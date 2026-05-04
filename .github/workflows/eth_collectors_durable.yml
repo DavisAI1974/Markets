@@ -18,6 +18,12 @@ on:
         description: 'Collection duration in seconds (default 5h50m=21000)'
         default: '21000'
         type: string
+  # Push trigger restricted to the workflow file itself so unrelated commits
+  # don't fire collectors. Used to bootstrap first run.
+  push:
+    branches: [claude/new-session-o3vnm]
+    paths:
+      - '.github/workflows/eth_collectors_durable.yml'
 
 permissions:
   contents: write
