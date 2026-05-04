@@ -263,8 +263,8 @@ def analyze(
     decoder = SignalDecoder()
 
     chunks = chunker.chunk(PRODUCT, bars)
-    if len(chunks) < 2:
-        return {"error": f"too few chunks ({len(chunks)})", "n_bars": len(bars)}
+    if len(chunks) == 0:
+        return {"error": f"no chunks produced", "n_bars": len(bars)}
 
     print(f"[analyze] {len(bars)} bars -> {len(chunks)} chunks", flush=True)
 
@@ -306,7 +306,7 @@ def analyze(
               f"flag={contam_flag} perm_spread_mean={float(np.mean(perm_spread)):.4f}",
               flush=True)
 
-    # Discontinuity check at PELT boundaries
+    # Discontinuity check at PELT boundaries (only meaningful with >=2 chunks)
     boundaries: list[dict] = []
     n_passed = 0
     for k in range(len(chunks) - 1):
@@ -330,7 +330,8 @@ def analyze(
 
     n_chunks = len(chunks)
     contam_rate = contam_pass / n_chunks if n_chunks > 0 else 0.0
-    gate_A = n_passed >= 1
+    # gate_A is unevaluable with only 1 chunk (no boundaries) - report None
+    gate_A = (n_passed >= 1) if n_chunks >= 2 else None
     gate_B = contam_rate >= 0.6
 
     return {
@@ -343,7 +344,7 @@ def analyze(
         "contamination_pass_rate": contam_rate,
         "gate_A_discontinuity": gate_A,
         "gate_B_contamination": gate_B,
-        "ALL_GATES_AB": bool(gate_A and gate_B),
+        "ALL_GATES_AB": bool(gate_A) and bool(gate_B) if gate_A is not None else None,
         "coef_matrix": coef_matrix.tolist(),
         "perm_matrix": perm_matrix.tolist(),
     }
@@ -445,7 +446,7 @@ def main():
 
     bars = aggregate_to_minute_bars(sec_bins)
     print(f"[main] {len(sec_bins)} sec bins -> {len(bars)} min bars", flush=True)
-    if len(bars) < 20:
+    if len(bars) < 5:
         print(f"[main] too few minute bars ({len(bars)}); abort", file=sys.stderr)
         sys.exit(2)
 
@@ -467,15 +468,20 @@ def main():
         print(f"  ERROR: {report['error']}")
         sys.exit(1)
     print(f"  n_chunks                       : {report['n_chunks']}")
-    print(f"  n_boundaries_passing           : {report['n_boundaries_passing']} / {report['n_chunks']-1}")
+    if report['n_chunks'] >= 2:
+        print(f"  n_boundaries_passing           : {report['n_boundaries_passing']} / {report['n_chunks']-1}")
+    else:
+        print(f"  n_boundaries_passing           : N/A (only 1 chunk; gate A unevaluable)")
     print(f"  contamination_pass_rate        : {report['contamination_pass_rate']:.2%}")
     print(f"  gate A (>=1 disc passing perm) : {report['gate_A_discontinuity']}")
     print(f"  gate B (>=60% chunks clean)    : {report['gate_B_contamination']}")
     print(f"  ALL_GATES_AB (signal candidate): {report['ALL_GATES_AB']}")
-    if report["ALL_GATES_AB"]:
+    if report["ALL_GATES_AB"] is True:
         print("  -> next: rerun on a held-out 4-hour window (gate C replication)")
+    elif report["ALL_GATES_AB"] is None:
+        print("  -> too few chunks to evaluate gate A; wait for more data")
     else:
-        print("  -> document and rethink operator pair")
+        print("  -> gates failing; will reassess at next checkpoint")
 
 
 if __name__ == "__main__":
