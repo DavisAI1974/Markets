@@ -61,10 +61,13 @@ populates the feed naturally.
 
 Real data dependencies; can't be done productively yet.
 
-- **Phase 1.5 results captured** — see `HANDOFF_PHASE1_5_RESULTS.md`. Gate I
-  passes on both venues (first time); WHALE regimes carry the edge. Continue
-  GHA collection on `data/eth-bins` until n≥30 per regime before tuning
-  thresholds.
+- **Phase 1.5 results captured + verified** — see `HANDOFF_PHASE1_5_RESULTS.md`
+  and `eth_phase1_5_gates_report.json`. Gate I passes on both venues (first
+  time, `--multi-signal-pelt` required); Gate G CB-only, Gate H still 51%.
+  WHALE regimes carry the mean-reversion edge (R²=0.69–0.99 with negative r).
+  Use `phase2_chunk_picker.py` to list pickable WHALE chunks for Phase 2
+  feasibility. Continue GHA collection on `data/eth-bins` until n≥30 per
+  non-EQUILIBRIUM regime before tuning thresholds.
 - **DPGMM auto-taxonomy**: replace hand-coded rule classifier with learned
   regime classes via `task_meta_learner`. Spec says wait for N≥200 labeled
   chunks; currently ~50.
