@@ -21,4 +21,8 @@ phase1_ny_logs/
 # Kraken collection artifacts
 kraken_bins.json
 kraken_bins.json.tmp
+kraken_bins_at_*.json
 kraken_logs/
+kraken_report_*.json
+kraken_trajectory_*.png
+kraken_analysis_*.json
