@@ -50,6 +50,28 @@ The product is NOT:
 
 The two tiers are **independent services** sharing infrastructure. Crypto stays running even after ICE launches.
 
+### Tier 3 — Cross-domain macro expansion (institutional / "big boys")
+
+The deeper truth about the architecture: **PELT chunking, dipole, regime classifier, cross-venue agreement — none of these are crypto-specific.** They detect operator structure on any pair of coupled markets. Once Tiers 1 + 2 validate the methodology, the same machinery ports to any asset class with paired-market microstructure.
+
+- **Audience**: macro hedge funds (Bridgewater, Brevan Howard tier and below), multi-strategy desks at prop shops, family offices with macro arms, fixed-income/FX trading desks at investment banks, single-strategy commodities funds expanding cross-asset.
+- **Markets** (each is its own coupled-pair test bed):
+  - **FX** — EUR/USD ⊥ DXY ⊥ Treasury futures (Greg's "EUR vs 30Y mortgage" inverse relationship is the canonical example: US 10Y yield drives both ends; mortgages move with rates, EUR moves opposite to rate differential)
+  - **Rates** — 2Y ⊥ 10Y ⊥ 30Y (yield curve regime detection; inversion alerts)
+  - **Commodities** — WTI ⊥ Brent ⊥ USD; NG ⊥ power ⊥ weather; metals via LME
+  - **Equity index** — ES ⊥ NQ ⊥ RTY (intraday rotation detection)
+  - **Cross-asset** — BTC ⊥ DXY ⊥ ES (risk-on/off regime)
+  - **Mortgage MBS** — MBS spread ⊥ 10Y ⊥ EUR (the original Smith Barney CBOT-style trade, modernized)
+- **Data cost**: paid feeds. CME via Databento or direct membership; FX via OANDA/EBS or paid retail platforms; equities via Polygon/IBKR. ~$500-5,000/mo per asset class for production-grade.
+- **Pricing**: $5K-$50K/mo per seat for individual analysts/PMs; multi-seat enterprise contracts $50K-$500K/mo for desk-wide deployment. The big-boys end of this range supports a real sales / customer-success team.
+- **Regulatory shape**: heaviest of all tiers. Cross-jurisdictional data licensing (CME/ICE/LSE/etc. each have separate redistribution terms). If we manage assets or take performance fees we hit RIA territory; if we sell signals only, investment-newsletter precedent still applies but the institutional sales surface raises the SEC scrutiny threshold. Real legal team before first paid customer.
+- **Edge longevity**: structurally best of all three tiers. Macro cross-asset lead-lag at minute scale is *less* heavily HFT'd than crypto microstructure (HFT competition is brutal at the tick on each individual asset, but cross-asset coupling at minute-to-hour scales has been studied less and arb'd less because the data infrastructure is harder to assemble). The methodology's domain-agnostic detection of regime transitions and actor classes is novel even in mature markets.
+- **Customer-acquisition asset**: Greg's energy-trading career + cyber-DARPA operator-discovery pedigree + cross-domain market intuition spans the credibility surface that institutional buyers actually care about. The pitch isn't "we built a crypto signal feed." It's "we built a methodology for finding operator structure in any coupled-market system, validated across crypto + energy + cyber attack telemetry, ready to run on your asset class with your data." That's a different conversation than competing on signal performance against existing quant shops.
+- **Failure mode**: institutional sales cycles are 6-18 months; cannot be the first revenue tier. Requires Tier 1 (live signal feed) + Tier 2 (paying ICE customer) as proof points before serious institutional sales make sense. **Plan for Tier 3 to take 12-24 months from Tier 1 launch.**
+- **MVP timeline**: ~6 months after Tier 2 demonstrates a paying institutional customer. The first Tier 3 deal probably comes from a warm intro through Tier 2 — an energy desk's parent fund or a former colleague at a macro shop.
+
+The crucial framing throughout: **the methodology is the moat, not the asset class.** Tier 1 (crypto) and Tier 2 (ICE) are *proof of methodology*. Tier 3 is where the methodology is sold as a methodology. Pricing supports it because Tier 3 customers are buying institutional-grade alpha-discovery infrastructure, not a signal feed.
+
 ## Shared architecture
 
 Same Python backend serves both tiers. Differences are confined to the **collector** and the **regime baseline calibration**.
