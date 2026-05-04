@@ -6,6 +6,8 @@ import LiveStatus from "./pages/LiveStatus.jsx";
 import SignalFeed from "./pages/SignalFeed.jsx";
 import SignalDetail from "./pages/SignalDetail.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
+import Stats from "./pages/Stats.jsx";
+import RegimeHistory from "./pages/RegimeHistory.jsx";
 
 export default function App() {
   const setStatuses = useStore((s) => s.setStatuses);
@@ -42,9 +44,11 @@ export default function App() {
           </Link>
           <ConnectionDot />
         </div>
-        <nav className="mt-2 flex gap-3 text-sm">
+        <nav className="mt-2 flex gap-3 text-sm overflow-x-auto">
           <NavTab to="/">Live</NavTab>
           <NavTab to="/signals">Signals</NavTab>
+          <NavTab to="/history">History</NavTab>
+          <NavTab to="/stats">Stats</NavTab>
           <NavTab to="/about">About</NavTab>
         </nav>
       </header>
@@ -53,6 +57,8 @@ export default function App() {
           <Route path="/" element={<LiveStatus />} />
           <Route path="/signals" element={<SignalFeed />} />
           <Route path="/signal/:id" element={<SignalDetail />} />
+          <Route path="/history" element={<RegimeHistory />} />
+          <Route path="/stats" element={<Stats />} />
           <Route path="/about" element={<Onboarding />} />
         </Routes>
       </main>

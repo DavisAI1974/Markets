@@ -26,6 +26,18 @@ export async function fetchChart(asset, venue, nMinutes = 240) {
   return r.json();
 }
 
+export async function fetchStats(windowHours = 24) {
+  const r = await fetch(`${BASE}/api/stats?window_hours=${windowHours}`);
+  if (!r.ok) throw new Error(`stats ${r.status}`);
+  return r.json();
+}
+
+export async function fetchRegimeHistory(asset, venue, nPoints = 60) {
+  const r = await fetch(`${BASE}/api/regime_history/${asset}/${venue}?n_points=${nPoints}`);
+  if (!r.ok) throw new Error(`regime history ${r.status}`);
+  return r.json();
+}
+
 /** Subscribe to SSE stream. Returns a cleanup fn. */
 export function subscribeToStream({ onSignal, onSnapshot, onError }) {
   const es = new EventSource(`${BASE}/api/stream`);

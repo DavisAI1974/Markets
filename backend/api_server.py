@@ -447,6 +447,80 @@ async def chart(asset: str, venue: str, n_minutes: int = 240):
     return await store.chart_data(asset, venue, n_minutes=n_minutes)
 
 
+@app.get("/api/stats")
+async def stats(window_hours: int = 24):
+    """Aggregate stats over recent signals: counts, distribution, top sources."""
+    from collections import Counter, defaultdict
+    cutoff = time.time() - window_hours * 3600
+    sigs = [s for s in store.recent_signals if s.timestamp_utc >= cutoff]
+    by_regime: Counter[str] = Counter(s.regime for s in sigs)
+    by_asset: Counter[str] = Counter(s.asset for s in sigs)
+    by_venue: Counter[str] = Counter(s.venue for s in sigs)
+    by_source: Counter[str] = Counter(f"{s.asset}-{s.venue}" for s in sigs)
+    confirmed = sum(1 for s in sigs if s.cross_venue_multiplier > 1.0)
+    disagreed = sum(1 for s in sigs if s.cross_venue_multiplier < 1.0)
+    avg_conf = (sum(s.adjusted_confidence for s in sigs) / len(sigs)) if sigs else 0.0
+
+    # Per-source rolling time series for sparkline-ish
+    by_source_series: dict[str, list[dict]] = defaultdict(list)
+    for s in sigs:
+        by_source_series[f"{s.asset}-{s.venue}"].append({
+            "ts": s.timestamp_utc,
+            "regime": s.regime,
+            "conf": s.adjusted_confidence,
+        })
+
+    return {
+        "window_hours": window_hours,
+        "n_signals": len(sigs),
+        "by_regime": dict(by_regime.most_common()),
+        "by_asset": dict(by_asset),
+        "by_venue": dict(by_venue),
+        "by_source": dict(by_source.most_common()),
+        "cross_venue_confirmed": confirmed,
+        "cross_venue_disagreed": disagreed,
+        "avg_adjusted_confidence": round(avg_conf, 3),
+        "as_of_utc": time.time(),
+        "by_source_series": dict(by_source_series),
+    }
+
+
+@app.get("/api/regime_history/{asset}/{venue}")
+async def regime_history(asset: str, venue: str, n_points: int = 60):
+    """Return last N regime classifications (one per chunk) for an (asset, venue).
+
+    Used by the frontend's regime-timeline view.
+    """
+    path = next((p for a, v, p in DATA_SOURCES if a == asset and v == venue), None)
+    if not path:
+        raise HTTPException(404, "no such (asset, venue)")
+    bars = store._bars_from_bins(path)
+    if not bars:
+        return {"asset": asset, "venue": venue, "points": []}
+    chunker = MarketChunker(max_window_size=CHUNK_MAX_SIZE,
+                              stride=CHUNK_MAX_SIZE // 2,
+                              min_segment=CHUNK_MIN_SEGMENT, mode="hybrid")
+    encoder = MarketChunkEncoder(d_enc=64)
+    chunks = chunker.chunk(f"{venue}-{asset}", bars)
+    if not chunks:
+        return {"asset": asset, "venue": venue, "points": []}
+    feats = [encoder._extract(c) for c in chunks]
+    base = baselines_from_corpus(feats)
+    results = [classify_regime(f, base) for f in feats]
+    points = []
+    for c, f, r in zip(chunks[-n_points:], feats[-n_points:], results[-n_points:]):
+        points.append({
+            "chunk_idx": c.window_start,
+            "regime": r.regime.value,
+            "mean_dipole": float(f.mean_dipole),
+            "realized_vol": float(f.realized_vol),
+            "confidence": r.confidence,
+            "ts_start": float(bars[c.window_start].ts) if c.window_start < len(bars) else 0,
+            "ts_end": float(bars[min(c.window_end - 1, len(bars) - 1)].ts) if bars else 0,
+        })
+    return {"asset": asset, "venue": venue, "n_chunks_total": len(chunks), "points": points}
+
+
 @app.get("/api/stream")
 async def stream():
     """Server-Sent Events stream of new signal events."""
