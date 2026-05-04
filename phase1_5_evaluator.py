@@ -29,6 +29,8 @@ from markets_adapter import (
 from regime_classifier import (
     Regime, Baselines, ClassificationResult,
     classify_regime, baselines_from_corpus,
+    baselines_per_session, classify_with_session_baselines,
+    apply_cross_venue_multiplier, _session_phase_of,
 )
 
 
@@ -59,15 +61,23 @@ def load_bars(bins_path: str) -> list[MarketBar]:
 
 
 def classify_venue(bars: list[MarketBar], label: str,
-                    chunk_max: int = 30, chunk_min: int = 10) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines]:
+                    chunk_max: int = 30, chunk_min: int = 10,
+                    multi_signal_pelt: bool = False,
+                    use_session_baselines: bool = False
+                    ) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines, dict]:
     chunker = MarketChunker(max_window_size=chunk_max, stride=chunk_max // 2,
                              min_segment=chunk_min, mode="hybrid")
     encoder = MarketChunkEncoder(d_enc=64)
-    chunks = chunker.chunk(label, bars)
+    chunks = chunker.chunk(label, bars, multi_signal=multi_signal_pelt)
     feats = [encoder._extract(c) for c in chunks]
     base = baselines_from_corpus(feats)
-    results = [classify_regime(f, base) for f in feats]
-    return chunks, results, base
+    if use_session_baselines:
+        session_base = baselines_per_session(feats)
+        results = [classify_with_session_baselines(f, session_base) for f in feats]
+    else:
+        session_base = {"_global": base}
+        results = [classify_regime(f, base) for f in feats]
+    return chunks, results, base, session_base
 
 
 # ---------------------------------------------------------------------------
@@ -223,6 +233,10 @@ def main():
     p.add_argument("--chunk-max-size", type=int, default=30)
     p.add_argument("--chunk-min-segment", type=int, default=10)
     p.add_argument("--report-path", type=str, default=None)
+    p.add_argument("--multi-signal-pelt", action="store_true",
+                   help="Run PELT on price + dipole + OFI signals (Phase 1.5 enhancement)")
+    p.add_argument("--session-baselines", action="store_true",
+                   help="Use per-session baselines (london_active, london_lunch, etc.) instead of global")
     args = p.parse_args()
 
     print(f"=== Phase 1.5 Evaluation: {args.asset} ===\n")
@@ -231,13 +245,30 @@ def main():
     kr_bars = load_bars(args.kr_bins)
     print(f"Coinbase bars: {len(cb_bars)}, Kraken bars: {len(kr_bars)}\n")
 
-    cb_chunks, cb_results, cb_base = classify_venue(cb_bars, f"CB-{args.asset}",
-                                                     args.chunk_max_size, args.chunk_min_segment)
-    kr_chunks, kr_results, kr_base = classify_venue(kr_bars, f"KR-{args.asset}",
-                                                     args.chunk_max_size, args.chunk_min_segment)
+    cb_chunks, cb_results, cb_base, cb_session = classify_venue(
+        cb_bars, f"CB-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
+        multi_signal_pelt=args.multi_signal_pelt,
+        use_session_baselines=args.session_baselines,
+    )
+    kr_chunks, kr_results, kr_base, kr_session = classify_venue(
+        kr_bars, f"KR-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
+        multi_signal_pelt=args.multi_signal_pelt,
+        use_session_baselines=args.session_baselines,
+    )
 
     print(f"CB-{args.asset}: {len(cb_chunks)} chunks, baselines rv={cb_base.rv:.5f}")
     print(f"KR-{args.asset}: {len(kr_chunks)} chunks, baselines rv={kr_base.rv:.5f}\n")
+    if args.session_baselines:
+        print("  Session-baseline phases:")
+        for phase, b in sorted(cb_session.items()):
+            if phase != "_global":
+                print(f"    CB {phase}: rv={b.rv:.5f}, vol={b.chunk_volume:.3f}")
+
+    # F6: apply cross-venue multipliers to each side's results
+    cb_minute_pre = chunk_to_minute_regime(cb_chunks, cb_results, cb_bars)
+    kr_minute_pre = chunk_to_minute_regime(kr_chunks, kr_results, kr_bars)
+    apply_cross_venue_multiplier(cb_results, cb_chunks, cb_bars, kr_minute_pre)
+    apply_cross_venue_multiplier(kr_results, kr_chunks, kr_bars, cb_minute_pre)
 
     # Gate G per venue
     g_cb = evaluate_gate_G(f"CB-{args.asset}", cb_results)
@@ -283,6 +314,18 @@ def main():
                 marker = " <- significant" if (stat["r2"] or 0) > 0.05 and (stat["p"] or 1) < 0.10 else ""
                 print(f"    {regime:<24}  n={stat['n']:>2}  r={stat['r']:+.3f}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{marker}")
         print(f"    -> {'PASS' if ig['gate_I'] else 'FAIL'} (need >=1 significant regime, >=2 evaluable)")
+    print()
+
+    # F6 confidence multiplier summary
+    print(f"--- F6 cross-venue confidence multipliers ---")
+    cb_confirm = sum(1 for r in cb_results if r.cross_venue_multiplier > 1.0)
+    cb_disagree = sum(1 for r in cb_results if r.cross_venue_multiplier < 1.0)
+    kr_confirm = sum(1 for r in kr_results if r.cross_venue_multiplier > 1.0)
+    kr_disagree = sum(1 for r in kr_results if r.cross_venue_multiplier < 1.0)
+    print(f"  CB-{args.asset}: {cb_confirm}/{len(cb_results)} chunks confirmed by KR (mult=1.5),"
+          f" {cb_disagree} disagreement (mult=0.5)")
+    print(f"  KR-{args.asset}: {kr_confirm}/{len(kr_results)} chunks confirmed by CB (mult=1.5),"
+          f" {kr_disagree} disagreement (mult=0.5)")
     print()
 
     # Combined verdict

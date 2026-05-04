@@ -67,22 +67,24 @@ def load_bars(bins_path: str) -> list[MarketBar]:
     return bars
 
 
-def build_dataset(datasets: list[tuple[str, str]]) -> tuple[np.ndarray, np.ndarray, list[str]]:
-    """Build pooled EQUILIBRIUM-only (X, y) across multiple bins files.
+FEATURE_NAMES = [
+    "ret_mean", "ret_std", "ret_skew", "ret_kurt", "autocorr_lag1",
+    "mean_dipole", "mean_ofi", "volume_zscore", "realized_vol",
+    "range_atr", "spectral_energy",
+    "dipole_acl1", "dipole_pk_freq", "dipole_pk_pow", "kyle_proxy",
+    "chunk_volume",
+]
 
-    X: feature matrix (n, p)
-    y: next-chunk log return (n,)
-    Feature names returned for interpretability.
+
+def build_dataset(datasets: list[tuple[str, str]],
+                   regime_filter: Regime | None = Regime.EQUILIBRIUM_TWO_SIDED
+                   ) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """Build pooled (X, y) across multiple bins files, optionally filtered to one regime.
+
+    regime_filter=None pools all chunks regardless of regime (useful for per-regime mode).
     """
     all_features = []
     all_targets = []
-    feature_names = [
-        "ret_mean", "ret_std", "ret_skew", "ret_kurt", "autocorr_lag1",
-        "mean_dipole", "mean_ofi", "volume_zscore", "realized_vol",
-        "range_atr", "spectral_energy",
-        "dipole_acl1", "dipole_pk_freq", "dipole_pk_pow", "kyle_proxy",
-        "chunk_volume",
-    ]
     for label, path in datasets:
         bars = load_bars(path)
         chunker = MarketChunker(max_window_size=30, stride=15, min_segment=10, mode="hybrid")
@@ -93,7 +95,7 @@ def build_dataset(datasets: list[tuple[str, str]]) -> tuple[np.ndarray, np.ndarr
         results = [classify_regime(f, base) for f in feats]
 
         for t in range(len(chunks) - 1):
-            if results[t].regime != Regime.EQUILIBRIUM_TWO_SIDED:
+            if regime_filter is not None and results[t].regime != regime_filter:
                 continue
             f = feats[t]
             row = [
@@ -103,7 +105,6 @@ def build_dataset(datasets: list[tuple[str, str]]) -> tuple[np.ndarray, np.ndarr
                 f.dipole_autocorr_lag1, f.dipole_peak_freq, f.dipole_peak_power,
                 f.kyle_proxy, f.chunk_total_volume,
             ]
-            # Target: next-chunk log return
             c_next = chunks[t + 1]
             if not c_next.bars or not chunks[t].bars:
                 continue
@@ -115,7 +116,18 @@ def build_dataset(datasets: list[tuple[str, str]]) -> tuple[np.ndarray, np.ndarr
             all_features.append(row)
             all_targets.append(y)
 
-    return np.array(all_features), np.array(all_targets), feature_names
+    return np.array(all_features), np.array(all_targets), FEATURE_NAMES
+
+
+def build_per_regime_datasets(datasets: list[tuple[str, str]]
+                                ) -> dict[Regime, tuple[np.ndarray, np.ndarray, list[str]]]:
+    """Build separate (X, y) for each regime with sufficient samples (n >= 10)."""
+    out: dict[Regime, tuple[np.ndarray, np.ndarray, list[str]]] = {}
+    for regime in Regime:
+        X, y, names = build_dataset(datasets, regime_filter=regime)
+        if len(y) >= 10:
+            out[regime] = (X, y, names)
+    return out
 
 
 def split_train_test(X: np.ndarray, y: np.ndarray, train_frac: float = 0.6):
@@ -285,6 +297,8 @@ def main():
     p.add_argument("--datasets", nargs="+", required=True,
                    help="Pairs of label:path (e.g. CB-BTC:phase1_bins.json)")
     p.add_argument("--report-path", default=None)
+    p.add_argument("--per-regime", action="store_true",
+                   help="Run autoresearch separately within each regime class with n>=10")
     args = p.parse_args()
 
     pairs = []
@@ -294,6 +308,38 @@ def main():
             continue
         label, path = spec.split(":", 1)
         pairs.append((label, path))
+
+    if args.per_regime:
+        print(f"Building per-regime datasets from {len(pairs)} sources...")
+        per_regime = build_per_regime_datasets(pairs)
+        if not per_regime:
+            print("FATAL: no regime has n>=10. Need more data.")
+            return
+        all_per_regime_results = {}
+        for regime, (X, y, names) in per_regime.items():
+            print(f"\n{'#' * 70}")
+            print(f"# REGIME: {regime.value}  (n_pairs={len(y)})")
+            print(f"{'#' * 70}")
+            X_tr, y_tr, X_te, y_te = split_train_test(X, y, train_frac=0.6)
+            print(f"Train: n={len(y_tr)}, Test: n={len(y_te)}\n")
+            results = []
+            results.extend(operator_bakeoff(X_tr, y_tr, X_te, y_te, names))
+            lr = lasso_search(X_tr, y_tr, X_te, y_te, names)
+            if lr: results.append(lr)
+            pr = polynomial_search(X_tr, y_tr, X_te, y_te, names)
+            if pr: results.append(pr)
+            results.sort(key=lambda r: -r.out_of_sample_r2)
+            print(f"Top operators (held-out R^2):")
+            for r in results[:5]:
+                flag = "**" if r.out_of_sample_r2 > 0.05 else "  "
+                print(f"  {flag} {r.name:<28} OOS R²={r.out_of_sample_r2:+.4f}  "
+                      f"IS={r.in_sample_r2:+.4f}  formula={r.formula[:60]}")
+            all_per_regime_results[regime.value] = [asdict(r) for r in results]
+        if args.report_path:
+            with open(args.report_path, "w") as f:
+                json.dump(all_per_regime_results, f, indent=2)
+            print(f"\nPer-regime report saved: {args.report_path}")
+        return
 
     print(f"Building EQUILIBRIUM-pooled dataset from {len(pairs)} sources...")
     X, y, names = build_dataset(pairs)

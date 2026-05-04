@@ -257,7 +257,19 @@ class MarketChunker:
         self.min_segment = min_segment
         self.mode = mode
 
-    def chunk(self, source_id: str, bars: list[MarketBar]) -> list[MarketChunk]:
+    def chunk(self, source_id: str, bars: list[MarketBar],
+              multi_signal: bool = False) -> list[MarketChunk]:
+        """Segment bars into PELT-aware chunks.
+
+        Args:
+            multi_signal: if True, run PELT on log_returns AND bar-level
+                dipole AND signed OFI, then merge change points (dedupe
+                within min_segment of each other). Catches flow-regime
+                transitions that don't show up as price changes (e.g., the
+                London-open contamination drift we observed where price was
+                flat but flow correlation moved). Default False to preserve
+                backwards-compat with existing reports.
+        """
         if not bars:
             return []
         if self.mode == "fixed":
@@ -265,7 +277,25 @@ class MarketChunker:
 
         closes = np.array([b.close for b in bars], dtype=float)
         log_ret = np.diff(np.log(np.maximum(closes, 1e-12)))
-        cps = pelt_change_points(log_ret, min_segment=self.min_segment)
+        cps_price = pelt_change_points(log_ret, min_segment=self.min_segment)
+
+        if multi_signal:
+            # Per-bar dipole and OFI as additional signals; PELT on each
+            dipoles = np.array([b.dipole for b in bars], dtype=float)
+            ofis = np.array([b.ofi for b in bars], dtype=float)
+            # PELT on dipole / OFI (no diff; they're already stationary-ish)
+            cps_dipole = pelt_change_points(dipoles[1:], min_segment=self.min_segment)
+            cps_ofi = pelt_change_points(ofis[1:], min_segment=self.min_segment)
+            # Merge: union, dedupe within min_segment
+            all_cps = sorted(set(cps_price) | set(cps_dipole) | set(cps_ofi))
+            merged: list[int] = []
+            for cp in all_cps:
+                if not merged or cp - merged[-1] >= self.min_segment:
+                    merged.append(cp)
+            cps = merged
+        else:
+            cps = cps_price
+
         bar_cps = [c + 1 for c in cps]
         boundaries = [0] + bar_cps + [len(bars)]
 

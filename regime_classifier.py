@@ -49,6 +49,12 @@ class ClassificationResult:
     regime: Regime
     confidence: float            # 0-1 rough confidence based on rule strength
     notes: list[str]             # human-readable reasons for the verdict
+    cross_venue_multiplier: float = 1.0   # F6: 1.5 if other venue agrees, 0.5 if disagrees, 1.0 if unknown
+
+    @property
+    def adjusted_confidence(self) -> float:
+        """Confidence × cross-venue multiplier, capped at [0, 1]."""
+        return max(0.0, min(1.0, self.confidence * self.cross_venue_multiplier))
 
 
 def classify_regime(f: MarketFeatures, baselines: Baselines | None = None) -> ClassificationResult:
@@ -134,6 +140,107 @@ def baselines_from_corpus(features_list: list[MarketFeatures]) -> Baselines:
         kyle=float(np.median(kys)) if kys else 1e-3,
         chunk_volume=float(np.median(vols)) if vols else 1.0,
     )
+
+
+# ---------------------------------------------------------------------------
+# Per-session baselines: bucket chunks by session_phase before averaging
+# ---------------------------------------------------------------------------
+
+def _session_phase_of(f: MarketFeatures) -> str:
+    """Discrete session-phase label based on UTC hour and weekday flags."""
+    h = f.hour_utc
+    if f.day_of_week >= 5:
+        return "weekend"
+    if f.is_london_lunch:
+        return "london_lunch"
+    if f.is_us_lunch:
+        return "us_lunch"
+    if f.is_us_market_hours and not f.is_us_lunch:
+        return "us_active"
+    if 7.0 <= h < 11.0 or 12.0 <= h < 13.5:
+        return "london_active"  # London hrs ex-lunch and pre-NY
+    if 0.0 <= h < 7.0:
+        return "asia_overnight"
+    return "off_hours"
+
+
+def baselines_per_session(features_list: list[MarketFeatures]) -> dict[str, Baselines]:
+    """Compute Baselines bucketed by session_phase.
+
+    Each session_phase gets its own median of (rv, range, kyle, volume).
+    Falls back to the global baseline for phases with too few samples (<3).
+    """
+    import numpy as np
+    by_phase: dict[str, list[MarketFeatures]] = {}
+    for f in features_list:
+        phase = _session_phase_of(f)
+        by_phase.setdefault(phase, []).append(f)
+    global_base = baselines_from_corpus(features_list)
+    out: dict[str, Baselines] = {"_global": global_base}
+    for phase, items in by_phase.items():
+        if len(items) < 3:
+            out[phase] = global_base
+            continue
+        rvs = [f.realized_vol for f in items if f.realized_vol > 0]
+        rgs = [f.range_atr for f in items if f.range_atr > 0]
+        kys = [f.kyle_proxy for f in items if f.kyle_proxy > 0]
+        vols = [f.chunk_total_volume for f in items if f.chunk_total_volume > 0]
+        out[phase] = Baselines(
+            rv=float(np.median(rvs)) if rvs else global_base.rv,
+            range_atr=float(np.median(rgs)) if rgs else global_base.range_atr,
+            kyle=float(np.median(kys)) if kys else global_base.kyle,
+            chunk_volume=float(np.median(vols)) if vols else global_base.chunk_volume,
+        )
+    return out
+
+
+def classify_with_session_baselines(f: MarketFeatures,
+                                      session_baselines: dict[str, Baselines]
+                                      ) -> ClassificationResult:
+    """Classify using the baseline appropriate to f's session phase."""
+    phase = _session_phase_of(f)
+    base = session_baselines.get(phase, session_baselines.get("_global", Baselines()))
+    result = classify_regime(f, base)
+    result.notes.insert(0, f"[session={phase}, baseline rv={base.rv:.5f}]")
+    return result
+
+
+# ---------------------------------------------------------------------------
+# F6: cross-venue confidence multiplier
+# ---------------------------------------------------------------------------
+
+def apply_cross_venue_multiplier(
+    primary_results: list[ClassificationResult],
+    primary_chunks: list,
+    primary_bars: list,
+    other_minute_regime: dict[float, str],
+) -> None:
+    """Mutate primary_results in place: set cross_venue_multiplier per result.
+
+    For each chunk on the primary venue, look up the most-common regime
+    label observed on the other venue across the chunk's wall-clock range.
+    Multiplier:
+      1.5 if same regime    (both venues confirm)
+      0.5 if different      (single-venue event)
+      1.0 if no overlap     (other venue had no data)
+    """
+    from collections import Counter
+    for c, r in zip(primary_chunks, primary_results):
+        # Collect other-venue regime labels for the wall-clock minutes covered
+        other_labels: list[str] = []
+        for bar_idx in range(c.window_start, c.window_end):
+            if 0 <= bar_idx < len(primary_bars):
+                ts = primary_bars[bar_idx].ts
+                if ts in other_minute_regime:
+                    other_labels.append(other_minute_regime[ts])
+        if not other_labels:
+            r.cross_venue_multiplier = 1.0
+            continue
+        most_common = Counter(other_labels).most_common(1)[0][0]
+        if most_common == r.regime.value:
+            r.cross_venue_multiplier = 1.5
+        else:
+            r.cross_venue_multiplier = 0.5
 
 
 # ---------------------------------------------------------------------------
