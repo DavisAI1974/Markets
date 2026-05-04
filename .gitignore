@@ -40,3 +40,7 @@ eth_*_trajectory.png
 
 # Phase 1.5 evaluator output
 phase1_5_*_report.json
+
+# Phase 2 autoresearch + backtester output
+autoresearch_*_report.json
+backtest_*_report.json
