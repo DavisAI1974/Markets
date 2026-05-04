@@ -101,6 +101,18 @@ class MarketFeatures:
     peak_frequency: float
     spectral_centroid: float
     coefficients: list[float]
+    # Phase 1.5 additions (whale/herd/panic discriminators)
+    dipole_autocorr_lag1: float = 0.0       # F1: sustained one-side pressure
+    dipole_peak_freq: float = 0.0           # F2: oscillation/range-trader detector
+    dipole_peak_power: float = 0.0          # F2: concentration of oscillation energy
+    kyle_proxy: float = 0.0                 # F3: price_move / volume; low = absorption
+    # Session-time (universal-state context; chunks don't bring their own time)
+    hour_utc: float = 0.0                   # 0-23, normalized 0-1 elsewhere
+    day_of_week: int = 0                    # 0=Mon, 6=Sun
+    is_london_lunch: bool = False           # 11:00-12:00 UTC
+    is_us_lunch: bool = False               # 15:45-17:30 UTC
+    is_us_market_hours: bool = False        # 13:30-20:00 UTC (9:30-16:00 ET)
+    chunk_total_volume: float = 0.0         # sum of bar volumes; used for chunk_vol_ratio in classifier
 
 
 @dataclass
@@ -331,6 +343,23 @@ class MarketChunkEncoder:
         if n < 2:
             return MarketFeatures(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [])
 
+        # Phase 1.5 session-time context: derive from chunk's first bar timestamp
+        from datetime import datetime, timezone
+        ts0 = bars[0].ts
+        try:
+            dt = datetime.fromtimestamp(ts0, tz=timezone.utc)
+            hour_utc_val = float(dt.hour) + float(dt.minute) / 60.0
+            dow = int(dt.weekday())
+        except Exception:
+            hour_utc_val = 0.0
+            dow = 0
+        # London lunch: 11:00-12:00 UTC (12:00-13:00 BST)
+        is_london_lunch_val = 11.0 <= hour_utc_val < 12.0
+        # NY lunch: 15:45-17:30 UTC (11:45-13:30 ET) - per Wall Street Journal/Moomoo
+        is_us_lunch_val = 15.75 <= hour_utc_val < 17.5
+        # NY market hours: 13:30-20:00 UTC (9:30-16:00 ET)
+        is_us_mkt_val = 13.5 <= hour_utc_val < 20.0
+
         closes = np.array([b.close for b in bars], dtype=float)
         log_ret = np.diff(np.log(np.maximum(closes, 1e-12)))
 
@@ -392,6 +421,46 @@ class MarketChunkEncoder:
             spectral_centroid = 0.0
             coefficients = []
 
+        # --- Phase 1.5 features (whale/herd discriminators) ---
+
+        # F1: dipole autocorrelation lag-1 (sustained-pressure detector).
+        # High value => one-side pressure persists across bars (whale signature).
+        bar_dipoles = np.array(dipoles, dtype=float)
+        if len(bar_dipoles) >= 3 and np.std(bar_dipoles) > 1e-12:
+            d0 = bar_dipoles[:-1] - np.mean(bar_dipoles)
+            d1 = bar_dipoles[1:] - np.mean(bar_dipoles)
+            denom_d = float(np.sum((bar_dipoles - np.mean(bar_dipoles)) ** 2)) + 1e-12
+            dipole_acl1 = float(np.sum(d0 * d1) / denom_d)
+        else:
+            dipole_acl1 = 0.0
+
+        # F2: dipole spectral peak frequency + power (oscillation/range-trader detector).
+        # Strong non-DC peak => periodic flow pattern (range-trading whale).
+        if len(bar_dipoles) >= 4 and np.std(bar_dipoles) > 1e-12:
+            d_mean = np.mean(bar_dipoles)
+            d_mags = np.abs(np.fft.rfft(bar_dipoles - d_mean))
+            d_total = float(np.sum(d_mags ** 2))
+            if d_total > 1e-12 and len(d_mags) > 1:
+                # Skip DC bin (idx 0); find peak among real frequencies
+                d_peak_idx = int(np.argmax(d_mags[1:])) + 1
+                dipole_pk_freq = d_peak_idx / len(bar_dipoles)
+                dipole_pk_pow = float(d_mags[d_peak_idx] ** 2 / d_total)
+            else:
+                dipole_pk_freq = 0.0
+                dipole_pk_pow = 0.0
+        else:
+            dipole_pk_freq = 0.0
+            dipole_pk_pow = 0.0
+
+        # F3: Kyle's lambda proxy (price impact per unit volume).
+        # Low value despite high volume => absorption (someone soaking liquidity).
+        total_vol = float(np.sum([b.volume for b in bars]))
+        if total_vol > 1e-9 and closes[0] > 1e-12:
+            price_move = float(abs(closes[-1] - closes[0]) / closes[0])
+            kyle_proxy_val = price_move / total_vol
+        else:
+            kyle_proxy_val = 0.0
+
         return MarketFeatures(
             ret_mean=ret_mean, ret_std=ret_std, ret_skew=ret_skew, ret_kurt=ret_kurt,
             autocorr_lag1=autocorr, mean_dipole=mean_dipole, mean_ofi=mean_ofi,
@@ -399,6 +468,16 @@ class MarketChunkEncoder:
             spectral_energy=spectral_energy, spectral_entropy=spectral_entropy,
             peak_frequency=peak_frequency, spectral_centroid=spectral_centroid,
             coefficients=coefficients,
+            dipole_autocorr_lag1=dipole_acl1,
+            dipole_peak_freq=dipole_pk_freq,
+            dipole_peak_power=dipole_pk_pow,
+            kyle_proxy=kyle_proxy_val,
+            hour_utc=hour_utc_val,
+            day_of_week=dow,
+            is_london_lunch=bool(is_london_lunch_val),
+            is_us_lunch=bool(is_us_lunch_val),
+            is_us_market_hours=bool(is_us_mkt_val),
+            chunk_total_volume=total_vol,
         )
 
     def encode(self, chunks: list[MarketChunk]) -> list[list[float]]:
