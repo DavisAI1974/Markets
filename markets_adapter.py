@@ -113,6 +113,51 @@ class SignalCandidate:
 
 
 # ---------------------------------------------------------------------------
+# FeatureScaler (per-dim z-score; fit on chunk corpus, apply to chunks + queries)
+# ---------------------------------------------------------------------------
+
+class FeatureScaler:
+    """Per-dimension z-score normalization across a chunk corpus.
+
+    Fit once on a representative chunk corpus; apply to every embedding
+    (chunks AND queries) before similarity search. Without this, cosine
+    similarity is dominated by whichever feature has the largest absolute
+    magnitude (the FFT coefficient block in the default 64-dim layout).
+
+    Sklearn-style fit/transform; no sklearn dependency.
+    """
+
+    def __init__(self, eps: float = 1e-9):
+        self.eps = eps
+        self.mean: Optional[np.ndarray] = None
+        self.std: Optional[np.ndarray] = None
+
+    def fit(self, embeddings: list[list[float]]) -> "FeatureScaler":
+        if not embeddings:
+            return self
+        arr = np.asarray(embeddings, dtype=float)
+        self.mean = arr.mean(axis=0)
+        self.std = arr.std(axis=0)
+        return self
+
+    def transform(self, embedding: list[float]) -> list[float]:
+        if self.mean is None or self.std is None:
+            return list(embedding)
+        v = (np.asarray(embedding, dtype=float) - self.mean) / (self.std + self.eps)
+        return v.tolist()
+
+    def transform_batch(self, embeddings: list[list[float]]) -> list[list[float]]:
+        if self.mean is None or self.std is None:
+            return [list(e) for e in embeddings]
+        arr = (np.asarray(embeddings, dtype=float) - self.mean) / (self.std + self.eps)
+        return arr.tolist()
+
+    @property
+    def is_fitted(self) -> bool:
+        return self.mean is not None and self.std is not None
+
+
+# ---------------------------------------------------------------------------
 # PELT change-point detection (normal mean+variance, BIC penalty)
 # ---------------------------------------------------------------------------
 
@@ -509,7 +554,11 @@ def _demo():
     chunker = MarketChunker(max_window_size=128, stride=64, min_segment=24, mode="hybrid")
     encoder = MarketChunkEncoder(d_enc=64)
     chunks = chunker.chunk("DEMO", bars)
-    embeds = encoder.encode(chunks)
+    embeds_raw = encoder.encode(chunks)
+
+    # Fit scaler on the chunk corpus, then apply to chunks + queries
+    scaler = FeatureScaler().fit(embeds_raw)
+    embeds = scaler.transform_batch(embeds_raw)
 
     print(f"[markets_adapter] bars={len(bars)} chunks={len(chunks)} embed_dim={len(embeds[0]) if embeds else 0}")
     for i, c in enumerate(chunks):
@@ -522,7 +571,8 @@ def _demo():
         spectral_entropy=0.5, peak_frequency=0.1, spectral_centroid=0.1,
         coefficients=[],
     )
-    q = MarketQuery(d_enc=64).from_regime_target(target)
+    q_raw = MarketQuery(d_enc=64).from_regime_target(target)
+    q = scaler.transform(q_raw)
 
     def cosine(a, b):
         a = np.array(a); b = np.array(b)
