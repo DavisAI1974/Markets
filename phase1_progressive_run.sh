@@ -12,8 +12,9 @@ set -u
 cd "$(dirname "$0")"
 
 DURATION_S=${1:-14400}              # default 4 hours; override for testing
-BINS_PATH=${BINS_PATH:-phase1_bins.json}
-LOGDIR=${LOGDIR:-phase1_logs}
+PREFIX=${PREFIX:-phase1}            # file prefix; allows multiple concurrent/sequential runs
+BINS_PATH=${BINS_PATH:-${PREFIX}_bins.json}
+LOGDIR=${LOGDIR:-${PREFIX}_logs}
 mkdir -p "$LOGDIR"
 
 START_T=$(date +%s)
@@ -56,10 +57,10 @@ run_checkpoint() {
     python coinbase_btcusd_4hr_trajectory.py \
         --from-bins \
         --bins-path "$BINS_PATH" \
-        --report-path "phase1_report_${label}.json" \
-        --plot-path "phase1_trajectory_${label}.png" \
+        --report-path "${PREFIX}_report_${label}.json" \
+        --plot-path "${PREFIX}_trajectory_${label}.png" \
         > "$LOGDIR/checkpoint_${label}.log" 2>&1
-    echo "[progressive] $label done; report=phase1_report_${label}.json" | tee -a "$LOGDIR/orchestrator.log"
+    echo "[progressive] $label done; report=${PREFIX}_report_${label}.json" | tee -a "$LOGDIR/orchestrator.log"
 }
 
 run_checkpoint "15min"  900

@@ -12,6 +12,11 @@ phase1_bins.json.tmp
 phase1_report_*.json
 phase1_trajectory_*.png
 phase1_logs/
+phase1_ny_bins.json
+phase1_ny_bins.json.tmp
+phase1_ny_report_*.json
+phase1_ny_trajectory_*.png
+phase1_ny_logs/
 
 # Kraken collection artifacts
 kraken_bins.json
