@@ -79,12 +79,16 @@ def backtest(
     only_equilibrium: bool = True,
     chunk_max_size: int = 30,
     chunk_min_segment: int = 10,
+    strategy: str = "dipole_x_volz",   # "raw_dipole" or "dipole_x_volz" (autoresearch winner)
+    vol_z_threshold: float = 0.5,
 ) -> dict:
     """Simulate fade-the-dipole within EQUILIBRIUM regime, hold one chunk.
 
-    Trade rule: at end of chunk t, if regime[t] == EQUILIBRIUM and
-    |mean_dipole[t]| >= threshold, take position = -sign(mean_dipole[t]).
-    Exit at end of chunk t+1.
+    Strategies:
+      raw_dipole     - direction = -sign(mean_dipole) when |mean_dipole| > threshold
+      dipole_x_volz  - direction = -sign(mean_dipole * volume_zscore) when
+                        |mean_dipole| > dipole_threshold AND |volume_zscore| > vol_z_threshold
+                        (autoresearch winner; OOS R²=+0.074 vs raw -0.34)
 
     Costs: fee_bps_round_trip applied as flat drag to net return.
     """
@@ -110,8 +114,16 @@ def backtest(
             continue
         if abs(f_t.mean_dipole) < dipole_threshold:
             continue
-        # Direction: fade the dipole
-        direction = -1 if f_t.mean_dipole > 0 else +1
+        # Strategy: pick direction
+        if strategy == "dipole_x_volz":
+            if abs(f_t.volume_zscore) < vol_z_threshold:
+                continue   # skip low-volume chunks (per autoresearch finding)
+            composite = f_t.mean_dipole * f_t.volume_zscore
+            if abs(composite) < 1e-12:
+                continue
+            direction = -1 if composite > 0 else +1
+        else:   # raw_dipole
+            direction = -1 if f_t.mean_dipole > 0 else +1
         entry_price = float(chunks[t].bars[-1].close) if chunks[t].bars else 0.0
         exit_price = float(chunks[t + 1].bars[-1].close) if chunks[t + 1].bars else entry_price
         if entry_price <= 0 or exit_price <= 0:
@@ -181,15 +193,26 @@ def backtest(
     }
 
 
-def parameter_sweep(bars: list[MarketBar], label: str) -> list[dict]:
-    """Sweep dipole threshold × fee assumption."""
+def parameter_sweep(bars: list[MarketBar], label: str,
+                     strategy: str = "dipole_x_volz") -> list[dict]:
+    """Sweep dipole threshold × fee assumption × (strategy)."""
     results: list[dict] = []
     for fee in [10, 25, 50, 100]:
         for thr in [0.1, 0.15, 0.2, 0.3, 0.4]:
-            r = backtest(bars, label, fee_bps_round_trip=fee, dipole_threshold=thr)
+            r = backtest(bars, label, fee_bps_round_trip=fee,
+                         dipole_threshold=thr, strategy=strategy)
             if "n_trades" in r and r["n_trades"] >= 1:
+                r["strategy"] = strategy
                 results.append(r)
     return results
+
+
+def comparative_sweep(bars: list[MarketBar], label: str) -> dict:
+    """Run both strategies and report side-by-side."""
+    return {
+        "raw_dipole": parameter_sweep(bars, label, strategy="raw_dipole"),
+        "dipole_x_volz": parameter_sweep(bars, label, strategy="dipole_x_volz"),
+    }
 
 
 def main():
@@ -201,16 +224,34 @@ def main():
     p.add_argument("--dipole-threshold", type=float, default=0.2)
     p.add_argument("--sweep", action="store_true",
                    help="Sweep over fee × dipole_threshold")
+    p.add_argument("--strategy", default="dipole_x_volz",
+                   choices=["raw_dipole", "dipole_x_volz"],
+                   help="Strategy: raw_dipole (original) or dipole_x_volz (autoresearch winner)")
+    p.add_argument("--compare", action="store_true",
+                   help="Run both strategies side-by-side")
     p.add_argument("--report-path", default=None)
     args = p.parse_args()
 
     bars = load_bars(args.bins_path)
     print(f"[{args.label}] loaded {len(bars)} minute bars\n")
 
-    if args.sweep:
-        rows = parameter_sweep(bars, args.label)
+    if args.compare:
+        comp = comparative_sweep(bars, args.label)
+        for strat, rows in comp.items():
+            print(f"\n=== STRATEGY: {strat} ===")
+            rows.sort(key=lambda r: -r["sharpe_per_trade"])
+            for r in rows[:5]:
+                print(f"  fee={r['fee_assumption_bps_round_trip']:>3.0f} thr={r['dipole_threshold']:.2f}  "
+                      f"n={r['n_trades']:>3}  win={r['win_rate_net']:>5.1%}  "
+                      f"avg={r['avg_net_return_bps']:>+7.2f}bp  pnl={r['total_pnl_bps']:>+8.2f}bp")
+        if args.report_path:
+            with open(args.report_path, "w") as f:
+                json.dump(comp, f, indent=2)
+            print(f"\nComparison report: {args.report_path}")
+    elif args.sweep:
+        rows = parameter_sweep(bars, args.label, strategy=args.strategy)
         rows.sort(key=lambda r: -r["sharpe_per_trade"])
-        print(f"=== Parameter sweep ({len(rows)} configs ranked by sharpe_per_trade) ===")
+        print(f"=== Parameter sweep [{args.strategy}] ({len(rows)} configs ranked by sharpe_per_trade) ===")
         print(f"{'fee':>4} {'thr':>5} {'n':>3} {'win_net':>7} {'avg_bps':>9} {'sharpe':>7} {'pnl_bps':>8} {'note'}")
         for r in rows:
             print(f"{r['fee_assumption_bps_round_trip']:>4.0f} {r['dipole_threshold']:>5.2f} "
@@ -224,7 +265,8 @@ def main():
     else:
         r = backtest(bars, args.label,
                      fee_bps_round_trip=args.fee_bps,
-                     dipole_threshold=args.dipole_threshold)
+                     dipole_threshold=args.dipole_threshold,
+                     strategy=args.strategy)
         print(json.dumps(r, indent=2))
         if args.report_path:
             with open(args.report_path, "w") as f:

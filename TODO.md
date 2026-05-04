@@ -51,9 +51,13 @@ populates the feed naturally.
   or a simple shared-secret bearer token. Currently the API is open.
 - **Backend HTTPS**: PWA service worker requires HTTPS in production. Caddy
   with Let's Encrypt is the cheapest path.
-- **Fix backtester strategy**: current backtester fades raw `mean_dipole` in
+- ~~**Fix backtester strategy**: current backtester fades raw `mean_dipole` in
   EQUILIBRIUM. Per autoresearch, the right operator is `dipole × volume_z`.
-  Update `backtester.py` to use the composite, re-sweep parameters.
+  Update `backtester.py` to use the composite, re-sweep parameters.~~ ✅ Done
+  in commit after `a7ea0c6`. `--strategy=dipole_x_volz` is now default;
+  `--compare` runs both side-by-side. Note: on the single-day CB-ETH window,
+  `raw_dipole` actually outperformed `dipole_x_volz` (the autoresearch winner).
+  Multi-day data will tell which is robust.
 
 ## Need collector changes (defer until F4/F5 actually wanted)
 
