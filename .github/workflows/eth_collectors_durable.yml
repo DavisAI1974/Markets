@@ -95,16 +95,8 @@ jobs:
           for f in eth_coinbase_bins.json eth_kraken_bins.json; do
             if [ -f "$f" ]; then
               SIZE=$(stat -c%s "$f")
-              echo "$f: $SIZE bytes"
-              python -c "
-import json
-with open('$f') as fh: b = json.load(fh)
-print(f'  bins: {len(b)}')
-ts = sorted(float(k) for k in b)
-if ts:
-    from datetime import datetime
-    print(f'  range: {datetime.utcfromtimestamp(ts[0]).strftime(\"%Y-%m-%d %H:%M\")} -> {datetime.utcfromtimestamp(ts[-1]).strftime(\"%Y-%m-%d %H:%M\")} UTC')
-" 2>&1 || echo "  (could not parse)"
+              N_BINS=$(python -c "import json,sys; print(len(json.load(open(sys.argv[1]))))" "$f" 2>/dev/null || echo "?")
+              echo "$f: $SIZE bytes, $N_BINS bins"
             fi
           done
 
