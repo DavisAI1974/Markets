@@ -26,3 +26,12 @@ kraken_logs/
 kraken_report_*.json
 kraken_trajectory_*.png
 kraken_analysis_*.json
+
+# ETH multi-asset collection artifacts
+eth_coinbase_bins.json
+eth_coinbase_bins.json.tmp
+eth_kraken_bins.json
+eth_kraken_bins.json.tmp
+eth_logs/
+eth_report_*.json
+eth_trajectory_*.png
