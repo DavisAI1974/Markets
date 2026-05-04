@@ -283,6 +283,62 @@ def perm_spread_for_chunk(
 
 
 # ---------------------------------------------------------------------------
+# Forward predictive R^2: does chunk_t mean_dipole predict chunk_{t+k} return?
+# ---------------------------------------------------------------------------
+
+def _pearsonr_with_p(x: np.ndarray, y: np.ndarray) -> tuple[float, float, int]:
+    """Pearson r + two-tailed normal-approx p-value. Returns (r, p, n)."""
+    n = len(x)
+    if n < 3:
+        return float("nan"), float("nan"), int(n)
+    if np.std(x) < 1e-12 or np.std(y) < 1e-12:
+        return 0.0, 1.0, int(n)
+    r = float(np.corrcoef(x, y)[0, 1])
+    if not np.isfinite(r) or abs(r) >= 1.0:
+        return r, float("nan"), int(n)
+    t = r * np.sqrt(n - 2) / np.sqrt(max(1.0 - r * r, 1e-12))
+    from math import erf, sqrt
+    p = 2.0 * (1.0 - 0.5 * (1.0 + erf(abs(t) / sqrt(2.0))))
+    return r, p, int(n)
+
+
+def forward_predictive_r2(chunks, k: int = 1) -> dict:
+    """Predict chunk_{t+k} log-return from chunk_t mean_dipole.
+
+    k=0 = contemporaneous (matches original canary), not tradeable
+    k=1 = one-chunk-ahead, the actual tradeable signal
+    k=2 = two-chunks-ahead, decay test
+
+    Returns dict with r, r2, p, n.
+    """
+    n = len(chunks)
+    if n < k + 2:
+        return {"k": k, "r": float("nan"), "r2": float("nan"), "p": float("nan"), "n": 0}
+
+    mean_dipoles = []
+    chunk_returns = []
+    for c in chunks:
+        d_vals = [b.dipole for b in c.bars]
+        mean_dipoles.append(float(np.mean(d_vals)) if d_vals else 0.0)
+        if len(c.bars) >= 2:
+            r = math.log(max(c.bars[-1].close, 1e-12) / max(c.bars[0].close, 1e-12))
+        else:
+            r = 0.0
+        chunk_returns.append(r)
+
+    md = np.array(mean_dipoles, dtype=float)
+    cr = np.array(chunk_returns, dtype=float)
+    if k == 0:
+        x, y = md, cr
+    else:
+        x, y = md[:-k], cr[k:]
+
+    r, p, npairs = _pearsonr_with_p(x, y)
+    return {"k": k, "r": float(r), "r2": float(r * r) if np.isfinite(r) else float("nan"),
+            "p": float(p), "n": int(npairs)}
+
+
+# ---------------------------------------------------------------------------
 # Main analysis pipeline
 # ---------------------------------------------------------------------------
 
@@ -396,6 +452,9 @@ def analyze(
     gate_A = (n_passed >= 1) if n_chunks >= 2 else None
     gate_B = contam_rate >= 0.6
 
+    # Forward predictive R^2 at multiple lags
+    pred_r2 = {f"lag_{k}": forward_predictive_r2(chunks, k=k) for k in (0, 1, 2)}
+
     return {
         "n_bars": len(bars),
         "n_chunks": n_chunks,
@@ -407,6 +466,7 @@ def analyze(
         "gate_A_discontinuity": gate_A,
         "gate_B_contamination": gate_B,
         "ALL_GATES_AB": bool(gate_A) and bool(gate_B) if gate_A is not None else None,
+        "forward_predictive_r2": pred_r2,
         "coef_matrix": coef_matrix.tolist(),
         "perm_matrix": perm_matrix.tolist(),
     }
@@ -538,6 +598,11 @@ def main():
     print(f"  gate A (>=1 disc passing perm) : {report['gate_A_discontinuity']}")
     print(f"  gate B (>=60% chunks clean)    : {report['gate_B_contamination']}")
     print(f"  ALL_GATES_AB (signal candidate): {report['ALL_GATES_AB']}")
+    if report.get("forward_predictive_r2"):
+        print(f"  forward predictive R^2 (mean_dipole_t -> chunk_return_{{t+k}}):")
+        for label, pr in report["forward_predictive_r2"].items():
+            print(f"    {label:>5s}: r={pr['r']:+.4f}  R^2={pr['r2']:.5f}  "
+                  f"p={pr['p']:.3f}  n={pr['n']}")
     if report["ALL_GATES_AB"] is True:
         print("  -> next: rerun on a held-out 4-hour window (gate C replication)")
     elif report["ALL_GATES_AB"] is None:
