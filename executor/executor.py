@@ -39,7 +39,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import aiohttp
 
-from executor.risk import RiskConfig, evaluate as risk_evaluate
+from executor.risk import RiskConfig, LayeredRiskConfig, evaluate as risk_evaluate
 from executor.exchanges import PaperExchange, Exchange
 
 
@@ -70,13 +70,13 @@ def audit(audit_path: str, entry: dict) -> None:
         f.write(json.dumps(entry) + "\n")
 
 
-def load_config(path: str) -> tuple[RiskConfig, dict]:
+def load_config(path: str) -> tuple[LayeredRiskConfig, dict]:
+    """Load layered config (backwards compatible with the old flat shape)."""
     with open(path) as f:
         raw = json.load(f)
-    risk_dict = raw.get("risk", {})
-    cfg = RiskConfig(**{k: v for k, v in risk_dict.items() if k in RiskConfig.__dataclass_fields__})
+    layered = LayeredRiskConfig.load(path)
     settings = raw.get("settings", {})
-    return cfg, settings
+    return layered, settings
 
 
 async def stream_signals(api_base: str):
@@ -109,10 +109,10 @@ async def stream_signals(api_base: str):
 
 
 class Executor:
-    def __init__(self, exchange: Exchange, cfg: RiskConfig, settings: dict,
+    def __init__(self, exchange: Exchange, layered: LayeredRiskConfig, settings: dict,
                  audit_path: str, dry_run: bool):
         self.exchange = exchange
-        self.cfg = cfg
+        self.layered = layered
         self.settings = settings
         self.audit_path = audit_path
         self.dry_run = dry_run
@@ -120,18 +120,27 @@ class Executor:
         self.open_trades: dict[str, Trade] = {}   # signal_id -> Trade
 
     async def handle_signal(self, sig: dict):
-        # Risk gates
-        decision = risk_evaluate(sig, self.cfg, [asdict(t) for t in self.recent_trades])
+        # Risk gates resolve to per-(asset, venue) config inside evaluate()
+        decision = risk_evaluate(sig, self.layered, [asdict(t) for t in self.recent_trades])
+        cfg = self.layered.for_source(sig["asset"], sig["venue"])
         audit(self.audit_path, {
             "kind": "signal_received", "signal": sig,
             "gate_allow": decision.allow, "gate_reason": decision.reason,
+            "resolved_cfg_summary": {
+                "position_size_usd": cfg.position_size_usd,
+                "min_confidence": cfg.min_confidence,
+                "stop_loss_bps": cfg.stop_loss_bps,
+                "take_profit_bps": cfg.take_profit_bps,
+                "fee_bps": cfg.simulated_fee_bps,
+            },
             "ts": time.time(),
         })
         if not decision.allow:
             print(f"[exec] DENY {sig['signal_id']}: {decision.reason}", flush=True)
             return
         if self.dry_run:
-            print(f"[exec] DRY-RUN ALLOW {sig['signal_id']} {sig['asset']}-{sig['venue']} {sig['regime']}", flush=True)
+            print(f"[exec] DRY-RUN ALLOW {sig['signal_id']} {sig['asset']}-{sig['venue']} {sig['regime']} "
+                  f"(cfg: pos=${cfg.position_size_usd}, conf>={cfg.min_confidence})", flush=True)
             audit(self.audit_path, {"kind": "dry_run_allow", "signal_id": sig["signal_id"], "ts": time.time()})
             return
 
@@ -140,7 +149,7 @@ class Executor:
         if direction is None:
             print(f"[exec] no direction for {sig['regime']}; skipping", flush=True)
             return
-        notional = min(self.cfg.position_size_usd, self.cfg.max_position_usd)
+        notional = min(cfg.position_size_usd, cfg.max_position_usd)
         asset = sig["asset"]
         if direction == "long":
             r = self.exchange.market_buy(asset, notional)
@@ -172,8 +181,8 @@ class Executor:
         audit(self.audit_path, {"kind": "trade_opened", "trade": asdict(trade), "ts": time.time()})
         print(f"[exec] OPEN {trade.direction.upper()} {asset} @ {r.fill_price:.2f} (signal {sig['signal_id']})", flush=True)
 
-        # Schedule exit
-        asyncio.create_task(self._exit_after_hold(trade))
+        # Schedule exit using this source's config
+        asyncio.create_task(self._exit_after_hold(trade, cfg))
 
     def _direction_from_regime(self, sig: dict) -> str | None:
         regime = sig["regime"]
@@ -187,11 +196,12 @@ class Executor:
             return "short" if d > 0 else "long"
         return None
 
-    async def _exit_after_hold(self, trade: Trade):
-        # Wait for max_hold_minutes, polling every 30s for stop/target hits
-        end_ts = trade.entry_ts_utc + self.cfg.max_hold_minutes * 60
-        stop_bps = self.cfg.stop_loss_bps
-        target_bps = self.cfg.take_profit_bps
+    async def _exit_after_hold(self, trade: Trade, cfg: RiskConfig):
+        # Wait for max_hold_minutes, polling every 30s for stop/target hits.
+        # cfg is the per-(asset, venue) resolved config from when we opened.
+        end_ts = trade.entry_ts_utc + cfg.max_hold_minutes * 60
+        stop_bps = cfg.stop_loss_bps
+        target_bps = cfg.take_profit_bps
 
         while time.time() < end_ts:
             await asyncio.sleep(30)
@@ -242,21 +252,26 @@ class Executor:
 
 
 async def amain(args):
-    cfg, settings = load_config(args.config)
+    layered, settings = load_config(args.config)
     api_base = settings.get("api_base", "http://localhost:8000")
     audit_path = settings.get("audit_path", "executor/audit.jsonl")
     paper_log = settings.get("paper_trade_log", "executor/paper_trades.jsonl")
-    fee_bps = settings.get("simulated_fee_bps", 25.0)
+    # Note: paper exchange's fee comes from default config; per-source fees are
+    # used by the gate evaluation but the paper exchange uses one assumption.
+    fee_bps = layered.default.simulated_fee_bps
 
     exchange = PaperExchange(api_base=api_base, trade_log_path=paper_log, simulated_fee_bps=fee_bps)
-    ex = Executor(exchange, cfg, settings, audit_path, dry_run=args.dry_run)
+    ex = Executor(exchange, layered, settings, audit_path, dry_run=args.dry_run)
 
     print(f"[exec] starting; api={api_base}, exchange={exchange.name}, "
           f"dry_run={args.dry_run}, audit={audit_path}", flush=True)
-    print(f"[exec] risk config: position=${cfg.position_size_usd}, "
-          f"max_trades_today={cfg.max_trades_per_day}, "
-          f"min_confidence={cfg.min_confidence}, "
-          f"regime_whitelist={cfg.regime_whitelist}", flush=True)
+    print(f"[exec] layered config:", flush=True)
+    print(f"  default: position=${layered.default.position_size_usd}, "
+          f"min_conf={layered.default.min_confidence}, fee={layered.default.simulated_fee_bps}bp", flush=True)
+    if layered.per_asset:
+        print(f"  per_asset overrides for: {list(layered.per_asset.keys())}", flush=True)
+    if layered.per_source:
+        print(f"  per_source overrides for: {list(layered.per_source.keys())}", flush=True)
 
     async for sig in stream_signals(api_base):
         await ex.handle_signal(sig)

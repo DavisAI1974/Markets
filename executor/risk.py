@@ -1,58 +1,90 @@
 """
-risk.py — risk gates for the executor.
+risk.py — risk gates with per-(asset, venue) hierarchical config.
 
 Each gate is a pure function: takes (signal, config, recent_trades) and returns
 either ALLOW or a deny reason. The executor runs all gates in order; first deny
 short-circuits.
 
-Philosophy: every gate explains *why* it denied. Friends should be able to
-debug "why didn't I trade this?" by reading the deny reasons.
+Config hierarchy: default -> per-asset overrides -> per-(asset, venue) overrides.
+At lookup time for a specific (asset, venue), we merge top-down so the most-
+specific value wins. This lets the same executor handle BTC on Coinbase
+differently from BTC on Kraken or ETH on Coinbase.
+
+Backwards compatible: the old flat config (single `"risk"` block) still works
+- LayeredRiskConfig.load() detects shape and routes accordingly.
 """
 
 from __future__ import annotations
 
-import time
-from dataclasses import dataclass, field
+import json
+import os
+from dataclasses import dataclass, field, fields
 from datetime import datetime, timezone
 from typing import Any
 
 
 @dataclass
 class RiskConfig:
-    """Per-friend trading constraints. Loaded from JSON config file."""
+    """Per-(asset, venue) trading constraints. Resolved from layered config."""
 
-    # Asset whitelist: only signals for these assets are eligible.
-    # Empty list = allow all.
     asset_whitelist: list[str] = field(default_factory=list)
-
-    # Venue whitelist: only signals from these venues are eligible.
     venue_whitelist: list[str] = field(default_factory=list)
-
-    # Regime whitelist: which regime classes are tradeable.
-    # Default: only the actionable ones; explicitly excludes EQUILIBRIUM_EXTREME_DEMO
-    # to prevent demo signals from triggering paper trades automatically.
     regime_whitelist: list[str] = field(default_factory=lambda: [
         "WHALE_UP", "WHALE_DOWN", "HERD_UP", "HERD_DOWN",
     ])
-
-    # Confidence floor: skip signals below this.
     min_confidence: float = 0.6
-
-    # Position sizing: fixed USD notional per trade.
     position_size_usd: float = 100.0
-
-    # Daily limits.
     max_trades_per_day: int = 6
     max_daily_loss_usd: float = 50.0
-
-    # Per-trade risk limits.
-    max_position_usd: float = 500.0     # cap on single position
-    stop_loss_bps: float = 80.0         # exit if down this much from entry
-    take_profit_bps: float = 60.0       # exit if up this much
-    max_hold_minutes: int = 35          # exit unconditionally after this long
-
-    # Cross-venue requirement: only trade if cross-venue confirms.
+    max_position_usd: float = 500.0
+    stop_loss_bps: float = 80.0
+    take_profit_bps: float = 60.0
+    max_hold_minutes: int = 35
     require_cross_venue_confirm: bool = False
+    simulated_fee_bps: float = 25.0    # per-venue; Coinbase taker default
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "RiskConfig":
+        valid = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in d.items() if k in valid})
+
+
+@dataclass
+class LayeredRiskConfig:
+    """Merge order at lookup: default <- per_asset[asset] <- per_source[(asset, venue)]."""
+
+    default: RiskConfig = field(default_factory=RiskConfig)
+    per_asset: dict[str, dict] = field(default_factory=dict)
+    per_source: dict[str, dict] = field(default_factory=dict)   # key "ASSET.VENUE"
+
+    def for_source(self, asset: str, venue: str) -> RiskConfig:
+        """Return resolved RiskConfig for this (asset, venue)."""
+        merged = {f.name: getattr(self.default, f.name) for f in fields(RiskConfig)}
+        if asset in self.per_asset:
+            merged.update(self.per_asset[asset])
+        key = f"{asset}.{venue}"
+        if key in self.per_source:
+            merged.update(self.per_source[key])
+        return RiskConfig.from_dict(merged)
+
+    @classmethod
+    def load(cls, path: str) -> "LayeredRiskConfig":
+        """Load from JSON, autodetecting flat vs layered shape."""
+        with open(path) as f:
+            raw = json.load(f)
+        risk_block = raw.get("risk", {})
+        if not isinstance(risk_block, dict):
+            return cls()
+        # Layered shape: has "default" key
+        if "default" in risk_block or "per_asset" in risk_block or "per_source" in risk_block:
+            default_d = risk_block.get("default", {})
+            return cls(
+                default=RiskConfig.from_dict(default_d),
+                per_asset=risk_block.get("per_asset", {}),
+                per_source=risk_block.get("per_source", {}),
+            )
+        # Flat shape (backwards compatible): treat whole block as the default
+        return cls(default=RiskConfig.from_dict(risk_block))
 
 
 @dataclass
@@ -91,7 +123,7 @@ def gate_cross_venue_confirm(signal: dict, cfg: RiskConfig, _recent) -> GateResu
         return GateResult(True)
     cvm = signal.get("cross_venue_multiplier", 1.0)
     if cvm <= 1.0:
-        return GateResult(False, f"cross-venue multiplier {cvm:.2f} not > 1.0; require_cross_venue_confirm is on")
+        return GateResult(False, f"cross-venue mult {cvm:.2f} not > 1.0; require_cross_venue_confirm on")
     return GateResult(True)
 
 
@@ -99,24 +131,33 @@ def _today_key_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
-def gate_daily_trade_count(_signal, cfg: RiskConfig, recent: list[dict]) -> GateResult:
+def gate_daily_trade_count(signal: dict, cfg: RiskConfig, recent: list[dict]) -> GateResult:
     today = _today_key_utc()
-    today_trades = [t for t in recent if t.get("date_utc") == today]
-    if len(today_trades) >= cfg.max_trades_per_day:
-        return GateResult(False, f"already {len(today_trades)} trades today (max {cfg.max_trades_per_day})")
+    # Per-(asset, venue) trade count if we want max-trades-per-source enforcement
+    src_today = [t for t in recent
+                 if t.get("date_utc") == today
+                 and t.get("asset") == signal["asset"]
+                 and t.get("venue") == signal["venue"]]
+    if len(src_today) >= cfg.max_trades_per_day:
+        return GateResult(False, f"already {len(src_today)} trades today on "
+                                  f"{signal['asset']}/{signal['venue']} (max {cfg.max_trades_per_day})")
     return GateResult(True)
 
 
-def gate_daily_loss(_signal, cfg: RiskConfig, recent: list[dict]) -> GateResult:
+def gate_daily_loss(signal: dict, cfg: RiskConfig, recent: list[dict]) -> GateResult:
     today = _today_key_utc()
     today_pnl = sum(float(t.get("realized_pnl_usd", 0.0))
-                    for t in recent if t.get("date_utc") == today and t.get("status") == "closed")
+                    for t in recent
+                    if t.get("date_utc") == today
+                    and t.get("asset") == signal["asset"]
+                    and t.get("venue") == signal["venue"]
+                    and t.get("status") == "closed")
     if today_pnl <= -cfg.max_daily_loss_usd:
-        return GateResult(False, f"today PnL ${today_pnl:.2f} <= -${cfg.max_daily_loss_usd:.2f} (daily loss limit)")
+        return GateResult(False, f"today PnL ${today_pnl:.2f} <= -${cfg.max_daily_loss_usd:.2f} "
+                                  f"on {signal['asset']}/{signal['venue']}")
     return GateResult(True)
 
 
-# Ordered list of gates. First deny short-circuits.
 ALL_GATES = [
     gate_asset_whitelist,
     gate_venue_whitelist,
@@ -128,8 +169,16 @@ ALL_GATES = [
 ]
 
 
-def evaluate(signal: dict, cfg: RiskConfig, recent: list[dict]) -> GateResult:
-    """Run all gates; return first deny or final ALLOW."""
+def evaluate(signal: dict, layered: LayeredRiskConfig | RiskConfig, recent: list[dict]) -> GateResult:
+    """Run all gates; return first deny or final ALLOW.
+
+    Accepts either a RiskConfig (legacy) or LayeredRiskConfig (new).
+    With layered, resolves the right config for the signal's (asset, venue).
+    """
+    if isinstance(layered, LayeredRiskConfig):
+        cfg = layered.for_source(signal["asset"], signal["venue"])
+    else:
+        cfg = layered
     for gate in ALL_GATES:
         r = gate(signal, cfg, recent)
         if not r.allow:

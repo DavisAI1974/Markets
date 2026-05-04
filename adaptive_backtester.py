@@ -41,6 +41,7 @@ from markets_adapter import (
 from regime_classifier import (
     Regime, classify_regime, baselines_from_corpus,
 )
+from operator_registry import OperatorRegistry, GeneratorStats
 
 
 # ---------------------------------------------------------------------------
@@ -287,9 +288,12 @@ def print_result(r: SimResult, fee_bps: float) -> None:
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--datasets", nargs="+", required=True,
-                   help="label:path pairs")
+                   help="label:path pairs (label format ASSET-VENUE, e.g. CB-BTC:phase1_bins.json)")
     p.add_argument("--fee-bps", type=float, default=25.0)
     p.add_argument("--report-path", default=None)
+    p.add_argument("--persist-registry", action="store_true",
+                   help="Update operator_registry.json with per-source preferences")
+    p.add_argument("--registry-path", default="operator_registry.json")
     args = p.parse_args()
 
     pairs = []
@@ -299,12 +303,45 @@ def main():
         label, path = spec.split(":", 1)
         pairs.append((label, path))
 
+    registry = OperatorRegistry(args.registry_path) if args.persist_registry else None
+
     all_results: list[SimResult] = []
     for label, path in pairs:
         bars = load_bars(path)
         r = simulate(label, bars, fee_bps=args.fee_bps)
         print_result(r, args.fee_bps)
         all_results.append(r)
+
+        # Update per-source registry if requested. Label format ASSET-VENUE
+        # or VENUE-ASSET; we accept either. (If label is "CB-BTC", we treat
+        # CB as venue, BTC as asset.)
+        if registry and "-" in label:
+            parts = label.split("-")
+            if len(parts) == 2:
+                # Try to detect: if first is a known venue prefix, use that
+                venue_prefixes = {"CB": "Coinbase", "KR": "Kraken", "BN": "Binance",
+                                   "Coinbase": "Coinbase", "Kraken": "Kraken"}
+                if parts[0] in venue_prefixes:
+                    venue, asset = venue_prefixes[parts[0]], parts[1]
+                elif parts[1] in venue_prefixes:
+                    venue, asset = venue_prefixes[parts[1]], parts[0]
+                else:
+                    asset, venue = parts
+                gen_stats = {
+                    name: GeneratorStats(
+                        sharpe=t.rolling_sharpe(),
+                        n_trades=t.n_trades,
+                        pnl_bps=t.total_pnl_bps,
+                        last_updated_utc=__import__("time").time(),
+                    )
+                    for name, t in r.per_gen_track.items()
+                }
+                registry.update_source(asset, venue, gen_stats)
+
+    if registry:
+        registry.save()
+        print(f"\n=== Operator registry updated: {args.registry_path} ===")
+        print(registry.summary())
 
     # Summary table
     print(f"\n{'=' * 70}")

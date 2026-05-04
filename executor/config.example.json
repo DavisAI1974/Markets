@@ -1,25 +1,61 @@
 {
-  "_comment": "Example executor config. Copy to my_config.json and edit. Never commit your real keys.",
+  "_comment": [
+    "Layered config: default -> per_asset -> per_source overrides.",
+    "Most-specific value wins. The system is backwards compatible with the",
+    "old flat shape (just put fields directly under 'risk')."
+  ],
 
   "settings": {
     "api_base": "http://localhost:8000",
     "audit_path": "executor/audit.jsonl",
-    "paper_trade_log": "executor/paper_trades.jsonl",
-    "simulated_fee_bps": 25.0
+    "paper_trade_log": "executor/paper_trades.jsonl"
   },
 
   "risk": {
-    "asset_whitelist": ["BTC", "ETH"],
-    "venue_whitelist": ["Coinbase", "Kraken"],
-    "regime_whitelist": ["WHALE_UP", "WHALE_DOWN", "HERD_UP", "HERD_DOWN"],
-    "min_confidence": 0.6,
-    "position_size_usd": 100.0,
-    "max_trades_per_day": 6,
-    "max_daily_loss_usd": 50.0,
-    "max_position_usd": 500.0,
-    "stop_loss_bps": 80.0,
-    "take_profit_bps": 60.0,
-    "max_hold_minutes": 35,
-    "require_cross_venue_confirm": false
+    "default": {
+      "regime_whitelist": ["WHALE_UP", "WHALE_DOWN", "HERD_UP", "HERD_DOWN"],
+      "min_confidence": 0.6,
+      "position_size_usd": 100.0,
+      "max_trades_per_day": 6,
+      "max_daily_loss_usd": 50.0,
+      "max_position_usd": 500.0,
+      "stop_loss_bps": 80.0,
+      "take_profit_bps": 60.0,
+      "max_hold_minutes": 35,
+      "require_cross_venue_confirm": false,
+      "simulated_fee_bps": 25.0
+    },
+
+    "per_asset": {
+      "BTC": {
+        "position_size_usd": 100.0,
+        "stop_loss_bps": 80.0,
+        "take_profit_bps": 60.0
+      },
+      "ETH": {
+        "position_size_usd": 80.0,
+        "stop_loss_bps": 100.0,
+        "take_profit_bps": 80.0,
+        "max_hold_minutes": 30
+      }
+    },
+
+    "per_source": {
+      "BTC.Coinbase": {
+        "simulated_fee_bps": 25.0
+      },
+      "BTC.Kraken": {
+        "simulated_fee_bps": 26.0,
+        "min_confidence": 0.65
+      },
+      "ETH.Coinbase": {
+        "simulated_fee_bps": 25.0
+      },
+      "ETH.Kraken": {
+        "simulated_fee_bps": 26.0,
+        "min_confidence": 0.65,
+        "max_trades_per_day": 4
+      }
+    }
   }
 }
