@@ -5,3 +5,10 @@ __pycache__/
 venv/
 .env
 .DS_Store
+
+# Phase 1 run artifacts (large; regenerated per run)
+phase1_bins.json
+phase1_bins.json.tmp
+phase1_report_*.json
+phase1_trajectory_*.png
+phase1_logs/

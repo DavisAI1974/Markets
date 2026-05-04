@@ -426,6 +426,35 @@ class MarketChunkEncoder:
             out.append(summary + spectral_block + resampled)
         return out
 
+    @staticmethod
+    def reduce(embeddings: list[list[float]], target_dim: int = 12, method: str = "pca") -> list[list[float]]:
+        """Reduce 64D chunk embeddings to target_dim for downstream consumers.
+
+        Per HANDOFF_TO_CODE: encoder stays 64D natively; reduction is a
+        separate downstream operation. UMAP is non-deterministic and breaks
+        reproducibility for falsification work, so PCA is the default.
+        UMAP is available via method='umap' if the umap-learn package is
+        installed; otherwise it falls back to PCA with a warning.
+        """
+        arr = np.asarray(embeddings, dtype=float)
+        if arr.size == 0:
+            return []
+        n, d = arr.shape
+        target_dim = min(target_dim, n, d)
+        if method == "umap":
+            try:
+                import umap  # type: ignore
+                reducer = umap.UMAP(n_components=target_dim, random_state=0)
+                reduced = reducer.fit_transform(arr)
+                return reduced.tolist()
+            except ImportError:
+                print("[reduce] umap-learn not installed; falling back to PCA")
+        # PCA via SVD on centered data
+        centered = arr - arr.mean(axis=0, keepdims=True)
+        u, s, vt = np.linalg.svd(centered, full_matrices=False)
+        reduced = u[:, :target_dim] * s[:target_dim]
+        return reduced.tolist()
+
 
 # ---------------------------------------------------------------------------
 # MarketQuery
