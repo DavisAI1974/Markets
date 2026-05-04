@@ -4,6 +4,42 @@
 **Branch**: `davisai1974/markets @ claude/new-session-o3vnm`
 **Status**: Direction confirmed. Build follows Phase 1 → Phase 1.5 → Option E build, with ICE port deferred until Phase 1.5 gates G + H + I pass on crypto.
 
+## What we actually built (the universal frame)
+
+Before the product details: this section is the lead concept. Everything below derives from it.
+
+The methodology measures three primitives and nothing else: **energy, flow, momentum.** It detects which of five universal states a flow-based system is in at any moment, and it detects the transitions between those states. The five states apply to any system that has conservation laws and bidirectional flow — which means any market, any physical system, any biological process, any cyber telemetry stream, any organization, any engineering control loop. The detection mechanism is the dipole `(H_a − H_b) / (H_a + H_b)`, the same operator that emerged across physics, biology, chemistry, and geology.
+
+### The five universal states
+
+| State | Energy | Flow | Momentum | What's happening |
+|---|---|---|---|---|
+| **EQUILIBRIUM** | active, conserved | bidirectional, balanced | net zero with high turnover | system doing work, exchanging freely; healthy |
+| **CHANNELED** | active, persistent | unidirectional, sustained | net positive in one direction | one pathway dominates; counter-flow suppressed |
+| **CASCADE** | surging | unidirectional, accelerating | net positive, growing | mass committed to one direction; counter-flow overrun |
+| **DEPLETED** | low / absent | minimal | near zero | system out of fuel; cannot do work right now |
+| **RECIRCULATING** | active but trapped | cyclic, closed loop | net zero with no exchange | apparent activity, no through-passage; wasted motion |
+
+Transitions between states are detected as **PELT change-point boundaries** in our pipeline. State + transition = complete description of what any flow-based system is doing.
+
+### Cross-domain manifestation of each state
+
+| State | Markets | Physics | Biology | Cyber | Social / Org | Engineering |
+|---|---|---|---|---|---|---|
+| **EQUILIBRIUM** | two-sided trading | thermal equilibrium / detailed balance | homeostasis | normal traffic | functioning team | steady-state operation |
+| **CHANNELED** | whale dominance, sustained imbalance | jamming, laminar flow at high pressure | arterial blockage, controlled migration | dominant attack vector | one voice dominating committee | bottlenecked pipeline |
+| **CASCADE** | panic / herd / FOMO | avalanche, phase transition, wildfire spread | stampede, allergic overreaction | DDoS, viral malware spread | mass movement, run-on-bank | resonance failure |
+| **DEPLETED** | lunchtime lull, off-hours quiet | ground state, heat death | dormancy, fatigue | idle channel | post-deadline burnout | system at rest |
+| **RECIRCULATING** | wash trades, paired self-deals | closed eddies, futile loops, recurrent cycles | autoimmune, futile metabolic cycle | spoofed C2 traffic | bureaucratic theatrics | infinite loop / deadlock |
+
+### The product framing
+
+Whatever the customer's domain, their system is in one of five energy states at any time. We detect which state. We detect when it transitions. We tell them what to do about it. It works because it only depends on three things — energy, flow, momentum — and those three things govern everything that exists.
+
+The substrate-specific tuning (what counts as "high volume," what counts as "wash signature," what the playbooks recommend per state) is configuration, not core mechanism. The same machinery serves an energy desk, a macro PM, a SOC analyst, an executive, a regulator, a control engineer.
+
+This is why the product can scale across the three tiers below — each tier picks a substrate, reuses the universal detection mechanism, and configures the playbook. Tier 1 (crypto retail) and Tier 2 (ICE energy) prove the methodology on different substrates. Tier 3 sells the methodology itself as the product to institutions whose data is their own.
+
 ## Scope
 
 Option E is the chosen product direction from the five drafted on 2026-05-04 (see conversation log). The remaining four options (signal feed only / arb LLC / white-glove personal bots / GP-LP fund) are documented as "future possibilities" PDFs to share when scaling beyond the closed group makes sense.
