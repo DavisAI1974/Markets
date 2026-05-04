@@ -66,6 +66,27 @@ RECENT_SIGNALS_CAP = 200
 CHUNK_MAX_SIZE = 30
 CHUNK_MIN_SEGMENT = 10
 
+# ---------------------------------------------------------------------------
+# DEMO MODE — emits synthetic signals for empty-state UI demonstration
+#
+# XXX TODO: revert to False before Tier 1 launch. Tracked in /TODO.md
+#
+# When True, _poll_one also emits a signal event when an EQUILIBRIUM chunk
+# has |mean_dipole| > 0.3 AND |volume_zscore| > 0.5 (the autoresearch-
+# derived mean-reversion condition). This populates the signal feed for
+# UI demos before real WHALE/HERD/WASH transitions accumulate from the
+# multi-day GHA data collection.
+#
+# Production semantics (DEMO_MODE = False): only emit on regime transitions
+# to actionable states (WHALE_*, HERD_*, WASH_PAIRED). EQUILIBRIUM is the
+# baseline and shouldn't spam the feed.
+# ---------------------------------------------------------------------------
+DEMO_MODE_EMIT_EQUILIBRIUM_EXTREMES = os.environ.get(
+    "MARKETS_WATCH_DEMO_MODE", "1"
+) == "1"
+DEMO_DIPOLE_THRESHOLD = 0.3
+DEMO_VOL_Z_THRESHOLD = 0.5
+
 
 # ---------------------------------------------------------------------------
 # Domain types
@@ -220,7 +241,12 @@ class SignalStore:
         regime_changed = (prev_status is None) or (prev_status.regime != status.regime)
         self.current_status[(asset, venue)] = status
 
-        # If regime changed AND it's an actionable regime, emit a signal event
+        # Track new-chunk transitions for both the production and demo emit paths
+        last_emitted = self.last_chunk_id_per_source.get((asset, venue))
+        chunk_changed = (last_emitted != latest_chunk.chunk_id)
+
+        emitted = False
+        # Production emit: regime transitions to actionable states
         if regime_changed and status.regime not in ("EQUILIBRIUM_TWO_SIDED", "DEPLETED", "UNKNOWN"):
             sig = SignalEvent(
                 signal_id=str(uuid.uuid4())[:12],
@@ -240,6 +266,50 @@ class SignalStore:
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
             await self.event_queue.put({"type": "signal", "data": asdict(sig)})
+            emitted = True
+
+        # XXX DEMO_MODE: also emit when a NEW chunk in EQUILIBRIUM has extreme
+        # dipole + volume (mean-reversion candidate per autoresearch). Revert
+        # before Tier 1 launch. Tracked in /TODO.md.
+        elif (
+            DEMO_MODE_EMIT_EQUILIBRIUM_EXTREMES
+            and chunk_changed
+            and status.regime == "EQUILIBRIUM_TWO_SIDED"
+            and abs(latest_feat.mean_dipole) > DEMO_DIPOLE_THRESHOLD
+            and abs(latest_feat.volume_zscore) > DEMO_VOL_Z_THRESHOLD
+        ):
+            direction = "Fade SHORT" if latest_feat.mean_dipole > 0 else "Fade LONG"
+            demo_playbook = (
+                f"[DEMO] EQUILIBRIUM with extreme dipole ({latest_feat.mean_dipole:+.2f}) "
+                f"and elevated volume (z={latest_feat.volume_zscore:+.2f}). "
+                f"Mean-reversion candidate: {direction} one chunk, exit at next chunk close. "
+                f"NB: synthetic demo signal; production filter is regime transitions only."
+            )
+            sig = SignalEvent(
+                signal_id=str(uuid.uuid4())[:12],
+                asset=asset, venue=venue,
+                regime="EQUILIBRIUM_EXTREME_DEMO",
+                confidence=status.confidence * 0.6,   # soft-flag as lower-trust
+                cross_venue_multiplier=status.cross_venue_multiplier,
+                adjusted_confidence=max(0.0, min(1.0,
+                    status.confidence * 0.6 * status.cross_venue_multiplier)),
+                mean_dipole=float(latest_feat.mean_dipole),
+                realized_vol=float(latest_feat.realized_vol),
+                chunk_volume=float(latest_feat.chunk_total_volume),
+                notes=[f"|dipole|={abs(latest_feat.mean_dipole):.2f} > {DEMO_DIPOLE_THRESHOLD}",
+                        f"|vol_z|={abs(latest_feat.volume_zscore):.2f} > {DEMO_VOL_Z_THRESHOLD}",
+                        "DEMO mode emit; not a regime transition"],
+                playbook=demo_playbook,
+                timestamp_utc=time.time(),
+                chunk_window=(latest_chunk.window_start, latest_chunk.window_end),
+            )
+            self.recent_signals.append(sig)
+            self.signal_index[sig.signal_id] = sig
+            await self.event_queue.put({"type": "signal", "data": asdict(sig)})
+            emitted = True
+
+        if emitted:
+            self.last_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
 
     def _apply_cross_venue_F6(self):
         """For each (asset, venue), set cross_venue_multiplier on its current status
