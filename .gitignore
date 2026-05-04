@@ -35,3 +35,5 @@ eth_kraken_bins.json.tmp
 eth_logs/
 eth_report_*.json
 eth_trajectory_*.png
+eth_*_report.json
+eth_*_trajectory.png
