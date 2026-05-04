@@ -14,7 +14,8 @@ ORCH_LOG=phase1_logs/orchestrator.log
 echo "[kraken-watcher] starting at $(date -u)" | tee -a "$WATCHER_LOG"
 
 # Tail orchestrator log; on each [progressive] X done; line, run kraken analysis
-tail -F "$ORCH_LOG" 2>&1 | while IFS= read -r line; do
+# -n 0 starts at end of file - only fire on NEW events, never on historical
+tail -F -n 0 "$ORCH_LOG" 2>&1 | while IFS= read -r line; do
     if [[ "$line" =~ ^\[progressive\]\ ([a-z0-9]+)\ done\; ]]; then
         label="${BASH_REMATCH[1]}"
         echo "[kraken-watcher] triggering kraken analysis for $label at $(date -u)" \
