@@ -61,6 +61,10 @@ populates the feed naturally.
 
 Real data dependencies; can't be done productively yet.
 
+- **Phase 1.5 results captured** — see `HANDOFF_PHASE1_5_RESULTS.md`. Gate I
+  passes on both venues (first time); WHALE regimes carry the edge. Continue
+  GHA collection on `data/eth-bins` until n≥30 per regime before tuning
+  thresholds.
 - **DPGMM auto-taxonomy**: replace hand-coded rule classifier with learned
   regime classes via `task_meta_learner`. Spec says wait for N≥200 labeled
   chunks; currently ~50.
