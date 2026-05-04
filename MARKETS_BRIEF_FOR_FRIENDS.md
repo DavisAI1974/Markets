@@ -40,6 +40,25 @@ Over the four hours, with no human input, it correctly identified in real time:
 
 For a first live test, three independent regime transitions correctly identified in one session is real. We also confirmed the same regime structure showed up on a second venue (Kraken) at the same wall-clock times — the patterns are not venue-specific quirks; they're real market structure.
 
+## Does the dipole actually predict price moves?
+
+This is the central question, and we want to be straight about it. **Detecting regime states is one thing. Making money from them is another.** Those aren't the same problem.
+
+Here's what we've measured so far:
+
+- **Same-window correlation between order flow and price moves is strong.** When we measure flow imbalance and price movement in the same chunk of time, they correlate at roughly 45% on Coinbase and 65% on Kraken — substantially above noise level and statistically significant on both venues. Order flow and price are clearly linked.
+- **Next-window prediction is what we still need to prove.** A signal that just describes what's happening right now isn't tradeable — by the time you can read it, the price move has already happened. To actually trade on it, the dipole has to predict the NEXT period's return, not just describe the current one.
+
+In Monday morning's data, the next-period predictive signal was too small to clearly distinguish from noise at our sample size — but a real predictive edge of the size we're hoping for typically needs several days to weeks of data to detect cleanly. That's why we're not declaring victory yet.
+
+What we're hoping the multi-week data shows:
+
+1. **Regime-transition moments predict the direction** the market resolves into. When the system detects a transition from "Equilibrium" to "Cascade-Up," does the price actually keep going up over the next 5–30 minutes more often than not?
+2. **Cross-venue agreement is a confidence multiplier.** When both Coinbase and Kraken show the same regime shift at the same wall-clock minute, the resulting price move should follow through more reliably than when only one venue shows it.
+3. **Specific regime types have characteristic resolution patterns** we can position ahead of. Whales unwinding inventory eventually exhaust; herds in panic eventually capitulate; depleted markets eventually re-engage. Each has a typical recovery shape.
+
+If the data over the coming weeks shows the dipole has predictive power above the size of trading fees, we have a real product. If it doesn't, we say so honestly and stop. We do not know yet, and that's the bet we're collecting data to settle.
+
 ## What we still need
 
 One morning of data is suggestive, not conclusive. Before we'd ever stake real capital on this, we need:
