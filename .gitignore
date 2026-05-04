@@ -44,3 +44,4 @@ phase1_5_*_report.json
 # Phase 2 autoresearch + backtester output
 autoresearch_*_report.json
 backtest_*_report.json
+adaptive_*_report.json
