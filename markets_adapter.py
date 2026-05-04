@@ -258,7 +258,7 @@ class MarketChunker:
         self.mode = mode
 
     def chunk(self, source_id: str, bars: list[MarketBar],
-              multi_signal: bool = False) -> list[MarketChunk]:
+              multi_signal: bool = True) -> list[MarketChunk]:
         """Segment bars into PELT-aware chunks.
 
         Args:

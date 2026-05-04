@@ -103,7 +103,8 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                             qty = float(trade.get("qty", 0.0))
                             price = float(trade.get("price", last_mid or 0.0))
                             b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                                      "high": 0.0, "low": 0.0, "n_trades": 0})
+                                                      "high": 0.0, "low": 0.0, "n_trades": 0,
+                                                      "trades": []})
                             # Kraken v2: 'side' is the taker side
                             if side == "buy":
                                 b["buy"] += qty
@@ -114,6 +115,8 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                             if b["low"] == 0.0 or price < b["low"]:
                                 b["low"] = price
                             b["n_trades"] += 1
+                            # Per-trade retention for F4 (size multimodality) + F5 (burstiness)
+                            b.setdefault("trades", []).append([side, qty, price])
 
                     elif channel == "ticker":
                         for ticker in msg.get("data", []):

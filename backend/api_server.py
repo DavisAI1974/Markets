@@ -34,7 +34,7 @@ from typing import Any
 # Allow imports from the parent Markets directory
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
@@ -45,6 +45,11 @@ from regime_classifier import (
     Regime, classify_regime, baselines_from_corpus,
     apply_cross_venue_multiplier, _session_phase_of,
 )
+from backend.auth import verify_token, ACCESS_TOKEN
+from backend.push import (
+    PushSubscription, add_sub, remove_sub, get_subs, send_to_all, VAPID_PUBLIC,
+)
+from pydantic import BaseModel
 
 
 # ---------------------------------------------------------------------------
@@ -515,11 +520,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],   # tighten before prod
     allow_credentials=False,
-    allow_methods=["GET"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["*", "Authorization"],
 )
 
-
+# /api/health stays unauthenticated for liveness probes
 @app.get("/api/health")
 async def health():
     return {
@@ -530,7 +535,7 @@ async def health():
     }
 
 
-@app.get("/api/status")
+@app.get("/api/status", dependencies=[Depends(verify_token)])
 async def status():
     return {
         "statuses": [asdict(s) for s in store.current_status.values()],
@@ -538,14 +543,14 @@ async def status():
     }
 
 
-@app.get("/api/signals")
+@app.get("/api/signals", dependencies=[Depends(verify_token)])
 async def signals(limit: int = 50):
     sigs = list(store.recent_signals)[-limit:]
     sigs.reverse()  # newest first
     return {"signals": [asdict(s) for s in sigs]}
 
 
-@app.get("/api/signal/{signal_id}")
+@app.get("/api/signal/{signal_id}", dependencies=[Depends(verify_token)])
 async def signal_detail(signal_id: str):
     sig = store.signal_index.get(signal_id)
     if not sig:
@@ -554,12 +559,12 @@ async def signal_detail(signal_id: str):
     return {"signal": asdict(sig), "chart": chart}
 
 
-@app.get("/api/chart/{asset}/{venue}")
+@app.get("/api/chart/{asset}/{venue}", dependencies=[Depends(verify_token)])
 async def chart(asset: str, venue: str, n_minutes: int = 240):
     return await store.chart_data(asset, venue, n_minutes=n_minutes)
 
 
-@app.get("/api/stats")
+@app.get("/api/stats", dependencies=[Depends(verify_token)])
 async def stats(window_hours: int = 24):
     """Aggregate stats over recent signals: counts, distribution, top sources,
     plus realized hit rate and P&L when outcomes are available."""
@@ -623,7 +628,7 @@ async def stats(window_hours: int = 24):
     }
 
 
-@app.get("/api/regime_history/{asset}/{venue}")
+@app.get("/api/regime_history/{asset}/{venue}", dependencies=[Depends(verify_token)])
 async def regime_history(asset: str, venue: str, n_points: int = 60):
     """Return last N regime classifications (one per chunk) for an (asset, venue).
 
@@ -659,7 +664,40 @@ async def regime_history(asset: str, venue: str, n_points: int = 60):
     return {"asset": asset, "venue": venue, "n_chunks_total": len(chunks), "points": points}
 
 
-@app.get("/api/stream")
+# ---------------------------------------------------------------------------
+# Web Push subscription endpoints
+# ---------------------------------------------------------------------------
+
+class PushSubscribeBody(BaseModel):
+    endpoint: str
+    p256dh: str
+    auth: str
+    user_agent: str = ""
+
+
+@app.get("/api/push/vapid-public-key")
+async def push_vapid_public_key():
+    """Frontend fetches this on first run to call subscribe with the right VAPID key."""
+    return {"public_key": VAPID_PUBLIC, "configured": bool(VAPID_PUBLIC)}
+
+
+@app.post("/api/push/subscribe", dependencies=[Depends(verify_token)])
+async def push_subscribe(body: PushSubscribeBody):
+    sub = PushSubscription(
+        endpoint=body.endpoint, keys_p256dh=body.p256dh,
+        keys_auth=body.auth, user_agent=body.user_agent,
+    )
+    n = add_sub(sub)
+    return {"ok": True, "n_subs": n}
+
+
+@app.post("/api/push/unsubscribe", dependencies=[Depends(verify_token)])
+async def push_unsubscribe(body: PushSubscribeBody):
+    removed = remove_sub(body.endpoint)
+    return {"ok": True, "removed": removed}
+
+
+@app.get("/api/stream", dependencies=[Depends(verify_token)])
 async def stream():
     """Server-Sent Events stream of new signal events."""
     async def event_gen():

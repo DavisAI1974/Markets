@@ -118,17 +118,26 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                         qty = float(msg["size"])
                         maker_side = msg["side"]
                         b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                                  "high": 0.0, "low": 0.0, "n_trades": 0})
+                                                  "high": 0.0, "low": 0.0, "n_trades": 0,
+                                                  "trades": []})
+                        taker_side = ""
                         if maker_side == "sell":
                             b["buy"] += qty
+                            taker_side = "buy"
                         elif maker_side == "buy":
                             b["sell"] += qty
+                            taker_side = "sell"
                         price = float(msg.get("price", last_mid or 0.0))
                         if b["high"] == 0.0 or price > b["high"]:
                             b["high"] = price
                         if b["low"] == 0.0 or price < b["low"]:
                             b["low"] = price
                         b["n_trades"] += 1
+                        # Per-trade retention for Phase 1.5 F4 (trade-size
+                        # multimodality) and F5 (interarrival burstiness).
+                        # ~5x storage cost; enables whale-vs-herd discrimination
+                        # via size-distribution and timing patterns.
+                        b.setdefault("trades", []).append([taker_side, qty, price])
 
                     elif mtype == "ticker":
                         bid_s = msg.get("best_bid")
