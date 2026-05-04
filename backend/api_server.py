@@ -123,6 +123,13 @@ class SignalEvent:
     playbook: str
     timestamp_utc: float
     chunk_window: tuple[int, int]
+    # Phase 1.5b: outcome tracking
+    entry_price: float = 0.0
+    expected_direction: int = 0          # +1 long bias, -1 short bias, 0 unclear
+    outcome_status: str = "pending"      # pending | resolved | abandoned
+    outcome_exit_price: float = 0.0
+    outcome_resolved_utc: float = 0.0
+    outcome_realized_bps: float = 0.0    # signed return in bps after fees
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +149,20 @@ PLAYBOOKS: dict[str, str] = {
 
 
 # ---------------------------------------------------------------------------
+# Direction inference (matches executor logic)
+# ---------------------------------------------------------------------------
+
+def expected_direction_from_signal(regime: str, mean_dipole: float) -> int:
+    if regime == "WHALE_UP" or regime == "HERD_UP":
+        return +1
+    if regime == "WHALE_DOWN" or regime == "HERD_DOWN":
+        return -1
+    if regime in ("EQUILIBRIUM_TWO_SIDED", "EQUILIBRIUM_EXTREME_DEMO"):
+        return -1 if mean_dipole > 0 else +1   # fade
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # SignalStore: polls bins, runs classifier, accumulates events
 # ---------------------------------------------------------------------------
 
@@ -154,6 +175,46 @@ class SignalStore:
         self.last_chunk_id_per_source: dict[tuple[str, str], str | None] = {}
         # Cross-venue minute->regime maps for F6 multiplier
         self._minute_regime_per_venue: dict[tuple[str, str], dict[float, str]] = {}
+        # Persistent signal log (JSONL); restored on startup
+        self._persist_path = os.path.join(REPO_ROOT, "backend_signals.jsonl")
+        self._restore_signals()
+
+    def _restore_signals(self):
+        if not os.path.exists(self._persist_path):
+            return
+        try:
+            with open(self._persist_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    d = json.loads(line)
+                    sig = SignalEvent(**{k: v for k, v in d.items()
+                                          if k in SignalEvent.__dataclass_fields__})
+                    self.recent_signals.append(sig)
+                    self.signal_index[sig.signal_id] = sig
+            print(f"[SignalStore] restored {len(self.recent_signals)} signals from disk", flush=True)
+        except Exception as e:
+            print(f"[SignalStore] could not restore: {e}", flush=True)
+
+    def _persist_signal(self, sig: SignalEvent):
+        try:
+            with open(self._persist_path, "a") as f:
+                f.write(json.dumps(asdict(sig)) + "\n")
+        except Exception as e:
+            print(f"[SignalStore] persist error: {e}", flush=True)
+
+    def _rewrite_signals(self):
+        """Rewrite the persisted log with the current in-memory state.
+        Used after outcome resolution to update the on-disk record."""
+        try:
+            tmp = self._persist_path + ".tmp"
+            with open(tmp, "w") as f:
+                for sig in self.recent_signals:
+                    f.write(json.dumps(asdict(sig)) + "\n")
+            os.replace(tmp, self._persist_path)
+        except Exception as e:
+            print(f"[SignalStore] rewrite error: {e}", flush=True)
 
     def _bars_from_bins(self, bins_path: str) -> list[MarketBar]:
         if not os.path.exists(bins_path):
@@ -302,14 +363,62 @@ class SignalStore:
                 playbook=demo_playbook,
                 timestamp_utc=time.time(),
                 chunk_window=(latest_chunk.window_start, latest_chunk.window_end),
+                entry_price=float(latest_chunk.bars[-1].close) if latest_chunk.bars else 0.0,
+                expected_direction=expected_direction_from_signal(
+                    "EQUILIBRIUM_EXTREME_DEMO", latest_feat.mean_dipole),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
+            self._persist_signal(sig)
             await self.event_queue.put({"type": "signal", "data": asdict(sig)})
             emitted = True
 
         if emitted:
             self.last_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
+
+    async def resolve_pending_outcomes(self, hold_minutes: int = 30,
+                                         abandon_after_minutes: int = 120,
+                                         fee_bps_round_trip: float = 50.0):
+        """For each pending signal whose hold window has elapsed, fetch the
+        current price for its (asset, venue) and compute realized P&L.
+
+        Called every poll cycle. Idempotent: skips already-resolved signals.
+        """
+        now = time.time()
+        changed = False
+        for sig in list(self.recent_signals):
+            if sig.outcome_status != "pending":
+                continue
+            elapsed_min = (now - sig.timestamp_utc) / 60.0
+            if elapsed_min < hold_minutes:
+                continue   # not yet time to evaluate
+            # Fetch current price from the bins file
+            path = next((p for a, v, p in DATA_SOURCES if a == sig.asset and v == sig.venue), None)
+            if not path:
+                continue
+            bars = self._bars_from_bins(path)
+            if not bars:
+                continue
+            latest_price = float(bars[-1].close)
+            if elapsed_min > abandon_after_minutes:
+                sig.outcome_status = "abandoned"
+                sig.outcome_resolved_utc = now
+                sig.outcome_exit_price = latest_price
+                sig.outcome_realized_bps = 0.0
+                changed = True
+                continue
+            # Resolve: signed return = expected_direction * log(exit/entry) * 10000
+            if sig.entry_price > 0 and sig.expected_direction != 0:
+                import math as _math
+                signed_log_ret = sig.expected_direction * _math.log(latest_price / sig.entry_price)
+                bps = signed_log_ret * 10000.0 - fee_bps_round_trip
+                sig.outcome_realized_bps = float(bps)
+                sig.outcome_exit_price = latest_price
+                sig.outcome_resolved_utc = now
+                sig.outcome_status = "resolved"
+                changed = True
+        if changed:
+            self._rewrite_signals()
 
     def _apply_cross_venue_F6(self):
         """For each (asset, venue), set cross_venue_multiplier on its current status
@@ -379,6 +488,9 @@ store = SignalStore()
 async def _polling_loop():
     while True:
         await store.poll_all()
+        await store.resolve_pending_outcomes(
+            hold_minutes=30, abandon_after_minutes=120, fee_bps_round_trip=50.0,
+        )
         await asyncio.sleep(POLL_INTERVAL_S)
 
 
@@ -449,7 +561,8 @@ async def chart(asset: str, venue: str, n_minutes: int = 240):
 
 @app.get("/api/stats")
 async def stats(window_hours: int = 24):
-    """Aggregate stats over recent signals: counts, distribution, top sources."""
+    """Aggregate stats over recent signals: counts, distribution, top sources,
+    plus realized hit rate and P&L when outcomes are available."""
     from collections import Counter, defaultdict
     cutoff = time.time() - window_hours * 3600
     sigs = [s for s in store.recent_signals if s.timestamp_utc >= cutoff]
@@ -461,13 +574,29 @@ async def stats(window_hours: int = 24):
     disagreed = sum(1 for s in sigs if s.cross_venue_multiplier < 1.0)
     avg_conf = (sum(s.adjusted_confidence for s in sigs) / len(sigs)) if sigs else 0.0
 
-    # Per-source rolling time series for sparkline-ish
+    # Outcome stats
+    resolved = [s for s in sigs if s.outcome_status == "resolved"]
+    pending = sum(1 for s in sigs if s.outcome_status == "pending")
+    abandoned = sum(1 for s in sigs if s.outcome_status == "abandoned")
+    n_resolved = len(resolved)
+    wins = sum(1 for s in resolved if s.outcome_realized_bps > 0)
+    win_rate = (wins / n_resolved) if n_resolved > 0 else None
+    avg_realized_bps = (sum(s.outcome_realized_bps for s in resolved) / n_resolved) if n_resolved > 0 else None
+    total_realized_bps = sum(s.outcome_realized_bps for s in resolved) if resolved else 0.0
+    # Per-source realized P&L
+    by_source_pnl: dict[str, dict] = {}
+    for s in resolved:
+        key = f"{s.asset}-{s.venue}"
+        d = by_source_pnl.setdefault(key, {"n": 0, "wins": 0, "total_bps": 0.0})
+        d["n"] += 1
+        if s.outcome_realized_bps > 0:
+            d["wins"] += 1
+        d["total_bps"] += s.outcome_realized_bps
+
     by_source_series: dict[str, list[dict]] = defaultdict(list)
     for s in sigs:
         by_source_series[f"{s.asset}-{s.venue}"].append({
-            "ts": s.timestamp_utc,
-            "regime": s.regime,
-            "conf": s.adjusted_confidence,
+            "ts": s.timestamp_utc, "regime": s.regime, "conf": s.adjusted_confidence,
         })
 
     return {
@@ -480,6 +609,15 @@ async def stats(window_hours: int = 24):
         "cross_venue_confirmed": confirmed,
         "cross_venue_disagreed": disagreed,
         "avg_adjusted_confidence": round(avg_conf, 3),
+        "outcomes": {
+            "resolved": n_resolved,
+            "pending": pending,
+            "abandoned": abandoned,
+            "win_rate": round(win_rate, 3) if win_rate is not None else None,
+            "avg_realized_bps": round(avg_realized_bps, 2) if avg_realized_bps is not None else None,
+            "total_realized_bps": round(total_realized_bps, 2),
+            "by_source_pnl": by_source_pnl,
+        },
         "as_of_utc": time.time(),
         "by_source_series": dict(by_source_series),
     }

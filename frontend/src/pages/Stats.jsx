@@ -42,6 +42,51 @@ export default function Stats() {
         <Stat label="avg conf" value={`${(data.avg_adjusted_confidence * 100).toFixed(0)}%`} />
       </section>
 
+      {data.outcomes && (data.outcomes.resolved > 0 || data.outcomes.pending > 0) && (
+        <section>
+          <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">Realized outcomes</h3>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <Stat
+              label="resolved"
+              value={data.outcomes.resolved}
+              sub={`${data.outcomes.pending} pending · ${data.outcomes.abandoned} abandoned`}
+            />
+            <Stat
+              label="win rate"
+              value={data.outcomes.win_rate !== null ? `${(data.outcomes.win_rate * 100).toFixed(0)}%` : "—"}
+              big
+            />
+            <Stat
+              label="total P&L"
+              value={data.outcomes.total_realized_bps !== null
+                ? `${data.outcomes.total_realized_bps >= 0 ? "+" : ""}${data.outcomes.total_realized_bps.toFixed(1)}bp`
+                : "—"}
+              sub={data.outcomes.avg_realized_bps !== null
+                ? `avg ${data.outcomes.avg_realized_bps >= 0 ? "+" : ""}${data.outcomes.avg_realized_bps.toFixed(1)}bp/trade`
+                : null}
+            />
+          </div>
+          {data.outcomes.by_source_pnl && Object.keys(data.outcomes.by_source_pnl).length > 0 && (
+            <div className="bg-slate-900 rounded p-3 text-xs space-y-1.5">
+              <div className="text-slate-500 uppercase tracking-wider text-[10px] mb-1">By source</div>
+              {Object.entries(data.outcomes.by_source_pnl).map(([key, p]) => {
+                const wp = p.n > 0 ? (p.wins / p.n) : 0;
+                return (
+                  <div key={key} className="flex items-center justify-between gap-3 font-mono">
+                    <div className="text-slate-300 w-28 truncate">{key}</div>
+                    <div className="text-slate-400">n={p.n}</div>
+                    <div className="text-slate-400">{(wp * 100).toFixed(0)}%</div>
+                    <div className={p.total_bps >= 0 ? "text-green-400" : "text-red-400"}>
+                      {p.total_bps >= 0 ? "+" : ""}{p.total_bps.toFixed(1)}bp
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
       <section>
         <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">By regime</h3>
         <DistBar entries={Object.entries(data.by_regime)} colors={REGIME_COLORS} />

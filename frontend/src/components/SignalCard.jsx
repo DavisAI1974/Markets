@@ -45,6 +45,14 @@ export default function SignalCard({ sig }) {
         <span className="text-xs text-slate-500 font-mono">{time}</span>
       </div>
       <div className="text-xs text-slate-400 mt-2 line-clamp-2">{sig.playbook}</div>
+      {sig.outcome_status === "resolved" && (
+        <div className={`mt-2 text-xs font-mono ${sig.outcome_realized_bps >= 0 ? "text-green-400" : "text-red-400"}`}>
+          outcome: {sig.outcome_realized_bps >= 0 ? "+" : ""}{sig.outcome_realized_bps.toFixed(1)} bps
+        </div>
+      )}
+      {sig.outcome_status === "pending" && (
+        <div className="mt-2 text-xs text-slate-500 italic">outcome: pending (resolves ~30 min after entry)</div>
+      )}
     </Link>
   );
 }
