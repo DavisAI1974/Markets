@@ -306,22 +306,44 @@ def analyze(
               f"flag={contam_flag} perm_spread_mean={float(np.mean(perm_spread)):.4f}",
               flush=True)
 
-    # Discontinuity check at PELT boundaries (only meaningful with >=2 chunks)
+    # Discontinuity check at PELT boundaries (only meaningful with >=2 chunks).
+    # Fix #1: filter out permutation-invariant dims (true perm_spread ~ 0). Those
+    # dims have no meaningful within-chunk noise floor, so any non-zero diff
+    # gets clamped against the floor of 1e-6 and trivially passes. Examples:
+    # mean_dipole, mean_ofi, range_atr (means are invariant under bar shuffle).
+    # Only evaluate dims with perm_spread >= PERM_SPREAD_VALID_THRESHOLD.
+    PERM_SPREAD_VALID_THRESHOLD = 0.001
     boundaries: list[dict] = []
     n_passed = 0
     for k in range(len(chunks) - 1):
         diff = np.abs(coef_matrix[k + 1] - coef_matrix[k])
-        # Use small floor to avoid divide-by-zero on permutation-invariant dims
-        floor = np.maximum(np.maximum(perm_matrix[k], perm_matrix[k + 1]), 1e-6)
-        ratio = diff / floor
+        perm_combined = np.maximum(perm_matrix[k], perm_matrix[k + 1])
+        valid_mask = perm_combined >= PERM_SPREAD_VALID_THRESHOLD
+        n_valid = int(np.sum(valid_mask))
+        if n_valid == 0:
+            boundaries.append({
+                "between": (k, k + 1),
+                "n_valid_dims": 0,
+                "n_dims_exceeding_perm95": 0,
+                "max_ratio": 0.0,
+                "max_ratio_dim": -1,
+                "passes": False,
+                "skipped_reason": "no_dims_with_meaningful_perm_spread",
+            })
+            continue
+        diff_valid = diff[valid_mask]
+        floor_valid = perm_combined[valid_mask]
+        ratio = diff_valid / floor_valid
         n_dims_passing = int(np.sum(ratio > 1.0))
         max_ratio = float(np.max(ratio))
-        max_dim = int(np.argmax(ratio))
+        valid_idx = np.where(valid_mask)[0]
+        max_dim = int(valid_idx[int(np.argmax(ratio))])
         passed = n_dims_passing >= 1
         if passed:
             n_passed += 1
         boundaries.append({
             "between": (k, k + 1),
+            "n_valid_dims": n_valid,
             "n_dims_exceeding_perm95": n_dims_passing,
             "max_ratio": max_ratio,
             "max_ratio_dim": max_dim,
