@@ -60,67 +60,107 @@ CONTAMINATION_THRESHOLD = 0.7       # within-chunk H_a/H_b correlation
 # ---------------------------------------------------------------------------
 
 async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
-    """Stream Coinbase WS for duration_s seconds, accumulating 1-sec bins.
+    """Stream Coinbase WS for duration_s with reconnect-on-failure and append-mode.
 
-    Saves bins to disk every 30 seconds so a mid-run crash doesn't lose data.
+    Resumes from existing bins file if present. Wraps the WS connection
+    in an outer retry loop so transient drops (ConnectionClosed, etc.)
+    don't kill the run; reconnects with 5s backoff.
     """
     sub = {
         "type": "subscribe",
         "product_ids": [PRODUCT],
         "channels": ["matches", "ticker"],
     }
+    # Append mode: resume from existing bins file if present
     bins: dict[float, dict] = {}
+    if os.path.exists(save_path):
+        try:
+            with open(save_path) as f:
+                raw = json.load(f)
+            bins = {float(k): v for k, v in raw.items()}
+            print(f"[collect] resumed with {len(bins)} existing bins from {save_path}",
+                  flush=True)
+        except Exception as e:
+            print(f"[collect] could not load existing bins ({e}); starting fresh",
+                  flush=True)
+
     last_mid: float | None = None
     t0 = time.time()
     last_save = t0
+    reconnect_count = 0
 
     print(f"[collect] starting {duration_s:.0f}s collection on {PRODUCT}", flush=True)
-    async with websockets.connect(WS_URI, ping_interval=20) as ws:
-        await ws.send(json.dumps(sub))
-        while time.time() - t0 < duration_s:
+    while time.time() - t0 < duration_s:
+        try:
+            async with websockets.connect(WS_URI, ping_interval=20, close_timeout=5) as ws:
+                await ws.send(json.dumps(sub))
+                if reconnect_count > 0:
+                    print(f"[collect] reconnected (attempt {reconnect_count}) at t={time.time()-t0:.0f}s",
+                          flush=True)
+
+                while time.time() - t0 < duration_s:
+                    try:
+                        raw = await asyncio.wait_for(ws.recv(), timeout=30.0)
+                    except asyncio.TimeoutError:
+                        print(f"[collect] WS recv timeout at t={time.time()-t0:.0f}s; continuing",
+                              flush=True)
+                        continue
+
+                    try:
+                        msg = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+
+                    mtype = msg.get("type", "")
+                    ts = int(time.time() / SECOND_BIN_S) * SECOND_BIN_S
+
+                    if mtype in ("match", "last_match"):
+                        qty = float(msg["size"])
+                        maker_side = msg["side"]
+                        b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
+                                                  "high": 0.0, "low": 0.0, "n_trades": 0})
+                        if maker_side == "sell":
+                            b["buy"] += qty
+                        elif maker_side == "buy":
+                            b["sell"] += qty
+                        price = float(msg.get("price", last_mid or 0.0))
+                        if b["high"] == 0.0 or price > b["high"]:
+                            b["high"] = price
+                        if b["low"] == 0.0 or price < b["low"]:
+                            b["low"] = price
+                        b["n_trades"] += 1
+
+                    elif mtype == "ticker":
+                        bid_s = msg.get("best_bid")
+                        ask_s = msg.get("best_ask")
+                        if bid_s is None or ask_s is None:
+                            continue
+                        last_mid = 0.5 * (float(bid_s) + float(ask_s))
+                        b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
+                                                  "high": 0.0, "low": 0.0, "n_trades": 0})
+                        b["mid"] = last_mid
+
+                    now = time.time()
+                    if now - last_save >= 30.0:
+                        _save_bins(bins, save_path)
+                        last_save = now
+                        print(f"[collect] t={now-t0:.0f}s bins={len(bins)}", flush=True)
+
+        except (websockets.exceptions.ConnectionClosed,
+                websockets.exceptions.WebSocketException,
+                ConnectionResetError, OSError) as e:
+            reconnect_count += 1
+            print(f"[collect] WS connection issue at t={time.time()-t0:.0f}s "
+                  f"({type(e).__name__}: {e}); reconnecting in 5s (count={reconnect_count})",
+                  flush=True)
+            _save_bins(bins, save_path)
             try:
-                raw = await asyncio.wait_for(ws.recv(), timeout=30.0)
-            except asyncio.TimeoutError:
-                print(f"[collect] WS recv timeout at t={time.time()-t0:.0f}s", flush=True)
-                continue
-            msg = json.loads(raw)
-            mtype = msg.get("type", "")
-            ts = int(time.time() / SECOND_BIN_S) * SECOND_BIN_S
-
-            if mtype in ("match", "last_match"):
-                qty = float(msg["size"])
-                maker_side = msg["side"]
-                b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                          "high": 0.0, "low": 0.0, "n_trades": 0})
-                if maker_side == "sell":
-                    b["buy"] += qty
-                elif maker_side == "buy":
-                    b["sell"] += qty
-                price = float(msg.get("price", last_mid or 0.0))
-                if b["high"] == 0.0 or price > b["high"]:
-                    b["high"] = price
-                if b["low"] == 0.0 or price < b["low"]:
-                    b["low"] = price
-                b["n_trades"] += 1
-
-            elif mtype == "ticker":
-                bid_s = msg.get("best_bid")
-                ask_s = msg.get("best_ask")
-                if bid_s is None or ask_s is None:
-                    continue
-                last_mid = 0.5 * (float(bid_s) + float(ask_s))
-                b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                          "high": 0.0, "low": 0.0, "n_trades": 0})
-                b["mid"] = last_mid
-
-            now = time.time()
-            if now - last_save >= 30.0:
-                _save_bins(bins, save_path)
-                last_save = now
-                print(f"[collect] t={now-t0:.0f}s bins={len(bins)}", flush=True)
+                await asyncio.sleep(5)
+            except asyncio.CancelledError:
+                break
 
     _save_bins(bins, save_path)
-    print(f"[collect] done. final bins={len(bins)}", flush=True)
+    print(f"[collect] done. final bins={len(bins)} reconnects={reconnect_count}", flush=True)
     return bins
 
 
