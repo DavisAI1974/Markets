@@ -45,3 +45,8 @@ phase1_5_*_report.json
 autoresearch_*_report.json
 backtest_*_report.json
 adaptive_*_report.json
+
+# Executor runtime data
+executor/audit.jsonl
+executor/paper_trades.jsonl
+my_config.json
