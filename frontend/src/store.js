@@ -22,6 +22,7 @@ export const useStore = create((set, get) => ({
   connected: false,
   lastError: null,
   practiceMode: loadPracticeMode(),
+  openSignalDetailId: null,  // when set, SignalDetailSheet renders as a bottom-sheet overlay
 
   setStatuses: (statuses) => set({ statuses }),
   setSignals: (signals) => set({ signals }),
@@ -34,4 +35,6 @@ export const useStore = create((set, get) => ({
     try { localStorage.setItem(PRACTICE_KEY, on ? "true" : "false"); } catch {}
     set({ practiceMode: !!on });
   },
+  openSignalSheet: (id) => set({ openSignalDetailId: id }),
+  closeSignalSheet: () => set({ openSignalDetailId: null }),
 }));

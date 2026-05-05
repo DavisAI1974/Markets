@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchPracticeTrades, closePracticeTrade } from "../api.js";
 import { SkeletonCard, EmptyState } from "../components/LoadingSkeleton.jsx";
-import { usePullToRefresh, PullIndicator } from "../usePullToRefresh.js";
+import { usePullToRefresh, PullIndicator } from "../usePullToRefresh.jsx";
 
 function fmtPrice(p) {
   if (!p) return "—";

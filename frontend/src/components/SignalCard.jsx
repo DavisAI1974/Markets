@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useStore } from "../store.js";
 
 const REGIME_COLORS = {
   WHALE_UP:   "border-l-green-500",
@@ -85,10 +85,12 @@ export default function SignalCard({ sig, isFresh = false }) {
     ? "border-t-4 border-t-amber-400 bg-gradient-to-b from-amber-950/40 to-slate-900/70"
     : "bg-slate-900/70";
 
+  const openSheet = useStore((s) => s.openSignalSheet);
   return (
-    <Link
-      to={`/signal/${sig.signal_id}`}
-      className={`block ${cascadeRibbonCls} border-l-4 ${cls} rounded-r p-3 mb-2 hover:bg-slate-900
+    <button
+      type="button"
+      onClick={() => openSheet(sig.signal_id)}
+      className={`block w-full text-left ${cascadeRibbonCls} border-l-4 ${cls} rounded-r p-3 mb-2 hover:bg-slate-900
                     transition relative overflow-hidden ${animClass}`}
     >
       {/* Cascade watermark + ribbon if applicable */}
@@ -160,6 +162,6 @@ export default function SignalCard({ sig, isFresh = false }) {
       {sig.outcome_status === "pending" && (
         <div className="mt-2 text-xs text-slate-500 italic">outcome: pending (resolves ~30 min after entry)</div>
       )}
-    </Link>
+    </button>
   );
 }

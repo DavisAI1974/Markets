@@ -10,6 +10,7 @@ import Stats from "./pages/Stats.jsx";
 import RegimeHistory from "./pages/RegimeHistory.jsx";
 import PracticeFeed from "./pages/PracticeFeed.jsx";
 import DriftBanner from "./components/DriftBanner.jsx";
+import SignalDetailSheet from "./components/SignalDetailSheet.jsx";
 
 export default function App() {
   const setStatuses = useStore((s) => s.setStatuses);
@@ -77,6 +78,7 @@ export default function App() {
       <footer className="border-t border-slate-800 px-4 py-2 text-xs text-slate-500 text-center">
         Research signals — not investment advice. Closed group.
       </footer>
+      <SignalDetailSheet />
     </div>
   );
 }

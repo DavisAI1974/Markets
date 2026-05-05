@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useStore } from "../store.js";
 import SignalCard from "../components/SignalCard.jsx";
 import { EmptyState } from "../components/LoadingSkeleton.jsx";
-import { usePullToRefresh, PullIndicator } from "../usePullToRefresh.js";
+import { usePullToRefresh, PullIndicator } from "../usePullToRefresh.jsx";
 import { fetchSignals } from "../api.js";
 
 const REGIME_OPTS = [
