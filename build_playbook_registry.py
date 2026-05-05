@@ -98,18 +98,63 @@ def _per_regime_edge(chunks: list, results: list, k: int = 1) -> dict:
     return out
 
 
+_HISTORY_MAX_LEN = 200            # cap each cell's history; keeps file size bounded
+_LIFECYCLE_VERSION = 2            # bump when shape changes; older entries auto-upgrade
+
+
+def _upgrade_legacy_entry(entry: dict, key: str) -> dict:
+    """Convert a flat (pre-v2) registry entry into a history-aware one."""
+    if "current" in entry and "history" in entry:
+        return entry
+    asset, venue, regime = key.split("/", 2)
+    flat = {k: v for k, v in entry.items()
+              if k in ("n", "r", "r2", "p", "direction", "note", "last_updated")}
+    return {
+        "asset": asset, "venue": venue, "regime": regime,
+        "current": flat,
+        "history": [flat] if flat else [],
+        "lifecycle": {
+            "version": _LIFECYCLE_VERSION,
+            "proposed_at": entry.get("last_updated"),
+            "last_updated": entry.get("last_updated"),
+            "last_changed_direction_at": None,
+            "n_direction_flips": 0,
+            "n_milestone_upgrades": 0,
+            "status": "evolving",
+        },
+    }
+
+
+def _direction_flipped(prev_dir: str, cur_dir: str) -> bool:
+    """Treat momentum<->mean_revert as a flip; ignore exploring/insufficient
+    transitions because those are noise-driven, not real shifts in the edge."""
+    decisive = ("momentum", "mean_revert")
+    return (prev_dir in decisive
+            and cur_dir in decisive
+            and prev_dir != cur_dir)
+
+
+def _milestone_crossed(prev_n: int, cur_n: int) -> str | None:
+    for thr in (10, 20, 30, 50, 100):
+        if prev_n < thr <= cur_n:
+            return f"n>={thr}"
+    return None
+
+
 def build_registry(asset: str, cb_bins_path: str, kr_bins_path: str,
-                    multi_signal_pelt: bool = True) -> dict:
+                    existing: dict | None = None,
+                    multi_signal_pelt: bool = True
+                    ) -> tuple[dict, list[dict]]:
     """Run classify_venue on each venue and compute per-regime edge stats.
-    Returns a dict shaped:
-      {
-        "ETH/CB/WHALE_UP":   {n, r, r2, p, direction, last_updated},
-        "ETH/KR/WHALE_UP":   {...},
-        "ETH/CB/HERD_DOWN":  {...},
-        ...
-      }
+
+    Merges into `existing` registry, preserving each cell's history. Returns
+    `(updated_registry, audit_events)` where `audit_events` is a list of dict
+    records describing what changed in this rebuild — direction flips,
+    milestone crossings, decay onsets. refrag_audit.py + the backend's
+    `/api/drift-alert` relay consume these.
     """
-    out: dict[str, dict] = {}
+    existing = existing or {}
+    audit_events: list[dict] = []
     now = datetime.now(timezone.utc).isoformat()
     for venue_short, bins_path in (("CB", cb_bins_path), ("KR", kr_bins_path)):
         if not os.path.exists(bins_path):
@@ -126,9 +171,75 @@ def build_registry(asset: str, cb_bins_path: str, kr_bins_path: str,
         per_regime = _per_regime_edge(chunks, results, k=1)
         for regime, stats in per_regime.items():
             key = f"{asset}/{venue_short}/{regime}"
-            out[key] = {**stats, "last_updated": now,
-                          "asset": asset, "venue": venue_short, "regime": regime}
-    return out
+            stats = {**stats, "last_updated": now}
+
+            prior = existing.get(key)
+            if prior is not None:
+                prior = _upgrade_legacy_entry(prior, key)
+            entry = prior or {
+                "asset": asset, "venue": venue_short, "regime": regime,
+                "current": {}, "history": [],
+                "lifecycle": {
+                    "version": _LIFECYCLE_VERSION,
+                    "proposed_at": now, "last_updated": now,
+                    "last_changed_direction_at": None,
+                    "n_direction_flips": 0,
+                    "n_milestone_upgrades": 0,
+                    "status": "evolving",
+                },
+            }
+
+            prev_current = entry.get("current") or {}
+            prev_dir = prev_current.get("direction") or ""
+            prev_n = prev_current.get("n") or 0
+
+            entry["current"] = stats
+            entry["history"].append(stats)
+            if len(entry["history"]) > _HISTORY_MAX_LEN:
+                entry["history"] = entry["history"][-_HISTORY_MAX_LEN:]
+            lifecycle = entry["lifecycle"]
+            lifecycle["last_updated"] = now
+
+            cur_dir = stats.get("direction") or ""
+            cur_n = stats.get("n") or 0
+
+            if _direction_flipped(prev_dir, cur_dir):
+                lifecycle["last_changed_direction_at"] = now
+                lifecycle["n_direction_flips"] = lifecycle.get("n_direction_flips", 0) + 1
+                audit_events.append({
+                    "type": "direction_flip", "key": key, "ts": now,
+                    "from": prev_dir, "to": cur_dir,
+                    "prev_r": prev_current.get("r"), "cur_r": stats.get("r"),
+                    "prev_n": prev_n, "cur_n": cur_n,
+                })
+            milestone = _milestone_crossed(prev_n, cur_n)
+            if milestone:
+                lifecycle["n_milestone_upgrades"] = lifecycle.get("n_milestone_upgrades", 0) + 1
+                audit_events.append({
+                    "type": "sample_milestone", "key": key, "ts": now,
+                    "milestone": milestone,
+                    "cur_r": stats.get("r"), "cur_direction": cur_dir,
+                })
+            # Decay/strengthen detection on |r| trend across last 3 readings
+            decisive_history = [h for h in entry["history"]
+                                  if h.get("r") is not None][-3:]
+            if len(decisive_history) >= 3:
+                rs = [abs(h["r"]) for h in decisive_history]
+                if rs[0] > rs[1] > rs[2] and rs[0] - rs[2] > 0.15:
+                    audit_events.append({
+                        "type": "edge_decay", "key": key, "ts": now,
+                        "abs_r_trend": [round(x, 3) for x in rs],
+                        "cur_direction": cur_dir,
+                    })
+                elif rs[0] < rs[1] < rs[2] and rs[2] - rs[0] > 0.15:
+                    audit_events.append({
+                        "type": "edge_strengthen", "key": key, "ts": now,
+                        "abs_r_trend": [round(x, 3) for x in rs],
+                        "cur_direction": cur_dir,
+                    })
+
+            existing[key] = entry
+    return existing, audit_events
 
 
 def main():
@@ -137,15 +248,14 @@ def main():
     p.add_argument("--cb-bins", required=True)
     p.add_argument("--kr-bins", required=True)
     p.add_argument("--output-path", default="playbook_registry.json")
+    p.add_argument("--audit-events-path", default=None,
+                   help="if set, append audit events (direction flips, "
+                        "milestones, decay/strengthen) to this JSONL file")
     p.add_argument("--no-multi-signal-pelt", dest="multi_signal_pelt",
                    action="store_false")
     p.set_defaults(multi_signal_pelt=True)
     args = p.parse_args()
 
-    new_entries = build_registry(args.asset, args.cb_bins, args.kr_bins,
-                                   multi_signal_pelt=args.multi_signal_pelt)
-
-    # Merge with existing registry — different assets may live side by side.
     existing: dict = {}
     if os.path.exists(args.output_path):
         try:
@@ -153,23 +263,56 @@ def main():
                 existing = json.load(f)
         except Exception:
             existing = {}
-    existing.update(new_entries)
+
+    updated, audit_events = build_registry(
+        args.asset, args.cb_bins, args.kr_bins,
+        existing=existing,
+        multi_signal_pelt=args.multi_signal_pelt,
+    )
 
     with open(args.output_path, "w") as f:
-        json.dump(existing, f, indent=2)
+        json.dump(updated, f, indent=2)
 
-    print(f"[registry] {len(new_entries)} entries written for asset={args.asset}")
-    for k in sorted(new_entries):
-        s = new_entries[k]
+    print(f"[registry] {len(updated)} cells in registry; saved to {args.output_path}")
+    for k in sorted(k for k in updated if k.startswith(f"{args.asset}/")):
+        s = updated[k].get("current") or {}
         n = s.get("n", 0)
         r = s.get("r")
         p_val = s.get("p")
         d = s.get("direction", "?")
+        flips = updated[k].get("lifecycle", {}).get("n_direction_flips", 0)
+        flip_tag = f"  flips={flips}" if flips else ""
         if r is None:
-            print(f"  {k:<28} n={n:>3}  ({d})")
+            print(f"  {k:<28} n={n:>3}  ({d}){flip_tag}")
         else:
-            print(f"  {k:<28} n={n:>3}  r={r:+.3f}  p={p_val:.3f}  -> {d}")
-    print(f"  saved to {args.output_path}")
+            print(f"  {k:<28} n={n:>3}  r={r:+.3f}  p={p_val:.3f}  -> {d}{flip_tag}")
+
+    if audit_events:
+        print(f"[audit] {len(audit_events)} event(s) generated this rebuild:")
+        for ev in audit_events:
+            etype = ev["type"]
+            key = ev["key"]
+            if etype == "direction_flip":
+                print(f"  ⚠ FLIP   {key}: {ev['from']} -> {ev['to']}  "
+                      f"(r {ev.get('prev_r')} -> {ev.get('cur_r')}, "
+                      f"n {ev.get('prev_n')} -> {ev.get('cur_n')})")
+            elif etype == "sample_milestone":
+                print(f"  ✓ MILESTONE  {key}: {ev['milestone']}  "
+                      f"(direction {ev.get('cur_direction')})")
+            elif etype == "edge_decay":
+                print(f"  ↓ DECAY  {key}: |r| trend {ev['abs_r_trend']}")
+            elif etype == "edge_strengthen":
+                print(f"  ↑ STRENGTHEN  {key}: |r| trend {ev['abs_r_trend']}")
+            else:
+                print(f"  · {etype}  {key}")
+    else:
+        print("[audit] no drift events this rebuild")
+
+    if args.audit_events_path and audit_events:
+        with open(args.audit_events_path, "a") as f:
+            for ev in audit_events:
+                f.write(json.dumps(ev) + "\n")
+        print(f"[audit] {len(audit_events)} events appended to {args.audit_events_path}")
 
 
 if __name__ == "__main__":

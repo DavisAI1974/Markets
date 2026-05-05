@@ -52,6 +52,7 @@ from backend.push import (
     PushSubscription, add_sub, remove_sub, get_subs, send_to_all, VAPID_PUBLIC,
 )
 from playbook_generator import get_playbook as get_dynamic_playbook
+from playbook_generator import get_drift_status
 from pydantic import BaseModel
 
 
@@ -166,6 +167,7 @@ class SignalEvent:
     current_ask: float = 0.0             # latest top-of-book ask
     last_aggressor: str = ""             # "buy" | "sell" | "" — UI flashes the side that was hit
     event_label: str = ""                # plain-language event description e.g. "Big buyer detected"
+    drift_status: str = ""               # "" | "recently_flipped" | "unstable" | "decaying" — surfaced in UI as a warning badge when the cell's edge is in flux
 
 
 # ---------------------------------------------------------------------------
@@ -271,9 +273,19 @@ class SignalStore:
         # Dedup set for cross-venue cascade emits (asset, frozenset(venues),
         # window_start_ts, window_end_ts). Reset on backend restart.
         self._cross_venue_cascade_emitted: set[tuple] = set()
+        # Per-cell signal-outcome contradiction streak. When a signal whose
+        # registry cell predicts "momentum" actually loses (or vice versa),
+        # we increment the streak; on a streak >= 3, we emit a drift_alert
+        # SSE event so users see real-time drift before waiting for the
+        # next registry rebuild.
+        self._cell_contradiction_streak: dict[str, int] = {}
+        # Recent drift alerts kept in memory for fast /api/drift-alerts read.
+        self.recent_drift_alerts: deque[dict] = deque(maxlen=200)
         # Persistent signal log (JSONL); restored on startup
         self._persist_path = os.path.join(REPO_ROOT, "backend_signals.jsonl")
+        self._drift_alerts_path = os.path.join(REPO_ROOT, "backend_drift_alerts.jsonl")
         self._restore_signals()
+        self._restore_drift_alerts()
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -311,6 +323,32 @@ class SignalStore:
             os.replace(tmp, self._persist_path)
         except Exception as e:
             print(f"[SignalStore] rewrite error: {e}", flush=True)
+
+    def _restore_drift_alerts(self):
+        if not os.path.exists(self._drift_alerts_path):
+            return
+        try:
+            with open(self._drift_alerts_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        self.recent_drift_alerts.append(json.loads(line))
+        except Exception as e:
+            print(f"[SignalStore] drift restore error: {e}", flush=True)
+
+    async def _emit_drift_alert(self, alert: dict):
+        """Persist + queue a drift_alert SSE event. Idempotent on
+        (alert_id) — repeats deduped by the caller."""
+        alert = {**alert, "id": alert.get("id") or str(uuid.uuid4())[:12],
+                  "ts_utc": alert.get("ts_utc") or time.time()}
+        self.recent_drift_alerts.append(alert)
+        try:
+            with open(self._drift_alerts_path, "a") as f:
+                f.write(json.dumps(alert) + "\n")
+        except Exception as e:
+            print(f"[SignalStore] drift persist error: {e}", flush=True)
+        await self.event_queue.put({"type": "drift_alert", "data": alert})
+        return alert
 
     def _bars_from_bins(self, bins_path: str) -> list[MarketBar]:
         if not os.path.exists(bins_path):
@@ -510,6 +548,7 @@ class SignalStore:
                 current_ask=float(latest_chunk.bars[-1].ask) if latest_chunk.bars else 0.0,
                 last_aggressor=str(latest_chunk.bars[-1].last_aggressor) if latest_chunk.bars else "",
                 event_label=event_label,
+                drift_status=get_drift_status(asset, venue, status.regime),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -604,6 +643,51 @@ class SignalStore:
                 sig.outcome_resolved_utc = now
                 sig.outcome_status = "resolved"
                 changed = True
+
+                # Per-cell drift tracking — when an outcome contradicts the
+                # cell's currently-claimed direction (e.g. registry says
+                # "momentum" but the trade lost), increment a streak. On
+                # streak >= 3 we emit a drift_alert SSE event so users see
+                # the read going stale BEFORE waiting for the next registry
+                # rebuild. Wins reset the streak.
+                from playbook_generator import _load_registry_if_stale
+                registry = _load_registry_if_stale()
+                venue_short = "CB" if sig.venue.lower().startswith("c") else (
+                    "KR" if sig.venue.lower().startswith("k") else sig.venue)
+                cell_key = f"{sig.asset}/{venue_short}/{sig.regime}"
+                cell = registry.get(cell_key) or {}
+                cell_current = cell.get("current") or {}
+                cell_direction = cell_current.get("direction") or ""
+                if cell_direction in ("momentum", "mean_revert"):
+                    contradicted = (cell_direction == "momentum" and bps < 0) \
+                                    or (cell_direction == "mean_revert" and bps < 0)
+                    # NB: with expected_direction baked into bps already,
+                    # bps<0 means the signal lost. For momentum the cell
+                    # predicted continuation and we lost = contradiction.
+                    # For mean_revert the cell predicted fade and we lost = contradiction.
+                    if contradicted:
+                        streak = self._cell_contradiction_streak.get(cell_key, 0) + 1
+                        self._cell_contradiction_streak[cell_key] = streak
+                        if streak >= 3:
+                            await self._emit_drift_alert({
+                                "type": "outcome_contradiction_streak",
+                                "key": cell_key,
+                                "asset": sig.asset, "venue": venue_short,
+                                "regime": sig.regime,
+                                "streak": streak,
+                                "expected_direction": cell_direction,
+                                "latest_outcome_bps": float(bps),
+                                "summary": (
+                                    f"{cell_key} predicted {cell_direction} but "
+                                    f"the last {streak} signals all lost — "
+                                    f"the cell's read may be drifting; "
+                                    f"check next registry rebuild."),
+                            })
+                            # Reset streak on emit so we don't spam — next 3
+                            # contradictions in a row would trigger again.
+                            self._cell_contradiction_streak[cell_key] = 0
+                    else:
+                        self._cell_contradiction_streak[cell_key] = 0
         if changed:
             self._rewrite_signals()
 
@@ -717,6 +801,7 @@ class SignalStore:
                         event_label=("Cross-venue buying cascade confirmed"
                                        if primary_dir == "UP"
                                        else "Cross-venue selling cascade confirmed"),
+                        drift_status=get_drift_status(asset, primary_venue, primary_status.regime),
                         entry_price=cur_price,
                         expected_direction=+1 if primary_dir == "UP" else -1,
                     )
@@ -1188,6 +1273,43 @@ async def get_manual_trade_intents(limit: int = 50):
         return {"error": str(e), "intents": []}
     intents.reverse()
     return {"intents": intents[:limit]}
+
+
+# ---------------------------------------------------------------------------
+# Drift alerts — refrag_audit.py POSTs detected drift events here, backend
+# emits them on the SSE stream so Discord + PWA surface them in real time.
+# Backend also emits drift alerts itself when signal-outcome contradiction
+# streaks accumulate (see SignalStore.resolve_pending_outcomes).
+# ---------------------------------------------------------------------------
+
+
+class DriftAlertBody(BaseModel):
+    type: str            # "direction_flip" | "edge_decay" | "edge_strengthen" | "sample_milestone" | other
+    key: str             # "<ASSET>/<VENUE>/<REGIME>"
+    summary: str = ""
+    # Free-form fields preserved on persistence and forwarded via SSE
+    # so the consumer (Discord embed, PWA banner) has full detail.
+    extra: dict = {}
+
+
+@app.post("/api/drift-alert", dependencies=[Depends(verify_token)])
+async def post_drift_alert(body: DriftAlertBody):
+    alert = {
+        "type": body.type,
+        "key": body.key,
+        "summary": body.summary,
+        **body.extra,
+    }
+    persisted = await store._emit_drift_alert(alert)
+    return {"ok": True, **persisted}
+
+
+@app.get("/api/drift-alerts", dependencies=[Depends(verify_token)])
+async def get_drift_alerts(limit: int = 50):
+    """Recent drift alerts (in-memory + persisted). Newest first."""
+    alerts = list(store.recent_drift_alerts)[-limit:]
+    alerts.reverse()
+    return {"alerts": alerts, "n_total": len(store.recent_drift_alerts)}
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])

@@ -138,19 +138,65 @@ Each step has: **what**, **why**, **how**, **verify**.
   # Repeat per asset as you add them (BTC, etc.)
   ```
   The backend hot-reloads the registry by mtime — no restart needed.
-- **Schedule**: rerun after each GHA collection cycle. Add to crontab:
+- **Schedule**: rerun after each GHA collection cycle, then immediately
+  audit + post drift events to the running backend. Add to crontab:
   ```cron
-  10 */6 * * * cd /opt/markets && git fetch origin data/eth-bins && \
+  10 */6 * * * cd /opt/markets && \
+    git fetch origin data/eth-bins && \
     git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json && \
     python build_playbook_registry.py --asset ETH \
       --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
-      --output-path /opt/markets/playbook_registry.json
+      --output-path /opt/markets/playbook_registry.json \
+      --audit-events-path /opt/markets/audit_events.jsonl && \
+    python refrag_audit.py \
+      --registry-path /opt/markets/playbook_registry.json \
+      --audit-events-path /opt/markets/audit_events.jsonl \
+      --report-dir /opt/markets/audit_reports \
+      --post-url http://127.0.0.1:8080/api/drift-alert \
+      --access-token "$MARKETS_WATCH_ACCESS_TOKEN"
   ```
-  This runs ~10 minutes after each GHA cycle finishes.
-- **Verify**: `cat /opt/markets/playbook_registry.json | python -m
-  json.tool` shows entries like `"ETH/CB/WHALE_UP"`. Trigger a test
-  signal and confirm the playbook text in Discord includes the
-  `[n=..., r=..., p=...]` caveat.
+  This runs ~10 minutes after each GHA cycle finishes. The chain is:
+  1. Pull the latest bins from `data/eth-bins`
+  2. Rebuild the registry; emit drift events into `audit_events.jsonl`
+  3. Run refrag_audit.py — writes a markdown report to `audit_reports/`
+     and POSTs each drift event to the backend's `/api/drift-alert`
+     endpoint, which emits them on the SSE stream so Discord + PWA
+     surface them in real time
+- **Verify**:
+  - `cat /opt/markets/playbook_registry.json | python -m json.tool`
+    shows entries like `"ETH/CB/WHALE_UP"` with `current` + `history`
+    + `lifecycle` sub-keys
+  - `ls /opt/markets/audit_reports/` shows one markdown report per
+    GHA cycle
+  - `curl -H "Authorization: Bearer $TOKEN"
+    http://127.0.0.1:8080/api/drift-alerts` lists recent alerts
+  - In the PWA: trigger a registry rebuild that produces a direction
+    flip (e.g., manually edit a cell's history), confirm the top
+    drift banner appears within seconds. In Discord, a yellow embed
+    with the flip details posts to the channel.
+
+#### Why the audit matters
+
+> "we don't want to be thinking about shifts in the market dynamics
+> after we see our confidence numbers have dropped noticeably. we want
+> to be on top of this constantly."
+
+The audit chain is the answer to that. There are two drift-detection
+loops running in parallel:
+
+1. **Per-GHA-cycle (every 6h)** — rebuild registry → audit detects
+   direction flips, edge decay, edge strengthening, milestone
+   crossings, posts each as a `drift_alert` SSE event
+2. **Per-signal (real time)** — when a signal's outcome resolves, the
+   backend tracks per-cell contradiction streaks. If 3 signals in a
+   row whose cell predicted "momentum" actually lost, that's a
+   `outcome_contradiction_streak` drift alert — emitted before the
+   next GHA cycle would catch it
+
+Both feed the same drift_alert SSE channel. The PWA's top banner +
+Discord's yellow embed surface them; SignalCard + the embed title gain
+a `⚠ recently-flipped` / `⚠ edge-decaying` badge when the cell's read
+is in flux. Users see drift the moment it's detectable in the data.
 
 ---
 

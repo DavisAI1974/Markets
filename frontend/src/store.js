@@ -18,6 +18,7 @@ function loadPracticeMode() {
 export const useStore = create((set, get) => ({
   statuses: [],            // current regime per (asset, venue)
   signals: [],             // recent signal events
+  driftAlerts: [],         // recent drift_alert SSE events (newest first)
   connected: false,
   lastError: null,
   practiceMode: loadPracticeMode(),
@@ -25,6 +26,8 @@ export const useStore = create((set, get) => ({
   setStatuses: (statuses) => set({ statuses }),
   setSignals: (signals) => set({ signals }),
   prependSignal: (sig) => set({ signals: [sig, ...get().signals].slice(0, 200) }),
+  setDriftAlerts: (driftAlerts) => set({ driftAlerts }),
+  prependDriftAlert: (a) => set({ driftAlerts: [a, ...get().driftAlerts].slice(0, 60) }),
   setConnected: (connected) => set({ connected }),
   setError: (lastError) => set({ lastError }),
   setPracticeMode: (on) => {

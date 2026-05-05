@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Link, NavLink } from "react-router-dom";
 import { useStore } from "./store.js";
-import { fetchStatus, fetchSignals, subscribeToStream } from "./api.js";
+import { fetchStatus, fetchSignals, fetchDriftAlerts, subscribeToStream } from "./api.js";
 import LiveStatus from "./pages/LiveStatus.jsx";
 import SignalFeed from "./pages/SignalFeed.jsx";
 import SignalDetail from "./pages/SignalDetail.jsx";
@@ -9,21 +9,26 @@ import Onboarding from "./pages/Onboarding.jsx";
 import Stats from "./pages/Stats.jsx";
 import RegimeHistory from "./pages/RegimeHistory.jsx";
 import PracticeFeed from "./pages/PracticeFeed.jsx";
+import DriftBanner from "./components/DriftBanner.jsx";
 
 export default function App() {
   const setStatuses = useStore((s) => s.setStatuses);
   const setSignals = useStore((s) => s.setSignals);
   const prependSignal = useStore((s) => s.prependSignal);
+  const setDriftAlerts = useStore((s) => s.setDriftAlerts);
+  const prependDriftAlert = useStore((s) => s.prependDriftAlert);
   const setConnected = useStore((s) => s.setConnected);
 
   useEffect(() => {
     let cancelled = false;
     fetchStatus().then((j) => !cancelled && setStatuses(j.statuses || [])).catch(() => {});
     fetchSignals().then((j) => !cancelled && setSignals(j.signals || [])).catch(() => {});
+    fetchDriftAlerts().then((j) => !cancelled && setDriftAlerts(j.alerts || [])).catch(() => {});
 
     const cleanup = subscribeToStream({
       onSnapshot: (d) => setStatuses(d.statuses || []),
       onSignal: (sig) => prependSignal(sig),
+      onDriftAlert: (a) => prependDriftAlert(a),
       onError: () => setConnected(false),
     });
     setConnected(true);
@@ -58,6 +63,7 @@ export default function App() {
         </nav>
       </header>
       <main className="flex-1 p-4 max-w-3xl mx-auto w-full">
+        <DriftBanner />
         <Routes>
           <Route path="/" element={<LiveStatus />} />
           <Route path="/signals" element={<SignalFeed />} />

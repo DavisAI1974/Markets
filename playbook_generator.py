@@ -162,6 +162,48 @@ def _caveat(stats: dict) -> str:
     return f"[n={n}, r={r:+.2f}, p={p:.3f}{flag}]"
 
 
+def _current_stats(entry: dict) -> dict:
+    """Extract current-reading stats from a registry entry, supporting
+    both the lifecycle-aware shape ({"current": {...}, "history": [...]})
+    and the legacy flat shape (top-level n/r/p)."""
+    if not entry:
+        return {}
+    if "current" in entry and isinstance(entry["current"], dict):
+        return entry["current"]
+    return entry
+
+
+def _drift_status(entry: dict) -> str:
+    """Concise drift state derived from lifecycle metadata + recent history.
+    Used by the runtime to tag SignalEvent.drift_status when emitting; also
+    surfaced in the playbook caveat so users see "this cell just flipped"
+    in the same text."""
+    if not entry:
+        return ""
+    lifecycle = entry.get("lifecycle") or {}
+    if lifecycle.get("n_direction_flips", 0) >= 2:
+        return "unstable"
+    if lifecycle.get("last_changed_direction_at"):
+        return "recently_flipped"
+    history = entry.get("history") or []
+    decisive = [h for h in history if h.get("r") is not None][-3:]
+    if len(decisive) >= 3:
+        rs = [abs(h["r"]) for h in decisive]
+        if rs[0] > rs[1] > rs[2] and rs[0] - rs[2] > 0.15:
+            return "decaying"
+    return ""
+
+
+def get_drift_status(asset: str, venue: str, regime: str) -> str:
+    """Public — used by the backend at signal-emit time to populate
+    SignalEvent.drift_status. "" means no drift state to flag."""
+    registry = _load_registry_if_stale()
+    venue_short = "CB" if venue.lower().startswith("c") else (
+        "KR" if venue.lower().startswith("k") else venue
+    )
+    return _drift_status(registry.get(f"{asset}/{venue_short}/{regime}") or {})
+
+
 def get_playbook(asset: str, venue: str, regime: str) -> str:
     """Return the actionable playbook text for an emit.
 
@@ -182,20 +224,25 @@ def get_playbook(asset: str, venue: str, regime: str) -> str:
     if entry is None:
         return default
 
-    direction = entry.get("direction") or "exploring"
+    stats = _current_stats(entry)
+    direction = stats.get("direction") or "exploring"
     if direction == "insufficient":
-        # Too few samples to fit; show the default + sample-size note so
-        # users still know we're tracking this cell.
-        n = entry.get("n", 0)
+        n = stats.get("n", 0)
         return f"{default}  [n={n} on {venue_short}-{asset}; need ≥3 to compute edge]"
 
-    description = _direction_text(regime, direction, entry.get("r"))
+    description = _direction_text(regime, direction, stats.get("r"))
     action = _action_text(regime, direction)
-    caveat = _caveat(entry)
+    caveat = _caveat(stats)
+    drift = _drift_status(entry)
+    drift_tag = ""
+    if drift == "unstable":
+        drift_tag = "  ⚠ This cell has flipped direction more than once — read with skepticism."
+    elif drift == "recently_flipped":
+        drift_tag = "  ⚠ Direction recently changed — fresh data shifted the call."
+    elif drift == "decaying":
+        drift_tag = "  ⚠ Edge strength declining over recent rebuilds — possible regime drift."
     base_label = DEFAULT_PLAYBOOKS.get(regime, "")
-    # Lead with the regime context, then the recovered direction, action,
-    # and caveat. Plain language end-to-end.
-    composed = f"{base_label.split('.')[0]}. On {venue_short}-{asset}, {description}. {action} {caveat}"
+    composed = f"{base_label.split('.')[0]}. On {venue_short}-{asset}, {description}. {action} {caveat}{drift_tag}"
     return composed
 
 

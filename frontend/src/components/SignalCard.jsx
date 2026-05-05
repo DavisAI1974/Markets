@@ -103,6 +103,17 @@ export default function SignalCard({ sig, isFresh = false }) {
         </>
       )}
 
+      {/* Drift badge — surfaces when the cell's edge is in flux. Plain
+          language so users know to read this signal with skepticism. */}
+      {sig.drift_status && (
+        <div className="mb-2 inline-block text-[10px] uppercase tracking-wider font-bold text-amber-300 border border-amber-700/60 bg-amber-950/40 rounded px-1.5 py-0.5">
+          ⚠ {sig.drift_status === "unstable" ? "cell unstable"
+              : sig.drift_status === "recently_flipped" ? "direction recently flipped"
+              : sig.drift_status === "decaying" ? "edge decaying"
+              : "drift detected"}
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-semibold text-sm">

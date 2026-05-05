@@ -47,13 +47,20 @@ export async function fetchRegimeHistory(asset, venue, nPoints = 60) {
 }
 
 /** Subscribe to SSE stream. Returns a cleanup fn. */
-export function subscribeToStream({ onSignal, onSnapshot, onError }) {
+export function subscribeToStream({ onSignal, onSnapshot, onDriftAlert, onError }) {
   const es = new EventSource(`${BASE}/api/stream`);
   es.addEventListener("signal", (e) => { try { onSignal && onSignal(JSON.parse(e.data)); } catch {} });
   es.addEventListener("snapshot", (e) => { try { onSnapshot && onSnapshot(JSON.parse(e.data)); } catch {} });
+  es.addEventListener("drift_alert", (e) => { try { onDriftAlert && onDriftAlert(JSON.parse(e.data)); } catch {} });
   es.addEventListener("heartbeat", () => { /* no-op; just keeps connection alive */ });
   es.onerror = (e) => onError && onError(e);
   return () => es.close();
+}
+
+export async function fetchDriftAlerts(limit = 50) {
+  const r = await fetch(`${BASE}/api/drift-alerts?limit=${limit}`);
+  if (!r.ok) throw new Error(`drift-alerts ${r.status}`);
+  return r.json();
 }
 
 // ---------------------------------------------------------------------------

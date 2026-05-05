@@ -220,8 +220,16 @@ def make_main_embed(sig: dict) -> discord.Embed:
         title_prefix = "🌊 WHALE→HERD CASCADE — "
 
     headline = sig.get("event_label") or label
+    drift = sig.get("drift_status") or ""
+    drift_marker = ""
+    if drift == "unstable":
+        drift_marker = " ⚠ unstable"
+    elif drift == "recently_flipped":
+        drift_marker = " ⚠ recently-flipped"
+    elif drift == "decaying":
+        drift_marker = " ⚠ edge-decaying"
     e = discord.Embed(
-        title=f"{title_prefix}{emoji} {headline} — {sig['asset']}-USD on {sig['venue']}",
+        title=f"{title_prefix}{emoji} {headline}{drift_marker} — {sig['asset']}-USD on {sig['venue']}",
         description=sig.get("playbook", "(no playbook)"),
         color=color,
         timestamp=datetime.fromtimestamp(sig["timestamp_utc"], tz=timezone.utc),
@@ -336,6 +344,62 @@ async def post_signal(channel: discord.abc.Messageable, sig: dict):
 
 
 # ---------------------------------------------------------------------------
+# Drift alert posting — separate from signal posts so the visual treatment
+# is distinct (yellow border, no chart attachment, prominent ⚠ marker).
+# ---------------------------------------------------------------------------
+
+
+_DRIFT_TYPE_TITLES = {
+    "direction_flip": "⚠ Direction flip",
+    "edge_decay": "↓ Edge decaying",
+    "edge_strengthen": "↑ Edge strengthening",
+    "sample_milestone": "✓ Sample milestone",
+    "outcome_contradiction_streak": "⚠ Outcome contradiction streak",
+}
+
+
+async def post_drift_alert(channel: discord.abc.Messageable, alert: dict):
+    """Post a drift alert as a yellow embed. Distinct from regular signals
+    so users notice their playbook read may be shifting."""
+    a_type = alert.get("type", "drift")
+    title = _DRIFT_TYPE_TITLES.get(a_type, "Drift event")
+    key = alert.get("key", "?")
+    summary = alert.get("summary", "")
+    color = 0xf59e0b   # amber for all drift events
+    if a_type == "edge_strengthen":
+        color = 0x10b981
+    e = discord.Embed(
+        title=f"{title} — {key}",
+        description=summary or "(no summary)",
+        color=color,
+        timestamp=datetime.fromtimestamp(alert.get("ts_utc", 0), tz=timezone.utc),
+    )
+    _set_branding(e)
+    # Surface the discriminating fields per type
+    if a_type == "direction_flip":
+        e.add_field(name="From → To",
+                    value=f"{alert.get('from')} → {alert.get('to')}", inline=True)
+        e.add_field(name="r change",
+                    value=f"{alert.get('prev_r')} → {alert.get('cur_r')}", inline=True)
+        e.add_field(name="n change",
+                    value=f"{alert.get('prev_n')} → {alert.get('cur_n')}", inline=True)
+    elif a_type in ("edge_decay", "edge_strengthen"):
+        trend = alert.get("abs_r_trend") or []
+        e.add_field(name="|r| trend (last 3)",
+                    value="  →  ".join(f"{v}" for v in trend) or "—",
+                    inline=False)
+    elif a_type == "outcome_contradiction_streak":
+        e.add_field(name="Streak", value=str(alert.get("streak", "?")), inline=True)
+        e.add_field(name="Cell predicted",
+                    value=alert.get("expected_direction", "?"), inline=True)
+    e.set_footer(text=f"alert_id={alert.get('id', '?')} · review the registry on next rebuild")
+    try:
+        await channel.send(embed=e)
+    except Exception as ex:
+        print(f"[discord-bot] drift post error: {ex}", flush=True)
+
+
+# ---------------------------------------------------------------------------
 # SSE listener
 # ---------------------------------------------------------------------------
 
@@ -369,6 +433,12 @@ async def stream_listener():
                                 await post_signal(channel, sig)
                             except Exception as ex:
                                 print(f"[discord-bot] post error: {ex}")
+                        elif event_type == "drift_alert" and payload:
+                            try:
+                                alert = json.loads(payload)
+                                await post_drift_alert(channel, alert)
+                            except Exception as ex:
+                                print(f"[discord-bot] drift post error: {ex}")
                         event_type = None
         except Exception as ex:
             print(f"[discord-bot] stream error: {ex}; will retry")
