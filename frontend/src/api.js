@@ -26,6 +26,14 @@ export async function fetchChart(asset, venue, nMinutes = 240) {
   return r.json();
 }
 
+/** 1-second resolution tape feed. UI polls this at ~1Hz to flash the
+ *  bid/ask cell on each new aggressor hit. */
+export async function fetchTape(asset, venue, nSeconds = 30) {
+  const r = await fetch(`${BASE}/api/tape/${asset}/${venue}?n_seconds=${nSeconds}`);
+  if (!r.ok) throw new Error(`tape ${r.status}`);
+  return r.json();
+}
+
 export async function fetchStats(windowHours = 24) {
   const r = await fetch(`${BASE}/api/stats?window_hours=${windowHours}`);
   if (!r.ok) throw new Error(`stats ${r.status}`);

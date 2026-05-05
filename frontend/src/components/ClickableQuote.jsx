@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import OrderTicketModal from "./OrderTicketModal.jsx";
+import { useTapePulse } from "../useTapePulse.js";
 
 function fmtPrice(p) {
   if (!p) return "—";
@@ -8,25 +9,60 @@ function fmtPrice(p) {
   return "$" + p.toFixed(6);
 }
 
+const FLASH_MS = 350;   // how long each cell flashes after a hit
+
 /**
- * Two big tappable boxes — bid (sell here) and ask (buy here).
- * The whole box is clickable so you don't have to land your cursor on
- * the digits. On tap, opens an order-ticket modal pre-filled with
- * side + price.
+ * Two big tappable cells — one per side. Whole cell is the click target
+ * so you don't have to land on the digits.
  *
- * Color: whichever side was last hit by a trade (props.lastAggressor)
- * gets red text + bold; the other side stays default. This matches
- * standard tape-side flash for level-1 quote displays.
+ * Visual states:
+ *   - Static red text on the side that was last hit (lastAggressor prop)
+ *   - Brief background-flash on every new aggressor hit detected on the
+ *     1Hz tape feed (drives the "this is moving right now" feel)
+ *   - Click → opens OrderTicketModal pre-filled with side + price
+ *
+ * If `disablePulse` is true (e.g. on a static historical signal card),
+ * skip the live tape subscription and use only the prop-driven static
+ * red flash.
  */
 export default function ClickableQuote({
   asset, venue, bid, ask, lastAggressor,
-  onSubmitted,                 // optional callback after a manual-trade intent is recorded
-  size = "md",                 // "sm" | "md" | "lg"
+  onSubmitted,
+  size = "md",
+  disablePulse = false,
 }) {
-  const [open, setOpen] = useState(null);   // null | { side, price }
+  const [open, setOpen] = useState(null);
+  const pulse = useTapePulse(disablePulse ? null : asset, disablePulse ? null : venue);
+  // Live values from tape override props if present (so the cell shows
+  // whatever's most current). Falls back to props if tape hasn't loaded
+  // yet or if the component is in static mode.
+  const liveBid = (!disablePulse && pulse.latestBid) || bid || 0;
+  const liveAsk = (!disablePulse && pulse.latestAsk) || ask || 0;
 
-  const askFlash = lastAggressor === "buy";   // last trade lifted the ask
-  const bidFlash = lastAggressor === "sell";  // last trade hit the bid
+  // Per-cell flash: useEffect on pulse counters triggers a 350ms class.
+  const [flashBid, setFlashBid] = useState(false);
+  const [flashAsk, setFlashAsk] = useState(false);
+  const bidTimer = useRef(null);
+  const askTimer = useRef(null);
+  useEffect(() => {
+    if (disablePulse || pulse.sellPulse === 0) return;
+    setFlashBid(true);
+    clearTimeout(bidTimer.current);
+    bidTimer.current = setTimeout(() => setFlashBid(false), FLASH_MS);
+  }, [pulse.sellPulse, disablePulse]);
+  useEffect(() => {
+    if (disablePulse || pulse.buyPulse === 0) return;
+    setFlashAsk(true);
+    clearTimeout(askTimer.current);
+    askTimer.current = setTimeout(() => setFlashAsk(false), FLASH_MS);
+  }, [pulse.buyPulse, disablePulse]);
+  useEffect(() => () => {
+    clearTimeout(bidTimer.current);
+    clearTimeout(askTimer.current);
+  }, []);
+
+  const askStaticRed = lastAggressor === "buy";
+  const bidStaticRed = lastAggressor === "sell";
 
   const sizeClasses = {
     sm: "py-2 px-3 text-base",
@@ -34,49 +70,44 @@ export default function ClickableQuote({
     lg: "py-5 px-6 text-2xl",
   }[size] || "py-3 px-4 text-lg";
 
-  function clickBid() {
-    if (!bid) return;
-    setOpen({ side: "sell", price: bid });
-  }
-  function clickAsk() {
-    if (!ask) return;
-    setOpen({ side: "buy", price: ask });
-  }
-
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
-          onClick={clickBid}
-          disabled={!bid}
-          className={`group rounded border border-emerald-800 bg-emerald-950/60
+          onClick={() => liveBid && setOpen({ side: "sell", price: liveBid })}
+          disabled={!liveBid}
+          className={`group rounded border ${flashBid ? "border-rose-400 ring-2 ring-rose-400/60" : "border-emerald-800"}
+                       ${flashBid ? "bg-rose-900/50" : "bg-emerald-950/60"}
                        hover:bg-emerald-900/70 active:bg-emerald-800/70
                        disabled:opacity-40 disabled:cursor-not-allowed
-                       ${sizeClasses} text-left transition`}
+                       ${sizeClasses} text-left transition-colors duration-200`}
         >
           <div className="text-[10px] uppercase tracking-wider text-emerald-300/80">
             Sell · hit the bid
           </div>
-          <div className={`font-mono mt-1 ${bidFlash ? "text-rose-400 font-bold" : "text-slate-100"}`}>
-            {fmtPrice(bid)}
+          <div className={`font-mono mt-1 transition-colors duration-200
+                            ${flashBid ? "text-rose-200" : (bidStaticRed ? "text-rose-400 font-bold" : "text-slate-100")}`}>
+            {fmtPrice(liveBid)}
           </div>
         </button>
 
         <button
           type="button"
-          onClick={clickAsk}
-          disabled={!ask}
-          className={`group rounded border border-rose-800 bg-rose-950/60
+          onClick={() => liveAsk && setOpen({ side: "buy", price: liveAsk })}
+          disabled={!liveAsk}
+          className={`group rounded border ${flashAsk ? "border-rose-400 ring-2 ring-rose-400/60" : "border-rose-800"}
+                       ${flashAsk ? "bg-rose-900/50" : "bg-rose-950/60"}
                        hover:bg-rose-900/70 active:bg-rose-800/70
                        disabled:opacity-40 disabled:cursor-not-allowed
-                       ${sizeClasses} text-left transition`}
+                       ${sizeClasses} text-left transition-colors duration-200`}
         >
           <div className="text-[10px] uppercase tracking-wider text-rose-300/80">
             Buy · lift the offer
           </div>
-          <div className={`font-mono mt-1 ${askFlash ? "text-rose-400 font-bold" : "text-slate-100"}`}>
-            {fmtPrice(ask)}
+          <div className={`font-mono mt-1 transition-colors duration-200
+                            ${flashAsk ? "text-rose-200" : (askStaticRed ? "text-rose-400 font-bold" : "text-slate-100")}`}>
+            {fmtPrice(liveAsk)}
           </div>
         </button>
       </div>

@@ -756,6 +756,41 @@ class SignalStore:
                 status.adjusted_confidence = max(0.0, min(1.0,
                     status.confidence * status.cross_venue_multiplier))
 
+    async def tape_data(self, asset: str, venue: str, n_seconds: int = 60) -> dict:
+        """1-second resolution tape feed for the click-to-trade UI's flash
+        animation. Returns the last N seconds of raw bin records so the
+        frontend can detect each individual aggressor-side hit."""
+        path = next((p for a, v, p in DATA_SOURCES if a == asset and v == venue), None)
+        if not path:
+            return {"error": "no such (asset, venue)"}
+        if not os.path.exists(path):
+            return {"error": "no data"}
+        try:
+            with open(path) as f:
+                sec_bins = {float(k): v for k, v in json.load(f).items()}
+        except Exception as e:
+            return {"error": str(e)}
+        if not sec_bins:
+            return {"asset": asset, "venue": venue, "data": []}
+        keys = sorted(sec_bins.keys())
+        cutoff = keys[-1] - n_seconds
+        out = []
+        for k in keys:
+            if k < cutoff:
+                continue
+            b = sec_bins[k]
+            out.append({
+                "ts": k,
+                "buy": b.get("buy", 0.0),
+                "sell": b.get("sell", 0.0),
+                "n_trades": b.get("n_trades", 0),
+                "bid": b.get("bid", 0.0),
+                "ask": b.get("ask", 0.0),
+                "last_aggressor": b.get("last_aggressor", ""),
+                "mid": b.get("mid", 0.0),
+            })
+        return {"asset": asset, "venue": venue, "data": out}
+
     async def chart_data(self, asset: str, venue: str, n_minutes: int = 240) -> dict:
         path = next((p for a, v, p in DATA_SOURCES if a == asset and v == venue), None)
         if not path:
@@ -858,6 +893,13 @@ async def signal_detail(signal_id: str):
 @app.get("/api/chart/{asset}/{venue}", dependencies=[Depends(verify_token)])
 async def chart(asset: str, venue: str, n_minutes: int = 240):
     return await store.chart_data(asset, venue, n_minutes=n_minutes)
+
+
+@app.get("/api/tape/{asset}/{venue}", dependencies=[Depends(verify_token)])
+async def tape(asset: str, venue: str, n_seconds: int = 60):
+    """1-second resolution tape feed. UI polls at ~1Hz and flashes the
+    bid/ask cell on each new sec-bin with activity on that side."""
+    return await store.tape_data(asset, venue, n_seconds=n_seconds)
 
 
 @app.get("/api/stats", dependencies=[Depends(verify_token)])
