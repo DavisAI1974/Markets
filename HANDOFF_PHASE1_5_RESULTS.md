@@ -1,16 +1,16 @@
 # Markets / dipole — Phase 1.5 results: first GHA-collected ETH evaluation
 
-**Date**: 2026-05-04
+**Date**: 2026-05-04 (initial), 2026-05-05 (second pass on larger corpus)
 **From**: prior session (notes captured by next-agent handoff)
 **Verified by**: re-running `phase1_5_evaluator.py` against the persisted bins
 **To**: next agent picking up from commit `8243ca9` on `claude/new-session-o3vnm`
 **Companion spec**: `HANDOFF_PHASE1_5.md` (gate definitions G / H / I)
 **Companion spec**: `HANDOFF_TO_CODE_PHASE2.md` (Phase 2 trigger gate D)
 
-This file captures the first real evaluation of the Phase 1.5 actor-aware
-regime classifier against multi-hour ETH bins collected by the durable
-GitHub Actions workflow. It is descriptive, not prescriptive — the spec
-files above remain the source of truth for definitions.
+This file captures sequential evaluation passes of the Phase 1.5
+actor-aware regime classifier against ETH bins collected by the durable
+GitHub Actions workflow. Latest pass at the bottom; earlier passes
+preserved for trajectory.
 
 ## Collection status
 
@@ -435,3 +435,115 @@ clears 60% on its own or the spec gets updated to credit structured
 single-venue disagreement, I retains significance with larger n. When
 n per non-EQUILIBRIUM regime reaches ~30, threshold recalibration and
 DPGMM migration become tractable.
+
+---
+
+## Second pass — 2026-05-05, ~12.83h corpus
+
+The GHA workflow advanced from 5.83h to 12.83h between passes. Same
+reproducer command (`--multi-signal-pelt` only). Snapshot taken at
+`origin/data/eth-bins` commit `6c57981`.
+
+### Gate-status table
+
+| Gate | CB-ETH | KR-ETH | Δ from first pass |
+|---|---|---|---|
+| **G** classifier diversity | **FAIL** (4 classes, modal 73.3%) | **PASS** (5 classes, modal 63.8%) | CB regressed (modal climbed); KR cleared as HERD_UP + DEPLETED appeared |
+| **H** cross-venue agreement | **FAIL** (50.6% over 700 minutes) | — | unchanged in spirit (51% → 50.6%); structured single-venue disagreement still dominates |
+| **I** per-regime forward predictive R² | **PASS** | **PASS** | both still pass; **but the sign of WHALE r-values diverged** — see below |
+
+`G + H + I` (the "holy grail" criterion) still does NOT pass. Gate G
+went from CB-only to KR-only — flipped between venues as more data
+came in. This is small-sample volatility in the modal-share threshold
+test; expect more flips before n stabilizes.
+
+### Gate I detail at lag k=1
+
+CB-ETH:
+
+| Regime | n | r | R² | p | significant? |
+|---|---:|---:|---:|---:|:-:|
+| EQUILIBRIUM_TWO_SIDED | 32 | +0.054 | 0.003 | 0.765 | no |
+| HERD_DOWN             |  6 | -0.394 | 0.156 | 0.391 | no |
+| **WHALE_UP**          |  5 | **+0.766** | **0.587** | **0.039** | **yes (momentum)** |
+| WHALE_DOWN            |  1 | — | — | — | n too small |
+
+KR-ETH:
+
+| Regime | n | r | R² | p | significant? |
+|---|---:|---:|---:|---:|:-:|
+| EQUILIBRIUM_TWO_SIDED | 29 | -0.040 | 0.002 | 0.835 | no |
+| **WHALE_UP**          | 13 | **-0.642** | **0.413** | **0.005** | **yes (mean-revert)** |
+| HERD_UP               |  2 | — | — | — | n too small |
+| DEPLETED              |  1 | — | — | — | n too small |
+| WHALE_DOWN            |  1 | — | — | — | n too small |
+
+### Key new finding — WHALE r-sign divergence between venues
+
+The first pass showed unanimously negative r-values on all significant
+non-EQUILIBRIUM regimes (mean-reversion edge across the board). The
+second pass shows:
+- **CB-ETH WHALE_UP**: r = **+0.77** (momentum) — chunks where the buy-
+  side dipole is high tend to be followed by *more* upside.
+- **KR-ETH WHALE_UP**: r = **−0.64** (mean-reversion) — chunks where
+  the buy-side dipole is high tend to be followed by *retracement*.
+
+Two competing interpretations:
+1. **Real venue-specific structural effect.** CB whales are mostly
+   institutional / early-trend (their flow keeps pushing); KR whales
+   are mostly late-followers / over-extended (mean-revert after).
+   This would match the venue-volume asymmetry (KR is ~20× thinner
+   so a "whale" there is a smaller absolute actor, more likely to be
+   exhausted).
+2. **Small-sample artifact.** CB WHALE_UP has only n=5, KR has n=13.
+   With n=5 and a high R² the per-chunk influence is huge — one
+   outlier chunk could flip the sign. Won't be diagnostic until
+   CB-ETH WHALE_UP n ≥ 20.
+
+Either way: **don't tune any thresholds based on this pass alone.**
+If interpretation #1 is right, Phase 2 autoresearch should fit
+operators per (regime × venue), not per regime alone. If #2 is right,
+the sign settles on negative once n ≥ 20. The data will tell.
+
+### HERD persistence and cascade events
+
+- **CB-ETH HERD_DOWN run of 5 consecutive chunks** starting at idx 8
+  (was a 2-chunk run in the first pass). Either the same 15:03–15:18
+  event extended further into the corpus's overlapping coverage, or
+  a separate sustained selling cascade occurred during the new 7-hour
+  window.
+- **KR-ETH first WHALE_UP → HERD_UP cascade** (single-venue, idx 2 →
+  idx 3). Up-direction cascade had not appeared in the first pass —
+  this is the first FOMO-trip-the-herd pattern captured.
+- Cross-venue WHALE+HERD simultaneity: still none in this corpus.
+
+### What this changes for Phase 2
+
+- The `markets_autoresearch_chunk.py` feasibility chunk-pick (CB-ETH
+  chunk 8, WHALE_DOWN, 17.7k volume) is no longer the obvious top
+  pick — chunks 8–12 now form the 5-chunk HERD_DOWN run, which is
+  arguably more informative for autoresearch since it gives 5 same-
+  regime chunks to fit within a single sustained event.
+- Stratified train/test (mentioned earlier) is now more important
+  given the venue-divergent r-signs. Train per (regime × venue),
+  test per (regime × venue), don't pool.
+- DPGMM migration still gated on N≥200 labeled chunks (`TODO.md`
+  line 65). Combined corpus now ~92 chunks. Still well short.
+
+### Reproducer for this snapshot
+
+```bash
+git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json
+# bins at commit 6c57981 (ETH bins update 2026-05-05T01:39:45Z)
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --multi-signal-pelt
+```
+
+### Next-evaluation trigger
+
+Rerun once any of:
+- CB-ETH WHALE_UP n reaches 20 (resolves the r-sign question)
+- corpus reaches 24h continuous
+- a cross-venue WHALE+HERD simultaneity finally fires (would be the
+  first time `_emit_cross_venue_cascades` produces real output)
