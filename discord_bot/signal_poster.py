@@ -44,6 +44,11 @@ REGIME_STYLES = {
     "WASH_PAIRED":          (0xeab308, "WASH ⚠",        "🟡"),
     "DEPLETED":             (0x9ca3af, "DEPLETED",      "⚪"),
     "UNKNOWN":              (0x6b7280, "UNKNOWN",       "❓"),
+    # Composite regimes emitted by cross-venue cascade detection
+    "CROSS_VENUE_WHALE_HERD_UP":   (0x16a34a, "CROSS-VENUE WHALE+HERD ↑", "🌊"),
+    "CROSS_VENUE_HERD_WHALE_UP":   (0x16a34a, "CROSS-VENUE WHALE+HERD ↑", "🌊"),
+    "CROSS_VENUE_WHALE_HERD_DOWN": (0xdc2626, "CROSS-VENUE WHALE+HERD ↓", "🌊"),
+    "CROSS_VENUE_HERD_WHALE_DOWN": (0xdc2626, "CROSS-VENUE WHALE+HERD ↓", "🌊"),
 }
 
 
@@ -62,20 +67,50 @@ async def on_ready():
 
 def make_embed(sig: dict) -> discord.Embed:
     color, label, emoji = REGIME_STYLES.get(sig["regime"], REGIME_STYLES["UNKNOWN"])
+    cascade_event = sig.get("cascade_event") or ""
+    title_prefix = ""
+    if cascade_event.startswith("CROSS_VENUE_WHALE_HERD"):
+        title_prefix = "🌊🌊 CROSS-VENUE CASCADE — "
+    elif cascade_event.startswith("WHALE_TO_HERD"):
+        title_prefix = "🌊 WHALE→HERD CASCADE — "
     e = discord.Embed(
-        title=f"{emoji} {label} — {sig['asset']}-USD on {sig['venue']}",
+        title=f"{title_prefix}{emoji} {label} — {sig['asset']}-USD on {sig['venue']}",
         description=sig.get("playbook", "(no playbook)"),
         color=color,
         timestamp=datetime.fromtimestamp(sig["timestamp_utc"], tz=timezone.utc),
     )
-    e.add_field(name="Dipole",        value=f"{sig['mean_dipole']:+.3f}", inline=True)
-    e.add_field(name="Realized vol",  value=f"{sig['realized_vol'] * 1e4:.1f} bp", inline=True)
+    e.add_field(name="Dipole",       value=f"{sig['mean_dipole']:+.3f}", inline=True)
+    e.add_field(name="Realized vol", value=f"{sig['realized_vol'] * 1e4:.1f} bp", inline=True)
     cvm = sig.get("cross_venue_multiplier", 1.0)
     cv_text = "✓ confirmed" if cvm > 1.0 else "✗ single-venue" if cvm < 1.0 else "—"
     conf = sig.get("adjusted_confidence", sig.get("confidence", 0.0))
     e.add_field(name="Confidence", value=f"{conf * 100:.0f}% ({cv_text})", inline=True)
+
+    # Aggressor split — buy_vol vs sell_vol within the chunk; high one-side
+    # share is the cleanest secondary discriminator after the regime label.
+    buy_v = sig.get("chunk_buy_volume", 0.0)
+    sell_v = sig.get("chunk_sell_volume", 0.0)
+    total_v = buy_v + sell_v
+    if total_v > 0:
+        buy_pct = buy_v / total_v * 100
+        e.add_field(
+            name="Aggressor split",
+            value=(f"**{buy_pct:.0f}% buy / {100 - buy_pct:.0f}% sell**  "
+                   f"({total_v:.2f} units total)"),
+            inline=False,
+        )
+
+    if cascade_event:
+        e.add_field(
+            name="Cascade",
+            value=sig.get("cascade_detail") or cascade_event,
+            inline=False,
+        )
+
     if sig.get("notes"):
-        e.add_field(name="Why", value="\n".join(f"• {n}" for n in sig["notes"][:2]), inline=False)
+        e.add_field(name="Why",
+                    value="\n".join(f"• {n}" for n in sig["notes"][:3]),
+                    inline=False)
     e.set_footer(text=f"signal_id={sig.get('signal_id', '?')} · research, not advice")
     return e
 

@@ -184,6 +184,26 @@ CASCADE_PLAYBOOKS: dict[str, str] = {
     ),
 }
 
+# Cross-venue cascade: WHALE on one venue + HERD on the other, same direction
+# in the same wall-clock window. Independent confirmation across venues =
+# strongest possible regime signal we can emit (top-of-book event).
+CROSS_VENUE_CASCADE_PLAYBOOKS: dict[str, str] = {
+    "CROSS_VENUE_WHALE_HERD_UP": (
+        "CROSS-VENUE WHALE+HERD UP: one venue shows whale-style sustained "
+        "buying, the other shows herd-style multi-actor FOMO, same "
+        "direction, same wall-clock window. Independent confirmation across "
+        "venues = strongest long signal we can emit. Size accordingly. "
+        "Tight stop; exit before the fade."
+    ),
+    "CROSS_VENUE_WHALE_HERD_DOWN": (
+        "CROSS-VENUE WHALE+HERD DOWN: one venue shows whale-style sustained "
+        "selling, the other shows herd-style multi-actor capitulation, same "
+        "direction, same wall-clock window. Independent confirmation across "
+        "venues = strongest short signal we can emit. Size accordingly. "
+        "Tight stop; do NOT catch the knife on the way down."
+    ),
+}
+
 
 # ---------------------------------------------------------------------------
 # Direction inference (matches executor logic)
@@ -212,6 +232,12 @@ class SignalStore:
         self.last_chunk_id_per_source: dict[tuple[str, str], str | None] = {}
         # Cross-venue minute->regime maps for F6 multiplier
         self._minute_regime_per_venue: dict[tuple[str, str], dict[float, str]] = {}
+        # Latest fully-classified chunk per (asset, venue) — needed by
+        # _emit_cross_venue_cascades to read wall-clock windows + bars
+        self._latest_chunk_per_venue: dict[tuple[str, str], "MarketChunk"] = {}
+        # Dedup set for cross-venue cascade emits (asset, frozenset(venues),
+        # window_start_ts, window_end_ts). Reset on backend restart.
+        self._cross_venue_cascade_emitted: set[tuple] = set()
         # Persistent signal log (JSONL); restored on startup
         self._persist_path = os.path.join(REPO_ROOT, "backend_signals.jsonl")
         self._restore_signals()
@@ -293,6 +319,12 @@ class SignalStore:
 
         # Apply F6 cross-venue multiplier to current statuses
         self._apply_cross_venue_F6()
+        # Emit cross-venue WHALE+HERD cascade signals (independent
+        # confirmation across venues = top-of-book event)
+        try:
+            await self._emit_cross_venue_cascades()
+        except Exception as e:
+            print(f"[SignalStore] cross-venue cascade error: {e}", flush=True)
 
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
@@ -317,6 +349,9 @@ class SignalStore:
                 if 0 <= bar_idx < len(bars):
                     m_map[bars[bar_idx].ts] = r.regime.value
         self._minute_regime_per_venue[(asset, venue)] = m_map
+        # Persist the latest chunk so _emit_cross_venue_cascades can reach
+        # its wall-clock window and bar list
+        self._latest_chunk_per_venue[(asset, venue)] = chunks[-1]
 
         # Use most recent chunk as current status
         latest_chunk = chunks[-1]
@@ -493,6 +528,114 @@ class SignalStore:
                 changed = True
         if changed:
             self._rewrite_signals()
+
+    async def _emit_cross_venue_cascades(self):
+        """Detect WHALE+HERD same-direction simultaneity across venues for
+        the same asset and emit a CROSS_VENUE_WHALE_HERD signal per event.
+
+        Runs after both venues have polled in poll_all(). Dedupes by
+        (asset, frozenset(venues), latest_chunk_id) so we only emit once
+        per cross-venue cascade window.
+        """
+        from collections import Counter, defaultdict
+        by_asset: dict[str, list[tuple[str, str]]] = defaultdict(list)
+        for (asset, venue) in self._latest_chunk_per_venue:
+            by_asset[asset].append((asset, venue))
+
+        for asset, keys in by_asset.items():
+            if len(keys) < 2:
+                continue
+            for (a, primary_venue) in keys:
+                primary_chunk = self._latest_chunk_per_venue.get((a, primary_venue))
+                primary_status = self.current_status.get((a, primary_venue))
+                if primary_chunk is None or primary_status is None:
+                    continue
+                primary_kind = ("WHALE" if "WHALE" in primary_status.regime
+                                else ("HERD" if "HERD" in primary_status.regime
+                                       else None))
+                if primary_kind is None:
+                    continue
+                if primary_status.regime.endswith("_UP"):
+                    primary_dir = "UP"
+                elif primary_status.regime.endswith("_DOWN"):
+                    primary_dir = "DOWN"
+                else:
+                    continue
+                for (a2, other_venue) in keys:
+                    if other_venue == primary_venue:
+                        continue
+                    other_map = self._minute_regime_per_venue.get((a, other_venue), {})
+                    if not other_map or not primary_chunk.bars:
+                        continue
+                    ts_lo = primary_chunk.bars[0].ts
+                    ts_hi = primary_chunk.bars[-1].ts
+                    covering = [other_map[ts] for ts in other_map
+                                  if ts_lo <= ts <= ts_hi]
+                    if not covering:
+                        continue
+                    modal_other = Counter(covering).most_common(1)[0][0]
+                    other_kind = ("WHALE" if "WHALE" in modal_other
+                                    else ("HERD" if "HERD" in modal_other
+                                           else None))
+                    other_dir = ("UP" if modal_other.endswith("_UP")
+                                  else ("DOWN" if modal_other.endswith("_DOWN")
+                                          else None))
+                    if (other_kind is None or other_dir != primary_dir
+                            or {primary_kind, other_kind} != {"WHALE", "HERD"}):
+                        continue
+                    cascade_key = (asset, frozenset({primary_venue, other_venue}),
+                                    round(ts_lo), round(ts_hi))
+                    if cascade_key in self._cross_venue_cascade_emitted:
+                        continue
+                    self._cross_venue_cascade_emitted.add(cascade_key)
+                    if len(self._cross_venue_cascade_emitted) > 1000:
+                        # Bound memory; drop oldest 200 (set has no order so
+                        # just clear half — these are stale anyway)
+                        for k in list(self._cross_venue_cascade_emitted)[:200]:
+                            self._cross_venue_cascade_emitted.discard(k)
+
+                    cascade_event = f"CROSS_VENUE_WHALE_HERD_{primary_dir}"
+                    cascade_detail = (
+                        f"{primary_venue} shows {primary_status.regime}; "
+                        f"{other_venue} shows {modal_other} over the same "
+                        f"wall-clock window — independent cross-venue "
+                        f"WHALE+HERD confirmation in direction {primary_dir}")
+                    chunk_buy = float(sum(b.buy_vol for b in primary_chunk.bars))
+                    chunk_sell = float(sum(b.sell_vol for b in primary_chunk.bars))
+                    total_v = chunk_buy + chunk_sell
+                    buy_pct = (chunk_buy / total_v * 100) if total_v > 0 else 0.0
+                    split_note = (f"primary aggressor split: {buy_pct:.0f}% buy / "
+                                  f"{100 - buy_pct:.0f}% sell ({total_v:.2f} units)")
+                    playbook = CROSS_VENUE_CASCADE_PLAYBOOKS.get(
+                        cascade_event, "(no cascade playbook configured)"
+                    ) + f"  ({split_note}.)"
+                    sig = SignalEvent(
+                        signal_id=str(uuid.uuid4())[:12],
+                        asset=asset,
+                        venue=f"{primary_venue}+{other_venue}",
+                        regime=f"CROSS_VENUE_{primary_kind}_{other_kind}_{primary_dir}",
+                        confidence=min(1.0, primary_status.confidence * 1.5),
+                        cross_venue_multiplier=1.5,
+                        adjusted_confidence=min(1.0, primary_status.confidence * 1.5),
+                        mean_dipole=primary_status.mean_dipole,
+                        realized_vol=primary_status.realized_vol,
+                        chunk_volume=total_v,
+                        notes=[cascade_detail, split_note,
+                                f"primary={primary_status.regime}, other={modal_other}"],
+                        playbook=playbook,
+                        timestamp_utc=time.time(),
+                        chunk_window=primary_status.chunk_window,
+                        cascade_event=cascade_event,
+                        cascade_detail=cascade_detail,
+                        chunk_buy_volume=chunk_buy,
+                        chunk_sell_volume=chunk_sell,
+                        entry_price=float(primary_chunk.bars[-1].close),
+                        expected_direction=+1 if primary_dir == "UP" else -1,
+                    )
+                    self.recent_signals.append(sig)
+                    self.signal_index[sig.signal_id] = sig
+                    self._persist_signal(sig)
+                    await self.event_queue.put({"type": "signal", "data": asdict(sig)})
 
     def _apply_cross_venue_F6(self):
         """For each (asset, venue), set cross_venue_multiplier on its current status

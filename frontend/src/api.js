@@ -47,3 +47,39 @@ export function subscribeToStream({ onSignal, onSnapshot, onError }) {
   es.onerror = (e) => onError && onError(e);
   return () => es.close();
 }
+
+// ---------------------------------------------------------------------------
+// Web Push subscription helpers
+// ---------------------------------------------------------------------------
+
+export async function fetchVapidPublicKey() {
+  const r = await fetch(`${BASE}/api/push/vapid-public-key`);
+  if (!r.ok) throw new Error(`vapid-public-key ${r.status}`);
+  return r.json();
+}
+
+export async function postPushSubscription(subscription) {
+  const subJson = subscription.toJSON();
+  const r = await fetch(`${BASE}/api/push/subscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      endpoint: subJson.endpoint,
+      p256dh: subJson.keys.p256dh,
+      auth: subJson.keys.auth,
+      user_agent: navigator.userAgent,
+    }),
+  });
+  if (!r.ok) throw new Error(`push/subscribe ${r.status}`);
+  return r.json();
+}
+
+export async function postPushUnsubscribe(endpoint) {
+  const r = await fetch(`${BASE}/api/push/unsubscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint, p256dh: "", auth: "" }),
+  });
+  if (!r.ok) throw new Error(`push/unsubscribe ${r.status}`);
+  return r.json();
+}

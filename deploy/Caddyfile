@@ -1,0 +1,89 @@
+# markets-watch — Caddy reverse-proxy + auto-HTTPS configuration.
+#
+# Caddy fronts both the React PWA (built into frontend/dist) and the FastAPI
+# backend (uvicorn on 127.0.0.1:8080). It auto-provisions and renews
+# Let's Encrypt certs as long as the domain points at this host and ports
+# 80/443 are reachable.
+#
+# Required for Tier 1 launch (TODO.md "Backend HTTPS" item) - the PWA service
+# worker only registers on HTTPS in production.
+#
+# Usage:
+#   1. Install caddy:                 https://caddyserver.com/docs/install
+#   2. Edit DOMAIN below to your real domain.
+#   3. Symlink or copy this file to /etc/caddy/Caddyfile
+#   4. systemctl enable --now caddy
+#   5. Build the PWA:                  (cd frontend && npm run build)
+#   6. Start the backend:              uvicorn backend.api_server:app \
+#                                        --host 127.0.0.1 --port 8080
+#      (or run as a systemd service - see deploy/markets-watch.service if
+#      provided)
+#
+# Environment variables expected in the backend's process:
+#   MARKETS_WATCH_ACCESS_TOKEN  shared bearer token for /api/* (except /api/health)
+#   VAPID_PRIVATE_KEY           generated via `python -m backend.push --generate-keys`
+#   VAPID_PUBLIC_KEY            same; the frontend fetches this via /api/push/vapid-public-key
+#   VAPID_CONTACT_EMAIL         mailto:you@example.com - required by Web Push spec
+
+# ----------------------------------------------------------------------------
+# Replace markets.example.com with your actual hostname.
+# ----------------------------------------------------------------------------
+markets.example.com {
+    # Auto-HTTPS via Let's Encrypt (Caddy handles cert lifecycle).
+
+    # Strong defaults
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options    "nosniff"
+        X-Frame-Options            "DENY"
+        Referrer-Policy            "strict-origin-when-cross-origin"
+        Permissions-Policy         "geolocation=(), microphone=(), camera=()"
+        # Service worker must serve from origin and not be cached aggressively
+        # so updates roll out within a poll window.
+        Cache-Control              "no-cache" /service-worker.js
+    }
+
+    encode gzip zstd
+
+    # Backend API + SSE stream + push subscription endpoints
+    @api path /api/*
+    handle @api {
+        reverse_proxy 127.0.0.1:8080 {
+            # SSE: keep the connection alive, no buffering
+            flush_interval -1
+            transport http {
+                read_buffer  16KB
+                write_buffer 16KB
+                # Allow the long-lived /api/stream connection to stay open
+                read_timeout 0
+            }
+        }
+    }
+
+    # PWA static files (built React app)
+    handle {
+        root * /var/www/markets-watch
+        try_files {path} /index.html
+        file_server
+    }
+
+    log {
+        output file /var/log/caddy/markets-watch.log {
+            roll_size  10mb
+            roll_keep  5
+        }
+        format console
+    }
+}
+
+# Health-only endpoint over plain HTTP for uptime checks; redirects
+# everything else to HTTPS.
+:80 {
+    @health path /api/health
+    handle @health {
+        reverse_proxy 127.0.0.1:8080
+    }
+    handle {
+        redir https://{host}{uri} permanent
+    }
+}

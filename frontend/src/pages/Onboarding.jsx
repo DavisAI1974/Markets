@@ -1,4 +1,5 @@
 import React from "react";
+import PushNotifyButton from "../components/PushNotifyButton.jsx";
 
 export default function Onboarding() {
   return (
@@ -9,6 +10,19 @@ export default function Onboarding() {
         in real time, on streaming order-flow data. Every market is in one of five universal states.
         We tell you which one and what to do about it.
       </p>
+
+      <div className="not-prose my-4 rounded border border-emerald-900/60 bg-emerald-950/30 p-3">
+        <h3 className="text-sm font-semibold text-emerald-200 mb-2">
+          Get pushed when a high-conviction signal fires
+        </h3>
+        <p className="text-xs text-emerald-200/70 mb-2">
+          Subscribe to web-push notifications: WHALE / HERD / WASH transitions
+          and WHALE→HERD cascade events show up as a system notification within
+          seconds. Works on Android Chrome and on iOS Safari (after you
+          install the app via Share → Add to Home Screen).
+        </p>
+        <PushNotifyButton />
+      </div>
       <p>
         The math behind it (the <strong>dipole</strong>) is the same operator that emerged across physics,
         biology, chemistry, and geology. It works on markets because money is just energy in a different
