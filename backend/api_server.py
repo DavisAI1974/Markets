@@ -44,6 +44,8 @@ from markets_adapter import (
 from regime_classifier import (
     Regime, classify_regime, baselines_from_corpus,
     apply_cross_venue_multiplier, _session_phase_of,
+    apply_herd_persistence, detect_whale_to_herd_cascades,
+    detect_cross_venue_whale_herd_simultaneity,
 )
 from backend.auth import verify_token, ACCESS_TOKEN
 from backend.push import (
@@ -135,6 +137,17 @@ class SignalEvent:
     outcome_exit_price: float = 0.0
     outcome_resolved_utc: float = 0.0
     outcome_realized_bps: float = 0.0    # signed return in bps after fees
+    # Phase 1.5c: cascade flagging — set when a HERD signal arrives directly
+    # from a WHALE chunk in the same direction with no equilibrium gap
+    # (single-venue) or when the other venue is concurrently in the
+    # opposite-kind regime (cross-venue WHALE+HERD simultaneity).
+    cascade_event: str = ""              # "" | "WHALE_TO_HERD_UP" | "WHALE_TO_HERD_DOWN" | "CROSS_VENUE_WHALE_HERD"
+    cascade_detail: str = ""             # human-readable
+    # Buy/sell side breakdown so the UI / Discord post can show absolute
+    # buy_vol vs sell_vol on this chunk (the regime label already encodes
+    # net direction; this is the magnitude).
+    chunk_buy_volume: float = 0.0
+    chunk_sell_volume: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -150,6 +163,25 @@ PLAYBOOKS: dict[str, str] = {
     "WASH_PAIRED": "Wash-trade signature. Do not trade. Manipulation, no real price discovery.",
     "DEPLETED": "Market is asleep (lunch / off-hours). Sit out - no work being done here.",
     "UNKNOWN": "Pattern doesn't match a known regime. Skip until classifier resolves.",
+}
+
+# Cascade playbooks override the base regime playbook when WHALE→HERD
+# direct transition fires (whale-tripped-the-herd; higher conviction).
+CASCADE_PLAYBOOKS: dict[str, str] = {
+    "WHALE_TO_HERD_UP": (
+        "Whale-tripped FOMO. Big buyer's pressure pulled the herd in. "
+        "Highest-conviction long-side cascade: ride with very tight stop, "
+        "exit on first sign of buying exhaustion (volume drops, dipole "
+        "fades). Do NOT chase late - the overshoot is where the fade "
+        "trade lives."
+    ),
+    "WHALE_TO_HERD_DOWN": (
+        "Whale-tripped capitulation. Big seller's pressure broke retail "
+        "stops; herd is selling the fear. Highest-conviction short-side "
+        "cascade: short the cascade with a tight stop, OR wait for the "
+        "fade-buy at exhaustion (volume drops, dipole flips). Do NOT "
+        "catch the falling knife mid-cascade."
+    ),
 }
 
 
@@ -276,6 +308,7 @@ class SignalStore:
         feats = [encoder._extract(c) for c in chunks]
         base = baselines_from_corpus(feats)
         results = [classify_regime(f, base) for f in feats]
+        apply_herd_persistence(results)
 
         # Build minute->regime map for cross-venue agreement (F6)
         m_map: dict[float, str] = {}
@@ -314,20 +347,56 @@ class SignalStore:
         emitted = False
         # Production emit: regime transitions to actionable states
         if regime_changed and status.regime not in ("EQUILIBRIUM_TWO_SIDED", "DEPLETED", "UNKNOWN"):
+            # Cascade detection: is the latest chunk a HERD that came directly
+            # from a same-direction WHALE on the previous chunk?
+            cascade_event = ""
+            cascade_detail = ""
+            confidence_boost = 1.0
+            if "HERD" in status.regime and len(results) >= 2:
+                prev_r = results[-2]
+                if ("WHALE" in prev_r.regime.value
+                        and prev_r.regime.value.endswith(status.regime[-3:])):
+                    direction = "UP" if status.regime.endswith("_UP") else "DOWN"
+                    cascade_event = f"WHALE_TO_HERD_{direction}"
+                    cascade_detail = (
+                        f"WHALE_{direction} chunk immediately preceding this "
+                        f"HERD_{direction}; whale-tripped-the-herd cascade "
+                        f"(higher conviction signal)")
+                    confidence_boost = 1.3
+            # Buy/sell volume breakdown for this chunk — explicit aggressor-
+            # side imbalance is more actionable for traders than the regime
+            # label alone (which only encodes net direction).
+            chunk_buy = float(sum(b.buy_vol for b in latest_chunk.bars))
+            chunk_sell = float(sum(b.sell_vol for b in latest_chunk.bars))
+            total_v = chunk_buy + chunk_sell
+            buy_pct = (chunk_buy / total_v * 100) if total_v > 0 else 0.0
+            split_note = f"aggressor split: {buy_pct:.0f}% buy / {100 - buy_pct:.0f}% sell ({total_v:.2f} units)"
+            base_notes = list(latest_result.notes[:3]) + [split_note]
+            playbook = PLAYBOOKS.get(status.regime, "(no playbook configured)")
+            if cascade_event:
+                playbook = (
+                    f"[CASCADE: WHALE→HERD same direction] "
+                    + CASCADE_PLAYBOOKS.get(cascade_event, playbook))
+            playbook = playbook + f"  ({split_note}.)"
             sig = SignalEvent(
                 signal_id=str(uuid.uuid4())[:12],
                 asset=asset, venue=venue,
                 regime=status.regime,
-                confidence=status.confidence,
+                confidence=min(1.0, status.confidence * confidence_boost),
                 cross_venue_multiplier=status.cross_venue_multiplier,
-                adjusted_confidence=status.adjusted_confidence,
+                adjusted_confidence=min(1.0,
+                    status.adjusted_confidence * confidence_boost),
                 mean_dipole=float(latest_feat.mean_dipole),
                 realized_vol=float(latest_feat.realized_vol),
                 chunk_volume=float(latest_feat.chunk_total_volume),
-                notes=latest_result.notes[:3],
-                playbook=PLAYBOOKS.get(status.regime, "(no playbook configured)"),
+                notes=base_notes,
+                playbook=playbook,
                 timestamp_utc=time.time(),
                 chunk_window=(latest_chunk.window_start, latest_chunk.window_end),
+                cascade_event=cascade_event,
+                cascade_detail=cascade_detail,
+                chunk_buy_volume=chunk_buy,
+                chunk_sell_volume=chunk_sell,
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig

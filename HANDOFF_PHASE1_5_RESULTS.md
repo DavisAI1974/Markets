@@ -274,14 +274,154 @@ classes, a per-regime baseline now exists. Concretely:
   line 67. Needs multi-week corpus.
 - **Threshold recalibration** — premature; see Finding #4.
 
+## Phase 1.5c additions: HERD persistence + WHALE→HERD cascade detection
+
+The "slow build vs all-at-once" structural distinction between HERD and
+WHALE activity (HERD = consecutive 30-min chunks; WHALE = isolated single
+chunks) is now explicit in the code:
+
+- `regime_classifier.apply_herd_persistence(results)` — annotates each
+  HERD chunk with `herd_persistence = N` for an N-chunk consecutive
+  same-direction run; adds a "sustained N-chunk HERD (k/N)" note.
+- `regime_classifier.detect_whale_to_herd_cascades(results)` — single-
+  venue cascade detection: WHALE_X chunk immediately followed by HERD_X
+  in the same direction (no EQUILIBRIUM/DEPLETED gap). Returns
+  notification-worthy event records.
+- `regime_classifier.detect_cross_venue_whale_herd_simultaneity(...)` —
+  WHALE on one venue + HERD on the other in the same wall-clock window
+  (same direction). Used in the offline evaluator; not yet wired to the
+  backend (requires persisting per-venue chunk lists across polls).
+- `regime_classifier.apply_herd_borderline_rescue(...)` — opt-in pass
+  that reclassifies EQUILIBRIUM chunks adjacent to confirmed HERD runs
+  if they meet relaxed thresholds (rv>1.4×, vol>1.2×, |dipole|>0.08).
+  **Premature**; only enable for diagnostic comparison until n≥30 HERD
+  chunks accumulate.
+
+Wired into:
+- `phase1_5_evaluator.py` — new "HERD persistence" and "WHALE→HERD
+  cascade events" sections in CLI output; `--herd-rescue` flag
+- `regime_feature_audit.py` — per-HERD-chunk persistence + rescue tag
+- `backend/api_server.py` — `SignalEvent` gains `cascade_event`,
+  `cascade_detail`, `chunk_buy_volume`, `chunk_sell_volume` fields;
+  emits with confidence boost (×1.3) and cascade-specific playbook
+  when the latest chunk is a HERD that came directly from a same-
+  direction WHALE on the previous chunk
+
+**Verified result on the current ETH window:**
+- CB-ETH chunk 8 (WHALE_DOWN, 14:48) → chunks 9+10 (HERD_DOWN run of 2,
+  15:03+15:18) — cascade fires correctly
+- KR-ETH: no single-venue cascade (no HERD chunks)
+- Cross-venue WHALE+HERD simultaneity: none in this window (KR-ETH
+  didn't classify the 15:00-15:30 minutes as HERD due to the per-venue
+  baseline mismatch noted in the HERD-detail table above)
+
+## Buy/sell aggressor split per chunk
+
+The regime label (UP / DOWN) already encodes net aggressor direction
+via `mean_dipole` sign, but absolute buy/sell percentages are
+substantially more actionable for traders than the label alone. Now
+surfaced in:
+- `regime_feature_audit.py` per-chunk output (e.g., WHALE_UP at 15:00:
+  `buy/sell=81%/19%`; HERD_DOWN at 15:18: `buy/sell=40%/60%`)
+- `SignalEvent.chunk_buy_volume` / `chunk_sell_volume` (raw)
+- `SignalEvent.notes[-1]` and `playbook` tail include
+  `aggressor split: NN% buy / MM% sell (V units)` so the Discord post
+  / push notification body shows the split directly
+
+Sample buy/sell signatures from this run:
+
+| chunk | regime | buy % / sell % |
+|---|---|---|
+| KR 13:24 | WHALE_UP | 62% / 38% |
+| KR 14:48 | WHALE_DOWN | 43% / 57% |
+| KR 15:00 | WHALE_UP | **81% / 19%** |
+| KR 18:05 | WHALE_UP | **86% / 14%** |
+| KR 16:50 | WHALE_DOWN | **25% / 75%** |
+| CB 15:03 | HERD_DOWN | 40% / 60% |
+| CB 15:18 | HERD_DOWN | 40% / 60% |
+
+The high-conviction WHALE chunks (15:00 and 18:05 on KR-ETH, 16:50 on
+KR-ETH for the down side) show 75-86% one-side aggressor share — the
+clearest signal-quality discriminator after the regime label itself.
+
+## Phase 2 autoresearch — feasibility result
+
+`markets_autoresearch_chunk.py` implements the per-chunk operator-
+discovery feasibility leg of `HANDOFF_TO_CODE_PHASE2.md`. It fits a
+curated family of linear-in-coefficients operators with nonlinear
+feature constructions to bar-level data within each chunk
+(X_t → log_return_{t+1}), picks the winner by complexity-penalized
+in-sample R², and aggregates winners per regime as a Gate E proxy.
+
+**Operator family (8 candidates):** intercept-only, dipole, dipole+
+log-volume, dipole², dipole+dipole-velocity, dipole×log-volume,
+signed dipole², kitchen-sink (5 features). Solved via
+`np.linalg.lstsq`; per-chunk fit is sub-millisecond.
+
+This is *structurally* like apr5's autoresearch (multi-form search
+with complexity penalty) but restricted to a hand-curated family. The
+true symbolic-regression engine in the apr5 OD branch is the right
+backend when wired in; this scaffold provides the chunk loader, format
+conversion, per-regime aggregation, and Gate D/E evaluation
+infrastructure.
+
+**Reproducer:**
+
+```bash
+python markets_autoresearch_chunk.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --gate-d-eval [--regime-filter WHALE] [--complexity-lambda 0.5]
+```
+
+**Honest results — the in-sample R² uplift is overfit, the
+per-regime aggregation is not yet stable.**
+
+With the default lenient penalty (λ=0.05), `O7_kitchen_sink`
+(5 parameters) wins 80–100% of chunks across all regimes. Per-regime
+mean in-sample R² ranges 0.27 (HERD_DOWN) to 0.66 (WHALE_UP). Naive
+Gate D check shows 281% relative uplift over the dipole-only
+baseline. **All of this reflects in-sample overfitting on chunks of
+9–29 samples (post-lag).**
+
+With a 10× stricter penalty (λ=0.5), the modal-operator share drops
+to 50% on WHALE_DOWN and 40% on WHALE_UP — Gate E (≥60% modal share)
+**fails** on both actionable regimes. Different WHALE chunks pick
+different operators:
+- KR WHALE_UP 13:24 → `O4_dipole_velocity` (R²=0.86)
+- KR WHALE_UP 14:16 → `O2_dipole_logvolume` (R²=0.78)
+- KR WHALE_UP 18:05 → `O3_dipole_squared` (R²=0.56)
+
+This is itself an interesting finding: the WHALE class may not be a
+single regime but a cluster of structurally distinct subtypes
+(dipole-velocity-driven, volume-weighted-dipole-driven, nonlinear-
+dipole-driven). DPGMM auto-taxonomy (`TODO.md` line 65) is the right
+treatment but premature at n=5.
+
+**What is and isn't established:**
+- ✓ Autoresearch infrastructure works end-to-end
+- ✓ Per-regime aggregation works
+- ✗ Operator stability (Gate E) — not yet established for WHALE
+  classes; HERD has only n=2 (insufficient)
+- ✗ Honest Gate D (forward predictive R² uplift on held-out chunks) —
+  the current implementation is in-sample only. True cross-chunk
+  train/test split is deferred to a separate tool when n≥30 per regime.
+
 ## Artifacts in this commit
 
 - `HANDOFF_PHASE1_5_RESULTS.md` — this file
-- `phase2_chunk_picker.py` — small CLI tool to list classified chunks
-  with `--regime-filter` for picking Phase 2 inputs
+- `phase2_chunk_picker.py` — list classified chunks with
+  `--regime-filter` for picking Phase 2 inputs
 - `regime_feature_audit.py` — per-regime feature-signature audit;
-  spotlights HERD/WHALE chunks with the rule trace and lists borderline
-  candidates that just missed a threshold
+  HERD/WHALE chunks with rule trace, persistence flag, buy/sell split
+- `markets_autoresearch_chunk.py` — Phase 2 per-chunk operator-form
+  search with complexity penalty + per-regime aggregation
+- `regime_classifier.py` — `apply_herd_persistence`,
+  `apply_herd_borderline_rescue`,
+  `detect_whale_to_herd_cascades`,
+  `detect_cross_venue_whale_herd_simultaneity` (new)
+- `backend/api_server.py` — `SignalEvent` gains `cascade_event`,
+  `cascade_detail`, `chunk_buy_volume`, `chunk_sell_volume`;
+  cascade-augmented playbook + confidence boost on emit
 
 The bin files and the JSON gate report are gitignored — pull them from
 `origin/data/eth-bins` and regenerate the report with the reproducer

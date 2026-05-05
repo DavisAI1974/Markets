@@ -31,6 +31,9 @@ from regime_classifier import (
     classify_regime, baselines_from_corpus,
     baselines_per_session, classify_with_session_baselines,
     apply_cross_venue_multiplier, _session_phase_of,
+    apply_herd_persistence, apply_herd_borderline_rescue,
+    detect_whale_to_herd_cascades,
+    detect_cross_venue_whale_herd_simultaneity,
 )
 
 
@@ -63,7 +66,8 @@ def load_bars(bins_path: str) -> list[MarketBar]:
 def classify_venue(bars: list[MarketBar], label: str,
                     chunk_max: int = 30, chunk_min: int = 10,
                     multi_signal_pelt: bool = False,
-                    use_session_baselines: bool = False
+                    use_session_baselines: bool = False,
+                    herd_rescue: bool = False,
                     ) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines, dict]:
     chunker = MarketChunker(max_window_size=chunk_max, stride=chunk_max // 2,
                              min_segment=chunk_min, mode="hybrid")
@@ -77,7 +81,35 @@ def classify_venue(bars: list[MarketBar], label: str,
     else:
         session_base = {"_global": base}
         results = [classify_regime(f, base) for f in feats]
+    apply_herd_persistence(results)
+    if herd_rescue:
+        apply_herd_borderline_rescue(results, feats, base)
+        apply_herd_persistence(results)  # recompute including rescued chunks
     return chunks, results, base, session_base
+
+
+def _herd_runs(results: list[ClassificationResult]
+                ) -> list[tuple[int, int, str, int]]:
+    """Group consecutive same-regime HERD chunks (persistence>=2) into runs.
+
+    Returns list of (start_idx, length, regime_value, n_rescued).
+    """
+    out: list[tuple[int, int, str, int]] = []
+    i = 0
+    while i < len(results):
+        if results[i].herd_persistence < 2:
+            i += 1
+            continue
+        regime = results[i].regime.value
+        j = i
+        while (j < len(results)
+                and results[j].regime.value == regime
+                and results[j].herd_persistence >= 2):
+            j += 1
+        rescued = sum(1 for k in range(i, j) if results[k].herd_rescued)
+        out.append((i, j - i, regime, rescued))
+        i = j
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -237,6 +269,8 @@ def main():
                    help="Run PELT on price + dipole + OFI signals (Phase 1.5 enhancement)")
     p.add_argument("--session-baselines", action="store_true",
                    help="Use per-session baselines (london_active, london_lunch, etc.) instead of global")
+    p.add_argument("--herd-rescue", action="store_true",
+                   help="Reclassify EQUILIBRIUM chunks adjacent to a confirmed HERD run if they meet relaxed thresholds. Premature; only enable for diagnostic comparison until n>=30 HERD chunks.")
     args = p.parse_args()
 
     print(f"=== Phase 1.5 Evaluation: {args.asset} ===\n")
@@ -249,11 +283,13 @@ def main():
         cb_bars, f"CB-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
+        herd_rescue=args.herd_rescue,
     )
     kr_chunks, kr_results, kr_base, kr_session = classify_venue(
         kr_bars, f"KR-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
+        herd_rescue=args.herd_rescue,
     )
 
     print(f"CB-{args.asset}: {len(cb_chunks)} chunks, baselines rv={cb_base.rv:.5f}")
@@ -314,6 +350,45 @@ def main():
                 marker = " <- significant" if (stat["r2"] or 0) > 0.05 and (stat["p"] or 1) < 0.10 else ""
                 print(f"    {regime:<24}  n={stat['n']:>2}  r={stat['r']:+.3f}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{marker}")
         print(f"    -> {'PASS' if ig['gate_I'] else 'FAIL'} (need >=1 significant regime, >=2 evaluable)")
+    print()
+
+    # HERD persistence summary (sustained N-chunk runs)
+    print(f"--- HERD persistence (consecutive same-direction chunks) ---")
+    for label, results in [(f"CB-{args.asset}", cb_results), (f"KR-{args.asset}", kr_results)]:
+        runs = _herd_runs(results)
+        if not runs:
+            print(f"  {label}: no sustained HERD runs (all HERD chunks isolated)")
+            continue
+        for start, length, regime, rescued in runs:
+            extra = f" [{rescued} rescued]" if rescued else ""
+            print(f"  {label}: {regime} run of {length} chunks "
+                  f"starting at idx {start}{extra}")
+    print()
+
+    # WHALE -> HERD cascade detection (notification-worthy events)
+    print(f"--- WHALE -> HERD cascade events ---")
+    for label, results in [(f"CB-{args.asset}", cb_results), (f"KR-{args.asset}", kr_results)]:
+        events = detect_whale_to_herd_cascades(results)
+        if not events:
+            print(f"  {label}: no single-venue WHALE->HERD cascades")
+            continue
+        for ev in events:
+            print(f"  {label}: {ev['summary']}  [direction={ev['direction']}]")
+    cb_minute_now = chunk_to_minute_regime(cb_chunks, cb_results, cb_bars)
+    kr_minute_now = chunk_to_minute_regime(kr_chunks, kr_results, kr_bars)
+    cross_events = (
+        detect_cross_venue_whale_herd_simultaneity(
+            cb_results, cb_chunks, cb_bars, kr_minute_now,
+            primary_label=f"CB-{args.asset}", other_label=f"KR-{args.asset}")
+        + detect_cross_venue_whale_herd_simultaneity(
+            kr_results, kr_chunks, kr_bars, cb_minute_now,
+            primary_label=f"KR-{args.asset}", other_label=f"CB-{args.asset}")
+    )
+    if cross_events:
+        for ev in cross_events:
+            print(f"  CROSS-VENUE: {ev['summary']}  [direction={ev['direction']}]")
+    else:
+        print(f"  CROSS-VENUE: no WHALE+HERD simultaneity detected")
     print()
 
     # F6 confidence multiplier summary

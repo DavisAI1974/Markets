@@ -48,14 +48,13 @@ def audit_venue(label: str, bins_path: str, multi_signal_pelt: bool = True):
         bars, label, chunk_max=30, chunk_min=10,
         multi_signal_pelt=multi_signal_pelt,
     )
+    # Re-extract MarketFeatures (results only carry Regime + notes, not feature values)
+    from markets_adapter import MarketChunkEncoder
+    enc = MarketChunkEncoder(d_enc=64)
+    chrono = [(c, r, enc._extract(c)) for c, r in zip(chunks, results)]
     feats_by_regime: dict[str, list] = defaultdict(list)
-    for c, r in zip(chunks, results):
-        # Re-extract MarketFeatures so we can read the discriminators
-        # (results only carry the Regime label and notes, not feature values)
-        from markets_adapter import MarketChunkEncoder
-        enc = MarketChunkEncoder(d_enc=64)
-        f = enc._extract(c)
-        feats_by_regime[r.regime.value].append((c, r, f))
+    for item in chrono:
+        feats_by_regime[item[1].regime.value].append(item)
 
     print(f"\n=== {label} feature signatures ===")
     print(f"  baselines: rv={base.rv:.5f}  kyle={base.kyle:.6f}  "
@@ -73,7 +72,7 @@ def audit_venue(label: str, bins_path: str, multi_signal_pelt: bool = True):
         print(f"  {regime:<24} | {fmt_stat(dips):<22} | {fmt_stat(acls):<22} | "
               f"{fmt_stat(vrs, '{:.2f}'):<22} | {fmt_stat(rvs, '{:.2f}'):<22}")
 
-    # Spotlight HERD chunks individually with the rule trace
+    # Spotlight HERD chunks individually with the rule trace + buy/sell split
     herd_items = [it for r, items in feats_by_regime.items() if "HERD" in r for it in items]
     if herd_items:
         print(f"\n  -- HERD detail ({len(herd_items)} chunk(s)) --")
@@ -82,9 +81,18 @@ def audit_venue(label: str, bins_path: str, multi_signal_pelt: bool = True):
                 .strftime("%Y-%m-%d %H:%M")
             vr = f.chunk_total_volume / max(base.chunk_volume, 1e-9)
             rv = f.realized_vol / max(base.rv, 1e-9)
+            buy_vol = sum(b.buy_vol for b in c.bars)
+            sell_vol = sum(b.sell_vol for b in c.bars)
+            total = buy_vol + sell_vol
+            buy_pct = (buy_vol / total * 100) if total > 0 else 0
+            persist = (f"  [run={r.herd_persistence}]"
+                        if r.herd_persistence >= 2 else "")
+            rescued = "  [RESCUED]" if r.herd_rescued else ""
             print(f"    {ts0}  {r.regime.value:<11}  bars={len(c.bars):>3}  "
                   f"|dipole|={abs(f.mean_dipole):.3f}  vol_ratio={vr:.2f}x  "
-                  f"rv_ratio={rv:.2f}x  notes={r.notes}")
+                  f"rv_ratio={rv:.2f}x  buy/sell={buy_pct:.0f}%/{100-buy_pct:.0f}%"
+                  f"{persist}{rescued}")
+            print(f"        notes: {r.notes}")
     else:
         print(f"\n  -- HERD detail: NONE --")
         # Show borderline candidates: high rv_ratio chunks that didn't make HERD
@@ -111,16 +119,32 @@ def audit_venue(label: str, bins_path: str, multi_signal_pelt: bool = True):
     whale_items = [it for r, items in feats_by_regime.items() if "WHALE" in r for it in items]
     if whale_items:
         print(f"\n  -- WHALE detail ({len(whale_items)} chunk(s)) --")
-        for c, r, f in whale_items[:6]:
+        for c, r, f in whale_items[:8]:
             ts0 = datetime.fromtimestamp(c.bars[0].ts, tz=timezone.utc) \
                 .strftime("%Y-%m-%d %H:%M")
             vr = f.chunk_total_volume / max(base.chunk_volume, 1e-9)
             kyle_r = f.kyle_proxy / max(base.kyle, 1e-9)
+            buy_vol = sum(b.buy_vol for b in c.bars)
+            sell_vol = sum(b.sell_vol for b in c.bars)
+            total = buy_vol + sell_vol
+            buy_pct = (buy_vol / total * 100) if total > 0 else 0
             print(f"    {ts0}  {r.regime.value:<11}  bars={len(c.bars):>3}  "
                   f"dipole={f.mean_dipole:+.3f}  acl1={f.dipole_autocorr_lag1:+.2f}  "
-                  f"vol_ratio={vr:.2f}x  kyle_ratio={kyle_r:.2f}x")
-        if len(whale_items) > 6:
-            print(f"    ... ({len(whale_items) - 6} more)")
+                  f"vol_ratio={vr:.2f}x  kyle_ratio={kyle_r:.2f}x  "
+                  f"buy/sell={buy_pct:.0f}%/{100-buy_pct:.0f}%")
+        if len(whale_items) > 8:
+            print(f"    ... ({len(whale_items) - 8} more)")
+
+    # Cascade events on this venue (single-venue WHALE→HERD direct transition)
+    from regime_classifier import detect_whale_to_herd_cascades
+    chrono_results = [r for _, r, _ in chrono]
+    events = detect_whale_to_herd_cascades(chrono_results)
+    if events:
+        print(f"\n  -- WHALE→HERD cascade events ({len(events)}) --")
+        for ev in events:
+            print(f"    {ev['summary']}  (direction={ev['direction']})")
+    else:
+        print(f"\n  -- WHALE→HERD cascade events: none --")
 
 
 def main():
