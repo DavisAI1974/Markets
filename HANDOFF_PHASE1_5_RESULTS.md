@@ -547,3 +547,39 @@ Rerun once any of:
 - corpus reaches 24h continuous
 - a cross-venue WHALE+HERD simultaneity finally fires (would be the
   first time `_emit_cross_venue_cascades` produces real output)
+
+### Playbook registry framework (added 2026-05-05)
+
+Rather than hand-coding venue-specific theories ("CB momentum / KR
+mean-reversion") into static playbook strings, we ship a registry-
+driven approach:
+
+- `build_playbook_registry.py` reads the bins, runs the classifier per
+  venue, and computes per-(asset, venue, regime) edge stats:
+  `{n, r, r2, p, direction}` where `direction ∈ {"momentum",
+  "mean_revert", "exploring", "insufficient"}`.
+- `playbook_generator.py` reads the registry at signal-emit time and
+  composes the actionable playbook text. Includes the current
+  `[n=..., r=..., p=...]` caveat in the text so users see the
+  small-sample state directly.
+- Backend `api_server.py` calls `get_playbook(asset, venue, regime)`
+  instead of indexing the static `PLAYBOOKS` dict. Falls back to the
+  per-regime defaults when the registry has no qualifying entry.
+
+This means the **framing the user sees updates each time the registry
+is rebuilt** — by design. We explicitly do not gate on `n>=10` because
+forcing the framing to shift run-to-run forces awareness of how the
+read is evolving.
+
+Sample output from the current 12.83h corpus:
+
+| Cell | n | r | direction | playbook flavor |
+|---|---:|---:|---|---|
+| ETH/CB/WHALE_UP | 5 | +0.77 | momentum | "ride the trend, tight stop, exit on first sign of buying exhaustion" |
+| ETH/KR/WHALE_UP | 13 | -0.64 | mean_revert | "fade the overextension OR sit out, small size with tight stop" |
+| ETH/CB/HERD_DOWN | 6 | -0.39 | exploring (p=0.39) | falls through to "skip — wait for more data" |
+| ETH/KR/EQUILIBRIUM_TWO_SIDED | 29 | -0.04 | exploring | "skip — wait for more data" |
+| ETH/CB/WHALE_DOWN | 1 | — | insufficient | falls back to default per-regime playbook |
+
+Rebuild after each GHA cycle (LAUNCH_PLAYBOOK §1.6 cron entry). The
+backend hot-reloads via mtime, no restart required.

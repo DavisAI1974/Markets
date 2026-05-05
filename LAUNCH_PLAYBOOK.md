@@ -118,6 +118,40 @@ Each step has: **what**, **why**, **how**, **verify**.
   on the VM. Then `curl -I https://markets.yourname.com/api/health`
   returns 200 from your laptop. The PWA's connection dot turns green.
 
+### 1.6 Build the playbook registry
+
+- **What**: per-(asset, venue, regime) edge stats that drive the
+  dynamic playbook strings the PWA + Discord embed.
+- **Why**: without it, signals fall back to per-regime defaults that
+  ignore venue-specific dynamics (CB momentum vs KR mean-reversion,
+  etc.). The fallback is safe — signals still emit — but you lose the
+  per-venue precision until the registry is built.
+- **How**, on the host (after the backend is running and the data
+  branch has at least 1 collection cycle):
+  ```bash
+  cd /opt/markets
+  git fetch origin data/eth-bins
+  git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json
+  python build_playbook_registry.py --asset ETH \
+      --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+      --output-path /opt/markets/playbook_registry.json
+  # Repeat per asset as you add them (BTC, etc.)
+  ```
+  The backend hot-reloads the registry by mtime — no restart needed.
+- **Schedule**: rerun after each GHA collection cycle. Add to crontab:
+  ```cron
+  10 */6 * * * cd /opt/markets && git fetch origin data/eth-bins && \
+    git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json && \
+    python build_playbook_registry.py --asset ETH \
+      --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+      --output-path /opt/markets/playbook_registry.json
+  ```
+  This runs ~10 minutes after each GHA cycle finishes.
+- **Verify**: `cat /opt/markets/playbook_registry.json | python -m
+  json.tool` shows entries like `"ETH/CB/WHALE_UP"`. Trigger a test
+  signal and confirm the playbook text in Discord includes the
+  `[n=..., r=..., p=...]` caveat.
+
 ---
 
 ## 2. VAPID keys (Web Push)

@@ -51,6 +51,7 @@ from backend.auth import verify_token, ACCESS_TOKEN
 from backend.push import (
     PushSubscription, add_sub, remove_sub, get_subs, send_to_all, VAPID_PUBLIC,
 )
+from playbook_generator import get_playbook as get_dynamic_playbook
 from pydantic import BaseModel
 
 
@@ -467,7 +468,13 @@ class SignalStore:
             buy_pct = (chunk_buy / total_v * 100) if total_v > 0 else 0.0
             split_note = f"aggressor split: {buy_pct:.0f}% buy / {100 - buy_pct:.0f}% sell ({total_v:.2f} units)"
             base_notes = list(latest_result.notes[:3]) + [split_note]
-            playbook = PLAYBOOKS.get(status.regime, "(no playbook configured)")
+            # Dynamic per-(asset, venue, regime) playbook — reads
+            # playbook_registry.json (built by build_playbook_registry.py)
+            # and falls back to the per-regime DEFAULT_PLAYBOOKS when the
+            # registry has no qualifying entry. The text includes the
+            # current sample size + r + p so users see how the read
+            # evolves run-to-run.
+            playbook = get_dynamic_playbook(asset, venue, status.regime)
             if cascade_event:
                 playbook = (
                     f"[CASCADE: WHALE→HERD same direction] "
