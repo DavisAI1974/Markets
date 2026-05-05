@@ -1,15 +1,16 @@
 import React from "react";
 import ClickableQuote from "./ClickableQuote.jsx";
+import MiniChart from "./MiniChart.jsx";
 
 const REGIME_STYLES = {
-  EQUILIBRIUM_TWO_SIDED: { bg: "bg-blue-950/40",   border: "border-blue-700",  chip: "bg-blue-700",   label: "Healthy two-sided" },
-  WHALE_UP:              { bg: "bg-green-950/40",  border: "border-green-700", chip: "bg-green-700",  label: "Big buyer detected" },
-  WHALE_DOWN:            { bg: "bg-red-950/40",    border: "border-red-700",   chip: "bg-red-700",    label: "Big seller detected" },
-  HERD_UP:               { bg: "bg-orange-950/40", border: "border-orange-700",chip: "bg-orange-600", label: "Buying cascade" },
-  HERD_DOWN:             { bg: "bg-rose-950/40",   border: "border-rose-700",  chip: "bg-rose-700",   label: "Selling cascade" },
-  WASH_PAIRED:           { bg: "bg-yellow-950/40", border: "border-yellow-700",chip: "bg-yellow-700", label: "Wash pattern — skip" },
-  DEPLETED:              { bg: "bg-gray-900/60",   border: "border-gray-600",  chip: "bg-gray-600",   label: "Quiet" },
-  UNKNOWN:               { bg: "bg-slate-900/60",  border: "border-slate-700", chip: "bg-slate-700",  label: "Unclassified" },
+  EQUILIBRIUM_TWO_SIDED: { bg: "bg-blue-950/40",   border: "border-blue-700",  chip: "bg-blue-700",   label: "Healthy two-sided",  icon: "⚖️" },
+  WHALE_UP:              { bg: "bg-emerald-950/40",border: "border-emerald-700",chip: "bg-emerald-700",label: "Big buyer detected", icon: "🐋" },
+  WHALE_DOWN:            { bg: "bg-red-950/40",    border: "border-red-700",   chip: "bg-red-700",    label: "Big seller detected",icon: "🐋" },
+  HERD_UP:               { bg: "bg-orange-950/40", border: "border-orange-700",chip: "bg-orange-600", label: "Buying cascade",     icon: "🌊" },
+  HERD_DOWN:             { bg: "bg-rose-950/40",   border: "border-rose-700",  chip: "bg-rose-700",   label: "Selling cascade",    icon: "🌊" },
+  WASH_PAIRED:           { bg: "bg-yellow-950/40", border: "border-yellow-700",chip: "bg-yellow-700", label: "Wash — skip",        icon: "⚠️" },
+  DEPLETED:              { bg: "bg-gray-900/60",   border: "border-gray-600",  chip: "bg-gray-600",   label: "Quiet",              icon: "💤" },
+  UNKNOWN:               { bg: "bg-slate-900/60",  border: "border-slate-700", chip: "bg-slate-700",  label: "Unclassified",       icon: "❓" },
 };
 
 function fmtPrice(p) {
@@ -44,50 +45,58 @@ export default function RegimeCard({ status }) {
   const price = status.current_price || 0;
   const bid = status.current_bid || 0;
   const ask = status.current_ask || 0;
-  // Tape-side flash: if the last trade was an aggressor-buy (lifted ask),
-  // the ask price is what just got paid → flash red. If aggressor-sell
-  // (hit bid), the bid is what was paid → flash red. Other side stays
-  // default text color.
   const lastAggr = status.last_aggressor || "";
-  const askCls = lastAggr === "buy"  ? "text-rose-400 font-bold" : "text-slate-100";
-  const bidCls = lastAggr === "sell" ? "text-rose-400 font-bold" : "text-slate-100";
 
   return (
-    <div className={`rounded-lg border ${s.border} ${s.bg} p-4 mb-3`}>
-      <div className="flex items-center justify-between gap-2">
-        <div className="font-mono text-base font-semibold">
-          {status.asset}-USD <span className="text-slate-400 text-sm">on {status.venue}</span>
+    <div className={`rounded-lg border ${s.border} ${s.bg} p-4 mb-3 relative overflow-hidden`}>
+      {/* Top row: asset + big regime headline + icon */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0">
+          <div className="font-mono text-base font-semibold text-slate-100">
+            {status.asset}-USD
+            <span className="text-slate-400 text-xs ml-2">on {status.venue}</span>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-2xl select-none">{s.icon}</span>
+            <span className="font-semibold text-base text-slate-100">{s.label}</span>
+          </div>
         </div>
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${s.chip} whitespace-nowrap`}>{s.label}</span>
+        <div className="text-right">
+          <div className="font-mono text-lg text-slate-100">{fmtPrice(price)}</div>
+          <div className="text-[10px] text-slate-500 uppercase tracking-wide">last price</div>
+        </div>
       </div>
 
-      {/* Last price + confidence on top, then click-to-trade bid/ask cells.
-          Each cell is independently clickable; opens an order ticket
-          pre-filled with side + price. */}
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <Metric label="Last price" value={fmtPrice(price)} mono />
-        <Metric label="Confidence" value={`${confPct}%`} mono />
-      </div>
-      <div className="mt-2">
-        <ClickableQuote
-          asset={status.asset}
-          venue={status.venue}
-          bid={bid}
-          ask={ask}
-          lastAggressor={lastAggr}
-        />
+      {/* Confidence + cross-venue chip row */}
+      <div className="flex items-center gap-2 mb-3 text-xs">
+        <span className={`px-2 py-0.5 rounded text-white text-xs font-semibold ${s.chip}`}>
+          {confPct}% conf
+        </span>
+        <span className={`text-xs ${cvm > 1.0 ? "text-emerald-400" : cvm < 1.0 ? "text-yellow-500" : "text-slate-500"}`}>
+          {cvmIcon}
+        </span>
+        <span className="text-slate-500 ml-auto">{lastUpdate} UTC</span>
       </div>
 
-      {/* Buy/sell stacked bar — visually obvious aggressor split */}
+      {/* Click-to-trade bid/ask cells */}
+      <ClickableQuote
+        asset={status.asset}
+        venue={status.venue}
+        bid={bid}
+        ask={ask}
+        lastAggressor={lastAggr}
+      />
+
+      {/* Buy/sell stacked bar — shows the aggressor split for this chunk */}
       {total > 0 && (
         <div className="mt-3">
           <div className="flex justify-between text-[10px] text-slate-400 uppercase tracking-wide mb-1">
-            <span>Buy / Sell  ·  this chunk</span>
+            <span>Buy / Sell · this chunk</span>
             <span>{nTrades} trade{nTrades === 1 ? "" : "s"}</span>
           </div>
           <div className="flex h-2.5 rounded overflow-hidden bg-slate-800">
-            <div className="bg-emerald-500" style={{ width: `${buyPct}%` }} />
-            <div className="bg-rose-500"    style={{ width: `${100 - buyPct}%` }} />
+            <div className="bg-gradient-to-r from-emerald-600 to-emerald-400" style={{ width: `${buyPct}%` }} />
+            <div className="bg-gradient-to-r from-rose-400 to-rose-600"        style={{ width: `${100 - buyPct}%` }} />
           </div>
           <div className="flex justify-between text-[11px] mt-1 font-mono">
             <span className="text-emerald-400">{buyPct.toFixed(0)}% buy · {fmtQty(buy)} {status.asset}</span>
@@ -96,19 +105,13 @@ export default function RegimeCard({ status }) {
         </div>
       )}
 
-      <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-        <span>cross-venue: {cvmIcon}</span>
-        <span>{lastUpdate} UTC</span>
+      {/* Mini chart — last 30m price + buy/sell volume */}
+      <div className="mt-3">
+        <div className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">
+          Last 30 min · price + flow
+        </div>
+        <MiniChart asset={status.asset} venue={status.venue} nMinutes={30} height={32} />
       </div>
-    </div>
-  );
-}
-
-function Metric({ label, value, mono }) {
-  return (
-    <div className="bg-slate-950/60 rounded px-2 py-1">
-      <div className="text-slate-500 text-[10px] uppercase tracking-wide">{label}</div>
-      <div className={`text-sm ${mono ? "font-mono" : ""}`}>{value}</div>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchPracticeTrades, closePracticeTrade } from "../api.js";
+import { SkeletonCard, EmptyState } from "../components/LoadingSkeleton.jsx";
+import { usePullToRefresh, PullIndicator } from "../usePullToRefresh.js";
 
 function fmtPrice(p) {
   if (!p) return "—";
@@ -37,6 +39,7 @@ export default function PracticeFeed() {
     const t = setInterval(refresh, 5000);
     return () => clearInterval(t);
   }, []);
+  const ptr = usePullToRefresh(refresh);
 
   async function close(intentId) {
     setClosing(intentId);
@@ -50,7 +53,12 @@ export default function PracticeFeed() {
   }
 
   if (error) return <div className="text-rose-400 text-sm">{error}</div>;
-  if (!data) return <div className="text-slate-500 text-sm py-8 text-center">Loading…</div>;
+  if (!data) return (
+    <div>
+      <SkeletonCard heightCls="h-24" />
+      <SkeletonCard heightCls="h-32" />
+    </div>
+  );
 
   const trades = data.trades || [];
   const open = trades.filter((t) => t.status === "open");
@@ -60,6 +68,7 @@ export default function PracticeFeed() {
 
   return (
     <div className="space-y-4">
+      <PullIndicator {...ptr} />
       <div className="rounded border border-sky-800 bg-sky-950/40 p-3">
         <div className="text-xs uppercase tracking-wide text-sky-300/80 font-bold">
           Practice mode

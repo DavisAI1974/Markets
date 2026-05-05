@@ -2,16 +2,27 @@ import React, { useState } from "react";
 import { useStore } from "../store.js";
 import RegimeCard from "../components/RegimeCard.jsx";
 import LiveTape from "../components/LiveTape.jsx";
+import { SkeletonCard, EmptyState } from "../components/LoadingSkeleton.jsx";
 
 export default function LiveStatus() {
   const statuses = useStore((s) => s.statuses);
   const [showTape, setShowTape] = useState(true);
 
-  if (!statuses || statuses.length === 0) {
+  if (!statuses) {
     return (
-      <div className="text-slate-500 text-sm py-8 text-center">
-        Waiting for the first regime read (~30 seconds after backend starts collecting)…
+      <div>
+        <SkeletonCard />
+        <SkeletonCard />
       </div>
+    );
+  }
+  if (statuses.length === 0) {
+    return (
+      <EmptyState
+        icon="⏳"
+        title="Waiting for the first regime read"
+        body="The backend is collecting bins. The first card will appear about 30 seconds after the collectors start receiving trades."
+      />
     );
   }
 

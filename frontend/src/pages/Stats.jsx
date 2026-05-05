@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchStats } from "../api.js";
+import { SkeletonCard } from "../components/LoadingSkeleton.jsx";
 
 export default function Stats() {
   const [data, setData] = useState(null);
@@ -13,7 +14,7 @@ export default function Stats() {
   }, [windowHours]);
 
   if (error) return <div className="text-red-400">{error}</div>;
-  if (!data) return <div className="text-slate-500 text-sm py-8 text-center">Loading…</div>;
+  if (!data) return <SkeletonCard heightCls="h-64" />;
 
   const cvTotal = data.cross_venue_confirmed + data.cross_venue_disagreed;
   const cvRate = cvTotal > 0 ? data.cross_venue_confirmed / cvTotal : 0;

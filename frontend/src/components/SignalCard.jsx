@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 const REGIME_COLORS = {
@@ -41,7 +41,7 @@ function fmtQty(q) {
   return q.toFixed(6);
 }
 
-export default function SignalCard({ sig }) {
+export default function SignalCard({ sig, isFresh = false }) {
   const cls = REGIME_COLORS[sig.regime] || "border-l-slate-500";
   const time = new Date(sig.timestamp_utc * 1000).toLocaleTimeString("en-US", { hour12: false });
   const conf = sig.adjusted_confidence ?? sig.confidence ?? 0;
@@ -50,6 +50,24 @@ export default function SignalCard({ sig }) {
   const headline = sig.event_label
     || REGIME_HEADLINES[sig.regime]
     || sig.regime.replace(/_/g, " ");
+
+  // Animation hook: cards rendered for the first time after their parent
+  // listens to a new SSE signal use the slide-in + cascade-pulse classes.
+  const [animClass, setAnimClass] = useState(
+    isFresh ? (cascade ? "animate-signal-in animate-cascade-pulse" : "animate-signal-in") : ""
+  );
+  useEffect(() => {
+    if (!isFresh) return;
+    // Haptic on cascade arrivals (Android Chrome supports navigator.vibrate;
+    // iOS Safari ignores). Guarded — single short pulse for cascades.
+    if (cascade && typeof navigator !== "undefined" && navigator.vibrate) {
+      try { navigator.vibrate([60, 40, 60]); } catch {}
+    } else if (typeof navigator !== "undefined" && navigator.vibrate) {
+      try { navigator.vibrate(40); } catch {}
+    }
+    const t = setTimeout(() => setAnimClass(""), 3500);
+    return () => clearTimeout(t);
+  }, [isFresh, cascade]);
 
   const buy = sig.chunk_buy_volume || 0;
   const sell = sig.chunk_sell_volume || 0;
@@ -63,16 +81,26 @@ export default function SignalCard({ sig }) {
   const askCls = lastAggr === "buy"  ? "text-rose-400 font-bold" : "text-slate-300";
   const bidCls = lastAggr === "sell" ? "text-rose-400 font-bold" : "text-slate-300";
 
+  const cascadeRibbonCls = cascade
+    ? "border-t-4 border-t-amber-400 bg-gradient-to-b from-amber-950/40 to-slate-900/70"
+    : "bg-slate-900/70";
+
   return (
     <Link
       to={`/signal/${sig.signal_id}`}
-      className={`block bg-slate-900/70 border-l-4 ${cls} rounded-r p-3 mb-2 hover:bg-slate-900 transition`}
+      className={`block ${cascadeRibbonCls} border-l-4 ${cls} rounded-r p-3 mb-2 hover:bg-slate-900
+                    transition relative overflow-hidden ${animClass}`}
     >
-      {/* Cascade ribbon if applicable */}
+      {/* Cascade watermark + ribbon if applicable */}
       {cascade && (
-        <div className="mb-2 text-[10px] uppercase tracking-wider font-bold text-amber-300">
-          {cascade.startsWith("CROSS_VENUE") ? "🌊🌊 cross-venue cascade" : "🌊 whale → herd cascade"}
-        </div>
+        <>
+          <div className="absolute top-1 right-2 text-3xl opacity-15 select-none pointer-events-none">
+            {cascade.startsWith("CROSS_VENUE") ? "🌊🌊" : "🌊"}
+          </div>
+          <div className="mb-2 text-[10px] uppercase tracking-wider font-bold text-amber-300">
+            {cascade.startsWith("CROSS_VENUE") ? "🌊🌊 cross-venue cascade" : "🌊 whale → herd cascade"}
+          </div>
+        </>
       )}
 
       <div className="flex items-start justify-between gap-2">
