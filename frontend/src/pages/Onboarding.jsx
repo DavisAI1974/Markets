@@ -6,9 +6,11 @@ export default function Onboarding() {
     <article className="prose prose-invert max-w-none text-slate-300 leading-relaxed">
       <h2 className="text-xl font-semibold text-slate-100">What is markets-watch?</h2>
       <p>
-        It's a system that detects what kind of <strong>energy state</strong> a market is in at any moment,
-        in real time, on streaming order-flow data. Every market is in one of five universal states.
-        We tell you which one and what to do about it.
+        markets-watch tells you, in real time, what kind of activity is happening in a market —
+        whether one big actor is dominating, whether a crowd is piling on, whether trading is
+        balanced and healthy, or whether something looks artificial. It watches the live order
+        flow on multiple exchanges at once and posts a signal whenever it detects something
+        worth your attention.
       </p>
 
       <div className="not-prose my-4 rounded border border-emerald-900/60 bg-emerald-950/30 p-3">
@@ -16,178 +18,184 @@ export default function Onboarding() {
           Get pushed when a high-conviction signal fires
         </h3>
         <p className="text-xs text-emerald-200/70 mb-2">
-          Subscribe to web-push notifications: WHALE / HERD / WASH transitions
-          and WHALE→HERD cascade events show up as a system notification within
-          seconds. Works on Android Chrome and on iOS Safari (after you
-          install the app via Share → Add to Home Screen).
+          Subscribe to push notifications: every detected event (big buyer / big seller /
+          buying or selling cascade / cross-venue cascade) shows up as a system notification
+          within seconds. Works on Android Chrome and on iOS Safari (after you install the
+          app via Share → Add to Home Screen).
         </p>
         <PushNotifyButton />
       </div>
-      <p>
-        The math behind it (the <strong>dipole</strong>) is the same operator that emerged across physics,
-        biology, chemistry, and geology. It works on markets because money is just energy in a different
-        form, and markets are conservation systems — capital flowing in equals capital flowing out.
+
+      <h2 className="text-xl font-semibold text-slate-100 mt-8">What you'll see in a signal</h2>
+      <p className="text-sm">
+        Every signal comes with the same anatomy:
       </p>
+      <ul className="text-sm space-y-1">
+        <li><strong>Event:</strong> plain-language description — "Big buyer detected", "Selling cascade", etc.</li>
+        <li><strong>Asset · Venue:</strong> which coin and which exchange.</li>
+        <li><strong>Price:</strong> last trade.</li>
+        <li><strong>Bid / Ask:</strong> current top-of-book quote. Whichever side was last
+            hit by a trade flashes red — bid red means someone just sold, ask red means
+            someone just bought.</li>
+        <li><strong>Buy / Sell volume:</strong> how much volume traded on the buy side
+            versus the sell side over the chunk window, in absolute coin units, plus a
+            stacked bar so it's visible at a glance.</li>
+        <li><strong>Trades:</strong> total number of individual trades over the chunk window.</li>
+        <li><strong>Confidence:</strong> how strongly the detector fired (0–100%), discounted
+            if the other venue disagrees, boosted if it confirms.</li>
+        <li><strong>Cross-venue:</strong> whether the same event is visible on the second venue
+            — confirmation makes the signal much higher conviction.</li>
+        <li><strong>Playbook:</strong> the suggested action for this event type.</li>
+      </ul>
 
       {/* ----------------------------------------------------------------- */}
-      <h2 className="text-xl font-semibold text-slate-100 mt-8">What the regime labels mean</h2>
+      <h2 className="text-xl font-semibold text-slate-100 mt-8">Event types</h2>
       <p className="text-sm">
-        Every chunk of market data (a regime-aware window of 10–30 one-minute bars) gets classified
-        into one of these states. Most chunks are equilibrium — that's normal market behavior.
-        The interesting moments are the transitions.
+        Every chunk of market data (a regime-aware window of 10–30 one-minute bars) is
+        classified into one of these. Most of the time markets are in healthy two-sided
+        trading — the interesting moments are the transitions.
       </p>
 
-      <Term color="blue" name="Equilibrium" formal="EQUILIBRIUM_TWO_SIDED">
-        <p><strong>Healthy two-sided trading.</strong> Money flowing both ways, balanced. Buyers and
-        sellers actively pushing back against each other.</p>
-        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> sit out — no edge to extract.
-        Unless we detect an extreme dipole within equilibrium (see "EQUILIBRIUM_EXTREME_DEMO" below),
-        in which case it's a mean-reversion candidate.</p>
+      <Term color="blue" name="Healthy two-sided" formal="EQUILIBRIUM_TWO_SIDED">
+        <p><strong>Buyers and sellers actively pushing back against each other.</strong> Volume
+        flows both ways, balanced. This is normal market behavior most of the time.</p>
+        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> sit out — no edge here unless
+        the flow becomes extremely one-sided within the chunk.</p>
       </Term>
 
-      <Term color="green" name="Whale ↑" formal="WHALE_UP">
-        <p><strong>One big buyer dominating</strong>, sustained over multiple minutes. Counter-flow
-        from sellers can't push back fast enough. Could be position cover, accumulation, or institutional
+      <Term color="green" name="Big buyer detected" formal="WHALE_UP">
+        <p><strong>One big buyer dominating</strong>, sustained over multiple minutes. Sellers
+        can't push back fast enough. Could be a position cover, accumulation, or institutional
         rotation.</p>
-        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> piggyback if you catch it early
-        (their flow keeps pushing price up). Get out of the way if late — whales eventually exhaust.
-        Watch for round-number price magnets where the whale's order may finish.</p>
+        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> piggyback if you catch it
+        early. Get out of the way if late — big buyers eventually finish. Watch for the buying
+        to exhaust near round-number price levels.</p>
       </Term>
 
-      <Term color="red" name="Whale ↓" formal="WHALE_DOWN">
-        <p><strong>One big seller dominating.</strong> Mirror image of Whale ↑.</p>
+      <Term color="red" name="Big seller detected" formal="WHALE_DOWN">
+        <p><strong>One big seller dominating.</strong> Mirror image of the big-buyer case.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> piggyback short if early.
-        Watch for capitulation bottom — whales' inventory eventually depletes.</p>
+        Watch for the seller's inventory to run out — that's typically the bottom.</p>
       </Term>
 
-      <Term color="orange" name="Herd ↑" formal="HERD_UP">
-        <p><strong>FOMO / panic buy.</strong> Mass aligned movement — many actors buying at the same
-        time. Logic out the window. Volume spikes, realized vol spikes, dipole goes very positive.</p>
-        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> follow with tight stops if you
-        catch it on the way up. Fade after overshoot — herd events usually retrace.</p>
+      <Term color="orange" name="Buying cascade" formal="HERD_UP">
+        <p><strong>FOMO / panic buy.</strong> Many actors aligned on the buy side at the same
+        time. Volume and volatility both spike.</p>
+        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> follow with tight stops if
+        you catch it on the way up. Fade after overshoot — these usually retrace.</p>
       </Term>
 
-      <Term color="rose" name="Herd ↓" formal="HERD_DOWN">
-        <p><strong>Panic sell / capitulation.</strong> Multi-actor selling cascade.</p>
-        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> do <strong>not</strong> catch
-        the falling knife. Wait for capitulation (volume + dipole peak), then fade after the worst
-        is over.</p>
+      <Term color="rose" name="Selling cascade" formal="HERD_DOWN">
+        <p><strong>Panic sell / capitulation.</strong> Multi-actor selling.</p>
+        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> do <strong>not</strong>
+        catch the falling knife. Wait for the sell pressure to peak and exhaust, then fade
+        once the worst is over.</p>
       </Term>
 
-      <Term color="yellow" name="Wash ⚠" formal="WASH_PAIRED">
-        <p><strong>Paired self-trades.</strong> Detected by anti-correlated H_a/H_b within tight
-        price range and low realized volatility. Manipulation, not real price discovery.</p>
+      <Term color="amber" name="Whale → Herd cascade" formal="WHALE_TO_HERD_*">
+        <p><strong>A big actor's flow tripped a crowd-style cascade in the same direction.</strong> The
+        first chunk classifies as a whale, the very next chunk classifies as a cascade with
+        no quiet in between. This is high-conviction — two independent signal types align.</p>
+        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> ride the cascade with a
+        tight stop. Exit on first sign of exhaustion (volume drops, buy/sell pressure flips).</p>
+      </Term>
+
+      <Term color="amber" name="Cross-venue cascade" formal="CROSS_VENUE_WHALE_HERD_*">
+        <p><strong>Same direction, both venues, two different signal types simultaneously.</strong>
+        One exchange shows a whale, the other shows a cascade, same direction, same wall-clock
+        window. This is the strongest event we emit.</p>
+        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> independent confirmation
+        across venues. Size accordingly. Tight stop.</p>
+      </Term>
+
+      <Term color="yellow" name="Wash pattern — skip" formal="WASH_PAIRED">
+        <p><strong>Paired self-trades.</strong> Tight price range, low volatility, suspicious
+        flow signature. Manipulation, not real price discovery.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> exclude. Do not trade.</p>
       </Term>
 
-      <Term color="gray" name="Depleted" formal="DEPLETED">
-        <p><strong>Market is asleep.</strong> Realized vol below activity floor or session-specific
-        baseline. Lunchtime lull, off-hours, weekends. The system can't do work — there's no flow
-        to ride.</p>
-        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> sit out. Wait for re-engagement.</p>
-      </Term>
-
-      <Term color="blue" name="Equilibrium-Extreme (demo)" formal="EQUILIBRIUM_EXTREME_DEMO">
-        <p><strong>Mean-reversion candidate within equilibrium.</strong> The market is in a healthy
-        two-sided state, but the dipole has spiked extreme (|dipole| {">"} 0.3) and volume is elevated
-        (vol_z {">"} 0.5). Per our autoresearch finding, these chunks tend to mean-revert at the next
-        chunk close.</p>
-        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> fade the dipole — go opposite
-        direction, hold one chunk (~30 minutes), exit at chunk close.</p>
-        <p className="text-xs text-yellow-400/70 italic mt-1">
-          NB: currently flagged "DEMO" because we're using it to populate the signal feed before
-          multi-day regime-transition data accumulates. Reverts to non-demo once production signals
-          flow naturally.
-        </p>
+      <Term color="gray" name="Quiet" formal="DEPLETED">
+        <p><strong>Market is asleep.</strong> Off-hours, lunch lulls, weekends. There's no flow
+        worth riding.</p>
+        <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> sit out. Wait for
+        activity to return.</p>
       </Term>
 
       {/* ----------------------------------------------------------------- */}
       <h2 className="text-xl font-semibold text-slate-100 mt-8">Other terms in the app</h2>
 
-      <Glossary term="Dipole">
-        The asymmetry between taker buy volume (H_a) and taker sell volume (H_b) within a chunk:
-        <code className="block font-mono text-sm bg-slate-950 p-2 rounded my-2">
-          dipole = (H_a − H_b) / (H_a + H_b)
-        </code>
-        Range −1 to +1. Positive means buyers were aggressive; negative means sellers were aggressive.
-        Same operator structure as in physics, biology, chemistry, geology.
+      <Glossary term="Bid / Ask">
+        The current top-of-book quote on the exchange. Bid = highest price someone is willing
+        to pay; Ask = lowest price someone is willing to sell at. Whichever side was just
+        traded against flashes red on the card.
       </Glossary>
 
       <Glossary term="Cross-venue confirmation">
-        We track the same asset on multiple venues (Coinbase, Kraken). When both venues' classifiers
-        report the <em>same</em> regime at the same wall-clock minute, the signal's confidence is
-        multiplied by 1.5×. When they disagree, multiplied by 0.5×. Disagreement often means a
-        single-venue event (e.g., a whale on one exchange) rather than a global market move.
+        We track the same asset on multiple venues (Coinbase, Kraken). When both venues
+        report the same kind of activity at the same wall-clock minute, the signal's confidence
+        is multiplied by 1.5×. When they disagree, multiplied by 0.5×. Disagreement often
+        means a single-venue event (e.g., a whale on one exchange) rather than a global
+        market move.
       </Glossary>
 
       <Glossary term="Confidence">
-        A 0–1 score combining (a) how strongly the classifier rules fired, and (b) the cross-venue
-        multiplier. Below 0.5 = weak signal, skip. 0.5–0.7 = moderate. Above 0.7 = strong.
-        Configure your minimum confidence threshold in the executor config.
+        A 0–100% score combining how strongly the detector rules fired with the cross-venue
+        multiplier. Below 50% = weak, skip. 50–70% = moderate. Above 70% = strong. Configure
+        your minimum confidence threshold in the executor config.
       </Glossary>
 
-      <Glossary term="PELT chunk">
-        We don't use fixed time bins. Instead, PELT (Pruned Exact Linear Time) change-point detection
-        finds natural regime boundaries in the price + flow series and chunks the data along those
-        boundaries. Chunks are typically 10–30 minutes long. Each chunk gets one regime label.
+      <Glossary term="Buy / Sell volume">
+        On every signal you'll see the absolute coin volume that traded on the aggressor-buy
+        side versus the aggressor-sell side over the chunk window, plus a stacked-bar visual.
+        High one-side share is the cleanest secondary discriminator after the regime label.
       </Glossary>
 
-      <Glossary term="Realized vol (rv)">
-        Standard deviation of log returns within a chunk. Reported in basis points (bp). Baseline
-        on BTC during quiet periods is around 4–5 bp per chunk; during volatile events it can
-        spike to 100+ bp.
-      </Glossary>
-
-      <Glossary term="Adjusted confidence">
-        confidence × cross_venue_multiplier, capped at [0, 1]. This is the number the executor's
-        risk gate compares against your `min_confidence` setting. Use this for thresholding.
+      <Glossary term="Trades">
+        The count of individual trades that hit the tape over the chunk window, regardless of
+        size. High trade count + low one-side share suggests many small actors (cascade);
+        low trade count + high one-side share suggests one or two big actors (whale).
       </Glossary>
 
       {/* ----------------------------------------------------------------- */}
       <h2 className="text-xl font-semibold text-slate-100 mt-8">FAQ</h2>
 
-      <FAQ q="Why is the signal feed empty most of the time?">
-        Most chunks are equilibrium — that's normal market behavior. Real WHALE / HERD / WASH transitions
-        are rare. The DEMO mode also emits signals for extreme-dipole equilibrium chunks
-        (mean-reversion candidates) so the feed has actionable content while we accumulate real
-        transitions across multiple days.
+      <FAQ q="Why is the signal feed quiet most of the time?">
+        Most market activity is healthy two-sided trading — that's the baseline. Real big-actor
+        events and cascades are rare, which is exactly why they're worth flagging when they
+        happen.
       </FAQ>
 
       <FAQ q="Should I trade every signal?">
-        No. The signals are research; the executor's risk gates filter them by your personal
-        thresholds (min confidence, asset whitelist, daily trade cap, etc.). For the first weeks
-        you should run the executor in <code>--dry-run</code> mode and just verify the gates fire
-        as you'd expect. Real-money trading requires a real-exchange adapter you write yourself,
-        not the paper adapter we ship.
+        No. The signals are research; your executor's risk gates filter them by your personal
+        thresholds (min confidence, asset whitelist, daily trade cap, etc.). For the first
+        weeks you should run the executor in <code>--dry-run</code> mode and just verify the
+        gates fire as you'd expect. Real-money trading requires a real-exchange adapter you
+        write yourself, not the paper adapter we ship.
       </FAQ>
 
       <FAQ q="What if Coinbase says one thing and Kraken says another?">
-        That's a <em>single-venue event</em>, and it's actually one of the most informative signals.
-        Cross-venue disagreement at the same wall-clock minute often means a whale specifically on
-        one exchange, or a venue-local technical anomaly. The system flags these with a 0.5× confidence
-        multiplier; consider raising your `min_confidence` if you want to skip them entirely.
+        That's a <em>single-venue event</em>, and it's actually one of the most informative
+        situations. Cross-venue disagreement at the same wall-clock minute often means a big
+        actor specifically on one exchange. The system flags these with a 0.5× confidence
+        multiplier; consider raising your minimum confidence if you want to skip them entirely.
       </FAQ>
 
       <FAQ q="Why are different coins on the same venue treated differently?">
         Each coin has its own fingerprint — different liquidity, different actor mix, different
         baseline volatility. The executor's risk config supports per-(asset, venue) overrides
-        on top of the default settings. The operator-discovery system also tracks which formula
-        predicts best for each (asset, venue) independently. ETH on Coinbase and ETH on Kraken
-        may end up using different operators.
+        on top of the default settings.
       </FAQ>
 
       <FAQ q="How do I know if it's working?">
         Open the Stats tab. It shows the rolling 24-hour (or 7d / 30d) signal counts, regime
-        distribution, cross-venue confirmation rate, and average confidence. Once we have multi-week
-        data, we'll add realized hit rate and P&L tracking too. Until then, the right bar is
-        "are the regime transitions matching things you know happened in the market?" — e.g., did
-        the system flag the volatility spike when CPI came out? When London opened?
+        distribution, cross-venue confirmation rate, average confidence, and (once enough
+        signals resolve) realized hit rate and total P&L.
       </FAQ>
 
       <FAQ q="Can I run my own executor?">
         Yes. Clone the repo, edit <code>my_config.json</code>, run{" "}
         <code>python -m executor.executor --config my_config.json --dry-run</code>. The repo
-        ships a paper-trading adapter; for real-money, write your own Exchange adapter (see
+        ships a paper-trading adapter; for real money, write your own Exchange adapter (see
         <code>executor/exchanges/base.py</code>). Your API keys never leave your machine.
       </FAQ>
 
@@ -198,14 +206,14 @@ export default function Onboarding() {
         <li>Closed group only. Don't share signals, screenshots, or links outside.</li>
         <li>Each member trades on their own exchange accounts; no pooled capital.</li>
         <li>Discord is the primary channel; this app is the visual companion.</li>
-        <li>If you find a bug, post in <code>#data-health</code>; if you want to discuss a signal
-            interpretation, use the threaded reply on the signal post in Discord.</li>
+        <li>If you find a bug, post in <code>#data-health</code>; if you want to discuss a
+            signal interpretation, use the threaded reply on the signal post in Discord.</li>
       </ul>
 
       <p className="text-slate-500 text-xs italic mt-8">
-        Multi-week validation of the underlying signal is still in progress. We're collecting data
-        24/7 via GitHub Actions; decisions to scale up position sizes or onboard more friends
-        depend on what that data shows.
+        Multi-week validation of the underlying signal is still in progress. We're collecting
+        data 24/7 via GitHub Actions; decisions to scale up position sizes or onboard more
+        members depend on what that data shows.
       </p>
     </article>
   );
@@ -219,6 +227,7 @@ const COLOR_BORDERS = {
   red: "border-red-700",
   orange: "border-orange-600",
   rose: "border-rose-700",
+  amber: "border-amber-600",
   yellow: "border-yellow-700",
   gray: "border-gray-600",
 };

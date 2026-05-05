@@ -86,11 +86,15 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                             qty = float(trade.get("qty", 0.0))
                             price = float(trade.get("price", last_mid or 0.0))
                             b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                                      "high": 0.0, "low": 0.0, "n_trades": 0})
+                                                      "high": 0.0, "low": 0.0, "n_trades": 0,
+                                                      "bid": 0.0, "ask": 0.0, "last_aggressor": ""})
+                            # Kraken: side IS the aggressor side directly
                             if side == "buy":
                                 b["buy"] += qty
+                                b["last_aggressor"] = "buy"
                             elif side == "sell":
                                 b["sell"] += qty
+                                b["last_aggressor"] = "sell"
                             if b["high"] == 0.0 or price > b["high"]:
                                 b["high"] = price
                             if b["low"] == 0.0 or price < b["low"]:
@@ -103,11 +107,16 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                             ask = ticker.get("ask")
                             if bid is None or ask is None:
                                 continue
-                            last_mid = 0.5 * (float(bid) + float(ask))
+                            bid_f = float(bid)
+                            ask_f = float(ask)
+                            last_mid = 0.5 * (bid_f + ask_f)
                             ts = int(time.time() / SECOND_BIN_S) * SECOND_BIN_S
                             b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                                      "high": 0.0, "low": 0.0, "n_trades": 0})
+                                                      "high": 0.0, "low": 0.0, "n_trades": 0,
+                                                      "bid": bid_f, "ask": ask_f})
                             b["mid"] = last_mid
+                            b["bid"] = bid_f
+                            b["ask"] = ask_f
 
                     elif channel == "heartbeat" or mtype == "pong":
                         continue

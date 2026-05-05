@@ -86,11 +86,19 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                         qty = float(msg["size"])
                         maker_side = msg["side"]
                         b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                                  "high": 0.0, "low": 0.0, "n_trades": 0})
+                                                  "high": 0.0, "low": 0.0, "n_trades": 0,
+                                                  "bid": 0.0, "ask": 0.0, "last_aggressor": ""})
+                        # Coinbase: maker_side is the resting side. If maker
+                        # was selling (resting on the offer), the aggressor
+                        # was buying = lifted the ask. Conversely, maker
+                        # buying (resting on the bid) means aggressor sold,
+                        # i.e. hit the bid.
                         if maker_side == "sell":
                             b["buy"] += qty
+                            b["last_aggressor"] = "buy"
                         elif maker_side == "buy":
                             b["sell"] += qty
+                            b["last_aggressor"] = "sell"
                         price = float(msg.get("price", last_mid or 0.0))
                         if b["high"] == 0.0 or price > b["high"]:
                             b["high"] = price
@@ -103,10 +111,15 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                         ask_s = msg.get("best_ask")
                         if bid_s is None or ask_s is None:
                             continue
-                        last_mid = 0.5 * (float(bid_s) + float(ask_s))
+                        bid_f = float(bid_s)
+                        ask_f = float(ask_s)
+                        last_mid = 0.5 * (bid_f + ask_f)
                         b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
-                                                  "high": 0.0, "low": 0.0, "n_trades": 0})
+                                                  "high": 0.0, "low": 0.0, "n_trades": 0,
+                                                  "bid": bid_f, "ask": ask_f})
                         b["mid"] = last_mid
+                        b["bid"] = bid_f
+                        b["ask"] = ask_f
 
                     now = time.time()
                     if now - last_save >= 30.0:

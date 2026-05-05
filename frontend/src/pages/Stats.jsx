@@ -99,8 +99,9 @@ export default function Stats() {
 
       {data.n_signals === 0 && (
         <p className="text-slate-500 text-sm italic mt-6">
-          No signals in this window yet. Most chunks are EQUILIBRIUM (baseline);
-          signals fire on regime transitions plus extreme-dipole equilibrium chunks.
+          No signals in this window yet. Most market activity is healthy
+          two-sided trading (baseline). Signals fire when we detect a big
+          buyer, big seller, buying or selling cascade, or wash pattern.
         </p>
       )}
     </div>

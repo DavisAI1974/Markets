@@ -83,3 +83,18 @@ export async function postPushUnsubscribe(endpoint) {
   if (!r.ok) throw new Error(`push/unsubscribe ${r.status}`);
   return r.json();
 }
+
+// ---------------------------------------------------------------------------
+// Manual-trade intent — records click-to-trade events for audit. The user
+// then executes on their own exchange; this endpoint never holds keys.
+// ---------------------------------------------------------------------------
+
+export async function postManualTradeIntent({ asset, venue, side, price, qty, note }) {
+  const r = await fetch(`${BASE}/api/manual-trade-intent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ asset, venue, side, price, qty, note: note || "" }),
+  });
+  if (!r.ok) throw new Error(`manual-trade-intent ${r.status}`);
+  return r.json();
+}

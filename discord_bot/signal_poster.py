@@ -65,6 +65,26 @@ async def on_ready():
         stream_listener.start()
 
 
+def _fmt_price(p):
+    if not p:
+        return "—"
+    if p >= 1000:
+        return f"${p:,.2f}"
+    if p >= 1:
+        return f"${p:.4f}"
+    return f"${p:.6f}"
+
+
+def _fmt_qty(q):
+    if not q:
+        return "0"
+    if q >= 1000:
+        return f"{q:,.1f}"
+    if q >= 1:
+        return f"{q:.3f}"
+    return f"{q:.6f}"
+
+
 def make_embed(sig: dict) -> discord.Embed:
     color, label, emoji = REGIME_STYLES.get(sig["regime"], REGIME_STYLES["UNKNOWN"])
     cascade_event = sig.get("cascade_event") or ""
@@ -73,32 +93,51 @@ def make_embed(sig: dict) -> discord.Embed:
         title_prefix = "🌊🌊 CROSS-VENUE CASCADE — "
     elif cascade_event.startswith("WHALE_TO_HERD"):
         title_prefix = "🌊 WHALE→HERD CASCADE — "
+
+    # Plain-language headline. Falls back to label if event_label not set.
+    headline = sig.get("event_label") or label
     e = discord.Embed(
-        title=f"{title_prefix}{emoji} {label} — {sig['asset']}-USD on {sig['venue']}",
+        title=f"{title_prefix}{emoji} {headline} — {sig['asset']}-USD on {sig['venue']}",
         description=sig.get("playbook", "(no playbook)"),
         color=color,
         timestamp=datetime.fromtimestamp(sig["timestamp_utc"], tz=timezone.utc),
     )
-    e.add_field(name="Dipole",       value=f"{sig['mean_dipole']:+.3f}", inline=True)
-    e.add_field(name="Realized vol", value=f"{sig['realized_vol'] * 1e4:.1f} bp", inline=True)
+
+    # Price + bid/ask (top-of-book quote at signal time)
+    price = sig.get("current_price", 0.0)
+    bid = sig.get("current_bid", 0.0)
+    ask = sig.get("current_ask", 0.0)
+    spread = (ask - bid) if (bid and ask) else 0.0
+    e.add_field(name="Price",
+                value=_fmt_price(price),
+                inline=True)
+    e.add_field(name="Bid / Ask",
+                value=(f"{_fmt_price(bid)} / {_fmt_price(ask)}"
+                       + (f"  (spread {_fmt_price(spread)})" if spread else ""))
+                      if (bid or ask) else "—",
+                inline=True)
     cvm = sig.get("cross_venue_multiplier", 1.0)
     cv_text = "✓ confirmed" if cvm > 1.0 else "✗ single-venue" if cvm < 1.0 else "—"
     conf = sig.get("adjusted_confidence", sig.get("confidence", 0.0))
     e.add_field(name="Confidence", value=f"{conf * 100:.0f}% ({cv_text})", inline=True)
 
-    # Aggressor split — buy_vol vs sell_vol within the chunk; high one-side
-    # share is the cleanest secondary discriminator after the regime label.
+    # Aggressor split — absolute coin volume + side breakdown.
     buy_v = sig.get("chunk_buy_volume", 0.0)
     sell_v = sig.get("chunk_sell_volume", 0.0)
     total_v = buy_v + sell_v
+    n_tr = sig.get("chunk_n_trades", 0)
     if total_v > 0:
         buy_pct = buy_v / total_v * 100
         e.add_field(
-            name="Aggressor split",
-            value=(f"**{buy_pct:.0f}% buy / {100 - buy_pct:.0f}% sell**  "
-                   f"({total_v:.2f} units total)"),
+            name="Buy / Sell volume",
+            value=(f"**{buy_pct:.0f}% buy / {100 - buy_pct:.0f}% sell**\n"
+                   f"buy {_fmt_qty(buy_v)}  ·  sell {_fmt_qty(sell_v)}\n"
+                   f"total {_fmt_qty(total_v)} {sig['asset']}"
+                   + (f"  ·  {n_tr} trades" if n_tr else "")),
             inline=False,
         )
+    elif n_tr:
+        e.add_field(name="Trades", value=f"{n_tr}", inline=False)
 
     if cascade_event:
         e.add_field(
@@ -106,11 +145,6 @@ def make_embed(sig: dict) -> discord.Embed:
             value=sig.get("cascade_detail") or cascade_event,
             inline=False,
         )
-
-    if sig.get("notes"):
-        e.add_field(name="Why",
-                    value="\n".join(f"• {n}" for n in sig["notes"][:3]),
-                    inline=False)
     e.set_footer(text=f"signal_id={sig.get('signal_id', '?')} · research, not advice")
     return e
 

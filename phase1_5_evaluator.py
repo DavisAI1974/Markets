@@ -52,6 +52,16 @@ def load_bars(bins_path: str) -> list[MarketBar]:
         mids = [b["mid"] for _, b in members if b["mid"] is not None]
         if not mids:
             continue
+        last_bid = 0.0
+        last_ask = 0.0
+        last_aggressor = ""
+        for _, bb in members:
+            if bb.get("bid"):
+                last_bid = float(bb["bid"])
+            if bb.get("ask"):
+                last_ask = float(bb["ask"])
+            if bb.get("last_aggressor"):
+                last_aggressor = str(bb["last_aggressor"])
         bars.append(MarketBar(
             ts=float(m_ts),
             close=float(mids[-1]), open_=float(mids[0]),
@@ -59,6 +69,8 @@ def load_bars(bins_path: str) -> list[MarketBar]:
             volume=float(sum(b["buy"] + b["sell"] for _, b in members)),
             buy_vol=float(sum(b["buy"] for _, b in members)),
             sell_vol=float(sum(b["sell"] for _, b in members)),
+            n_trades=int(sum(b.get("n_trades", 0) for _, b in members)),
+            bid=last_bid, ask=last_ask, last_aggressor=last_aggressor,
         ))
     return bars
 

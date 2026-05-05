@@ -61,7 +61,7 @@ export default function SignalFeed() {
       {filtered.length === 0 ? (
         <div className="text-slate-500 text-sm py-8 text-center italic">
           {signals?.length === 0
-            ? "No signals yet. Most chunks are Equilibrium — signals fire on transitions to actionable states or on extreme-dipole equilibrium chunks."
+            ? "No signals yet. Most market activity is healthy two-sided trading. Signals fire when we detect a big buyer, big seller, buying or selling cascade, or wash pattern."
             : "No signals match the current filters."}
         </div>
       ) : (

@@ -1,7 +1,32 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchSignalDetail } from "../api.js";
-import DipoleChart from "../components/DipoleChart.jsx";
+import PriceVolumeChart from "../components/PriceVolumeChart.jsx";
+
+const REGIME_HEADLINES = {
+  WHALE_UP:   "Big buyer detected",
+  WHALE_DOWN: "Big seller detected",
+  HERD_UP:    "Buying cascade",
+  HERD_DOWN:  "Selling cascade",
+  WASH_PAIRED:"Wash pattern — skip",
+  EQUILIBRIUM_TWO_SIDED: "Healthy two-sided",
+  DEPLETED:   "Market quiet",
+  UNKNOWN:    "Unclassified",
+};
+
+function fmtPrice(p) {
+  if (!p) return "—";
+  if (p >= 1000) return "$" + p.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (p >= 1)    return "$" + p.toFixed(4);
+  return "$" + p.toFixed(6);
+}
+
+function fmtQty(q) {
+  if (!q) return "0";
+  if (q >= 1000) return q.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (q >= 1)    return q.toFixed(3);
+  return q.toFixed(6);
+}
 
 export default function SignalDetail() {
   const { id } = useParams();
@@ -19,15 +44,37 @@ export default function SignalDetail() {
   const time = new Date(sig.timestamp_utc * 1000).toLocaleString();
   const conf = sig.adjusted_confidence ?? sig.confidence ?? 0;
   const cvm = sig.cross_venue_multiplier ?? 1.0;
+  const cascade = sig.cascade_event || "";
+  const headline = sig.event_label
+    || REGIME_HEADLINES[sig.regime]
+    || sig.regime.replace(/_/g, " ");
+
+  const buy = sig.chunk_buy_volume || 0;
+  const sell = sig.chunk_sell_volume || 0;
+  const total = buy + sell;
+  const buyPct = total > 0 ? (buy / total) * 100 : 50;
+  const nTrades = sig.chunk_n_trades || 0;
+  const price = sig.current_price || 0;
+  const bid = sig.current_bid || 0;
+  const ask = sig.current_ask || 0;
+  const lastAggr = sig.last_aggressor || "";
+  const askCls = lastAggr === "buy"  ? "text-rose-400 font-bold" : "text-slate-100";
+  const bidCls = lastAggr === "sell" ? "text-rose-400 font-bold" : "text-slate-100";
 
   return (
     <div className="space-y-4">
       <Link to="/signals" className="text-xs text-slate-400 hover:text-slate-200">← back to feed</Link>
 
       <div className="bg-slate-900 rounded-lg p-4 border border-slate-800">
-        <div className="flex items-start justify-between mb-2">
+        {cascade && (
+          <div className="mb-2 text-[11px] uppercase tracking-wider font-bold text-amber-300">
+            {cascade.startsWith("CROSS_VENUE") ? "🌊🌊 cross-venue cascade" : "🌊 whale → herd cascade"}
+          </div>
+        )}
+
+        <div className="flex items-start justify-between gap-2 mb-2">
           <div>
-            <div className="font-mono text-lg font-semibold">{sig.regime.replace(/_/g, " ")}</div>
+            <div className="text-lg font-semibold">{headline}</div>
             <div className="text-sm text-slate-400">{sig.asset}-USD · {sig.venue}</div>
           </div>
           <div className="text-right text-xs text-slate-500 font-mono">
@@ -35,28 +82,56 @@ export default function SignalDetail() {
             <div className="mt-1">conf {(conf * 100).toFixed(0)}%</div>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 text-xs">
-          <Metric label="mean dipole" value={sig.mean_dipole?.toFixed(3)} />
-          <Metric label="realized vol" value={(sig.realized_vol * 1e4).toFixed(1) + " bp"} />
-          <Metric label="chunk volume" value={sig.chunk_volume?.toFixed(2)} />
-          <Metric label="cross-venue mult" value={cvm.toFixed(2)} />
+
+        {/* Quote row — bid or ask flashes red on the side just hit */}
+        <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
+          <Metric label="Price" value={fmtPrice(price)} />
+          <div className="bg-slate-950 rounded px-2 py-1.5">
+            <div className="text-slate-500 text-[10px] uppercase tracking-wide">Bid / Ask</div>
+            <div className="font-mono text-sm mt-0.5">
+              {bid ? <span className={bidCls}>{fmtPrice(bid)}</span> : <span>—</span>}
+              <span className="text-slate-500"> / </span>
+              {ask ? <span className={askCls}>{fmtPrice(ask)}</span> : <span>—</span>}
+            </div>
+          </div>
+          <Metric
+            label="Cross-venue"
+            value={cvm > 1.0 ? "✓ confirmed" : cvm < 1.0 ? "✗ single-venue" : "—"}
+          />
         </div>
-        <div className="mt-3 p-3 bg-slate-950 rounded text-sm">
+
+        {/* Buy/sell stacked bar */}
+        {total > 0 && (
+          <div className="mt-4">
+            <div className="flex justify-between text-[10px] text-slate-400 uppercase tracking-wide mb-1">
+              <span>Buy / Sell volume on this chunk</span>
+              <span>{nTrades} trade{nTrades === 1 ? "" : "s"}</span>
+            </div>
+            <div className="flex h-3 rounded overflow-hidden bg-slate-800">
+              <div className="bg-emerald-500" style={{ width: `${buyPct}%` }} />
+              <div className="bg-rose-500"    style={{ width: `${100 - buyPct}%` }} />
+            </div>
+            <div className="flex justify-between text-[11px] mt-1 font-mono">
+              <span className="text-emerald-400">{buyPct.toFixed(0)}% buy · {fmtQty(buy)} {sig.asset}</span>
+              <span className="text-rose-400">{(100 - buyPct).toFixed(0)}% sell · {fmtQty(sell)} {sig.asset}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 p-3 bg-slate-950 rounded text-sm">
           <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Playbook</div>
           {sig.playbook}
         </div>
-        {sig.notes && sig.notes.length > 0 && (
-          <details className="mt-3 text-xs">
-            <summary className="text-slate-400 cursor-pointer">Why this fired</summary>
-            <ul className="mt-2 text-slate-300 list-disc pl-5 space-y-1">
-              {sig.notes.map((n, i) => <li key={i} className="font-mono">{n}</li>)}
-            </ul>
-          </details>
+
+        {sig.outcome_status === "resolved" && (
+          <div className={`mt-3 text-sm font-mono ${sig.outcome_realized_bps >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            outcome: {sig.outcome_realized_bps >= 0 ? "+" : ""}{sig.outcome_realized_bps.toFixed(1)} bps
+          </div>
         )}
       </div>
 
       <div className="bg-slate-900 rounded-lg p-4 border border-slate-800">
-        <DipoleChart data={data.chart} />
+        <PriceVolumeChart data={data.chart} />
       </div>
     </div>
   );

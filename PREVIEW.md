@@ -7,28 +7,27 @@ representations matching the actual code (`discord_bot/signal_poster.py`,
 
 ---
 
-## Discord channel post — regular WHALE_DOWN signal
+## Discord channel post — "Big seller detected" (WHALE_DOWN)
 
-What `signal_poster.py:make_embed` posts when a `WHALE_DOWN` signal
-arrives via SSE. Discord embeds render as a colored left-bar panel:
+Plain-language headline, no math jargon. Top-of-book bid/ask plus the
+absolute coin volume that traded on each side. No dipole, no realized
+vol, no autocorrelation — those are the detector's internal features and
+don't appear in the consumer-facing surfaces.
 
 ```
 ┌─[red bar]─────────────────────────────────────────────────┐
-│ 🔴 WHALE ↓ — ETH-USD on KR                                │
+│ 🔴 Big seller detected — ETH-USD on KR                    │
 │                                                           │
 │ One big seller dominating. Piggyback short if early; sit  │
 │ out if late. Watch for capitulation bottom.               │
-│ (aggressor split: 25% buy / 75% sell (243.76 units).)     │
 │                                                           │
-│   Dipole          Realized vol     Confidence             │
-│   -0.167          16.8 bp          53% (✗ single-venue)   │
+│   Price          Bid / Ask              Confidence        │
+│   $2,341.93     $2,341.86 / $2,341.95   53% (✗ single)   │
 │                                                           │
-│   Aggressor split                                         │
-│   25% buy / 75% sell  (243.76 units total)                │
-│                                                           │
-│   Why                                                     │
-│   • acl1=+0.20 + dipole=-0.17 (sustained)                 │
-│   • [session=us_active, baseline rv=0.00060]              │
+│   Buy / Sell volume                                       │
+│   25% buy / 75% sell                                      │
+│   buy 60.94  ·  sell 182.82                               │
+│   total 243.76 ETH  ·  47 trades                          │
 │                                                           │
 │ signal_id=8c2f3a1b4e7d · research, not advice  · 16:50 UTC│
 └───────────────────────────────────────────────────────────┘
@@ -135,41 +134,55 @@ screen. All screens use the existing dark slate theme
 
 ### Screen 1 — Live Status (`/`, default)
 
-`frontend/src/pages/LiveStatus.jsx` renders a top status row per
-(asset, venue), the regime card, and the live dipole chart.
+`LiveStatus.jsx` renders one regime card + live tape per (asset, venue).
+Each card is plain language + clickable bid/ask.
 
 ```
 ┌──────────────────────────────────────────────┐
-│ Live   Signals   History   Stats   About     │  ← top tab nav
+│ Live   Signals   History   Stats   About     │ ← top tab nav
+│                              [hide live tape] │
 ├──────────────────────────────────────────────┤
-│  ETH-USD  ·  Coinbase                        │
+│  ETH                                         │
 │  ┌──────────────────────────────────────┐    │
-│  │ HERD ↓ (panic)            🟤         │    │
-│  │ Confidence 97%   |   ✓ confirmed     │    │
-│  │ Dipole -0.21    |   rv 19 bp         │    │
-│  │ Aggressor: 40% buy / 60% sell        │    │
-│  │   (13.1k units)                      │    │
-│  │ 🌊 cascade from WHALE_DOWN (prior    │    │
-│  │   chunk)                             │    │
+│  │ ETH-USD  on Coinbase  [Selling cascade] │
+│  │                                      │    │
+│  │ Last price            Confidence     │    │
+│  │ $2,341.93             97%            │    │
+│  │                                      │    │
+│  │ ┌─ Sell · hit bid ─┐ ┌─ Buy · lift ─┐│    │
+│  │ │   $2,341.86 (red)│ │  $2,341.95   ││    │
+│  │ │  ← if last hit   │ │              ││    │
+│  │ └──────────────────┘ └──────────────┘│    │
+│  │ (each cell tap-target opens an order │    │
+│  │  ticket pre-filled with that price)  │    │
+│  │                                      │    │
+│  │ Buy / Sell · this chunk    47 trades │    │
+│  │ ████████████░░░░░░░░░░░░░░ 40% / 60% │    │
+│  │ 5,232 ETH buy  ·  7,849 ETH sell     │    │
+│  │                                      │    │
+│  │ cross-venue: ✓ confirmed   16:18 UTC │    │
 │  └──────────────────────────────────────┘    │
 │                                              │
-│  ETH-USD  ·  Kraken                          │
-│  ┌──────────────────────────────────────┐    │
-│  │ EQUILIBRIUM               🔵         │    │
-│  │ Confidence 65%   |   ✗ single-venue  │    │
-│  │ Dipole -0.06    |   rv 11 bp         │    │
-│  │ Aggressor: 49% buy / 51% sell        │    │
-│  └──────────────────────────────────────┘    │
-│                                              │
-│  ┌─ Dipole · last 60m ─────────────────┐    │
-│  │  +0.5┤                       ╱╲     │    │
-│  │     0├────────────────╱╲╱╲╲╱  ╲────│    │
-│  │  -0.5┤    ╲╱╲    ╲╲╱           ╲   │    │
-│  │      └────────────────────────────  │    │
-│  │       12:00      14:00      16:00   │    │
-│  └─────────────────────────────────────┘    │
+│  ┌─ Live tape · ETH-USD on Coinbase ───┐    │
+│  │ ETH-USD on Coinbase  $2,341.93   live│   │
+│  │ ┌─ Sell ─────┐ ┌── Buy ──────┐       │   │
+│  │ │ $2,341.86  │ │  $2,341.95  │       │   │
+│  │ └────────────┘ └─────────────┘       │   │
+│  │                                      │   │
+│  │ 16:18 ▌▌▌▌▌▌  ▌▌▌▌▌▌▌▌▌▌  18t 1.8k  │   │
+│  │ 16:17 ▌▌▌  ▌▌▌▌▌▌▌▌▌▌▌▌▌▌  31t 3.2k  │   │
+│  │ 16:16 ▌▌▌▌▌▌▌▌  ▌▌▌▌▌▌      14t 0.9k  │   │
+│  │ 16:15 ▌▌  ▌▌▌▌▌▌▌▌▌▌         9t 0.4k  │   │
+│  │       sell    buy       trades volume│   │
+│  └──────────────────────────────────────┘   │
 └──────────────────────────────────────────────┘
 ```
+
+**Click-to-trade**: each bid and ask is its own large tappable cell.
+Tapping opens an order-ticket modal with price locked, side locked,
+and a size input. Confirming records a manual-trade intent in the
+audit log; the user then executes on their own exchange. The PWA
+never holds API keys or places real orders directly.
 
 ### Screen 2 — Signal Feed (`/signals`)
 

@@ -51,6 +51,10 @@ class MarketBar:
     volume: float = 0.0
     buy_vol: float = 0.0
     sell_vol: float = 0.0
+    n_trades: int = 0    # count of individual trades within this bar
+    bid: float = 0.0     # latest top-of-book bid in this bar (0.0 if not set)
+    ask: float = 0.0     # latest top-of-book ask in this bar (0.0 if not set)
+    last_aggressor: str = ""  # "buy" if last trade lifted the offer, "sell" if hit the bid, "" if none
 
     @property
     def mid(self) -> float:

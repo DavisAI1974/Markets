@@ -112,6 +112,17 @@ class RegimeStatus:
     realized_vol: float
     chunk_window: tuple[int, int]
     last_update_utc: float
+    # Consumer-facing fields (added 1.5e): user-readable summary of what's
+    # happening on this chunk, with no math jargon. The classifier's
+    # internal features (mean_dipole, realized_vol) are not surfaced in
+    # the UI; these derived fields are.
+    current_price: float = 0.0
+    current_bid: float = 0.0
+    current_ask: float = 0.0
+    last_aggressor: str = ""             # "buy" | "sell" | "" — UI flashes the side that was hit
+    chunk_buy_volume: float = 0.0
+    chunk_sell_volume: float = 0.0
+    chunk_n_trades: int = 0
 
 
 @dataclass
@@ -148,6 +159,12 @@ class SignalEvent:
     # net direction; this is the magnitude).
     chunk_buy_volume: float = 0.0
     chunk_sell_volume: float = 0.0
+    chunk_n_trades: int = 0              # total individual trades on this chunk
+    current_price: float = 0.0           # latest close on this chunk
+    current_bid: float = 0.0             # latest top-of-book bid
+    current_ask: float = 0.0             # latest top-of-book ask
+    last_aggressor: str = ""             # "buy" | "sell" | "" — UI flashes the side that was hit
+    event_label: str = ""                # plain-language event description e.g. "Big buyer detected"
 
 
 # ---------------------------------------------------------------------------
@@ -155,14 +172,29 @@ class SignalEvent:
 # ---------------------------------------------------------------------------
 
 PLAYBOOKS: dict[str, str] = {
-    "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided market. No edge. Sit out unless dipole is extreme - then mean-revert.",
-    "WHALE_UP": "One big buyer dominating. Piggyback if early; get out of way if late. Watch for inventory exhaustion.",
+    "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided market. No edge. Sit out unless flow becomes extremely one-sided.",
+    "WHALE_UP": "One big buyer dominating. Piggyback if early; get out of the way if late. Watch for the buyer's order to finish.",
     "WHALE_DOWN": "One big seller dominating. Piggyback short if early; sit out if late. Watch for capitulation bottom.",
-    "HERD_UP": "FOMO/panic buy. Follow with tight stops; fade after overshoot.",
-    "HERD_DOWN": "Panic sell / capitulation. Fade after the worst is over; do NOT catch the falling knife.",
-    "WASH_PAIRED": "Wash-trade signature. Do not trade. Manipulation, no real price discovery.",
-    "DEPLETED": "Market is asleep (lunch / off-hours). Sit out - no work being done here.",
+    "HERD_UP": "FOMO / panic buy — many actors aligned on the buy side. Follow with tight stops; fade after overshoot.",
+    "HERD_DOWN": "Panic sell / capitulation — many actors aligned on the sell side. Fade after the worst is over; do NOT catch the falling knife.",
+    "WASH_PAIRED": "Wash-trade signature: paired self-trades, no real price discovery. Do not trade.",
+    "DEPLETED": "Market is asleep (lunch / off-hours). Sit out — there's no flow to ride.",
     "UNKNOWN": "Pattern doesn't match a known regime. Skip until classifier resolves.",
+}
+
+# Plain-language event labels for user-facing surfaces (Discord title, push
+# notification title, phone-app card). Deliberately free of math jargon —
+# no "dipole", no "realized vol", no "autocorrelation". Whatever happens,
+# the user sees a human sentence.
+EVENT_LABELS: dict[str, str] = {
+    "WHALE_UP":    "Big buyer detected",
+    "WHALE_DOWN":  "Big seller detected",
+    "HERD_UP":     "Buying cascade detected",
+    "HERD_DOWN":   "Selling cascade detected",
+    "WASH_PAIRED": "Wash-trade pattern detected — skip",
+    "DEPLETED":    "Market quiet — no activity",
+    "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided trading",
+    "UNKNOWN":     "Unclassified pattern",
 }
 
 # Cascade playbooks override the base regime playbook when WHALE→HERD
@@ -300,6 +332,20 @@ class SignalStore:
             mids = [b["mid"] for _, b in members if b["mid"] is not None]
             if not mids:
                 continue
+            # Latest bid/ask + last_aggressor side in the minute (members
+            # are time-sorted; iterate in order so the last non-empty value
+            # wins). Falls back to 0.0 / "" when collectors haven't been
+            # updated yet — UI handles missing values gracefully.
+            last_bid = 0.0
+            last_ask = 0.0
+            last_aggressor = ""
+            for _, bb in members:
+                if bb.get("bid"):
+                    last_bid = float(bb["bid"])
+                if bb.get("ask"):
+                    last_ask = float(bb["ask"])
+                if bb.get("last_aggressor"):
+                    last_aggressor = str(bb["last_aggressor"])
             bars.append(MarketBar(
                 ts=float(m_ts),
                 close=float(mids[-1]), open_=float(mids[0]),
@@ -307,6 +353,10 @@ class SignalStore:
                 volume=float(sum(b["buy"] + b["sell"] for _, b in members)),
                 buy_vol=float(sum(b["buy"] for _, b in members)),
                 sell_vol=float(sum(b["sell"] for _, b in members)),
+                n_trades=int(sum(b.get("n_trades", 0) for _, b in members)),
+                bid=last_bid,
+                ask=last_ask,
+                last_aggressor=last_aggressor,
             ))
         return bars
 
@@ -358,6 +408,9 @@ class SignalStore:
         latest_feat = feats[-1]
         latest_result = results[-1]
 
+        chunk_buy_v = float(sum(b.buy_vol for b in latest_chunk.bars))
+        chunk_sell_v = float(sum(b.sell_vol for b in latest_chunk.bars))
+        chunk_n_tr = int(sum(b.n_trades for b in latest_chunk.bars))
         status = RegimeStatus(
             asset=asset, venue=venue,
             regime=latest_result.regime.value,
@@ -369,6 +422,13 @@ class SignalStore:
             realized_vol=float(latest_feat.realized_vol),
             chunk_window=(latest_chunk.window_start, latest_chunk.window_end),
             last_update_utc=time.time(),
+            current_price=float(latest_chunk.bars[-1].close) if latest_chunk.bars else 0.0,
+            current_bid=float(latest_chunk.bars[-1].bid) if latest_chunk.bars else 0.0,
+            current_ask=float(latest_chunk.bars[-1].ask) if latest_chunk.bars else 0.0,
+            last_aggressor=str(latest_chunk.bars[-1].last_aggressor) if latest_chunk.bars else "",
+            chunk_buy_volume=chunk_buy_v,
+            chunk_sell_volume=chunk_sell_v,
+            chunk_n_trades=chunk_n_tr,
         )
 
         prev_status = self.current_status.get((asset, venue))
@@ -413,6 +473,11 @@ class SignalStore:
                     f"[CASCADE: WHALE→HERD same direction] "
                     + CASCADE_PLAYBOOKS.get(cascade_event, playbook))
             playbook = playbook + f"  ({split_note}.)"
+            event_label = EVENT_LABELS.get(status.regime, "Unclassified pattern")
+            if cascade_event:
+                event_label = (f"Whale-tripped {('buying' if cascade_event.endswith('_UP') else 'selling')} cascade"
+                                if cascade_event.startswith("WHALE_TO_HERD")
+                                else f"Cross-venue {('buying' if cascade_event.endswith('_UP') else 'selling')} cascade confirmed")
             sig = SignalEvent(
                 signal_id=str(uuid.uuid4())[:12],
                 asset=asset, venue=venue,
@@ -432,6 +497,12 @@ class SignalStore:
                 cascade_detail=cascade_detail,
                 chunk_buy_volume=chunk_buy,
                 chunk_sell_volume=chunk_sell,
+                chunk_n_trades=int(sum(b.n_trades for b in latest_chunk.bars)),
+                current_price=float(latest_chunk.bars[-1].close) if latest_chunk.bars else 0.0,
+                current_bid=float(latest_chunk.bars[-1].bid) if latest_chunk.bars else 0.0,
+                current_ask=float(latest_chunk.bars[-1].ask) if latest_chunk.bars else 0.0,
+                last_aggressor=str(latest_chunk.bars[-1].last_aggressor) if latest_chunk.bars else "",
+                event_label=event_label,
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -609,6 +680,8 @@ class SignalStore:
                     playbook = CROSS_VENUE_CASCADE_PLAYBOOKS.get(
                         cascade_event, "(no cascade playbook configured)"
                     ) + f"  ({split_note}.)"
+                    chunk_n_tr = int(sum(b.n_trades for b in primary_chunk.bars))
+                    cur_price = float(primary_chunk.bars[-1].close)
                     sig = SignalEvent(
                         signal_id=str(uuid.uuid4())[:12],
                         asset=asset,
@@ -629,7 +702,15 @@ class SignalStore:
                         cascade_detail=cascade_detail,
                         chunk_buy_volume=chunk_buy,
                         chunk_sell_volume=chunk_sell,
-                        entry_price=float(primary_chunk.bars[-1].close),
+                        chunk_n_trades=chunk_n_tr,
+                        current_price=cur_price,
+                        current_bid=float(primary_chunk.bars[-1].bid),
+                        current_ask=float(primary_chunk.bars[-1].ask),
+                        last_aggressor=str(primary_chunk.bars[-1].last_aggressor),
+                        event_label=("Cross-venue buying cascade confirmed"
+                                       if primary_dir == "UP"
+                                       else "Cross-venue selling cascade confirmed"),
+                        entry_price=cur_price,
                         expected_direction=+1 if primary_dir == "UP" else -1,
                     )
                     self.recent_signals.append(sig)
@@ -688,8 +769,11 @@ class SignalStore:
             "n_points": len(bars),
             "data": [
                 {"ts": b.ts, "price": b.close,
-                 "dipole": b.dipole, "ofi": b.ofi,
-                 "volume": b.volume}
+                 "bid": b.bid, "ask": b.ask,
+                 "buy_volume": b.buy_vol, "sell_volume": b.sell_vol,
+                 "n_trades": b.n_trades,
+                 "last_aggressor": b.last_aggressor,
+                 "high": b.high, "low": b.low}
                 for b in bars
             ],
         }
@@ -907,6 +991,73 @@ async def push_subscribe(body: PushSubscribeBody):
 async def push_unsubscribe(body: PushSubscribeBody):
     removed = remove_sub(body.endpoint)
     return {"ok": True, "removed": removed}
+
+
+# ---------------------------------------------------------------------------
+# Manual-trade intent: click-to-trade audit log
+# ---------------------------------------------------------------------------
+
+class ManualTradeIntentBody(BaseModel):
+    asset: str
+    venue: str
+    side: str        # "buy" | "sell"
+    price: float
+    qty: float
+    note: str = ""
+
+
+_MANUAL_INTENT_PATH = os.path.join(REPO_ROOT, "backend_manual_trade_intents.jsonl")
+
+
+@app.post("/api/manual-trade-intent", dependencies=[Depends(verify_token)])
+async def post_manual_trade_intent(body: ManualTradeIntentBody):
+    """Record a click-to-trade intent. The PWA never executes real orders —
+    the user has to place the trade themselves on their exchange. This
+    endpoint just persists the intent for audit (so users can see their own
+    trade-decision history) and emits it on the SSE stream so the user's
+    local executor (if running) can hook into the feed and place the order
+    on their exchange of choice."""
+    if body.side not in ("buy", "sell"):
+        return {"ok": False, "error": "side must be 'buy' or 'sell'"}
+    if body.qty <= 0 or body.price <= 0:
+        return {"ok": False, "error": "qty and price must be positive"}
+    intent = {
+        "intent_id": str(uuid.uuid4())[:12],
+        "asset": body.asset,
+        "venue": body.venue,
+        "side": body.side,
+        "price": body.price,
+        "qty": body.qty,
+        "notional": body.price * body.qty,
+        "note": body.note,
+        "ts_utc": time.time(),
+    }
+    try:
+        with open(_MANUAL_INTENT_PATH, "a") as f:
+            f.write(json.dumps(intent) + "\n")
+    except Exception as e:
+        print(f"[manual-intent] persist error: {e}", flush=True)
+    # Emit on the SSE stream so executors / Discord bot can react
+    await store.event_queue.put({"type": "manual_trade_intent", "data": intent})
+    return {"ok": True, **intent}
+
+
+@app.get("/api/manual-trade-intents", dependencies=[Depends(verify_token)])
+async def get_manual_trade_intents(limit: int = 50):
+    """List recent manual-trade intents (audit feed)."""
+    if not os.path.exists(_MANUAL_INTENT_PATH):
+        return {"intents": []}
+    intents = []
+    try:
+        with open(_MANUAL_INTENT_PATH) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    intents.append(json.loads(line))
+    except Exception as e:
+        return {"error": str(e), "intents": []}
+    intents.reverse()
+    return {"intents": intents[:limit]}
 
 
 @app.get("/api/stream", dependencies=[Depends(verify_token)])
