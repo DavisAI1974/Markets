@@ -26,6 +26,23 @@ export default function Onboarding() {
         <PushNotifyButton />
       </div>
 
+      <h2 className="text-xl font-semibold text-slate-100 mt-8">Practice vs Live mode</h2>
+      <p className="text-sm">
+        The header has a <strong>Practice / Live</strong> toggle. New users default to
+        Practice — every bid/ask tap simulates a fill against the current market with
+        a 25 bp fee, with no real money at risk. Open positions appear on the
+        <strong> Practice </strong> tab where you can watch unrealized P&L update against
+        the live mid and close at any time. Use this to learn the workflow and your own
+        reactions before flipping the toggle.
+      </p>
+      <p className="text-sm">
+        Live mode requires you to have your own executor running locally with API keys
+        for your exchange (Coinbase / Binance / Kraken / paper). Confirming a Live trade
+        records an intent on the central host that your executor reads off the live
+        stream and routes to your wallet. The central app never holds your keys —
+        capital and credentials stay with you.
+      </p>
+
       <h2 className="text-xl font-semibold text-slate-100 mt-8">What you'll see in a signal</h2>
       <p className="text-sm">
         Every signal comes with the same anatomy:

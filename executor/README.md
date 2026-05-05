@@ -131,9 +131,17 @@ The audit log records the gate decision for every signal, so you can debug
 
 ## Click-to-trade: manual orders from the PWA
 
-The phone app's bid/ask cells emit `manual_trade_intent` events on the
-SSE stream when a user taps to trade. The executor consumes those events
-in addition to auto-signals:
+The phone app has a header **Practice / Live** toggle. New users default
+to Practice — clicks simulate fills against the live bid/ask on the
+central host with a 25 bp fee, persist to a practice trades log, and
+appear on the Practice tab with running P&L. **The executor never sees
+practice intents** because the backend doesn't emit them on SSE. This
+lets users learn the workflow without the executor needing to be
+running and without any real-money risk.
+
+When the user flips to Live (with a confirm dialog), the same
+click-to-trade flow emits `manual_trade_intent` events on the SSE
+stream. The executor consumes those events in addition to auto-signals:
 
 - Side + price + qty come from the user's tap + ticket modal
 - The intent BYPASSES the auto-trading risk gates (the human already

@@ -8,6 +8,7 @@ import SignalDetail from "./pages/SignalDetail.jsx";
 import Onboarding from "./pages/Onboarding.jsx";
 import Stats from "./pages/Stats.jsx";
 import RegimeHistory from "./pages/RegimeHistory.jsx";
+import PracticeFeed from "./pages/PracticeFeed.jsx";
 
 export default function App() {
   const setStatuses = useStore((s) => s.setStatuses);
@@ -42,11 +43,15 @@ export default function App() {
           <Link to="/" className="font-mono text-base font-semibold tracking-tight text-slate-100">
             markets-watch
           </Link>
-          <ConnectionDot />
+          <div className="flex items-center gap-3">
+            <ModeToggle />
+            <ConnectionDot />
+          </div>
         </div>
         <nav className="mt-2 flex gap-3 text-sm overflow-x-auto">
           <NavTab to="/">Live</NavTab>
           <NavTab to="/signals">Signals</NavTab>
+          <NavTab to="/practice">Practice</NavTab>
           <NavTab to="/history">History</NavTab>
           <NavTab to="/stats">Stats</NavTab>
           <NavTab to="/about">About</NavTab>
@@ -58,6 +63,7 @@ export default function App() {
           <Route path="/signals" element={<SignalFeed />} />
           <Route path="/signal/:id" element={<SignalDetail />} />
           <Route path="/history" element={<RegimeHistory />} />
+          <Route path="/practice" element={<PracticeFeed />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/about" element={<Onboarding />} />
         </Routes>
@@ -90,5 +96,35 @@ function ConnectionDot() {
       className={`inline-block w-2 h-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`}
       title={connected ? "Connected (SSE live)" : "Disconnected"}
     />
+  );
+}
+
+/**
+ * Header mode toggle. Practice mode is default-ON for new users — users
+ * have to deliberately switch to live to put real money at risk.
+ */
+function ModeToggle() {
+  const practiceMode = useStore((s) => s.practiceMode);
+  const setPracticeMode = useStore((s) => s.setPracticeMode);
+  return (
+    <button
+      onClick={() => {
+        if (practiceMode) {
+          // Going live requires explicit confirmation
+          if (window.confirm("Switch to LIVE mode? Trades you confirm will be sent as real-money intents to your local executor / exchange. Make sure your executor is set up.")) {
+            setPracticeMode(false);
+          }
+        } else {
+          setPracticeMode(true);
+        }
+      }}
+      className={`text-[10px] uppercase tracking-wider font-bold rounded px-2 py-1
+                    ${practiceMode
+                      ? "bg-sky-700 text-sky-50 hover:bg-sky-600"
+                      : "bg-amber-700 text-amber-50 hover:bg-amber-600"}`}
+      title="Tap to toggle practice / live"
+    >
+      {practiceMode ? "🎯 Practice" : "⚠️ Live"}
+    </button>
   );
 }

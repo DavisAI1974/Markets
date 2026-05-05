@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { postManualTradeIntent } from "../api.js";
+import { useStore } from "../store.js";
 
 function fmtPrice(p) {
   if (!p) return "—";
@@ -23,6 +24,8 @@ const QTY_KEY = "marketsWatch.lastQty";   // remember last qty between clicks
  * (or wires their local executor to the audit feed).
  */
 export default function OrderTicketModal({ asset, venue, side, price, onClose, onSubmitted }) {
+  const practiceMode = useStore((s) => s.practiceMode);
+  const setPracticeMode = useStore((s) => s.setPracticeMode);
   const [qty, setQty] = useState(() => {
     const stored = localStorage.getItem(`${QTY_KEY}.${asset}`);
     return stored ? parseFloat(stored) : 0.1;
@@ -30,6 +33,7 @@ export default function OrderTicketModal({ asset, venue, side, price, onClose, o
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(null);     // null | { ok, signal_id?, error }
   const [note, setNote] = useState("");
+  const [confirmedLive, setConfirmedLive] = useState(false);  // double-confirm for live
 
   useEffect(() => {
     function onKey(e) { if (e.key === "Escape" && !submitting) onClose(); }
@@ -48,8 +52,9 @@ export default function OrderTicketModal({ asset, venue, side, price, onClose, o
       localStorage.setItem(`${QTY_KEY}.${asset}`, String(qty));
       const r = await postManualTradeIntent({
         asset, venue, side, price, qty, note,
+        practice: practiceMode,
       });
-      setDone({ ok: true, intent_id: r.intent_id });
+      setDone({ ok: true, intent_id: r.intent_id, practice: practiceMode, fill_price: r.fill_price });
       onSubmitted && onSubmitted(r);
     } catch (e) {
       setDone({ ok: false, error: String(e) });
@@ -62,7 +67,30 @@ export default function OrderTicketModal({ asset, venue, side, price, onClose, o
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && !submitting && onClose()}
     >
-      <div className="bg-slate-900 border border-slate-700 rounded-t-lg sm:rounded-lg w-full max-w-md p-4 shadow-2xl">
+      <div className={`bg-slate-900 border rounded-t-lg sm:rounded-lg w-full max-w-md p-4 shadow-2xl
+                         ${practiceMode ? "border-sky-700" : "border-amber-600"}`}>
+        {/* Mode banner — prominent so the user always knows what's at stake */}
+        <div className={`flex items-center justify-between rounded px-3 py-2 mb-3 text-xs font-bold
+                           ${practiceMode
+                             ? "bg-sky-950/60 border border-sky-700 text-sky-200"
+                             : "bg-amber-950/60 border border-amber-700 text-amber-200"}`}>
+          <span>
+            {practiceMode
+              ? "🎯 PRACTICE — simulated fill, no real money"
+              : "⚠️ LIVE — real money on your exchange"}
+          </span>
+          <button
+            onClick={() => { setPracticeMode(!practiceMode); setConfirmedLive(false); }}
+            disabled={submitting}
+            className={`rounded px-2 py-0.5 text-[10px] uppercase tracking-wide
+                          ${practiceMode
+                            ? "bg-sky-700 hover:bg-sky-600 text-white"
+                            : "bg-amber-700 hover:bg-amber-600 text-white"} disabled:opacity-40`}
+          >
+            switch to {practiceMode ? "live" : "practice"}
+          </button>
+        </div>
+
         {/* Header */}
         <div className="flex items-baseline justify-between mb-3">
           <div>
@@ -116,23 +144,49 @@ export default function OrderTicketModal({ asset, venue, side, price, onClose, o
           maxLength={200}
         />
 
-        {/* Disclaimer */}
+        {/* Disclaimer — different for practice vs live */}
         <p className="text-[10px] text-slate-500 mb-3 leading-relaxed">
-          markets-watch records this intent for your audit log. Execution stays
-          with your own exchange / executor — this app never holds API keys
-          and never places real orders directly. After confirming, place the
-          order on your exchange of choice using the price + size shown above.
+          {practiceMode
+            ? <>Practice mode simulates a fill against the current bid/ask with a 25 bp fee.
+                The trade tracks against live prices; close it from the Practice tab to see
+                realized P&L. No real money. Use this to learn the workflow.</>
+            : <>Live mode records the intent and emits it on the SSE stream so your local
+                executor (with your exchange API keys) can place the order on your wallet.
+                The central app never holds your keys. Make sure your executor is running
+                before you confirm.</>}
         </p>
+
+        {/* Live-mode double-confirm checkbox */}
+        {!practiceMode && !done?.ok && (
+          <label className="flex items-start gap-2 text-xs text-amber-200 mb-3">
+            <input
+              type="checkbox"
+              checked={confirmedLive}
+              onChange={(e) => setConfirmedLive(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              I understand this places a <strong>real order</strong> on my exchange,
+              and my executor is running locally with my API keys.
+            </span>
+          </label>
+        )}
 
         {/* Result banner */}
         {done && (
           <div className={`text-xs rounded px-2 py-2 mb-3 ${
             done.ok
-              ? "bg-emerald-950/60 border border-emerald-800 text-emerald-200"
+              ? (done.practice
+                  ? "bg-sky-950/60 border border-sky-700 text-sky-200"
+                  : "bg-emerald-950/60 border border-emerald-800 text-emerald-200")
               : "bg-rose-950/60 border border-rose-800 text-rose-200"
           }`}>
             {done.ok
-              ? <>Recorded. Intent id <code className="font-mono">{done.intent_id}</code>. Now go execute on your exchange.</>
+              ? (done.practice
+                  ? <>Practice fill at <code className="font-mono">${done.fill_price?.toFixed?.(4) ?? "—"}</code>.
+                      Open in the Practice tab to track + close.</>
+                  : <>Live intent recorded. Intent id <code className="font-mono">{done.intent_id}</code>.
+                      Your executor will pick it up off the SSE stream.</>)
               : <>Error: {done.error}</>}
           </div>
         )}
@@ -151,10 +205,17 @@ export default function OrderTicketModal({ asset, venue, side, price, onClose, o
             <button
               type="button"
               onClick={submit}
-              disabled={submitting || !qty || qty <= 0}
-              className={`flex-1 rounded ${sideColor} px-3 py-2 text-sm font-semibold text-white disabled:opacity-40`}
+              disabled={submitting || !qty || qty <= 0 || (!practiceMode && !confirmedLive)}
+              className={`flex-1 rounded px-3 py-2 text-sm font-semibold text-white disabled:opacity-40
+                            ${practiceMode
+                              ? "bg-sky-700 hover:bg-sky-600"
+                              : sideColor}`}
             >
-              {submitting ? "Recording…" : `Confirm ${side === "buy" ? "BUY" : "SELL"} ${qty} ${asset}`}
+              {submitting
+                ? "Submitting…"
+                : practiceMode
+                  ? `Practice ${side === "buy" ? "BUY" : "SELL"} ${qty} ${asset}`
+                  : `LIVE ${side === "buy" ? "BUY" : "SELL"} ${qty} ${asset}`}
             </button>
           )}
         </div>

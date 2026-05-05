@@ -1042,29 +1042,86 @@ async def push_unsubscribe(body: PushSubscribeBody):
 class ManualTradeIntentBody(BaseModel):
     asset: str
     venue: str
-    side: str        # "buy" | "sell"
+    side: str            # "buy" | "sell"
     price: float
     qty: float
     note: str = ""
+    practice: bool = True   # default ON for safety; set false from UI toggle for live
 
 
 _MANUAL_INTENT_PATH = os.path.join(REPO_ROOT, "backend_manual_trade_intents.jsonl")
+_PRACTICE_TRADE_PATH = os.path.join(REPO_ROOT, "backend_practice_trades.jsonl")
+_PRACTICE_FEE_BPS = 25.0    # symmetric simulated fee on practice fills
+
+
+def _persist_practice_trade(trade: dict) -> None:
+    try:
+        with open(_PRACTICE_TRADE_PATH, "a") as f:
+            f.write(json.dumps(trade) + "\n")
+    except Exception as e:
+        print(f"[practice] persist error: {e}", flush=True)
+
+
+def _rewrite_practice_trades(trades: list[dict]) -> None:
+    try:
+        tmp = _PRACTICE_TRADE_PATH + ".tmp"
+        with open(tmp, "w") as f:
+            for t in trades:
+                f.write(json.dumps(t) + "\n")
+        os.replace(tmp, _PRACTICE_TRADE_PATH)
+    except Exception as e:
+        print(f"[practice] rewrite error: {e}", flush=True)
+
+
+def _load_practice_trades() -> list[dict]:
+    if not os.path.exists(_PRACTICE_TRADE_PATH):
+        return []
+    out = []
+    with open(_PRACTICE_TRADE_PATH) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    out.append(json.loads(line))
+                except Exception:
+                    continue
+    return out
+
+
+def _current_quote(asset: str, venue: str) -> tuple[float, float, float]:
+    """Return (bid, ask, mid) from the latest tracked status; falls back
+    to the bins file if necessary. Returns (0,0,0) if not available."""
+    st = store.current_status.get((asset, venue))
+    if st and (st.current_bid or st.current_ask):
+        bid = st.current_bid or st.current_price
+        ask = st.current_ask or st.current_price
+        mid = st.current_price or (bid + ask) / 2
+        return bid, ask, mid
+    return 0.0, 0.0, 0.0
 
 
 @app.post("/api/manual-trade-intent", dependencies=[Depends(verify_token)])
 async def post_manual_trade_intent(body: ManualTradeIntentBody):
-    """Record a click-to-trade intent. The PWA never executes real orders —
-    the user has to place the trade themselves on their exchange. This
-    endpoint just persists the intent for audit (so users can see their own
-    trade-decision history) and emits it on the SSE stream so the user's
-    local executor (if running) can hook into the feed and place the order
-    on their exchange of choice."""
+    """Record a click-to-trade intent.
+
+    practice=True (default): simulate the fill against the current
+    bid/ask on the central host with a 25 bp symmetric fee, persist to
+    the practice trades log, and return the simulated fill. NO real
+    exchange call. NO SSE emit (executor doesn't see it). Lets users
+    learn the workflow with no money at risk.
+
+    practice=False: persist to the manual-intent audit log and emit on
+    the SSE stream so the user's local executor (configured for their
+    exchange) can route to their wallet.
+    """
     if body.side not in ("buy", "sell"):
         return {"ok": False, "error": "side must be 'buy' or 'sell'"}
     if body.qty <= 0 or body.price <= 0:
         return {"ok": False, "error": "qty and price must be positive"}
-    intent = {
-        "intent_id": str(uuid.uuid4())[:12],
+
+    intent_id = str(uuid.uuid4())[:12]
+    base = {
+        "intent_id": intent_id,
         "asset": body.asset,
         "venue": body.venue,
         "side": body.side,
@@ -1073,20 +1130,44 @@ async def post_manual_trade_intent(body: ManualTradeIntentBody):
         "notional": body.price * body.qty,
         "note": body.note,
         "ts_utc": time.time(),
+        "practice": body.practice,
     }
+
+    if body.practice:
+        # Fill against current bid (sell) or ask (buy); fall back to
+        # clicked price if no live quote available.
+        bid, ask, mid = _current_quote(body.asset, body.venue)
+        fill_price = (ask if body.side == "buy" else bid) or body.price
+        notional = fill_price * body.qty
+        fee_usd = notional * (_PRACTICE_FEE_BPS / 10000.0)
+        trade = {
+            **base,
+            "kind": "practice",
+            "status": "open",
+            "fill_price": float(fill_price),
+            "fees_usd": float(fee_usd),
+            "fee_bps": _PRACTICE_FEE_BPS,
+            "exit_price": 0.0,
+            "exit_ts_utc": 0.0,
+            "realized_pnl_usd": 0.0,
+        }
+        _persist_practice_trade(trade)
+        return {"ok": True, **trade}
+
+    # Live (real money) path: persist to audit log + emit on SSE for
+    # the user's own executor to handle.
     try:
         with open(_MANUAL_INTENT_PATH, "a") as f:
-            f.write(json.dumps(intent) + "\n")
+            f.write(json.dumps(base) + "\n")
     except Exception as e:
         print(f"[manual-intent] persist error: {e}", flush=True)
-    # Emit on the SSE stream so executors / Discord bot can react
-    await store.event_queue.put({"type": "manual_trade_intent", "data": intent})
-    return {"ok": True, **intent}
+    await store.event_queue.put({"type": "manual_trade_intent", "data": base})
+    return {"ok": True, **base}
 
 
 @app.get("/api/manual-trade-intents", dependencies=[Depends(verify_token)])
 async def get_manual_trade_intents(limit: int = 50):
-    """List recent manual-trade intents (audit feed)."""
+    """List recent live manual-trade intents (real-money audit feed)."""
     if not os.path.exists(_MANUAL_INTENT_PATH):
         return {"intents": []}
     intents = []
@@ -1100,6 +1181,71 @@ async def get_manual_trade_intents(limit: int = 50):
         return {"error": str(e), "intents": []}
     intents.reverse()
     return {"intents": intents[:limit]}
+
+
+@app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
+async def get_practice_trades(limit: int = 100):
+    """List practice trades. Auto-marks open positions to current
+    market mid on read so the running P&L is fresh."""
+    trades = _load_practice_trades()
+    # Mark to market: for any "open" practice trade, compute unrealized
+    # P&L against the current mid. (Doesn't persist; just decorates.)
+    for t in trades:
+        if t.get("status") == "open":
+            _, _, mid = _current_quote(t["asset"], t["venue"])
+            if mid > 0:
+                signed = +1 if t["side"] == "buy" else -1
+                t["mark_price"] = mid
+                t["unrealized_pnl_usd"] = signed * (mid - t["fill_price"]) * t["qty"] - t["fees_usd"]
+    trades.reverse()
+    # Aggregate stats
+    closed = [t for t in trades if t.get("status") == "closed"]
+    n_wins = sum(1 for t in closed if t.get("realized_pnl_usd", 0) > 0)
+    total_realized = sum(t.get("realized_pnl_usd", 0) for t in closed)
+    return {
+        "trades": trades[:limit],
+        "n_open": sum(1 for t in trades if t.get("status") == "open"),
+        "n_closed": len(closed),
+        "win_rate": (n_wins / len(closed)) if closed else None,
+        "total_realized_pnl_usd": float(total_realized),
+    }
+
+
+class PracticeCloseBody(BaseModel):
+    intent_id: str
+
+
+@app.post("/api/practice-trade/close", dependencies=[Depends(verify_token)])
+async def close_practice_trade(body: PracticeCloseBody):
+    """Manually close an open practice trade at current market mid + fee."""
+    trades = _load_practice_trades()
+    target = None
+    for t in trades:
+        if t.get("intent_id") == body.intent_id and t.get("status") == "open":
+            target = t
+            break
+    if target is None:
+        return {"ok": False, "error": "trade not found or already closed"}
+    bid, ask, mid = _current_quote(target["asset"], target["venue"])
+    if mid <= 0:
+        return {"ok": False, "error": "no live quote to mark against"}
+    # Exit at the opposite side: if we bought, sell at bid; if we sold, buy at ask
+    exit_price = bid if target["side"] == "buy" else ask
+    if exit_price <= 0:
+        exit_price = mid
+    notional_in = target["fill_price"] * target["qty"]
+    notional_out = exit_price * target["qty"]
+    signed = +1 if target["side"] == "buy" else -1
+    gross_pnl = signed * (exit_price - target["fill_price"]) * target["qty"]
+    exit_fee = notional_out * (_PRACTICE_FEE_BPS / 10000.0)
+    realized = gross_pnl - target["fees_usd"] - exit_fee
+    target["status"] = "closed"
+    target["exit_price"] = float(exit_price)
+    target["exit_ts_utc"] = time.time()
+    target["fees_usd"] = float(target["fees_usd"] + exit_fee)
+    target["realized_pnl_usd"] = float(realized)
+    _rewrite_practice_trades(trades)
+    return {"ok": True, **target}
 
 
 @app.get("/api/stream", dependencies=[Depends(verify_token)])

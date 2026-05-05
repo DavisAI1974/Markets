@@ -97,12 +97,32 @@ export async function postPushUnsubscribe(endpoint) {
 // then executes on their own exchange; this endpoint never holds keys.
 // ---------------------------------------------------------------------------
 
-export async function postManualTradeIntent({ asset, venue, side, price, qty, note }) {
+export async function postManualTradeIntent({ asset, venue, side, price, qty, note, practice }) {
   const r = await fetch(`${BASE}/api/manual-trade-intent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ asset, venue, side, price, qty, note: note || "" }),
+    body: JSON.stringify({
+      asset, venue, side, price, qty,
+      note: note || "",
+      practice: practice !== false,   // default true — practice unless explicitly false
+    }),
   });
   if (!r.ok) throw new Error(`manual-trade-intent ${r.status}`);
+  return r.json();
+}
+
+export async function fetchPracticeTrades(limit = 100) {
+  const r = await fetch(`${BASE}/api/practice-trades?limit=${limit}`);
+  if (!r.ok) throw new Error(`practice-trades ${r.status}`);
+  return r.json();
+}
+
+export async function closePracticeTrade(intentId) {
+  const r = await fetch(`${BASE}/api/practice-trade/close`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ intent_id: intentId }),
+  });
+  if (!r.ok) throw new Error(`practice-trade/close ${r.status}`);
   return r.json();
 }
