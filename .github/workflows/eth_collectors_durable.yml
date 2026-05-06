@@ -1,8 +1,10 @@
 name: ETH Collectors (durable)
 
-# Runs ETH-USD collectors on Coinbase + Kraken on GitHub's compute,
-# independent of any local device. Persists bins to the `data/eth-bins`
-# branch via force-push (cumulative state, no need for history).
+# Runs ETH-USD spot collectors on Coinbase + Kraken AND ETH perpetual
+# futures collectors on Binance USDT-M and Kraken Futures, on GitHub's
+# compute, independent of any local device. Persists bins to the
+# `data/eth-bins` branch via force-push (cumulative state, no need for
+# history).
 #
 # Schedule: every 6 hours. Each run collects for 5h50m, leaving ~10 min
 # gap before next scheduled run. Public repo = unlimited minutes.
@@ -21,7 +23,9 @@ on:
   # Push trigger restricted to the workflow file itself so unrelated commits
   # don't fire collectors. Used to bootstrap first run.
   push:
-    branches: [claude/new-session-o3vnm]
+    branches:
+      - claude/new-session-o3vnm
+      - claude/continue-phase-2-pipeline-UFiGY
     paths:
       - '.github/workflows/eth_collectors_durable.yml'
 
@@ -41,7 +45,7 @@ jobs:
       - name: Checkout code branch
         uses: actions/checkout@v4
         with:
-          ref: claude/new-session-o3vnm
+          ref: claude/continue-phase-2-pipeline-UFiGY
           fetch-depth: 0   # need full history to access data branch
 
       - name: Set up Python
@@ -59,6 +63,8 @@ jobs:
             git fetch origin data/eth-bins
             git checkout origin/data/eth-bins -- eth_coinbase_bins.json 2>/dev/null || echo "[restore] no eth_coinbase_bins.json on data branch yet"
             git checkout origin/data/eth-bins -- eth_kraken_bins.json 2>/dev/null || echo "[restore] no eth_kraken_bins.json on data branch yet"
+            git checkout origin/data/eth-bins -- eth_binance_perp_bins.json 2>/dev/null || echo "[restore] no eth_binance_perp_bins.json on data branch yet"
+            git checkout origin/data/eth-bins -- eth_kraken_perp_bins.json 2>/dev/null || echo "[restore] no eth_kraken_perp_bins.json on data branch yet"
           else
             echo "[restore] data branch does not exist; first run, starting fresh"
           fi
@@ -66,8 +72,10 @@ jobs:
 
       - name: Connectivity check
         run: |
-          curl -sS --max-time 5 -o /dev/null -w "Coinbase WS: %{http_code}\n" https://ws-feed.exchange.coinbase.com/ || true
-          curl -sS --max-time 5 -o /dev/null -w "Kraken WS:   %{http_code}\n" https://ws.kraken.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Coinbase WS:     %{http_code}\n" https://ws-feed.exchange.coinbase.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Kraken spot WS:  %{http_code}\n" https://ws.kraken.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Kraken fut WS:   %{http_code}\n" https://futures.kraken.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Binance fstream: %{http_code}\n" https://fstream.binance.com/ || true
 
       - name: Run ETH collectors in parallel
         timeout-minutes: 350
@@ -78,21 +86,33 @@ jobs:
           CB_PID=$!
           python kraken_eth_collector.py --duration $DURATION --bins-path eth_kraken_bins.json > /tmp/kr_eth.log 2>&1 &
           KR_PID=$!
-          echo "[run] CB PID=$CB_PID, KR PID=$KR_PID"
+          python binance_ethusdt_perp_collector.py --duration $DURATION --bins-path eth_binance_perp_bins.json > /tmp/bn_eth_perp.log 2>&1 &
+          BN_PID=$!
+          python kraken_ethusd_perp_collector.py --duration $DURATION --bins-path eth_kraken_perp_bins.json > /tmp/kr_eth_perp.log 2>&1 &
+          KRP_PID=$!
+          echo "[run] CB PID=$CB_PID, KR PID=$KR_PID, BN-perp PID=$BN_PID, KR-perp PID=$KRP_PID"
           wait $CB_PID; CB_EXIT=$?
           wait $KR_PID; KR_EXIT=$?
-          echo "[run] CB exit=$CB_EXIT, KR exit=$KR_EXIT"
+          wait $BN_PID; BN_EXIT=$?
+          wait $KRP_PID; KRP_EXIT=$?
+          echo "[run] CB exit=$CB_EXIT, KR exit=$KR_EXIT, BN-perp exit=$BN_EXIT, KR-perp exit=$KRP_EXIT"
           echo ""
           echo "=== Coinbase ETH log tail ==="
           tail -30 /tmp/cb_eth.log
           echo ""
           echo "=== Kraken ETH log tail ==="
           tail -30 /tmp/kr_eth.log
+          echo ""
+          echo "=== Binance ETH-PERP log tail ==="
+          tail -30 /tmp/bn_eth_perp.log
+          echo ""
+          echo "=== Kraken ETH-PERP log tail ==="
+          tail -30 /tmp/kr_eth_perp.log
 
       - name: Bin file stats
         if: always()
         run: |
-          for f in eth_coinbase_bins.json eth_kraken_bins.json; do
+          for f in eth_coinbase_bins.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json; do
             if [ -f "$f" ]; then
               SIZE=$(stat -c%s "$f")
               N_BINS=$(python -c "import json,sys; print(len(json.load(open(sys.argv[1]))))" "$f" 2>/dev/null || echo "?")
@@ -110,6 +130,8 @@ jobs:
           mkdir -p /tmp/bins
           cp eth_coinbase_bins.json /tmp/bins/ 2>/dev/null || true
           cp eth_kraken_bins.json /tmp/bins/ 2>/dev/null || true
+          cp eth_binance_perp_bins.json /tmp/bins/ 2>/dev/null || true
+          cp eth_kraken_perp_bins.json /tmp/bins/ 2>/dev/null || true
 
           # Switch to orphan data branch (force fresh, no history)
           git checkout --orphan data/eth-bins-tmp
@@ -118,9 +140,11 @@ jobs:
           # Restore bins
           cp /tmp/bins/eth_coinbase_bins.json . 2>/dev/null || true
           cp /tmp/bins/eth_kraken_bins.json . 2>/dev/null || true
+          cp /tmp/bins/eth_binance_perp_bins.json . 2>/dev/null || true
+          cp /tmp/bins/eth_kraken_perp_bins.json . 2>/dev/null || true
 
-          if [ -f eth_coinbase_bins.json ] || [ -f eth_kraken_bins.json ]; then
-            git add eth_coinbase_bins.json eth_kraken_bins.json 2>/dev/null || true
+          if [ -f eth_coinbase_bins.json ] || [ -f eth_kraken_bins.json ] || [ -f eth_binance_perp_bins.json ] || [ -f eth_kraken_perp_bins.json ]; then
+            git add eth_coinbase_bins.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json 2>/dev/null || true
             git commit -m "ETH bins update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/eth-bins-tmp:data/eth-bins
             echo "[commit] pushed to data/eth-bins"
