@@ -583,3 +583,136 @@ Sample output from the current 12.83h corpus:
 
 Rebuild after each GHA cycle (LAUNCH_PLAYBOOK §1.6 cron entry). The
 backend hot-reloads via mtime, no restart required.
+
+---
+
+## Third pass — 2026-05-06, ~50.7h corpus
+
+The GHA workflow advanced from 12.83h to 50.7h between passes (~4×).
+Snapshot taken at `origin/data/eth-bins` commit `bec58f5` ("ETH bins
+update 2026-05-06T15:31:17Z"). Same reproducer as before plus
+`--session-baselines --herd-rescue` so per-session-phase baselines and
+borderline HERD rescue are exercised.
+
+### Gate-status table
+
+| Gate | CB-ETH | KR-ETH | Δ from second pass |
+|---|---|---|---|
+| **G** classifier diversity | **FAIL** (6 classes, modal **80.8%**) | **PASS** (6 classes, modal 65.2%) | CB worsened (modal 73.3%→80.8%); KR holds |
+| **H** cross-venue agreement | **FAIL** (59.4% over 2451 minutes) | — | climbed 50.6%→59.4%; **0.6 pp shy of 60% threshold** |
+| **I** per-regime forward predictive R² | **PASS** | **PASS** | both still pass; **CB-ETH WHALE_UP momentum result did not survive 4× more data** — see below |
+
+`G + H + I` still does NOT pass. Gate G has now flipped CB → KR → KR
+across passes — KR-ETH stabilizing as the diverse-classifier venue, CB
+becoming progressively more equilibrium-dominated as more low-activity
+hours enter the window.
+
+### Gate I detail at lag k=1
+
+CB-ETH:
+
+| Regime | n | r | R² | p | significant? | Δ from pass 2 |
+|---|---:|---:|---:|---:|:-:|---|
+| EQUILIBRIUM_TWO_SIDED | 125 | -0.117 | 0.014 | 0.192 | no | sign flipped (+0.054→-0.117), still insig |
+| **WHALE_DOWN**        |   8 | **-0.674** | **0.455** | **0.025** | **yes (mean-revert)** | new — n was 1 |
+| **WHALE_UP**          |  15 | +0.289 | 0.084 | **0.276** | **NO LONGER SIG** | n=5→15, p=0.039→0.276 |
+| HERD_DOWN             |   3 | -0.780 | 0.608 | 0.213 | no | n was 6, lost significance |
+| UNKNOWN               |   3 | +0.994 | 0.988 | 0.000 | yes (n=3, ignore) | spurious — too small |
+| HERD_UP               |   1 | — | — | — | n too small | new — first HERD_UP |
+
+KR-ETH:
+
+| Regime | n | r | R² | p | significant? | Δ from pass 2 |
+|---|---:|---:|---:|---:|:-:|---|
+| EQUILIBRIUM_TWO_SIDED | 100 | -0.205 | 0.042 | **0.038** | yes | newly significant; mean-revert tilt |
+| **WHALE_UP**          |  40 | **-0.398** | **0.159** | **0.007** | **yes (mean-revert)** | n=13→40, sign held, p stronger |
+| HERD_UP               |   8 | -0.558 | 0.311 | 0.100 | borderline | n=2→8, near-significant mean-revert |
+| WHALE_DOWN            |   4 | +0.316 | 0.100 | 0.638 | no | n=1→4 |
+| UNKNOWN, DEPLETED     |   1, 1 | — | — | — | n too small | — |
+
+### Headline findings — what survived more data, what didn't
+
+**1. The CB-ETH WHALE_UP "momentum" result from pass 2 was a
+small-sample artifact.** Pass 2 reported n=5, r=+0.77, p=0.039 — the
+basis for the "venue-divergent edge sign" interpretation in the
+previous handoff. With n=15 it's r=+0.289, p=0.276 — **not
+significant**. This is exactly the failure mode pass 2 flagged
+(interpretation #2 in pass 2's "WHALE r-sign divergence" section), and
+the data resolved it. **Treat the venue-divergent-by-direction story
+as withdrawn until further data either restores it or replaces it.**
+
+**2. KR-ETH WHALE_UP fade is the most robust signal in the corpus.**
+n more than tripled (13→40), direction held (mean-reversion),
+significance strengthened (p 0.005→0.007 at higher n; r=−0.398).
+Three passes, three confirmations. This is the cell most defensibly
+ready to wire as a real trade signal in the executor.
+
+**3. CB-ETH WHALE_DOWN newly significant at n=8** (r=−0.674,
+p=0.025). Different signal type from WHALE_UP — whales selling on
+Coinbase show mean-reversion, not momentum. n still small; flag as
+suggestive, not confirmed.
+
+**4. First cross-venue WHALE+HERD simultaneity captured.** Pass 1 and
+2 reported "no cross-venue WHALE+HERD simultaneity"; this pass shows
+CB-ETH WHALE_UP @ chunk 129 co-occurring with KR-ETH HERD_UP @ chunk
+130 in the same wall-clock window (UP direction). Single event, but
+the `_emit_cross_venue_cascades` path now has a real payload to fire
+on. Watch for this becoming repeating vs remaining a one-off.
+
+**5. Single-venue WHALE→HERD cascades on KR-ETH up to 3 events** (was
+1 in pass 2), all UP-direction, all single-chunk HERD runs. CB-ETH
+no longer shows the 5-chunk HERD_DOWN run from pass 2; that segment
+appears to have re-segmented under the larger corpus's PELT —
+revisit if it returns.
+
+**6. F6 cross-venue confirmation rate ~60% both ways.** CB chunks
+KR-confirmed: 92/156 (59%); KR chunks CB-confirmed: 93/155 (60%). The
+1.5× / 0.5× confidence multiplier is genuinely in play half the time.
+
+### What this changes for Phase 2 / executor wiring
+
+- **Promote KR-ETH WHALE_UP to executor signal** (n=40, p=0.007,
+  consistent direction across 3 passes, mean-revert framing). This
+  is the first cell that meets a reasonable real-money threshold.
+  Practice mode should already surface it via the playbook registry;
+  the upgrade is moving from "show the signal" to "act on it" once a
+  user opts into live mode for that specific cell.
+- **Park the venue-divergent r-sign story.** The pass-2 framing
+  ("CB momentum / KR mean-reversion") was load-bearing for the
+  cross-domain "actor mix" interpretation. With WHALE_UP no longer
+  significant on CB, the interpretation needs a smaller scope: KR-ETH
+  WHALE_UP is reliably mean-reverting; CB-ETH does not yet have a
+  reliable WHALE_UP edge. Don't fit operators per (regime × venue) on
+  this basis alone — wait until CB-ETH WHALE_UP either crosses
+  significance again or stays insignificant past n=30.
+- **CB-ETH classifier-diversity drift is worth monitoring.** Modal
+  share climbed from 60% → 73% → 80.8% across the three passes. Either
+  the bin coverage is being stretched into more low-activity hours
+  (mechanical), or the venue genuinely produces fewer regime-distinct
+  segments at this corpus length (informative). The refrag self-audit
+  loop should catch this if it persists; explicitly flag if modal
+  share crosses 85%.
+- **Gate H is on the threshold.** 59.4% with another day or two of
+  data could clear 60% on its own — recheck at ~75h before any spec
+  change to credit "structured single-venue disagreement".
+
+### Reproducer for this snapshot
+
+```bash
+git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json
+# bins at commit bec58f5 (ETH bins update 2026-05-06T15:31:17Z)
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --multi-signal-pelt --session-baselines --herd-rescue
+```
+
+### Next-evaluation trigger
+
+Rerun once any of:
+- corpus reaches ~75h continuous (Gate H 60% recheck)
+- CB-ETH WHALE_UP n reaches 30 (resolves the momentum-or-noise
+  question definitively)
+- a second cross-venue WHALE+HERD simultaneity fires (would confirm
+  the chunk-129/130 event is a recurring pattern, not a one-off)
+- CB-ETH classifier modal share drops below 75% (recovered diversity)
+  or climbs above 85% (drift confirmed)
