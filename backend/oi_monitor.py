@@ -50,6 +50,19 @@ SUSTAINED_CYCLES = 3            # consecutive polls above BUILD_Z
 MIN_OBS_FOR_Z = 60              # need this much history before z-scoring
 HISTORY_PATH_DEFAULT = "backend_oi_history.jsonl"
 HTTP_TIMEOUT_S = 6.0
+# TODO recalibration: re-run `python calibrate_oi.py` once
+# backend_oi_history.jsonl has ≥240 observations per (asset, venue)
+# on AWS to swap BUILD_Z=2.0 / CLEAR_Z=1.0 for empirical p95 / p50
+# of |Δoi z|. Sigma cuts are deliberate policy until then; do not
+# tighten without data. See TODO.md "Recalibrations to re-run as
+# the corpus grows".
+# TODO empirical: WINDOW_OBS=12 (~6 min) is a guess; OI typically
+# moves on hourly cadences and 12 may pick up too much short-term
+# noise. Once history accumulates, compare 12 vs 60 vs 120 by
+# alert-rate vs realized-cascade fraction.
+# TODO consistency: SUSTAINED_CYCLES=3 differs from basis_monitor's
+# 5 with no derivation. Either harmonize or document why OI moves
+# require fewer confirmation cycles than basis.
 
 
 OI_SOURCES = [

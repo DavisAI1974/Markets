@@ -35,6 +35,19 @@ from dataclasses import asdict, dataclass
 # venue-specific borrow rates and round-trip fee schedules. These
 # defaults are intentionally pessimistic so anything flagged here
 # is a real opportunity even after slippage.
+#
+# TODO empirical (per-venue rates): DEFAULT_SPOT_LENDING_APR varies
+# by venue+asset (CB / KR / BN all differ); DEFAULT_FEE_ROUND_TRIP_BPS
+# varies by user fee tier (5-30bp range). Once we have per-venue
+# rate fetchers and the friend group's fee tiers, drop the uniform
+# defaults. Until then, the uniform values flag fewer opportunities
+# than a tier-aware desk would see. See TODO.md "Carry-analyzer
+# per-venue rates".
+# TODO empirical (hold horizon): expected_hold_days=1.0 is the
+# biggest lever. Real carry desks roll for weeks, which dilutes the
+# fee amortization linearly: 1d -> 36.5% APR penalty (kills most
+# opps), 1w -> 5.2%, 1mo -> 1.2%. Pick a default that matches the
+# friend group's likely hold horizon once we have user data.
 DEFAULT_SPOT_LENDING_APR = 0.05         # 5% APR cost of borrowing spot
 DEFAULT_FEE_ROUND_TRIP_BPS = 10.0       # 10 bps round-trip fee (open + close, both legs)
 FUNDING_CYCLES_PER_DAY = 3              # 8h cadence on the venues we monitor
