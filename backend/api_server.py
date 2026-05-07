@@ -131,6 +131,11 @@ class RegimeStatus:
     chunk_buy_volume: float = 0.0
     chunk_sell_volume: float = 0.0
     chunk_n_trades: int = 0
+    # Microstructure toxicity (VPIN). High = informed flow concentrated;
+    # surfaces alongside the regime so PWA/Discord can flag "informed
+    # cascade" vs "retail flutter" without a separate signal type.
+    vpin: float = 0.0
+    vpin_multiplier: float = 1.0
 
 
 @dataclass
@@ -174,6 +179,10 @@ class SignalEvent:
     last_aggressor: str = ""             # "buy" | "sell" | "" — UI flashes the side that was hit
     event_label: str = ""                # plain-language event description e.g. "Big buyer detected"
     drift_status: str = ""               # "" | "recently_flipped" | "unstable" | "decaying" — surfaced in UI as a warning badge when the cell's edge is in flux
+    # Microstructure toxicity (VPIN). Carried on signal so consumers can
+    # filter (e.g., paper-trade only when vpin >= 0.30).
+    vpin: float = 0.0
+    vpin_multiplier: float = 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -485,6 +494,8 @@ class SignalStore:
             chunk_buy_volume=chunk_buy_v,
             chunk_sell_volume=chunk_sell_v,
             chunk_n_trades=chunk_n_tr,
+            vpin=float(getattr(latest_result, "vpin", 0.0)),
+            vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
         )
 
         prev_status = self.current_status.get((asset, venue))
@@ -566,6 +577,8 @@ class SignalStore:
                 last_aggressor=str(latest_chunk.bars[-1].last_aggressor) if latest_chunk.bars else "",
                 event_label=event_label,
                 drift_status=get_drift_status(asset, venue, status.regime),
+                vpin=float(getattr(latest_result, "vpin", 0.0)),
+                vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig

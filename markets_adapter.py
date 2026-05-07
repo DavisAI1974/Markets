@@ -87,6 +87,53 @@ class MarketChunk:
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
+def _compute_vpin(bars: list, n_buckets: int = 10) -> tuple[float, int]:
+    """VPIN over N equal-volume buckets within a chunk.
+
+    Walks bars in time order, accumulating volume until it crosses a
+    bucket-size threshold V = total_volume / n_buckets, then closes the
+    bucket and records |sum_buy - sum_sell| / V. Returns (vpin, n_full).
+
+    Snaps bucket boundaries to bar boundaries (no fractional split). The
+    last partial bucket is dropped; if fewer than 3 full buckets fill,
+    returns (0.0, 0) — the chunk is too thin for a stable estimate.
+    """
+    if not bars:
+        return 0.0, 0
+    total_v = sum(float(getattr(b, "volume", 0.0)) for b in bars)
+    if total_v <= 0 or n_buckets < 3:
+        return 0.0, 0
+    bucket_size = total_v / n_buckets
+    if bucket_size <= 0:
+        return 0.0, 0
+    bucket_buy = 0.0
+    bucket_sell = 0.0
+    bucket_vol = 0.0
+    imbalances = []
+    for b in bars:
+        v = float(getattr(b, "volume", 0.0))
+        bv = float(getattr(b, "buy_vol", 0.0))
+        sv = float(getattr(b, "sell_vol", 0.0))
+        bucket_buy += bv
+        bucket_sell += sv
+        bucket_vol += v
+        # Snap to bar boundary: close out any time the running bucket
+        # has filled past the threshold. Multiple very small bars vs
+        # one very large bar are both handled naturally.
+        while bucket_vol >= bucket_size and bucket_size > 0:
+            imbalances.append(abs(bucket_buy - bucket_sell) / max(bucket_vol, 1e-9))
+            bucket_buy = 0.0
+            bucket_sell = 0.0
+            bucket_vol = 0.0
+            # Don't try to "carry" the overflow; snapping to bar
+            # boundary biases toward stability over precision.
+            break
+    n_full = len(imbalances)
+    if n_full < 3:
+        return 0.0, n_full
+    return float(sum(imbalances) / n_full), n_full
+
+
 @dataclass
 class MarketFeatures:
     """Feature vector extracted from a MarketChunk."""
@@ -110,6 +157,10 @@ class MarketFeatures:
     dipole_peak_freq: float = 0.0           # F2: oscillation/range-trader detector
     dipole_peak_power: float = 0.0          # F2: concentration of oscillation energy
     kyle_proxy: float = 0.0                 # F3: price_move / volume; low = absorption
+    # Microstructure toxicity (Easley/Lopez de Prado/O'Hara). Values in
+    # [0,1]; high = informed flow concentrated, predicts imminent move.
+    vpin: float = 0.0
+    vpin_n_buckets: int = 0                 # how many full volume buckets the chunk had
     # Session-time (universal-state context; chunks don't bring their own time)
     hour_utc: float = 0.0                   # 0-23, normalized 0-1 elsewhere
     day_of_week: int = 0                    # 0=Mon, 6=Sun
@@ -495,6 +546,15 @@ class MarketChunkEncoder:
         else:
             kyle_proxy_val = 0.0
 
+        # F4: VPIN (Easley/Lopez de Prado/O'Hara). Volume-bucket the chunk
+        # into N equal-volume buckets; for each bucket compute
+        # |buy_vol - sell_vol| / V; mean across buckets = VPIN in [0, 1].
+        # High = informed/toxic flow concentrated; predicts imminent move.
+        # We use direct buy/sell aggressor sides (collectors already
+        # classify them) instead of bulk-volume-classification (BVC),
+        # which is more accurate when aggressor side is observed.
+        vpin_val, vpin_n = _compute_vpin(bars, n_buckets=10)
+
         return MarketFeatures(
             ret_mean=ret_mean, ret_std=ret_std, ret_skew=ret_skew, ret_kurt=ret_kurt,
             autocorr_lag1=autocorr, mean_dipole=mean_dipole, mean_ofi=mean_ofi,
@@ -506,6 +566,8 @@ class MarketChunkEncoder:
             dipole_peak_freq=dipole_pk_freq,
             dipole_peak_power=dipole_pk_pow,
             kyle_proxy=kyle_proxy_val,
+            vpin=vpin_val,
+            vpin_n_buckets=vpin_n,
             hour_utc=hour_utc_val,
             day_of_week=dow,
             is_london_lunch=bool(is_london_lunch_val),
