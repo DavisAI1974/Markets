@@ -229,6 +229,14 @@ class MarketFeatures:
     # (see Tier-1 microprice work). Adding the field now so downstream
     # serialization is forward-compatible without a breaking change.
     book_ofi: float = 0.0
+    # Hawkes branching ratio η = α/β fit on bar-derived synthetic
+    # event times (n_trades uniform-jitter per bar). Higher η = stronger
+    # self-excitation / clustering (cascade-like flow); η ≈ 0 = Poisson
+    # arrivals. Reported relative across chunks; not a calibrated
+    # absolute level since synthetic event times only preserve arrival
+    # counts at bar resolution. See hawkes.py.
+    hawkes_eta: float = 0.0
+    hawkes_n_events: int = 0
     # Session-time (universal-state context; chunks don't bring their own time)
     hour_utc: float = 0.0                   # 0-23, normalized 0-1 elsewhere
     day_of_week: int = 0                    # 0=Mon, 6=Sun
@@ -636,6 +644,16 @@ class MarketChunkEncoder:
             bv = chunk_total_for_fallback / 10.0
         vpin_val, vpin_n = _compute_vpin(bars, bv)
 
+        # F5: Hawkes branching ratio η on synthetic per-trade event
+        # times. Identifies clustered/cascade arrival regimes vs
+        # Poisson. Returns (0.0, 0) on chunks too small to fit
+        # without raising; failure modes degrade gracefully.
+        try:
+            from hawkes import hawkes_eta_for_bars
+            hawkes_eta_val, hawkes_n_evt = hawkes_eta_for_bars(bars)
+        except Exception:
+            hawkes_eta_val, hawkes_n_evt = 0.0, 0
+
         return MarketFeatures(
             ret_mean=ret_mean, ret_std=ret_std, ret_skew=ret_skew, ret_kurt=ret_kurt,
             autocorr_lag1=autocorr, mean_dipole=mean_dipole, mean_ofi=mean_ofi,
@@ -649,6 +667,8 @@ class MarketChunkEncoder:
             kyle_proxy=kyle_proxy_val,
             vpin=vpin_val,
             vpin_n_buckets=vpin_n,
+            hawkes_eta=hawkes_eta_val,
+            hawkes_n_events=hawkes_n_evt,
             hour_utc=hour_utc_val,
             day_of_week=dow,
             is_london_lunch=bool(is_london_lunch_val),
