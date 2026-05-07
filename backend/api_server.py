@@ -53,6 +53,12 @@ from backend.push import (
 )
 from playbook_generator import get_playbook as get_dynamic_playbook
 from playbook_generator import get_drift_status
+from backend.forward_paper import (
+    find_matching_cells as _fp_find_cells,
+    open_paper_trade as _fp_open_trade,
+    is_expired as _fp_is_expired,
+    close_paper_trade as _fp_close_trade,
+)
 from pydantic import BaseModel
 
 
@@ -267,6 +273,9 @@ class SignalStore:
         self.signal_index: dict[str, SignalEvent] = {}
         self.event_queue: asyncio.Queue[dict] = asyncio.Queue()
         self.last_chunk_id_per_source: dict[tuple[str, str], str | None] = {}
+        # Tracks the chunk id we last considered for forward paper-trade
+        # cell predicates, so we open at most one trade per cell per chunk.
+        self.last_paper_chunk_id_per_source: dict[tuple[str, str], str | None] = {}
         # Cross-venue minute->regime maps for F6 multiplier
         self._minute_regime_per_venue: dict[tuple[str, str], dict[float, str]] = {}
         # Latest fully-classified chunk per (asset, venue) — needed by
@@ -416,6 +425,12 @@ class SignalStore:
             await self._emit_cross_venue_cascades()
         except Exception as e:
             print(f"[SignalStore] cross-venue cascade error: {e}", flush=True)
+
+        # Sweep-close any forward paper trades whose hold has elapsed.
+        try:
+            self._sweep_close_forward_paper_trades()
+        except Exception as e:
+            print(f"[forward-paper] sweep error: {e}", flush=True)
 
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
@@ -603,6 +618,55 @@ class SignalStore:
 
         if emitted:
             self.last_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
+
+        # Forward paper-trade cell evaluator. Runs once per new chunk per
+        # source, regardless of whether a regime-transition signal emitted
+        # — the candidate cells trigger on regime+feature combinations
+        # that don't always coincide with a transition (e.g. the second
+        # consecutive HERD_UP chunk in vol-Q3 is still a fade candidate).
+        last_paper = self.last_paper_chunk_id_per_source.get((asset, venue))
+        if last_paper != latest_chunk.chunk_id:
+            try:
+                self._maybe_open_forward_paper_trades(
+                    asset, venue, status.regime, latest_feat, latest_chunk)
+            except Exception as e:
+                print(f"[forward-paper] open error {asset}/{venue}: {e}", flush=True)
+            self.last_paper_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
+
+    def _maybe_open_forward_paper_trades(self, asset: str, venue: str,
+                                          regime: str, feat, chunk) -> None:
+        cells = _fp_find_cells(asset, venue, regime, feat, chunk)
+        if not cells:
+            return
+        bid, ask, mid = _current_quote(asset, venue)
+        for cell in cells:
+            fill_price = (ask if cell.side == "buy" else bid) or mid
+            if fill_price <= 0:
+                continue
+            trade = _fp_open_trade(cell, fill_price)
+            _persist_practice_trade(trade)
+            print(f"[forward-paper] opened {cell.cell_id} "
+                  f"{cell.side} {asset}/{venue} @ {fill_price:.4f} "
+                  f"(intent_id={trade['intent_id']})", flush=True)
+
+    def _sweep_close_forward_paper_trades(self) -> None:
+        trades = _load_practice_trades()
+        now = time.time()
+        any_changed = False
+        for t in trades:
+            if not _fp_is_expired(t, now):
+                continue
+            bid, ask, mid = _current_quote(t.get("asset", ""), t.get("venue", ""))
+            before_status = t.get("status")
+            _fp_close_trade(t, bid, ask, mid)
+            if t.get("status") != before_status:
+                any_changed = True
+                print(f"[forward-paper] closed {t.get('cell_id')} "
+                      f"intent_id={t.get('intent_id')} "
+                      f"realized_pnl_usd={t.get('realized_pnl_usd', 0):.2f}",
+                      flush=True)
+        if any_changed:
+            _rewrite_practice_trades(trades)
 
     async def resolve_pending_outcomes(self, hold_minutes: int = 30,
                                          abandon_after_minutes: int = 120,
@@ -1315,10 +1379,18 @@ async def get_drift_alerts(limit: int = 50):
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
-async def get_practice_trades(limit: int = 100):
+async def get_practice_trades(limit: int = 100, source: str = "all"):
     """List practice trades. Auto-marks open positions to current
-    market mid on read so the running P&L is fresh."""
+    market mid on read so the running P&L is fresh.
+
+    source: "all" (default), "manual" (human click-to-trade), or "auto"
+    (forward paper-trades opened by candidate-cell predicates).
+    """
     trades = _load_practice_trades()
+    if source == "manual":
+        trades = [t for t in trades if not t.get("auto")]
+    elif source == "auto":
+        trades = [t for t in trades if t.get("auto")]
     # Mark to market: for any "open" practice trade, compute unrealized
     # P&L against the current mid. (Doesn't persist; just decorates.)
     for t in trades:
@@ -1333,12 +1405,27 @@ async def get_practice_trades(limit: int = 100):
     closed = [t for t in trades if t.get("status") == "closed"]
     n_wins = sum(1 for t in closed if t.get("realized_pnl_usd", 0) > 0)
     total_realized = sum(t.get("realized_pnl_usd", 0) for t in closed)
+    # Per-cell aggregates for forward-paper visibility.
+    by_cell: dict[str, dict] = {}
+    for t in closed:
+        cid = t.get("cell_id")
+        if not cid:
+            continue
+        agg = by_cell.setdefault(cid, {"n": 0, "wins": 0, "realized_pnl_usd": 0.0})
+        agg["n"] += 1
+        if t.get("realized_pnl_usd", 0) > 0:
+            agg["wins"] += 1
+        agg["realized_pnl_usd"] += float(t.get("realized_pnl_usd", 0.0))
+    for cid, agg in by_cell.items():
+        agg["win_rate"] = (agg["wins"] / agg["n"]) if agg["n"] else None
+        agg["realized_pnl_usd"] = round(agg["realized_pnl_usd"], 4)
     return {
         "trades": trades[:limit],
         "n_open": sum(1 for t in trades if t.get("status") == "open"),
         "n_closed": len(closed),
         "win_rate": (n_wins / len(closed)) if closed else None,
         "total_realized_pnl_usd": float(total_realized),
+        "by_cell": by_cell,
     }
 
 
