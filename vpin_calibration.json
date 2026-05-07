@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "computed_utc": "2026-05-07T08:56:00Z",
+  "calibration": {
+    "ETH/Coinbase": {
+      "n_chunks": 176,
+      "corpus_mean_chunk_volume": 3079.8617290854077,
+      "bucket_volume": 307.98617290854077,
+      "vpin_p10": 0.15268994624622806,
+      "vpin_p25": 0.20211406634966658,
+      "vpin_p50": 0.2663283407459444,
+      "vpin_p75": 0.3222356038525615,
+      "vpin_p90": 0.3834453144886889,
+      "elevated": 0.3222356038525615,
+      "diffuse": 0.20211406634966658,
+      "per_regime_mean": {
+        "EQUILIBRIUM_TWO_SIDED": 0.2611110623831777,
+        "HERD_DOWN": 0.25845159467950507,
+        "WHALE_UP": 0.2869748410027369,
+        "WHALE_DOWN": 0.3064496536387035,
+        "WHALE_NASCENT_DOWN": 0.41097445588100273,
+        "WHALE_NASCENT_UP": 0.3569624813103163
+      },
+      "per_regime_n": {
+        "EQUILIBRIUM_TWO_SIDED": 146,
+        "HERD_DOWN": 9,
+        "WHALE_UP": 8,
+        "WHALE_DOWN": 6,
+        "WHALE_NASCENT_DOWN": 6,
+        "WHALE_NASCENT_UP": 1
+      }
+    },
+    "ETH/Kraken": {
+      "n_chunks": 1683,
+      "corpus_mean_chunk_volume": 401.6088901146151,
+      "bucket_volume": 40.160889011461514,
+      "vpin_p10": 0.396014214154667,
+      "vpin_p25": 0.49102166391606983,
+      "vpin_p50": 0.6009761956872847,
+      "vpin_p75": 0.7040364326717401,
+      "vpin_p90": 0.7957919530252787,
+      "elevated": 0.7040364326717401,
+      "diffuse": 0.49102166391606983,
+      "per_regime_mean": {
+        "WHALE_UP": 0.6850344239913938,
+        "EQUILIBRIUM_TWO_SIDED": 0.5781541176147037,
+        "HERD_UP": 0.5929774920100119,
+        "HERD_DOWN": 0.6310523745296232,
+        "WHALE_DOWN": 0.6865338868363473,
+        "WHALE_NASCENT_UP": 0.676584460413458,
+        "WHALE_NASCENT_DOWN": 0.6515344131017899,
+        "DEPLETED": 0.3563956368466774
+      },
+      "per_regime_n": {
+        "WHALE_UP": 193,
+        "EQUILIBRIUM_TWO_SIDED": 1235,
+        "HERD_UP": 140,
+        "HERD_DOWN": 35,
+        "WHALE_DOWN": 30,
+        "WHALE_NASCENT_UP": 45,
+        "WHALE_NASCENT_DOWN": 4,
+        "DEPLETED": 1
+      }
+    },
+    "BTC/Coinbase": {
+      "n_chunks": 45,
+      "corpus_mean_chunk_volume": 121.67527696234043,
+      "bucket_volume": 12.167527696234043,
+      "vpin_p10": 0.15362158964754996,
+      "vpin_p25": 0.21691797655877343,
+      "vpin_p50": 0.2887478441014578,
+      "vpin_p75": 0.3814411774005975,
+      "vpin_p90": 0.42860334937807865,
+      "elevated": 0.3814411774005975,
+      "diffuse": 0.21691797655877343,
+      "per_regime_mean": {
+        "EQUILIBRIUM_TWO_SIDED": 0.2753415894465646,
+        "WHALE_UP": 0.4224621413568595,
+        "WHALE_NASCENT_UP": 0.4234371270877643,
+        "HERD_UP": 0.40629602164629847
+      },
+      "per_regime_n": {
+        "EQUILIBRIUM_TWO_SIDED": 38,
+        "WHALE_UP": 3,
+        "WHALE_NASCENT_UP": 3,
+        "HERD_UP": 1
+      }
+    },
+    "BTC/Kraken": {
+      "n_chunks": 1824,
+      "corpus_mean_chunk_volume": 34.762154672101204,
+      "bucket_volume": 3.47621546721012,
+      "vpin_p10": 0.4266479148313503,
+      "vpin_p25": 0.521897337103367,
+      "vpin_p50": 0.6221590579050764,
+      "vpin_p75": 0.7176184182067801,
+      "vpin_p90": 0.8028550879723582,
+      "elevated": 0.7176184182067801,
+      "diffuse": 0.521897337103367,
+      "per_regime_mean": {
+        "EQUILIBRIUM_TWO_SIDED": 0.608016310131553,
+        "HERD_DOWN": 0.6046064131884454,
+        "WHALE_UP": 0.6717104347387325,
+        "HERD_UP": 0.6048266192645844,
+        "WHALE_NASCENT_UP": 0.6683417572780169,
+        "WHALE_DOWN": 0.6865780936142932,
+        "WHALE_NASCENT_DOWN": 0.6873735918383104,
+        "DEPLETED": 0.7738413473922087
+      },
+      "per_regime_n": {
+        "EQUILIBRIUM_TWO_SIDED": 1355,
+        "HERD_DOWN": 45,
+        "WHALE_UP": 192,
+        "HERD_UP": 163,
+        "WHALE_NASCENT_UP": 44,
+        "WHALE_DOWN": 21,
+        "WHALE_NASCENT_DOWN": 3,
+        "DEPLETED": 1
+      }
+    }
+  }
+}

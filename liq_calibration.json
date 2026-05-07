@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "computed_utc": "2026-05-07T08:56:28Z",
+  "calibration": {
+    "BTC": {
+      "n_bars": 14340,
+      "rolling_window": 60,
+      "percentile_used": 99.0,
+      "vol_z_p99": 6.620188425763156,
+      "dipole_abs_p99": 0.8674704526132824,
+      "gap_abs_p99": 0.0015649492022334378,
+      "joint_pass_rate": 0.0,
+      "joint_alerts_per_day_est": 0.0,
+      "vol_z_threshold": 6.620188425763156,
+      "one_sided_threshold": 0.8674704526132824,
+      "price_move_threshold": 0.0015649492022334378
+    },
+    "ETH": {
+      "n_bars": 14340,
+      "rolling_window": 60,
+      "percentile_used": 99.0,
+      "vol_z_p99": 6.976268641644847,
+      "dipole_abs_p99": 0.8389536428329974,
+      "gap_abs_p99": 0.002011018030385313,
+      "joint_pass_rate": 0.0,
+      "joint_alerts_per_day_est": 0.0,
+      "vol_z_threshold": 6.976268641644847,
+      "one_sided_threshold": 0.8389536428329974,
+      "price_move_threshold": 0.002011018030385313
+    }
+  }
+}
