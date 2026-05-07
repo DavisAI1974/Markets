@@ -59,6 +59,37 @@ def _save_bins(bins: dict, path: str) -> None:
     os.replace(tmp, path)
 
 
+def _cursor_path_for(bins_path: str) -> str:
+    if bins_path.endswith(".json"):
+        return bins_path[:-5] + ".cursor.json"
+    return bins_path + ".cursor.json"
+
+
+def _load_cursor(path: str) -> dict | None:
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[backfill-cb] could not load cursor {path}: {e}", flush=True)
+        return None
+
+
+def _save_cursor(path: str, oldest_before: int | None, oldest_ts: float | None) -> None:
+    if oldest_before is None:
+        return
+    payload = {
+        "oldest_before": int(oldest_before),
+        "oldest_ts": float(oldest_ts) if oldest_ts is not None else None,
+        "saved_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    }
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(payload, f)
+    os.replace(tmp, path)
+
+
 def _fetch_page(product: str, before: int | None) -> tuple[list, int | None] | None:
     """Returns (trades_list, next_before_cursor) or None on hard failure.
     If before is None, fetches the most recent page.
@@ -102,9 +133,15 @@ def main():
     p.add_argument("--max-seconds", type=int, default=18000,
                    help="wallclock budget for fetching (default 5h)")
     p.add_argument("--bins-path", type=str, required=True)
+    p.add_argument("--cursor-path", type=str, default=None,
+                   help="sidecar JSON storing oldest pagination cursor; lets a subsequent "
+                        "run resume where this one left off. Default: <bins>.cursor.json")
+    p.add_argument("--no-resume", action="store_true",
+                   help="ignore any existing cursor file and walk back from now")
     args = p.parse_args()
 
     product = args.product.upper()
+    cursor_path = args.cursor_path or _cursor_path_for(args.bins_path)
 
     existing = _load_existing_bins(args.bins_path)
     print(f"[backfill-cb] {product}: loaded {len(existing)} existing bins", flush=True)
@@ -119,6 +156,22 @@ def main():
     last_progress_log = t0
     before_cursor: int | None = None
     oldest_seen_ts: float | None = None
+
+    if not args.no_resume:
+        prev = _load_cursor(cursor_path)
+        if prev and isinstance(prev.get("oldest_before"), int):
+            before_cursor = prev["oldest_before"]
+            prev_ts = prev.get("oldest_ts")
+            if isinstance(prev_ts, (int, float)):
+                oldest_seen_ts = float(prev_ts)
+            print(f"[backfill-cb] resuming from cursor before={before_cursor} "
+                  f"(prev oldest_ts={prev_ts})", flush=True)
+            if oldest_seen_ts is not None and oldest_seen_ts < cutoff_ts:
+                print(f"[backfill-cb] cursor already past cutoff "
+                      f"({oldest_seen_ts:.0f} < {cutoff_ts:.0f}); nothing to do",
+                      flush=True)
+                _save_cursor(cursor_path, before_cursor, oldest_seen_ts)
+                return
 
     while True:
         if time.time() - t0 > args.max_seconds:
@@ -214,6 +267,12 @@ def main():
           flush=True)
     _save_bins(merged, args.bins_path)
     print(f"[backfill-cb] saved {args.bins_path}", flush=True)
+
+    _save_cursor(cursor_path, before_cursor, oldest_seen_ts)
+    if before_cursor is not None:
+        print(f"[backfill-cb] cursor saved to {cursor_path} "
+              f"(oldest_before={before_cursor}, oldest_ts={oldest_seen_ts})",
+              flush=True)
 
 
 if __name__ == "__main__":
