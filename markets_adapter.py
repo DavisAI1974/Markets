@@ -54,11 +54,31 @@ class MarketBar:
     n_trades: int = 0    # count of individual trades within this bar
     bid: float = 0.0     # latest top-of-book bid in this bar (0.0 if not set)
     ask: float = 0.0     # latest top-of-book ask in this bar (0.0 if not set)
+    bid_qty: float = 0.0  # L1 bid size (added 2026-05; 0.0 = not captured)
+    ask_qty: float = 0.0  # L1 ask size
     last_aggressor: str = ""  # "buy" if last trade lifted the offer, "sell" if hit the bid, "" if none
 
     @property
-    def mid(self) -> float:
+    def microprice(self) -> float:
+        """Stoikov microprice: depth-weighted mid that's a better
+        short-horizon price predictor than (bid+ask)/2.
+            mp = (bid_qty * ask + ask_qty * bid) / (bid_qty + ask_qty)
+        Falls back to simple (bid+ask)/2 when L1 sizes aren't captured
+        (older bins from before the 2026-05 schema bump), and to
+        close as a last resort.
+        """
+        if self.bid > 0 and self.ask > 0 and self.bid_qty > 0 and self.ask_qty > 0:
+            denom = self.bid_qty + self.ask_qty
+            return (self.bid_qty * self.ask + self.ask_qty * self.bid) / denom
+        if self.bid > 0 and self.ask > 0:
+            return 0.5 * (self.bid + self.ask)
         return self.close
+
+    @property
+    def mid(self) -> float:
+        """Best price estimate. Prefers microprice (when L1 sizes present),
+        else (bid+ask)/2, else last close."""
+        return self.microprice
 
     @property
     def signed_volume(self) -> float:
