@@ -40,6 +40,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from markets_adapter import (
     MarketBar, MarketChunker, MarketChunkEncoder,
+    _vpin_bucket_volume_from_corpus,
 )
 from regime_classifier import (
     Regime, classify_regime, baselines_from_corpus,
@@ -117,6 +118,59 @@ DEMO_MODE_EMIT_EQUILIBRIUM_EXTREMES = os.environ.get(
 ) == "1"
 DEMO_DIPOLE_THRESHOLD = 0.3
 DEMO_VOL_Z_THRESHOLD = 0.5
+
+
+# ---------------------------------------------------------------------------
+# VPIN calibration: per-(asset, venue) thresholds + bucket sizes loaded
+# from vpin_calibration.json (produced by calibrate_vpin.py). Fallback
+# to literature defaults when the file is missing or an entry is absent.
+# ---------------------------------------------------------------------------
+
+_VPIN_CALIBRATION_PATH = os.path.join(REPO_ROOT, "vpin_calibration.json")
+_VPIN_DEFAULT_ELEVATED = 0.30
+_VPIN_DEFAULT_DIFFUSE = 0.08
+
+
+def _load_vpin_calibration() -> dict:
+    """Read vpin_calibration.json once at module load. Returns the
+    per-(asset, venue) calibration dict, or {} if the file is missing
+    or malformed. Errors are non-fatal — the classifier will use
+    hardcoded defaults."""
+    if not os.path.exists(_VPIN_CALIBRATION_PATH):
+        print(f"[vpin] no calibration file at {_VPIN_CALIBRATION_PATH}; "
+              f"using defaults (elevated={_VPIN_DEFAULT_ELEVATED}, "
+              f"diffuse={_VPIN_DEFAULT_DIFFUSE})", flush=True)
+        return {}
+    try:
+        with open(_VPIN_CALIBRATION_PATH) as f:
+            payload = json.load(f)
+        cal = payload.get("calibration", {}) or {}
+        print(f"[vpin] loaded calibration for {len(cal)} (asset, venue) "
+              f"entries from {_VPIN_CALIBRATION_PATH}", flush=True)
+        return cal
+    except Exception as e:
+        print(f"[vpin] could not parse calibration: {e}; using defaults",
+              flush=True)
+        return {}
+
+
+_VPIN_CAL = _load_vpin_calibration()
+
+
+def _vpin_thresholds_for(asset: str, venue: str) -> tuple[float, float]:
+    """Return (elevated, diffuse) thresholds for this (asset, venue).
+    Falls back to defaults when the entry isn't in the calibration."""
+    entry = _VPIN_CAL.get(f"{asset}/{venue}") or {}
+    elevated = float(entry.get("elevated", _VPIN_DEFAULT_ELEVATED))
+    diffuse = float(entry.get("diffuse", _VPIN_DEFAULT_DIFFUSE))
+    return elevated, diffuse
+
+
+def _vpin_bucket_volume_for(asset: str, venue: str) -> float:
+    """Return bucket_volume from calibration; 0 means caller falls back
+    to per-chunk dynamic sizing (degraded but functional)."""
+    entry = _VPIN_CAL.get(f"{asset}/{venue}") or {}
+    return float(entry.get("bucket_volume", 0.0))
 
 
 # ---------------------------------------------------------------------------
@@ -521,9 +575,20 @@ class SignalStore:
         chunks = chunker.chunk(f"{venue}-{asset}", bars)
         if not chunks:
             return
-        feats = [encoder._extract(c) for c in chunks]
+        # VPIN bucket size: prefer per-(asset, venue) calibration; fall
+        # back to corpus-derived (mean chunk volume / 10) since we have
+        # the chunks in hand. The fallback gives us correct relative
+        # ranking even before calibrate_vpin.py is run.
+        bv = _vpin_bucket_volume_for(asset, venue)
+        if bv <= 0:
+            bv = _vpin_bucket_volume_from_corpus(chunks)
+        feats = [encoder._extract(c, vpin_bucket_volume=bv) for c in chunks]
         base = baselines_from_corpus(feats)
-        results = [classify_regime(f, base) for f in feats]
+        # Per-(asset, venue) VPIN thresholds; falls back to defaults.
+        vpin_elev, vpin_diff = _vpin_thresholds_for(asset, venue)
+        results = [classify_regime(f, base,
+                                     vpin_elevated=vpin_elev,
+                                     vpin_diffuse=vpin_diff) for f in feats]
         apply_herd_persistence(results)
 
         # Build minute->regime map for cross-venue agreement (F6)
@@ -1225,9 +1290,15 @@ async def regime_history(asset: str, venue: str, n_points: int = 60):
     chunks = chunker.chunk(f"{venue}-{asset}", bars)
     if not chunks:
         return {"asset": asset, "venue": venue, "points": []}
-    feats = [encoder._extract(c) for c in chunks]
+    bv = _vpin_bucket_volume_for(asset, venue)
+    if bv <= 0:
+        bv = _vpin_bucket_volume_from_corpus(chunks)
+    feats = [encoder._extract(c, vpin_bucket_volume=bv) for c in chunks]
     base = baselines_from_corpus(feats)
-    results = [classify_regime(f, base) for f in feats]
+    vpin_elev, vpin_diff = _vpin_thresholds_for(asset, venue)
+    results = [classify_regime(f, base,
+                                 vpin_elevated=vpin_elev,
+                                 vpin_diffuse=vpin_diff) for f in feats]
     points = []
     for c, f, r in zip(chunks[-n_points:], feats[-n_points:], results[-n_points:]):
         points.append({
