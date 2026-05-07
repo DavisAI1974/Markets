@@ -91,6 +91,8 @@ def classify_venue(bars: list[MarketBar], label: str,
                     multi_signal_pelt: bool = False,
                     use_session_baselines: bool = False,
                     herd_rescue: bool = False,
+                    hawkes_elevated: float | None = None,
+                    hawkes_diffuse: float | None = None,
                     ) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines, dict, list[MarketFeatures]]:
     chunker = MarketChunker(max_window_size=chunk_max, stride=chunk_max // 2,
                              min_segment=chunk_min, mode="hybrid")
@@ -98,12 +100,19 @@ def classify_venue(bars: list[MarketBar], label: str,
     chunks = chunker.chunk(label, bars, multi_signal=multi_signal_pelt)
     feats = [encoder._extract(c) for c in chunks]
     base = baselines_from_corpus(feats)
+    # Hawkes thresholds: pass through to classify_regime, fall back to
+    # the function's own literature defaults if caller didn't supply.
+    haw_kwargs: dict = {}
+    if hawkes_elevated is not None:
+        haw_kwargs["hawkes_elevated"] = float(hawkes_elevated)
+    if hawkes_diffuse is not None:
+        haw_kwargs["hawkes_diffuse"] = float(hawkes_diffuse)
     if use_session_baselines:
         session_base = baselines_per_session(feats)
         results = [classify_with_session_baselines(f, session_base) for f in feats]
     else:
         session_base = {"_global": base}
-        results = [classify_regime(f, base) for f in feats]
+        results = [classify_regime(f, base, **haw_kwargs) for f in feats]
     apply_herd_persistence(results)
     if herd_rescue:
         apply_herd_borderline_rescue(results, feats, base)
@@ -494,11 +503,34 @@ def main():
                    help="Sibling-asset KR bins (e.g. btc_kraken_bins.json when --asset ETH).")
     p.add_argument("--events-calendar", type=str, default="events_calendar.json",
                    help="Path to scheduled-event calendar JSON. Enables F8 event/weekend confidence dampener. Empty/missing file leaves events disabled but weekend dampener still applies.")
+    p.add_argument("--hawkes-calibration", type=str,
+                   default="hawkes_eta_calibration.json",
+                   help="Path to hawkes_eta_calibration.json. When present, per-(asset,venue) elevated/diffuse thresholds drive the F10 hawkes_multiplier. Falls back to literature defaults if missing or entry not found.")
     p.add_argument("--features-out", type=str, default=None,
                    help="Path to JSON dump of per-(asset,venue,regime) feature distributions + sub-cell Gate I (Pass-7 evaluator output).")
     p.add_argument("--subcell-min-n", type=int, default=15,
                    help="Minimum n per sub-cell for Pass-7 sub-cell Gate I. Lower for small corpora; default 15 keeps signal/noise reasonable.")
     args = p.parse_args()
+
+    # Load hawkes calibration once; per-(asset, venue) thresholds drive F10
+    haw_cal = {}
+    if args.hawkes_calibration:
+        try:
+            with open(args.hawkes_calibration) as _f:
+                _payload = json.load(_f)
+            haw_cal = _payload.get("calibration", {}) or {}
+            print(f"[hawkes] loaded calibration for {len(haw_cal)} entries from "
+                  f"{args.hawkes_calibration}")
+        except FileNotFoundError:
+            print(f"[hawkes] no calibration at {args.hawkes_calibration}; "
+                  f"using literature defaults")
+        except Exception as e:
+            print(f"[hawkes] could not parse calibration ({e}); "
+                  f"using literature defaults")
+
+    def _haw_thr(asset: str, venue: str) -> tuple[float | None, float | None]:
+        entry = haw_cal.get(f"{asset}/{venue}") or {}
+        return entry.get("elevated"), entry.get("diffuse")
 
     print(f"=== Phase 1.5 Evaluation: {args.asset} ===\n")
 
@@ -506,17 +538,21 @@ def main():
     kr_bars = load_bars(args.kr_bins)
     print(f"Coinbase bars: {len(cb_bars)}, Kraken bars: {len(kr_bars)}\n")
 
+    cb_haw_e, cb_haw_d = _haw_thr(args.asset, "Coinbase")
+    kr_haw_e, kr_haw_d = _haw_thr(args.asset, "Kraken")
     cb_chunks, cb_results, cb_base, cb_session, cb_feats = classify_venue(
         cb_bars, f"CB-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
         herd_rescue=args.herd_rescue,
+        hawkes_elevated=cb_haw_e, hawkes_diffuse=cb_haw_d,
     )
     kr_chunks, kr_results, kr_base, kr_session, kr_feats = classify_venue(
         kr_bars, f"KR-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
         herd_rescue=args.herd_rescue,
+        hawkes_elevated=kr_haw_e, hawkes_diffuse=kr_haw_d,
     )
 
     print(f"CB-{args.asset}: {len(cb_chunks)} chunks, baselines rv={cb_base.rv:.5f}")
