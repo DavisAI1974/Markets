@@ -54,14 +54,59 @@ class ClassificationResult:
     cross_venue_multiplier: float = 1.0   # F6: 1.5 if other venue agrees, 0.5 if disagrees, 1.0 if unknown
     herd_persistence: int = 1    # 1 = isolated chunk; N>=2 = part of N-chunk consecutive same-HERD run
     herd_rescued: bool = False   # set True when a borderline EQUILIBRIUM chunk was reclassified by apply_herd_borderline_rescue
+    vpin: float = 0.0            # informed-flow toxicity, [0,1]; high = imminent move predicted
+    vpin_multiplier: float = 1.0 # confidence boost/de-rate from VPIN (HERD/WHALE only)
 
     @property
     def adjusted_confidence(self) -> float:
-        """Confidence × cross-venue multiplier, capped at [0, 1]."""
-        return max(0.0, min(1.0, self.confidence * self.cross_venue_multiplier))
+        """Confidence × cross-venue multiplier × vpin multiplier, capped at [0, 1]."""
+        return max(0.0, min(1.0,
+            self.confidence * self.cross_venue_multiplier * self.vpin_multiplier))
+
+
+def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int) -> tuple[float, str]:
+    """Return (multiplier, note) for a chunk's VPIN given its regime.
+
+    Boosts/de-rates only directional regimes (HERD_*, WHALE_*, NASCENT_*).
+    Skipped for EQUILIBRIUM/DEPLETED/UNKNOWN. WASH_PAIRED with high VPIN
+    is flagged as suspicious — pair-cancel patterns shouldn't carry
+    informed flow.
+    """
+    if vpin_n < 3:
+        return 1.0, ""
+    name = regime.value
+    is_directional = (
+        name.startswith("WHALE_") or name.startswith("HERD_")
+        or name.startswith("WHALE_NASCENT_")
+    )
+    if is_directional:
+        if vpin >= 0.30:
+            return 1.15, f"vpin={vpin:.2f} (informed flow concentrated; +15% confidence)"
+        if vpin <= 0.08:
+            return 0.85, f"vpin={vpin:.2f} (diffuse/retail flow; -15% confidence)"
+        return 1.0, f"vpin={vpin:.2f}"
+    if name == "WASH_PAIRED" and vpin >= 0.30:
+        # WASH should be flow-neutral; high VPIN here suggests one side
+        # is actually informed and we mislabeled. De-rate.
+        return 0.7, f"vpin={vpin:.2f} HIGH on WASH_PAIRED (suspicious; -30%)"
+    return 1.0, ""
 
 
 def classify_regime(f: MarketFeatures, baselines: Baselines | None = None) -> ClassificationResult:
+    """Classify a chunk's MarketFeatures and attach a VPIN-based confidence
+    multiplier on directional regimes.
+    """
+    result = _classify_regime_raw(f, baselines)
+    result.vpin = float(getattr(f, "vpin", 0.0) or 0.0)
+    vpin_n = int(getattr(f, "vpin_n_buckets", 0) or 0)
+    mult, note = _vpin_multiplier_for_regime(result.regime, result.vpin, vpin_n)
+    result.vpin_multiplier = float(mult)
+    if note:
+        result.notes.append(note)
+    return result
+
+
+def _classify_regime_raw(f: MarketFeatures, baselines: Baselines | None = None) -> ClassificationResult:
     """Classify a chunk's MarketFeatures into one of the universal regime states.
 
     Decision order matters: most-disqualifying conditions first.
