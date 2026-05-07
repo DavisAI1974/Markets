@@ -4,6 +4,8 @@ const REGIME_STYLES = {
   EQUILIBRIUM_TWO_SIDED: { bg: "bg-blue-950/40", border: "border-blue-700", chip: "bg-blue-700", label: "Equilibrium" },
   WHALE_UP: { bg: "bg-green-950/40", border: "border-green-700", chip: "bg-green-700", label: "Whale ↑" },
   WHALE_DOWN: { bg: "bg-red-950/40", border: "border-red-700", chip: "bg-red-700", label: "Whale ↓" },
+  WHALE_NASCENT_UP: { bg: "bg-emerald-950/30", border: "border-emerald-600", chip: "bg-emerald-600", label: "Nascent ↑" },
+  WHALE_NASCENT_DOWN: { bg: "bg-rose-950/30", border: "border-rose-600", chip: "bg-rose-600", label: "Nascent ↓" },
   HERD_UP: { bg: "bg-orange-950/40", border: "border-orange-700", chip: "bg-orange-600", label: "Herd ↑" },
   HERD_DOWN: { bg: "bg-rose-950/40", border: "border-rose-700", chip: "bg-rose-700", label: "Herd ↓" },
   WASH_PAIRED: { bg: "bg-yellow-950/40", border: "border-yellow-700", chip: "bg-yellow-700", label: "Wash ⚠" },

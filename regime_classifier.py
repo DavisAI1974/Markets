@@ -27,11 +27,13 @@ class Regime(str, Enum):
     EQUILIBRIUM_TWO_SIDED = "EQUILIBRIUM_TWO_SIDED"
     WHALE_UP = "WHALE_UP"
     WHALE_DOWN = "WHALE_DOWN"
+    WHALE_NASCENT_UP = "WHALE_NASCENT_UP"      # directional pressure, moderate
+    WHALE_NASCENT_DOWN = "WHALE_NASCENT_DOWN"  # persistence, sub-WHALE evidence
     HERD_UP = "HERD_UP"
     HERD_DOWN = "HERD_DOWN"
     WASH_PAIRED = "WASH_PAIRED"
-    DEPLETED = "DEPLETED"          # added: low-liquidity quiet
-    UNKNOWN = "UNKNOWN"
+    DEPLETED = "DEPLETED"          # low-liquidity quiet
+    UNKNOWN = "UNKNOWN"            # genuine fallback (now rare)
 
 
 @dataclass
@@ -120,9 +122,15 @@ def classify_regime(f: MarketFeatures, baselines: Baselines | None = None) -> Cl
         notes.append(f"dipole={f.mean_dipole:+.2f}, acl1={f.dipole_autocorr_lag1:+.2f} (balanced)")
         return ClassificationResult(Regime.EQUILIBRIUM_TWO_SIDED, confidence=0.65, notes=notes)
 
-    # 5. UNKNOWN fallback (now genuinely rare)
-    notes.append(f"unmatched: dipole={f.mean_dipole:+.2f}, acl1={f.dipole_autocorr_lag1:+.2f}, vol_ratio={vol_ratio:.2f}, rv_ratio={f.realized_vol/b.rv:.2f}")
-    return ClassificationResult(Regime.UNKNOWN, confidence=0.3, notes=notes)
+    # 4.5 WHALE_NASCENT: directional dipole (>=0.25) + persistence (acl1>=0.2)
+    #     but didn't trip full WHALE thresholds (acl1>=0.4+|dipole|>=0.15, OR
+    #     Kyle absorption, OR oscillation). Mechanistically: a trend that has
+    #     started forming but hasn't yet shown sustained one-side pressure.
+    #     Hypothesis (to be confirmed at higher n): NASCENT continues, full
+    #     WHALE fades. n=44 at 30d ETH-KR shows r=+0.21 momentum suggestive.
+    notes.append(f"borderline whale: dipole={f.mean_dipole:+.2f}, acl1={f.dipole_autocorr_lag1:+.2f}, vol_ratio={vol_ratio:.2f}")
+    regime = Regime.WHALE_NASCENT_UP if f.mean_dipole > 0 else Regime.WHALE_NASCENT_DOWN
+    return ClassificationResult(regime, confidence=0.55, notes=notes)
 
 
 def baselines_from_corpus(features_list: list[MarketFeatures]) -> Baselines:

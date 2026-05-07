@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 const REGIME_COLORS = {
   WHALE_UP: "border-l-green-500",
   WHALE_DOWN: "border-l-red-500",
+  WHALE_NASCENT_UP: "border-l-emerald-400",
+  WHALE_NASCENT_DOWN: "border-l-rose-400",
   HERD_UP: "border-l-orange-500",
   HERD_DOWN: "border-l-rose-700",
   WASH_PAIRED: "border-l-yellow-500",
@@ -14,6 +16,7 @@ const REGIME_COLORS = {
 
 const REGIME_LABELS = {
   WHALE_UP: "Whale ↑", WHALE_DOWN: "Whale ↓",
+  WHALE_NASCENT_UP: "Nascent ↑", WHALE_NASCENT_DOWN: "Nascent ↓",
   HERD_UP: "Herd ↑", HERD_DOWN: "Herd ↓",
   WASH_PAIRED: "Wash ⚠", EQUILIBRIUM_TWO_SIDED: "Equilibrium",
   DEPLETED: "Depleted", UNKNOWN: "Unknown",
