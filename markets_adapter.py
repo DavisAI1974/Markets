@@ -123,24 +123,23 @@ class MarketChunk:
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
-def _compute_vpin(bars: list, n_buckets: int = 10) -> tuple[float, int]:
-    """VPIN over N equal-volume buckets within a chunk.
+def _compute_vpin(bars: list, bucket_volume: float) -> tuple[float, int]:
+    """VPIN over equal-volume buckets of size `bucket_volume` (in raw
+    volume units).
 
-    Walks bars in time order, accumulating volume until it crosses a
-    bucket-size threshold V = total_volume / n_buckets, then closes the
-    bucket and records |sum_buy - sum_sell| / V. Returns (vpin, n_full).
+    Walks bars in time order, accumulating volume until it crosses
+    bucket_volume, then closes the bucket and records
+    |sum_buy - sum_sell| / V. Snaps bucket boundaries to bar
+    boundaries (no fractional split). The last partial bucket is
+    dropped; if fewer than 3 full buckets fill, returns (0.0, n_full)
+    — the chunk is too thin for a stable estimate.
 
-    Snaps bucket boundaries to bar boundaries (no fractional split). The
-    last partial bucket is dropped; if fewer than 3 full buckets fill,
-    returns (0.0, 0) — the chunk is too thin for a stable estimate.
+    Caller supplies bucket_volume from the corpus mean chunk volume
+    (typically corpus_mean / 10). Per-chunk fixed-N is wrong because
+    it conflates "this chunk traded a lot" with "this chunk had
+    one-sided flow".
     """
-    if not bars:
-        return 0.0, 0
-    total_v = sum(float(getattr(b, "volume", 0.0)) for b in bars)
-    if total_v <= 0 or n_buckets < 3:
-        return 0.0, 0
-    bucket_size = total_v / n_buckets
-    if bucket_size <= 0:
+    if not bars or bucket_volume <= 0:
         return 0.0, 0
     bucket_buy = 0.0
     bucket_sell = 0.0
@@ -156,7 +155,7 @@ def _compute_vpin(bars: list, n_buckets: int = 10) -> tuple[float, int]:
         # Snap to bar boundary: close out any time the running bucket
         # has filled past the threshold. Multiple very small bars vs
         # one very large bar are both handled naturally.
-        while bucket_vol >= bucket_size and bucket_size > 0:
+        while bucket_vol >= bucket_volume:
             imbalances.append(abs(bucket_buy - bucket_sell) / max(bucket_vol, 1e-9))
             bucket_buy = 0.0
             bucket_sell = 0.0
@@ -168,6 +167,29 @@ def _compute_vpin(bars: list, n_buckets: int = 10) -> tuple[float, int]:
     if n_full < 3:
         return 0.0, n_full
     return float(sum(imbalances) / n_full), n_full
+
+
+def _vpin_bucket_volume_from_corpus(chunks: list) -> float:
+    """Returns bucket_volume = corpus_mean_chunk_volume / 10.
+
+    The /10 picks ~10 buckets in a typical chunk, which is the standard
+    Easley/Lopez de Prado granularity. A 5x-larger chunk would yield
+    ~50 buckets, a 0.1x chunk would yield ~1 (sub-threshold -> VPIN=0
+    for that chunk, which is the right outcome — small chunks don't
+    have enough data to estimate informed-flow concentration).
+    """
+    if not chunks:
+        return 0.0
+    totals = []
+    for c in chunks:
+        bars = getattr(c, "bars", []) or []
+        v = sum(float(getattr(b, "volume", 0.0)) for b in bars)
+        if v > 0:
+            totals.append(v)
+    if not totals:
+        return 0.0
+    mean_vol = sum(totals) / len(totals)
+    return mean_vol / 10.0
 
 
 @dataclass
@@ -468,7 +490,16 @@ class MarketChunkEncoder:
         self.n_summary = 11
         self.n_spectral_block = 3
 
-    def _extract(self, chunk: MarketChunk) -> MarketFeatures:
+    def _extract(self, chunk: MarketChunk,
+                  vpin_bucket_volume: float = 0.0) -> MarketFeatures:
+        """Extract a feature vector from a chunk.
+
+        vpin_bucket_volume: bucket size for VPIN, in raw volume units.
+        Pass corpus_mean_chunk_volume / 10 for proper per-(asset,venue)
+        calibration. If 0, falls back to chunk_total_volume / 10 which
+        is a poor estimator (fixed-N-per-chunk conflates volume with
+        toxicity) but stops VPIN from collapsing to 0.
+        """
         bars = chunk.bars
         n = len(bars)
         if n < 2:
@@ -593,13 +624,17 @@ class MarketChunkEncoder:
             kyle_proxy_val = 0.0
 
         # F4: VPIN (Easley/Lopez de Prado/O'Hara). Volume-bucket the chunk
-        # into N equal-volume buckets; for each bucket compute
+        # by a fixed bucket volume (in raw units); for each bucket compute
         # |buy_vol - sell_vol| / V; mean across buckets = VPIN in [0, 1].
         # High = informed/toxic flow concentrated; predicts imminent move.
-        # We use direct buy/sell aggressor sides (collectors already
-        # classify them) instead of bulk-volume-classification (BVC),
-        # which is more accurate when aggressor side is observed.
-        vpin_val, vpin_n = _compute_vpin(bars, n_buckets=10)
+        # Caller passes vpin_bucket_volume calibrated from the corpus mean
+        # chunk volume so VPIN scales correctly across asset/venue. If
+        # the caller passes 0, fall back to chunk_total/10 (degraded).
+        bv = vpin_bucket_volume
+        if bv <= 0:
+            chunk_total_for_fallback = float(np.sum([b.volume for b in bars]))
+            bv = chunk_total_for_fallback / 10.0
+        vpin_val, vpin_n = _compute_vpin(bars, bv)
 
         return MarketFeatures(
             ret_mean=ret_mean, ret_std=ret_std, ret_skew=ret_skew, ret_kurt=ret_kurt,

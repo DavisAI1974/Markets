@@ -64,8 +64,14 @@ class ClassificationResult:
             self.confidence * self.cross_venue_multiplier * self.vpin_multiplier))
 
 
-def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int) -> tuple[float, str]:
+def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
+                                  elevated: float = 0.30,
+                                  diffuse: float = 0.08) -> tuple[float, str]:
     """Return (multiplier, note) for a chunk's VPIN given its regime.
+
+    elevated/diffuse: thresholds for "informed flow concentrated" vs
+    "retail/diffuse". Defaults are literature priors; the production
+    backend passes per-(asset,venue) p75/p25 from vpin_calibration.json.
 
     Boosts/de-rates only directional regimes (HERD_*, WHALE_*, NASCENT_*).
     Skipped for EQUILIBRIUM/DEPLETED/UNKNOWN. WASH_PAIRED with high VPIN
@@ -80,26 +86,38 @@ def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int) -> tup
         or name.startswith("WHALE_NASCENT_")
     )
     if is_directional:
-        if vpin >= 0.30:
-            return 1.15, f"vpin={vpin:.2f} (informed flow concentrated; +15% confidence)"
-        if vpin <= 0.08:
-            return 0.85, f"vpin={vpin:.2f} (diffuse/retail flow; -15% confidence)"
+        if vpin >= elevated:
+            return 1.15, (f"vpin={vpin:.2f} >= p75={elevated:.2f} "
+                          f"(informed flow concentrated; +15% confidence)")
+        if vpin <= diffuse:
+            return 0.85, (f"vpin={vpin:.2f} <= p25={diffuse:.2f} "
+                          f"(diffuse/retail flow; -15% confidence)")
         return 1.0, f"vpin={vpin:.2f}"
-    if name == "WASH_PAIRED" and vpin >= 0.30:
+    if name == "WASH_PAIRED" and vpin >= elevated:
         # WASH should be flow-neutral; high VPIN here suggests one side
         # is actually informed and we mislabeled. De-rate.
-        return 0.7, f"vpin={vpin:.2f} HIGH on WASH_PAIRED (suspicious; -30%)"
+        return 0.7, (f"vpin={vpin:.2f} >= p75={elevated:.2f} on WASH_PAIRED "
+                     f"(suspicious; -30%)")
     return 1.0, ""
 
 
-def classify_regime(f: MarketFeatures, baselines: Baselines | None = None) -> ClassificationResult:
+def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
+                      *,
+                      vpin_elevated: float = 0.30,
+                      vpin_diffuse: float = 0.08) -> ClassificationResult:
     """Classify a chunk's MarketFeatures and attach a VPIN-based confidence
     multiplier on directional regimes.
+
+    vpin_elevated / vpin_diffuse: thresholds. Backend passes per-
+    (asset, venue) p75 / p25 from vpin_calibration.json; defaults are
+    a hardcoded literature prior used when no calibration is loaded.
     """
     result = _classify_regime_raw(f, baselines)
     result.vpin = float(getattr(f, "vpin", 0.0) or 0.0)
     vpin_n = int(getattr(f, "vpin_n_buckets", 0) or 0)
-    mult, note = _vpin_multiplier_for_regime(result.regime, result.vpin, vpin_n)
+    mult, note = _vpin_multiplier_for_regime(
+        result.regime, result.vpin, vpin_n,
+        elevated=vpin_elevated, diffuse=vpin_diffuse)
     result.vpin_multiplier = float(mult)
     if note:
         result.notes.append(note)
