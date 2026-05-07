@@ -206,11 +206,38 @@ def _pearsonr_with_p(x: np.ndarray, y: np.ndarray) -> tuple[float, float, int]:
     return r, p, int(n)
 
 
+def _bh_fdr(pvalues: list[float], q: float = 0.10) -> tuple[list[float], list[bool]]:
+    """Benjamini-Hochberg FDR. Returns (q_values, reject_at_q). q_value is the
+    smallest q at which the test is rejected; reject is True iff q_value <= q.
+    Empty input returns ([], [])."""
+    m = len(pvalues)
+    if m == 0:
+        return [], []
+    order = sorted(range(m), key=lambda i: pvalues[i])
+    qvals = [1.0] * m
+    running_min = 1.0
+    # Walk from largest p to smallest, applying step-up enforcement.
+    for rank_from_top, idx in enumerate(reversed(order)):
+        rank = m - rank_from_top  # 1-based rank from smallest
+        adj = pvalues[idx] * m / rank
+        if adj < running_min:
+            running_min = adj
+        qvals[idx] = min(running_min, 1.0)
+    reject = [qv <= q for qv in qvals]
+    return qvals, reject
+
+
 def evaluate_gate_I(label: str, chunks: list[MarketChunk],
                      results: list[ClassificationResult],
-                     k: int = 1) -> dict:
+                     k: int = 1,
+                     min_n: int = 30,
+                     fdr_q: float = 0.10) -> dict:
     """For each regime label, compute Pearson r/r2 of (chunk_mean_dipole_t,
     chunk_log_return_{t+k}) restricted to consecutive chunk pairs in that regime.
+
+    Cells with n < min_n are recorded but excluded from the test (prevents
+    tiny-n artifacts from passing the gate). Surviving cells go through
+    Benjamini-Hochberg FDR at q=fdr_q across regimes within this venue.
     """
     if len(chunks) < k + 2:
         return {"label": label, "gate_I": None, "reason": "too few chunks"}
@@ -231,13 +258,15 @@ def evaluate_gate_I(label: str, chunks: list[MarketChunk],
     labels = [r.regime.value for r in results]
 
     per_regime: dict[str, dict] = {}
+    testable_regimes: list[str] = []
+    testable_pvalues: list[float] = []
     for regime in set(labels):
         # Indices where chunk t is this regime AND chunk t+k exists
         idx = [i for i in range(len(chunks) - k) if labels[i] == regime]
         n = len(idx)
-        if n < 3:
+        if n < min_n:
             per_regime[regime] = {"n": n, "r": None, "r2": None, "p": None,
-                                   "note": "insufficient chunks"}
+                                   "note": f"n<{min_n}"}
             continue
         x = md[idx]
         y = cr[[i + k for i in idx]]
@@ -247,21 +276,35 @@ def evaluate_gate_I(label: str, chunks: list[MarketChunk],
             "r": round(r, 4) if np.isfinite(r) else None,
             "r2": round(r * r, 5) if np.isfinite(r) else None,
             "p": round(p, 4) if np.isfinite(p) else None,
+            "q": None,
         }
-    # Gate I: pass if any regime has r2 > 0.05 with p < 0.10 AND we have >=2 regimes evaluated
-    evaluable = {k: v for k, v in per_regime.items() if v.get("r") is not None}
+        if np.isfinite(p):
+            testable_regimes.append(regime)
+            testable_pvalues.append(float(p))
+
+    # Benjamini-Hochberg FDR across testable regimes within this venue.
+    qvals, rejects = _bh_fdr(testable_pvalues, q=fdr_q)
+    for regime, qv, rej in zip(testable_regimes, qvals, rejects):
+        per_regime[regime]["q"] = round(qv, 4)
+        per_regime[regime]["bh_reject"] = bool(rej)
+
+    # Gate I: pass if any testable regime has r2 > 0.05 AND survives BH-FDR
+    # AND we have >=2 testable regimes (so the FDR correction is meaningful).
+    n_testable = len(testable_regimes)
     has_signal = any(
-        (v["r2"] or 0) > 0.05 and (v["p"] or 1) < 0.10
-        for v in evaluable.values()
+        per_regime[r].get("bh_reject") and (per_regime[r].get("r2") or 0) > 0.05
+        for r in testable_regimes
     )
-    n_evaluable = len(evaluable)
     return {
         "label": label,
         "lag_k": k,
-        "n_evaluable_regimes": n_evaluable,
+        "min_n": min_n,
+        "fdr_q": fdr_q,
+        "n_testable_regimes": n_testable,
+        "n_evaluable_regimes": n_testable,  # alias for backward compat
         "per_regime": per_regime,
         "has_at_least_one_significant_regime": has_signal,
-        "gate_I": has_signal and n_evaluable >= 2,
+        "gate_I": has_signal and n_testable >= 2,
     }
 
 
@@ -357,11 +400,16 @@ def main():
             continue
         for regime, stat in sorted(ig["per_regime"].items(), key=lambda x: -(x[1].get("n") or 0)):
             if stat.get("r") is None:
-                print(f"    {regime:<24}  n={stat['n']:>2}  insufficient data")
+                note = stat.get("note", "insufficient data")
+                print(f"    {regime:<24}  n={stat['n']:>3}  {note}")
             else:
-                marker = " <- significant" if (stat["r2"] or 0) > 0.05 and (stat["p"] or 1) < 0.10 else ""
-                print(f"    {regime:<24}  n={stat['n']:>2}  r={stat['r']:+.3f}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{marker}")
-        print(f"    -> {'PASS' if ig['gate_I'] else 'FAIL'} (need >=1 significant regime, >=2 evaluable)")
+                q = stat.get("q")
+                marker = " <- significant (BH q<=0.10)" if stat.get("bh_reject") and (stat["r2"] or 0) > 0.05 else ""
+                qstr = f"  q={q:.3f}" if q is not None else ""
+                print(f"    {regime:<24}  n={stat['n']:>3}  r={stat['r']:+.3f}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{qstr}{marker}")
+        print(f"    -> {'PASS' if ig['gate_I'] else 'FAIL'} "
+              f"(need >=1 BH-significant regime with R^2>0.05, >=2 testable cells, "
+              f"min n={ig.get('min_n','?')})")
     print()
 
     # HERD persistence summary (sustained N-chunk runs)
