@@ -570,3 +570,158 @@ When the user's first message is a continuation cue:
 > "Picked up at `7886ede` on phase-2. All 4 backfill jobs done — data branches at `30c27bc` (eth) / `b5d4142` (btc). Tier 1 microstructure (VPIN, basis, funding, liq, microprice) plus calibration scripts shipped. Want me to (a) pull data and run the 3 calibration scripts + Pass-6 evaluator, (b) start Tier 2 (OI delta / Coinbase premium / Hawkes), (c) wire BTC perp-lead into forward paper, or (d) AWS §1.5?"
 
 — end of 2026-05-07 update —
+
+---
+
+## 2026-05-07 evening session update — Tier 1 calibration + Tier 2 + Tier 3
+
+This session ran the calibration runbook on the 30d backfilled
+corpus (Pass-6), shipped Tier 2 microstructure (OI delta, Coinbase
+premium, Hawkes), shipped Tier 3 (vol-target sizing, EQUILIBRIUM
+market-making, carry/basis-arb scoring + paper trades), and audited
+hardcoded constants for empirical reevaluation.
+
+### Branches at end of session
+
+| Branch | Tip | Notes |
+|---|---|---|
+| `claude/continue-phase-2-pipeline-UFiGY` (active code) | `fe34fcd` | All session work cherry-picked here |
+| `claude/calibrate-phase-2-metrics-Z1lUW` (session) | `df64ad3` | Where development happened; merge of phase-2 + new work |
+| `data/eth-bins` | `30c27bc` (unchanged this session) | KR ~30d, BN-vision ~10d, CB grown via cb_extend |
+| `data/btc-bins` | `b5d4142` (unchanged this session) | Same |
+| `claude/new-session-o3vnm` (default) | `4a86520` (unchanged this session) | Stale by design |
+
+### What this session shipped (commits on phase-2 since b61a935)
+
+| Commit | What |
+|---|---|
+| `f533283` | Calibration JSONs (vpin + liq) from 30d corpus |
+| `cd6cd0d` | **Pass-6 evaluator results** appended to HANDOFF_PHASE1_5_RESULTS.md |
+| `3c99f6a` | **Tier 2.7** OI delta backend monitor + calibrate_oi.py + /api/oi-status |
+| `00d3331` | **Tier 2.8** Coinbase premium monitor + /api/cb-premium-status |
+| `b5d720f` | **Tier 2.9** Hawkes branching ratio per chunk (eta on MarketFeatures) |
+| `71209ff` | **Tier 3.2** vol-targeted sizing in forward_paper |
+| `697ad1e` | **Tier 3.1** EQUILIBRIUM MM cells + playbook variant |
+| `3bc490f` | **Tier 3.3** carry/basis-arb scoring + /api/carry-opportunities |
+| `ac3f0bc` | Hardcode reevaluation: vol_target per (asset,venue) + hawkes bar inference |
+| `23ee441` | TODO.md + inline calibration TODOs for deferred recalibrations |
+| `e653776` | vol_target_calibration JSON (median realized_vol per cell, 3.4-5.1 bps) |
+| `fe34fcd` | **Tier 3.3 finished** — paper-trade carry integration on funding alerts |
+
+### Pass-6 headlines (still authoritative)
+
+- **KR-ETH WHALE_UP fade dead at scale**: r=−0.073 at n=484 confirms
+  Pass-5 collapse. Withdrawn hypothesis.
+- **KR-ETH WHALE_NASCENT_UP** holds direction at n=45, r=+0.221 —
+  sign stable across 5 passes; forward-paper-traded.
+- **KR-BTC WHALE_NASCENT_UP r=−0.209 at n=48** — opposite sign vs
+  ETH NASCENT. Cross-asset divergence on NASCENT confirmed.
+- **BTC Gate H passes** (63.9%) again; ETH Gate H still fails (56.4%).
+- **No cell BH-significant at q=0.10** in either asset at 30d.
+
+### Vol-target finding (calibration changed real behavior)
+
+Hand-picked `VOL_TARGET=0.005` was **10× too high**. Actual median
+realized_vol per (asset, venue) is 3.4-5.1 bps (calibration JSON).
+Old default clipped every chunk to 2.0× (vol-targeting was a no-op
+constant). Per-cell calibration now drives [0.5×–2.0×] inverse-vol
+scaling. Global fallback dropped to 0.0004.
+
+### Tier 4 — daily-priors layer (NOT STARTED)
+
+- **4.1 BTC→ETH cross-asset lead multiplier**. Research consistent on
+  intraday lead. Use BTC's current chunk regime as a same-direction
+  confirmation multiplier on ETH signals (analogous to F6 cross-venue
+  but cross-asset). Plumbing: `regime_classifier` reads sibling
+  asset's latest regime; multiplier in `ClassificationResult`.
+- **4.2 Calendar/event awareness**. 8h funding windows (already
+  partially modeled), ETF flow days, US/EU/Asia session breaks
+  (`session_phase` exists but day-of-week / weekend not modeled),
+  CPI/FOMC. Confidence dampener around scheduled events.
+
+### Tier 5 — classifiers worth revisiting (NOT STARTED)
+
+- **5.1 Wash-trade detection via Hawkes**. Multivariate Hawkes on
+  (buy, sell, cancel) reliably beats rule-based WASH. Current
+  rule-based WASH_PAIRED has tiny n; would benefit from a benchmark.
+- **5.2 Spoofing / quote-flicker**. Cancel-replace ratio at top-of-
+  book. Requires order-book deltas, not just trades. Blocked on
+  collector schema upgrade.
+- **5.3 Hurst exponent / DFA per chunk**. Orthogonal trending-vs-
+  reverting label that layers on top of the regime classifier.
+- **5.4 Real Cont-Kukanov OFI**. Needs L1 size *deltas* (we have
+  static sizes via the microprice work, but not deltas). Fills
+  `MarketFeatures.book_ofi` once book-state diff machinery is in
+  collectors.
+
+### Deferred from prior tiers
+
+- **Wire hawkes_eta into the regime classifier**. The field is now
+  populated on every chunk extraction (T2.9), but the classifier
+  doesn't read it yet. Two paths: (a) split NASCENT/WHALE into
+  eta-clustered vs eta-quiet sub-cells, (b) use eta as a confidence
+  multiplier analogous to vpin_multiplier. Either path needs a
+  Pass-7 evaluator to produce per-cell eta distributions first.
+- **BTC perp-lead → forward paper-trading**. The most robust signal
+  in the project (r=+0.10 n=13k 4/4 quarters significant) is
+  currently NOT wired for forward paper because the existing
+  evaluator runs on chunks, not 1-min perp imbalance. Adding it
+  requires a minute-level evaluator that taps the perp bins
+  separately from `_poll_one`. Modest scope (~100 LOC).
+- **CB premium calibration**: `cb_premium_monitor` uses sigma-cut
+  HOT_Z=2.0 / CLEAR_Z=1.0 (policy). Empirical calibration would
+  ship as `calibrate_cb_premium.py` reading
+  `backend_cb_premium_history.jsonl` for p95/p50 of |premium_z|.
+  Defer until ≥240 obs exist on AWS.
+- **Carry-analyzer per-venue rates**: `DEFAULT_SPOT_LENDING_APR=0.05`,
+  `DEFAULT_FEE_ROUND_TRIP_BPS=10.0`, `expected_hold_days=1.0` are
+  uniform conservative placeholders. Real values are venue +
+  user-tier specific. Wire venue lending APIs and friend-group fee
+  tiers to flag more opportunities.
+
+### Calibrations awaiting AWS uptime (ALL 5 SCRIPTS SHIPPED)
+
+Re-run as data accumulates; backend reads each JSON at module load:
+- `calibrate_vpin.py` (re-run when CB depth grows materially)
+- `calibrate_liq.py` (re-run as perp corpus grows)
+- `calibrate_funding.py` (skips until ≥30 cycles ~ 10 days uptime)
+- `calibrate_oi.py` (skips until ≥240 obs ~ 2 hours of cumulative
+  uptime per asset/venue)
+- `calibrate_vol_target.py` (re-run any time corpus grows ≥2×)
+
+### Launch carry-over (still pending — needs user hardware/accounts)
+
+- **AWS §1.5 backend systemd**
+- **AWS §2 VAPID push + phone test**
+- **AWS §3 Discord bot deploy** (Developer Portal + token + channel ID)
+- **AWS §5 end-to-end smoke test** (7-item checklist)
+- **Verify PWA loads on phone** (30s test)
+- **Rotate GoDaddy API key** (exposed earlier in transcripts)
+- **Fix AWS MCP for Claude Code** (separate from Desktop install)
+
+### Hardcodes accepted as policy this session (don't relitigate)
+
+Add to the existing list:
+- OI monitor / CB premium: `BUILD_Z=2.0 / CLEAR_Z=1.0 / HOT_Z=2.0`
+  — sigma cuts, match basis_monitor convention.
+- Vol-target: `VOL_MULT_MIN=0.5 / VOL_MULT_MAX=2.0` — risk caps.
+- Carry analyzer: `MIN_NET_APR_FOR_OPPORTUNITY=0.03` — opportunity
+  threshold.
+- Carry trade hold: `max_hold_minutes=480` (one funding cycle) —
+  policy default; real desks roll for weeks but the paper cell is
+  intentionally short-horizon for now.
+
+### First-message script for next agent
+
+When the user's first message is a continuation cue, respond with
+something like:
+
+> "Picked up at `fe34fcd` on phase-2. Tiers 1-3 + Pass-6 + hardcode
+> reevaluation all shipped this session. Want me to (a) start Tier 4
+> (BTC→ETH lead multiplier or calendar awareness), (b) start Tier 5
+> (Hurst/DFA, Hawkes wash, or Cont-Kukanov OFI), (c) wire hawkes_eta
+> into the regime classifier with a Pass-7 evaluator, (d) build the
+> BTC perp-lead minute-level evaluator (~100 LOC, most robust signal),
+> or (e) AWS §1.5?"
+
+— end of 2026-05-07 evening update —
