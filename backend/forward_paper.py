@@ -35,8 +35,21 @@ class CellSpec:
     asset: str
     venue: str
     side: str               # "buy" (long-momentum) or "sell" (short-fade)
-    notional_usd: float     # fixed notional per opened trade
-    hold_minutes: float     # auto-close after this many minutes
+    notional_usd: float     # fixed notional per opened trade. Vol-target
+                            # sizing is a Tier-3 follow-up: scale notional
+                            # by 1/realized_vol_z so size shrinks in high-
+                            # vol regimes. Defer until forward data shows
+                            # the cell is real.
+    hold_minutes: float     # auto-close after this many minutes. TODO:
+                            # empirically calibrate per cell once
+                            # backend_practice_trades.jsonl accumulates
+                            # ~50+ closed auto trades per cell. Method:
+                            # for each cell, sweep horizons (1, 5, 10,
+                            # 30, 60 min) on the closed-trades realized
+                            # P&L; pick the horizon maximizing adjusted
+                            # IC. Until then, 10 min is a chunk-aligned
+                            # default that matches the existing 30-bar
+                            # chunk window on 1-min bars.
     note: str
     # Predicate: returns True iff the cell should fire on this chunk.
     # Args: regime (str), feat (MarketFeatures-like), chunk (MarketChunk-like).
