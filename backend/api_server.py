@@ -61,6 +61,7 @@ from backend.forward_paper import (
     close_paper_trade as _fp_close_trade,
 )
 from backend.basis_monitor import BasisMonitor
+from backend.cb_premium_monitor import CoinbasePremiumMonitor
 from backend.funding_monitor import FundingMonitor
 from backend.oi_monitor import OIMonitor
 from backend.liq_monitor import LiqMonitor
@@ -408,6 +409,14 @@ class SignalStore:
         self.oi_monitor = OIMonitor(
             history_path=os.path.join(REPO_ROOT, "backend_oi_history.jsonl"),
             calibration_path=os.path.join(REPO_ROOT, "oi_calibration.json"))
+        # Coinbase premium index. Tracks (CB_USD - BN_USDT * USDT/USD)
+        # in bps and emits CB_PREMIUM_{HOT,COLD,CLEARED} drift alerts.
+        # US-institutional flow proxy; persists every observation to
+        # backend_cb_premium_history.jsonl so the calibration script
+        # can later derive empirical thresholds.
+        self.cb_premium_monitor = CoinbasePremiumMonitor(
+            history_path=os.path.join(REPO_ROOT,
+                                       "backend_cb_premium_history.jsonl"))
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -589,6 +598,13 @@ class SignalStore:
                 await self._emit_drift_alert(alert)
         except Exception as e:
             print(f"[oi-monitor] error: {e}", flush=True)
+
+        # Coinbase premium index (CB-USD vs BN-USDT*peg).
+        try:
+            for alert in self.cb_premium_monitor.update_all():
+                await self._emit_drift_alert(alert)
+        except Exception as e:
+            print(f"[cb-premium] error: {e}", flush=True)
 
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
@@ -1582,6 +1598,16 @@ async def get_oi_status():
     (OI↑ with price) from leverage build-up (OI↑ counter to price)
     and from squeezes / capitulations (OI↓)."""
     return {"oi": store.oi_monitor.snapshot()}
+
+
+@app.get("/api/cb-premium-status", dependencies=[Depends(verify_token)])
+async def get_cb_premium_status():
+    """Per-asset Coinbase-premium snapshot: peg-corrected
+    (CB_USD - BN_USDT * USDT/USD) in bps, rolling z, current state.
+    Sustained positive premium = US-institutional buying pressure;
+    sustained negative = US-side selling pressure. Use as a daily-bias
+    multiplier on US-hours signals."""
+    return {"cb_premium": store.cb_premium_monitor.snapshot()}
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
