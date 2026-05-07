@@ -435,3 +435,138 @@ When the user's first message is a continuation cue ("ok", "continue",
 > (c) something else?"
 
 — end of handoff —
+
+---
+
+## 2026-05-07 session update — microstructure layer + calibration
+
+User pivoted from launch-blockers to deepening the analytics. This
+section is the brief for the NEXT chat.
+
+### Branches at end of session
+
+| Branch | Tip | Notes |
+|---|---|---|
+| `claude/continue-phase-2-pipeline-UFiGY` (active code) | `7886ede` | All Tier-1 microstructure work + 3 calibration scripts cherry-picked here |
+| `claude/remove-handoff-info-rXuUL` (session work) | `d09de8a` (`7886ede` after cherry-pick mapping) | Where development happened |
+| `data/eth-bins` | `30c27bc` (2026-05-07 07:42 UTC) | All 4 backfill jobs landed |
+| `data/btc-bins` | `b5d4142` (2026-05-07 07:59 UTC) | Same |
+| `claude/new-session-o3vnm` (default) | `4a86520` | Untouched this session |
+
+### Backfill workflow status — ALL 4 JOBS DONE
+
+The `Backfill (one-shot)` workflow on phase-2 finished cleanly. Both
+`backfill_eth` / `backfill_btc` (parallel BN-vision + KR + CB rounds)
+AND the new chained `cb_extend_eth` / `cb_extend_btc` (resume-from-
+cursor CB-only rounds) committed bins back to the data branches. The
+new `*_coinbase_bins.cursor.json` sidecar files are persisted on the
+data branches, so future workflow triggers will continue extending CB
+depth.
+
+**Reminder for next agent**: pull both data branches before any
+analysis. Re-running the workflow once or twice more will push CB
+depth toward the 30-day target. KR is already at full 30d; BN-vision
+is capped at 10d (~90 MB push limit).
+
+### What shipped this session — Tier 1 + calibration
+
+All 14 commits below are on phase-2 (and on rXuUL):
+
+| Commit | What |
+|---|---|
+| `c169cb4` | Gate I tightened: `n>=30` + Benjamini-Hochberg FDR (`q<=0.10`). Tiny-n artifacts no longer trip the gate. |
+| `c34b771` | `backend/forward_paper.py` + hooks: auto-paper-trades the 2 ETH chunk-level candidate cells (`eth_kr_nascent_up_momo`, `eth_kr_herd_up_volq3_fade`). Sweep-close + by-cell aggregates in `/api/practice-trades?source=auto`. |
+| `d19bb1e` | **VPIN** per chunk (Easley/LdP toxicity proxy). `MarketFeatures.vpin`/`vpin_n_buckets`. `ClassificationResult.vpin_multiplier` (×1.15 high / ×0.85 low / ×0.7 on suspicious WASH). Threaded into `adjusted_confidence`. |
+| `cd55ea3` | OFI semantics doc: current `ofi` is collinear with `dipole`. NOT Cont-Kukanov OFI. `MarketFeatures.book_ofi: float = 0.0` placeholder. |
+| `95b4f70` | **Basis monitor** (`backend/basis_monitor.py`): spot-perp basis tracker emitting `BASIS_DIVERGENT_HOT/COLD/CLEARED`. `/api/basis-status`. Self-calibrating via rolling z. |
+| `8410b72` | **Funding monitor** (`backend/funding_monitor.py`): polls Binance + Bybit funding rates; emits `FUNDING_OVERLEVERED_LONG/SHORT/CLEARED`. Persists every cycle to `backend_funding_history.jsonl`. `/api/funding-status`. |
+| `e0db811` | **Liq monitor** (`backend/liq_monitor.py`): synthetic liquidation-burst detector on perp bins. `LIQ_BURST_UP/DOWN`. Upgrade path = real WSS feed. |
+| `c5d6dc2` | **Microprice + L1 sizes**: 4 spot collectors (CB/KR × ETH/BTC) now write `bid_qty`/`ask_qty` per bin. `MarketBar.mid` = Stoikov microprice with graceful degradation. Schema-additive. |
+| `f8c349d` | **VPIN calibration**: refactored `_compute_vpin` to fixed bucket SIZE in volume units (corpus-mean / 10). `calibrate_vpin.py` writes `vpin_calibration.json`. Backend reads p75/p25 per (asset, venue). |
+| `08b2dc1` | **Liq calibration**: `calibrate_liq.py` walks perp bins, picks p99 of (vol_z, |dip|, |gap|) per asset, reports joint pass-rate / alerts/day. `liq_calibration.json`. |
+| `4e48187` | **Funding calibration**: `calibrate_funding.py` reads funding history, computes p25/p75/p95 of `|rate|` per (asset, venue). `funding_calibration.json`. Needs ≥30 cycles. |
+| `7886ede` | `forward_paper.CellSpec` doc: `notional_usd` = pure policy (vol-target Tier 3). `hold_minutes` = TODO empirical per-cell IC vs horizon curve once ≥50 closed auto trades exist. |
+
+### Calibration runbook (RUN THESE FIRST)
+
+The data branches are now full. Next agent should:
+
+1. **Pull data branches** from a phase-2 checkout:
+   ```bash
+   git fetch origin data/eth-bins data/btc-bins
+   git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json
+   git checkout origin/data/btc-bins -- btc_coinbase_bins.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json
+   ```
+2. `python calibrate_vpin.py` → writes `vpin_calibration.json`. Inspect per-(asset, venue) p25/p75 + per-regime mean VPIN. Sanity-check that BTC and ETH percentiles diverge (literature says they should).
+3. `python calibrate_liq.py` → writes `liq_calibration.json`. Inspect `joint_alerts_per_day_est`. If >5/asset/day, rerun with `--percentile=99.5` or `99.9`.
+4. `python calibrate_funding.py` → likely **skips** (only 1-2 cycles of data exist; need ≥30). Re-run after ~10 days of backend uptime.
+5. Commit the JSONs to phase-2 (gitignore exempt).
+6. **Re-run `phase1_5_evaluator.py` on the fresh 30d corpus** — Gate I results will likely move (more cells now meet n≥30, FDR may filter some). Update `HANDOFF_PHASE1_5_RESULTS.md` with a Pass-6 section.
+7. Backend startup logs show per-key `(calibrated)` vs `(hardcoded fallback)` so it's verifiable on next AWS systemd start.
+
+### Pass-5 findings still authoritative (from `HANDOFF_PHASE1_5_RESULTS.md`)
+
+- **KR-ETH WHALE_UP fade**: collapsed at 10× n (r=−0.073 p=0.109). Headline gone standalone.
+- **Pre-registered KR _UP-fade family pool**: Stouffer combined p=0.020. Real but tiny effect.
+- **ETH KR HERD_UP × vol-Q3 fade**: r=−0.20 at n=168 p=0.008. Forward paper-traded as `eth_kr_herd_up_volq3_fade`.
+- **BTC BN-perp imb leads KR-spot at 1m**: most robust signal in project. r=+0.10 at n=12,955. Decile spread D10−D1 = 1.44 bps. Marginal at maker tier; impossible at retail. NOT yet wired into forward paper (requires minute-level perp evaluator — see carry-over).
+- **ETH KR WHALE_NASCENT_UP momentum**: r=+0.21 over 30d, r=+0.58 in recent 9d. Forward paper-traded as `eth_kr_nascent_up_momo`.
+- **BTC NASCENT divergence from ETH**: BTC NASCENT shows r=−0.21 (fade), opposite of ETH (+0.21 momentum). Asset divergence in regime lifecycle.
+
+### Tier suggestions NOT yet shipped
+
+The full prioritized list from the literature survey (web research
+2026-05-07), with everything still pending. Recommend tackling
+top-down. Sources detailed in the session that produced this list.
+
+#### Tier 2 (high impact, requires some new data)
+
+- **2.7 OI delta per chunk**. Open Interest on BN/BB perp APIs is free; per-chunk `oi_delta_pct` tells trend conviction (OI↑ + price↑ = trend; OI↑ + flat = position build; OI↓ + move = unwind). Add to `MarketFeatures` and as a sub-axis on regime classification.
+- **2.8 Coinbase premium index**. `(CB_BTC_USD − BN_BTCUSDT/peg) / spot`. US-institutional flow proxy. We already have CB; need a USDT-peg adjustment + alignment. Use as daily-bias multiplier on US-hours signals.
+- **2.9 Hawkes branching ratio per chunk**. Multivariate Hawkes self-excitation (η = α/β) — clustered (informed/cascade) vs Poisson (random). Better separator for NASCENT-vs-WHALE. Multiple recent papers on BTC LOB.
+
+#### Tier 3 (strategy classes the playbook ignores)
+
+- **3.1 EQUILIBRIUM market-making**. Current playbook says "no edge, sit out." That's exactly when passive top-of-book quoting earns spread. Add `MM_PASSIVE_QUOTE` playbook variant + a separate paper-trade cell that quotes both sides on `EQUILIBRIUM_TWO_SIDED` chunks and exits on regime flip.
+- **3.2 Vol-targeted sizing for forward_paper**. All trades currently $1000 fixed notional. Scale notional ∝ 1/realized_vol_z. ~10 LOC in `forward_paper.open_paper_trade`.
+- **3.3 Funding-rate carry / basis arb**. Delta-neutral (long spot, short perp when funding > spot lending rate by margin). Multi-hour holds, very high Sharpe, uncorrelated to direction calls. Pairs with the funding feed (already shipped).
+- **3.4 Forward_paper hold_minutes empirical calibration**. Per-cell IC vs horizon curve; needs ≥50 closed auto trades per cell. Documented in `forward_paper.py:CellSpec`.
+
+#### Tier 4 (daily-priors layer)
+
+- **4.1 BTC→ETH cross-asset lead multiplier**. Research is consistent: BTC leads ETH intraday. Use BTC's current chunk regime as a same-direction confirmation multiplier on ETH signals (analogous to F6 cross-venue but cross-asset).
+- **4.2 Calendar/event awareness**. 8h funding windows (already partially modeled), ETF flow days, US/EU/Asia session breaks (have `session_phase` but day-of-week / weekend not modeled), CPI/FOMC. Confidence dampener around scheduled events.
+
+#### Tier 5 (classifiers worth revisiting)
+
+- **5.1 Wash-trade detection via Hawkes**. Multivariate Hawkes on (buy, sell, cancel) reliably beats rule-based WASH. Current rule-based `WASH_PAIRED` has tiny n; would benefit from a benchmark.
+- **5.2 Spoofing / quote-flicker**. Cancel-replace ratio at top-of-book. Requires order-book deltas, not just trades.
+- **5.3 Hurst exponent / DFA per chunk**. Orthogonal trending-vs-reverting label that layers on top of the regime classifier.
+- **5.4 Real Cont-Kukanov OFI**. Needs L1 size *deltas* (we have static sizes via the microprice work, but not deltas). Fill `MarketFeatures.book_ofi` once book-state diff machinery is in collectors.
+
+### Carry-over from earlier sessions (still open)
+
+1. **Verify PWA loads on phone** (30s test).
+2. **AWS §1.5 backend systemd** — pickup point in `LAUNCH_PLAYBOOK.md`.
+3. **AWS §2 VAPID push + phone test**.
+4. **AWS §3 Discord bot deploy**.
+5. **AWS §5 end-to-end smoke test** — 7-item checklist.
+6. **BTC perp-lead → forward paper-trading**. The most robust signal in the project (r=+0.10, n=13k, 4/4 quarters significant) is currently NOT wired for forward paper because the existing evaluator runs on chunks, not 1-min perp imbalance. Adding it requires a minute-level evaluator that taps the perp bins separately from `_poll_one`. Modest scope (~100 LOC).
+7. **Rotate GoDaddy API key** — exposed in earlier session transcript.
+8. **Fix AWS MCP for Claude Code** — separate from Desktop install.
+
+### Hardcodes in shipped code — accepted as policy/conventions
+
+These were reviewed and explicitly kept hardcoded (NOT empirical questions):
+- `regime_classifier._vpin_multiplier_for_regime`: 1.15 / 0.85 / 0.7 multipliers — policy.
+- `basis_monitor`: `HOT_THRESHOLD_Z=2.0`, `CLEAR_THRESHOLD_Z=1.0` — sigma counts (auto-scale to volatility), `SUSTAINED_CYCLES=5` — noise filter.
+- `Gate I`: `min_n=30`, `fdr_q=0.10`, `r²>0.05` — statistical conventions.
+- `forward_paper`: `vol_z>=0.67` for HERD×Q3 cell — standard-normal Q3 cut.
+
+### First-message script for next agent (revised)
+
+When the user's first message is a continuation cue:
+
+> "Picked up at `7886ede` on phase-2. All 4 backfill jobs done — data branches at `30c27bc` (eth) / `b5d4142` (btc). Tier 1 microstructure (VPIN, basis, funding, liq, microprice) plus calibration scripts shipped. Want me to (a) pull data and run the 3 calibration scripts + Pass-6 evaluator, (b) start Tier 2 (OI delta / Coinbase premium / Hawkes), (c) wire BTC perp-lead into forward paper, or (d) AWS §1.5?"
+
+— end of 2026-05-07 update —
