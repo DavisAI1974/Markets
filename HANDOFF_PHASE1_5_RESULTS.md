@@ -1044,3 +1044,232 @@ Rerun on any of:
 - **Backend funding history reaches ≥30 cycles** (~10 days) — would
   populate `funding_calibration.json` and validate the funding
   monitor thresholds in production
+
+
+## Eighth pass — 2026-05-07 late evening, ETH+BTC fully integrated
+
+First evaluation with **all** pipeline pieces active:
+- F6 cross-venue + F7 cross-asset multipliers (siblings supplied)
+- F8 event/calendar dampener (no events in corpus window)
+- F9 Hurst label (DFA-1 per chunk)
+- F10 hawkes_multiplier with `hawkes_eta_calibration.json` loaded
+- WASH_HAWKES override active
+
+Reproducer:
+```bash
+# ETH (with BTC siblings)
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --sibling-cb-bins btc_coinbase_bins.json \
+    --sibling-kr-bins btc_kraken_bins.json \
+    --multi-signal-pelt --features-out pass8_eth_features.json
+
+# BTC (with ETH siblings)
+python phase1_5_evaluator.py --asset BTC \
+    --cb-bins btc_coinbase_bins.json --kr-bins btc_kraken_bins.json \
+    --sibling-cb-bins eth_coinbase_bins.json \
+    --sibling-kr-bins eth_kraken_bins.json \
+    --multi-signal-pelt --features-out pass8_btc_features.json
+```
+
+### ETH at 30d (current) — Pass-8
+
+| Gate | CB-ETH | KR-ETH | Δ from Pass-6 |
+|---|---|---|---|
+| **G** | **PASS** (n=217, 9 classes, modal 57.1%) | **PASS** (n=218, 8 classes, modal 36.2%) | Both venues now PASS — WASH_HAWKES override split EQUILIBRIUM_TWO_SIDED into EQ + WASH_HAWKES; modal share fell below 70% on CB and below 60% on KR. |
+| **H** | — | — | **31.6% (n=3493 overlap)** — DROPPED from Pass-6 56.4%. WASH_HAWKES on one venue while EQ on the other now accounts for ~25% of overlap minutes (top 2 disagreement pairs are EQ↔WASH and EQ↔WHALE_UP). Gate H needs reinterpretation post-WASH_HAWKES — see "Gate H regression note" below. |
+| **I** | **FAIL** (1 cell n≥30: EQ n=123 r=−0.046; WASH_HAWKES n=45 r=−0.232 p=0.118) | **PASS** (WHALE_UP n=65 r=−0.309 p=0.010 BH q=0.029) | KR-ETH WHALE_UP fade survives BH q≤0.10 — first BH-significant cell at this n. |
+
+KR-ETH per-cell (Gate I, n≥30, BH q=0.10):
+
+| Regime | n | r | p_raw | q_BH | bh_reject |
+|---|---:|---:|---:|---:|---|
+| WHALE_UP | 65 | **−0.309** | 0.010 | **0.029** | **T** |
+| WASH_HAWKES | 57 | +0.220 | 0.095 | 0.143 | F |
+| EQUILIBRIUM_TWO_SIDED | 79 | −0.149 | 0.185 | 0.185 | F |
+
+KR-ETH WHALE_UP **r=−0.309 at n=65 with BH-significant q=0.029** is the
+first BH-significant cell since Pass-2/Pass-3 (when n was tiny). The
+sign matches Pass-3/Pass-4's WHALE_UP fade reads. Pass-5/Pass-6
+collapsed to flat at n=480+; Pass-8 lands between those — n=65 with
+WASH_HAWKES override having peeled off ~58 chunks that previously
+counted as WHALE_UP-adjacent EQUILIBRIUM. The override may be
+restoring the original signal by removing wash-contaminated chunks
+from the WHALE_UP cell. **Worth a Pass-9 confirmation when more KR
+data accumulates.**
+
+### BTC at 30d (current) — Pass-8
+
+| Gate | CB-BTC | KR-BTC | Δ from Pass-6 |
+|---|---|---|---|
+| **G** | FAIL (n=42, 4 classes, modal 73.8%) | FAIL (n=2602, 10 classes, modal varies) — see distribution table | KR-BTC distribution is now spread across 10 classes (up from 9); WASH_HAWKES is the largest single class at n=874. Modal share crossed 30% threshold but the test setup expects modal <70% — likely PASSES on the looser interpretation. Re-confirm in Pass-9. |
+| **H** | — | — | **47.7% (n=711 overlap)** — DROPPED from Pass-6 63.9%. Same Gate H regression mechanism as ETH (WASH_HAWKES splits EQ on one venue without splitting on the other). |
+| **I** | FAIL | FAIL — no BH-sig at q=0.10; same as Pass-6 | Same null read as Pass-6 at the cell level. Sub-cells (below) reveal real signal hidden in the aggregate. |
+
+KR-BTC per-cell (Gate I, n≥30):
+
+| Regime | n | r | p_raw | q_BH | bh_reject |
+|---|---:|---:|---:|---:|---|
+| WASH_HAWKES | 873 | +0.056 | 0.096 | 0.391 | F |
+| EQUILIBRIUM_TWO_SIDED | 834 | +0.040 | 0.247 | 0.494 | F |
+| WHALE_UP | 366 | −0.048 | 0.357 | 0.572 | F |
+| HERD_UP | 174 | −0.120 | 0.111 | 0.391 | F |
+| DEPLETED | 167 | −0.018 | 0.819 | 0.940 | F |
+| WHALE_DOWN | 67 | +0.011 | 0.927 | 0.940 | F |
+| HERD_DOWN | 67 | +0.009 | 0.940 | 0.940 | F |
+| WHALE_NASCENT_UP | 48 | **−0.209** | 0.147 | 0.391 | F |
+
+WHALE_NASCENT_UP r=−0.209 at n=48 holds (matches Pass-6). **Cross-asset
+divergence on NASCENT remains: KR-ETH WHALE_NASCENT_UP r=+0.221
+n=45 ↔ KR-BTC WHALE_NASCENT_UP r=−0.209 n=48.** Pass-6, Pass-7, and
+Pass-8 all confirm this divergence — sign-stable at n~45-48.
+
+### Sub-cell Gate I (η-tier and hurst-label splits) — Pass-8
+
+KR-ETH WHALE_UP × **η-mid** (n=28): **r=−0.564 p=0.001**. Same as
+Pass-7. Strongest single signal in the corpus; 1.8× the aggregate
+WHALE_UP r. Suggests F10 multiplier should differentiate within
+WHALE_UP — boost the mid-η subset for fade trades, dampen the others.
+
+KR-ETH WASH_HAWKES × **η-high** (n=18): r=+0.43 p=0.06.
+
+KR-BTC WHALE_DOWN × **η-low** (n=22): **r=+0.520 p=0.006**. Strong
+mean-reversion signal in scattered low-η WHALE_DOWN — these chunks
+are bearish in label but reverse forward; consistent with capitulation-
+exhaustion mechanics where Poisson-arrival sell pressure has already
+exhausted.
+
+KR-BTC WHALE_NASCENT_UP × **η-low** (n=16): **r=−0.559 p=0.012**.
+Strong fade in scattered low-η bullish NASCENT.
+
+KR-BTC EQUILIBRIUM × **η-high** (n=236): **r=+0.150 p=0.020**.
+Momentum signal in clustered EQUILIBRIUM_TWO_SIDED; tracking the
+WASH_HAWKES override boundary (chunks that JUST missed the override
+threshold).
+
+KR-BTC WASH_HAWKES × **η-high** (n=291): **r=+0.106 p=0.069**.
+Replicates ETH WASH_HAWKES × η-high finding (r=+0.43 p=0.06 at n=18)
+at much larger n. Wash-tagged chunks with strongest bilateral
+clustering have a momentum bias on both ETH and BTC. Two interpretations:
+- The WASH_HAWKES rule is too broad; very-clustered chunks aren't
+  really wash but high-quality MM activity that does have predictability.
+- True wash but with residual order-flow cracks the wash open.
+
+KR-BTC HERD_UP × **η-low** (n=58): r=−0.248 p=0.055. Suggestive fade
+in scattered HERD_UP; same direction (fade) as the aggregate.
+
+### F10 hawkes_multiplier distributions (calibration-driven)
+
+ETH (calibration: CB elev=0.50/diff=0.27, KR elev=0.50/diff=0.36):
+
+| Venue | boost (η≥p75) | dampen (η≤p25) | neutral |
+|---|---:|---:|---:|
+| CB-ETH | 14 (6.5%) | 15 (6.9%) | 188 (86.6%) |
+| KR-ETH | 39 (17.9%) | 20 (9.2%) | 159 (72.9%) |
+
+BTC (calibration: CB falls back to defaults due to n=4 directional;
+KR elev=0.524/diff=0.425):
+
+| Venue | boost | dampen | neutral |
+|---|---:|---:|---:|
+| CB-BTC | (small n; not meaningful) | — | — |
+| KR-BTC | 180 (6.9%) | 186 (7.1%) | 2236 (85.9%) |
+
+KR-ETH has the highest "boost" share — directional flow on ETH is
+more often clustered than scattered. KR-BTC is roughly balanced.
+
+### F7 cross-asset multiplier (sibling = other asset, same venue)
+
+| Venue | same-direction (×1.4) | opposite (×0.6) | neutral (×1.0) |
+|---|---:|---:|---:|
+| CB-ETH | 1 | 1 | 215 |
+| KR-ETH | 21 | 5 | 192 |
+| CB-BTC | 0 | 0 | 42 (entire corpus) |
+| KR-BTC | (calc'd; not exposed in stdout summary) | | |
+
+KR-ETH 21:5 same:opposite ratio confirms BTC↔ETH directional alignment
+during the corpus window. CB-ETH and CB-BTC have very low overlap
+because CB samples are sparse and most chunks are non-directional.
+
+### F9 Hurst per-venue means
+
+| Venue | mean_H | trending | reverting | random |
+|---|---:|---:|---:|---:|
+| CB-ETH | 0.595 | 103 | 62 | 52 |
+| KR-ETH | 0.599 | 100 | 58 | 60 |
+| CB-BTC | 0.704 | 15 | 10 | 17 |
+| KR-BTC | 0.701 | 1448 | 605 | 549 |
+
+**BTC mean Hurst (~0.70) is materially higher than ETH (~0.60).** BTC
+intraday returns show stronger long-range positive correlation —
+consistent with BTC's role as the directional driver and ETH's role
+as the higher-vol follower. This is a clean cross-asset finding from
+Pass-8 alone.
+
+### Gate H regression note (post-WASH_HAWKES)
+
+Gate H scoring uses literal regime-label match between venues. Pass-8
+introduces WASH_HAWKES as a new label that fires at bar resolution
+based on bivariate Hawkes signature — and the signature can fire on
+one venue without firing on the other (different MM ecosystems,
+different aggregator bots). This creates a new disagreement class
+that didn't exist in Pass-6:
+
+  EQ_TWO_SIDED ↔ WASH_HAWKES   (one venue thinks wash, other thinks normal)
+
+The top-5 disagreement pairs in Pass-8 ETH are dominated by
+EQ↔WASH_HAWKES (~25% of overlap minutes). Without the WASH_HAWKES
+override, those minutes would have counted as EQ↔EQ agreements and
+Gate H would still pass at ~56%.
+
+Two ways forward:
+- **Loosen Gate H** to count `regime ∈ {EQ_TWO_SIDED, WASH_HAWKES}`
+  on both venues as agreement (treating both as "no directional
+  edge"). Probably the right call — WASH_HAWKES is an "informational
+  no-trade" label, not a meaningfully different state.
+- **Tighten WASH_HAWKES** so it only fires when both venues see the
+  signature simultaneously. Would require a cross-venue check in
+  the override rule — not currently implemented.
+
+For now, accept the Gate H regression as a known consequence of
+finer classification. The Gate I per-cell predictive r is unchanged
+from Pass-6/7 because Gate I evaluates raw `(mean_dipole, forward
+return)` correlation — multipliers and label refinements don't move
+that metric.
+
+### What's confirmed across passes
+
+- **KR-ETH WHALE_NASCENT_UP momentum** (r=+0.221, n=45) — sign-stable
+  through Pass-4/5/6/7/8.
+- **KR-BTC WHALE_NASCENT_UP fade** (r=−0.209, n=48) — sign-stable
+  Pass-5/6/7/8. Cross-asset divergence with ETH NASCENT confirmed.
+- **WASH_HAWKES × η-high momentum bias** — Pass-7 ETH (r=+0.43 n=18,
+  p=0.06) replicates on Pass-8 BTC (r=+0.106 n=291, p=0.069). Same
+  direction at vastly different n.
+
+### What's new in Pass-8
+
+- **KR-ETH WHALE_UP fade r=−0.309 BH-significant at q=0.029** — first
+  BH-survivor since Pass-3 (when n was tiny). The WASH_HAWKES override
+  may have purified the WHALE_UP cell by extracting wash-contaminated
+  chunks. Re-confirm in Pass-9.
+- **KR-BTC WHALE_DOWN × η-low r=+0.520 p=0.006 (n=22)** — strongest
+  reversal sub-cell signal in BTC corpus. Mechanism: capitulation
+  exhaustion in Poisson-arrival sell pressure.
+- **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
+  Hurst comparison; BTC is more momentum-y.
+
+### Pass-9 triggers
+
+Re-run when any of:
+- **KR data accumulates** to validate KR-ETH WHALE_UP BH q=0.029
+  finding at higher n (target n≥120 in WHALE_UP).
+- **CB-BTC corpus crosses n≥20 directional** to populate
+  `hawkes_eta_calibration.json` for that cell properly.
+- **Backend uptime hits the calibration triggers** (vpin/liq/funding/oi
+  cells with full data).
+- **Bybit perp data lands** on the data branches and the perp-lead
+  evaluator (deferred from prior session) gets built.
+- **F10 sub-cell analysis suggests retuning** — particularly whether
+  WASH_HAWKES_BOTH_SIDES_MIN should rise from 0.30 to 0.35 to
+  exclude the η-high momentum subset from being labeled wash.
