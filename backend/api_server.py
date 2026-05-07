@@ -59,6 +59,7 @@ from backend.forward_paper import (
     is_expired as _fp_is_expired,
     close_paper_trade as _fp_close_trade,
 )
+from backend.basis_monitor import BasisMonitor
 from pydantic import BaseModel
 
 
@@ -75,6 +76,19 @@ DATA_SOURCES = [
     ("ETH", "Coinbase", os.path.join(REPO_ROOT, "eth_coinbase_bins.json")),
     ("ETH", "Kraken",   os.path.join(REPO_ROOT, "eth_kraken_bins.json")),
 ]
+
+# Spot/perp paths for the basis_monitor. Per-asset; we pick whichever
+# spot venue is deepest (KR for both ETH/BTC at present) and whichever
+# perp source has the longest history (Binance Vision once backfilled,
+# else the RT Bybit collector).
+BASIS_SPOT_PATHS = {
+    "BTC": os.path.join(REPO_ROOT, "kraken_bins.json"),
+    "ETH": os.path.join(REPO_ROOT, "eth_kraken_bins.json"),
+}
+BASIS_PERP_PATHS = {
+    "BTC": os.path.join(REPO_ROOT, "btc_binance_perp_bins.json"),
+    "ETH": os.path.join(REPO_ROOT, "eth_binance_perp_bins.json"),
+}
 
 POLL_INTERVAL_S = 30.0
 RECENT_SIGNALS_CAP = 200
@@ -306,6 +320,10 @@ class SignalStore:
         self._drift_alerts_path = os.path.join(REPO_ROOT, "backend_drift_alerts.jsonl")
         self._restore_signals()
         self._restore_drift_alerts()
+        # Spot-perp basis tracker; emits BASIS_DIVERGENT_{HOT,COLD,CLEARED}
+        # drift alerts when (perp - spot) drifts beyond a rolling-z
+        # threshold and stays there for SUSTAINED_CYCLES polls.
+        self.basis_monitor = BasisMonitor(BASIS_SPOT_PATHS, BASIS_PERP_PATHS)
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -440,6 +458,16 @@ class SignalStore:
             self._sweep_close_forward_paper_trades()
         except Exception as e:
             print(f"[forward-paper] sweep error: {e}", flush=True)
+
+        # Spot-perp basis: update once per asset (independent of venue
+        # poll calls) and emit a drift_alert on state transitions.
+        try:
+            for asset in {a for a, _, _ in DATA_SOURCES}:
+                alert = self.basis_monitor.update_asset(asset)
+                if alert:
+                    await self._emit_drift_alert(alert)
+        except Exception as e:
+            print(f"[basis-monitor] error: {e}", flush=True)
 
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
@@ -1389,6 +1417,14 @@ async def get_drift_alerts(limit: int = 50):
     alerts = list(store.recent_drift_alerts)[-limit:]
     alerts.reverse()
     return {"alerts": alerts, "n_total": len(store.recent_drift_alerts)}
+
+
+@app.get("/api/basis-status", dependencies=[Depends(verify_token)])
+async def get_basis_status():
+    """Per-asset spot-perp basis snapshot: latest bps, z-score, current
+    state (normal/hot/cold), and streak counters. Powers a frontend
+    badge / Discord pin showing where leverage is currently building."""
+    return {"basis": store.basis_monitor.snapshot()}
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
