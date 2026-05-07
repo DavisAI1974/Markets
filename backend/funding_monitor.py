@@ -32,12 +32,31 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
-# Thresholds in raw 8-hour rate (so 0.0001 == 1 bp per 8h ~ 10.95% APR).
+# Fallback thresholds in raw 8-hour rate (0.0001 == 1 bp / 8h ~ 10.95% APR).
+# Used only when funding_calibration.json is missing or doesn't have an
+# entry for this (asset, venue). Empirical per-key thresholds (p25/p75/p95
+# of historical |rate|) come from calibrate_funding.py.
 ELEVATED_THRESHOLD = 0.0001     # 1 bp / 8h
 EXTREME_THRESHOLD = 0.0005      # 5 bp / 8h
 CLEAR_THRESHOLD = 0.00003       # 0.3 bp / 8h
 HISTORY_PATH_DEFAULT = "backend_funding_history.jsonl"
 HTTP_TIMEOUT_S = 6.0
+
+
+def _load_funding_calibration(path: str) -> dict[str, dict]:
+    """Read funding_calibration.json once and return per-(asset, venue)
+    threshold dicts. Errors are non-fatal — caller falls back to
+    hardcoded defaults."""
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        with open(path) as f:
+            payload = json.load(f)
+        return payload.get("calibration", {}) or {}
+    except Exception as e:
+        print(f"[funding] could not parse {path}: {e}; using defaults",
+              flush=True)
+        return {}
 
 # (asset, venue, symbol) tuples. Matches the perp collectors already
 # in the project.
@@ -108,12 +127,28 @@ class _FundingState:
 
 class FundingMonitor:
     def __init__(self, history_path: Optional[str] = None,
-                  sources: Optional[list[tuple[str, str, str]]] = None):
+                  sources: Optional[list[tuple[str, str, str]]] = None,
+                  calibration_path: Optional[str] = None):
         self.history_path = history_path or HISTORY_PATH_DEFAULT
         self.sources = sources or FUNDING_SOURCES
         # State is keyed by (asset, venue) so BTC/Binance vs BTC/Bybit
         # have independent thresholds and emit distinct alerts.
         self._state: dict[tuple[str, str], _FundingState] = {}
+        # Per-(asset, venue) thresholds. Loaded once from
+        # funding_calibration.json; falls back to hardcoded defaults.
+        cal = _load_funding_calibration(calibration_path) if calibration_path else {}
+        self._thresholds: dict[tuple[str, str], tuple[float, float, float]] = {}
+        for asset, venue, _symbol in self.sources:
+            entry = cal.get(f"{asset}/{venue}") or {}
+            elev = float(entry.get("elevated_threshold", ELEVATED_THRESHOLD))
+            extr = float(entry.get("extreme_threshold", EXTREME_THRESHOLD))
+            clear = float(entry.get("clear_threshold", CLEAR_THRESHOLD))
+            self._thresholds[(asset, venue)] = (elev, extr, clear)
+            calibrated = f"{asset}/{venue}" in cal
+            print(f"[funding] {asset}/{venue}: elevated={elev*1e4:.2f}bps "
+                  f"extreme={extr*1e4:.2f}bps clear={clear*1e4:.2f}bps "
+                  f"({'calibrated' if calibrated else 'hardcoded fallback'})",
+                  flush=True)
 
     def _state_for(self, asset: str, venue: str) -> _FundingState:
         k = (asset, venue)
@@ -122,6 +157,11 @@ class FundingMonitor:
             s = _FundingState()
             self._state[k] = s
         return s
+
+    def _thresholds_for(self, asset: str, venue: str) -> tuple[float, float, float]:
+        return self._thresholds.get(
+            (asset, venue),
+            (ELEVATED_THRESHOLD, EXTREME_THRESHOLD, CLEAR_THRESHOLD))
 
     def _persist(self, asset: str, venue: str, symbol: str, rate: float,
                   nft: float) -> None:
@@ -138,15 +178,15 @@ class FundingMonitor:
         except Exception as e:
             print(f"[funding] persist error: {e}", flush=True)
 
-    @staticmethod
-    def _classify_state(rate: float) -> str:
-        if rate >= EXTREME_THRESHOLD:
+    def _classify_state(self, rate: float, asset: str, venue: str) -> str:
+        elevated, extreme, _clear = self._thresholds_for(asset, venue)
+        if rate >= extreme:
             return "extreme_long"
-        if rate <= -EXTREME_THRESHOLD:
+        if rate <= -extreme:
             return "extreme_short"
-        if rate >= ELEVATED_THRESHOLD:
+        if rate >= elevated:
             return "elevated_long"
-        if rate <= -ELEVATED_THRESHOLD:
+        if rate <= -elevated:
             return "elevated_short"
         return "normal"
 
@@ -177,7 +217,7 @@ class FundingMonitor:
                 st.history.append({"rate": rate, "nft": nft, "ts": time.time()})
                 st.last_observed_funding_ts = nft
 
-            new_state = self._classify_state(rate)
+            new_state = self._classify_state(rate, asset, venue)
             if new_state == st.current_state:
                 continue
 
