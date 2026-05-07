@@ -835,7 +835,7 @@ class SignalStore:
         # clipped to [0.5x, 2.0x]. Same multiplier applies to all cells
         # firing on this chunk since they share the same regime context.
         rv = float(getattr(feat, "realized_vol", 0.0) or 0.0)
-        vol_mult = _fp_vol_mult(rv)
+        vol_mult = _fp_vol_mult(rv, asset=asset, venue=venue)
         for cell in cells:
             fill_price = _fp_entry_price(cell, bid, ask, mid)
             if fill_price <= 0:

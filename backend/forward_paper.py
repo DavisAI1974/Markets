@@ -23,6 +23,8 @@ and realized P&L computed (same fee math as the manual-close path).
 
 from __future__ import annotations
 
+import json
+import os
 import time
 import uuid
 from dataclasses import dataclass
@@ -144,25 +146,86 @@ CELLS: list[CellSpec] = [
 _PRACTICE_FEE_BPS = 25.0
 
 # Vol-target sizing (Tier 3.2). Chunk realized_vol is the std of bar
-# log-returns over the chunk window. We pick a target around which
-# notional is unscaled, then clip the multiplier so a single high-vol
-# chunk can't blow position size up nor a quiet chunk pile risk on.
-# 0.0050 ≈ 50 bps stdev over a ~30-bar window matches the ETH/BTC
-# spot corpora we've seen across all six passes.
+# log-returns over the chunk window. The "target" is the realized_vol
+# value at which the multiplier returns 1.0 — set per-(asset, venue)
+# from vol_target_calibration.json (output of calibrate_vol_target.py
+# = median realized_vol over the corpus). Falls back to a global
+# default when the calibration entry is missing.
 VOL_TARGET = 0.0050
 VOL_MULT_MIN = 0.5
 VOL_MULT_MAX = 2.0
 
+_VOL_TARGET_CALIB_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..", "vol_target_calibration.json")
+_vol_target_table: dict[str, float] = {}
+_vol_target_loaded: bool = False
+
+
+_VENUE_LABEL_MAP = {
+    "CB": "Coinbase",
+    "KR": "Kraken",
+    "BN": "Binance",
+    "BB": "Bybit",
+}
+
+
+def _load_vol_target_calibration() -> None:
+    """Read vol_target_calibration.json into _vol_target_table once.
+    Resolved keys are 'ETH/Coinbase'-style (matching the calibrator)
+    AND short-form 'ETH/CB' (matching CellSpec.venue). Errors are
+    non-fatal."""
+    global _vol_target_loaded, _vol_target_table
+    if _vol_target_loaded:
+        return
+    _vol_target_loaded = True
+    if not os.path.exists(_VOL_TARGET_CALIB_PATH):
+        return
+    try:
+        with open(_VOL_TARGET_CALIB_PATH) as f:
+            payload = json.load(f)
+        for label, entry in (payload.get("calibration") or {}).items():
+            tgt = float(entry.get("vol_target", VOL_TARGET))
+            _vol_target_table[label] = tgt
+            try:
+                asset, full_venue = label.split("/", 1)
+                short_venue = next((k for k, v in _VENUE_LABEL_MAP.items()
+                                     if v == full_venue), full_venue)
+                _vol_target_table[f"{asset}/{short_venue}"] = tgt
+            except ValueError:
+                pass
+    except Exception as e:
+        print(f"[vol-target] could not parse {_VOL_TARGET_CALIB_PATH}: "
+              f"{e}; using global default {VOL_TARGET}", flush=True)
+
+
+def _target_for(asset: Optional[str], venue: Optional[str]) -> float:
+    _load_vol_target_calibration()
+    if asset and venue:
+        key = f"{asset}/{venue}"
+        if key in _vol_target_table:
+            return _vol_target_table[key]
+    return VOL_TARGET
+
 
 def vol_target_multiplier(realized_vol: float,
-                            target: float = VOL_TARGET,
+                            asset: Optional[str] = None,
+                            venue: Optional[str] = None,
+                            target: Optional[float] = None,
                             lo: float = VOL_MULT_MIN,
                             hi: float = VOL_MULT_MAX) -> float:
     """Inverse-vol sizing: notional ∝ target / realized_vol, clipped.
     A chunk at exactly `target` returns 1.0; quieter chunks size up
-    (capped at `hi`); louder chunks size down (floored at `lo`)."""
+    (capped at `hi`); louder chunks size down (floored at `lo`).
+
+    Pass (asset, venue) to use the per-cell calibrated target from
+    vol_target_calibration.json. Pass `target` directly to override.
+    Falls back to the global VOL_TARGET default when neither is
+    available."""
     if realized_vol is None or realized_vol <= 1e-9:
         return 1.0
+    if target is None:
+        target = _target_for(asset, venue)
     raw = float(target) / float(realized_vol)
     return max(float(lo), min(float(hi), raw))
 

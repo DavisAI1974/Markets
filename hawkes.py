@@ -126,13 +126,36 @@ def fit_exponential_hawkes(event_times: np.ndarray, T: Optional[float] = None
             "n_events": n}
 
 
-def synth_event_times_from_bars(bars, bar_duration_s: float = DEFAULT_BAR_DURATION_S
+def _infer_bar_duration_s(bars) -> float:
+    """Infer bar bin size from the median Δts of consecutive bars.
+    Falls back to DEFAULT_BAR_DURATION_S when fewer than 2 bars exist
+    or all timestamps are zero/equal. Tolerant of small drift around
+    a fixed cadence."""
+    ts = [float(getattr(b, "ts", 0.0) or 0.0) for b in bars]
+    ts = [t for t in ts if t > 0]
+    if len(ts) < 2:
+        return DEFAULT_BAR_DURATION_S
+    diffs = np.diff(np.sort(np.asarray(ts, dtype=float)))
+    diffs = diffs[diffs > 0]
+    if len(diffs) == 0:
+        return DEFAULT_BAR_DURATION_S
+    inferred = float(np.median(diffs))
+    return inferred if inferred > 0 else DEFAULT_BAR_DURATION_S
+
+
+def synth_event_times_from_bars(bars,
+                                  bar_duration_s: Optional[float] = None
                                   ) -> np.ndarray:
     """Reconstruct synthetic per-trade event times from bar-level data.
     For each bar with n_trades > 0, place n_trades event times
     uniformly in [bar.ts, bar.ts + bar_duration_s).
 
-    Returns a sorted np.ndarray. Empty if no bars have trade activity."""
+    bar_duration_s defaults to median(Δts) inferred from the bars
+    themselves, so the function tolerates collectors emitting 30s,
+    60s, 5-min, etc. bins without an explicit override. Returns a
+    sorted np.ndarray. Empty if no bars have trade activity."""
+    if bar_duration_s is None:
+        bar_duration_s = _infer_bar_duration_s(bars)
     rng = np.random.default_rng(0)
     out: list[float] = []
     for b in bars:
