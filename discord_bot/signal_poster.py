@@ -50,6 +50,7 @@ REGIME_STYLES = {
     "HERD_DOWN":            (0xb91c1c, "Selling cascade",      "🌊"),
     "EQUILIBRIUM_TWO_SIDED":(0x3b82f6, "Healthy two-sided",   "⚖️"),
     "WASH_PAIRED":          (0xeab308, "Wash pattern — skip",  "⚠️"),
+    "WASH_HAWKES":          (0xeab308, "Hawkes wash — skip",   "⚠️"),
     "DEPLETED":             (0x9ca3af, "Market quiet",         "💤"),
     "UNKNOWN":              (0x6b7280, "Unclassified",         "❓"),
     # Composite regimes from cross-venue cascade detection

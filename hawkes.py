@@ -183,3 +183,113 @@ def hawkes_eta_for_bars(bars) -> tuple[float, int]:
         return 0.0, int(len(et))
     fit = fit_exponential_hawkes(et)
     return float(fit["eta"]), int(fit["n_events"])
+
+
+# ---------------------------------------------------------------------------
+# Bivariate (buy / sell) variant for wash-trade detection
+# ---------------------------------------------------------------------------
+
+# Wash-candidate threshold on the combined-side η. Below this, the per-side
+# fits aren't worth the cost — clustering is too weak to be wash-like.
+WASH_CANDIDATE_ETA_FLOOR = 0.30
+
+
+def synth_buy_sell_event_times_from_bars(bars,
+                                            bar_duration_s: Optional[float] = None
+                                            ) -> tuple[np.ndarray, np.ndarray]:
+    """Return (buy_times, sell_times) by splitting each bar's n_trades by
+    the buy_vol/sell_vol share, then placing the trades uniformly within
+    the bar window.
+
+    Volume-share split is an approximation: bar-binned data doesn't tell us
+    which trades went which side, only the aggregate. The split tracks
+    proportional intensity but loses individual trade orderings — fine for
+    a Hawkes branching-ratio estimate, not for tick-level reconstruction.
+    """
+    if bar_duration_s is None:
+        bar_duration_s = _infer_bar_duration_s(bars)
+    rng = np.random.default_rng(0)
+    buys: list[float] = []
+    sells: list[float] = []
+    for b in bars:
+        n = int(getattr(b, "n_trades", 0) or 0)
+        if n <= 0:
+            continue
+        ts0 = float(getattr(b, "ts", 0.0))
+        if ts0 <= 0:
+            continue
+        bv = float(getattr(b, "buy_vol", 0.0) or 0.0)
+        sv = float(getattr(b, "sell_vol", 0.0) or 0.0)
+        total = bv + sv
+        if total <= 1e-12:
+            n_buy = n // 2
+            n_sell = n - n_buy
+        else:
+            n_buy = int(round(n * bv / total))
+            n_sell = n - n_buy
+        if n_buy > 0:
+            offsets = rng.uniform(0.0, bar_duration_s, size=n_buy)
+            buys.extend((ts0 + offsets).tolist())
+        if n_sell > 0:
+            offsets = rng.uniform(0.0, bar_duration_s, size=n_sell)
+            sells.extend((ts0 + offsets).tolist())
+    buy_arr = np.asarray(buys, dtype=float)
+    sell_arr = np.asarray(sells, dtype=float)
+    buy_arr.sort()
+    sell_arr.sort()
+    return buy_arr, sell_arr
+
+
+def hawkes_eta_buy_sell_for_bars(bars,
+                                    candidate_floor: float = WASH_CANDIDATE_ETA_FLOOR,
+                                    eta_all: Optional[float] = None,
+                                    ) -> dict:
+    """Compute per-side η_buy / η_sell only when the combined η_all clears
+    candidate_floor. Otherwise the per-side fits are skipped (returns
+    zeros) — wash-detection is a no-op when combined clustering is weak,
+    and the gate halves the average runtime cost.
+
+    Caller passes the already-fit eta_all (from hawkes_eta_for_bars) when
+    available to avoid a redundant combined fit.
+
+    The wash *rule* lives in regime_classifier (WASH_HAWKES override
+    fires when both per-side η are elevated and the dipole is balanced).
+    This helper is purely a measurement layer.
+
+    Returns: {
+      'eta_all', 'eta_buy', 'eta_sell',
+      'n_all', 'n_buy', 'n_sell',
+      'fit_per_side': bool,   # whether per-side fits actually ran
+    }
+    """
+    if eta_all is None:
+        eta_all_val, n_all = hawkes_eta_for_bars(bars)
+    else:
+        eta_all_val = float(eta_all)
+        n_all = sum(int(getattr(b, "n_trades", 0) or 0) for b in bars)
+
+    out = {
+        "eta_all": float(eta_all_val),
+        "eta_buy": 0.0,
+        "eta_sell": 0.0,
+        "n_all": int(n_all),
+        "n_buy": 0,
+        "n_sell": 0,
+        "fit_per_side": False,
+    }
+    if eta_all_val < candidate_floor:
+        return out
+
+    buy_t, sell_t = synth_buy_sell_event_times_from_bars(bars)
+    out["n_buy"] = int(len(buy_t))
+    out["n_sell"] = int(len(sell_t))
+
+    if len(buy_t) >= MIN_EVENTS_FOR_FIT:
+        fit_b = fit_exponential_hawkes(buy_t)
+        out["eta_buy"] = float(fit_b["eta"])
+    if len(sell_t) >= MIN_EVENTS_FOR_FIT:
+        fit_s = fit_exponential_hawkes(sell_t)
+        out["eta_sell"] = float(fit_s["eta"])
+
+    out["fit_per_side"] = True
+    return out

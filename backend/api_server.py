@@ -294,6 +294,7 @@ PLAYBOOKS: dict[str, str] = {
     "HERD_UP": "FOMO / panic buy — many actors aligned on the buy side. Follow with tight stops; fade after overshoot.",
     "HERD_DOWN": "Panic sell / capitulation — many actors aligned on the sell side. Fade after the worst is over; do NOT catch the falling knife.",
     "WASH_PAIRED": "Wash-trade signature: paired self-trades, no real price discovery. Do not trade.",
+    "WASH_HAWKES": "Hawkes wash signature: both buy and sell flows cluster simultaneously with balanced volume. Likely wash / self-trade activity at bar resolution. Do not trade — no real price discovery to ride.",
     "DEPLETED": "Market is asleep (lunch / off-hours). Sit out — there's no flow to ride.",
     "UNKNOWN": "Pattern doesn't match a known regime. Skip until classifier resolves.",
 }
@@ -308,6 +309,7 @@ EVENT_LABELS: dict[str, str] = {
     "HERD_UP":     "Buying cascade detected",
     "HERD_DOWN":   "Selling cascade detected",
     "WASH_PAIRED": "Wash-trade pattern detected — skip",
+    "WASH_HAWKES": "Hawkes wash signature detected — skip",
     "DEPLETED":    "Market quiet — no activity",
     "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided trading",
     "UNKNOWN":     "Unclassified pattern",

@@ -32,6 +32,7 @@ class Regime(str, Enum):
     HERD_UP = "HERD_UP"
     HERD_DOWN = "HERD_DOWN"
     WASH_PAIRED = "WASH_PAIRED"
+    WASH_HAWKES = "WASH_HAWKES"    # bivariate Hawkes wash detector (5.1)
     DEPLETED = "DEPLETED"          # low-liquidity quiet
     UNKNOWN = "UNKNOWN"            # genuine fallback (now rare)
 
@@ -101,10 +102,10 @@ def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
             return 0.85, (f"vpin={vpin:.2f} <= p25={diffuse:.2f} "
                           f"(diffuse/retail flow; -15% confidence)")
         return 1.0, f"vpin={vpin:.2f}"
-    if name == "WASH_PAIRED" and vpin >= elevated:
+    if name in ("WASH_PAIRED", "WASH_HAWKES") and vpin >= elevated:
         # WASH should be flow-neutral; high VPIN here suggests one side
         # is actually informed and we mislabeled. De-rate.
-        return 0.7, (f"vpin={vpin:.2f} >= p75={elevated:.2f} on WASH_PAIRED "
+        return 0.7, (f"vpin={vpin:.2f} >= p75={elevated:.2f} on {name} "
                      f"(suspicious; -30%)")
     return 1.0, ""
 
@@ -114,6 +115,16 @@ def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
 HURST_TRENDING = 0.55
 HURST_REVERTING = 0.45
 HURST_MIN_RETURNS_FOR_LABEL = 8  # mirrors hurst.HURST_MIN_RETURNS
+
+# WASH_HAWKES override thresholds. Wash signature at bar resolution:
+# - Both per-side η elevated (each side's events cluster in time).
+# - Combined η also elevated (cross-excitation contributes too).
+# - Balanced volume (|mean_dipole| small).
+# Only EQUILIBRIUM_TWO_SIDED is overridden — directional regimes already
+# encode a side bias and shouldn't be relabeled as wash.
+WASH_HAWKES_BOTH_SIDES_MIN = 0.30   # min(η_buy, η_sell) must clear this
+WASH_HAWKES_COMBINED_MIN = 0.40     # combined η must clear this
+WASH_HAWKES_DIPOLE_MAX = 0.20       # |mean_dipole| must stay below this
 
 
 def _hurst_label_for(f: MarketFeatures) -> str:
@@ -154,6 +165,24 @@ def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
     result.hurst_label = _hurst_label_for(f)
     if result.hurst_label:
         result.notes.append(f"hurst={result.hurst:.2f} ({result.hurst_label})")
+
+    # 5.1 WASH_HAWKES override: bivariate Hawkes wash detector. Promotes
+    # EQUILIBRIUM_TWO_SIDED chunks with bilateral self-excitation +
+    # balanced volume to WASH_HAWKES so the playbook can flag them as
+    # likely wash flow. Doesn't touch directional regimes — they already
+    # encode a side bias that's incompatible with wash.
+    eta_all = float(getattr(f, "hawkes_eta", 0.0) or 0.0)
+    eta_buy = float(getattr(f, "hawkes_eta_buy", 0.0) or 0.0)
+    eta_sell = float(getattr(f, "hawkes_eta_sell", 0.0) or 0.0)
+    if (result.regime == Regime.EQUILIBRIUM_TWO_SIDED
+            and eta_all >= WASH_HAWKES_COMBINED_MIN
+            and min(eta_buy, eta_sell) >= WASH_HAWKES_BOTH_SIDES_MIN
+            and abs(f.mean_dipole) < WASH_HAWKES_DIPOLE_MAX):
+        result.regime = Regime.WASH_HAWKES
+        result.notes.append(
+            f"hawkes_wash: η_all={eta_all:.2f} η_buy={eta_buy:.2f} "
+            f"η_sell={eta_sell:.2f} dipole={f.mean_dipole:+.2f} "
+            f"(bilateral self-excitation + balanced volume)")
     return result
 
 

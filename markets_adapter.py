@@ -237,6 +237,13 @@ class MarketFeatures:
     # counts at bar resolution. See hawkes.py.
     hawkes_eta: float = 0.0
     hawkes_n_events: int = 0
+    # Per-side Hawkes branching ratios for wash detection. Computed only
+    # when hawkes_eta clears WASH_CANDIDATE_ETA_FLOOR (cost gate). Wash
+    # signature: both eta_buy and eta_sell elevated AND |mean_dipole|
+    # small — i.e., both sides cluster simultaneously with balanced
+    # volume. See regime_classifier WASH_HAWKES override rule.
+    hawkes_eta_buy: float = 0.0
+    hawkes_eta_sell: float = 0.0
     # Hurst exponent via DFA-1 on the chunk's log returns. Orthogonal to
     # the regime classifier's whale/herd axis: H>0.5 = trending, H<0.5 =
     # mean-reverting. hurst=0.5 with hurst_n_returns=0 signals "couldn't
@@ -656,10 +663,17 @@ class MarketChunkEncoder:
         # Poisson. Returns (0.0, 0) on chunks too small to fit
         # without raising; failure modes degrade gracefully.
         try:
-            from hawkes import hawkes_eta_for_bars
+            from hawkes import hawkes_eta_for_bars, hawkes_eta_buy_sell_for_bars
             hawkes_eta_val, hawkes_n_evt = hawkes_eta_for_bars(bars)
+            # Per-side fits gated on combined eta clearing the wash candidate
+            # floor (avoids paying ~3x the Hawkes-fit cost on Poisson chunks).
+            bs = hawkes_eta_buy_sell_for_bars(bars, eta_all=hawkes_eta_val)
+            hawkes_eta_buy_val = float(bs["eta_buy"])
+            hawkes_eta_sell_val = float(bs["eta_sell"])
         except Exception:
             hawkes_eta_val, hawkes_n_evt = 0.0, 0
+            hawkes_eta_buy_val = 0.0
+            hawkes_eta_sell_val = 0.0
 
         # F9: Hurst exponent via DFA on the chunk's log returns.
         # Orthogonal trending-vs-reverting axis. Falls back to (0.5, 0)
@@ -685,6 +699,8 @@ class MarketChunkEncoder:
             vpin_n_buckets=vpin_n,
             hawkes_eta=hawkes_eta_val,
             hawkes_n_events=hawkes_n_evt,
+            hawkes_eta_buy=hawkes_eta_buy_val,
+            hawkes_eta_sell=hawkes_eta_sell_val,
             hurst=hurst_val,
             hurst_n_returns=hurst_n,
             hour_utc=hour_utc_val,
