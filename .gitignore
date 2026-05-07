@@ -90,3 +90,7 @@ playbook_registry.json
 
 # One-off scratch / recheck scripts (leading underscore convention)
 _*.py
+
+# Pass-N evaluator stdout captures (transient; features-out JSON is the
+# authoritative evidence and gets committed)
+pass*_stdout.txt
