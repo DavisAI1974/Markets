@@ -62,6 +62,7 @@ from backend.forward_paper import (
 )
 from backend.basis_monitor import BasisMonitor
 from backend.funding_monitor import FundingMonitor
+from backend.oi_monitor import OIMonitor
 from backend.liq_monitor import LiqMonitor
 from pydantic import BaseModel
 
@@ -398,6 +399,15 @@ class SignalStore:
         self.liq_monitor = LiqMonitor(
             BASIS_PERP_PATHS,
             calibration_path=os.path.join(REPO_ROOT, "liq_calibration.json"))
+        # Open-interest watcher. Polls Binance + Bybit perp APIs each
+        # cycle; emits OI_BUILDING_{LONG,SHORT} / OI_UNWIND_{SHORTS,LONGS}
+        # / OI_CLEARED on Δoi-z transitions. Persists every observation
+        # to backend_oi_history.jsonl. oi_calibration.json (from
+        # calibrate_oi.py once history accumulates) overrides the
+        # hardcoded build_z / clear_z thresholds per (asset, venue).
+        self.oi_monitor = OIMonitor(
+            history_path=os.path.join(REPO_ROOT, "backend_oi_history.jsonl"),
+            calibration_path=os.path.join(REPO_ROOT, "oi_calibration.json"))
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -571,6 +581,14 @@ class SignalStore:
                     await self._emit_drift_alert(alert)
         except Exception as e:
             print(f"[liq-monitor] error: {e}", flush=True)
+
+        # Open-interest watcher. One HTTP roundtrip per (asset, venue);
+        # state transitions only emit drift alerts.
+        try:
+            for alert in self.oi_monitor.update_all():
+                await self._emit_drift_alert(alert)
+        except Exception as e:
+            print(f"[oi-monitor] error: {e}", flush=True)
 
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
@@ -1553,6 +1571,17 @@ async def get_funding_status():
     annualized APR (rate * 3 * 365), current state. Surfaces leverage
     crowdedness that doesn't show up in chunk-level regimes."""
     return {"funding": store.funding_monitor.snapshot()}
+
+
+@app.get("/api/oi-status", dependencies=[Depends(verify_token)])
+async def get_oi_status():
+    """Per-(asset, venue) open-interest snapshot: latest oi, latest
+    price, Δoi/Δprice over the trailing window, rolling z-score, and
+    current state (normal / building_long / building_short /
+    unwind_shorts / unwind_longs). Distinguishes trend conviction
+    (OI↑ with price) from leverage build-up (OI↑ counter to price)
+    and from squeezes / capitulations (OI↓)."""
+    return {"oi": store.oi_monitor.snapshot()}
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
