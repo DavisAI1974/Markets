@@ -47,6 +47,7 @@ from regime_classifier import (
     apply_cross_venue_multiplier, _session_phase_of,
     apply_herd_persistence, detect_whale_to_herd_cascades,
     detect_cross_venue_whale_herd_simultaneity,
+    apply_cross_asset_multiplier_uniform, _direction,
 )
 from backend.auth import verify_token, ACCESS_TOKEN
 from backend.push import (
@@ -215,6 +216,8 @@ class RegimeStatus:
     # cascade" vs "retail flutter" without a separate signal type.
     vpin: float = 0.0
     vpin_multiplier: float = 1.0
+    # F7 cross-asset directional confirmation (BTC <-> ETH).
+    cross_asset_multiplier: float = 1.0
 
 
 @dataclass
@@ -262,6 +265,8 @@ class SignalEvent:
     # filter (e.g., paper-trade only when vpin >= 0.30).
     vpin: float = 0.0
     vpin_multiplier: float = 1.0
+    # F7 cross-asset directional confirmation (BTC <-> ETH).
+    cross_asset_multiplier: float = 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -648,6 +653,14 @@ class SignalStore:
                                      vpin_diffuse=vpin_diff) for f in feats]
         apply_herd_persistence(results)
 
+        # F7 cross-asset directional confirmation. BTC and ETH lead each
+        # other on intraday horizons; if the sibling asset is currently in
+        # a same-direction regime we boost confidence, opposite direction
+        # damps it. Uses sibling's most recent RegimeStatus (set by an
+        # earlier _poll_one within this cycle, or the previous cycle).
+        sibling_dir = self._sibling_asset_direction(asset, venue)
+        apply_cross_asset_multiplier_uniform(results, sibling_dir)
+
         # Build minute->regime map for cross-venue agreement (F6)
         m_map: dict[float, str] = {}
         for c, r in zip(chunks, results):
@@ -687,6 +700,7 @@ class SignalStore:
             chunk_n_trades=chunk_n_tr,
             vpin=float(getattr(latest_result, "vpin", 0.0)),
             vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
+            cross_asset_multiplier=float(getattr(latest_result, "cross_asset_multiplier", 1.0)),
         )
 
         prev_status = self.current_status.get((asset, venue))
@@ -770,6 +784,7 @@ class SignalStore:
                 drift_status=get_drift_status(asset, venue, status.regime),
                 vpin=float(getattr(latest_result, "vpin", 0.0)),
                 vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
+                cross_asset_multiplier=float(getattr(latest_result, "cross_asset_multiplier", 1.0)),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -1165,6 +1180,28 @@ class SignalStore:
                     self._persist_signal(sig)
                     await self.event_queue.put({"type": "signal", "data": asdict(sig)})
 
+    def _sibling_asset_direction(self, asset: str, venue: str) -> str | None:
+        """Return the sibling asset's most recent regime direction (UP/DOWN/None).
+
+        F7 cross-asset confirmation prefers same-venue sibling (BTC/Kraken vs
+        ETH/Kraken: same exchange ecosystem, comparable liquidity profile)
+        and falls back to any sibling status if same-venue is missing.
+        Returns None when no sibling status exists or sibling regime is
+        non-directional (EQUILIBRIUM/DEPLETED/WASH/UNKNOWN).
+        """
+        sibling = "ETH" if asset == "BTC" else ("BTC" if asset == "ETH" else None)
+        if sibling is None:
+            return None
+        status = self.current_status.get((sibling, venue))
+        if status is None:
+            for (a, v), s in self.current_status.items():
+                if a == sibling:
+                    status = s
+                    break
+        if status is None:
+            return None
+        return _direction(status.regime)
+
     def _apply_cross_venue_F6(self):
         """For each (asset, venue), set cross_venue_multiplier on its current status
         based on the OTHER venue's regime label at the same wall-clock minute."""
@@ -1190,18 +1227,23 @@ class SignalStore:
                 other_map = self._minute_regime_per_venue.get((other_asset, other_venue), {})
                 if not other_map:
                     status.cross_venue_multiplier = 1.0
-                    status.adjusted_confidence = status.confidence
-                    continue
-                # Pick the most recent timestamps from other_map's keys overlapping our chunk window
-                # For simplicity: most recent label from the other venue
-                latest_other_ts = max(other_map.keys())
-                latest_other_regime = other_map[latest_other_ts]
-                if latest_other_regime == status.regime:
-                    status.cross_venue_multiplier = 1.5
                 else:
-                    status.cross_venue_multiplier = 0.5
+                    # Pick the most recent timestamps from other_map's keys overlapping our chunk window
+                    # For simplicity: most recent label from the other venue
+                    latest_other_ts = max(other_map.keys())
+                    latest_other_regime = other_map[latest_other_ts]
+                    if latest_other_regime == status.regime:
+                        status.cross_venue_multiplier = 1.5
+                    else:
+                        status.cross_venue_multiplier = 0.5
+                # adjusted_confidence reflects all four multipliers consistently
+                # with ClassificationResult.adjusted_confidence so /api/status
+                # mirrors what signals carry.
                 status.adjusted_confidence = max(0.0, min(1.0,
-                    status.confidence * status.cross_venue_multiplier))
+                    status.confidence
+                    * status.cross_venue_multiplier
+                    * status.vpin_multiplier
+                    * status.cross_asset_multiplier))
 
     async def tape_data(self, asset: str, venue: str, n_seconds: int = 60) -> dict:
         """1-second resolution tape feed for the click-to-trade UI's flash

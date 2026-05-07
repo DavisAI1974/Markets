@@ -34,6 +34,7 @@ from regime_classifier import (
     apply_herd_persistence, apply_herd_borderline_rescue,
     detect_whale_to_herd_cascades,
     detect_cross_venue_whale_herd_simultaneity,
+    apply_cross_asset_multiplier,
 )
 
 
@@ -334,6 +335,10 @@ def main():
                    help="Use per-session baselines (london_active, london_lunch, etc.) instead of global")
     p.add_argument("--herd-rescue", action="store_true",
                    help="Reclassify EQUILIBRIUM chunks adjacent to a confirmed HERD run if they meet relaxed thresholds. Premature; only enable for diagnostic comparison until n>=30 HERD chunks.")
+    p.add_argument("--sibling-cb-bins", type=str, default=None,
+                   help="Sibling-asset CB bins (e.g. btc_coinbase_bins.json when --asset ETH). Enables F7 cross-asset directional confirmation multiplier on each chunk.")
+    p.add_argument("--sibling-kr-bins", type=str, default=None,
+                   help="Sibling-asset KR bins (e.g. btc_kraken_bins.json when --asset ETH).")
     args = p.parse_args()
 
     print(f"=== Phase 1.5 Evaluation: {args.asset} ===\n")
@@ -368,6 +373,43 @@ def main():
     kr_minute_pre = chunk_to_minute_regime(kr_chunks, kr_results, kr_bars)
     apply_cross_venue_multiplier(cb_results, cb_chunks, cb_bars, kr_minute_pre)
     apply_cross_venue_multiplier(kr_results, kr_chunks, kr_bars, cb_minute_pre)
+
+    # F7: classify the sibling asset (if bins supplied) and apply cross-asset
+    # directional confirmation multipliers per same-venue pairing. ETH and
+    # BTC lead each other intraday; same-direction sibling regime boosts
+    # confidence, opposite direction damps it. Multiplier band is 1.4 / 0.6
+    # (tighter than F6's 1.5 / 0.5) since cross-asset is a weaker prior
+    # than cross-venue.
+    if args.sibling_cb_bins or args.sibling_kr_bins:
+        sibling_asset = "ETH" if args.asset.upper() == "BTC" else (
+            "BTC" if args.asset.upper() == "ETH" else None)
+        sib_label = sibling_asset or "SIBLING"
+        if args.sibling_cb_bins:
+            sib_cb_bars = load_bars(args.sibling_cb_bins)
+            sib_cb_chunks, sib_cb_results, _, _ = classify_venue(
+                sib_cb_bars, f"CB-{sib_label}", args.chunk_max_size,
+                args.chunk_min_segment,
+                multi_signal_pelt=args.multi_signal_pelt,
+                use_session_baselines=args.session_baselines,
+                herd_rescue=args.herd_rescue,
+            )
+            sib_cb_minute = chunk_to_minute_regime(
+                sib_cb_chunks, sib_cb_results, sib_cb_bars)
+            apply_cross_asset_multiplier(
+                cb_results, cb_chunks, cb_bars, sib_cb_minute)
+        if args.sibling_kr_bins:
+            sib_kr_bars = load_bars(args.sibling_kr_bins)
+            sib_kr_chunks, sib_kr_results, _, _ = classify_venue(
+                sib_kr_bars, f"KR-{sib_label}", args.chunk_max_size,
+                args.chunk_min_segment,
+                multi_signal_pelt=args.multi_signal_pelt,
+                use_session_baselines=args.session_baselines,
+                herd_rescue=args.herd_rescue,
+            )
+            sib_kr_minute = chunk_to_minute_regime(
+                sib_kr_chunks, sib_kr_results, sib_kr_bars)
+            apply_cross_asset_multiplier(
+                kr_results, kr_chunks, kr_bars, sib_kr_minute)
 
     # Gate G per venue
     g_cb = evaluate_gate_G(f"CB-{args.asset}", cb_results)
@@ -470,6 +512,19 @@ def main():
     print(f"  KR-{args.asset}: {kr_confirm}/{len(kr_results)} chunks confirmed by CB (mult=1.5),"
           f" {kr_disagree} disagreement (mult=0.5)")
     print()
+
+    # F7 cross-asset multiplier summary (only if sibling bins were supplied)
+    if args.sibling_cb_bins or args.sibling_kr_bins:
+        print(f"--- F7 cross-asset confidence multipliers ---")
+        for label, results in [(f"CB-{args.asset}", cb_results),
+                                (f"KR-{args.asset}", kr_results)]:
+            agree = sum(1 for r in results if r.cross_asset_multiplier > 1.0)
+            disagree = sum(1 for r in results if r.cross_asset_multiplier < 1.0)
+            neutral = len(results) - agree - disagree
+            print(f"  {label}: {agree}/{len(results)} same-direction sibling "
+                  f"(mult=1.4), {disagree} opposite (mult=0.6), "
+                  f"{neutral} neutral/no-overlap (mult=1.0)")
+        print()
 
     # Combined verdict
     all_g = g_cb["gate_G"] and g_kr["gate_G"]

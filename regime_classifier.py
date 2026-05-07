@@ -56,12 +56,16 @@ class ClassificationResult:
     herd_rescued: bool = False   # set True when a borderline EQUILIBRIUM chunk was reclassified by apply_herd_borderline_rescue
     vpin: float = 0.0            # informed-flow toxicity, [0,1]; high = imminent move predicted
     vpin_multiplier: float = 1.0 # confidence boost/de-rate from VPIN (HERD/WHALE only)
+    cross_asset_multiplier: float = 1.0  # F7: 1.4 if sibling asset same direction, 0.6 if opposite, 1.0 if neutral/no overlap
 
     @property
     def adjusted_confidence(self) -> float:
-        """Confidence × cross-venue multiplier × vpin multiplier, capped at [0, 1]."""
+        """Confidence × cross-venue × vpin × cross-asset, capped at [0, 1]."""
         return max(0.0, min(1.0,
-            self.confidence * self.cross_venue_multiplier * self.vpin_multiplier))
+            self.confidence
+            * self.cross_venue_multiplier
+            * self.vpin_multiplier
+            * self.cross_asset_multiplier))
 
 
 def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
@@ -555,6 +559,79 @@ def apply_cross_venue_multiplier(
             r.cross_venue_multiplier = 1.5
         else:
             r.cross_venue_multiplier = 0.5
+
+
+# ---------------------------------------------------------------------------
+# F7: cross-asset confidence multiplier (BTC <-> ETH directional agreement)
+# ---------------------------------------------------------------------------
+
+# Cross-asset agreement is a *direction* match (UP / DOWN), not a regime-label
+# match. ETH WHALE_UP and BTC HERD_UP both confirm UP. Multiplier band is
+# tighter than F6 because cross-asset is a weaker prior than cross-venue
+# (different asset, different liquidity profile).
+CROSS_ASSET_AGREE = 1.4
+CROSS_ASSET_DISAGREE = 0.6
+
+
+def apply_cross_asset_multiplier_uniform(
+    results: list[ClassificationResult],
+    sibling_direction: str | None,
+) -> None:
+    """Live-backend variant: set cross_asset_multiplier on each result using
+    a single sibling-asset direction (UP/DOWN/None) instead of a minute-
+    level stream. The live backend tracks one 'current_status' per
+    (asset, venue), so its cross-asset lookup is naturally uniform.
+    """
+    for r in results:
+        primary_dir = _direction(r.regime.value)
+        if primary_dir is None or sibling_direction is None:
+            r.cross_asset_multiplier = 1.0
+        elif primary_dir == sibling_direction:
+            r.cross_asset_multiplier = CROSS_ASSET_AGREE
+        else:
+            r.cross_asset_multiplier = CROSS_ASSET_DISAGREE
+
+
+def apply_cross_asset_multiplier(
+    primary_results: list[ClassificationResult],
+    primary_chunks: list,
+    primary_bars: list,
+    sibling_minute_regime: dict[float, str],
+) -> None:
+    """Mutate primary_results in place: set cross_asset_multiplier per result.
+
+    For each chunk on the primary asset, look up the most-common regime label
+    observed on the SIBLING asset across the chunk's wall-clock range. Use
+    direction agreement (UP/DOWN) — not exact regime match — to set the
+    multiplier:
+      CROSS_ASSET_AGREE    if both directions match
+      CROSS_ASSET_DISAGREE if directions oppose
+      1.0                  if either side is non-directional
+                           (EQUILIBRIUM/DEPLETED/WASH/UNKNOWN) or no overlap
+    """
+    from collections import Counter
+    for c, r in zip(primary_chunks, primary_results):
+        primary_dir = _direction(r.regime.value)
+        if primary_dir is None:
+            r.cross_asset_multiplier = 1.0
+            continue
+        sibling_labels: list[str] = []
+        for bar_idx in range(c.window_start, c.window_end):
+            if 0 <= bar_idx < len(primary_bars):
+                ts = primary_bars[bar_idx].ts
+                if ts in sibling_minute_regime:
+                    sibling_labels.append(sibling_minute_regime[ts])
+        if not sibling_labels:
+            r.cross_asset_multiplier = 1.0
+            continue
+        most_common = Counter(sibling_labels).most_common(1)[0][0]
+        sibling_dir = _direction(most_common)
+        if sibling_dir is None:
+            r.cross_asset_multiplier = 1.0
+        elif sibling_dir == primary_dir:
+            r.cross_asset_multiplier = CROSS_ASSET_AGREE
+        else:
+            r.cross_asset_multiplier = CROSS_ASSET_DISAGREE
 
 
 # ---------------------------------------------------------------------------
