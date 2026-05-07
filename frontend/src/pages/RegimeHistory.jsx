@@ -91,7 +91,7 @@ function RegimeStrip({ points }) {
             <div
               key={i}
               className={`flex-shrink-0 w-8 h-10 ${cls} rounded text-[10px] flex flex-col items-center justify-center font-mono`}
-              title={`${p.regime} @ ${ts} (dipole=${p.mean_dipole?.toFixed(2)}, conf=${(p.confidence*100).toFixed(0)}%)`}
+              title={`${p.regime} @ ${ts} (conf ${(p.confidence*100).toFixed(0)}%)`}
             >
               <div className="text-white">{lbl}</div>
               <div className="text-white/60 text-[8px]">{ts.slice(0, 5)}</div>

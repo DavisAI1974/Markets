@@ -23,12 +23,49 @@ The shipped `PaperExchange` adapter does NOT place real orders. It fetches
 the current price from the markets-watch API and simulates fills against it
 with a configurable fee assumption (default 25 bps).
 
-To trade real money, **you must write your own `Exchange` adapter** for
-your specific exchange. See `exchanges/base.py` for the interface. We do not
-ship live-trading adapters because:
-1. Your exchange API keys must never touch our infrastructure.
-2. The signal hasn't validated yet (multi-day data still accumulating).
-3. Different friends use different exchanges; one-size-fits-all doesn't work.
+We also ship adapter scaffolds for **Coinbase Advanced Trade**, **Binance
+Spot**, and **Kraken** (`executor/exchanges/{coinbase,binance,kraken}.py`).
+They use signed REST against the official APIs, default to dry-run, and
+read API keys from env vars on your own machine. The keys never leave
+your host — the central markets-watch backend never sees them.
+
+Switching exchanges is a config + env change:
+
+```jsonc
+// my_config.json
+{
+  "settings": {
+    "exchange": "coinbase",         // "paper" | "coinbase" | "binance" | "kraken"
+    "exchange_kwargs": {}           // optional adapter constructor overrides
+  }
+}
+```
+
+```bash
+# Required env per exchange (set on your own machine; never commit):
+export COINBASE_API_KEY=...      COINBASE_API_SECRET=...
+export BINANCE_API_KEY=...       BINANCE_API_SECRET=...
+export KRAKEN_API_KEY=...        KRAKEN_API_SECRET=...
+
+# Adapters default to dry-run (no real orders); flip to live only after
+# end-to-end validation:
+export EXCHANGE_LIVE=1
+
+# Binance testnet (recommended before going live):
+export BINANCE_REST=https://testnet.binance.vision
+```
+
+The adapters cover MARKET and LIMIT orders + position lookup. Each has
+the same `Exchange` interface (`get_quote`, `market_buy`, `market_sell`,
+`limit_buy`, `limit_sell`, `get_position`) so the executor works identically
+across them.
+
+We DO ship these adapters (vs. requiring users to write their own) because:
+1. Most users want one of these three exchanges and copying signed-REST
+   code from scratch is error-prone — the auth schemes are subtle.
+2. Default dry-run + env-only keys keeps the failure mode safe.
+3. Code is short (~150 LOC each) and auditable; read `exchanges/<name>.py`
+   to see exactly what the adapter does before flipping live.
 
 ## Setup
 
@@ -92,32 +129,54 @@ Every signal goes through these gates in order. First denial short-circuits.
 The audit log records the gate decision for every signal, so you can debug
 "why didn't I trade this?" by reading `audit.jsonl`.
 
-## Writing a real-exchange adapter
+## Click-to-trade: manual orders from the PWA
 
-Implement the `Exchange` protocol in `exchanges/base.py`:
+The phone app has a header **Practice / Live** toggle. New users default
+to Practice — clicks simulate fills against the live bid/ask on the
+central host with a 25 bp fee, persist to a practice trades log, and
+appear on the Practice tab with running P&L. **The executor never sees
+practice intents** because the backend doesn't emit them on SSE. This
+lets users learn the workflow without the executor needing to be
+running and without any real-money risk.
+
+When the user flips to Live (with a confirm dialog), the same
+click-to-trade flow emits `manual_trade_intent` events on the SSE
+stream. The executor consumes those events in addition to auto-signals:
+
+- Side + price + qty come from the user's tap + ticket modal
+- The intent BYPASSES the auto-trading risk gates (the human already
+  decided), but still goes through the same exchange adapter and audit
+  trail
+- For "buy", the executor places a `limit_buy` at the clicked price (or
+  market if the adapter doesn't support limits); same for sell
+- Every intent is recorded in `audit.jsonl` with kind
+  `manual_intent_received` / `manual_intent_order_placed`
+
+If you want manual clicks to remain notification-only (no real order),
+keep `--dry-run` on or use the paper exchange.
+
+## Writing a custom-exchange adapter
+
+If you use an exchange other than Coinbase/Binance/Kraken, implement the
+`Exchange` protocol in `exchanges/base.py`:
 
 ```python
 from executor.exchanges.base import Exchange, OrderResult, PriceQuote
 
-class MyCoinbaseAdapter:
-    name = "coinbase_advanced"
-
-    def __init__(self, api_key, api_secret, ...):
-        # set up your exchange client (e.g., coinbase-advanced-py)
+class MyExchangeAdapter:
+    name = "myexchange"
+    def __init__(self, api_key, api_secret, dry_run=True):
         ...
-
-    def get_quote(self, asset: str) -> PriceQuote:
-        # call your exchange's ticker endpoint
-        ...
-
-    def market_buy(self, asset: str, notional_usd: float) -> OrderResult:
-        # call market-order endpoint with quote_size=notional_usd
-        ...
-
-    # ...etc
+    def get_quote(self, asset): ...
+    def market_buy(self, asset, notional_usd): ...
+    def market_sell(self, asset, size): ...
+    def limit_buy(self, asset, price, size): ...    # optional
+    def limit_sell(self, asset, price, size): ...   # optional
+    def get_position(self, asset): ...
 ```
 
-Then in `executor.py`, swap `PaperExchange(...)` for your adapter.
+Register it in `executor/exchanges/__init__.py:make_exchange` so it can
+be selected via `settings.exchange = "myexchange"` in your config.
 
 **Recommended workflow before going live**:
 1. Run `--dry-run` for a week. Verify gates fire as expected.

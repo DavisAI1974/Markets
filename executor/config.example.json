@@ -8,7 +8,21 @@
   "settings": {
     "api_base": "http://localhost:8000",
     "audit_path": "executor/audit.jsonl",
-    "paper_trade_log": "executor/paper_trades.jsonl"
+    "paper_trade_log": "executor/paper_trades.jsonl",
+
+    "_exchange_comment": [
+      "exchange: 'paper' | 'coinbase' | 'binance' | 'kraken'.",
+      "Default 'paper' simulates fills against the backend prices (no real",
+      "money, no API keys needed). For real money:",
+      "  1. Set this to your exchange ('coinbase' / 'binance' / 'kraken').",
+      "  2. Export the matching API_KEY/API_SECRET in env (see README).",
+      "  3. Adapters default to dry-run; flip live with EXCHANGE_LIVE=1.",
+      "exchange_kwargs is passed to the adapter constructor; override",
+      "individual fields like quote_asset (Binance: USDT/USDC) or",
+      "pair_overrides (Kraken)."
+    ],
+    "exchange": "paper",
+    "exchange_kwargs": {}
   },
 
   "risk": {

@@ -2,16 +2,18 @@
 signal_poster.py — Discord bot for the markets-watch closed signal feed.
 
 Subscribes to the backend's SSE stream at /api/stream and posts each signal
-event to a configured Discord channel as a rich embed. Color-codes by regime.
-Provides slash commands for self-service stats.
+event to a configured Discord channel. Plain-language headlines (no math
+jargon), confidence-tiered colors, multi-embed cascade posts, and an
+optional matplotlib-rendered price/volume chart attachment.
 
 Setup:
   1. Create a Discord application at https://discord.com/developers/applications
   2. Add a bot, copy the bot token, set DISCORD_BOT_TOKEN env var
   3. Invite bot to your server with permissions: Send Messages, Embed Links,
-     Read Message History, Use Slash Commands
+     Read Message History, Use Slash Commands, Attach Files
   4. Set DISCORD_CHANNEL_ID env var to the channel where signals should post
   5. Set MARKETS_WATCH_API env var to your backend URL (default localhost:8000)
+  6. (Optional) set SIGNAL_POSTER_ATTACH_CHART=0 to skip chart attachments
 
 Run: python signal_poster.py
 """
@@ -19,6 +21,7 @@ Run: python signal_poster.py
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import os
 from datetime import datetime, timezone
@@ -32,18 +35,28 @@ from discord.ext import tasks
 BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
 CHANNEL_ID = int(os.environ.get("DISCORD_CHANNEL_ID", "0"))
 API_BASE = os.environ.get("MARKETS_WATCH_API", "http://localhost:8000")
+ATTACH_CHART = os.environ.get("SIGNAL_POSTER_ATTACH_CHART", "1") not in ("0", "false", "no")
+BOT_DISPLAY_NAME = os.environ.get("SIGNAL_POSTER_NAME", "markets-watch")
+BOT_AVATAR_URL = os.environ.get("SIGNAL_POSTER_AVATAR_URL", "")
 
 
-# Regime → (color int, label, emoji)
+# Regime → (base color int, label, emoji). Color is the "max confidence"
+# anchor; we shade lighter for low-conviction signals so a glance at the
+# stripe tells you both regime AND strength.
 REGIME_STYLES = {
-    "WHALE_UP":             (0x22c55e, "WHALE ↑",       "🟢"),
-    "WHALE_DOWN":           (0xef4444, "WHALE ↓",       "🔴"),
-    "HERD_UP":              (0xf97316, "HERD ↑ (FOMO)", "🟠"),
-    "HERD_DOWN":            (0xb91c1c, "HERD ↓ (panic)", "🟤"),
-    "EQUILIBRIUM_TWO_SIDED":(0x3b82f6, "EQUILIBRIUM",   "🔵"),
-    "WASH_PAIRED":          (0xeab308, "WASH ⚠",        "🟡"),
-    "DEPLETED":             (0x9ca3af, "DEPLETED",      "⚪"),
-    "UNKNOWN":              (0x6b7280, "UNKNOWN",       "❓"),
+    "WHALE_UP":             (0x16a34a, "Big buyer detected",  "🐋"),
+    "WHALE_DOWN":           (0xdc2626, "Big seller detected", "🐋"),
+    "HERD_UP":              (0xf97316, "Buying cascade",       "🌊"),
+    "HERD_DOWN":            (0xb91c1c, "Selling cascade",      "🌊"),
+    "EQUILIBRIUM_TWO_SIDED":(0x3b82f6, "Healthy two-sided",   "⚖️"),
+    "WASH_PAIRED":          (0xeab308, "Wash pattern — skip",  "⚠️"),
+    "DEPLETED":             (0x9ca3af, "Market quiet",         "💤"),
+    "UNKNOWN":              (0x6b7280, "Unclassified",         "❓"),
+    # Composite regimes from cross-venue cascade detection
+    "CROSS_VENUE_WHALE_HERD_UP":   (0x10b981, "Cross-venue cascade ↑", "🌊"),
+    "CROSS_VENUE_HERD_WHALE_UP":   (0x10b981, "Cross-venue cascade ↑", "🌊"),
+    "CROSS_VENUE_WHALE_HERD_DOWN": (0xb91c1c, "Cross-venue cascade ↓", "🌊"),
+    "CROSS_VENUE_HERD_WHALE_DOWN": (0xb91c1c, "Cross-venue cascade ↓", "🌊"),
 }
 
 
@@ -60,29 +73,339 @@ async def on_ready():
         stream_listener.start()
 
 
-def make_embed(sig: dict) -> discord.Embed:
-    color, label, emoji = REGIME_STYLES.get(sig["regime"], REGIME_STYLES["UNKNOWN"])
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+
+
+def _fmt_price(p):
+    if not p:
+        return "—"
+    if p >= 1000:
+        return f"${p:,.2f}"
+    if p >= 1:
+        return f"${p:.4f}"
+    return f"${p:.6f}"
+
+
+def _fmt_qty(q):
+    if not q:
+        return "0"
+    if q >= 1000:
+        return f"{q:,.1f}"
+    if q >= 1:
+        return f"{q:.3f}"
+    return f"{q:.6f}"
+
+
+def _shade(color: int, factor: float) -> int:
+    """Linearly interpolate a 0xRRGGBB integer toward white (factor 0 = white,
+    factor 1 = original). Used to wash out low-confidence stripes."""
+    factor = max(0.35, min(1.0, factor))
+    r = (color >> 16) & 0xff
+    g = (color >> 8) & 0xff
+    b = color & 0xff
+    r = int(255 - (255 - r) * factor)
+    g = int(255 - (255 - g) * factor)
+    b = int(255 - (255 - b) * factor)
+    return (r << 16) | (g << 8) | b
+
+
+def _confidence_color(base_color: int, conf: float) -> int:
+    """Confidence 0–1 → shaded version of base color. <0.5 = washed out,
+    >=0.7 = full saturation."""
+    if conf >= 0.7:
+        return base_color
+    if conf >= 0.5:
+        return _shade(base_color, 0.75)
+    return _shade(base_color, 0.5)
+
+
+# ---------------------------------------------------------------------------
+# Optional chart attachment (matplotlib)
+# ---------------------------------------------------------------------------
+
+
+async def _fetch_chart_data(asset: str, venue: str, n_minutes: int = 60) -> list[dict]:
+    """Fetch recent chart bars for the chart attachment. Returns [] on error."""
+    url = f"{API_BASE}/api/chart/{asset}/{venue}?n_minutes={n_minutes}"
+    try:
+        async with aiohttp.ClientSession() as s:
+            async with s.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                if r.status != 200:
+                    return []
+                data = await r.json()
+                return data.get("data") or []
+    except Exception:
+        return []
+
+
+def _render_chart_png(asset: str, venue: str, bars: list[dict]) -> bytes | None:
+    """Render a small price + buy/sell volume chart as a PNG byte buffer.
+    Returns None if matplotlib isn't installed or rendering fails."""
+    if not bars:
+        return None
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        import numpy as np
+    except Exception:
+        return None
+    try:
+        prices = np.array([b.get("price", 0) for b in bars], dtype=float)
+        buys = np.array([b.get("buy_volume", 0) for b in bars], dtype=float)
+        sells = np.array([b.get("sell_volume", 0) for b in bars], dtype=float)
+        x = np.arange(len(bars))
+
+        fig, (ax_p, ax_v) = plt.subplots(
+            2, 1, figsize=(8, 4), gridspec_kw={"height_ratios": [3, 1]},
+            sharex=True,
+        )
+        fig.patch.set_facecolor("#0f172a")
+        for ax in (ax_p, ax_v):
+            ax.set_facecolor("#0f172a")
+            for sp in ax.spines.values():
+                sp.set_color("#475569")
+            ax.tick_params(colors="#94a3b8", labelsize=8)
+
+        upish = prices[-1] >= prices[0]
+        ax_p.plot(x, prices, color=("#34d399" if upish else "#fb7185"), linewidth=1.6)
+        ax_p.set_title(f"{asset}-USD on {venue} · last {len(bars)} min",
+                        color="#cbd5e1", fontsize=10, loc="left")
+        ax_p.set_ylabel("price", color="#94a3b8", fontsize=8)
+        ax_p.grid(True, color="#1e293b", linewidth=0.5)
+
+        ax_v.bar(x, buys,   color="#10b981", alpha=0.8, width=0.9, label="buy")
+        ax_v.bar(x, -sells, color="#f43f5e", alpha=0.8, width=0.9, label="sell")
+        ax_v.axhline(0, color="#475569", linewidth=0.6)
+        ax_v.set_ylabel("buy / sell", color="#94a3b8", fontsize=8)
+        ax_v.set_xlabel("minutes ago", color="#94a3b8", fontsize=8)
+        ax_v.grid(True, color="#1e293b", linewidth=0.5, axis="y")
+
+        fig.tight_layout()
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=110, facecolor=fig.get_facecolor())
+        plt.close(fig)
+        buf.seek(0)
+        return buf.getvalue()
+    except Exception as e:
+        print(f"[discord-bot] chart render failed: {e}", flush=True)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Embed building
+# ---------------------------------------------------------------------------
+
+
+def _set_branding(e: discord.Embed):
+    if BOT_AVATAR_URL:
+        e.set_author(name=BOT_DISPLAY_NAME, icon_url=BOT_AVATAR_URL)
+    else:
+        e.set_author(name=BOT_DISPLAY_NAME)
+
+
+def make_main_embed(sig: dict) -> discord.Embed:
+    base_color, label, emoji = REGIME_STYLES.get(sig["regime"], REGIME_STYLES["UNKNOWN"])
+    cascade_event = sig.get("cascade_event") or ""
+    cvm = sig.get("cross_venue_multiplier", 1.0)
+    conf = sig.get("adjusted_confidence", sig.get("confidence", 0.0))
+    color = _confidence_color(base_color, float(conf))
+
+    title_prefix = ""
+    if cascade_event.startswith("CROSS_VENUE_WHALE_HERD"):
+        title_prefix = "🌊🌊 CROSS-VENUE CASCADE — "
+    elif cascade_event.startswith("WHALE_TO_HERD"):
+        title_prefix = "🌊 WHALE→HERD CASCADE — "
+
+    headline = sig.get("event_label") or label
+    drift = sig.get("drift_status") or ""
+    drift_marker = ""
+    if drift == "unstable":
+        drift_marker = " ⚠ unstable"
+    elif drift == "recently_flipped":
+        drift_marker = " ⚠ recently-flipped"
+    elif drift == "decaying":
+        drift_marker = " ⚠ edge-decaying"
     e = discord.Embed(
-        title=f"{emoji} {label} — {sig['asset']}-USD on {sig['venue']}",
+        title=f"{title_prefix}{emoji} {headline}{drift_marker} — {sig['asset']}-USD on {sig['venue']}",
         description=sig.get("playbook", "(no playbook)"),
         color=color,
         timestamp=datetime.fromtimestamp(sig["timestamp_utc"], tz=timezone.utc),
     )
-    e.add_field(name="Dipole",        value=f"{sig['mean_dipole']:+.3f}", inline=True)
-    e.add_field(name="Realized vol",  value=f"{sig['realized_vol'] * 1e4:.1f} bp", inline=True)
-    cvm = sig.get("cross_venue_multiplier", 1.0)
+    _set_branding(e)
+
+    # Price + bid/ask
+    price = sig.get("current_price", 0.0)
+    bid = sig.get("current_bid", 0.0)
+    ask = sig.get("current_ask", 0.0)
+    spread = (ask - bid) if (bid and ask) else 0.0
+    e.add_field(name="Price", value=_fmt_price(price), inline=True)
+    e.add_field(
+        name="Bid / Ask",
+        value=(f"{_fmt_price(bid)} / {_fmt_price(ask)}"
+               + (f"  (spread {_fmt_price(spread)})" if spread else ""))
+              if (bid or ask) else "—",
+        inline=True,
+    )
     cv_text = "✓ confirmed" if cvm > 1.0 else "✗ single-venue" if cvm < 1.0 else "—"
-    conf = sig.get("adjusted_confidence", sig.get("confidence", 0.0))
     e.add_field(name="Confidence", value=f"{conf * 100:.0f}% ({cv_text})", inline=True)
-    if sig.get("notes"):
-        e.add_field(name="Why", value="\n".join(f"• {n}" for n in sig["notes"][:2]), inline=False)
-    e.set_footer(text=f"signal_id={sig.get('signal_id', '?')} · research, not advice")
+
+    # Aggressor split
+    buy_v = sig.get("chunk_buy_volume", 0.0)
+    sell_v = sig.get("chunk_sell_volume", 0.0)
+    total_v = buy_v + sell_v
+    n_tr = sig.get("chunk_n_trades", 0)
+    if total_v > 0:
+        buy_pct = buy_v / total_v * 100
+        e.add_field(
+            name="Buy / Sell volume",
+            value=(f"**{buy_pct:.0f}% buy / {100 - buy_pct:.0f}% sell**\n"
+                   f"buy {_fmt_qty(buy_v)}  ·  sell {_fmt_qty(sell_v)}\n"
+                   f"total {_fmt_qty(total_v)} {sig['asset']}"
+                   + (f"  ·  {n_tr} trades" if n_tr else "")),
+            inline=False,
+        )
+    elif n_tr:
+        e.add_field(name="Trades", value=f"{n_tr}", inline=False)
+
+    e.set_footer(text=f"signal_id={sig.get('signal_id', '?')} · research, not advice · closed group")
     return e
+
+
+def make_cascade_secondary_embed(sig: dict) -> discord.Embed | None:
+    """Second embed posted alongside the main one when a cascade event
+    fires. Provides extra context — for cross-venue cascade, a side-by-
+    side WHALE / HERD breakdown; for WHALE→HERD, the prior-chunk note.
+    Returns None if there's no cascade.
+    """
+    cascade_event = sig.get("cascade_event") or ""
+    if not cascade_event:
+        return None
+    base_color = 0xf59e0b   # amber for all cascade-secondary panels
+    e = discord.Embed(
+        title="🌊 cascade detail",
+        description=sig.get("cascade_detail") or cascade_event,
+        color=base_color,
+    )
+    if cascade_event.startswith("CROSS_VENUE_WHALE_HERD"):
+        e.add_field(
+            name="Why this is high conviction",
+            value=("Two independent venues are showing complementary "
+                   "signal types in the same direction over the same "
+                   "wall-clock window. Whale + herd alignment across "
+                   "venues is the strongest signal we emit."),
+            inline=False,
+        )
+    elif cascade_event.startswith("WHALE_TO_HERD"):
+        e.add_field(
+            name="Why this is high conviction",
+            value=("A big actor's flow tripped a multi-actor cascade in "
+                   "the same direction with no quiet between them. Two "
+                   "structurally distinct signals align — typical "
+                   "whale-trips-the-herd pattern."),
+            inline=False,
+        )
+    e.set_footer(text="confidence boosted ×1.3 over base regime")
+    return e
+
+
+# ---------------------------------------------------------------------------
+# Posting path
+# ---------------------------------------------------------------------------
+
+
+async def post_signal(channel: discord.abc.Messageable, sig: dict):
+    """Post the main embed, optional secondary cascade embed, and (if
+    enabled and matplotlib is available) a price/volume chart attachment.
+    """
+    embeds = [make_main_embed(sig)]
+    sec = make_cascade_secondary_embed(sig)
+    if sec is not None:
+        embeds.append(sec)
+
+    file = None
+    if ATTACH_CHART:
+        bars = await _fetch_chart_data(sig.get("asset", ""), sig.get("venue", ""))
+        png = _render_chart_png(sig.get("asset", ""), sig.get("venue", ""), bars)
+        if png:
+            file = discord.File(io.BytesIO(png), filename="chart.png")
+            # Inline the chart in the main embed
+            embeds[0].set_image(url="attachment://chart.png")
+
+    try:
+        if file:
+            await channel.send(embeds=embeds, file=file)
+        else:
+            await channel.send(embeds=embeds)
+    except Exception as e:
+        print(f"[discord-bot] post error: {e}", flush=True)
+
+
+# ---------------------------------------------------------------------------
+# Drift alert posting — separate from signal posts so the visual treatment
+# is distinct (yellow border, no chart attachment, prominent ⚠ marker).
+# ---------------------------------------------------------------------------
+
+
+_DRIFT_TYPE_TITLES = {
+    "direction_flip": "⚠ Direction flip",
+    "edge_decay": "↓ Edge decaying",
+    "edge_strengthen": "↑ Edge strengthening",
+    "sample_milestone": "✓ Sample milestone",
+    "outcome_contradiction_streak": "⚠ Outcome contradiction streak",
+}
+
+
+async def post_drift_alert(channel: discord.abc.Messageable, alert: dict):
+    """Post a drift alert as a yellow embed. Distinct from regular signals
+    so users notice their playbook read may be shifting."""
+    a_type = alert.get("type", "drift")
+    title = _DRIFT_TYPE_TITLES.get(a_type, "Drift event")
+    key = alert.get("key", "?")
+    summary = alert.get("summary", "")
+    color = 0xf59e0b   # amber for all drift events
+    if a_type == "edge_strengthen":
+        color = 0x10b981
+    e = discord.Embed(
+        title=f"{title} — {key}",
+        description=summary or "(no summary)",
+        color=color,
+        timestamp=datetime.fromtimestamp(alert.get("ts_utc", 0), tz=timezone.utc),
+    )
+    _set_branding(e)
+    # Surface the discriminating fields per type
+    if a_type == "direction_flip":
+        e.add_field(name="From → To",
+                    value=f"{alert.get('from')} → {alert.get('to')}", inline=True)
+        e.add_field(name="r change",
+                    value=f"{alert.get('prev_r')} → {alert.get('cur_r')}", inline=True)
+        e.add_field(name="n change",
+                    value=f"{alert.get('prev_n')} → {alert.get('cur_n')}", inline=True)
+    elif a_type in ("edge_decay", "edge_strengthen"):
+        trend = alert.get("abs_r_trend") or []
+        e.add_field(name="|r| trend (last 3)",
+                    value="  →  ".join(f"{v}" for v in trend) or "—",
+                    inline=False)
+    elif a_type == "outcome_contradiction_streak":
+        e.add_field(name="Streak", value=str(alert.get("streak", "?")), inline=True)
+        e.add_field(name="Cell predicted",
+                    value=alert.get("expected_direction", "?"), inline=True)
+    e.set_footer(text=f"alert_id={alert.get('id', '?')} · review the registry on next rebuild")
+    try:
+        await channel.send(embed=e)
+    except Exception as ex:
+        print(f"[discord-bot] drift post error: {ex}", flush=True)
+
+
+# ---------------------------------------------------------------------------
+# SSE listener
+# ---------------------------------------------------------------------------
 
 
 @tasks.loop(reconnect=True)
 async def stream_listener():
-    """Long-lived loop: connect to backend SSE, post each signal to Discord."""
     channel = client.get_channel(CHANNEL_ID)
     if channel is None:
         print(f"[discord-bot] channel id {CHANNEL_ID} not found yet")
@@ -107,9 +430,15 @@ async def stream_listener():
                         if event_type == "signal" and payload:
                             try:
                                 sig = json.loads(payload)
-                                await channel.send(embed=make_embed(sig))
+                                await post_signal(channel, sig)
                             except Exception as ex:
                                 print(f"[discord-bot] post error: {ex}")
+                        elif event_type == "drift_alert" and payload:
+                            try:
+                                alert = json.loads(payload)
+                                await post_drift_alert(channel, alert)
+                            except Exception as ex:
+                                print(f"[discord-bot] drift post error: {ex}")
                         event_type = None
         except Exception as ex:
             print(f"[discord-bot] stream error: {ex}; will retry")
@@ -125,6 +454,7 @@ async def before():
 # Slash commands
 # ---------------------------------------------------------------------------
 
+
 @tree.command(name="status", description="Current regime per asset/venue")
 async def cmd_status(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True)
@@ -138,9 +468,12 @@ async def cmd_status(interaction: discord.Interaction):
     lines = []
     for st in statuses:
         emoji = REGIME_STYLES.get(st["regime"], REGIME_STYLES["UNKNOWN"])[2]
+        label = REGIME_STYLES.get(st["regime"], REGIME_STYLES["UNKNOWN"])[1]
+        price = _fmt_price(st.get("current_price", 0))
+        conf = st.get("adjusted_confidence", st.get("confidence", 0)) * 100
         lines.append(
-            f"{emoji} `{st['asset']}-USD on {st['venue']:<8}` {st['regime']:<22} "
-            f"dipole={st['mean_dipole']:+.3f}  conf={st.get('adjusted_confidence', st.get('confidence', 0))*100:.0f}%"
+            f"{emoji} `{st['asset']}-USD on {st['venue']:<8}` {label:<22}  "
+            f"{price}  conf {conf:.0f}%"
         )
     await interaction.followup.send("```\n" + "\n".join(lines) + "\n```")
 
@@ -158,8 +491,9 @@ async def cmd_stats(interaction: discord.Interaction, limit: int = 50):
     from collections import Counter
     by_regime = Counter(s["regime"] for s in sigs)
     by_asset = Counter(s["asset"] for s in sigs)
+    n_cascade = sum(1 for s in sigs if s.get("cascade_event"))
     lines = [
-        f"Last {len(sigs)} signals:",
+        f"Last {len(sigs)} signals · {n_cascade} cascade",
         "By regime:",
         *[f"  {r}: {n}" for r, n in by_regime.most_common()],
         "By asset:",
