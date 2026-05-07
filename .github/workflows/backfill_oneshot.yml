@@ -65,20 +65,26 @@ jobs:
           if git ls-remote --exit-code --heads origin data/eth-bins > /dev/null 2>&1; then
             git fetch origin data/eth-bins
             git checkout origin/data/eth-bins -- eth_coinbase_bins.json 2>/dev/null || true
+            git checkout origin/data/eth-bins -- eth_coinbase_bins.cursor.json 2>/dev/null || true
             git checkout origin/data/eth-bins -- eth_kraken_bins.json 2>/dev/null || true
             git checkout origin/data/eth-bins -- eth_binance_perp_bins.json 2>/dev/null || true
             git checkout origin/data/eth-bins -- eth_kraken_perp_bins.json 2>/dev/null || true
           fi
-          ls -la eth_*_bins.json 2>&1 || echo "[restore] no bins yet"
+          ls -la eth_*_bins.json eth_*_bins.cursor.json 2>&1 || echo "[restore] no bins yet"
 
       - name: Run all 3 ETH backfills in parallel
         timeout-minutes: 350
         run: |
           DAYS=${{ github.event.inputs.days_eth }}
           MAX=${{ github.event.inputs.max_seconds_per_script }}
-          echo "[backfill-eth] days=$DAYS max_seconds=$MAX"
+          # Binance Vision binned 1-sec is ~9MB/day for ETH/BTC perps;
+          # 30d = ~270MB which exceeds GitHub's 100MB hard push limit.
+          # Cap at 10d (~90MB) so the file pushes cleanly.
+          BN_DAYS=$DAYS
+          if [ "$BN_DAYS" -gt 10 ]; then BN_DAYS=10; fi
+          echo "[backfill-eth] days=$DAYS bn_days=$BN_DAYS max_seconds=$MAX"
 
-          python backfill_binance_vision.py --symbol ETHUSDT --days $DAYS \
+          python backfill_binance_vision.py --symbol ETHUSDT --days $BN_DAYS \
             --bins-path eth_binance_perp_bins.json > /tmp/bn.log 2>&1 &
           BN=$!
           python backfill_kraken_spot.py --pair ETHUSD --days $DAYS --max-seconds $MAX \
@@ -122,6 +128,7 @@ jobs:
 
           mkdir -p /tmp/bins
           cp eth_coinbase_bins.json /tmp/bins/ 2>/dev/null || true
+          cp eth_coinbase_bins.cursor.json /tmp/bins/ 2>/dev/null || true
           cp eth_kraken_bins.json /tmp/bins/ 2>/dev/null || true
           cp eth_binance_perp_bins.json /tmp/bins/ 2>/dev/null || true
           cp eth_kraken_perp_bins.json /tmp/bins/ 2>/dev/null || true
@@ -130,12 +137,17 @@ jobs:
           git rm -rf . > /dev/null 2>&1 || true
 
           cp /tmp/bins/eth_coinbase_bins.json . 2>/dev/null || true
+          cp /tmp/bins/eth_coinbase_bins.cursor.json . 2>/dev/null || true
           cp /tmp/bins/eth_kraken_bins.json . 2>/dev/null || true
           cp /tmp/bins/eth_binance_perp_bins.json . 2>/dev/null || true
           cp /tmp/bins/eth_kraken_perp_bins.json . 2>/dev/null || true
 
           if [ -f eth_coinbase_bins.json ] || [ -f eth_kraken_bins.json ] || [ -f eth_binance_perp_bins.json ]; then
-            git add eth_coinbase_bins.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json 2>/dev/null || true
+            # -f bypasses .gitignore (eth_coinbase_bins.json + eth_kraken_bins.json
+            # are listed there to keep RT collector outputs out of phase-2 commits;
+            # the data branches intentionally commit them).
+            git add -f eth_coinbase_bins.json eth_coinbase_bins.cursor.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json 2>/dev/null || true
+            git status --short
             git commit -m "ETH bins backfill $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/eth-bins-tmp:data/eth-bins
             echo "[commit] pushed merged ETH bins to data/eth-bins"
@@ -161,22 +173,28 @@ jobs:
           if git ls-remote --exit-code --heads origin data/btc-bins > /dev/null 2>&1; then
             git fetch origin data/btc-bins
             git checkout origin/data/btc-bins -- btc_coinbase_bins.json 2>/dev/null || true
+            git checkout origin/data/btc-bins -- btc_coinbase_bins.cursor.json 2>/dev/null || true
             git checkout origin/data/btc-bins -- btc_kraken_bins.json 2>/dev/null || true
             git checkout origin/data/btc-bins -- btc_binance_perp_bins.json 2>/dev/null || true
             git checkout origin/data/btc-bins -- btc_kraken_perp_bins.json 2>/dev/null || true
           else
             echo "[restore] data/btc-bins does not exist yet (first ever); starting fresh"
           fi
-          ls -la btc_*_bins.json 2>&1 || echo "[restore] no bins yet"
+          ls -la btc_*_bins.json btc_*_bins.cursor.json 2>&1 || echo "[restore] no bins yet"
 
       - name: Run all 3 BTC backfills in parallel
         timeout-minutes: 350
         run: |
           DAYS=${{ github.event.inputs.days_btc }}
           MAX=${{ github.event.inputs.max_seconds_per_script }}
-          echo "[backfill-btc] days=$DAYS max_seconds=$MAX"
+          # Binance Vision binned 1-sec is ~9MB/day for BTC perps;
+          # 30d = ~270MB which exceeds GitHub's 100MB hard push limit
+          # (verified in run 25472326899). Cap at 10d (~90MB).
+          BN_DAYS=$DAYS
+          if [ "$BN_DAYS" -gt 10 ]; then BN_DAYS=10; fi
+          echo "[backfill-btc] days=$DAYS bn_days=$BN_DAYS max_seconds=$MAX"
 
-          python backfill_binance_vision.py --symbol BTCUSDT --days $DAYS \
+          python backfill_binance_vision.py --symbol BTCUSDT --days $BN_DAYS \
             --bins-path btc_binance_perp_bins.json > /tmp/bn.log 2>&1 &
           BN=$!
           python backfill_kraken_spot.py --pair XBTUSD --days $DAYS --max-seconds $MAX \
@@ -220,6 +238,7 @@ jobs:
 
           mkdir -p /tmp/bins
           cp btc_coinbase_bins.json /tmp/bins/ 2>/dev/null || true
+          cp btc_coinbase_bins.cursor.json /tmp/bins/ 2>/dev/null || true
           cp btc_kraken_bins.json /tmp/bins/ 2>/dev/null || true
           cp btc_binance_perp_bins.json /tmp/bins/ 2>/dev/null || true
           cp btc_kraken_perp_bins.json /tmp/bins/ 2>/dev/null || true
@@ -228,13 +247,183 @@ jobs:
           git rm -rf . > /dev/null 2>&1 || true
 
           cp /tmp/bins/btc_coinbase_bins.json . 2>/dev/null || true
+          cp /tmp/bins/btc_coinbase_bins.cursor.json . 2>/dev/null || true
           cp /tmp/bins/btc_kraken_bins.json . 2>/dev/null || true
           cp /tmp/bins/btc_binance_perp_bins.json . 2>/dev/null || true
           cp /tmp/bins/btc_kraken_perp_bins.json . 2>/dev/null || true
 
           if [ -f btc_coinbase_bins.json ] || [ -f btc_kraken_bins.json ] || [ -f btc_binance_perp_bins.json ]; then
-            git add btc_coinbase_bins.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json 2>/dev/null || true
+            git add -f btc_coinbase_bins.json btc_coinbase_bins.cursor.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json 2>/dev/null || true
+            git status --short
             git commit -m "BTC bins backfill $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/btc-bins-tmp:data/btc-bins
             echo "[commit] pushed merged BTC bins to data/btc-bins"
+          fi
+
+  # CB walks history backward from `now` and is rate-limited; one parallel-job
+  # round only reaches ~2-3d for ETH and <1d for BTC. The cb_extend_* jobs
+  # run AFTER the parallel round, restore the just-pushed bins (including
+  # the cursor sidecar), and walk further back from where the prior round
+  # stopped. This roughly doubles CB depth per workflow trigger; re-trigger
+  # the workflow as needed until depth approaches 30d.
+  cb_extend_eth:
+    needs: backfill_eth
+    runs-on: ubuntu-latest
+    timeout-minutes: 358
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/continue-phase-2-pipeline-UFiGY
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restore latest data/eth-bins (post-parallel-round)
+        run: |
+          if git ls-remote --exit-code --heads origin data/eth-bins > /dev/null 2>&1; then
+            git fetch origin data/eth-bins
+            git checkout origin/data/eth-bins -- eth_coinbase_bins.json 2>/dev/null || true
+            git checkout origin/data/eth-bins -- eth_coinbase_bins.cursor.json 2>/dev/null || true
+            git checkout origin/data/eth-bins -- eth_kraken_bins.json 2>/dev/null || true
+            git checkout origin/data/eth-bins -- eth_binance_perp_bins.json 2>/dev/null || true
+            git checkout origin/data/eth-bins -- eth_kraken_perp_bins.json 2>/dev/null || true
+          else
+            echo "[cb-extend-eth] data/eth-bins missing; nothing to extend"; exit 0
+          fi
+          ls -la eth_*_bins.json eth_*_bins.cursor.json 2>&1 || true
+
+      - name: CB-only ETH backfill (resume from cursor)
+        timeout-minutes: 350
+        run: |
+          DAYS=${{ github.event.inputs.days_eth }}
+          MAX=${{ github.event.inputs.max_seconds_per_script }}
+          echo "[cb-extend-eth] days=$DAYS max_seconds=$MAX"
+          python backfill_coinbase_spot.py --product ETH-USD --days $DAYS \
+            --max-seconds $MAX --bins-path eth_coinbase_bins.json 2>&1 | tee /tmp/cb.log
+
+      - name: Bin file stats
+        if: always()
+        run: |
+          for f in eth_coinbase_bins.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json; do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f")
+              N_BINS=$(python -c "import json,sys; print(len(json.load(open(sys.argv[1]))))" "$f" 2>/dev/null || echo "?")
+              echo "$f: $SIZE bytes, $N_BINS bins"
+            fi
+          done
+          [ -f eth_coinbase_bins.cursor.json ] && cat eth_coinbase_bins.cursor.json && echo
+
+      - name: Force-push merged ETH bins to data/eth-bins
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          mkdir -p /tmp/bins
+          cp eth_coinbase_bins.json /tmp/bins/ 2>/dev/null || true
+          cp eth_coinbase_bins.cursor.json /tmp/bins/ 2>/dev/null || true
+          cp eth_kraken_bins.json /tmp/bins/ 2>/dev/null || true
+          cp eth_binance_perp_bins.json /tmp/bins/ 2>/dev/null || true
+          cp eth_kraken_perp_bins.json /tmp/bins/ 2>/dev/null || true
+
+          git checkout --orphan data/eth-bins-tmp
+          git rm -rf . > /dev/null 2>&1 || true
+
+          cp /tmp/bins/eth_coinbase_bins.json . 2>/dev/null || true
+          cp /tmp/bins/eth_coinbase_bins.cursor.json . 2>/dev/null || true
+          cp /tmp/bins/eth_kraken_bins.json . 2>/dev/null || true
+          cp /tmp/bins/eth_binance_perp_bins.json . 2>/dev/null || true
+          cp /tmp/bins/eth_kraken_perp_bins.json . 2>/dev/null || true
+
+          if [ -f eth_coinbase_bins.json ]; then
+            git add -f eth_coinbase_bins.json eth_coinbase_bins.cursor.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json 2>/dev/null || true
+            git status --short
+            git commit -m "ETH CB extend round $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin data/eth-bins-tmp:data/eth-bins
+            echo "[cb-extend-eth] pushed merged ETH bins to data/eth-bins"
+          fi
+
+  cb_extend_btc:
+    needs: backfill_btc
+    runs-on: ubuntu-latest
+    timeout-minutes: 358
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/continue-phase-2-pipeline-UFiGY
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restore latest data/btc-bins (post-parallel-round)
+        run: |
+          if git ls-remote --exit-code --heads origin data/btc-bins > /dev/null 2>&1; then
+            git fetch origin data/btc-bins
+            git checkout origin/data/btc-bins -- btc_coinbase_bins.json 2>/dev/null || true
+            git checkout origin/data/btc-bins -- btc_coinbase_bins.cursor.json 2>/dev/null || true
+            git checkout origin/data/btc-bins -- btc_kraken_bins.json 2>/dev/null || true
+            git checkout origin/data/btc-bins -- btc_binance_perp_bins.json 2>/dev/null || true
+            git checkout origin/data/btc-bins -- btc_kraken_perp_bins.json 2>/dev/null || true
+          else
+            echo "[cb-extend-btc] data/btc-bins missing; nothing to extend"; exit 0
+          fi
+          ls -la btc_*_bins.json btc_*_bins.cursor.json 2>&1 || true
+
+      - name: CB-only BTC backfill (resume from cursor)
+        timeout-minutes: 350
+        run: |
+          DAYS=${{ github.event.inputs.days_btc }}
+          MAX=${{ github.event.inputs.max_seconds_per_script }}
+          echo "[cb-extend-btc] days=$DAYS max_seconds=$MAX"
+          python backfill_coinbase_spot.py --product BTC-USD --days $DAYS \
+            --max-seconds $MAX --bins-path btc_coinbase_bins.json 2>&1 | tee /tmp/cb.log
+
+      - name: Bin file stats
+        if: always()
+        run: |
+          for f in btc_coinbase_bins.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json; do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f")
+              N_BINS=$(python -c "import json,sys; print(len(json.load(open(sys.argv[1]))))" "$f" 2>/dev/null || echo "?")
+              echo "$f: $SIZE bytes, $N_BINS bins"
+            fi
+          done
+          [ -f btc_coinbase_bins.cursor.json ] && cat btc_coinbase_bins.cursor.json && echo
+
+      - name: Force-push merged BTC bins to data/btc-bins
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          mkdir -p /tmp/bins
+          cp btc_coinbase_bins.json /tmp/bins/ 2>/dev/null || true
+          cp btc_coinbase_bins.cursor.json /tmp/bins/ 2>/dev/null || true
+          cp btc_kraken_bins.json /tmp/bins/ 2>/dev/null || true
+          cp btc_binance_perp_bins.json /tmp/bins/ 2>/dev/null || true
+          cp btc_kraken_perp_bins.json /tmp/bins/ 2>/dev/null || true
+
+          git checkout --orphan data/btc-bins-tmp
+          git rm -rf . > /dev/null 2>&1 || true
+
+          cp /tmp/bins/btc_coinbase_bins.json . 2>/dev/null || true
+          cp /tmp/bins/btc_coinbase_bins.cursor.json . 2>/dev/null || true
+          cp /tmp/bins/btc_kraken_bins.json . 2>/dev/null || true
+          cp /tmp/bins/btc_binance_perp_bins.json . 2>/dev/null || true
+          cp /tmp/bins/btc_kraken_perp_bins.json . 2>/dev/null || true
+
+          if [ -f btc_coinbase_bins.json ]; then
+            git add -f btc_coinbase_bins.json btc_coinbase_bins.cursor.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json 2>/dev/null || true
+            git status --short
+            git commit -m "BTC CB extend round $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin data/btc-bins-tmp:data/btc-bins
+            echo "[cb-extend-btc] pushed merged BTC bins to data/btc-bins"
           fi

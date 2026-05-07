@@ -27,11 +27,13 @@ class Regime(str, Enum):
     EQUILIBRIUM_TWO_SIDED = "EQUILIBRIUM_TWO_SIDED"
     WHALE_UP = "WHALE_UP"
     WHALE_DOWN = "WHALE_DOWN"
+    WHALE_NASCENT_UP = "WHALE_NASCENT_UP"      # directional pressure, moderate
+    WHALE_NASCENT_DOWN = "WHALE_NASCENT_DOWN"  # persistence, sub-WHALE evidence
     HERD_UP = "HERD_UP"
     HERD_DOWN = "HERD_DOWN"
     WASH_PAIRED = "WASH_PAIRED"
-    DEPLETED = "DEPLETED"          # added: low-liquidity quiet
-    UNKNOWN = "UNKNOWN"
+    DEPLETED = "DEPLETED"          # low-liquidity quiet
+    UNKNOWN = "UNKNOWN"            # genuine fallback (now rare)
 
 
 @dataclass
@@ -50,14 +52,79 @@ class ClassificationResult:
     confidence: float            # 0-1 rough confidence based on rule strength
     notes: list[str]             # human-readable reasons for the verdict
     cross_venue_multiplier: float = 1.0   # F6: 1.5 if other venue agrees, 0.5 if disagrees, 1.0 if unknown
+    herd_persistence: int = 1    # 1 = isolated chunk; N>=2 = part of N-chunk consecutive same-HERD run
+    herd_rescued: bool = False   # set True when a borderline EQUILIBRIUM chunk was reclassified by apply_herd_borderline_rescue
+    vpin: float = 0.0            # informed-flow toxicity, [0,1]; high = imminent move predicted
+    vpin_multiplier: float = 1.0 # confidence boost/de-rate from VPIN (HERD/WHALE only)
 
     @property
     def adjusted_confidence(self) -> float:
-        """Confidence × cross-venue multiplier, capped at [0, 1]."""
-        return max(0.0, min(1.0, self.confidence * self.cross_venue_multiplier))
+        """Confidence × cross-venue multiplier × vpin multiplier, capped at [0, 1]."""
+        return max(0.0, min(1.0,
+            self.confidence * self.cross_venue_multiplier * self.vpin_multiplier))
 
 
-def classify_regime(f: MarketFeatures, baselines: Baselines | None = None) -> ClassificationResult:
+def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
+                                  elevated: float = 0.30,
+                                  diffuse: float = 0.08) -> tuple[float, str]:
+    """Return (multiplier, note) for a chunk's VPIN given its regime.
+
+    elevated/diffuse: thresholds for "informed flow concentrated" vs
+    "retail/diffuse". Defaults are literature priors; the production
+    backend passes per-(asset,venue) p75/p25 from vpin_calibration.json.
+
+    Boosts/de-rates only directional regimes (HERD_*, WHALE_*, NASCENT_*).
+    Skipped for EQUILIBRIUM/DEPLETED/UNKNOWN. WASH_PAIRED with high VPIN
+    is flagged as suspicious — pair-cancel patterns shouldn't carry
+    informed flow.
+    """
+    if vpin_n < 3:
+        return 1.0, ""
+    name = regime.value
+    is_directional = (
+        name.startswith("WHALE_") or name.startswith("HERD_")
+        or name.startswith("WHALE_NASCENT_")
+    )
+    if is_directional:
+        if vpin >= elevated:
+            return 1.15, (f"vpin={vpin:.2f} >= p75={elevated:.2f} "
+                          f"(informed flow concentrated; +15% confidence)")
+        if vpin <= diffuse:
+            return 0.85, (f"vpin={vpin:.2f} <= p25={diffuse:.2f} "
+                          f"(diffuse/retail flow; -15% confidence)")
+        return 1.0, f"vpin={vpin:.2f}"
+    if name == "WASH_PAIRED" and vpin >= elevated:
+        # WASH should be flow-neutral; high VPIN here suggests one side
+        # is actually informed and we mislabeled. De-rate.
+        return 0.7, (f"vpin={vpin:.2f} >= p75={elevated:.2f} on WASH_PAIRED "
+                     f"(suspicious; -30%)")
+    return 1.0, ""
+
+
+def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
+                      *,
+                      vpin_elevated: float = 0.30,
+                      vpin_diffuse: float = 0.08) -> ClassificationResult:
+    """Classify a chunk's MarketFeatures and attach a VPIN-based confidence
+    multiplier on directional regimes.
+
+    vpin_elevated / vpin_diffuse: thresholds. Backend passes per-
+    (asset, venue) p75 / p25 from vpin_calibration.json; defaults are
+    a hardcoded literature prior used when no calibration is loaded.
+    """
+    result = _classify_regime_raw(f, baselines)
+    result.vpin = float(getattr(f, "vpin", 0.0) or 0.0)
+    vpin_n = int(getattr(f, "vpin_n_buckets", 0) or 0)
+    mult, note = _vpin_multiplier_for_regime(
+        result.regime, result.vpin, vpin_n,
+        elevated=vpin_elevated, diffuse=vpin_diffuse)
+    result.vpin_multiplier = float(mult)
+    if note:
+        result.notes.append(note)
+    return result
+
+
+def _classify_regime_raw(f: MarketFeatures, baselines: Baselines | None = None) -> ClassificationResult:
     """Classify a chunk's MarketFeatures into one of the universal regime states.
 
     Decision order matters: most-disqualifying conditions first.
@@ -120,9 +187,15 @@ def classify_regime(f: MarketFeatures, baselines: Baselines | None = None) -> Cl
         notes.append(f"dipole={f.mean_dipole:+.2f}, acl1={f.dipole_autocorr_lag1:+.2f} (balanced)")
         return ClassificationResult(Regime.EQUILIBRIUM_TWO_SIDED, confidence=0.65, notes=notes)
 
-    # 5. UNKNOWN fallback (now genuinely rare)
-    notes.append(f"unmatched: dipole={f.mean_dipole:+.2f}, acl1={f.dipole_autocorr_lag1:+.2f}, vol_ratio={vol_ratio:.2f}, rv_ratio={f.realized_vol/b.rv:.2f}")
-    return ClassificationResult(Regime.UNKNOWN, confidence=0.3, notes=notes)
+    # 4.5 WHALE_NASCENT: directional dipole (>=0.25) + persistence (acl1>=0.2)
+    #     but didn't trip full WHALE thresholds (acl1>=0.4+|dipole|>=0.15, OR
+    #     Kyle absorption, OR oscillation). Mechanistically: a trend that has
+    #     started forming but hasn't yet shown sustained one-side pressure.
+    #     Hypothesis (to be confirmed at higher n): NASCENT continues, full
+    #     WHALE fades. n=44 at 30d ETH-KR shows r=+0.21 momentum suggestive.
+    notes.append(f"borderline whale: dipole={f.mean_dipole:+.2f}, acl1={f.dipole_autocorr_lag1:+.2f}, vol_ratio={vol_ratio:.2f}")
+    regime = Regime.WHALE_NASCENT_UP if f.mean_dipole > 0 else Regime.WHALE_NASCENT_DOWN
+    return ClassificationResult(regime, confidence=0.55, notes=notes)
 
 
 def baselines_from_corpus(features_list: list[MarketFeatures]) -> Baselines:
@@ -203,6 +276,247 @@ def classify_with_session_baselines(f: MarketFeatures,
     result = classify_regime(f, base)
     result.notes.insert(0, f"[session={phase}, baseline rv={base.rv:.5f}]")
     return result
+
+
+# ---------------------------------------------------------------------------
+# HERD persistence: annotate consecutive same-HERD chunk runs.
+#
+# The "slow build" signature of HERD activity (multiple actors gradually
+# piling in over multiple chunks) is structurally distinct from WHALE
+# activity (single-actor impulse, isolated chunks). This pass surfaces
+# multi-chunk HERD runs without changing the classification rules.
+# ---------------------------------------------------------------------------
+
+_HERD_REGIME_VALUES = frozenset({Regime.HERD_UP.value, Regime.HERD_DOWN.value})
+
+
+def apply_herd_persistence(results: list[ClassificationResult]) -> list[tuple[int, int, str]]:
+    """Mutate results in place: set herd_persistence = N for chunks in an
+    N-chunk consecutive run of the same HERD regime.
+
+    HERD_UP and HERD_DOWN runs are tracked independently. Any non-HERD
+    chunk (or a switch from HERD_UP to HERD_DOWN) breaks the run.
+
+    Returns a list of (start_idx, run_length, regime_value) for runs
+    with length >= 2 (sustained HERD events).
+    """
+    sustained: list[tuple[int, int, str]] = []
+    n = len(results)
+    i = 0
+    while i < n:
+        if results[i].regime.value not in _HERD_REGIME_VALUES:
+            i += 1
+            continue
+        regime_val = results[i].regime.value
+        j = i + 1
+        while j < n and results[j].regime.value == regime_val:
+            j += 1
+        run_len = j - i
+        for k in range(i, j):
+            results[k].herd_persistence = run_len
+            if run_len >= 2:
+                results[k].notes.append(
+                    f"sustained {run_len}-chunk HERD ({k - i + 1}/{run_len})")
+        if run_len >= 2:
+            sustained.append((i, run_len, regime_val))
+        i = j
+    return sustained
+
+
+def apply_herd_borderline_rescue(
+    results: list[ClassificationResult],
+    features: list[MarketFeatures],
+    baselines: Baselines,
+) -> int:
+    """Reclassify borderline EQUILIBRIUM chunks adjacent to a confirmed HERD
+    run (persistence>=2) as HERD if they meet RELAXED thresholds:
+
+      rv_ratio    > 1.4  (vs the strict 1.8 in classify_regime)
+      vol_ratio   > 1.2  (vs the strict 1.5)
+      |dipole|    > 0.08 (vs the strict 0.10)
+      direction matches the adjacent HERD run
+
+    Returns count of chunks rescued. Mutates results + sets herd_rescued=True.
+
+    NOTE: This is borderline-threshold tuning. Do not enable by default
+    until n>=30 HERD chunks accumulate; it can fire spuriously on small
+    samples. Call apply_herd_persistence again after rescue to recompute
+    persistence counts including the rescued chunks.
+    """
+    rescued = 0
+    n = len(results)
+    if n != len(features):
+        raise ValueError("results and features must align 1:1 with chunks")
+
+    # Build set of confirmed HERD-run boundaries (start, end_exclusive, regime)
+    runs: list[tuple[int, int, str]] = []
+    i = 0
+    while i < n:
+        if (results[i].regime.value in _HERD_REGIME_VALUES
+                and results[i].herd_persistence >= 2):
+            j = i + 1
+            while (j < n
+                   and results[j].regime.value == results[i].regime.value
+                   and results[j].herd_persistence >= 2):
+                j += 1
+            runs.append((i, j, results[i].regime.value))
+            i = j
+        else:
+            i += 1
+
+    candidates: list[tuple[int, str]] = []  # (idx, target_regime)
+    for start, end, regime in runs:
+        if start - 1 >= 0:
+            candidates.append((start - 1, regime))
+        if end < n:
+            candidates.append((end, regime))
+
+    for idx, target_regime in candidates:
+        r = results[idx]
+        if r.regime != Regime.EQUILIBRIUM_TWO_SIDED:
+            continue
+        f = features[idx]
+        rv_ratio = f.realized_vol / max(baselines.rv, 1e-9)
+        vol_ratio = f.chunk_total_volume / max(baselines.chunk_volume, 1e-9)
+        dipole_dir = +1 if target_regime == Regime.HERD_UP.value else -1
+        if (rv_ratio > 1.4
+                and vol_ratio > 1.2
+                and abs(f.mean_dipole) > 0.08
+                and (f.mean_dipole > 0) == (dipole_dir > 0)):
+            r.regime = Regime.HERD_UP if target_regime == Regime.HERD_UP.value else Regime.HERD_DOWN
+            r.herd_rescued = True
+            r.notes.append(
+                f"rescued: rv_ratio={rv_ratio:.2f} vol_ratio={vol_ratio:.2f} "
+                f"|dipole|={abs(f.mean_dipole):.3f} adjacent to {target_regime} run")
+            rescued += 1
+    return rescued
+
+
+# ---------------------------------------------------------------------------
+# WHALE -> HERD cascade detection (notification-worthy events).
+#
+# Pattern: a WHALE chunk (single-actor sustained pressure) that flows
+# directly into a HERD chunk (multi-actor cascade) in the SAME direction
+# without an intervening EQUILIBRIUM/DEPLETED gap. This is the canonical
+# "whale trips the herd" sequence: one big seller pushes, the herd piles
+# on. Empirically the WHALE and HERD chunks often overlap (chunker stride
+# = max_window/2) so they are "happening at the same time" in the
+# wall-clock sense.
+#
+# These events warrant immediate notification because:
+#   1. high directional conviction (two independent signal types align)
+#   2. typically the start of a multi-percent move
+#   3. the playbook differs from either alone: "get out of the way of the
+#      whale + fade the herd overshoot once the cascade exhausts"
+# ---------------------------------------------------------------------------
+
+
+def _direction(regime_value: str) -> str | None:
+    if regime_value.endswith("_UP"):
+        return "UP"
+    if regime_value.endswith("_DOWN"):
+        return "DOWN"
+    return None
+
+
+def detect_whale_to_herd_cascades(
+    results: list[ClassificationResult],
+) -> list[dict]:
+    """Detect single-venue WHALE -> HERD direct transitions in the same
+    direction with no intervening non-WHALE-non-HERD chunk.
+
+    Returns a list of event dicts:
+      {"type": "WHALE_TO_HERD_CASCADE",
+       "direction": "UP" | "DOWN",
+       "whale_idx": int, "herd_start_idx": int,
+       "herd_run_length": int,
+       "summary": "..."}
+    """
+    events: list[dict] = []
+    for i in range(len(results) - 1):
+        cur = results[i]
+        nxt = results[i + 1]
+        if "WHALE" not in cur.regime.value or "HERD" not in nxt.regime.value:
+            continue
+        cur_dir = _direction(cur.regime.value)
+        nxt_dir = _direction(nxt.regime.value)
+        if cur_dir is None or cur_dir != nxt_dir:
+            continue
+        events.append({
+            "type": "WHALE_TO_HERD_CASCADE",
+            "direction": cur_dir,
+            "whale_idx": i,
+            "herd_start_idx": i + 1,
+            "herd_run_length": nxt.herd_persistence,
+            "summary": (
+                f"WHALE_{cur_dir} at chunk {i} flows directly into "
+                f"HERD_{nxt_dir} run of {nxt.herd_persistence} chunk(s) "
+                f"starting at chunk {i + 1}"
+            ),
+        })
+    return events
+
+
+def detect_cross_venue_whale_herd_simultaneity(
+    primary_results: list[ClassificationResult],
+    primary_chunks: list,
+    primary_bars: list,
+    other_minute_regime: dict[float, str],
+    primary_label: str = "primary",
+    other_label: str = "other",
+) -> list[dict]:
+    """Detect chunks where the primary venue is WHALE and the other venue
+    is HERD in the SAME direction over the chunk's wall-clock window
+    (or vice versa).
+
+    Returns events dicts:
+      {"type": "CROSS_VENUE_WHALE_HERD_SIMULTANEITY",
+       "primary_regime": "WHALE_DOWN", "other_regime": "HERD_DOWN",
+       "primary_chunk_idx": int, "direction": "UP"|"DOWN",
+       "primary_label": ..., "other_label": ...,
+       "summary": "..."}
+    """
+    from collections import Counter
+    events: list[dict] = []
+    for idx, (c, r) in enumerate(zip(primary_chunks, primary_results)):
+        primary_dir = _direction(r.regime.value)
+        if primary_dir is None:
+            continue
+        primary_kind = ("WHALE" if "WHALE" in r.regime.value
+                         else ("HERD" if "HERD" in r.regime.value else None))
+        if primary_kind is None:
+            continue
+        other_labels: list[str] = []
+        for bar_idx in range(c.window_start, c.window_end):
+            if 0 <= bar_idx < len(primary_bars):
+                ts = primary_bars[bar_idx].ts
+                if ts in other_minute_regime:
+                    other_labels.append(other_minute_regime[ts])
+        if not other_labels:
+            continue
+        most_common = Counter(other_labels).most_common(1)[0][0]
+        other_dir = _direction(most_common)
+        other_kind = ("WHALE" if "WHALE" in most_common
+                       else ("HERD" if "HERD" in most_common else None))
+        if other_dir != primary_dir or other_kind is None:
+            continue
+        # WHALE+HERD or HERD+WHALE in same direction
+        if {primary_kind, other_kind} == {"WHALE", "HERD"}:
+            events.append({
+                "type": "CROSS_VENUE_WHALE_HERD_SIMULTANEITY",
+                "primary_regime": r.regime.value,
+                "other_regime": most_common,
+                "primary_chunk_idx": idx,
+                "direction": primary_dir,
+                "primary_label": primary_label,
+                "other_label": other_label,
+                "summary": (
+                    f"{primary_label} {r.regime.value} at chunk {idx} "
+                    f"co-occurs with {other_label} {most_common} over "
+                    f"the same wall-clock window"
+                ),
+            })
+    return events
 
 
 # ---------------------------------------------------------------------------

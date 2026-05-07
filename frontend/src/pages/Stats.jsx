@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchStats } from "../api.js";
+import { SkeletonCard } from "../components/LoadingSkeleton.jsx";
 
 export default function Stats() {
   const [data, setData] = useState(null);
@@ -13,7 +14,7 @@ export default function Stats() {
   }, [windowHours]);
 
   if (error) return <div className="text-red-400">{error}</div>;
-  if (!data) return <div className="text-slate-500 text-sm py-8 text-center">Loading…</div>;
+  if (!data) return <SkeletonCard heightCls="h-64" />;
 
   const cvTotal = data.cross_venue_confirmed + data.cross_venue_disagreed;
   const cvRate = cvTotal > 0 ? data.cross_venue_confirmed / cvTotal : 0;
@@ -99,8 +100,9 @@ export default function Stats() {
 
       {data.n_signals === 0 && (
         <p className="text-slate-500 text-sm italic mt-6">
-          No signals in this window yet. Most chunks are EQUILIBRIUM (baseline);
-          signals fire on regime transitions plus extreme-dipole equilibrium chunks.
+          No signals in this window yet. Most market activity is healthy
+          two-sided trading (baseline). Signals fire when we detect a big
+          buyer, big seller, buying or selling cascade, or wash pattern.
         </p>
       )}
     </div>

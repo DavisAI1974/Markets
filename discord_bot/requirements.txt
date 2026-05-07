@@ -1,2 +1,6 @@
 discord.py>=2.4
 aiohttp>=3.9
+# Used to render an optional price/volume chart attachment per signal.
+# Set SIGNAL_POSTER_ATTACH_CHART=0 in env to skip and avoid this dep.
+matplotlib>=3.7
+numpy>=1.24

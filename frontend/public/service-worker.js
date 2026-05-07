@@ -40,13 +40,40 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// Web Push placeholder; activate when push subscriptions are wired
+// Web Push: incoming notification from backend.send_to_all
 self.addEventListener("push", (event) => {
-  const data = event.data ? event.data.json() : { title: "markets-watch", body: "new signal" };
-  event.waitUntil(self.registration.showNotification(data.title || "markets-watch", {
+  let data = { title: "markets-watch", body: "new signal" };
+  try { data = event.data ? event.data.json() : data; } catch { /* malformed */ }
+  const opts = {
     body: data.body || "",
     icon: "/icon-192.png",
     badge: "/icon-192.png",
     tag: data.tag || "signal",
-  }));
+    data: { url: data.url || "/", signal_id: data.signal_id || null },
+    requireInteraction: !!data.cascade_event,  // cascade events stay until tapped
+    vibrate: data.cascade_event ? [200, 100, 200] : [100],
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title || "markets-watch", opts)
+  );
+});
+
+// Notification tap: focus existing tab if open, else open a new one to the
+// signal detail (or root).
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.signal_id)
+    ? `/signal/${event.notification.data.signal_id}`
+    : "/";
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const c of all) {
+      if (c.url.includes(self.location.origin)) {
+        await c.focus();
+        try { await c.navigate(target); } catch { /* detached / cross-origin */ }
+        return;
+      }
+    }
+    await self.clients.openWindow(target);
+  })());
 });

@@ -40,7 +40,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import aiohttp
 
 from executor.risk import RiskConfig, LayeredRiskConfig, evaluate as risk_evaluate
-from executor.exchanges import PaperExchange, Exchange
+from executor.exchanges import PaperExchange, Exchange, make_exchange
 
 
 @dataclass
@@ -79,8 +79,13 @@ def load_config(path: str) -> tuple[LayeredRiskConfig, dict]:
     return layered, settings
 
 
-async def stream_signals(api_base: str):
-    """Async generator yielding signal dicts from SSE."""
+async def stream_events(api_base: str):
+    """Async generator yielding (event_type, payload_dict) from SSE.
+
+    Event types of interest:
+      "signal"               — auto-trade candidate (regime detector fired)
+      "manual_trade_intent"  — user clicked a bid/ask cell in the PWA
+    """
     timeout = aiohttp.ClientTimeout(total=None, sock_read=60)
     while True:
         try:
@@ -97,15 +102,22 @@ async def stream_signals(api_base: str):
                             event_type = line.split(":", 1)[1].strip()
                         elif line.startswith("data:"):
                             payload = line.split(":", 1)[1].strip()
-                            if event_type == "signal" and payload:
+                            if event_type and payload:
                                 try:
-                                    yield json.loads(payload)
+                                    yield event_type, json.loads(payload)
                                 except Exception:
                                     pass
                             event_type = None
         except Exception as e:
             print(f"[exec] stream error: {e}; reconnect in 5s", flush=True)
             await asyncio.sleep(5)
+
+
+async def stream_signals(api_base: str):
+    """Backwards-compatible: yields only signal events."""
+    async for kind, payload in stream_events(api_base):
+        if kind == "signal":
+            yield payload
 
 
 class Executor:
@@ -184,6 +196,82 @@ class Executor:
         # Schedule exit using this source's config
         asyncio.create_task(self._exit_after_hold(trade, cfg))
 
+    async def handle_manual_intent(self, intent: dict):
+        """Place an order from a user's click-to-trade intent emitted by
+        the PWA. Bypasses the auto-trading risk gates (the human already
+        decided) but still goes through the configured exchange adapter
+        with its own dry-run / live behavior.
+
+        Intent shape (from /api/manual-trade-intent):
+          {intent_id, asset, venue, side: 'buy'|'sell', price, qty, note,
+           notional, ts_utc}
+        """
+        intent_id = intent.get("intent_id", "?")
+        asset = intent.get("asset", "")
+        side = intent.get("side", "")
+        price = float(intent.get("price", 0.0))
+        qty = float(intent.get("qty", 0.0))
+        notional = float(intent.get("notional") or price * qty)
+        note = intent.get("note", "")
+
+        if side not in ("buy", "sell") or qty <= 0 or price <= 0 or not asset:
+            print(f"[exec] manual intent {intent_id} malformed; skipping", flush=True)
+            return
+
+        audit(self.audit_path, {
+            "kind": "manual_intent_received",
+            "intent": intent,
+            "ts": time.time(),
+        })
+
+        if self.dry_run:
+            print(f"[exec] DRY-RUN manual {side} {qty} {asset} @ {price} (intent {intent_id}, note: {note!r})", flush=True)
+            audit(self.audit_path, {"kind": "manual_intent_dry_run",
+                                     "intent_id": intent_id, "ts": time.time()})
+            return
+
+        # Route to the configured exchange adapter. For "buy", interpret
+        # the user's price+qty as a limit order at price (so they get
+        # the price they clicked, with `post_only` opt-in if available)
+        # falling back to market if the adapter doesn't expose limits.
+        try:
+            if side == "buy":
+                if hasattr(self.exchange, "limit_buy"):
+                    r = self.exchange.limit_buy(asset, price, qty)
+                else:
+                    r = self.exchange.market_buy(asset, notional)
+            else:
+                if hasattr(self.exchange, "limit_sell"):
+                    r = self.exchange.limit_sell(asset, price, qty)
+                else:
+                    r = self.exchange.market_sell(asset, qty)
+        except Exception as e:
+            print(f"[exec] manual {intent_id} exchange error: {e}", flush=True)
+            audit(self.audit_path, {"kind": "manual_intent_error",
+                                     "intent_id": intent_id, "error": str(e),
+                                     "ts": time.time()})
+            return
+
+        if not r.success:
+            print(f"[exec] manual {intent_id} order FAILED: {r.error}", flush=True)
+            audit(self.audit_path, {"kind": "manual_intent_order_fail",
+                                     "intent_id": intent_id,
+                                     "error": r.error, "raw": r.raw,
+                                     "ts": time.time()})
+            return
+
+        print(f"[exec] manual {side.upper()} {qty} {asset} @ {price} -> "
+              f"order_id={r.exchange_order_id} (intent {intent_id})", flush=True)
+        audit(self.audit_path, {
+            "kind": "manual_intent_order_placed",
+            "intent_id": intent_id,
+            "exchange": self.exchange.name,
+            "exchange_order_id": r.exchange_order_id,
+            "fill_price": r.fill_price, "fill_size": r.fill_size,
+            "fees_usd": r.fees_usd,
+            "ts": time.time(),
+        })
+
     def _direction_from_regime(self, sig: dict) -> str | None:
         regime = sig["regime"]
         if regime == "WHALE_UP" or regime == "HERD_UP":
@@ -256,11 +344,22 @@ async def amain(args):
     api_base = settings.get("api_base", "http://localhost:8000")
     audit_path = settings.get("audit_path", "executor/audit.jsonl")
     paper_log = settings.get("paper_trade_log", "executor/paper_trades.jsonl")
-    # Note: paper exchange's fee comes from default config; per-source fees are
-    # used by the gate evaluation but the paper exchange uses one assumption.
     fee_bps = layered.default.simulated_fee_bps
 
-    exchange = PaperExchange(api_base=api_base, trade_log_path=paper_log, simulated_fee_bps=fee_bps)
+    # Exchange selection — settings.exchange is one of:
+    #   "paper"     (default; safe; simulates against backend prices)
+    #   "coinbase"  (Coinbase Advanced Trade)
+    #   "binance"   (Binance Spot; testnet via BINANCE_REST env)
+    #   "kraken"    (Kraken Spot)
+    # Real exchanges read API keys from env vars and default to dry-run
+    # unless EXCHANGE_LIVE=1 is explicitly set.
+    exchange_name = settings.get("exchange", "paper").lower()
+    exchange_kwargs = settings.get("exchange_kwargs", {}) or {}
+    if exchange_name == "paper":
+        exchange = PaperExchange(api_base=api_base, trade_log_path=paper_log,
+                                   simulated_fee_bps=fee_bps)
+    else:
+        exchange = make_exchange(exchange_name, **exchange_kwargs)
     ex = Executor(exchange, layered, settings, audit_path, dry_run=args.dry_run)
 
     print(f"[exec] starting; api={api_base}, exchange={exchange.name}, "
@@ -273,8 +372,12 @@ async def amain(args):
     if layered.per_source:
         print(f"  per_source overrides for: {list(layered.per_source.keys())}", flush=True)
 
-    async for sig in stream_signals(api_base):
-        await ex.handle_signal(sig)
+    async for kind, payload in stream_events(api_base):
+        if kind == "signal":
+            await ex.handle_signal(payload)
+        elif kind == "manual_trade_intent":
+            await ex.handle_manual_intent(payload)
+        # ignore "snapshot", "heartbeat", and any future event types
 
 
 def main():

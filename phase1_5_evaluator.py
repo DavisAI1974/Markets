@@ -31,6 +31,9 @@ from regime_classifier import (
     classify_regime, baselines_from_corpus,
     baselines_per_session, classify_with_session_baselines,
     apply_cross_venue_multiplier, _session_phase_of,
+    apply_herd_persistence, apply_herd_borderline_rescue,
+    detect_whale_to_herd_cascades,
+    detect_cross_venue_whale_herd_simultaneity,
 )
 
 
@@ -49,6 +52,22 @@ def load_bars(bins_path: str) -> list[MarketBar]:
         mids = [b["mid"] for _, b in members if b["mid"] is not None]
         if not mids:
             continue
+        last_bid = 0.0
+        last_ask = 0.0
+        last_bid_qty = 0.0
+        last_ask_qty = 0.0
+        last_aggressor = ""
+        for _, bb in members:
+            if bb.get("bid"):
+                last_bid = float(bb["bid"])
+            if bb.get("ask"):
+                last_ask = float(bb["ask"])
+            if bb.get("bid_qty"):
+                last_bid_qty = float(bb["bid_qty"])
+            if bb.get("ask_qty"):
+                last_ask_qty = float(bb["ask_qty"])
+            if bb.get("last_aggressor"):
+                last_aggressor = str(bb["last_aggressor"])
         bars.append(MarketBar(
             ts=float(m_ts),
             close=float(mids[-1]), open_=float(mids[0]),
@@ -56,6 +75,10 @@ def load_bars(bins_path: str) -> list[MarketBar]:
             volume=float(sum(b["buy"] + b["sell"] for _, b in members)),
             buy_vol=float(sum(b["buy"] for _, b in members)),
             sell_vol=float(sum(b["sell"] for _, b in members)),
+            n_trades=int(sum(b.get("n_trades", 0) for _, b in members)),
+            bid=last_bid, ask=last_ask,
+            bid_qty=last_bid_qty, ask_qty=last_ask_qty,
+            last_aggressor=last_aggressor,
         ))
     return bars
 
@@ -63,7 +86,8 @@ def load_bars(bins_path: str) -> list[MarketBar]:
 def classify_venue(bars: list[MarketBar], label: str,
                     chunk_max: int = 30, chunk_min: int = 10,
                     multi_signal_pelt: bool = False,
-                    use_session_baselines: bool = False
+                    use_session_baselines: bool = False,
+                    herd_rescue: bool = False,
                     ) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines, dict]:
     chunker = MarketChunker(max_window_size=chunk_max, stride=chunk_max // 2,
                              min_segment=chunk_min, mode="hybrid")
@@ -77,7 +101,35 @@ def classify_venue(bars: list[MarketBar], label: str,
     else:
         session_base = {"_global": base}
         results = [classify_regime(f, base) for f in feats]
+    apply_herd_persistence(results)
+    if herd_rescue:
+        apply_herd_borderline_rescue(results, feats, base)
+        apply_herd_persistence(results)  # recompute including rescued chunks
     return chunks, results, base, session_base
+
+
+def _herd_runs(results: list[ClassificationResult]
+                ) -> list[tuple[int, int, str, int]]:
+    """Group consecutive same-regime HERD chunks (persistence>=2) into runs.
+
+    Returns list of (start_idx, length, regime_value, n_rescued).
+    """
+    out: list[tuple[int, int, str, int]] = []
+    i = 0
+    while i < len(results):
+        if results[i].herd_persistence < 2:
+            i += 1
+            continue
+        regime = results[i].regime.value
+        j = i
+        while (j < len(results)
+                and results[j].regime.value == regime
+                and results[j].herd_persistence >= 2):
+            j += 1
+        rescued = sum(1 for k in range(i, j) if results[k].herd_rescued)
+        out.append((i, j - i, regime, rescued))
+        i = j
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -162,11 +214,38 @@ def _pearsonr_with_p(x: np.ndarray, y: np.ndarray) -> tuple[float, float, int]:
     return r, p, int(n)
 
 
+def _bh_fdr(pvalues: list[float], q: float = 0.10) -> tuple[list[float], list[bool]]:
+    """Benjamini-Hochberg FDR. Returns (q_values, reject_at_q). q_value is the
+    smallest q at which the test is rejected; reject is True iff q_value <= q.
+    Empty input returns ([], [])."""
+    m = len(pvalues)
+    if m == 0:
+        return [], []
+    order = sorted(range(m), key=lambda i: pvalues[i])
+    qvals = [1.0] * m
+    running_min = 1.0
+    # Walk from largest p to smallest, applying step-up enforcement.
+    for rank_from_top, idx in enumerate(reversed(order)):
+        rank = m - rank_from_top  # 1-based rank from smallest
+        adj = pvalues[idx] * m / rank
+        if adj < running_min:
+            running_min = adj
+        qvals[idx] = min(running_min, 1.0)
+    reject = [qv <= q for qv in qvals]
+    return qvals, reject
+
+
 def evaluate_gate_I(label: str, chunks: list[MarketChunk],
                      results: list[ClassificationResult],
-                     k: int = 1) -> dict:
+                     k: int = 1,
+                     min_n: int = 30,
+                     fdr_q: float = 0.10) -> dict:
     """For each regime label, compute Pearson r/r2 of (chunk_mean_dipole_t,
     chunk_log_return_{t+k}) restricted to consecutive chunk pairs in that regime.
+
+    Cells with n < min_n are recorded but excluded from the test (prevents
+    tiny-n artifacts from passing the gate). Surviving cells go through
+    Benjamini-Hochberg FDR at q=fdr_q across regimes within this venue.
     """
     if len(chunks) < k + 2:
         return {"label": label, "gate_I": None, "reason": "too few chunks"}
@@ -187,13 +266,15 @@ def evaluate_gate_I(label: str, chunks: list[MarketChunk],
     labels = [r.regime.value for r in results]
 
     per_regime: dict[str, dict] = {}
+    testable_regimes: list[str] = []
+    testable_pvalues: list[float] = []
     for regime in set(labels):
         # Indices where chunk t is this regime AND chunk t+k exists
         idx = [i for i in range(len(chunks) - k) if labels[i] == regime]
         n = len(idx)
-        if n < 3:
+        if n < min_n:
             per_regime[regime] = {"n": n, "r": None, "r2": None, "p": None,
-                                   "note": "insufficient chunks"}
+                                   "note": f"n<{min_n}"}
             continue
         x = md[idx]
         y = cr[[i + k for i in idx]]
@@ -203,21 +284,35 @@ def evaluate_gate_I(label: str, chunks: list[MarketChunk],
             "r": round(r, 4) if np.isfinite(r) else None,
             "r2": round(r * r, 5) if np.isfinite(r) else None,
             "p": round(p, 4) if np.isfinite(p) else None,
+            "q": None,
         }
-    # Gate I: pass if any regime has r2 > 0.05 with p < 0.10 AND we have >=2 regimes evaluated
-    evaluable = {k: v for k, v in per_regime.items() if v.get("r") is not None}
+        if np.isfinite(p):
+            testable_regimes.append(regime)
+            testable_pvalues.append(float(p))
+
+    # Benjamini-Hochberg FDR across testable regimes within this venue.
+    qvals, rejects = _bh_fdr(testable_pvalues, q=fdr_q)
+    for regime, qv, rej in zip(testable_regimes, qvals, rejects):
+        per_regime[regime]["q"] = round(qv, 4)
+        per_regime[regime]["bh_reject"] = bool(rej)
+
+    # Gate I: pass if any testable regime has r2 > 0.05 AND survives BH-FDR
+    # AND we have >=2 testable regimes (so the FDR correction is meaningful).
+    n_testable = len(testable_regimes)
     has_signal = any(
-        (v["r2"] or 0) > 0.05 and (v["p"] or 1) < 0.10
-        for v in evaluable.values()
+        per_regime[r].get("bh_reject") and (per_regime[r].get("r2") or 0) > 0.05
+        for r in testable_regimes
     )
-    n_evaluable = len(evaluable)
     return {
         "label": label,
         "lag_k": k,
-        "n_evaluable_regimes": n_evaluable,
+        "min_n": min_n,
+        "fdr_q": fdr_q,
+        "n_testable_regimes": n_testable,
+        "n_evaluable_regimes": n_testable,  # alias for backward compat
         "per_regime": per_regime,
         "has_at_least_one_significant_regime": has_signal,
-        "gate_I": has_signal and n_evaluable >= 2,
+        "gate_I": has_signal and n_testable >= 2,
     }
 
 
@@ -237,6 +332,8 @@ def main():
                    help="Run PELT on price + dipole + OFI signals (Phase 1.5 enhancement)")
     p.add_argument("--session-baselines", action="store_true",
                    help="Use per-session baselines (london_active, london_lunch, etc.) instead of global")
+    p.add_argument("--herd-rescue", action="store_true",
+                   help="Reclassify EQUILIBRIUM chunks adjacent to a confirmed HERD run if they meet relaxed thresholds. Premature; only enable for diagnostic comparison until n>=30 HERD chunks.")
     args = p.parse_args()
 
     print(f"=== Phase 1.5 Evaluation: {args.asset} ===\n")
@@ -249,11 +346,13 @@ def main():
         cb_bars, f"CB-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
+        herd_rescue=args.herd_rescue,
     )
     kr_chunks, kr_results, kr_base, kr_session = classify_venue(
         kr_bars, f"KR-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
+        herd_rescue=args.herd_rescue,
     )
 
     print(f"CB-{args.asset}: {len(cb_chunks)} chunks, baselines rv={cb_base.rv:.5f}")
@@ -309,11 +408,55 @@ def main():
             continue
         for regime, stat in sorted(ig["per_regime"].items(), key=lambda x: -(x[1].get("n") or 0)):
             if stat.get("r") is None:
-                print(f"    {regime:<24}  n={stat['n']:>2}  insufficient data")
+                note = stat.get("note", "insufficient data")
+                print(f"    {regime:<24}  n={stat['n']:>3}  {note}")
             else:
-                marker = " <- significant" if (stat["r2"] or 0) > 0.05 and (stat["p"] or 1) < 0.10 else ""
-                print(f"    {regime:<24}  n={stat['n']:>2}  r={stat['r']:+.3f}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{marker}")
-        print(f"    -> {'PASS' if ig['gate_I'] else 'FAIL'} (need >=1 significant regime, >=2 evaluable)")
+                q = stat.get("q")
+                marker = " <- significant (BH q<=0.10)" if stat.get("bh_reject") and (stat["r2"] or 0) > 0.05 else ""
+                qstr = f"  q={q:.3f}" if q is not None else ""
+                print(f"    {regime:<24}  n={stat['n']:>3}  r={stat['r']:+.3f}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{qstr}{marker}")
+        print(f"    -> {'PASS' if ig['gate_I'] else 'FAIL'} "
+              f"(need >=1 BH-significant regime with R^2>0.05, >=2 testable cells, "
+              f"min n={ig.get('min_n','?')})")
+    print()
+
+    # HERD persistence summary (sustained N-chunk runs)
+    print(f"--- HERD persistence (consecutive same-direction chunks) ---")
+    for label, results in [(f"CB-{args.asset}", cb_results), (f"KR-{args.asset}", kr_results)]:
+        runs = _herd_runs(results)
+        if not runs:
+            print(f"  {label}: no sustained HERD runs (all HERD chunks isolated)")
+            continue
+        for start, length, regime, rescued in runs:
+            extra = f" [{rescued} rescued]" if rescued else ""
+            print(f"  {label}: {regime} run of {length} chunks "
+                  f"starting at idx {start}{extra}")
+    print()
+
+    # WHALE -> HERD cascade detection (notification-worthy events)
+    print(f"--- WHALE -> HERD cascade events ---")
+    for label, results in [(f"CB-{args.asset}", cb_results), (f"KR-{args.asset}", kr_results)]:
+        events = detect_whale_to_herd_cascades(results)
+        if not events:
+            print(f"  {label}: no single-venue WHALE->HERD cascades")
+            continue
+        for ev in events:
+            print(f"  {label}: {ev['summary']}  [direction={ev['direction']}]")
+    cb_minute_now = chunk_to_minute_regime(cb_chunks, cb_results, cb_bars)
+    kr_minute_now = chunk_to_minute_regime(kr_chunks, kr_results, kr_bars)
+    cross_events = (
+        detect_cross_venue_whale_herd_simultaneity(
+            cb_results, cb_chunks, cb_bars, kr_minute_now,
+            primary_label=f"CB-{args.asset}", other_label=f"KR-{args.asset}")
+        + detect_cross_venue_whale_herd_simultaneity(
+            kr_results, kr_chunks, kr_bars, cb_minute_now,
+            primary_label=f"KR-{args.asset}", other_label=f"CB-{args.asset}")
+    )
+    if cross_events:
+        for ev in cross_events:
+            print(f"  CROSS-VENUE: {ev['summary']}  [direction={ev['direction']}]")
+    else:
+        print(f"  CROSS-VENUE: no WHALE+HERD simultaneity detected")
     print()
 
     # F6 confidence multiplier summary

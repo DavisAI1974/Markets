@@ -51,17 +51,57 @@ class MarketBar:
     volume: float = 0.0
     buy_vol: float = 0.0
     sell_vol: float = 0.0
+    n_trades: int = 0    # count of individual trades within this bar
+    bid: float = 0.0     # latest top-of-book bid in this bar (0.0 if not set)
+    ask: float = 0.0     # latest top-of-book ask in this bar (0.0 if not set)
+    bid_qty: float = 0.0  # L1 bid size (added 2026-05; 0.0 = not captured)
+    ask_qty: float = 0.0  # L1 ask size
+    last_aggressor: str = ""  # "buy" if last trade lifted the offer, "sell" if hit the bid, "" if none
 
     @property
-    def mid(self) -> float:
+    def microprice(self) -> float:
+        """Stoikov microprice: depth-weighted mid that's a better
+        short-horizon price predictor than (bid+ask)/2.
+            mp = (bid_qty * ask + ask_qty * bid) / (bid_qty + ask_qty)
+        Falls back to simple (bid+ask)/2 when L1 sizes aren't captured
+        (older bins from before the 2026-05 schema bump), and to
+        close as a last resort.
+        """
+        if self.bid > 0 and self.ask > 0 and self.bid_qty > 0 and self.ask_qty > 0:
+            denom = self.bid_qty + self.ask_qty
+            return (self.bid_qty * self.ask + self.ask_qty * self.bid) / denom
+        if self.bid > 0 and self.ask > 0:
+            return 0.5 * (self.bid + self.ask)
         return self.close
 
     @property
-    def ofi(self) -> float:
+    def mid(self) -> float:
+        """Best price estimate. Prefers microprice (when L1 sizes present),
+        else (bid+ask)/2, else last close."""
+        return self.microprice
+
+    @property
+    def signed_volume(self) -> float:
+        """Net aggressor-side volume (buy_vol - sell_vol).
+
+        NB: this is NOT Cont-Kukanov order flow imbalance (OFI), which
+        requires top-of-book size deltas (ΔBidSize·1[B'≥B] − ΔAskSize·1[A'≤A])
+        and would need L1 size capture in the collectors. Once L1 sizes
+        are in the bin schema, see MarketFeatures.book_ofi for the
+        proper measure.
+        """
         return self.buy_vol - self.sell_vol
 
     @property
+    def ofi(self) -> float:
+        """DEPRECATED alias for signed_volume; kept so existing callers
+        don't break. New code should use signed_volume."""
+        return self.signed_volume
+
+    @property
     def dipole(self) -> float:
+        """signed_volume normalized by total volume; in [-1, +1]. Strictly
+        a rescaled version of signed_volume."""
         s = self.buy_vol + self.sell_vol
         return (self.buy_vol - self.sell_vol) / (s + 1e-9) if s > 0 else 0.0
 
@@ -83,6 +123,75 @@ class MarketChunk:
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
+def _compute_vpin(bars: list, bucket_volume: float) -> tuple[float, int]:
+    """VPIN over equal-volume buckets of size `bucket_volume` (in raw
+    volume units).
+
+    Walks bars in time order, accumulating volume until it crosses
+    bucket_volume, then closes the bucket and records
+    |sum_buy - sum_sell| / V. Snaps bucket boundaries to bar
+    boundaries (no fractional split). The last partial bucket is
+    dropped; if fewer than 3 full buckets fill, returns (0.0, n_full)
+    — the chunk is too thin for a stable estimate.
+
+    Caller supplies bucket_volume from the corpus mean chunk volume
+    (typically corpus_mean / 10). Per-chunk fixed-N is wrong because
+    it conflates "this chunk traded a lot" with "this chunk had
+    one-sided flow".
+    """
+    if not bars or bucket_volume <= 0:
+        return 0.0, 0
+    bucket_buy = 0.0
+    bucket_sell = 0.0
+    bucket_vol = 0.0
+    imbalances = []
+    for b in bars:
+        v = float(getattr(b, "volume", 0.0))
+        bv = float(getattr(b, "buy_vol", 0.0))
+        sv = float(getattr(b, "sell_vol", 0.0))
+        bucket_buy += bv
+        bucket_sell += sv
+        bucket_vol += v
+        # Snap to bar boundary: close out any time the running bucket
+        # has filled past the threshold. Multiple very small bars vs
+        # one very large bar are both handled naturally.
+        while bucket_vol >= bucket_volume:
+            imbalances.append(abs(bucket_buy - bucket_sell) / max(bucket_vol, 1e-9))
+            bucket_buy = 0.0
+            bucket_sell = 0.0
+            bucket_vol = 0.0
+            # Don't try to "carry" the overflow; snapping to bar
+            # boundary biases toward stability over precision.
+            break
+    n_full = len(imbalances)
+    if n_full < 3:
+        return 0.0, n_full
+    return float(sum(imbalances) / n_full), n_full
+
+
+def _vpin_bucket_volume_from_corpus(chunks: list) -> float:
+    """Returns bucket_volume = corpus_mean_chunk_volume / 10.
+
+    The /10 picks ~10 buckets in a typical chunk, which is the standard
+    Easley/Lopez de Prado granularity. A 5x-larger chunk would yield
+    ~50 buckets, a 0.1x chunk would yield ~1 (sub-threshold -> VPIN=0
+    for that chunk, which is the right outcome — small chunks don't
+    have enough data to estimate informed-flow concentration).
+    """
+    if not chunks:
+        return 0.0
+    totals = []
+    for c in chunks:
+        bars = getattr(c, "bars", []) or []
+        v = sum(float(getattr(b, "volume", 0.0)) for b in bars)
+        if v > 0:
+            totals.append(v)
+    if not totals:
+        return 0.0
+    mean_vol = sum(totals) / len(totals)
+    return mean_vol / 10.0
+
+
 @dataclass
 class MarketFeatures:
     """Feature vector extracted from a MarketChunk."""
@@ -92,6 +201,11 @@ class MarketFeatures:
     ret_kurt: float
     autocorr_lag1: float
     mean_dipole: float
+    # signed-volume mean (buy_vol - sell_vol) per chunk. NB: this is
+    # COLLINEAR with mean_dipole (just rescaled by total volume) and
+    # does NOT track Cont-Kukanov OFI (which needs L1 size deltas).
+    # Kept for backward-compat with cached embeddings; new analysis
+    # should prefer mean_dipole or, once L1 sizes land, book_ofi.
     mean_ofi: float
     volume_zscore: float
     realized_vol: float
@@ -106,6 +220,15 @@ class MarketFeatures:
     dipole_peak_freq: float = 0.0           # F2: oscillation/range-trader detector
     dipole_peak_power: float = 0.0          # F2: concentration of oscillation energy
     kyle_proxy: float = 0.0                 # F3: price_move / volume; low = absorption
+    # Microstructure toxicity (Easley/Lopez de Prado/O'Hara). Values in
+    # [0,1]; high = informed flow concentrated, predicts imminent move.
+    vpin: float = 0.0
+    vpin_n_buckets: int = 0                 # how many full volume buckets the chunk had
+    # Placeholder for proper Cont-Kukanov OFI from top-of-book size
+    # deltas. Stays 0.0 until L1 sizes are captured in the bin schema
+    # (see Tier-1 microprice work). Adding the field now so downstream
+    # serialization is forward-compatible without a breaking change.
+    book_ofi: float = 0.0
     # Session-time (universal-state context; chunks don't bring their own time)
     hour_utc: float = 0.0                   # 0-23, normalized 0-1 elsewhere
     day_of_week: int = 0                    # 0=Mon, 6=Sun
@@ -367,7 +490,16 @@ class MarketChunkEncoder:
         self.n_summary = 11
         self.n_spectral_block = 3
 
-    def _extract(self, chunk: MarketChunk) -> MarketFeatures:
+    def _extract(self, chunk: MarketChunk,
+                  vpin_bucket_volume: float = 0.0) -> MarketFeatures:
+        """Extract a feature vector from a chunk.
+
+        vpin_bucket_volume: bucket size for VPIN, in raw volume units.
+        Pass corpus_mean_chunk_volume / 10 for proper per-(asset,venue)
+        calibration. If 0, falls back to chunk_total_volume / 10 which
+        is a poor estimator (fixed-N-per-chunk conflates volume with
+        toxicity) but stops VPIN from collapsing to 0.
+        """
         bars = chunk.bars
         n = len(bars)
         if n < 2:
@@ -491,6 +623,19 @@ class MarketChunkEncoder:
         else:
             kyle_proxy_val = 0.0
 
+        # F4: VPIN (Easley/Lopez de Prado/O'Hara). Volume-bucket the chunk
+        # by a fixed bucket volume (in raw units); for each bucket compute
+        # |buy_vol - sell_vol| / V; mean across buckets = VPIN in [0, 1].
+        # High = informed/toxic flow concentrated; predicts imminent move.
+        # Caller passes vpin_bucket_volume calibrated from the corpus mean
+        # chunk volume so VPIN scales correctly across asset/venue. If
+        # the caller passes 0, fall back to chunk_total/10 (degraded).
+        bv = vpin_bucket_volume
+        if bv <= 0:
+            chunk_total_for_fallback = float(np.sum([b.volume for b in bars]))
+            bv = chunk_total_for_fallback / 10.0
+        vpin_val, vpin_n = _compute_vpin(bars, bv)
+
         return MarketFeatures(
             ret_mean=ret_mean, ret_std=ret_std, ret_skew=ret_skew, ret_kurt=ret_kurt,
             autocorr_lag1=autocorr, mean_dipole=mean_dipole, mean_ofi=mean_ofi,
@@ -502,6 +647,8 @@ class MarketChunkEncoder:
             dipole_peak_freq=dipole_pk_freq,
             dipole_peak_power=dipole_pk_pow,
             kyle_proxy=kyle_proxy_val,
+            vpin=vpin_val,
+            vpin_n_buckets=vpin_n,
             hour_utc=hour_utc_val,
             day_of_week=dow,
             is_london_lunch=bool(is_london_lunch_val),
