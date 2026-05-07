@@ -33,14 +33,30 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
 
-# Detection thresholds. Tuned to be conservative — the project's
-# PWA/Discord spam tolerance is low. In observed BTC perp data, a
-# 1-min bar with vol-z >= 4 and |dipole| >= 0.6 and |price_move| >=
-# 0.3% is very rare outside actual liquidation prints.
+# Fallback thresholds, used only when liq_calibration.json is missing
+# or has no entry for this asset. Empirical per-asset thresholds
+# (p99 of historical distribution) come from calibrate_liq.py and
+# override these at LiqMonitor construction time.
 VOLUME_Z_THRESHOLD = 4.0
 ONE_SIDED_THRESHOLD = 0.6
 PRICE_MOVE_THRESHOLD = 0.003
 ROLLING_BAR_WINDOW = 60          # minutes of context for vol-z
+
+
+def _load_liq_calibration(path: str) -> dict[str, dict]:
+    """Read liq_calibration.json once and return per-asset threshold
+    dicts. Errors are non-fatal — caller falls back to hardcoded
+    defaults."""
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path) as f:
+            payload = json.load(f)
+        return payload.get("calibration", {}) or {}
+    except Exception as e:
+        print(f"[liq] could not parse {path}: {e}; using defaults",
+              flush=True)
+        return {}
 
 
 @dataclass
@@ -93,11 +109,31 @@ def _load_bins(path: str) -> dict[float, dict]:
 
 
 class LiqMonitor:
-    """Per-asset liquidation-burst detector reading perp bins."""
+    """Per-asset liquidation-burst detector reading perp bins.
 
-    def __init__(self, perp_paths: dict[str, str]):
+    calibration_path: path to liq_calibration.json. When present, each
+    asset uses its own empirical p99 thresholds (via calibrate_liq.py).
+    When missing or asset-not-in-cal, falls back to module-level
+    hardcoded defaults.
+    """
+
+    def __init__(self, perp_paths: dict[str, str],
+                  calibration_path: str | None = None):
         self.perp_paths = dict(perp_paths)
         self._state: dict[str, _AssetState] = {}
+        cal = _load_liq_calibration(calibration_path) if calibration_path else {}
+        self._thresholds: dict[str, tuple[float, float, float]] = {}
+        for asset in self.perp_paths:
+            entry = cal.get(asset) or {}
+            vol_z = float(entry.get("vol_z_threshold", VOLUME_Z_THRESHOLD))
+            one_sided = float(entry.get("one_sided_threshold", ONE_SIDED_THRESHOLD))
+            price_move = float(entry.get("price_move_threshold", PRICE_MOVE_THRESHOLD))
+            self._thresholds[asset] = (vol_z, one_sided, price_move)
+            calibrated = asset in cal
+            print(f"[liq] {asset}: vol_z>={vol_z:.2f} |dip|>={one_sided:.2f} "
+                  f"|gap|>={price_move*100:.3f}% "
+                  f"({'calibrated' if calibrated else 'hardcoded fallback'})",
+                  flush=True)
 
     def _state_for(self, asset: str) -> _AssetState:
         s = self._state.get(asset)
@@ -105,6 +141,10 @@ class LiqMonitor:
             s = _AssetState()
             self._state[asset] = s
         return s
+
+    def _thresholds_for(self, asset: str) -> tuple[float, float, float]:
+        return self._thresholds.get(
+            asset, (VOLUME_Z_THRESHOLD, ONE_SIDED_THRESHOLD, PRICE_MOVE_THRESHOLD))
 
     def update_asset(self, asset: str) -> dict | None:
         path = self.perp_paths.get(asset)
@@ -148,9 +188,10 @@ class LiqMonitor:
         else:
             price_move = 0.0
 
-        if (vol_z >= VOLUME_Z_THRESHOLD
-                and abs(dipole) >= ONE_SIDED_THRESHOLD
-                and abs(price_move) >= PRICE_MOVE_THRESHOLD):
+        vol_thr, dip_thr, gap_thr = self._thresholds_for(asset)
+        if (vol_z >= vol_thr
+                and abs(dipole) >= dip_thr
+                and abs(price_move) >= gap_thr):
             direction = "UP" if (dipole > 0 and price_move > 0) else \
                 ("DOWN" if (dipole < 0 and price_move < 0) else None)
             if direction is None:

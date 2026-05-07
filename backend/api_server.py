@@ -389,7 +389,11 @@ class SignalStore:
         # monitor uses; flags 1-min bars with extreme volume z + one-sided
         # flow + bar-to-bar price gap. Synthetic detection on existing
         # data; upgrade path is a real WSS liquidation feed.
-        self.liq_monitor = LiqMonitor(BASIS_PERP_PATHS)
+        # liq_calibration.json (from calibrate_liq.py) gives per-asset
+        # p99 thresholds; absent => hardcoded fallback.
+        self.liq_monitor = LiqMonitor(
+            BASIS_PERP_PATHS,
+            calibration_path=os.path.join(REPO_ROOT, "liq_calibration.json"))
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
