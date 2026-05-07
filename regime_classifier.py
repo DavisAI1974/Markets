@@ -164,7 +164,12 @@ HURST_MIN_RETURNS_FOR_LABEL = 8  # mirrors hurst.HURST_MIN_RETURNS
 # - Balanced volume (|mean_dipole| small).
 # Only EQUILIBRIUM_TWO_SIDED is overridden — directional regimes already
 # encode a side bias and shouldn't be relabeled as wash.
-WASH_HAWKES_BOTH_SIDES_MIN = 0.30   # min(η_buy, η_sell) must clear this
+#
+# Pass-8 finding: with WASH_HAWKES_BOTH_SIDES_MIN=0.30, the WASH_HAWKES
+# × η-high subset showed a spurious momentum bias (ETH n=18 r=+0.43
+# p=0.06; BTC n=291 r=+0.106 p=0.069). Tightening to 0.35 excludes the
+# borderline-clustered high-η chunks that were carrying real order flow.
+WASH_HAWKES_BOTH_SIDES_MIN = 0.35   # min(η_buy, η_sell) must clear this
 WASH_HAWKES_COMBINED_MIN = 0.40     # combined η must clear this
 WASH_HAWKES_DIPOLE_MAX = 0.20       # |mean_dipole| must stay below this
 

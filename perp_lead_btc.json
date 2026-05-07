@@ -1,0 +1,106 @@
+{
+  "perp_bins": "btc_bybit_perp_bins.json",
+  "spot_bins": "btc_kraken_bins.json",
+  "results": {
+    "lag_1m": {
+      "lag_min": 1,
+      "n": 192,
+      "n_overlap_minutes": 194,
+      "r": 0.2122,
+      "p": 0.0028,
+      "decile_means_bps": [
+        -1.227,
+        -0.589,
+        -0.024,
+        0.458,
+        0.037,
+        0.889,
+        0.814,
+        0.668,
+        1.376,
+        0.838
+      ],
+      "decile_spread_top_vs_bottom_bps": 2.065
+    },
+    "lag_2m": {
+      "lag_min": 2,
+      "n": 190,
+      "n_overlap_minutes": 194,
+      "r": 0.1931,
+      "p": 0.007,
+      "decile_means_bps": [
+        -0.585,
+        -0.973,
+        -0.44,
+        0.031,
+        0.684,
+        1.277,
+        1.423,
+        1.206,
+        2.945,
+        0.626
+      ],
+      "decile_spread_top_vs_bottom_bps": 1.21
+    },
+    "lag_3m": {
+      "lag_min": 3,
+      "n": 188,
+      "n_overlap_minutes": 194,
+      "r": 0.1676,
+      "p": 0.0204,
+      "decile_means_bps": [
+        0.271,
+        -0.625,
+        0.024,
+        -0.593,
+        1.535,
+        0.254,
+        0.508,
+        0.753,
+        4.882,
+        1.312
+      ],
+      "decile_spread_top_vs_bottom_bps": 1.04
+    },
+    "lag_5m": {
+      "lag_min": 5,
+      "n": 184,
+      "n_overlap_minutes": 194,
+      "r": 0.1349,
+      "p": 0.0663,
+      "decile_means_bps": [
+        0.435,
+        0.147,
+        -0.566,
+        1.079,
+        1.035,
+        2.568,
+        -1.154,
+        1.358,
+        6.957,
+        1.351
+      ],
+      "decile_spread_top_vs_bottom_bps": 0.916
+    },
+    "lag_10m": {
+      "lag_min": 10,
+      "n": 174,
+      "n_overlap_minutes": 194,
+      "r": 0.1381,
+      "p": 0.0675,
+      "decile_means_bps": [
+        2.125,
+        1.672,
+        -1.543,
+        0.746,
+        2.708,
+        7.153,
+        -2.148,
+        3.118,
+        11.463,
+        3.04
+      ],
+      "decile_spread_top_vs_bottom_bps": 0.916
+    }
+  }
+}

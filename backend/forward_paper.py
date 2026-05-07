@@ -76,6 +76,10 @@ def _is_eth_kr_herd_up_volq3(regime: str, feat: object, chunk: object) -> bool:
     return vz is not None and float(vz) >= 0.67
 
 
+def _is_eth_kr_whale_up(regime: str, feat: object, chunk: object) -> bool:
+    return regime == "WHALE_UP"
+
+
 def _is_equilibrium(regime: str, feat: object, chunk: object) -> bool:
     """MM cells fire on the modal regime — chunks where there's no
     directional edge but the spread is alive. Pass-6 confirms this is
@@ -103,6 +107,23 @@ CELLS: list[CellSpec] = [
         note="forward paper: ETH KR HERD_UP fade within vol-Q3 (cell pass 5: "
              "r=-0.20 at n=168, p=0.008)",
         predicate=_is_eth_kr_herd_up_volq3,
+    ),
+    # Pass-8 finding: KR-ETH WHALE_UP n=65 r=-0.309 BH q=0.029. First
+    # BH-significant cell since Pass-3. Plain WHALE_UP fade — short
+    # against the upward whale pressure, exit at next chunk close.
+    # Hold tight because the WHALE regime can flip quickly; the
+    # multi-horizon edge tracker will also fire its own edge_eth_kr_
+    # whale_up_*_fade trades on top of this cell as supplementary
+    # confirmation.
+    CellSpec(
+        cell_id="eth_kr_whale_up_fade",
+        asset="ETH", venue="KR",
+        side="sell",
+        notional_usd=1000.0,
+        hold_minutes=10.0,
+        note="forward paper: ETH KR WHALE_UP fade (Pass-8: r=-0.309 n=65 "
+             "BH q=0.029; first BH-significant cell since Pass-3)",
+        predicate=_is_eth_kr_whale_up,
     ),
     # Tier 3.1 EQUILIBRIUM market-making cells. One per (asset, venue) so
     # each cell's realized P&L tracks the captured-spread minus
@@ -420,6 +441,132 @@ def open_paper_trade(cell: CellSpec, fill_price: float,
         "base_notional_usd": float(cell.notional_usd),
         "kind": str(cell.kind),
     }
+
+
+# ---------------------------------------------------------------------------
+# F11 edge-driven paper trades. When the multi-horizon edge tracker tags a
+# cell as STRONG on any horizon, this opens a paper trade in the implied
+# direction with a hold-time scaled to the horizon. Distinct from the
+# CellSpec-driven cells above — those are static hand-picked predicates;
+# these are dynamic, fired only when empirical edge appears.
+# ---------------------------------------------------------------------------
+
+# Hold-time per horizon. Hardcoded as policy this session — daily fires
+# expire fastest because the daily edge can fade within hours; longterm
+# trades hold longer because the edge has more inertia.
+EDGE_DRIVEN_HOLD_MIN_DAILY = 30.0      # one chunk
+EDGE_DRIVEN_HOLD_MIN_WEEKLY = 120.0    # 4 chunks
+EDGE_DRIVEN_HOLD_MIN_LONGTERM = 240.0  # 8 chunks
+
+# Notional sizing per horizon. Daily signals get the smallest notional
+# because they're most ephemeral; longterm get the largest. Vol-target
+# scaling still applies on top.
+EDGE_DRIVEN_NOTIONAL_DAILY = 500.0
+EDGE_DRIVEN_NOTIONAL_WEEKLY = 1000.0
+EDGE_DRIVEN_NOTIONAL_LONGTERM = 1500.0
+
+
+def _regime_is_directional(regime: str) -> bool:
+    return (regime.startswith("WHALE_") or regime.startswith("HERD_")
+             or regime.startswith("WHALE_NASCENT_"))
+
+
+def _side_for_edge(regime: str, direction: str) -> str | None:
+    """Map (regime UP/DOWN, edge direction fade/momentum) -> 'buy'/'sell'.
+
+    Returns None when the regime isn't directional or edge direction is empty.
+    """
+    if not _regime_is_directional(regime) or not direction:
+        return None
+    is_up = regime.endswith("_UP")
+    if direction == "momentum":
+        return "buy" if is_up else "sell"
+    if direction == "fade":
+        return "sell" if is_up else "buy"
+    return None
+
+
+def try_open_edge_driven_trade(
+    asset: str,
+    venue: str,
+    regime: str,
+    edge_tags,        # edge_tracker.CellTags
+    bid: float,
+    ask: float,
+    mid: float,
+    vol_multiplier: float = 1.0,
+) -> dict | None:
+    """Return a paper-trade dict to open, or None if no horizon qualifies.
+
+    Priority: daily > weekly > longterm. The first horizon with
+    strength==STRONG and a non-empty direction (and a directional regime)
+    wins. Caller is responsible for dedup (one trade per chunk per cell)
+    and for persisting the returned dict.
+    """
+    if not _regime_is_directional(regime):
+        return None
+
+    horizons = (
+        ("daily", edge_tags.daily, EDGE_DRIVEN_HOLD_MIN_DAILY,
+            EDGE_DRIVEN_NOTIONAL_DAILY),
+        ("weekly", edge_tags.weekly, EDGE_DRIVEN_HOLD_MIN_WEEKLY,
+            EDGE_DRIVEN_NOTIONAL_WEEKLY),
+        ("longterm", edge_tags.longterm, EDGE_DRIVEN_HOLD_MIN_LONGTERM,
+            EDGE_DRIVEN_NOTIONAL_LONGTERM),
+    )
+
+    for horizon_name, hstat, hold_min, notional in horizons:
+        if hstat.strength != "STRONG":
+            continue
+        side = _side_for_edge(regime, hstat.direction)
+        if side is None:
+            continue
+        # Directional fill: buy crosses ask, sell crosses bid.
+        fill_price = float(ask if side == "buy" else bid)
+        if fill_price <= 0:
+            continue
+        scaled_notional = float(notional) * float(vol_multiplier)
+        qty = scaled_notional / fill_price if fill_price > 0 else 0.0
+        cell_id = (f"edge_{asset.lower()}_{venue.lower()}_{regime.lower()}"
+                    f"_{horizon_name}_{hstat.direction}")
+        note = (f"edge-driven {horizon_name} {hstat.strength.lower()} "
+                f"{hstat.direction} on {asset}/{venue}/{regime} "
+                f"(r={hstat.r:+.2f} n={hstat.n} self_trend={hstat.self_trend})")
+        fee_usd = scaled_notional * (_PRACTICE_FEE_BPS / 10000.0)
+        return {
+            "intent_id": str(uuid.uuid4())[:12],
+            "asset": asset,
+            "venue": venue,
+            "side": side,
+            "price": float(fill_price),
+            "qty": float(qty),
+            "notional": float(scaled_notional),
+            "note": note,
+            "ts_utc": time.time(),
+            "practice": True,
+            "auto": True,
+            "cell_id": cell_id,
+            "kind": "practice",
+            "status": "open",
+            "fill_price": float(fill_price),
+            "fees_usd": float(fee_usd),
+            "fee_bps": _PRACTICE_FEE_BPS,
+            "exit_price": 0.0,
+            "exit_ts_utc": 0.0,
+            "realized_pnl_usd": 0.0,
+            "hold_minutes": float(hold_min),
+            "vol_multiplier": float(vol_multiplier),
+            "base_notional_usd": float(notional),
+            # Extra fields specific to edge-driven trades
+            "edge_horizon": horizon_name,
+            "edge_strength": hstat.strength,
+            "edge_direction": hstat.direction,
+            "edge_self_trend": hstat.self_trend,
+            "edge_r": float(hstat.r) if hstat.r is not None else 0.0,
+            "edge_n": int(hstat.n),
+            "regime_at_open": regime,
+        }
+    return None
 
 
 def is_expired(trade: dict, now_utc: float) -> bool:

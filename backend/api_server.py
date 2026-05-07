@@ -51,6 +51,7 @@ from regime_classifier import (
     apply_event_multiplier,
 )
 from event_calendar import EventCalendar
+from edge_tracker import MultiHorizonEdgeTracker, CellTags
 from backend.auth import verify_token, ACCESS_TOKEN
 from backend.push import (
     PushSubscription, add_sub, remove_sub, get_subs, send_to_all, VAPID_PUBLIC,
@@ -271,6 +272,15 @@ class RegimeStatus:
     hurst_label: str = ""
     # F10 Hawkes branching-ratio multiplier on directional regimes.
     hawkes_multiplier: float = 1.0
+    # F11 multi-horizon edge tags (long-term / weekly / daily). Surface
+    # on /api/status so PWA + Discord can show the three-track read.
+    edge_summary: str = ""               # one-liner for display
+    edge_daily_strength: str = "NEW"     # STRONG | MODERATE | WEAK | NEW
+    edge_weekly_strength: str = "NEW"
+    edge_longterm_strength: str = "NEW"
+    edge_daily_self_trend: str = "NEW"   # STRENGTHENING | DECAYING | FLIPPING | STABLE | NEW
+    edge_weekly_self_trend: str = "NEW"
+    edge_longterm_self_trend: str = "NEW"
 
 
 @dataclass
@@ -327,6 +337,14 @@ class SignalEvent:
     hurst_label: str = ""
     # F10 Hawkes branching-ratio multiplier on directional regimes.
     hawkes_multiplier: float = 1.0
+    # F11 multi-horizon edge tags (long-term / weekly / daily).
+    edge_summary: str = ""
+    edge_daily_strength: str = "NEW"
+    edge_weekly_strength: str = "NEW"
+    edge_longterm_strength: str = "NEW"
+    edge_daily_self_trend: str = "NEW"
+    edge_weekly_self_trend: str = "NEW"
+    edge_longterm_self_trend: str = "NEW"
 
 
 # ---------------------------------------------------------------------------
@@ -495,6 +513,17 @@ class SignalStore:
         # Confidence dampener fires within ±60 min of an event or on weekends.
         self.event_calendar = EventCalendar(
             os.path.join(REPO_ROOT, "events_calendar.json"))
+        # F11 multi-horizon edge tracker. Per-(asset, venue, regime) cell
+        # rolling Gate I-style r over daily / weekly / longterm windows.
+        # Persists to backend_edge_history.jsonl so warm starts retain
+        # weekly/longterm reads immediately.
+        self.edge_tracker = MultiHorizonEdgeTracker(
+            history_path=os.path.join(REPO_ROOT, "backend_edge_history.jsonl"))
+        # Per-(asset, venue) "prior chunk" cache so we can compute the
+        # forward-return for the previous chunk's mean_dipole — Gate I
+        # lag-1 convention. Holds (chunk_id, regime, mean_dipole, ts,
+        # close_price).
+        self._prior_chunk_for_edge: dict[tuple[str, str], tuple[str, str, float, float, float]] = {}
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -790,6 +819,43 @@ class SignalStore:
         last_emitted = self.last_chunk_id_per_source.get((asset, venue))
         chunk_changed = (last_emitted != latest_chunk.chunk_id)
 
+        # F11 edge tracker update: when a NEW chunk lands, the previously
+        # cached chunk's mean_dipole is the predictor, and THIS chunk's
+        # log_return is the target — Gate I's lag-1 convention.
+        if chunk_changed:
+            prior = self._prior_chunk_for_edge.get((asset, venue))
+            if prior is not None:
+                prior_chunk_id, prior_regime, prior_dipole, prior_ts, prior_close = prior
+                if latest_chunk.bars:
+                    cur_close = float(latest_chunk.bars[-1].close)
+                    if prior_close > 1e-12 and cur_close > 1e-12:
+                        import math as _m
+                        forward_ret = _m.log(cur_close / prior_close)
+                        self.edge_tracker.update(
+                            asset=asset, venue=venue, regime=prior_regime,
+                            ts=prior_ts, mean_dipole=prior_dipole,
+                            forward_return=forward_ret)
+            # Cache THIS chunk as the next prior — forward_return will be
+            # computed when the NEXT new chunk lands.
+            if latest_chunk.bars:
+                self._prior_chunk_for_edge[(asset, venue)] = (
+                    latest_chunk.chunk_id,
+                    status.regime,
+                    float(latest_feat.mean_dipole),
+                    float(latest_chunk.bars[-1].ts),
+                    float(latest_chunk.bars[-1].close),
+                )
+
+        # Pull current cell tags for surfacing on RegimeStatus / SignalEvent
+        edge_tags = self.edge_tracker.cell_tags(asset, venue, status.regime)
+        status.edge_summary = edge_tags.summary
+        status.edge_daily_strength = edge_tags.daily.strength
+        status.edge_weekly_strength = edge_tags.weekly.strength
+        status.edge_longterm_strength = edge_tags.longterm.strength
+        status.edge_daily_self_trend = edge_tags.daily.self_trend
+        status.edge_weekly_self_trend = edge_tags.weekly.self_trend
+        status.edge_longterm_self_trend = edge_tags.longterm.self_trend
+
         emitted = False
         # Production emit: regime transitions to actionable states
         if regime_changed and status.regime not in ("EQUILIBRIUM_TWO_SIDED", "DEPLETED", "UNKNOWN"):
@@ -830,6 +896,10 @@ class SignalStore:
                     f"[CASCADE: WHALE→HERD same direction] "
                     + CASCADE_PLAYBOOKS.get(cascade_event, playbook))
             playbook = playbook + f"  ({split_note}.)"
+            # F11 multi-horizon edge read prepended to the playbook so the
+            # user sees long-term / weekly / daily strength + trend up front.
+            if status.edge_summary:
+                playbook = f"[edge] {status.edge_summary}\n\n" + playbook
             event_label = EVENT_LABELS.get(status.regime, "Unclassified pattern")
             if cascade_event:
                 event_label = (f"Whale-tripped {('buying' if cascade_event.endswith('_UP') else 'selling')} cascade"
@@ -868,6 +938,13 @@ class SignalStore:
                 hurst=float(getattr(latest_result, "hurst", 0.5)),
                 hurst_label=str(getattr(latest_result, "hurst_label", "")),
                 hawkes_multiplier=float(getattr(latest_result, "hawkes_multiplier", 1.0)),
+                edge_summary=status.edge_summary,
+                edge_daily_strength=status.edge_daily_strength,
+                edge_weekly_strength=status.edge_weekly_strength,
+                edge_longterm_strength=status.edge_longterm_strength,
+                edge_daily_self_trend=status.edge_daily_self_trend,
+                edge_weekly_self_trend=status.edge_weekly_self_trend,
+                edge_longterm_self_trend=status.edge_longterm_self_trend,
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -1009,9 +1086,8 @@ class SignalStore:
 
     def _maybe_open_forward_paper_trades(self, asset: str, venue: str,
                                           regime: str, feat, chunk) -> None:
+        # Static CellSpec-based path (Pass-5 hand-picked cells)
         cells = _fp_find_cells(asset, venue, regime, feat, chunk)
-        if not cells:
-            return
         bid, ask, mid = _current_quote(asset, venue)
         # Vol-target sizing: scale notional ∝ VOL_TARGET / chunk realized_vol,
         # clipped to [0.5x, 2.0x]. Same multiplier applies to all cells
@@ -1028,6 +1104,36 @@ class SignalStore:
                   f"({cell.kind}) {cell.side} {asset}/{venue} @ {fill_price:.4f} "
                   f"(intent_id={trade['intent_id']} "
                   f"rv={rv:.4f} vol_mult={vol_mult:.2f})", flush=True)
+
+        # F11 edge-driven path: open a trade when ANY horizon is STRONG.
+        # Dedup against currently-open edge trades for this (asset, venue,
+        # regime, horizon) so we don't fire the same cell repeatedly while
+        # the strength persists.
+        from backend.forward_paper import try_open_edge_driven_trade
+        edge_tags = self.edge_tracker.cell_tags(asset, venue, regime)
+        if any(s == "STRONG" for s in (
+                edge_tags.daily.strength, edge_tags.weekly.strength,
+                edge_tags.longterm.strength)):
+            existing_open = {
+                t.get("cell_id", "")
+                for t in _load_practice_trades()
+                if t.get("status") == "open"
+                and t.get("auto") is True
+                and isinstance(t.get("cell_id"), str)
+                and t.get("cell_id", "").startswith("edge_")
+            }
+            edge_trade = try_open_edge_driven_trade(
+                asset, venue, regime, edge_tags, bid, ask, mid,
+                vol_multiplier=vol_mult)
+            if edge_trade is not None and edge_trade["cell_id"] not in existing_open:
+                _persist_practice_trade(edge_trade)
+                print(f"[edge-paper] opened {edge_trade['cell_id']} "
+                      f"{edge_trade['side']} {asset}/{venue} @ "
+                      f"{edge_trade['fill_price']:.4f} "
+                      f"horizon={edge_trade['edge_horizon']} "
+                      f"r={edge_trade['edge_r']:+.2f} n={edge_trade['edge_n']} "
+                      f"hold_min={edge_trade['hold_minutes']:.0f}",
+                      flush=True)
 
     def _sweep_close_forward_paper_trades(self) -> None:
         trades = _load_practice_trades()
@@ -1845,6 +1951,24 @@ async def get_carry_opportunities():
     round-trip fee) clears the opportunity threshold; full list also
     returned under all_evaluated for diagnostics."""
     return evaluate_all_carry(store.funding_monitor.snapshot())
+
+
+@app.get("/api/edge-tracker", dependencies=[Depends(verify_token)])
+async def get_edge_tracker():
+    """Per-(asset, venue, regime) multi-horizon edge tags: long-term /
+    weekly / daily strength + direction + self_trend (strengthening /
+    decaying / flipping / stable). Plus cross-horizon trends and a
+    human-readable summary line per cell.
+
+    Cells appear once they have at least one observation in any window;
+    new cells will tag NEW until enough samples accumulate.
+    """
+    cells = store.edge_tracker.all_cell_tags()
+    return {
+        "n_cells": len(cells),
+        "n_total_samples": store.edge_tracker.n_total_samples(),
+        "cells": [c.to_dict() for c in cells],
+    }
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
