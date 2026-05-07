@@ -32,11 +32,29 @@ eth_coinbase_bins.json
 eth_coinbase_bins.json.tmp
 eth_kraken_bins.json
 eth_kraken_bins.json.tmp
+eth_binance_perp_bins.json
+eth_binance_perp_bins.json.tmp
+eth_kraken_perp_bins.json
+eth_kraken_perp_bins.json.tmp
+eth_bybit_perp_bins.json
+eth_bybit_perp_bins.json.tmp
 eth_logs/
 eth_report_*.json
 eth_trajectory_*.png
 eth_*_report.json
 eth_*_trajectory.png
+
+# BTC multi-asset collection artifacts
+btc_coinbase_bins.json
+btc_coinbase_bins.json.tmp
+btc_kraken_bins.json
+btc_kraken_bins.json.tmp
+btc_binance_perp_bins.json
+btc_binance_perp_bins.json.tmp
+btc_kraken_perp_bins.json
+btc_kraken_perp_bins.json.tmp
+btc_bybit_perp_bins.json
+btc_bybit_perp_bins.json.tmp
 
 # Phase 1.5 evaluator output
 phase1_5_*_report.json
