@@ -91,7 +91,7 @@ def classify_venue(bars: list[MarketBar], label: str,
                     multi_signal_pelt: bool = False,
                     use_session_baselines: bool = False,
                     herd_rescue: bool = False,
-                    ) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines, dict]:
+                    ) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines, dict, list[MarketFeatures]]:
     chunker = MarketChunker(max_window_size=chunk_max, stride=chunk_max // 2,
                              min_segment=chunk_min, mode="hybrid")
     encoder = MarketChunkEncoder(d_enc=64)
@@ -108,7 +108,7 @@ def classify_venue(bars: list[MarketBar], label: str,
     if herd_rescue:
         apply_herd_borderline_rescue(results, feats, base)
         apply_herd_persistence(results)  # recompute including rescued chunks
-    return chunks, results, base, session_base
+    return chunks, results, base, session_base, feats
 
 
 def _herd_runs(results: list[ClassificationResult]
@@ -320,6 +320,157 @@ def evaluate_gate_I(label: str, chunks: list[MarketChunk],
 
 
 # ---------------------------------------------------------------------------
+# PASS-7 additions: per-cell feature distributions + sub-cell Gate I
+# ---------------------------------------------------------------------------
+
+def _percentiles(vals: list[float]) -> dict:
+    if not vals:
+        return {"n": 0, "p25": None, "p50": None, "p75": None,
+                 "min": None, "max": None}
+    arr = np.asarray(vals, dtype=float)
+    return {
+        "n": int(len(arr)),
+        "p25": round(float(np.percentile(arr, 25)), 4),
+        "p50": round(float(np.percentile(arr, 50)), 4),
+        "p75": round(float(np.percentile(arr, 75)), 4),
+        "min": round(float(np.min(arr)), 4),
+        "max": round(float(np.max(arr)), 4),
+    }
+
+
+def feature_distributions_per_cell(label: str,
+                                       chunks: list[MarketChunk],
+                                       results: list[ClassificationResult],
+                                       feats: list[MarketFeatures]) -> dict:
+    """Per-(regime) distributions of: hawkes_eta, hawkes_eta_buy,
+    hawkes_eta_sell, hurst, |mean_dipole|. Also tracks Hurst-label split.
+    """
+    by_regime: dict[str, list[int]] = {}
+    for i, r in enumerate(results):
+        by_regime.setdefault(r.regime.value, []).append(i)
+
+    out: dict = {"label": label, "by_regime": {}}
+    for regime, idxs in by_regime.items():
+        eta = [float(feats[i].hawkes_eta) for i in idxs]
+        eta_buy = [float(feats[i].hawkes_eta_buy) for i in idxs]
+        eta_sell = [float(feats[i].hawkes_eta_sell) for i in idxs]
+        hurst = [float(feats[i].hurst) for i in idxs
+                  if int(feats[i].hurst_n_returns or 0) >= 8]
+        adipole = [abs(float(feats[i].mean_dipole)) for i in idxs]
+        h_lbl_counts = {"trending": 0, "reverting": 0, "random": 0, "": 0}
+        for i in idxs:
+            h_lbl_counts[results[i].hurst_label] = h_lbl_counts.get(
+                results[i].hurst_label, 0) + 1
+        out["by_regime"][regime] = {
+            "n": len(idxs),
+            "hawkes_eta": _percentiles(eta),
+            "hawkes_eta_buy": _percentiles(eta_buy),
+            "hawkes_eta_sell": _percentiles(eta_sell),
+            "hurst": _percentiles(hurst),
+            "abs_mean_dipole": _percentiles(adipole),
+            "hurst_label_counts": h_lbl_counts,
+        }
+    return out
+
+
+def evaluate_gate_I_subcells(label: str,
+                                chunks: list[MarketChunk],
+                                results: list[ClassificationResult],
+                                feats: list[MarketFeatures],
+                                k: int = 1,
+                                min_n_subcell: int = 15) -> dict:
+    """Per-(regime, sub-axis) Gate I splits. Two sub-axes:
+      - hawkes_eta tier (low/mid/high split at the regime's p33/p67)
+      - hurst_label (trending vs reverting vs random)
+
+    A sub-cell that produces a meaningfully different forward predictive r
+    from its parent regime's r is evidence the sub-axis is informative.
+    Cells with n < min_n_subcell skip sub-cell evaluation (too noisy).
+    """
+    if len(chunks) < k + 2:
+        return {"label": label, "subcells": {}, "reason": "too few chunks"}
+
+    mean_dipoles = []
+    chunk_returns = []
+    for c in chunks:
+        bar_dipoles = [b.dipole for b in c.bars]
+        mean_dipoles.append(float(np.mean(bar_dipoles)) if bar_dipoles else 0.0)
+        if len(c.bars) >= 2:
+            r_ret = math.log(max(c.bars[-1].close, 1e-12)
+                              / max(c.bars[0].close, 1e-12))
+        else:
+            r_ret = 0.0
+        chunk_returns.append(r_ret)
+    md = np.array(mean_dipoles)
+    cr = np.array(chunk_returns)
+    labels = [r.regime.value for r in results]
+
+    by_regime: dict[str, list[int]] = {}
+    for i, lbl in enumerate(labels):
+        if i + k < len(chunks):
+            by_regime.setdefault(lbl, []).append(i)
+
+    subcells: dict = {}
+    for regime, idxs in by_regime.items():
+        if len(idxs) < min_n_subcell * 2:
+            # Need at least 2x min_n to split even into 2 tiers
+            continue
+        # ETA tier split
+        etas = np.array([feats[i].hawkes_eta for i in idxs], dtype=float)
+        if np.std(etas) > 1e-9:
+            p33 = float(np.percentile(etas, 33.33))
+            p67 = float(np.percentile(etas, 66.66))
+            tiers = {
+                "low":  [i for i in idxs if feats[i].hawkes_eta <= p33],
+                "mid":  [i for i in idxs if p33 < feats[i].hawkes_eta <= p67],
+                "high": [i for i in idxs if feats[i].hawkes_eta > p67],
+            }
+            eta_subcell: dict = {"p33": round(p33, 3), "p67": round(p67, 3),
+                                  "tiers": {}}
+            for tier_name, tier_idx in tiers.items():
+                if len(tier_idx) < min_n_subcell:
+                    eta_subcell["tiers"][tier_name] = {
+                        "n": len(tier_idx), "r": None, "p": None,
+                        "note": f"n<{min_n_subcell}"}
+                    continue
+                x = md[tier_idx]
+                y = cr[[i + k for i in tier_idx]]
+                r, p, npairs = _pearsonr_with_p(x, y)
+                eta_subcell["tiers"][tier_name] = {
+                    "n": npairs,
+                    "r": round(r, 4) if np.isfinite(r) else None,
+                    "p": round(p, 4) if np.isfinite(p) else None,
+                }
+            subcells.setdefault(regime, {})["by_eta"] = eta_subcell
+
+        # Hurst label split
+        h_groups: dict[str, list[int]] = {}
+        for i in idxs:
+            h_groups.setdefault(results[i].hurst_label, []).append(i)
+        hurst_subcell: dict = {}
+        for lbl, gi in h_groups.items():
+            if not lbl:
+                continue  # skip "insufficient data"
+            if len(gi) < min_n_subcell:
+                hurst_subcell[lbl] = {"n": len(gi), "r": None, "p": None,
+                                        "note": f"n<{min_n_subcell}"}
+                continue
+            x = md[gi]
+            y = cr[[i + k for i in gi]]
+            r, p, npairs = _pearsonr_with_p(x, y)
+            hurst_subcell[lbl] = {
+                "n": npairs,
+                "r": round(r, 4) if np.isfinite(r) else None,
+                "p": round(p, 4) if np.isfinite(p) else None,
+            }
+        if hurst_subcell:
+            subcells.setdefault(regime, {})["by_hurst_label"] = hurst_subcell
+
+    return {"label": label, "subcells": subcells,
+             "min_n_subcell": min_n_subcell, "lag_k": k}
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -343,6 +494,10 @@ def main():
                    help="Sibling-asset KR bins (e.g. btc_kraken_bins.json when --asset ETH).")
     p.add_argument("--events-calendar", type=str, default="events_calendar.json",
                    help="Path to scheduled-event calendar JSON. Enables F8 event/weekend confidence dampener. Empty/missing file leaves events disabled but weekend dampener still applies.")
+    p.add_argument("--features-out", type=str, default=None,
+                   help="Path to JSON dump of per-(asset,venue,regime) feature distributions + sub-cell Gate I (Pass-7 evaluator output).")
+    p.add_argument("--subcell-min-n", type=int, default=15,
+                   help="Minimum n per sub-cell for Pass-7 sub-cell Gate I. Lower for small corpora; default 15 keeps signal/noise reasonable.")
     args = p.parse_args()
 
     print(f"=== Phase 1.5 Evaluation: {args.asset} ===\n")
@@ -351,13 +506,13 @@ def main():
     kr_bars = load_bars(args.kr_bins)
     print(f"Coinbase bars: {len(cb_bars)}, Kraken bars: {len(kr_bars)}\n")
 
-    cb_chunks, cb_results, cb_base, cb_session = classify_venue(
+    cb_chunks, cb_results, cb_base, cb_session, cb_feats = classify_venue(
         cb_bars, f"CB-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
         herd_rescue=args.herd_rescue,
     )
-    kr_chunks, kr_results, kr_base, kr_session = classify_venue(
+    kr_chunks, kr_results, kr_base, kr_session, kr_feats = classify_venue(
         kr_bars, f"KR-{args.asset}", args.chunk_max_size, args.chunk_min_segment,
         multi_signal_pelt=args.multi_signal_pelt,
         use_session_baselines=args.session_baselines,
@@ -390,7 +545,7 @@ def main():
         sib_label = sibling_asset or "SIBLING"
         if args.sibling_cb_bins:
             sib_cb_bars = load_bars(args.sibling_cb_bins)
-            sib_cb_chunks, sib_cb_results, _, _ = classify_venue(
+            sib_cb_chunks, sib_cb_results, _, _, _ = classify_venue(
                 sib_cb_bars, f"CB-{sib_label}", args.chunk_max_size,
                 args.chunk_min_segment,
                 multi_signal_pelt=args.multi_signal_pelt,
@@ -403,7 +558,7 @@ def main():
                 cb_results, cb_chunks, cb_bars, sib_cb_minute)
         if args.sibling_kr_bins:
             sib_kr_bars = load_bars(args.sibling_kr_bins)
-            sib_kr_chunks, sib_kr_results, _, _ = classify_venue(
+            sib_kr_chunks, sib_kr_results, _, _, _ = classify_venue(
                 sib_kr_bars, f"KR-{sib_label}", args.chunk_max_size,
                 args.chunk_min_segment,
                 multi_signal_pelt=args.multi_signal_pelt,
@@ -552,6 +707,17 @@ def main():
                   f"{unaffected} unaffected (mult=1.0)")
         print()
 
+    # F10 Hawkes-multiplier distribution (directional regimes only)
+    print(f"--- F10 Hawkes multiplier distribution (directional cells) ---")
+    for label, results in [(f"CB-{args.asset}", cb_results),
+                            (f"KR-{args.asset}", kr_results)]:
+        boost = sum(1 for r in results if abs(r.hawkes_multiplier - 1.15) < 1e-6)
+        dampen = sum(1 for r in results if abs(r.hawkes_multiplier - 0.85) < 1e-6)
+        neutral = sum(1 for r in results if abs(r.hawkes_multiplier - 1.0) < 1e-6)
+        print(f"  {label}: {boost} chunks η>=p75 (mult=1.15), "
+              f"{dampen} η<=p25 (mult=0.85), {neutral} neutral (mult=1.0)")
+    print()
+
     # F9 Hurst label distribution (orthogonal trending/reverting axis)
     print(f"--- F9 Hurst label distribution (DFA on chunk log returns) ---")
     for label, results in [(f"CB-{args.asset}", cb_results),
@@ -566,6 +732,71 @@ def main():
               f"random={random_}  insufficient-data={unset}  "
               f"mean_H={h_mean:.3f}")
     print()
+
+    # --- Pass-7: per-(asset, venue, regime) feature distributions ---
+    print("--- PASS-7 per-cell feature distributions ---")
+    pass7 = {}
+    for label, chunks, results, feats in [
+        (f"CB-{args.asset}", cb_chunks, cb_results, cb_feats),
+        (f"KR-{args.asset}", kr_chunks, kr_results, kr_feats),
+    ]:
+        dist = feature_distributions_per_cell(label, chunks, results, feats)
+        pass7[label] = {"distributions": dist}
+        print(f"\n  [{label}]")
+        for regime, stats in sorted(dist["by_regime"].items(),
+                                       key=lambda x: -x[1]["n"]):
+            n = stats["n"]
+            eta = stats["hawkes_eta"]
+            eta_b = stats["hawkes_eta_buy"]
+            eta_s = stats["hawkes_eta_sell"]
+            hu = stats["hurst"]
+            ad = stats["abs_mean_dipole"]
+            print(f"    {regime:<22} n={n:>4}  η={eta['p25']:.2f}/{eta['p50']:.2f}/{eta['p75']:.2f}  "
+                  f"ηb={eta_b['p50']:.2f}  ηs={eta_s['p50']:.2f}  "
+                  f"H={hu['p50'] if hu['p50'] is not None else float('nan'):.2f}  "
+                  f"|d|p50={ad['p50']:.2f}")
+
+    print()
+    print("--- PASS-7 Gate I sub-cells (η-tier and hurst-label splits) ---")
+    for label, chunks, results, feats in [
+        (f"CB-{args.asset}", cb_chunks, cb_results, cb_feats),
+        (f"KR-{args.asset}", kr_chunks, kr_results, kr_feats),
+    ]:
+        sub = evaluate_gate_I_subcells(label, chunks, results, feats,
+                                          min_n_subcell=args.subcell_min_n)
+        pass7[label]["subcells"] = sub
+        print(f"\n  [{label}]")
+        if not sub["subcells"]:
+            print(f"    (no cells with n>={2*args.subcell_min_n} for sub-split)")
+            continue
+        for regime, axes in sub["subcells"].items():
+            print(f"    {regime}:")
+            if "by_eta" in axes:
+                e = axes["by_eta"]
+                print(f"      η-tier (cuts p33={e['p33']}, p67={e['p67']}):")
+                for tier in ("low", "mid", "high"):
+                    t = e["tiers"].get(tier, {})
+                    if "note" in t:
+                        print(f"        {tier:<5} n={t.get('n', 0):>3}  {t['note']}")
+                    else:
+                        rstr = f"{t.get('r'):+.3f}" if t.get('r') is not None else "  nan"
+                        pstr = f"{t.get('p'):.3f}" if t.get('p') is not None else " nan"
+                        print(f"        {tier:<5} n={t.get('n', 0):>3}  r={rstr}  p={pstr}")
+            if "by_hurst_label" in axes:
+                print(f"      hurst-label split:")
+                for lbl, t in axes["by_hurst_label"].items():
+                    if "note" in t:
+                        print(f"        {lbl:<10} n={t.get('n', 0):>3}  {t['note']}")
+                    else:
+                        rstr = f"{t.get('r'):+.3f}" if t.get('r') is not None else "  nan"
+                        pstr = f"{t.get('p'):.3f}" if t.get('p') is not None else " nan"
+                        print(f"        {lbl:<10} n={t.get('n', 0):>3}  r={rstr}  p={pstr}")
+    print()
+
+    if args.features_out:
+        with open(args.features_out, "w") as f:
+            json.dump(pass7, f, indent=2, default=str)
+        print(f"Pass-7 features dump: {args.features_out}\n")
 
     # Combined verdict
     all_g = g_cb["gate_G"] and g_kr["gate_G"]

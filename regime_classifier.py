@@ -61,16 +61,58 @@ class ClassificationResult:
     event_multiplier: float = 1.0   # F8: dampener around scheduled events / weekend sessions (<=1.0)
     hurst: float = 0.5              # F9: Hurst exponent (DFA-1) on chunk log returns; 0.5 = no signal
     hurst_label: str = ""           # F9: "trending" | "reverting" | "random" | "" (insufficient data)
+    hawkes_multiplier: float = 1.0  # F10: 1.15 if η>=p75 of directional cells, 0.85 if η<=p25, 1.0 otherwise
 
     @property
     def adjusted_confidence(self) -> float:
-        """Confidence × cross-venue × vpin × cross-asset × event, capped at [0, 1]."""
+        """Confidence × cross-venue × vpin × cross-asset × event × hawkes,
+        capped at [0, 1]."""
         return max(0.0, min(1.0,
             self.confidence
             * self.cross_venue_multiplier
             * self.vpin_multiplier
             * self.cross_asset_multiplier
-            * self.event_multiplier))
+            * self.event_multiplier
+            * self.hawkes_multiplier))
+
+
+# F10 Hawkes multiplier defaults (literature priors). Production backend
+# overrides via hawkes_eta_calibration.json once enough directional chunks
+# accumulate per (asset, venue).
+HAWKES_DEFAULT_ELEVATED = 0.45
+HAWKES_DEFAULT_DIFFUSE = 0.20
+HAWKES_BOOST = 1.15
+HAWKES_DAMPEN = 0.85
+
+
+def _hawkes_multiplier_for_regime(regime: Regime, eta: float, n_events: int,
+                                     elevated: float = HAWKES_DEFAULT_ELEVATED,
+                                     diffuse: float = HAWKES_DEFAULT_DIFFUSE,
+                                     ) -> tuple[float, str]:
+    """Return (multiplier, note) for a chunk's Hawkes branching ratio η.
+
+    Like VPIN, only directional regimes (HERD_*, WHALE_*, NASCENT_*) are
+    affected — η on EQUILIBRIUM/DEPLETED/UNKNOWN is informational but
+    doesn't translate to confidence (no signal to amplify). WASH_*
+    regimes have η high by definition; skip the multiplier so the
+    classifier's wash-rule confidence isn't double-counted.
+    """
+    if n_events < 8:
+        return 1.0, ""
+    name = regime.value
+    is_directional = (
+        name.startswith("WHALE_") or name.startswith("HERD_")
+        or name.startswith("WHALE_NASCENT_")
+    )
+    if not is_directional:
+        return 1.0, ""
+    if eta >= elevated:
+        return HAWKES_BOOST, (f"hawkes_eta={eta:.2f} >= p75={elevated:.2f} "
+                                f"(clustered cascade; +{int((HAWKES_BOOST-1)*100)}% confidence)")
+    if eta <= diffuse:
+        return HAWKES_DAMPEN, (f"hawkes_eta={eta:.2f} <= p25={diffuse:.2f} "
+                                f"(scattered/Poisson; -{int((1-HAWKES_DAMPEN)*100)}% confidence)")
+    return 1.0, f"hawkes_eta={eta:.2f}"
 
 
 def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
@@ -142,13 +184,20 @@ def _hurst_label_for(f: MarketFeatures) -> str:
 def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
                       *,
                       vpin_elevated: float = 0.30,
-                      vpin_diffuse: float = 0.08) -> ClassificationResult:
-    """Classify a chunk's MarketFeatures and attach a VPIN-based confidence
-    multiplier on directional regimes.
+                      vpin_diffuse: float = 0.08,
+                      hawkes_elevated: float = HAWKES_DEFAULT_ELEVATED,
+                      hawkes_diffuse: float = HAWKES_DEFAULT_DIFFUSE,
+                      ) -> ClassificationResult:
+    """Classify a chunk's MarketFeatures and attach VPIN + Hawkes
+    confidence multipliers on directional regimes.
 
-    vpin_elevated / vpin_diffuse: thresholds. Backend passes per-
-    (asset, venue) p75 / p25 from vpin_calibration.json; defaults are
-    a hardcoded literature prior used when no calibration is loaded.
+    vpin_elevated / vpin_diffuse: VPIN thresholds. Backend passes per-
+    (asset, venue) p75 / p25 from vpin_calibration.json.
+    hawkes_elevated / hawkes_diffuse: Hawkes-η thresholds. Backend passes
+    per-(asset, venue) p75 / p25 from hawkes_eta_calibration.json,
+    computed over directional chunks only (Pass-7 finding: η is regime-
+    dependent so venue-wide thresholds would be uninformative).
+    Both default to literature priors when no calibration is loaded.
     """
     result = _classify_regime_raw(f, baselines)
     result.vpin = float(getattr(f, "vpin", 0.0) or 0.0)
@@ -159,6 +208,16 @@ def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
     result.vpin_multiplier = float(mult)
     if note:
         result.notes.append(note)
+
+    # F10 Hawkes branching-ratio multiplier on directional regimes.
+    eta_val = float(getattr(f, "hawkes_eta", 0.0) or 0.0)
+    eta_n = int(getattr(f, "hawkes_n_events", 0) or 0)
+    h_mult, h_note = _hawkes_multiplier_for_regime(
+        result.regime, eta_val, eta_n,
+        elevated=hawkes_elevated, diffuse=hawkes_diffuse)
+    result.hawkes_multiplier = float(h_mult)
+    if h_note:
+        result.notes.append(h_note)
     # F9 Hurst orthogonal label (does NOT modify confidence; layered
     # annotation that downstream consumers can use for sub-cell slicing).
     result.hurst = float(getattr(f, "hurst", 0.5) or 0.5)

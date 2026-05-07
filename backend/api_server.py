@@ -169,6 +169,50 @@ def _load_vpin_calibration() -> dict:
 _VPIN_CAL = _load_vpin_calibration()
 
 
+# ---------------------------------------------------------------------------
+# F10 Hawkes-η calibration loader. Mirrors VPIN structure. Calibration is
+# computed over directional regimes only (Pass-7 finding: η is regime-
+# dependent — venue-wide thresholds would always rank WHALE as "high η"
+# and EQUILIBRIUM as "low η", giving no information).
+# ---------------------------------------------------------------------------
+
+_HAWKES_CALIBRATION_PATH = os.path.join(REPO_ROOT, "hawkes_eta_calibration.json")
+_HAWKES_DEFAULT_ELEVATED = 0.45
+_HAWKES_DEFAULT_DIFFUSE = 0.20
+
+
+def _load_hawkes_calibration() -> dict:
+    if not os.path.exists(_HAWKES_CALIBRATION_PATH):
+        print(f"[hawkes] no calibration at {_HAWKES_CALIBRATION_PATH}; "
+              f"using defaults (elevated={_HAWKES_DEFAULT_ELEVATED}, "
+              f"diffuse={_HAWKES_DEFAULT_DIFFUSE})", flush=True)
+        return {}
+    try:
+        with open(_HAWKES_CALIBRATION_PATH) as f:
+            payload = json.load(f)
+        cal = payload.get("calibration", {}) or {}
+        print(f"[hawkes] loaded calibration for {len(cal)} (asset, venue) "
+              f"entries from {_HAWKES_CALIBRATION_PATH}", flush=True)
+        return cal
+    except Exception as e:
+        print(f"[hawkes] could not parse calibration: {e}; using defaults",
+              flush=True)
+        return {}
+
+
+_HAWKES_CAL = _load_hawkes_calibration()
+
+
+def _hawkes_thresholds_for(asset: str, venue: str) -> tuple[float, float]:
+    entry = _HAWKES_CAL.get(f"{asset}/{venue}") or {}
+    elevated = entry.get("elevated")
+    diffuse = entry.get("diffuse")
+    return (
+        float(elevated) if elevated is not None else _HAWKES_DEFAULT_ELEVATED,
+        float(diffuse) if diffuse is not None else _HAWKES_DEFAULT_DIFFUSE,
+    )
+
+
 def _vpin_thresholds_for(asset: str, venue: str) -> tuple[float, float]:
     """Return (elevated, diffuse) thresholds for this (asset, venue).
     Falls back to defaults when the entry isn't in the calibration."""
@@ -225,6 +269,8 @@ class RegimeStatus:
     # F9 Hurst exponent (DFA) + label. Orthogonal trending/reverting axis.
     hurst: float = 0.5
     hurst_label: str = ""
+    # F10 Hawkes branching-ratio multiplier on directional regimes.
+    hawkes_multiplier: float = 1.0
 
 
 @dataclass
@@ -279,6 +325,8 @@ class SignalEvent:
     # F9 Hurst exponent + label (orthogonal trending/reverting axis).
     hurst: float = 0.5
     hurst_label: str = ""
+    # F10 Hawkes branching-ratio multiplier on directional regimes.
+    hawkes_multiplier: float = 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -664,11 +712,15 @@ class SignalStore:
             bv = _vpin_bucket_volume_from_corpus(chunks)
         feats = [encoder._extract(c, vpin_bucket_volume=bv) for c in chunks]
         base = baselines_from_corpus(feats)
-        # Per-(asset, venue) VPIN thresholds; falls back to defaults.
+        # Per-(asset, venue) VPIN + Hawkes-η thresholds; both fall back to
+        # literature defaults when an entry is missing.
         vpin_elev, vpin_diff = _vpin_thresholds_for(asset, venue)
+        haw_elev, haw_diff = _hawkes_thresholds_for(asset, venue)
         results = [classify_regime(f, base,
                                      vpin_elevated=vpin_elev,
-                                     vpin_diffuse=vpin_diff) for f in feats]
+                                     vpin_diffuse=vpin_diff,
+                                     hawkes_elevated=haw_elev,
+                                     hawkes_diffuse=haw_diff) for f in feats]
         apply_herd_persistence(results)
 
         # F7 cross-asset directional confirmation. BTC and ETH lead each
@@ -727,6 +779,7 @@ class SignalStore:
             event_multiplier=float(getattr(latest_result, "event_multiplier", 1.0)),
             hurst=float(getattr(latest_result, "hurst", 0.5)),
             hurst_label=str(getattr(latest_result, "hurst_label", "")),
+            hawkes_multiplier=float(getattr(latest_result, "hawkes_multiplier", 1.0)),
         )
 
         prev_status = self.current_status.get((asset, venue))
@@ -814,6 +867,7 @@ class SignalStore:
                 event_multiplier=float(getattr(latest_result, "event_multiplier", 1.0)),
                 hurst=float(getattr(latest_result, "hurst", 0.5)),
                 hurst_label=str(getattr(latest_result, "hurst_label", "")),
+                hawkes_multiplier=float(getattr(latest_result, "hawkes_multiplier", 1.0)),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -1265,7 +1319,7 @@ class SignalStore:
                         status.cross_venue_multiplier = 1.5
                     else:
                         status.cross_venue_multiplier = 0.5
-                # adjusted_confidence reflects all five multipliers consistently
+                # adjusted_confidence reflects all six multipliers consistently
                 # with ClassificationResult.adjusted_confidence so /api/status
                 # mirrors what signals carry.
                 status.adjusted_confidence = max(0.0, min(1.0,
@@ -1273,7 +1327,8 @@ class SignalStore:
                     * status.cross_venue_multiplier
                     * status.vpin_multiplier
                     * status.cross_asset_multiplier
-                    * status.event_multiplier))
+                    * status.event_multiplier
+                    * status.hawkes_multiplier))
 
     async def tape_data(self, asset: str, venue: str, n_seconds: int = 60) -> dict:
         """1-second resolution tape feed for the click-to-trade UI's flash
