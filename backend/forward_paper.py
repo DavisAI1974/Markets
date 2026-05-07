@@ -155,7 +155,7 @@ _PRACTICE_FEE_BPS = 25.0
 # TODO recalibration: re-run `python calibrate_vol_target.py` any
 # time the corpus grows ≥2× (currently anchored on the 30d Pass-6
 # corpus). See TODO.md "Recalibrations to re-run as the corpus grows".
-VOL_TARGET = 0.0050
+VOL_TARGET = 0.0004
 VOL_MULT_MIN = 0.5
 VOL_MULT_MAX = 2.0
 
