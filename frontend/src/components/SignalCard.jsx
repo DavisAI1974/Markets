@@ -4,6 +4,8 @@ import { useStore } from "../store.js";
 const REGIME_COLORS = {
   WHALE_UP:   "border-l-green-500",
   WHALE_DOWN: "border-l-red-500",
+  WHALE_NASCENT_UP:   "border-l-emerald-400",
+  WHALE_NASCENT_DOWN: "border-l-rose-400",
   HERD_UP:    "border-l-orange-500",
   HERD_DOWN:  "border-l-rose-700",
   WASH_PAIRED:"border-l-yellow-500",
@@ -19,6 +21,8 @@ const REGIME_COLORS = {
 const REGIME_HEADLINES = {
   WHALE_UP:   "Big buyer detected",
   WHALE_DOWN: "Big seller detected",
+  WHALE_NASCENT_UP:   "Buy pressure forming",
+  WHALE_NASCENT_DOWN: "Sell pressure forming",
   HERD_UP:    "Buying cascade",
   HERD_DOWN:  "Selling cascade",
   WASH_PAIRED:"Wash pattern — skip",

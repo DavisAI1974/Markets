@@ -178,6 +178,8 @@ PLAYBOOKS: dict[str, str] = {
     "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided market. No edge. Sit out unless flow becomes extremely one-sided.",
     "WHALE_UP": "One big buyer dominating. Piggyback if early; get out of the way if late. Watch for the buyer's order to finish.",
     "WHALE_DOWN": "One big seller dominating. Piggyback short if early; sit out if late. Watch for capitulation bottom.",
+    "WHALE_NASCENT_UP": "Buy pressure building, not yet sustained. Working hypothesis: trend continues until full WHALE classification kicks in.",
+    "WHALE_NASCENT_DOWN": "Sell pressure building, not yet sustained. Working hypothesis: trend continues until full WHALE classification kicks in.",
     "HERD_UP": "FOMO / panic buy — many actors aligned on the buy side. Follow with tight stops; fade after overshoot.",
     "HERD_DOWN": "Panic sell / capitulation — many actors aligned on the sell side. Fade after the worst is over; do NOT catch the falling knife.",
     "WASH_PAIRED": "Wash-trade signature: paired self-trades, no real price discovery. Do not trade.",
@@ -245,9 +247,9 @@ CROSS_VENUE_CASCADE_PLAYBOOKS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 def expected_direction_from_signal(regime: str, mean_dipole: float) -> int:
-    if regime == "WHALE_UP" or regime == "HERD_UP":
+    if regime.endswith("_UP"):
         return +1
-    if regime == "WHALE_DOWN" or regime == "HERD_DOWN":
+    if regime.endswith("_DOWN"):
         return -1
     if regime in ("EQUILIBRIUM_TWO_SIDED", "EQUILIBRIUM_EXTREME_DEMO"):
         return -1 if mean_dipole > 0 else +1   # fade

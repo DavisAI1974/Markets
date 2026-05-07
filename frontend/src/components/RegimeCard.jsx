@@ -6,6 +6,8 @@ const REGIME_STYLES = {
   EQUILIBRIUM_TWO_SIDED: { bg: "bg-blue-950/40",   border: "border-blue-700",  chip: "bg-blue-700",   label: "Healthy two-sided",  icon: "⚖️" },
   WHALE_UP:              { bg: "bg-emerald-950/40",border: "border-emerald-700",chip: "bg-emerald-700",label: "Big buyer detected", icon: "🐋" },
   WHALE_DOWN:            { bg: "bg-red-950/40",    border: "border-red-700",   chip: "bg-red-700",    label: "Big seller detected",icon: "🐋" },
+  WHALE_NASCENT_UP:      { bg: "bg-emerald-950/25",border: "border-emerald-600",chip: "bg-emerald-600",label: "Buy pressure forming",  icon: "🐋" },
+  WHALE_NASCENT_DOWN:    { bg: "bg-rose-950/25",   border: "border-rose-600",  chip: "bg-rose-600",   label: "Sell pressure forming", icon: "🐋" },
   HERD_UP:               { bg: "bg-orange-950/40", border: "border-orange-700",chip: "bg-orange-600", label: "Buying cascade",     icon: "🌊" },
   HERD_DOWN:             { bg: "bg-rose-950/40",   border: "border-rose-700",  chip: "bg-rose-700",   label: "Selling cascade",    icon: "🌊" },
   WASH_PAIRED:           { bg: "bg-yellow-950/40", border: "border-yellow-700",chip: "bg-yellow-700", label: "Wash — skip",        icon: "⚠️" },
