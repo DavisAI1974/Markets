@@ -113,13 +113,26 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                             continue
                         bid_f = float(bid_s)
                         ask_f = float(ask_s)
+                        # L1 sizes (added 2026-05) for microprice + book-OFI.
+                        # Coinbase v2 ticker carries best_bid_size / best_ask_size.
+                        try:
+                            bid_qty_f = float(msg.get("best_bid_size") or 0.0)
+                        except (TypeError, ValueError):
+                            bid_qty_f = 0.0
+                        try:
+                            ask_qty_f = float(msg.get("best_ask_size") or 0.0)
+                        except (TypeError, ValueError):
+                            ask_qty_f = 0.0
                         last_mid = 0.5 * (bid_f + ask_f)
                         b = bins.setdefault(ts, {"buy": 0.0, "sell": 0.0, "mid": last_mid,
                                                   "high": 0.0, "low": 0.0, "n_trades": 0,
-                                                  "bid": bid_f, "ask": ask_f})
+                                                  "bid": bid_f, "ask": ask_f,
+                                                  "bid_qty": bid_qty_f, "ask_qty": ask_qty_f})
                         b["mid"] = last_mid
                         b["bid"] = bid_f
                         b["ask"] = ask_f
+                        b["bid_qty"] = bid_qty_f
+                        b["ask_qty"] = ask_qty_f
 
                     now = time.time()
                     if now - last_save >= 30.0:
