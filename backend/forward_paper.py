@@ -145,6 +145,121 @@ CELLS: list[CellSpec] = [
 
 _PRACTICE_FEE_BPS = 25.0
 
+
+# ---------------------------------------------------------------------------
+# Tier 3.3 — funding-rate carry / basis-arb paper trades.
+#
+# Triggered by funding-monitor alerts (NOT regime classification), so
+# the surface differs from CellSpec: open on FUNDING_OVERLEVERED_{LONG,
+# SHORT} (one trade per asset, per perp venue, deduped), close on
+# FUNDING_CLEARED for that key OR when max_hold_minutes elapses.
+#
+# Trade represents the perp leg of an assumed delta-neutral pair. We
+# don't simulate the spot hedge; we just credit funding income at
+# close (= |rate_at_open| × notional × elapsed_hours / 8) and ignore
+# the perp price-drift P&L on the assumption that the spot leg
+# cancels it perfectly. That's optimistic — real basis variance eats
+# into P&L — but adequate for forward paper accounting until we wire
+# multi-leg infrastructure.
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class CarryCellSpec:
+    cell_id: str
+    asset: str
+    perp_venue: str          # "Binance" or "Bybit"
+    notional_usd: float = 1000.0
+    max_hold_minutes: float = 480.0   # one funding cycle
+
+
+CARRY_CELLS: list[CarryCellSpec] = [
+    CarryCellSpec(cell_id="btc_carry_bn",  asset="BTC", perp_venue="Binance"),
+    CarryCellSpec(cell_id="btc_carry_bb",  asset="BTC", perp_venue="Bybit"),
+    CarryCellSpec(cell_id="eth_carry_bn",  asset="ETH", perp_venue="Binance"),
+    CarryCellSpec(cell_id="eth_carry_bb",  asset="ETH", perp_venue="Bybit"),
+]
+
+
+def find_carry_spec(asset: str, perp_venue: str) -> Optional[CarryCellSpec]:
+    for c in CARRY_CELLS:
+        if c.asset == asset and c.perp_venue == perp_venue:
+            return c
+    return None
+
+
+def open_carry_trade(spec: CarryCellSpec, funding_rate_at_open: float,
+                       perp_price: float) -> dict:
+    """Open a paper carry trade. Side determined by funding rate sign:
+       rate > 0  -> short perp (longs pay shorts; we receive funding)
+       rate < 0  -> long perp  (shorts pay longs; we receive funding)
+    Trade represents the perp leg of an assumed delta-neutral pair."""
+    side = "sell" if funding_rate_at_open > 0 else "buy"
+    qty = spec.notional_usd / perp_price if perp_price > 0 else 0.0
+    notional = perp_price * qty
+    fee_usd = notional * (_PRACTICE_FEE_BPS / 10000.0)
+    return {
+        "intent_id": str(uuid.uuid4())[:12],
+        "asset": spec.asset, "venue": spec.perp_venue,
+        "side": side,
+        "kind": "carry_perp_leg",
+        "price": float(perp_price),
+        "qty": float(qty),
+        "notional": float(notional),
+        "note": (f"forward paper: {spec.asset} {spec.perp_venue} carry "
+                 f"({side} perp leg, funding="
+                 f"{funding_rate_at_open*1e4:+.2f}bps/8h)"),
+        "ts_utc": time.time(),
+        "practice": True, "auto": True,
+        "cell_id": spec.cell_id,
+        "kind_short": "carry",
+        "status": "open",
+        "fill_price": float(perp_price),
+        "fees_usd": float(fee_usd),
+        "fee_bps": _PRACTICE_FEE_BPS,
+        "exit_price": 0.0,
+        "exit_ts_utc": 0.0,
+        "realized_pnl_usd": 0.0,
+        "hold_minutes": float(spec.max_hold_minutes),
+        "funding_rate_at_open": float(funding_rate_at_open),
+        "base_notional_usd": float(spec.notional_usd),
+    }
+
+
+def close_carry_trade(trade: dict, perp_price_now: float,
+                        close_reason: str = "funding_cleared") -> None:
+    """Close the perp leg. Funding income accrues at the rate captured
+    at open, scaled by elapsed hours / 8. Delta-neutral assumption
+    cancels the perp price-drift P&L against the (un-modeled) spot leg.
+    Realized P&L = funding_income - 2 × fees."""
+    qty = float(trade.get("qty", 0.0))
+    rate_at_open = float(trade.get("funding_rate_at_open", 0.0))
+    elapsed_s = max(0.0, time.time() - float(trade.get("ts_utc", 0.0)))
+    elapsed_hours = elapsed_s / 3600.0
+    notional_out = perp_price_now * qty
+    exit_fee = notional_out * (_PRACTICE_FEE_BPS / 10000.0)
+    notional_at_open = float(trade.get("notional", 0.0))
+    # Funding income = |rate| × avg notional × n_funding_cycles_elapsed.
+    # Average leg notional approximates avg(open, exit) to soak up some
+    # price drift; conservative.
+    avg_notional = 0.5 * (notional_at_open + notional_out)
+    n_cycles = elapsed_hours / 8.0
+    funding_income = abs(rate_at_open) * avg_notional * n_cycles
+    realized = funding_income - float(trade.get("fees_usd", 0.0)) - exit_fee
+    trade["status"] = "closed"
+    trade["exit_price"] = float(perp_price_now)
+    trade["exit_ts_utc"] = time.time()
+    trade["fees_usd"] = float(trade.get("fees_usd", 0.0)) + float(exit_fee)
+    trade["realized_pnl_usd"] = float(realized)
+    trade["funding_income_usd"] = float(funding_income)
+    trade["elapsed_hours"] = float(elapsed_hours)
+    trade["close_reason"] = str(close_reason)
+
+
+def is_carry_trade(trade: dict) -> bool:
+    return (trade.get("status") == "open"
+              and trade.get("kind_short") == "carry")
+
 # Vol-target sizing (Tier 3.2). Chunk realized_vol is the std of bar
 # log-returns over the chunk window. The "target" is the realized_vol
 # value at which the multiplier returns 1.0 — set per-(asset, venue)

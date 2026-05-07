@@ -55,8 +55,12 @@ from backend.push import (
 from playbook_generator import get_playbook as get_dynamic_playbook
 from playbook_generator import get_drift_status
 from backend.forward_paper import (
+    close_carry_trade as _fp_close_carry,
     entry_price_for_cell as _fp_entry_price,
+    find_carry_spec as _fp_find_carry_spec,
     find_matching_cells as _fp_find_cells,
+    is_carry_trade as _fp_is_carry,
+    open_carry_trade as _fp_open_carry,
     open_paper_trade as _fp_open_trade,
     vol_target_multiplier as _fp_vol_mult,
     is_expired as _fp_is_expired,
@@ -582,6 +586,14 @@ class SignalStore:
         try:
             for alert in self.funding_monitor.update_all():
                 await self._emit_drift_alert(alert)
+                # T3.3: open carry paper trade on OVERLEVERED, close on
+                # CLEARED. Trade represents the perp leg of an assumed
+                # delta-neutral pair; spot leg is not modeled.
+                try:
+                    self._handle_carry_alert(alert)
+                except Exception as e2:
+                    print(f"[carry-paper] alert handling error: {e2}",
+                          flush=True)
         except Exception as e:
             print(f"[funding-monitor] error: {e}", flush=True)
 
@@ -825,6 +837,78 @@ class SignalStore:
                 print(f"[forward-paper] open error {asset}/{venue}: {e}", flush=True)
             self.last_paper_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
 
+    def _handle_carry_alert(self, alert: dict) -> None:
+        """T3.3 carry paper-trade dispatcher. Open on
+        FUNDING_OVERLEVERED_{LONG,SHORT} (one trade per asset, perp
+        venue at a time — dedup by checking persisted trades). Close
+        on FUNDING_CLEARED for that key. Timeout closes are handled
+        by the same sweep that closes regime-driven cells."""
+        atype = alert.get("type", "")
+        asset = alert.get("asset", "")
+        venue = alert.get("venue", "")
+        if not asset or not venue:
+            return
+
+        if atype == "FUNDING_CLEARED":
+            trades = _load_practice_trades()
+            changed = False
+            for t in trades:
+                if not _fp_is_carry(t):
+                    continue
+                if t.get("asset") != asset or t.get("venue") != venue:
+                    continue
+                # Use the perp current price as the closing mark; if
+                # we don't have one, fall back to fill_price (best we
+                # can do without quote streams for perp venues yet).
+                bid, ask, mid = _current_quote(asset, venue)
+                close_px = (mid or float(t.get("fill_price", 0.0)))
+                if close_px <= 0:
+                    continue
+                _fp_close_carry(t, close_px, close_reason="funding_cleared")
+                changed = True
+                print(f"[carry-paper] closed {t.get('cell_id')} "
+                      f"{asset}/{venue} on funding clear: "
+                      f"realized_pnl={t.get('realized_pnl_usd', 0):.2f} "
+                      f"funding_income={t.get('funding_income_usd', 0):.2f} "
+                      f"hours={t.get('elapsed_hours', 0):.1f}",
+                      flush=True)
+            if changed:
+                _rewrite_practice_trades(trades)
+            return
+
+        if not atype.startswith("FUNDING_OVERLEVERED_"):
+            return
+
+        spec = _fp_find_carry_spec(asset, venue)
+        if spec is None:
+            return
+
+        # Dedup: skip if there's already an open carry trade for this
+        # (asset, perp venue) — funding alerts can re-fire (e.g.
+        # ELEVATED -> EXTREME).
+        existing = _load_practice_trades()
+        for t in existing:
+            if (_fp_is_carry(t)
+                    and t.get("asset") == asset
+                    and t.get("venue") == venue):
+                return
+
+        rate = float(alert.get("rate", 0.0))
+        bid, ask, mid = _current_quote(asset, venue)
+        perp_price = mid if mid > 0 else (bid or ask or 0.0)
+        if perp_price <= 0:
+            print(f"[carry-paper] no perp quote for {asset}/{venue}; "
+                  f"skipping carry open", flush=True)
+            return
+
+        trade = _fp_open_carry(spec, funding_rate_at_open=rate,
+                                 perp_price=perp_price)
+        _persist_practice_trade(trade)
+        print(f"[carry-paper] opened {spec.cell_id} {trade['side']} "
+              f"{asset}/{venue} @ {perp_price:.4f} "
+              f"(rate={rate*1e4:+.2f}bps/8h max_hold={spec.max_hold_minutes:.0f}m "
+              f"intent_id={trade['intent_id']})", flush=True)
+
     def _maybe_open_forward_paper_trades(self, asset: str, venue: str,
                                           regime: str, feat, chunk) -> None:
         cells = _fp_find_cells(asset, venue, regime, feat, chunk)
@@ -856,7 +940,14 @@ class SignalStore:
                 continue
             bid, ask, mid = _current_quote(t.get("asset", ""), t.get("venue", ""))
             before_status = t.get("status")
-            _fp_close_trade(t, bid, ask, mid)
+            # Carry trades (T3.3) use a different close path: funding
+            # accrual P&L instead of price-direction P&L.
+            if _fp_is_carry(t):
+                close_px = mid if mid > 0 else (bid or ask or float(t.get("fill_price", 0.0)))
+                if close_px > 0:
+                    _fp_close_carry(t, close_px, close_reason="max_hold_elapsed")
+            else:
+                _fp_close_trade(t, bid, ask, mid)
             if t.get("status") != before_status:
                 any_changed = True
                 print(f"[forward-paper] closed {t.get('cell_id')} "
