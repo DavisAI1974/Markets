@@ -237,6 +237,13 @@ class MarketFeatures:
     # counts at bar resolution. See hawkes.py.
     hawkes_eta: float = 0.0
     hawkes_n_events: int = 0
+    # Hurst exponent via DFA-1 on the chunk's log returns. Orthogonal to
+    # the regime classifier's whale/herd axis: H>0.5 = trending, H<0.5 =
+    # mean-reverting. hurst=0.5 with hurst_n_returns=0 signals "couldn't
+    # estimate" (chunk too short); consumers should filter on
+    # hurst_n_returns>=8 before reading hurst.
+    hurst: float = 0.5
+    hurst_n_returns: int = 0
     # Session-time (universal-state context; chunks don't bring their own time)
     hour_utc: float = 0.0                   # 0-23, normalized 0-1 elsewhere
     day_of_week: int = 0                    # 0=Mon, 6=Sun
@@ -654,6 +661,15 @@ class MarketChunkEncoder:
         except Exception:
             hawkes_eta_val, hawkes_n_evt = 0.0, 0
 
+        # F9: Hurst exponent via DFA on the chunk's log returns.
+        # Orthogonal trending-vs-reverting axis. Falls back to (0.5, 0)
+        # for chunks too short for a reliable fit.
+        try:
+            from hurst import hurst_dfa
+            hurst_val, hurst_n = hurst_dfa(log_ret)
+        except Exception:
+            hurst_val, hurst_n = 0.5, 0
+
         return MarketFeatures(
             ret_mean=ret_mean, ret_std=ret_std, ret_skew=ret_skew, ret_kurt=ret_kurt,
             autocorr_lag1=autocorr, mean_dipole=mean_dipole, mean_ofi=mean_ofi,
@@ -669,6 +685,8 @@ class MarketChunkEncoder:
             vpin_n_buckets=vpin_n,
             hawkes_eta=hawkes_eta_val,
             hawkes_n_events=hawkes_n_evt,
+            hurst=hurst_val,
+            hurst_n_returns=hurst_n,
             hour_utc=hour_utc_val,
             day_of_week=dow,
             is_london_lunch=bool(is_london_lunch_val),

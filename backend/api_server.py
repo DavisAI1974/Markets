@@ -222,6 +222,9 @@ class RegimeStatus:
     cross_asset_multiplier: float = 1.0
     # F8 scheduled-event / weekend confidence dampener (<=1.0).
     event_multiplier: float = 1.0
+    # F9 Hurst exponent (DFA) + label. Orthogonal trending/reverting axis.
+    hurst: float = 0.5
+    hurst_label: str = ""
 
 
 @dataclass
@@ -273,6 +276,9 @@ class SignalEvent:
     cross_asset_multiplier: float = 1.0
     # F8 scheduled-event / weekend confidence dampener (<=1.0).
     event_multiplier: float = 1.0
+    # F9 Hurst exponent + label (orthogonal trending/reverting axis).
+    hurst: float = 0.5
+    hurst_label: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -717,6 +723,8 @@ class SignalStore:
             vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
             cross_asset_multiplier=float(getattr(latest_result, "cross_asset_multiplier", 1.0)),
             event_multiplier=float(getattr(latest_result, "event_multiplier", 1.0)),
+            hurst=float(getattr(latest_result, "hurst", 0.5)),
+            hurst_label=str(getattr(latest_result, "hurst_label", "")),
         )
 
         prev_status = self.current_status.get((asset, venue))
@@ -802,6 +810,8 @@ class SignalStore:
                 vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
                 cross_asset_multiplier=float(getattr(latest_result, "cross_asset_multiplier", 1.0)),
                 event_multiplier=float(getattr(latest_result, "event_multiplier", 1.0)),
+                hurst=float(getattr(latest_result, "hurst", 0.5)),
+                hurst_label=str(getattr(latest_result, "hurst_label", "")),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig

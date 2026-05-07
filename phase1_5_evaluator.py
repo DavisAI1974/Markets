@@ -552,6 +552,21 @@ def main():
                   f"{unaffected} unaffected (mult=1.0)")
         print()
 
+    # F9 Hurst label distribution (orthogonal trending/reverting axis)
+    print(f"--- F9 Hurst label distribution (DFA on chunk log returns) ---")
+    for label, results in [(f"CB-{args.asset}", cb_results),
+                            (f"KR-{args.asset}", kr_results)]:
+        trending = sum(1 for r in results if r.hurst_label == "trending")
+        reverting = sum(1 for r in results if r.hurst_label == "reverting")
+        random_ = sum(1 for r in results if r.hurst_label == "random")
+        unset = sum(1 for r in results if not r.hurst_label)
+        h_vals = [r.hurst for r in results if r.hurst_label]
+        h_mean = float(np.mean(h_vals)) if h_vals else 0.5
+        print(f"  {label}: trending={trending}  reverting={reverting}  "
+              f"random={random_}  insufficient-data={unset}  "
+              f"mean_H={h_mean:.3f}")
+    print()
+
     # Combined verdict
     all_g = g_cb["gate_G"] and g_kr["gate_G"]
     pass_h = h.get("gate_H", False)

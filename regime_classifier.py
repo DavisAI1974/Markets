@@ -58,6 +58,8 @@ class ClassificationResult:
     vpin_multiplier: float = 1.0 # confidence boost/de-rate from VPIN (HERD/WHALE only)
     cross_asset_multiplier: float = 1.0  # F7: 1.4 if sibling asset same direction, 0.6 if opposite, 1.0 if neutral/no overlap
     event_multiplier: float = 1.0   # F8: dampener around scheduled events / weekend sessions (<=1.0)
+    hurst: float = 0.5              # F9: Hurst exponent (DFA-1) on chunk log returns; 0.5 = no signal
+    hurst_label: str = ""           # F9: "trending" | "reverting" | "random" | "" (insufficient data)
 
     @property
     def adjusted_confidence(self) -> float:
@@ -107,6 +109,25 @@ def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
     return 1.0, ""
 
 
+# F9 Hurst label thresholds. Hardcoded as policy this session; recalibrate
+# once per-cell hurst distributions accumulate (Pass-7 evaluator territory).
+HURST_TRENDING = 0.55
+HURST_REVERTING = 0.45
+HURST_MIN_RETURNS_FOR_LABEL = 8  # mirrors hurst.HURST_MIN_RETURNS
+
+
+def _hurst_label_for(f: MarketFeatures) -> str:
+    h = float(getattr(f, "hurst", 0.5) or 0.5)
+    n = int(getattr(f, "hurst_n_returns", 0) or 0)
+    if n < HURST_MIN_RETURNS_FOR_LABEL:
+        return ""
+    if h >= HURST_TRENDING:
+        return "trending"
+    if h <= HURST_REVERTING:
+        return "reverting"
+    return "random"
+
+
 def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
                       *,
                       vpin_elevated: float = 0.30,
@@ -127,6 +148,12 @@ def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
     result.vpin_multiplier = float(mult)
     if note:
         result.notes.append(note)
+    # F9 Hurst orthogonal label (does NOT modify confidence; layered
+    # annotation that downstream consumers can use for sub-cell slicing).
+    result.hurst = float(getattr(f, "hurst", 0.5) or 0.5)
+    result.hurst_label = _hurst_label_for(f)
+    if result.hurst_label:
+        result.notes.append(f"hurst={result.hurst:.2f} ({result.hurst_label})")
     return result
 
 
