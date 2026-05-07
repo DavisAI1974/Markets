@@ -57,15 +57,17 @@ class ClassificationResult:
     vpin: float = 0.0            # informed-flow toxicity, [0,1]; high = imminent move predicted
     vpin_multiplier: float = 1.0 # confidence boost/de-rate from VPIN (HERD/WHALE only)
     cross_asset_multiplier: float = 1.0  # F7: 1.4 if sibling asset same direction, 0.6 if opposite, 1.0 if neutral/no overlap
+    event_multiplier: float = 1.0   # F8: dampener around scheduled events / weekend sessions (<=1.0)
 
     @property
     def adjusted_confidence(self) -> float:
-        """Confidence × cross-venue × vpin × cross-asset, capped at [0, 1]."""
+        """Confidence × cross-venue × vpin × cross-asset × event, capped at [0, 1]."""
         return max(0.0, min(1.0,
             self.confidence
             * self.cross_venue_multiplier
             * self.vpin_multiplier
-            * self.cross_asset_multiplier))
+            * self.cross_asset_multiplier
+            * self.event_multiplier))
 
 
 def _vpin_multiplier_for_regime(regime: Regime, vpin: float, vpin_n: int,
@@ -632,6 +634,45 @@ def apply_cross_asset_multiplier(
             r.cross_asset_multiplier = CROSS_ASSET_AGREE
         else:
             r.cross_asset_multiplier = CROSS_ASSET_DISAGREE
+
+
+# ---------------------------------------------------------------------------
+# F8: scheduled-event proximity + weekend confidence dampener
+# ---------------------------------------------------------------------------
+
+def apply_event_multiplier(
+    results: list[ClassificationResult],
+    chunks: list,
+    bars: list,
+    calendar,  # event_calendar.EventCalendar | None
+) -> None:
+    """Mutate results in place: set event_multiplier per chunk based on the
+    chunk's wall-clock midpoint timestamp.
+
+    Reads the chunk's last bar timestamp (most recent moment in the chunk)
+    and asks event_calendar.event_multiplier_for_ts() for the dampener:
+      - 0.7 when within ±30 min of a scheduled FOMC/CPI/etc. event
+      - 0.85 when within ±60 min OR on a weekend
+      - 1.0 otherwise
+
+    No-op when calendar is None.
+    """
+    if calendar is None:
+        return
+    # Local import to avoid circular dep at module load
+    from event_calendar import event_multiplier_for_ts
+    for c, r in zip(chunks, results):
+        if not c.bars:
+            continue
+        ts = float(c.bars[-1].ts) if hasattr(c.bars[-1], 'ts') else None
+        if ts is None and c.window_end - 1 < len(bars):
+            ts = float(bars[c.window_end - 1].ts)
+        if ts is None:
+            continue
+        mult, note = event_multiplier_for_ts(ts, calendar)
+        r.event_multiplier = float(mult)
+        if note:
+            r.notes.append(note)
 
 
 # ---------------------------------------------------------------------------

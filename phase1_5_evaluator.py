@@ -35,7 +35,9 @@ from regime_classifier import (
     detect_whale_to_herd_cascades,
     detect_cross_venue_whale_herd_simultaneity,
     apply_cross_asset_multiplier,
+    apply_event_multiplier,
 )
+from event_calendar import EventCalendar
 
 
 def load_bars(bins_path: str) -> list[MarketBar]:
@@ -339,6 +341,8 @@ def main():
                    help="Sibling-asset CB bins (e.g. btc_coinbase_bins.json when --asset ETH). Enables F7 cross-asset directional confirmation multiplier on each chunk.")
     p.add_argument("--sibling-kr-bins", type=str, default=None,
                    help="Sibling-asset KR bins (e.g. btc_kraken_bins.json when --asset ETH).")
+    p.add_argument("--events-calendar", type=str, default="events_calendar.json",
+                   help="Path to scheduled-event calendar JSON. Enables F8 event/weekend confidence dampener. Empty/missing file leaves events disabled but weekend dampener still applies.")
     args = p.parse_args()
 
     print(f"=== Phase 1.5 Evaluation: {args.asset} ===\n")
@@ -410,6 +414,14 @@ def main():
                 sib_kr_chunks, sib_kr_results, sib_kr_bars)
             apply_cross_asset_multiplier(
                 kr_results, kr_chunks, kr_bars, sib_kr_minute)
+
+    # F8: load scheduled-event calendar (FOMC/CPI/etc.) and apply confidence
+    # dampener around event windows + on weekends. No-op if calendar is
+    # empty; weekend dampener still applies whenever the file exists.
+    event_cal = EventCalendar(args.events_calendar) if args.events_calendar else None
+    if event_cal is not None:
+        apply_event_multiplier(cb_results, cb_chunks, cb_bars, event_cal)
+        apply_event_multiplier(kr_results, kr_chunks, kr_bars, event_cal)
 
     # Gate G per venue
     g_cb = evaluate_gate_G(f"CB-{args.asset}", cb_results)
@@ -524,6 +536,20 @@ def main():
             print(f"  {label}: {agree}/{len(results)} same-direction sibling "
                   f"(mult=1.4), {disagree} opposite (mult=0.6), "
                   f"{neutral} neutral/no-overlap (mult=1.0)")
+        print()
+
+    # F8 event / weekend dampener summary
+    if event_cal is not None:
+        print(f"--- F8 event-proximity / weekend confidence dampeners ---")
+        print(f"  Calendar: {len(event_cal.events)} events loaded from {args.events_calendar}")
+        for label, results in [(f"CB-{args.asset}", cb_results),
+                                (f"KR-{args.asset}", kr_results)]:
+            tight = sum(1 for r in results if abs(r.event_multiplier - 0.7) < 1e-6)
+            loose = sum(1 for r in results if abs(r.event_multiplier - 0.85) < 1e-6)
+            unaffected = sum(1 for r in results if r.event_multiplier > 0.999)
+            print(f"  {label}: {tight} chunks ±30min event (mult=0.70), "
+                  f"{loose} ±60min event/weekend (mult=0.85), "
+                  f"{unaffected} unaffected (mult=1.0)")
         print()
 
     # Combined verdict

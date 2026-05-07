@@ -48,7 +48,9 @@ from regime_classifier import (
     apply_herd_persistence, detect_whale_to_herd_cascades,
     detect_cross_venue_whale_herd_simultaneity,
     apply_cross_asset_multiplier_uniform, _direction,
+    apply_event_multiplier,
 )
+from event_calendar import EventCalendar
 from backend.auth import verify_token, ACCESS_TOKEN
 from backend.push import (
     PushSubscription, add_sub, remove_sub, get_subs, send_to_all, VAPID_PUBLIC,
@@ -218,6 +220,8 @@ class RegimeStatus:
     vpin_multiplier: float = 1.0
     # F7 cross-asset directional confirmation (BTC <-> ETH).
     cross_asset_multiplier: float = 1.0
+    # F8 scheduled-event / weekend confidence dampener (<=1.0).
+    event_multiplier: float = 1.0
 
 
 @dataclass
@@ -267,6 +271,8 @@ class SignalEvent:
     vpin_multiplier: float = 1.0
     # F7 cross-asset directional confirmation (BTC <-> ETH).
     cross_asset_multiplier: float = 1.0
+    # F8 scheduled-event / weekend confidence dampener (<=1.0).
+    event_multiplier: float = 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -429,6 +435,10 @@ class SignalStore:
         self.cb_premium_monitor = CoinbasePremiumMonitor(
             history_path=os.path.join(REPO_ROOT,
                                        "backend_cb_premium_history.jsonl"))
+        # F8 scheduled-event calendar (FOMC/CPI/etc.). Hot-reloads by mtime.
+        # Confidence dampener fires within ±60 min of an event or on weekends.
+        self.event_calendar = EventCalendar(
+            os.path.join(REPO_ROOT, "events_calendar.json"))
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -661,6 +671,11 @@ class SignalStore:
         sibling_dir = self._sibling_asset_direction(asset, venue)
         apply_cross_asset_multiplier_uniform(results, sibling_dir)
 
+        # F8 event-proximity / weekend dampener. Hot-reloads from
+        # events_calendar.json by mtime; absent file = no event dampening
+        # but weekend dampener still applies.
+        apply_event_multiplier(results, chunks, bars, self.event_calendar)
+
         # Build minute->regime map for cross-venue agreement (F6)
         m_map: dict[float, str] = {}
         for c, r in zip(chunks, results):
@@ -701,6 +716,7 @@ class SignalStore:
             vpin=float(getattr(latest_result, "vpin", 0.0)),
             vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
             cross_asset_multiplier=float(getattr(latest_result, "cross_asset_multiplier", 1.0)),
+            event_multiplier=float(getattr(latest_result, "event_multiplier", 1.0)),
         )
 
         prev_status = self.current_status.get((asset, venue))
@@ -785,6 +801,7 @@ class SignalStore:
                 vpin=float(getattr(latest_result, "vpin", 0.0)),
                 vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
                 cross_asset_multiplier=float(getattr(latest_result, "cross_asset_multiplier", 1.0)),
+                event_multiplier=float(getattr(latest_result, "event_multiplier", 1.0)),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -1236,14 +1253,15 @@ class SignalStore:
                         status.cross_venue_multiplier = 1.5
                     else:
                         status.cross_venue_multiplier = 0.5
-                # adjusted_confidence reflects all four multipliers consistently
+                # adjusted_confidence reflects all five multipliers consistently
                 # with ClassificationResult.adjusted_confidence so /api/status
                 # mirrors what signals carry.
                 status.adjusted_confidence = max(0.0, min(1.0,
                     status.confidence
                     * status.cross_venue_multiplier
                     * status.vpin_multiplier
-                    * status.cross_asset_multiplier))
+                    * status.cross_asset_multiplier
+                    * status.event_multiplier))
 
     async def tape_data(self, asset: str, venue: str, n_seconds: int = 60) -> dict:
         """1-second resolution tape feed for the click-to-trade UI's flash
