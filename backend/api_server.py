@@ -63,6 +63,7 @@ from backend.forward_paper import (
     close_paper_trade as _fp_close_trade,
 )
 from backend.basis_monitor import BasisMonitor
+from backend.carry_analyzer import evaluate_all_carry
 from backend.cb_premium_monitor import CoinbasePremiumMonitor
 from backend.funding_monitor import FundingMonitor
 from backend.oi_monitor import OIMonitor
@@ -1616,6 +1617,16 @@ async def get_cb_premium_status():
     sustained negative = US-side selling pressure. Use as a daily-bias
     multiplier on US-hours signals."""
     return {"cb_premium": store.cb_premium_monitor.snapshot()}
+
+
+@app.get("/api/carry-opportunities", dependencies=[Depends(verify_token)])
+async def get_carry_opportunities():
+    """Score funding-rate carry / basis-arb opportunities given the
+    current funding-monitor snapshot. Returns only entries whose net
+    APR (gross funding minus assumed spot lending cost minus amortized
+    round-trip fee) clears the opportunity threshold; full list also
+    returned under all_evaluated for diagnostics."""
+    return evaluate_all_carry(store.funding_monitor.snapshot())
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
