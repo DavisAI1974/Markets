@@ -246,4 +246,192 @@ The user said they'd start a new chat. Recommended first message back to them af
 
 Then let them direct.
 
+— end of original handoff —
+
+---
+
+## Session update — 2026-05-06 / 2026-05-07
+
+**Current branch tip**: `claude/continue-phase-2-pipeline-UFiGY @ 3e4b560`
+**Default branch tip**: `claude/new-session-o3vnm @ 4a86520` (now carries the
+new workflow YML files so they're visible in the GitHub Actions UI)
+**Data branches**:
+- `data/eth-bins @ 1a2c926` — eth_coinbase_bins.json + eth_kraken_bins.json,
+  56.5h corpus
+- `data/btc-bins @ 7fc3d05` — btc_coinbase_bins.json + btc_kraken_bins.json,
+  5.8h corpus (the BTC perp files in this commit are stale/broken — see
+  perp section below; will be replaced on next workflow cycle)
+
+### What this session shipped (commits)
+
+| commit | what |
+|---|---|
+| `e613661` | phase 1.5 results: third pass on 50.7h ETH corpus |
+| `b1fa1dc` | add ETH perp collectors (Binance USDT-M + Kraken Futures) — superseded |
+| `343ea6a` | add BTC collectors (CB spot, BN+KR perp) + parallel BTC workflow — perp parts superseded |
+| `3005b5c` | add 30-day backfill scripts (Binance Vision, Kraken /Trades, Coinbase /trades) + one-shot workflow |
+| `b07d35e` | sync workflow files from phase-2 to default branch (UI visibility) |
+| `277c86c` | swap broken Binance + Kraken Futures perps for Bybit V5 linear |
+| `4a86520` | sync workflow updates: Bybit perps onto default branch |
+| `3e4b560` | phase 1.5 results: fourth pass + first BTC corpus + perp debug |
+
+### AWS deployment state — what's done, what's left
+
+The user did `LAUNCH_PLAYBOOK.md` §1.1–1.4 in this session on AWS Lightsail.
+Picking up §1.5+.
+
+**Host**:
+- Lightsail us-east-2, instance `market_watch`
+- Public IPv4 **`3.142.250.137`** (static)
+- Public IPv6 `2600:1f16:16b2:ad00:f62a:6db2:252c:4020` (stable per Lightsail)
+- OS: Ubuntu 22.04 LTS
+- SSH: `ssh ubuntu@3.142.250.137` (Lightsail default key in user's downloads)
+
+**DNS**:
+- `markets.davisai.ai → 3.142.250.137` (GoDaddy A record, 600s TTL, propagated)
+- Domain registrar: GoDaddy. The user has a GoDaddy developer API key
+  (production) on the davisholdingco@gmail.com account. **DO NOT prompt the
+  user for it again — they exposed it in the prior session transcript and
+  rotation is on the pending-todo list. If you need to update DNS, ask the
+  user for a current key.**
+
+**Hardening**:
+- ufw active, allows 22/80/443 only
+- sshd: `pubkeyauthentication yes`, `passwordauthentication no`
+
+**Caddy**:
+- Installed via Cloudsmith repo
+- Config: `/etc/caddy/Caddyfile` (sourced from `deploy/Caddyfile` on
+  phase-2 branch with `markets.example.com` sed-replaced by
+  `markets.davisai.ai`)
+- Let's Encrypt cert obtained for `markets.davisai.ai` (verified in journal)
+- HTTP→HTTPS redirect verified working (308 from outside)
+
+**PWA frontend**:
+- Repo cloned to `/opt/markets`, owned by `ubuntu`
+- Branch checked out: `claude/continue-phase-2-pipeline-UFiGY`
+- Node 20 installed via NodeSource
+- `frontend/dist/` built (vite, 8.39s build)
+- Deployed to `/var/www/markets-watch/` (chowned to caddy:caddy)
+- **Unverified**: whether the URL actually loads in a browser. The
+  in-VM curl hit AWS NAT-hairpin issue and timed out, but external
+  reachability is implied by the LE cert + 308 redirect. First task next
+  session: ask user to load `https://markets.davisai.ai/` on phone or
+  laptop and confirm the dark-themed PWA shell shows up (red dot top-right
+  is expected; backend not running yet).
+
+**Still to do** (per LAUNCH_PLAYBOOK.md):
+- §1.5 Backend systemd service. Needs `MARKETS_WATCH_ACCESS_TOKEN`
+  (long random string), VAPID env vars (next item), pip install of
+  `backend/requirements.txt`. Service file template in playbook.
+- §2 VAPID push key generation + wiring + phone subscription test
+  - `cd /opt/markets && python -m backend.push --generate-keys`
+  - paste public+private into the systemd unit env
+  - test with phone Add-to-Home-Screen + "Notify me" toggle
+- §3 Discord bot setup: Discord developer portal app, bot token, channel
+  ID, systemd unit. Per-step in playbook §3.
+- §5 End-to-end smoke test (the 7-checkbox list in playbook)
+
+**Don't bother with**: §4 (per-user exchange wallet wiring) — that's
+each member's responsibility on their own machine; the central host
+never touches keys.
+
+### Data collection — current state
+
+Two durable workflows on schedule (every 6h):
+
+- `eth_collectors_durable.yml` → `data/eth-bins`
+  - coinbase_eth_collector.py (CB-ETH spot)
+  - kraken_eth_collector.py (KR-ETH spot)
+  - **bybit_ethusdt_perp_collector.py** (NEW; first run pending)
+
+- `btc_collectors_durable.yml` → `data/btc-bins`
+  - coinbase_btcusd_collector.py (CB-BTC spot)
+  - kraken_btcusd_collector.py (KR-BTC spot)
+  - **bybit_btcusdt_perp_collector.py** (NEW; first run pending)
+
+Both workflows checkout `claude/continue-phase-2-pipeline-UFiGY` for the
+actual collector code; the YML on the default branch only exists so GHA
+surfaces the workflow in the UI.
+
+**Coinbase futures intentionally parked** — Coinbase INTX has the real
+ETH-PERP / BTC-PERP but needs a non-US account. Coinbase Derivatives nano
+dated futures are too thin to compare to perps.
+
+**Perp debug history (don't relitigate without new evidence):**
+- Binance USDT-M perp (`fstream.binance.com`): WS handshake / trade stream
+  doesn't deliver from GHA's egress IPs even though HTTPS is reachable.
+  Result was empty bins file. Removed from workflow.
+- Kraken Futures v1 (`futures.kraken.com/ws/v1`): emits one
+  `feed: trade_snapshot` on subscribe, then zero live trade messages over
+  25s (verified via local probe). Result was 29 active bins out of 21k
+  in production. Removed from workflow.
+- Bybit V5 linear (`stream.bybit.com/v5/public/linear`): verified working
+  (47 trade-like messages in 15s smoke test). This is the active perp venue.
+- The .py collector files for the two broken venues remain in the repo for
+  reference but are not invoked.
+
+### Backfill — running at handoff time
+
+`backfill_oneshot.yml` is running (workflow_dispatch, started by user via
+GitHub UI). Two parallel jobs (eth + btc), each runs 3 backfill scripts
+in parallel:
+- backfill_binance_vision.py (Vision daily aggTrades zips, 30d clean —
+  Vision is an S3 bucket, NOT subject to the fstream geo-block we hit
+  on the live WS)
+- backfill_kraken_spot.py (paginated /Trades, 30d, ~30-90 min/pair)
+- backfill_coinbase_spot.py (paginated /trades, 30d target capped by
+  wallclock; realistic ~7-15d for BTC)
+
+Wallclock estimate ~3-5h. Will land merged historical+RT bins on
+`data/eth-bins` and `data/btc-bins` (existing RT bins always win,
+backfill fills gaps only).
+
+### Latest analysis findings (HANDOFF_PHASE1_5_RESULTS.md, 4 passes)
+
+- **KR-ETH WHALE_UP fade is the most robust signal** (n=45, r=−0.369,
+  p=0.009; held direction across all four passes). First cell ready to
+  promote from playbook surface to live executor signal once n grows
+  more.
+- **Both pass-2 and pass-3 CB-ETH-specific edges have failed to
+  reproduce.** Treat the venue-divergent "CB momentum / KR mean-revert"
+  story as withdrawn pending dramatic new evidence.
+- **First BTC pass (5.8h): Gate H clears at 60.9%** — first time any
+  venue pair has cleared 60% threshold. BTC venues agree more than ETH
+  venues (working hypothesis: BTC has more institutional flow).
+- **3 of 4 (asset × venue) cells lean mean-revert on WHALE_UP.** The
+  unified read is "WHALE_UP fades on both crypto majors, both major
+  spot venues."
+
+### Pending todos (carry over to next session)
+
+1. **Verify PWA loads in browser** — first thing, takes 30s
+2. **AWS §1.5 backend systemd** — straightforward, follow playbook
+3. **AWS §2 VAPID + phone push test** — generates push keys, tests on
+   real phone (iOS Safari Add-to-Home-Screen path is non-obvious)
+4. **AWS §3 Discord bot** — Developer Portal account creation + bot
+   token + systemd unit
+5. **AWS §5 end-to-end smoke test** — 7-item checklist before opening
+   to friends group
+6. **Re-run phase1_5_evaluator on backfilled corpus** once `data/eth-bins`
+   and `data/btc-bins` get the 30-day data committed (~3-5h after
+   backfill workflow trigger time)
+7. **Rotate GoDaddy API key** — exposed in prior session transcript;
+   user knows. They click delete + create new at
+   developer.godaddy.com/keys.
+8. **Fix AWS MCP for Claude Code** (separate from Desktop install) if
+   the user wants to drive AWS APIs from a session — not strictly needed
+   for the playbook's remaining steps which are all SSH + Discord UI.
+
+### First-message script for next agent
+
+When the user's first message is a continuation cue ("ok", "continue",
+"where were we"), respond with something like:
+
+> "Picked up at commit `3e4b560` on phase-2 branch. AWS deployment is at
+> §1.5 (backend systemd next). Backfill should be landing on
+> `data/{eth,btc}-bins` shortly if it hasn't already. Want to (a) finish
+> AWS deployment, (b) check on backfill + run analysis if it landed, or
+> (c) something else?"
+
 — end of handoff —
