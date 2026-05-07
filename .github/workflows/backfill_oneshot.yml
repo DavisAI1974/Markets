@@ -76,9 +76,14 @@ jobs:
         run: |
           DAYS=${{ github.event.inputs.days_eth }}
           MAX=${{ github.event.inputs.max_seconds_per_script }}
-          echo "[backfill-eth] days=$DAYS max_seconds=$MAX"
+          # Binance Vision binned 1-sec is ~9MB/day for ETH/BTC perps;
+          # 30d = ~270MB which exceeds GitHub's 100MB hard push limit.
+          # Cap at 10d (~90MB) so the file pushes cleanly.
+          BN_DAYS=$DAYS
+          if [ "$BN_DAYS" -gt 10 ]; then BN_DAYS=10; fi
+          echo "[backfill-eth] days=$DAYS bn_days=$BN_DAYS max_seconds=$MAX"
 
-          python backfill_binance_vision.py --symbol ETHUSDT --days $DAYS \
+          python backfill_binance_vision.py --symbol ETHUSDT --days $BN_DAYS \
             --bins-path eth_binance_perp_bins.json > /tmp/bn.log 2>&1 &
           BN=$!
           python backfill_kraken_spot.py --pair ETHUSD --days $DAYS --max-seconds $MAX \
@@ -135,7 +140,11 @@ jobs:
           cp /tmp/bins/eth_kraken_perp_bins.json . 2>/dev/null || true
 
           if [ -f eth_coinbase_bins.json ] || [ -f eth_kraken_bins.json ] || [ -f eth_binance_perp_bins.json ]; then
-            git add eth_coinbase_bins.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json 2>/dev/null || true
+            # -f bypasses .gitignore (eth_coinbase_bins.json + eth_kraken_bins.json
+            # are listed there to keep RT collector outputs out of phase-2 commits;
+            # the data branches intentionally commit them).
+            git add -f eth_coinbase_bins.json eth_kraken_bins.json eth_binance_perp_bins.json eth_kraken_perp_bins.json 2>/dev/null || true
+            git status --short
             git commit -m "ETH bins backfill $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/eth-bins-tmp:data/eth-bins
             echo "[commit] pushed merged ETH bins to data/eth-bins"
@@ -174,9 +183,14 @@ jobs:
         run: |
           DAYS=${{ github.event.inputs.days_btc }}
           MAX=${{ github.event.inputs.max_seconds_per_script }}
-          echo "[backfill-btc] days=$DAYS max_seconds=$MAX"
+          # Binance Vision binned 1-sec is ~9MB/day for BTC perps;
+          # 30d = ~270MB which exceeds GitHub's 100MB hard push limit
+          # (verified in run 25472326899). Cap at 10d (~90MB).
+          BN_DAYS=$DAYS
+          if [ "$BN_DAYS" -gt 10 ]; then BN_DAYS=10; fi
+          echo "[backfill-btc] days=$DAYS bn_days=$BN_DAYS max_seconds=$MAX"
 
-          python backfill_binance_vision.py --symbol BTCUSDT --days $DAYS \
+          python backfill_binance_vision.py --symbol BTCUSDT --days $BN_DAYS \
             --bins-path btc_binance_perp_bins.json > /tmp/bn.log 2>&1 &
           BN=$!
           python backfill_kraken_spot.py --pair XBTUSD --days $DAYS --max-seconds $MAX \
@@ -233,7 +247,8 @@ jobs:
           cp /tmp/bins/btc_kraken_perp_bins.json . 2>/dev/null || true
 
           if [ -f btc_coinbase_bins.json ] || [ -f btc_kraken_bins.json ] || [ -f btc_binance_perp_bins.json ]; then
-            git add btc_coinbase_bins.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json 2>/dev/null || true
+            git add -f btc_coinbase_bins.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json 2>/dev/null || true
+            git status --short
             git commit -m "BTC bins backfill $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/btc-bins-tmp:data/btc-bins
             echo "[commit] pushed merged BTC bins to data/btc-bins"
