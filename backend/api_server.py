@@ -60,6 +60,7 @@ from backend.forward_paper import (
     close_paper_trade as _fp_close_trade,
 )
 from backend.basis_monitor import BasisMonitor
+from backend.funding_monitor import FundingMonitor
 from pydantic import BaseModel
 
 
@@ -324,6 +325,11 @@ class SignalStore:
         # drift alerts when (perp - spot) drifts beyond a rolling-z
         # threshold and stays there for SUSTAINED_CYCLES polls.
         self.basis_monitor = BasisMonitor(BASIS_SPOT_PATHS, BASIS_PERP_PATHS)
+        # Perp funding-rate watcher; emits FUNDING_OVERLEVERED_{LONG,SHORT}
+        # / FUNDING_CLEARED on threshold transitions. Persists every
+        # new funding-cycle observation to backend_funding_history.jsonl.
+        self.funding_monitor = FundingMonitor(
+            history_path=os.path.join(REPO_ROOT, "backend_funding_history.jsonl"))
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -468,6 +474,16 @@ class SignalStore:
                     await self._emit_drift_alert(alert)
         except Exception as e:
             print(f"[basis-monitor] error: {e}", flush=True)
+
+        # Funding rates (perp). Polls Binance + Bybit for both BTC and
+        # ETH; HTTP failures are isolated per source. Emits drift alerts
+        # only on state transitions, so steady-state polls cost just two
+        # HTTP roundtrips per asset.
+        try:
+            for alert in self.funding_monitor.update_all():
+                await self._emit_drift_alert(alert)
+        except Exception as e:
+            print(f"[funding-monitor] error: {e}", flush=True)
 
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
@@ -1425,6 +1441,14 @@ async def get_basis_status():
     state (normal/hot/cold), and streak counters. Powers a frontend
     badge / Discord pin showing where leverage is currently building."""
     return {"basis": store.basis_monitor.snapshot()}
+
+
+@app.get("/api/funding-status", dependencies=[Depends(verify_token)])
+async def get_funding_status():
+    """Per-(asset, venue) funding-rate snapshot: latest rate, bps/8h,
+    annualized APR (rate * 3 * 365), current state. Surfaces leverage
+    crowdedness that doesn't show up in chunk-level regimes."""
+    return {"funding": store.funding_monitor.snapshot()}
 
 
 @app.get("/api/practice-trades", dependencies=[Depends(verify_token)])
