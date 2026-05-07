@@ -725,3 +725,143 @@ something like:
 > or (e) AWS §1.5?"
 
 — end of 2026-05-07 evening update —
+
+## 2026-05-07 late-evening session update — Tier 4 + Tier 5 + Pass-7 + F10
+
+Continuation session on `claude/continue-phase-2-pipeline-UFiGY`.
+Shipped Tier 4 (cross-asset + calendar) + Tier 5.3 + 5.1 (Hurst, Hawkes
+wash) + Pass-7 evaluator extension + F10 (hawkes_multiplier).
+
+### Branches at end of session
+
+| Branch | Tip | Notes |
+|---|---|---|
+| `claude/continue-phase-2-pipeline-UFiGY` (active code) | `<see latest>` | All session work pushed here |
+| `data/eth-bins` | `0b5e2c0` | Advanced from 30c27bc earlier same day |
+| `data/btc-bins` | `7bb1c29` | Force-pushed; advanced from b5d4142 |
+
+### Commits this session
+
+| Commit | What |
+|---|---|
+| `b9764c5` | **Tier 4.1** F7 cross-asset directional confirmation multiplier |
+| `043fb00` | **Tier 4.2** F8 scheduled-event + weekend confidence dampener (event_calendar.py + events_calendar.json) |
+| `906e405` | **Tier 5.3** Hurst exponent (DFA-1) per chunk + classifier label |
+| `2a7bfa6` | **Tier 5.1** Hawkes wash detection (Regime.WASH_HAWKES override) |
+| `<F10 commit>` | **F10** hawkes_multiplier on directional regimes + Pass-7 evaluator extension + calibrate_hawkes_eta.py + hawkes_eta_calibration.json |
+
+### Confidence multipliers stack
+
+`adjusted_confidence` is now `confidence × cross-venue × vpin × cross-asset × event × hawkes`. Applied consistently in:
+- `ClassificationResult.adjusted_confidence` property
+- Backend `_poll_one` → SignalEvent emit (both production + demo paths)
+- `_apply_cross_venue_F6` post-poll status formula
+
+### Pass-7 evaluator (extends phase1_5_evaluator)
+
+Per-(asset, venue, regime) feature distributions for `hawkes_eta`,
+`hawkes_eta_buy`, `hawkes_eta_sell`, `hurst`, `|mean_dipole|`, plus
+hurst_label counts. Two sub-cell Gate I splits:
+- η-tier (low/mid/high at p33/p67)
+- hurst-label (trending/reverting/random)
+
+CLI: add `--features-out PATH` to dump JSON; `--subcell-min-n N` to
+control the sub-cell threshold.
+
+### Pass-7 ETH headline findings
+
+KR-ETH WHALE_UP (n=65, aggregate r=−0.31, p=0.01) splits as:
+- η-tier mid (n=28): **r=−0.564 p=0.001** — 2× the aggregate signal
+- η-tier low (n=22): r=+0.04 (no signal)
+- hurst random subset (n=15): r=−0.43 p=0.09
+
+KR-ETH WASH_HAWKES (n=58, aggregate r=+0.22, p=0.10) splits as:
+- η-tier high (n=18): r=+0.43 p=0.06 — wash-tagged chunks with
+  strongest bilateral clustering show momentum bias. Surprising.
+  Either the override threshold is slightly loose OR there's
+  residual structure in apparently-wash chunks.
+
+Per-cell η distributions confirm regime-dependence:
+- KR-ETH EQUILIBRIUM η p25/p75 = 0.16 / 0.49
+- KR-ETH WHALE_UP   η p25/p75 = 0.33 / 0.50
+- KR-ETH WASH_HAWKES η p25/p75 = 0.50 / 0.53
+
+This is why `calibrate_hawkes_eta.py` restricts to *directional* regimes
+when computing thresholds — venue-wide percentiles would just relabel
+WHALE as "high η" and EQUILIBRIUM as "low η" with no information gain.
+
+BTC Pass-7 was killed mid-run (BTC corpus is ~17× ETH; full Gate I
+sub-cell evaluation was estimated >50 min). The `calibrate_hawkes_eta.py`
+script does the much-cheaper work of just extracting η per directional
+chunk and computing p25/p75; that ran on the full corpus and produced
+`hawkes_eta_calibration.json`.
+
+### F10 hawkes_multiplier
+
+ClassificationResult gains `hawkes_multiplier: float = 1.0`.
+`classify_regime` accepts `hawkes_elevated` / `hawkes_diffuse` kwargs
+(literature priors 0.45 / 0.20 by default). Applied only to directional
+regimes (mirrors VPIN's policy):
+- η ≥ p75 (elevated): boost 1.15 (clustered cascade)
+- η ≤ p25 (diffuse): dampen 0.85 (scattered/Poisson)
+- else: 1.0
+
+Backend loads `hawkes_eta_calibration.json` at module load via
+`_load_hawkes_calibration()` and passes per-(asset, venue) p25/p75
+into `classify_regime`. Falls back to literature defaults when the
+file is missing or an entry is absent.
+
+### Threshold revisits (no changes warranted)
+
+Pass-7 ETH validated current thresholds:
+- **WASH_HAWKES rule**: combined η ≥ 0.40, min(η_buy, η_sell) ≥ 0.30,
+  |dipole| < 0.20. The wash-tagged distribution shows η~0.50, both
+  sides ~0.50, |dipole|p50=0.08 — well-separated from non-wash.
+  21–27% reclassified rate is high but reflects real bar-resolution
+  wash-like activity. Keep current values.
+- **Hurst label thresholds**: 0.55 trending / 0.45 reverting. Pass-7
+  shows ~47/28/25 split (trending/reverting/random) on both venues —
+  balanced. Keep current values.
+
+Hawkes elevated/diffuse defaults (0.45 / 0.20) backed by Pass-7 ETH
+directional cells; refresh per-(asset, venue) once
+`hawkes_eta_calibration.json` accumulates more BTC data.
+
+### Open follow-ups for the next agent
+
+- **WASH_HAWKES Gate I momentum bias**: the n=18 sub-cell with
+  r=+0.43 p=0.06 deserves a Pass-8 with more data. If it holds at
+  larger n, it's either a tradeable signal or a sign the threshold
+  needs tightening (perhaps WASH_HAWKES_BOTH_SIDES_MIN > 0.30).
+- **BTC Pass-7 sub-cell Gate I**: never landed (corpus too large
+  this session). Run `python phase1_5_evaluator.py --asset BTC
+  --cb-bins btc_coinbase_bins.json --kr-bins btc_kraken_bins.json
+  --multi-signal-pelt --features-out pass7_btc_features.json` when
+  there's a 30+ min uninterrupted runtime budget.
+- **Hawkes per-regime thresholds**: current calibration uses a single
+  p25/p75 per (asset, venue) over all directional chunks. A finer
+  variant (per regime within (asset, venue)) would let WHALE_UP's
+  multiplier respond differently from HERD_UP's. Defer until per-
+  regime n is large enough.
+- **Tier 5.2 / 5.4** (spoofing, real Cont-Kukanov OFI): both still
+  blocked on collector schema upgrade (need L1 book-state deltas).
+- **AWS §1.5** + everything below it (still pending).
+
+### Hardcodes accepted as policy this session (don't relitigate)
+
+- F7 cross-asset multiplier band: 1.4 / 0.6 (tighter than F6's 1.5 / 0.5).
+- F8 event/weekend dampener: 0.7 (±30 min event), 0.85 (±60 min OR weekend).
+- F9 Hurst label thresholds: 0.55 trending / 0.45 reverting; HURST_MIN_RETURNS_FOR_LABEL=8.
+- F10 Hawkes multiplier band: 1.15 / 0.85; defaults 0.45 / 0.20 (refreshed by calibration).
+- WASH_HAWKES override: η_combined≥0.40 AND min(η_buy,η_sell)≥0.30 AND |dipole|<0.20; only overrides EQUILIBRIUM_TWO_SIDED.
+- WASH_CANDIDATE_ETA_FLOOR=0.30 in hawkes.py (per-side fits gated on combined η to keep cost down).
+
+### First-message script for next agent
+
+> "Picked up at `<F10 tip>` on phase-2. Tier 4 + 5.3 + 5.1 + Pass-7 +
+> F10 all shipped. Want me to (a) Pass-8 with more data (WASH_HAWKES
+> momentum sub-cell follow-up), (b) BTC perp-lead minute-level
+> evaluator (~100 LOC, most robust signal in the project), (c) AWS
+> §1.5 backend systemd, or (d) something else from the deferred list?"
+
+— end of 2026-05-07 late-evening update —
