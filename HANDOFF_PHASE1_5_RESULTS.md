@@ -716,3 +716,156 @@ Rerun once any of:
   the chunk-129/130 event is a recurring pattern, not a one-off)
 - CB-ETH classifier modal share drops below 75% (recovered diversity)
   or climbs above 85% (drift confirmed)
+
+---
+
+## Fourth pass — 2026-05-06 22:45 UTC, ~56.5h ETH + first BTC corpus
+
+Two firsts in this pass: (1) ETH spot extended to 56.5h, (2) **first
+ever Phase 1.5 evaluation on BTC** after the new BTC durable workflow
+finished its first cycle. Plus an honest report on the perp collectors
+(both broken in their initial form, now replaced).
+
+### ETH at 56.5h
+
+Same reproducer flags. Snapshot at `data/eth-bins` commit `1a2c926`.
+
+| Gate | CB-ETH | KR-ETH | Δ from third pass |
+|---|---|---|---|
+| **G** | **FAIL** (modal 80.1%) | **PASS** (modal 64.8%) | CB modal essentially flat (80.8 → 80.1); KR holds |
+| **H** | — | — | **58.2%** (slipped back from 59.4% in pass 3) |
+| **I** | **FAIL** (no significant cell) | **PASS** (KR-ETH WHALE_UP n=45 r=−0.369 p=0.009) | **CB-ETH WHALE_DOWN finding from pass 3 didn't survive resegmentation** |
+
+The CB-ETH WHALE_DOWN result reported in pass 3 (n=8, r=−0.674,
+p=0.025) re-evaluated to n=8 r=−0.380 p=0.315 — same chunk count,
+different chunk boundaries from PELT, different correlation. This is
+a second small-sample finding that didn't survive more data: pass 2's
+CB-ETH WHALE_UP "momentum" (withdrawn in pass 3), and now pass 3's
+CB-ETH WHALE_DOWN (withdrawn here). **Both CB-ETH-specific edges have
+failed to reproduce.** The KR-ETH WHALE_UP fade (n=45 now) remains
+the only ETH cell that has survived three consecutive passes at
+growing n.
+
+### BTC at 5.8h (FIRST EVER)
+
+The new `btc_collectors_durable.yml` finished its first cycle and
+committed bins to `data/btc-bins` (new branch). Corpus: 5.8h on both
+CB-BTC and KR-BTC spot. n per regime is 1–8 — treat individual cells
+as suggestive, not confirmed; the gate-level structure is what matters.
+
+Snapshot at `data/btc-bins` commit `7fc3d05`.
+
+| Gate | CB-BTC | KR-BTC | Notes |
+|---|---|---|---|
+| **G** | **FAIL** (2 classes only, modal 80%) | **PASS** (4 classes, modal 54.5%) | CB-BTC at 5.8h is only EQUILIBRIUM + WHALE_UP; needs more data |
+| **H** | — | — | **PASS at 60.9%** — first venue pair to clear 60% threshold on first run |
+| **I** | **PASS** (CB-BTC WHALE_UP n=4 r=−0.800 **p=0.059**) | **FAIL** (KR-BTC WHALE_UP n=7 r=−0.461 p=0.245) | CB-BTC borderline mean-revert; KR-BTC same direction not yet sig |
+
+**Key BTC findings:**
+
+1. **Gate H clears on the very first BTC pass.** ETH never got above
+   59.4% even after 56.5h. **BTC venues agree more than ETH venues.**
+   Working hypothesis: BTC has more institutional flow (more
+   structural homogeneity); ETH has more retail (more idiosyncratic
+   per-venue actor mix). Confirm with more data.
+2. **No HERD activity captured in the 5.8h window** on either BTC
+   venue. Either a quiet 5.8h (regime-conditional sampling artifact)
+   or BTC's HERD threshold needs separate calibration vs ETH.
+3. **No WHALE→HERD cascades, no cross-venue simultaneity** — same as
+   point 2; expected at this corpus length.
+
+### Cross-asset / cross-venue read on WHALE_UP
+
+| Cell | n | r | p | direction |
+|---|---:|---:|---:|---|
+| CB-ETH WHALE_UP | 16 | +0.190 | 0.469 | not significant; was momentum at small n, faded |
+| KR-ETH WHALE_UP | 45 | **−0.369** | **0.009** | **mean-revert, robust across 4 passes** |
+| CB-BTC WHALE_UP |  4 | −0.800 | 0.059 | mean-revert (borderline; tiny n) |
+| KR-BTC WHALE_UP |  7 | −0.461 | 0.245 | mean-revert direction (not yet sig) |
+
+**3 of 4 cells lean mean-revert on WHALE_UP. The fourth (CB-ETH) is
+the consistent outlier and its "momentum" claim has now failed three
+significance tests at growing n.** Working unified read: WHALE_UP
+fades across both crypto majors and both major spot venues, with
+CB-ETH the lone exception that has not yet shown a significant
+positive r at any sample size. The pass-2 venue-divergent
+interpretation should be considered withdrawn pending dramatic new
+evidence.
+
+### Perp collectors — debug + replacement
+
+The first BTC run was supposed to deliver perp data on Binance USDT-M
+and Kraken Futures alongside CB+KR spot. **Both perp collectors failed
+in production despite working on local smoke tests:**
+
+**Binance USDT-M perp** (`fstream.binance.com`): bins file came back
+literally `{}` after 5.8h. HTTPS to fstream is reachable (404 at /),
+but the WS handshake or auth-free trade stream doesn't deliver data
+from GHA's egress IPs in practice. The optimistic read that fstream
+sidestepped api.binance.com's geo-block (HTTP 451 from US/cloud) was
+wrong, at least for our case.
+
+**Kraken Futures perp** (`futures.kraken.com/ws/v1`): 21k bins created
+from ticker channel updates, but **only 29 had any trade activity**
+(0.14%). Live probe confirmed: subscribe → emit one
+`feed: trade_snapshot` with the recent N trades → emit zero
+`feed: trade` updates over the next 25 seconds. The v1 endpoint
+appears to be snapshot-only for unauthenticated trade subscriptions.
+The 29 active bins all came from connect/reconnect snapshots, not
+live trade flow.
+
+**Replacement: Bybit V5 linear perp.** Verified live: 47 trade-like
+messages in 15 seconds on BTCUSDT during smoke test. Public WS at
+`wss://stream.bybit.com/v5/public/linear`, no geo-block on US/cloud
+egress, well-documented schema. New collectors:
+- `bybit_btcusdt_perp_collector.py`
+- `bybit_ethusdt_perp_collector.py`
+
+Both workflows now run Bybit instead of Binance + Kraken Futures.
+The broken `binance_*_perp_collector.py` and `kraken_*_perp_collector.py`
+files remain in the repo as reference (for future debugging) but are
+not invoked.
+
+### Net active cells after this pass
+
+| Asset | Venue | Source | Status |
+|---|---|---|---|
+| ETH | CB | spot | RT 56.5h |
+| ETH | KR | spot | RT 56.5h |
+| ETH | Bybit | perp (new) | starts on next workflow run |
+| BTC | CB | spot | RT 5.8h |
+| BTC | KR | spot | RT 5.8h |
+| BTC | Bybit | perp (new) | starts on next workflow run |
+
+3 working cells per asset. Coinbase futures (INTX) intentionally
+parked — needs non-US account.
+
+### Next-evaluation triggers
+
+Rerun once any of:
+- **Bybit perp data lands** (next workflow cycle, ~6h) — first chance
+  to look at spot-vs-perp basis structure on either asset
+- **BTC corpus reaches 24h** — gate G might clear on CB-BTC once
+  more regime classes appear
+- **ETH cross-venue agreement crosses 60%** for two consecutive passes
+  (would unblock H + G + I together for the first time)
+- **CB-ETH WHALE_UP n reaches 30+** with p still > 0.10 — would
+  formally close the venue-divergent question
+
+### One-shot backfill in progress
+
+Backfill workflow (`backfill_oneshot.yml`, commit `3005b5c`) is
+running at time of writing. Sources:
+
+- **Binance Vision** (data.binance.vision) — daily aggTrades zips for
+  BTCUSDT + ETHUSDT futures, targeting 30 days. Vision is an S3
+  bucket, NOT subject to the fstream geo-block.
+- **Kraken /Trades** — paginated public endpoint, targeting 30 days
+  for XBTUSD + ETHUSD spot, ~30-90 min per pair at 1 req/s rate limit.
+- **Coinbase /trades** — paginated public endpoint, targeting 30 days
+  but capped by wallclock budget; realistic depth ~7-15 days for BTC.
+
+Total wallclock estimate ~3-5h. Will fill `data/eth-bins` and
+`data/btc-bins` with merged historical + RT data. Re-run
+phase1_5_evaluator after backfill commits land for a 30-day-corpus
+analysis.
