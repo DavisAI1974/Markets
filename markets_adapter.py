@@ -61,11 +61,27 @@ class MarketBar:
         return self.close
 
     @property
-    def ofi(self) -> float:
+    def signed_volume(self) -> float:
+        """Net aggressor-side volume (buy_vol - sell_vol).
+
+        NB: this is NOT Cont-Kukanov order flow imbalance (OFI), which
+        requires top-of-book size deltas (ΔBidSize·1[B'≥B] − ΔAskSize·1[A'≤A])
+        and would need L1 size capture in the collectors. Once L1 sizes
+        are in the bin schema, see MarketFeatures.book_ofi for the
+        proper measure.
+        """
         return self.buy_vol - self.sell_vol
 
     @property
+    def ofi(self) -> float:
+        """DEPRECATED alias for signed_volume; kept so existing callers
+        don't break. New code should use signed_volume."""
+        return self.signed_volume
+
+    @property
     def dipole(self) -> float:
+        """signed_volume normalized by total volume; in [-1, +1]. Strictly
+        a rescaled version of signed_volume."""
         s = self.buy_vol + self.sell_vol
         return (self.buy_vol - self.sell_vol) / (s + 1e-9) if s > 0 else 0.0
 
@@ -143,6 +159,11 @@ class MarketFeatures:
     ret_kurt: float
     autocorr_lag1: float
     mean_dipole: float
+    # signed-volume mean (buy_vol - sell_vol) per chunk. NB: this is
+    # COLLINEAR with mean_dipole (just rescaled by total volume) and
+    # does NOT track Cont-Kukanov OFI (which needs L1 size deltas).
+    # Kept for backward-compat with cached embeddings; new analysis
+    # should prefer mean_dipole or, once L1 sizes land, book_ofi.
     mean_ofi: float
     volume_zscore: float
     realized_vol: float
@@ -161,6 +182,11 @@ class MarketFeatures:
     # [0,1]; high = informed flow concentrated, predicts imminent move.
     vpin: float = 0.0
     vpin_n_buckets: int = 0                 # how many full volume buckets the chunk had
+    # Placeholder for proper Cont-Kukanov OFI from top-of-book size
+    # deltas. Stays 0.0 until L1 sizes are captured in the bin schema
+    # (see Tier-1 microprice work). Adding the field now so downstream
+    # serialization is forward-compatible without a breaking change.
+    book_ofi: float = 0.0
     # Session-time (universal-state context; chunks don't bring their own time)
     hour_utc: float = 0.0                   # 0-23, normalized 0-1 elsewhere
     day_of_week: int = 0                    # 0=Mon, 6=Sun
