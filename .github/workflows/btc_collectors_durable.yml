@@ -1,15 +1,22 @@
 name: BTC Collectors (durable)
 
-# Runs BTC-USD spot collectors on Coinbase + Kraken AND BTC perpetual
-# futures collectors on Binance USDT-M and Kraken Futures, on GitHub's
-# compute, independent of any local device. Persists bins to the
-# `data/btc-bins` branch via force-push (cumulative state, no need for
-# history).
+# Runs BTC-USD spot collectors on Coinbase + Kraken AND BTC-USDT
+# linear perp collector on Bybit, on GitHub's compute, independent
+# of any local device. Persists bins to the `data/btc-bins` branch
+# via force-push (cumulative state, no need for history).
 #
 # Schedule: every 6 hours. Each run collects for 5h50m, leaving ~10 min
 # gap before next scheduled run. Public repo = unlimited minutes.
 #
 # Manual trigger via "Run workflow" button on Actions tab, or via API.
+#
+# Perp venue history: tried Binance USDT-M (fstream geo-blocked from
+# GHA in practice — empty bins despite TLS reachability) and Kraken
+# Futures v1 (only emits trade_snapshot on subscribe, no live trade
+# updates — 99.5% empty bins). Both .py collectors are kept in the
+# repo for reference but not executed in this workflow. Bybit V5 linear
+# perp WS is the working venue (verified ~3-7 trade msgs/sec on BTC
+# during normal hours, no geo restrictions on US/cloud egress).
 
 on:
   schedule:
@@ -22,6 +29,7 @@ on:
         type: string
   push:
     branches:
+      - claude/new-session-o3vnm
       - claude/continue-phase-2-pipeline-UFiGY
     paths:
       - '.github/workflows/btc_collectors_durable.yml'
@@ -43,7 +51,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: claude/continue-phase-2-pipeline-UFiGY
-          fetch-depth: 0
+          fetch-depth: 0   # need full history to access data branch
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -60,8 +68,7 @@ jobs:
             git fetch origin data/btc-bins
             git checkout origin/data/btc-bins -- btc_coinbase_bins.json 2>/dev/null || echo "[restore] no btc_coinbase_bins.json on data branch yet"
             git checkout origin/data/btc-bins -- btc_kraken_bins.json 2>/dev/null || echo "[restore] no btc_kraken_bins.json on data branch yet"
-            git checkout origin/data/btc-bins -- btc_binance_perp_bins.json 2>/dev/null || echo "[restore] no btc_binance_perp_bins.json on data branch yet"
-            git checkout origin/data/btc-bins -- btc_kraken_perp_bins.json 2>/dev/null || echo "[restore] no btc_kraken_perp_bins.json on data branch yet"
+            git checkout origin/data/btc-bins -- btc_bybit_perp_bins.json 2>/dev/null || echo "[restore] no btc_bybit_perp_bins.json on data branch yet"
           else
             echo "[restore] data branch does not exist; first run, starting fresh"
           fi
@@ -69,10 +76,9 @@ jobs:
 
       - name: Connectivity check
         run: |
-          curl -sS --max-time 5 -o /dev/null -w "Coinbase WS:     %{http_code}\n" https://ws-feed.exchange.coinbase.com/ || true
-          curl -sS --max-time 5 -o /dev/null -w "Kraken spot WS:  %{http_code}\n" https://ws.kraken.com/ || true
-          curl -sS --max-time 5 -o /dev/null -w "Kraken fut WS:   %{http_code}\n" https://futures.kraken.com/ || true
-          curl -sS --max-time 5 -o /dev/null -w "Binance fstream: %{http_code}\n" https://fstream.binance.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Coinbase WS:    %{http_code}\n" https://ws-feed.exchange.coinbase.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Kraken spot WS: %{http_code}\n" https://ws.kraken.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Bybit linear:   %{http_code}\n" https://stream.bybit.com/ || true
 
       - name: Run BTC collectors in parallel
         timeout-minutes: 350
@@ -83,16 +89,13 @@ jobs:
           CB_PID=$!
           python kraken_btcusd_collector.py --duration $DURATION --bins-path btc_kraken_bins.json > /tmp/kr_btc.log 2>&1 &
           KR_PID=$!
-          python binance_btcusdt_perp_collector.py --duration $DURATION --bins-path btc_binance_perp_bins.json > /tmp/bn_btc_perp.log 2>&1 &
-          BN_PID=$!
-          python kraken_btcusd_perp_collector.py --duration $DURATION --bins-path btc_kraken_perp_bins.json > /tmp/kr_btc_perp.log 2>&1 &
-          KRP_PID=$!
-          echo "[run] CB PID=$CB_PID, KR PID=$KR_PID, BN-perp PID=$BN_PID, KR-perp PID=$KRP_PID"
+          python bybit_btcusdt_perp_collector.py --duration $DURATION --bins-path btc_bybit_perp_bins.json > /tmp/by_btc_perp.log 2>&1 &
+          BY_PID=$!
+          echo "[run] CB PID=$CB_PID, KR PID=$KR_PID, BY-perp PID=$BY_PID"
           wait $CB_PID; CB_EXIT=$?
           wait $KR_PID; KR_EXIT=$?
-          wait $BN_PID; BN_EXIT=$?
-          wait $KRP_PID; KRP_EXIT=$?
-          echo "[run] CB exit=$CB_EXIT, KR exit=$KR_EXIT, BN-perp exit=$BN_EXIT, KR-perp exit=$KRP_EXIT"
+          wait $BY_PID; BY_EXIT=$?
+          echo "[run] CB exit=$CB_EXIT, KR exit=$KR_EXIT, BY-perp exit=$BY_EXIT"
           echo ""
           echo "=== Coinbase BTC log tail ==="
           tail -30 /tmp/cb_btc.log
@@ -100,16 +103,13 @@ jobs:
           echo "=== Kraken BTC log tail ==="
           tail -30 /tmp/kr_btc.log
           echo ""
-          echo "=== Binance BTC-PERP log tail ==="
-          tail -30 /tmp/bn_btc_perp.log
-          echo ""
-          echo "=== Kraken BTC-PERP log tail ==="
-          tail -30 /tmp/kr_btc_perp.log
+          echo "=== Bybit BTC-PERP log tail ==="
+          tail -30 /tmp/by_btc_perp.log
 
       - name: Bin file stats
         if: always()
         run: |
-          for f in btc_coinbase_bins.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json; do
+          for f in btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json; do
             if [ -f "$f" ]; then
               SIZE=$(stat -c%s "$f")
               N_BINS=$(python -c "import json,sys; print(len(json.load(open(sys.argv[1]))))" "$f" 2>/dev/null || echo "?")
@@ -126,19 +126,17 @@ jobs:
           mkdir -p /tmp/bins
           cp btc_coinbase_bins.json /tmp/bins/ 2>/dev/null || true
           cp btc_kraken_bins.json /tmp/bins/ 2>/dev/null || true
-          cp btc_binance_perp_bins.json /tmp/bins/ 2>/dev/null || true
-          cp btc_kraken_perp_bins.json /tmp/bins/ 2>/dev/null || true
+          cp btc_bybit_perp_bins.json /tmp/bins/ 2>/dev/null || true
 
           git checkout --orphan data/btc-bins-tmp
           git rm -rf . > /dev/null 2>&1 || true
 
           cp /tmp/bins/btc_coinbase_bins.json . 2>/dev/null || true
           cp /tmp/bins/btc_kraken_bins.json . 2>/dev/null || true
-          cp /tmp/bins/btc_binance_perp_bins.json . 2>/dev/null || true
-          cp /tmp/bins/btc_kraken_perp_bins.json . 2>/dev/null || true
+          cp /tmp/bins/btc_bybit_perp_bins.json . 2>/dev/null || true
 
-          if [ -f btc_coinbase_bins.json ] || [ -f btc_kraken_bins.json ] || [ -f btc_binance_perp_bins.json ] || [ -f btc_kraken_perp_bins.json ]; then
-            git add btc_coinbase_bins.json btc_kraken_bins.json btc_binance_perp_bins.json btc_kraken_perp_bins.json 2>/dev/null || true
+          if [ -f btc_coinbase_bins.json ] || [ -f btc_kraken_bins.json ] || [ -f btc_bybit_perp_bins.json ]; then
+            git add btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json 2>/dev/null || true
             git commit -m "BTC bins update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/btc-bins-tmp:data/btc-bins
             echo "[commit] pushed to data/btc-bins"
