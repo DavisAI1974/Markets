@@ -383,8 +383,12 @@ class SignalStore:
         # Perp funding-rate watcher; emits FUNDING_OVERLEVERED_{LONG,SHORT}
         # / FUNDING_CLEARED on threshold transitions. Persists every
         # new funding-cycle observation to backend_funding_history.jsonl.
+        # funding_calibration.json (from calibrate_funding.py once
+        # ~30+ cycles accumulate) gives per-(asset, venue) p75/p95
+        # thresholds; absent => hardcoded fallback.
         self.funding_monitor = FundingMonitor(
-            history_path=os.path.join(REPO_ROOT, "backend_funding_history.jsonl"))
+            history_path=os.path.join(REPO_ROOT, "backend_funding_history.jsonl"),
+            calibration_path=os.path.join(REPO_ROOT, "funding_calibration.json"))
         # Liquidation-burst detector. Reads the same perp bins the basis
         # monitor uses; flags 1-min bars with extreme volume z + one-sided
         # flow + bar-to-bar price gap. Synthetic detection on existing
