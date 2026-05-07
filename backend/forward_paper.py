@@ -96,6 +96,29 @@ CELLS: list[CellSpec] = [
 
 _PRACTICE_FEE_BPS = 25.0
 
+# Vol-target sizing (Tier 3.2). Chunk realized_vol is the std of bar
+# log-returns over the chunk window. We pick a target around which
+# notional is unscaled, then clip the multiplier so a single high-vol
+# chunk can't blow position size up nor a quiet chunk pile risk on.
+# 0.0050 ≈ 50 bps stdev over a ~30-bar window matches the ETH/BTC
+# spot corpora we've seen across all six passes.
+VOL_TARGET = 0.0050
+VOL_MULT_MIN = 0.5
+VOL_MULT_MAX = 2.0
+
+
+def vol_target_multiplier(realized_vol: float,
+                            target: float = VOL_TARGET,
+                            lo: float = VOL_MULT_MIN,
+                            hi: float = VOL_MULT_MAX) -> float:
+    """Inverse-vol sizing: notional ∝ target / realized_vol, clipped.
+    A chunk at exactly `target` returns 1.0; quieter chunks size up
+    (capped at `hi`); louder chunks size down (floored at `lo`)."""
+    if realized_vol is None or realized_vol <= 1e-9:
+        return 1.0
+    raw = float(target) / float(realized_vol)
+    return max(float(lo), min(float(hi), raw))
+
 
 def find_matching_cells(asset: str, venue: str, regime: str,
                           feat: object, chunk: object) -> list[CellSpec]:
@@ -112,11 +135,18 @@ def find_matching_cells(asset: str, venue: str, regime: str,
     return out
 
 
-def open_paper_trade(cell: CellSpec, fill_price: float) -> dict:
+def open_paper_trade(cell: CellSpec, fill_price: float,
+                       vol_multiplier: float = 1.0) -> dict:
     """Build the open-trade dict matching backend_practice_trades.jsonl
     schema (same shape as the manual practice path in api_server.py).
-    Caller persists via _persist_practice_trade()."""
-    qty = cell.notional_usd / fill_price if fill_price > 0 else 0.0
+    Caller persists via _persist_practice_trade().
+
+    vol_multiplier: pass a value from `vol_target_multiplier(feat.realized_vol)`
+    to scale notional inversely with chunk volatility. Defaults to 1.0
+    (no scaling) so callers that haven't been migrated still get the
+    fixed-notional behavior."""
+    scaled_notional = float(cell.notional_usd) * float(vol_multiplier)
+    qty = scaled_notional / fill_price if fill_price > 0 else 0.0
     notional = fill_price * qty
     fee_usd = notional * (_PRACTICE_FEE_BPS / 10000.0)
     return {
@@ -141,6 +171,8 @@ def open_paper_trade(cell: CellSpec, fill_price: float) -> dict:
         "exit_ts_utc": 0.0,
         "realized_pnl_usd": 0.0,
         "hold_minutes": float(cell.hold_minutes),
+        "vol_multiplier": float(vol_multiplier),
+        "base_notional_usd": float(cell.notional_usd),
     }
 
 

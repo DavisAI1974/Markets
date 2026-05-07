@@ -57,6 +57,7 @@ from playbook_generator import get_drift_status
 from backend.forward_paper import (
     find_matching_cells as _fp_find_cells,
     open_paper_trade as _fp_open_trade,
+    vol_target_multiplier as _fp_vol_mult,
     is_expired as _fp_is_expired,
     close_paper_trade as _fp_close_trade,
 )
@@ -828,15 +829,21 @@ class SignalStore:
         if not cells:
             return
         bid, ask, mid = _current_quote(asset, venue)
+        # Vol-target sizing: scale notional ∝ VOL_TARGET / chunk realized_vol,
+        # clipped to [0.5x, 2.0x]. Same multiplier applies to all cells
+        # firing on this chunk since they share the same regime context.
+        rv = float(getattr(feat, "realized_vol", 0.0) or 0.0)
+        vol_mult = _fp_vol_mult(rv)
         for cell in cells:
             fill_price = (ask if cell.side == "buy" else bid) or mid
             if fill_price <= 0:
                 continue
-            trade = _fp_open_trade(cell, fill_price)
+            trade = _fp_open_trade(cell, fill_price, vol_multiplier=vol_mult)
             _persist_practice_trade(trade)
             print(f"[forward-paper] opened {cell.cell_id} "
                   f"{cell.side} {asset}/{venue} @ {fill_price:.4f} "
-                  f"(intent_id={trade['intent_id']})", flush=True)
+                  f"(intent_id={trade['intent_id']} "
+                  f"rv={rv:.4f} vol_mult={vol_mult:.2f})", flush=True)
 
     def _sweep_close_forward_paper_trades(self) -> None:
         trades = _load_practice_trades()
