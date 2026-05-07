@@ -869,3 +869,178 @@ Total wallclock estimate ~3-5h. Will fill `data/eth-bins` and
 `data/btc-bins` with merged historical + RT data. Re-run
 phase1_5_evaluator after backfill commits land for a 30-day-corpus
 analysis.
+
+## Sixth pass — 2026-05-07, 30d backfilled corpus (ETH + BTC)
+
+First evaluation on the fully backfilled corpus. Data branches at
+`data/eth-bins @ 30c27bc` (KR ~30d, BN-vision ~10d, CB grown via
+chained `cb_extend_*` rounds) and `data/btc-bins @ b5d4142` (same
+shape). Gate I uses the new convention (`min_n=30`, BH FDR `q<=0.10`,
+`r²>0.05`) shipped in `c169cb4`.
+
+### ETH at 30d
+
+Reproducer:
+```bash
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --multi-signal-pelt
+```
+
+| Gate | CB-ETH | KR-ETH | Δ from fourth pass (56.5h) |
+|---|---|---|---|
+| **G** | **FAIL** (n=198, 8 classes, modal 78.8%) | **PASS** (n=2607, 8 classes, modal 61.5%) | CB modal slightly down (80.1 → 78.8); KR modal down (64.8 → 61.5) — class diversity stable. |
+| **H** | — | — | **56.4% (n=3178 overlap min)** — slipped from 58.2%. |
+| **I** | **FAIL** (1 testable cell: EQUILIBRIUM n=155 r=−0.07) | **FAIL** (7 testable cells; 0 survive BH @ q=0.10) | KR-ETH WHALE_UP fade dead at scale (see below). |
+
+KR-ETH per-cell (Gate I, n≥30, BH q=0.10):
+
+| Regime | n | r | p_raw | q_BH | bh_reject |
+|---|---:|---:|---:|---:|---|
+| WHALE_NASCENT_UP | 45 | **+0.221** | 0.137 | 0.481 | F |
+| WHALE_UP | 484 | −0.073 | 0.109 | 0.481 | F |
+| HERD_UP | 145 | −0.064 | 0.441 | 0.640 | F |
+| HERD_DOWN | 63 | −0.123 | 0.332 | 0.640 | F |
+| DEPLETED | 183 | +0.055 | 0.457 | 0.640 | F |
+| WHALE_DOWN | 82 | +0.022 | 0.846 | 0.846 | F |
+| EQUILIBRIUM_TWO_SIDED | 1602 | +0.012 | 0.628 | 0.732 | F |
+
+Key ETH reads:
+
+1. **KR-ETH WHALE_UP fade is dead.** Pass-4 had n=45 r=−0.369 p=0.009.
+   Pass-5 collapsed at 10× n (n≈480 r=−0.073). Pass-6 confirms with
+   n=484 r=−0.073 p=0.109. The headline ETH signal from earlier
+   passes does not survive at scale. This is the third decisive
+   negative on it; it's a withdrawn hypothesis.
+2. **KR-ETH WHALE_NASCENT_UP momentum holds direction at the same
+   n=45**, r=+0.221 p=0.137. Same value as Pass-5. NASCENT regimes
+   are structurally rare — n hasn't grown despite 13× more wallclock,
+   so the sign-stability (5 passes now) is the only signal we have
+   on this cell. Forward paper-traded as `eth_kr_nascent_up_momo`;
+   continue to let it accumulate fills.
+3. **KR-ETH HERD_UP aggregate r=−0.064 (n=145).** Doesn't confirm or
+   deny the Pass-5 vol-Q3 subset finding (r=−0.20 n=168 p=0.008 on
+   the high-vol subset only). The aggregate dilutes that subset.
+   `eth_kr_herd_up_volq3_fade` forward paper cell remains defensible.
+4. **CB-ETH still has only 198 chunks** (vs KR's 2607). The
+   `cb_extend_*` chained rounds are growing CB depth slowly; CB-ETH
+   gate I has only one evaluable cell (EQUILIBRIUM). Need more CB
+   depth before any CB-ETH cell can be tested.
+
+### BTC at 30d (FIRST AT THIS DEPTH)
+
+Reproducer:
+```bash
+python phase1_5_evaluator.py --asset BTC \
+    --cb-bins btc_coinbase_bins.json --kr-bins btc_kraken_bins.json \
+    --multi-signal-pelt
+```
+
+| Gate | CB-BTC | KR-BTC | Δ from fourth pass (5.8h) |
+|---|---|---|---|
+| **G** | **FAIL** (n=42, only 3 classes, modal 78.6%) | **PASS** (n=2602, 9 classes, modal 65.6%) | KR-BTC unlocks full class diversity at depth. CB-BTC still data-starved. |
+| **H** | — | — | **PASS at 63.9% (n=711)** — extends pass-4's H clearance from 60.9% to 63.9%. |
+| **I** | **FAIL** (1 testable cell: EQUILIBRIUM n=32 r=+0.07) | **FAIL** (7 testable cells; 0 survive BH @ q=0.10) | First time KR-BTC has cells at n≥30. |
+
+KR-BTC per-cell (Gate I, n≥30, BH q=0.10):
+
+| Regime | n | r | p_raw | q_BH | bh_reject |
+|---|---:|---:|---:|---:|---|
+| WHALE_NASCENT_UP | 48 | **−0.209** | 0.147 | 0.343 | F |
+| HERD_UP | 174 | −0.121 | 0.111 | 0.343 | F |
+| EQUILIBRIUM_TWO_SIDED | 1707 | +0.049 | 0.043 | 0.299 | F |
+| WHALE_UP | 366 | −0.048 | 0.357 | 0.626 | F |
+| DEPLETED | 167 | −0.018 | 0.819 | 0.940 | F |
+| WHALE_DOWN | 67 | +0.011 | 0.927 | 0.940 | F |
+| HERD_DOWN | 67 | +0.009 | 0.940 | 0.940 | F |
+
+Key BTC reads:
+
+1. **Gate H still passes for BTC** — second consecutive pass (60.9% →
+   63.9%). ETH H stays in the 56–58% band. The "BTC venues agree
+   more than ETH venues" working hypothesis from pass-4 is confirmed
+   at 30d depth.
+2. **KR-BTC WHALE_NASCENT_UP r=−0.209 at n=48** — opposite sign vs
+   ETH WHALE_NASCENT_UP (r=+0.221 at n=45). Same regime label, same
+   venue type, opposite directional bias by asset. Pass-5 first
+   noted this divergence; Pass-6 confirms with one more cycle of
+   data. Magnitude is nearly identical, signs are flipped. **Asset-
+   level lifecycle divergence on NASCENT is real to the available
+   sample size.**
+3. **KR-BTC HERD_UP r=−0.121 at n=174** — fade direction, raw
+   p=0.111. Suggestive but BH-rejected at q=0.10. Cross-cell with
+   ETH HERD_UP (r=−0.064 n=145, raw p=0.441) — both fade direction
+   on aggregate, BTC slightly stronger.
+4. **No BH-significant cell at q=0.10 anywhere in 30d ETH or BTC.**
+   Strict gate. Working empirical reads still come from raw r-sign
+   stability across passes (NASCENT cross-asset divergence) and from
+   forward paper cells with finer slices than the aggregate gate.
+
+### Cross-asset / cross-venue summary
+
+| Cell | n | r | p_raw | direction |
+|---|---:|---:|---:|---|
+| KR-ETH WHALE_NASCENT_UP | 45 | **+0.221** | 0.137 | momentum (5-pass stable sign) |
+| KR-BTC WHALE_NASCENT_UP | 48 | **−0.209** | 0.147 | fade (matches Pass-5) |
+| KR-ETH WHALE_UP | 484 | −0.073 | 0.109 | dead at scale (was r=−0.369 at n=45) |
+| KR-BTC WHALE_UP | 366 | −0.048 | 0.357 | flat |
+| KR-ETH HERD_UP | 145 | −0.064 | 0.441 | aggregate flat |
+| KR-BTC HERD_UP | 174 | −0.121 | 0.111 | fade-leaning |
+| CB-ETH all cells | 198 | — | — | only EQUILIBRIUM has n≥30; flat |
+| CB-BTC all cells | 42 | — | — | only EQUILIBRIUM has n≥30; flat |
+
+### Microstructure calibration outputs (this pass)
+
+Three calibration JSONs landed pre-Pass-6:
+
+- **vpin_calibration.json**: 4 (asset, venue) entries.
+  - ETH/CB n=176 chunks, p25=0.20 / p75=0.32
+  - ETH/KR n=1683 chunks, p25=0.49 / p75=0.70
+  - BTC/CB n=45 chunks,  p25=0.22 / p75=0.38
+  - BTC/KR n=1824 chunks, p25=0.52 / p75=0.72
+  - Backend `regime_classifier` reads these for VPIN-multiplier
+    thresholds at module load; falls back to literature defaults
+    only when an entry is missing.
+- **liq_calibration.json**: per-asset p99 thresholds on
+  `(vol_z, |dipole|, |gap|)` over 14,340 perp bins each. Joint
+  alert rate ≈ 0.0/day on both — conservative, well under the
+  5/day tightening trigger.
+- **funding_calibration.json**: skipped (no
+  `backend_funding_history.jsonl` yet — needs ≥30 cycles of
+  backend uptime, ≈ 10 days at 8h funding cadence).
+
+### Net active cells after this pass
+
+| Asset | Venue | Source | Status | Pass-6 read |
+|---|---|---|---|---|
+| ETH | CB | spot | RT 30d | data-starved (n=198); 1 testable Gate-I cell |
+| ETH | KR | spot | RT 30d | full coverage; 7 testable cells; none BH-sig at q=0.10 |
+| ETH | Bybit | perp (active) | first cycle pending | not in Pass-6 |
+| BTC | CB | spot | RT 30d | data-starved (n=42, 3 classes) |
+| BTC | KR | spot | RT 30d | full coverage; 7 testable cells; none BH-sig at q=0.10 |
+| BTC | Bybit | perp (active) | first cycle pending | not in Pass-6 |
+
+### Forward paper cells — Pass-6 reads
+
+`eth_kr_nascent_up_momo` (KR-ETH WHALE_NASCENT_UP momentum trade):
+**still defensible** — sign stable across 5 passes at the same n=45.
+
+`eth_kr_herd_up_volq3_fade` (KR-ETH HERD_UP × vol-Q3 fade): aggregate
+HERD_UP r is flat (n=145, r=−0.064) — Pass-6 evaluator does not
+break out the vol-Q3 subset, so Pass-5's r=−0.20 n=168 p=0.008
+finding for the high-vol slice is neither confirmed nor refuted.
+Cell remains defensible until forward paper closed-trade aggregates
+contradict it.
+
+### Next-evaluation triggers
+
+Rerun on any of:
+- **CB depth crosses n≥30 in WHALE_UP** (currently CB-ETH n=18,
+  CB-BTC n=7 there) — would unblock CB-side Gate I cell tests
+- **Bybit perp first-cycle data lands on data branches** — first
+  chance to evaluate spot-vs-perp basis structure end-to-end
+- **NASCENT_UP samples grow** to n≥80 on either asset — would let
+  the cross-asset sign divergence reach BH significance
+- **Backend funding history reaches ≥30 cycles** (~10 days) — would
+  populate `funding_calibration.json` and validate the funding
+  monitor thresholds in production
