@@ -36,6 +36,11 @@ from typing import Optional
 # Used only when funding_calibration.json is missing or doesn't have an
 # entry for this (asset, venue). Empirical per-key thresholds (p25/p75/p95
 # of historical |rate|) come from calibrate_funding.py.
+#
+# TODO recalibration: re-run `python calibrate_funding.py` weekly once
+# backend_funding_history.jsonl accumulates ≥30 funding cycles per
+# (asset, venue) on AWS (~10 days uptime at the 8h cadence). See
+# TODO.md "Recalibrations to re-run as the corpus grows".
 ELEVATED_THRESHOLD = 0.0001     # 1 bp / 8h
 EXTREME_THRESHOLD = 0.0005      # 5 bp / 8h
 CLEAR_THRESHOLD = 0.00003       # 0.3 bp / 8h

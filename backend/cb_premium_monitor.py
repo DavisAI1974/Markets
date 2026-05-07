@@ -45,6 +45,12 @@ SUSTAINED_CYCLES = 5
 MIN_OBS_FOR_Z = 60
 HISTORY_PATH_DEFAULT = "backend_cb_premium_history.jsonl"
 HTTP_TIMEOUT_S = 6.0
+# TODO calibration: this monitor currently uses sigma cuts (HOT_Z=2.0
+# / CLEAR_Z=1.0) as policy. If we want empirical per-asset thresholds
+# the way oi_monitor and funding_monitor have, ship
+# calibrate_cb_premium.py that walks backend_cb_premium_history.jsonl
+# for p95/p50 of |premium_z|. Defer until ≥240 observations exist on
+# AWS. See TODO.md "CB premium calibration (deferred)".
 
 
 PREMIUM_SOURCES = [
