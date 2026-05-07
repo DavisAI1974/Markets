@@ -55,6 +55,7 @@ from backend.push import (
 from playbook_generator import get_playbook as get_dynamic_playbook
 from playbook_generator import get_drift_status
 from backend.forward_paper import (
+    entry_price_for_cell as _fp_entry_price,
     find_matching_cells as _fp_find_cells,
     open_paper_trade as _fp_open_trade,
     vol_target_multiplier as _fp_vol_mult,
@@ -835,13 +836,13 @@ class SignalStore:
         rv = float(getattr(feat, "realized_vol", 0.0) or 0.0)
         vol_mult = _fp_vol_mult(rv)
         for cell in cells:
-            fill_price = (ask if cell.side == "buy" else bid) or mid
+            fill_price = _fp_entry_price(cell, bid, ask, mid)
             if fill_price <= 0:
                 continue
             trade = _fp_open_trade(cell, fill_price, vol_multiplier=vol_mult)
             _persist_practice_trade(trade)
             print(f"[forward-paper] opened {cell.cell_id} "
-                  f"{cell.side} {asset}/{venue} @ {fill_price:.4f} "
+                  f"({cell.kind}) {cell.side} {asset}/{venue} @ {fill_price:.4f} "
                   f"(intent_id={trade['intent_id']} "
                   f"rv={rv:.4f} vol_mult={vol_mult:.2f})", flush=True)
 

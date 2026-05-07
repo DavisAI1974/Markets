@@ -32,7 +32,7 @@ from typing import Optional
 # ---------------------------------------------------------------------------
 
 DEFAULT_PLAYBOOKS: dict[str, str] = {
-    "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided market. No edge. Sit out unless flow becomes extremely one-sided.",
+    "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided market. Quiet directional edge — passive-quote market making earns the spread minus fees while regime persists. Exit on first WHALE/HERD flip.",
     "WHALE_UP": "One big buyer dominating. Piggyback if early; get out of the way if late. Watch for the buyer's order to finish.",
     "WHALE_DOWN": "One big seller dominating. Piggyback short if early; sit out if late. Watch for capitulation bottom.",
     "HERD_UP": "FOMO / panic buy — many actors aligned on the buy side. Follow with tight stops; fade after overshoot.",

@@ -36,10 +36,9 @@ class CellSpec:
     venue: str
     side: str               # "buy" (long-momentum) or "sell" (short-fade)
     notional_usd: float     # fixed notional per opened trade. Vol-target
-                            # sizing is a Tier-3 follow-up: scale notional
-                            # by 1/realized_vol_z so size shrinks in high-
-                            # vol regimes. Defer until forward data shows
-                            # the cell is real.
+                            # sizing (Tier 3.2) scales by VOL_TARGET /
+                            # realized_vol at open time, clipped to
+                            # [0.5x, 2.0x].
     hold_minutes: float     # auto-close after this many minutes. TODO:
                             # empirically calibrate per cell once
                             # backend_practice_trades.jsonl accumulates
@@ -54,6 +53,11 @@ class CellSpec:
     # Predicate: returns True iff the cell should fire on this chunk.
     # Args: regime (str), feat (MarketFeatures-like), chunk (MarketChunk-like).
     predicate: Callable[[str, object, object], bool]
+    kind: str = "directional"  # "directional" (default; aggressive marketable
+                               # entry/exit) or "mm_passive" (passive quoting:
+                               # entry on the resting side of the book, exit
+                               # on the opposite side, earning spread minus
+                               # round-trip fees instead of paying it).
 
 
 def _is_eth_kr_nascent_up(regime: str, feat: object, chunk: object) -> bool:
@@ -68,6 +72,13 @@ def _is_eth_kr_herd_up_volq3(regime: str, feat: object, chunk: object) -> bool:
     # sub-window finding (recent_pass5: r=-0.20 within vol-Q3 for ETH
     # KR HERD_UP at n=168, p=0.008).
     return vz is not None and float(vz) >= 0.67
+
+
+def _is_equilibrium(regime: str, feat: object, chunk: object) -> bool:
+    """MM cells fire on the modal regime — chunks where there's no
+    directional edge but the spread is alive. Pass-6 confirms this is
+    61-78% of all chunks across both assets and venues."""
+    return regime == "EQUILIBRIUM_TWO_SIDED"
 
 
 CELLS: list[CellSpec] = [
@@ -90,6 +101,42 @@ CELLS: list[CellSpec] = [
         note="forward paper: ETH KR HERD_UP fade within vol-Q3 (cell pass 5: "
              "r=-0.20 at n=168, p=0.008)",
         predicate=_is_eth_kr_herd_up_volq3,
+    ),
+    # Tier 3.1 EQUILIBRIUM market-making cells. One per (asset, venue) so
+    # each cell's realized P&L tracks the captured-spread minus
+    # round-trip-fees on its own venue. Hold short (5 min) so the cell
+    # exits before the regime drifts off EQUILIBRIUM; the actual real-
+    # money equivalent would also exit on regime flip via SSE rather
+    # than time-out.
+    CellSpec(
+        cell_id="eth_kr_eq_mm_passive",
+        asset="ETH", venue="KR", side="buy", kind="mm_passive",
+        notional_usd=1000.0, hold_minutes=5.0,
+        note="forward paper: ETH KR EQUILIBRIUM passive-quote MM. "
+             "Entry rests on bid; exit rests on ask; earns spread "
+             "minus 2 fee legs while regime persists.",
+        predicate=_is_equilibrium,
+    ),
+    CellSpec(
+        cell_id="eth_cb_eq_mm_passive",
+        asset="ETH", venue="CB", side="buy", kind="mm_passive",
+        notional_usd=1000.0, hold_minutes=5.0,
+        note="forward paper: ETH CB EQUILIBRIUM passive-quote MM.",
+        predicate=_is_equilibrium,
+    ),
+    CellSpec(
+        cell_id="btc_kr_eq_mm_passive",
+        asset="BTC", venue="KR", side="buy", kind="mm_passive",
+        notional_usd=1000.0, hold_minutes=5.0,
+        note="forward paper: BTC KR EQUILIBRIUM passive-quote MM.",
+        predicate=_is_equilibrium,
+    ),
+    CellSpec(
+        cell_id="btc_cb_eq_mm_passive",
+        asset="BTC", venue="CB", side="buy", kind="mm_passive",
+        notional_usd=1000.0, hold_minutes=5.0,
+        note="forward paper: BTC CB EQUILIBRIUM passive-quote MM.",
+        predicate=_is_equilibrium,
     ),
 ]
 
@@ -135,6 +182,22 @@ def find_matching_cells(asset: str, venue: str, regime: str,
     return out
 
 
+def entry_price_for_cell(cell: CellSpec, bid: float, ask: float, mid: float
+                            ) -> float:
+    """Return the simulated fill price for opening this cell's position.
+    Directional cells cross the spread (buy fills at ask, sell at bid);
+    mm_passive cells rest on the resting side (buy fills at bid, sell
+    at ask) — they would actually be filled when a counterparty crosses.
+    Falls back to mid if the appropriate side isn't quoted."""
+    if cell.kind == "mm_passive":
+        target = bid if cell.side == "buy" else ask
+    else:
+        target = ask if cell.side == "buy" else bid
+    if target and target > 0:
+        return float(target)
+    return float(mid)
+
+
 def open_paper_trade(cell: CellSpec, fill_price: float,
                        vol_multiplier: float = 1.0) -> dict:
     """Build the open-trade dict matching backend_practice_trades.jsonl
@@ -173,6 +236,7 @@ def open_paper_trade(cell: CellSpec, fill_price: float,
         "hold_minutes": float(cell.hold_minutes),
         "vol_multiplier": float(vol_multiplier),
         "base_notional_usd": float(cell.notional_usd),
+        "kind": str(cell.kind),
     }
 
 
@@ -189,9 +253,19 @@ def is_expired(trade: dict, now_utc: float) -> bool:
 
 def close_paper_trade(trade: dict, bid: float, ask: float, mid: float) -> None:
     """Mutates `trade` in place to closed status with exit_price + realized P&L.
-    Mirrors the math of /api/practice-trade/close in api_server.py."""
+    Mirrors the math of /api/practice-trade/close in api_server.py.
+
+    For directional cells (kind=='directional' or unset) a buy closes at
+    bid, a sell at ask — same as a market-order exit that crosses the
+    spread. For mm_passive cells the exit also rests on the book
+    (buy closes at ask, sell at bid), so the round trip captures
+    full bid-ask spread minus fees instead of paying it."""
     side = trade.get("side")
-    exit_price = bid if side == "buy" else ask
+    kind = trade.get("kind", "directional")
+    if kind == "mm_passive":
+        exit_price = ask if side == "buy" else bid
+    else:
+        exit_price = bid if side == "buy" else ask
     if exit_price <= 0:
         exit_price = mid
     if exit_price <= 0:
