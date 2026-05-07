@@ -61,6 +61,7 @@ from backend.forward_paper import (
 )
 from backend.basis_monitor import BasisMonitor
 from backend.funding_monitor import FundingMonitor
+from backend.liq_monitor import LiqMonitor
 from pydantic import BaseModel
 
 
@@ -330,6 +331,11 @@ class SignalStore:
         # new funding-cycle observation to backend_funding_history.jsonl.
         self.funding_monitor = FundingMonitor(
             history_path=os.path.join(REPO_ROOT, "backend_funding_history.jsonl"))
+        # Liquidation-burst detector. Reads the same perp bins the basis
+        # monitor uses; flags 1-min bars with extreme volume z + one-sided
+        # flow + bar-to-bar price gap. Synthetic detection on existing
+        # data; upgrade path is a real WSS liquidation feed.
+        self.liq_monitor = LiqMonitor(BASIS_PERP_PATHS)
 
     def _restore_signals(self):
         if not os.path.exists(self._persist_path):
@@ -484,6 +490,15 @@ class SignalStore:
                 await self._emit_drift_alert(alert)
         except Exception as e:
             print(f"[funding-monitor] error: {e}", flush=True)
+
+        # Liquidation-burst detector on perp bins.
+        try:
+            for asset in {a for a, _, _ in DATA_SOURCES}:
+                alert = self.liq_monitor.update_asset(asset)
+                if alert:
+                    await self._emit_drift_alert(alert)
+        except Exception as e:
+            print(f"[liq-monitor] error: {e}", flush=True)
 
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
