@@ -613,6 +613,8 @@ def main():
                    help="Path to JSON dump of per-(asset,venue,regime) feature distributions + sub-cell Gate I (Pass-7 evaluator output).")
     p.add_argument("--subcell-min-n", type=int, default=15,
                    help="Minimum n per sub-cell for Pass-7 sub-cell Gate I. Lower for small corpora; default 15 keeps signal/noise reasonable.")
+    p.add_argument("--lag-scan-range", type=int, default=10,
+                   help="Half-width (in minutes) of the Gate H lag-scan range. Scan covers [-N, +N] in 1-min steps. Default 10 keeps ETH cheap; raise to 30+ for BTC investigations of CB->KR lead time (Pass-11 found BTC scan hit edge at +10 still rising).")
     args = p.parse_args()
 
     # Load hawkes calibration once; per-(asset, venue) thresholds drive F10
@@ -751,8 +753,12 @@ def main():
     print()
 
     # Gate H lag-scan: timing vs structural divergence (Pass-11)
-    print(f"--- GATE H lag-scan (timing-vs-structural disambiguation) ---")
-    lag = evaluate_gate_H_lag_scan(cb_minute, kr_minute)
+    lag_half_width = max(1, int(args.lag_scan_range))
+    print(f"--- GATE H lag-scan (timing-vs-structural disambiguation, "
+          f"±{lag_half_width} min) ---")
+    lag = evaluate_gate_H_lag_scan(
+        cb_minute, kr_minute,
+        lag_range_min=range(-lag_half_width, lag_half_width + 1))
     if lag.get("lag_scan") is None:
         print(f"  {lag.get('reason', 'no scan')}")
     else:
