@@ -31,6 +31,6 @@
     "relaxed_range_max": 0.579,
     "calibration_pass": "Pass-11",
     "calibration_date": "2026-05-10",
-    "interpretation": "ETH cross-venue divergence is structural, not timing. Lag-scan curve is flat across the entire ±10 min range (strict varies between 33.9% and 35.2%, relaxed between 56.2% and 57.9%); no timing offset rescues the gate. CB-ETH (US institutional flow) and KR-ETH (European retail/algorithmic flow) genuinely classify the same nominal price moves with different microstructure labels — different MM populations, different aggressor profiles, different fill patterns. Gate H is NOT applicable as a hard pass criterion for ETH; per-venue Gate I findings (e.g. KR-ETH WHALE_UP fade BH q=0.029, replicated 5 consecutive passes) stand on their own merits without requiring cross-venue confirmation."
+    "interpretation": "Empirical record from Pass-11 lag scan: across ±10 min in 1-min steps, ETH cross-venue agreement varied between 33.9-35.2% (strict) and 56.2-57.9% (relaxed). Neither metric clears the 60% threshold at any scanned lag; ETH FAILS Gate H. The structural_divergence flag is a tag for downstream tooling that 'we have already scanned this asset across the standard range and no lag rescues the gate' — it is informational metadata, not a pass override. Gate H verdict reflects the actual measurement."
   }
 }

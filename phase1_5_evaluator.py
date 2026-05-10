@@ -242,15 +242,21 @@ def evaluate_gate_H_calibrated(asset: str,
         return {"verdict": "NO_CALIBRATION",
                   "reason": f"no calibration entry for asset={asset}"}
     if entry.get("structural_divergence"):
+        # Empirical: prior lag scan found no offset clears 60% on either
+        # strict or relaxed scoring. Report the recorded max_strict /
+        # max_relaxed at any lag and let the gate FAIL on its merits —
+        # the structural-divergence flag is INFORMATIONAL metadata, NOT a
+        # pass override. The actual measurement is what counts.
+        max_strict = float(entry.get("max_strict_at_any_lag") or 0.0)
+        max_relaxed = float(entry.get("max_relaxed_at_any_lag") or 0.0)
+        passes = (max_strict >= 0.60) or (max_relaxed >= 0.60)
         return {
-            "verdict": "STRUCTURAL_DIVERGENCE",
-            "interpretation": entry.get("interpretation", ""),
-            "max_strict_at_any_lag": entry.get("max_strict_at_any_lag"),
-            "max_relaxed_at_any_lag": entry.get("max_relaxed_at_any_lag"),
+            "verdict": "PASS" if passes else "FAIL",
+            "interpretation_note": entry.get("interpretation", ""),
+            "max_strict_at_any_lag": max_strict,
+            "max_relaxed_at_any_lag": max_relaxed,
+            "structural_divergence_flag": True,
             "calibration_pass": entry.get("calibration_pass"),
-            # treated as "not a hard fail" for the COMBINED VERDICT —
-            # the per-venue Gate I findings are what we trade on.
-            "gate_pass_override": True,
         }
     lag_min = int(entry.get("lag_min", 0))
     if lag_min == 0:
@@ -864,16 +870,18 @@ def main():
     h_calibrated = evaluate_gate_H_calibrated(
         args.asset, cb_minute, kr_minute, lag_calibration)
     print(f"--- GATE H (asset-specific, calibrated) ---")
-    if h_calibrated["verdict"] == "STRUCTURAL_DIVERGENCE":
-        print(f"  {args.asset}: STRUCTURAL DIVERGENCE (calibrated by "
-              f"{h_calibrated.get('calibration_pass', '?')})")
+    if h_calibrated.get("structural_divergence_flag"):
+        # Asset previously flagged as structural in the calibration file.
+        # The flag is informational only — the gate verdict reflects the
+        # recorded max strict/relaxed at any lag.
+        print(f"  {args.asset}: structural-divergence flag set "
+              f"(prior scan {h_calibrated.get('calibration_pass', '?')})")
         print(f"    max strict at any lag (recorded): "
-              f"{h_calibrated.get('max_strict_at_any_lag', '?')}")
+              f"{h_calibrated['max_strict_at_any_lag']:.1%}")
         print(f"    max relaxed at any lag (recorded): "
-              f"{h_calibrated.get('max_relaxed_at_any_lag', '?')}")
-        print(f"  -> NOT a hard fail; cross-venue divergence is the finding,")
-        print(f"     not noise to fix. Trade per-venue Gate I results on")
-        print(f"     their own merits without requiring cross-venue agreement.")
+              f"{h_calibrated['max_relaxed_at_any_lag']:.1%}")
+        print(f"  -> {h_calibrated['verdict']} "
+              f"(no lag in scanned range clears 60%)")
     elif h_calibrated["verdict"] == "NO_CALIBRATION":
         print(f"  {h_calibrated['reason']} — falling back to base Gate H verdict")
     elif h_calibrated["verdict"] == "INSUFFICIENT_OVERLAP":
@@ -1092,12 +1100,21 @@ def main():
     # file is missing or has no entry for this asset.
     all_g = g_cb["gate_G"] and g_kr["gate_G"]
     base_pass_h = h.get("gate_H", False)
-    if h_calibrated["verdict"] in ("PASS", "STRUCTURAL_DIVERGENCE"):
+    if h_calibrated["verdict"] == "PASS":
         pass_h = True
-        h_source = f"calibrated:{h_calibrated['verdict']}"
+        if h_calibrated.get("structural_divergence_flag"):
+            h_source = "calibrated:PASS (max-at-any-lag>=60%)"
+        else:
+            h_source = f"calibrated:PASS@lag={h_calibrated.get('lag_min')}"
     elif h_calibrated["verdict"] == "FAIL":
         pass_h = False
-        h_source = f"calibrated:FAIL@lag={h_calibrated.get('lag_min')}"
+        if h_calibrated.get("structural_divergence_flag"):
+            h_source = (f"calibrated:FAIL "
+                        f"(max strict {h_calibrated['max_strict_at_any_lag']:.1%}, "
+                        f"max relaxed {h_calibrated['max_relaxed_at_any_lag']:.1%} "
+                        f"— neither clears 60%)")
+        else:
+            h_source = f"calibrated:FAIL@lag={h_calibrated.get('lag_min')}"
     else:
         # NO_CALIBRATION or INSUFFICIENT_OVERLAP → fall back to base
         pass_h = base_pass_h
