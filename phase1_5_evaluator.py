@@ -205,6 +205,79 @@ def _bucketed_label(label: str) -> str:
     return "NO_EDGE" if label in _NO_EDGE_BUCKET else label
 
 
+def evaluate_gate_H_lag_scan(cb_minute: dict[float, str],
+                                kr_minute: dict[float, str],
+                                lag_range_min: range = range(-10, 11)) -> dict:
+    """Scan lag offsets in 1-minute steps; return the lag that maximizes
+    strict agreement plus the per-lag agreement curve.
+
+    Pass-10 found ETH Gate H still failing (strict 35.2% / relaxed 57.7%)
+    after the WASH_HAWKES ceiling change, dominated by `EQ | WHALE_UP`
+    disagreement pairs (640). Two interpretations:
+      - TIMING: CB sees the EQ tail at minute t, KR sees the same flow
+        as WHALE_UP at minute t±Δ (where Δ is propagation latency
+        between venues). If true, scoring at the right lag should clear
+        the gate.
+      - STRUCTURAL: CB and KR genuinely classify the same flow
+        differently (different MM ecosystems, different fill patterns).
+        No lag should help.
+
+    Comparison: cb_minute[t] vs kr_minute[t - lag*60]. Positive lag means
+    KR's classification at minute (t - lag) is compared to CB at t —
+    i.e. positive lag indicates CB LEADS KR by `lag` minutes. Negative
+    lag indicates KR leads CB.
+
+    Returns the full per-lag table so the writeup can show the curve,
+    plus the argmax and a binary "is timing-driven" flag (true if the
+    best lag's strict agreement clears 60% AND lag != 0).
+    """
+    base = evaluate_gate_H(cb_minute, kr_minute)
+    if "reason" in base:
+        return {"reason": base["reason"], "lag_scan": None}
+    per_lag: list[dict] = []
+    best_lag = 0
+    best_strict = base["agreement_rate"]
+    best_relaxed = base["agreement_rate_relaxed"]
+    for lag in lag_range_min:
+        if lag == 0:
+            kr_shifted = kr_minute
+        else:
+            # Shift KR by `lag` minutes: ts in kr_minute moves to ts + lag*60.
+            # Then compare cb_minute[t] vs kr_shifted[t] which equals
+            # kr_minute[t - lag*60].
+            kr_shifted = {ts + lag * 60.0: r for ts, r in kr_minute.items()}
+        h = evaluate_gate_H(cb_minute, kr_shifted)
+        if "reason" in h:
+            per_lag.append({
+                "lag_min": lag, "n_overlap": h.get("n_overlap", 0),
+                "strict": None, "relaxed": None,
+            })
+            continue
+        per_lag.append({
+            "lag_min": lag,
+            "n_overlap": h["n_overlap_minutes"],
+            "strict": h["agreement_rate"],
+            "relaxed": h["agreement_rate_relaxed"],
+            "strict_n": h["n_agreements"],
+            "relaxed_n": h["n_agreements_relaxed"],
+        })
+        if h["agreement_rate"] > best_strict:
+            best_strict = h["agreement_rate"]
+            best_lag = lag
+            best_relaxed = h["agreement_rate_relaxed"]
+    return {
+        "lag_scan": per_lag,
+        "best_lag_min": best_lag,
+        "best_strict": best_strict,
+        "best_relaxed_at_best_lag": best_relaxed,
+        "base_strict": base["agreement_rate"],
+        "base_relaxed": base["agreement_rate_relaxed"],
+        "is_timing_driven": (best_lag != 0
+                                and best_strict >= 0.60
+                                and base["agreement_rate"] < 0.60),
+    }
+
+
 def evaluate_gate_H(cb_minute: dict[float, str], kr_minute: dict[float, str]) -> dict:
     common = sorted(set(cb_minute) & set(kr_minute))
     if len(common) < 30:
@@ -675,6 +748,30 @@ def main():
             print(f"    {cb_r:<22} | {kr_r:<22} | {n:>4} ({tag})")
         print(f"  -> {'PASS' if h['gate_H'] else 'FAIL'} "
               f"(strict OR relaxed >=60%)")
+    print()
+
+    # Gate H lag-scan: timing vs structural divergence (Pass-11)
+    print(f"--- GATE H lag-scan (timing-vs-structural disambiguation) ---")
+    lag = evaluate_gate_H_lag_scan(cb_minute, kr_minute)
+    if lag.get("lag_scan") is None:
+        print(f"  {lag.get('reason', 'no scan')}")
+    else:
+        print(f"  base @ lag=0: strict={lag['base_strict']:.1%}  "
+              f"relaxed={lag['base_relaxed']:.1%}")
+        print(f"  best lag: {lag['best_lag_min']:+d} min "
+              f"(strict={lag['best_strict']:.1%}, "
+              f"relaxed_at_best={lag['best_relaxed_at_best_lag']:.1%})")
+        if lag["is_timing_driven"]:
+            print(f"  -> TIMING-DRIVEN: best lag != 0 clears strict 60% threshold")
+        else:
+            print(f"  -> structural at scanned lags (best lag doesn't clear 60% strict)")
+        print(f"  per-lag agreement (lag_min : strict / relaxed / n_overlap):")
+        for entry in lag["lag_scan"]:
+            if entry["strict"] is None:
+                print(f"    {entry['lag_min']:+3d} : --   /   --  / n={entry['n_overlap']}")
+            else:
+                print(f"    {entry['lag_min']:+3d} : {entry['strict']:.1%} / "
+                      f"{entry['relaxed']:.1%} / n={entry['n_overlap']}")
     print()
 
     # Gate I per venue
