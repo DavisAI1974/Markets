@@ -1259,6 +1259,168 @@ that metric.
 - **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
   Hurst comparison; BTC is more momentum-y.
 
+## Tenth pass — 2026-05-10, ETH+BTC + WASH_HAWKES combined-η ceiling
+
+First evaluation after the Pass-10 prep (`7459ef8`):
+- WASH_HAWKES_COMBINED_MAX = 0.55 added to regime_classifier.py — new
+  override band is `η_combined ∈ [0.40, 0.55)` instead of `[0.40, ∞)`.
+  Chunks above 0.55 stay as EQUILIBRIUM_TWO_SIDED.
+- INTRADAY (4h) horizon added to edge_tracker.py (runtime-only; not
+  exercised by offline evaluator).
+
+Reproducer same as Pass-9 (commands unchanged). Outputs:
+`pass10_eth_features.json`, `pass10_btc_features.json`.
+
+### The headline: ceiling worked exactly as designed
+
+WASH_HAWKES counts dropped on every venue, with the displaced chunks
+absorbed into EQUILIBRIUM_TWO_SIDED:
+
+| Venue | WASH_HAWKES Pass-9 → Pass-10 | EQ_TWO_SIDED Pass-9 → Pass-10 |
+|---|---|---|
+| CB-ETH | 43 → **23** (−47%) | 126 → 146 (+16%) |
+| KR-ETH | 58 → **46** (−21%) | 79 → 91 (+15%) |
+| KR-BTC | 874 → **605** (−31%) | 834 → 1103 (+32%) |
+| CB-BTC | 2 → **1**  (−50% but n=42) | 31 → 32 |
+
+### KR-BTC EQ × η-high momentum cell consolidated
+
+Pass-9 had two separate η-high momentum reads that the playbook had
+to handle independently:
+
+| Cell (Pass-9) | n | r | p |
+|---|---:|---:|---:|
+| EQ × η-high | 236 | +0.150 | 0.020 |
+| WASH_HAWKES × η-high | 291 | +0.106 | 0.069 |
+
+Pass-10 merged them into a single cleaner momentum cell:
+
+| Cell (Pass-10) | n | r | p |
+|---|---:|---:|---:|
+| **EQ × η-high (merged)** | **368** | **+0.134** | **0.010** |
+| WASH_HAWKES × η-high (residual) | 146 | +0.087 | 0.294 |
+
+The η-tier cuts on KR-BTC EQ_TWO_SIDED moved too: Pass-9 `p33=0.0,
+p67=0.0` (dichotomous because EQ chunks all had η near zero) became
+Pass-10 `p33=0.422, p67=0.565` (continuous distribution because the
+absorbed wash chunks sit in the upper η range). The merged
+distribution looks like one continuous cell instead of two truncated
+ones.
+
+### Gate H BTC: strict jumped 47.7% → 57.1% (close to passing strict)
+
+| Gate H BTC | Pass-9 | Pass-10 |
+|---|---|---|
+| strict agreement | 47.7% **FAIL** | 57.1% FAIL (close) |
+| relaxed agreement | 63.9% **PASS** | 63.9% PASS |
+| top disagreement pair (CB,KR) | EQ\|WASH_HAWKES = 92 | EQ\|WASH_HAWKES = 38 |
+| top agreement pair (CB,KR) | EQ\|EQ = 307 | EQ\|EQ = 378 |
+
+The mechanical inflation of disagreement from KR-side WASH_HAWKES
+overrides on CB-side EQ chunks dropped from 92 → 38 disagreements;
+and the EQ\|EQ agreement pair grew by +71. Strict is now within 3
+percentage points of passing — strongest signal yet that the original
+Gate H regression (Pass-7..9 strict 47-49%) was a labeling artifact,
+not a real cross-venue divergence.
+
+### Gate H ETH: still fails both strict (35.2%) and relaxed (57.7%)
+
+ETH cross-venue mismatch is dominated by `EQ | WHALE_UP` pairs (640
+disagreements) and `EQ | WASH_HAWKES` (534) — the WHALE_UP
+disagreement is structural (CB labels a chunk EQ while KR sees
+nascent buying) and not affected by the wash ceiling. Pass-10 didn't
+move the needle here. Real cross-venue divergence on ETH at current
+sample.
+
+### KR-ETH WHALE_UP fade BH q=0.029 replicates for the third pass
+
+| Pass | n | r | BH q | bh_reject |
+|---|---:|---:|---:|---|
+| Pass-8 | 65 | −0.309 | 0.029 | T |
+| Pass-9 | 65 | −0.309 | 0.029 | T |
+| **Pass-10** | **65** | **−0.309** | **0.029** | **T** |
+
+The eth_kr_whale_up_fade paper cell (committed `34ddbdc`) continues
+to operate on a survived signal. WHALE_UP isn't affected by the wash
+ceiling since the override only fires from EQ chunks.
+
+### KR-ETH WHALE_UP × η-mid sub-cell still strongest in corpus
+
+`n=28, r=−0.564, p=0.001` — replicates Pass-8/9 exactly. WHALE_UP
+sub-cells aren't touched by the ceiling.
+
+### WASH_HAWKES distribution collapsed to η ≈ 0.50
+
+After the ceiling, the remaining WASH_HAWKES chunks live in the
+narrow band `η_combined ∈ [0.40, 0.55)`:
+
+| Venue | WASH_HAWKES η p25/p50/p75 (Pass-10) |
+|---|---|
+| CB-ETH | 0.43 / 0.50 / 0.50 |
+| KR-ETH | 0.50 / 0.50 / 0.50 |
+| KR-BTC | 0.48 / 0.50 / 0.50 |
+
+The wash signature is now homogeneous — purely "moderate clustering
++ balanced volume," with the saturated-clustering momentum subset
+peeled off. Sub-cell reads on the residual wash:
+
+| Cell | Pass-10 sub-cell |
+|---|---|
+| KR-BTC WASH × η-high (residual, n=146) | r=+0.087, p=0.294 — flat |
+| KR-BTC WASH × η-low (n=202) | r=+0.021, p=0.765 — flat |
+| KR-ETH WASH × η-low (n=37) | r=+0.107, p=0.524 — flat |
+
+Residual wash carries no Gate I signal. As intended.
+
+### Gate G CB-BTC regression (cosmetic, small-n)
+
+CB-BTC went from 4 classes / modal 73.8% (FAIL in Pass-9) to 4
+classes / modal 76.2% (FAIL in Pass-10). One wash chunk reverted to
+EQ which pushed modal % up from 31/42 to 32/42. CB-BTC has been
+data-starved throughout (n=42); the regression is a small-sample
+artifact, not a real classifier degradation.
+
+### KR-BTC aggregate Gate I r values
+
+| Regime | Pass-9 r | Pass-10 r | Interpretation |
+|---|---:|---:|---|
+| EQUILIBRIUM_TWO_SIDED | +0.027 | +0.047 | momentum nudged stronger by absorbed η-high chunks |
+| WASH_HAWKES | −0.027 | +0.024 | residual wash flat (no fade) |
+| WHALE_UP | −0.048 | −0.048 | unchanged (regime untouched) |
+
+No aggregate cell turned BH-significant on KR-BTC. The signal lives
+in the η-tier sub-cells (EQ × η-high r=+0.134, WHALE_DOWN × η-low
+r=+0.520, WHALE_NASCENT_UP × η-low r=−0.559, KR-ETH WHALE_UP × η-mid
+r=−0.564 etc — same as Pass-9).
+
+### F8 weekend dampener KR-BTC at 28% of chunks (unchanged)
+
+Same as Pass-9: 9 chunks ±30min event (mult=0.70), 707 ±60min
+event/weekend (mult=0.85), 1886 unaffected (mult=1.0). ETH + CB-BTC
+corpora don't span weekends in current snapshot.
+
+### Pass-11 triggers
+
+- **Backend uptime accumulates 24+h** to populate the live edge-
+  tracker windows (intraday will populate first at ~4h after first
+  poll; daily fully fills by hour 24; weekly takes a week).
+- **CB-BTC corpus crosses n≥20 directional** to populate
+  `hawkes_eta_calibration.json` for that cell.
+- **Bybit perp data >24h** to push perp_lead_evaluator past n≥1000.
+- **NASCENT samples to n≥80** for cross-asset divergence BH-significance
+  (currently KR-ETH n=45, KR-BTC n=48).
+- **Gate H ETH analysis**: dig into `EQ | WHALE_UP` (640
+  disagreements) and `EQ | WASH_HAWKES` (534) to understand the
+  structural mismatch — is it timing (CB sees the EQ tail before KR
+  sees the WHALE? or vice versa) or true microstructure divergence?
+  Lag-aligned Gate H scoring (CB regime at t vs KR regime at t±5min)
+  could disambiguate.
+- **Edge tracker: edge-driven paper trades validation** — once
+  backend has 24h of live data, the first edge-driven trades emit;
+  validate horizon-scaled hold/notional doesn't whipsaw on
+  intraday-strong-but-daily-flat signals.
+
+
 ## Ninth pass — 2026-05-07 night, ETH+BTC + threshold revisits + Gate H relaxed
 
 First evaluation after the Pass-8 follow-ups landed:
