@@ -1259,6 +1259,152 @@ that metric.
 - **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
   Hurst comparison; BTC is more momentum-y.
 
+## Eleventh pass — 2026-05-10 night, ETH+BTC + lag-aligned Gate H
+
+First pass with `evaluate_gate_H_lag_scan` (committed `7a1d5f6`):
+scan lag offsets in [-10, +10] minutes (1-min steps) and find the
+lag that maximizes strict cross-venue agreement. Disambiguates two
+hypotheses for ETH Gate H failure:
+
+- **TIMING**: CB sees the EQ tail at minute t, KR sees same flow as
+  WHALE_UP at minute t±Δ → some non-zero lag should clear 60%.
+- **STRUCTURAL**: CB and KR genuinely classify the same flow
+  differently → no lag helps.
+
+Reproducer same as prior passes. Outputs: `pass11_eth_features.json`,
+`pass11_btc_features.json`.
+
+### THE HEADLINE: ETH structural, BTC timing-driven (and BTC scan
+hits the edge)
+
+| Asset | Base strict (lag=0) | Best lag | Best strict | Conclusion |
+|---|---:|---:|---:|---|
+| **ETH** | 35.2% | +0 min | 35.2% | **STRUCTURAL** — flat curve 33.9–35.2% across whole ±10 range |
+| **BTC** | 57.1% | **+10 min** | **60.8%** | **TIMING-DRIVEN** — monotone rise across whole range; clears 60% at +10 min, scan hits edge before peaking |
+
+### ETH Gate H is structural — confirmed
+
+The full ETH lag-scan curve:
+
+```
+lag (min) | strict | relaxed | n_overlap
+-10       | 33.9%  | 56.2%   | 3443
+-5        | 34.9%  | 57.7%   | 3468
+-2        | 35.2%  | 57.9%   | 3483       ← relaxed maximum
++0        | 35.2%  | 57.7%   | 3493       ← strict maximum (tied with -2)
++5        | 35.1%  | 57.4%   | 3469
++10       | 35.1%  | 57.2%   | 3445
+```
+
+The curve is essentially flat. Total range across all 21 lags:
+strict 33.9% to 35.2% (1.3 pp spread); relaxed 56.2% to 57.9% (1.7
+pp spread). No timing offset rescues ETH Gate H.
+
+**Implication**: CB-ETH and KR-ETH have genuinely heterogeneous
+microstructure. Different MM populations, different aggressor
+profiles, different fill patterns. The 640 `EQ | WHALE_UP`
+disagreement pairs in Pass-10 represent real microstructure
+divergence, not propagation latency.
+
+This is *consistent with* and *helps explain* the KR-ETH WHALE_UP
+fade BH q=0.029 finding (replicated for the 4th consecutive pass —
+n=65 r=-0.309 BH q=0.029): KR-ETH has its own predictable patterns
+that CB-ETH doesn't share. KR-ETH has structural autonomy from
+CB-ETH; cross-venue confirmation isn't a useful gate for it.
+
+### BTC Gate H is timing-driven — and we hit the scan edge
+
+The full BTC lag-scan curve is monotonically increasing:
+
+```
+lag (min) | strict | relaxed
+-10       | 49.8%  | 57.0%
+ -5       | 53.2%  | 60.7%
+  0       | 57.1%  | 63.9%
+ +5       | 59.6%  | 65.6%
+ +8       | 60.1%  | 66.2%   ← strict crosses 60%
++10       | 60.8%  | 66.7%   ← scan edge, slope still +0.4 pp/min
+```
+
+Slope from -10 → +10 averages ~0.55 pp/min. Strict crosses the 60%
+threshold at lag=+8 min and is still rising at the scan edge. The
+actual peak is at some lag > +10; Pass-12 should extend the scan to
+±30 min to locate it.
+
+**Implication**: CB-BTC LEADS KR-BTC by at least 10 minutes (and
+probably significantly more). When CB classifies a chunk as
+WHALE_UP at minute t, KR classifies the corresponding flow as
+WHALE_UP roughly 10+ minutes later.
+
+This is much longer than the Bybit-perp lead time (sub-minute) and
+suggests CB-BTC is the dominant price-discovery venue for BTC spot
+worldwide (US institutional flow), with KR-BTC mirroring it on a
+10+ minute delay. Three follow-ups:
+
+1. **Extend the lag scan to ±30 min** in Pass-12 to find the actual
+   peak — could be +15, +20, or further.
+2. **CB→KR BTC signal forwarder**: when CB-BTC fires a directional
+   regime, expect KR-BTC to fire the same regime ~10-20 min later.
+   Tradeable on KR-BTC using CB-BTC as the leading indicator.
+3. **The Bybit-perp lead is on top of this**: perps lead CB-BTC
+   spot by sub-minute, CB-BTC spot leads KR-BTC spot by ~10+ min.
+   So Bybit-perp leads KR-BTC by ~10+ min total. That's a long
+   actionable horizon for cross-venue arbitrage / signal forwarding.
+
+### BTC×ETH dichotomy is itself a finding
+
+The fact that BTC is timing-driven (single price-discovery process
+with venue lag) while ETH is structural (different price-discovery
+processes per venue) tells us something about the assets:
+
+- **BTC** has a single dominant price discovery process (presumably
+  CME futures / Bybit perp / Coinbase spot in some hierarchy).
+  Microstructure is consistent across spot venues; only timing
+  differs.
+- **ETH** has fragmented price discovery. Coinbase US-institutional
+  flow and Kraken European-retail flow generate different
+  microstructure patterns even on the same nominal price moves.
+
+System implications:
+- **BTC**: cross-venue Gate H is a meaningful signal once we account
+  for the lead/lag. The system should run lag-aligned Gate H as the
+  default for BTC, with the lag value itself being a calibrated
+  parameter.
+- **ETH**: cross-venue Gate H is structurally NOT going to clear
+  60% in any lag-aligned form. We should treat per-venue findings
+  (KR-ETH WHALE_UP fade) on their own merits without requiring
+  cross-venue confirmation. Possibly remove ETH from Gate H as a
+  hard gate; keep it as informative metadata only.
+
+### Other Pass-11 reads (regime classifier unchanged from Pass-10)
+
+- Gate G: PASS both venues on ETH (same as Pass-10), KR-BTC PASS,
+  CB-BTC FAIL (same).
+- Gate I: KR-ETH WHALE_UP n=65 r=-0.309 BH q=0.029 STILL SIGNIFICANT
+  (4th consecutive pass).
+- KR-ETH WHALE_UP × η-mid sub-cell n=28 r=-0.564 p=0.001 (replicates).
+- KR-BTC EQ × η-high n=368 r=+0.134 p=0.010 (Pass-10 consolidation,
+  replicates).
+- WASH_HAWKES distributions identical to Pass-10 (no classifier
+  changes).
+
+### Pass-12 triggers
+
+- **Extend BTC lag scan to ±30 min** to find the peak. Add an
+  argparse flag `--lag-scan-range` with sensible default ±10 to keep
+  ETH cheap and a wider sweep available for BTC investigations.
+- **Apply CB-BTC LEADS KR-BTC** finding to live signal flow: when
+  CB-BTC fires a directional regime, queue a forwarded signal to
+  KR-BTC with the optimal lag. Validate on the historical corpus
+  before going live.
+- **Asset-specific Gate H pass criteria**: relax / remove the gate
+  for ETH (structural divergence is the finding, not noise to fix);
+  keep BTC at lag-aligned strict 60% with the calibrated lag value.
+- All pre-existing Pass-11 triggers remain (backend uptime → live
+  edge tracker, CB-BTC n≥20 directional, Bybit perp >24h, NASCENT
+  n≥80).
+
+
 ## Tenth pass — 2026-05-10, ETH+BTC + WASH_HAWKES combined-η ceiling
 
 First evaluation after the Pass-10 prep (`7459ef8`):
