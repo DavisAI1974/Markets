@@ -1259,6 +1259,190 @@ that metric.
 - **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
   Hurst comparison; BTC is more momentum-y.
 
+## Thirteenth pass — 2026-05-10 night, corrections + actual measurements
+
+This pass exists to walk back interpretation-driven adjustments that
+had been folded into the code over Passes 8–10, and to report the
+actual measurements that the corrected code produces. No new
+classifier changes; what changed is what the gate verdict reports.
+
+### Corrections to prior passes
+
+The user's directive was: "I'm not concerned about what i think is
+happening, I only care about what actually is. i don't want us to
+adjust things to what we think and just go with what actually is
+happening." Three code-level changes are reverted in commits
+`8df20ce` and `e2592de`:
+
+1. **Pass-13 structural-divergence pass override removed**
+   (`8df20ce`). The earlier draft had ETH's calibrated Gate H
+   verdict auto-pass via `gate_pass_override=True` because the
+   asset was flagged as "structural divergence". Calling an
+   empirical FAIL a PASS based on an interpretive label was the
+   exact pattern the user pushed back on. The flag is preserved
+   as informational metadata only; the verdict now follows the
+   measured agreement.
+
+2. **Pass-8 strict-OR-relaxed Gate H verdict removed** (`e2592de`).
+   Pass-8 introduced `gate_H = strict>=60% OR relaxed>=60%`, where
+   the relaxed metric collapses
+   `EQUILIBRIUM_TWO_SIDED + WASH_HAWKES + WASH_PAIRED + DEPLETED`
+   into a single `NO_EDGE` bucket. The bucket was a definitional
+   choice I made; the OR-passing meant the gate could pass via
+   the softer metric whenever strict failed. Strict is now the
+   sole verdict driver at 60%. Relaxed is still computed and
+   printed but tagged "info only".
+
+3. **Pass-9 WASH_HAWKES_BOTH_SIDES_MIN tightening (0.30→0.35) and
+   Pass-10 WASH_HAWKES_COMBINED_MAX = 0.55 ceiling reverted**
+   (`e2592de`). Both changes were normative classifier tweaks
+   driven by sub-cell findings (η-high WASH chunks predicted
+   momentum r=+0.106, contradicting the wash hypothesis). The
+   chunks themselves and their forward returns didn't change;
+   only the labels did. With the reverts, η-saturated balanced-
+   flow chunks go back to being labeled WASH_HAWKES per the
+   original threshold definition. Sub-cell findings are reported
+   below as measurements, not folded back into labels.
+
+The lag calibration / lag-aligned scoring (Pass-11/12) is
+preserved: that path applies a measurement (where on the lag axis
+is agreement highest?) and reports the verdict at that empirical
+point.
+
+### Pass-13 actual measurements
+
+Reproducer same as prior passes (no new flags).
+
+#### ETH — all paths FAIL Gate H under strict-only verdict
+
+| Path | strict | relaxed (info) | verdict |
+|---|---:|---:|---|
+| Base lag=0 | 31.6% | 57.7% | FAIL |
+| Lag-scan ±10 best (lag=−2) | 31.8% | 57.9% | FAIL |
+| Calibrated path (structural flag, max-at-any-lag from prior scan) | 35.2% | 57.9% | FAIL |
+
+The strict-only revert dropped ETH from "PASS via relaxed at 57.7%"
+(Pass-8..12 reporting) to "FAIL at 31.6% strict" (actual
+measurement). The relaxed metric still says 57.7% — that is real
+and reported — but the gate verdict reflects the strict measurement.
+
+#### BTC — all paths FAIL Gate H under strict-only verdict
+
+| Path | strict | relaxed (info) | verdict |
+|---|---:|---:|---|
+| Base lag=0 | 47.7% | 63.9% | FAIL |
+| Lag-scan ±10 best (lag=+10) | 50.1% | 66.7% | FAIL |
+| Calibrated path (lag=+15, Pass-12 peak) | 50.5% | 67.9% | FAIL |
+
+Pass-12 reported BTC strict 62.4% at +15 lag. Pass-13 (corrected)
+measures **50.5% strict at the same lag** — a 12 percentage point
+drop. The drop is the real cost of the Pass-10 WASH_HAWKES ceiling:
+chunks with η_combined > 0.55 had been moved out of WASH_HAWKES on
+KR side (and CB side) before the cross-venue comparison was scored.
+That mechanically reduced WASH-on-KR vs EQ-on-CB disagreement pairs
+and inflated strict agreement.
+
+So **Pass-12's "BTC PASSES Gate H via lag-aligned strict at +15"
+finding does not reproduce** under the corrected classifier.
+Reporting that finding without flagging it as classifier-dependent
+was a goalpost shift.
+
+#### Distribution (counts back to Pass-9 baseline)
+
+| Cell | Pass-9 | Pass-10/11/12 | Pass-13 corrected |
+|---|---:|---:|---:|
+| KR-BTC WASH_HAWKES | 874 | 605 | 874 |
+| KR-BTC EQUILIBRIUM_TWO_SIDED | 834 | 1103 | 834 |
+| CB-ETH WASH_HAWKES | 45 | 23 | 45 |
+| CB-ETH EQUILIBRIUM_TWO_SIDED | 124 | 146 | 124 |
+| KR-ETH WASH_HAWKES | 58 | 46 | 58 |
+| KR-ETH EQUILIBRIUM_TWO_SIDED | 79 | 91 | 79 |
+
+Reverted distributions exactly match Pass-9 numbers (the snapshot
+just before the WASH_HAWKES ceiling was introduced).
+
+#### Gate I findings (regime classifier doesn't change Gate I r values for the cells we relied on)
+
+KR-ETH WHALE_UP fade: **n=65 r=−0.309 BH q=0.029** — replicates
+for the 6th consecutive pass (Pass-8 through Pass-13). WHALE_UP
+isn't touched by the WASH_HAWKES override (override only fires
+from EQ source).
+
+KR-ETH WHALE_UP × η-mid: n=28 r=−0.564 p=0.001 — replicates.
+
+KR-BTC η-high sub-cells, now SPLIT (Pass-9 state, before the Pass-10
+ceiling consolidated them):
+
+| Sub-cell | n | r | p |
+|---|---:|---:|---:|
+| KR-BTC EQ × η-high | 236 | +0.150 | 0.020 |
+| KR-BTC WASH_HAWKES × η-high | 291 | +0.106 | 0.069 |
+
+These two cells together carry the η-saturated momentum signal that
+Pass-10 had merged into a single n=368 r=+0.134 p=0.010 read. With
+the ceiling reverted, the signal is split across two labels, with
+the WASH side just shy of BH significance.
+
+KR-BTC WHALE_DOWN × η-low n=22 r=+0.520 p=0.006 — replicates.
+KR-BTC WHALE_NASCENT_UP × η-low n=16 r=−0.559 p=0.012 — replicates.
+
+#### COMBINED VERDICT
+
+| Asset | Gate G | Gate H | Gate I | All G+H+I |
+|---|---|---|---|---|
+| ETH | PASS (CB 9 classes 57.1%, KR 8 classes 36.2%) | **FAIL** (calibrated FAIL: max-strict 35.2% at any scanned lag) | PASS (KR-ETH WHALE_UP fade BH q=0.029) | **FAIL** |
+| BTC | FAIL (CB-BTC data-starved n=42, 4 classes 73.8%) | **FAIL** (calibrated FAIL@lag=+15: 50.5% strict) | FAIL (no aggregate cell BH-significant; sub-cell signals still present) | **FAIL** |
+
+### What this means
+
+The actual data says cross-venue regime agreement does not pass the
+60% strict threshold for either asset, at any scanned lag. ETH and
+BTC differ in HOW they fail (ETH flat at any lag, BTC monotonically
+rising up to its lag-scan-range edge — Pass-12 found peak at +15
+under the inflated classifier; under the reverted classifier the
+peak is the same shape but lower absolute level), but neither
+passes.
+
+Per-venue Gate I findings are unaffected — KR-ETH WHALE_UP fade
+remains BH-significant for the 6th consecutive pass, and the
+KR-BTC sub-cell signals replicate. Trading on those per-venue
+findings is a separate question from whether Gate H passes.
+
+### Pass-14 candidates (open questions, no recommended actions)
+
+These are open questions that the data poses; whether/how to
+respond is the user's call:
+
+1. The Pass-10 WASH_HAWKES ceiling demonstrably moves BTC's
+   lag-aligned strict measurement by 12 pp. That tells us
+   classifier definitions affect cross-venue agreement
+   measurements substantially. Open question: should
+   classifier choices be locked at the original spec and any
+   sub-cell signal reported in a separate analytics layer, or
+   should the classifier be allowed to evolve based on
+   measurement?
+
+2. Pass-12's BTC lag-scan peak at +15 was measured under the
+   Pass-10 classifier. Under the reverted (original) classifier,
+   the peak is at +10 with strict 50.1% (the scan edge). A wider
+   lag-scan-range run with the reverted classifier would map the
+   true peak location and magnitude.
+
+3. The KR-ETH WHALE_UP fade BH q=0.029 finding has now replicated
+   6 times across classifier configurations. The signal is robust
+   to the classifier choices we've made or reverted. That's a
+   property of the measurement, not the model.
+
+4. The Bybit-perp ↔ KR-BTC composition claim from the Pass-12
+   writeup ("Bybit-perp leads KR-BTC by 15+ min total") is not
+   directly measured. To measure it would require a Bybit-perp
+   ↔ KR-BTC lag scan over the perp_lead_evaluator's data window
+   AND the KR-BTC chunk window simultaneously.
+
+5. Backend uptime triggers (edge-tracker, edge-driven paper
+   trades) carry over from Pass-11/12.
+
+
 ## Twelfth pass — 2026-05-10, BTC lag scan extended to ±30 min
 
 Pass-11 found the BTC lag-scan curve still rising at +10 min (the
