@@ -432,6 +432,158 @@ def _bh_fdr(pvalues: list[float], q: float = 0.10) -> tuple[list[float], list[bo
     return qvals, reject
 
 
+def classify_cell_tradability(label: str,
+                                  chunks: list[MarketChunk],
+                                  results: list[ClassificationResult],
+                                  k: int = 1,
+                                  strong_r: float = 0.15,
+                                  weak_r: float = 0.10,
+                                  min_quarter_n: int = 6,
+                                  min_total_n: int = 24) -> dict:
+    """Per-cell chronological tradability classifier (Pass-14).
+
+    Splits each regime cell's chunks into 4 equal-time quarters (by
+    chronological order) and computes Pearson r per quarter. Reports
+    one of four tradability states based on which quarters carry a
+    strong signal:
+
+      ALWAYS_TRADEABLE
+        3+ of 4 quarters have |r| >= strong_r AND consistent sign.
+      CURRENTLY_TRADEABLE
+        q4 (most recent quarter) has |r| >= strong_r AND not
+        ALWAYS_TRADEABLE.
+      HISTORICALLY_TRADEABLE_NOT_NOW
+        1+ older quarter (q1/q2/q3) has |r| >= strong_r BUT q4 |r| < weak_r.
+      NEVER_TRADEABLE
+        no quarter has |r| >= strong_r.
+      INSUFFICIENT_DATA
+        total n < min_total_n or any quarter < min_quarter_n.
+
+    The goal is to surface which cells are tradeable RIGHT NOW (q4
+    strong) vs consistently tradeable across history (always) vs
+    dormant (was strong, isn't now) vs never strong. This replaces
+    the prior "signal faded over time" framing — that's just one of
+    the four categories, and the focus shifts to current tradeability.
+    """
+    if len(chunks) < k + 2:
+        return {"label": label, "verdict": "INSUFFICIENT_DATA",
+                  "reason": "too few chunks"}
+
+    # Per-chunk dipole + forward log return, indexed parallel to chunks.
+    mean_dipoles = []
+    chunk_returns = []
+    chunk_ts = []
+    for c in chunks:
+        bar_dipoles = [b.dipole for b in c.bars]
+        mean_dipoles.append(float(np.mean(bar_dipoles)) if bar_dipoles else 0.0)
+        if len(c.bars) >= 2:
+            r_ret = math.log(max(c.bars[-1].close, 1e-12)
+                              / max(c.bars[0].close, 1e-12))
+        else:
+            r_ret = 0.0
+        chunk_returns.append(r_ret)
+        chunk_ts.append(float(c.bars[0].ts) if c.bars else 0.0)
+    md = np.array(mean_dipoles)
+    cr = np.array(chunk_returns)
+    labels = [r.regime.value for r in results]
+
+    per_regime: dict[str, dict] = {}
+    for regime in sorted(set(labels)):
+        idx = [i for i in range(len(chunks) - k) if labels[i] == regime]
+        n_total = len(idx)
+        if n_total < min_total_n:
+            per_regime[regime] = {"n": n_total, "verdict": "INSUFFICIENT_DATA",
+                                    "reason": f"n<{min_total_n}"}
+            continue
+        # Sort idx chronologically by ts of chunk i (predictor chunk)
+        idx.sort(key=lambda i: chunk_ts[i])
+        # Split into 4 equal-size quarters by chronological order.
+        q_size = n_total / 4.0
+        quarters: list[dict] = []
+        for q in range(4):
+            a = int(round(q * q_size))
+            b = int(round((q + 1) * q_size))
+            seg = idx[a:b]
+            n_q = len(seg)
+            if n_q < min_quarter_n:
+                quarters.append({"quarter": q + 1, "n": n_q, "r": None, "p": None,
+                                  "ts_start": chunk_ts[seg[0]] if seg else None,
+                                  "ts_end": chunk_ts[seg[-1]] if seg else None,
+                                  "note": f"n<{min_quarter_n}"})
+                continue
+            x = md[seg]
+            y = cr[[i + k for i in seg]]
+            r, p, _ = _pearsonr_with_p(x, y)
+            quarters.append({
+                "quarter": q + 1,
+                "n": n_q,
+                "r": round(float(r), 4) if np.isfinite(r) else None,
+                "p": round(float(p), 4) if np.isfinite(p) else None,
+                "ts_start": chunk_ts[seg[0]],
+                "ts_end": chunk_ts[seg[-1]],
+            })
+
+        # Classify based on quarter r values.
+        rs = [q["r"] for q in quarters]
+        has_q = [r is not None for r in rs]
+        # If any quarter is insufficient data, classify based on what we have
+        # rather than refusing — but only if q4 is computable.
+        q4 = rs[3]
+        if q4 is None and not any(has_q):
+            verdict = "INSUFFICIENT_DATA"
+        else:
+            strong_quarters = [
+                (i, r) for i, r in enumerate(rs)
+                if r is not None and abs(r) >= strong_r
+            ]
+            n_strong = len(strong_quarters)
+            # Sign consistency: when 3+ quarters strong, majority sign
+            if n_strong >= 3:
+                signs = [1 if r > 0 else -1 for _, r in strong_quarters]
+                pos = sum(1 for s in signs if s > 0)
+                neg = sum(1 for s in signs if s < 0)
+                consistent_sign = (pos >= 3) or (neg >= 3)
+            else:
+                consistent_sign = False
+            q4_strong = (q4 is not None and abs(q4) >= strong_r)
+            q4_weak = (q4 is not None and abs(q4) < weak_r)
+            any_older_strong = any(
+                rs[i] is not None and abs(rs[i]) >= strong_r
+                for i in (0, 1, 2)
+            )
+            if n_strong >= 3 and consistent_sign:
+                verdict = "ALWAYS_TRADEABLE"
+            elif q4_strong:
+                verdict = "CURRENTLY_TRADEABLE"
+            elif any_older_strong and q4_weak:
+                verdict = "HISTORICALLY_TRADEABLE_NOT_NOW"
+            elif n_strong == 0:
+                verdict = "NEVER_TRADEABLE"
+            else:
+                # Some quarter is between weak_r and strong_r but q4 isn't
+                # strong; or q4 is between weak and strong. Call this
+                # AMBIGUOUS rather than forcing a verdict.
+                verdict = "AMBIGUOUS"
+        # Direction: from q4 if strong, else from majority of strong quarters
+        if q4 is not None and abs(q4) >= weak_r:
+            direction = "fade" if q4 < 0 else "momentum"
+        else:
+            signs = [1 if r > 0 else -1 for r in rs if r is not None and abs(r) >= weak_r]
+            if signs:
+                direction = "momentum" if sum(signs) > 0 else "fade"
+            else:
+                direction = ""
+
+        per_regime[regime] = {
+            "n": n_total,
+            "quarters": quarters,
+            "verdict": verdict,
+            "direction": direction,
+        }
+
+    return {"label": label, "per_regime": per_regime}
+
+
 def evaluate_gate_I(label: str, chunks: list[MarketChunk],
                      results: list[ClassificationResult],
                      k: int = 1,
@@ -1095,6 +1247,52 @@ def main():
         with open(args.features_out, "w") as f:
             json.dump(pass7, f, indent=2, default=str)
         print(f"Pass-7 features dump: {args.features_out}\n")
+
+    # TRADEABLE SIGNAL REPORT (Pass-14) — the headline. Chronological-
+    # quarter classification of each cell into:
+    #   ALWAYS_TRADEABLE | CURRENTLY_TRADEABLE |
+    #   HISTORICALLY_TRADEABLE_NOT_NOW | NEVER_TRADEABLE | AMBIGUOUS |
+    #   INSUFFICIENT_DATA
+    # Goal: find strong tradeable signals right now, regardless of whether
+    # any gate passes. Gate reports below are diagnostics.
+    print(f"--- TRADEABLE SIGNAL REPORT (per-cell chronological quarters) ---")
+    cb_trade = classify_cell_tradability(f"CB-{args.asset}",
+                                            cb_chunks, cb_results, k=1)
+    kr_trade = classify_cell_tradability(f"KR-{args.asset}",
+                                            kr_chunks, kr_results, k=1)
+    by_category: dict[str, list[tuple[str, str, dict]]] = defaultdict(list)
+    for venue_report in (cb_trade, kr_trade):
+        venue = venue_report["label"]
+        for regime, cell in venue_report.get("per_regime", {}).items():
+            by_category[cell["verdict"]].append((venue, regime, cell))
+    # Print in priority order — actionable categories first.
+    for cat in ("ALWAYS_TRADEABLE",
+                  "CURRENTLY_TRADEABLE",
+                  "HISTORICALLY_TRADEABLE_NOT_NOW",
+                  "AMBIGUOUS",
+                  "NEVER_TRADEABLE",
+                  "INSUFFICIENT_DATA"):
+        cells = by_category.get(cat, [])
+        if not cells:
+            continue
+        print(f"\n  [{cat}]  ({len(cells)} cell(s))")
+        for venue, regime, cell in cells:
+            if cat == "INSUFFICIENT_DATA":
+                reason = cell.get("reason", "")
+                print(f"    {venue:<8} {regime:<22} n={cell.get('n', 0):>4}  "
+                      f"({reason})")
+                continue
+            q = cell.get("quarters", [])
+            dir_word = cell.get("direction", "")
+            q_strs = []
+            for qi in q:
+                if qi.get("r") is None:
+                    q_strs.append(f"q{qi['quarter']}=--(n={qi['n']})")
+                else:
+                    q_strs.append(f"q{qi['quarter']}={qi['r']:+.2f}(n={qi['n']})")
+            print(f"    {venue:<8} {regime:<22} n={cell.get('n', 0):>4}  "
+                  f"{dir_word:<9}  " + "  ".join(q_strs))
+    print()
 
     # Combined verdict — Gate H prefers the calibrated path when present
     # (per-asset lag-aligned scoring + structural-divergence handling
