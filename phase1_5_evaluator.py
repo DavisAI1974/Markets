@@ -437,42 +437,56 @@ def classify_cell_tradability(label: str,
                                   results: list[ClassificationResult],
                                   k: int = 1,
                                   strong_r: float = 0.15,
-                                  weak_r: float = 0.10,
-                                  min_quarter_n: int = 6,
-                                  min_total_n: int = 24) -> dict:
-    """Per-cell chronological tradability classifier (Pass-14).
+                                  moderate_r: float = 0.10,
+                                  min_n_intraday: int = 4,
+                                  min_n_daily: int = 6,
+                                  min_n_weekly: int = 20,
+                                  min_n_longterm: int = 30) -> dict:
+    """Per-cell horizon-based tradability classifier (Pass-14).
 
-    Splits each regime cell's chunks into 4 equal-time quarters (by
-    chronological order) and computes Pearson r per quarter. Reports
-    one of four tradability states based on which quarters carry a
-    strong signal:
+    Mirrors edge_tracker.MultiHorizonEdgeTracker for offline data.
+    Uses the same horizon definitions and thresholds so the offline
+    and live views report the same way.
 
-      ALWAYS_TRADEABLE
-        3+ of 4 quarters have |r| >= strong_r AND consistent sign.
-      CURRENTLY_TRADEABLE
-        q4 (most recent quarter) has |r| >= strong_r AND not
-        ALWAYS_TRADEABLE.
-      HISTORICALLY_TRADEABLE_NOT_NOW
-        1+ older quarter (q1/q2/q3) has |r| >= strong_r BUT q4 |r| < weak_r.
-      NEVER_TRADEABLE
-        no quarter has |r| >= strong_r.
-      INSUFFICIENT_DATA
-        total n < min_total_n or any quarter < min_quarter_n.
+      Intraday  = last 4 hours of the corpus
+      Daily     = last 24 hours
+      Weekly    = last 7 days
+      Long-term = last 30 days (or all)
 
-    The goal is to surface which cells are tradeable RIGHT NOW (q4
-    strong) vs consistently tradeable across history (always) vs
-    dormant (was strong, isn't now) vs never strong. This replaces
-    the prior "signal faded over time" framing — that's just one of
-    the four categories, and the focus shifts to current tradeability.
+    Per horizon, compute Pearson r over (chunk_t.mean_dipole,
+    chunk_{t+k}.log_return) using only chunks whose predictor
+    timestamp falls inside the horizon. Strength tag per horizon:
+
+      STRONG       |r| >= strong_r AND n >= min_n_horizon
+      MODERATE     |r| >= moderate_r AND n >= min_n_horizon
+      WEAK         |r| <  moderate_r AND n >= min_n_horizon
+      NEW          n  <  min_n_horizon
+
+    Tradability category derived from horizon strengths:
+
+      ALWAYS_TRADEABLE              long-term STRONG AND weekly STRONG
+                                     AND (daily STRONG OR daily MODERATE)
+                                     AND signs match across those horizons
+      CURRENTLY_TRADEABLE            intraday STRONG, OR daily STRONG,
+                                     and not ALWAYS_TRADEABLE
+      HISTORICALLY_TRADEABLE_NOT_NOW long-term STRONG (or weekly STRONG)
+                                     but both daily AND intraday are
+                                     WEAK or NEW
+      NEVER_TRADEABLE                no horizon ever reached STRONG
+                                     (all WEAK or NEW)
+      AMBIGUOUS                      partial signal that doesn't fit
+                                     a clear category (e.g. only
+                                     weekly MODERATE, mixed signs)
+      INSUFFICIENT_DATA              long-term horizon has n<min_n_longterm
     """
     if len(chunks) < k + 2:
         return {"label": label, "verdict": "INSUFFICIENT_DATA",
                   "reason": "too few chunks"}
 
-    # Per-chunk dipole + forward log return, indexed parallel to chunks.
-    mean_dipoles = []
-    chunk_returns = []
-    chunk_ts = []
+    # Per-chunk dipole + forward log return + predictor timestamp.
+    mean_dipoles: list[float] = []
+    chunk_returns: list[float] = []
+    chunk_ts: list[float] = []
     for c in chunks:
         bar_dipoles = [b.dipole for b in c.bars]
         mean_dipoles.append(float(np.mean(bar_dipoles)) if bar_dipoles else 0.0)
@@ -487,101 +501,112 @@ def classify_cell_tradability(label: str,
     cr = np.array(chunk_returns)
     labels = [r.regime.value for r in results]
 
+    # Anchor "now" to the end of the corpus (the latest predictor ts that
+    # has a forward chunk).
+    if len(chunk_ts) <= k or not any(chunk_ts):
+        return {"label": label, "verdict": "INSUFFICIENT_DATA",
+                  "reason": "no usable timestamps"}
+    now_ts = max(chunk_ts[:len(chunks) - k])
+    HOUR = 3600.0
+    DAY = 24 * HOUR
+    horizons = (
+        ("intraday", 4 * HOUR, min_n_intraday),
+        ("daily",    24 * HOUR, min_n_daily),
+        ("weekly",   7 * DAY,   min_n_weekly),
+        ("longterm", 30 * DAY,  min_n_longterm),
+    )
+
+    def _strength(n: int, r: float | None, min_n: int) -> tuple[str, str]:
+        if r is None or n < min_n:
+            return "NEW", ""
+        direction = "fade" if r < 0 else ("momentum" if r > 0 else "")
+        if abs(r) >= strong_r:
+            return "STRONG", direction
+        if abs(r) >= moderate_r:
+            return "MODERATE", direction
+        return "WEAK", direction
+
     per_regime: dict[str, dict] = {}
     for regime in sorted(set(labels)):
-        idx = [i for i in range(len(chunks) - k) if labels[i] == regime]
-        n_total = len(idx)
-        if n_total < min_total_n:
+        all_idx = [i for i in range(len(chunks) - k) if labels[i] == regime]
+        n_total = len(all_idx)
+        if n_total < min_n_longterm:
             per_regime[regime] = {"n": n_total, "verdict": "INSUFFICIENT_DATA",
-                                    "reason": f"n<{min_total_n}"}
+                                    "reason": f"long-term n<{min_n_longterm}"}
             continue
-        # Sort idx chronologically by ts of chunk i (predictor chunk)
-        idx.sort(key=lambda i: chunk_ts[i])
-        # Split into 4 equal-size quarters by chronological order.
-        q_size = n_total / 4.0
-        quarters: list[dict] = []
-        for q in range(4):
-            a = int(round(q * q_size))
-            b = int(round((q + 1) * q_size))
-            seg = idx[a:b]
-            n_q = len(seg)
-            if n_q < min_quarter_n:
-                quarters.append({"quarter": q + 1, "n": n_q, "r": None, "p": None,
-                                  "ts_start": chunk_ts[seg[0]] if seg else None,
-                                  "ts_end": chunk_ts[seg[-1]] if seg else None,
-                                  "note": f"n<{min_quarter_n}"})
+        cell_horizons: dict[str, dict] = {}
+        for hname, hsec, hmin_n in horizons:
+            cutoff = now_ts - hsec
+            seg = [i for i in all_idx if chunk_ts[i] >= cutoff]
+            n_h = len(seg)
+            if n_h < 3:
+                cell_horizons[hname] = {"n": n_h, "r": None, "p": None,
+                                          "strength": "NEW", "direction": ""}
                 continue
             x = md[seg]
             y = cr[[i + k for i in seg]]
             r, p, _ = _pearsonr_with_p(x, y)
-            quarters.append({
-                "quarter": q + 1,
-                "n": n_q,
+            strength, direction = _strength(
+                n_h, float(r) if np.isfinite(r) else None, hmin_n)
+            cell_horizons[hname] = {
+                "n": n_h,
                 "r": round(float(r), 4) if np.isfinite(r) else None,
                 "p": round(float(p), 4) if np.isfinite(p) else None,
-                "ts_start": chunk_ts[seg[0]],
-                "ts_end": chunk_ts[seg[-1]],
-            })
+                "strength": strength,
+                "direction": direction,
+            }
 
-        # Classify based on quarter r values.
-        rs = [q["r"] for q in quarters]
-        has_q = [r is not None for r in rs]
-        # If any quarter is insufficient data, classify based on what we have
-        # rather than refusing — but only if q4 is computable.
-        q4 = rs[3]
-        if q4 is None and not any(has_q):
-            verdict = "INSUFFICIENT_DATA"
+        # Derive tradability category from horizon strengths.
+        intraday = cell_horizons["intraday"]
+        daily = cell_horizons["daily"]
+        weekly = cell_horizons["weekly"]
+        longterm = cell_horizons["longterm"]
+
+        intraday_strong = intraday["strength"] == "STRONG"
+        daily_strong = daily["strength"] == "STRONG"
+        weekly_strong = weekly["strength"] == "STRONG"
+        longterm_strong = longterm["strength"] == "STRONG"
+        daily_ok = daily["strength"] in ("STRONG", "MODERATE")
+        intraday_quiet = intraday["strength"] in ("WEAK", "NEW")
+        daily_quiet = daily["strength"] in ("WEAK", "NEW")
+
+        # Sign consistency across long-term / weekly / daily (when present)
+        signs = []
+        for h in (longterm, weekly, daily):
+            if h.get("r") is not None and abs(h["r"]) >= moderate_r:
+                signs.append(1 if h["r"] > 0 else -1)
+        consistent_sign = (len(signs) >= 2
+                              and (all(s > 0 for s in signs)
+                                    or all(s < 0 for s in signs)))
+
+        if longterm_strong and weekly_strong and daily_ok and consistent_sign:
+            verdict = "ALWAYS_TRADEABLE"
+        elif intraday_strong or daily_strong:
+            verdict = "CURRENTLY_TRADEABLE"
+        elif (longterm_strong or weekly_strong) and daily_quiet and intraday_quiet:
+            verdict = "HISTORICALLY_TRADEABLE_NOT_NOW"
+        elif not any(h["strength"] == "STRONG"
+                      for h in cell_horizons.values()):
+            verdict = "NEVER_TRADEABLE"
         else:
-            strong_quarters = [
-                (i, r) for i, r in enumerate(rs)
-                if r is not None and abs(r) >= strong_r
-            ]
-            n_strong = len(strong_quarters)
-            # Sign consistency: when 3+ quarters strong, majority sign
-            if n_strong >= 3:
-                signs = [1 if r > 0 else -1 for _, r in strong_quarters]
-                pos = sum(1 for s in signs if s > 0)
-                neg = sum(1 for s in signs if s < 0)
-                consistent_sign = (pos >= 3) or (neg >= 3)
-            else:
-                consistent_sign = False
-            q4_strong = (q4 is not None and abs(q4) >= strong_r)
-            q4_weak = (q4 is not None and abs(q4) < weak_r)
-            any_older_strong = any(
-                rs[i] is not None and abs(rs[i]) >= strong_r
-                for i in (0, 1, 2)
-            )
-            if n_strong >= 3 and consistent_sign:
-                verdict = "ALWAYS_TRADEABLE"
-            elif q4_strong:
-                verdict = "CURRENTLY_TRADEABLE"
-            elif any_older_strong and q4_weak:
-                verdict = "HISTORICALLY_TRADEABLE_NOT_NOW"
-            elif n_strong == 0:
-                verdict = "NEVER_TRADEABLE"
-            else:
-                # Some quarter is between weak_r and strong_r but q4 isn't
-                # strong; or q4 is between weak and strong. Call this
-                # AMBIGUOUS rather than forcing a verdict.
-                verdict = "AMBIGUOUS"
-        # Direction: from q4 if strong, else from majority of strong quarters
-        if q4 is not None and abs(q4) >= weak_r:
-            direction = "fade" if q4 < 0 else "momentum"
-        else:
-            signs = [1 if r > 0 else -1 for r in rs if r is not None and abs(r) >= weak_r]
-            if signs:
-                direction = "momentum" if sum(signs) > 0 else "fade"
-            else:
-                direction = ""
+            verdict = "AMBIGUOUS"
+
+        # Headline direction: prefer intraday if strong; else daily;
+        # else weekly; else long-term.
+        direction = ""
+        for h in (intraday, daily, weekly, longterm):
+            if h["strength"] in ("STRONG", "MODERATE") and h.get("direction"):
+                direction = h["direction"]
+                break
 
         per_regime[regime] = {
             "n": n_total,
-            "quarters": quarters,
+            "horizons": cell_horizons,
             "verdict": verdict,
             "direction": direction,
         }
 
-    return {"label": label, "per_regime": per_regime}
+    return {"label": label, "per_regime": per_regime, "now_ts": now_ts}
 
 
 def evaluate_gate_I(label: str, chunks: list[MarketChunk],
@@ -1248,14 +1273,14 @@ def main():
             json.dump(pass7, f, indent=2, default=str)
         print(f"Pass-7 features dump: {args.features_out}\n")
 
-    # TRADEABLE SIGNAL REPORT (Pass-14) — the headline. Chronological-
-    # quarter classification of each cell into:
-    #   ALWAYS_TRADEABLE | CURRENTLY_TRADEABLE |
-    #   HISTORICALLY_TRADEABLE_NOT_NOW | NEVER_TRADEABLE | AMBIGUOUS |
-    #   INSUFFICIENT_DATA
-    # Goal: find strong tradeable signals right now, regardless of whether
-    # any gate passes. Gate reports below are diagnostics.
-    print(f"--- TRADEABLE SIGNAL REPORT (per-cell chronological quarters) ---")
+    # TRADEABLE SIGNAL REPORT (Pass-14) — the headline. Per-cell
+    # horizon-based classification using the same horizons + thresholds
+    # as edge_tracker.MultiHorizonEdgeTracker:
+    #   intraday=4h, daily=24h, weekly=7d, longterm=30d
+    # Tradability categories: ALWAYS / CURRENTLY / HISTORICALLY_NOT_NOW /
+    # NEVER / AMBIGUOUS / INSUFFICIENT_DATA. Goal: find strong tradeable
+    # signals right now. Gate reports below are diagnostics.
+    print(f"--- TRADEABLE SIGNAL REPORT (per-cell, multi-horizon) ---")
     cb_trade = classify_cell_tradability(f"CB-{args.asset}",
                                             cb_chunks, cb_results, k=1)
     kr_trade = classify_cell_tradability(f"KR-{args.asset}",
@@ -1282,16 +1307,19 @@ def main():
                 print(f"    {venue:<8} {regime:<22} n={cell.get('n', 0):>4}  "
                       f"({reason})")
                 continue
-            q = cell.get("quarters", [])
-            dir_word = cell.get("direction", "")
-            q_strs = []
-            for qi in q:
-                if qi.get("r") is None:
-                    q_strs.append(f"q{qi['quarter']}=--(n={qi['n']})")
+            horizons = cell.get("horizons", {})
+            dir_word = cell.get("direction", "") or "-"
+            h_strs = []
+            for hname in ("intraday", "daily", "weekly", "longterm"):
+                h = horizons.get(hname, {})
+                if h.get("r") is None:
+                    h_strs.append(f"{hname}={h.get('strength', 'NEW')}"
+                                    f"(n={h.get('n', 0)})")
                 else:
-                    q_strs.append(f"q{qi['quarter']}={qi['r']:+.2f}(n={qi['n']})")
+                    h_strs.append(f"{hname}={h['strength']}/"
+                                    f"r={h['r']:+.2f}(n={h['n']})")
             print(f"    {venue:<8} {regime:<22} n={cell.get('n', 0):>4}  "
-                  f"{dir_word:<9}  " + "  ".join(q_strs))
+                  f"{dir_word:<9}  " + "  ".join(h_strs))
     print()
 
     # Combined verdict — Gate H prefers the calibrated path when present

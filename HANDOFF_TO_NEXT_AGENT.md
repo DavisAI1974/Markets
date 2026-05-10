@@ -1,3 +1,259 @@
+# Handoff to the next agent — markets-watch, 2026-05-10 (Pass-14 in progress)
+
+> The handoff doc below this section is the historical version (2026-05-05,
+> Phase 1.5j status). It is preserved for context. The CURRENT state of
+> the project — including major framing change from the user — is in
+> this top section.
+
+## Branch + checkout
+
+**Branch**: `claude/continue-phase-2-pipeline-UFiGY` (origin: `davisai1974/markets`)
+**Latest pushed commit**: `ca71bf2` ("Pass-14: TRADEABLE SIGNAL REPORT — reframe around current tradeability")
+**Uncommitted work in progress**: `phase1_5_evaluator.py` was just modified to switch from chronological-quarter classification to **horizon-based** classification (matching `edge_tracker.py`'s intraday/daily/weekly/longterm windows). This change is the IMMEDIATE TODO for the next agent: commit it, run Pass-14, then write the result up.
+
+```bash
+git fetch origin claude/continue-phase-2-pipeline-UFiGY
+git checkout claude/continue-phase-2-pipeline-UFiGY
+git status   # phase1_5_evaluator.py will show as modified
+```
+
+## THE PRODUCT GOAL (reframed by user, 2026-05-10)
+
+Direct quote: *"the goal of this is to find the strongest tradeable
+signals. not to make everything pass. if something fails that just
+means not a tradeable signal. we need to figure out if signals are
+always tradeable, always not, sometimes yes or sometimes no. that's
+the goal and that's why we track them long-term and short-term. and
+why we segment them. we need to get away from all the focus being on
+if a signal fades over time. we need to focus on finding strong
+signals to trade on in the moment."*
+
+Operationally: every (asset, venue, regime) cell gets classified into
+exactly one of four tradability states across four time horizons:
+
+```
+horizons   : intraday (4h), daily (24h), weekly (7d), longterm (30d)
+strengths  : STRONG (|r|>=0.15), MODERATE (|r|>=0.10), WEAK, NEW
+categories : ALWAYS_TRADEABLE              (longterm+weekly+daily strong,
+                                              signs consistent)
+             CURRENTLY_TRADEABLE           (intraday or daily strong,
+                                              not always)
+             HISTORICALLY_TRADEABLE_NOT_NOW (longterm/weekly strong but
+                                              daily+intraday quiet)
+             NEVER_TRADEABLE               (no horizon ever strong)
+             AMBIGUOUS                     (partial signal, no clear category)
+             INSUFFICIENT_DATA             (longterm n < 30)
+```
+
+The two existing systems that implement this:
+
+- **`edge_tracker.py`** (live, runtime): `MultiHorizonEdgeTracker` polls
+  per-chunk and maintains the four horizons. Already deployed. Tagged
+  per-cell summary appears on `RegimeStatus` and `SignalEvent`.
+- **`phase1_5_evaluator.py`** (offline, static corpus): the new
+  `classify_cell_tradability()` does the same thing on a fixed 30d
+  corpus. **Just rewritten to use the same horizons** (was chronological-
+  quarter; user reminded me intraday/daily/weekly was already the
+  framework). Uncommitted as of this handoff.
+
+Gates (G/H/I) and the lag scan are now **diagnostics**, not quality
+bars. They tell us things about the classifier and cross-venue
+agreement; they do not determine what we trade. The TRADEABLE SIGNAL
+REPORT is the headline.
+
+## Critical user pushback this session (two major corrections)
+
+This session had two big course-corrections from the user. The next
+agent must respect these and not regress.
+
+### Correction 1: do not bend analysis to fit interpretations
+
+The user said: *"I'm not concerned about what i think is happening,
+I only care about what actually is. i don't want us to adjust things
+to what we think and just go with what actually is happening."*
+
+Three code-level reverts landed in commits `8df20ce` + `e2592de`:
+
+1. **Removed structural-divergence pass override**. I had ETH's
+   calibrated Gate H verdict auto-pass via `gate_pass_override=True`
+   because the asset was flagged "structural divergence". That was
+   calling an empirical FAIL a PASS based on an interpretive label.
+2. **Removed strict-OR-relaxed Gate H pass**. Pass-8 introduced
+   `gate_H = strict>=60% OR relaxed>=60%` where the relaxed metric
+   collapses EQ + WASH_HAWKES + WASH_PAIRED + DEPLETED into a
+   NO_EDGE bucket. The bucket was a definitional choice; OR-passing
+   gave the gate a softer second path. Strict-only is the verdict
+   now. Relaxed still computed + printed but tagged "info only".
+3. **Reverted WASH_HAWKES classifier tweaks**: `BOTH_SIDES_MIN`
+   restored 0.35→0.30 (Pass-9 was nearly a no-op anyway) and
+   `COMBINED_MAX = 0.55` ceiling removed entirely (Pass-10 revert).
+   Both changes were classifier label tweaks motivated by sub-cell
+   measurements showing η-high WASH chunks predicted momentum
+   (r=+0.106). The chunks themselves and their forward returns
+   didn't change — only the labels did. With the reverts,
+   η-saturated balanced-flow chunks go back to being labeled
+   `WASH_HAWKES` per the original threshold definition. The sub-
+   cell finding is reported as a measurement, not folded into labels.
+
+### Correction 2: focus on tradeable signals, not pass/fail (Pass-14 reframe)
+
+The product goal (above) replaces the gates-as-quality-bars framing.
+The new headline is the TRADEABLE SIGNAL REPORT.
+
+### Lessons to internalize
+
+- **Measurement, not interpretation.** Report what the data says.
+  Don't extrapolate composition claims either (Pass-12 had a "Bybit-
+  perp leads KR-BTC by 15+ min total" claim composed from sub-minute
+  Bybit→CB-spot + 15min CB-spot→KR-spot. The composition was not
+  directly measured. Don't repeat this pattern.)
+- **Goalpost shifts are easy to do accidentally** when motivated by
+  wanting a gate to pass or a signal to look stronger. The user is
+  going to push back hard. Just report the measurement.
+- **When in doubt about a classifier knob, leave it at the original
+  spec** and report the sub-cell finding separately.
+
+## Surviving findings (robust across passes 8–13)
+
+These are tradeable empirical reads that survived all the classifier
+reverts (because they live in regimes the WASH_HAWKES override doesn't
+touch, or because they're sub-cell findings that don't depend on the
+override):
+
+| Cell | n | r | p / q | Notes |
+|---|---:|---:|---|---|
+| **KR-ETH WHALE_UP fade** | 65 | −0.309 | BH q=0.029 | **6 consecutive replications**, including under reverted classifier. Most robust finding in the corpus. |
+| KR-ETH WHALE_UP × η-mid | 28 | −0.564 | p=0.001 | Strongest single sub-cell signal in corpus. |
+| KR-BTC EQ × η-high | 236 | +0.150 | p=0.020 | Pass-13 split (Pass-10 had merged into n=368 r=+0.134 p=0.010; that merge is reverted). |
+| KR-BTC WASH × η-high | 291 | +0.106 | p=0.069 | The other half of the Pass-10 merged cell. |
+| KR-BTC WHALE_DOWN × η-low | 22 | +0.520 | p=0.006 | Capitulation-exhaustion fade. |
+| KR-BTC WHALE_NASCENT_UP × η-low | 16 | −0.559 | p=0.012 | Cross-asset divergence with ETH (KR-ETH NASCENT_UP shows momentum). |
+
+Already wired as a paper-trade cell (`backend/forward_paper.py`):
+- `eth_kr_whale_up_fade` — fades KR-ETH WHALE_UP entries based on the
+  Pass-8 finding above.
+
+## Architecture map (so next agent can navigate)
+
+```
+phase1_5_evaluator.py        offline evaluator on 30d corpora
+  - Gate G  : per-venue classifier diversity
+  - Gate H  : cross-venue agreement (strict-only verdict; relaxed info-only)
+  - Gate H lag-scan : disambiguates timing vs structural divergence
+  - Gate H calibrated : uses cross_venue_lag_calibration.json
+  - Gate I  : per-regime forward predictive r (BH-FDR corrected)
+  - sub-cell Gate I : η-tier × hurst-label splits per regime
+  - TRADEABLE SIGNAL REPORT : (Pass-14, in flight)
+                              horizon-based per-cell classification
+
+regime_classifier.py         regime classifier (WHALE_UP, HERD_UP,
+                             EQ_TWO_SIDED, WASH_HAWKES, DEPLETED, etc.)
+                             Thresholds at PASS-8 baseline as of e2592de.
+
+markets_adapter.py           data layer: MarketBar, MarketChunk,
+                             MarketChunker (PELT segmentation)
+
+edge_tracker.py              live multi-horizon edge tracker (runtime).
+                             Per-(asset, venue, regime) cell tracks
+                             intraday/daily/weekly/longterm strength +
+                             self_trend (STRENGTHENING/DECAYING/FLIPPING
+                             /STABLE).
+
+backend/api_server.py        live polling backend. Wires edge_tracker
+                             into _poll_one. RegimeStatus + SignalEvent
+                             carry edge_* fields.
+
+backend/forward_paper.py     paper-trade cells (hardcoded) + edge-driven
+                             trades via try_open_edge_driven_trade.
+                             Priority: intraday > daily > weekly > longterm.
+
+cross_venue_lag_calibration.json
+                             Pass-11/12 lag-scan findings persisted.
+                             BTC: CB leads KR by 15 min (peak measured).
+                             ETH: structural_divergence=true (informational
+                             metadata only, NOT a pass override).
+
+HANDOFF_PHASE1_5_RESULTS.md  pass-by-pass results history.
+                             Pass-13 entry documents all corrections.
+                             Pass-14 entry: TBD (write when run completes).
+
+pass{N}_{eth,btc}_stdout.txt  raw evaluator output per pass
+pass{N}_{eth,btc}_features.json  feature dumps per pass
+```
+
+## Immediate todo list for next agent
+
+1. **Commit the in-flight Pass-14 horizon-based classifier change** to
+   `phase1_5_evaluator.py`. The classify_cell_tradability function was
+   rewritten from chronological-quarter to horizon-based (intraday/
+   daily/weekly/longterm matching edge_tracker.py). The print section
+   was updated to show per-horizon strength + r. The classifier docstring
+   was updated. Just commit and push.
+
+2. **Run Pass-14** on ETH and BTC:
+   ```bash
+   nohup python phase1_5_evaluator.py --asset ETH \
+       --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+       --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+       --multi-signal-pelt --features-out pass14_eth_features.json \
+       > pass14_eth_stdout.txt 2>&1 &
+   nohup python phase1_5_evaluator.py --asset BTC \
+       --cb-bins btc_coinbase_bins.json --kr-bins btc_kraken_bins.json \
+       --sibling-cb-bins eth_coinbase_bins.json --sibling-kr-bins eth_kraken_bins.json \
+       --multi-signal-pelt --features-out pass14_btc_features.json \
+       > pass14_btc_stdout.txt 2>&1 &
+   ```
+   ETH typically ~30-40 min wall-clock, BTC ~40-50 min. Use Monitor to
+   wake when both `pass14_*_features.json` files exist.
+
+3. **Read the TRADEABLE SIGNAL REPORT section** of each stdout. The
+   key question for each cell: which category did it fall into?
+   - `ALWAYS_TRADEABLE` cells are the strongest claim.
+   - `CURRENTLY_TRADEABLE` cells should be productized (added as
+     paper cells via the same pattern as `eth_kr_whale_up_fade`).
+   - `HISTORICALLY_TRADEABLE_NOT_NOW` cells go on the watchlist.
+
+4. **Write Pass-14 entry in `HANDOFF_PHASE1_5_RESULTS.md`** at the
+   top, before the Pass-13 entry. Document what categorized where.
+   Resist the urge to interpret beyond what the measurements say.
+
+5. **Commit pass14 artifacts** (stdout, features JSON, doc update).
+
+## Open questions / future pass candidates
+
+- **Pass-15 candidate**: each `CURRENTLY_TRADEABLE` cell from Pass-14
+  should get a paper-trade cell registered in `backend/forward_paper.py`
+  using the same pattern as `eth_kr_whale_up_fade` (cell_id, asset,
+  venue, regime, side, kind, hold_minutes, etc.).
+- **Backend uptime**: once the live backend accumulates 24h+ of
+  polling, the edge-tracker's daily horizon populates and the first
+  edge-driven paper trades can fire.
+- **Bybit perp data >24h**: `perp_lead_evaluator.py` was built in
+  Pass-9 but needs >24h of Bybit perp data to run at n≥1000.
+- **CB-BTC n≥20 directional**: still data-starved (n=42 total
+  across all regimes in current 30d corpus).
+- **NASCENT_UP n≥80**: currently KR-ETH n=45, KR-BTC n=48. Cross-
+  asset sign divergence (KR-ETH momentum vs KR-BTC fade) would reach
+  BH-significance at n≥80.
+- **Don't extrapolate composition claims**. If we need Bybit-perp ↔
+  KR-BTC lead time, measure it directly via a new lag scan over
+  those two streams. Don't compose from prior measurements.
+
+## Operating environment notes
+
+- Repo lives in `/home/user/Markets`. Already a git repo on the
+  named branch.
+- Evaluator runs accumulate ~30-50 min wall-clock per pass per asset.
+  Use background processes + Monitor for progress.
+- Stop hook will complain about uncommitted artifacts; commit
+  evaluator dumps after each pass.
+- The user prefers concrete measurements over interpretation. When
+  in doubt, report numbers and let the user decide.
+
+---
+
+# (Below: historical handoff doc from 2026-05-05, Phase 1.5j) ===========
+
 # Handoff to the next agent — markets-watch, 2026-05-05
 
 **Status**: Phase 1.5j complete. Codebase end-to-end ready; remaining work is operational (deploy on user hardware) per `LAUNCH_PLAYBOOK.md`.
