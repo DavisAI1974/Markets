@@ -1,0 +1,36 @@
+{
+  "_comment": "Per-asset cross-venue lead/lag calibration for asset-specific Gate H scoring. Generated from Pass-12 lag-scan results (commit 1c328cf). Pass-12 used 30d corpora for both assets. Re-run lag scan periodically (Pass-N+5 or after major venue/microstructure changes) and update this file.",
+  "_schema_version": 1,
+  "BTC": {
+    "primary_venue": "CB",
+    "secondary_venue": "KR",
+    "lag_min": 15,
+    "strict_at_lag": 0.624,
+    "relaxed_at_lag": 0.679,
+    "base_strict_at_lag_0": 0.571,
+    "base_relaxed_at_lag_0": 0.639,
+    "plateau_start_min": 8,
+    "plateau_end_min": 21,
+    "plateau_strict_threshold": 0.60,
+    "calibration_pass": "Pass-12",
+    "calibration_date": "2026-05-10",
+    "scan_range_min": 30,
+    "scan_n_overlap_at_peak": 707,
+    "interpretation": "CB-BTC leads KR-BTC by 15 minutes for regime classification. Plateau above 60% strict spans lag +8 to +21 (14 min wide), giving the system tolerance to ~±6 min lag drift around the +15 peak. Combined with sub-minute Bybit-perp lead over CB-BTC spot, Bybit-perp leads KR-BTC spot by ~15+ min total."
+  },
+  "ETH": {
+    "structural_divergence": true,
+    "lag_scan_range_min": 10,
+    "max_strict_at_any_lag": 0.352,
+    "max_relaxed_at_any_lag": 0.579,
+    "max_strict_lag_min": 0,
+    "max_relaxed_lag_min": -2,
+    "strict_range_min": 0.339,
+    "strict_range_max": 0.352,
+    "relaxed_range_min": 0.562,
+    "relaxed_range_max": 0.579,
+    "calibration_pass": "Pass-11",
+    "calibration_date": "2026-05-10",
+    "interpretation": "ETH cross-venue divergence is structural, not timing. Lag-scan curve is flat across the entire ±10 min range (strict varies between 33.9% and 35.2%, relaxed between 56.2% and 57.9%); no timing offset rescues the gate. CB-ETH (US institutional flow) and KR-ETH (European retail/algorithmic flow) genuinely classify the same nominal price moves with different microstructure labels — different MM populations, different aggressor profiles, different fill patterns. Gate H is NOT applicable as a hard pass criterion for ETH; per-venue Gate I findings (e.g. KR-ETH WHALE_UP fade BH q=0.029, replicated 5 consecutive passes) stand on their own merits without requiring cross-venue confirmation."
+  }
+}

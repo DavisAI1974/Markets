@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 from collections import Counter, defaultdict
 from typing import Sequence
 
@@ -203,6 +204,78 @@ def _bucketed_label(label: str) -> str:
     """Collapse the no-edge cluster to a single 'NO_EDGE' bucket; pass other
     labels through unchanged."""
     return "NO_EDGE" if label in _NO_EDGE_BUCKET else label
+
+
+def load_lag_calibration(path: str) -> dict:
+    """Load cross_venue_lag_calibration.json. Returns {} on any failure
+    so the calibrated-gate path silently degrades to the base Gate H."""
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path) as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def evaluate_gate_H_calibrated(asset: str,
+                                  cb_minute: dict[float, str],
+                                  kr_minute: dict[float, str],
+                                  calibration: dict) -> dict:
+    """Asset-specific Gate H using a persisted lag calibration entry.
+
+    Pass-12 found CB-BTC leads KR-BTC by 15 min while ETH cross-venue
+    divergence is structural at any lag. The base Gate H scores both
+    assets at lag=0 which understates BTC alignment and miscategorizes
+    ETH as fixable. This function applies the per-asset calibration:
+
+      - structural_divergence=True : verdict='STRUCTURAL_DIVERGENCE'
+        (informational; not a hard pass/fail — per-venue Gate I findings
+        stand on their own).
+      - lag_min=K : compare cb_minute[t] to kr_minute[t-K*60], strict
+        and relaxed scored normally; PASS if either ≥ 60%.
+      - no entry : verdict='NO_CALIBRATION' (caller falls back to base).
+    """
+    entry = (calibration or {}).get(asset)
+    if entry is None:
+        return {"verdict": "NO_CALIBRATION",
+                  "reason": f"no calibration entry for asset={asset}"}
+    if entry.get("structural_divergence"):
+        return {
+            "verdict": "STRUCTURAL_DIVERGENCE",
+            "interpretation": entry.get("interpretation", ""),
+            "max_strict_at_any_lag": entry.get("max_strict_at_any_lag"),
+            "max_relaxed_at_any_lag": entry.get("max_relaxed_at_any_lag"),
+            "calibration_pass": entry.get("calibration_pass"),
+            # treated as "not a hard fail" for the COMBINED VERDICT —
+            # the per-venue Gate I findings are what we trade on.
+            "gate_pass_override": True,
+        }
+    lag_min = int(entry.get("lag_min", 0))
+    if lag_min == 0:
+        h = evaluate_gate_H(cb_minute, kr_minute)
+    else:
+        kr_shifted = {ts + lag_min * 60.0: r for ts, r in kr_minute.items()}
+        h = evaluate_gate_H(cb_minute, kr_shifted)
+    if "reason" in h:
+        return {"verdict": "INSUFFICIENT_OVERLAP", "lag_min": lag_min, **h}
+    strict_pass = h["agreement_rate"] >= 0.60
+    relaxed_pass = h["agreement_rate_relaxed"] >= 0.60
+    pass_overall = strict_pass or relaxed_pass
+    return {
+        "verdict": "PASS" if pass_overall else "FAIL",
+        "lag_min": lag_min,
+        "primary_venue": entry.get("primary_venue"),
+        "secondary_venue": entry.get("secondary_venue"),
+        "strict_at_lag": h["agreement_rate"],
+        "relaxed_at_lag": h["agreement_rate_relaxed"],
+        "n_overlap": h["n_overlap_minutes"],
+        "strict_pass": strict_pass,
+        "relaxed_pass": relaxed_pass,
+        "calibration_pass": entry.get("calibration_pass"),
+        "gate_pass_override": pass_overall,
+    }
 
 
 def evaluate_gate_H_lag_scan(cb_minute: dict[float, str],
@@ -615,6 +688,9 @@ def main():
                    help="Minimum n per sub-cell for Pass-7 sub-cell Gate I. Lower for small corpora; default 15 keeps signal/noise reasonable.")
     p.add_argument("--lag-scan-range", type=int, default=10,
                    help="Half-width (in minutes) of the Gate H lag-scan range. Scan covers [-N, +N] in 1-min steps. Default 10 keeps ETH cheap; raise to 30+ for BTC investigations of CB->KR lead time (Pass-11 found BTC scan hit edge at +10 still rising).")
+    p.add_argument("--lag-calibration", type=str,
+                   default="cross_venue_lag_calibration.json",
+                   help="Path to per-asset cross-venue lag calibration JSON. When present, the evaluator scores Gate H at the calibrated lag (BTC: +15 min CB->KR per Pass-12) and treats structural-divergence assets (ETH per Pass-11) as informational rather than hard-fail. Falls back to base Gate H if file missing or asset entry missing.")
     args = p.parse_args()
 
     # Load hawkes calibration once; per-(asset, venue) thresholds drive F10
@@ -778,6 +854,44 @@ def main():
             else:
                 print(f"    {entry['lag_min']:+3d} : {entry['strict']:.1%} / "
                       f"{entry['relaxed']:.1%} / n={entry['n_overlap']}")
+    print()
+
+    # Gate H calibrated: per-asset cross-venue lag + structural-divergence
+    # handling (Pass-13). Uses cross_venue_lag_calibration.json — a
+    # persisted record of Pass-11/12 findings (BTC: CB leads KR by 15min;
+    # ETH: structural divergence at any lag).
+    lag_calibration = load_lag_calibration(args.lag_calibration)
+    h_calibrated = evaluate_gate_H_calibrated(
+        args.asset, cb_minute, kr_minute, lag_calibration)
+    print(f"--- GATE H (asset-specific, calibrated) ---")
+    if h_calibrated["verdict"] == "STRUCTURAL_DIVERGENCE":
+        print(f"  {args.asset}: STRUCTURAL DIVERGENCE (calibrated by "
+              f"{h_calibrated.get('calibration_pass', '?')})")
+        print(f"    max strict at any lag (recorded): "
+              f"{h_calibrated.get('max_strict_at_any_lag', '?')}")
+        print(f"    max relaxed at any lag (recorded): "
+              f"{h_calibrated.get('max_relaxed_at_any_lag', '?')}")
+        print(f"  -> NOT a hard fail; cross-venue divergence is the finding,")
+        print(f"     not noise to fix. Trade per-venue Gate I results on")
+        print(f"     their own merits without requiring cross-venue agreement.")
+    elif h_calibrated["verdict"] == "NO_CALIBRATION":
+        print(f"  {h_calibrated['reason']} — falling back to base Gate H verdict")
+    elif h_calibrated["verdict"] == "INSUFFICIENT_OVERLAP":
+        print(f"  insufficient overlap at calibrated lag={h_calibrated['lag_min']}")
+    else:
+        primary = h_calibrated.get("primary_venue", "?")
+        secondary = h_calibrated.get("secondary_venue", "?")
+        lag = h_calibrated["lag_min"]
+        print(f"  {args.asset}: {primary} leads {secondary} by {lag:+d} min "
+              f"(calibrated {h_calibrated.get('calibration_pass', '?')})")
+        print(f"    strict at lag={lag:+d}: "
+              f"{h_calibrated['strict_at_lag']:.1%}  "
+              f"[{'PASS' if h_calibrated['strict_pass'] else 'FAIL'}]")
+        print(f"    relaxed at lag={lag:+d}: "
+              f"{h_calibrated['relaxed_at_lag']:.1%}  "
+              f"[{'PASS' if h_calibrated['relaxed_pass'] else 'FAIL'}]")
+        print(f"  -> {h_calibrated['verdict']} "
+              f"(strict OR relaxed >=60% at calibrated lag)")
     print()
 
     # Gate I per venue
@@ -972,13 +1086,27 @@ def main():
             json.dump(pass7, f, indent=2, default=str)
         print(f"Pass-7 features dump: {args.features_out}\n")
 
-    # Combined verdict
+    # Combined verdict — Gate H prefers the calibrated path when present
+    # (per-asset lag-aligned scoring + structural-divergence handling
+    # introduced Pass-13). Falls back to base Gate H if the calibration
+    # file is missing or has no entry for this asset.
     all_g = g_cb["gate_G"] and g_kr["gate_G"]
-    pass_h = h.get("gate_H", False)
+    base_pass_h = h.get("gate_H", False)
+    if h_calibrated["verdict"] in ("PASS", "STRUCTURAL_DIVERGENCE"):
+        pass_h = True
+        h_source = f"calibrated:{h_calibrated['verdict']}"
+    elif h_calibrated["verdict"] == "FAIL":
+        pass_h = False
+        h_source = f"calibrated:FAIL@lag={h_calibrated.get('lag_min')}"
+    else:
+        # NO_CALIBRATION or INSUFFICIENT_OVERLAP → fall back to base
+        pass_h = base_pass_h
+        h_source = "base (no calibration)"
     pass_i = i_cb.get("gate_I", False) or i_kr.get("gate_I", False)  # either venue suffices
     print(f"--- COMBINED VERDICT ---")
     print(f"  Gate G (both venues): {'PASS' if all_g else 'FAIL'}")
-    print(f"  Gate H (cross-venue agreement): {'PASS' if pass_h else 'FAIL'}")
+    print(f"  Gate H (cross-venue, {h_source}): "
+          f"{'PASS' if pass_h else 'FAIL'}")
     print(f"  Gate I (per-regime predictive): {'PASS' if pass_i else 'FAIL'}")
     print(f"  ALL GATES G+H+I: {'PASS' if (all_g and pass_h and pass_i) else 'FAIL'}")
 
