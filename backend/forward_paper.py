@@ -451,16 +451,18 @@ def open_paper_trade(cell: CellSpec, fill_price: float,
 # these are dynamic, fired only when empirical edge appears.
 # ---------------------------------------------------------------------------
 
-# Hold-time per horizon. Hardcoded as policy this session — daily fires
-# expire fastest because the daily edge can fade within hours; longterm
-# trades hold longer because the edge has more inertia.
+# Hold-time per horizon. Hardcoded as policy this session — intraday
+# fires hold for half a chunk because the edge can flip within minutes;
+# daily/weekly/longterm scale up.
+EDGE_DRIVEN_HOLD_MIN_INTRADAY = 15.0   # half a chunk
 EDGE_DRIVEN_HOLD_MIN_DAILY = 30.0      # one chunk
 EDGE_DRIVEN_HOLD_MIN_WEEKLY = 120.0    # 4 chunks
 EDGE_DRIVEN_HOLD_MIN_LONGTERM = 240.0  # 8 chunks
 
-# Notional sizing per horizon. Daily signals get the smallest notional
-# because they're most ephemeral; longterm get the largest. Vol-target
-# scaling still applies on top.
+# Notional sizing per horizon. Intraday + daily get the smallest because
+# they're most ephemeral; longterm gets the largest. Vol-target scaling
+# still applies on top.
+EDGE_DRIVEN_NOTIONAL_INTRADAY = 250.0
 EDGE_DRIVEN_NOTIONAL_DAILY = 500.0
 EDGE_DRIVEN_NOTIONAL_WEEKLY = 1000.0
 EDGE_DRIVEN_NOTIONAL_LONGTERM = 1500.0
@@ -498,15 +500,19 @@ def try_open_edge_driven_trade(
 ) -> dict | None:
     """Return a paper-trade dict to open, or None if no horizon qualifies.
 
-    Priority: daily > weekly > longterm. The first horizon with
-    strength==STRONG and a non-empty direction (and a directional regime)
-    wins. Caller is responsible for dedup (one trade per chunk per cell)
-    and for persisting the returned dict.
+    Priority: intraday > daily > weekly > longterm. The first horizon
+    with strength==STRONG and a non-empty direction (and a directional
+    regime) wins. Intraday-first because the user wants tradeable-NOW
+    signals acted on immediately — even if longer horizons don't yet
+    confirm. Caller is responsible for dedup (one trade per chunk per
+    cell) and for persisting the returned dict.
     """
     if not _regime_is_directional(regime):
         return None
 
     horizons = (
+        ("intraday", edge_tags.intraday, EDGE_DRIVEN_HOLD_MIN_INTRADAY,
+            EDGE_DRIVEN_NOTIONAL_INTRADAY),
         ("daily", edge_tags.daily, EDGE_DRIVEN_HOLD_MIN_DAILY,
             EDGE_DRIVEN_NOTIONAL_DAILY),
         ("weekly", edge_tags.weekly, EDGE_DRIVEN_HOLD_MIN_WEEKLY,

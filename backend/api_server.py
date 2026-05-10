@@ -272,13 +272,15 @@ class RegimeStatus:
     hurst_label: str = ""
     # F10 Hawkes branching-ratio multiplier on directional regimes.
     hawkes_multiplier: float = 1.0
-    # F11 multi-horizon edge tags (long-term / weekly / daily). Surface
-    # on /api/status so PWA + Discord can show the three-track read.
-    edge_summary: str = ""               # one-liner for display
-    edge_daily_strength: str = "NEW"     # STRONG | MODERATE | WEAK | NEW
+    # F11 multi-horizon edge tags (intraday / daily / weekly / long-term).
+    # Surface on /api/status so PWA + Discord can show the four-track read.
+    edge_summary: str = ""                # one-liner for display
+    edge_intraday_strength: str = "NEW"   # STRONG | MODERATE | WEAK | NEW
+    edge_daily_strength: str = "NEW"
     edge_weekly_strength: str = "NEW"
     edge_longterm_strength: str = "NEW"
-    edge_daily_self_trend: str = "NEW"   # STRENGTHENING | DECAYING | FLIPPING | STABLE | NEW
+    edge_intraday_self_trend: str = "NEW"  # STRENGTHENING | DECAYING | FLIPPING | STABLE | NEW
+    edge_daily_self_trend: str = "NEW"
     edge_weekly_self_trend: str = "NEW"
     edge_longterm_self_trend: str = "NEW"
 
@@ -849,9 +851,11 @@ class SignalStore:
         # Pull current cell tags for surfacing on RegimeStatus / SignalEvent
         edge_tags = self.edge_tracker.cell_tags(asset, venue, status.regime)
         status.edge_summary = edge_tags.summary
+        status.edge_intraday_strength = edge_tags.intraday.strength
         status.edge_daily_strength = edge_tags.daily.strength
         status.edge_weekly_strength = edge_tags.weekly.strength
         status.edge_longterm_strength = edge_tags.longterm.strength
+        status.edge_intraday_self_trend = edge_tags.intraday.self_trend
         status.edge_daily_self_trend = edge_tags.daily.self_trend
         status.edge_weekly_self_trend = edge_tags.weekly.self_trend
         status.edge_longterm_self_trend = edge_tags.longterm.self_trend
@@ -1112,8 +1116,8 @@ class SignalStore:
         from backend.forward_paper import try_open_edge_driven_trade
         edge_tags = self.edge_tracker.cell_tags(asset, venue, regime)
         if any(s == "STRONG" for s in (
-                edge_tags.daily.strength, edge_tags.weekly.strength,
-                edge_tags.longterm.strength)):
+                edge_tags.intraday.strength, edge_tags.daily.strength,
+                edge_tags.weekly.strength, edge_tags.longterm.strength)):
             existing_open = {
                 t.get("cell_id", "")
                 for t in _load_practice_trades()

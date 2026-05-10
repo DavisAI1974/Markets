@@ -169,6 +169,22 @@ HURST_MIN_RETURNS_FOR_LABEL = 8  # mirrors hurst.HURST_MIN_RETURNS
 # × η-high subset showed a spurious momentum bias (ETH n=18 r=+0.43
 # p=0.06; BTC n=291 r=+0.106 p=0.069). Tightening to 0.35 excludes the
 # borderline-clustered high-η chunks that were carrying real order flow.
+# Pass-9 finding: tightening MIN 0.30→0.35 had near-zero empirical
+# effect because the per-side Hawkes fit on bar-binned data saturates
+# at η=0.50; few chunks land in [0.30, 0.35]. The actually-discriminating
+# variable is hawkes_eta_combined (cross-excitation), which spreads
+# from ~0.40 up to ~0.95.
+#
+# Pass-9 sub-cell read on the η-high tier of WASH_HAWKES (η_combined
+# above the cell's p67):
+#   KR-BTC WASH_HAWKES × η-high: n=291 r=+0.106 p=0.069  (momentum, not wash)
+#   KR-BTC EQ × η-high (just below override threshold): n=236 r=+0.150 p=0.020
+# The η-high subset of WASH_HAWKES is moving WITH price, not washing.
+# Pass-10: add a CEILING — chunks with η_combined > MAX stay as EQ
+# (they get the EQ × η-high momentum read instead of being mislabeled).
+# 0.55 is just above the WASH_HAWKES p50 (0.50) but below the η-high
+# tier's lower bound, so it cleanly peels the saturated-clustered band.
+WASH_HAWKES_COMBINED_MAX = 0.55     # combined η must stay BELOW this
 WASH_HAWKES_BOTH_SIDES_MIN = 0.35   # min(η_buy, η_sell) must clear this
 WASH_HAWKES_COMBINED_MIN = 0.40     # combined η must clear this
 WASH_HAWKES_DIPOLE_MAX = 0.20       # |mean_dipole| must stay below this
@@ -240,13 +256,14 @@ def classify_regime(f: MarketFeatures, baselines: Baselines | None = None,
     eta_sell = float(getattr(f, "hawkes_eta_sell", 0.0) or 0.0)
     if (result.regime == Regime.EQUILIBRIUM_TWO_SIDED
             and eta_all >= WASH_HAWKES_COMBINED_MIN
+            and eta_all < WASH_HAWKES_COMBINED_MAX
             and min(eta_buy, eta_sell) >= WASH_HAWKES_BOTH_SIDES_MIN
             and abs(f.mean_dipole) < WASH_HAWKES_DIPOLE_MAX):
         result.regime = Regime.WASH_HAWKES
         result.notes.append(
             f"hawkes_wash: η_all={eta_all:.2f} η_buy={eta_buy:.2f} "
             f"η_sell={eta_sell:.2f} dipole={f.mean_dipole:+.2f} "
-            f"(bilateral self-excitation + balanced volume)")
+            f"(moderate-cluster bilateral self-excitation + balanced volume)")
     return result
 
 

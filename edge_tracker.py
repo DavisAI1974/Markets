@@ -44,13 +44,18 @@ from typing import Any, Iterable
 import numpy as np
 
 
-# Window durations (seconds). Hardcoded as policy this session — these
-# correspond to canonical "daily / weekly / month" trader horizons.
+# Window durations (seconds). Four canonical trader horizons —
+# intraday / daily / weekly / monthly.
+INTRADAY_WINDOW_S = 4 * 60 * 60          # last 4 hours — "tradeable right now"
 DAILY_WINDOW_S = 24 * 60 * 60
 WEEKLY_WINDOW_S = 7 * 24 * 60 * 60
 LONGTERM_WINDOW_S = 30 * 24 * 60 * 60
 
 # Min n per window to report a strength tag. Below this we report "NEW".
+# Intraday is intentionally low because at 30min stride a 4h window can
+# only hold 8 samples — even 4 is enough to flag a STRONG fresh signal
+# to the user.
+MIN_N_INTRADAY = 4
 MIN_N_DAILY = 6
 MIN_N_WEEKLY = 20
 MIN_N_LONGTERM = 30
@@ -119,11 +124,13 @@ class CellTags:
     asset: str = ""
     venue: str = ""
     regime: str = ""
+    intraday: HorizonStat = field(default_factory=HorizonStat)
     daily: HorizonStat = field(default_factory=HorizonStat)
     weekly: HorizonStat = field(default_factory=HorizonStat)
     longterm: HorizonStat = field(default_factory=HorizonStat)
     # Trends compare a window to the next-broader one.
-    daily_trend: str = "STABLE"     # STRENGTHENING | WEAKENING | STABLE | UNKNOWN
+    intraday_trend: str = "STABLE"  # STRENGTHENING | WEAKENING | STABLE | UNKNOWN
+    daily_trend: str = "STABLE"
     weekly_trend: str = "STABLE"
     summary: str = ""               # human-readable one-liner for the playbook
 
@@ -264,9 +271,10 @@ def _classify_trend(short: HorizonStat, broad: HorizonStat) -> str:
 def _summary_for(tags: CellTags) -> str:
     """Human-readable one-liner for the playbook.
 
-    Surfaces strength + direction + self_trend per horizon. Cross-horizon
-    trends (daily_vs_weekly, weekly_vs_longterm) are appended only when
-    they fire (STRENGTHENING / WEAKENING) to keep the line short.
+    Surfaces strength + direction + self_trend per horizon, in
+    long-term → weekly → daily → intraday order so the reader sees the
+    broad-context first then drills down to "tradeable right now."
+    Cross-horizon trends are appended only when they fire actionably.
     """
     def _phrase(window: str, st: HorizonStat) -> str:
         if st.strength == "NEW":
@@ -281,13 +289,15 @@ def _summary_for(tags: CellTags) -> str:
         _phrase("Long-term", tags.longterm),
         _phrase("Weekly",    tags.weekly),
         _phrase("Daily",     tags.daily),
+        _phrase("Intraday",  tags.intraday),
     ]
-    # Append cross-horizon comparisons only when they fire actionably.
     extras = []
     if tags.weekly_trend in ("STRENGTHENING", "WEAKENING"):
         extras.append(f"weekly {tags.weekly_trend.lower()} vs long-term")
     if tags.daily_trend in ("STRENGTHENING", "WEAKENING"):
         extras.append(f"daily {tags.daily_trend.lower()} vs weekly")
+    if tags.intraday_trend in ("STRENGTHENING", "WEAKENING"):
+        extras.append(f"intraday {tags.intraday_trend.lower()} vs daily")
     base = ". ".join(parts) + "."
     if extras:
         base += "  (" + "; ".join(extras) + ".)"
@@ -340,30 +350,11 @@ class MultiHorizonEdgeTracker:
             now_ts = time.time()
         key = (asset, venue, regime)
         buf = self._buffers.get(key, deque())
-        # Bin samples by recency
+        cutoff_i = now_ts - INTRADAY_WINDOW_S
         cutoff_d = now_ts - DAILY_WINDOW_S
         cutoff_w = now_ts - WEEKLY_WINDOW_S
         cutoff_l = now_ts - LONGTERM_WINDOW_S
-        d_x: list[float] = []
-        d_y: list[float] = []
-        w_x: list[float] = []
-        w_y: list[float] = []
-        l_x: list[float] = []
-        l_y: list[float] = []
-        for s in buf:
-            if s.ts >= cutoff_l:
-                l_x.append(s.mean_dipole)
-                l_y.append(s.forward_return)
-                if s.ts >= cutoff_w:
-                    w_x.append(s.mean_dipole)
-                    w_y.append(s.forward_return)
-                    if s.ts >= cutoff_d:
-                        d_x.append(s.mean_dipole)
-                        d_y.append(s.forward_return)
-
-        # Also collect per-window sample lists for self_trend computation
-        # (we need ts to split into quarters; the unzipped lists above lost
-        # ordering structure).
+        i_samples: list[_Sample] = []
         d_samples: list[_Sample] = []
         w_samples: list[_Sample] = []
         l_samples: list[_Sample] = []
@@ -374,32 +365,34 @@ class MultiHorizonEdgeTracker:
                     w_samples.append(s)
                     if s.ts >= cutoff_d:
                         d_samples.append(s)
+                        if s.ts >= cutoff_i:
+                            i_samples.append(s)
 
-        def _stat(xs: list[float], ys: list[float], min_n: int,
-                    samples: list[_Sample]) -> HorizonStat:
-            if not xs:
+        def _stat(samples: list[_Sample], min_n: int) -> HorizonStat:
+            if not samples:
                 return HorizonStat(n=0)
-            xa = np.asarray(xs, dtype=float)
-            ya = np.asarray(ys, dtype=float)
+            xa = np.asarray([s.mean_dipole for s in samples], dtype=float)
+            ya = np.asarray([s.forward_return for s in samples], dtype=float)
             r, p = _pearson_with_p(xa, ya)
-            strength, direction = _classify_strength(len(xs), r, p, min_n)
+            strength, direction = _classify_strength(len(samples), r, p, min_n)
             self_trend, n_flips = _classify_self_trend(samples)
             return HorizonStat(
-                n=len(xs),
+                n=len(samples),
                 r=round(r, 4) if r is not None else None,
                 p=round(p, 4) if p is not None else None,
                 strength=strength, direction=direction,
                 self_trend=self_trend, n_sign_flips=n_flips)
 
-        daily = _stat(d_x, d_y, MIN_N_DAILY, d_samples)
-        weekly = _stat(w_x, w_y, MIN_N_WEEKLY, w_samples)
-        longterm = _stat(l_x, l_y, MIN_N_LONGTERM, l_samples)
+        intraday = _stat(i_samples, MIN_N_INTRADAY)
+        daily = _stat(d_samples, MIN_N_DAILY)
+        weekly = _stat(w_samples, MIN_N_WEEKLY)
+        longterm = _stat(l_samples, MIN_N_LONGTERM)
         tags = CellTags(asset=asset, venue=venue, regime=regime,
-                          daily=daily, weekly=weekly, longterm=longterm)
-        # Trends compare each horizon to the next-broader. UNKNOWN if the
-        # broader window has no signal yet.
+                          intraday=intraday, daily=daily,
+                          weekly=weekly, longterm=longterm)
         tags.weekly_trend = _classify_trend(weekly, longterm)
         tags.daily_trend = _classify_trend(daily, weekly)
+        tags.intraday_trend = _classify_trend(intraday, daily)
         tags.summary = _summary_for(tags)
         return tags
 
