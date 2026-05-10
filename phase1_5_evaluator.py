@@ -242,16 +242,15 @@ def evaluate_gate_H_calibrated(asset: str,
         return {"verdict": "NO_CALIBRATION",
                   "reason": f"no calibration entry for asset={asset}"}
     if entry.get("structural_divergence"):
-        # Empirical: prior lag scan found no offset clears 60% on either
-        # strict or relaxed scoring. Report the recorded max_strict /
-        # max_relaxed at any lag and let the gate FAIL on its merits —
-        # the structural-divergence flag is INFORMATIONAL metadata, NOT a
-        # pass override. The actual measurement is what counts.
+        # Empirical: prior lag scan found no offset clears 60% strict.
+        # Verdict driven by max_strict_at_any_lag — the structural-
+        # divergence flag is INFORMATIONAL metadata only, NOT a pass
+        # override. Relaxed metric is reported alongside but does not
+        # drive the verdict (see evaluate_gate_H docstring).
         max_strict = float(entry.get("max_strict_at_any_lag") or 0.0)
         max_relaxed = float(entry.get("max_relaxed_at_any_lag") or 0.0)
-        passes = (max_strict >= 0.60) or (max_relaxed >= 0.60)
         return {
-            "verdict": "PASS" if passes else "FAIL",
+            "verdict": "PASS" if max_strict >= 0.60 else "FAIL",
             "interpretation_note": entry.get("interpretation", ""),
             "max_strict_at_any_lag": max_strict,
             "max_relaxed_at_any_lag": max_relaxed,
@@ -268,9 +267,10 @@ def evaluate_gate_H_calibrated(asset: str,
         return {"verdict": "INSUFFICIENT_OVERLAP", "lag_min": lag_min, **h}
     strict_pass = h["agreement_rate"] >= 0.60
     relaxed_pass = h["agreement_rate_relaxed"] >= 0.60
-    pass_overall = strict_pass or relaxed_pass
     return {
-        "verdict": "PASS" if pass_overall else "FAIL",
+        # Verdict driven by STRICT agreement at the calibrated lag.
+        # Relaxed reported alongside as informational only.
+        "verdict": "PASS" if strict_pass else "FAIL",
         "lag_min": lag_min,
         "primary_venue": entry.get("primary_venue"),
         "secondary_venue": entry.get("secondary_venue"),
@@ -280,7 +280,6 @@ def evaluate_gate_H_calibrated(asset: str,
         "strict_pass": strict_pass,
         "relaxed_pass": relaxed_pass,
         "calibration_pass": entry.get("calibration_pass"),
-        "gate_pass_override": pass_overall,
     }
 
 
@@ -381,12 +380,16 @@ def evaluate_gate_H(cb_minute: dict[float, str], kr_minute: dict[float, str]) ->
         "n_agreements_relaxed": relaxed_agreements,
         "agreement_rate_relaxed": relaxed_rate,
         "confusion_top_5": confusion.most_common(5),
-        # Gate passes if EITHER strict or relaxed clears 60%. The relaxed
-        # path treats EQ_TWO_SIDED/WASH_HAWKES/WASH_PAIRED/DEPLETED as a
-        # single 'no edge' state.
+        # Gate verdict is STRICT only. The relaxed metric (NO_EDGE
+        # bucket collapsing EQ/WASH/DEPLETED) is reported alongside as
+        # informational context, but does not drive the pass/fail
+        # verdict — that lets the gate be softened by routing
+        # disagreements through a definitional bucket I created. The
+        # measurement we report is the direct one: "do CB and KR emit
+        # the same regime label?" The 60% threshold applies to that.
         "gate_H_strict": strict_rate >= 0.60,
         "gate_H_relaxed": relaxed_rate >= 0.60,
-        "gate_H": (strict_rate >= 0.60) or (relaxed_rate >= 0.60),
+        "gate_H": strict_rate >= 0.60,
     }
 
 
@@ -831,7 +834,7 @@ def main():
             tag = "AGREE" if cb_r == kr_r else "disagree"
             print(f"    {cb_r:<22} | {kr_r:<22} | {n:>4} ({tag})")
         print(f"  -> {'PASS' if h['gate_H'] else 'FAIL'} "
-              f"(strict OR relaxed >=60%)")
+              f"(strict >=60%; relaxed reported as info only)")
     print()
 
     # Gate H lag-scan: timing vs structural divergence (Pass-11)
@@ -873,15 +876,15 @@ def main():
     if h_calibrated.get("structural_divergence_flag"):
         # Asset previously flagged as structural in the calibration file.
         # The flag is informational only — the gate verdict reflects the
-        # recorded max strict/relaxed at any lag.
+        # recorded max strict at any lag.
         print(f"  {args.asset}: structural-divergence flag set "
               f"(prior scan {h_calibrated.get('calibration_pass', '?')})")
         print(f"    max strict at any lag (recorded): "
               f"{h_calibrated['max_strict_at_any_lag']:.1%}")
         print(f"    max relaxed at any lag (recorded): "
-              f"{h_calibrated['max_relaxed_at_any_lag']:.1%}")
+              f"{h_calibrated['max_relaxed_at_any_lag']:.1%} (info only)")
         print(f"  -> {h_calibrated['verdict']} "
-              f"(no lag in scanned range clears 60%)")
+              f"(no lag in scanned range clears 60% strict)")
     elif h_calibrated["verdict"] == "NO_CALIBRATION":
         print(f"  {h_calibrated['reason']} — falling back to base Gate H verdict")
     elif h_calibrated["verdict"] == "INSUFFICIENT_OVERLAP":
@@ -897,9 +900,8 @@ def main():
               f"[{'PASS' if h_calibrated['strict_pass'] else 'FAIL'}]")
         print(f"    relaxed at lag={lag:+d}: "
               f"{h_calibrated['relaxed_at_lag']:.1%}  "
-              f"[{'PASS' if h_calibrated['relaxed_pass'] else 'FAIL'}]")
-        print(f"  -> {h_calibrated['verdict']} "
-              f"(strict OR relaxed >=60% at calibrated lag)")
+              f"(info only)")
+        print(f"  -> {h_calibrated['verdict']} (strict >=60% at calibrated lag)")
     print()
 
     # Gate I per venue
