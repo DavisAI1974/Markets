@@ -20,6 +20,7 @@ import json
 import math
 import os
 from collections import Counter, defaultdict
+from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
@@ -522,7 +523,9 @@ def classify_cell_tradability(label: str,
                                   min_n_intraday: int = 4,
                                   min_n_daily: int = 6,
                                   min_n_weekly: int = 20,
-                                  min_n_longterm: int = 30) -> dict:
+                                  min_n_longterm: int = 30,
+                                  feature_values: np.ndarray | None = None,
+                                  feature_name: str = "mean_dipole") -> dict:
     """Per-cell horizon-based tradability classifier (Pass-15 — three-
     statistic stack: Pearson r, Spearman ρ, distance correlation).
 
@@ -584,13 +587,16 @@ def classify_cell_tradability(label: str,
         return {"label": label, "verdict": "INSUFFICIENT_DATA",
                   "reason": "too few chunks"}
 
-    # Per-chunk dipole + forward log return + predictor timestamp.
-    mean_dipoles: list[float] = []
+    # Per-chunk feature value (defaults to chunk-mean dipole — same as
+    # the Pass-14 baseline) + forward log return + predictor timestamp.
     chunk_returns: list[float] = []
     chunk_ts: list[float] = []
+    if feature_values is None:
+        feature_values = np.array([
+            float(np.mean([b.dipole for b in c.bars])) if c.bars else 0.0
+            for c in chunks
+        ])
     for c in chunks:
-        bar_dipoles = [b.dipole for b in c.bars]
-        mean_dipoles.append(float(np.mean(bar_dipoles)) if bar_dipoles else 0.0)
         if len(c.bars) >= 2:
             r_ret = math.log(max(c.bars[-1].close, 1e-12)
                               / max(c.bars[0].close, 1e-12))
@@ -598,7 +604,7 @@ def classify_cell_tradability(label: str,
             r_ret = 0.0
         chunk_returns.append(r_ret)
         chunk_ts.append(float(c.bars[0].ts) if c.bars else 0.0)
-    md = np.array(mean_dipoles)
+    md = np.asarray(feature_values, dtype=float)
     cr = np.array(chunk_returns)
     labels = [r.regime.value for r in results]
 
@@ -764,7 +770,271 @@ def classify_cell_tradability(label: str,
             "direction": direction,
         }
 
-    return {"label": label, "per_regime": per_regime, "now_ts": now_ts}
+    return {"label": label, "feature": feature_name,
+            "per_regime": per_regime, "now_ts": now_ts}
+
+
+# ---------------------------------------------------------------------------
+# Pass-15: multi-feature scan. The dipole equation is one candidate
+# predictor; the test infrastructure (Pearson + Spearman + dCor at four
+# horizons) can be aimed at any per-chunk feature. This section defines
+# a registry of 10+ candidate features and a runner that evaluates each
+# one through classify_cell_tradability so we get a unified
+# (feature × asset × venue × regime) tradeability map.
+#
+# Feature roster (Pass-15):
+#   PROVEN microstructure (computable from existing chunk data):
+#     1. mean_dipole           baseline; signed volume / total volume
+#     2. mean_ofi              raw signed volume (un-normalized dipole)
+#     3. vpin_like             |buy - sell| / total per bar, mean over chunk
+#                              (Volume-Synchronized Probability of Informed
+#                              Trading proxy — bar-bucketed)
+#     4. hawkes_eta            self-excitation intensity (existing feature)
+#     5. realized_vol_z        vol-regime indicator
+#
+#   NOVEL (computable from existing chunk data):
+#     6. cross_asset_dipole    sibling-asset dipole × this asset's dipole
+#                              (sign-aligned: positive = coordinated flow)
+#     7. cross_venue_gap_z     (this venue mid − other venue mid), z-scored
+#                              (cross-venue arb pressure)
+#     8. hurst_delta           Δhurst from prior chunk; flags regime breaks
+#
+#   EXPERIMENTAL (theoretical, computable):
+#     9. trade_size_entropy    Shannon H of per-bar trade-size distribution
+#                              within chunk (informed-flow signature)
+#    10. microprice_drift      (chunk-final microprice − chunk-mean mid)
+#                              (Stoikov hidden-edge proxy; requires L1
+#                              size capture — falls back to 0 when bins
+#                              predate the 2026-05 schema bump)
+#
+#   INFRASTRUCTURE-PENDING (named in roster; no backfill yet):
+#    11. funding_rate_z        perp funding z-score (8h cycles)
+#    12. oi_delta_z            open-interest delta z-score
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class MultiFeatureContext:
+    """Inputs to a multi-feature scan for one (asset, venue)."""
+    chunks: list  # this venue's chunks for this asset
+    feats: list   # parallel MarketFeatures per chunk
+    sibling_chunks: list | None = None   # same-venue chunks for the OTHER asset
+    sibling_feats: list | None = None
+    other_venue_chunks: list | None = None  # OTHER venue, same asset
+    other_venue_feats: list | None = None
+
+
+def _ts_aligned_lookup(this_chunks: list,
+                         other_chunks: list,
+                         tolerance_sec: float = 90.0) -> list[int]:
+    """For each chunk in this_chunks, return the index of the
+    closest-in-time chunk in other_chunks (by chunk-start ts), or -1
+    if no match within tolerance_sec. Linear in min(len) — good
+    enough for ~hundreds of chunks per venue."""
+    if not other_chunks:
+        return [-1] * len(this_chunks)
+    other_ts = [float(c.bars[0].ts) if c.bars else 0.0 for c in other_chunks]
+    out = []
+    for c in this_chunks:
+        this_ts = float(c.bars[0].ts) if c.bars else 0.0
+        if this_ts == 0.0:
+            out.append(-1); continue
+        # Find closest in other_ts via binary-search-ish linear scan.
+        best_i = -1
+        best_dt = float("inf")
+        for i, t in enumerate(other_ts):
+            dt = abs(t - this_ts)
+            if dt < best_dt:
+                best_dt = dt
+                best_i = i
+        if best_dt <= tolerance_sec:
+            out.append(best_i)
+        else:
+            out.append(-1)
+    return out
+
+
+def _feat_mean_dipole(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    return np.array([
+        float(np.mean([b.dipole for b in c.bars])) if c.bars else 0.0
+        for c in ctx.chunks
+    ]), ""
+
+
+def _feat_mean_ofi(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    return np.array([
+        float(np.mean([b.signed_volume for b in c.bars])) if c.bars else 0.0
+        for c in ctx.chunks
+    ]), ""
+
+
+def _feat_vpin_like(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    out = []
+    for c in ctx.chunks:
+        if not c.bars:
+            out.append(0.0); continue
+        imbs = []
+        for b in c.bars:
+            tot = b.buy_vol + b.sell_vol
+            if tot > 0:
+                imbs.append(abs(b.buy_vol - b.sell_vol) / tot)
+        out.append(float(np.mean(imbs)) if imbs else 0.0)
+    return np.array(out), ""
+
+
+def _feat_hawkes_eta(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    if not ctx.feats:
+        return np.zeros(len(ctx.chunks)), "no MarketFeatures available"
+    return np.array([float(getattr(f, "hawkes_eta", 0.0) or 0.0)
+                     for f in ctx.feats]), ""
+
+
+def _feat_realized_vol_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    if not ctx.feats:
+        return np.zeros(len(ctx.chunks)), "no MarketFeatures available"
+    rv = np.array([float(getattr(f, "realized_vol", 0.0) or 0.0)
+                    for f in ctx.feats])
+    mu, sd = float(np.mean(rv)), float(np.std(rv))
+    return (rv - mu) / (sd + 1e-9), ""
+
+
+def _feat_cross_asset_dipole(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    if ctx.sibling_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no sibling-asset chunks loaded"
+    sib_idx = _ts_aligned_lookup(ctx.chunks, ctx.sibling_chunks)
+    out = []
+    for c, si in zip(ctx.chunks, sib_idx):
+        self_d = float(np.mean([b.dipole for b in c.bars])) if c.bars else 0.0
+        if si < 0:
+            out.append(0.0); continue
+        sc = ctx.sibling_chunks[si]
+        sib_d = float(np.mean([b.dipole for b in sc.bars])) if sc.bars else 0.0
+        # Sign-aligned product: |self||sib| with sign of self*sib.
+        # Captures coordinated flow magnitude.
+        out.append(self_d * sib_d)
+    return np.array(out), ""
+
+
+def _feat_cross_venue_gap_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    if ctx.other_venue_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no other-venue chunks loaded"
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+    out = []
+    for c, oi in zip(ctx.chunks, other_idx):
+        if not c.bars or oi < 0:
+            out.append(0.0); continue
+        self_mid = float(np.mean([b.mid for b in c.bars if b.mid > 0]) or 0.0)
+        oc = ctx.other_venue_chunks[oi]
+        other_mid = float(np.mean([b.mid for b in oc.bars if b.mid > 0]) or 0.0)
+        if self_mid > 0 and other_mid > 0:
+            out.append(self_mid - other_mid)
+        else:
+            out.append(0.0)
+    arr = np.array(out)
+    mu, sd = float(np.mean(arr)), float(np.std(arr))
+    return (arr - mu) / (sd + 1e-9), ""
+
+
+def _feat_hurst_delta(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    if not ctx.feats:
+        return np.zeros(len(ctx.chunks)), "no MarketFeatures available"
+    h = np.array([float(getattr(f, "hurst", 0.5) or 0.5)
+                  for f in ctx.feats])
+    delta = np.concatenate([[0.0], np.diff(h)])
+    return delta, ""
+
+
+def _feat_trade_size_entropy(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    out = []
+    for c in ctx.chunks:
+        if not c.bars:
+            out.append(0.0); continue
+        # Use per-bar total volume as a proxy for trade-size distribution
+        # (the bin schema doesn't retain individual trade sizes by default).
+        vols = np.array([b.buy_vol + b.sell_vol for b in c.bars])
+        s = vols.sum()
+        if s <= 0:
+            out.append(0.0); continue
+        p = vols / s
+        # Shannon entropy in nats; mask zero probabilities.
+        nz = p[p > 0]
+        h = float(-np.sum(nz * np.log(nz)))
+        out.append(h)
+    return np.array(out), ""
+
+
+def _feat_microprice_drift(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    has_l1 = False
+    out = []
+    for c in ctx.chunks:
+        if not c.bars:
+            out.append(0.0); continue
+        # Microprice − mid, averaged. Microprice falls back to mid when
+        # L1 sizes aren't captured, so drift is 0 on pre-2026-05 bins.
+        drift_samples = []
+        for b in c.bars:
+            if b.bid_qty > 0 and b.ask_qty > 0 and b.bid > 0 and b.ask > 0:
+                has_l1 = True
+                mp = (b.bid_qty * b.ask + b.ask_qty * b.bid) / (b.bid_qty + b.ask_qty)
+                simple_mid = 0.5 * (b.bid + b.ask)
+                drift_samples.append(mp - simple_mid)
+        out.append(float(np.mean(drift_samples)) if drift_samples else 0.0)
+    status = "" if has_l1 else "L1 sizes not captured in any bar (pre-2026-05 bins)"
+    return np.array(out), status
+
+
+def _feat_funding_rate_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    return np.zeros(len(ctx.chunks)), "infrastructure-pending: no historical funding backfill"
+
+
+def _feat_oi_delta_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    return np.zeros(len(ctx.chunks)), "infrastructure-pending: no historical OI backfill"
+
+
+# Registry: ordered for deterministic report output.
+FEATURE_EXTRACTORS: list[tuple[str, str, callable]] = [
+    # (feature_id, group, extractor)
+    ("mean_dipole",          "proven",       _feat_mean_dipole),
+    ("mean_ofi",             "proven",       _feat_mean_ofi),
+    ("vpin_like",            "proven",       _feat_vpin_like),
+    ("hawkes_eta",           "proven",       _feat_hawkes_eta),
+    ("realized_vol_z",       "proven",       _feat_realized_vol_z),
+    ("cross_asset_dipole",   "novel",        _feat_cross_asset_dipole),
+    ("cross_venue_gap_z",    "novel",        _feat_cross_venue_gap_z),
+    ("hurst_delta",          "novel",        _feat_hurst_delta),
+    ("trade_size_entropy",   "experimental", _feat_trade_size_entropy),
+    ("microprice_drift",     "experimental", _feat_microprice_drift),
+    ("funding_rate_z",       "pending",      _feat_funding_rate_z),
+    ("oi_delta_z",           "pending",      _feat_oi_delta_z),
+]
+
+
+def run_multi_feature_scan(label: str,
+                              ctx: MultiFeatureContext,
+                              results: list,
+                              k: int = 1) -> list[dict]:
+    """Run classify_cell_tradability once per feature in the registry.
+    Returns one classification result per feature, with the feature
+    name + group + extractor-status attached."""
+    out = []
+    for name, group, fn in FEATURE_EXTRACTORS:
+        values, status = fn(ctx)
+        if status.startswith("infrastructure-pending"):
+            out.append({"feature": name, "group": group,
+                          "status": status, "per_regime": {}})
+            continue
+        if values is None or not np.any(np.isfinite(values)) or np.std(values) < 1e-12:
+            out.append({"feature": name, "group": group,
+                          "status": status or "zero variance",
+                          "per_regime": {}})
+            continue
+        cell = classify_cell_tradability(
+            label, ctx.chunks, results, k=k,
+            feature_values=values, feature_name=name)
+        cell["group"] = group
+        cell["status"] = status
+        out.append(cell)
+    return out
 
 
 def evaluate_gate_I(label: str, chunks: list[MarketChunk],
@@ -1126,13 +1396,15 @@ def main():
     # confidence, opposite direction damps it. Multiplier band is 1.4 / 0.6
     # (tighter than F6's 1.5 / 0.5) since cross-asset is a weaker prior
     # than cross-venue.
+    sib_cb_chunks = None; sib_cb_feats = None
+    sib_kr_chunks = None; sib_kr_feats = None
     if args.sibling_cb_bins or args.sibling_kr_bins:
         sibling_asset = "ETH" if args.asset.upper() == "BTC" else (
             "BTC" if args.asset.upper() == "ETH" else None)
         sib_label = sibling_asset or "SIBLING"
         if args.sibling_cb_bins:
             sib_cb_bars = load_bars(args.sibling_cb_bins)
-            sib_cb_chunks, sib_cb_results, _, _, _ = classify_venue(
+            sib_cb_chunks, sib_cb_results, _, _, sib_cb_feats = classify_venue(
                 sib_cb_bars, f"CB-{sib_label}", args.chunk_max_size,
                 args.chunk_min_segment,
                 multi_signal_pelt=args.multi_signal_pelt,
@@ -1145,7 +1417,7 @@ def main():
                 cb_results, cb_chunks, cb_bars, sib_cb_minute)
         if args.sibling_kr_bins:
             sib_kr_bars = load_bars(args.sibling_kr_bins)
-            sib_kr_chunks, sib_kr_results, _, _, _ = classify_venue(
+            sib_kr_chunks, sib_kr_results, _, _, sib_kr_feats = classify_venue(
                 sib_kr_bars, f"KR-{sib_label}", args.chunk_max_size,
                 args.chunk_min_segment,
                 multi_signal_pelt=args.multi_signal_pelt,
@@ -1543,6 +1815,106 @@ def main():
             tag_suffix = (f"  [{' | '.join(tags)}]" if tags else "")
             print(f"    {venue:<8} {regime:<22} n={cell.get('n', 0):>4}  "
                   f"{dir_word:<9}  " + "  ".join(h_strs) + tag_suffix)
+    print()
+
+    # MULTI-FEATURE TRADEABLE SIGNAL REPORT (Pass-15). The same
+    # horizon-based classifier (Pearson + Spearman + dCor) is run for
+    # each candidate feature in FEATURE_EXTRACTORS, and the per-(feature,
+    # venue, regime) tradeability verdicts are collected. The point is
+    # to find tradeable cells across MANY feature axes, not just dipole.
+    # Goal: surface "any signal that's present" — including non-dipole
+    # ones — through one unified detection pipeline.
+    print(f"--- MULTI-FEATURE TRADEABLE SIGNAL REPORT (Pass-15) ---")
+    venue_ctxs = [
+        (f"CB-{args.asset}", MultiFeatureContext(
+            chunks=cb_chunks, feats=cb_feats,
+            sibling_chunks=sib_cb_chunks, sibling_feats=sib_cb_feats,
+            other_venue_chunks=kr_chunks, other_venue_feats=kr_feats),
+         cb_results),
+        (f"KR-{args.asset}", MultiFeatureContext(
+            chunks=kr_chunks, feats=kr_feats,
+            sibling_chunks=sib_kr_chunks, sibling_feats=sib_kr_feats,
+            other_venue_chunks=cb_chunks, other_venue_feats=cb_feats),
+         kr_results),
+    ]
+    actionable_rows: list[tuple[str, str, str, str, str, dict]] = []
+    pending_status: list[tuple[str, str]] = []
+    for venue_label, ctx, results in venue_ctxs:
+        scan = run_multi_feature_scan(venue_label, ctx, results, k=1)
+        for feat_result in scan:
+            fname = feat_result["feature"]
+            group = feat_result["group"]
+            if feat_result.get("status", "").startswith("infrastructure-pending"):
+                if (fname, feat_result["status"]) not in pending_status:
+                    pending_status.append((fname, feat_result["status"]))
+                continue
+            if feat_result.get("status"):
+                # Missing data or zero-variance — note once.
+                if (fname, feat_result["status"]) not in pending_status:
+                    pending_status.append((fname, feat_result["status"]))
+                continue
+            for regime, cell in feat_result.get("per_regime", {}).items():
+                verdict = cell.get("verdict", "INSUFFICIENT_DATA")
+                # Surface ALWAYS_TRADEABLE / CURRENTLY_TRADEABLE / any
+                # cell with a non-linear or non-monotonic flag.
+                nl_flag = any(h.get("non_linear") for h in cell.get("horizons", {}).values())
+                nm_flag = any(h.get("non_monotonic") for h in cell.get("horizons", {}).values())
+                if verdict in ("ALWAYS_TRADEABLE", "CURRENTLY_TRADEABLE",
+                                  "HISTORICALLY_TRADEABLE_NOT_NOW") or nl_flag or nm_flag:
+                    actionable_rows.append(
+                        (group, fname, venue_label, regime, verdict, cell))
+    # Sort: group order proven→novel→experimental→pending, then by
+    # verdict priority, then by best horizon confidence.
+    group_order = {"proven": 0, "novel": 1, "experimental": 2, "pending": 3}
+    verdict_order = {"ALWAYS_TRADEABLE": 0, "CURRENTLY_TRADEABLE": 1,
+                       "HISTORICALLY_TRADEABLE_NOT_NOW": 2,
+                       "AMBIGUOUS": 3, "NEVER_TRADEABLE": 4,
+                       "INSUFFICIENT_DATA": 5}
+
+    def _best_conf(cell):
+        return max((h.get("confidence") or 0.0)
+                   for h in cell.get("horizons", {}).values()
+                   if isinstance(h, dict))
+
+    actionable_rows.sort(key=lambda row: (group_order.get(row[0], 99),
+                                              verdict_order.get(row[4], 99),
+                                              -_best_conf(row[5])))
+    if not actionable_rows:
+        print("  (no actionable cells across any feature)")
+    else:
+        prev_group = None
+        prev_feature = None
+        for group, fname, venue, regime, verdict, cell in actionable_rows:
+            if group != prev_group:
+                print(f"\n  === {group.upper()} ===")
+                prev_group = group
+                prev_feature = None
+            if fname != prev_feature:
+                print(f"\n  [{fname}]")
+                prev_feature = fname
+            horizons = cell.get("horizons", {})
+            dir_word = cell.get("direction", "") or "-"
+            h_strs = []
+            flags = []
+            for hname in ("intraday", "daily", "weekly", "longterm"):
+                h = horizons.get(hname, {})
+                strength = h.get("strength", "NEW")
+                conf = h.get("confidence")
+                if conf is None:
+                    h_strs.append(f"{hname}={strength}")
+                else:
+                    h_strs.append(f"{hname}={strength}/c={conf:.2f}")
+                if h.get("non_linear"):
+                    flags.append(f"NL:{hname}")
+                if h.get("non_monotonic"):
+                    flags.append(f"NM:{hname}")
+            flag_suffix = f"  [{','.join(flags)}]" if flags else ""
+            print(f"    {venue:<8} {regime:<22} {verdict:<32} "
+                  f"{dir_word:<9}  " + "  ".join(h_strs) + flag_suffix)
+    if pending_status:
+        print(f"\n  === SKIPPED ===")
+        for fname, status in pending_status:
+            print(f"  [{fname}] {status}")
     print()
 
     # Combined verdict — Gate H prefers the calibrated path when present
