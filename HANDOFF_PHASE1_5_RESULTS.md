@@ -1259,6 +1259,231 @@ that metric.
 - **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
   Hurst comparison; BTC is more momentum-y.
 
+## Fourteenth pass — 2026-05-11 morning, horizon-based tradeability classifier
+
+First pass that runs the horizon-based `classify_cell_tradability`
+function (committed in `0396deb`). Every (venue, regime) cell is now
+classified across four horizons — intraday (4h), daily (24h),
+weekly (7d), longterm (30d) — and assigned one of:
+`ALWAYS_TRADEABLE` / `CURRENTLY_TRADEABLE` /
+`HISTORICALLY_TRADEABLE_NOT_NOW` / `NEVER_TRADEABLE` /
+`AMBIGUOUS` / `INSUFFICIENT_DATA`.
+
+This reframe replaces the old chronological-quarter "consistency"
+view. Gates G/H/I are still computed but reported as **diagnostics**;
+the TRADEABLE SIGNAL REPORT is the headline.
+
+### Corpus
+
+| Asset | Venue | bins | bars (1-min) | span | end (UTC) |
+|---|---|---:|---:|---|---|
+| ETH | Coinbase | 281,005 | 8,428 | 6.60 d | 2026-05-11 03:20 |
+| ETH | Kraken | 75,159 | 8,722 | 6.60 d | 2026-05-11 03:20 |
+| BTC | Coinbase | 293,715 | 5,569 | 4.42 d | 2026-05-11 02:55 |
+| BTC | Kraken | 85,294 | 6,301 | 4.42 d | 2026-05-11 02:56 |
+
+**Corpus-length caveat.** The classifier defines `longterm` as a
+30-day lookback. The corpus is currently 4.4 d (BTC) to 6.6 d (ETH),
+so `longterm` and `weekly` effectively span the entire available
+data, and most regimes outside `EQUILIBRIUM_TWO_SIDED` /
+`WHALE_UP` / `WASH_HAWKES` fall under `INSUFFICIENT_DATA`
+(longterm n<30). The categorizations below are accurate at this
+corpus length; they will refine as the data branches accumulate
+toward the 30 d target. Read `longterm` here as "everything we have"
+and the INSUFFICIENT_DATA bucket as "not yet observed often enough,"
+not as a quality verdict.
+
+### ETH TRADEABLE SIGNAL REPORT (18 cells)
+
+#### ALWAYS_TRADEABLE (2)
+
+| Venue | Regime | n | direction | intraday | daily | weekly | longterm |
+|---|---|---:|---|---|---|---|---|
+| KR-ETH | DEPLETED | 33 | momentum | NEW (n=0) | STRONG +0.16 (n=11) | STRONG +0.18 (n=33) | STRONG +0.18 (n=33) |
+| KR-ETH | WHALE_UP | 126 | fade | NEW (n=0) | STRONG −0.34 (n=15) | STRONG −0.23 (n=126) | STRONG −0.23 (n=126) |
+
+KR-ETH WHALE_UP fade is the headline finding of the corpus: 7th
+consecutive replication (Pass-8 through Pass-14) across two
+classifier configurations, now at n=126 r=−0.233 BH q=0.038 in the
+Gate I detail and STRONG/fade across daily + weekly + longterm
+horizons with matching signs. This is the cell already wired as
+`eth_kr_whale_up_fade` in `backend/forward_paper.py`.
+
+KR-ETH DEPLETED momentum is a new ALWAYS_TRADEABLE find at this
+corpus length — sign-consistent +0.16/+0.18/+0.18 across daily,
+weekly, longterm. Not yet in `forward_paper.py`.
+
+#### CURRENTLY_TRADEABLE (4)
+
+| Venue | Regime | n | direction | intraday | daily | weekly | longterm |
+|---|---|---:|---|---|---|---|---|
+| CB-ETH | DEPLETED | 32 | momentum | NEW (n=0) | STRONG +0.44 (n=12) | WEAK +0.07 | WEAK +0.07 |
+| CB-ETH | EQUILIBRIUM_TWO_SIDED | 258 | momentum | MODERATE +0.13 (n=10) | STRONG +0.26 (n=32) | WEAK +0.04 | WEAK +0.04 |
+| KR-ETH | EQUILIBRIUM_TWO_SIDED | 214 | fade | STRONG −0.53 (n=6) | WEAK −0.09 | WEAK −0.06 | WEAK −0.06 |
+| KR-ETH | HERD_UP | 35 | momentum | NEW (n=2) | STRONG +0.41 (n=9) | STRONG −0.27 (n=35) | STRONG −0.27 (n=35) |
+
+CB-ETH DEPLETED and CB-ETH EQ are clean CURRENTLY_TRADEABLE
+finds — daily STRONG with consistent sign, but the weekly/longterm
+horizons have averaged out to WEAK across the full corpus. These
+are the "right now it's working" signals to consider for paper-cell
+registration.
+
+Two cells warrant caution:
+
+- **KR-ETH EQ intraday STRONG −0.53 on n=6**. The small-n strength
+  is a feature of the classifier (intraday min_n=4), but a Pearson r
+  on six points is fragile. The cell is genuinely CURRENTLY_TRADEABLE
+  by the classifier rules but should be re-checked when intraday n
+  grows.
+- **KR-ETH HERD_UP daily +0.41 (momentum) vs weekly/longterm −0.27
+  (fade)**. The sign flips between horizons; the cell is classified
+  CURRENTLY_TRADEABLE on the daily STRONG signal, but the longer
+  horizons have the opposite read. This is exactly the
+  "signals may change at different horizons" pattern the product is
+  designed to surface. Trade the daily side at your own risk; the
+  weekly read is "fade", not "momentum".
+
+#### AMBIGUOUS (1)
+
+| Venue | Regime | n | intraday | daily | weekly | longterm |
+|---|---|---:|---|---|---|---|
+| CB-ETH | WHALE_UP | 41 | NEW (n=1) | MODERATE −0.15 (n=9) | STRONG +0.23 (n=41) | STRONG +0.23 (n=41) |
+
+Daily lean is fade (−0.15), weekly + longterm lean is momentum
+(+0.23). Sign-inconsistent, so the classifier refuses to commit. The
+KR-ETH WHALE_UP cell on the same regime label is ALWAYS_TRADEABLE
+fade; CB-ETH WHALE_UP says momentum on longer horizons. **Cross-venue
+sign divergence on WHALE_UP between CB and KR is the surviving
+finding from Passes 6–11** ("KR-ETH fades, CB-ETH does the opposite"),
+now reproduced under the horizon classifier.
+
+#### NEVER_TRADEABLE (2)
+
+| Venue | Regime | n | intraday | daily | weekly | longterm |
+|---|---|---:|---|---|---|---|
+| CB-ETH | WASH_HAWKES | 111 | NEW (n=1) | MODERATE +0.12 | MODERATE −0.13 | MODERATE −0.13 |
+| KR-ETH | WASH_HAWKES | 103 | NEW (n=3, r=−0.79 dismissed) | WEAK −0.09 | WEAK −0.04 | WEAK −0.04 |
+
+WASH_HAWKES — the regime the Pass-10 ceiling once tried to redefine —
+classifies as NEVER_TRADEABLE on both venues at current corpus
+length: no horizon ever clears the STRONG threshold (|r|>=0.15) at
+adequate n. Consistent with the Pass-13 finding that the
+WASH_HAWKES classifier reverts didn't change the underlying signal,
+only the labels.
+
+#### INSUFFICIENT_DATA (9)
+
+All cells with longterm n<30. Includes all of CB-ETH's HERD_DOWN,
+HERD_UP, WHALE_DOWN, WHALE_NASCENT_DOWN, WHALE_NASCENT_UP, and
+KR-ETH's HERD_DOWN, WASH_PAIRED, WHALE_DOWN, WHALE_NASCENT_UP.
+These are not unactionable in principle — the corpus is just short.
+Re-evaluate after the data branches reach 14+ days.
+
+### BTC TRADEABLE SIGNAL REPORT (19 cells)
+
+#### CURRENTLY_TRADEABLE (1)
+
+| Venue | Regime | n | direction | intraday | daily | weekly | longterm |
+|---|---|---:|---|---|---|---|---|
+| CB-BTC | EQUILIBRIUM_TWO_SIDED | 210 | momentum | STRONG +0.61 (n=4) | WEAK +0.08 (n=39) | WEAK +0.08 | WEAK +0.08 |
+
+The classifier flags this CURRENTLY_TRADEABLE on the intraday STRONG
+(r=+0.61 at n=4) signal alone. **The intraday n=4 is at the floor
+of `min_n_intraday=4` and the longer horizons all report WEAK +0.08
+— the daily-and-longer data does not corroborate the intraday
+read**. Treat this as "watching" not "trade now". Re-evaluate next
+pass.
+
+#### NEVER_TRADEABLE (3)
+
+| Venue | Regime | n | intraday | daily | weekly | longterm |
+|---|---|---:|---|---|---|---|
+| KR-BTC | EQUILIBRIUM_TWO_SIDED | 110 | NEW (n=1) | WEAK +0.04 | WEAK +0.01 | WEAK +0.01 |
+| KR-BTC | WASH_HAWKES | 132 | WEAK −0.04 (n=8) | WEAK +0.10 | WEAK +0.05 | WEAK +0.05 |
+| KR-BTC | WHALE_UP | 49 | NEW (n=0) | MODERATE −0.14 (n=9) | WEAK +0.08 | WEAK +0.08 |
+
+KR-BTC WHALE_UP is interesting: daily MODERATE −0.14 (the same fade
+direction as KR-ETH WHALE_UP), but at this corpus length the weekly
+and longterm averages dilute to WEAK +0.08 with opposite sign. **The
+KR-BTC WHALE_UP cell does not currently replicate the KR-ETH
+WHALE_UP fade pattern at the longer horizons**, despite the daily
+direction agreeing. Worth re-checking as the BTC corpus extends.
+
+#### INSUFFICIENT_DATA (15)
+
+All other BTC cells. The 4.4 d corpus is too short to populate
+longterm n>=30 for the rarer regimes. Notably:
+`CB-BTC WHALE_UP n=28`, `KR-BTC WHALE_UP n=49` —
+WHALE_UP on KR did reach the threshold; on CB it sits just below
+at n=28. A few more days of data will push CB-BTC WHALE_UP into the
+classifier.
+
+### Diagnostics (Gates G / H / I)
+
+These are no longer pass/fail quality bars; they're reported as
+context for the classifier output.
+
+| Asset | Gate G | Gate H | Gate I |
+|---|---|---|---|
+| ETH | PASS (CB 9 classes, KR 8 classes) | FAIL (calibrated max-strict 35.2%, max-relaxed 57.9% — neither clears 60% at any scanned lag) | **PASS** — KR-ETH WHALE_UP n=126 r=−0.233 BH q=0.038 |
+| BTC | PASS | FAIL (calibrated@lag=+15) | FAIL (no aggregate cell BH-significant at corpus length) |
+
+The Gate I PASS on ETH and FAIL on BTC tracks the TRADEABLE SIGNAL
+REPORT: ETH has two ALWAYS_TRADEABLE cells, BTC has zero. Gate H
+FAIL on both assets is consistent with the cross-venue sign
+divergence on WHALE_UP and is a property of the data, not a quality
+problem.
+
+### Pass-15 candidates (open questions)
+
+1. **Productize the ALWAYS_TRADEABLE finds.** KR-ETH DEPLETED
+   momentum is new — register as a paper cell in
+   `backend/forward_paper.py` using the same pattern as the existing
+   `eth_kr_whale_up_fade`. KR-ETH WHALE_UP fade is already wired.
+
+2. **Productize CURRENTLY_TRADEABLE conservatively.** CB-ETH DEPLETED
+   and CB-ETH EQUILIBRIUM_TWO_SIDED are clean daily-horizon momentum
+   signals. KR-ETH EQ intraday and KR-ETH HERD_UP daily-vs-weekly
+   should be watched, not traded, until the n grows.
+
+3. **Re-run once the corpus reaches ~14 d.** The 4.4–6.6 d window
+   leaves a large `INSUFFICIENT_DATA` bucket. Cells like CB-BTC
+   WHALE_UP (n=28, just below the 30 floor) and the entire HERD /
+   NASCENT family should reclassify cleanly with more data.
+
+4. **The CB-ETH WHALE_UP AMBIGUOUS cell** is the cross-venue WHALE_UP
+   sign-divergence finding from earlier passes, now picked up by the
+   classifier. Worth a sub-cell decomposition (η-tier × hurst-label)
+   on the CB side specifically to see whether the +0.23 weekly r is
+   driven by a particular flow signature.
+
+5. **Sub-cell findings (η-tier × hurst-label)** are still reported in
+   the Pass-7 section of the stdout for both assets but are not
+   surfaced in the TRADEABLE SIGNAL REPORT. If a future pass extends
+   the classifier to operate on sub-cells, the η-high WASH momentum
+   reads from Pass-13 would shift category.
+
+### Reproducer
+
+```bash
+# Bin files come from origin/data/eth-bins and origin/data/btc-bins
+git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json eth_bybit_perp_bins.json
+git checkout origin/data/btc-bins -- btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json
+
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+    --multi-signal-pelt --features-out pass14_eth_features.json \
+    > pass14_eth_stdout.txt 2>&1
+
+python phase1_5_evaluator.py --asset BTC \
+    --cb-bins btc_coinbase_bins.json --kr-bins btc_kraken_bins.json \
+    --sibling-cb-bins eth_coinbase_bins.json --sibling-kr-bins eth_kraken_bins.json \
+    --multi-signal-pelt --features-out pass14_btc_features.json \
+    > pass14_btc_stdout.txt 2>&1
+```
+
+
 ## Thirteenth pass — 2026-05-10 night, corrections + actual measurements
 
 This pass exists to walk back interpretation-driven adjustments that
