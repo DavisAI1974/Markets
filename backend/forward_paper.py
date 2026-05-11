@@ -488,6 +488,53 @@ def _side_for_edge(regime: str, direction: str) -> str | None:
     return None
 
 
+# Confidence-tier thresholds for edge-driven trades. Maps the cell's
+# observed |r| at the firing horizon AND multi-horizon corroboration
+# into an alert tier consumed by the UI / push notification layer.
+#   high_conviction → "low-risk-trade-signal" alert
+#   alertable       → "risky-trade-signal" alert
+# Tier reflects detection confidence, not P&L expectation; risk is
+# always 100% of stake for the paper trade itself.
+#
+# TODO once edge_tracker tracks Spearman ρ alongside Pearson r:
+# replace abs(r) with max(|r|, |ρ|) in the threshold checks.
+EDGE_TIER_HIGH_CONVICTION_R = 0.20  # firing-horizon |r| floor for tier 1
+EDGE_TIER_CORROBORATION_R = 0.15    # other-horizon |r| floor for corroboration
+
+
+def _edge_confidence_tier(firing_horizon: str, firing_r: float,
+                            firing_direction: str,
+                            edge_tags) -> str:
+    """Return 'high_conviction' or 'alertable' for a STRONG firing horizon.
+
+    Promotes to high_conviction iff |r| at the firing horizon clears
+    EDGE_TIER_HIGH_CONVICTION_R AND at least one other horizon also
+    has |r| >= EDGE_TIER_CORROBORATION_R with the SAME direction
+    (fade ↔ fade or momentum ↔ momentum). Without that corroboration,
+    the tier stays 'alertable'.
+
+    Single-horizon STRONG fires (intraday-only, e.g.) are intentionally
+    capped at alertable so they don't get pushed as the strongest tier.
+    """
+    others = []
+    for name, stat in (("intraday", edge_tags.intraday),
+                        ("daily", edge_tags.daily),
+                        ("weekly", edge_tags.weekly),
+                        ("longterm", edge_tags.longterm)):
+        if name == firing_horizon:
+            continue
+        others.append(stat)
+    corroborated = any(
+        s.r is not None
+        and abs(float(s.r)) >= EDGE_TIER_CORROBORATION_R
+        and s.direction == firing_direction
+        for s in others
+    )
+    if abs(firing_r) >= EDGE_TIER_HIGH_CONVICTION_R and corroborated:
+        return "high_conviction"
+    return "alertable"
+
+
 def try_open_edge_driven_trade(
     asset: str,
     venue: str,
@@ -535,9 +582,13 @@ def try_open_edge_driven_trade(
         qty = scaled_notional / fill_price if fill_price > 0 else 0.0
         cell_id = (f"edge_{asset.lower()}_{venue.lower()}_{regime.lower()}"
                     f"_{horizon_name}_{hstat.direction}")
+        confidence_tier = _edge_confidence_tier(
+            horizon_name, float(hstat.r) if hstat.r is not None else 0.0,
+            hstat.direction, edge_tags)
         note = (f"edge-driven {horizon_name} {hstat.strength.lower()} "
                 f"{hstat.direction} on {asset}/{venue}/{regime} "
-                f"(r={hstat.r:+.2f} n={hstat.n} self_trend={hstat.self_trend})")
+                f"(r={hstat.r:+.2f} n={hstat.n} "
+                f"tier={confidence_tier} self_trend={hstat.self_trend})")
         fee_usd = scaled_notional * (_PRACTICE_FEE_BPS / 10000.0)
         return {
             "intent_id": str(uuid.uuid4())[:12],
@@ -571,6 +622,10 @@ def try_open_edge_driven_trade(
             "edge_r": float(hstat.r) if hstat.r is not None else 0.0,
             "edge_n": int(hstat.n),
             "regime_at_open": regime,
+            # Tier consumed by the alert/notification layer.
+            # high_conviction → push as the strongest tier; alertable →
+            # push as the weaker tier. Both still book a paper trade.
+            "confidence_tier": confidence_tier,
         }
     return None
 

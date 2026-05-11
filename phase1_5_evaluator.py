@@ -434,6 +434,64 @@ def _spearmanr_with_p(x: np.ndarray, y: np.ndarray) -> tuple[float, float, int]:
     return rho, p, int(n)
 
 
+def _dcor(x: np.ndarray, y: np.ndarray) -> float:
+    """Distance correlation (Székely-Rizzo, 2007). Zero iff x and y are
+    independent. Captures any dependence — linear, monotonic non-linear,
+    OR non-monotonic (U-shapes, threshold reversals). Range [0, 1].
+
+    Sign-less by construction — useful as a detector but not as a
+    direction indicator. For tradeability, pair dCor with sign from
+    Pearson/Spearman."""
+    n = len(x)
+    if n < 4:
+        return float("nan")
+    if np.std(x) < 1e-12 or np.std(y) < 1e-12:
+        return 0.0
+    a = np.abs(x[:, None] - x[None, :])
+    b = np.abs(y[:, None] - y[None, :])
+    a_dc = a - a.mean(axis=0, keepdims=True) - a.mean(axis=1, keepdims=True) + a.mean()
+    b_dc = b - b.mean(axis=0, keepdims=True) - b.mean(axis=1, keepdims=True) + b.mean()
+    dcov2 = float((a_dc * b_dc).mean())
+    dvarx2 = float((a_dc * a_dc).mean())
+    dvary2 = float((b_dc * b_dc).mean())
+    denom = math.sqrt(max(dvarx2 * dvary2, 1e-24))
+    if denom < 1e-12:
+        return 0.0
+    val = math.sqrt(max(dcov2, 0.0)) / math.sqrt(denom)
+    return min(1.0, max(0.0, val))
+
+
+def _dcor_with_p(x: np.ndarray, y: np.ndarray,
+                   n_perm: int = 500,
+                   seed: int = 0) -> tuple[float, float, int]:
+    """Distance correlation + permutation p-value. p = fraction of
+    permutations whose dCor >= observed dCor. n_perm=500 → p resolution
+    of 0.002, adequate for the BH-FDR pipeline at q=0.10.
+
+    Returns (dcor, p, n). For n<8 returns (dcor, nan, n) — permutation
+    on tiny samples isn't meaningful."""
+    n = len(x)
+    if n < 4:
+        return float("nan"), float("nan"), int(n)
+    if np.std(x) < 1e-12 or np.std(y) < 1e-12:
+        return 0.0, 1.0, int(n)
+    observed = _dcor(x, y)
+    if not np.isfinite(observed):
+        return observed, float("nan"), int(n)
+    if n < 8:
+        return observed, float("nan"), int(n)
+    rng = np.random.default_rng(seed)
+    ge = 0
+    y_arr = np.asarray(y)
+    for _ in range(n_perm):
+        y_perm = rng.permutation(y_arr)
+        d = _dcor(x, y_perm)
+        if np.isfinite(d) and d >= observed:
+            ge += 1
+    p = (ge + 1) / (n_perm + 1)  # +1 smoothing to avoid p=0
+    return observed, p, int(n)
+
+
 def _bh_fdr(pvalues: list[float], q: float = 0.10) -> tuple[list[float], list[bool]]:
     """Benjamini-Hochberg FDR. Returns (q_values, reject_at_q). q_value is the
     smallest q at which the test is rejected; reject is True iff q_value <= q.
@@ -465,7 +523,8 @@ def classify_cell_tradability(label: str,
                                   min_n_daily: int = 6,
                                   min_n_weekly: int = 20,
                                   min_n_longterm: int = 30) -> dict:
-    """Per-cell horizon-based tradability classifier (Pass-14, +Spearman).
+    """Per-cell horizon-based tradability classifier (Pass-15 — three-
+    statistic stack: Pearson r, Spearman ρ, distance correlation).
 
     Mirrors edge_tracker.MultiHorizonEdgeTracker for offline data.
     Uses the same horizon definitions and thresholds so the offline
@@ -476,18 +535,33 @@ def classify_cell_tradability(label: str,
       Weekly    = last 7 days
       Long-term = last 30 days (or all)
 
-    Per horizon, compute BOTH Pearson r AND Spearman rho over
-    (chunk_t.mean_dipole, chunk_{t+k}.log_return) using only chunks
-    whose predictor timestamp falls inside the horizon. Pearson is
-    linear; Spearman captures monotonic non-linearity. Strength uses
-    the larger of |r| and |rho| as the confidence proxy:
+    Per horizon compute three statistics on
+    (chunk_t.mean_dipole, chunk_{t+k}.log_return) for chunks whose
+    predictor timestamp falls inside the horizon:
 
-      confidence = max(|r|, |rho|)
-      direction  = sign of whichever is the larger-magnitude statistic
+      r    Pearson         linear dependence
+      ρ    Spearman        monotonic non-linear dependence
+      dC   distance corr   any dependence (incl. non-monotonic)
+
+    Strength tier uses the larger of |r| and |ρ| (monotonic
+    confidence) so a direction can be assigned:
+
+      confidence = max(|r|, |ρ|)
+      direction  = sign of whichever monotonic statistic has the larger
+                   magnitude
       STRONG     confidence >= strong_r AND n >= min_n_horizon
       MODERATE   confidence >= moderate_r AND n >= min_n_horizon
       WEAK       confidence <  moderate_r AND n >= min_n_horizon
       NEW        n  <  min_n_horizon
+
+    Diagnostic flags:
+      non_linear     |ρ| − |r| >= 0.10 AND confidence >= moderate_r
+                     (rank correlation differs from level correlation)
+      non_monotonic  dC >= moderate_r AND confidence < moderate_r
+                     (distance correlation detects dependence both
+                     monotonic statistics missed; direction is undefined,
+                     so the cell stays WEAK in the strength tier but
+                     gets flagged for manual inspection)
 
     Tradability category derived from horizon strengths:
 
@@ -590,27 +664,48 @@ def classify_cell_tradability(label: str,
             y = cr[[i + k for i in seg]]
             r, p, _ = _pearsonr_with_p(x, y)
             rho, p_rho, _ = _spearmanr_with_p(x, y)
+            # dCor permutation is O(n^2 * n_perm); skip when the
+            # monotonic stack is already STRONG (no information gain
+            # from also computing dCor) or when n is too small for
+            # permutation testing.
             r_v = float(r) if np.isfinite(r) else None
             rho_v = float(rho) if np.isfinite(rho) else None
+            mono_conf = max(abs(r_v or 0.0), abs(rho_v or 0.0))
+            if n_h >= 8 and mono_conf < strong_r:
+                dc, p_dc, _ = _dcor_with_p(x, y, n_perm=500, seed=int(n_h))
+            else:
+                dc = _dcor(x, y) if n_h >= 4 else float("nan")
+                p_dc = float("nan")
+            dc_v = float(dc) if np.isfinite(dc) else None
             strength, direction, conf = _strength(n_h, r_v, rho_v, hmin_n)
-            # Non-linear flag: |rho - r| > 0.10 AND both above moderate_r.
-            # Means a monotonic non-linear structure that Pearson alone
-            # would have read as weaker. Diagnostic only.
             non_linear = (
                 r_v is not None and rho_v is not None
                 and abs(abs(rho_v) - abs(r_v)) >= 0.10
                 and max(abs(r_v), abs(rho_v)) >= moderate_r
             )
+            # Non-monotonic flag: dC clears moderate but the monotonic
+            # stack does not. Means there's dependence Pearson and
+            # Spearman BOTH missed; direction is undefined so the
+            # cell stays WEAK in the strength tier, but it's surfaced
+            # downstream for manual inspection.
+            non_monotonic = (
+                dc_v is not None and dc_v >= moderate_r
+                and mono_conf < moderate_r
+                and n_h >= hmin_n
+            )
             cell_horizons[hname] = {
                 "n": n_h,
                 "r": round(r_v, 4) if r_v is not None else None,
                 "rho": round(rho_v, 4) if rho_v is not None else None,
+                "dcor": round(dc_v, 4) if dc_v is not None else None,
                 "p": round(float(p), 4) if np.isfinite(p) else None,
                 "p_rho": round(float(p_rho), 4) if np.isfinite(p_rho) else None,
+                "p_dcor": round(float(p_dc), 4) if np.isfinite(p_dc) else None,
                 "confidence": round(conf, 4) if conf is not None else None,
                 "strength": strength,
                 "direction": direction,
                 "non_linear": bool(non_linear),
+                "non_monotonic": bool(non_monotonic),
             }
 
         # Derive tradability category from horizon strengths.
@@ -677,12 +772,20 @@ def evaluate_gate_I(label: str, chunks: list[MarketChunk],
                      k: int = 1,
                      min_n: int = 30,
                      fdr_q: float = 0.10) -> dict:
-    """For each regime label, compute Pearson r/r2 of (chunk_mean_dipole_t,
-    chunk_log_return_{t+k}) restricted to consecutive chunk pairs in that regime.
+    """For each regime label, compute Pearson r AND Spearman ρ on
+    (chunk_mean_dipole_t, chunk_log_return_{t+k}) restricted to
+    consecutive chunk pairs in that regime. The p-value driving BH-FDR
+    is Bonferroni-adjusted min(p_r, p_ρ) — testing the same data with
+    two statistics doubles the family size, so the conservative
+    correction divides each p in half before taking the min, or
+    equivalently doubles the minimum.
 
-    Cells with n < min_n are recorded but excluded from the test (prevents
-    tiny-n artifacts from passing the gate). Surviving cells go through
+    Cells with n < min_n are recorded but excluded from the test
+    (prevents tiny-n artifacts). Surviving cells go through
     Benjamini-Hochberg FDR at q=fdr_q across regimes within this venue.
+
+    Effect size is r2 = max(|r|, |ρ|)² — using the larger of the two
+    monotonic statistics so non-linear-but-monotonic edges register.
     """
     if len(chunks) < k + 2:
         return {"label": label, "gate_I": None, "reason": "too few chunks"}
@@ -710,22 +813,40 @@ def evaluate_gate_I(label: str, chunks: list[MarketChunk],
         idx = [i for i in range(len(chunks) - k) if labels[i] == regime]
         n = len(idx)
         if n < min_n:
-            per_regime[regime] = {"n": n, "r": None, "r2": None, "p": None,
-                                   "note": f"n<{min_n}"}
+            per_regime[regime] = {"n": n, "r": None, "rho": None,
+                                    "r2": None, "p": None, "note": f"n<{min_n}"}
             continue
         x = md[idx]
         y = cr[[i + k for i in idx]]
-        r, p, npairs = _pearsonr_with_p(x, y)
+        r, p_r, npairs = _pearsonr_with_p(x, y)
+        rho, p_rho, _ = _spearmanr_with_p(x, y)
+        r_v = float(r) if np.isfinite(r) else None
+        rho_v = float(rho) if np.isfinite(rho) else None
+        # Effect size on whichever monotonic statistic dominates.
+        eff = max(abs(r_v or 0.0), abs(rho_v or 0.0))
+        # Bonferroni: testing two stats on the same data doubles
+        # family size, so report adjusted min p.
+        p_candidates = []
+        if np.isfinite(p_r): p_candidates.append(float(p_r))
+        if np.isfinite(p_rho): p_candidates.append(float(p_rho))
+        if p_candidates:
+            p_combined = min(p_candidates) * len(p_candidates)
+            p_combined = min(1.0, p_combined)
+        else:
+            p_combined = float("nan")
         per_regime[regime] = {
             "n": npairs,
-            "r": round(r, 4) if np.isfinite(r) else None,
-            "r2": round(r * r, 5) if np.isfinite(r) else None,
-            "p": round(p, 4) if np.isfinite(p) else None,
+            "r": round(r_v, 4) if r_v is not None else None,
+            "rho": round(rho_v, 4) if rho_v is not None else None,
+            "r2": round(eff * eff, 5) if eff is not None else None,
+            "p": round(p_combined, 4) if np.isfinite(p_combined) else None,
+            "p_r": round(float(p_r), 4) if np.isfinite(p_r) else None,
+            "p_rho": round(float(p_rho), 4) if np.isfinite(p_rho) else None,
             "q": None,
         }
-        if np.isfinite(p):
+        if np.isfinite(p_combined):
             testable_regimes.append(regime)
-            testable_pvalues.append(float(p))
+            testable_pvalues.append(float(p_combined))
 
     # Benjamini-Hochberg FDR across testable regimes within this venue.
     qvals, rejects = _bh_fdr(testable_pvalues, q=fdr_q)
@@ -1147,7 +1268,8 @@ def main():
     # Gate I per venue
     i_cb = evaluate_gate_I(f"CB-{args.asset}", cb_chunks, cb_results, k=1)
     i_kr = evaluate_gate_I(f"KR-{args.asset}", kr_chunks, kr_results, k=1)
-    print(f"--- GATE I (per-regime forward predictive R^2 at lag k=1) ---")
+    print(f"--- GATE I (per-regime forward predictive R^2 at lag k=1, "
+          f"r + ρ, Bonferroni-adjusted) ---")
     for ig in (i_cb, i_kr):
         print(f"  {ig['label']}:")
         if "reason" in ig:
@@ -1161,7 +1283,10 @@ def main():
                 q = stat.get("q")
                 marker = " <- significant (BH q<=0.10)" if stat.get("bh_reject") and (stat["r2"] or 0) > 0.05 else ""
                 qstr = f"  q={q:.3f}" if q is not None else ""
-                print(f"    {regime:<24}  n={stat['n']:>3}  r={stat['r']:+.3f}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{qstr}{marker}")
+                rho_v = stat.get("rho")
+                rho_str = f"  ρ={rho_v:+.3f}" if rho_v is not None else ""
+                print(f"    {regime:<24}  n={stat['n']:>3}  r={stat['r']:+.3f}"
+                      f"{rho_str}  R^2={stat['r2']:.4f}  p={stat['p']:.3f}{qstr}{marker}")
         print(f"    -> {'PASS' if ig['gate_I'] else 'FAIL'} "
               f"(need >=1 BH-significant regime with R^2>0.05, >=2 testable cells, "
               f"min n={ig.get('min_n','?')})")
@@ -1374,6 +1499,7 @@ def main():
             dir_word = cell.get("direction", "") or "-"
             h_strs = []
             non_linear_marks: list[str] = []
+            non_monotonic_marks: list[str] = []
             for hname in ("intraday", "daily", "weekly", "longterm"):
                 h = horizons.get(hname, {})
                 if h.get("r") is None and h.get("rho") is None:
@@ -1382,9 +1508,12 @@ def main():
                     continue
                 r_v = h.get("r")
                 rho_v = h.get("rho")
-                # Show whichever has larger magnitude (the strength
-                # driver); annotate with the other when it diverges
-                # by >=0.05.
+                dc_v = h.get("dcor")
+                # Show whichever monotonic stat has larger magnitude
+                # (the strength driver); annotate with the other when
+                # it diverges by >=0.05. Append dC only when it
+                # exceeds the larger monotonic by >=0.10 (means there's
+                # non-monotonic structure on top of any monotonic edge).
                 r_mag = abs(r_v) if r_v is not None else -1
                 rho_mag = abs(rho_v) if rho_v is not None else -1
                 if rho_mag > r_mag:
@@ -1397,14 +1526,23 @@ def main():
                 if (secondary is not None and primary is not None
                         and abs(abs(primary) - abs(secondary)) >= 0.05):
                     tag += f"|{sec_name}={secondary:+.2f}"
+                if (dc_v is not None
+                        and dc_v - max(r_mag, rho_mag, 0.0) >= 0.10):
+                    tag += f"|dC={dc_v:.2f}"
                 h_strs.append(f"{hname}={h['strength']}/"
                                 f"{tag}(n={h['n']})")
                 if h.get("non_linear"):
                     non_linear_marks.append(hname)
-            nl_tag = (f"  [non-linear: {','.join(non_linear_marks)}]"
-                      if non_linear_marks else "")
+                if h.get("non_monotonic"):
+                    non_monotonic_marks.append(hname)
+            tags = []
+            if non_linear_marks:
+                tags.append(f"non-linear:{','.join(non_linear_marks)}")
+            if non_monotonic_marks:
+                tags.append(f"non-monotonic:{','.join(non_monotonic_marks)}")
+            tag_suffix = (f"  [{' | '.join(tags)}]" if tags else "")
             print(f"    {venue:<8} {regime:<22} n={cell.get('n', 0):>4}  "
-                  f"{dir_word:<9}  " + "  ".join(h_strs) + nl_tag)
+                  f"{dir_word:<9}  " + "  ".join(h_strs) + tag_suffix)
     print()
 
     # Combined verdict — Gate H prefers the calibrated path when present
