@@ -1,9 +1,291 @@
-# Handoff to the next agent — markets-watch, 2026-05-10 (Pass-14 in progress)
+# Handoff to the next agent — markets-watch, 2026-05-11 evening (Pass-17 in progress)
 
-> The handoff doc below this section is the historical version (2026-05-05,
-> Phase 1.5j status). It is preserved for context. The CURRENT state of
-> the project — including major framing change from the user — is in
-> this top section.
+> Older handoff sections are preserved below this top section. The
+> CURRENT state of the project is in this top section. Each session's
+> additions stack on top; nothing from earlier sessions is intended
+> to be discarded.
+
+## Branch + checkout
+
+**Branch**: `claude/run-pass-14-classifier-nTViL` (origin: `davisai1974/markets`)
+**Latest pushed commit**: `c2d7c2d` ("Signal rotation: cohort allocator + fairness ledger + per-cell capacity")
+**Plus uncommitted in working tree (to commit when picking up)**:
+- `direction_conflict_audit.py` — new standalone analysis tool, NOT yet committed
+- `/tmp/audit_kreth_eq.txt` and `/tmp/audit_cbeth_wash.txt` — empty (parallel runs were killed before completion when user paused work)
+
+```bash
+git fetch origin claude/run-pass-14-classifier-nTViL
+git checkout claude/run-pass-14-classifier-nTViL
+git log --oneline -15   # see Pass-14..16 + rotation
+git status              # direction_conflict_audit.py untracked
+```
+
+The branch contains every Pass-14 → Pass-16 result + signal rotation
+infrastructure. The Pass-15 evolution (multi-feature scan, FDR,
+cross-platform features) and Pass-16 results are documented in
+`HANDOFF_PHASE1_5_RESULTS.md` (top of file).
+
+## Where the project is right now
+
+The dipole-equation framing (Pass-13/14) has evolved into a
+**multi-feature non-linear detection pipeline** with FDR discipline
+and cross-platform features. The empirical headline: cross-platform
+features (cross-venue + spot↔perp + L1 depth) are now producing the
+strongest BH-FDR-significant cells, not the dipole alone. The
+dipole is one feature among 18 in the registry.
+
+Recent passes:
+
+| Pass | Date | What it shipped |
+|---|---|---|
+| 14 (step 1) | 2026-05-11 morning | Horizon-based `classify_cell_tradability` (intraday/daily/weekly/longterm), 4-state verdict (ALWAYS / CURRENTLY / HISTORICALLY_NOT_NOW / NEVER) |
+| 14 (step 2) | 2026-05-11 afternoon | + Spearman ρ alongside Pearson; `non_linear` flag; `confidence_tier` field for edge-driven trades |
+| 15 | 2026-05-11 | + Distance correlation (dCor) with permutation p-value; Gate I now uses r + ρ Bonferroni-adjusted; **multi-feature scan with 10 active extractors** (then 16 after cross-platform batch); per-(feature, venue, regime, horizon) tradeability scan |
+| 15.5 | 2026-05-11 | + 6 cross-platform features added (`book_depth_imbalance`, `cross_venue_book_imbalance_delta`, `cross_venue_aggressor_agreement`, `perp_spot_basis_z`, `perp_spot_dipole_divergence`, `triangulated_consensus`); `--bybit-perp-bins` arg + perp chunk loading |
+| 16 | 2026-05-11 evening | + **BH-FDR across full multi-feature family** at q=0.10; 3-tier report (BH-significant / exploratory / flag-only); **cross-platform features dominate Tier 1** |
+| 17 (in flight) | 2026-05-11 night | + **Signal rotation** in `backend/forward_paper.py` (cohort allocator, fairness ledger, per-cell capacity classes, dispatch hook); + `direction_conflict_audit.py` tool (one cell audited; two pending) |
+
+## CRITICAL PRINCIPLE THE USER HAS REPEATED (must respect)
+
+Direct quote: *"don't force a solution, let the data decide. just
+because 1 says something and 10 others say the opposite doesn't mean
+the 1 is wrong."*
+
+When multiple features disagree on direction for the same cell, do
+NOT pick a winner by majority vote. Instead, use
+`direction_conflict_audit.py` to slice the cell's chunks by each
+feature's quartile and see under what CONDITIONS each direction
+wins. The conflict often resolves into a conditional rule (e.g.
+"trade fade when dipole is Q4; trade momentum when basis is Q4")
+rather than a contradiction.
+
+This principle also applies to the Pass-14 → Pass-13 user pushback
+already in this doc — don't fold interpretation into the classifier;
+report measurements.
+
+## KR-ETH WHALE_UP conflict audit — finding to internalize
+
+Ran the audit on KR-ETH WHALE_UP (178 chunks). Direction conflict
+between dipole/ofi (fade) and perp_spot_basis_z (momentum). The
+quartile analysis shows the data answer:
+
+| Feature | Q1 (low) | Q2 | Q3 | Q4 (high) |
+|---|---:|---:|---:|---:|
+| `mean_dipole` | +0.00002 momo | +0.00018 momo | +0.00016 momo | **−0.00032 fade** |
+| `mean_ofi` | +0.00021 momo | +0.00015 momo | +0.00017 momo | **−0.00047 fade** |
+| `perp_spot_basis_z` | +0.00002 momo | −0.00015 fade | −0.00001 fade | **+0.00017 momo** |
+| `realized_vol_z` | +0.00011 momo | −0.00008 fade | +0.00005 momo | −0.00004 fade |
+
+**The dipole "fade" finding is conditional on Q4 dipole only**
+(top 25% strongest signal). Q1–Q3 actually show mild momentum or
+noise. The 7-replication finding was therefore implicit-quartile-Q4
+— still real, just narrower in scope than we'd been saying.
+
+**The perp_spot_basis_z "momentum" finding is conditional on Q4
+basis_z** (top 25%, basis > +0.137). Q2 + Q3 (mid basis, around the
+tight cluster) actually fade.
+
+**realized_vol_z alternates quartile signs** — its Tier-1 Pass-16
+status is likely vol-of-vol clustering autocorrelation, not real
+predictive information. Treat as suspect.
+
+The conditional rule that emerges: *both* directions can fire
+simultaneously when dipole_Q4 AND basis_z_Q4 are both true — these
+are the strongest-disagreement chunks. The cleanest tradeable
+formulation is two separate paper cells with gating predicates, not
+one cell with averaged direction.
+
+The other two audits (KR-ETH EQUILIBRIUM_TWO_SIDED and CB-ETH
+WASH_HAWKES) were queued but deferred to this chat (user paused).
+Run them at session start:
+
+```bash
+python3 direction_conflict_audit.py --asset ETH \
+  --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+  --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+  --bybit-perp-bins eth_bybit_perp_bins.json \
+  --target-venue KR-ETH --target-regime EQUILIBRIUM_TWO_SIDED \
+  --features cross_venue_gap_z realized_vol_z perp_spot_basis_z mean_dipole
+
+python3 direction_conflict_audit.py --asset ETH \
+  --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+  --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+  --bybit-perp-bins eth_bybit_perp_bins.json \
+  --target-venue CB-ETH --target-regime WASH_HAWKES \
+  --features cross_venue_gap_z cross_venue_book_imbalance_delta cross_venue_aggressor_agreement mean_dipole
+```
+
+Each audit ~5 min runtime.
+
+## Immediate todo (Pass-17 completion)
+
+1. **Commit `direction_conflict_audit.py`** (currently untracked). One commit, message-only — no other changes needed.
+2. **Run the two deferred audits** (commands above). Save outputs to `pass17_audit_*.txt` and commit.
+3. **Productize gated paper cells** based on the three audits. For KR-ETH WHALE_UP specifically:
+   - Add `eth_kr_whale_up_q4_dipole_fade` — fires only when chunk dipole is in Q4 of the WHALE_UP cell's historical distribution (need to persist quartile cutoffs to a small calibration JSON)
+   - Add `eth_kr_whale_up_q4_basis_momo` — fires only when `perp_spot_basis_z` is in Q4 (needs basis_monitor live state in the predicate; or a separate basis_z threshold calibrated from history)
+   - Keep the existing `eth_kr_whale_up_fade` running so we can compare the gated vs ungated realized P&L over weeks
+   - Both new cells `capacity_class="tiny"` for safety
+4. **Productize similar gated cells** for KR-ETH EQUILIBRIUM + CB-ETH WASH_HAWKES based on their audit results.
+5. **Write the Pass-17 doc entry** in `HANDOFF_PHASE1_5_RESULTS.md` summarizing audit findings + new cells + a brief discussion of "let the data decide" — the conflicts resolve into conditional rules.
+
+## Older open todos that must NOT be forgotten
+
+These are scattered across `TODO.md`, prior pass docs, and code-level
+TODO comments. Surfacing them here so they don't slip:
+
+### From `TODO.md` ⚠️ Must revert before Tier 1 launch
+- **`DEMO_MODE_EMIT_EQUILIBRIUM_EXTREMES` in `backend/api_server.py`**
+  is currently `True` (default). Causes synthetic
+  `EQUILIBRIUM_EXTREME_DEMO` signals to emit so the demo UI isn't
+  empty. **Revert to `False`** when production data has produced ≥10
+  real WHALE/HERD/WASH signal events. Search `XXX DEMO_MODE` in
+  api_server.py.
+
+### From `TODO.md` 🟡 Implement when multi-day data accumulates
+- Re-run `calibrate_vpin.py` when CB depth grows (currently
+  CB-ETH n=176, CB-BTC n=45)
+- Re-run `calibrate_liq.py` against larger perp corpus
+- **Run `calibrate_funding.py`** — needs ≥30 8h cycles → ~10 days of
+  backend uptime. Weekly cron once AWS is up.
+- Run `calibrate_oi.py` — needs ≥240 observations per (asset, venue)
+- Re-run `calibrate_vol_target.py` any time corpus grows ≥2×
+- Write `calibrate_cb_premium.py` once ≥240 observations on AWS
+- F4 (trade-size multimodality) feature once a few weeks of multi-trade-per-bin data
+- F5 (inter-trade burstiness) feature, same data dependency
+- DPGMM auto-taxonomy when N≥200 labeled chunks (currently ~50)
+- Per-(asset, session_phase, day_of_week) baselines with multi-week corpus
+
+### From `TODO.md` 🚧 Implement before Tier 1 launch (external dependencies)
+- Backend HTTPS (Caddy + Let's Encrypt)
+- **Generate VAPID keys** (`python -m backend.push --generate-keys`), set env vars. Required before push notifications actually deliver
+- Discord bot deployment (DISCORD_BOT_TOKEN + DISCORD_CHANNEL_ID + server creation)
+
+### From Pass-14 → Pass-16 candidates not yet done
+- **Backfill historical funding rate + open interest** so `funding_rate_z` and `oi_delta_z` activate in the multi-feature scan. Write `backfill_funding_history.py` (8h cycles from each perp venue) and `backfill_oi_history.py` (1h snapshots).
+- **Wire Spearman + dCor into the live `edge_tracker.py`** — the live tracker is still Pearson-only. The offline classifier promoted KR-BTC WHALE_UP via Spearman; the live system doesn't see that yet.
+- **Schedule full multi-feature pass at 1× daily UTC 04:00** (discussed in session: 4×/day is overkill and destabilizes BH-FDR; 1×/day + event-triggered on regime shifts is recommended).
+- **Wire the api_server SignalEvent → push dispatch hook** at `dispatch_signal_for_cell(...)`. Currently `send_to_all` is imported but never called — push delivery on signal events doesn't exist yet. When wired, the signal rotation activates.
+- **Productize Pass-16 Tier-1 cells** (after audits resolve direction conflicts):
+  - KR-BTC WASH_HAWKES fade under `microprice_drift` (intraday c=0.88 q=0.000 — strongest BTC find)
+  - KR-BTC EQUILIBRIUM fade under `perp_spot_dipole_divergence`
+  - KR-ETH HERD_UP fade under `cross_venue_book_imbalance_delta`
+  - KR-ETH DEPLETED momentum (new ALWAYS_TRADEABLE from Pass-14 step 2; not yet in `forward_paper.py`)
+- **Per-cell P&L decay monitoring**: track post-publication realized r vs discovered r; pull cells when realized < 50% of discovered. Pairs with the rotation infrastructure.
+
+### From `backend/carry_analyzer.py` TODOs
+- Per-venue lending APR (currently uniform 5%)
+- Per-tier fee table (currently 10 bps round-trip)
+- Realistic expected_hold_days (currently 1.0, real carry desks hold weeks)
+
+### From the user's stated "lean into cross-platform position" directive
+The session added 6 cross-platform features (Pass-15.5). Continue
+adding features that exploit our cross-platform position over time —
+this is the differentiation pitch no single-venue competitor can
+match. Candidates: cross-venue trade-burst correlation, perp-perp
+basis (Binance perp vs Bybit perp once Binance backfill returns),
+funding-rate divergence between venues.
+
+## Signal-rotation infrastructure (just shipped, c2d7c2d)
+
+`backend/signal_allocator.py` provides:
+- `select_cohort(cell_id, capacity_class, tier, all_endpoints, ...)`:
+  pure function, deterministic ordering by `(weighted_fairness ASC,
+  last_alloc_ts ASC, registered_ts ASC)`
+- `record_allocation(...)`: appends to `signal_allocations.jsonl`
+- `get_fairness_summary(...)`: per-endpoint state for admin/debug
+
+Capacity classes (cohort size cap):
+- `tiny=5`, `small=20`, `medium=50`, `large=∞`, `huge=∞`
+
+Tier weights: `high_conviction=3.0`, `alertable=1.0`. 7-day rolling window.
+
+Existing cells in `forward_paper.py` classified:
+- `tiny`: KR fade cells (`eth_kr_whale_up_fade`, `eth_kr_nascent_up_momo`, `eth_kr_herd_up_volq3_fade`)
+- `medium`: KR EQ MM (`eth_kr_eq_mm_passive`, `btc_kr_eq_mm_passive`)
+- `large`: CB EQ MM (`eth_cb_eq_mm_passive`, `btc_cb_eq_mm_passive`)
+
+`dispatch_signal_for_cell(cell_id, capacity_class, tier, payload)` is
+the integration point. NOT YET wired to `api_server.py` because push
+delivery on signal events doesn't exist yet (see todo above). When
+that integration lands, callers point at `dispatch_signal_for_cell`
+instead of `send_to_all` and rotation activates.
+
+Sanity-verified: 50 occurrences of a tiny cell across 25 subscribers
+produces exactly 10 allocations per subscriber, spread of 0
+(perfect cycle distribution).
+
+## Architecture pointers (where everything lives)
+
+```
+phase1_5_evaluator.py        offline evaluator
+  - classify_cell_tradability  per-cell horizon-based tradeability classifier
+                                + Pearson r + Spearman ρ + dCor
+  - run_multi_feature_scan     loops the classifier over FEATURE_EXTRACTORS
+  - apply_multi_feature_fdr    BH-FDR across the family at q=0.10
+  - FEATURE_EXTRACTORS         18-feature registry (16 active + 2 pending)
+  - evaluate_gate_I            Gate I, now r + ρ Bonferroni-adjusted
+
+direction_conflict_audit.py  standalone tool for cells with multi-feature
+                              direction conflicts — quartile-conditional
+                              forward-return breakdown per feature.
+                              ONE COMMIT PENDING.
+
+backend/forward_paper.py     paper-trade cells
+  - CellSpec.capacity_class    rotation bucket
+  - dispatch_signal_for_cell   integration hook for push delivery
+  - try_open_edge_driven_trade edge-tracker-driven trades carry capacity_class
+
+backend/signal_allocator.py  cohort allocator + fairness ledger (NEW)
+
+backend/push.py              push subscription persistence + delivery
+  - send_to_endpoints          new: filtered variant
+  - send_to_all                thin wrapper over send_to_endpoints
+
+backend/api_server.py        live polling backend; send_to_all imported
+                              but NOT called — push delivery hook missing
+
+edge_tracker.py              live multi-horizon edge tracker. Pearson-only
+                              right now; needs Spearman + dCor wired.
+
+HANDOFF_PHASE1_5_RESULTS.md  pass-by-pass results (Pass-1 through Pass-16
+                              entries; Pass-17 entry pending audit completion)
+
+signal_allocations.jsonl     (will exist once rotation fires) audit log
+                              of allocations for replay/fairness state
+```
+
+## Operating environment
+
+- Repo: `/home/user/Markets`, git repo on `claude/run-pass-14-classifier-nTViL`
+- Python 3.11; `pip install numpy scipy` already done in this session
+- Bin files: 30 d backfill TARGETED, currently ~6.6d ETH / ~4.4d BTC
+  (live collectors are adding ~1d/day; pull fresh data each session
+  via `git checkout origin/data/eth-bins -- ...`)
+- Full multi-feature pass: ~10–15 min wall-clock per asset on this VM
+- Stop hook complains about untracked files; commit evaluator dumps
+  + Pass entries after each pass
+- The user prefers concrete measurements over interpretation. When in
+  doubt, run the audit, then let the numbers shape the conclusion.
+- The user is comfortable with substantial-scope commits + multi-step
+  work; don't ask permission for routine refactors, but DO ask before
+  destructive git operations or before adding new permanent
+  infrastructure (e.g. SQLite, new external services).
+
+## On first contact
+
+1. `git log --oneline -20` to see the full Pass-14..17 arc.
+2. Read this top section + the Pass-16 entry in
+   `HANDOFF_PHASE1_5_RESULTS.md` (look for "## Sixteenth pass").
+3. `git status` shows `direction_conflict_audit.py` untracked.
+   Commit it as the first action.
+4. Run the two deferred audits (commands in the
+   "KR-ETH WHALE_UP conflict audit" section above).
+5. Then proceed with Pass-17 todo list.
+
+---
+
+# (Below: historical 2026-05-10 handoff for Pass-14 — preserved for context) ============================================
 
 ## Branch + checkout
 
