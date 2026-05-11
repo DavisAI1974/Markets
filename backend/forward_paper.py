@@ -60,6 +60,15 @@ class CellSpec:
                                # entry on the resting side of the book, exit
                                # on the opposite side, earning spread minus
                                # round-trip fees instead of paying it).
+    capacity_class: str = "small"  # alpha-decay bucket consumed by
+                               # signal_allocator. tiny (5/cohort, rotate),
+                               # small (20/cohort, rotate),
+                               # medium (50/cohort, rotate),
+                               # large (broadcast to all),
+                               # huge (broadcast; informational, not a
+                               # trade). Per-cell setting reflects venue
+                               # depth and the magnitude of edge that
+                               # gets consumed per simultaneous fill.
 
 
 def _is_eth_kr_nascent_up(regime: str, feat: object, chunk: object) -> bool:
@@ -97,6 +106,7 @@ CELLS: list[CellSpec] = [
         note="forward paper: ETH KR WHALE_NASCENT_UP momentum (cell pass 5: "
              "r=+0.21 over 30d, r=+0.58 in recent 9d)",
         predicate=_is_eth_kr_nascent_up,
+        capacity_class="tiny",
     ),
     CellSpec(
         cell_id="eth_kr_herd_up_volq3_fade",
@@ -107,6 +117,7 @@ CELLS: list[CellSpec] = [
         note="forward paper: ETH KR HERD_UP fade within vol-Q3 (cell pass 5: "
              "r=-0.20 at n=168, p=0.008)",
         predicate=_is_eth_kr_herd_up_volq3,
+        capacity_class="tiny",
     ),
     # Pass-8 finding: KR-ETH WHALE_UP n=65 r=-0.309 BH q=0.029. First
     # BH-significant cell since Pass-3. Plain WHALE_UP fade — short
@@ -124,6 +135,7 @@ CELLS: list[CellSpec] = [
         note="forward paper: ETH KR WHALE_UP fade (Pass-8: r=-0.309 n=65 "
              "BH q=0.029; first BH-significant cell since Pass-3)",
         predicate=_is_eth_kr_whale_up,
+        capacity_class="tiny",
     ),
     # Tier 3.1 EQUILIBRIUM market-making cells. One per (asset, venue) so
     # each cell's realized P&L tracks the captured-spread minus
@@ -139,6 +151,7 @@ CELLS: list[CellSpec] = [
              "Entry rests on bid; exit rests on ask; earns spread "
              "minus 2 fee legs while regime persists.",
         predicate=_is_equilibrium,
+        capacity_class="medium",
     ),
     CellSpec(
         cell_id="eth_cb_eq_mm_passive",
@@ -146,6 +159,7 @@ CELLS: list[CellSpec] = [
         notional_usd=1000.0, hold_minutes=5.0,
         note="forward paper: ETH CB EQUILIBRIUM passive-quote MM.",
         predicate=_is_equilibrium,
+        capacity_class="large",
     ),
     CellSpec(
         cell_id="btc_kr_eq_mm_passive",
@@ -153,6 +167,7 @@ CELLS: list[CellSpec] = [
         notional_usd=1000.0, hold_minutes=5.0,
         note="forward paper: BTC KR EQUILIBRIUM passive-quote MM.",
         predicate=_is_equilibrium,
+        capacity_class="medium",
     ),
     CellSpec(
         cell_id="btc_cb_eq_mm_passive",
@@ -160,6 +175,7 @@ CELLS: list[CellSpec] = [
         notional_usd=1000.0, hold_minutes=5.0,
         note="forward paper: BTC CB EQUILIBRIUM passive-quote MM.",
         predicate=_is_equilibrium,
+        capacity_class="large",
     ),
 ]
 
@@ -590,6 +606,15 @@ def try_open_edge_driven_trade(
                 f"(r={hstat.r:+.2f} n={hstat.n} "
                 f"tier={confidence_tier} self_trend={hstat.self_trend})")
         fee_usd = scaled_notional * (_PRACTICE_FEE_BPS / 10000.0)
+        # Edge-driven trades come from the live tracker and don't have a
+        # CellSpec.capacity_class. Default capacity by horizon: intraday
+        # = tiny (fastest decay), daily = small, weekly/longterm = medium.
+        edge_capacity = {
+            "intraday": "tiny",
+            "daily": "small",
+            "weekly": "medium",
+            "longterm": "medium",
+        }.get(horizon_name, "small")
         return {
             "intent_id": str(uuid.uuid4())[:12],
             "asset": asset,
@@ -626,8 +651,75 @@ def try_open_edge_driven_trade(
             # high_conviction → push as the strongest tier; alertable →
             # push as the weaker tier. Both still book a paper trade.
             "confidence_tier": confidence_tier,
+            # Capacity class for signal_allocator rotation. Edge-driven
+            # trades inherit it from the firing horizon.
+            "capacity_class": edge_capacity,
         }
     return None
+
+
+def dispatch_signal_for_cell(cell_id: str, capacity_class: str, tier: str,
+                                 payload: dict) -> dict:
+    """Distribute a signal occurrence to a rotation-selected cohort.
+
+    Pulls the current subscriber list from push.get_subs(), asks
+    signal_allocator.select_cohort() which subset should receive THIS
+    occurrence, sends the push to that cohort, and records the
+    allocation in the fairness ledger.
+
+    Returns the push result dict (sent / failed / pruned) augmented
+    with cohort_size and tier — useful for SSE diagnostics.
+
+    Imports are lazy because forward_paper.py is imported by the
+    evaluator + the executor, neither of which need push/allocator
+    machinery. Only the backend api_server path exercises this.
+    """
+    try:
+        from backend.push import get_subs, send_to_endpoints
+        from backend.signal_allocator import (
+            select_cohort, record_allocation,
+        )
+    except ImportError as e:
+        return {"sent": 0, "failed": 0,
+                  "note": f"dispatch unavailable: {e}"}
+
+    subs = get_subs()
+    if not subs:
+        return {"sent": 0, "failed": 0, "cohort_size": 0,
+                  "note": "no subscribers"}
+
+    all_endpoints = [s.endpoint for s in subs]
+    reg_ts = {s.endpoint: float(getattr(s, "registered_utc", 0.0))
+              for s in subs}
+    cohort = select_cohort(
+        cell_id=cell_id,
+        capacity_class=capacity_class,
+        tier=tier,
+        all_endpoints=all_endpoints,
+        registered_ts_by_endpoint=reg_ts,
+    )
+    if not cohort:
+        return {"sent": 0, "failed": 0, "cohort_size": 0,
+                  "note": "empty cohort"}
+
+    push_payload = dict(payload)
+    # Always tag the push payload with the cell + tier + cohort size so
+    # the receiving client can render it sensibly.
+    push_payload.setdefault("cell_id", cell_id)
+    push_payload.setdefault("tier", tier)
+    push_payload.setdefault("capacity_class", capacity_class)
+
+    result = send_to_endpoints(push_payload, cohort)
+    # Record allocation AFTER the push attempt. If we recorded before,
+    # a failed push would still bump the cohort's fairness counters and
+    # they'd be unfairly de-prioritized next round. By recording after,
+    # we accept that the ledger reflects "intended delivery" rather than
+    # "confirmed delivery" — the right tradeoff for fairness.
+    record_allocation(cell_id=cell_id, tier=tier, endpoints=cohort)
+    result["cohort_size"] = len(cohort)
+    result["all_subscribers"] = len(all_endpoints)
+    result["tier"] = tier
+    return result
 
 
 def is_expired(trade: dict, now_utc: float) -> bool:

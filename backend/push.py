@@ -99,8 +99,10 @@ def remove_sub(endpoint: str) -> bool:
     return len(subs) < n_before
 
 
-def send_to_all(payload: dict) -> dict:
-    """Send a push notification to every subscribed client.
+def send_to_endpoints(payload: dict, endpoints: list[str]) -> dict:
+    """Send a push notification to a specified subset of subscribers.
+    Used by the signal_allocator cohort rotation to deliver each
+    occurrence only to the selected cohort rather than the whole base.
 
     Returns {sent: int, failed: int, expired_pruned: int}.
     """
@@ -113,9 +115,12 @@ def send_to_all(payload: dict) -> dict:
         return {"sent": 0, "failed": 0, "expired_pruned": 0,
                 "note": "pywebpush not installed; push disabled"}
 
+    target_set = set(endpoints)
     sent = failed = pruned = 0
     expired_endpoints: list[str] = []
     for s in list(get_subs()):
+        if s.endpoint not in target_set:
+            continue
         try:
             webpush(
                 subscription_info={
@@ -141,6 +146,13 @@ def send_to_all(payload: dict) -> dict:
         remove_sub(ep)
         pruned += 1
     return {"sent": sent, "failed": failed, "expired_pruned": pruned}
+
+
+def send_to_all(payload: dict) -> dict:
+    """Send to every subscribed client. Thin wrapper over send_to_endpoints
+    that targets the full subscriber list. Kept for callers that don't
+    do cohort selection (e.g. macro broadcasts, system alerts)."""
+    return send_to_endpoints(payload, [s.endpoint for s in get_subs()])
 
 
 def generate_vapid_keypair() -> dict:
