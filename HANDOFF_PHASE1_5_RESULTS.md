@@ -1259,6 +1259,197 @@ that metric.
 - **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
   Hurst comparison; BTC is more momentum-y.
 
+## Fifteenth pass — 2026-05-11, multi-feature scan + dCor + Gate-I non-linearization
+
+Three substantive additions on top of Pass-14:
+
+1. **Distance correlation (dCor)** wired into `classify_cell_tradability`.
+   Catches non-monotonic dependence (U-shapes, threshold-then-saturate)
+   that both Pearson and Spearman miss. `non_monotonic` flag fires when
+   `dC ≥ moderate_r (0.10) AND max(|r|,|ρ|) < moderate_r`. Direction is
+   undefined for non-monotonic finds, so the cell stays WEAK in the
+   strength tier but gets a `[non-monotonic: <horizons>]` tag for
+   manual inspection. Permutation p-value at n_perm=500. Skipped when
+   monotonic stack is already STRONG (no info gain).
+
+2. **Gate I** now runs both Pearson r and Spearman ρ. Effect size is
+   `r² = max(|r|, |ρ|)²`. p-value driving BH-FDR is Bonferroni-adjusted
+   `min(p_r, p_ρ) × 2` (two stats on the same data → double the family).
+
+3. **MULTI-FEATURE TRADEABLE SIGNAL REPORT** — 10 active feature
+   extractors + 2 infrastructure-pending. The detection pipeline
+   (Pearson + Spearman + dCor at four horizons) is aimed at each
+   feature in turn; results are collected into a unified
+   (feature × venue × regime × verdict) table.
+
+Also: `backend/forward_paper.py` gained a `confidence_tier` on
+edge-driven trades (`high_conviction` if firing horizon |r|≥0.20 AND
+corroborated by ≥1 other horizon |r|≥0.15 with matching direction;
+`alertable` otherwise). Maps the user's tiered-alert framing
+(low-risk / risky) onto the existing edge-tracker output.
+
+### Feature roster (12, run on the same 6.6d ETH / 4.4d BTC corpus)
+
+| # | Feature | Group | Status |
+|---|---|---|---|
+| 1 | `mean_dipole`        | proven       | active (baseline) |
+| 2 | `mean_ofi`           | proven       | active |
+| 3 | `vpin_like`          | proven       | active (per-bar imbalance proxy) |
+| 4 | `hawkes_eta`         | proven       | active |
+| 5 | `realized_vol_z`     | proven       | active |
+| 6 | `cross_asset_dipole` | novel        | active (uses sibling-asset chunks) |
+| 7 | `cross_venue_gap_z`  | novel        | active (uses other-venue chunks) |
+| 8 | `hurst_delta`        | novel        | active |
+| 9 | `trade_size_entropy` | experimental | active |
+| 10 | `microprice_drift`  | experimental | active when L1 sizes captured |
+| 11 | `funding_rate_z`    | proven (microstructure) | **infrastructure-pending** — no historical funding backfill |
+| 12 | `oi_delta_z`        | proven (microstructure) | **infrastructure-pending** — no historical OI backfill |
+
+### ⚠️ Multiple-comparisons caveat (read first)
+
+The multi-feature scan runs ~10 features × ~10 regimes × 2 venues ×
+4 horizons = ~800 horizon-level significance tests per pass. **No FDR
+correction is applied across the multi-feature family** (only Gate I
+runs BH-FDR within its own venue). At α=0.05, ~40 false positives by
+chance alone. The ALWAYS / CURRENTLY verdicts below are a
+**discovery list**, not a trade list. The right filter is **feature
+corroboration** (cells where ≥2 independent features agree).
+
+### Headline find: KR-ETH DEPLETED — 4 features agree it's ALWAYS_TRADEABLE
+
+| Feature | direction | Best horizon | confidence |
+|---|---|---|---|
+| `mean_dipole`        | momentum | weekly+longterm | 0.18 |
+| `mean_ofi`           | **fade** | daily            | 0.22 |
+| `cross_venue_gap_z`  | momentum | longterm         | varies |
+| `trade_size_entropy` | momentum | longterm         | varies |
+
+**Sign disagreement** between mean_dipole (momentum) and mean_ofi
+(fade) on the same cell is the key flag. mean_dipole = signed_volume /
+total_volume; mean_ofi = signed_volume. They're functionally
+collinear, so a sign flip implies the chunk-mean is being driven by
+volume-normalization edge cases. Investigate before productizing.
+
+### Second corroborated find: KR-ETH WHALE_UP — 3 features ALWAYS_TRADEABLE
+
+| Feature | direction | Daily confidence |
+|---|---|---:|
+| `mean_dipole`     | fade      | 0.35 (Pass-14 baseline; 7th replication) |
+| `mean_ofi`        | fade      | 0.54 |
+| `realized_vol_z`  | **momentum** | **0.76** |
+
+mean_dipole + mean_ofi agree on fade. `realized_vol_z` reads c=0.76
+momentum — opposite direction, very high confidence. **Possible
+explanation**: realized_vol_z is z-scored within-corpus chunk-level
+volatility. On a 6.6d corpus, volatility clusters; a chunk's vol-level
+may proxy for *coming volatility* rather than *coming direction*. The
+high c=0.76 likely captures vol-of-vol carry, not signed return
+direction. Treat with caution; re-run on a longer corpus before
+trading.
+
+### Cells with ≥2-feature ALWAYS_TRADEABLE agreement
+
+| Cell | # features ALWAYS | features |
+|---|---:|---|
+| KR-ETH DEPLETED | 4 | mean_dipole, mean_ofi, cross_venue_gap_z, trade_size_entropy |
+| KR-ETH WHALE_UP | 3 | mean_dipole, mean_ofi, realized_vol_z |
+| KR-ETH WASH_HAWKES | 2 | hawkes_eta, cross_asset_dipole |
+| KR-ETH HERD_UP | 2 | hawkes_eta, microprice_drift |
+| CB-ETH WHALE_UP | 2 | cross_venue_gap_z, cross_asset_dipole |
+| CB-ETH DEPLETED | 2 | cross_asset_dipole, microprice_drift |
+| KR-BTC EQUILIBRIUM_TWO_SIDED | 2 | mean_ofi, realized_vol_z |
+| CB-BTC EQUILIBRIUM_TWO_SIDED | 2 | mean_ofi, hurst_delta |
+
+### Feature productivity (total ALWAYS + CURRENTLY cells across both assets)
+
+| Feature | Group | Total actionable cells |
+|---|---|---:|
+| `vpin_like`          | proven       | 12 |
+| `mean_ofi`           | proven       | 12 |
+| `cross_venue_gap_z`  | novel        | 12 |
+| `trade_size_entropy` | experimental | 11 |
+| `microprice_drift`   | experimental | 11 |
+| `hurst_delta`        | novel        | 11 |
+| `realized_vol_z`     | proven       | 10 |
+| `mean_dipole`        | proven       | 10 |
+| `hawkes_eta`         | proven       | 10 |
+| `cross_asset_dipole` | novel        | 9 |
+
+**Two takeaways**: (a) every active feature surfaced ≥9 actionable
+cells, so none of the 10 are obvious witherers at this corpus length;
+(b) the spread is narrow (9 to 12), consistent with significant
+false-positive contamination across the family.
+
+### Diagnostics (Gate I now r + ρ Bonferroni-adjusted)
+
+| Asset | Gate G | Gate H | Gate I |
+|---|---|---|---|
+| ETH | PASS | FAIL (max-strict 35.2% at any scanned lag) | **PASS** — KR-ETH WHALE_UP n=126 BH q-adjusted via r+ρ Bonferroni |
+| BTC | PASS | FAIL (calibrated@lag=+15) | FAIL — no aggregate cell BH-significant |
+
+ETH Gate I PASS now uses r=−0.233 (Pearson) OR ρ=−0.230 (Spearman) via
+the Bonferroni-adjusted family p-value. BTC still FAILs — KR-BTC
+WHALE_UP daily ρ=−0.33 was promising at the cell level but doesn't
+clear the aggregate Gate I bar because the aggregate uses chunk-pair
+data without the horizon restriction.
+
+### Pass-16 candidates (open questions)
+
+1. **Add BH-FDR across the multi-feature family.** ~800 tests with no
+   correction is the biggest gap. Bonferroni across all (feature ×
+   venue × regime × horizon) would over-correct; BH-FDR at q=0.10
+   across the actionable rows is the cleanest add. Most of the ~20
+   ALWAYS_TRADEABLE rows would shrink to ~5 once corrected.
+
+2. **Investigate sign disagreements between features on the same
+   cell.** KR-ETH DEPLETED (mean_dipole momentum vs mean_ofi fade) and
+   KR-ETH WHALE_UP (dipole/ofi fade vs realized_vol_z momentum) are
+   both real signals that point in opposite directions depending on
+   which feature you ask. The cleaner one wins for paper-trade
+   registration.
+
+3. **Backfill historical funding rate + open interest.** Currently
+   `funding_rate_z` and `oi_delta_z` are in the registry but skip
+   entirely with "infrastructure-pending". Writing
+   `backfill_funding_history.py` (8h cycles from each perp venue's
+   public API) and `backfill_oi_history.py` (1h snapshots) would
+   activate these two features and put the perp-leverage-cycle angle
+   into the same comparison framework.
+
+4. **Wire Spearman into `edge_tracker.py`.** The live tracker still
+   computes Pearson r only. Adding ρ would let the live RegimeStatus
+   surface the non-linear-promoted cells (e.g. KR-BTC WHALE_UP from
+   Pass-14 step 2) in real-time.
+
+5. **Productize KR-ETH DEPLETED if and only if the sign disagreement
+   resolves.** It's the most-corroborated cell (4 features ALWAYS) but
+   the dipole/ofi sign flip means we don't know which direction to
+   trade.
+
+6. **Distance-correlation Gate I**. dCor in the per-horizon classifier
+   gives us non-monotonic detection at the cell level. The aggregate
+   Gate I doesn't use it yet. Adding it might surface cells with
+   non-monotonic structure that monotonic-only Gate I dismisses.
+
+### Reproducer
+
+```bash
+git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json eth_bybit_perp_bins.json
+git checkout origin/data/btc-bins -- btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json
+
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+    --multi-signal-pelt --features-out pass15_eth_features.json \
+    > pass15_eth_stdout.txt 2>&1
+# BTC analogue
+```
+
+Pass-15 commits: `5486cf5` (non-linear stack: dCor + Gate I r+ρ +
+confidence tiers), `1be0c66` (multi-feature scan infrastructure +
+12-feature registry).
+
+
 ## Fourteenth pass — 2026-05-11, horizon-based classifier + non-linear detector (Spearman ρ)
 
 Two-step pass. **Step 1** (morning) ran the horizon-based
