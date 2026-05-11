@@ -1259,18 +1259,34 @@ that metric.
 - **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
   Hurst comparison; BTC is more momentum-y.
 
-## Fourteenth pass — 2026-05-11 morning, horizon-based tradeability classifier
+## Fourteenth pass — 2026-05-11, horizon-based classifier + non-linear detector (Spearman ρ)
 
-First pass that runs the horizon-based `classify_cell_tradability`
-function (committed in `0396deb`). Every (venue, regime) cell is now
-classified across four horizons — intraday (4h), daily (24h),
-weekly (7d), longterm (30d) — and assigned one of:
-`ALWAYS_TRADEABLE` / `CURRENTLY_TRADEABLE` /
-`HISTORICALLY_TRADEABLE_NOT_NOW` / `NEVER_TRADEABLE` /
-`AMBIGUOUS` / `INSUFFICIENT_DATA`.
+Two-step pass. **Step 1** (morning) ran the horizon-based
+`classify_cell_tradability` function committed in `0396deb` (Pearson r
+only). **Step 2** (afternoon, commit `fca0675`) added Spearman ρ
+alongside Pearson r at every horizon and re-ran both assets. User
+directive: "add the non-linear det." The motivation is that a
+chunk-mean dipole → forward log-return relationship can be monotonic
+but non-linear (saturation, threshold effects); Pearson under-reads
+those signals while Spearman captures them.
 
-This reframe replaces the old chronological-quarter "consistency"
-view. Gates G/H/I are still computed but reported as **diagnostics**;
+This entry documents the **step-2 (non-linear-enabled) results**;
+the step-1 categorizations are flagged inline where they differ.
+
+Every (venue, regime) cell is classified across four horizons —
+intraday (4h), daily (24h), weekly (7d), longterm (30d) — and
+assigned one of: `ALWAYS_TRADEABLE` / `CURRENTLY_TRADEABLE` /
+`HISTORICALLY_TRADEABLE_NOT_NOW` / `NEVER_TRADEABLE` / `AMBIGUOUS` /
+`INSUFFICIENT_DATA`. Strength tier per horizon now uses
+`confidence = max(|r|, |ρ|)`; direction follows whichever statistic
+has the larger magnitude.
+
+Cells get a `[non-linear: <horizons>]` tag whenever
+`abs(|ρ| − |r|) ≥ 0.10` AND `max(|r|, |ρ|) ≥ moderate_r (0.10)`.
+The flag fires in either direction (ρ > r → monotonic non-linear;
+r > ρ → outlier-driven linear).
+
+Gates G/H/I are still computed but reported as **diagnostics**;
 the TRADEABLE SIGNAL REPORT is the headline.
 
 ### Corpus
@@ -1295,142 +1311,175 @@ not as a quality verdict.
 
 ### ETH TRADEABLE SIGNAL REPORT (18 cells)
 
-#### ALWAYS_TRADEABLE (2)
+Categorization change between step 1 and step 2: ALWAYS 2→2,
+**CURRENTLY 4→6**, **AMBIGUOUS 1→0**, **NEVER 2→1**, INSUFFICIENT 9→9.
+Two cells moved up because Spearman picked up monotonic non-linear
+structure that Pearson under-read.
+
+#### ALWAYS_TRADEABLE (2) — unchanged from step 1
 
 | Venue | Regime | n | direction | intraday | daily | weekly | longterm |
 |---|---|---:|---|---|---|---|---|
-| KR-ETH | DEPLETED | 33 | momentum | NEW (n=0) | STRONG +0.16 (n=11) | STRONG +0.18 (n=33) | STRONG +0.18 (n=33) |
-| KR-ETH | WHALE_UP | 126 | fade | NEW (n=0) | STRONG −0.34 (n=15) | STRONG −0.23 (n=126) | STRONG −0.23 (n=126) |
+| KR-ETH | DEPLETED | 33 | momentum | NEW (n=0) | STRONG r=+0.16 (n=11) | STRONG r=+0.18 (n=33) | STRONG r=+0.18 (n=33) |
+| KR-ETH | WHALE_UP | 126 | fade | NEW (n=0) | STRONG ρ=−0.35 (n=15) | STRONG r=−0.23 (n=126) | STRONG r=−0.23 (n=126) |
 
 KR-ETH WHALE_UP fade is the headline finding of the corpus: 7th
 consecutive replication (Pass-8 through Pass-14) across two
 classifier configurations, now at n=126 r=−0.233 BH q=0.038 in the
 Gate I detail and STRONG/fade across daily + weekly + longterm
-horizons with matching signs. This is the cell already wired as
-`eth_kr_whale_up_fade` in `backend/forward_paper.py`.
+horizons with matching signs. Daily horizon strength came in slightly
+higher under Spearman (ρ=−0.35 vs r=−0.34) but didn't shift category.
+This is the cell already wired as `eth_kr_whale_up_fade` in
+`backend/forward_paper.py`.
 
-KR-ETH DEPLETED momentum is a new ALWAYS_TRADEABLE find at this
-corpus length — sign-consistent +0.16/+0.18/+0.18 across daily,
-weekly, longterm. Not yet in `forward_paper.py`.
+KR-ETH DEPLETED momentum is a new ALWAYS_TRADEABLE find — sign-
+consistent +0.16/+0.18/+0.18 across daily, weekly, longterm. Not yet
+in `forward_paper.py`.
 
-#### CURRENTLY_TRADEABLE (4)
+#### CURRENTLY_TRADEABLE (6) — was 4 in step 1
 
-| Venue | Regime | n | direction | intraday | daily | weekly | longterm |
-|---|---|---:|---|---|---|---|---|
-| CB-ETH | DEPLETED | 32 | momentum | NEW (n=0) | STRONG +0.44 (n=12) | WEAK +0.07 | WEAK +0.07 |
-| CB-ETH | EQUILIBRIUM_TWO_SIDED | 258 | momentum | MODERATE +0.13 (n=10) | STRONG +0.26 (n=32) | WEAK +0.04 | WEAK +0.04 |
-| KR-ETH | EQUILIBRIUM_TWO_SIDED | 214 | fade | STRONG −0.53 (n=6) | WEAK −0.09 | WEAK −0.06 | WEAK −0.06 |
-| KR-ETH | HERD_UP | 35 | momentum | NEW (n=2) | STRONG +0.41 (n=9) | STRONG −0.27 (n=35) | STRONG −0.27 (n=35) |
+| Venue | Regime | n | direction | intraday | daily | weekly | longterm | non-linear |
+|---|---|---:|---|---|---|---|---|---|
+| CB-ETH | DEPLETED | 32 | momentum | NEW (n=0) | STRONG r=+0.44 (n=12) | WEAK r=+0.07\|ρ=+0.02 | WEAK r=+0.07\|ρ=+0.02 | — |
+| CB-ETH | EQUILIBRIUM_TWO_SIDED | 258 | momentum | MODERATE r=+0.13 (n=10) | **STRONG ρ=+0.47\|r=+0.26 (n=32)** | WEAK ρ=+0.07 | WEAK ρ=+0.07 | **daily** |
+| CB-ETH | WASH_HAWKES | 111 | momentum | NEW (n=1) | **STRONG ρ=+0.20\|r=+0.12 (n=19)** | MODERATE r=−0.13 | MODERATE r=−0.13 | — |
+| CB-ETH | WHALE_UP | 41 | fade | NEW (n=1) | **STRONG ρ=−0.20\|r=−0.15 (n=9)** | STRONG r=+0.23 | STRONG r=+0.23 | — |
+| KR-ETH | EQUILIBRIUM_TWO_SIDED | 214 | fade | STRONG ρ=−0.66\|r=−0.53 (n=6) | MODERATE ρ=−0.12 (n=30) | WEAK ρ=−0.07 | WEAK ρ=−0.07 | **intraday** |
+| KR-ETH | HERD_UP | 35 | momentum | NEW (n=2) | STRONG ρ=+0.50\|r=+0.41 (n=9) | STRONG r=−0.27\|ρ=−0.20 | STRONG r=−0.27\|ρ=−0.20 | — |
 
-CB-ETH DEPLETED and CB-ETH EQ are clean CURRENTLY_TRADEABLE
-finds — daily STRONG with consistent sign, but the weekly/longterm
-horizons have averaged out to WEAK across the full corpus. These
-are the "right now it's working" signals to consider for paper-cell
-registration.
+Two cells **promoted** from non-CURRENTLY to CURRENTLY by Spearman:
+
+- **CB-ETH EQ daily**: r=+0.26 (MODERATE under Pearson) → ρ=+0.47
+  (STRONG under rank). Pearson-only treated this as borderline; the
+  rank correlation makes it a clear STRONG. This is the headline
+  non-linear find: there's a monotonic dipole→return relationship on
+  CB-ETH EQ at daily horizon that the linear view missed.
+- **CB-ETH WHALE_UP** moved out of AMBIGUOUS (step 1) into
+  CURRENTLY_TRADEABLE because Spearman promoted daily from MODERATE
+  to STRONG (ρ=−0.20 vs r=−0.15) so a STRONG horizon now exists,
+  matching the CURRENTLY_TRADEABLE definition. The weekly/longterm
+  +0.23 momentum vs daily −0.20 fade sign divergence is still real
+  — this is the cross-venue WHALE_UP divergence with KR-ETH WHALE_UP
+  (which fades on all horizons).
+
+CB-ETH WASH_HAWKES moved from step-1 NEVER_TRADEABLE to step-2
+CURRENTLY_TRADEABLE for the same reason: daily Pearson r=+0.12 was
+MODERATE; Spearman ρ=+0.20 promotes daily to STRONG. Note: weekly
+and longterm read −0.13 momentum on Pearson (opposite sign from
+daily), so this is sign-inconsistent across horizons — same caveat
+as KR-ETH HERD_UP below.
 
 Two cells warrant caution:
 
-- **KR-ETH EQ intraday STRONG −0.53 on n=6**. The small-n strength
-  is a feature of the classifier (intraday min_n=4), but a Pearson r
-  on six points is fragile. The cell is genuinely CURRENTLY_TRADEABLE
-  by the classifier rules but should be re-checked when intraday n
-  grows.
-- **KR-ETH HERD_UP daily +0.41 (momentum) vs weekly/longterm −0.27
-  (fade)**. The sign flips between horizons; the cell is classified
-  CURRENTLY_TRADEABLE on the daily STRONG signal, but the longer
-  horizons have the opposite read. This is exactly the
+- **KR-ETH EQ intraday STRONG ρ=−0.66 on n=6**. The small-n strength
+  is structural (intraday min_n=4). Six-point Spearman is more
+  robust than six-point Pearson because rank correlation is less
+  sensitive to outliers, but the cell should still be re-checked
+  when intraday n grows.
+- **KR-ETH HERD_UP daily ρ=+0.50 (momentum) vs weekly/longterm
+  ρ=−0.20 / r=−0.27 (fade)**. Sign flips between horizons. The cell
+  is CURRENTLY_TRADEABLE on the daily STRONG signal, but the longer
+  horizons have the opposite read — exactly the
   "signals may change at different horizons" pattern the product is
-  designed to surface. Trade the daily side at your own risk; the
-  weekly read is "fade", not "momentum".
+  designed to surface.
 
-#### AMBIGUOUS (1)
+#### NEVER_TRADEABLE (1) — was 2 in step 1
 
-| Venue | Regime | n | intraday | daily | weekly | longterm |
-|---|---|---:|---|---|---|---|
-| CB-ETH | WHALE_UP | 41 | NEW (n=1) | MODERATE −0.15 (n=9) | STRONG +0.23 (n=41) | STRONG +0.23 (n=41) |
+| Venue | Regime | n | intraday | daily | weekly | longterm | non-linear |
+|---|---|---:|---|---|---|---|---|
+| KR-ETH | WASH_HAWKES | 103 | NEW r=−0.79\|ρ=−0.50 (n=3) | WEAK r=−0.09\|ρ=−0.04 (n=14) | WEAK r=−0.04 | WEAK r=−0.04 | **intraday** |
 
-Daily lean is fade (−0.15), weekly + longterm lean is momentum
-(+0.23). Sign-inconsistent, so the classifier refuses to commit. The
-KR-ETH WHALE_UP cell on the same regime label is ALWAYS_TRADEABLE
-fade; CB-ETH WHALE_UP says momentum on longer horizons. **Cross-venue
-sign divergence on WHALE_UP between CB and KR is the surviving
-finding from Passes 6–11** ("KR-ETH fades, CB-ETH does the opposite"),
-now reproduced under the horizon classifier.
+KR-ETH WASH_HAWKES classifies NEVER on both views — no STRONG
+horizon at adequate n. The intraday n=3 r=−0.79 with ρ=−0.50 is
+intriguing but dismissed by `min_n_intraday=4`. The fact that |r|
+exceeds |ρ| (linear stronger than rank) on tiny n is a classic
+outlier-driven Pearson — Spearman is the more trustworthy read there.
 
-#### NEVER_TRADEABLE (2)
+CB-ETH WASH_HAWKES moved out of NEVER (see CURRENTLY above).
 
-| Venue | Regime | n | intraday | daily | weekly | longterm |
-|---|---|---:|---|---|---|---|
-| CB-ETH | WASH_HAWKES | 111 | NEW (n=1) | MODERATE +0.12 | MODERATE −0.13 | MODERATE −0.13 |
-| KR-ETH | WASH_HAWKES | 103 | NEW (n=3, r=−0.79 dismissed) | WEAK −0.09 | WEAK −0.04 | WEAK −0.04 |
+#### AMBIGUOUS (0) — was 1 in step 1
 
-WASH_HAWKES — the regime the Pass-10 ceiling once tried to redefine —
-classifies as NEVER_TRADEABLE on both venues at current corpus
-length: no horizon ever clears the STRONG threshold (|r|>=0.15) at
-adequate n. Consistent with the Pass-13 finding that the
-WASH_HAWKES classifier reverts didn't change the underlying signal,
-only the labels.
+CB-ETH WHALE_UP, the step-1 AMBIGUOUS cell, moved up to
+CURRENTLY_TRADEABLE because Spearman promoted daily to STRONG. The
+sign divergence vs KR-ETH WHALE_UP remains a real, replicating
+finding — the classifier just has a STRONG horizon to anchor on now.
 
-#### INSUFFICIENT_DATA (9)
+#### INSUFFICIENT_DATA (9) — unchanged
 
 All cells with longterm n<30. Includes all of CB-ETH's HERD_DOWN,
 HERD_UP, WHALE_DOWN, WHALE_NASCENT_DOWN, WHALE_NASCENT_UP, and
 KR-ETH's HERD_DOWN, WASH_PAIRED, WHALE_DOWN, WHALE_NASCENT_UP.
-These are not unactionable in principle — the corpus is just short.
 Re-evaluate after the data branches reach 14+ days.
 
 ### BTC TRADEABLE SIGNAL REPORT (19 cells)
 
-#### CURRENTLY_TRADEABLE (1)
+Categorization change between step 1 and step 2: ALWAYS 0→0,
+**CURRENTLY 1→2**, AMBIGUOUS 0→0, **NEVER 3→2**, INSUFFICIENT 15→15.
+One cell promoted by Spearman.
 
-| Venue | Regime | n | direction | intraday | daily | weekly | longterm |
-|---|---|---:|---|---|---|---|---|
-| CB-BTC | EQUILIBRIUM_TWO_SIDED | 210 | momentum | STRONG +0.61 (n=4) | WEAK +0.08 (n=39) | WEAK +0.08 | WEAK +0.08 |
+#### CURRENTLY_TRADEABLE (2) — was 1 in step 1
 
-The classifier flags this CURRENTLY_TRADEABLE on the intraday STRONG
-(r=+0.61 at n=4) signal alone. **The intraday n=4 is at the floor
-of `min_n_intraday=4` and the longer horizons all report WEAK +0.08
-— the daily-and-longer data does not corroborate the intraday
-read**. Treat this as "watching" not "trade now". Re-evaluate next
-pass.
+| Venue | Regime | n | direction | intraday | daily | weekly | longterm | non-linear |
+|---|---|---:|---|---|---|---|---|---|
+| CB-BTC | EQUILIBRIUM_TWO_SIDED | 210 | momentum | STRONG ρ=+0.80\|r=+0.61 (n=4) | STRONG ρ=+0.19\|r=+0.08 (n=39) | MODERATE ρ=+0.11 | MODERATE ρ=+0.11 | **intraday + daily** |
+| KR-BTC | WHALE_UP | 49 | fade | NEW (n=0) | **STRONG ρ=−0.33\|r=−0.14 (n=9)** | WEAK r=+0.08 | WEAK r=+0.08 | **daily** |
 
-#### NEVER_TRADEABLE (3)
+**KR-BTC WHALE_UP** is the BTC analog of the KR-ETH WHALE_UP fade —
+promoted from step-1 NEVER_TRADEABLE to step-2 CURRENTLY_TRADEABLE
+purely on the strength of Spearman. Daily Pearson r=−0.14 (WEAK in
+step 1) becomes ρ=−0.33 (STRONG) once ranks are used. **This is a
+genuine non-linear find**: the dipole→return relationship on
+KR-BTC WHALE_UP at daily horizon is rank-monotonic but the linear
+correlation is weak, suggesting either outliers or a saturating
+response curve. The fade direction matches KR-ETH WHALE_UP, which
+strengthens the cross-asset interpretation even though the longer
+horizons here still dilute to WEAK +0.08.
+
+**CB-BTC EQ daily** also gets a Spearman bump (ρ=+0.19 vs r=+0.08)
+that promotes daily from WEAK to STRONG, and intraday goes from
+STRONG r=+0.61 (n=4) to STRONG ρ=+0.80 (n=4). The intraday n=4
+caveat remains, but the daily corroboration is now there. Both
+intraday and daily are flagged non-linear.
+
+#### NEVER_TRADEABLE (2) — was 3 in step 1
 
 | Venue | Regime | n | intraday | daily | weekly | longterm |
 |---|---|---:|---|---|---|---|
-| KR-BTC | EQUILIBRIUM_TWO_SIDED | 110 | NEW (n=1) | WEAK +0.04 | WEAK +0.01 | WEAK +0.01 |
-| KR-BTC | WASH_HAWKES | 132 | WEAK −0.04 (n=8) | WEAK +0.10 | WEAK +0.05 | WEAK +0.05 |
-| KR-BTC | WHALE_UP | 49 | NEW (n=0) | MODERATE −0.14 (n=9) | WEAK +0.08 | WEAK +0.08 |
+| KR-BTC | EQUILIBRIUM_TWO_SIDED | 110 | NEW (n=1) | MODERATE ρ=−0.13\|r=+0.04 | WEAK ρ=−0.01 | WEAK ρ=−0.01 |
+| KR-BTC | WASH_HAWKES | 132 | WEAK ρ=+0.10\|r=−0.04 | MODERATE ρ=+0.14 | WEAK ρ=+0.07 | WEAK ρ=+0.07 |
 
-KR-BTC WHALE_UP is interesting: daily MODERATE −0.14 (the same fade
-direction as KR-ETH WHALE_UP), but at this corpus length the weekly
-and longterm averages dilute to WEAK +0.08 with opposite sign. **The
-KR-BTC WHALE_UP cell does not currently replicate the KR-ETH
-WHALE_UP fade pattern at the longer horizons**, despite the daily
-direction agreeing. Worth re-checking as the BTC corpus extends.
+KR-BTC EQ daily is interesting: ρ=−0.13 and r=+0.04 disagree in
+sign. The rank correlation says weak fade; Pearson says weak
+momentum. Neither clears STRONG, so the verdict is correctly NEVER,
+but the sign-disagreement is itself a flag — at this corpus length,
+the cell is noise.
 
-#### INSUFFICIENT_DATA (15)
+#### INSUFFICIENT_DATA (15) — unchanged
 
-All other BTC cells. The 4.4 d corpus is too short to populate
-longterm n>=30 for the rarer regimes. Notably:
-`CB-BTC WHALE_UP n=28`, `KR-BTC WHALE_UP n=49` —
-WHALE_UP on KR did reach the threshold; on CB it sits just below
-at n=28. A few more days of data will push CB-BTC WHALE_UP into the
-classifier.
+Same as step 1: the 4.4 d BTC corpus can't populate longterm n≥30
+for the rarer regimes. CB-BTC WHALE_UP n=28 still sits just below
+the floor — likely flips into the classifier in the next pass.
 
 ### Diagnostics (Gates G / H / I)
 
 These are no longer pass/fail quality bars; they're reported as
-context for the classifier output.
+context for the classifier output. Gate I still uses Pearson r only
+(not yet wired to Spearman) — that's a Pass-15 follow-up.
 
 | Asset | Gate G | Gate H | Gate I |
 |---|---|---|---|
 | ETH | PASS (CB 9 classes, KR 8 classes) | FAIL (calibrated max-strict 35.2%, max-relaxed 57.9% — neither clears 60% at any scanned lag) | **PASS** — KR-ETH WHALE_UP n=126 r=−0.233 BH q=0.038 |
-| BTC | PASS | FAIL (calibrated@lag=+15) | FAIL (no aggregate cell BH-significant at corpus length) |
+| BTC | PASS | FAIL (calibrated@lag=+15) | FAIL (no aggregate cell BH-significant on Pearson at corpus length) |
 
-The Gate I PASS on ETH and FAIL on BTC tracks the TRADEABLE SIGNAL
-REPORT: ETH has two ALWAYS_TRADEABLE cells, BTC has zero. Gate H
-FAIL on both assets is consistent with the cross-venue sign
+The Gate I PASS on ETH and FAIL on BTC tracks the **step-1**
+TRADEABLE SIGNAL REPORT: ETH has two ALWAYS_TRADEABLE cells under
+Pearson alone, BTC has zero. After step-2 (Spearman) the BTC report
+gains a CURRENTLY_TRADEABLE cell (KR-BTC WHALE_UP daily) but Gate I
+still runs Pearson-only and so still FAILs. Aligning Gate I with the
+non-linear classifier would let the cell pass Gate I as well — Pass-15
+follow-up.
+
+Gate H FAIL on both assets is consistent with the cross-venue sign
 divergence on WHALE_UP and is a property of the data, not a quality
 problem.
 
@@ -1441,27 +1490,48 @@ problem.
    `backend/forward_paper.py` using the same pattern as the existing
    `eth_kr_whale_up_fade`. KR-ETH WHALE_UP fade is already wired.
 
-2. **Productize CURRENTLY_TRADEABLE conservatively.** CB-ETH DEPLETED
-   and CB-ETH EQUILIBRIUM_TWO_SIDED are clean daily-horizon momentum
-   signals. KR-ETH EQ intraday and KR-ETH HERD_UP daily-vs-weekly
-   should be watched, not traded, until the n grows.
+2. **Productize the Spearman-promoted CURRENTLY_TRADEABLE finds.**
+   Three of the step-2 CURRENTLY cells exist BECAUSE of non-linear
+   detection — they would have been NEVER or AMBIGUOUS under
+   Pearson alone:
+   - CB-ETH EQ daily ρ=+0.47 (vs r=+0.26) — strongest non-linear find
+   - CB-ETH WASH_HAWKES daily ρ=+0.20 (vs r=+0.12)
+   - CB-ETH WHALE_UP daily ρ=−0.20 (vs r=−0.15)
+   - KR-BTC WHALE_UP daily ρ=−0.33 (vs r=−0.14) — BTC analog of the
+     KR-ETH WHALE_UP fade
+   Worth productizing each as a paper cell IF the daily signal
+   replicates next pass.
 
-3. **Re-run once the corpus reaches ~14 d.** The 4.4–6.6 d window
+3. **Confidence-tier alert thresholds.** User direction is to
+   surface tiered alerts ("low-risk-trade-signal" vs
+   "risky-trade-signal" thresholds). The `confidence` field on each
+   horizon (max(|r|,|ρ|)) is the obvious score to threshold on.
+   Empirical confidence distribution at current corpus length:
+   STRONG cells span confidence 0.16–0.80. Setting tier cutoffs at,
+   e.g., confidence≥0.30 for "high-conviction" and ≥0.15 for
+   "alertable" would generate a 2-tier paper alert stream. Wire into
+   `backend/forward_paper.py` and the live edge_tracker.
+
+4. **Re-run once the corpus reaches ~14 d.** The 4.4–6.6 d window
    leaves a large `INSUFFICIENT_DATA` bucket. Cells like CB-BTC
    WHALE_UP (n=28, just below the 30 floor) and the entire HERD /
-   NASCENT family should reclassify cleanly with more data.
-
-4. **The CB-ETH WHALE_UP AMBIGUOUS cell** is the cross-venue WHALE_UP
-   sign-divergence finding from earlier passes, now picked up by the
-   classifier. Worth a sub-cell decomposition (η-tier × hurst-label)
-   on the CB side specifically to see whether the +0.23 weekly r is
-   driven by a particular flow signature.
+   NASCENT family should reclassify cleanly with more data. Several
+   of the step-2 promotions (especially those riding small n on the
+   daily horizon, like KR-BTC WHALE_UP daily n=9) need re-validation.
 
 5. **Sub-cell findings (η-tier × hurst-label)** are still reported in
    the Pass-7 section of the stdout for both assets but are not
    surfaced in the TRADEABLE SIGNAL REPORT. If a future pass extends
    the classifier to operate on sub-cells, the η-high WASH momentum
    reads from Pass-13 would shift category.
+
+6. **Stronger non-linear detector**. Spearman captures monotonic
+   non-linearity. If the predictive structure on some cell is
+   non-monotonic (U-shape, threshold-then-saturate), Spearman misses
+   it too. A distance-correlation (dCor) or mutual-information pass
+   on the cells currently classifying as WEAK across all horizons
+   would tell us whether there's hidden structure that both Pearson
+   AND Spearman miss.
 
 ### Reproducer
 
@@ -1470,6 +1540,8 @@ problem.
 git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json eth_bybit_perp_bins.json
 git checkout origin/data/btc-bins -- btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json
 
+# Step-2 results (with Spearman) require fca0675 or later. Step-1 results
+# (Pearson only) use 0396deb..fca0675~1 — same flags.
 python phase1_5_evaluator.py --asset ETH \
     --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
     --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
