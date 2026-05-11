@@ -1220,6 +1220,73 @@ def run_multi_feature_scan(label: str,
     return out
 
 
+def _combined_horizon_p(horizon: dict) -> float | None:
+    """Bonferroni-combine the {Pearson, Spearman, dCor permutation}
+    p-values within a single horizon. min(p_*) × number-of-finite-stats,
+    clipped to 1.0. Returns None when no stat has a finite p (e.g.
+    NEW horizon)."""
+    ps = []
+    for key in ("p", "p_rho", "p_dcor"):
+        v = horizon.get(key)
+        if v is None:
+            continue
+        try:
+            fv = float(v)
+        except (TypeError, ValueError):
+            continue
+        if not (0.0 <= fv <= 1.0):
+            continue
+        ps.append(fv)
+    if not ps:
+        return None
+    return min(1.0, min(ps) * len(ps))
+
+
+def apply_multi_feature_fdr(scan_results_by_venue: dict,
+                              fdr_q: float = 0.10) -> dict:
+    """Apply Benjamini-Hochberg FDR across the full multi-feature
+    family: every (feature, venue, regime, horizon) tuple that has a
+    finite combined p-value. Mutates the horizon dicts in place to add
+    `q` (BH-adjusted q-value) and `bh_significant` (boolean at fdr_q).
+
+    The combined p per horizon is Bonferroni-adjusted across the 2-3
+    statistics tested on the same data (Pearson, Spearman, dCor),
+    making the per-horizon p conservative; BH-FDR is then applied
+    across the family.
+
+    Returns a summary dict: counts of total tests, BH-significant
+    rejections, family q-level."""
+    flat: list[tuple[float, dict]] = []
+    for venue_label, scan in scan_results_by_venue.items():
+        for feat_result in scan:
+            for regime, cell in feat_result.get("per_regime", {}).items():
+                horizons = cell.get("horizons", {})
+                if not isinstance(horizons, dict):
+                    continue
+                for hname in ("intraday", "daily", "weekly", "longterm"):
+                    h = horizons.get(hname)
+                    if not isinstance(h, dict):
+                        continue
+                    pc = _combined_horizon_p(h)
+                    if pc is None:
+                        h["p_combined"] = None
+                        h["q"] = None
+                        h["bh_significant"] = False
+                        continue
+                    h["p_combined"] = round(pc, 4)
+                    flat.append((pc, h))
+    if not flat:
+        return {"n_tests": 0, "n_significant": 0, "fdr_q": fdr_q}
+    ps = [p for p, _ in flat]
+    qvals, rejects = _bh_fdr(ps, q=fdr_q)
+    for (_, h), qv, rej in zip(flat, qvals, rejects):
+        h["q"] = round(float(qv), 4)
+        h["bh_significant"] = bool(rej)
+    return {"n_tests": len(flat),
+              "n_significant": int(sum(rejects)),
+              "fdr_q": fdr_q}
+
+
 def evaluate_gate_I(label: str, chunks: list[MarketChunk],
                      results: list[ClassificationResult],
                      k: int = 1,
@@ -2023,14 +2090,16 @@ def main():
                   f"{dir_word:<9}  " + "  ".join(h_strs) + tag_suffix)
     print()
 
-    # MULTI-FEATURE TRADEABLE SIGNAL REPORT (Pass-15). The same
+    # MULTI-FEATURE TRADEABLE SIGNAL REPORT (Pass-16). The same
     # horizon-based classifier (Pearson + Spearman + dCor) is run for
-    # each candidate feature in FEATURE_EXTRACTORS, and the per-(feature,
-    # venue, regime) tradeability verdicts are collected. The point is
-    # to find tradeable cells across MANY feature axes, not just dipole.
-    # Goal: surface "any signal that's present" — including non-dipole
-    # ones — through one unified detection pipeline.
-    print(f"--- MULTI-FEATURE TRADEABLE SIGNAL REPORT (Pass-15) ---")
+    # each candidate feature in FEATURE_EXTRACTORS, then BH-FDR is
+    # applied across every (feature, venue, regime, horizon) test
+    # in one family at q=0.10. Cells surviving BH-FDR are "BH-significant"
+    # — the tier-1 / high-conviction discovery list. Cells that classify
+    # as ALWAYS/CURRENTLY_TRADEABLE by strength tier but DON'T survive
+    # BH-FDR are "exploratory" tier — interesting but consistent with
+    # multiple-comparisons noise at q=0.10.
+    print(f"--- MULTI-FEATURE TRADEABLE SIGNAL REPORT (Pass-16, FDR-corrected) ---")
     venue_ctxs = [
         (f"CB-{args.asset}", MultiFeatureContext(
             chunks=cb_chunks, feats=cb_feats,
@@ -2045,10 +2114,22 @@ def main():
             perp_chunks=perp_chunks, perp_feats=perp_feats),
          kr_results),
     ]
-    actionable_rows: list[tuple[str, str, str, str, str, dict]] = []
-    pending_status: list[tuple[str, str]] = []
+    scan_by_venue: dict[str, list[dict]] = {}
     for venue_label, ctx, results in venue_ctxs:
-        scan = run_multi_feature_scan(venue_label, ctx, results, k=1)
+        scan_by_venue[venue_label] = run_multi_feature_scan(
+            venue_label, ctx, results, k=1)
+    fdr_summary = apply_multi_feature_fdr(scan_by_venue, fdr_q=0.10)
+    print(f"  Family size: {fdr_summary['n_tests']} (feature, venue, regime, "
+          f"horizon) tests at fdr_q={fdr_summary['fdr_q']}; "
+          f"{fdr_summary['n_significant']} survive BH-FDR.\n")
+
+    # Collect actionable rows, tagging by tier.
+    # Tier 1 = strength tier surfaces it AND at least one BH-significant horizon
+    # Tier 2 = strength tier surfaces it but NO horizon is BH-significant
+    # Tier 3 = no surface verdict but a non-linear or non-monotonic flag fires
+    tier_rows: dict[int, list] = {1: [], 2: [], 3: []}
+    pending_status: list[tuple[str, str]] = []
+    for venue_label, scan in scan_by_venue.items():
         for feat_result in scan:
             fname = feat_result["feature"]
             group = feat_result["group"]
@@ -2057,22 +2138,28 @@ def main():
                     pending_status.append((fname, feat_result["status"]))
                 continue
             if feat_result.get("status"):
-                # Missing data or zero-variance — note once.
                 if (fname, feat_result["status"]) not in pending_status:
                     pending_status.append((fname, feat_result["status"]))
                 continue
             for regime, cell in feat_result.get("per_regime", {}).items():
                 verdict = cell.get("verdict", "INSUFFICIENT_DATA")
-                # Surface ALWAYS_TRADEABLE / CURRENTLY_TRADEABLE / any
-                # cell with a non-linear or non-monotonic flag.
-                nl_flag = any(h.get("non_linear") for h in cell.get("horizons", {}).values())
-                nm_flag = any(h.get("non_monotonic") for h in cell.get("horizons", {}).values())
-                if verdict in ("ALWAYS_TRADEABLE", "CURRENTLY_TRADEABLE",
-                                  "HISTORICALLY_TRADEABLE_NOT_NOW") or nl_flag or nm_flag:
-                    actionable_rows.append(
-                        (group, fname, venue_label, regime, verdict, cell))
-    # Sort: group order proven→novel→experimental→pending, then by
-    # verdict priority, then by best horizon confidence.
+                horizons = cell.get("horizons", {})
+                any_bh = any(isinstance(h, dict) and h.get("bh_significant")
+                              for h in horizons.values())
+                nl_flag = any(isinstance(h, dict) and h.get("non_linear")
+                               for h in horizons.values())
+                nm_flag = any(isinstance(h, dict) and h.get("non_monotonic")
+                               for h in horizons.values())
+                actionable_verdict = verdict in (
+                    "ALWAYS_TRADEABLE", "CURRENTLY_TRADEABLE",
+                    "HISTORICALLY_TRADEABLE_NOT_NOW")
+                if actionable_verdict and any_bh:
+                    tier_rows[1].append((group, fname, venue_label, regime, verdict, cell))
+                elif actionable_verdict:
+                    tier_rows[2].append((group, fname, venue_label, regime, verdict, cell))
+                elif nl_flag or nm_flag:
+                    tier_rows[3].append((group, fname, venue_label, regime, verdict, cell))
+
     group_order = {"proven": 0, "novel": 1, "cross_platform": 2,
                        "experimental": 3, "pending": 4}
     verdict_order = {"ALWAYS_TRADEABLE": 0, "CURRENTLY_TRADEABLE": 1,
@@ -2085,41 +2172,67 @@ def main():
                    for h in cell.get("horizons", {}).values()
                    if isinstance(h, dict))
 
-    actionable_rows.sort(key=lambda row: (group_order.get(row[0], 99),
-                                              verdict_order.get(row[4], 99),
-                                              -_best_conf(row[5])))
-    if not actionable_rows:
-        print("  (no actionable cells across any feature)")
-    else:
+    def _min_q(cell):
+        qs = [h.get("q") for h in cell.get("horizons", {}).values()
+              if isinstance(h, dict) and h.get("q") is not None]
+        return min(qs) if qs else 1.0
+
+    def _print_row(group, fname, venue, regime, verdict, cell):
+        horizons = cell.get("horizons", {})
+        dir_word = cell.get("direction", "") or "-"
+        h_strs = []
+        flags = []
+        for hname in ("intraday", "daily", "weekly", "longterm"):
+            h = horizons.get(hname, {})
+            strength = h.get("strength", "NEW")
+            conf = h.get("confidence")
+            sig_mark = "*" if h.get("bh_significant") else ""
+            if conf is None:
+                h_strs.append(f"{hname}={strength}")
+            else:
+                qv = h.get("q")
+                q_str = f",q={qv:.3f}" if qv is not None else ""
+                h_strs.append(f"{hname}={strength}{sig_mark}/c={conf:.2f}{q_str}")
+            if h.get("non_linear"):
+                flags.append(f"NL:{hname}")
+            if h.get("non_monotonic"):
+                flags.append(f"NM:{hname}")
+        flag_suffix = f"  [{','.join(flags)}]" if flags else ""
+        print(f"    {venue:<8} {regime:<22} {verdict:<32} "
+              f"{dir_word:<9}  " + "  ".join(h_strs) + flag_suffix)
+
+    tier_titles = {
+        1: "TIER 1 — BH-SIGNIFICANT (survives FDR at q=0.10)",
+        2: "TIER 2 — STRENGTH-TIER ACTIONABLE BUT NOT BH-SIGNIFICANT (exploratory)",
+        3: "TIER 3 — NON-LINEAR / NON-MONOTONIC FLAGS (no surface verdict)",
+    }
+    for tier in (1, 2, 3):
+        rows = tier_rows[tier]
+        print(f"\n  ## {tier_titles[tier]}  ({len(rows)} cell(s))")
+        if not rows:
+            print("    (none)")
+            continue
+        # Tier 1 sorted by lowest q (most BH-significant first); tiers
+        # 2 + 3 by group → verdict → confidence as before.
+        if tier == 1:
+            rows.sort(key=lambda row: (_min_q(row[5]),
+                                          group_order.get(row[0], 99),
+                                          -_best_conf(row[5])))
+        else:
+            rows.sort(key=lambda row: (group_order.get(row[0], 99),
+                                          verdict_order.get(row[4], 99),
+                                          -_best_conf(row[5])))
         prev_group = None
         prev_feature = None
-        for group, fname, venue, regime, verdict, cell in actionable_rows:
-            if group != prev_group:
-                print(f"\n  === {group.upper()} ===")
+        for group, fname, venue, regime, verdict, cell in rows:
+            if tier > 1 and group != prev_group:
+                print(f"\n    === {group.upper()} ===")
                 prev_group = group
                 prev_feature = None
             if fname != prev_feature:
-                print(f"\n  [{fname}]")
+                print(f"    [{fname}]")
                 prev_feature = fname
-            horizons = cell.get("horizons", {})
-            dir_word = cell.get("direction", "") or "-"
-            h_strs = []
-            flags = []
-            for hname in ("intraday", "daily", "weekly", "longterm"):
-                h = horizons.get(hname, {})
-                strength = h.get("strength", "NEW")
-                conf = h.get("confidence")
-                if conf is None:
-                    h_strs.append(f"{hname}={strength}")
-                else:
-                    h_strs.append(f"{hname}={strength}/c={conf:.2f}")
-                if h.get("non_linear"):
-                    flags.append(f"NL:{hname}")
-                if h.get("non_monotonic"):
-                    flags.append(f"NM:{hname}")
-            flag_suffix = f"  [{','.join(flags)}]" if flags else ""
-            print(f"    {venue:<8} {regime:<22} {verdict:<32} "
-                  f"{dir_word:<9}  " + "  ".join(h_strs) + flag_suffix)
+            _print_row(group, fname, venue, regime, verdict, cell)
     if pending_status:
         print(f"\n  === SKIPPED ===")
         for fname, status in pending_status:
