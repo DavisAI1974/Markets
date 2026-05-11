@@ -822,6 +822,8 @@ class MultiFeatureContext:
     sibling_feats: list | None = None
     other_venue_chunks: list | None = None  # OTHER venue, same asset
     other_venue_feats: list | None = None
+    perp_chunks: list | None = None      # Bybit perp, same asset
+    perp_feats: list | None = None
 
 
 def _ts_aligned_lookup(this_chunks: list,
@@ -983,6 +985,174 @@ def _feat_microprice_drift(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
     return np.array(out), status
 
 
+def _feat_book_depth_imbalance(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    """L1 depth imbalance: (bid_qty − ask_qty) / (bid_qty + ask_qty),
+    in [−1, +1], averaged per chunk. Stoikov microstructure: when one
+    side is heavier, price tends to move AWAY from it (toward the
+    thinner side). Cleanest direct expression of that observation."""
+    has_l1 = False
+    out = []
+    for c in ctx.chunks:
+        if not c.bars:
+            out.append(0.0); continue
+        samples = []
+        for b in c.bars:
+            if b.bid_qty > 0 and b.ask_qty > 0:
+                has_l1 = True
+                samples.append((b.bid_qty - b.ask_qty) / (b.bid_qty + b.ask_qty))
+        out.append(float(np.mean(samples)) if samples else 0.0)
+    status = "" if has_l1 else "L1 sizes not captured in any bar (pre-2026-05 bins)"
+    return np.array(out), status
+
+
+def _feat_cross_venue_book_imbalance_delta(ctx: MultiFeatureContext
+                                              ) -> tuple[np.ndarray, str]:
+    """(this venue book imbalance) − (other venue book imbalance), per
+    chunk. Cross-platform: when this venue's order book leans buy but
+    the other venue's leans sell, only one side is informed. The
+    direction of the delta tells us which venue is leading."""
+    if ctx.other_venue_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no other-venue chunks loaded"
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+
+    def _bi(chunk) -> float | None:
+        s = []
+        for b in chunk.bars:
+            if b.bid_qty > 0 and b.ask_qty > 0:
+                s.append((b.bid_qty - b.ask_qty) / (b.bid_qty + b.ask_qty))
+        return float(np.mean(s)) if s else None
+
+    out = []
+    seen_l1 = False
+    for c, oi in zip(ctx.chunks, other_idx):
+        if oi < 0:
+            out.append(0.0); continue
+        self_bi = _bi(c); other_bi = _bi(ctx.other_venue_chunks[oi])
+        if self_bi is None or other_bi is None:
+            out.append(0.0); continue
+        seen_l1 = True
+        out.append(self_bi - other_bi)
+    status = "" if seen_l1 else "L1 sizes not captured on either venue"
+    return np.array(out), status
+
+
+def _feat_cross_venue_aggressor_agreement(ctx: MultiFeatureContext
+                                            ) -> tuple[np.ndarray, str]:
+    """Per chunk: fraction of bars where this venue's last_aggressor
+    matches the other venue's last_aggressor (within the
+    timestamp-aligned chunk). Cross-platform consensus on which side
+    is crossing the spread. High agreement = real flow on both venues;
+    low agreement = one-venue informed flow or pure noise."""
+    if ctx.other_venue_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no other-venue chunks loaded"
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+    out = []
+    seen_any = False
+    for c, oi in zip(ctx.chunks, other_idx):
+        if oi < 0 or not c.bars:
+            out.append(0.0); continue
+        oc = ctx.other_venue_chunks[oi]
+        # Tally per-bar aggressor on this venue, and per-bar aggressor
+        # on the other venue (each chunk has roughly aligned bar count
+        # but timestamps may differ — use the chunk-mode last_aggressor
+        # as a proxy).
+        self_aggr = [b.last_aggressor for b in c.bars if b.last_aggressor]
+        other_aggr = [b.last_aggressor for b in oc.bars if b.last_aggressor]
+        if not self_aggr or not other_aggr:
+            out.append(0.0); continue
+        seen_any = True
+        # Most-common aggressor on each side; +1 if they match, −1 if not.
+        # Encoded as a signed value so the classifier can correlate
+        # against direction.
+        self_mode = max(set(self_aggr), key=self_aggr.count)
+        other_mode = max(set(other_aggr), key=other_aggr.count)
+        if self_mode == other_mode:
+            # Match: +1 if both "buy" (bullish), −1 if both "sell".
+            out.append(1.0 if self_mode == "buy" else -1.0)
+        else:
+            out.append(0.0)
+    status = "" if seen_any else "no last_aggressor info on bars"
+    return np.array(out), status
+
+
+def _feat_perp_spot_basis_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
+    """(perp mid − this venue spot mid), z-scored across the corpus.
+    Cross-platform: basis is the carry implied by funding. Persistent
+    positive basis → perp longs paying carry → leveraged longs
+    crowded. Sign predicts the direction of basis-normalization."""
+    if ctx.perp_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no Bybit perp chunks loaded (--bybit-perp-bins not supplied)"
+    perp_idx = _ts_aligned_lookup(ctx.chunks, ctx.perp_chunks)
+    out = []
+    seen_any = False
+    for c, pi in zip(ctx.chunks, perp_idx):
+        if pi < 0 or not c.bars:
+            out.append(0.0); continue
+        pc = ctx.perp_chunks[pi]
+        self_mid = float(np.mean([b.mid for b in c.bars if b.mid > 0]) or 0.0)
+        perp_mid = float(np.mean([b.mid for b in pc.bars if b.mid > 0]) or 0.0)
+        if self_mid > 0 and perp_mid > 0:
+            seen_any = True
+            out.append(perp_mid - self_mid)
+        else:
+            out.append(0.0)
+    arr = np.array(out)
+    mu, sd = float(np.mean(arr)), float(np.std(arr))
+    status = "" if seen_any else "perp/spot mid overlap empty"
+    return (arr - mu) / (sd + 1e-9), status
+
+
+def _feat_perp_spot_dipole_divergence(ctx: MultiFeatureContext
+                                          ) -> tuple[np.ndarray, str]:
+    """(perp chunk-mean dipole − spot chunk-mean dipole). Cross-platform:
+    perp dipole reflects leveraged flow; spot dipole reflects cash flow.
+    When perp leans hard one way and spot doesn't follow, leverage is
+    being deployed without spot conviction — typically gets unwound."""
+    if ctx.perp_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no Bybit perp chunks loaded"
+    perp_idx = _ts_aligned_lookup(ctx.chunks, ctx.perp_chunks)
+    out = []
+    for c, pi in zip(ctx.chunks, perp_idx):
+        if pi < 0 or not c.bars:
+            out.append(0.0); continue
+        pc = ctx.perp_chunks[pi]
+        self_dip = float(np.mean([b.dipole for b in c.bars]) or 0.0)
+        perp_dip = float(np.mean([b.dipole for b in pc.bars]) or 0.0)
+        out.append(perp_dip - self_dip)
+    return np.array(out), ""
+
+
+def _feat_triangulated_consensus(ctx: MultiFeatureContext
+                                    ) -> tuple[np.ndarray, str]:
+    """Sign-aligned three-platform consensus: (CB dipole sign + KR
+    dipole sign + Bybit perp dipole sign) / 3 ∈ {−1, −⅓, +⅓, +1}.
+    +1 = all three agree bullish, −1 = all three bearish.
+    Captures the moments when no venue disagrees — the strongest
+    cross-platform conviction signal we can measure."""
+    if ctx.other_venue_chunks is None or ctx.perp_chunks is None:
+        return np.zeros(len(ctx.chunks)), ("triangulation requires both "
+            "other-venue and perp chunks (--bybit-perp-bins not supplied)")
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+    perp_idx = _ts_aligned_lookup(ctx.chunks, ctx.perp_chunks)
+    out = []
+    seen = False
+    for c, oi, pi in zip(ctx.chunks, other_idx, perp_idx):
+        if oi < 0 or pi < 0 or not c.bars:
+            out.append(0.0); continue
+        seen = True
+        self_dip = float(np.mean([b.dipole for b in c.bars]) or 0.0)
+        other_dip = float(np.mean([b.dipole for b in ctx.other_venue_chunks[oi].bars]) or 0.0)
+        perp_dip = float(np.mean([b.dipole for b in ctx.perp_chunks[pi].bars]) or 0.0)
+        sign_sum = (
+            (1 if self_dip > 0 else (-1 if self_dip < 0 else 0)) +
+            (1 if other_dip > 0 else (-1 if other_dip < 0 else 0)) +
+            (1 if perp_dip > 0 else (-1 if perp_dip < 0 else 0))
+        )
+        out.append(sign_sum / 3.0)
+    status = "" if seen else "no three-platform timestamp overlap"
+    return np.array(out), status
+
+
 def _feat_funding_rate_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
     return np.zeros(len(ctx.chunks)), "infrastructure-pending: no historical funding backfill"
 
@@ -991,21 +1161,34 @@ def _feat_oi_delta_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
     return np.zeros(len(ctx.chunks)), "infrastructure-pending: no historical OI backfill"
 
 
-# Registry: ordered for deterministic report output.
+# Registry: ordered for deterministic report output. Cross-platform
+# features (cross_*, perp_*, triangulated_*) are the differentiation
+# pitch — no competing retail-signal product is publishing this stack.
 FEATURE_EXTRACTORS: list[tuple[str, str, callable]] = [
     # (feature_id, group, extractor)
-    ("mean_dipole",          "proven",       _feat_mean_dipole),
-    ("mean_ofi",             "proven",       _feat_mean_ofi),
-    ("vpin_like",            "proven",       _feat_vpin_like),
-    ("hawkes_eta",           "proven",       _feat_hawkes_eta),
-    ("realized_vol_z",       "proven",       _feat_realized_vol_z),
-    ("cross_asset_dipole",   "novel",        _feat_cross_asset_dipole),
-    ("cross_venue_gap_z",    "novel",        _feat_cross_venue_gap_z),
-    ("hurst_delta",          "novel",        _feat_hurst_delta),
-    ("trade_size_entropy",   "experimental", _feat_trade_size_entropy),
-    ("microprice_drift",     "experimental", _feat_microprice_drift),
-    ("funding_rate_z",       "pending",      _feat_funding_rate_z),
-    ("oi_delta_z",           "pending",      _feat_oi_delta_z),
+    # Proven microstructure — single-venue, single-asset
+    ("mean_dipole",                       "proven",       _feat_mean_dipole),
+    ("mean_ofi",                          "proven",       _feat_mean_ofi),
+    ("vpin_like",                         "proven",       _feat_vpin_like),
+    ("hawkes_eta",                        "proven",       _feat_hawkes_eta),
+    ("realized_vol_z",                    "proven",       _feat_realized_vol_z),
+    ("book_depth_imbalance",              "proven",       _feat_book_depth_imbalance),
+    # Novel — cross-asset / cross-venue
+    ("cross_asset_dipole",                "novel",        _feat_cross_asset_dipole),
+    ("cross_venue_gap_z",                 "novel",        _feat_cross_venue_gap_z),
+    ("cross_venue_book_imbalance_delta",  "novel",        _feat_cross_venue_book_imbalance_delta),
+    ("cross_venue_aggressor_agreement",   "novel",        _feat_cross_venue_aggressor_agreement),
+    ("hurst_delta",                       "novel",        _feat_hurst_delta),
+    # Cross-platform — spot ↔ perp
+    ("perp_spot_basis_z",                 "cross_platform", _feat_perp_spot_basis_z),
+    ("perp_spot_dipole_divergence",       "cross_platform", _feat_perp_spot_dipole_divergence),
+    ("triangulated_consensus",            "cross_platform", _feat_triangulated_consensus),
+    # Experimental — theoretical, low evidence
+    ("trade_size_entropy",                "experimental", _feat_trade_size_entropy),
+    ("microprice_drift",                  "experimental", _feat_microprice_drift),
+    # Infrastructure-pending — wired but skip until backfill exists
+    ("funding_rate_z",                    "pending",      _feat_funding_rate_z),
+    ("oi_delta_z",                        "pending",      _feat_oi_delta_z),
 ]
 
 
@@ -1317,6 +1500,11 @@ def main():
                    help="Sibling-asset CB bins (e.g. btc_coinbase_bins.json when --asset ETH). Enables F7 cross-asset directional confirmation multiplier on each chunk.")
     p.add_argument("--sibling-kr-bins", type=str, default=None,
                    help="Sibling-asset KR bins (e.g. btc_kraken_bins.json when --asset ETH).")
+    p.add_argument("--bybit-perp-bins", type=str, default=None,
+                   help="Same-asset Bybit perp bins. When supplied, the "
+                        "multi-feature scan computes perp-spot basis, "
+                        "perp-spot dipole divergence, and triangulated "
+                        "(CB+KR+perp) flow consensus.")
     p.add_argument("--events-calendar", type=str, default="events_calendar.json",
                    help="Path to scheduled-event calendar JSON. Enables F8 event/weekend confidence dampener. Empty/missing file leaves events disabled but weekend dampener still applies.")
     p.add_argument("--hawkes-calibration", type=str,
@@ -1377,7 +1565,25 @@ def main():
     )
 
     print(f"CB-{args.asset}: {len(cb_chunks)} chunks, baselines rv={cb_base.rv:.5f}")
-    print(f"KR-{args.asset}: {len(kr_chunks)} chunks, baselines rv={kr_base.rv:.5f}\n")
+    print(f"KR-{args.asset}: {len(kr_chunks)} chunks, baselines rv={kr_base.rv:.5f}")
+
+    # Optional Bybit perp chunks for cross-platform (perp vs spot) features.
+    # Same chunker + classifier as spot; the perp feed has the same
+    # MarketBar shape, so the existing pipeline applies unchanged.
+    perp_chunks = None
+    perp_feats = None
+    if args.bybit_perp_bins:
+        perp_bars = load_bars(args.bybit_perp_bins)
+        perp_chunks, _perp_results, perp_base, _perp_session, perp_feats = classify_venue(
+            perp_bars, f"BB-{args.asset}", args.chunk_max_size,
+            args.chunk_min_segment,
+            multi_signal_pelt=args.multi_signal_pelt,
+            use_session_baselines=args.session_baselines,
+            herd_rescue=args.herd_rescue,
+        )
+        print(f"BB-{args.asset} (Bybit perp): {len(perp_chunks)} chunks, "
+              f"baselines rv={perp_base.rv:.5f}")
+    print()
     if args.session_baselines:
         print("  Session-baseline phases:")
         for phase, b in sorted(cb_session.items()):
@@ -1829,12 +2035,14 @@ def main():
         (f"CB-{args.asset}", MultiFeatureContext(
             chunks=cb_chunks, feats=cb_feats,
             sibling_chunks=sib_cb_chunks, sibling_feats=sib_cb_feats,
-            other_venue_chunks=kr_chunks, other_venue_feats=kr_feats),
+            other_venue_chunks=kr_chunks, other_venue_feats=kr_feats,
+            perp_chunks=perp_chunks, perp_feats=perp_feats),
          cb_results),
         (f"KR-{args.asset}", MultiFeatureContext(
             chunks=kr_chunks, feats=kr_feats,
             sibling_chunks=sib_kr_chunks, sibling_feats=sib_kr_feats,
-            other_venue_chunks=cb_chunks, other_venue_feats=cb_feats),
+            other_venue_chunks=cb_chunks, other_venue_feats=cb_feats,
+            perp_chunks=perp_chunks, perp_feats=perp_feats),
          kr_results),
     ]
     actionable_rows: list[tuple[str, str, str, str, str, dict]] = []
@@ -1865,7 +2073,8 @@ def main():
                         (group, fname, venue_label, regime, verdict, cell))
     # Sort: group order proven→novel→experimental→pending, then by
     # verdict priority, then by best horizon confidence.
-    group_order = {"proven": 0, "novel": 1, "experimental": 2, "pending": 3}
+    group_order = {"proven": 0, "novel": 1, "cross_platform": 2,
+                       "experimental": 3, "pending": 4}
     verdict_order = {"ALWAYS_TRADEABLE": 0, "CURRENTLY_TRADEABLE": 1,
                        "HISTORICALLY_TRADEABLE_NOT_NOW": 2,
                        "AMBIGUOUS": 3, "NEVER_TRADEABLE": 4,
