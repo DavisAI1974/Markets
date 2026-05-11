@@ -411,6 +411,29 @@ def _pearsonr_with_p(x: np.ndarray, y: np.ndarray) -> tuple[float, float, int]:
     return r, p, int(n)
 
 
+def _spearmanr_with_p(x: np.ndarray, y: np.ndarray) -> tuple[float, float, int]:
+    """Spearman rank correlation. Captures monotonic non-linear dependence
+    that Pearson r misses (saturation curves, threshold effects, ranks).
+    Returns (rho, p_value, n). Same NaN-safe contract as _pearsonr_with_p.
+
+    p-value uses the same t-approximation as Pearson on the ranked series;
+    valid for n>=10. For smaller n, treat p as advisory."""
+    n = len(x)
+    if n < 3:
+        return float("nan"), float("nan"), int(n)
+    if np.std(x) < 1e-12 or np.std(y) < 1e-12:
+        return 0.0, 1.0, int(n)
+    # argsort.argsort gives ranks (with ties averaged-ish — good enough here).
+    rx = np.argsort(np.argsort(x)).astype(np.float64)
+    ry = np.argsort(np.argsort(y)).astype(np.float64)
+    rho = float(np.corrcoef(rx, ry)[0, 1])
+    if not np.isfinite(rho) or abs(rho) >= 1.0:
+        return rho, float("nan"), int(n)
+    t = rho * np.sqrt(n - 2) / np.sqrt(max(1.0 - rho * rho, 1e-12))
+    p = 2.0 * (1.0 - 0.5 * (1.0 + math.erf(abs(t) / math.sqrt(2.0))))
+    return rho, p, int(n)
+
+
 def _bh_fdr(pvalues: list[float], q: float = 0.10) -> tuple[list[float], list[bool]]:
     """Benjamini-Hochberg FDR. Returns (q_values, reject_at_q). q_value is the
     smallest q at which the test is rejected; reject is True iff q_value <= q.
@@ -442,7 +465,7 @@ def classify_cell_tradability(label: str,
                                   min_n_daily: int = 6,
                                   min_n_weekly: int = 20,
                                   min_n_longterm: int = 30) -> dict:
-    """Per-cell horizon-based tradability classifier (Pass-14).
+    """Per-cell horizon-based tradability classifier (Pass-14, +Spearman).
 
     Mirrors edge_tracker.MultiHorizonEdgeTracker for offline data.
     Uses the same horizon definitions and thresholds so the offline
@@ -453,14 +476,18 @@ def classify_cell_tradability(label: str,
       Weekly    = last 7 days
       Long-term = last 30 days (or all)
 
-    Per horizon, compute Pearson r over (chunk_t.mean_dipole,
-    chunk_{t+k}.log_return) using only chunks whose predictor
-    timestamp falls inside the horizon. Strength tag per horizon:
+    Per horizon, compute BOTH Pearson r AND Spearman rho over
+    (chunk_t.mean_dipole, chunk_{t+k}.log_return) using only chunks
+    whose predictor timestamp falls inside the horizon. Pearson is
+    linear; Spearman captures monotonic non-linearity. Strength uses
+    the larger of |r| and |rho| as the confidence proxy:
 
-      STRONG       |r| >= strong_r AND n >= min_n_horizon
-      MODERATE     |r| >= moderate_r AND n >= min_n_horizon
-      WEAK         |r| <  moderate_r AND n >= min_n_horizon
-      NEW          n  <  min_n_horizon
+      confidence = max(|r|, |rho|)
+      direction  = sign of whichever is the larger-magnitude statistic
+      STRONG     confidence >= strong_r AND n >= min_n_horizon
+      MODERATE   confidence >= moderate_r AND n >= min_n_horizon
+      WEAK       confidence <  moderate_r AND n >= min_n_horizon
+      NEW        n  <  min_n_horizon
 
     Tradability category derived from horizon strengths:
 
@@ -516,15 +543,31 @@ def classify_cell_tradability(label: str,
         ("longterm", 30 * DAY,  min_n_longterm),
     )
 
-    def _strength(n: int, r: float | None, min_n: int) -> tuple[str, str]:
-        if r is None or n < min_n:
-            return "NEW", ""
-        direction = "fade" if r < 0 else ("momentum" if r > 0 else "")
-        if abs(r) >= strong_r:
-            return "STRONG", direction
-        if abs(r) >= moderate_r:
-            return "MODERATE", direction
-        return "WEAK", direction
+    def _strength(n: int,
+                  r: float | None,
+                  rho: float | None,
+                  min_n: int) -> tuple[str, str, float | None]:
+        """Return (strength_tag, direction, confidence). Confidence is
+        max(|r|, |rho|); direction follows the sign of whichever
+        statistic has the larger magnitude (or matches both if signs
+        agree). When the two disagree in sign at moderate-or-stronger
+        strength, the direction is taken from the stronger statistic
+        but the divergence is logged downstream."""
+        if (r is None and rho is None) or n < min_n:
+            return "NEW", "", None
+        r_mag = abs(r) if r is not None else 0.0
+        rho_mag = abs(rho) if rho is not None else 0.0
+        conf = max(r_mag, rho_mag)
+        if r_mag >= rho_mag:
+            sign = (1 if (r or 0) > 0 else (-1 if (r or 0) < 0 else 0))
+        else:
+            sign = (1 if (rho or 0) > 0 else (-1 if (rho or 0) < 0 else 0))
+        direction = "fade" if sign < 0 else ("momentum" if sign > 0 else "")
+        if conf >= strong_r:
+            return "STRONG", direction, conf
+        if conf >= moderate_r:
+            return "MODERATE", direction, conf
+        return "WEAK", direction, conf
 
     per_regime: dict[str, dict] = {}
     for regime in sorted(set(labels)):
@@ -546,14 +589,28 @@ def classify_cell_tradability(label: str,
             x = md[seg]
             y = cr[[i + k for i in seg]]
             r, p, _ = _pearsonr_with_p(x, y)
-            strength, direction = _strength(
-                n_h, float(r) if np.isfinite(r) else None, hmin_n)
+            rho, p_rho, _ = _spearmanr_with_p(x, y)
+            r_v = float(r) if np.isfinite(r) else None
+            rho_v = float(rho) if np.isfinite(rho) else None
+            strength, direction, conf = _strength(n_h, r_v, rho_v, hmin_n)
+            # Non-linear flag: |rho - r| > 0.10 AND both above moderate_r.
+            # Means a monotonic non-linear structure that Pearson alone
+            # would have read as weaker. Diagnostic only.
+            non_linear = (
+                r_v is not None and rho_v is not None
+                and abs(abs(rho_v) - abs(r_v)) >= 0.10
+                and max(abs(r_v), abs(rho_v)) >= moderate_r
+            )
             cell_horizons[hname] = {
                 "n": n_h,
-                "r": round(float(r), 4) if np.isfinite(r) else None,
+                "r": round(r_v, 4) if r_v is not None else None,
+                "rho": round(rho_v, 4) if rho_v is not None else None,
                 "p": round(float(p), 4) if np.isfinite(p) else None,
+                "p_rho": round(float(p_rho), 4) if np.isfinite(p_rho) else None,
+                "confidence": round(conf, 4) if conf is not None else None,
                 "strength": strength,
                 "direction": direction,
+                "non_linear": bool(non_linear),
             }
 
         # Derive tradability category from horizon strengths.
@@ -570,11 +627,17 @@ def classify_cell_tradability(label: str,
         intraday_quiet = intraday["strength"] in ("WEAK", "NEW")
         daily_quiet = daily["strength"] in ("WEAK", "NEW")
 
-        # Sign consistency across long-term / weekly / daily (when present)
+        # Sign consistency across long-term / weekly / daily (when
+        # present at MODERATE+). Uses the strength-determining statistic
+        # (whichever of r/rho has larger magnitude — captured in the
+        # 'direction' field) so non-linear signals are not penalized for
+        # disagreeing on Pearson sign.
         signs = []
         for h in (longterm, weekly, daily):
-            if h.get("r") is not None and abs(h["r"]) >= moderate_r:
-                signs.append(1 if h["r"] > 0 else -1)
+            conf = h.get("confidence")
+            dirn = h.get("direction")
+            if conf is not None and conf >= moderate_r and dirn:
+                signs.append(1 if dirn == "momentum" else -1)
         consistent_sign = (len(signs) >= 2
                               and (all(s > 0 for s in signs)
                                     or all(s < 0 for s in signs)))
@@ -1310,16 +1373,38 @@ def main():
             horizons = cell.get("horizons", {})
             dir_word = cell.get("direction", "") or "-"
             h_strs = []
+            non_linear_marks: list[str] = []
             for hname in ("intraday", "daily", "weekly", "longterm"):
                 h = horizons.get(hname, {})
-                if h.get("r") is None:
+                if h.get("r") is None and h.get("rho") is None:
                     h_strs.append(f"{hname}={h.get('strength', 'NEW')}"
                                     f"(n={h.get('n', 0)})")
+                    continue
+                r_v = h.get("r")
+                rho_v = h.get("rho")
+                # Show whichever has larger magnitude (the strength
+                # driver); annotate with the other when it diverges
+                # by >=0.05.
+                r_mag = abs(r_v) if r_v is not None else -1
+                rho_mag = abs(rho_v) if rho_v is not None else -1
+                if rho_mag > r_mag:
+                    primary, prim_name = rho_v, "ρ"
+                    secondary, sec_name = r_v, "r"
                 else:
-                    h_strs.append(f"{hname}={h['strength']}/"
-                                    f"r={h['r']:+.2f}(n={h['n']})")
+                    primary, prim_name = r_v, "r"
+                    secondary, sec_name = rho_v, "ρ"
+                tag = f"{prim_name}={primary:+.2f}"
+                if (secondary is not None and primary is not None
+                        and abs(abs(primary) - abs(secondary)) >= 0.05):
+                    tag += f"|{sec_name}={secondary:+.2f}"
+                h_strs.append(f"{hname}={h['strength']}/"
+                                f"{tag}(n={h['n']})")
+                if h.get("non_linear"):
+                    non_linear_marks.append(hname)
+            nl_tag = (f"  [non-linear: {','.join(non_linear_marks)}]"
+                      if non_linear_marks else "")
             print(f"    {venue:<8} {regime:<22} n={cell.get('n', 0):>4}  "
-                  f"{dir_word:<9}  " + "  ".join(h_strs))
+                  f"{dir_word:<9}  " + "  ".join(h_strs) + nl_tag)
     print()
 
     # Combined verdict — Gate H prefers the calibrated path when present
