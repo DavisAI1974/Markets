@@ -1,6 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useStore } from "../store.js";
 import SignalCard from "../components/SignalCard.jsx";
+import { EmptyState } from "../components/LoadingSkeleton.jsx";
+import { usePullToRefresh, PullIndicator } from "../usePullToRefresh.jsx";
+import { fetchSignals } from "../api.js";
 
 const REGIME_OPTS = [
   "WHALE_UP", "WHALE_DOWN", "HERD_UP", "HERD_DOWN",
@@ -9,10 +12,33 @@ const REGIME_OPTS = [
 
 export default function SignalFeed() {
   const signals = useStore((s) => s.signals);
+  const setSignals = useStore((s) => s.setSignals);
+  const ptr = usePullToRefresh(async () => {
+    try {
+      const j = await fetchSignals(100);
+      setSignals(j.signals || []);
+    } catch {}
+  });
   const [assetFilter, setAssetFilter] = useState("all");
   const [venueFilter, setVenueFilter] = useState("all");
   const [regimeFilter, setRegimeFilter] = useState("all");
   const [confirmedOnly, setConfirmedOnly] = useState(false);
+
+  // Track which signal_ids we've seen so newly-arrived ones get the
+  // slide-in + cascade-pulse animation only on first render.
+  const seenIds = useRef(new Set());
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (!signals) return;
+    let added = false;
+    for (const s of signals) {
+      if (s && s.signal_id && !seenIds.current.has(s.signal_id)) {
+        seenIds.current.add(s.signal_id);
+        added = true;
+      }
+    }
+    if (added) force((x) => x + 1);
+  }, [signals]);
 
   const filtered = useMemo(() => {
     if (!signals) return [];
@@ -25,12 +51,23 @@ export default function SignalFeed() {
     });
   }, [signals, assetFilter, venueFilter, regimeFilter, confirmedOnly]);
 
+  // The first signal in the unfiltered list is "freshest" — only animate
+  // it if it just arrived (i.e. not yet seen for >1s). Use a small ref
+  // tracking when each id was first seen.
+  const firstSeenAt = useRef(new Map());
+  for (const s of signals || []) {
+    if (s && s.signal_id && !firstSeenAt.current.has(s.signal_id)) {
+      firstSeenAt.current.set(s.signal_id, Date.now());
+    }
+  }
+
   const assets = useMemo(() => Array.from(new Set((signals || []).map((s) => s.asset))).sort(), [signals]);
   const venues = useMemo(() => Array.from(new Set((signals || []).map((s) => s.venue))).sort(), [signals]);
   const regimes = useMemo(() => Array.from(new Set((signals || []).map((s) => s.regime))).sort(), [signals]);
 
   return (
     <div>
+      <PullIndicator {...ptr} />
       <div className="flex flex-wrap gap-1.5 mb-3 items-center">
         <Pill active={assetFilter === "all"} onClick={() => setAssetFilter("all")}>asset: all</Pill>
         {assets.map((a) => (
@@ -59,13 +96,25 @@ export default function SignalFeed() {
         {filtered.length} of {signals?.length || 0} signals
       </h2>
       {filtered.length === 0 ? (
-        <div className="text-slate-500 text-sm py-8 text-center italic">
-          {signals?.length === 0
-            ? "No signals yet. Most chunks are Equilibrium — signals fire on transitions to actionable states or on extreme-dipole equilibrium chunks."
-            : "No signals match the current filters."}
-        </div>
+        signals?.length === 0 ? (
+          <EmptyState
+            icon="📡"
+            title="No signals yet"
+            body="Most market activity is healthy two-sided trading. Signals fire when we detect a big buyer, big seller, buying or selling cascade, or wash pattern. Leave this open and you'll see them arrive in real time."
+          />
+        ) : (
+          <EmptyState
+            icon="🔍"
+            title="No signals match"
+            body="Try clearing one of the filters above."
+          />
+        )
       ) : (
-        filtered.map((sig) => <SignalCard key={sig.signal_id} sig={sig} />)
+        filtered.map((sig) => {
+          const seenAt = firstSeenAt.current.get(sig.signal_id) || 0;
+          const isFresh = (Date.now() - seenAt) < 1500;
+          return <SignalCard key={sig.signal_id} sig={sig} isFresh={isFresh} />;
+        })
       )}
     </div>
   );

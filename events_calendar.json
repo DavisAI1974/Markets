@@ -1,0 +1,25 @@
+{
+  "_comment": "Scheduled macro-event calendar consumed by event_calendar.py. ts_iso supports either explicit Z suffix or +00:00 offset; ts_utc unix-seconds also accepted. Confidence dampener fires within ±60 min (loose, 0.85x) or ±30 min (tight, 0.7x) of an event. Add additional events as the FOMC/BLS calendars are released. Sources: Fed FOMC schedule, BLS CPI/PPI release schedule. Times are official release times (UTC).",
+  "events": [
+    {"ts_iso": "2026-01-14T13:30:00Z", "kind": "CPI",  "label": "CPI Dec 2025"},
+    {"ts_iso": "2026-01-28T19:00:00Z", "kind": "FOMC", "label": "FOMC Jan 2026"},
+    {"ts_iso": "2026-02-11T13:30:00Z", "kind": "CPI",  "label": "CPI Jan 2026"},
+    {"ts_iso": "2026-03-12T12:30:00Z", "kind": "CPI",  "label": "CPI Feb 2026"},
+    {"ts_iso": "2026-03-18T18:00:00Z", "kind": "FOMC", "label": "FOMC Mar 2026"},
+    {"ts_iso": "2026-04-10T12:30:00Z", "kind": "CPI",  "label": "CPI Mar 2026"},
+    {"ts_iso": "2026-04-29T18:00:00Z", "kind": "FOMC", "label": "FOMC Apr 2026"},
+    {"ts_iso": "2026-05-13T12:30:00Z", "kind": "CPI",  "label": "CPI Apr 2026"},
+    {"ts_iso": "2026-06-10T12:30:00Z", "kind": "CPI",  "label": "CPI May 2026"},
+    {"ts_iso": "2026-06-17T18:00:00Z", "kind": "FOMC", "label": "FOMC Jun 2026"},
+    {"ts_iso": "2026-07-15T12:30:00Z", "kind": "CPI",  "label": "CPI Jun 2026"},
+    {"ts_iso": "2026-07-29T18:00:00Z", "kind": "FOMC", "label": "FOMC Jul 2026"},
+    {"ts_iso": "2026-08-12T12:30:00Z", "kind": "CPI",  "label": "CPI Jul 2026"},
+    {"ts_iso": "2026-09-10T12:30:00Z", "kind": "CPI",  "label": "CPI Aug 2026"},
+    {"ts_iso": "2026-09-16T18:00:00Z", "kind": "FOMC", "label": "FOMC Sep 2026"},
+    {"ts_iso": "2026-10-13T12:30:00Z", "kind": "CPI",  "label": "CPI Sep 2026"},
+    {"ts_iso": "2026-10-28T18:00:00Z", "kind": "FOMC", "label": "FOMC Oct 2026"},
+    {"ts_iso": "2026-11-12T13:30:00Z", "kind": "CPI",  "label": "CPI Oct 2026"},
+    {"ts_iso": "2026-12-09T18:00:00Z", "kind": "FOMC", "label": "FOMC Dec 2026"},
+    {"ts_iso": "2026-12-10T13:30:00Z", "kind": "CPI",  "label": "CPI Nov 2026"}
+  ]
+}

@@ -61,6 +61,59 @@ populates the feed naturally.
 
 Real data dependencies; can't be done productively yet.
 
+### Recalibrations to re-run as the corpus grows
+
+These all already have their calibration scripts shipped; they just
+need to be re-run periodically and the output JSONs re-committed
+once enough data exists. Backend reads each JSON at module load and
+falls back to hardcoded defaults when the entry is missing.
+
+- **`vpin_calibration.json`** — `python calibrate_vpin.py`. Already
+  has Pass-6 corpus data; re-run when CB depth grows materially
+  (currently CB-ETH n=176, CB-BTC n=45 — small for percentile
+  estimates).
+- **`liq_calibration.json`** — `python calibrate_liq.py`. Synthetic-
+  liq detector at p99 currently fires ~0/day on both assets;
+  rerun against larger perp corpus (and update the percentile if
+  joint rate lands >5/asset/day).
+- **`funding_calibration.json`** — `python calibrate_funding.py`.
+  Needs ≥30 8h cycles → ~10 days of backend uptime. After AWS §1.5
+  is up, schedule this on a weekly cron.
+- **`oi_calibration.json`** — `python calibrate_oi.py`. Needs ≥240
+  observations per (asset, venue) at the 30s poll cadence
+  (≈ 2 hours of uptime, but sample-quality grows with weeks).
+- **`vol_target_calibration.json`** — `python calibrate_vol_target.py`.
+  Re-run any time the corpus grows ≥2× to update median realized_vol
+  per cell. Currently anchored on the 30d Pass-6 corpus.
+
+### CB premium calibration (deferred)
+
+`cb_premium_monitor` uses hardcoded `HOT_Z=2.0 / CLEAR_Z=1.0` (sigma
+cuts; policy-style). If we want empirical per-asset thresholds the
+way oi_monitor has, write `calibrate_cb_premium.py` that walks
+`backend_cb_premium_history.jsonl` for p95/p50 of `|premium_z|`.
+Defer until ≥240 observations exist on AWS.
+
+### Carry-analyzer per-venue rates
+
+`backend/carry_analyzer.py` uses uniform conservative defaults:
+- `DEFAULT_SPOT_LENDING_APR = 0.05` — actually venue+asset specific.
+- `DEFAULT_FEE_ROUND_TRIP_BPS = 10.0` — actually user-tier specific.
+- `expected_hold_days = 1.0` — actually weeks for real carry desks.
+A follow-up could pull venue lending rates from CB/KR/BN APIs and
+scope the fee table to the friend group's actual tier; until then
+the uniform defaults flag fewer opportunities than a tier-aware
+desk would see.
+
+
+
+- **Phase 1.5 results captured + verified** — see `HANDOFF_PHASE1_5_RESULTS.md`
+  and `eth_phase1_5_gates_report.json`. Gate I passes on both venues (first
+  time, `--multi-signal-pelt` required); Gate G CB-only, Gate H still 51%.
+  WHALE regimes carry the mean-reversion edge (R²=0.69–0.99 with negative r).
+  Use `phase2_chunk_picker.py` to list pickable WHALE chunks for Phase 2
+  feasibility. Continue GHA collection on `data/eth-bins` until n≥30 per
+  non-EQUILIBRIUM regime before tuning thresholds.
 - **DPGMM auto-taxonomy**: replace hand-coded rule classifier with learned
   regime classes via `task_meta_learner`. Spec says wait for N≥200 labeled
   chunks; currently ~50.

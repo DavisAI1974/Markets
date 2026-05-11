@@ -4,3 +4,49 @@
 
 html, body, #root { height: 100%; }
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+
+/* Loading shimmer — used by SkeletonCard. */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Signal-arrival slide-in. */
+@keyframes slide-in-fade {
+  0%   { transform: translateY(-12px); opacity: 0; }
+  100% { transform: translateY(0);     opacity: 1; }
+}
+.animate-signal-in {
+  animation: slide-in-fade 280ms ease-out;
+}
+
+/* Cascade event pulse — gold/amber ring fades in/out twice on arrival. */
+@keyframes cascade-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55); }
+  60%  { box-shadow: 0 0 0 12px rgba(245, 158, 11, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+.animate-cascade-pulse {
+  animation: cascade-pulse 1.6s ease-out 2;
+}
+
+/* Cell flash for ClickableQuote (already inline classes; this is a
+   reusable backup if we want to drive flash via a single class). */
+@keyframes tape-flash {
+  0%   { background-color: rgba(244, 63, 94, 0.5); }
+  100% { background-color: transparent; }
+}
+.animate-tape-flash {
+  animation: tape-flash 350ms ease-out;
+}
+
+/* Bottom-sheet entry animations (used by SignalDetailSheet via Tailwind
+   arbitrary-name animation utilities, e.g. animate-[slide-in-up_280ms_…]) */
+@keyframes slide-in-up {
+  0%   { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+@keyframes fadeIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
