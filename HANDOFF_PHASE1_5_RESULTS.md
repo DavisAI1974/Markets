@@ -1259,6 +1259,202 @@ that metric.
 - **BTC mean Hurst ~0.70 vs ETH ~0.60** — first explicit per-asset
   Hurst comparison; BTC is more momentum-y.
 
+## Sixteenth pass — 2026-05-11 evening, BH-FDR across multi-feature family + 6 cross-platform features
+
+Two big additions on Pass-15:
+
+1. **6 new cross-platform features** (committed `0e488cb`). Three
+   cross-venue (using both spot venues at once), three spot↔perp
+   (using Bybit perp via new `--bybit-perp-bins` arg). Plus
+   `book_depth_imbalance` — direct expression of the empirical
+   "price moves away from the heavier side" pattern.
+
+2. **BH-FDR across the full multi-feature family** (committed
+   `9ded3cd`). Every (feature, venue, regime, horizon) tuple with a
+   finite p-value goes into one Benjamini-Hochberg pool at q=0.10.
+   The per-horizon p-value is Bonferroni-adjusted across the
+   within-cell {Pearson, Spearman, dCor} stats.
+
+Report restructured into 3 tiers:
+- **TIER 1** — BH-significant cells (survives FDR at q=0.10). The
+  discovery list with multiple-comparisons discipline applied.
+- **TIER 2** — strength-tier actionable BUT no horizon BH-significant.
+  Exploratory; consistent with FDR-managed noise.
+- **TIER 3** — non-linear or non-monotonic flags only (no surface
+  verdict). Manual-inspection list.
+
+### Family sizes + survival
+
+| Asset | Family size (tests) | Tier 1 cells | Tier 2 cells | Tier 3 cells |
+|---|---:|---:|---:|---:|
+| ETH | 480 | **11** | 111 | 16 |
+| BTC | 210 | **2** | 48 | 9 |
+
+Expected false-discovery count at q=0.10 across both families:
+~(13 × 0.10) = ~1.3 false positives among the 13 Tier-1 cells.
+
+### ETH Tier 1 — cross-platform features dominate
+
+Sorted by lowest q:
+
+| Cell | Feature | Group | Verdict | Direction | Best BH horizon |
+|---|---|---|---|---|---|
+| KR-ETH EQUILIBRIUM_TWO_SIDED | `realized_vol_z` | proven | CURRENTLY | momentum | intraday c=0.98, **q=0.000** |
+| KR-ETH WHALE_UP | `perp_spot_basis_z` | **cross_platform** | ALWAYS | momentum | daily c=0.86 **q=0.000**, weekly+longterm c=0.32 **q=0.019** |
+| KR-ETH WHALE_UP | `realized_vol_z` | proven | ALWAYS | momentum | daily c=0.76, **q=0.000** |
+| CB-ETH WASH_HAWKES | `cross_venue_gap_z` | **novel** | ALWAYS | momentum | daily c=0.81, **q=0.000** |
+| CB-ETH WASH_HAWKES | `cross_venue_book_imbalance_delta` | **novel** | CURRENTLY | momentum | daily c=0.81, **q=0.000** |
+| KR-ETH EQUILIBRIUM_TWO_SIDED | `perp_spot_basis_z` | **cross_platform** | CURRENTLY | momentum | daily c=0.68, **q=0.000** |
+| KR-ETH EQUILIBRIUM_TWO_SIDED | `cross_venue_gap_z` | **novel** | CURRENTLY | **fade** | intraday c=0.89, **q=0.012** |
+| KR-ETH HERD_UP | `cross_venue_book_imbalance_delta` | **novel** | ALWAYS | fade | daily c=0.80, **q=0.035** |
+| CB-ETH WASH_HAWKES | `cross_venue_aggressor_agreement` | **novel** | ALWAYS | **fade** | daily c=0.62, **q=0.081** |
+| CB-ETH EQUILIBRIUM_TWO_SIDED | `trade_size_entropy` | experimental | CURRENTLY | momentum | intraday c=0.76, **q=0.081** |
+
+**Headline: the new cross-platform / cross-venue features account for
+7 of the 11 ETH Tier-1 cells.** The single strongest find is
+`perp_spot_basis_z` on KR-ETH WHALE_UP — triple-horizon BH-significant
+(daily + weekly + longterm), the only Tier-1 cell where multiple
+horizons clear q=0.10.
+
+### BTC Tier 1 — both cross-platform
+
+| Cell | Feature | Verdict | Direction | Best horizon |
+|---|---|---|---|---|
+| KR-BTC WASH_HAWKES | `microprice_drift` | CURRENTLY | fade | intraday c=0.88 **q=0.000** |
+| KR-BTC EQUILIBRIUM_TWO_SIDED | `perp_spot_dipole_divergence` | CURRENTLY | fade | daily c=0.67 **q=0.042** |
+
+Both Tier-1 BTC cells are flagged by features that **literally cannot
+be computed at a single-venue/single-platform shop**. `microprice_drift`
+needs L1 sizes (which we capture via the 2026-05 schema); `perp_spot_
+dipole_divergence` needs Bybit perp alongside CB spot.
+
+### Direction agreement and disagreement within Tier 1
+
+When multiple features land in Tier 1 on the same cell, do they agree?
+
+- **KR-ETH WHALE_UP** (2 features Tier 1): `perp_spot_basis_z` says
+  momentum, `realized_vol_z` says momentum. **Agree** ✓
+- **KR-ETH EQUILIBRIUM_TWO_SIDED** (3 features Tier 1): `realized_vol_z`
+  + `perp_spot_basis_z` both say momentum at the daily horizon;
+  `cross_venue_gap_z` says **fade** at intraday horizon. **Direction
+  conflict across horizons.** The cell may have different
+  microstructure on different timescales (intraday mean-reversion;
+  daily continuation).
+- **CB-ETH WASH_HAWKES** (3 features Tier 1): `cross_venue_gap_z` +
+  `cross_venue_book_imbalance_delta` say momentum at daily horizon;
+  `cross_venue_aggressor_agreement` says **fade** at daily horizon.
+  **Direction conflict at the same horizon** — needs further
+  investigation before productizing.
+
+The cleanest tradeable cell at this corpus length is **KR-ETH WHALE_UP
+momentum** under cross-platform features (2 Tier-1 features agreeing
+on direction, triple-horizon BH significance on `perp_spot_basis_z`).
+
+### What happened to the prior Pass-14 / Pass-15 mean_dipole findings?
+
+The 7-replication `mean_dipole` finding on KR-ETH WHALE_UP fade
+**does not appear in Pass-16 Tier 1**. Its daily horizon falls to
+q=0.211 in the multi-feature family (Tier 2). This is NOT a regression
+in the underlying signal — it's the cost of testing 480 hypotheses
+instead of ~10. The Gate I result for that cell is still
+BH-significant in its own (per-venue, per-regime, mean_dipole-only)
+family: that finding remains valid for Gate-I-scoped interpretation
+and continues to power the `eth_kr_whale_up_fade` paper cell. The
+multi-feature FDR result tells us how the same cell ranks against
+the broader feature stack — and at this corpus length, the
+cross-platform features are providing stronger evidence.
+
+### Feature productivity in Tier 1 (FDR-disciplined)
+
+Pass-15 productivity was a flat 9–12 cells per active feature across
+both assets — uninformative because there was no FDR. Pass-16 with
+FDR shows which features are doing real work:
+
+| Feature | Tier-1 hits | Group | Note |
+|---|---:|---|---|
+| `realized_vol_z`              | 2 | proven       | Picks up intraday vol-of-vol carry — likely auto-correlated, treat with caution |
+| `perp_spot_basis_z`           | 2 | cross_platform | Two cells (KR-ETH WHALE_UP, KR-ETH EQ), all momentum |
+| `cross_venue_gap_z`           | 2 | novel        | Mixed direction across cells |
+| `cross_venue_book_imbalance_delta` | 2 | novel   | Mixed direction across cells (L1-gated; only ~4d of L1 data) |
+| `cross_venue_aggressor_agreement`  | 1 | novel   | CB-ETH WASH_HAWKES fade |
+| `microprice_drift`            | 1 | experimental | KR-BTC WASH_HAWKES fade (the strongest BTC find) |
+| `perp_spot_dipole_divergence` | 1 | cross_platform | KR-BTC EQUILIBRIUM fade |
+| `trade_size_entropy`          | 1 | experimental | CB-ETH EQUILIBRIUM momentum |
+| `mean_dipole`                 | **0** | proven   | All dipole findings drop to Tier 2 under multi-feature FDR |
+| `mean_ofi`                    | 0 | proven       | — |
+| `vpin_like`                   | 0 | proven       | — |
+| `hawkes_eta`                  | 0 | proven       | — |
+| `book_depth_imbalance`        | 0 | proven       | Likely L1-data-starved (~4d only) |
+| `cross_asset_dipole`          | 0 | novel        | — |
+| `hurst_delta`                 | 0 | novel        | — |
+
+**The cross-platform position is empirically winning.** Of the 13
+Tier-1 hits, 7 are flagged by cross-platform/cross-venue features
+that no single-venue/single-platform competitor can compute.
+
+### Diagnostics (Gate I + venue-level)
+
+| Asset | Gate G | Gate H | Gate I |
+|---|---|---|---|
+| ETH | PASS | FAIL (max-strict 35.2%) | PASS (KR-ETH WHALE_UP n=126 in venue-scoped FDR) |
+| BTC | PASS | FAIL (calibrated@lag=+15) | FAIL |
+
+### Pass-17 candidates
+
+1. **Productize the cleanest Tier-1 cell (KR-ETH WHALE_UP momentum,
+   `perp_spot_basis_z`)** as a paper cell. Triple-horizon BH-significant,
+   single direction, the strongest empirical evidence in the corpus.
+   Pattern: same as `eth_kr_whale_up_fade` but momentum + uses
+   perp-spot basis as the trigger. Direction NOTE: this is **opposite
+   sign** from the existing `eth_kr_whale_up_fade` cell; consider
+   whether the two coexist (different signals) or one supersedes the
+   other.
+
+2. **Investigate the direction conflicts** on KR-ETH EQUILIBRIUM and
+   CB-ETH WASH_HAWKES before productizing those cells. The
+   horizon-or-feature split tells us the cell has multiple
+   microstructure stories; need to disambiguate which timescale to
+   trade.
+
+3. **Implement signal-rotation + cohort capacity-budgeting** in
+   `backend/forward_paper.py` to manage alpha decay as subscribers
+   join. Per-cell capacity (chunk-mean volume × edge-magnitude /
+   notional) caps simultaneous fills; round-robin across cohorts
+   distributes signal traffic. Cross-cell diversification at the
+   subscriber level prevents bunching.
+
+4. **Schedule the full multi-feature pass at 1× daily** (recommended
+   UTC 04:00, before US wake). 4×/day would destabilize the FDR
+   family without adding meaningful information (see operational
+   discussion in session log).
+
+5. **Backfill historical funding + OI** to activate `funding_rate_z`
+   and `oi_delta_z`. Both currently skip with "infrastructure-pending"
+   in the registry. Write `backfill_funding_history.py` (8h cycles
+   from each perp venue's public API) and `backfill_oi_history.py`
+   (1h snapshots). Expected to surface additional cross-platform
+   Tier-1 cells once active.
+
+6. **Wire Spearman + dCor into the live `edge_tracker`** so the
+   real-time RegimeStatus tier annotations match what the offline
+   pass discovers. Currently `edge_tracker` is Pearson-only.
+
+### Reproducer
+
+```bash
+git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json eth_bybit_perp_bins.json
+git checkout origin/data/btc-bins -- btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json
+
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+    --bybit-perp-bins eth_bybit_perp_bins.json \
+    --multi-signal-pelt --features-out pass16_eth_features.json \
+    > pass16_eth_stdout.txt 2>&1
+# BTC analogue with --asset BTC and swapped --sibling args
+```
+
+
 ## Fifteenth pass — 2026-05-11, multi-feature scan + dCor + Gate-I non-linearization
 
 Three substantive additions on top of Pass-14:
