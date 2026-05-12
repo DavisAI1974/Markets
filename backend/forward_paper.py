@@ -104,6 +104,9 @@ class CellSpec:
                                     # discovered this cell, n_chunks at
                                     # discovery, q-value, etc. Informational
                                     # only; doesn't affect trade behavior.
+    runtime_status: str = "active"   # active | watch | retain | insufficient
+    runtime_action: str = "active"   # active | watch | suppress
+    runtime_reason: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -113,9 +116,23 @@ class CellSpec:
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _CELLS_REGISTRY_PATH = os.path.join(_REPO_ROOT, "cells_registry.json")
+_CELLS_RUNTIME_CONTROLS_PATH = os.path.join(
+    _REPO_ROOT, "cells_runtime_controls.json")
 
-_cells_cache: tuple[float, list[CellSpec]] | None = None  # (mtime, cells)
+_cells_cache: tuple[float, float, list[CellSpec]] | None = None
+_controls_cache: tuple[float, dict[str, dict]] | None = None
 _cutoffs_cache: dict[str, tuple[float, dict]] = {}        # asset -> (mtime, cutoffs)
+
+_VENUE_SHORT_ALIASES = {
+    "COINBASE": "CB",
+    "CB": "CB",
+    "KRAKEN": "KR",
+    "KR": "KR",
+    "BINANCE": "BN",
+    "BN": "BN",
+    "BYBIT": "BB",
+    "BB": "BB",
+}
 
 
 def _cutoffs_path(asset: str) -> str:
@@ -147,6 +164,43 @@ def _load_cutoffs(asset: str) -> dict:
     return cutoffs
 
 
+def _norm_venue_label(label: str | None) -> str:
+    if label is None:
+        return ""
+    raw = str(label).strip()
+    if not raw:
+        return ""
+    return _VENUE_SHORT_ALIASES.get(raw.upper(), raw.upper())
+
+
+def _venue_matches(cell_venue: str, live_venue: str) -> bool:
+    return _norm_venue_label(cell_venue) == _norm_venue_label(live_venue)
+
+
+def load_cells_runtime_controls(path: str | None = None) -> dict[str, dict]:
+    global _controls_cache
+    actual = path or _CELLS_RUNTIME_CONTROLS_PATH
+    try:
+        mtime = os.path.getmtime(actual)
+    except OSError:
+        _controls_cache = None
+        return {}
+    if _controls_cache and _controls_cache[0] == mtime:
+        return _controls_cache[1]
+    try:
+        with open(actual) as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"[cells] runtime controls load failed at {actual}: {e}",
+              flush=True)
+        return _controls_cache[1] if _controls_cache else {}
+    controls = payload.get("controls") or {}
+    if not isinstance(controls, dict):
+        controls = {}
+    _controls_cache = (mtime, controls)
+    return controls
+
+
 def _cellspec_from_dict(d: dict) -> CellSpec | None:
     """Build a CellSpec from a registry JSON entry. Missing required
     fields → None (caller skips with warning)."""
@@ -163,6 +217,9 @@ def _cellspec_from_dict(d: dict) -> CellSpec | None:
             kind=str(d.get("kind", "directional")),
             capacity_class=str(d.get("capacity_class", "small")),
             provenance=d.get("provenance"),
+            runtime_status=str(d.get("runtime_status", "active")),
+            runtime_action=str(d.get("runtime_action", "active")),
+            runtime_reason=str(d.get("runtime_reason", "")),
         )
     except (KeyError, TypeError, ValueError) as e:
         print(f"[cells] skipping malformed registry entry: {e} "
@@ -177,31 +234,38 @@ def load_cells_registry(path: str | None = None) -> list[CellSpec]:
     hardcoded cells — there are no legacy hardcoded cells anymore)."""
     global _cells_cache
     actual = path or _CELLS_REGISTRY_PATH
+    controls = load_cells_runtime_controls()
+    controls_mtime = _controls_cache[0] if _controls_cache else -1.0
     try:
         mtime = os.path.getmtime(actual)
     except OSError:
         if _cells_cache is not None:
             print(f"[cells] registry no longer at {actual}; serving "
-                  f"{len(_cells_cache[1])} stale cells", flush=True)
-            return _cells_cache[1]
+                  f"{len(_cells_cache[2])} stale cells", flush=True)
+            return _cells_cache[2]
         print(f"[cells] no registry at {actual}; no cells loaded",
               flush=True)
         return []
-    if _cells_cache and _cells_cache[0] == mtime:
-        return _cells_cache[1]
+    if _cells_cache and _cells_cache[0] == mtime and _cells_cache[1] == controls_mtime:
+        return _cells_cache[2]
     try:
         with open(actual) as f:
             payload = json.load(f)
     except (OSError, json.JSONDecodeError) as e:
         print(f"[cells] registry load failed at {actual}: {e}", flush=True)
-        return _cells_cache[1] if _cells_cache else []
+        return _cells_cache[2] if _cells_cache else []
     raw_cells = payload.get("cells") or []
     cells: list[CellSpec] = []
     for entry in raw_cells:
         spec = _cellspec_from_dict(entry)
         if spec is not None:
+            ctrl = controls.get(spec.cell_id) or {}
+            if isinstance(ctrl, dict):
+                spec.runtime_status = str(ctrl.get("status", spec.runtime_status))
+                spec.runtime_action = str(ctrl.get("action", spec.runtime_action))
+                spec.runtime_reason = str(ctrl.get("reason", spec.runtime_reason))
             cells.append(spec)
-    _cells_cache = (mtime, cells)
+    _cells_cache = (mtime, controls_mtime, cells)
     print(f"[cells] loaded {len(cells)} cells from "
           f"{os.path.basename(actual)} (schema_version="
           f"{payload.get('schema_version')})", flush=True)
@@ -501,7 +565,9 @@ def find_matching_cells(asset: str, venue: str, regime: str,
     cutoffs = _load_cutoffs(asset)
     out: list[CellSpec] = []
     for cell in cells:
-        if cell.asset != asset or cell.venue != venue:
+        if cell.asset != asset or not _venue_matches(cell.venue, venue):
+            continue
+        if cell.runtime_action == "suppress":
             continue
         try:
             if _eval_predicate(cell.predicate, regime, feat, chunk, cutoffs):
@@ -572,6 +638,208 @@ def open_paper_trade(cell: CellSpec, fill_price: float,
     }
 
 
+def _predicate_feature_names(pred: Any) -> set[str]:
+    if not isinstance(pred, dict) or not pred:
+        return set()
+    out: set[str] = set()
+    if "feat_threshold" in pred:
+        spec = pred.get("feat_threshold") or {}
+        name = spec.get("name")
+        if isinstance(name, str) and name:
+            out.add(name)
+    if "feat_quartile" in pred:
+        spec = pred.get("feat_quartile") or {}
+        name = spec.get("name")
+        if isinstance(name, str) and name:
+            out.add(name)
+    for key in ("all_of", "any_of"):
+        subs = pred.get(key) or []
+        if isinstance(subs, list):
+            for sub in subs:
+                out |= _predicate_feature_names(sub)
+    return out
+
+
+def _cell_feature_names(cell: CellSpec) -> set[str]:
+    prov = getattr(cell, "provenance", None) or {}
+    combo_spec = prov.get("combination_spec") or []
+    out: set[str] = set()
+    if isinstance(combo_spec, list):
+        for item in combo_spec:
+            if not isinstance(item, dict):
+                continue
+            name = item.get("feature")
+            if isinstance(name, str) and name:
+                out.add(name)
+    if out:
+        return out
+    return _predicate_feature_names(getattr(cell, "predicate", {}))
+
+
+def _cell_direction_label(cell: CellSpec, regime: str) -> str:
+    prov = getattr(cell, "provenance", None) or {}
+    predicted = prov.get("predicted_direction")
+    if predicted in ("momentum", "fade"):
+        return str(predicted)
+    side = getattr(cell, "side", "")
+    if regime.endswith("_UP"):
+        return "momentum" if side == "buy" else "fade"
+    if regime.endswith("_DOWN"):
+        return "momentum" if side == "sell" else "fade"
+    if side == "buy":
+        return "buy_bias"
+    if side == "sell":
+        return "sell_bias"
+    return ""
+
+
+def summarize_live_convergence(
+    asset: str,
+    venue: str,
+    regime: str,
+    cells: list[CellSpec],
+    *,
+    min_support: int = 3,
+) -> dict | None:
+    groups: dict[str, dict] = {}
+    for cell in cells:
+        if cell.runtime_action == "suppress":
+            continue
+        features = sorted(_cell_feature_names(cell))
+        if not features:
+            continue
+        side = getattr(cell, "side", "")
+        if side not in ("buy", "sell"):
+            continue
+        bucket = groups.setdefault(side, {
+            "cell_ids": [],
+            "features": set(),
+            "directions": set(),
+            "ci_lows": [],
+            "edges": [],
+            "tiers": set(),
+        })
+        bucket["cell_ids"].append(cell.cell_id)
+        bucket["features"].update(features)
+        bucket["directions"].add(_cell_direction_label(cell, regime))
+        prov = getattr(cell, "provenance", None) or {}
+        if isinstance(prov.get("score_ci_low"), (int, float)):
+            bucket["ci_lows"].append(float(prov["score_ci_low"]))
+        if isinstance(prov.get("edge_magnitude"), (int, float)):
+            bucket["edges"].append(float(prov["edge_magnitude"]))
+        tier = prov.get("tier")
+        if isinstance(tier, str) and tier:
+            bucket["tiers"].add(tier)
+
+    best_side = None
+    best_bucket = None
+    best_key = None
+    for side, bucket in groups.items():
+        support_count = len(bucket["features"])
+        if support_count < min_support:
+            continue
+        avg_ci = sum(bucket["ci_lows"]) / len(bucket["ci_lows"]) if bucket["ci_lows"] else 0.0
+        score_key = (support_count, len(bucket["cell_ids"]), avg_ci)
+        if best_key is None or score_key > best_key:
+            best_key = score_key
+            best_side = side
+            best_bucket = bucket
+    if best_side is None or best_bucket is None:
+        return None
+
+    support_count = len(best_bucket["features"])
+    direction_labels = sorted(label for label in best_bucket["directions"] if label)
+    direction_label = direction_labels[0] if len(direction_labels) == 1 else "/".join(direction_labels)
+    avg_ci = (
+        sum(best_bucket["ci_lows"]) / len(best_bucket["ci_lows"])
+        if best_bucket["ci_lows"] else None
+    )
+    avg_edge = (
+        sum(best_bucket["edges"]) / len(best_bucket["edges"])
+        if best_bucket["edges"] else None
+    )
+    bonus = min(1.50, 1.0 + 0.10 * max(0, support_count - min_support + 1))
+    feature_list = sorted(best_bucket["features"])
+    return {
+        "asset": asset,
+        "venue": _norm_venue_label(venue),
+        "regime": regime,
+        "side": best_side,
+        "direction_label": direction_label,
+        "support_count": support_count,
+        "cell_ids": list(best_bucket["cell_ids"]),
+        "features": feature_list,
+        "confidence_tier": "convergence",
+        "avg_score_ci_low": avg_ci,
+        "avg_edge_magnitude": avg_edge,
+        "bonus_multiplier": bonus,
+        "summary": (
+            f"{support_count}-feature convergence on {asset}/{_norm_venue_label(venue)}/{regime}: "
+            f"{best_side} via {', '.join(feature_list)}"
+        ),
+        "tier_labels": sorted(best_bucket["tiers"]),
+    }
+
+
+def open_convergence_trade(
+    convergence: dict,
+    fill_price: float,
+    *,
+    vol_multiplier: float = 1.0,
+    base_notional_usd: float = 750.0,
+    base_hold_minutes: float = 10.0,
+) -> dict | None:
+    side = str(convergence.get("side") or "")
+    if side not in ("buy", "sell") or fill_price <= 0:
+        return None
+    support_count = int(convergence.get("support_count") or 0)
+    notional_scale = max(1.0, min(2.0, support_count / 3.0))
+    scaled_notional = float(base_notional_usd) * notional_scale * float(vol_multiplier)
+    qty = scaled_notional / fill_price if fill_price > 0 else 0.0
+    fee_usd = scaled_notional * (_PRACTICE_FEE_BPS / 10000.0)
+    asset = str(convergence.get("asset") or "")
+    venue = str(convergence.get("venue") or "")
+    regime = str(convergence.get("regime") or "")
+    features = list(convergence.get("features") or [])
+    cell_id = (
+        f"conv_{asset.lower()}_{venue.lower()}_{regime.lower()}_{side}_"
+        f"{support_count}f"
+    )
+    return {
+        "intent_id": str(uuid.uuid4())[:12],
+        "asset": asset,
+        "venue": venue,
+        "side": side,
+        "price": float(fill_price),
+        "qty": float(qty),
+        "notional": float(scaled_notional),
+        "note": str(convergence.get("summary") or ""),
+        "ts_utc": time.time(),
+        "practice": True,
+        "auto": True,
+        "cell_id": cell_id,
+        "kind": "practice",
+        "status": "open",
+        "fill_price": float(fill_price),
+        "fees_usd": float(fee_usd),
+        "fee_bps": _PRACTICE_FEE_BPS,
+        "exit_price": 0.0,
+        "exit_ts_utc": 0.0,
+        "realized_pnl_usd": 0.0,
+        "hold_minutes": float(base_hold_minutes),
+        "vol_multiplier": float(vol_multiplier),
+        "base_notional_usd": float(base_notional_usd),
+        "confidence_tier": "convergence",
+        "capacity_class": "medium",
+        "convergence_support_count": support_count,
+        "convergence_features": features,
+        "convergence_bonus_multiplier": float(
+            convergence.get("bonus_multiplier") or 1.0
+        ),
+        "regime_at_open": regime,
+    }
+
+
 # ---------------------------------------------------------------------------
 # F11 edge-driven paper trades. When the multi-horizon edge tracker tags a
 # cell as STRONG on any horizon, this opens a paper trade in the implied
@@ -625,10 +893,26 @@ def _side_for_edge(regime: str, direction: str) -> str | None:
 # Tier reflects detection confidence, not P&L expectation; risk is
 # always 100% of stake for the paper trade itself.
 #
-# TODO once edge_tracker tracks Spearman ρ alongside Pearson r:
-# replace abs(r) with max(|r|, |ρ|) in the threshold checks.
 EDGE_TIER_HIGH_CONVICTION_R = 0.20  # firing-horizon |r| floor for tier 1
 EDGE_TIER_CORROBORATION_R = 0.15    # other-horizon |r| floor for corroboration
+
+
+def _edge_abs_score(hstat) -> float:
+    vals = []
+    if getattr(hstat, "r", None) is not None:
+        vals.append(abs(float(hstat.r)))
+    if getattr(hstat, "rho", None) is not None:
+        vals.append(abs(float(hstat.rho)))
+    return max(vals) if vals else 0.0
+
+
+def _edge_metric_note(hstat) -> str:
+    metric = getattr(hstat, "primary_metric", "")
+    if metric == "rho" and getattr(hstat, "rho", None) is not None:
+        return f"rho={float(hstat.rho):+.2f}"
+    if getattr(hstat, "r", None) is not None:
+        return f"r={float(hstat.r):+.2f}"
+    return "r=n/a"
 
 
 def _edge_confidence_tier(firing_horizon: str, firing_r: float,
@@ -654,8 +938,7 @@ def _edge_confidence_tier(firing_horizon: str, firing_r: float,
             continue
         others.append(stat)
     corroborated = any(
-        s.r is not None
-        and abs(float(s.r)) >= EDGE_TIER_CORROBORATION_R
+        _edge_abs_score(s) >= EDGE_TIER_CORROBORATION_R
         and s.direction == firing_direction
         for s in others
     )
@@ -712,11 +995,11 @@ def try_open_edge_driven_trade(
         cell_id = (f"edge_{asset.lower()}_{venue.lower()}_{regime.lower()}"
                     f"_{horizon_name}_{hstat.direction}")
         confidence_tier = _edge_confidence_tier(
-            horizon_name, float(hstat.r) if hstat.r is not None else 0.0,
+            horizon_name, _edge_abs_score(hstat),
             hstat.direction, edge_tags)
         note = (f"edge-driven {horizon_name} {hstat.strength.lower()} "
                 f"{hstat.direction} on {asset}/{venue}/{regime} "
-                f"(r={hstat.r:+.2f} n={hstat.n} "
+                f"({_edge_metric_note(hstat)} n={hstat.n} "
                 f"tier={confidence_tier} self_trend={hstat.self_trend})")
         fee_usd = scaled_notional * (_PRACTICE_FEE_BPS / 10000.0)
         # Edge-driven trades come from the live tracker and don't have a
@@ -758,6 +1041,13 @@ def try_open_edge_driven_trade(
             "edge_direction": hstat.direction,
             "edge_self_trend": hstat.self_trend,
             "edge_r": float(hstat.r) if hstat.r is not None else 0.0,
+            "edge_rho": float(hstat.rho) if getattr(hstat, "rho", None) is not None else 0.0,
+            "edge_primary_metric": getattr(hstat, "primary_metric", ""),
+            "edge_primary_value": float(
+                hstat.r if getattr(hstat, "primary_metric", "") == "r" else (
+                    hstat.rho if getattr(hstat, "primary_metric", "") == "rho" else 0.0
+                )
+            ),
             "edge_n": int(hstat.n),
             "regime_at_open": regime,
             # Tier consumed by the alert/notification layer.

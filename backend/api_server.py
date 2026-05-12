@@ -65,7 +65,10 @@ from backend.forward_paper import (
     find_matching_cells as _fp_find_cells,
     is_carry_trade as _fp_is_carry,
     open_carry_trade as _fp_open_carry,
+    open_convergence_trade as _fp_open_convergence_trade,
     open_paper_trade as _fp_open_trade,
+    load_cells_runtime_controls as _fp_load_cell_controls,
+    summarize_live_convergence as _fp_summarize_convergence,
     vol_target_multiplier as _fp_vol_mult,
     is_expired as _fp_is_expired,
     close_paper_trade as _fp_close_trade,
@@ -76,6 +79,10 @@ from backend.cb_premium_monitor import CoinbasePremiumMonitor
 from backend.funding_monitor import FundingMonitor
 from backend.oi_monitor import OIMonitor
 from backend.liq_monitor import LiqMonitor
+from cells_decay_monitor import (
+    DEFAULT_CONTROLS_OUTPUT_PATH,
+    refresh_runtime_controls,
+)
 from pydantic import BaseModel
 
 
@@ -283,6 +290,14 @@ class RegimeStatus:
     edge_daily_self_trend: str = "NEW"
     edge_weekly_self_trend: str = "NEW"
     edge_longterm_self_trend: str = "NEW"
+    convergence_support_count: int = 0
+    convergence_direction: str = ""
+    convergence_side: str = ""
+    convergence_cell_ids: list[str] = field(default_factory=list)
+    convergence_features: list[str] = field(default_factory=list)
+    convergence_tier: str = ""
+    convergence_bonus: float = 1.0
+    convergence_summary: str = ""
 
 
 @dataclass
@@ -347,6 +362,15 @@ class SignalEvent:
     edge_daily_self_trend: str = "NEW"
     edge_weekly_self_trend: str = "NEW"
     edge_longterm_self_trend: str = "NEW"
+    signal_tier: str = "actionable"
+    convergence_support_count: int = 0
+    convergence_direction: str = ""
+    convergence_side: str = ""
+    convergence_cell_ids: list[str] = field(default_factory=list)
+    convergence_features: list[str] = field(default_factory=list)
+    convergence_tier: str = ""
+    convergence_bonus: float = 1.0
+    convergence_summary: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -467,6 +491,11 @@ class SignalStore:
         self._cell_contradiction_streak: dict[str, int] = {}
         # Recent drift alerts kept in memory for fast /api/drift-alerts read.
         self.recent_drift_alerts: deque[dict] = deque(maxlen=200)
+        self._controls_path = os.path.join(
+            REPO_ROOT, DEFAULT_CONTROLS_OUTPUT_PATH)
+        self._controls_refresh_interval_s = 300.0
+        self._next_controls_refresh_utc = 0.0
+        self._suppressed_cell_ids: set[str] = set()
         # Persistent signal log (JSONL); restored on startup
         self._persist_path = os.path.join(REPO_ROOT, "backend_signals.jsonl")
         self._drift_alerts_path = os.path.join(REPO_ROOT, "backend_drift_alerts.jsonl")
@@ -590,6 +619,50 @@ class SignalStore:
         await self.event_queue.put({"type": "drift_alert", "data": alert})
         return alert
 
+    async def _refresh_cell_runtime_controls(self) -> None:
+        now = time.time()
+        if now < self._next_controls_refresh_utc:
+            return
+        self._next_controls_refresh_utc = now + self._controls_refresh_interval_s
+        try:
+            _report, controls = refresh_runtime_controls(
+                registry_path=os.path.join(REPO_ROOT, "cells_registry.json"),
+                practice_trades_path=os.path.join(REPO_ROOT, "backend_practice_trades.jsonl"),
+                output_path=self._controls_path,
+            )
+        except Exception as e:
+            print(f"[cells] runtime control refresh error: {e}", flush=True)
+            return
+        control_rows = controls.get("controls") or {}
+        new_suppressed = {
+            cell_id
+            for cell_id, meta in control_rows.items()
+            if isinstance(meta, dict) and meta.get("action") == "suppress"
+        }
+        became_suppressed = new_suppressed - self._suppressed_cell_ids
+        became_active = self._suppressed_cell_ids - new_suppressed
+        self._suppressed_cell_ids = new_suppressed
+        for cell_id in sorted(became_suppressed):
+            meta = control_rows.get(cell_id) or {}
+            await self._emit_drift_alert({
+                "type": "cell_runtime_suppressed",
+                "key": cell_id,
+                "cell_id": cell_id,
+                "summary": (
+                    f"{cell_id} suppressed by decay monitor: "
+                    f"{meta.get('reason') or meta.get('status') or 'retire_candidate'}"
+                ),
+                "status": meta.get("status"),
+                "reason": meta.get("reason"),
+            })
+        for cell_id in sorted(became_active):
+            await self._emit_drift_alert({
+                "type": "cell_runtime_reactivated",
+                "key": cell_id,
+                "cell_id": cell_id,
+                "summary": f"{cell_id} reactivated by decay monitor",
+            })
+
     def _bars_from_bins(self, bins_path: str) -> list[MarketBar]:
         if not os.path.exists(bins_path):
             return []
@@ -650,6 +723,11 @@ class SignalStore:
         return bars
 
     async def poll_all(self):
+        try:
+            await self._refresh_cell_runtime_controls()
+        except Exception as e:
+            print(f"[cells] runtime control poll hook error: {e}", flush=True)
+
         for asset, venue, path in DATA_SOURCES:
             try:
                 await self._poll_one(asset, venue, path)
@@ -860,6 +938,20 @@ class SignalStore:
         status.edge_weekly_self_trend = edge_tags.weekly.self_trend
         status.edge_longterm_self_trend = edge_tags.longterm.self_trend
 
+        live_cells = _fp_find_cells(
+            asset, venue, status.regime, latest_feat, latest_chunk)
+        convergence = _fp_summarize_convergence(
+            asset, venue, status.regime, live_cells, min_support=3)
+        if convergence is not None:
+            status.convergence_support_count = int(convergence.get("support_count") or 0)
+            status.convergence_direction = str(convergence.get("direction_label") or "")
+            status.convergence_side = str(convergence.get("side") or "")
+            status.convergence_cell_ids = list(convergence.get("cell_ids") or [])
+            status.convergence_features = list(convergence.get("features") or [])
+            status.convergence_tier = str(convergence.get("confidence_tier") or "")
+            status.convergence_bonus = float(convergence.get("bonus_multiplier") or 1.0)
+            status.convergence_summary = str(convergence.get("summary") or "")
+
         emitted = False
         # Production emit: regime transitions to actionable states
         if regime_changed and status.regime not in ("EQUILIBRIUM_TWO_SIDED", "DEPLETED", "UNKNOWN"):
@@ -949,9 +1041,19 @@ class SignalStore:
                 edge_daily_self_trend=status.edge_daily_self_trend,
                 edge_weekly_self_trend=status.edge_weekly_self_trend,
                 edge_longterm_self_trend=status.edge_longterm_self_trend,
+                signal_tier=("convergence" if convergence else "actionable"),
+                convergence_support_count=status.convergence_support_count,
+                convergence_direction=status.convergence_direction,
+                convergence_side=status.convergence_side,
+                convergence_cell_ids=list(status.convergence_cell_ids),
+                convergence_features=list(status.convergence_features),
+                convergence_tier=status.convergence_tier,
+                convergence_bonus=status.convergence_bonus,
+                convergence_summary=status.convergence_summary,
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
+            self._persist_signal(sig)
             await self.event_queue.put({"type": "signal", "data": asdict(sig)})
             emitted = True
 
@@ -999,6 +1101,79 @@ class SignalStore:
             await self.event_queue.put({"type": "signal", "data": asdict(sig)})
             emitted = True
 
+        paper_chunk_changed = (
+            self.last_paper_chunk_id_per_source.get((asset, venue))
+            != latest_chunk.chunk_id
+        )
+        if (not emitted) and paper_chunk_changed and convergence is not None:
+            base_notes = list(latest_result.notes[:3]) + [status.convergence_summary]
+            conv_playbook = (
+                f"[convergence] {status.convergence_summary}\n\n"
+                f"{get_dynamic_playbook(asset, venue, status.regime)}"
+            )
+            conv_label = (
+                "Convergence long confirmed"
+                if status.convergence_side == "buy"
+                else "Convergence short confirmed"
+            )
+            conv_conf = min(
+                1.0,
+                status.adjusted_confidence * max(1.0, status.convergence_bonus),
+            )
+            sig = SignalEvent(
+                signal_id=str(uuid.uuid4())[:12],
+                asset=asset,
+                venue=venue,
+                regime=status.regime,
+                confidence=conv_conf,
+                cross_venue_multiplier=status.cross_venue_multiplier,
+                adjusted_confidence=conv_conf,
+                mean_dipole=float(latest_feat.mean_dipole),
+                realized_vol=float(latest_feat.realized_vol),
+                chunk_volume=float(latest_feat.chunk_total_volume),
+                notes=base_notes,
+                playbook=conv_playbook,
+                timestamp_utc=time.time(),
+                chunk_window=(latest_chunk.window_start, latest_chunk.window_end),
+                chunk_buy_volume=chunk_buy_v,
+                chunk_sell_volume=chunk_sell_v,
+                chunk_n_trades=chunk_n_tr,
+                current_price=float(latest_chunk.bars[-1].close) if latest_chunk.bars else 0.0,
+                current_bid=float(latest_chunk.bars[-1].bid) if latest_chunk.bars else 0.0,
+                current_ask=float(latest_chunk.bars[-1].ask) if latest_chunk.bars else 0.0,
+                last_aggressor=str(latest_chunk.bars[-1].last_aggressor) if latest_chunk.bars else "",
+                event_label=conv_label,
+                drift_status=get_drift_status(asset, venue, status.regime),
+                vpin=float(getattr(latest_result, "vpin", 0.0)),
+                vpin_multiplier=float(getattr(latest_result, "vpin_multiplier", 1.0)),
+                cross_asset_multiplier=float(getattr(latest_result, "cross_asset_multiplier", 1.0)),
+                event_multiplier=float(getattr(latest_result, "event_multiplier", 1.0)),
+                hurst=float(getattr(latest_result, "hurst", 0.5)),
+                hurst_label=str(getattr(latest_result, "hurst_label", "")),
+                hawkes_multiplier=float(getattr(latest_result, "hawkes_multiplier", 1.0)),
+                edge_summary=status.edge_summary,
+                edge_daily_strength=status.edge_daily_strength,
+                edge_weekly_strength=status.edge_weekly_strength,
+                edge_longterm_strength=status.edge_longterm_strength,
+                edge_daily_self_trend=status.edge_daily_self_trend,
+                edge_weekly_self_trend=status.edge_weekly_self_trend,
+                edge_longterm_self_trend=status.edge_longterm_self_trend,
+                signal_tier="convergence",
+                convergence_support_count=status.convergence_support_count,
+                convergence_direction=status.convergence_direction,
+                convergence_side=status.convergence_side,
+                convergence_cell_ids=list(status.convergence_cell_ids),
+                convergence_features=list(status.convergence_features),
+                convergence_tier=status.convergence_tier,
+                convergence_bonus=status.convergence_bonus,
+                convergence_summary=status.convergence_summary,
+            )
+            self.recent_signals.append(sig)
+            self.signal_index[sig.signal_id] = sig
+            self._persist_signal(sig)
+            await self.event_queue.put({"type": "signal", "data": asdict(sig)})
+            emitted = True
+
         if emitted:
             self.last_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
 
@@ -1011,7 +1186,8 @@ class SignalStore:
         if last_paper != latest_chunk.chunk_id:
             try:
                 self._maybe_open_forward_paper_trades(
-                    asset, venue, status.regime, latest_feat, latest_chunk)
+                    asset, venue, status.regime, latest_feat, latest_chunk,
+                    cells=live_cells, convergence=convergence)
             except Exception as e:
                 print(f"[forward-paper] open error {asset}/{venue}: {e}", flush=True)
             self.last_paper_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
@@ -1089,9 +1265,11 @@ class SignalStore:
               f"intent_id={trade['intent_id']})", flush=True)
 
     def _maybe_open_forward_paper_trades(self, asset: str, venue: str,
-                                          regime: str, feat, chunk) -> None:
+                                          regime: str, feat, chunk,
+                                          cells=None, convergence: dict | None = None) -> None:
         # Static CellSpec-based path (Pass-5 hand-picked cells)
-        cells = _fp_find_cells(asset, venue, regime, feat, chunk)
+        cells = list(cells) if cells is not None else _fp_find_cells(
+            asset, venue, regime, feat, chunk)
         bid, ask, mid = _current_quote(asset, venue)
         # Vol-target sizing: scale notional ∝ VOL_TARGET / chunk realized_vol,
         # clipped to [0.5x, 2.0x]. Same multiplier applies to all cells
@@ -1108,6 +1286,35 @@ class SignalStore:
                   f"({cell.kind}) {cell.side} {asset}/{venue} @ {fill_price:.4f} "
                   f"(intent_id={trade['intent_id']} "
                   f"rv={rv:.4f} vol_mult={vol_mult:.2f})", flush=True)
+
+        if convergence is not None:
+            existing_open_conv = {
+                t.get("cell_id", "")
+                for t in _load_practice_trades()
+                if t.get("status") == "open"
+                and t.get("auto") is True
+                and isinstance(t.get("cell_id"), str)
+                and t.get("cell_id", "").startswith("conv_")
+            }
+            conv_side = str(convergence.get("side") or "")
+            conv_fill = float(ask if conv_side == "buy" else bid)
+            if conv_fill <= 0:
+                conv_fill = float(mid)
+            conv_trade = _fp_open_convergence_trade(
+                convergence,
+                conv_fill,
+                vol_multiplier=vol_mult,
+            )
+            if conv_trade is not None and conv_trade["cell_id"] not in existing_open_conv:
+                _persist_practice_trade(conv_trade)
+                print(
+                    f"[conv-paper] opened {conv_trade['cell_id']} "
+                    f"{conv_trade['side']} {asset}/{venue} @ "
+                    f"{conv_trade['fill_price']:.4f} "
+                    f"support={conv_trade['convergence_support_count']} "
+                    f"vol_mult={vol_mult:.2f}",
+                    flush=True,
+                )
 
         # F11 edge-driven path: open a trade when ANY horizon is STRONG.
         # Dedup against currently-open edge trades for this (asset, venue,
@@ -1972,6 +2179,15 @@ async def get_edge_tracker():
         "n_cells": len(cells),
         "n_total_samples": store.edge_tracker.n_total_samples(),
         "cells": [c.to_dict() for c in cells],
+    }
+
+
+@app.get("/api/cell-controls", dependencies=[Depends(verify_token)])
+async def get_cell_controls():
+    controls = _fp_load_cell_controls()
+    return {
+        "n_controls": len(controls),
+        "controls": controls,
     }
 
 
