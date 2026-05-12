@@ -711,6 +711,124 @@ def run_search(asset: str,
     return all_winners
 
 
+def dedupe_singletons_by_chunk_jaccard(
+    winners: list[Combination],
+    snapshot_cache: dict[tuple[str, str], "CellSnapshot"],
+    threshold: float,
+    tiers: list[TierSpec],
+) -> tuple[list[Combination], list[dict]]:
+    """For each (venue, regime), among arity-1 winners, compute pairwise
+    Jaccard between their gate chunk sets. Cluster gates with Jaccard >=
+    threshold. Within each cluster, keep the one with highest
+    (score_ci_low * edge_magnitude); mark the rest as duplicates and drop.
+
+    Multi-arity (>=2) winners are NEVER deduplicated -- they were already
+    Phase-2 promotions and tend to be unique by construction.
+
+    Returns (kept_winners, dedup_log) where dedup_log is a list of dicts
+    each describing one cluster (cell_key, members, representative, dropped,
+    min_intracluster_jaccard) suitable for the report JSON.
+    """
+    # Partition winners by (venue, regime); separate arity-1 vs >=2
+    by_cell: dict[tuple[str, str], list[Combination]] = defaultdict(list)
+    higher_arity: list[Combination] = []
+    for c in winners:
+        if c.arity == 1:
+            by_cell[(c.venue_label, c.regime)].append(c)
+        else:
+            higher_arity.append(c)
+
+    kept_singletons: list[Combination] = []
+    dedup_log: list[dict] = []
+
+    for (venue_label, regime), cell_winners in by_cell.items():
+        if len(cell_winners) < 2:
+            kept_singletons.extend(cell_winners)
+            continue
+        snap = snapshot_cache.get((venue_label, regime))
+        if snap is None:
+            # No snapshot -- can't dedupe; keep all
+            kept_singletons.extend(cell_winners)
+            continue
+
+        # Build chunk-set per winner
+        gate_sets: list[set[int]] = []
+        for c in cell_winners:
+            g = c.gates[0]
+            q_arr = snap.feature_quartile.get(g.feature)
+            if q_arr is None:
+                gate_sets.append(set())
+            else:
+                gate_sets.append(set(int(i) for i in np.where(q_arr == g.quartile)[0]))
+
+        n = len(cell_winners)
+
+        # Union-find clusters by Jaccard >= threshold
+        parent = list(range(n))
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        jaccard_matrix: list[list[float]] = [[1.0] * n for _ in range(n)]
+        for i in range(n):
+            si = gate_sets[i]
+            for j in range(i + 1, n):
+                sj = gate_sets[j]
+                u = si | sj
+                jac = (len(si & sj) / len(u)) if u else 0.0
+                jaccard_matrix[i][j] = jac
+                jaccard_matrix[j][i] = jac
+                if jac >= threshold:
+                    union(i, j)
+
+        # Group cluster members
+        groups: dict[int, list[int]] = defaultdict(list)
+        for i in range(n):
+            groups[find(i)].append(i)
+
+        for members in groups.values():
+            if len(members) == 1:
+                kept_singletons.append(cell_winners[members[0]])
+                continue
+            # Representative = argmax(score_ci_low * edge_magnitude)
+            ranked = sorted(
+                members,
+                key=lambda idx: -(cell_winners[idx].score_ci_low
+                                    * cell_winners[idx].edge_magnitude),
+            )
+            rep_idx = ranked[0]
+            dropped_idx = ranked[1:]
+            kept_singletons.append(cell_winners[rep_idx])
+            dedup_log.append({
+                "cell_key": f"{venue_label}/{regime}",
+                "cluster_size": len(members),
+                "representative": (
+                    f"{cell_winners[rep_idx].gates[0].feature}="
+                    f"Q{cell_winners[rep_idx].gates[0].quartile}"
+                ),
+                "representative_tier": cell_winners[rep_idx].tier,
+                "representative_score_ci_low": cell_winners[rep_idx].score_ci_low,
+                "representative_edge": cell_winners[rep_idx].edge_magnitude,
+                "dropped": [
+                    f"{cell_winners[i].gates[0].feature}="
+                    f"Q{cell_winners[i].gates[0].quartile}"
+                    for i in dropped_idx
+                ],
+                "min_intracluster_jaccard": min(
+                    jaccard_matrix[i][j]
+                    for i in members for j in members if i < j
+                ),
+            })
+
+    return kept_singletons + higher_arity, dedup_log
+
+
 def dedupe_keep_best_tier(winners: list[Combination],
                             tiers: list[TierSpec]) -> list[Combination]:
     """For each (venue, regime, gate-set, direction), keep only the highest-
@@ -791,6 +909,14 @@ def main():
     p.add_argument("--exclude-tier-3", action="store_true",
                    help="Skip tier-3 cells when appending to registry (more"
                         " conservative; default ships all tiers).")
+    p.add_argument("--dedupe-by-jaccard", type=float, default=0.0,
+                   help="If >0, dedupe arity-1 winners within each"
+                        " (venue, regime) cell whose gate-chunk-set Jaccard"
+                        " overlap meets or exceeds this threshold. The"
+                        " survivor is the gate with highest score_ci_low *"
+                        " edge_magnitude. Set ~0.85 to drop literal/near-"
+                        " duplicates without losing partially-overlapping"
+                        " distinct gates. Recommended for production runs.")
     p.add_argument("--dry-run", action="store_true",
                    help="Show what would be appended but do not write the registry")
     p.add_argument("--seed", type=int, default=0)
@@ -881,14 +1007,11 @@ def main():
             with open(args.cutoffs) as f:
                 cutoffs = json.load(f)
 
-        # Build per-(venue, regime) fallback uppers from the search snapshots.
-        # Re-run the snapshot pass for this purpose (cheap; just quartile boundaries).
-        # Practical shortcut: we recorded uppers in CellSnapshot during search.
-        # In this simplified flow we accept inline-threshold fallback uses the
-        # in-cell quartile boundaries that the search already derived for each
-        # cell. For the registry write, we re-derive on demand: build a small
-        # local cache from a second pass over winners.
+        # Build per-(venue, regime) fallback uppers + full snapshots from the
+        # search re-classification. Snapshots are needed when --dedupe-by-jaccard
+        # is in effect (we need per-gate chunk membership to compute Jaccard).
         fallback_cache: dict[tuple[str, str], dict[str, list[float]]] = {}
+        snapshot_cache: dict[tuple[str, str], CellSnapshot] = {}
         for venue_label, ctx, results in contexts:
             feat_vals = compute_global_feature_values(ctx, feature_names)
             fwd = forward_log_returns(ctx.chunks, k=1)
@@ -898,6 +1021,32 @@ def main():
                     continue
                 snap = build_cell_snapshot(venue_label, regime, mask, feat_vals, fwd)
                 fallback_cache[(venue_label, regime)] = dict(snap.feature_quartile_upper)
+                snapshot_cache[(venue_label, regime)] = snap
+
+        # Optional dedup: drop arity-1 winners whose gate chunk sets overlap
+        # heavily within the same (venue, regime). Hidden double-sizing is the
+        # real risk when two cells trigger on identical/near-identical events.
+        dedup_log: list[dict] = []
+        if args.dedupe_by_jaccard > 0.0:
+            before = len(winners)
+            winners, dedup_log = dedupe_singletons_by_chunk_jaccard(
+                winners, snapshot_cache, args.dedupe_by_jaccard, DEFAULT_TIERS,
+            )
+            after = len(winners)
+            if dedup_log:
+                print(f"\n  dedup-by-jaccard (>= {args.dedupe_by_jaccard}): "
+                      f"{before - after} duplicate(s) dropped across "
+                      f"{len(dedup_log)} cluster(s)")
+                for entry in dedup_log:
+                    print(f"    {entry['cell_key']}: kept '{entry['representative']}'"
+                          f" (tier={entry['representative_tier']}, "
+                          f"score_ci_low={entry['representative_score_ci_low']:.3f}, "
+                          f"edge={entry['representative_edge']:.2f}); "
+                          f"dropped {entry['dropped']} "
+                          f"(min_jaccard={entry['min_intracluster_jaccard']:.3f})")
+            else:
+                print(f"\n  dedup-by-jaccard (>= {args.dedupe_by_jaccard}): "
+                      f"no duplicates found")
 
         tier_lookup = {t.name: t for t in DEFAULT_TIERS}
         entries: list[dict] = []
@@ -912,7 +1061,15 @@ def main():
             entry = build_cell_entry(c, args.asset, tier_spec,
                                        args.base_notional, predicate,
                                        args.pass_num)
-            entries.append(entry)
+            # Tag dedup-survivor entries with the dropped duplicate gates for
+            # provenance.
+            for dl in dedup_log:
+                if dl["cell_key"] == f"{c.venue_label}/{c.regime}":
+                    rep_gate = f"{c.gates[0].feature}=Q{c.gates[0].quartile}" if c.arity == 1 else None
+                    if rep_gate == dl["representative"]:
+                        entry["provenance"]["jaccard_dedupe_dropped"] = dl["dropped"]
+                        entry["provenance"]["jaccard_dedupe_min_overlap"] = dl["min_intracluster_jaccard"]
+                        break
 
         n_added = append_to_registry(args.append_to_registry, entries,
                                        dry_run=args.dry_run)
