@@ -1164,31 +1164,51 @@ def _feat_oi_delta_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
 # Registry: ordered for deterministic report output. Cross-platform
 # features (cross_*, perp_*, triangulated_*) are the differentiation
 # pitch — no competing retail-signal product is publishing this stack.
-FEATURE_EXTRACTORS: list[tuple[str, str, callable]] = [
-    # (feature_id, group, extractor)
+#
+# The `role` field distinguishes how a feature is meant to be used.
+# Pass-17 reframe based on the bounded-dipole-thrives findings:
+#
+#   "predictor" — feature whose value-add is discriminating future
+#     forward returns. AUC against forward return is the success
+#     metric. Goes into the multi-feature BH-FDR family. Cross-venue
+#     z-scores, perp-spot basis, microprice drift, etc.
+#
+#   "operationalization" — bounded within-channel imbalance form
+#     (canonical dipole or close relative). Per the bounded-form theory:
+#     these are AUC-equivalent to their underlying raw ratio so they
+#     are NOT predictors that generate novel signal. Their value-add is
+#     bounded [-1, +1] thresholding for gating + sizing on top of the
+#     predictors, plus outlier compression that keeps the heavy-tail
+#     end of the distribution operationally tractable. Pass-18 will
+#     pull these out of the predictive FDR family (testing them
+#     predictively is the wrong test); for now they stay in for
+#     measurement continuity but consumers should treat their Tier-2
+#     standings as confirmation of the theory, not as regressions.
+FEATURE_EXTRACTORS: list[tuple[str, str, str, callable]] = [
+    # (feature_id, group, role, extractor)
     # Proven microstructure — single-venue, single-asset
-    ("mean_dipole",                       "proven",       _feat_mean_dipole),
-    ("mean_ofi",                          "proven",       _feat_mean_ofi),
-    ("vpin_like",                         "proven",       _feat_vpin_like),
-    ("hawkes_eta",                        "proven",       _feat_hawkes_eta),
-    ("realized_vol_z",                    "proven",       _feat_realized_vol_z),
-    ("book_depth_imbalance",              "proven",       _feat_book_depth_imbalance),
+    ("mean_dipole",                       "proven",       "operationalization", _feat_mean_dipole),
+    ("mean_ofi",                          "proven",       "predictor",          _feat_mean_ofi),
+    ("vpin_like",                         "proven",       "operationalization", _feat_vpin_like),
+    ("hawkes_eta",                        "proven",       "predictor",          _feat_hawkes_eta),
+    ("realized_vol_z",                    "proven",       "predictor",          _feat_realized_vol_z),
+    ("book_depth_imbalance",              "proven",       "operationalization", _feat_book_depth_imbalance),
     # Novel — cross-asset / cross-venue
-    ("cross_asset_dipole",                "novel",        _feat_cross_asset_dipole),
-    ("cross_venue_gap_z",                 "novel",        _feat_cross_venue_gap_z),
-    ("cross_venue_book_imbalance_delta",  "novel",        _feat_cross_venue_book_imbalance_delta),
-    ("cross_venue_aggressor_agreement",   "novel",        _feat_cross_venue_aggressor_agreement),
-    ("hurst_delta",                       "novel",        _feat_hurst_delta),
+    ("cross_asset_dipole",                "novel",        "predictor",          _feat_cross_asset_dipole),
+    ("cross_venue_gap_z",                 "novel",        "predictor",          _feat_cross_venue_gap_z),
+    ("cross_venue_book_imbalance_delta",  "novel",        "predictor",          _feat_cross_venue_book_imbalance_delta),
+    ("cross_venue_aggressor_agreement",   "novel",        "predictor",          _feat_cross_venue_aggressor_agreement),
+    ("hurst_delta",                       "novel",        "predictor",          _feat_hurst_delta),
     # Cross-platform — spot ↔ perp
-    ("perp_spot_basis_z",                 "cross_platform", _feat_perp_spot_basis_z),
-    ("perp_spot_dipole_divergence",       "cross_platform", _feat_perp_spot_dipole_divergence),
-    ("triangulated_consensus",            "cross_platform", _feat_triangulated_consensus),
+    ("perp_spot_basis_z",                 "cross_platform", "predictor",        _feat_perp_spot_basis_z),
+    ("perp_spot_dipole_divergence",       "cross_platform", "predictor",        _feat_perp_spot_dipole_divergence),
+    ("triangulated_consensus",            "cross_platform", "predictor",        _feat_triangulated_consensus),
     # Experimental — theoretical, low evidence
-    ("trade_size_entropy",                "experimental", _feat_trade_size_entropy),
-    ("microprice_drift",                  "experimental", _feat_microprice_drift),
+    ("trade_size_entropy",                "experimental", "predictor",          _feat_trade_size_entropy),
+    ("microprice_drift",                  "experimental", "predictor",          _feat_microprice_drift),
     # Infrastructure-pending — wired but skip until backfill exists
-    ("funding_rate_z",                    "pending",      _feat_funding_rate_z),
-    ("oi_delta_z",                        "pending",      _feat_oi_delta_z),
+    ("funding_rate_z",                    "pending",      "predictor",          _feat_funding_rate_z),
+    ("oi_delta_z",                        "pending",      "predictor",          _feat_oi_delta_z),
 ]
 
 
@@ -1200,14 +1220,14 @@ def run_multi_feature_scan(label: str,
     Returns one classification result per feature, with the feature
     name + group + extractor-status attached."""
     out = []
-    for name, group, fn in FEATURE_EXTRACTORS:
+    for name, group, role, fn in FEATURE_EXTRACTORS:
         values, status = fn(ctx)
         if status.startswith("infrastructure-pending"):
-            out.append({"feature": name, "group": group,
+            out.append({"feature": name, "group": group, "role": role,
                           "status": status, "per_regime": {}})
             continue
         if values is None or not np.any(np.isfinite(values)) or np.std(values) < 1e-12:
-            out.append({"feature": name, "group": group,
+            out.append({"feature": name, "group": group, "role": role,
                           "status": status or "zero variance",
                           "per_regime": {}})
             continue
@@ -1215,6 +1235,7 @@ def run_multi_feature_scan(label: str,
             label, ctx.chunks, results, k=k,
             feature_values=values, feature_name=name)
         cell["group"] = group
+        cell["role"] = role
         cell["status"] = status
         out.append(cell)
     return out

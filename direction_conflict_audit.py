@@ -121,7 +121,7 @@ def audit_cell(venue_label: str,
     """Print the per-feature × quartile forward-return breakdown for
     chunks of one (venue, regime) cell."""
     # Build a name → extractor lookup from the registry
-    ext_by_name = {name: fn for name, _, fn in FEATURE_EXTRACTORS}
+    ext_by_name = {name: fn for name, _g, _r, fn in FEATURE_EXTRACTORS}
 
     chunks = ctx.chunks
     regime_labels = [r.regime.value for r in results]
