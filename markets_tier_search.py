@@ -698,12 +698,14 @@ def run_search(asset: str,
                 phase_winners.extend(pn)
                 all_phase_for_cell.extend(pn)
             elapsed = time.time() - t0
-            n_t1 = sum(1 for c in all_phase_for_cell if c.tier == "tier_1")
-            n_t2 = sum(1 for c in all_phase_for_cell if c.tier == "tier_2")
-            n_t3 = sum(1 for c in all_phase_for_cell if c.tier == "tier_3")
+            tier_counts = {t.name: 0 for t in tiers}
+            for c in all_phase_for_cell:
+                if c.tier in tier_counts:
+                    tier_counts[c.tier] += 1
+            tier_str = " ".join(f"t{t.name.split('_')[-1]}={tier_counts[t.name]:>2}"
+                                 for t in tiers)
             print(f"    {snap.regime:<26} n={snap.n_cell_chunks:>3}  "
-                  f"t1={n_t1:>2} t2={n_t2:>2} t3={n_t3:>2}  "
-                  f"({elapsed:.1f}s)")
+                  f"{tier_str}  ({elapsed:.1f}s)")
             all_winners.extend(all_phase_for_cell)
 
     return all_winners
@@ -825,11 +827,14 @@ def main():
     winners = dedupe_keep_best_tier(winners, DEFAULT_TIERS)
 
     # Summary
-    n_t1 = sum(1 for c in winners if c.tier == "tier_1")
-    n_t2 = sum(1 for c in winners if c.tier == "tier_2")
-    n_t3 = sum(1 for c in winners if c.tier == "tier_3")
+    tier_counts_summary = {t.name: 0 for t in DEFAULT_TIERS}
+    for c in winners:
+        if c.tier in tier_counts_summary:
+            tier_counts_summary[c.tier] += 1
+    counts_str = " ".join(f"{t.name}={tier_counts_summary[t.name]}"
+                            for t in DEFAULT_TIERS)
     print(f"\n=== summary: {len(winners)} tier-hitting combinations "
-          f"(t1={n_t1} t2={n_t2} t3={n_t3}) ===")
+          f"({counts_str}) ===")
 
     # Optional report
     if args.output_report:
@@ -841,7 +846,7 @@ def main():
             "bootstrap_samples": args.bootstrap_samples,
             "features_searched": feature_names,
             "n_winners": len(winners),
-            "tier_counts": {"tier_1": n_t1, "tier_2": n_t2, "tier_3": n_t3},
+            "tier_counts": dict(tier_counts_summary),
             "winners": [
                 {
                     "venue_label": c.venue_label,
