@@ -1,3 +1,122 @@
+# Handoff to the next agent — markets-watch, 2026-05-12 (Pass-18 complete)
+
+> Older handoff sections are preserved below this top section. The
+> CURRENT state of the project is in this top section. Each session's
+> additions stack on top; nothing from earlier sessions is intended
+> to be discarded.
+
+## ⚠️ Branch — DO NOT GET THIS WRONG
+
+**Active branch with all the work**: `claude/run-pass-14-classifier-nTViL`
+**Origin**: `davisai1974/markets`
+**Latest commit at handoff**: `8298dea` ("Pass-18 data: registry append (10 ETH cells) + initial runtime controls")
+
+The Pass-18 work landed in 5 commits on top of `944010c`:
+
+| Commit | Subject |
+|---|---|
+| `84842b9` | Pass-18 tier search: sanitize pending features + wire external history |
+| `e1f0734` | Pass-18 discovery toolkit: convergence + decay + autoresearch + edge metrics |
+| `34daa66` | Pass-18 live: convergence wiring + runtime decay control + venue normalization |
+| `fc06bc0` | Pass-18 remote collection: Bybit public WS forward path (REST is geoblocked) |
+| `8298dea` | Pass-18 data: registry append (10 ETH cells) + initial runtime controls |
+
+## What Pass-18 shipped
+
+Pass-18 closed three of the four leader-build gaps from the Pass-17 handoff (convergence is live, autoresearch is built, decay enforces in production). The remaining gap — true retro funding/OI history — is still external-environment-bound.
+
+### 1. Tier-search code-fix pass (`84842b9`)
+
+`markets_tier_search.resolve_feature_names()` drops pending and unknown features at the top of every entry point so `funding_rate_z` and `oi_delta_z` cannot become fake winners while their JSONLs are still warming up. `compute_global_feature_values()` also skips zero-variance feature arrays. `MarketChunkEncoder` now takes `compute_hawkes` / `compute_hurst` flags so the expensive fits only run when those features are actually selected. Sibling-asset venues load chunk-only (no full reclassify) when only `cross_asset_dipole` needs them. External history (`market_history_features.precompute_external_feature_values`) is precomputed once per venue when `funding_rate_z` or `oi_delta_z` is in the feature set. `phase1_5_evaluator` moved those two features from `pending` to `cross_platform` group with the same external-history backing.
+
+### 2. Discovery toolkit (`e1f0734`)
+
+| File | What it does | How to run |
+|---|---|---|
+| `market_signal_connector.py` | Offline convergence detector. Groups tier-search winners by (venue, regime, chunk_index, direction); ≥ min_support agreeing features = `convergence` event above `high_conviction` | `python market_signal_connector.py --asset ETH --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json --bybit-perp-bins eth_bybit_perp_bins.json --min-support 3 --output-path market_signal_connector_eth.json` |
+| `audit_bounded_form_value.py` | Heavy-tail audit for the 9 bounded-form operationalization features. Compares each bounded form against its raw dominance ratio per (venue, regime); verdict ∈ {`bounded_form_valuable`, `mixed`, `raw_form_well_behaved`} | `python audit_bounded_form_value.py --asset ETH --cb-bins ... --kr-bins ... --bybit-perp-bins ... --output-path bounded_audit_eth.json` |
+| `cross_platform_autoresearch.py` | Pairwise feature-quartile interaction discovery per (venue, regime), with binomial p-values, BH-FDR per cell, and append-mostly suggestions for `cells_registry.json` | `python cross_platform_autoresearch.py --asset ETH --cb-bins ... --kr-bins ... --bybit-perp-bins ... --fdr-q 0.10 --append-to-registry cells_registry.json` |
+| `cells_decay_monitor.py` | Realized-P&L decay audit on `backend_practice_trades.jsonl`. Win-rate retention vs `provenance.score_*`. Emits `cells_runtime_controls.json` with action ∈ {`active`, `watch`, `suppress`} | `python cells_decay_monitor.py` |
+| `sync_perp_history_branch.py` | Pulls `backend_funding_history.jsonl` and `backend_oi_history.jsonl` from the `data/perp-history` branch into the local checkout. Newest-wins. | `python sync_perp_history_branch.py --fetch-remote` |
+| `edge_tracker.py` (modified) | `HorizonStat` now tracks Pearson, Spearman, and dCor with permutation p-values. `_best_directional_metric` picks the strongest of r/ρ for direction + strength. `non_linear` flag fires when dCor sees structure the directional stack misses | Live via `MultiHorizonEdgeTracker` in `api_server` |
+
+### 3. Live convergence + runtime decay control (`34daa66`)
+
+`backend/forward_paper.py`:
+- `_norm_venue_label`/`_venue_matches` map Coinbase ↔ CB / Kraken ↔ KR / Bybit ↔ BB so short-label registry cells match live venues (this was a silent bug; verify with `find_matching_cells('ETH', 'Kraken', 'WHALE_UP', ...)` returns KR cells)
+- `summarize_live_convergence(asset, venue, regime, cells, min_support=3)` groups matching cells by side, returns a convergence summary when ≥ min_support feature families agree
+- `open_convergence_trade(convergence, fill_price, vol_multiplier, ...)` — paper-trade builder; notional scales 1.0×..2.0× with support_count
+- Runtime decay controls: `cells_runtime_controls.json` is reread on mtime change. Cells with `action=suppress` are skipped by `find_matching_cells`. Every `CellSpec` carries `runtime_status` / `runtime_action` / `runtime_reason`
+- Edge-driven trade gating uses `max(|r|, |ρ|)` and records the primary metric
+
+`backend/api_server.py`:
+- `RegimeStatus` and `SignalEvent` carry `convergence_*` fields
+- `SignalStore.poll_all` refreshes `cells_runtime_controls.json` every 5 minutes by calling `cells_decay_monitor.refresh_runtime_controls`. Emits `cell_runtime_suppressed` / `cell_runtime_reactivated` drift alerts on state changes
+- Convergence-only signal events emit on new chunks when no other signal fires that poll cycle
+- `_maybe_open_forward_paper_trades` now opens a convergence trade alongside the existing static / edge-driven paths
+- New endpoint: `GET /api/cell-controls` exposes the runtime controls map
+
+### 4. Remote durable Bybit collection (`fc06bc0`)
+
+Binance REST returns 451 and Bybit REST returns 403 from this US/cloud environment. Public Bybit linear ticker WS is reachable, so the forward path now uses it.
+
+| File | What it does |
+|---|---|
+| `bybit_public_tickers.py` | `fetch_bybit_ticker_snapshots(symbols, timeout_s)` subscribes to the public linear ticker WS and returns latest `fundingRate` / `nextFundingTime` / `openInterest` / `lastPrice` per symbol |
+| `collect_bybit_perp_history.py` | One-shot CLI that appends current snapshots to `backend_funding_history.jsonl` (deduped by next funding ts) and `backend_oi_history.jsonl` (deduped by `--min-oi-gap-sec`) |
+| `backend/funding_monitor.py` + `backend/oi_monitor.py` | Bulk-fetch Bybit symbols via WS first, fall back to REST. Binance path unchanged |
+| `.github/workflows/bybit_perp_history_durable.yml` | Scheduled `*/15 * * * *`. Restores prior rows from `data/perp-history`, runs the collector, force-pushes the JSONLs back to `data/perp-history`. Lives on the default branch so the schedule fires |
+
+Two runs verified on 2026-05-12: `25717195059` seeded the branch with both JSONLs; `25717291721` hit the clean no-op path.
+
+**When does this become usable?** `oi_delta_z` requires ~16 OI samples (~4 hours at 15-min cadence). `funding_rate_z` requires ~8 funding cycles (~64 hours).
+
+### 5. Registry + runtime controls data (`8298dea`)
+
+Appended 10 new ETH cells from the 5-bin tier search (1 Jaccard dup dropped): CB-ETH WHALE_UP, KR-ETH WASH_HAWKES, KR-ETH WHALE_UP, CB-ETH BB_WASH_HAWKES. Gates exercise `trade_size_entropy`, `cross_venue_l1_bid_depth_dipole`, `cross_venue_l1_ask_depth_dipole`, `cross_asset_dipole`, `cross_venue_aggressor_agreement`, `microprice_drift`, `perp_spot_dipole_divergence`, `mean_dipole`. Registry now has 20 cells.
+
+`cells_runtime_controls.json` starts every cell at `status=insufficient` because no closed practice trades exist yet. Once realized P&L starts flowing, decay-monitor will start producing `retire_candidate` / `watch` / `retain` verdicts and the live backend will auto-suppress retirees.
+
+## Files added or modified in Pass-18
+
+**New (9 files):**
+- `audit_bounded_form_value.py`
+- `bybit_public_tickers.py`
+- `cells_decay_monitor.py`
+- `collect_bybit_perp_history.py`
+- `cross_platform_autoresearch.py`
+- `market_history_features.py`
+- `market_signal_connector.py`
+- `markets_chunk_overlap.py`
+- `sync_perp_history_branch.py`
+- `.github/workflows/bybit_perp_history_durable.yml`
+- `cells_runtime_controls.json` (generated data)
+
+**Modified:**
+- `backend/api_server.py`
+- `backend/forward_paper.py`
+- `backend/funding_monitor.py`
+- `backend/oi_monitor.py`
+- `direction_conflict_audit.py`
+- `edge_tracker.py`
+- `markets_adapter.py`
+- `markets_importance_runner.py`
+- `markets_tier_search.py`
+- `phase1_5_evaluator.py`
+- `cells_registry.json` (data: +10 cells)
+
+The earlier Pass-18-setup commits `944010c` and `5fc9926` (already pushed) added `backfill_funding_history.py`, `backfill_oi_history.py`, and `.github/workflows/perp_history_backfill.yml`. Those scripts ARE wired but Binance/Bybit REST are geoblocked from this environment — they wrote zero rows locally. The `bybit_perp_history_durable.yml` workflow is what actually feeds rows into `data/perp-history`.
+
+## What we still could not do (carry to Pass-19)
+
+1. **Real retro funding/OI history.** Forward collection is solved. There is no source for pre-2026-05-12 funding/OI rows on `data/perp-history`. Either run the existing `backfill_funding_history.py` / `backfill_oi_history.py` from a non-geoblocked machine, or wire an archive source (e.g. cryptodatadownload, Tardis, exchange-specific archives) into a new backfill workflow.
+2. **Auto-append discovered autoresearch winners into a live-cells flow.** `cross_platform_autoresearch.py --append-to-registry` writes into `cells_registry.json` directly, but there is no scheduled job running it on the data-of-the-day yet. The runner exists; it just isn't on a cron.
+3. **Real-time convergence is "snapshot, this chunk" only.** It looks at currently-matching live cells at this chunk. A multi-chunk convergence persistence model (e.g. "this convergence has been firing 3 chunks in a row, escalate to convergence_strong") is not built.
+4. **No UI surface for convergence yet.** Convergence flows through the signal event payload and the `/api/cell-controls` endpoint, but the frontend doesn't render it as its own tier.
+5. **Decay-monitor calibration unvalidated.** `DEFAULT_RETIRE_THRESHOLD=0.50`, `DEFAULT_WATCH_THRESHOLD=0.80`, `min_trades=8` are reasonable defaults but have not been calibrated against actual realized win-rate distributions. Revisit once there are ≥ 30 closed trades per cell on at least a handful of cells.
+
+## Pass-17 handoff (preserved below)
+
 # Handoff to the next agent — markets-watch, 2026-05-12 (Pass-17 complete)
 
 > Older handoff sections are preserved below this top section. The
