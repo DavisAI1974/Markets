@@ -35,6 +35,8 @@ jobs:
 
       - name: Install runtime dependency
         run: python -m pip install --upgrade websocket-client
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
 
       - name: Restore existing perp-history branch
         run: |
@@ -48,6 +50,8 @@ jobs:
           ls -la backend_funding_history.jsonl backend_oi_history.jsonl 2>/dev/null || true
 
       - name: Collect current Bybit snapshots
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
         run: |
           python collect_bybit_perp_history.py \
             --funding-output-path backend_funding_history.jsonl \
@@ -79,6 +83,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "actions@github.com"
 
+          changed=0
+          for f in backend_funding_history.jsonl backend_oi_history.jsonl; do
+            if git cat-file -e "origin/data/perp-history:$f" 2>/dev/null; then
+              git show "origin/data/perp-history:$f" > "/tmp/orig-$f"
+              if [ ! -f "$f" ] || ! cmp -s "$f" "/tmp/orig-$f"; then
+                changed=1
+              fi
+            elif [ -f "$f" ]; then
+              changed=1
+            fi
+          done
+
+          if [ "$changed" -eq 0 ]; then
+            echo "[commit] no new history rows"
+            exit 0
+          fi
+
           mkdir -p /tmp/perp-history
           for f in backend_funding_history.jsonl backend_oi_history.jsonl; do
             if [ -f "$f" ]; then
@@ -100,11 +121,6 @@ jobs:
               git add -f "$f"
             fi
           done
-
-          if git diff --cached --quiet; then
-            echo "[commit] no new history rows"
-            exit 0
-          fi
 
           git status --short
           git commit -m "Bybit perp history $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
