@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "generated_utc": 1778568311,
+  "registry_path": "E:\\Markets\\cells_registry.json",
+  "practice_trades_path": "E:\\Markets\\backend_practice_trades.jsonl",
+  "summary": {
+    "no_baseline": 10,
+    "insufficient": 10
+  },
+  "controls": {
+    "eth_cb_whale_up_cross_venue_l1_bid_depth_dipole_q1_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_cb_whale_up_trade_size_entropy_q2_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_cb_whale_up_trade_size_entropy_q3_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_wash_hawkes_cross_asset_dipole_q2_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_wash_hawkes_cross_venue_aggressor_agreement_q2_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_wash_hawkes_perp_spot_dipole_divergence_q2_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_wash_hawkes_cross_venue_l1_ask_depth_dipole_q2_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_wash_hawkes_microprice_drift_q3_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_whale_up_mean_dipole_q1_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_bb_wash_hawkes_trade_size_entropy_q3_tier_5": {
+      "status": "insufficient",
+      "action": "active",
+      "reason": "insufficient",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_nascent_up_momo": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_herd_up_volq3_fade": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_whale_up_fade": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_eq_mm_passive": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_cb_eq_mm_passive": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "btc_kr_eq_mm_passive": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "btc_cb_eq_mm_passive": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_whale_up_q4_dipole_fade": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_kr_eq_q1_dipole_momo": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    },
+    "eth_cb_wash_q1_dipole_fade": {
+      "status": "no_baseline",
+      "action": "active",
+      "reason": "no_baseline",
+      "n_closed_recent": 0,
+      "realized_win_rate_recent": null,
+      "win_rate_retention": null,
+      "updated_utc": 1778568311
+    }
+  }
+}

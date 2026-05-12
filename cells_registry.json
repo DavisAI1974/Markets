@@ -1,16 +1,21 @@
 {
   "schema_version": 1,
-  "generated_utc": 1747008052,
+  "generated_utc": 1778564326,
   "notes": "Pass-17 cells-as-data registry. backend/forward_paper.py loads this at startup and reloads on mtime change. Cells are append-mostly: new findings get appended here; retirement happens via the P&L decay monitor (Pass-18 candidate), not via FDR churn. Predicate DSL documented in backend/forward_paper.py module docstring.",
   "cells": [
     {
       "cell_id": "eth_kr_nascent_up_momo",
-      "asset": "ETH", "venue": "KR",
-      "side": "buy", "kind": "directional",
-      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "buy",
+      "kind": "directional",
+      "notional_usd": 1000.0,
+      "hold_minutes": 10.0,
       "capacity_class": "tiny",
       "note": "forward paper: ETH KR WHALE_NASCENT_UP momentum (cell pass 5: r=+0.21 over 30d, r=+0.58 in recent 9d)",
-      "predicate": {"regime_eq": "WHALE_NASCENT_UP"},
+      "predicate": {
+        "regime_eq": "WHALE_NASCENT_UP"
+      },
       "provenance": {
         "discovered_pass": 5,
         "discovery_method": "hand_specified_pass5",
@@ -19,15 +24,26 @@
     },
     {
       "cell_id": "eth_kr_herd_up_volq3_fade",
-      "asset": "ETH", "venue": "KR",
-      "side": "sell", "kind": "directional",
-      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 1000.0,
+      "hold_minutes": 10.0,
       "capacity_class": "tiny",
       "note": "forward paper: ETH KR HERD_UP fade within vol-Q3 (cell pass 5: r=-0.20 at n=168, p=0.008)",
       "predicate": {
         "all_of": [
-          {"regime_eq": "HERD_UP"},
-          {"feat_threshold": {"name": "volume_zscore", "op": ">=", "value": 0.67}}
+          {
+            "regime_eq": "HERD_UP"
+          },
+          {
+            "feat_threshold": {
+              "name": "volume_zscore",
+              "op": ">=",
+              "value": 0.67
+            }
+          }
         ]
       },
       "provenance": {
@@ -38,12 +54,17 @@
     },
     {
       "cell_id": "eth_kr_whale_up_fade",
-      "asset": "ETH", "venue": "KR",
-      "side": "sell", "kind": "directional",
-      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 1000.0,
+      "hold_minutes": 10.0,
       "capacity_class": "tiny",
       "note": "forward paper: ETH KR WHALE_UP fade (Pass-8: r=-0.309 n=65 BH q=0.029; first BH-significant cell since Pass-3)",
-      "predicate": {"regime_eq": "WHALE_UP"},
+      "predicate": {
+        "regime_eq": "WHALE_UP"
+      },
       "provenance": {
         "discovered_pass": 8,
         "discovered_n_chunks": 65,
@@ -54,12 +75,17 @@
     },
     {
       "cell_id": "eth_kr_eq_mm_passive",
-      "asset": "ETH", "venue": "KR",
-      "side": "buy", "kind": "mm_passive",
-      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "buy",
+      "kind": "mm_passive",
+      "notional_usd": 1000.0,
+      "hold_minutes": 5.0,
       "capacity_class": "medium",
       "note": "forward paper: ETH KR EQUILIBRIUM passive-quote MM. Entry rests on bid; exit rests on ask; earns spread minus 2 fee legs while regime persists.",
-      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "predicate": {
+        "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+      },
       "provenance": {
         "discovered_pass": 6,
         "discovery_method": "tier_3_1_modal_regime",
@@ -68,12 +94,17 @@
     },
     {
       "cell_id": "eth_cb_eq_mm_passive",
-      "asset": "ETH", "venue": "CB",
-      "side": "buy", "kind": "mm_passive",
-      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "asset": "ETH",
+      "venue": "CB",
+      "side": "buy",
+      "kind": "mm_passive",
+      "notional_usd": 1000.0,
+      "hold_minutes": 5.0,
       "capacity_class": "large",
       "note": "forward paper: ETH CB EQUILIBRIUM passive-quote MM.",
-      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "predicate": {
+        "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+      },
       "provenance": {
         "discovered_pass": 6,
         "discovery_method": "tier_3_1_modal_regime",
@@ -82,12 +113,17 @@
     },
     {
       "cell_id": "btc_kr_eq_mm_passive",
-      "asset": "BTC", "venue": "KR",
-      "side": "buy", "kind": "mm_passive",
-      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "asset": "BTC",
+      "venue": "KR",
+      "side": "buy",
+      "kind": "mm_passive",
+      "notional_usd": 1000.0,
+      "hold_minutes": 5.0,
       "capacity_class": "medium",
       "note": "forward paper: BTC KR EQUILIBRIUM passive-quote MM.",
-      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "predicate": {
+        "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+      },
       "provenance": {
         "discovered_pass": 6,
         "discovery_method": "tier_3_1_modal_regime",
@@ -96,12 +132,17 @@
     },
     {
       "cell_id": "btc_cb_eq_mm_passive",
-      "asset": "BTC", "venue": "CB",
-      "side": "buy", "kind": "mm_passive",
-      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "asset": "BTC",
+      "venue": "CB",
+      "side": "buy",
+      "kind": "mm_passive",
+      "notional_usd": 1000.0,
+      "hold_minutes": 5.0,
       "capacity_class": "large",
       "note": "forward paper: BTC CB EQUILIBRIUM passive-quote MM.",
-      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "predicate": {
+        "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+      },
       "provenance": {
         "discovered_pass": 6,
         "discovery_method": "tier_3_1_modal_regime",
@@ -110,19 +151,26 @@
     },
     {
       "cell_id": "eth_kr_whale_up_q4_dipole_fade",
-      "asset": "ETH", "venue": "KR",
-      "side": "sell", "kind": "directional",
-      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 1000.0,
+      "hold_minutes": 10.0,
       "capacity_class": "tiny",
       "note": "Pass-17 conflict-audit finding: KR-ETH WHALE_UP fade conditional on Q4 mean_dipole (top 25% by chunk dipole, cutoff > q3_upper of KR-ETH/WHALE_UP/mean_dipole). Mild fade signal (-0.00021, SE 0.00019). Gated overlay on the broader eth_kr_whale_up_fade cell.",
       "predicate": {
         "all_of": [
-          {"regime_eq": "WHALE_UP"},
-          {"feat_quartile": {
-            "name": "mean_dipole",
-            "cell_key": "KR-ETH/WHALE_UP",
-            "quartile_min": 4
-          }}
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "feat_quartile": {
+              "name": "mean_dipole",
+              "cell_key": "KR-ETH/WHALE_UP",
+              "quartile_min": 4
+            }
+          }
         ]
       },
       "provenance": {
@@ -134,19 +182,26 @@
     },
     {
       "cell_id": "eth_kr_eq_q1_dipole_momo",
-      "asset": "ETH", "venue": "KR",
-      "side": "buy", "kind": "directional",
-      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "buy",
+      "kind": "directional",
+      "notional_usd": 1000.0,
+      "hold_minutes": 10.0,
       "capacity_class": "tiny",
-      "note": "Pass-17 conflict-audit finding: KR-ETH EQUILIBRIUM_TWO_SIDED momentum conditional on Q1 mean_dipole (bottom 25%, cutoff <= q1_upper). Strong signal (+0.00054, SE 0.00026, **). Directional overlay on top of the eth_kr_eq_mm_passive cell — fires on the Q1 subset only.",
+      "note": "Pass-17 conflict-audit finding: KR-ETH EQUILIBRIUM_TWO_SIDED momentum conditional on Q1 mean_dipole (bottom 25%, cutoff <= q1_upper). Strong signal (+0.00054, SE 0.00026, **). Directional overlay on top of the eth_kr_eq_mm_passive cell \u00e2\u20ac\u201d fires on the Q1 subset only.",
       "predicate": {
         "all_of": [
-          {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
-          {"feat_quartile": {
-            "name": "mean_dipole",
-            "cell_key": "KR-ETH/EQUILIBRIUM_TWO_SIDED",
-            "quartile_max": 1
-          }}
+          {
+            "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+          },
+          {
+            "feat_quartile": {
+              "name": "mean_dipole",
+              "cell_key": "KR-ETH/EQUILIBRIUM_TWO_SIDED",
+              "quartile_max": 1
+            }
+          }
         ]
       },
       "provenance": {
@@ -158,19 +213,26 @@
     },
     {
       "cell_id": "eth_cb_wash_q1_dipole_fade",
-      "asset": "ETH", "venue": "CB",
-      "side": "sell", "kind": "directional",
-      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "asset": "ETH",
+      "venue": "CB",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 1000.0,
+      "hold_minutes": 10.0,
       "capacity_class": "tiny",
       "note": "Pass-17 conflict-audit finding: CB-ETH WASH_HAWKES fade conditional on Q1 mean_dipole (bottom 25%, cutoff <= q1_upper). Strongest CB-ETH dipole signal (-0.00083, SE 0.00039, **). Monotonic quartile pattern (Q1 strong fade, Q4 mild momentum) consistent with the dipole-thrives outlier-compression principle.",
       "predicate": {
         "all_of": [
-          {"regime_eq": "WASH_HAWKES"},
-          {"feat_quartile": {
-            "name": "mean_dipole",
-            "cell_key": "CB-ETH/WASH_HAWKES",
-            "quartile_max": 1
-          }}
+          {
+            "regime_eq": "WASH_HAWKES"
+          },
+          {
+            "feat_quartile": {
+              "name": "mean_dipole",
+              "cell_key": "CB-ETH/WASH_HAWKES",
+              "quartile_max": 1
+            }
+          }
         ]
       },
       "provenance": {
@@ -178,6 +240,530 @@
         "discovered_n_chunks": 137,
         "discovery_method": "direction_conflict_audit_q1_gate",
         "audit_output": "pass17_audit_out/cbeth_wash_hawkes.txt"
+      }
+    },
+    {
+      "cell_id": "eth_cb_whale_up_cross_venue_l1_bid_depth_dipole_q1_tier_5",
+      "asset": "ETH",
+      "venue": "CB",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: CB-ETH WHALE_UP fade; score=0.800 ci=[0.600,1.000] edge=0.59 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "feat_quartile": {
+              "name": "cross_venue_l1_bid_depth_dipole",
+              "cell_key": "CB-ETH/WHALE_UP",
+              "quartile_min": 1,
+              "quartile_max": 1
+            }
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8,
+        "score_ci_low": 0.6,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.5887615018461175,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": -0.0011885425444184859,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "cross_venue_l1_bid_depth_dipole",
+            "quartile": 1
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "eth_cb_whale_up_trade_size_entropy_q2_tier_5",
+      "asset": "ETH",
+      "venue": "CB",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: CB-ETH WHALE_UP fade; score=0.900 ci=[0.700,1.000] edge=0.52 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "trade_size_entropy",
+                  "op": ">",
+                  "value": 2.2253961731209637
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "trade_size_entropy",
+                  "op": "<=",
+                  "value": 2.675885958077586
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.9,
+        "score_ci_low": 0.7,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.5159184171071639,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": -0.0010414930090676578,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "trade_size_entropy",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "eth_cb_whale_up_trade_size_entropy_q3_tier_5",
+      "asset": "ETH",
+      "venue": "CB",
+      "side": "buy",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: CB-ETH WHALE_UP momentum; score=0.800 ci=[0.600,1.000] edge=0.59 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "trade_size_entropy",
+                  "op": ">",
+                  "value": 2.675885958077586
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "trade_size_entropy",
+                  "op": "<=",
+                  "value": 2.9797569694056327
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8,
+        "score_ci_low": 0.6,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.5922455150956114,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": 0.0011955757793690677,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "trade_size_entropy",
+            "quartile": 3
+          }
+        ],
+        "predicted_direction": "momentum"
+      }
+    },
+    {
+      "cell_id": "eth_kr_wash_hawkes_cross_asset_dipole_q2_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: KR-ETH WASH_HAWKES fade; score=0.724 ci=[0.586,0.862] edge=0.57 n=29",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WASH_HAWKES"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "cross_asset_dipole",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "cross_asset_dipole",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.7241379310344828,
+        "score_ci_low": 0.5862068965517241,
+        "score_ci_high": 0.8620689655172413,
+        "edge_magnitude": 0.5673763968844158,
+        "n_chunks_in_combo": 29,
+        "mean_fwd_return": -0.0011632519437048542,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "cross_asset_dipole",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "eth_kr_wash_hawkes_cross_venue_aggressor_agreement_q2_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: KR-ETH WASH_HAWKES fade; score=0.690 ci=[0.552,0.828] edge=0.60 n=29",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WASH_HAWKES"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_aggressor_agreement",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_aggressor_agreement",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.6896551724137931,
+        "score_ci_low": 0.5517241379310345,
+        "score_ci_high": 0.8275862068965517,
+        "edge_magnitude": 0.6032508733106808,
+        "n_chunks_in_combo": 29,
+        "mean_fwd_return": -0.0012368028609819931,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "cross_venue_aggressor_agreement",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "eth_kr_wash_hawkes_perp_spot_dipole_divergence_q2_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: KR-ETH WASH_HAWKES fade; score=0.690 ci=[0.552,0.828] edge=0.59 n=29",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WASH_HAWKES"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "perp_spot_dipole_divergence",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "perp_spot_dipole_divergence",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.6896551724137931,
+        "score_ci_low": 0.5517241379310345,
+        "score_ci_high": 0.8275862068965517,
+        "edge_magnitude": 0.59485081849393,
+        "n_chunks_in_combo": 29,
+        "mean_fwd_return": -0.0012195808190597886,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "perp_spot_dipole_divergence",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "eth_kr_wash_hawkes_cross_venue_l1_ask_depth_dipole_q2_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: KR-ETH WASH_HAWKES fade; score=0.690 ci=[0.552,0.828] edge=0.59 n=29",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WASH_HAWKES"
+          },
+          {
+            "feat_quartile": {
+              "name": "cross_venue_l1_ask_depth_dipole",
+              "cell_key": "KR-ETH/WASH_HAWKES",
+              "quartile_min": 2,
+              "quartile_max": 2
+            }
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.6896551724137931,
+        "score_ci_low": 0.5517241379310345,
+        "score_ci_high": 0.8275862068965517,
+        "edge_magnitude": 0.589511389827439,
+        "n_chunks_in_combo": 29,
+        "mean_fwd_return": -0.0012086337637915831,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "cross_venue_l1_ask_depth_dipole",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade",
+        "jaccard_dedupe_dropped": [
+          "cross_venue_l1_bid_depth_dipole=Q2"
+        ],
+        "jaccard_dedupe_min_overlap": 0.9333333333333333
+      }
+    },
+    {
+      "cell_id": "eth_kr_wash_hawkes_microprice_drift_q3_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: KR-ETH WASH_HAWKES fade; score=0.724 ci=[0.586,0.862] edge=0.56 n=29",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WASH_HAWKES"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "microprice_drift",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "microprice_drift",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.7241379310344828,
+        "score_ci_low": 0.5862068965517241,
+        "score_ci_high": 0.8620689655172413,
+        "edge_magnitude": 0.5579108625289153,
+        "n_chunks_in_combo": 29,
+        "mean_fwd_return": -0.001143845423980552,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "microprice_drift",
+            "quartile": 3
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "eth_kr_whale_up_mean_dipole_q1_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "buy",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: KR-ETH WHALE_UP momentum; score=0.794 ci=[0.676,0.912] edge=0.56 n=35",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "feat_quartile": {
+              "name": "mean_dipole",
+              "cell_key": "KR-ETH/WHALE_UP",
+              "quartile_min": 1,
+              "quartile_max": 1
+            }
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.7941176470588235,
+        "score_ci_low": 0.6764705882352942,
+        "score_ci_high": 0.9117647058823529,
+        "edge_magnitude": 0.558206173548524,
+        "n_chunks_in_combo": 35,
+        "mean_fwd_return": 0.0010654751897696887,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "mean_dipole",
+            "quartile": 1
+          }
+        ],
+        "predicted_direction": "momentum"
+      }
+    },
+    {
+      "cell_id": "eth_bb_wash_hawkes_trade_size_entropy_q3_tier_5",
+      "asset": "ETH",
+      "venue": "BB",
+      "side": "buy",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-18: BB-ETH WASH_HAWKES momentum; score=0.750 ci=[0.600,0.900] edge=0.54 n=20",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WASH_HAWKES"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "trade_size_entropy",
+                  "op": ">",
+                  "value": 2.780928480073889
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "trade_size_entropy",
+                  "op": "<=",
+                  "value": 2.971188609760834
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 18,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.75,
+        "score_ci_low": 0.6,
+        "score_ci_high": 0.9,
+        "edge_magnitude": 0.5425548533634068,
+        "n_chunks_in_combo": 20,
+        "mean_fwd_return": 0.0009339066887293433,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "trade_size_entropy",
+            "quartile": 3
+          }
+        ],
+        "predicted_direction": "momentum"
       }
     }
   ]
