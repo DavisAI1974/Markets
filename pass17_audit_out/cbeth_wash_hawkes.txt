@@ -1,0 +1,29 @@
+
+=== CB-ETH  regime=WASH_HAWKES  ===
+chunks in cell: 137
+corpus chunks total: 607
+
+  [cross_venue_gap_z]   chunks=137   feature_mean=-0.0436   feature_std=1.1755
+    Q1: n= 34  feature ∈ [-4.961, +0.015]  fwd_r=-0.00087  SE=0.00046  dir=fade  *
+    Q2: n= 34  feature ∈ [+0.015, +0.015]  fwd_r=-0.00004  SE=0.00043  dir=fade
+    Q3: n= 34  feature ∈ [+0.015, +0.015]  fwd_r=+0.00001  SE=0.00027  dir=momentum
+    Q4: n= 34  feature ∈ [+0.015, +5.985]  fwd_r=-0.00021  SE=0.00025  dir=fade
+
+  [cross_venue_book_imbalance_delta]   chunks=137   feature_mean=+0.0137   feature_std=0.2040
+    Q1: n= 34  feature ∈ [-0.665, +0.000]  fwd_r=-0.00076  SE=0.00046  dir=fade  *
+    Q2: n= 34  feature ∈ [+0.000, +0.000]  fwd_r=+0.00015  SE=0.00041  dir=momentum
+    Q3: n= 34  feature ∈ [+0.000, +0.000]  fwd_r=-0.00013  SE=0.00026  dir=fade
+    Q4: n= 34  feature ∈ [+0.000, +1.023]  fwd_r=-0.00037  SE=0.00030  dir=fade
+
+  [cross_venue_aggressor_agreement]   chunks=137   feature_mean=+0.1679   feature_std=0.3738
+    Q1: n= 34  feature ∈ [+0.000, +0.000]  fwd_r=-0.00036  SE=0.00033  dir=fade
+    Q2: n= 34  feature ∈ [+0.000, +0.000]  fwd_r=+0.00000  SE=0.00032  dir=momentum
+    Q3: n= 34  feature ∈ [+0.000, +0.000]  fwd_r=-0.00017  SE=0.00020  dir=fade
+    Q4: n= 34  feature ∈ [+0.000, +1.000]  fwd_r=-0.00058  SE=0.00054  dir=fade
+
+  [mean_dipole]   chunks=137   feature_mean=-0.0040   feature_std=0.0934
+    Q1: n= 34  feature ∈ [-0.200, -0.075]  fwd_r=-0.00083  SE=0.00039  dir=fade  **
+    Q2: n= 34  feature ∈ [-0.075, -0.006]  fwd_r=-0.00038  SE=0.00039  dir=fade
+    Q3: n= 34  feature ∈ [-0.004, +0.072]  fwd_r=+0.00006  SE=0.00020  dir=momentum
+    Q4: n= 34  feature ∈ [+0.073, +0.199]  fwd_r=+0.00005  SE=0.00042  dir=momentum
+

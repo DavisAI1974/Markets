@@ -1153,6 +1153,188 @@ def _feat_triangulated_consensus(ctx: MultiFeatureContext
     return np.array(out), status
 
 
+# ---------------------------------------------------------------------------
+# Cross-platform bounded dipoles (Pass-17).
+#
+# These are canonical bounded-imbalance forms (H_a - H_b) / (H_a + H_b)
+# ∈ [-1, +1] applied ACROSS platforms rather than within a single
+# venue's book/flow. The four "When the dipole equation thrives"
+# principles all pass for these:
+#   1. Coexistence — venues / spot+perp coexist in the same timestamp
+#      window; not temporal complements.
+#   2. Heavy-tail compression — cross-platform raw ratios are heavier-
+#      tailed than within-venue (one platform can dominate flow by 10x+
+#      during dislocations); the bounded form keeps the tail tractable.
+#   3. Domain meaning — cross-venue / spot-perp imbalance is a known
+#      microstructure signal (lead-lag, informed flow, basis carry).
+#   4. Operationalization, not prediction — they're tagged
+#      role="operationalization" because their job is gating/sizing on
+#      top of predictors, not generating novel predictive signal.
+#
+# Cross-platform is our actual product differentiator vs single-venue
+# competitors; bounded dipoles ARE the missing form in our existing
+# cross-platform feature stack (z-scores, deltas, sign-votes, but no
+# canonical dipoles until now).
+# ---------------------------------------------------------------------------
+
+
+def _bounded_dipole(a: float, b: float) -> float:
+    """(a - b) / (a + b) clipped to [-1, +1]. Returns 0 when both
+    inputs are zero (no defined imbalance)."""
+    s = a + b
+    if s <= 0:
+        return 0.0
+    return max(-1.0, min(1.0, (a - b) / s))
+
+
+def _feat_cross_venue_buy_volume_dipole(ctx: MultiFeatureContext
+                                          ) -> tuple[np.ndarray, str]:
+    """Buy-aggressor pressure dipole between this venue and the other
+    spot venue: (this_buy - other_buy) / (this_buy + other_buy).
+    Positive = this venue's bids are being lifted harder."""
+    if ctx.other_venue_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no other-venue chunks loaded"
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+    out = []
+    seen = False
+    for c, oi in zip(ctx.chunks, other_idx):
+        if oi < 0 or not c.bars:
+            out.append(0.0); continue
+        oc = ctx.other_venue_chunks[oi]
+        self_b = float(sum(b.buy_vol for b in c.bars))
+        other_b = float(sum(b.buy_vol for b in oc.bars))
+        if self_b > 0 or other_b > 0:
+            seen = True
+        out.append(_bounded_dipole(self_b, other_b))
+    status = "" if seen else "no cross-venue buy volume observed"
+    return np.array(out), status
+
+
+def _feat_cross_venue_sell_volume_dipole(ctx: MultiFeatureContext
+                                            ) -> tuple[np.ndarray, str]:
+    """Sell-aggressor pressure dipole between this venue and the other
+    spot venue: (this_sell - other_sell) / (this_sell + other_sell).
+    Positive = this venue's offers are being hit harder."""
+    if ctx.other_venue_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no other-venue chunks loaded"
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+    out = []
+    seen = False
+    for c, oi in zip(ctx.chunks, other_idx):
+        if oi < 0 or not c.bars:
+            out.append(0.0); continue
+        oc = ctx.other_venue_chunks[oi]
+        self_s = float(sum(b.sell_vol for b in c.bars))
+        other_s = float(sum(b.sell_vol for b in oc.bars))
+        if self_s > 0 or other_s > 0:
+            seen = True
+        out.append(_bounded_dipole(self_s, other_s))
+    status = "" if seen else "no cross-venue sell volume observed"
+    return np.array(out), status
+
+
+def _feat_perp_spot_buy_volume_dipole(ctx: MultiFeatureContext
+                                         ) -> tuple[np.ndarray, str]:
+    """Leveraged vs cash buyer dipole:
+    (perp_buy - spot_buy) / (perp_buy + spot_buy). Positive = perp
+    longs leading the bid lift relative to spot longs."""
+    if ctx.perp_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no Bybit perp chunks loaded"
+    perp_idx = _ts_aligned_lookup(ctx.chunks, ctx.perp_chunks)
+    out = []
+    seen = False
+    for c, pi in zip(ctx.chunks, perp_idx):
+        if pi < 0 or not c.bars:
+            out.append(0.0); continue
+        pc = ctx.perp_chunks[pi]
+        spot_b = float(sum(b.buy_vol for b in c.bars))
+        perp_b = float(sum(b.buy_vol for b in pc.bars))
+        if spot_b > 0 or perp_b > 0:
+            seen = True
+        out.append(_bounded_dipole(perp_b, spot_b))
+    status = "" if seen else "no perp/spot buy volume observed"
+    return np.array(out), status
+
+
+def _feat_perp_spot_sell_volume_dipole(ctx: MultiFeatureContext
+                                          ) -> tuple[np.ndarray, str]:
+    """Leveraged vs cash seller dipole:
+    (perp_sell - spot_sell) / (perp_sell + spot_sell). Positive = perp
+    shorts leading the offer hit relative to spot sellers."""
+    if ctx.perp_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no Bybit perp chunks loaded"
+    perp_idx = _ts_aligned_lookup(ctx.chunks, ctx.perp_chunks)
+    out = []
+    seen = False
+    for c, pi in zip(ctx.chunks, perp_idx):
+        if pi < 0 or not c.bars:
+            out.append(0.0); continue
+        pc = ctx.perp_chunks[pi]
+        spot_s = float(sum(b.sell_vol for b in c.bars))
+        perp_s = float(sum(b.sell_vol for b in pc.bars))
+        if spot_s > 0 or perp_s > 0:
+            seen = True
+        out.append(_bounded_dipole(perp_s, spot_s))
+    status = "" if seen else "no perp/spot sell volume observed"
+    return np.array(out), status
+
+
+def _feat_cross_venue_l1_bid_depth_dipole(ctx: MultiFeatureContext
+                                             ) -> tuple[np.ndarray, str]:
+    """L1 bid-depth dipole between this venue and the other spot venue:
+    (this_bid_qty - other_bid_qty) / (this_bid_qty + other_bid_qty).
+    Per-chunk: average bar-level bid_qty per venue, then bounded dipole.
+    Requires L1 sizes captured (post-2026-05 bins)."""
+    if ctx.other_venue_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no other-venue chunks loaded"
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+
+    def _avg_bid(chunk) -> float | None:
+        s = [b.bid_qty for b in chunk.bars if b.bid_qty > 0]
+        return float(np.mean(s)) if s else None
+
+    out = []
+    seen_l1 = False
+    for c, oi in zip(ctx.chunks, other_idx):
+        if oi < 0:
+            out.append(0.0); continue
+        self_bq = _avg_bid(c); other_bq = _avg_bid(ctx.other_venue_chunks[oi])
+        if self_bq is None or other_bq is None:
+            out.append(0.0); continue
+        seen_l1 = True
+        out.append(_bounded_dipole(self_bq, other_bq))
+    status = "" if seen_l1 else "L1 bid_qty not captured on either venue"
+    return np.array(out), status
+
+
+def _feat_cross_venue_l1_ask_depth_dipole(ctx: MultiFeatureContext
+                                             ) -> tuple[np.ndarray, str]:
+    """L1 ask-depth dipole between this venue and the other spot venue:
+    (this_ask_qty - other_ask_qty) / (this_ask_qty + other_ask_qty).
+    Per-chunk: average bar-level ask_qty per venue, then bounded dipole.
+    Requires L1 sizes captured (post-2026-05 bins)."""
+    if ctx.other_venue_chunks is None:
+        return np.zeros(len(ctx.chunks)), "no other-venue chunks loaded"
+    other_idx = _ts_aligned_lookup(ctx.chunks, ctx.other_venue_chunks)
+
+    def _avg_ask(chunk) -> float | None:
+        s = [b.ask_qty for b in chunk.bars if b.ask_qty > 0]
+        return float(np.mean(s)) if s else None
+
+    out = []
+    seen_l1 = False
+    for c, oi in zip(ctx.chunks, other_idx):
+        if oi < 0:
+            out.append(0.0); continue
+        self_aq = _avg_ask(c); other_aq = _avg_ask(ctx.other_venue_chunks[oi])
+        if self_aq is None or other_aq is None:
+            out.append(0.0); continue
+        seen_l1 = True
+        out.append(_bounded_dipole(self_aq, other_aq))
+    status = "" if seen_l1 else "L1 ask_qty not captured on either venue"
+    return np.array(out), status
+
+
 def _feat_funding_rate_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
     return np.zeros(len(ctx.chunks)), "infrastructure-pending: no historical funding backfill"
 
@@ -1203,6 +1385,17 @@ FEATURE_EXTRACTORS: list[tuple[str, str, str, callable]] = [
     ("perp_spot_basis_z",                 "cross_platform", "predictor",        _feat_perp_spot_basis_z),
     ("perp_spot_dipole_divergence",       "cross_platform", "predictor",        _feat_perp_spot_dipole_divergence),
     ("triangulated_consensus",            "cross_platform", "predictor",        _feat_triangulated_consensus),
+    # Cross-platform bounded dipoles (Pass-17). All role="operationalization":
+    # canonical (H_a - H_b) / (H_a + H_b) forms applied across platforms.
+    # Value comes from heavy-tail compression of cross-platform raw ratios,
+    # not from new predictive signal. Consumed by gated paper cells via the
+    # --cutoffs-out artifact.
+    ("cross_venue_buy_volume_dipole",     "cross_platform", "operationalization", _feat_cross_venue_buy_volume_dipole),
+    ("cross_venue_sell_volume_dipole",    "cross_platform", "operationalization", _feat_cross_venue_sell_volume_dipole),
+    ("perp_spot_buy_volume_dipole",       "cross_platform", "operationalization", _feat_perp_spot_buy_volume_dipole),
+    ("perp_spot_sell_volume_dipole",      "cross_platform", "operationalization", _feat_perp_spot_sell_volume_dipole),
+    ("cross_venue_l1_bid_depth_dipole",   "cross_platform", "operationalization", _feat_cross_venue_l1_bid_depth_dipole),
+    ("cross_venue_l1_ask_depth_dipole",   "cross_platform", "operationalization", _feat_cross_venue_l1_ask_depth_dipole),
     # Experimental — theoretical, low evidence
     ("trade_size_entropy",                "experimental", "predictor",          _feat_trade_size_entropy),
     ("microprice_drift",                  "experimental", "predictor",          _feat_microprice_drift),

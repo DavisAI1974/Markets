@@ -1,0 +1,29 @@
+
+=== KR-ETH  regime=WHALE_UP  ===
+chunks in cell: 191
+corpus chunks total: 806
+
+  [mean_dipole]   chunks=191   feature_mean=+0.4614   feature_std=0.2156
+    Q1: n= 47  feature ∈ [+0.153, +0.294]  fwd_r=+0.00008  SE=0.00023  dir=momentum
+    Q2: n= 48  feature ∈ [+0.297, +0.419]  fwd_r=+0.00023  SE=0.00019  dir=momentum
+    Q3: n= 47  feature ∈ [+0.421, +0.567]  fwd_r=+0.00014  SE=0.00024  dir=momentum
+    Q4: n= 48  feature ∈ [+0.575, +1.000]  fwd_r=-0.00021  SE=0.00019  dir=fade
+
+  [mean_ofi]   chunks=191   feature_mean=+11.5967   feature_std=73.9663
+    Q1: n= 47  feature ∈ [-160.913, +0.139]  fwd_r=+0.00032  SE=0.00021  dir=momentum  *
+    Q2: n= 48  feature ∈ [+0.147, +1.160]  fwd_r=+0.00027  SE=0.00025  dir=momentum
+    Q3: n= 47  feature ∈ [+1.184, +7.913]  fwd_r=+0.00011  SE=0.00021  dir=momentum
+    Q4: n= 48  feature ∈ [+8.044, +945.371]  fwd_r=-0.00046  SE=0.00018  dir=fade  **
+
+  [perp_spot_basis_z]   chunks=191   feature_mean=-0.0439   feature_std=1.3158
+    Q1: n= 47  feature ∈ [-5.778, +0.111]  fwd_r=-0.00008  SE=0.00027  dir=fade
+    Q2: n= 48  feature ∈ [+0.111, +0.111]  fwd_r=-0.00008  SE=0.00019  dir=fade
+    Q3: n= 47  feature ∈ [+0.111, +0.111]  fwd_r=-0.00010  SE=0.00019  dir=fade
+    Q4: n= 48  feature ∈ [+0.111, +6.127]  fwd_r=+0.00049  SE=0.00019  dir=momentum  **
+
+  [realized_vol_z]   chunks=191   feature_mean=-0.2295   feature_std=0.5629
+    Q1: n= 47  feature ∈ [-1.318, -0.606]  fwd_r=+0.00018  SE=0.00020  dir=momentum
+    Q2: n= 48  feature ∈ [-0.594, -0.328]  fwd_r=-0.00001  SE=0.00022  dir=fade
+    Q3: n= 47  feature ∈ [-0.327, +0.043]  fwd_r=+0.00012  SE=0.00021  dir=momentum
+    Q4: n= 48  feature ∈ [+0.058, +2.699]  fwd_r=-0.00005  SE=0.00024  dir=fade
+
