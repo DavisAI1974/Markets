@@ -28,7 +28,40 @@ import os
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Any, Optional
+
+
+# Pass-17 cells-as-data architecture. CellSpec.predicate is a dict-tree
+# matching the predicate DSL below — NOT a Python callable. Cells load
+# from cells_registry.json at startup (path resolves to the repo root
+# alongside the bin files and the cutoffs JSON).
+#
+# DSL leaves (each is a dict with exactly one of these keys):
+#
+#   {"regime_eq": "<regime label>"}
+#     True iff the chunk's regime label equals the string.
+#
+#   {"feat_threshold": {"name": "<attr>", "op": ">=|>|<=|<", "value": <number>}}
+#     Reads feat.<attr> via getattr, compares to value with op. Used for
+#     z-score thresholds and other non-quartile gates.
+#
+#   {"feat_quartile":
+#      {"name": "<attr>", "cell_key": "<venue_label>/<regime>",
+#       "quartile_min": <int 1-4>, "quartile_max": <int 1-4>}}
+#     Looks up the cell's quartile cutoffs from <asset>_cutoffs.json
+#     (emitted by phase1_5_evaluator --cutoffs-out), determines which
+#     quartile the live value falls in, and returns True iff
+#     quartile_min <= q <= quartile_max. quartile_min defaults to 1,
+#     quartile_max defaults to 4. So Q4-only = quartile_min=4, Q1-only =
+#     quartile_max=1.
+#
+# DSL composers (each is a dict with one key, value = list of sub-preds):
+#
+#   {"all_of": [<pred>, ...]}   — all must be true
+#   {"any_of": [<pred>, ...]}   — at least one must be true
+#
+# Anything else evaluates to False (fail-closed; cells with malformed
+# predicates never fire).
 
 
 @dataclass
@@ -52,9 +85,7 @@ class CellSpec:
                             # default that matches the existing 30-bar
                             # chunk window on 1-min bars.
     note: str
-    # Predicate: returns True iff the cell should fire on this chunk.
-    # Args: regime (str), feat (MarketFeatures-like), chunk (MarketChunk-like).
-    predicate: Callable[[str, object, object], bool]
+    predicate: dict         # DSL predicate dict; see module docstring above.
     kind: str = "directional"  # "directional" (default; aggressive marketable
                                # entry/exit) or "mm_passive" (passive quoting:
                                # entry on the resting side of the book, exit
@@ -69,115 +100,188 @@ class CellSpec:
                                # trade). Per-cell setting reflects venue
                                # depth and the magnitude of edge that
                                # gets consumed per simultaneous fill.
+    provenance: dict | None = None  # per-cell history: which pass/method
+                                    # discovered this cell, n_chunks at
+                                    # discovery, q-value, etc. Informational
+                                    # only; doesn't affect trade behavior.
 
 
-def _is_eth_kr_nascent_up(regime: str, feat: object, chunk: object) -> bool:
-    return regime == "WHALE_NASCENT_UP"
+# ---------------------------------------------------------------------------
+# Registry + cutoffs loader. Both files live in the repo root; paths
+# resolved relative to this file so the backend works regardless of cwd.
+# ---------------------------------------------------------------------------
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_CELLS_REGISTRY_PATH = os.path.join(_REPO_ROOT, "cells_registry.json")
+
+_cells_cache: tuple[float, list[CellSpec]] | None = None  # (mtime, cells)
+_cutoffs_cache: dict[str, tuple[float, dict]] = {}        # asset -> (mtime, cutoffs)
 
 
-def _is_eth_kr_herd_up_volq3(regime: str, feat: object, chunk: object) -> bool:
-    if regime != "HERD_UP":
+def _cutoffs_path(asset: str) -> str:
+    return os.path.join(_REPO_ROOT, f"{asset.lower()}_cutoffs.json")
+
+
+def _load_cutoffs(asset: str) -> dict:
+    """Load <asset>_cutoffs.json, reloading on mtime change. Returns
+    the cutoffs sub-dict keyed by venue_label/regime/feature. Missing
+    file → empty dict (cells with feat_quartile predicates will then
+    fail-closed)."""
+    path = _cutoffs_path(asset)
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return {}
+    cached = _cutoffs_cache.get(asset)
+    if cached and cached[0] == mtime:
+        return cached[1]
+    try:
+        with open(path) as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"[cells] cutoffs load failed for {asset} ({path}): {e}",
+              flush=True)
+        return {}
+    cutoffs = payload.get("cutoffs", {}) or {}
+    _cutoffs_cache[asset] = (mtime, cutoffs)
+    return cutoffs
+
+
+def _cellspec_from_dict(d: dict) -> CellSpec | None:
+    """Build a CellSpec from a registry JSON entry. Missing required
+    fields → None (caller skips with warning)."""
+    try:
+        return CellSpec(
+            cell_id=str(d["cell_id"]),
+            asset=str(d["asset"]),
+            venue=str(d["venue"]),
+            side=str(d["side"]),
+            notional_usd=float(d.get("notional_usd", 1000.0)),
+            hold_minutes=float(d.get("hold_minutes", 10.0)),
+            note=str(d.get("note", "")),
+            predicate=d.get("predicate") or {},
+            kind=str(d.get("kind", "directional")),
+            capacity_class=str(d.get("capacity_class", "small")),
+            provenance=d.get("provenance"),
+        )
+    except (KeyError, TypeError, ValueError) as e:
+        print(f"[cells] skipping malformed registry entry: {e} "
+              f"(cell_id={d.get('cell_id', '?')})", flush=True)
+        return None
+
+
+def load_cells_registry(path: str | None = None) -> list[CellSpec]:
+    """Load cells from cells_registry.json. Caches by mtime so repeated
+    calls are cheap. Returns [] if the file is missing or unreadable
+    (cells_as_data system fails to all-empty rather than to legacy
+    hardcoded cells — there are no legacy hardcoded cells anymore)."""
+    global _cells_cache
+    actual = path or _CELLS_REGISTRY_PATH
+    try:
+        mtime = os.path.getmtime(actual)
+    except OSError:
+        if _cells_cache is not None:
+            print(f"[cells] registry no longer at {actual}; serving "
+                  f"{len(_cells_cache[1])} stale cells", flush=True)
+            return _cells_cache[1]
+        print(f"[cells] no registry at {actual}; no cells loaded",
+              flush=True)
+        return []
+    if _cells_cache and _cells_cache[0] == mtime:
+        return _cells_cache[1]
+    try:
+        with open(actual) as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"[cells] registry load failed at {actual}: {e}", flush=True)
+        return _cells_cache[1] if _cells_cache else []
+    raw_cells = payload.get("cells") or []
+    cells: list[CellSpec] = []
+    for entry in raw_cells:
+        spec = _cellspec_from_dict(entry)
+        if spec is not None:
+            cells.append(spec)
+    _cells_cache = (mtime, cells)
+    print(f"[cells] loaded {len(cells)} cells from "
+          f"{os.path.basename(actual)} (schema_version="
+          f"{payload.get('schema_version')})", flush=True)
+    return cells
+
+
+# Module-level CELLS is now a property-style function call site. Callers
+# should prefer load_cells_registry() but legacy imports of CELLS keep
+# working — they get the registry contents at import time.
+CELLS: list[CellSpec] = load_cells_registry()
+
+
+# ---------------------------------------------------------------------------
+# DSL evaluator. Pure function: (predicate dict, regime, feat, chunk,
+# cutoffs_for_asset) -> bool. Cutoffs are passed in (not looked up) so
+# the function stays unit-testable without filesystem.
+# ---------------------------------------------------------------------------
+
+
+def _eval_predicate(pred: Any, regime: str, feat: object, chunk: object,
+                     cutoffs: dict) -> bool:
+    if not isinstance(pred, dict) or not pred:
         return False
-    vz = getattr(feat, "volume_zscore", 0.0)
-    # ~Q3 cut on a standard-normal corpus z-score; matches the
-    # sub-window finding (recent_pass5: r=-0.20 within vol-Q3 for ETH
-    # KR HERD_UP at n=168, p=0.008).
-    return vz is not None and float(vz) >= 0.67
-
-
-def _is_eth_kr_whale_up(regime: str, feat: object, chunk: object) -> bool:
-    return regime == "WHALE_UP"
-
-
-def _is_equilibrium(regime: str, feat: object, chunk: object) -> bool:
-    """MM cells fire on the modal regime — chunks where there's no
-    directional edge but the spread is alive. Pass-6 confirms this is
-    61-78% of all chunks across both assets and venues."""
-    return regime == "EQUILIBRIUM_TWO_SIDED"
-
-
-CELLS: list[CellSpec] = [
-    CellSpec(
-        cell_id="eth_kr_nascent_up_momo",
-        asset="ETH", venue="KR",
-        side="buy",
-        notional_usd=1000.0,
-        hold_minutes=10.0,
-        note="forward paper: ETH KR WHALE_NASCENT_UP momentum (cell pass 5: "
-             "r=+0.21 over 30d, r=+0.58 in recent 9d)",
-        predicate=_is_eth_kr_nascent_up,
-        capacity_class="tiny",
-    ),
-    CellSpec(
-        cell_id="eth_kr_herd_up_volq3_fade",
-        asset="ETH", venue="KR",
-        side="sell",
-        notional_usd=1000.0,
-        hold_minutes=10.0,
-        note="forward paper: ETH KR HERD_UP fade within vol-Q3 (cell pass 5: "
-             "r=-0.20 at n=168, p=0.008)",
-        predicate=_is_eth_kr_herd_up_volq3,
-        capacity_class="tiny",
-    ),
-    # Pass-8 finding: KR-ETH WHALE_UP n=65 r=-0.309 BH q=0.029. First
-    # BH-significant cell since Pass-3. Plain WHALE_UP fade — short
-    # against the upward whale pressure, exit at next chunk close.
-    # Hold tight because the WHALE regime can flip quickly; the
-    # multi-horizon edge tracker will also fire its own edge_eth_kr_
-    # whale_up_*_fade trades on top of this cell as supplementary
-    # confirmation.
-    CellSpec(
-        cell_id="eth_kr_whale_up_fade",
-        asset="ETH", venue="KR",
-        side="sell",
-        notional_usd=1000.0,
-        hold_minutes=10.0,
-        note="forward paper: ETH KR WHALE_UP fade (Pass-8: r=-0.309 n=65 "
-             "BH q=0.029; first BH-significant cell since Pass-3)",
-        predicate=_is_eth_kr_whale_up,
-        capacity_class="tiny",
-    ),
-    # Tier 3.1 EQUILIBRIUM market-making cells. One per (asset, venue) so
-    # each cell's realized P&L tracks the captured-spread minus
-    # round-trip-fees on its own venue. Hold short (5 min) so the cell
-    # exits before the regime drifts off EQUILIBRIUM; the actual real-
-    # money equivalent would also exit on regime flip via SSE rather
-    # than time-out.
-    CellSpec(
-        cell_id="eth_kr_eq_mm_passive",
-        asset="ETH", venue="KR", side="buy", kind="mm_passive",
-        notional_usd=1000.0, hold_minutes=5.0,
-        note="forward paper: ETH KR EQUILIBRIUM passive-quote MM. "
-             "Entry rests on bid; exit rests on ask; earns spread "
-             "minus 2 fee legs while regime persists.",
-        predicate=_is_equilibrium,
-        capacity_class="medium",
-    ),
-    CellSpec(
-        cell_id="eth_cb_eq_mm_passive",
-        asset="ETH", venue="CB", side="buy", kind="mm_passive",
-        notional_usd=1000.0, hold_minutes=5.0,
-        note="forward paper: ETH CB EQUILIBRIUM passive-quote MM.",
-        predicate=_is_equilibrium,
-        capacity_class="large",
-    ),
-    CellSpec(
-        cell_id="btc_kr_eq_mm_passive",
-        asset="BTC", venue="KR", side="buy", kind="mm_passive",
-        notional_usd=1000.0, hold_minutes=5.0,
-        note="forward paper: BTC KR EQUILIBRIUM passive-quote MM.",
-        predicate=_is_equilibrium,
-        capacity_class="medium",
-    ),
-    CellSpec(
-        cell_id="btc_cb_eq_mm_passive",
-        asset="BTC", venue="CB", side="buy", kind="mm_passive",
-        notional_usd=1000.0, hold_minutes=5.0,
-        note="forward paper: BTC CB EQUILIBRIUM passive-quote MM.",
-        predicate=_is_equilibrium,
-        capacity_class="large",
-    ),
-]
+    if "regime_eq" in pred:
+        return regime == pred["regime_eq"]
+    if "feat_threshold" in pred:
+        spec = pred["feat_threshold"]
+        v = getattr(feat, spec.get("name", ""), None)
+        if v is None:
+            return False
+        op = spec.get("op", ">=")
+        try:
+            fv = float(v); thr = float(spec.get("value", 0.0))
+        except (TypeError, ValueError):
+            return False
+        if op == ">=":  return fv >= thr
+        if op == ">":   return fv > thr
+        if op == "<=":  return fv <= thr
+        if op == "<":   return fv < thr
+        if op == "==":  return fv == thr
+        return False
+    if "feat_quartile" in pred:
+        spec = pred["feat_quartile"]
+        v = getattr(feat, spec.get("name", ""), None)
+        if v is None:
+            return False
+        cell_key = spec.get("cell_key", "")
+        venue_label, _, regime_key = cell_key.partition("/")
+        feat_name = spec.get("name", "")
+        try:
+            entry = (cutoffs.get(venue_label, {})
+                     .get(regime_key, {})
+                     .get(feat_name))
+        except AttributeError:
+            return False
+        if not isinstance(entry, dict):
+            return False
+        try:
+            q1u = float(entry["q1_upper"])
+            q2u = float(entry["q2_upper"])
+            q3u = float(entry["q3_upper"])
+            fv = float(v)
+        except (KeyError, TypeError, ValueError):
+            return False
+        if fv <= q1u:    q_actual = 1
+        elif fv <= q2u:  q_actual = 2
+        elif fv <= q3u:  q_actual = 3
+        else:            q_actual = 4
+        q_min = int(spec.get("quartile_min", 1))
+        q_max = int(spec.get("quartile_max", 4))
+        return q_min <= q_actual <= q_max
+    if "all_of" in pred:
+        subs = pred.get("all_of") or []
+        return all(_eval_predicate(p, regime, feat, chunk, cutoffs)
+                   for p in subs)
+    if "any_of" in pred:
+        subs = pred.get("any_of") or []
+        return any(_eval_predicate(p, regime, feat, chunk, cutoffs)
+                   for p in subs)
+    return False
 
 
 _PRACTICE_FEE_BPS = 25.0
@@ -388,15 +492,24 @@ def vol_target_multiplier(realized_vol: float,
 
 def find_matching_cells(asset: str, venue: str, regime: str,
                           feat: object, chunk: object) -> list[CellSpec]:
-    out = []
-    for cell in CELLS:
+    """Return all registry cells whose DSL predicate fires on this chunk.
+    Reloads the registry + cutoffs on mtime change so live appends are
+    picked up without a backend restart."""
+    cells = load_cells_registry()
+    if not cells:
+        return []
+    cutoffs = _load_cutoffs(asset)
+    out: list[CellSpec] = []
+    for cell in cells:
         if cell.asset != asset or cell.venue != venue:
             continue
         try:
-            if cell.predicate(regime, feat, chunk):
+            if _eval_predicate(cell.predicate, regime, feat, chunk, cutoffs):
                 out.append(cell)
-        except Exception:
-            # Predicate failure shouldn't kill the poll loop.
+        except Exception as e:
+            # Predicate failure shouldn't kill the poll loop. Log + skip.
+            print(f"[cells] predicate eval error for {cell.cell_id}: {e}",
+                  flush=True)
             continue
     return out
 

@@ -1,5 +1,287 @@
 # Markets / dipole — Phase 1.5 results: first GHA-collected ETH evaluation
 
+## Seventeenth pass — 2026-05-12 night, dipole reframe + cells-as-data + cross-platform bounded dipoles
+
+Three substantive shifts on top of Pass-16:
+
+1. **Conceptual reframe of the dipole's role** (from a prior session's
+   "When the Dipole Equation Thrives" findings, mapped onto markets):
+   bounded within-channel imbalance forms (mean_dipole, vpin_like,
+   book_depth_imbalance) are AUC-equivalent to their underlying raw
+   ratio. They do NOT generate novel predictive signal — their value-
+   add is bounded `[-1, +1]` outlier compression for thresholding +
+   sizing on top of the predictive features.
+
+2. **Cells-as-data**: `forward_paper.py` no longer hardcodes its
+   trading cells. They live in `cells_registry.json` as DSL
+   predicates and load at runtime.
+
+3. **Cross-platform bounded dipoles**: six new operationalization
+   features filling the gap in our cross-platform stack (z-scores,
+   deltas, sign-votes, but no canonical dipoles until now).
+
+### The dipole-thrives principle, mapped to markets
+
+Four principles transferred from the bounded-form work in another
+domain (the original is medical; the principles are formulation, not
+biology):
+
+| Principle | Markets check |
+|---|---|
+| **Coexistence** — H_a and H_b in same window, not temporal complements | ✓ buy_vol/sell_vol per bar; cross-venue ticks coexist; spot+perp coexist |
+| **Heavy-tail compression** — raw ratio has heavy upper tail; bounded form keeps the tail tractable | ✓ in extreme regimes (WHALE_UP, WASH_HAWKES); raw imbalance ratios can be 10x+ |
+| **Domain meaning** — balance maps to a known operational state | ✓ aggressor pressure, book imbalance, basis carry — all microstructure-literature staples |
+| **Operationalization not prediction** — AUC-equivalent to the raw ratio; value is thresholding/sizing/tracking | ✓ exactly what Pass-16 saw: `mean_dipole` drops to Tier-2 under multi-feature FDR — the theory predicting itself |
+
+**Operational consequence**: dipole-family features should NOT compete
+in the predictive FDR family on their merits as predictors. Their
+right role is to define *Q-cutoffs* — operational thresholds — that
+gate the predictive features' entries onto extreme-tail chunks where
+the predictive signal is strongest. Pass-17 builds the machinery for
+this; Pass-18 will pull operationalization features out of the FDR
+predictive family (testing them predictively is the wrong test) and
+the Tier-2 readings will turn out to have been confirmation of the
+theory all along, not regressions.
+
+### Conflict audits — let-the-data-decide on the three Pass-16 cells with feature disagreement
+
+The Pass-16 doc flagged direction conflicts on KR-ETH EQUILIBRIUM,
+CB-ETH WASH_HAWKES, and (from the prior session) KR-ETH WHALE_UP. The
+user's repeated principle:
+
+> *"don't force a solution, let the data decide. just because 1 says
+>  something and 10 others say the opposite doesn't mean the 1 is wrong."*
+
+`direction_conflict_audit.py` (built in the prior session, run with
+fresh bins this pass) slices each cell's chunks into quartiles by
+each named feature's per-chunk value and reports the forward log-
+return mean per quartile. Findings:
+
+**KR-ETH WHALE_UP** (191 chunks):
+- `mean_dipole`: Q1–Q3 mild momentum/noise; **Q4 fades** (-0.00021,
+  SE 0.00019) at cutoff dipole > +0.575. The 7-replication "WHALE_UP
+  fades" was implicit-quartile-Q4 all along.
+- `mean_ofi`: Q1–Q3 momentum; **Q4 strong fade** (-0.00046 **) at
+  cutoff ofi > +8.04.
+- `perp_spot_basis_z`: Q1–Q3 mild fade; **Q4 strong momentum**
+  (+0.00049 **) at cutoff > +0.111. Opposite-direction Tier-1 finding
+  from Pass-16 is real but conditional on Q4 basis only.
+- `realized_vol_z`: alternates Q1+ / Q2- / Q3+ / Q4- — likely
+  vol-of-vol autocorrelation, treat as suspect.
+
+**KR-ETH EQUILIBRIUM_TWO_SIDED** (314 chunks):
+- `mean_dipole`: **Q1 strong momentum** (+0.00054 **) at cutoff ≤
+  +0.036. Q2 fade, Q3 momentum (*), Q4 fade. Alternating, not
+  monotonic — the actionable subset is Q1.
+- `cross_venue_gap_z`: **Q3 strongest momentum** (+0.00055 **) — very
+  tight feature range. Cleanest signal of any feature on this cell.
+- `realized_vol_z`, `perp_spot_basis_z`: mixed by quartile;
+  consistent with the Pass-16 daily-horizon read but intraday-
+  attenuated.
+
+**CB-ETH WASH_HAWKES** (137 chunks):
+- `mean_dipole`: **Q1 strong fade** (-0.00083 **) at cutoff ≤ -0.075;
+  monotonic to Q4 mild momentum. Cleanest signal on this cell.
+- `cross_venue_gap_z`: Q1 fade (*) but tight everywhere else;
+  Pass-16's daily "momentum" reading doesn't survive at the chunk-
+  forward-return microscope.
+- `cross_venue_book_imbalance_delta`, `cross_venue_aggressor_
+  agreement`: mostly fade or noise across quartiles.
+
+**Cross-cell finding**: the Q4-fade framing inherited from KR-ETH
+WHALE_UP was the wrong default. Each cell has its own actionable
+quartile (Q1, Q3, or Q4) and its own direction. Per-cell Q-cutoff
+gating is required; one-size-fits-all Q4 gating would mis-trade most
+cells. The conflict audit's value isn't choosing a winner — it's
+finding the regime within the regime where each feature's signal is
+real.
+
+### Cells-as-data architecture
+
+Previous pattern: each cell was a `CellSpec` literal in
+`backend/forward_paper.py` with a hand-written Python predicate.
+Discovering a new cell required a code change → commit → deploy.
+Discovered cells competed with old ones for human attention in code
+review. The cells we traded were whichever ones a human (us) decided
+to bake in.
+
+New pattern (committed this pass):
+
+- **`cells_registry.json`** (repo root) — source of truth for what
+  trades. Schema documented at the top of the file; each cell entry
+  carries cell_id, asset, venue, side, kind, notional, hold_minutes,
+  capacity_class, note, a DSL predicate dict, and provenance metadata
+  (which pass discovered the cell, n_chunks at discovery, q-value
+  when available, etc).
+- **Predicate DSL** (specified in `backend/forward_paper.py` module
+  docstring): four primitives — `regime_eq`, `feat_threshold`,
+  `feat_quartile`, and the `all_of` / `any_of` composers. The
+  `feat_quartile` leaf reads per-(venue, regime) Q-cutoffs from
+  `<asset>_cutoffs.json` to support principle-grounded gating without
+  baking thresholds into code.
+- **Runner refactor**: `find_matching_cells(asset, venue, regime,
+  feat, chunk)` now loads from the registry (cached by mtime,
+  reloads on file change), looks up `<asset>_cutoffs.json` for the
+  feat_quartile leaves, and evaluates each cell's predicate via the
+  DSL interpreter. Append a cell to the JSON → live within one poll
+  cycle, no restart.
+- **Append-mostly retirement model**: cells stay in the registry
+  even after newer findings supersede them. The signal_allocator
+  already handles capacity, so accumulation doesn't bunch capital.
+  Retirement is driven by realized P&L decay (Pass-18 candidate),
+  not by FDR churn — the offline pass operates on historical chunks
+  and can't see live P&L, so it shouldn't be the kill switch.
+
+**Migration**: 7 hardcoded cells migrated to DSL with cell_id
+preserved (so trade history continuity is intact). DSL-vs-legacy
+parity test passes on all 7 cells across regime/threshold/all_of
+fixtures (0 mismatches).
+
+### --cutoffs-out artifact
+
+`phase1_5_evaluator.py --cutoffs-out <path>` writes a JSON of per-
+(asset, venue, regime) quartile cutoffs for every FEATURE_EXTRACTORS
+entry with `role="operationalization"`. Schema:
+
+```
+cutoffs[<venue_label>][<regime>][<feature_name>] = {
+  n_chunks, q1_upper, q2_upper, q3_upper, min, max, mean, median
+}
+```
+
+`feat_quartile` predicate leaves reference these via
+`cell_key = "<venue_label>/<regime>"`. The cutoffs file is regenerated
+every pass; gated cells automatically pick up the latest thresholds
+on the next mtime change.
+
+### Role-tagged FEATURE_EXTRACTORS + 6 new cross-platform bounded dipoles
+
+FEATURE_EXTRACTORS is now a 4-tuple `(name, group, role, fn)`. Roles:
+
+- **`"predictor"`** (15 features) — features whose value-add is
+  forward-return prediction. Belong in the multi-feature BH-FDR
+  family.
+- **`"operationalization"`** (9 features, ↑ from 3 to 9 this pass) —
+  bounded within-channel imbalance forms. Value-add is Q-cutoff
+  gating, not prediction. Pass-18 will pull these out of the FDR
+  family.
+
+Six new cross-platform bounded dipoles added, all tagged
+operationalization:
+
+- `cross_venue_buy_volume_dipole` — (KR buy − CB buy) / (sum) per chunk
+- `cross_venue_sell_volume_dipole` — same for sell aggressor pressure
+- `perp_spot_buy_volume_dipole` — leveraged vs cash buyers
+- `perp_spot_sell_volume_dipole` — leveraged vs cash sellers
+- `cross_venue_l1_bid_depth_dipole` — KR vs CB bid depth (L1)
+- `cross_venue_l1_ask_depth_dipole` — KR vs CB ask depth (L1)
+
+All four dipole-thrives principles pass for each. These were the
+missing canonical-dipole forms in our existing cross-platform stack
+(`cross_venue_book_imbalance_delta` is a delta of dipoles;
+`perp_spot_dipole_divergence` is a difference; `triangulated_
+consensus` is a sign-vote — none is a `(a-b)/(a+b)` form). Bounded
+cross-platform dipoles are the precise differentiator no single-venue
+competitor can compute.
+
+### Three new dipole-gated paper cells (in registry)
+
+Each is gated on the audit-discovered Q-cutoff via the DSL's
+`feat_quartile` leaf:
+
+| cell_id | regime | feat | quartile | direction | audit signal |
+|---|---|---|---|---|---|
+| `eth_kr_whale_up_q4_dipole_fade` | KR-ETH WHALE_UP | mean_dipole | Q4 | sell | -0.00021 SE 0.00019 |
+| `eth_kr_eq_q1_dipole_momo` | KR-ETH EQ | mean_dipole | Q1 | buy | +0.00054 SE 0.00026 ** |
+| `eth_kr_eq_q1_dipole_momo` runs alongside the existing `eth_kr_eq_mm_passive` cell — different kind (directional vs passive) on a Q1 subset of the same chunks. | | | | | |
+| `eth_cb_wash_q1_dipole_fade` | CB-ETH WASH_HAWKES | mean_dipole | Q1 | sell | -0.00083 SE 0.00039 ** |
+
+All three use `feat.mean_dipole` (already exposed on
+MarketFeatures), `capacity_class="tiny"`, 10 min hold. The deferred
+gated cells based on mean_ofi (Q4 fade) and perp_spot_basis_z (Q4
+momentum) require plumbing those values onto `feat` at chunk creation
+— deferred to Pass-18.
+
+### Pass-18 candidates
+
+In priority order:
+
+1. **`MarketSignalConnector` (convergence detector)** — analog of the
+   `CrossDomainConnector` real-time pattern. Listens to every cell
+   firing, tracks per-chunk co-occurrence of features in actionable
+   quartiles, detects "convergence chunks" where ≥3 features agree on
+   direction. Convergence chunks fire a new `convergence` tier above
+   `high_conviction` for the signal_allocator. Smallest scope, biggest
+   immediate signal-quality lift; the Q-gating shipped in Pass-17
+   gates a single feature, this gates the agreement of many.
+
+2. **Pull operationalization features out of the multi-feature BH-FDR
+   family**. Their job isn't predicting; testing them for predictive
+   significance is the wrong test (Principle 4). Restructured family
+   = fewer false-tail tests + cleaner Tier-1 picture. The
+   `mean_dipole` Tier-2 reading from Pass-16 was the theory
+   predicting itself.
+
+3. **`cross_platform_autoresearch.py` (OD analog)** — adopts the
+   autoresearch loop pattern: hypothesis → modify → score →
+   keep/discard → repeat, with phased strategy and stop conditions.
+   Inputs are per-chunk feature vectors from BOTH spot venues + perp
+   (~54 base features × 3 platforms). Tests pairwise cross-platform
+   interactions (~1,400 candidates) with BH-FDR discipline; emits new
+   cell suggestions for `cells_registry.json`. Runs per (venue,
+   regime) cell, not on pooled corpus (piecewise insight from the
+   OD-on-Liouvillian work). This is the OD analog the codebase has
+   been gesturing at since `markets_autoresearch_chunk.py`'s "the
+   apr5 OD-branch search engine is the right backend when wired in"
+   comment.
+
+4. **P&L decay retirement monitor** — for each registry cell, track
+   post-publication realized r vs discovered r over rolling window;
+   pull cells when realized < 50% of discovered. This is the only
+   cell-retirement mechanism in the append-mostly architecture.
+
+5. **Plumb `mean_ofi` and `perp_spot_basis_z` onto live `feat`** so
+   the remaining gated-cell candidates from the Pass-17 audit
+   (KR-ETH WHALE_UP Q4 ofi-fade, Q4 basis-momo) can ship without
+   bypassing the predicate DSL.
+
+6. **Heavy-tail validation script** (`audit_bounded_form_value.py`):
+   for each operationalization feature × cell, compute kurtosis or
+   99th-pct/median of the raw underlying ratio. Cells where the raw
+   form is well-behaved → bounded form is cosmetic, flag for
+   replacement with raw form. Cells where raw is heavy-tailed →
+   bounded form is earning its keep. Pre-commit gate for any new
+   dipole-family feature.
+
+### Reproducer
+
+```bash
+git checkout origin/data/eth-bins -- eth_coinbase_bins.json eth_kraken_bins.json eth_bybit_perp_bins.json
+git checkout origin/data/btc-bins -- btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json
+
+# Three conflict audits (each ~5–30 min):
+python3 direction_conflict_audit.py --asset ETH \
+  --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+  --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+  --bybit-perp-bins eth_bybit_perp_bins.json \
+  --target-venue KR-ETH --target-regime WHALE_UP \
+  --features mean_dipole mean_ofi perp_spot_basis_z realized_vol_z
+# (analogous calls for KR-ETH EQUILIBRIUM_TWO_SIDED and CB-ETH WASH_HAWKES)
+
+# Full pass with cutoffs artifact (writes eth_cutoffs.json):
+python phase1_5_evaluator.py --asset ETH \
+    --cb-bins eth_coinbase_bins.json --kr-bins eth_kraken_bins.json \
+    --sibling-cb-bins btc_coinbase_bins.json --sibling-kr-bins btc_kraken_bins.json \
+    --bybit-perp-bins eth_bybit_perp_bins.json \
+    --multi-signal-pelt --cutoffs-out eth_cutoffs.json
+```
+
+`cells_registry.json` and `<asset>_cutoffs.json` are checked-in
+artifacts. Backend reads them at runtime.
+
+
+
+
 **Date**: 2026-05-04 (initial), 2026-05-05 (second pass on larger corpus)
 **From**: prior session (notes captured by next-agent handoff)
 **Verified by**: re-running `phase1_5_evaluator.py` against the persisted bins

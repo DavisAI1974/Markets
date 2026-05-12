@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "generated_utc": 1747008052,
+  "notes": "Pass-17 cells-as-data registry. backend/forward_paper.py loads this at startup and reloads on mtime change. Cells are append-mostly: new findings get appended here; retirement happens via the P&L decay monitor (Pass-18 candidate), not via FDR churn. Predicate DSL documented in backend/forward_paper.py module docstring.",
+  "cells": [
+    {
+      "cell_id": "eth_kr_nascent_up_momo",
+      "asset": "ETH", "venue": "KR",
+      "side": "buy", "kind": "directional",
+      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "forward paper: ETH KR WHALE_NASCENT_UP momentum (cell pass 5: r=+0.21 over 30d, r=+0.58 in recent 9d)",
+      "predicate": {"regime_eq": "WHALE_NASCENT_UP"},
+      "provenance": {
+        "discovered_pass": 5,
+        "discovery_method": "hand_specified_pass5",
+        "migrated_from_hardcoded_pass": 17
+      }
+    },
+    {
+      "cell_id": "eth_kr_herd_up_volq3_fade",
+      "asset": "ETH", "venue": "KR",
+      "side": "sell", "kind": "directional",
+      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "forward paper: ETH KR HERD_UP fade within vol-Q3 (cell pass 5: r=-0.20 at n=168, p=0.008)",
+      "predicate": {
+        "all_of": [
+          {"regime_eq": "HERD_UP"},
+          {"feat_threshold": {"name": "volume_zscore", "op": ">=", "value": 0.67}}
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 5,
+        "discovery_method": "hand_specified_pass5_volq3_subwindow",
+        "migrated_from_hardcoded_pass": 17
+      }
+    },
+    {
+      "cell_id": "eth_kr_whale_up_fade",
+      "asset": "ETH", "venue": "KR",
+      "side": "sell", "kind": "directional",
+      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "forward paper: ETH KR WHALE_UP fade (Pass-8: r=-0.309 n=65 BH q=0.029; first BH-significant cell since Pass-3)",
+      "predicate": {"regime_eq": "WHALE_UP"},
+      "provenance": {
+        "discovered_pass": 8,
+        "discovered_n_chunks": 65,
+        "discovered_q_value": 0.029,
+        "discovery_method": "gate_I_BH_FDR_pass8",
+        "migrated_from_hardcoded_pass": 17
+      }
+    },
+    {
+      "cell_id": "eth_kr_eq_mm_passive",
+      "asset": "ETH", "venue": "KR",
+      "side": "buy", "kind": "mm_passive",
+      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "capacity_class": "medium",
+      "note": "forward paper: ETH KR EQUILIBRIUM passive-quote MM. Entry rests on bid; exit rests on ask; earns spread minus 2 fee legs while regime persists.",
+      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "provenance": {
+        "discovered_pass": 6,
+        "discovery_method": "tier_3_1_modal_regime",
+        "migrated_from_hardcoded_pass": 17
+      }
+    },
+    {
+      "cell_id": "eth_cb_eq_mm_passive",
+      "asset": "ETH", "venue": "CB",
+      "side": "buy", "kind": "mm_passive",
+      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "capacity_class": "large",
+      "note": "forward paper: ETH CB EQUILIBRIUM passive-quote MM.",
+      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "provenance": {
+        "discovered_pass": 6,
+        "discovery_method": "tier_3_1_modal_regime",
+        "migrated_from_hardcoded_pass": 17
+      }
+    },
+    {
+      "cell_id": "btc_kr_eq_mm_passive",
+      "asset": "BTC", "venue": "KR",
+      "side": "buy", "kind": "mm_passive",
+      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "capacity_class": "medium",
+      "note": "forward paper: BTC KR EQUILIBRIUM passive-quote MM.",
+      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "provenance": {
+        "discovered_pass": 6,
+        "discovery_method": "tier_3_1_modal_regime",
+        "migrated_from_hardcoded_pass": 17
+      }
+    },
+    {
+      "cell_id": "btc_cb_eq_mm_passive",
+      "asset": "BTC", "venue": "CB",
+      "side": "buy", "kind": "mm_passive",
+      "notional_usd": 1000.0, "hold_minutes": 5.0,
+      "capacity_class": "large",
+      "note": "forward paper: BTC CB EQUILIBRIUM passive-quote MM.",
+      "predicate": {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+      "provenance": {
+        "discovered_pass": 6,
+        "discovery_method": "tier_3_1_modal_regime",
+        "migrated_from_hardcoded_pass": 17
+      }
+    },
+    {
+      "cell_id": "eth_kr_whale_up_q4_dipole_fade",
+      "asset": "ETH", "venue": "KR",
+      "side": "sell", "kind": "directional",
+      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "Pass-17 conflict-audit finding: KR-ETH WHALE_UP fade conditional on Q4 mean_dipole (top 25% by chunk dipole, cutoff > q3_upper of KR-ETH/WHALE_UP/mean_dipole). Mild fade signal (-0.00021, SE 0.00019). Gated overlay on the broader eth_kr_whale_up_fade cell.",
+      "predicate": {
+        "all_of": [
+          {"regime_eq": "WHALE_UP"},
+          {"feat_quartile": {
+            "name": "mean_dipole",
+            "cell_key": "KR-ETH/WHALE_UP",
+            "quartile_min": 4
+          }}
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 17,
+        "discovered_n_chunks": 191,
+        "discovery_method": "direction_conflict_audit_q4_gate",
+        "audit_output": "pass17_audit_out/kreth_whale_up.txt"
+      }
+    },
+    {
+      "cell_id": "eth_kr_eq_q1_dipole_momo",
+      "asset": "ETH", "venue": "KR",
+      "side": "buy", "kind": "directional",
+      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "Pass-17 conflict-audit finding: KR-ETH EQUILIBRIUM_TWO_SIDED momentum conditional on Q1 mean_dipole (bottom 25%, cutoff <= q1_upper). Strong signal (+0.00054, SE 0.00026, **). Directional overlay on top of the eth_kr_eq_mm_passive cell — fires on the Q1 subset only.",
+      "predicate": {
+        "all_of": [
+          {"regime_eq": "EQUILIBRIUM_TWO_SIDED"},
+          {"feat_quartile": {
+            "name": "mean_dipole",
+            "cell_key": "KR-ETH/EQUILIBRIUM_TWO_SIDED",
+            "quartile_max": 1
+          }}
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 17,
+        "discovered_n_chunks": 314,
+        "discovery_method": "direction_conflict_audit_q1_gate",
+        "audit_output": "pass17_audit_out/kreth_eq_two_sided.txt"
+      }
+    },
+    {
+      "cell_id": "eth_cb_wash_q1_dipole_fade",
+      "asset": "ETH", "venue": "CB",
+      "side": "sell", "kind": "directional",
+      "notional_usd": 1000.0, "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "Pass-17 conflict-audit finding: CB-ETH WASH_HAWKES fade conditional on Q1 mean_dipole (bottom 25%, cutoff <= q1_upper). Strongest CB-ETH dipole signal (-0.00083, SE 0.00039, **). Monotonic quartile pattern (Q1 strong fade, Q4 mild momentum) consistent with the dipole-thrives outlier-compression principle.",
+      "predicate": {
+        "all_of": [
+          {"regime_eq": "WASH_HAWKES"},
+          {"feat_quartile": {
+            "name": "mean_dipole",
+            "cell_key": "CB-ETH/WASH_HAWKES",
+            "quartile_max": 1
+          }}
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 17,
+        "discovered_n_chunks": 137,
+        "discovery_method": "direction_conflict_audit_q1_gate",
+        "audit_output": "pass17_audit_out/cbeth_wash_hawkes.txt"
+      }
+    }
+  ]
+}

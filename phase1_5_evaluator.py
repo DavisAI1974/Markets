@@ -19,6 +19,7 @@ import argparse
 import json
 import math
 import os
+import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Sequence
@@ -1501,6 +1502,84 @@ def apply_multi_feature_fdr(scan_results_by_venue: dict,
               "fdr_q": fdr_q}
 
 
+def compute_operationalization_cutoffs(
+    asset: str,
+    venue_ctxs: list,
+    n_buckets: int = 4,
+) -> dict:
+    """For each operationalization-role feature in FEATURE_EXTRACTORS,
+    compute per-(venue, regime) quartile cutoffs from the in-cell
+    chunks. Returns a dict suitable for JSON dump; consumed by the
+    predicate DSL's `feat_quartile` leaf in backend/forward_paper.py.
+
+    Per principle 2 of "When the dipole equation thrives": the bounded
+    form's value-add IS the per-cell threshold (operationalization),
+    so the cutoffs ARE the deliverable. The cells trade off these
+    thresholds, not off the bounded values directly.
+
+    Schema:
+      cutoffs[<venue_label>][<regime>][<feature_name>] = {
+        n_chunks, q1_upper, q2_upper, q3_upper, min, max, mean, median
+      }
+    where qN_upper is the inclusive upper bound of bucket N
+    (equal-count splits of the sorted in-cell feature values). Q4 is
+    values strictly greater than q3_upper. Matches the convention
+    used by direction_conflict_audit.py.
+
+    venue_ctxs is a list of (venue_label, ctx, results) — same shape
+    as scan_by_venue's source so the caller doesn't have to re-build.
+    """
+    out = {
+        "schema_version": 1,
+        "asset": asset,
+        "n_buckets": n_buckets,
+        "generated_utc": time.time(),
+        "convention": (
+            "qN_upper = inclusive upper bound of bucket N from equal-count "
+            "splits of sorted in-cell feature values. Q4 = values strictly "
+            "greater than q3_upper. Predicate DSL feat_quartile leaf reads "
+            "these via cell_key = '<venue_label>/<regime>'."
+        ),
+        "cutoffs": {},
+    }
+
+    for venue_label, ctx, results in venue_ctxs:
+        regime_labels = [r.regime.value for r in results]
+        per_venue: dict = {}
+        for name, group, role, fn in FEATURE_EXTRACTORS:
+            if role != "operationalization":
+                continue
+            values, status = fn(ctx)
+            if status.startswith("infrastructure-pending") or values is None:
+                continue
+            if not np.any(np.isfinite(values)) or np.std(values) < 1e-12:
+                continue
+            for regime in sorted(set(regime_labels)):
+                in_cell = np.array([lbl == regime for lbl in regime_labels])
+                v_cell = values[in_cell]
+                v_cell = v_cell[np.isfinite(v_cell)]
+                if len(v_cell) < n_buckets * 2:
+                    continue
+                v_sorted = np.sort(v_cell)
+                n = len(v_sorted)
+                cuts = np.linspace(0, n, n_buckets + 1).astype(int)
+                boundaries = {
+                    f"q{q+1}_upper":
+                        float(v_sorted[min(cuts[q + 1] - 1, n - 1)])
+                    for q in range(n_buckets - 1)
+                }
+                per_venue.setdefault(regime, {})[name] = {
+                    "n_chunks": int(n),
+                    **boundaries,
+                    "min": float(v_sorted[0]),
+                    "max": float(v_sorted[-1]),
+                    "mean": float(np.mean(v_sorted)),
+                    "median": float(np.median(v_sorted)),
+                }
+        out["cutoffs"][venue_label] = per_venue
+    return out
+
+
 def evaluate_gate_I(label: str, chunks: list[MarketChunk],
                      results: list[ClassificationResult],
                      k: int = 1,
@@ -1793,6 +1872,8 @@ def main():
                    help="Path to hawkes_eta_calibration.json. When present, per-(asset,venue) elevated/diffuse thresholds drive the F10 hawkes_multiplier. Falls back to literature defaults if missing or entry not found.")
     p.add_argument("--features-out", type=str, default=None,
                    help="Path to JSON dump of per-(asset,venue,regime) feature distributions + sub-cell Gate I (Pass-7 evaluator output).")
+    p.add_argument("--cutoffs-out", type=str, default=None,
+                   help="Path to JSON dump of per-(venue,regime) quartile cutoffs for FEATURE_EXTRACTORS entries with role='operationalization'. Consumed by gated paper cells via the predicate DSL's feat_quartile leaf — gives live predicates a calibrated Q-threshold for each (cell, feature) pair. Independent of --features-out; written after the multi-feature scan.")
     p.add_argument("--subcell-min-n", type=int, default=15,
                    help="Minimum n per sub-cell for Pass-7 sub-cell Gate I. Lower for small corpora; default 15 keeps signal/noise reasonable.")
     p.add_argument("--lag-scan-range", type=int, default=10,
@@ -2336,6 +2417,22 @@ def main():
     print(f"  Family size: {fdr_summary['n_tests']} (feature, venue, regime, "
           f"horizon) tests at fdr_q={fdr_summary['fdr_q']}; "
           f"{fdr_summary['n_significant']} survive BH-FDR.\n")
+
+    # Pass-17 — emit per-(venue, regime) quartile cutoffs for the
+    # operationalization-role features. Consumed by the predicate DSL's
+    # feat_quartile leaf in backend/forward_paper.py so gated cells can
+    # check live whether the current chunk's feature value falls in a
+    # calibrated Q tail of the cell's historical distribution.
+    if args.cutoffs_out:
+        cutoffs_payload = compute_operationalization_cutoffs(
+            args.asset, venue_ctxs, n_buckets=4)
+        with open(args.cutoffs_out, "w") as f:
+            json.dump(cutoffs_payload, f, indent=2)
+        op_features = sum(
+            len(by_feat) for by_venue in cutoffs_payload["cutoffs"].values()
+            for by_feat in by_venue.values())
+        print(f"Pass-17 cutoffs dump: {args.cutoffs_out} "
+              f"({op_features} (venue,regime,feature) entries)\n")
 
     # Collect actionable rows, tagging by tier.
     # Tier 1 = strength tier surfaces it AND at least one BH-significant horizon
