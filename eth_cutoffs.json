@@ -1,0 +1,1393 @@
+{
+  "schema_version": 1,
+  "asset": "ETH",
+  "n_buckets": 4,
+  "generated_utc": 1778547489.6714063,
+  "convention": "qN_upper = inclusive upper bound of bucket N from equal-count splits of sorted in-cell feature values. Q4 = values strictly greater than q3_upper. Predicate DSL feat_quartile leaf reads these via cell_key = '<venue_label>/<regime>'.",
+  "cutoffs": {
+    "CB-ETH": {
+      "DEPLETED": {
+        "mean_dipole": {
+          "n_chunks": 33,
+          "q1_upper": -0.005673706618302321,
+          "q2_upper": 0.059837649480222306,
+          "q3_upper": 0.12122770288543204,
+          "min": -0.30528483028217285,
+          "max": 0.36286921090377106,
+          "mean": 0.06124187810573241,
+          "median": 0.06817561713731618
+        },
+        "vpin_like": {
+          "n_chunks": 33,
+          "q1_upper": 0.4303361671757181,
+          "q2_upper": 0.4986287662770706,
+          "q3_upper": 0.5509739578364694,
+          "min": 0.3648107083762407,
+          "max": 0.7365777959272992,
+          "mean": 0.517074785461841,
+          "median": 0.5146908566449845
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 33,
+          "q1_upper": -0.20581631904060713,
+          "q2_upper": -0.08936291079006442,
+          "q3_upper": 0.0401270066078581,
+          "min": -0.7643982245371188,
+          "max": 0.29513104023777065,
+          "mean": -0.09674940057799053,
+          "median": -0.06094559649869501
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 33,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9379488770871316,
+          "mean": 0.1473685663100606,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 33,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9567291301301296,
+          "mean": 0.1422155473751543,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 33,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9654059868228317,
+          "mean": 0.21943071589936694,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 33,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9658863037848406,
+          "mean": 0.22344008583303482,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 33,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.8873060159506768,
+          "max": 0.3735100864706373,
+          "mean": -0.03422335397689095,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 33,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.6632773020731717,
+          "max": 0.15878581476362766,
+          "mean": -0.05205622118541742,
+          "median": 0.0
+        }
+      },
+      "EQUILIBRIUM_TWO_SIDED": {
+        "mean_dipole": {
+          "n_chunks": 289,
+          "q1_upper": -0.09243950099524047,
+          "q2_upper": 0.0358900069936028,
+          "q3_upper": 0.1463298602916112,
+          "min": -0.6522102937476972,
+          "max": 0.7395017749589899,
+          "mean": 0.042242927231549106,
+          "median": 0.037331344854262385
+        },
+        "vpin_like": {
+          "n_chunks": 289,
+          "q1_upper": 0.33072617113171937,
+          "q2_upper": 0.4033447604602894,
+          "q3_upper": 0.4783430736368705,
+          "min": 0.13333278669222345,
+          "max": 0.7450781825824895,
+          "mean": 0.41211250012908685,
+          "median": 0.40394805543003337
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 289,
+          "q1_upper": -0.0560575929367735,
+          "q2_upper": 0.0,
+          "q3_upper": 0.010894509141196813,
+          "min": -0.5396083524487669,
+          "max": 0.5499816380947657,
+          "mean": -0.013894840567315037,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 289,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.31069726953755833,
+          "max": 0.993259027269199,
+          "mean": 0.19557229113194977,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 289,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.6423088670107141,
+          "max": 0.9954055541326468,
+          "mean": 0.18825937443885105,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 289,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9832789067008519,
+          "mean": 0.08088147516432197,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 289,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9740596781327795,
+          "mean": 0.08569292389848922,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 289,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.95796443418189,
+          "max": 0.5622765136971986,
+          "mean": -0.04544060536477077,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 289,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.8572404806511353,
+          "max": 0.3173106073455667,
+          "mean": -0.045158062659937735,
+          "median": 0.0
+        }
+      },
+      "HERD_DOWN": {
+        "mean_dipole": {
+          "n_chunks": 25,
+          "q1_upper": -0.28365184845002944,
+          "q2_upper": -0.21510073710336822,
+          "q3_upper": -0.15524569492963003,
+          "min": -0.40691258252538676,
+          "max": -0.10308614111628059,
+          "mean": -0.21669811575384001,
+          "median": -0.19807100697255936
+        },
+        "vpin_like": {
+          "n_chunks": 25,
+          "q1_upper": 0.2751879084650564,
+          "q2_upper": 0.319938308286688,
+          "q3_upper": 0.3758391286497941,
+          "min": 0.20228560066616272,
+          "max": 0.4809602774054188,
+          "mean": 0.33821381848070303,
+          "median": 0.3200240363352202
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 25,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.2882831432586851,
+          "max": 0.2801579356867745,
+          "mean": -0.00873185588310589,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 25,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.8999401763754716,
+          "mean": 0.19394602453938767,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 25,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.875244233345594,
+          "mean": 0.1777672585810024,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 25,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.890031717383372,
+          "mean": 0.070219014629967,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 25,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.8966094929453418,
+          "mean": 0.06909148298978567,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 25,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.6179303997394728,
+          "max": 0.0,
+          "mean": -0.047746801191456585,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 25,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.31299905682798573,
+          "max": 0.18665285545162552,
+          "mean": -0.005053848055054409,
+          "median": 0.0
+        }
+      },
+      "HERD_UP": {
+        "mean_dipole": {
+          "n_chunks": 15,
+          "q1_upper": 0.12498255418847001,
+          "q2_upper": 0.22698928028498094,
+          "q3_upper": 0.35946911256724684,
+          "min": 0.11272004337837531,
+          "max": 0.4464275245233521,
+          "mean": 0.26519751763728594,
+          "median": 0.23221693474562502
+        },
+        "vpin_like": {
+          "n_chunks": 15,
+          "q1_upper": 0.29079448554431914,
+          "q2_upper": 0.3586791275304481,
+          "q3_upper": 0.43913935789324016,
+          "min": 0.2600836313881335,
+          "max": 0.5385102296442623,
+          "mean": 0.3912916212784163,
+          "median": 0.3814406165062956
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 15,
+          "q1_upper": -0.010078541423507366,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.1707882953333931,
+          "max": 0.3744110612158446,
+          "mean": 0.02660718091408655,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 15,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9498884170135983,
+          "mean": 0.20907896571449544,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 15,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.979393286116045,
+          "mean": 0.23688756139743214,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 15,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9236335094375759,
+          "mean": 0.06157556729583839,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 15,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9374518999220638,
+          "mean": 0.06249679332813759,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 15,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.06078270575819487,
+          "mean": 0.004052180383879658,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 15,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.0669133824988297,
+          "max": 0.0,
+          "mean": -0.004460892166588646,
+          "median": 0.0
+        }
+      },
+      "WASH_HAWKES": {
+        "mean_dipole": {
+          "n_chunks": 131,
+          "q1_upper": -0.0682189699386206,
+          "q2_upper": -0.002658442991687848,
+          "q3_upper": 0.08150088254135174,
+          "min": -0.1962191076004438,
+          "max": 0.19914429136767928,
+          "mean": 0.005711381224207903,
+          "median": 0.0006196181331542649
+        },
+        "vpin_like": {
+          "n_chunks": 131,
+          "q1_upper": 0.36269956465606673,
+          "q2_upper": 0.4278884773686985,
+          "q3_upper": 0.4847905038820774,
+          "min": 0.23546782411207118,
+          "max": 0.7203229438662432,
+          "mean": 0.4339287905534128,
+          "median": 0.4291032709922875
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 131,
+          "q1_upper": -0.06088805252091783,
+          "q2_upper": 0.0,
+          "q3_upper": 0.035630605728615226,
+          "min": -0.4581097820793133,
+          "max": 0.4650414587108903,
+          "mean": -0.0032871196407087914,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 131,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.30706333862335644,
+          "min": -0.3584267367699831,
+          "max": 0.9927675390018669,
+          "mean": 0.20202992560069874,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 131,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.1028610712556482,
+          "min": -0.326393720446254,
+          "max": 0.9869093083076007,
+          "mean": 0.2015174185689085,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 131,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9525161262683357,
+          "mean": 0.09539721267314741,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 131,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9766115163053214,
+          "mean": 0.09476012480450985,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 131,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.7850920593109977,
+          "max": 0.5556411491373786,
+          "mean": -0.038345934027386404,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 131,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.8318783290284031,
+          "max": 0.24810248849445982,
+          "mean": -0.07053750448408008,
+          "median": 0.0
+        }
+      },
+      "WHALE_DOWN": {
+        "mean_dipole": {
+          "n_chunks": 26,
+          "q1_upper": -0.36423494869049683,
+          "q2_upper": -0.2640838559823106,
+          "q3_upper": -0.21759402325554983,
+          "min": -0.6093300575519852,
+          "max": -0.15913011571485244,
+          "mean": -0.2903123092810245,
+          "median": -0.2598425213981921
+        },
+        "vpin_like": {
+          "n_chunks": 26,
+          "q1_upper": 0.3249206226430919,
+          "q2_upper": 0.37325974737233153,
+          "q3_upper": 0.47573936753995427,
+          "min": 0.23125156726858526,
+          "max": 0.628324703098588,
+          "mean": 0.4001123662265868,
+          "median": 0.37765913688854935
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 26,
+          "q1_upper": -0.1953186702705348,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.6384580110262953,
+          "max": 0.12002034086404462,
+          "mean": -0.09764754207496133,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 26,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.16096365729423157,
+          "max": 0.8878504698826236,
+          "mean": 0.09622575586833754,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 26,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9591576396033208,
+          "mean": 0.15110588080206538,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 26,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9711137165006166,
+          "mean": 0.06819587885959683,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 26,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9127758644811224,
+          "mean": 0.06933511113902065,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 26,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.5970572217569584,
+          "max": 0.23282251672901297,
+          "mean": -0.031141680685705296,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 26,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.8266830510957754,
+          "max": 0.21674237834488674,
+          "mean": -0.0654085468299196,
+          "median": 0.0
+        }
+      },
+      "WHALE_UP": {
+        "mean_dipole": {
+          "n_chunks": 40,
+          "q1_upper": 0.19582289199840516,
+          "q2_upper": 0.2706507229997327,
+          "q3_upper": 0.31747156442872615,
+          "min": 0.15076039904122618,
+          "max": 0.7146704574507724,
+          "mean": 0.29599927233415513,
+          "median": 0.273892947209331
+        },
+        "vpin_like": {
+          "n_chunks": 40,
+          "q1_upper": 0.41823474395132115,
+          "q2_upper": 0.48583479948777597,
+          "q3_upper": 0.5246202729434739,
+          "min": 0.19103194295553946,
+          "max": 0.7146704574714109,
+          "mean": 0.47000436305397353,
+          "median": 0.48856339471778576
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 40,
+          "q1_upper": -0.02209828767611436,
+          "q2_upper": 0.0,
+          "q3_upper": 0.09658221391836591,
+          "min": -0.343884881005165,
+          "max": 0.3104291547358114,
+          "mean": 0.024640640905063117,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 40,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.984707353990188,
+          "mean": 0.17740261132437918,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 40,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9862888016562391,
+          "mean": 0.16484813928051273,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 40,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.8992043118949432,
+          "mean": 0.11088683946152877,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 40,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9411199133126187,
+          "mean": 0.12634485271418266,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 40,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.6457913997032341,
+          "max": 0.0,
+          "mean": -0.08620980639429339,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 40,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.6839575484939472,
+          "max": 0.07378102152721948,
+          "mean": -0.07576793611528577,
+          "median": 0.0
+        }
+      }
+    },
+    "KR-ETH": {
+      "DEPLETED": {
+        "mean_dipole": {
+          "n_chunks": 34,
+          "q1_upper": 0.04086896020458929,
+          "q2_upper": 0.19792657051962131,
+          "q3_upper": 0.3238166279433153,
+          "min": -0.24552460732374304,
+          "max": 0.6926084315872196,
+          "mean": 0.22712008970936115,
+          "median": 0.20157176394788937
+        },
+        "vpin_like": {
+          "n_chunks": 34,
+          "q1_upper": 0.6733720933642827,
+          "q2_upper": 0.766108512977032,
+          "q3_upper": 0.79312129298864,
+          "min": 0.5929474571160258,
+          "max": 0.8682838281689168,
+          "mean": 0.7464547535086871,
+          "median": 0.7664282262639524
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 34,
+          "q1_upper": -0.44921343741292535,
+          "q2_upper": -0.17615847390727604,
+          "q3_upper": 0.010546361493811652,
+          "min": -0.6700495036492728,
+          "max": 0.6897540556647804,
+          "mean": -0.14456734523952158,
+          "median": -0.16832513066712876
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 34,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9928963453189343,
+          "max": 0.0,
+          "mean": -0.127735792227634,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 34,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9945034301929837,
+          "max": 0.0,
+          "mean": -0.1323714680373766,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 34,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9976197011393706,
+          "mean": 0.1167496176953408,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 34,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9959124355196981,
+          "mean": 0.11684531027756812,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 34,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.3735100864706373,
+          "max": 0.8873060159506768,
+          "mean": 0.0042126775938038175,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 34,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.15878581476362766,
+          "max": 0.7342932405776226,
+          "mean": 0.02291399927669991,
+          "median": 0.0
+        }
+      },
+      "EQUILIBRIUM_TWO_SIDED": {
+        "mean_dipole": {
+          "n_chunks": 245,
+          "q1_upper": 0.10353387175708424,
+          "q2_upper": 0.2528227005486419,
+          "q3_upper": 0.37052692188551767,
+          "min": -0.5013681305939308,
+          "max": 0.9026527574283374,
+          "mean": 0.23868701460912184,
+          "median": 0.25442316040307056
+        },
+        "vpin_like": {
+          "n_chunks": 245,
+          "q1_upper": 0.6907794336972537,
+          "q2_upper": 0.7495243576291589,
+          "q3_upper": 0.792347210306275,
+          "min": 0.5372171533095015,
+          "max": 0.9633860779416118,
+          "mean": 0.7462447124094578,
+          "median": 0.7500724521063019
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 245,
+          "q1_upper": -0.09046208393796838,
+          "q2_upper": 0.0,
+          "q3_upper": 0.03312626358681417,
+          "min": -0.6563663468578452,
+          "max": 0.6692612404744996,
+          "mean": -0.018941001636749943,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 245,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9927675390018669,
+          "max": 0.0,
+          "mean": -0.1780805398745317,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 245,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9954055541326468,
+          "max": 0.0,
+          "mean": -0.18013486677334822,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 245,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9994882694277082,
+          "mean": 0.14183640596431699,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 245,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9990863353481969,
+          "mean": 0.14441696466264403,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 245,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.5622765136971986,
+          "max": 0.8278869967936159,
+          "mean": 0.04547429013113972,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 245,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.33646619602872574,
+          "max": 0.730818049065718,
+          "mean": 0.04288222096662312,
+          "median": 0.0
+        }
+      },
+      "HERD_DOWN": {
+        "mean_dipole": {
+          "n_chunks": 14,
+          "q1_upper": -0.5566086071074235,
+          "q2_upper": -0.2823695302592938,
+          "q3_upper": -0.15556028225063703,
+          "min": -0.6572572069271493,
+          "max": -0.10776055315877645,
+          "mean": -0.30662684718328237,
+          "median": -0.2761066185547811
+        },
+        "vpin_like": {
+          "n_chunks": 14,
+          "q1_upper": 0.6955398551595492,
+          "q2_upper": 0.7344038306506386,
+          "q3_upper": 0.8001636182776255,
+          "min": 0.5993470886749461,
+          "max": 0.9361677727076512,
+          "mean": 0.7545690027270521,
+          "median": 0.7556764780192482
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 14,
+          "q1_upper": -0.13819628591132296,
+          "q2_upper": 0.0,
+          "q3_upper": 0.11701376514931783,
+          "min": -0.4364970563445593,
+          "max": 0.2851654465404361,
+          "mean": 0.018539264049437128,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 14,
+          "q1_upper": -0.6848344003213919,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9756794007389756,
+          "max": 0.0,
+          "mean": -0.2703884061508652,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 14,
+          "q1_upper": -0.19567883611125447,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.6129388330976058,
+          "max": 0.6423088670107141,
+          "mean": -0.05212149468691705,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 14,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9975191607031384,
+          "mean": 0.14180690636566737,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 14,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9882518925613473,
+          "mean": 0.13965344088588477,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 14,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.2015384468368821,
+          "max": 0.95796443418189,
+          "mean": 0.13859152327571214,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 14,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.12655776096672547,
+          "min": 0.0,
+          "max": 0.6676971531202647,
+          "mean": 0.15465578673847719,
+          "median": 0.0
+        }
+      },
+      "HERD_UP": {
+        "mean_dipole": {
+          "n_chunks": 36,
+          "q1_upper": 0.16445596624408262,
+          "q2_upper": 0.2143392286944768,
+          "q3_upper": 0.4189742471145231,
+          "min": 0.10519769204771076,
+          "max": 0.8420520737234318,
+          "mean": 0.30440812487386204,
+          "median": 0.21587246250800368
+        },
+        "vpin_like": {
+          "n_chunks": 36,
+          "q1_upper": 0.6455260843565365,
+          "q2_upper": 0.7264835637462419,
+          "q3_upper": 0.7700715069375598,
+          "min": 0.5864182918780194,
+          "max": 0.8553345024388,
+          "mean": 0.7205527259126243,
+          "median": 0.7282736781093362
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 36,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0009078667407092511,
+          "min": -0.42049880481874563,
+          "max": 0.49311774191707086,
+          "mean": -0.004293801541379096,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 36,
+          "q1_upper": -0.4553533019417902,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.8875585315900507,
+          "max": 0.0,
+          "mean": -0.18925509622077807,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 36,
+          "q1_upper": -0.48495283391392563,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9060458059025225,
+          "max": 0.326393720446254,
+          "mean": -0.20395358317293447,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 36,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9932404993863112,
+          "mean": 0.05456705451623559,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 36,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9917492340278947,
+          "mean": 0.05474815306291181,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 36,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.6395290122814786,
+          "mean": 0.07663058317464702,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 36,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.30659488314843947,
+          "max": 0.8318783290284031,
+          "mean": 0.06469527107157497,
+          "median": 0.0
+        }
+      },
+      "WASH_HAWKES": {
+        "mean_dipole": {
+          "n_chunks": 117,
+          "q1_upper": -0.025222406286503327,
+          "q2_upper": 0.04280667431314125,
+          "q3_upper": 0.10796870063906522,
+          "min": -0.1471671089650826,
+          "max": 0.19617623748013885,
+          "mean": 0.03805042269113116,
+          "median": 0.04339975329441251
+        },
+        "vpin_like": {
+          "n_chunks": 117,
+          "q1_upper": 0.6563093022542092,
+          "q2_upper": 0.7279472513863688,
+          "q3_upper": 0.7871429602498339,
+          "min": 0.45077523491132154,
+          "max": 0.9523398072345407,
+          "mean": 0.7269377538145924,
+          "median": 0.7285210707021365
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 117,
+          "q1_upper": -0.09222705264039006,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.5656219183929272,
+          "max": 0.5085137719650122,
+          "mean": -0.027004420546874096,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 117,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.984707353990188,
+          "max": 0.16096365729423157,
+          "mean": -0.17612333206812306,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 117,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9855420486404823,
+          "max": 0.3464555507320941,
+          "mean": -0.15988019062703046,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 117,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9936152125306483,
+          "mean": 0.09129128103136255,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 117,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9958049157125426,
+          "mean": 0.0908357995762199,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 117,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.2084414311773482,
+          "max": 0.9271029325786972,
+          "mean": 0.03319967754067538,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 117,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.18665285545162552,
+          "max": 0.8266830510957754,
+          "mean": 0.03909502519286676,
+          "median": 0.0
+        }
+      },
+      "WHALE_DOWN": {
+        "mean_dipole": {
+          "n_chunks": 20,
+          "q1_upper": -0.31604877804471043,
+          "q2_upper": -0.2608787742651121,
+          "q3_upper": -0.21498447658887007,
+          "min": -0.9608110112202956,
+          "max": -0.157830227795102,
+          "mean": -0.29498716711165224,
+          "median": -0.2514752711279411
+        },
+        "vpin_like": {
+          "n_chunks": 20,
+          "q1_upper": 0.7007451070409876,
+          "q2_upper": 0.7529082851597635,
+          "q3_upper": 0.834818008333681,
+          "min": 0.572517084077597,
+          "max": 0.9608110112778628,
+          "mean": 0.7664795823173718,
+          "median": 0.7544678193453302
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 20,
+          "q1_upper": -0.1576556359061581,
+          "q2_upper": 0.0,
+          "q3_upper": 0.05555161022478712,
+          "min": -0.5000856981470456,
+          "max": 0.5639504288657953,
+          "mean": 0.017100355719858663,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 20,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9104384932605892,
+          "max": 0.0,
+          "mean": -0.1285858545980242,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 20,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.7123197618376719,
+          "max": 0.17600222953178388,
+          "mean": -0.061780336119939105,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 20,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.9738426534650144,
+          "min": 0.0,
+          "max": 0.9964630545408338,
+          "mean": 0.29600470173621607,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 20,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.691396444015207,
+          "min": 0.0,
+          "max": 0.9955158168894629,
+          "mean": 0.27352094132132454,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 20,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.5171041367982153,
+          "mean": 0.0611535071137755,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 20,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.055179756253343724,
+          "max": 0.6090236318327663,
+          "mean": 0.05506961150973907,
+          "median": 0.0
+        }
+      },
+      "WHALE_NASCENT_UP": {
+        "mean_dipole": {
+          "n_chunks": 8,
+          "q1_upper": 0.31725419516515024,
+          "q2_upper": 0.3541785093886586,
+          "q3_upper": 0.40282773199146255,
+          "min": 0.260021169724359,
+          "max": 0.6236391075335185,
+          "mean": 0.39537877878540595,
+          "median": 0.3757873406749952
+        },
+        "vpin_like": {
+          "n_chunks": 8,
+          "q1_upper": 0.7311911235665332,
+          "q2_upper": 0.7646441341228563,
+          "q3_upper": 0.8095208832851932,
+          "min": 0.7292067350304924,
+          "max": 0.8227599716826517,
+          "mean": 0.7748668127223544,
+          "median": 0.768835067325581
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 8,
+          "q1_upper": 0.0,
+          "q2_upper": 0.020733038404001675,
+          "q3_upper": 0.06561434936639331,
+          "min": -0.19268619746608637,
+          "max": 0.11471725275770546,
+          "mean": 0.01849873330800641,
+          "median": 0.032656805459631705
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 8,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.7438015804646023,
+          "max": 0.0,
+          "mean": -0.09297519755807529,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 8,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9278548991602327,
+          "max": 0.0,
+          "mean": -0.11598186239502908,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 8,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9652843665198209,
+          "mean": 0.23672716416977668,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 8,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9926542334365842,
+          "mean": 0.24451422242111226,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 8,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.7934148051286855,
+          "mean": 0.09917685064108568,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 8,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.3334133082981017,
+          "mean": 0.04167666353726271,
+          "median": 0.0
+        }
+      },
+      "WHALE_UP": {
+        "mean_dipole": {
+          "n_chunks": 140,
+          "q1_upper": 0.21567151957397124,
+          "q2_upper": 0.29971591273837217,
+          "q3_upper": 0.43832250612708745,
+          "min": 0.15121477055879892,
+          "max": 0.9495630026242005,
+          "mean": 0.35397902960428423,
+          "median": 0.300930521667409
+        },
+        "vpin_like": {
+          "n_chunks": 140,
+          "q1_upper": 0.6974048909968105,
+          "q2_upper": 0.7559963997255182,
+          "q3_upper": 0.8085723192383187,
+          "min": 0.45572404772386205,
+          "max": 0.9828262750648815,
+          "mean": 0.755463836743318,
+          "median": 0.7562997739544324
+        },
+        "book_depth_imbalance": {
+          "n_chunks": 140,
+          "q1_upper": -0.02881734201654861,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0900327773801906,
+          "min": -0.715424078507362,
+          "max": 0.638465129330923,
+          "mean": -0.006482836938177616,
+          "median": 0.0
+        },
+        "cross_venue_buy_volume_dipole": {
+          "n_chunks": 140,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.993259027269199,
+          "max": 0.3584267367699831,
+          "mean": -0.1699429608468673,
+          "median": 0.0
+        },
+        "cross_venue_sell_volume_dipole": {
+          "n_chunks": 140,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.9922595638315157,
+          "max": 0.06848892952275436,
+          "mean": -0.19506176285956797,
+          "median": 0.0
+        },
+        "perp_spot_buy_volume_dipole": {
+          "n_chunks": 140,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9974474010205382,
+          "mean": 0.12522329994107173,
+          "median": 0.0
+        },
+        "perp_spot_sell_volume_dipole": {
+          "n_chunks": 140,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": 0.0,
+          "max": 0.9987203054163559,
+          "mean": 0.13721141394786163,
+          "median": 0.0
+        },
+        "cross_venue_l1_bid_depth_dipole": {
+          "n_chunks": 140,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.5556411491373786,
+          "max": 0.7850920593109977,
+          "mean": 0.02522557680997677,
+          "median": 0.0
+        },
+        "cross_venue_l1_ask_depth_dipole": {
+          "n_chunks": 140,
+          "q1_upper": 0.0,
+          "q2_upper": 0.0,
+          "q3_upper": 0.0,
+          "min": -0.24810248849445982,
+          "max": 0.8572404806511353,
+          "mean": 0.04863376552919242,
+          "median": 0.0
+        }
+      }
+    }
+  }
+}
