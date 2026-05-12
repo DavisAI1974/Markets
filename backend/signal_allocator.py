@@ -59,13 +59,105 @@ CAPACITY_COHORT_SIZE: dict[str, int] = {
     "huge": 10**9,
 }
 
-# Tier weights for fairness scoring. Receiving a tier-1 signal "costs"
+# Tier weights for fairness scoring. Receiving a higher-tier signal "costs"
 # the subscriber more of their fairness budget; they get fewer total
 # signals over a fixed window but more high-conviction ones.
+#
+# Pass-18 extension: the 5-tier markets_tier_search outputs (tier_1..tier_5)
+# slot in alongside the legacy "high_conviction" / "alertable" labels. Legacy
+# entries in the JSONL ledger continue to score via these existing weights;
+# new tier-search-emitted entries score via the tier_N weights.
 TIER_WEIGHTS: dict[str, float] = {
+    # Legacy labels (Pass-1..17 cells)
     "high_conviction": 3.0,
     "alertable": 1.0,
+    # 5-tier markets_tier_search labels (Pass-18+)
+    "tier_1": 5.0,   # 0.95-threshold: ~exceptional, costs most fairness budget
+    "tier_2": 3.0,   # 0.85: strong (parity with legacy high_conviction)
+    "tier_3": 2.0,   # 0.75: moderate
+    "tier_4": 1.5,   # 0.65: modest
+    "tier_5": 1.0,   # 0.55: parity with legacy alertable
 }
+
+# Tier ranking (highest -> lowest). Used by risk-profile filtering to test
+# whether a subscriber accepts signals at a given tier level. Adding new
+# tiers between the existing five is OK -- insertion order = rank order.
+TIER_RANK_ORDER: list[str] = ["tier_1", "tier_2", "tier_3", "tier_4", "tier_5"]
+
+
+def _tier_rank_idx(tier: str) -> int:
+    """Return position in TIER_RANK_ORDER, or len(TIER_RANK_ORDER) for unknown.
+    Lower index = higher quality tier."""
+    try:
+        return TIER_RANK_ORDER.index(tier)
+    except ValueError:
+        return len(TIER_RANK_ORDER)
+
+
+@dataclass
+class SubscriberProfile:
+    """Per-subscriber risk profile. Lets subscribers pick which tier levels
+    they want to receive and at what sizing.
+
+    min_tier: tier-name threshold. The subscriber accepts signals at this
+              tier and ALL HIGHER tiers (lower rank index). Default "tier_5"
+              means accept everything. Set "tier_1" for the most conservative
+              ("only show me near-certainty signals").
+
+    notional_multiplier_per_tier: optional finer-grained sizing dial. If
+              tier "tier_3" maps to 0.4 here, this subscriber's notional for
+              tier_3 cells is base_notional * 0.4. Missing keys default to
+              1.0 (use the cell's published notional verbatim).
+
+    A subscriber with min_tier="tier_5" and an empty multiplier dict trades
+    every tier at the cell's published notional -- the maximal-coverage,
+    maximal-size profile. A subscriber with min_tier="tier_2" and multipliers
+    {"tier_1": 1.0, "tier_2": 0.5} sees only tier_1+tier_2 and sizes tier_2
+    at half. Tier-3..5 cells never reach them."""
+    endpoint: str
+    min_tier: str = "tier_5"
+    notional_multiplier_per_tier: dict[str, float] = field(default_factory=dict)
+
+
+def filter_endpoints_by_risk_profile(
+    endpoints: list[str],
+    tier: str,
+    risk_profiles: dict[str, "SubscriberProfile"] | None,
+) -> list[str]:
+    """Filter endpoints down to those whose profile accepts THIS tier.
+    Endpoints without a registered profile default to "accept everything"
+    (backward compatibility with pre-Pass-18 subscribers)."""
+    if not risk_profiles:
+        return list(endpoints)
+    current_rank = _tier_rank_idx(tier)
+    out: list[str] = []
+    for ep in endpoints:
+        prof = risk_profiles.get(ep)
+        if prof is None:
+            out.append(ep)
+            continue
+        min_rank = _tier_rank_idx(prof.min_tier)
+        # current_rank <= min_rank means current tier is at-or-above the
+        # subscriber's floor (tier_1 = rank 0 is above tier_3 = rank 2).
+        if current_rank <= min_rank:
+            out.append(ep)
+    return out
+
+
+def notional_for_endpoint(
+    endpoint: str,
+    tier: str,
+    base_notional: float,
+    risk_profiles: dict[str, "SubscriberProfile"] | None,
+) -> float:
+    """Return the per-endpoint notional after applying the subscriber's
+    per-tier multiplier. Falls back to base_notional if no profile or no
+    tier-specific multiplier registered."""
+    if not risk_profiles or endpoint not in risk_profiles:
+        return base_notional
+    prof = risk_profiles[endpoint]
+    mult = prof.notional_multiplier_per_tier.get(tier, 1.0)
+    return base_notional * float(mult)
 
 # Fairness lookback: only allocations within this many seconds count
 # toward the fairness score. Older allocations decay (don't bias the
@@ -189,28 +281,37 @@ def select_cohort(
     registered_ts_by_endpoint: dict[str, float] | None = None,
     now_ts: float | None = None,
     window_sec: float = DEFAULT_FAIRNESS_WINDOW_SEC,
+    risk_profiles: dict[str, "SubscriberProfile"] | None = None,
 ) -> list[str]:
     """Return the cohort of endpoints that should receive THIS occurrence
     of the signal.
 
     Selection rule:
-      1. If capacity_class is large/huge → broadcast to all (no rotation).
-      2. Otherwise, sort endpoints by (weighted_count ASC, last_alloc_ts ASC,
-         registered_ts ASC) and take the first cohort_size.
+      1. If risk_profiles is supplied, drop endpoints whose profile does not
+         accept this tier (Pass-18: subscribers pick their own risk floor).
+      2. If capacity_class is large/huge → broadcast to all remaining (no rotation).
+      3. Otherwise, sort remaining endpoints by (weighted_count ASC,
+         last_alloc_ts ASC, registered_ts ASC) and take the first cohort_size.
 
     The sort key ensures fairness over time: lowest fairness budget gets
     the next signal; ties broken by longest-waiting; final tiebreak by
     longest-subscribed (rewards loyalty when fairness is identical).
+
+    risk_profiles is optional and backward-compatible: if None, every
+    endpoint is treated as accepting all tiers (the pre-Pass-18 behavior).
 
     Pure function: does NOT update state. Call record_allocation() after
     delivering the signal to update the fairness ledger.
     """
     if not all_endpoints:
         return []
+    eligible = filter_endpoints_by_risk_profile(all_endpoints, tier, risk_profiles)
+    if not eligible:
+        return []
     cohort_size = CAPACITY_COHORT_SIZE.get(capacity_class, 20)
-    if cohort_size >= len(all_endpoints):
-        return list(all_endpoints)
-    state = _compute_fairness_state(all_endpoints, window_sec=window_sec,
+    if cohort_size >= len(eligible):
+        return list(eligible)
+    state = _compute_fairness_state(eligible, window_sec=window_sec,
                                        now_ts=now_ts)
     reg_ts = registered_ts_by_endpoint or {}
 
@@ -218,7 +319,7 @@ def select_cohort(
         f = state[ep]
         return (f.weighted_count, f.last_alloc_ts, reg_ts.get(ep, 0.0))
 
-    ordered = sorted(all_endpoints, key=_key)
+    ordered = sorted(eligible, key=_key)
     return ordered[:cohort_size]
 
 
