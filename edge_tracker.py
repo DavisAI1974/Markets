@@ -109,6 +109,12 @@ class HorizonStat:
     n: int = 0
     r: float | None = None
     p: float | None = None
+    rho: float | None = None
+    p_rho: float | None = None
+    dcor: float | None = None
+    p_dcor: float | None = None
+    primary_metric: str = ""   # "r" | "rho" | ""
+    non_linear: bool = False   # dCor sees structure the directional stack misses
     strength: str = "NEW"      # STRONG | MODERATE | WEAK | NEW
     direction: str = ""        # "fade" | "momentum" | ""
     self_trend: str = "NEW"    # STRENGTHENING | DECAYING | FLIPPING | STABLE | NEW
@@ -153,15 +159,85 @@ def _pearson_with_p(xs: np.ndarray, ys: np.ndarray) -> tuple[float | None, float
     return r, float(p)
 
 
-def _classify_strength(n: int, r: float | None, p: float | None,
-                          min_n: int) -> tuple[str, str]:
-    """Return (strength, direction)."""
-    if n < min_n or r is None:
+def _spearman_with_p(xs: np.ndarray, ys: np.ndarray) -> tuple[float | None, float | None]:
+    """Mirror phase1_5_evaluator's Spearman stack for live edge tracking."""
+    n = len(xs)
+    if n < 3:
+        return None, None
+    if np.std(xs) < 1e-12 or np.std(ys) < 1e-12:
+        return 0.0, 1.0
+    rx = np.argsort(np.argsort(xs)).astype(np.float64)
+    ry = np.argsort(np.argsort(ys)).astype(np.float64)
+    rho = float(np.corrcoef(rx, ry)[0, 1])
+    if not np.isfinite(rho) or abs(rho) >= 1.0:
+        return rho, None
+    t = rho * math.sqrt(n - 2) / math.sqrt(max(1.0 - rho * rho, 1e-12))
+    p = 2.0 * (1.0 - 0.5 * (1.0 + math.erf(abs(t) / math.sqrt(2.0))))
+    return rho, float(p)
+
+
+def _dcor(xs: np.ndarray, ys: np.ndarray) -> float | None:
+    n = len(xs)
+    if n < 4:
+        return None
+    if np.std(xs) < 1e-12 or np.std(ys) < 1e-12:
+        return 0.0
+    a = np.abs(xs[:, None] - xs[None, :])
+    b = np.abs(ys[:, None] - ys[None, :])
+    a_dc = a - a.mean(axis=0, keepdims=True) - a.mean(axis=1, keepdims=True) + a.mean()
+    b_dc = b - b.mean(axis=0, keepdims=True) - b.mean(axis=1, keepdims=True) + b.mean()
+    dcov2 = float((a_dc * b_dc).mean())
+    dvarx2 = float((a_dc * a_dc).mean())
+    dvary2 = float((b_dc * b_dc).mean())
+    denom = math.sqrt(max(dvarx2 * dvary2, 1e-24))
+    if denom < 1e-12:
+        return 0.0
+    val = math.sqrt(max(dcov2, 0.0)) / math.sqrt(denom)
+    return min(1.0, max(0.0, val))
+
+
+def _dcor_with_p(xs: np.ndarray, ys: np.ndarray,
+                 n_perm: int = 200,
+                 seed: int = 0) -> tuple[float | None, float | None]:
+    observed = _dcor(xs, ys)
+    if observed is None:
+        return None, None
+    if len(xs) < 8:
+        return observed, None
+    rng = np.random.default_rng(seed=seed)
+    ge = 0
+    for _ in range(n_perm):
+        yp = ys[rng.permutation(len(ys))]
+        d = _dcor(xs, yp)
+        if d is not None and d >= observed:
+            ge += 1
+    return observed, float((ge + 1) / (n_perm + 1))
+
+
+def _best_directional_metric(r: float | None, p: float | None,
+                             rho: float | None, p_rho: float | None
+                             ) -> tuple[str, float | None, float | None, str]:
+    candidates: list[tuple[str, float, float | None]] = []
+    if r is not None and np.isfinite(r):
+        candidates.append(("r", float(r), p))
+    if rho is not None and np.isfinite(rho):
+        candidates.append(("rho", float(rho), p_rho))
+    if not candidates:
+        return "", None, None, ""
+    metric, value, pval = max(candidates, key=lambda item: abs(item[1]))
+    direction = "fade" if value < 0 else ("momentum" if value > 0 else "")
+    return metric, value, pval, direction
+
+
+def _classify_strength(n: int, directional_value: float | None,
+                       directional_p: float | None, min_n: int,
+                       direction: str) -> tuple[str, str]:
+    """Return (strength, direction) using the strongest directional metric."""
+    if n < min_n or directional_value is None:
         return "NEW", ""
-    direction = "fade" if r < 0 else ("momentum" if r > 0 else "")
-    if abs(r) >= STRONG_R_MIN and p is not None and p < STRONG_P_MAX:
+    if abs(directional_value) >= STRONG_R_MIN and directional_p is not None and directional_p < STRONG_P_MAX:
         return "STRONG", direction
-    if abs(r) >= MODERATE_R_MIN:
+    if abs(directional_value) >= MODERATE_R_MIN:
         return "MODERATE", direction
     return "WEAK", direction
 
@@ -283,7 +359,14 @@ def _summary_for(tags: CellTags) -> str:
         trend_word = ""
         if st.self_trend in ("STRENGTHENING", "DECAYING", "FLIPPING"):
             trend_word = f" {st.self_trend.lower()}"
-        return f"{window} {st.strength.lower()}{dir_word}{trend_word} (r={st.r:+.2f}, n={st.n})"
+        metric_note = ""
+        metric_val = st.r if st.primary_metric == "r" else st.rho
+        if st.primary_metric == "rho" and metric_val is not None:
+            metric_note = f" via rho={metric_val:+.2f}"
+        elif st.non_linear and st.dcor is not None:
+            metric_note = f" nonlinear dCor={st.dcor:.2f}"
+        base_r = f"{st.r:+.2f}" if st.r is not None else "n/a"
+        return f"{window} {st.strength.lower()}{dir_word}{trend_word} (r={base_r}, n={st.n}{metric_note})"
 
     parts = [
         _phrase("Long-term", tags.longterm),
@@ -374,12 +457,36 @@ class MultiHorizonEdgeTracker:
             xa = np.asarray([s.mean_dipole for s in samples], dtype=float)
             ya = np.asarray([s.forward_return for s in samples], dtype=float)
             r, p = _pearson_with_p(xa, ya)
-            strength, direction = _classify_strength(len(samples), r, p, min_n)
+            rho, p_rho = _spearman_with_p(xa, ya)
+            # dCor permutation is the expensive leg; cap it to windows
+            # where the sample size is still modest enough for live use.
+            if len(samples) <= 200:
+                dc, p_dc = _dcor_with_p(xa, ya, n_perm=200, seed=int(len(samples)))
+            else:
+                dc = _dcor(xa, ya)
+                p_dc = None
+            primary_metric, primary_value, primary_p, direction = _best_directional_metric(
+                r, p, rho, p_rho)
+            strength, direction = _classify_strength(
+                len(samples), primary_value, primary_p, min_n, direction)
             self_trend, n_flips = _classify_self_trend(samples)
+            non_linear = bool(
+                dc is not None
+                and p_dc is not None
+                and p_dc < STRONG_P_MAX
+                and (primary_value is None or abs(primary_value) < MODERATE_R_MIN)
+                and dc >= MODERATE_R_MIN
+            )
             return HorizonStat(
                 n=len(samples),
                 r=round(r, 4) if r is not None else None,
                 p=round(p, 4) if p is not None else None,
+                rho=round(rho, 4) if rho is not None else None,
+                p_rho=round(p_rho, 4) if p_rho is not None else None,
+                dcor=round(dc, 4) if dc is not None else None,
+                p_dcor=round(p_dc, 4) if p_dc is not None else None,
+                primary_metric=primary_metric,
+                non_linear=non_linear,
                 strength=strength, direction=direction,
                 self_trend=self_trend, n_sign_flips=n_flips)
 
