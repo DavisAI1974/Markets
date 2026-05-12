@@ -3,6 +3,10 @@ name: Perp History Backfill
 on:
   workflow_dispatch:
     inputs:
+      code_ref:
+        description: "Code branch/ref to check out (default current feature branch)"
+        default: "claude/run-pass-14-classifier-nTViL"
+        type: string
       days:
         description: "Days of historical funding/OI to fetch (default 30)"
         default: "30"
@@ -23,6 +27,7 @@ jobs:
       - name: Checkout workflow branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.inputs.code_ref }}
           fetch-depth: 0
 
       - name: Set up Python
