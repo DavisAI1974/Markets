@@ -1,0 +1,134 @@
+name: Perp History Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Days of historical funding/OI to fetch (default 30)"
+        default: "30"
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: perp-history-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout workflow branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore existing perp-history branch
+        run: |
+          if git ls-remote --exit-code --heads origin data/perp-history > /dev/null 2>&1; then
+            git fetch origin data/perp-history
+            git checkout origin/data/perp-history -- backend_funding_history.jsonl 2>/dev/null || true
+            git checkout origin/data/perp-history -- backend_oi_history.jsonl 2>/dev/null || true
+            git checkout origin/data/perp-history -- funding_calibration.json 2>/dev/null || true
+            git checkout origin/data/perp-history -- oi_calibration.json 2>/dev/null || true
+          else
+            echo "[restore] data/perp-history does not exist yet; starting fresh"
+          fi
+          ls -la backend_*history.jsonl funding_calibration.json oi_calibration.json 2>/dev/null || true
+
+      - name: Run funding + OI backfills
+        run: |
+          DAYS=${{ github.event.inputs.days }}
+          echo "[perp-history] days=$DAYS"
+
+          python backfill_funding_history.py --days "$DAYS" --append \
+            --output-path backend_funding_history.jsonl 2>&1 | tee /tmp/funding.log
+          python backfill_oi_history.py --days "$DAYS" --append \
+            --output-path backend_oi_history.jsonl 2>&1 | tee /tmp/oi.log
+
+          echo ""
+          echo "=== funding backfill tail ==="
+          tail -40 /tmp/funding.log
+          echo ""
+          echo "=== oi backfill tail ==="
+          tail -40 /tmp/oi.log
+
+      - name: Calibrate if histories exist
+        run: |
+          if [ -f backend_funding_history.jsonl ] && [ -s backend_funding_history.jsonl ]; then
+            python calibrate_funding.py \
+              --history-path backend_funding_history.jsonl \
+              --output-path funding_calibration.json 2>&1 | tee /tmp/funding_calib.log || true
+          fi
+          if [ -f backend_oi_history.jsonl ] && [ -s backend_oi_history.jsonl ]; then
+            python calibrate_oi.py \
+              --history-path backend_oi_history.jsonl \
+              --output-path oi_calibration.json 2>&1 | tee /tmp/oi_calib.log || true
+          fi
+          echo ""
+          echo "=== funding calibration tail ==="
+          tail -40 /tmp/funding_calib.log 2>/dev/null || true
+          echo ""
+          echo "=== oi calibration tail ==="
+          tail -40 /tmp/oi_calib.log 2>/dev/null || true
+
+      - name: File stats
+        if: always()
+        run: |
+          for f in backend_funding_history.jsonl backend_oi_history.jsonl funding_calibration.json oi_calibration.json; do
+            if [ -f "$f" ]; then
+              echo "$f: $(stat -c%s "$f") bytes"
+              if [[ "$f" == *.jsonl ]]; then
+                echo "  lines=$(wc -l < "$f")"
+              fi
+            fi
+          done
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perp-history
+          path: |
+            backend_funding_history.jsonl
+            backend_oi_history.jsonl
+            funding_calibration.json
+            oi_calibration.json
+          if-no-files-found: warn
+
+      - name: Force-push to data/perp-history
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          mkdir -p /tmp/perp-history
+          cp backend_funding_history.jsonl /tmp/perp-history/ 2>/dev/null || true
+          cp backend_oi_history.jsonl /tmp/perp-history/ 2>/dev/null || true
+          cp funding_calibration.json /tmp/perp-history/ 2>/dev/null || true
+          cp oi_calibration.json /tmp/perp-history/ 2>/dev/null || true
+
+          git checkout --orphan data/perp-history-tmp
+          git rm -rf . > /dev/null 2>&1 || true
+
+          cp /tmp/perp-history/backend_funding_history.jsonl . 2>/dev/null || true
+          cp /tmp/perp-history/backend_oi_history.jsonl . 2>/dev/null || true
+          cp /tmp/perp-history/funding_calibration.json . 2>/dev/null || true
+          cp /tmp/perp-history/oi_calibration.json . 2>/dev/null || true
+
+          if [ -f backend_funding_history.jsonl ] || [ -f backend_oi_history.jsonl ] || [ -f funding_calibration.json ] || [ -f oi_calibration.json ]; then
+            git add -f backend_funding_history.jsonl backend_oi_history.jsonl funding_calibration.json oi_calibration.json 2>/dev/null || true
+            git status --short
+            git commit -m "Perp history backfill $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin data/perp-history-tmp:data/perp-history
+            echo "[commit] pushed perp histories to data/perp-history"
+          else
+            echo "[commit] nothing to push"
+          fi
