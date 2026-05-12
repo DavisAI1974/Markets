@@ -94,3 +94,7 @@ _*.py
 # Pass-N evaluator stdout captures (transient; features-out JSON is the
 # authoritative evidence and gets committed)
 pass*_stdout.txt
+
+# Pass-17 audit working directory — gitignored while audits are mid-flight.
+# Will be un-gitignored + outputs committed once all 3 audits complete.
+pass17_audit_out/
