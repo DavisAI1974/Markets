@@ -41,6 +41,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
+from bybit_public_tickers import fetch_bybit_ticker_snapshots
+
 
 WINDOW_OBS = 12                 # observations spanned by Δ measurement
 ROLLING_WINDOW_OBS = 240        # rolling z baseline (~120 min @ 30s)
@@ -132,6 +134,27 @@ def _fetch_bybit(symbol: str) -> Optional[dict]:
                 "price": float(item.get("lastPrice", 0.0))}
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def _fetch_bybit_ws_bulk(symbols: list[str]) -> dict[str, dict]:
+    if not symbols:
+        return {}
+    try:
+        snaps = fetch_bybit_ticker_snapshots(symbols, timeout_s=max(HTTP_TIMEOUT_S, 10.0))
+    except Exception as e:
+        print(f"[oi] Bybit websocket fetch error: {e}", flush=True)
+        return {}
+    out: dict[str, dict] = {}
+    for symbol, snap in snaps.items():
+        try:
+            oi = float(snap.get("openInterest", 0.0))
+            price = float(snap.get("lastPrice", 0.0) or snap.get("markPrice", 0.0))
+        except (TypeError, ValueError):
+            continue
+        if oi <= 0 or price <= 0:
+            continue
+        out[symbol] = {"oi": oi, "price": price}
+    return out
 
 
 @dataclass
@@ -226,11 +249,16 @@ class OIMonitor:
 
     def update_all(self) -> list[dict]:
         alerts: list[dict] = []
+        bybit_symbols = [symbol for _, venue, symbol in self.sources if venue == "Bybit"]
+        bybit_snaps = _fetch_bybit_ws_bulk(bybit_symbols)
         for asset, venue, symbol in self.sources:
             try:
-                snap = (_fetch_binance(symbol) if venue == "Binance"
-                        else _fetch_bybit(symbol) if venue == "Bybit"
-                        else None)
+                if venue == "Binance":
+                    snap = _fetch_binance(symbol)
+                elif venue == "Bybit":
+                    snap = bybit_snaps.get(symbol) or _fetch_bybit(symbol)
+                else:
+                    snap = None
             except Exception as e:
                 print(f"[oi] fetch error {asset}/{venue}: {e}", flush=True)
                 continue

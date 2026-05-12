@@ -31,6 +31,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Optional
 
+from bybit_public_tickers import fetch_bybit_ticker_snapshots
+
 
 # Fallback thresholds in raw 8-hour rate (0.0001 == 1 bp / 8h ~ 10.95% APR).
 # Used only when funding_calibration.json is missing or doesn't have an
@@ -121,6 +123,27 @@ def _fetch_bybit(symbol: str) -> Optional[dict]:
         return None
 
 
+def _fetch_bybit_ws_bulk(symbols: list[str]) -> dict[str, dict]:
+    if not symbols:
+        return {}
+    try:
+        snaps = fetch_bybit_ticker_snapshots(symbols, timeout_s=max(HTTP_TIMEOUT_S, 10.0))
+    except Exception as e:
+        print(f"[funding] Bybit websocket fetch error: {e}", flush=True)
+        return {}
+    out: dict[str, dict] = {}
+    for symbol, snap in snaps.items():
+        try:
+            rate = float(snap.get("fundingRate", 0.0))
+            nft = float(snap.get("nextFundingTime", 0.0)) / 1000.0
+        except (TypeError, ValueError):
+            continue
+        if nft <= 0:
+            continue
+        out[symbol] = {"rate": rate, "next_funding_ts": nft}
+    return out
+
+
 @dataclass
 class _FundingState:
     last_rate: float = 0.0
@@ -199,11 +222,16 @@ class FundingMonitor:
         """Poll every (asset, venue, symbol) source. Returns a list of
         alert dicts (one per state transition)."""
         alerts: list[dict] = []
+        bybit_symbols = [symbol for _, venue, symbol in self.sources if venue == "Bybit"]
+        bybit_snaps = _fetch_bybit_ws_bulk(bybit_symbols)
         for asset, venue, symbol in self.sources:
             try:
-                snap = (_fetch_binance(symbol) if venue == "Binance"
-                        else _fetch_bybit(symbol) if venue == "Bybit"
-                        else None)
+                if venue == "Binance":
+                    snap = _fetch_binance(symbol)
+                elif venue == "Bybit":
+                    snap = bybit_snaps.get(symbol) or _fetch_bybit(symbol)
+                else:
+                    snap = None
             except Exception as e:
                 print(f"[funding] fetch error {asset}/{venue}: {e}", flush=True)
                 continue
