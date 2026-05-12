@@ -188,7 +188,7 @@ def main():
     p.add_argument("--bybit-perp-bins", default=None)
     p.add_argument("--sibling-cb-bins", default=None)
     p.add_argument("--sibling-kr-bins", default=None)
-    p.add_argument("--multi-signal-pelt", action="store_true", default=True)
+    p.add_argument("--multi-signal-pelt", action="store_true")
     p.add_argument("--target-venue", required=True,
                    help="e.g. KR-ETH, CB-ETH, KR-BTC, CB-BTC")
     p.add_argument("--target-regime", required=True,

@@ -68,12 +68,61 @@ from datetime import datetime, timezone
 
 import numpy as np
 
+from market_history_features import precompute_external_feature_values
+from markets_adapter import MarketChunker
 from phase1_5_evaluator import (
     load_bars,
     classify_venue,
     MultiFeatureContext,
     FEATURE_EXTRACTORS,
 )
+
+
+FEATURE_REGISTRY = {
+    name: (group, role, fn)
+    for name, group, role, fn in FEATURE_EXTRACTORS
+}
+SIBLING_CONTEXT_FEATURES = {"cross_asset_dipole"}
+EXTERNAL_HISTORY_FEATURES = {"funding_rate_z", "oi_delta_z"}
+
+
+def resolve_feature_names(requested_feature_names: list[str] | None,
+                          *,
+                          include_hawkes_default: bool = False
+                          ) -> tuple[list[str], list[str], list[str]]:
+    """Return (active_feature_names, skipped_pending, skipped_unknown).
+
+    Defaults exclude expensive Hawkes and infrastructure-pending features.
+    Explicit requests preserve order but still drop unknown / pending entries
+    so placeholder features cannot become fake winners.
+    """
+    if requested_feature_names is None:
+        names = [
+            name for name, group, _role, _fn in FEATURE_EXTRACTORS
+            if group != "pending"
+            and (include_hawkes_default or name != "hawkes_eta")
+        ]
+    else:
+        names = list(requested_feature_names)
+
+    resolved: list[str] = []
+    skipped_pending: list[str] = []
+    skipped_unknown: list[str] = []
+    seen: set[str] = set()
+    for name in names:
+        if name in seen:
+            continue
+        seen.add(name)
+        meta = FEATURE_REGISTRY.get(name)
+        if meta is None:
+            skipped_unknown.append(name)
+            continue
+        group, _role, _fn = meta
+        if group == "pending":
+            skipped_pending.append(name)
+            continue
+        resolved.append(name)
+    return resolved, skipped_pending, skipped_unknown
 
 
 # ---------------------------------------------------------------------------
@@ -438,20 +487,28 @@ def compute_global_feature_values(ctx: MultiFeatureContext,
     feature_name -> length-len(ctx.chunks) array, with NaN where the extractor
     flagged unavailable."""
     out: dict[str, np.ndarray] = {}
-    ext_by_name = {name: fn for name, _g, _r, fn in FEATURE_EXTRACTORS}
     n_chunks = len(ctx.chunks)
     for fname in feature_names:
-        fn = ext_by_name.get(fname)
-        if fn is None:
+        meta = FEATURE_REGISTRY.get(fname)
+        if meta is None:
             continue
+        _group, _role, fn = meta
         try:
             values, status = fn(ctx)
         except Exception as exc:
             print(f"    [warn] feature {fname} raised {type(exc).__name__}: {exc}")
             continue
-        if values is None or len(values) != n_chunks:
+        if status.startswith("infrastructure-pending"):
             continue
-        out[fname] = np.asarray(values, dtype=float)
+        arr = np.asarray(values, dtype=float) if values is not None else None
+        if arr is None or len(arr) != n_chunks:
+            continue
+        finite = arr[np.isfinite(arr)]
+        if len(finite) == 0:
+            continue
+        if float(np.std(finite)) < 1e-12:
+            continue
+        out[fname] = arr
     return out
 
 
@@ -559,21 +616,35 @@ class _VenueData:
     """Intermediate: raw classifier output per venue before cross-wiring."""
     label: str
     chunks: list
-    feats: list
-    results: list
+    feats: list | None
+    results: list | None
 
 
 def _load_venue_data(asset: str, label_prefix: str, bins_path: str,
-                      chunk_max: int, chunk_min: int, multi_pelt: bool
+                      chunk_max: int, chunk_min: int, multi_pelt: bool,
+                      classify: bool = True,
+                      compute_hawkes: bool = True,
+                      compute_hurst: bool = True,
                       ) -> _VenueData | None:
     """Load bins + classify a single venue. Returns None if bins missing."""
     if not bins_path or not os.path.exists(bins_path):
         return None
     venue_label = f"{label_prefix}-{asset}"
     bars = load_bars(bins_path)
+    if not classify:
+        chunker = MarketChunker(
+            max_window_size=chunk_max,
+            stride=chunk_max // 2,
+            min_segment=chunk_min,
+            mode="hybrid",
+        )
+        chunks = chunker.chunk(venue_label, bars, multi_signal=multi_pelt)
+        return _VenueData(label=venue_label, chunks=chunks, feats=None, results=None)
     chunks, results, _, _, feats = classify_venue(
         bars, venue_label, chunk_max=chunk_max, chunk_min=chunk_min,
         multi_signal_pelt=multi_pelt,
+        compute_hawkes=compute_hawkes,
+        compute_hurst=compute_hurst,
     )
     return _VenueData(label=venue_label, chunks=chunks, feats=feats, results=results)
 
@@ -584,7 +655,12 @@ def load_all_venue_contexts(asset: str,
                               sibling_cb_bins: str | None = None,
                               sibling_kr_bins: str | None = None,
                               chunk_max: int = 30, chunk_min: int = 10,
-                              multi_pelt: bool = True
+                              multi_pelt: bool = True,
+                              compute_hawkes: bool = True,
+                              compute_hurst: bool = True,
+                              feature_names: list[str] | None = None,
+                              funding_history_path: str | None = "backend_funding_history.jsonl",
+                              oi_history_path: str | None = "backend_oi_history.jsonl",
                               ) -> list[tuple[str, MultiFeatureContext, list]]:
     """Load + wire every venue context. Each returned MultiFeatureContext is
     fully wired with sibling, other_venue, and perp references so cross-platform
@@ -594,18 +670,46 @@ def load_all_venue_contexts(asset: str,
 
     Returns list of (venue_label, MultiFeatureContext, classification_results)
     for the THREE primary venues of asset: CB-<asset>, KR-<asset>, BB-<asset>.
-    Sibling-asset data is loaded but not returned as its own context — it only
-    populates the sibling_chunks/feats slots on the primary contexts.
+    Sibling-asset data is loaded only when a selected feature needs it, and is
+    not returned as its own context — it only populates the sibling_chunks/feats
+    slots on the primary contexts.
     """
+    need_sibling_context = (
+        feature_names is None
+        or bool(set(feature_names) & SIBLING_CONTEXT_FEATURES)
+    )
+    need_external_history = (
+        feature_names is None
+        or bool(set(feature_names) & EXTERNAL_HISTORY_FEATURES)
+    )
+
     # Primary asset venues
-    cb = _load_venue_data(asset, "CB", cb_bins, chunk_max, chunk_min, multi_pelt)
-    kr = _load_venue_data(asset, "KR", kr_bins, chunk_max, chunk_min, multi_pelt)
-    perp = _load_venue_data(asset, "BB", perp_bins, chunk_max, chunk_min, multi_pelt) if perp_bins else None
+    cb = _load_venue_data(asset, "CB", cb_bins, chunk_max, chunk_min, multi_pelt,
+                          classify=True,
+                          compute_hawkes=compute_hawkes,
+                          compute_hurst=compute_hurst)
+    kr = _load_venue_data(asset, "KR", kr_bins, chunk_max, chunk_min, multi_pelt,
+                          classify=True,
+                          compute_hawkes=compute_hawkes,
+                          compute_hurst=compute_hurst)
+    perp = (_load_venue_data(asset, "BB", perp_bins, chunk_max, chunk_min, multi_pelt,
+                             classify=True,
+                             compute_hawkes=compute_hawkes,
+                             compute_hurst=compute_hurst)
+            if perp_bins else None)
 
     # Sibling-asset data (for cross_asset_dipole and friends)
     sib_asset = _sibling_asset(asset)
-    sib_cb = _load_venue_data(sib_asset, "CB", sibling_cb_bins, chunk_max, chunk_min, multi_pelt) if sibling_cb_bins else None
-    sib_kr = _load_venue_data(sib_asset, "KR", sibling_kr_bins, chunk_max, chunk_min, multi_pelt) if sibling_kr_bins else None
+    sib_cb = (_load_venue_data(sib_asset, "CB", sibling_cb_bins, chunk_max, chunk_min, multi_pelt,
+                               classify=False,
+                               compute_hawkes=False,
+                               compute_hurst=False)
+              if need_sibling_context and sibling_cb_bins else None)
+    sib_kr = (_load_venue_data(sib_asset, "KR", sibling_kr_bins, chunk_max, chunk_min, multi_pelt,
+                               classify=False,
+                               compute_hawkes=False,
+                               compute_hurst=False)
+              if need_sibling_context and sibling_kr_bins else None)
 
     contexts: list[tuple[str, MultiFeatureContext, list]] = []
     primaries = [(cb, "CB"), (kr, "KR"), (perp, "BB")]
@@ -624,17 +728,34 @@ def load_all_venue_contexts(asset: str,
             other = cb if cb else kr   # any spot venue serves as basis reference
             sibling = sib_cb if sib_cb else sib_kr
 
+        external_feature_values: dict[str, np.ndarray] | None = None
+        external_feature_status: dict[str, str] | None = None
+        if need_external_history and perp_bins:
+            external_feature_values, external_feature_status = (
+                precompute_external_feature_values(
+                    venue.chunks,
+                    asset=asset,
+                    perp_history_venue="Bybit",
+                    funding_history_path=funding_history_path,
+                    oi_history_path=oi_history_path,
+                )
+            )
+
         ctx = MultiFeatureContext(
             chunks=venue.chunks,
-            feats=venue.feats,
+            feats=venue.feats or [],
+            asset=asset,
+            venue_label=venue.label,
             sibling_chunks=sibling.chunks if sibling else None,
             sibling_feats=sibling.feats if sibling else None,
             other_venue_chunks=other.chunks if other else None,
             other_venue_feats=other.feats if other else None,
             perp_chunks=perp.chunks if perp else None,
             perp_feats=perp.feats if perp else None,
+            external_feature_values=external_feature_values,
+            external_feature_status=external_feature_status,
         )
-        contexts.append((venue.label, ctx, venue.results))
+        contexts.append((venue.label, ctx, venue.results or []))
 
     return contexts
 
@@ -645,10 +766,12 @@ def run_search(asset: str,
                 tiers: list[TierSpec],
                 bootstrap_samples: int,
                 max_arity: int,
-                rng: np.random.Generator) -> list[Combination]:
+                rng: np.random.Generator
+                ) -> tuple[list[Combination], dict[tuple[str, str], CellSnapshot]]:
     """Search every (venue, regime) cell across all venue contexts. Returns the
     union of tier-hitting combinations from all phases."""
     all_winners: list[Combination] = []
+    snapshot_cache: dict[tuple[str, str], CellSnapshot] = {}
 
     for venue_label, ctx, results in venue_contexts:
         print(f"\n=== venue {venue_label} ({len(ctx.chunks)} chunks) ===")
@@ -679,6 +802,7 @@ def run_search(asset: str,
                 feat_vals, fwd,
             )
             snapshots.append(snap)
+            snapshot_cache[(venue_label, regime)] = snap
 
         # Phased search per cell
         for snap in snapshots:
@@ -708,7 +832,7 @@ def run_search(asset: str,
                   f"{tier_str}  ({elapsed:.1f}s)")
             all_winners.extend(all_phase_for_cell)
 
-    return all_winners
+    return all_winners, snapshot_cache
 
 
 def dedupe_singletons_by_chunk_jaccard(
@@ -889,13 +1013,23 @@ def main():
                         " feat_threshold values derived from the search itself.")
     p.add_argument("--features", nargs="*", default=None,
                    help="Subset of FEATURE_EXTRACTORS names to search."
-                        " Default: all features.")
+                        " Default: all non-Hawkes features."
+                        " Use --include-hawkes-feature or an explicit"
+                        " --features list to opt back into hawkes_eta.")
+    p.add_argument("--include-hawkes-feature", action="store_true",
+                   help="Include hawkes_eta in the default feature set."
+                        " Omitted by default because Hawkes fitting makes"
+                        " startup multi-minute on large venue loads."
+                        " Ignored when --features is provided.")
     p.add_argument("--max-arity", type=int, default=2,
                    help="Maximum combination arity (1=singletons, 2=pairs, 3=triples)")
     p.add_argument("--bootstrap-samples", type=int, default=1000)
     p.add_argument("--chunk-max-size", type=int, default=30)
     p.add_argument("--chunk-min-segment", type=int, default=10)
-    p.add_argument("--multi-signal-pelt", action="store_true", default=True)
+    p.add_argument("--multi-signal-pelt", action="store_true",
+                   help="Run PELT on price + dipole + OFI signals."
+                        " Disabled by default because it materially increases"
+                        " startup time on large venue loads.")
     p.add_argument("--base-notional", type=float, default=1000.0)
     p.add_argument("--pass-num", type=int, default=18,
                    help="Pass number to record in provenance.discovered_pass")
@@ -924,9 +1058,19 @@ def main():
 
     rng = np.random.default_rng(args.seed)
 
-    feature_names = args.features
-    if feature_names is None:
-        feature_names = [name for name, _g, _r, _fn in FEATURE_EXTRACTORS]
+    feature_names, skipped_pending, skipped_unknown = resolve_feature_names(
+        args.features,
+        include_hawkes_default=args.include_hawkes_feature,
+    )
+    if skipped_pending:
+        print(f"[skip] infrastructure-pending features removed from search: "
+              f"{', '.join(skipped_pending)}")
+    if skipped_unknown:
+        print(f"[warn] unknown features ignored: {', '.join(skipped_unknown)}")
+    if not feature_names:
+        raise SystemExit("No active features selected after removing pending/unknown entries")
+    compute_hawkes = "hawkes_eta" in feature_names
+    compute_hurst = "hurst_delta" in feature_names
 
     print(f"=== markets_tier_search asset={args.asset} max_arity={args.max_arity} "
           f"bootstrap={args.bootstrap_samples} features={len(feature_names)} ===")
@@ -944,9 +1088,12 @@ def main():
         chunk_max=args.chunk_max_size,
         chunk_min=args.chunk_min_segment,
         multi_pelt=args.multi_signal_pelt,
+        compute_hawkes=compute_hawkes,
+        compute_hurst=compute_hurst,
+        feature_names=feature_names,
     )
 
-    winners = run_search(
+    winners, snapshot_cache = run_search(
         args.asset, contexts, feature_names, DEFAULT_TIERS,
         args.bootstrap_samples, args.max_arity, rng,
     )
@@ -1007,21 +1154,13 @@ def main():
             with open(args.cutoffs) as f:
                 cutoffs = json.load(f)
 
-        # Build per-(venue, regime) fallback uppers + full snapshots from the
-        # search re-classification. Snapshots are needed when --dedupe-by-jaccard
-        # is in effect (we need per-gate chunk membership to compute Jaccard).
-        fallback_cache: dict[tuple[str, str], dict[str, list[float]]] = {}
-        snapshot_cache: dict[tuple[str, str], CellSnapshot] = {}
-        for venue_label, ctx, results in contexts:
-            feat_vals = compute_global_feature_values(ctx, feature_names)
-            fwd = forward_log_returns(ctx.chunks, k=1)
-            for regime in sorted({r.regime.value for r in results}):
-                mask = np.array([r.regime.value == regime for r in results])
-                if int(mask.sum()) < 8:
-                    continue
-                snap = build_cell_snapshot(venue_label, regime, mask, feat_vals, fwd)
-                fallback_cache[(venue_label, regime)] = dict(snap.feature_quartile_upper)
-                snapshot_cache[(venue_label, regime)] = snap
+        # Reuse snapshots built during the search. They already contain the
+        # in-cell quartile boundaries needed for predicate fallback and
+        # Jaccard dedupe.
+        fallback_cache = {
+            key: dict(snap.feature_quartile_upper)
+            for key, snap in snapshot_cache.items()
+        }
 
         # Optional dedup: drop arity-1 winners whose gate chunk sets overlap
         # heavily within the same (venue, regime). Hidden double-sizing is the
@@ -1070,6 +1209,7 @@ def main():
                         entry["provenance"]["jaccard_dedupe_dropped"] = dl["dropped"]
                         entry["provenance"]["jaccard_dedupe_min_overlap"] = dl["min_intracluster_jaccard"]
                         break
+            entries.append(entry)
 
         n_added = append_to_registry(args.append_to_registry, entries,
                                        dry_run=args.dry_run)

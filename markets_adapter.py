@@ -507,10 +507,15 @@ class MarketChunkEncoder:
         [14:]    downsampled FFT magnitudes (normalized to [0,1])
     """
 
-    def __init__(self, d_enc: int = 64):
+    def __init__(self,
+                 d_enc: int = 64,
+                 compute_hawkes: bool = True,
+                 compute_hurst: bool = True):
         self.d_enc = d_enc
         self.n_summary = 11
         self.n_spectral_block = 3
+        self.compute_hawkes = compute_hawkes
+        self.compute_hurst = compute_hurst
 
     def _extract(self, chunk: MarketChunk,
                   vpin_bucket_volume: float = 0.0) -> MarketFeatures:
@@ -663,13 +668,18 @@ class MarketChunkEncoder:
         # Poisson. Returns (0.0, 0) on chunks too small to fit
         # without raising; failure modes degrade gracefully.
         try:
-            from hawkes import hawkes_eta_for_bars, hawkes_eta_buy_sell_for_bars
-            hawkes_eta_val, hawkes_n_evt = hawkes_eta_for_bars(bars)
-            # Per-side fits gated on combined eta clearing the wash candidate
-            # floor (avoids paying ~3x the Hawkes-fit cost on Poisson chunks).
-            bs = hawkes_eta_buy_sell_for_bars(bars, eta_all=hawkes_eta_val)
-            hawkes_eta_buy_val = float(bs["eta_buy"])
-            hawkes_eta_sell_val = float(bs["eta_sell"])
+            if self.compute_hawkes:
+                from hawkes import hawkes_eta_for_bars, hawkes_eta_buy_sell_for_bars
+                hawkes_eta_val, hawkes_n_evt = hawkes_eta_for_bars(bars)
+                # Per-side fits gated on combined eta clearing the wash candidate
+                # floor (avoids paying ~3x the Hawkes-fit cost on Poisson chunks).
+                bs = hawkes_eta_buy_sell_for_bars(bars, eta_all=hawkes_eta_val)
+                hawkes_eta_buy_val = float(bs["eta_buy"])
+                hawkes_eta_sell_val = float(bs["eta_sell"])
+            else:
+                hawkes_eta_val, hawkes_n_evt = 0.0, 0
+                hawkes_eta_buy_val = 0.0
+                hawkes_eta_sell_val = 0.0
         except Exception:
             hawkes_eta_val, hawkes_n_evt = 0.0, 0
             hawkes_eta_buy_val = 0.0
@@ -679,8 +689,11 @@ class MarketChunkEncoder:
         # Orthogonal trending-vs-reverting axis. Falls back to (0.5, 0)
         # for chunks too short for a reliable fit.
         try:
-            from hurst import hurst_dfa
-            hurst_val, hurst_n = hurst_dfa(log_ret)
+            if self.compute_hurst:
+                from hurst import hurst_dfa
+                hurst_val, hurst_n = hurst_dfa(log_ret)
+            else:
+                hurst_val, hurst_n = 0.5, 0
         except Exception:
             hurst_val, hurst_n = 0.5, 0
 

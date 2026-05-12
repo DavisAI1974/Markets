@@ -52,11 +52,11 @@ from typing import Callable
 
 import numpy as np
 
-from phase1_5_evaluator import FEATURE_EXTRACTORS
 from markets_tier_search import (
     forward_log_returns,
     compute_global_feature_values,
     load_all_venue_contexts,
+    resolve_feature_names,
 )
 # Cloned F.1 module
 from operator_importance import (
@@ -424,13 +424,23 @@ def main():
     p.add_argument("--universal-threshold", type=float, default=0.70)
     p.add_argument("--chunk-max-size", type=int, default=30)
     p.add_argument("--chunk-min-segment", type=int, default=10)
-    p.add_argument("--multi-signal-pelt", action="store_true", default=True)
+    p.add_argument("--multi-signal-pelt", action="store_true")
     p.add_argument("--output-report", default=None)
     args = p.parse_args()
 
-    feature_names = args.features
-    if feature_names is None:
-        feature_names = [n for n, _g, _r, _fn in FEATURE_EXTRACTORS]
+    feature_names, skipped_pending, skipped_unknown = resolve_feature_names(
+        args.features,
+        include_hawkes_default=True,
+    )
+    if skipped_pending:
+        print(f"[skip] infrastructure-pending features removed from importance run: "
+              f"{', '.join(skipped_pending)}")
+    if skipped_unknown:
+        print(f"[warn] unknown features ignored: {', '.join(skipped_unknown)}")
+    if not feature_names:
+        raise SystemExit("No active features selected after removing pending/unknown entries")
+    compute_hawkes = "hawkes_eta" in feature_names
+    compute_hurst = "hurst_delta" in feature_names
 
     print(f"=== markets_importance_runner asset={args.asset} perms={args.n_permutations} features={len(feature_names)} ===")
 
@@ -441,6 +451,9 @@ def main():
         sibling_kr_bins=args.sibling_kr_bins,
         chunk_max=args.chunk_max_size, chunk_min=args.chunk_min_segment,
         multi_pelt=args.multi_signal_pelt,
+        compute_hawkes=compute_hawkes,
+        compute_hurst=compute_hurst,
+        feature_names=feature_names,
     )
 
     result = run(

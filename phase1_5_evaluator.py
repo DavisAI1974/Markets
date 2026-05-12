@@ -26,6 +26,7 @@ from typing import Sequence
 
 import numpy as np
 
+from market_history_features import precompute_external_feature_values
 from markets_adapter import (
     MarketBar, MarketChunk, MarketChunker, MarketChunkEncoder, MarketFeatures,
 )
@@ -94,12 +95,18 @@ def classify_venue(bars: list[MarketBar], label: str,
                     multi_signal_pelt: bool = False,
                     use_session_baselines: bool = False,
                     herd_rescue: bool = False,
+                    compute_hawkes: bool = True,
+                    compute_hurst: bool = True,
                     hawkes_elevated: float | None = None,
                     hawkes_diffuse: float | None = None,
                     ) -> tuple[list[MarketChunk], list[ClassificationResult], Baselines, dict, list[MarketFeatures]]:
     chunker = MarketChunker(max_window_size=chunk_max, stride=chunk_max // 2,
                              min_segment=chunk_min, mode="hybrid")
-    encoder = MarketChunkEncoder(d_enc=64)
+    encoder = MarketChunkEncoder(
+        d_enc=64,
+        compute_hawkes=compute_hawkes,
+        compute_hurst=compute_hurst,
+    )
     chunks = chunker.chunk(label, bars, multi_signal=multi_signal_pelt)
     feats = [encoder._extract(c) for c in chunks]
     base = baselines_from_corpus(feats)
@@ -819,12 +826,16 @@ class MultiFeatureContext:
     """Inputs to a multi-feature scan for one (asset, venue)."""
     chunks: list  # this venue's chunks for this asset
     feats: list   # parallel MarketFeatures per chunk
+    asset: str = ""
+    venue_label: str = ""
     sibling_chunks: list | None = None   # same-venue chunks for the OTHER asset
     sibling_feats: list | None = None
     other_venue_chunks: list | None = None  # OTHER venue, same asset
     other_venue_feats: list | None = None
     perp_chunks: list | None = None      # Bybit perp, same asset
     perp_feats: list | None = None
+    external_feature_values: dict[str, np.ndarray] | None = None
+    external_feature_status: dict[str, str] | None = None
 
 
 def _ts_aligned_lookup(this_chunks: list,
@@ -1337,11 +1348,27 @@ def _feat_cross_venue_l1_ask_depth_dipole(ctx: MultiFeatureContext
 
 
 def _feat_funding_rate_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
-    return np.zeros(len(ctx.chunks)), "infrastructure-pending: no historical funding backfill"
+    if ctx.external_feature_values and "funding_rate_z" in ctx.external_feature_values:
+        return np.asarray(ctx.external_feature_values["funding_rate_z"], dtype=float), (
+            (ctx.external_feature_status or {}).get("funding_rate_z", "")
+        )
+    status = (ctx.external_feature_status or {}).get(
+        "funding_rate_z",
+        "infrastructure-pending: no historical funding backfill",
+    )
+    return np.zeros(len(ctx.chunks)), status
 
 
 def _feat_oi_delta_z(ctx: MultiFeatureContext) -> tuple[np.ndarray, str]:
-    return np.zeros(len(ctx.chunks)), "infrastructure-pending: no historical OI backfill"
+    if ctx.external_feature_values and "oi_delta_z" in ctx.external_feature_values:
+        return np.asarray(ctx.external_feature_values["oi_delta_z"], dtype=float), (
+            (ctx.external_feature_status or {}).get("oi_delta_z", "")
+        )
+    status = (ctx.external_feature_status or {}).get(
+        "oi_delta_z",
+        "infrastructure-pending: no historical OI backfill",
+    )
+    return np.zeros(len(ctx.chunks)), status
 
 
 # Registry: ordered for deterministic report output. Cross-platform
@@ -1400,9 +1427,9 @@ FEATURE_EXTRACTORS: list[tuple[str, str, str, callable]] = [
     # Experimental — theoretical, low evidence
     ("trade_size_entropy",                "experimental", "predictor",          _feat_trade_size_entropy),
     ("microprice_drift",                  "experimental", "predictor",          _feat_microprice_drift),
-    # Infrastructure-pending — wired but skip until backfill exists
-    ("funding_rate_z",                    "pending",      "predictor",          _feat_funding_rate_z),
-    ("oi_delta_z",                        "pending",      "predictor",          _feat_oi_delta_z),
+    # External-history-backed perp positioning features
+    ("funding_rate_z",                    "cross_platform", "predictor",        _feat_funding_rate_z),
+    ("oi_delta_z",                        "cross_platform", "predictor",        _feat_oi_delta_z),
 ]
 
 
@@ -2395,18 +2422,28 @@ def main():
     # BH-FDR are "exploratory" tier — interesting but consistent with
     # multiple-comparisons noise at q=0.10.
     print(f"--- MULTI-FEATURE TRADEABLE SIGNAL REPORT (Pass-16, FDR-corrected) ---")
+    cb_external_vals, cb_external_status = precompute_external_feature_values(
+        cb_chunks, asset=args.asset, perp_history_venue="Bybit")
+    kr_external_vals, kr_external_status = precompute_external_feature_values(
+        kr_chunks, asset=args.asset, perp_history_venue="Bybit")
     venue_ctxs = [
         (f"CB-{args.asset}", MultiFeatureContext(
-            chunks=cb_chunks, feats=cb_feats,
+            chunks=cb_chunks, feats=cb_feats, asset=args.asset,
+            venue_label=f"CB-{args.asset}",
             sibling_chunks=sib_cb_chunks, sibling_feats=sib_cb_feats,
             other_venue_chunks=kr_chunks, other_venue_feats=kr_feats,
-            perp_chunks=perp_chunks, perp_feats=perp_feats),
+            perp_chunks=perp_chunks, perp_feats=perp_feats,
+            external_feature_values=cb_external_vals,
+            external_feature_status=cb_external_status),
          cb_results),
         (f"KR-{args.asset}", MultiFeatureContext(
-            chunks=kr_chunks, feats=kr_feats,
+            chunks=kr_chunks, feats=kr_feats, asset=args.asset,
+            venue_label=f"KR-{args.asset}",
             sibling_chunks=sib_kr_chunks, sibling_feats=sib_kr_feats,
             other_venue_chunks=cb_chunks, other_venue_feats=cb_feats,
-            perp_chunks=perp_chunks, perp_feats=perp_feats),
+            perp_chunks=perp_chunks, perp_feats=perp_feats,
+            external_feature_values=kr_external_vals,
+            external_feature_status=kr_external_status),
          kr_results),
     ]
     scan_by_venue: dict[str, list[dict]] = {}
