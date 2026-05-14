@@ -1,261 +1,342 @@
 {
   "schema_version": 1,
   "asset": "BTC",
-  "generated_utc": 1778743617,
+  "generated_utc": 1778746470,
   "min_support": 3,
-  "n_winners": 5,
+  "n_winners": 8,
   "n_convergence_events": 8,
   "dedupe_log": [
     {
       "cell_key": "KR-BTC/WHALE_UP",
       "cluster_size": 2,
-      "representative": "cross_venue_l1_bid_depth_dipole=Q2",
+      "representative": "perp_spot_buy_volume_dipole=Q1",
       "representative_tier": "tier_5",
-      "representative_score_ci_low": 0.6,
-      "representative_edge": 0.6688239376526678,
+      "representative_score_ci_low": 0.6666666666666666,
+      "representative_edge": 0.5798946344613783,
       "dropped": [
-        "cross_venue_l1_ask_depth_dipole=Q2"
+        "perp_spot_sell_volume_dipole=Q1"
       ],
       "min_intracluster_jaccard": 1.0
     }
   ],
   "events": [
     {
-      "venue_label": "KR-BTC",
-      "chunk_index": 193,
-      "regime": "WHALE_UP",
-      "ts_start": 1778263380.0,
-      "ts_end": 1778265120.0,
-      "direction": "fade",
-      "support_count": 5,
+      "venue_label": "CB-BTC",
+      "chunk_index": 407,
+      "regime": "HERD_DOWN",
+      "ts_start": 1778508720.0,
+      "ts_end": 1778510460.0,
+      "direction": "momentum",
+      "support_count": 3,
       "supporting_winners": [
         {
-          "winner_key": "KR-BTC/WHALE_UP/book_depth_imbalance=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "book_depth_imbalance",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5129672229932101
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_book_imbalance_delta=Q2/fade/tier_5",
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_book_imbalance_delta=Q2/momentum/tier_5",
           "feature_gates": [
             {
               "feature": "cross_venue_book_imbalance_delta",
               "quartile": 2
             }
           ],
-          "direction": "fade",
+          "direction": "momentum",
           "tier": "tier_5",
           "score_ci_low": 0.6,
-          "edge_magnitude": 0.5203937974276415
+          "edge_magnitude": 0.6877211495256225
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "triangulated_consensus",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q2/fade/tier_5",
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_buy_volume_dipole=Q2/momentum/tier_5",
           "feature_gates": [
             {
               "feature": "cross_venue_buy_volume_dipole",
               "quartile": 2
             }
           ],
-          "direction": "fade",
+          "direction": "momentum",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.7328243186872796
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.8836624688095573
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_sell_volume_dipole=Q2/momentum/tier_5",
           "feature_gates": [
             {
-              "feature": "cross_venue_l1_bid_depth_dipole",
+              "feature": "cross_venue_sell_volume_dipole",
               "quartile": 2
             }
           ],
-          "direction": "fade",
+          "direction": "momentum",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.939285502215253
         }
       ],
-      "confidence_tier": "convergence",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.5993935754077369
+      "confidence_tier": "high_conviction",
+      "avg_score_ci_low": 0.6666666666666666,
+      "avg_edge_magnitude": 0.8368897068501443
+    },
+    {
+      "venue_label": "CB-BTC",
+      "chunk_index": 411,
+      "regime": "HERD_DOWN",
+      "ts_start": 1778512320.0,
+      "ts_end": 1778514060.0,
+      "direction": "momentum",
+      "support_count": 3,
+      "supporting_winners": [
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_book_imbalance_delta=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_book_imbalance_delta",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.6,
+          "edge_magnitude": 0.6877211495256225
+        },
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_buy_volume_dipole=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_buy_volume_dipole",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.8836624688095573
+        },
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_sell_volume_dipole=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_sell_volume_dipole",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.939285502215253
+        }
+      ],
+      "confidence_tier": "high_conviction",
+      "avg_score_ci_low": 0.6666666666666666,
+      "avg_edge_magnitude": 0.8368897068501443
+    },
+    {
+      "venue_label": "CB-BTC",
+      "chunk_index": 412,
+      "regime": "HERD_DOWN",
+      "ts_start": 1778513220.0,
+      "ts_end": 1778514960.0,
+      "direction": "momentum",
+      "support_count": 3,
+      "supporting_winners": [
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_book_imbalance_delta=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_book_imbalance_delta",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.6,
+          "edge_magnitude": 0.6877211495256225
+        },
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_buy_volume_dipole=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_buy_volume_dipole",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.8836624688095573
+        },
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_sell_volume_dipole=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_sell_volume_dipole",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.939285502215253
+        }
+      ],
+      "confidence_tier": "high_conviction",
+      "avg_score_ci_low": 0.6666666666666666,
+      "avg_edge_magnitude": 0.8368897068501443
+    },
+    {
+      "venue_label": "CB-BTC",
+      "chunk_index": 451,
+      "regime": "HERD_DOWN",
+      "ts_start": 1778549160.0,
+      "ts_end": 1778550900.0,
+      "direction": "momentum",
+      "support_count": 3,
+      "supporting_winners": [
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_book_imbalance_delta=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_book_imbalance_delta",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.6,
+          "edge_magnitude": 0.6877211495256225
+        },
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_buy_volume_dipole=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_buy_volume_dipole",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.8836624688095573
+        },
+        {
+          "winner_key": "CB-BTC/HERD_DOWN/cross_venue_sell_volume_dipole=Q2/momentum/tier_5",
+          "feature_gates": [
+            {
+              "feature": "cross_venue_sell_volume_dipole",
+              "quartile": 2
+            }
+          ],
+          "direction": "momentum",
+          "tier": "tier_5",
+          "score_ci_low": 0.7,
+          "edge_magnitude": 0.939285502215253
+        }
+      ],
+      "confidence_tier": "high_conviction",
+      "avg_score_ci_low": 0.6666666666666666,
+      "avg_edge_magnitude": 0.8368897068501443
     },
     {
       "venue_label": "KR-BTC",
-      "chunk_index": 201,
+      "chunk_index": 100,
       "regime": "WHALE_UP",
-      "ts_start": 1778270580.0,
-      "ts_end": 1778272320.0,
+      "ts_start": 1778177820.0,
+      "ts_end": 1778179560.0,
       "direction": "fade",
-      "support_count": 5,
+      "support_count": 3,
       "supporting_winners": [
         {
-          "winner_key": "KR-BTC/WHALE_UP/book_depth_imbalance=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_dipole_divergence=Q3/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "book_depth_imbalance",
-              "quartile": 2
+              "feature": "perp_spot_dipole_divergence",
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5129672229932101
+          "score_ci_low": 0.5833333333333334,
+          "edge_magnitude": 0.5913767476169309
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_book_imbalance_delta=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_book_imbalance_delta",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5203937974276415
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "triangulated_consensus",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q3/fade/tier_5",
           "feature_gates": [
             {
               "feature": "cross_venue_buy_volume_dipole",
-              "quartile": 2
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.7328243186872796
+          "score_ci_low": 0.5791666666666669,
+          "edge_magnitude": 0.5040583971956655
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_buy_volume_dipole=Q1/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "cross_venue_l1_bid_depth_dipole",
-              "quartile": 2
+              "feature": "perp_spot_buy_volume_dipole",
+              "quartile": 1
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
+          "score_ci_low": 0.6666666666666666,
+          "edge_magnitude": 0.5798946344613783
         }
       ],
-      "confidence_tier": "convergence",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.5993935754077369
+      "confidence_tier": "high_conviction",
+      "avg_score_ci_low": 0.6097222222222224,
+      "avg_edge_magnitude": 0.5584432597579916
     },
     {
       "venue_label": "KR-BTC",
-      "chunk_index": 203,
+      "chunk_index": 102,
       "regime": "WHALE_UP",
-      "ts_start": 1778272380.0,
-      "ts_end": 1778274120.0,
+      "ts_start": 1778179620.0,
+      "ts_end": 1778181360.0,
       "direction": "fade",
-      "support_count": 5,
+      "support_count": 3,
       "supporting_winners": [
         {
-          "winner_key": "KR-BTC/WHALE_UP/book_depth_imbalance=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_dipole_divergence=Q3/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "book_depth_imbalance",
-              "quartile": 2
+              "feature": "perp_spot_dipole_divergence",
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5129672229932101
+          "score_ci_low": 0.5833333333333334,
+          "edge_magnitude": 0.5913767476169309
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_book_imbalance_delta=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_book_imbalance_delta",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5203937974276415
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "triangulated_consensus",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q3/fade/tier_5",
           "feature_gates": [
             {
               "feature": "cross_venue_buy_volume_dipole",
-              "quartile": 2
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.7328243186872796
+          "score_ci_low": 0.5791666666666669,
+          "edge_magnitude": 0.5040583971956655
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_buy_volume_dipole=Q1/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "cross_venue_l1_bid_depth_dipole",
-              "quartile": 2
+              "feature": "perp_spot_buy_volume_dipole",
+              "quartile": 1
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
+          "score_ci_low": 0.6666666666666666,
+          "edge_magnitude": 0.5798946344613783
         }
       ],
-      "confidence_tier": "convergence",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.5993935754077369
+      "confidence_tier": "high_conviction",
+      "avg_score_ci_low": 0.6097222222222224,
+      "avg_edge_magnitude": 0.5584432597579916
     },
     {
       "venue_label": "KR-BTC",
@@ -264,302 +345,104 @@
       "ts_start": 1778217360.0,
       "ts_end": 1778219100.0,
       "direction": "fade",
-      "support_count": 4,
+      "support_count": 3,
       "supporting_winners": [
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_book_imbalance_delta=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_dipole_divergence=Q3/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "cross_venue_book_imbalance_delta",
-              "quartile": 2
+              "feature": "perp_spot_dipole_divergence",
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5203937974276415
+          "score_ci_low": 0.5833333333333334,
+          "edge_magnitude": 0.5913767476169309
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "triangulated_consensus",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q3/fade/tier_5",
           "feature_gates": [
             {
               "feature": "cross_venue_buy_volume_dipole",
-              "quartile": 2
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.7328243186872796
+          "score_ci_low": 0.5791666666666669,
+          "edge_magnitude": 0.5040583971956655
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_buy_volume_dipole=Q1/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "cross_venue_l1_bid_depth_dipole",
-              "quartile": 2
+              "feature": "perp_spot_buy_volume_dipole",
+              "quartile": 1
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
+          "score_ci_low": 0.6666666666666666,
+          "edge_magnitude": 0.5798946344613783
         }
       ],
-      "confidence_tier": "convergence",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.6210001635113686
+      "confidence_tier": "high_conviction",
+      "avg_score_ci_low": 0.6097222222222224,
+      "avg_edge_magnitude": 0.5584432597579916
     },
     {
       "venue_label": "KR-BTC",
-      "chunk_index": 194,
+      "chunk_index": 179,
       "regime": "WHALE_UP",
-      "ts_start": 1778264280.0,
-      "ts_end": 1778266020.0,
-      "direction": "fade",
-      "support_count": 4,
-      "supporting_winners": [
-        {
-          "winner_key": "KR-BTC/WHALE_UP/book_depth_imbalance=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "book_depth_imbalance",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5129672229932101
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "triangulated_consensus",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_buy_volume_dipole",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.7328243186872796
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_l1_bid_depth_dipole",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
-        }
-      ],
-      "confidence_tier": "convergence",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.6191435199027607
-    },
-    {
-      "venue_label": "KR-BTC",
-      "chunk_index": 202,
-      "regime": "WHALE_UP",
-      "ts_start": 1778271480.0,
-      "ts_end": 1778273220.0,
-      "direction": "fade",
-      "support_count": 4,
-      "supporting_winners": [
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_book_imbalance_delta=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_book_imbalance_delta",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5203937974276415
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "triangulated_consensus",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_buy_volume_dipole",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.7328243186872796
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_l1_bid_depth_dipole",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
-        }
-      ],
-      "confidence_tier": "convergence",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.6210001635113686
-    },
-    {
-      "venue_label": "KR-BTC",
-      "chunk_index": 215,
-      "regime": "WHALE_UP",
-      "ts_start": 1778283180.0,
-      "ts_end": 1778284920.0,
+      "ts_start": 1778250540.0,
+      "ts_end": 1778252280.0,
       "direction": "fade",
       "support_count": 3,
       "supporting_winners": [
         {
-          "winner_key": "KR-BTC/WHALE_UP/book_depth_imbalance=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_dipole_divergence=Q3/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "book_depth_imbalance",
-              "quartile": 2
+              "feature": "perp_spot_dipole_divergence",
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5129672229932101
+          "score_ci_low": 0.5833333333333334,
+          "edge_magnitude": 0.5913767476169309
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/cross_venue_buy_volume_dipole=Q3/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "triangulated_consensus",
-              "quartile": 2
+              "feature": "cross_venue_buy_volume_dipole",
+              "quartile": 3
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
+          "score_ci_low": 0.5791666666666669,
+          "edge_magnitude": 0.5040583971956655
         },
         {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
+          "winner_key": "KR-BTC/WHALE_UP/perp_spot_buy_volume_dipole=Q1/fade/tier_5",
           "feature_gates": [
             {
-              "feature": "cross_venue_l1_bid_depth_dipole",
-              "quartile": 2
+              "feature": "perp_spot_buy_volume_dipole",
+              "quartile": 1
             }
           ],
           "direction": "fade",
           "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
+          "score_ci_low": 0.6666666666666666,
+          "edge_magnitude": 0.5798946344613783
         }
       ],
       "confidence_tier": "high_conviction",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.5812499203079211
-    },
-    {
-      "venue_label": "KR-BTC",
-      "chunk_index": 365,
-      "regime": "WHALE_UP",
-      "ts_start": 1778422140.0,
-      "ts_end": 1778423880.0,
-      "direction": "fade",
-      "support_count": 3,
-      "supporting_winners": [
-        {
-          "winner_key": "KR-BTC/WHALE_UP/book_depth_imbalance=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "book_depth_imbalance",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5129672229932101
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/triangulated_consensus=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "triangulated_consensus",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.5619586002778855
-        },
-        {
-          "winner_key": "KR-BTC/WHALE_UP/cross_venue_l1_bid_depth_dipole=Q2/fade/tier_5",
-          "feature_gates": [
-            {
-              "feature": "cross_venue_l1_bid_depth_dipole",
-              "quartile": 2
-            }
-          ],
-          "direction": "fade",
-          "tier": "tier_5",
-          "score_ci_low": 0.6,
-          "edge_magnitude": 0.6688239376526678
-        }
-      ],
-      "confidence_tier": "high_conviction",
-      "avg_score_ci_low": 0.6,
-      "avg_edge_magnitude": 0.5812499203079211
+      "avg_score_ci_low": 0.6097222222222224,
+      "avg_edge_magnitude": 0.5584432597579916
     }
   ]
 }

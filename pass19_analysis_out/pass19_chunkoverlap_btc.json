@@ -1,88 +1,53 @@
 {
   "cluster_reports": [
     {
-      "cell_key": "KR-BTC/WHALE_UP",
-      "n_singleton_winners": 6,
+      "cell_key": "CB-BTC/HERD_DOWN",
+      "n_singleton_winners": 5,
       "gate_list": [
-        "book_depth_imbalance=Q2",
         "cross_venue_book_imbalance_delta=Q2",
-        "triangulated_consensus=Q2",
         "cross_venue_buy_volume_dipole=Q2",
-        "cross_venue_l1_bid_depth_dipole=Q2",
-        "cross_venue_l1_ask_depth_dipole=Q2"
+        "cross_venue_buy_volume_dipole=Q4",
+        "cross_venue_sell_volume_dipole=Q2",
+        "cross_venue_sell_volume_dipole=Q4"
       ],
       "jaccard_matrix": [
         [
           1.0,
-          0.25,
-          0.42857142857142855,
-          0.25,
-          0.42857142857142855,
-          0.42857142857142855
-        ],
-        [
-          0.25,
-          1.0,
-          0.3333333333333333,
           0.5384615384615384,
-          0.3333333333333333,
-          0.3333333333333333
+          0.0,
+          0.25,
+          0.0
         ],
         [
-          0.42857142857142855,
-          0.3333333333333333,
+          0.5384615384615384,
           1.0,
+          0.0,
           0.42857142857142855,
-          0.8181818181818182,
-          0.8181818181818182
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.6666666666666666
         ],
         [
           0.25,
-          0.5384615384615384,
           0.42857142857142855,
+          0.0,
           1.0,
-          0.5384615384615384,
-          0.5384615384615384
+          0.0
         ],
         [
-          0.42857142857142855,
-          0.3333333333333333,
-          0.8181818181818182,
-          0.5384615384615384,
-          1.0,
-          1.0
-        ],
-        [
-          0.42857142857142855,
-          0.3333333333333333,
-          0.8181818181818182,
-          0.5384615384615384,
-          1.0,
+          0.0,
+          0.0,
+          0.6666666666666666,
+          0.0,
           1.0
         ]
       ],
       "clusters": [
-        {
-          "size": 2,
-          "members": [
-            "cross_venue_l1_bid_depth_dipole=Q2",
-            "cross_venue_l1_ask_depth_dipole=Q2"
-          ],
-          "representative": "cross_venue_l1_bid_depth_dipole=Q2",
-          "duplicates": [
-            "cross_venue_l1_ask_depth_dipole=Q2"
-          ],
-          "min_intracluster_jaccard": 1.0
-        },
-        {
-          "size": 1,
-          "members": [
-            "book_depth_imbalance=Q2"
-          ],
-          "representative": "book_depth_imbalance=Q2",
-          "duplicates": [],
-          "min_intracluster_jaccard": 1.0
-        },
         {
           "size": 1,
           "members": [
@@ -95,18 +60,105 @@
         {
           "size": 1,
           "members": [
-            "triangulated_consensus=Q2"
+            "cross_venue_buy_volume_dipole=Q2"
           ],
-          "representative": "triangulated_consensus=Q2",
+          "representative": "cross_venue_buy_volume_dipole=Q2",
           "duplicates": [],
           "min_intracluster_jaccard": 1.0
         },
         {
           "size": 1,
           "members": [
-            "cross_venue_buy_volume_dipole=Q2"
+            "cross_venue_buy_volume_dipole=Q4"
           ],
-          "representative": "cross_venue_buy_volume_dipole=Q2",
+          "representative": "cross_venue_buy_volume_dipole=Q4",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "cross_venue_sell_volume_dipole=Q2"
+          ],
+          "representative": "cross_venue_sell_volume_dipole=Q2",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "cross_venue_sell_volume_dipole=Q4"
+          ],
+          "representative": "cross_venue_sell_volume_dipole=Q4",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        }
+      ],
+      "verdict": "all_distinct"
+    },
+    {
+      "cell_key": "KR-BTC/WHALE_UP",
+      "n_singleton_winners": 4,
+      "gate_list": [
+        "perp_spot_dipole_divergence=Q3",
+        "cross_venue_buy_volume_dipole=Q3",
+        "perp_spot_buy_volume_dipole=Q1",
+        "perp_spot_sell_volume_dipole=Q1"
+      ],
+      "jaccard_matrix": [
+        [
+          1.0,
+          0.3333333333333333,
+          0.4117647058823529,
+          0.4117647058823529
+        ],
+        [
+          0.3333333333333333,
+          1.0,
+          0.2631578947368421,
+          0.2631578947368421
+        ],
+        [
+          0.4117647058823529,
+          0.2631578947368421,
+          1.0,
+          1.0
+        ],
+        [
+          0.4117647058823529,
+          0.2631578947368421,
+          1.0,
+          1.0
+        ]
+      ],
+      "clusters": [
+        {
+          "size": 2,
+          "members": [
+            "perp_spot_buy_volume_dipole=Q1",
+            "perp_spot_sell_volume_dipole=Q1"
+          ],
+          "representative": "perp_spot_buy_volume_dipole=Q1",
+          "duplicates": [
+            "perp_spot_sell_volume_dipole=Q1"
+          ],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "perp_spot_dipole_divergence=Q3"
+          ],
+          "representative": "perp_spot_dipole_divergence=Q3",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "cross_venue_buy_volume_dipole=Q3"
+          ],
+          "representative": "cross_venue_buy_volume_dipole=Q3",
           "duplicates": [],
           "min_intracluster_jaccard": 1.0
         }

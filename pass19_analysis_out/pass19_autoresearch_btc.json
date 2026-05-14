@@ -1,26 +1,120 @@
 {
   "schema_version": 1,
-  "generated_utc": 1778744462,
+  "generated_utc": 1778746283,
   "asset": "BTC",
   "fdr_q": 0.1,
-  "n_feature_candidates": 12,
-  "n_suggestions": 0,
-  "appended": 0,
+  "n_feature_candidates": 14,
+  "n_suggestions": 2,
+  "appended": 2,
   "cells": [
     {
       "venue_label": "CB-BTC",
       "regime": "EQUILIBRIUM_TWO_SIDED",
-      "n_cell_chunks": 350,
-      "n_tests": 797,
-      "n_fdr_survivors": 0,
-      "n_winners": 0,
-      "winners": [],
-      "append_entries": []
+      "n_cell_chunks": 480,
+      "n_tests": 853,
+      "n_fdr_survivors": 1,
+      "n_winners": 1,
+      "winners": [
+        {
+          "tier": "tier_4",
+          "direction": "fade",
+          "side": "sell",
+          "n_in_combo": 26,
+          "score_point": 0.8846153846153846,
+          "score_ci_low": 0.7692307692307693,
+          "score_ci_high": 0.9615384615384616,
+          "edge_magnitude": 0.8554441026534271,
+          "mean_fwd": -0.0016567398941494198,
+          "p_value": 8.797645568847656e-05,
+          "bh_q": 0.07504391670227051,
+          "gates": [
+            {
+              "feature": "cross_asset_dipole",
+              "quartile": 2
+            },
+            {
+              "feature": "triangulated_consensus",
+              "quartile": 1
+            }
+          ]
+        }
+      ],
+      "append_entries": [
+        {
+          "cell_id": "btc_cb_equilibrium_two_sided_cross_asset_dipole_q2_triangulated_consensus_q1_tier_4",
+          "asset": "BTC",
+          "venue": "CB",
+          "side": "sell",
+          "kind": "directional",
+          "notional_usd": 300.0,
+          "hold_minutes": 10.0,
+          "capacity_class": "tiny",
+          "note": "tier_search Pass-19: CB-BTC EQUILIBRIUM_TWO_SIDED fade; score=0.885 ci=[0.769,0.962] edge=0.86 n=26",
+          "predicate": {
+            "all_of": [
+              {
+                "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+              },
+              {
+                "all_of": [
+                  {
+                    "feat_threshold": {
+                      "name": "cross_asset_dipole",
+                      "op": ">",
+                      "value": 0.0
+                    }
+                  },
+                  {
+                    "feat_threshold": {
+                      "name": "cross_asset_dipole",
+                      "op": "<=",
+                      "value": 0.0
+                    }
+                  }
+                ]
+              },
+              {
+                "feat_threshold": {
+                  "name": "triangulated_consensus",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          },
+          "provenance": {
+            "discovered_pass": 19,
+            "discovery_method": "cross_platform_autoresearch",
+            "tier": "tier_4",
+            "score_point": 0.8846153846153846,
+            "score_ci_low": 0.7692307692307693,
+            "score_ci_high": 0.9615384615384616,
+            "edge_magnitude": 0.8554441026534271,
+            "n_chunks_in_combo": 26,
+            "mean_fwd_return": -0.0016567398941494198,
+            "arity": 2,
+            "combination_spec": [
+              {
+                "feature": "cross_asset_dipole",
+                "quartile": 2
+              },
+              {
+                "feature": "triangulated_consensus",
+                "quartile": 1
+              }
+            ],
+            "predicted_direction": "fade",
+            "fdr_q_target": 0.1,
+            "binomial_p_value": 8.797645568847656e-05,
+            "bh_q_value": 0.07504391670227051
+          }
+        }
+      ]
     },
     {
       "venue_label": "CB-BTC",
       "regime": "HERD_DOWN",
-      "n_cell_chunks": 25,
+      "n_cell_chunks": 38,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -30,7 +124,7 @@
     {
       "venue_label": "CB-BTC",
       "regime": "WHALE_DOWN",
-      "n_cell_chunks": 16,
+      "n_cell_chunks": 27,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -40,7 +134,7 @@
     {
       "venue_label": "CB-BTC",
       "regime": "WHALE_NASCENT_UP",
-      "n_cell_chunks": 10,
+      "n_cell_chunks": 11,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -50,7 +144,7 @@
     {
       "venue_label": "CB-BTC",
       "regime": "WHALE_UP",
-      "n_cell_chunks": 17,
+      "n_cell_chunks": 25,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -60,7 +154,7 @@
     {
       "venue_label": "KR-BTC",
       "regime": "DEPLETED",
-      "n_cell_chunks": 21,
+      "n_cell_chunks": 22,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -70,17 +164,100 @@
     {
       "venue_label": "KR-BTC",
       "regime": "EQUILIBRIUM_TWO_SIDED",
-      "n_cell_chunks": 370,
-      "n_tests": 783,
-      "n_fdr_survivors": 0,
-      "n_winners": 0,
-      "winners": [],
-      "append_entries": []
+      "n_cell_chunks": 503,
+      "n_tests": 839,
+      "n_fdr_survivors": 1,
+      "n_winners": 1,
+      "winners": [
+        {
+          "tier": "tier_5",
+          "direction": "fade",
+          "side": "sell",
+          "n_in_combo": 39,
+          "score_point": 0.8205128205128205,
+          "score_ci_low": 0.717948717948718,
+          "score_ci_high": 0.9230769230769231,
+          "edge_magnitude": 0.604775022951242,
+          "mean_fwd": -0.0011417758887240638,
+          "p_value": 7.025478407740593e-05,
+          "bh_q": 0.058943763840943575,
+          "gates": [
+            {
+              "feature": "perp_spot_dipole_divergence",
+              "quartile": 1
+            },
+            {
+              "feature": "triangulated_consensus",
+              "quartile": 1
+            }
+          ]
+        }
+      ],
+      "append_entries": [
+        {
+          "cell_id": "btc_kr_equilibrium_two_sided_perp_spot_dipole_divergence_q1_triangulated_consensus_q1_tier_5",
+          "asset": "BTC",
+          "venue": "KR",
+          "side": "sell",
+          "kind": "directional",
+          "notional_usd": 200.0,
+          "hold_minutes": 10.0,
+          "capacity_class": "tiny",
+          "note": "tier_search Pass-19: KR-BTC EQUILIBRIUM_TWO_SIDED fade; score=0.821 ci=[0.718,0.923] edge=0.60 n=39",
+          "predicate": {
+            "all_of": [
+              {
+                "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+              },
+              {
+                "feat_threshold": {
+                  "name": "perp_spot_dipole_divergence",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "triangulated_consensus",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          },
+          "provenance": {
+            "discovered_pass": 19,
+            "discovery_method": "cross_platform_autoresearch",
+            "tier": "tier_5",
+            "score_point": 0.8205128205128205,
+            "score_ci_low": 0.717948717948718,
+            "score_ci_high": 0.9230769230769231,
+            "edge_magnitude": 0.604775022951242,
+            "n_chunks_in_combo": 39,
+            "mean_fwd_return": -0.0011417758887240638,
+            "arity": 2,
+            "combination_spec": [
+              {
+                "feature": "perp_spot_dipole_divergence",
+                "quartile": 1
+              },
+              {
+                "feature": "triangulated_consensus",
+                "quartile": 1
+              }
+            ],
+            "predicted_direction": "fade",
+            "fdr_q_target": 0.1,
+            "binomial_p_value": 7.025478407740593e-05,
+            "bh_q_value": 0.058943763840943575
+          }
+        }
+      ]
     },
     {
       "venue_label": "KR-BTC",
       "regime": "HERD_DOWN",
-      "n_cell_chunks": 11,
+      "n_cell_chunks": 14,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -90,7 +267,7 @@
     {
       "venue_label": "KR-BTC",
       "regime": "HERD_UP",
-      "n_cell_chunks": 23,
+      "n_cell_chunks": 31,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -110,7 +287,7 @@
     {
       "venue_label": "KR-BTC",
       "regime": "WHALE_NASCENT_UP",
-      "n_cell_chunks": 8,
+      "n_cell_chunks": 10,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -120,8 +297,8 @@
     {
       "venue_label": "KR-BTC",
       "regime": "WHALE_UP",
-      "n_cell_chunks": 38,
-      "n_tests": 0,
+      "n_cell_chunks": 50,
+      "n_tests": 6,
       "n_fdr_survivors": 0,
       "n_winners": 0,
       "winners": [],
@@ -140,8 +317,8 @@
     {
       "venue_label": "BB-BTC",
       "regime": "EQUILIBRIUM_TWO_SIDED",
-      "n_cell_chunks": 389,
-      "n_tests": 308,
+      "n_cell_chunks": 544,
+      "n_tests": 348,
       "n_fdr_survivors": 0,
       "n_winners": 0,
       "winners": [],
@@ -150,7 +327,7 @@
     {
       "venue_label": "BB-BTC",
       "regime": "HERD_DOWN",
-      "n_cell_chunks": 9,
+      "n_cell_chunks": 10,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -169,8 +346,18 @@
     },
     {
       "venue_label": "BB-BTC",
-      "regime": "WHALE_UP",
+      "regime": "WHALE_DOWN",
       "n_cell_chunks": 10,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "BB-BTC",
+      "regime": "WHALE_UP",
+      "n_cell_chunks": 13,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,

@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "generated_utc": 1778744442,
+  "generated_utc": 1778746257,
   "asset": "ETH",
   "fdr_q": 0.1,
-  "n_feature_candidates": 12,
-  "n_suggestions": 0,
-  "appended": 0,
+  "n_feature_candidates": 14,
+  "n_suggestions": 1,
+  "appended": 1,
   "cells": [
     {
       "venue_label": "CB-ETH",
       "regime": "DEPLETED",
-      "n_cell_chunks": 30,
+      "n_cell_chunks": 27,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -20,17 +20,100 @@
     {
       "venue_label": "CB-ETH",
       "regime": "EQUILIBRIUM_TWO_SIDED",
-      "n_cell_chunks": 501,
-      "n_tests": 948,
-      "n_fdr_survivors": 0,
-      "n_winners": 0,
-      "winners": [],
-      "append_entries": []
+      "n_cell_chunks": 688,
+      "n_tests": 1034,
+      "n_fdr_survivors": 1,
+      "n_winners": 1,
+      "winners": [
+        {
+          "tier": "tier_4",
+          "direction": "fade",
+          "side": "sell",
+          "n_in_combo": 38,
+          "score_point": 0.8421052631578947,
+          "score_ci_low": 0.7368421052631579,
+          "score_ci_high": 0.9473684210526315,
+          "edge_magnitude": 0.7453521855725557,
+          "mean_fwd": -0.0018812022608049332,
+          "p_value": 2.4342560209333897e-05,
+          "bh_q": 0.02517020725645125,
+          "gates": [
+            {
+              "feature": "perp_spot_dipole_divergence",
+              "quartile": 4
+            },
+            {
+              "feature": "triangulated_consensus",
+              "quartile": 1
+            }
+          ]
+        }
+      ],
+      "append_entries": [
+        {
+          "cell_id": "eth_cb_equilibrium_two_sided_perp_spot_dipole_divergence_q4_triangulated_consensus_q1_tier_4",
+          "asset": "ETH",
+          "venue": "CB",
+          "side": "sell",
+          "kind": "directional",
+          "notional_usd": 300.0,
+          "hold_minutes": 10.0,
+          "capacity_class": "tiny",
+          "note": "tier_search Pass-19: CB-ETH EQUILIBRIUM_TWO_SIDED fade; score=0.842 ci=[0.737,0.947] edge=0.75 n=38",
+          "predicate": {
+            "all_of": [
+              {
+                "regime_eq": "EQUILIBRIUM_TWO_SIDED"
+              },
+              {
+                "feat_threshold": {
+                  "name": "perp_spot_dipole_divergence",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "triangulated_consensus",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          },
+          "provenance": {
+            "discovered_pass": 19,
+            "discovery_method": "cross_platform_autoresearch",
+            "tier": "tier_4",
+            "score_point": 0.8421052631578947,
+            "score_ci_low": 0.7368421052631579,
+            "score_ci_high": 0.9473684210526315,
+            "edge_magnitude": 0.7453521855725557,
+            "n_chunks_in_combo": 38,
+            "mean_fwd_return": -0.0018812022608049332,
+            "arity": 2,
+            "combination_spec": [
+              {
+                "feature": "perp_spot_dipole_divergence",
+                "quartile": 4
+              },
+              {
+                "feature": "triangulated_consensus",
+                "quartile": 1
+              }
+            ],
+            "predicted_direction": "fade",
+            "fdr_q_target": 0.1,
+            "binomial_p_value": 2.4342560209333897e-05,
+            "bh_q_value": 0.02517020725645125
+          }
+        }
+      ]
     },
     {
       "venue_label": "CB-ETH",
       "regime": "HERD_DOWN",
-      "n_cell_chunks": 22,
+      "n_cell_chunks": 25,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -40,7 +123,7 @@
     {
       "venue_label": "CB-ETH",
       "regime": "HERD_UP",
-      "n_cell_chunks": 9,
+      "n_cell_chunks": 10,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -50,7 +133,17 @@
     {
       "venue_label": "CB-ETH",
       "regime": "WHALE_DOWN",
-      "n_cell_chunks": 19,
+      "n_cell_chunks": 24,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "CB-ETH",
+      "regime": "WHALE_NASCENT_DOWN",
+      "n_cell_chunks": 8,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -60,7 +153,7 @@
     {
       "venue_label": "CB-ETH",
       "regime": "WHALE_NASCENT_UP",
-      "n_cell_chunks": 12,
+      "n_cell_chunks": 19,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -70,7 +163,7 @@
     {
       "venue_label": "CB-ETH",
       "regime": "WHALE_UP",
-      "n_cell_chunks": 24,
+      "n_cell_chunks": 31,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -90,8 +183,8 @@
     {
       "venue_label": "KR-ETH",
       "regime": "EQUILIBRIUM_TWO_SIDED",
-      "n_cell_chunks": 485,
-      "n_tests": 931,
+      "n_cell_chunks": 656,
+      "n_tests": 1035,
       "n_fdr_survivors": 0,
       "n_winners": 0,
       "winners": [],
@@ -100,7 +193,7 @@
     {
       "venue_label": "KR-ETH",
       "regime": "HERD_DOWN",
-      "n_cell_chunks": 10,
+      "n_cell_chunks": 15,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -110,7 +203,7 @@
     {
       "venue_label": "KR-ETH",
       "regime": "HERD_UP",
-      "n_cell_chunks": 27,
+      "n_cell_chunks": 34,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -120,7 +213,7 @@
     {
       "venue_label": "KR-ETH",
       "regime": "WHALE_NASCENT_UP",
-      "n_cell_chunks": 23,
+      "n_cell_chunks": 22,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -130,8 +223,8 @@
     {
       "venue_label": "KR-ETH",
       "regime": "WHALE_UP",
-      "n_cell_chunks": 64,
-      "n_tests": 88,
+      "n_cell_chunks": 91,
+      "n_tests": 106,
       "n_fdr_survivors": 0,
       "n_winners": 0,
       "winners": [],
@@ -150,8 +243,8 @@
     {
       "venue_label": "BB-ETH",
       "regime": "EQUILIBRIUM_TWO_SIDED",
-      "n_cell_chunks": 398,
-      "n_tests": 303,
+      "n_cell_chunks": 596,
+      "n_tests": 364,
       "n_fdr_survivors": 0,
       "n_winners": 0,
       "winners": [],
@@ -160,7 +253,7 @@
     {
       "venue_label": "BB-ETH",
       "regime": "HERD_UP",
-      "n_cell_chunks": 10,
+      "n_cell_chunks": 11,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,
@@ -170,7 +263,7 @@
     {
       "venue_label": "BB-ETH",
       "regime": "WHALE_DOWN",
-      "n_cell_chunks": 8,
+      "n_cell_chunks": 9,
       "n_tests": 0,
       "n_fdr_survivors": 0,
       "n_winners": 0,

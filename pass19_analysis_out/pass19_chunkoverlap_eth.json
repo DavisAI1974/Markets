@@ -2,156 +2,42 @@
   "cluster_reports": [
     {
       "cell_key": "KR-ETH/WHALE_UP",
-      "n_singleton_winners": 9,
+      "n_singleton_winners": 2,
       "gate_list": [
         "cross_venue_book_imbalance_delta=Q1",
-        "cross_venue_aggressor_agreement=Q1",
-        "perp_spot_dipole_divergence=Q2",
-        "triangulated_consensus=Q1",
-        "perp_spot_buy_volume_dipole=Q1",
-        "perp_spot_sell_volume_dipole=Q1",
-        "cross_venue_l1_bid_depth_dipole=Q1",
-        "cross_venue_l1_ask_depth_dipole=Q1",
-        "microprice_drift=Q2"
+        "perp_spot_basis_z=Q3"
       ],
       "jaccard_matrix": [
         [
           1.0,
-          0.6842105263157895,
-          0.6842105263157895,
-          0.8823529411764706,
-          0.6842105263157895,
-          0.6842105263157895,
-          0.6842105263157895,
-          0.6842105263157895,
-          0.6
+          0.3235294117647059
         ],
         [
-          0.6842105263157895,
-          1.0,
-          0.8823529411764706,
-          0.7777777777777778,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          0.8823529411764706
-        ],
-        [
-          0.6842105263157895,
-          0.8823529411764706,
-          1.0,
-          0.7777777777777778,
-          0.8823529411764706,
-          0.8823529411764706,
-          0.8823529411764706,
-          0.8823529411764706,
-          0.7777777777777778
-        ],
-        [
-          0.8823529411764706,
-          0.7777777777777778,
-          0.7777777777777778,
-          1.0,
-          0.7777777777777778,
-          0.7777777777777778,
-          0.7777777777777778,
-          0.7777777777777778,
-          0.6842105263157895
-        ],
-        [
-          0.6842105263157895,
-          1.0,
-          0.8823529411764706,
-          0.7777777777777778,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          0.8823529411764706
-        ],
-        [
-          0.6842105263157895,
-          1.0,
-          0.8823529411764706,
-          0.7777777777777778,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          0.8823529411764706
-        ],
-        [
-          0.6842105263157895,
-          1.0,
-          0.8823529411764706,
-          0.7777777777777778,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          0.8823529411764706
-        ],
-        [
-          0.6842105263157895,
-          1.0,
-          0.8823529411764706,
-          0.7777777777777778,
-          1.0,
-          1.0,
-          1.0,
-          1.0,
-          0.8823529411764706
-        ],
-        [
-          0.6,
-          0.8823529411764706,
-          0.7777777777777778,
-          0.6842105263157895,
-          0.8823529411764706,
-          0.8823529411764706,
-          0.8823529411764706,
-          0.8823529411764706,
+          0.3235294117647059,
           1.0
         ]
       ],
       "clusters": [
         {
-          "size": 7,
+          "size": 1,
           "members": [
-            "cross_venue_aggressor_agreement=Q1",
-            "perp_spot_dipole_divergence=Q2",
-            "perp_spot_buy_volume_dipole=Q1",
-            "perp_spot_sell_volume_dipole=Q1",
-            "cross_venue_l1_bid_depth_dipole=Q1",
-            "cross_venue_l1_ask_depth_dipole=Q1",
-            "microprice_drift=Q2"
-          ],
-          "representative": "perp_spot_dipole_divergence=Q2",
-          "duplicates": [
-            "cross_venue_aggressor_agreement=Q1",
-            "perp_spot_buy_volume_dipole=Q1",
-            "perp_spot_sell_volume_dipole=Q1",
-            "cross_venue_l1_bid_depth_dipole=Q1",
-            "cross_venue_l1_ask_depth_dipole=Q1",
-            "microprice_drift=Q2"
-          ],
-          "min_intracluster_jaccard": 0.7777777777777778
-        },
-        {
-          "size": 2,
-          "members": [
-            "cross_venue_book_imbalance_delta=Q1",
-            "triangulated_consensus=Q1"
-          ],
-          "representative": "triangulated_consensus=Q1",
-          "duplicates": [
             "cross_venue_book_imbalance_delta=Q1"
           ],
-          "min_intracluster_jaccard": 0.8823529411764706
+          "representative": "cross_venue_book_imbalance_delta=Q1",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "perp_spot_basis_z=Q3"
+          ],
+          "representative": "perp_spot_basis_z=Q3",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
         }
       ],
-      "verdict": "duplicates_found"
+      "verdict": "all_distinct"
     }
   ],
   "overlap_threshold": 0.85
