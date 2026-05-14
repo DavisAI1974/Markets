@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_utc": 1778564326,
+  "generated_utc": 1778744420,
   "notes": "Pass-17 cells-as-data registry. backend/forward_paper.py loads this at startup and reloads on mtime change. Cells are append-mostly: new findings get appended here; retirement happens via the P&L decay monitor (Pass-18 candidate), not via FDR churn. Predicate DSL documented in backend/forward_paper.py module docstring.",
   "cells": [
     {
@@ -764,6 +764,397 @@
           }
         ],
         "predicted_direction": "momentum"
+      }
+    },
+    {
+      "cell_id": "eth_kr_whale_up_triangulated_consensus_q1_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-19: KR-ETH WHALE_UP fade; score=0.812 ci=[0.625,0.938] edge=0.58 n=16",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "feat_threshold": {
+              "name": "triangulated_consensus",
+              "op": "<=",
+              "value": 0.0
+            }
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 19,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8125,
+        "score_ci_low": 0.625,
+        "score_ci_high": 0.9375,
+        "edge_magnitude": 0.5835676530604432,
+        "n_chunks_in_combo": 16,
+        "mean_fwd_return": -0.0015013624306225253,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "triangulated_consensus",
+            "quartile": 1
+          }
+        ],
+        "predicted_direction": "fade",
+        "jaccard_dedupe_dropped": [
+          "cross_venue_book_imbalance_delta=Q1"
+        ],
+        "jaccard_dedupe_min_overlap": 0.8823529411764706
+      }
+    },
+    {
+      "cell_id": "eth_kr_whale_up_perp_spot_dipole_divergence_q2_tier_5",
+      "asset": "ETH",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-19: KR-ETH WHALE_UP fade; score=0.812 ci=[0.625,0.938] edge=0.64 n=16",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "perp_spot_dipole_divergence",
+                  "op": ">",
+                  "value": -0.14635103538527328
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "perp_spot_dipole_divergence",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 19,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8125,
+        "score_ci_low": 0.625,
+        "score_ci_high": 0.9375,
+        "edge_magnitude": 0.6445691965516613,
+        "n_chunks_in_combo": 16,
+        "mean_fwd_return": -0.0016583029757802174,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "perp_spot_dipole_divergence",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade",
+        "jaccard_dedupe_dropped": [
+          "cross_venue_aggressor_agreement=Q1",
+          "perp_spot_buy_volume_dipole=Q1",
+          "perp_spot_sell_volume_dipole=Q1",
+          "cross_venue_l1_bid_depth_dipole=Q1",
+          "cross_venue_l1_ask_depth_dipole=Q1",
+          "microprice_drift=Q2"
+        ],
+        "jaccard_dedupe_min_overlap": 0.7777777777777778
+      }
+    },
+    {
+      "cell_id": "btc_kr_whale_up_book_depth_imbalance_q2_tier_5",
+      "asset": "BTC",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-19: KR-BTC WHALE_UP fade; score=0.800 ci=[0.600,1.000] edge=0.51 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "book_depth_imbalance",
+                  "op": ">",
+                  "value": -0.21086023931927447
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "book_depth_imbalance",
+                  "op": "<=",
+                  "value": -0.08563071342290939
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 19,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8,
+        "score_ci_low": 0.6,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.5129672229932101,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": -0.000771607245973478,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "book_depth_imbalance",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "btc_kr_whale_up_cross_venue_book_imbalance_delta_q2_tier_5",
+      "asset": "BTC",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-19: KR-BTC WHALE_UP fade; score=0.800 ci=[0.600,1.000] edge=0.52 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_book_imbalance_delta",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_book_imbalance_delta",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 19,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8,
+        "score_ci_low": 0.6,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.5203937974276415,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": -0.0007827783274568744,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "cross_venue_book_imbalance_delta",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "btc_kr_whale_up_triangulated_consensus_q2_tier_5",
+      "asset": "BTC",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-19: KR-BTC WHALE_UP fade; score=0.800 ci=[0.600,1.000] edge=0.56 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "triangulated_consensus",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "triangulated_consensus",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 19,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8,
+        "score_ci_low": 0.6,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.5619586002778855,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": -0.0008453002618400618,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "triangulated_consensus",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "btc_kr_whale_up_cross_venue_buy_volume_dipole_q2_tier_5",
+      "asset": "BTC",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-19: KR-BTC WHALE_UP fade; score=0.800 ci=[0.600,1.000] edge=0.73 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_buy_volume_dipole",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_buy_volume_dipole",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 19,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8,
+        "score_ci_low": 0.6,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.7328243186872796,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": -0.001102317124718448,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "cross_venue_buy_volume_dipole",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade"
+      }
+    },
+    {
+      "cell_id": "btc_kr_whale_up_cross_venue_l1_bid_depth_dipole_q2_tier_5",
+      "asset": "BTC",
+      "venue": "KR",
+      "side": "sell",
+      "kind": "directional",
+      "notional_usd": 200.0,
+      "hold_minutes": 10.0,
+      "capacity_class": "tiny",
+      "note": "tier_search Pass-19: KR-BTC WHALE_UP fade; score=0.800 ci=[0.600,1.000] edge=0.67 n=10",
+      "predicate": {
+        "all_of": [
+          {
+            "regime_eq": "WHALE_UP"
+          },
+          {
+            "all_of": [
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_l1_bid_depth_dipole",
+                  "op": ">",
+                  "value": 0.0
+                }
+              },
+              {
+                "feat_threshold": {
+                  "name": "cross_venue_l1_bid_depth_dipole",
+                  "op": "<=",
+                  "value": 0.0
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "provenance": {
+        "discovered_pass": 19,
+        "discovery_method": "markets_tier_search",
+        "tier": "tier_5",
+        "score_point": 0.8,
+        "score_ci_low": 0.6,
+        "score_ci_high": 1.0,
+        "edge_magnitude": 0.6688239376526678,
+        "n_chunks_in_combo": 10,
+        "mean_fwd_return": -0.0010060475083807513,
+        "arity": 1,
+        "combination_spec": [
+          {
+            "feature": "cross_venue_l1_bid_depth_dipole",
+            "quartile": 2
+          }
+        ],
+        "predicted_direction": "fade",
+        "jaccard_dedupe_dropped": [
+          "cross_venue_l1_ask_depth_dipole=Q2"
+        ],
+        "jaccard_dedupe_min_overlap": 1.0
       }
     }
   ]
