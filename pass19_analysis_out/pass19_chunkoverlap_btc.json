@@ -1,0 +1,118 @@
+{
+  "cluster_reports": [
+    {
+      "cell_key": "KR-BTC/WHALE_UP",
+      "n_singleton_winners": 6,
+      "gate_list": [
+        "book_depth_imbalance=Q2",
+        "cross_venue_book_imbalance_delta=Q2",
+        "triangulated_consensus=Q2",
+        "cross_venue_buy_volume_dipole=Q2",
+        "cross_venue_l1_bid_depth_dipole=Q2",
+        "cross_venue_l1_ask_depth_dipole=Q2"
+      ],
+      "jaccard_matrix": [
+        [
+          1.0,
+          0.25,
+          0.42857142857142855,
+          0.25,
+          0.42857142857142855,
+          0.42857142857142855
+        ],
+        [
+          0.25,
+          1.0,
+          0.3333333333333333,
+          0.5384615384615384,
+          0.3333333333333333,
+          0.3333333333333333
+        ],
+        [
+          0.42857142857142855,
+          0.3333333333333333,
+          1.0,
+          0.42857142857142855,
+          0.8181818181818182,
+          0.8181818181818182
+        ],
+        [
+          0.25,
+          0.5384615384615384,
+          0.42857142857142855,
+          1.0,
+          0.5384615384615384,
+          0.5384615384615384
+        ],
+        [
+          0.42857142857142855,
+          0.3333333333333333,
+          0.8181818181818182,
+          0.5384615384615384,
+          1.0,
+          1.0
+        ],
+        [
+          0.42857142857142855,
+          0.3333333333333333,
+          0.8181818181818182,
+          0.5384615384615384,
+          1.0,
+          1.0
+        ]
+      ],
+      "clusters": [
+        {
+          "size": 2,
+          "members": [
+            "cross_venue_l1_bid_depth_dipole=Q2",
+            "cross_venue_l1_ask_depth_dipole=Q2"
+          ],
+          "representative": "cross_venue_l1_bid_depth_dipole=Q2",
+          "duplicates": [
+            "cross_venue_l1_ask_depth_dipole=Q2"
+          ],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "book_depth_imbalance=Q2"
+          ],
+          "representative": "book_depth_imbalance=Q2",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "cross_venue_book_imbalance_delta=Q2"
+          ],
+          "representative": "cross_venue_book_imbalance_delta=Q2",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "triangulated_consensus=Q2"
+          ],
+          "representative": "triangulated_consensus=Q2",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        },
+        {
+          "size": 1,
+          "members": [
+            "cross_venue_buy_volume_dipole=Q2"
+          ],
+          "representative": "cross_venue_buy_volume_dipole=Q2",
+          "duplicates": [],
+          "min_intracluster_jaccard": 1.0
+        }
+      ],
+      "verdict": "duplicates_found"
+    }
+  ],
+  "overlap_threshold": 0.85
+}

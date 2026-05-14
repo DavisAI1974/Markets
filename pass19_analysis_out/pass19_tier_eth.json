@@ -1,0 +1,256 @@
+{
+  "asset": "ETH",
+  "generated_utc": 1778744400,
+  "tiers": [
+    {
+      "name": "tier_1",
+      "threshold": 0.95,
+      "min_n": 60,
+      "edge_floor": 1.5,
+      "notional_multiplier": 1.0
+    },
+    {
+      "name": "tier_2",
+      "threshold": 0.85,
+      "min_n": 30,
+      "edge_floor": 1.2,
+      "notional_multiplier": 0.7
+    },
+    {
+      "name": "tier_3",
+      "threshold": 0.75,
+      "min_n": 20,
+      "edge_floor": 0.9,
+      "notional_multiplier": 0.5
+    },
+    {
+      "name": "tier_4",
+      "threshold": 0.65,
+      "min_n": 15,
+      "edge_floor": 0.7,
+      "notional_multiplier": 0.3
+    },
+    {
+      "name": "tier_5",
+      "threshold": 0.55,
+      "min_n": 10,
+      "edge_floor": 0.5,
+      "notional_multiplier": 0.2
+    }
+  ],
+  "max_arity": 2,
+  "bootstrap_samples": 1000,
+  "features_searched": [
+    "mean_dipole",
+    "mean_ofi",
+    "vpin_like",
+    "realized_vol_z",
+    "book_depth_imbalance",
+    "cross_asset_dipole",
+    "cross_venue_gap_z",
+    "cross_venue_book_imbalance_delta",
+    "cross_venue_aggressor_agreement",
+    "hurst_delta",
+    "perp_spot_basis_z",
+    "perp_spot_dipole_divergence",
+    "triangulated_consensus",
+    "cross_venue_buy_volume_dipole",
+    "cross_venue_sell_volume_dipole",
+    "perp_spot_buy_volume_dipole",
+    "perp_spot_sell_volume_dipole",
+    "cross_venue_l1_bid_depth_dipole",
+    "cross_venue_l1_ask_depth_dipole",
+    "trade_size_entropy",
+    "microprice_drift"
+  ],
+  "n_winners": 9,
+  "tier_counts": {
+    "tier_1": 0,
+    "tier_2": 0,
+    "tier_3": 0,
+    "tier_4": 0,
+    "tier_5": 9
+  },
+  "winners": [
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.75,
+      "score_ci_low": 0.5625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5709972901567838,
+      "mean_fwd": -0.0014690222717671291,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_book_imbalance_delta",
+          "quartile": 1
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.75,
+      "score_ci_low": 0.5625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5668198385921165,
+      "mean_fwd": -0.0014582748137782486,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_aggressor_agreement",
+          "quartile": 1
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.8125,
+      "score_ci_low": 0.625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.6445691965516613,
+      "mean_fwd": -0.0016583029757802174,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "perp_spot_dipole_divergence",
+          "quartile": 2
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.8125,
+      "score_ci_low": 0.625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5835676530604432,
+      "mean_fwd": -0.0015013624306225253,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "triangulated_consensus",
+          "quartile": 1
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.75,
+      "score_ci_low": 0.5625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5668198385921165,
+      "mean_fwd": -0.0014582748137782486,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "perp_spot_buy_volume_dipole",
+          "quartile": 1
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.75,
+      "score_ci_low": 0.5625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5668198385921165,
+      "mean_fwd": -0.0014582748137782486,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "perp_spot_sell_volume_dipole",
+          "quartile": 1
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.75,
+      "score_ci_low": 0.5625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5668198385921165,
+      "mean_fwd": -0.0014582748137782486,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_l1_bid_depth_dipole",
+          "quartile": 1
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.75,
+      "score_ci_low": 0.5625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5668198385921165,
+      "mean_fwd": -0.0014582748137782486,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_l1_ask_depth_dipole",
+          "quartile": 1
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-ETH",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 16,
+      "score_point": 0.75,
+      "score_ci_low": 0.5625,
+      "score_ci_high": 0.9375,
+      "edge_magnitude": 0.5361435139849825,
+      "mean_fwd": -0.0013793528909588528,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "microprice_drift",
+          "quartile": 2
+        }
+      ]
+    }
+  ]
+}

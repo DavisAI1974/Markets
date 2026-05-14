@@ -1,0 +1,196 @@
+{
+  "asset": "BTC",
+  "generated_utc": 1778744420,
+  "tiers": [
+    {
+      "name": "tier_1",
+      "threshold": 0.95,
+      "min_n": 60,
+      "edge_floor": 1.5,
+      "notional_multiplier": 1.0
+    },
+    {
+      "name": "tier_2",
+      "threshold": 0.85,
+      "min_n": 30,
+      "edge_floor": 1.2,
+      "notional_multiplier": 0.7
+    },
+    {
+      "name": "tier_3",
+      "threshold": 0.75,
+      "min_n": 20,
+      "edge_floor": 0.9,
+      "notional_multiplier": 0.5
+    },
+    {
+      "name": "tier_4",
+      "threshold": 0.65,
+      "min_n": 15,
+      "edge_floor": 0.7,
+      "notional_multiplier": 0.3
+    },
+    {
+      "name": "tier_5",
+      "threshold": 0.55,
+      "min_n": 10,
+      "edge_floor": 0.5,
+      "notional_multiplier": 0.2
+    }
+  ],
+  "max_arity": 2,
+  "bootstrap_samples": 1000,
+  "features_searched": [
+    "mean_dipole",
+    "mean_ofi",
+    "vpin_like",
+    "realized_vol_z",
+    "book_depth_imbalance",
+    "cross_asset_dipole",
+    "cross_venue_gap_z",
+    "cross_venue_book_imbalance_delta",
+    "cross_venue_aggressor_agreement",
+    "hurst_delta",
+    "perp_spot_basis_z",
+    "perp_spot_dipole_divergence",
+    "triangulated_consensus",
+    "cross_venue_buy_volume_dipole",
+    "cross_venue_sell_volume_dipole",
+    "perp_spot_buy_volume_dipole",
+    "perp_spot_sell_volume_dipole",
+    "cross_venue_l1_bid_depth_dipole",
+    "cross_venue_l1_ask_depth_dipole",
+    "trade_size_entropy",
+    "microprice_drift"
+  ],
+  "n_winners": 6,
+  "tier_counts": {
+    "tier_1": 0,
+    "tier_2": 0,
+    "tier_3": 0,
+    "tier_4": 0,
+    "tier_5": 6
+  },
+  "winners": [
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 10,
+      "score_point": 0.8,
+      "score_ci_low": 0.6,
+      "score_ci_high": 1.0,
+      "edge_magnitude": 0.5129672229932101,
+      "mean_fwd": -0.000771607245973478,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "book_depth_imbalance",
+          "quartile": 2
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 10,
+      "score_point": 0.8,
+      "score_ci_low": 0.6,
+      "score_ci_high": 1.0,
+      "edge_magnitude": 0.5203937974276415,
+      "mean_fwd": -0.0007827783274568744,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_book_imbalance_delta",
+          "quartile": 2
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 10,
+      "score_point": 0.8,
+      "score_ci_low": 0.6,
+      "score_ci_high": 1.0,
+      "edge_magnitude": 0.5619586002778855,
+      "mean_fwd": -0.0008453002618400618,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "triangulated_consensus",
+          "quartile": 2
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 10,
+      "score_point": 0.8,
+      "score_ci_low": 0.6,
+      "score_ci_high": 1.0,
+      "edge_magnitude": 0.7328243186872796,
+      "mean_fwd": -0.001102317124718448,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_buy_volume_dipole",
+          "quartile": 2
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 10,
+      "score_point": 0.8,
+      "score_ci_low": 0.6,
+      "score_ci_high": 1.0,
+      "edge_magnitude": 0.6688239376526678,
+      "mean_fwd": -0.0010060475083807513,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_l1_bid_depth_dipole",
+          "quartile": 2
+        }
+      ]
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_UP",
+      "tier": "tier_5",
+      "direction": "fade",
+      "side": "sell",
+      "n_in_combo": 10,
+      "score_point": 0.8,
+      "score_ci_low": 0.6,
+      "score_ci_high": 1.0,
+      "edge_magnitude": 0.6688239376526678,
+      "mean_fwd": -0.0010060475083807513,
+      "arity": 1,
+      "gates": [
+        {
+          "feature": "cross_venue_l1_ask_depth_dipole",
+          "quartile": 2
+        }
+      ]
+    }
+  ]
+}

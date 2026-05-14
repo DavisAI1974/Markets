@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "generated_utc": 1778744462,
+  "asset": "BTC",
+  "fdr_q": 0.1,
+  "n_feature_candidates": 12,
+  "n_suggestions": 0,
+  "appended": 0,
+  "cells": [
+    {
+      "venue_label": "CB-BTC",
+      "regime": "EQUILIBRIUM_TWO_SIDED",
+      "n_cell_chunks": 350,
+      "n_tests": 797,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "CB-BTC",
+      "regime": "HERD_DOWN",
+      "n_cell_chunks": 25,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "CB-BTC",
+      "regime": "WHALE_DOWN",
+      "n_cell_chunks": 16,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "CB-BTC",
+      "regime": "WHALE_NASCENT_UP",
+      "n_cell_chunks": 10,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "CB-BTC",
+      "regime": "WHALE_UP",
+      "n_cell_chunks": 17,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "DEPLETED",
+      "n_cell_chunks": 21,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "EQUILIBRIUM_TWO_SIDED",
+      "n_cell_chunks": 370,
+      "n_tests": 783,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "HERD_DOWN",
+      "n_cell_chunks": 11,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "HERD_UP",
+      "n_cell_chunks": 23,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_DOWN",
+      "n_cell_chunks": 10,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_NASCENT_UP",
+      "n_cell_chunks": 8,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "KR-BTC",
+      "regime": "WHALE_UP",
+      "n_cell_chunks": 38,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "BB-BTC",
+      "regime": "DEPLETED",
+      "n_cell_chunks": 8,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "BB-BTC",
+      "regime": "EQUILIBRIUM_TWO_SIDED",
+      "n_cell_chunks": 389,
+      "n_tests": 308,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "BB-BTC",
+      "regime": "HERD_DOWN",
+      "n_cell_chunks": 9,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "BB-BTC",
+      "regime": "HERD_UP",
+      "n_cell_chunks": 12,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    },
+    {
+      "venue_label": "BB-BTC",
+      "regime": "WHALE_UP",
+      "n_cell_chunks": 10,
+      "n_tests": 0,
+      "n_fdr_survivors": 0,
+      "n_winners": 0,
+      "winners": [],
+      "append_entries": []
+    }
+  ]
+}

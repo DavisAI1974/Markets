@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "asset": "ETH",
+  "generated_utc": 1778743408,
+  "min_support": 3,
+  "n_winners": 2,
+  "n_convergence_events": 0,
+  "dedupe_log": [
+    {
+      "cell_key": "KR-ETH/WHALE_UP",
+      "cluster_size": 2,
+      "representative": "triangulated_consensus=Q1",
+      "representative_tier": "tier_5",
+      "representative_score_ci_low": 0.625,
+      "representative_edge": 0.5835676530604432,
+      "dropped": [
+        "cross_venue_book_imbalance_delta=Q1"
+      ],
+      "min_intracluster_jaccard": 0.8823529411764706
+    },
+    {
+      "cell_key": "KR-ETH/WHALE_UP",
+      "cluster_size": 7,
+      "representative": "perp_spot_dipole_divergence=Q2",
+      "representative_tier": "tier_5",
+      "representative_score_ci_low": 0.625,
+      "representative_edge": 0.6445691965516613,
+      "dropped": [
+        "cross_venue_aggressor_agreement=Q1",
+        "perp_spot_buy_volume_dipole=Q1",
+        "perp_spot_sell_volume_dipole=Q1",
+        "cross_venue_l1_bid_depth_dipole=Q1",
+        "cross_venue_l1_ask_depth_dipole=Q1",
+        "microprice_drift=Q2"
+      ],
+      "min_intracluster_jaccard": 0.7777777777777778
+    }
+  ],
+  "events": []
+}
