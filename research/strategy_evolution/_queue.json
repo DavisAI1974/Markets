@@ -1,0 +1,505 @@
+{
+  "schema": "strategy_evolution_queue_v1",
+  "created_at": "2026-05-23T03:14:07.409175Z",
+  "items": [
+    {
+      "family": "buy_fade",
+      "action": "evolve_buy_fade_exhaustion_entry_and_exit_candidate",
+      "priority": "high",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "mean_reversion_chop",
+        "liquidity_squeeze",
+        "news_breakout"
+      ],
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "source_family": "buy_fade",
+      "source_variant_id": "hindsight|buy_fade|hindsight_pattern_gap__buy_fade",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "BUY_FADE"
+      ],
+      "exact_context": {
+        "asset": "",
+        "venue": "",
+        "side": "",
+        "session": ""
+      },
+      "hindsight_experiment_id": "hindsight_pattern_gap__buy_fade",
+      "hindsight_context_key": "",
+      "hindsight_oracle_net_pnl_usd": 152.033407,
+      "hindsight_missed_entry_rows": 52,
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live-observable move-shape traits identify this pattern before hindsight?",
+        "Which platform/session buckets should be sampled or blocked first?",
+        "Is there a clear exit winner for this family, or should the top 3-4 remain shadow candidates?",
+        "If all exits are low-margin, which new exit mutation should evolve create next?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      }
+    },
+    {
+      "family": "relative_strength",
+      "source_family": "relative_strength",
+      "source_variant_id": "hindsight|relative_strength|RELATIVE_STRENGTH|ETH|Coinbase|buy|remaining18h",
+      "action": "evolve_entry_gate_and_exit_capture_from_hindsight_misses",
+      "priority": "high",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "RELATIVE_STRENGTH"
+      ],
+      "exact_context": {
+        "asset": "ETH",
+        "venue": "Coinbase",
+        "side": "buy",
+        "session": "remaining18h"
+      },
+      "hindsight_experiment_id": "hindsight_missed_winner__relative_strength_eth_coinbase_buy_remaining18h",
+      "hindsight_context_key": "RELATIVE_STRENGTH|ETH|Coinbase|buy|remaining18h",
+      "hindsight_oracle_net_pnl_usd": 305.155582,
+      "hindsight_missed_entry_rows": 114,
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live traits predict this profitable side before hindsight?",
+        "Should no-side rows use fallback directional probes when repeated path evidence appears?",
+        "Which non-oracle exit rule captures the path after fees?",
+        "Should pressure-flip, score-degrade, or fixed-hold exits be changed for this context?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      },
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "news_breakout",
+        "vol_breakout",
+        "basis_dislocation"
+      ]
+    },
+    {
+      "family": "sell_down_continuation",
+      "action": "evolve_sell_down_continuation_entry_and_exit_candidate",
+      "priority": "high",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "mean_reversion_chop",
+        "liquidity_squeeze",
+        "news_breakout"
+      ],
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "source_family": "sell_down_continuation",
+      "source_variant_id": "hindsight|sell_down_continuation|hindsight_pattern_gap__sell_down_continuation",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "SELL_DOWN_CONTINUATION"
+      ],
+      "exact_context": {
+        "asset": "",
+        "venue": "",
+        "side": "",
+        "session": ""
+      },
+      "hindsight_experiment_id": "hindsight_pattern_gap__sell_down_continuation",
+      "hindsight_context_key": "",
+      "hindsight_oracle_net_pnl_usd": 59.205217,
+      "hindsight_missed_entry_rows": 73,
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live-observable move-shape traits identify this pattern before hindsight?",
+        "Which platform/session buckets should be sampled or blocked first?",
+        "Is there a clear exit winner for this family, or should the top 3-4 remain shadow candidates?",
+        "If all exits are low-margin, which new exit mutation should evolve create next?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      }
+    },
+    {
+      "family": "basis_dislocation",
+      "source_family": "basis_dislocation",
+      "source_variant_id": "basis_dislocation|ETH|coinbase|buy|first6h",
+      "action": "evolve_or_retry",
+      "priority": "medium",
+      "reason": "Family opened no practice trades; keep it queued for mutation or a better-matched slice.",
+      "force_learning_trade": false,
+      "requested_strategy_families": [
+        "BASIS_DISLOCATION"
+      ],
+      "risk_tags_to_watch": [
+        "context_routed",
+        "forced_exploration",
+        "historical_route",
+        "mock_only"
+      ],
+      "mutation_notes": [
+        "Execute the best positive exact-context family from strategy_evolution routing JSON."
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_record_attempt_json": true,
+        "only_positive_pnl_exact_contexts_execute": true
+      },
+      "updated_at": "2026-05-23T12:40:12.016363Z",
+      "source": "E:\\Markets\\research\\strategy_evolution\\live_mock_replay\\live_mock_replay_results.json",
+      "run_id": "live_mock_replay",
+      "status": "queued",
+      "exact_context": {
+        "asset": "",
+        "venue": "",
+        "side": "",
+        "session": ""
+      },
+      "hindsight_experiment_id": "hindsight_pattern_gap__sell_down_continuation",
+      "hindsight_context_key": "",
+      "hindsight_oracle_net_pnl_usd": 8993.896962,
+      "hindsight_missed_entry_rows": 101,
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "relative_strength",
+        "vol_breakout",
+        "news_breakout"
+      ]
+    },
+    {
+      "family": "buy_up_continuation",
+      "source_family": "buy_up_continuation",
+      "source_variant_id": "hindsight|buy_up_continuation|hindsight_pattern_gap__buy_up_continuation",
+      "action": "evolve_buy_up_continuation_build_new_fast_fail_exit",
+      "priority": "critical",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "BUY_UP_CONTINUATION"
+      ],
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live-observable move-shape traits identify this pattern before hindsight?",
+        "Which platform/session buckets should be sampled or blocked first?",
+        "All retained buy-up continuation exits are negative; test buy_up_continuation_fast_fail_exits_v1 first.",
+        "Can a fast-fail stop, early partial at 9 bps, and 5 bps runner trail turn follow-through into net wins after fees?",
+        "If this mutation is still negative, create a stricter entry gate before adding another exit variant."
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      },
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "mean_reversion_chop",
+        "liquidity_squeeze",
+        "news_breakout"
+      ],
+      "exact_context": {
+        "asset": "",
+        "venue": "",
+        "side": "",
+        "session": ""
+      },
+      "hindsight_experiment_id": "hindsight_pattern_gap__buy_up_continuation",
+      "hindsight_context_key": "",
+      "hindsight_oracle_net_pnl_usd": 2283.192105,
+      "hindsight_missed_entry_rows": 906
+    },
+    {
+      "family": "liquidity_squeeze",
+      "source_family": "liquidity_squeeze",
+      "source_variant_id": "hindsight|liquidity_squeeze|NO_STRATEGY|ETH|Bybit|buy|remaining18h",
+      "action": "evolve_directional_entry_recognizer_from_hindsight_misses",
+      "priority": "critical",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "LIQUIDITY_SQUEEZE"
+      ],
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live traits predict this profitable side before hindsight?",
+        "Should no-side rows use fallback directional probes when repeated path evidence appears?",
+        "Which non-oracle exit rule captures the path after fees?",
+        "Should pressure-flip, score-degrade, or fixed-hold exits be changed for this context?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      },
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "exact_context": {
+        "asset": "ETH",
+        "venue": "Bybit",
+        "side": "buy",
+        "session": "remaining18h"
+      },
+      "hindsight_experiment_id": "hindsight_missed_winner__no_strategy_eth_bybit_buy_remaining18h",
+      "hindsight_context_key": "NO_STRATEGY|ETH|Bybit|buy|remaining18h",
+      "hindsight_oracle_net_pnl_usd": 425.92996,
+      "hindsight_missed_entry_rows": 139,
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "mean_reversion_chop",
+        "vol_breakout",
+        "basis_dislocation"
+      ]
+    },
+    {
+      "family": "mean_reversion_chop",
+      "source_family": "mean_reversion_chop",
+      "source_variant_id": "hindsight|mean_reversion_chop|NO_STRATEGY|ETH|Bybit|buy|remaining18h",
+      "action": "evolve_directional_entry_recognizer_from_hindsight_misses",
+      "priority": "critical",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "MEAN_REVERSION_CHOP"
+      ],
+      "exact_context": {
+        "asset": "ETH",
+        "venue": "Bybit",
+        "side": "buy",
+        "session": "remaining18h"
+      },
+      "hindsight_experiment_id": "hindsight_missed_winner__no_strategy_eth_bybit_buy_remaining18h",
+      "hindsight_context_key": "NO_STRATEGY|ETH|Bybit|buy|remaining18h",
+      "hindsight_oracle_net_pnl_usd": 425.92996,
+      "hindsight_missed_entry_rows": 139,
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live traits predict this profitable side before hindsight?",
+        "Should no-side rows use fallback directional probes when repeated path evidence appears?",
+        "Which non-oracle exit rule captures the path after fees?",
+        "Should pressure-flip, score-degrade, or fixed-hold exits be changed for this context?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      },
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "mean_reversion_chop",
+        "liquidity_squeeze",
+        "news_breakout"
+      ]
+    },
+    {
+      "family": "news_breakout",
+      "source_family": "news_breakout",
+      "source_variant_id": "hindsight|news_breakout|hindsight_pattern_gap__sell_down_continuation",
+      "action": "evolve_or_retry",
+      "priority": "medium",
+      "reason": "Family opened no practice trades; keep it queued for mutation or a better-matched slice.",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "NEWS_BREAKOUT"
+      ],
+      "exact_context": {
+        "asset": "",
+        "venue": "",
+        "side": "",
+        "session": ""
+      },
+      "hindsight_experiment_id": "hindsight_pattern_gap__sell_down_continuation",
+      "hindsight_context_key": "",
+      "hindsight_oracle_net_pnl_usd": 8993.896962,
+      "hindsight_missed_entry_rows": 101,
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live-observable move-shape traits identify this pattern before hindsight?",
+        "Which platform/session buckets should be sampled or blocked first?",
+        "Does the entry side need a forced override when pressure/no-side logic suppresses the pattern?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      },
+      "updated_at": "2026-05-23T12:40:12.016363Z",
+      "source": "E:\\Markets\\research\\strategy_evolution\\live_mock_replay\\live_mock_replay_results.json",
+      "run_id": "live_mock_replay",
+      "status": "queued",
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "mean_reversion_chop",
+        "liquidity_squeeze",
+        "relative_strength"
+      ]
+    },
+    {
+      "family": "small_move_fade",
+      "source_family": "small_move_fade",
+      "source_variant_id": "hindsight|small_move_fade|hindsight_pattern_gap__small_move_fade",
+      "action": "evolve_small_move_fade_from_hindsight_misses",
+      "priority": "critical",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "SMALL_MOVE_FADE"
+      ],
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live-observable move-shape traits identify this pattern before hindsight?",
+        "Which platform/session buckets should be sampled or blocked first?",
+        "Is there a clear exit winner for this family, or should the top 3-4 remain shadow candidates?",
+        "If all exits are low-margin, which new exit mutation should evolve create next?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      },
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "exact_context": {
+        "asset": "",
+        "venue": "",
+        "side": "",
+        "session": ""
+      },
+      "hindsight_experiment_id": "hindsight_pattern_gap__small_move_fade",
+      "hindsight_context_key": "",
+      "hindsight_oracle_net_pnl_usd": 239.188852,
+      "hindsight_missed_entry_rows": 130
+    },
+    {
+      "family": "vol_breakout",
+      "source_family": "vol_breakout",
+      "source_variant_id": "hindsight|vol_breakout|NO_STRATEGY|ETH|Bybit|buy|remaining18h",
+      "action": "evolve_directional_entry_recognizer_from_hindsight_misses",
+      "priority": "critical",
+      "reason": "Live hindsight found missed post-fee winners in this context; force a mock-only probe so routing can collect executable evidence.",
+      "force_learning_trade": true,
+      "requested_strategy_families": [
+        "VOL_BREAKOUT"
+      ],
+      "risk_tags_to_watch": [
+        "hindsight_missed_winner",
+        "forced_exploration",
+        "context_routed"
+      ],
+      "mutation_notes": [
+        "Which live traits predict this profitable side before hindsight?",
+        "Should no-side rows use fallback directional probes when repeated path evidence appears?",
+        "Which non-oracle exit rule captures the path after fees?",
+        "Should pressure-flip, score-degrade, or fixed-hold exits be changed for this context?"
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "must_reduce_future_missed_count": true,
+        "must_record_attempt_json": true,
+        "mock_only_until_promoted": true
+      },
+      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "source": "live_hindsight_evolve_worker",
+      "run_id": "live_hindsight",
+      "status": "queued",
+      "exact_context": {
+        "asset": "ETH",
+        "venue": "Bybit",
+        "side": "buy",
+        "session": "remaining18h"
+      },
+      "hindsight_experiment_id": "hindsight_missed_winner__no_strategy_eth_bybit_buy_remaining18h",
+      "hindsight_context_key": "NO_STRATEGY|ETH|Bybit|buy|remaining18h",
+      "hindsight_oracle_net_pnl_usd": 425.92996,
+      "hindsight_missed_entry_rows": 139,
+      "skip_diagnostics": [],
+      "next_family_candidates": [
+        "basis_dislocation",
+        "relative_strength",
+        "news_breakout"
+      ]
+    }
+  ],
+  "updated_at": "2026-05-23T13:09:10.812197Z",
+  "cleanup_log": [
+    {
+      "at": "2026-05-23T12:09:44.000000Z",
+      "reason": "pruned contaminated entries from Codex pretend-mapped historical run 2",
+      "removed_count": 1
+    }
+  ]
+}

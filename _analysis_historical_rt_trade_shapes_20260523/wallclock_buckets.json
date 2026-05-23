@@ -1,0 +1,710 @@
+{
+  "utc_6h": {
+    "00-06": {
+      "n": 15634,
+      "n_win": 1091,
+      "base_win_rate": 0.06978380452859154,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1303,
+          "n_fired_winners": 945,
+          "precision": 0.7252494244052188,
+          "recall": 0.8661778185151238,
+          "lift": 10.392804309029504
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 2449,
+          "n_fired_winners": 1048,
+          "precision": 0.42792976725193954,
+          "recall": 0.9605866177818515,
+          "lift": 6.132221797632284
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 2996,
+          "n_fired_winners": 1062,
+          "precision": 0.35447263017356473,
+          "recall": 0.9734188817598534,
+          "lift": 5.079583043202118
+        },
+        "hold_ge_60m": {
+          "n_fired": 392,
+          "n_fired_winners": 251,
+          "precision": 0.6403061224489796,
+          "recall": 0.23006416131989002,
+          "lift": 9.175569127742754
+        }
+      }
+    },
+    "06-12": {
+      "n": 18820,
+      "n_win": 1163,
+      "base_win_rate": 0.06179596174282678,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1445,
+          "n_fired_winners": 1057,
+          "precision": 0.7314878892733564,
+          "recall": 0.9088564058469476,
+          "lift": 11.837147098989309
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 2822,
+          "n_fired_winners": 1138,
+          "precision": 0.40326009922041106,
+          "recall": 0.9785038693035254,
+          "lift": 6.525670737169507
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3574,
+          "n_fired_winners": 1158,
+          "precision": 0.3240067151650811,
+          "recall": 0.9957007738607051,
+          "lift": 5.243169715741037
+        },
+        "hold_ge_60m": {
+          "n_fired": 294,
+          "n_fired_winners": 278,
+          "precision": 0.9455782312925171,
+          "recall": 0.23903697334479793,
+          "lift": 15.301618497786045
+        }
+      }
+    },
+    "12-18": {
+      "n": 16208,
+      "n_win": 1921,
+      "base_win_rate": 0.11852171767028628,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 2762,
+          "n_fired_winners": 1828,
+          "precision": 0.6618392469225199,
+          "recall": 0.9515877147319105,
+          "lift": 5.584117914690371
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 4473,
+          "n_fired_winners": 1875,
+          "precision": 0.41918175720992623,
+          "recall": 0.9760541384695471,
+          "lift": 3.5367506095046766
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 5470,
+          "n_fired_winners": 1897,
+          "precision": 0.34680073126142597,
+          "recall": 0.9875065070275898,
+          "lift": 2.9260521875508547
+        },
+        "hold_ge_60m": {
+          "n_fired": 364,
+          "n_fired_winners": 361,
+          "precision": 0.9917582417582418,
+          "recall": 0.18792295679333682,
+          "lift": 8.367734295896712
+        }
+      }
+    },
+    "18-24": {
+      "n": 17066,
+      "n_win": 1441,
+      "base_win_rate": 0.08443689206609634,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 2102,
+          "n_fired_winners": 1343,
+          "precision": 0.6389153187440533,
+          "recall": 0.9319916724496877,
+          "lift": 7.5667792017252
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 3471,
+          "n_fired_winners": 1378,
+          "precision": 0.3970037453183521,
+          "recall": 0.9562803608605135,
+          "lift": 4.701780650661344
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 4309,
+          "n_fired_winners": 1404,
+          "precision": 0.3258296588535623,
+          "recall": 0.974323386537127,
+          "lift": 3.8588542387195655
+        },
+        "hold_ge_60m": {
+          "n_fired": 322,
+          "n_fired_winners": 285,
+          "precision": 0.8850931677018633,
+          "recall": 0.19777931991672448,
+          "lift": 10.482303955586397
+        }
+      }
+    }
+  },
+  "utc_4h": {
+    "00-04": {
+      "n": 9563,
+      "n_win": 825,
+      "base_win_rate": 0.08626999895430304,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 965,
+          "n_fired_winners": 722,
+          "precision": 0.7481865284974093,
+          "recall": 0.8751515151515151,
+          "lift": 8.672615481237242
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 1796,
+          "n_fired_winners": 794,
+          "precision": 0.4420935412026726,
+          "recall": 0.9624242424242424,
+          "lift": 5.124533981237767
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 2204,
+          "n_fired_winners": 799,
+          "precision": 0.3625226860254083,
+          "recall": 0.9684848484848485,
+          "lift": 4.202187207831491
+        },
+        "hold_ge_60m": {
+          "n_fired": 299,
+          "n_fired_winners": 173,
+          "precision": 0.5785953177257525,
+          "recall": 0.2096969696969697,
+          "lift": 6.706796392013783
+        }
+      }
+    },
+    "04-08": {
+      "n": 11855,
+      "n_win": 702,
+      "base_win_rate": 0.059215520877266975,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 799,
+          "n_fired_winners": 592,
+          "precision": 0.7409261576971214,
+          "recall": 0.8433048433048433,
+          "lift": 12.512364101850961
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 1533,
+          "n_fired_winners": 674,
+          "precision": 0.43966079582517936,
+          "recall": 0.9601139601139601,
+          "lift": 7.424756032061968
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 1884,
+          "n_fired_winners": 696,
+          "precision": 0.36942675159235666,
+          "recall": 0.9914529914529915,
+          "lift": 6.238681111292576
+        },
+        "hold_ge_60m": {
+          "n_fired": 180,
+          "n_fired_winners": 162,
+          "precision": 0.9,
+          "recall": 0.23076923076923078,
+          "lift": 15.198717948717949
+        }
+      }
+    },
+    "08-12": {
+      "n": 13036,
+      "n_win": 727,
+      "base_win_rate": 0.0557686406873274,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 984,
+          "n_fired_winners": 688,
+          "precision": 0.6991869918699187,
+          "recall": 0.9463548830811555,
+          "lift": 12.537278715290594
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 1942,
+          "n_fired_winners": 718,
+          "precision": 0.36972193614830073,
+          "recall": 0.9876203576341128,
+          "lift": 6.629566932089751
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 2482,
+          "n_fired_winners": 725,
+          "precision": 0.2921031426269138,
+          "recall": 0.9972489683631361,
+          "lift": 5.237766942619599
+        },
+        "hold_ge_60m": {
+          "n_fired": 207,
+          "n_fired_winners": 194,
+          "precision": 0.9371980676328503,
+          "recall": 0.2668500687757909,
+          "lift": 16.805108679039666
+        }
+      }
+    },
+    "12-16": {
+      "n": 10989,
+      "n_win": 1370,
+      "base_win_rate": 0.12467012467012467,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1947,
+          "n_fired_winners": 1299,
+          "precision": 0.6671802773497689,
+          "recall": 0.9481751824817518,
+          "lift": 5.351565012990227
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 3042,
+          "n_fired_winners": 1324,
+          "precision": 0.4352399737015122,
+          "recall": 0.9664233576642336,
+          "lift": 3.4911328985444654
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3735,
+          "n_fired_winners": 1346,
+          "precision": 0.3603748326639893,
+          "recall": 0.9824817518248176,
+          "lift": 2.8906270336821738
+        },
+        "hold_ge_60m": {
+          "n_fired": 241,
+          "n_fired_winners": 241,
+          "precision": 1.0,
+          "recall": 0.1759124087591241,
+          "lift": 8.021167883211678
+        }
+      }
+    },
+    "16-20": {
+      "n": 10181,
+      "n_win": 916,
+      "base_win_rate": 0.0899715155682153,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1356,
+          "n_fired_winners": 862,
+          "precision": 0.6356932153392331,
+          "recall": 0.9410480349344978,
+          "lift": 7.065494132498616
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 2397,
+          "n_fired_winners": 879,
+          "precision": 0.3667083854818523,
+          "recall": 0.9596069868995634,
+          "lift": 4.075827590164562
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3013,
+          "n_fired_winners": 892,
+          "precision": 0.2960504480584135,
+          "recall": 0.9737991266375546,
+          "lift": 3.2904908424483716
+        },
+        "hold_ge_60m": {
+          "n_fired": 191,
+          "n_fired_winners": 168,
+          "precision": 0.8795811518324608,
+          "recall": 0.18340611353711792,
+          "lift": 9.776218020530878
+        }
+      }
+    },
+    "20-24": {
+      "n": 12104,
+      "n_win": 1076,
+      "base_win_rate": 0.08889623265036352,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1561,
+          "n_fired_winners": 1010,
+          "precision": 0.6470211402946829,
+          "recall": 0.9386617100371747,
+          "lift": 7.278386507552828
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 2505,
+          "n_fired_winners": 1050,
+          "precision": 0.41916167664670656,
+          "recall": 0.9758364312267658,
+          "lift": 4.715179306813881
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3031,
+          "n_fired_winners": 1063,
+          "precision": 0.3507093368525239,
+          "recall": 0.9879182156133829,
+          "lift": 3.945154101545492
+        },
+        "hold_ge_60m": {
+          "n_fired": 254,
+          "n_fired_winners": 237,
+          "precision": 0.9330708661417323,
+          "recall": 0.22026022304832713,
+          "lift": 10.496180077862014
+        }
+      }
+    }
+  },
+  "et_6h": {
+    "00-06": {
+      "n": 18364,
+      "n_win": 1073,
+      "base_win_rate": 0.058429536048791114,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1269,
+          "n_fired_winners": 943,
+          "precision": 0.7431048069345941,
+          "recall": 0.8788443616029823,
+          "lift": 12.717965213929997
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 2497,
+          "n_fired_winners": 1036,
+          "precision": 0.41489787745294354,
+          "recall": 0.9655172413793104,
+          "lift": 7.100824437600983
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3105,
+          "n_fired_winners": 1065,
+          "precision": 0.34299516908212563,
+          "recall": 0.9925442684063374,
+          "lift": 5.870236053144599
+        },
+        "hold_ge_60m": {
+          "n_fired": 280,
+          "n_fired_winners": 256,
+          "precision": 0.9142857142857143,
+          "recall": 0.2385834109972041,
+          "lift": 15.647663426973772
+        }
+      }
+    },
+    "06-12": {
+      "n": 17516,
+      "n_win": 1726,
+      "base_win_rate": 0.09853847910481846,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 2461,
+          "n_fired_winners": 1636,
+          "precision": 0.6647704185290533,
+          "recall": 0.947856315179606,
+          "lift": 6.74630281051848
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 4020,
+          "n_fired_winners": 1680,
+          "precision": 0.417910447761194,
+          "recall": 0.9733487833140209,
+          "lift": 4.24108887774338
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 4996,
+          "n_fired_winners": 1702,
+          "precision": 0.34067253803042435,
+          "recall": 0.9860950173812283,
+          "lift": 3.4572538679843063
+        },
+        "hold_ge_60m": {
+          "n_fired": 348,
+          "n_fired_winners": 341,
+          "precision": 0.9798850574712644,
+          "recall": 0.19756662804171496,
+          "lift": 9.944186944766319
+        }
+      }
+    },
+    "12-18": {
+      "n": 16159,
+      "n_win": 1433,
+      "base_win_rate": 0.08868123027415063,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 2146,
+          "n_fired_winners": 1349,
+          "precision": 0.6286113699906803,
+          "recall": 0.9413817166782973,
+          "lift": 7.088437632714168
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 3654,
+          "n_fired_winners": 1374,
+          "precision": 0.3760262725779967,
+          "recall": 0.958827634333566,
+          "lift": 4.240201352817759
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 4521,
+          "n_fired_winners": 1396,
+          "precision": 0.3087812430878124,
+          "recall": 0.9741800418702024,
+          "lift": 3.4819233126698954
+        },
+        "hold_ge_60m": {
+          "n_fired": 320,
+          "n_fired_winners": 281,
+          "precision": 0.878125,
+          "recall": 0.19609211444521982,
+          "lift": 9.90203899162596
+        }
+      }
+    },
+    "18-24": {
+      "n": 15689,
+      "n_win": 1384,
+      "base_win_rate": 0.08821467270061827,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1736,
+          "n_fired_winners": 1245,
+          "precision": 0.7171658986175116,
+          "recall": 0.8995664739884393,
+          "lift": 8.129780190325246
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 3044,
+          "n_fired_winners": 1349,
+          "precision": 0.4431668856767411,
+          "recall": 0.9747109826589595,
+          "lift": 5.023732131056641
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3727,
+          "n_fired_winners": 1358,
+          "precision": 0.3643681244969144,
+          "recall": 0.9812138728323699,
+          "lift": 4.130470740774632
+        },
+        "hold_ge_60m": {
+          "n_fired": 424,
+          "n_fired_winners": 297,
+          "precision": 0.7004716981132075,
+          "recall": 0.21459537572254336,
+          "lift": 7.940535022903261
+        }
+      }
+    }
+  },
+  "et_4h": {
+    "00-04": {
+      "n": 11855,
+      "n_win": 702,
+      "base_win_rate": 0.059215520877266975,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 799,
+          "n_fired_winners": 592,
+          "precision": 0.7409261576971214,
+          "recall": 0.8433048433048433,
+          "lift": 12.512364101850961
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 1533,
+          "n_fired_winners": 674,
+          "precision": 0.43966079582517936,
+          "recall": 0.9601139601139601,
+          "lift": 7.424756032061968
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 1884,
+          "n_fired_winners": 696,
+          "precision": 0.36942675159235666,
+          "recall": 0.9914529914529915,
+          "lift": 6.238681111292576
+        },
+        "hold_ge_60m": {
+          "n_fired": 180,
+          "n_fired_winners": 162,
+          "precision": 0.9,
+          "recall": 0.23076923076923078,
+          "lift": 15.198717948717949
+        }
+      }
+    },
+    "04-08": {
+      "n": 13036,
+      "n_win": 727,
+      "base_win_rate": 0.0557686406873274,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 984,
+          "n_fired_winners": 688,
+          "precision": 0.6991869918699187,
+          "recall": 0.9463548830811555,
+          "lift": 12.537278715290594
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 1942,
+          "n_fired_winners": 718,
+          "precision": 0.36972193614830073,
+          "recall": 0.9876203576341128,
+          "lift": 6.629566932089751
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 2482,
+          "n_fired_winners": 725,
+          "precision": 0.2921031426269138,
+          "recall": 0.9972489683631361,
+          "lift": 5.237766942619599
+        },
+        "hold_ge_60m": {
+          "n_fired": 207,
+          "n_fired_winners": 194,
+          "precision": 0.9371980676328503,
+          "recall": 0.2668500687757909,
+          "lift": 16.805108679039666
+        }
+      }
+    },
+    "08-12": {
+      "n": 10989,
+      "n_win": 1370,
+      "base_win_rate": 0.12467012467012467,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1947,
+          "n_fired_winners": 1299,
+          "precision": 0.6671802773497689,
+          "recall": 0.9481751824817518,
+          "lift": 5.351565012990227
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 3042,
+          "n_fired_winners": 1324,
+          "precision": 0.4352399737015122,
+          "recall": 0.9664233576642336,
+          "lift": 3.4911328985444654
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3735,
+          "n_fired_winners": 1346,
+          "precision": 0.3603748326639893,
+          "recall": 0.9824817518248176,
+          "lift": 2.8906270336821738
+        },
+        "hold_ge_60m": {
+          "n_fired": 241,
+          "n_fired_winners": 241,
+          "precision": 1.0,
+          "recall": 0.1759124087591241,
+          "lift": 8.021167883211678
+        }
+      }
+    },
+    "12-16": {
+      "n": 10181,
+      "n_win": 916,
+      "base_win_rate": 0.0899715155682153,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1356,
+          "n_fired_winners": 862,
+          "precision": 0.6356932153392331,
+          "recall": 0.9410480349344978,
+          "lift": 7.065494132498616
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 2397,
+          "n_fired_winners": 879,
+          "precision": 0.3667083854818523,
+          "recall": 0.9596069868995634,
+          "lift": 4.075827590164562
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3013,
+          "n_fired_winners": 892,
+          "precision": 0.2960504480584135,
+          "recall": 0.9737991266375546,
+          "lift": 3.2904908424483716
+        },
+        "hold_ge_60m": {
+          "n_fired": 191,
+          "n_fired_winners": 168,
+          "precision": 0.8795811518324608,
+          "recall": 0.18340611353711792,
+          "lift": 9.776218020530878
+        }
+      }
+    },
+    "16-20": {
+      "n": 12104,
+      "n_win": 1076,
+      "base_win_rate": 0.08889623265036352,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 1561,
+          "n_fired_winners": 1010,
+          "precision": 0.6470211402946829,
+          "recall": 0.9386617100371747,
+          "lift": 7.278386507552828
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 2505,
+          "n_fired_winners": 1050,
+          "precision": 0.41916167664670656,
+          "recall": 0.9758364312267658,
+          "lift": 4.715179306813881
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 3031,
+          "n_fired_winners": 1063,
+          "precision": 0.3507093368525239,
+          "recall": 0.9879182156133829,
+          "lift": 3.945154101545492
+        },
+        "hold_ge_60m": {
+          "n_fired": 254,
+          "n_fired_winners": 237,
+          "precision": 0.9330708661417323,
+          "recall": 0.22026022304832713,
+          "lift": 10.496180077862014
+        }
+      }
+    },
+    "20-24": {
+      "n": 9563,
+      "n_win": 825,
+      "base_win_rate": 0.08626999895430304,
+      "signals": {
+        "reached_20bps_within_30m": {
+          "n_fired": 965,
+          "n_fired_winners": 722,
+          "precision": 0.7481865284974093,
+          "recall": 0.8751515151515151,
+          "lift": 8.672615481237242
+        },
+        "reached_12bps_within_15m": {
+          "n_fired": 1796,
+          "n_fired_winners": 794,
+          "precision": 0.4420935412026726,
+          "recall": 0.9624242424242424,
+          "lift": 5.124533981237767
+        },
+        "cover_by_15m_TRUE": {
+          "n_fired": 2204,
+          "n_fired_winners": 799,
+          "precision": 0.3625226860254083,
+          "recall": 0.9684848484848485,
+          "lift": 4.202187207831491
+        },
+        "hold_ge_60m": {
+          "n_fired": 299,
+          "n_fired_winners": 173,
+          "precision": 0.5785953177257525,
+          "recall": 0.2096969696969697,
+          "lift": 6.706796392013783
+        }
+      }
+    }
+  }
+}

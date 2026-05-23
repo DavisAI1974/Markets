@@ -1,0 +1,452 @@
+{
+  "schema": "live_family_killlist_v1",
+  "updated_at": "2026-05-21T04:29:17.215628Z",
+  "policy": {
+    "purpose": "Prevent the resolver from calling families or exact contexts that live mock evidence shows are hurting PnL.",
+    "default_scope": "context_first_global_only_after_broad_underperformance",
+    "mock_only": true
+  },
+  "disabled_families": [],
+  "avoid_contexts": {
+    "BASIS_DISLOCATION": [
+      {
+        "context": "BTC|coinbase|buy|first6h",
+        "reason": "live compare closed=40 pnl=$-42.63; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -42.632199,
+        "mark_to_market_pnl_usd": -50.633225,
+        "examples": [
+          {
+            "account": "family_basis_dislocation_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.6442391154744889,
+            "mark_to_market_pnl_usd": -1.64423912
+          },
+          {
+            "account": "family_basis_dislocation_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.1058388070812704,
+            "mark_to_market_pnl_usd": -1.10583881
+          },
+          {
+            "account": "family_basis_dislocation_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.6897632664629021,
+            "mark_to_market_pnl_usd": -0.68976327
+          }
+        ]
+      },
+      {
+        "context": "BTC|kraken|sell|first6h",
+        "reason": "live compare closed=8 pnl=$-6.36; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 8,
+        "opened": 8,
+        "wins": 0,
+        "realized_pnl_usd": -6.356386,
+        "mark_to_market_pnl_usd": -6.356386,
+        "examples": [
+          {
+            "account": "family_basis_dislocation_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.7945482384256912,
+            "mark_to_market_pnl_usd": -0.79454824
+          },
+          {
+            "account": "matrix_basis_dislocation__exit_default_gated",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.7945482384256912,
+            "mark_to_market_pnl_usd": -0.79454824
+          },
+          {
+            "account": "matrix_basis_dislocation__exit_basis_runner",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.7945482384256912,
+            "mark_to_market_pnl_usd": -0.79454824
+          }
+        ]
+      },
+      {
+        "context": "ETH|kraken|buy|first6h",
+        "reason": "live compare closed=40 pnl=$-45.74; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -45.742979,
+        "mark_to_market_pnl_usd": -53.780296,
+        "examples": [
+          {
+            "account": "family_basis_dislocation_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.5173540191937027,
+            "mark_to_market_pnl_usd": -1.51735402
+          },
+          {
+            "account": "family_basis_dislocation_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.3637326440729507,
+            "mark_to_market_pnl_usd": -1.36373264
+          },
+          {
+            "account": "family_basis_dislocation_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.004664914892825,
+            "mark_to_market_pnl_usd": -1.00466491
+          }
+        ]
+      }
+    ],
+    "LIQUIDITY_SQUEEZE": [
+      {
+        "context": "BTC|coinbase|sell|first6h",
+        "reason": "live compare closed=90 pnl=$-84.09; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 90,
+        "opened": 108,
+        "wins": 0,
+        "realized_pnl_usd": -84.094737,
+        "mark_to_market_pnl_usd": -102.097046,
+        "examples": [
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.35537291056262554,
+            "mark_to_market_pnl_usd": -0.35537291
+          },
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.8943121232337512,
+            "mark_to_market_pnl_usd": -0.89431212
+          },
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.3108040281637336,
+            "mark_to_market_pnl_usd": -1.31080403
+          }
+        ]
+      },
+      {
+        "context": "ETH|kraken|sell|first6h",
+        "reason": "live compare closed=40 pnl=$-40.79; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -40.788002,
+        "mark_to_market_pnl_usd": -48.82532,
+        "examples": [
+          {
+            "account": "family_liquidity_squeeze_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.5614093177260391,
+            "mark_to_market_pnl_usd": -0.56140932
+          },
+          {
+            "account": "family_liquidity_squeeze_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.6452375953531791,
+            "mark_to_market_pnl_usd": -0.6452376
+          },
+          {
+            "account": "family_liquidity_squeeze_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.308193859739125,
+            "mark_to_market_pnl_usd": -1.30819386
+          }
+        ]
+      }
+    ],
+    "MEAN_REVERSION_CHOP": [
+      {
+        "context": "BTC|bybit|sell|first6h",
+        "reason": "live compare closed=18 pnl=$-19.92; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 18,
+        "opened": 36,
+        "wins": 0,
+        "realized_pnl_usd": -19.917291,
+        "mark_to_market_pnl_usd": -37.94037,
+        "examples": [
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.1065161733884064,
+            "mark_to_market_pnl_usd": -1.10651617
+          },
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "gated_profitable_score_news_exits_v1",
+            "status": "open",
+            "realized_pnl_usd": 0.0,
+            "mark_to_market_pnl_usd": -1.00128214
+          },
+          {
+            "account": "family_registry_fast_exit",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.1065161733884064,
+            "mark_to_market_pnl_usd": -1.10651617
+          }
+        ]
+      },
+      {
+        "context": "BTC|coinbase|sell|first6h",
+        "reason": "live compare closed=40 pnl=$-37.38; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -37.375439,
+        "mark_to_market_pnl_usd": -45.376465,
+        "examples": [
+          {
+            "account": "family_mean_reversion_chop_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.35537291056262554,
+            "mark_to_market_pnl_usd": -0.35537291
+          },
+          {
+            "account": "family_mean_reversion_chop_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.8943121232337512,
+            "mark_to_market_pnl_usd": -0.89431212
+          },
+          {
+            "account": "family_mean_reversion_chop_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.3108040281637336,
+            "mark_to_market_pnl_usd": -1.31080403
+          }
+        ]
+      },
+      {
+        "context": "BTC|kraken|buy|first6h",
+        "reason": "live compare closed=18 pnl=$-21.74; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 18,
+        "opened": 18,
+        "wins": 0,
+        "realized_pnl_usd": -21.740611,
+        "mark_to_market_pnl_usd": -21.740611,
+        "examples": [
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.2078117259311554,
+            "mark_to_market_pnl_usd": -1.20781173
+          },
+          {
+            "account": "family_registry_fast_exit",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.2078117259311554,
+            "mark_to_market_pnl_usd": -1.20781173
+          },
+          {
+            "account": "family_registry_runner_exit",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.2078117259311554,
+            "mark_to_market_pnl_usd": -1.20781173
+          }
+        ]
+      },
+      {
+        "context": "ETH|kraken|sell|first6h",
+        "reason": "live compare closed=40 pnl=$-40.79; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -40.788002,
+        "mark_to_market_pnl_usd": -48.82532,
+        "examples": [
+          {
+            "account": "family_mean_reversion_chop_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.5614093177260391,
+            "mark_to_market_pnl_usd": -0.56140932
+          },
+          {
+            "account": "family_mean_reversion_chop_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.6452375953531791,
+            "mark_to_market_pnl_usd": -0.6452376
+          },
+          {
+            "account": "family_mean_reversion_chop_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.308193859739125,
+            "mark_to_market_pnl_usd": -1.30819386
+          }
+        ]
+      }
+    ],
+    "RELATIVE_STRENGTH": [
+      {
+        "context": "BTC|coinbase|buy|first6h",
+        "reason": "live compare closed=40 pnl=$-42.63; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -42.632199,
+        "mark_to_market_pnl_usd": -50.633225,
+        "examples": [
+          {
+            "account": "family_relative_strength_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.6442391154744889,
+            "mark_to_market_pnl_usd": -1.64423912
+          },
+          {
+            "account": "family_relative_strength_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.1058388070812704,
+            "mark_to_market_pnl_usd": -1.10583881
+          },
+          {
+            "account": "family_relative_strength_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.6897632664629021,
+            "mark_to_market_pnl_usd": -0.68976327
+          }
+        ]
+      },
+      {
+        "context": "ETH|kraken|buy|first6h",
+        "reason": "live compare closed=40 pnl=$-45.74; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -45.742979,
+        "mark_to_market_pnl_usd": -53.780296,
+        "examples": [
+          {
+            "account": "family_relative_strength_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.5173540191937027,
+            "mark_to_market_pnl_usd": -1.51735402
+          },
+          {
+            "account": "family_relative_strength_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.3637326440729507,
+            "mark_to_market_pnl_usd": -1.36373264
+          },
+          {
+            "account": "family_relative_strength_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.004664914892825,
+            "mark_to_market_pnl_usd": -1.00466491
+          }
+        ]
+      }
+    ],
+    "VOL_BREAKOUT": [
+      {
+        "context": "BTC|coinbase|buy|first6h",
+        "reason": "live compare closed=40 pnl=$-42.63; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 40,
+        "opened": 48,
+        "wins": 0,
+        "realized_pnl_usd": -42.632199,
+        "mark_to_market_pnl_usd": -50.633225,
+        "examples": [
+          {
+            "account": "family_vol_breakout_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.6442391154744889,
+            "mark_to_market_pnl_usd": -1.64423912
+          },
+          {
+            "account": "family_vol_breakout_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.1058388070812704,
+            "mark_to_market_pnl_usd": -1.10583881
+          },
+          {
+            "account": "family_vol_breakout_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -0.6897632664629021,
+            "mark_to_market_pnl_usd": -0.68976327
+          }
+        ]
+      },
+      {
+        "context": "ETH|kraken|buy|first6h",
+        "reason": "live compare closed=90 pnl=$-102.92; quarantine exact context until evolution repairs entry/exit",
+        "run_id": "family_exit_matrix_1000_pnl_20260521_041725_utc",
+        "closed": 90,
+        "opened": 108,
+        "wins": 0,
+        "realized_pnl_usd": -102.921703,
+        "mark_to_market_pnl_usd": -121.005666,
+        "examples": [
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.5173540191937027,
+            "mark_to_market_pnl_usd": -1.51735402
+          },
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.3637326440729507,
+            "mark_to_market_pnl_usd": -1.36373264
+          },
+          {
+            "account": "family_registry_no_bucket_ignore_stale_news",
+            "exit_strategy_id": "bucket_counterfactual_runner_exits_v1",
+            "status": "closed",
+            "realized_pnl_usd": -1.004664914892825,
+            "mark_to_market_pnl_usd": -1.00466491
+          }
+        ]
+      }
+    ]
+  },
+  "last_source_run": "family_exit_matrix_1000_pnl_20260521_041725_utc"
+}

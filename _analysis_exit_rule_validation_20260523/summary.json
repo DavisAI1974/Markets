@@ -1,0 +1,17 @@
+{
+  "source_json": "E:\\Markets\\research\\strategy_evolution\\oracle_winner_trade_list.json",
+  "source_audit": "E:\\Markets\\research\\strategy_evolution\\live_mock_replay\\live_hindsight_missed_winner_audit_rows.csv",
+  "n_json_entries": 1316,
+  "n_joined": 1316,
+  "n_primary_simulated": 1311,
+  "n_bank_gate_pass": 1035,
+  "n_shadow_gate_only": 281,
+  "bank_gate_bps_per_min_threshold": 0.3,
+  "venue_fees_bps": {
+    "Coinbase": 50.0,
+    "Kraken": 16.0,
+    "Bybit": 10.0
+  },
+  "primary_rule": "arm=20bps, giveback=max(12,25%) of peak, weak-cuts at 15m",
+  "note": "Path simulation uses live_data rolling bin buffer. Clamped trades have entry_ts a few minutes before bin coverage starts; their armed/exit decisions effectively use the visible portion of the trade. fee_bps is a static venue assumption (Bybit 10, Kraken 16, Coinbase 50); oracle_net_bps in the JSON is already net of fees per the strategy_evolution pipeline. current_net_bps in the simulator uses bar.mid; fav_net_bps uses bar.low (sells) or bar.high (buys). Real fills would be at bid/ask -> add 1-3 bps slippage to read."
+}

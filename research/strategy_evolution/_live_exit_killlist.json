@@ -1,0 +1,47 @@
+{
+  "schema": "live_exit_killlist_v1",
+  "updated_at": "2026-05-21T05:16:00Z",
+  "policy": {
+    "purpose": "Disable exit profiles that live mock evidence shows are losing after fees.",
+    "mock_only": true,
+    "fallback": "Disabled profile IDs are bypassed; trades fall back to the scenario base exit profile."
+  },
+  "disabled_exit_profiles": [
+    {
+      "profile_id": "bucket_counterfactual_runner_exits_v1",
+      "reason": "Killed after live mock evidence showed zero net wins after fees: main live replay closed=22 losses=22 realized_pnl_usd=-32.660427; active sidecar closed=192 losses=192 realized_pnl_usd=-246.252899.",
+      "source_files": [
+        "research/strategy_evolution/_live_replay_mock_trades.jsonl",
+        "research/strategy_evolution/live_family_registry_compare/hybrid_exit_matrix_1000_pnl_20260521_050413_uAc/family_registry_trades.jsonl"
+      ],
+      "main_live_replay": {
+        "opened": 24,
+        "closed": 22,
+        "wins": 0,
+        "losses": 22,
+        "realized_pnl_usd": -32.660427,
+        "gross_pnl_usd": -10.231448,
+        "fees_usd": 23.119861,
+        "top_close_reasons": {
+          "pressure_flipped": 13,
+          "stop_loss": 7,
+          "present_score_degraded": 2
+        }
+      },
+      "active_sidecar": {
+        "run_id": "hybrid_exit_matrix_1000_pnl_20260521_050413_uAc",
+        "opened": 232,
+        "closed": 192,
+        "wins": 0,
+        "losses": 192,
+        "realized_pnl_usd": -246.252899,
+        "gross_pnl_usd": -54.314208,
+        "fees_usd": 211.938691,
+        "top_close_reasons": {
+          "pressure_flipped": 134,
+          "stop_loss": 58
+        }
+      }
+    }
+  ]
+}
