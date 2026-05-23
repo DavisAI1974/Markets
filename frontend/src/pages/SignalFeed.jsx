@@ -10,6 +10,15 @@ const REGIME_OPTS = [
   "WASH_PAIRED", "EQUILIBRIUM_EXTREME_DEMO",
 ];
 
+const SETUP_LABELS = {
+  WHALE_UP: "whale buyer",
+  WHALE_DOWN: "whale seller",
+  HERD_UP: "herd buying",
+  HERD_DOWN: "herd selling",
+  WASH_PAIRED: "suspect flow",
+  EQUILIBRIUM_EXTREME_DEMO: "equilibrium",
+};
+
 export default function SignalFeed() {
   const signals = useStore((s) => s.signals);
   const setSignals = useStore((s) => s.setSignals);
@@ -81,10 +90,10 @@ export default function SignalFeed() {
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5 mb-3 items-center">
-        <Pill active={regimeFilter === "all"} onClick={() => setRegimeFilter("all")}>regime: all</Pill>
+        <Pill active={regimeFilter === "all"} onClick={() => setRegimeFilter("all")}>setup: all</Pill>
         {regimes.filter((r) => REGIME_OPTS.includes(r)).map((r) => (
           <Pill key={r} active={regimeFilter === r} onClick={() => setRegimeFilter(r)}>
-            {r.replace(/_/g, " ").replace("EQUILIBRIUM EXTREME DEMO", "EQ-EXT")}
+            {SETUP_LABELS[r] || "market read"}
           </Pill>
         ))}
         <Pill active={confirmedOnly} onClick={() => setConfirmedOnly(!confirmedOnly)} accent="green">
@@ -100,7 +109,7 @@ export default function SignalFeed() {
           <EmptyState
             icon="📡"
             title="No signals yet"
-            body="Most market activity is healthy two-sided trading. Signals fire when we detect a big buyer, big seller, buying or selling cascade, or wash pattern. Leave this open and you'll see them arrive in real time."
+            body="Most market activity is equilibrium. Signals fire when we detect a whale buyer, whale seller, herd move, or wash pattern. Leave this open and you'll see them arrive in real time."
           />
         ) : (
           <EmptyState

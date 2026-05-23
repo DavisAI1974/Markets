@@ -1,10 +1,10 @@
 /**
  * markets-watch service worker.
- * Strategy: cache-first for app shell (HTML/JS/CSS), network-first for /api/*.
- * Future: handle web push notifications for high-confidence signals.
+ * Strategy: network-first for app shell and API routes, cache fallback for offline.
+ * Future: handle web push notifications for clean market reads.
  */
 
-const APP_CACHE = "markets-watch-v1";
+const APP_CACHE = "markets-watch-v3";
 const SHELL = ["/", "/index.html", "/manifest.json"];
 
 self.addEventListener("install", (event) => {
@@ -24,19 +24,20 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   // Always go network for API + SSE
-  if (url.pathname.startsWith("/api/")) {
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/mw/")) {
     event.respondWith(fetch(event.request).catch(() => new Response("offline", { status: 503 })));
     return;
   }
-  // Cache-first for app shell
+  // Network-first for the app shell so market-critical UI updates do not get
+  // trapped behind an old service-worker cache.
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request).then((res) => {
+    fetch(event.request).then((res) => {
       if (res.ok && event.request.method === "GET") {
         const clone = res.clone();
         caches.open(APP_CACHE).then((cache) => cache.put(event.request, clone));
       }
       return res;
-    }).catch(() => caches.match("/")))
+    }).catch(() => caches.match(event.request).then((cached) => cached || caches.match("/")))
   );
 });
 

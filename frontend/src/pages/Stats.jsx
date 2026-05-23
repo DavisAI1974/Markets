@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchStats } from "../api.js";
-import { SkeletonCard } from "../components/LoadingSkeleton.jsx";
+import { EmptyState, SkeletonCard } from "../components/LoadingSkeleton.jsx";
 
 export default function Stats() {
   const [data, setData] = useState(null);
@@ -8,12 +8,33 @@ export default function Stats() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchStats(windowHours).then(setData).catch((e) => setError(e.message));
-    const t = setInterval(() => fetchStats(windowHours).then(setData).catch(() => {}), 30000);
+    setError(null);
+    fetchStats(windowHours)
+      .then((j) => {
+        setData(normalizeStats(j));
+        setError(null);
+      })
+      .catch((e) => setError(e.message));
+    const t = setInterval(() => {
+      fetchStats(windowHours)
+        .then((j) => {
+          setData(normalizeStats(j));
+          setError(null);
+        })
+        .catch(() => {});
+    }, 30000);
     return () => clearInterval(t);
   }, [windowHours]);
 
-  if (error) return <div className="text-red-400">{error}</div>;
+  if (error && !data) {
+    return (
+      <EmptyState
+        icon="!"
+        title="Stats are not available yet"
+        body="The live stats endpoint did not return a usable response. The rest of the app can keep running while this view waits for analytics data."
+      />
+    );
+  }
   if (!data) return <SkeletonCard heightCls="h-64" />;
 
   const cvTotal = data.cross_venue_confirmed + data.cross_venue_disagreed;
@@ -40,7 +61,7 @@ export default function Stats() {
         <Stat label="signals" value={data.n_signals} big />
         <Stat label="cross-venue ✓" value={`${(cvRate * 100).toFixed(0)}%`}
                sub={`${data.cross_venue_confirmed} / ${cvTotal}`} />
-        <Stat label="avg conf" value={`${(data.avg_adjusted_confidence * 100).toFixed(0)}%`} />
+        <Stat label="avg read score" value={`${(data.avg_adjusted_confidence * 100).toFixed(0)}%`} />
       </section>
 
       {data.outcomes && (data.outcomes.resolved > 0 || data.outcomes.pending > 0) && (
@@ -89,9 +110,25 @@ export default function Stats() {
       )}
 
       <section>
-        <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">By regime</h3>
+        <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">By setup</h3>
         <DistBar entries={Object.entries(data.by_regime)} colors={REGIME_COLORS} />
       </section>
+
+      {data.pressure_watch && (
+        <section>
+          <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">Pressure watch</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-900 rounded p-3 border border-slate-800">
+              <div className="text-slate-500 uppercase tracking-wider text-[10px] mb-2">Signals by pressure state</div>
+              <DistBar entries={Object.entries(data.pressure_watch.by_state || {})} colors={PRESSURE_COLORS} />
+            </div>
+            <div className="bg-slate-900 rounded p-3 border border-slate-800">
+              <div className="text-slate-500 uppercase tracking-wider text-[10px] mb-2">Outcomes by pressure state</div>
+              <PressureOutcomeTable rows={data.pressure_watch.outcomes_by_state || {}} />
+            </div>
+          </div>
+        </section>
+      )}
 
       <section>
         <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2">By source</h3>
@@ -102,11 +139,26 @@ export default function Stats() {
         <p className="text-slate-500 text-sm italic mt-6">
           No signals in this window yet. Most market activity is healthy
           two-sided trading (baseline). Signals fire when we detect a big
-          buyer, big seller, buying or selling cascade, or wash pattern.
+          whale buyer, whale seller, herd move, or wash pattern.
         </p>
       )}
     </div>
   );
+}
+
+function normalizeStats(raw) {
+  const data = raw || {};
+  return {
+    ...data,
+    n_signals: data.n_signals ?? 0,
+    cross_venue_confirmed: data.cross_venue_confirmed ?? 0,
+    cross_venue_disagreed: data.cross_venue_disagreed ?? 0,
+    avg_adjusted_confidence: data.avg_adjusted_confidence ?? 0,
+    by_regime: data.by_regime || {},
+    by_source: data.by_source || {},
+    pressure_watch: data.pressure_watch || null,
+    outcomes: data.outcomes || null,
+  };
 }
 
 const REGIME_COLORS = {
@@ -117,9 +169,42 @@ const REGIME_COLORS = {
   EQUILIBRIUM_TWO_SIDED: "bg-blue-700",
   EQUILIBRIUM_EXTREME_DEMO: "bg-blue-900 border border-blue-500",
   WASH_PAIRED: "bg-yellow-700",
+  WASH_HAWKES: "bg-yellow-700",
   DEPLETED: "bg-gray-600",
   UNKNOWN: "bg-slate-700",
 };
+
+const PRESSURE_COLORS = {
+  none: "bg-slate-700",
+  internal: "bg-amber-900",
+  forming: "bg-amber-600",
+  transition_risk: "bg-yellow-600",
+  high_priority: "bg-orange-500",
+  confirmed: "bg-emerald-600",
+};
+
+function PressureOutcomeTable({ rows }) {
+  const entries = Object.entries(rows);
+  if (entries.length === 0) {
+    return <div className="text-slate-500 text-xs italic">no resolved outcomes yet</div>;
+  }
+  return (
+    <div className="space-y-1.5 text-xs">
+      {entries.map(([state, row]) => (
+        <div key={state} className="grid grid-cols-[1fr_2.5rem_3rem_4rem] gap-2 font-mono">
+          <span className="truncate text-slate-300">{state}</span>
+          <span className="text-slate-400 text-right">n={row.n}</span>
+          <span className="text-slate-400 text-right">
+            {row.win_rate != null ? `${(row.win_rate * 100).toFixed(0)}%` : "-"}
+          </span>
+          <span className={row.total_bps >= 0 ? "text-green-400 text-right" : "text-red-400 text-right"}>
+            {row.total_bps >= 0 ? "+" : ""}{Number(row.total_bps || 0).toFixed(1)}bp
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function Stat({ label, value, sub, big }) {
   return (

@@ -5,7 +5,7 @@ import {
 } from "recharts";
 
 /**
- * Replaces DipoleChart. Shows:
+ * Trader-facing price and flow chart. Shows:
  *   1. Price line over the chart window
  *   2. Per-bar buy volume (positive, green) and sell volume (negative, red)
  *      so the side that's pushing is visually obvious

@@ -23,7 +23,7 @@ const QTY_KEY = "marketsWatch.lastQty";   // remember last qty between clicks
  * audit purposes; the user then executes on their exchange of choice
  * (or wires their local executor to the audit feed).
  */
-export default function OrderTicketModal({ asset, venue, side, price, onClose, onSubmitted }) {
+export default function OrderTicketModal({ asset, venue, side, price, initialNote = "", tradeOption = null, onClose, onSubmitted }) {
   const practiceMode = useStore((s) => s.practiceMode);
   const setPracticeMode = useStore((s) => s.setPracticeMode);
   const [qty, setQty] = useState(() => {
@@ -32,7 +32,7 @@ export default function OrderTicketModal({ asset, venue, side, price, onClose, o
   });
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(null);     // null | { ok, signal_id?, error }
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(initialNote);
   const [confirmedLive, setConfirmedLive] = useState(false);  // double-confirm for live
 
   useEffect(() => {
@@ -103,6 +103,22 @@ export default function OrderTicketModal({ asset, venue, side, price, onClose, o
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-100 text-xl px-1" aria-label="close">×</button>
         </div>
+
+        {/* Locked price + size input */}
+        {tradeOption?.trade_option_label && (
+          <div className="mb-3 rounded border border-amber-700/60 bg-amber-950/30 px-2.5 py-2 text-xs text-amber-100">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold">{tradeOption.trade_option_label}</span>
+              <span className="font-mono">{tradeOption.trade_option_readiness || 0}/100</span>
+            </div>
+            <div className="mt-1 text-amber-100/75">{tradeOption.trade_option_size_hint}</div>
+            {(tradeOption.trade_option_exit_rules || []).length > 0 && (
+              <div className="mt-1 text-amber-100/70">
+                Exit: {tradeOption.trade_option_exit_rules[0]}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Locked price + size input */}
         <div className="grid grid-cols-2 gap-2 mb-3">

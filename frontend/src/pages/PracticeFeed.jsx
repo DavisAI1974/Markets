@@ -65,6 +65,8 @@ export default function PracticeFeed() {
   const closed = trades.filter((t) => t.status === "closed");
   const totalRealized = data.total_realized_pnl_usd || 0;
   const winRate = data.win_rate;
+  const mockBank = data.mock_bankroll || null;
+  const audit = data.live_hindsight_audit || null;
 
   return (
     <div className="space-y-4">
@@ -91,6 +93,35 @@ export default function PracticeFeed() {
         />
       </div>
 
+      {audit?.available && <HindsightAudit audit={audit} />}
+
+      {mockBank && (
+        <div className="rounded border border-emerald-900/70 bg-emerald-950/20 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="text-[10px] uppercase tracking-wide text-emerald-300/80 font-bold">
+                Mock forward bank
+              </div>
+              <div className="mt-1 text-xs text-emerald-100/75">
+                Real data, simulated execution. Bank can go to zero; exposure follows the POC rule.
+              </div>
+            </div>
+            <div className="text-right font-mono">
+              <div className="text-lg font-bold text-emerald-200">{fmtUsdPlain(mockBank.equity_usd)}</div>
+              <div className="text-[10px] text-emerald-300/70">mock equity</div>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <MiniStat label="bank reserve" value={fmtUsdPlain(mockBank.bank_usd)} />
+            <MiniStat label="open exposure" value={fmtUsdPlain(mockBank.open_exposure_usd)} />
+            <MiniStat label="cap" value={fmtUsdPlain(mockBank.exposure_cap_usd)} />
+          </div>
+          <div className="mt-2">
+            <MiniStat label="remaining capacity" value={fmtUsdPlain(mockBank.remaining_exposure_capacity_usd)} />
+          </div>
+        </div>
+      )}
+
       <section>
         <h3 className="text-xs uppercase tracking-wider text-slate-500 mb-2 px-1">
           Open positions ({open.length})
@@ -112,6 +143,60 @@ export default function PracticeFeed() {
           {closed.slice(0, 50).map((t) => <ClosedTrade key={t.intent_id} t={t} />)}
         </section>
       )}
+    </div>
+  );
+}
+
+function HindsightAudit({ audit }) {
+  const summary = audit.summary || {};
+  const missed = audit.top_missed_entries || [];
+  const leaks = audit.top_exit_leaks || [];
+  return (
+    <section className="rounded border border-amber-900/70 bg-amber-950/20 p-3">
+      <div className="grid grid-cols-3 gap-2">
+        <MiniStat label="oracle pace" value={fmtUsdPlain(summary.oracle_winner_weekly_pace_usd)} />
+        <MiniStat label="missed entries" value={summary.missed_entry_rows ?? 0} />
+        <MiniStat label="exit leaks" value={summary.exit_missed_or_fee_leak_rows ?? 0} />
+      </div>
+      {missed.length > 0 && (
+        <div className="mt-3">
+          <div className="text-[10px] uppercase tracking-wide text-amber-300/80 font-bold mb-1">
+            Hindsight misses
+          </div>
+          {missed.slice(0, 6).map((row) => <AuditRow key={`${row.unique_key}-${row.oracle_exit_ts_utc}`} row={row} />)}
+        </div>
+      )}
+      {leaks.length > 0 && (
+        <div className="mt-3">
+          <div className="text-[10px] uppercase tracking-wide text-amber-300/80 font-bold mb-1">
+            Exit leaks
+          </div>
+          {leaks.slice(0, 4).map((row) => <AuditRow key={`${row.unique_key}-${row.oracle_exit_ts_utc}-leak`} row={row} leak />)}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AuditRow({ row, leak }) {
+  const sideColor = row.side === "buy" ? "text-emerald-400" : "text-rose-400";
+  const value = leak ? row.oracle_incremental_vs_actual_usd : row.oracle_net_pnl_usd;
+  return (
+    <div className="rounded bg-slate-950/70 px-2 py-1.5 mb-1 border border-slate-800/80">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <span className={`font-mono text-xs font-bold ${sideColor}`}>{row.side === "buy" ? "LONG" : "SHORT"}</span>
+          <span className="ml-2 text-xs text-slate-200">{row.asset} {row.venue}</span>
+          <span className="ml-2 text-[10px] text-slate-500">{row.strategy_id}</span>
+          <div className="truncate text-[10px] text-slate-500 font-mono mt-0.5">
+            {row.blocker_reason} · {row.trade_stage || "none"} · {row.pressure_watch_state || "none"}
+          </div>
+        </div>
+        <div className="text-right font-mono text-xs text-amber-200">
+          {fmtUsd(value)}
+          <div className="text-[9px] text-amber-300/60">{Number(row.oracle_net_bps || 0).toFixed(1)} bps</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -196,6 +281,20 @@ function Stat({ label, value, sub, big, accent }) {
       <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
       <div className={`font-mono ${big ? "text-2xl" : "text-base"} mt-1 ${accentCls}`}>{value}</div>
       {sub && <div className="text-[10px] text-slate-500 mt-1">{sub}</div>}
+    </div>
+  );
+}
+
+function fmtUsdPlain(v) {
+  if (v == null) return "—";
+  return `$${Number(v || 0).toFixed(2)}`;
+}
+
+function MiniStat({ label, value }) {
+  return (
+    <div className="rounded bg-slate-950/70 px-2 py-1.5">
+      <div className="text-[9px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="mt-0.5 font-mono text-xs text-slate-100">{value}</div>
     </div>
   );
 }

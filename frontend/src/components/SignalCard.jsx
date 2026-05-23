@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useStore } from "../store.js";
+import { getMarketReadHeadline, getMarketStructureCopy, getReadQualityLabel } from "../marketReadCopy.js";
 
 const REGIME_COLORS = {
   WHALE_UP:   "border-l-green-500",
@@ -9,6 +10,7 @@ const REGIME_COLORS = {
   HERD_UP:    "border-l-orange-500",
   HERD_DOWN:  "border-l-rose-700",
   WASH_PAIRED:"border-l-yellow-500",
+  WASH_HAWKES:"border-l-yellow-500",
   EQUILIBRIUM_TWO_SIDED: "border-l-blue-500",
   DEPLETED:   "border-l-gray-500",
   UNKNOWN:    "border-l-slate-500",
@@ -16,19 +18,6 @@ const REGIME_COLORS = {
   CROSS_VENUE_HERD_WHALE_UP:   "border-l-emerald-400",
   CROSS_VENUE_WHALE_HERD_DOWN: "border-l-rose-400",
   CROSS_VENUE_HERD_WHALE_DOWN: "border-l-rose-400",
-};
-
-const REGIME_HEADLINES = {
-  WHALE_UP:   "Big buyer detected",
-  WHALE_DOWN: "Big seller detected",
-  WHALE_NASCENT_UP:   "Buy pressure forming",
-  WHALE_NASCENT_DOWN: "Sell pressure forming",
-  HERD_UP:    "Buying cascade",
-  HERD_DOWN:  "Selling cascade",
-  WASH_PAIRED:"Wash pattern — skip",
-  EQUILIBRIUM_TWO_SIDED: "Healthy two-sided",
-  DEPLETED:   "Market quiet",
-  UNKNOWN:    "Unclassified",
 };
 
 function fmtPrice(p) {
@@ -48,12 +37,15 @@ function fmtQty(q) {
 export default function SignalCard({ sig, isFresh = false }) {
   const cls = REGIME_COLORS[sig.regime] || "border-l-slate-500";
   const time = new Date(sig.timestamp_utc * 1000).toLocaleTimeString("en-US", { hour12: false });
-  const conf = sig.adjusted_confidence ?? sig.confidence ?? 0;
   const cvm = sig.cross_venue_multiplier ?? 1.0;
   const cascade = sig.cascade_event || "";
   const headline = sig.event_label
-    || REGIME_HEADLINES[sig.regime]
-    || sig.regime.replace(/_/g, " ");
+    || getMarketReadHeadline(sig.regime);
+  const structureCopy = getMarketStructureCopy(sig.regime);
+  const readQuality = getReadQualityLabel(sig);
+  const pressureLabel = sig.pressure_watch_state === "internal"
+    ? ""
+    : (sig.pressure_watch_label || "");
 
   // Animation hook: cards rendered for the first time after their parent
   // listens to a new SSE signal use the slide-in + cascade-pulse classes.
@@ -119,6 +111,11 @@ export default function SignalCard({ sig, isFresh = false }) {
               : "drift detected"}
         </div>
       )}
+      {pressureLabel && (
+        <div className="mb-2 inline-block text-[10px] uppercase tracking-wider font-bold text-amber-200 border border-amber-700/60 bg-amber-950/30 rounded px-1.5 py-0.5">
+          {pressureLabel}
+        </div>
+      )}
 
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -134,7 +131,7 @@ export default function SignalCard({ sig, isFresh = false }) {
                 {" / ask "}<span className={askCls}>{fmtPrice(ask)}</span>
               </span>
             )}
-            <span className="text-slate-500"> · conf {(conf * 100).toFixed(0)}%</span>
+            <span className="text-slate-500"> · read {readQuality}</span>
             {cvm > 1.0 && <span className="text-emerald-400 ml-1">✓ cross-venue</span>}
             {cvm < 1.0 && <span className="text-yellow-500 ml-1">✗ single-venue</span>}
           </div>
@@ -156,7 +153,10 @@ export default function SignalCard({ sig, isFresh = false }) {
         </div>
       )}
 
-      <div className="text-xs text-slate-400 mt-2 line-clamp-2">{sig.playbook}</div>
+      <div className="text-xs text-slate-300 mt-2 leading-snug">{structureCopy}</div>
+      {sig.playbook && (
+        <div className="text-xs text-slate-400 mt-1 line-clamp-2">{sig.playbook}</div>
+      )}
 
       {sig.outcome_status === "resolved" && (
         <div className={`mt-2 text-xs font-mono ${sig.outcome_realized_bps >= 0 ? "text-emerald-400" : "text-rose-400"}`}>

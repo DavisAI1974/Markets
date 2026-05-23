@@ -22,6 +22,15 @@ export const useStore = create((set, get) => ({
   connected: false,
   lastError: null,
   practiceMode: loadPracticeMode(),
+  autoTradeSettings: {
+    enabled: false,
+    practice: true,
+    tolerance: "balanced",
+    profiles: ["early_probe", "confirmed_follow"],
+    min_readiness: 65,
+    max_open_trades: 3,
+    base_notional_usd: 1000,
+  },
   openSignalDetailId: null,  // when set, SignalDetailSheet renders as a bottom-sheet overlay
 
   setStatuses: (statuses) => set({ statuses }),
@@ -31,6 +40,7 @@ export const useStore = create((set, get) => ({
   prependDriftAlert: (a) => set({ driftAlerts: [a, ...get().driftAlerts].slice(0, 60) }),
   setConnected: (connected) => set({ connected }),
   setError: (lastError) => set({ lastError }),
+  setAutoTradeSettings: (autoTradeSettings) => set({ autoTradeSettings }),
   setPracticeMode: (on) => {
     try { localStorage.setItem(PRACTICE_KEY, on ? "true" : "false"); } catch {}
     set({ practiceMode: !!on });

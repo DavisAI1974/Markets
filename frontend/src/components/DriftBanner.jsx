@@ -17,6 +17,7 @@ const TYPE_STYLES = {
   edge_strengthen:               { color: "emerald",icon: "↑", title: "Edge strengthening" },
   sample_milestone:              { color: "sky",    icon: "✓", title: "Sample milestone" },
   outcome_contradiction_streak:  { color: "rose",   icon: "⚠", title: "Outcome contradiction streak" },
+  pressure_watch_high_priority:  { color: "amber",  icon: "⚠", title: "Pressure forming" },
 };
 
 const COLOR_CLS = {
@@ -43,6 +44,9 @@ function _short(alert) {
   }
   if (t === "outcome_contradiction_streak") {
     return alert.summary || `${key}: ${alert.streak} in a row`;
+  }
+  if (t === "pressure_watch_high_priority") {
+    return alert.summary || `${alert.asset || "Market"} pressure forming`;
   }
   return alert.summary || key;
 }

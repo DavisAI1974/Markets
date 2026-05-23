@@ -1,7 +1,7 @@
 {
   "name": "markets-watch",
   "short_name": "markets-watch",
-  "description": "Regime-classified market signals: detect whales, panic, and equilibrium in real time.",
+  "description": "Real-time market flow signals for whale buyers, whale sellers, herd moves, and equilibrium.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

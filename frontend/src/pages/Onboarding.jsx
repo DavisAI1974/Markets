@@ -13,42 +13,30 @@ export default function Onboarding() {
         worth your attention.
       </p>
 
+      <p className="text-sm text-slate-400">
+        Tap any market read on the Live tab to drill into the live bid/ask cells and the
+        rolling minute-by-minute tape for that pair.
+      </p>
+
       <div className="not-prose my-4 rounded border border-emerald-900/60 bg-emerald-950/30 p-3">
         <h3 className="text-sm font-semibold text-emerald-200 mb-2">
-          Get pushed when a high-conviction signal fires
+          Get pushed when a clean market read fires
         </h3>
         <p className="text-xs text-emerald-200/70 mb-2">
-          Subscribe to push notifications: every detected event (big buyer / big seller /
-          buying or selling cascade / cross-venue cascade) shows up as a system notification
+          Subscribe to push notifications: every detected event (whale buyer / whale seller /
+          herd buying or selling / cross-venue cascade) shows up as a system notification
           within seconds. Works on Android Chrome and on iOS Safari (after you install the
           app via Share → Add to Home Screen).
         </p>
         <PushNotifyButton />
       </div>
 
-      <h2 className="text-xl font-semibold text-slate-100 mt-8">Practice vs Live mode</h2>
-      <p className="text-sm">
-        The header has a <strong>Practice / Live</strong> toggle. New users default to
-        Practice — every bid/ask tap simulates a fill against the current market with
-        a 25 bp fee, with no real money at risk. Open positions appear on the
-        <strong> Practice </strong> tab where you can watch unrealized P&L update against
-        the live mid and close at any time. Use this to learn the workflow and your own
-        reactions before flipping the toggle.
-      </p>
-      <p className="text-sm">
-        Live mode requires you to have your own executor running locally with API keys
-        for your exchange (Coinbase / Binance / Kraken / paper). Confirming a Live trade
-        records an intent on the central host that your executor reads off the live
-        stream and routes to your wallet. The central app never holds your keys —
-        capital and credentials stay with you.
-      </p>
-
       <h2 className="text-xl font-semibold text-slate-100 mt-8">What you'll see in a signal</h2>
       <p className="text-sm">
         Every signal comes with the same anatomy:
       </p>
       <ul className="text-sm space-y-1">
-        <li><strong>Event:</strong> plain-language description — "Big buyer detected", "Selling cascade", etc.</li>
+        <li><strong>Event:</strong> plain-language description — "Whale buyer detected", "Herd selling", etc.</li>
         <li><strong>Asset · Venue:</strong> which coin and which exchange.</li>
         <li><strong>Price:</strong> last trade.</li>
         <li><strong>Bid / Ask:</strong> current top-of-book quote. Whichever side was last
@@ -58,8 +46,8 @@ export default function Onboarding() {
             versus the sell side over the chunk window, in absolute coin units, plus a
             stacked bar so it's visible at a glance.</li>
         <li><strong>Trades:</strong> total number of individual trades over the chunk window.</li>
-        <li><strong>Confidence:</strong> how strongly the detector fired (0–100%), discounted
-            if the other venue disagrees, boosted if it confirms.</li>
+        <li><strong>Read quality:</strong> whether the tape is clean, mixed, noisy, thin,
+            or still incomplete.</li>
         <li><strong>Cross-venue:</strong> whether the same event is visible on the second venue
             — confirmation makes the signal much higher conviction.</li>
         <li><strong>Playbook:</strong> the suggested action for this event type.</li>
@@ -68,41 +56,41 @@ export default function Onboarding() {
       {/* ----------------------------------------------------------------- */}
       <h2 className="text-xl font-semibold text-slate-100 mt-8">Event types</h2>
       <p className="text-sm">
-        Every chunk of market data (a regime-aware window of 10–30 one-minute bars) is
+        Every chunk of market data (a flow-aware window of 10–30 one-minute bars) is
         classified into one of these. Most of the time markets are in healthy two-sided
         trading — the interesting moments are the transitions.
       </p>
 
-      <Term color="blue" name="Healthy two-sided" formal="EQUILIBRIUM_TWO_SIDED">
+      <Term color="blue" name="Equilibrium" formal="EQUILIBRIUM_TWO_SIDED">
         <p><strong>Buyers and sellers actively pushing back against each other.</strong> Volume
         flows both ways, balanced. This is normal market behavior most of the time.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> sit out — no edge here unless
         the flow becomes extremely one-sided within the chunk.</p>
       </Term>
 
-      <Term color="green" name="Big buyer detected" formal="WHALE_UP">
-        <p><strong>One big buyer dominating</strong>, sustained over multiple minutes. Sellers
+      <Term color="green" name="Whale buyer detected" formal="WHALE_UP">
+        <p><strong>One whale buyer dominating</strong>, sustained over multiple minutes. Sellers
         can't push back fast enough. Could be a position cover, accumulation, or institutional
         rotation.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> piggyback if you catch it
-        early. Get out of the way if late — big buyers eventually finish. Watch for the buying
+        early. Get out of the way if late — whale buyers eventually finish. Watch for the buying
         to exhaust near round-number price levels.</p>
       </Term>
 
-      <Term color="red" name="Big seller detected" formal="WHALE_DOWN">
-        <p><strong>One big seller dominating.</strong> Mirror image of the big-buyer case.</p>
+      <Term color="red" name="Whale seller detected" formal="WHALE_DOWN">
+        <p><strong>One whale seller dominating.</strong> Mirror image of the whale-buyer case.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> piggyback short if early.
         Watch for the seller's inventory to run out — that's typically the bottom.</p>
       </Term>
 
-      <Term color="orange" name="Buying cascade" formal="HERD_UP">
+      <Term color="orange" name="Herd buying" formal="HERD_UP">
         <p><strong>FOMO / panic buy.</strong> Many actors aligned on the buy side at the same
         time. Volume and volatility both spike.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> follow with tight stops if
         you catch it on the way up. Fade after overshoot — these usually retrace.</p>
       </Term>
 
-      <Term color="rose" name="Selling cascade" formal="HERD_DOWN">
+      <Term color="rose" name="Herd selling" formal="HERD_DOWN">
         <p><strong>Panic sell / capitulation.</strong> Multi-actor selling.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> do <strong>not</strong>
         catch the falling knife. Wait for the sell pressure to peak and exhaust, then fade
@@ -112,7 +100,7 @@ export default function Onboarding() {
       <Term color="amber" name="Whale → Herd cascade" formal="WHALE_TO_HERD_*">
         <p><strong>A big actor's flow tripped a crowd-style cascade in the same direction.</strong> The
         first chunk classifies as a whale, the very next chunk classifies as a cascade with
-        no quiet in between. This is high-conviction — two independent signal types align.</p>
+        no quiet in between. This is a cleaner read because two independent signal types align.</p>
         <p className="text-xs text-slate-400 mt-1"><em>Playbook:</em> ride the cascade with a
         tight stop. Exit on first sign of exhaustion (volume drops, buy/sell pressure flips).</p>
       </Term>
@@ -149,22 +137,23 @@ export default function Onboarding() {
 
       <Glossary term="Cross-venue confirmation">
         We track the same asset on multiple venues (Coinbase, Kraken). When both venues
-        report the same kind of activity at the same wall-clock minute, the signal's confidence
-        is multiplied by 1.5×. When they disagree, multiplied by 0.5×. Disagreement often
+        report the same kind of activity at the same wall-clock minute, the read quality
+        improves. When they disagree, the read is treated as thinner. Disagreement often
         means a single-venue event (e.g., a whale on one exchange) rather than a global
         market move.
       </Glossary>
 
-      <Glossary term="Confidence">
-        A 0–100% score combining how strongly the detector rules fired with the cross-venue
-        multiplier. Below 50% = weak, skip. 50–70% = moderate. Above 70% = strong. Configure
-        your minimum confidence threshold in the executor config.
+      <Glossary term="Read quality">
+        A plain-language description of the tape: Clean buyer/seller means directional
+        participation is easy to read, Two-sided means buyers and sellers are pushing back,
+        Noisy means the flow may be artificial, Thin means there is not enough flow, and
+        Incomplete means the app is still waiting for a usable market read.
       </Glossary>
 
       <Glossary term="Buy / Sell volume">
         On every signal you'll see the absolute coin volume that traded on the aggressor-buy
         side versus the aggressor-sell side over the chunk window, plus a stacked-bar visual.
-        High one-side share is the cleanest secondary discriminator after the regime label.
+        High one-side share is the cleanest confirmation after the headline market read.
       </Glossary>
 
       <Glossary term="Trades">
@@ -184,7 +173,7 @@ export default function Onboarding() {
 
       <FAQ q="Should I trade every signal?">
         No. The signals are research; your executor's risk gates filter them by your personal
-        thresholds (min confidence, asset whitelist, daily trade cap, etc.). For the first
+        thresholds (minimum signal strength, asset whitelist, daily trade cap, etc.). For the first
         weeks you should run the executor in <code>--dry-run</code> mode and just verify the
         gates fire as you'd expect. Real-money trading requires a real-exchange adapter you
         write yourself, not the paper adapter we ship.
@@ -193,8 +182,8 @@ export default function Onboarding() {
       <FAQ q="What if Coinbase says one thing and Kraken says another?">
         That's a <em>single-venue event</em>, and it's actually one of the most informative
         situations. Cross-venue disagreement at the same wall-clock minute often means a big
-        actor specifically on one exchange. The system flags these with a 0.5× confidence
-        multiplier; consider raising your minimum confidence if you want to skip them entirely.
+        actor specifically on one exchange. The system flags these as thinner reads; consider
+        raising your minimum signal-strength gate if you want to skip them entirely.
       </FAQ>
 
       <FAQ q="Why are different coins on the same venue treated differently?">
@@ -205,7 +194,7 @@ export default function Onboarding() {
 
       <FAQ q="How do I know if it's working?">
         Open the Stats tab. It shows the rolling 24-hour (or 7d / 30d) signal counts, regime
-        distribution, cross-venue confirmation rate, average confidence, and (once enough
+        distribution, cross-venue confirmation rate, average read score, and (once enough
         signals resolve) realized hit rate and total P&L.
       </FAQ>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchSignalDetail } from "../api.js";
 import PriceVolumeChart from "./PriceVolumeChart.jsx";
+import { getMarketReadHeadline, getMarketStructureCopy, getReadQualityLabel } from "../marketReadCopy.js";
 
 /**
  * Reusable signal-detail body. Used by:
@@ -10,17 +11,6 @@ import PriceVolumeChart from "./PriceVolumeChart.jsx";
  * Owns its own data fetch from /api/signal/{id}. Renders a loading
  * placeholder, an error state, or the detail content.
  */
-
-const REGIME_HEADLINES = {
-  WHALE_UP:   "Big buyer detected",
-  WHALE_DOWN: "Big seller detected",
-  HERD_UP:    "Buying cascade",
-  HERD_DOWN:  "Selling cascade",
-  WASH_PAIRED:"Wash pattern — skip",
-  EQUILIBRIUM_TWO_SIDED: "Healthy two-sided",
-  DEPLETED:   "Market quiet",
-  UNKNOWN:    "Unclassified",
-};
 
 function fmtPrice(p) {
   if (!p) return "—";
@@ -55,12 +45,16 @@ export default function SignalDetailBody({ id }) {
 
   const sig = data.signal;
   const time = new Date(sig.timestamp_utc * 1000).toLocaleString();
-  const conf = sig.adjusted_confidence ?? sig.confidence ?? 0;
   const cvm = sig.cross_venue_multiplier ?? 1.0;
   const cascade = sig.cascade_event || "";
   const headline = sig.event_label
-    || REGIME_HEADLINES[sig.regime]
-    || sig.regime.replace(/_/g, " ");
+    || getMarketReadHeadline(sig.regime);
+  const structureCopy = getMarketStructureCopy(sig.regime);
+  const readQuality = getReadQualityLabel(sig);
+  const pressureLabel = sig.pressure_watch_state === "internal"
+    ? ""
+    : (sig.pressure_watch_label || "");
+  const pressureReason = (sig.pressure_watch_reasons || [])[0] || "";
 
   const buy = sig.chunk_buy_volume || 0;
   const sell = sig.chunk_sell_volume || 0;
@@ -90,6 +84,12 @@ export default function SignalDetailBody({ id }) {
                 : "drift detected"}
           </div>
         )}
+        {pressureLabel && (
+          <div className="mb-2 rounded border border-amber-700/60 bg-amber-950/30 px-2 py-1.5 text-xs text-amber-100">
+            <div className="font-semibold">{pressureLabel}</div>
+            {pressureReason && <div className="text-amber-100/75">{pressureReason}</div>}
+          </div>
+        )}
 
         <div className="flex items-start justify-between gap-2 mb-2">
           <div>
@@ -98,7 +98,7 @@ export default function SignalDetailBody({ id }) {
           </div>
           <div className="text-right text-xs text-slate-500 font-mono">
             {time}
-            <div className="mt-1">conf {(conf * 100).toFixed(0)}%</div>
+            <div className="mt-1">read {readQuality}</div>
           </div>
         </div>
 
@@ -138,9 +138,16 @@ export default function SignalDetailBody({ id }) {
         )}
 
         <div className="mt-4 p-3 bg-slate-950 rounded text-sm">
-          <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Playbook</div>
-          {sig.playbook}
+          <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Market structure</div>
+          {structureCopy}
         </div>
+
+        {sig.playbook && (
+          <div className="mt-3 p-3 bg-slate-950 rounded text-sm">
+            <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Playbook</div>
+            {sig.playbook}
+          </div>
+        )}
 
         {sig.outcome_status === "resolved" && (
           <div className={`mt-3 text-sm font-mono ${sig.outcome_realized_bps >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
