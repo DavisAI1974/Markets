@@ -124,11 +124,13 @@ def _token(*parts: Any) -> str:
 
 
 def oracle_winner_canonical_trade_key(row: Any) -> str:
+    # trade_stage intentionally omitted: it's derived from age_chunks
+    # (setup-persistence time, not trade-duration time) — by the "date irrelevant"
+    # rule, time-derived fields must not gate match decisions.
     return _token(
         _strategy(row),
         _asset(row),
         _side(row),
-        _lower(_get(row, "trade_stage")) or "none",
         _lower(_get(row, "trade_option_state")) or "none",
         _score_band(row),
         _lower(_get(row, "pressure_watch_state")) or "none",
@@ -148,7 +150,6 @@ def oracle_winner_route_keys(row: Any, side: str = "") -> list[tuple[str, str]]:
     asset = _asset(row)
     venue = _venue(row)
     session = _session(row)
-    stage = _lower(_get(row, "trade_stage")) or "none"
     option_state = _lower(_get(row, "trade_option_state")) or "none"
     pressure_state = _lower(_get(row, "pressure_watch_state")) or "none"
     score = _score_band(row)
@@ -160,14 +161,15 @@ def oracle_winner_route_keys(row: Any, side: str = "") -> list[tuple[str, str]]:
     vol = _band_signed(_get(row, "volume_zscore"), 1.0)
     news = _news_state(row)
     base = [strategy, asset, venue, side_value]
+    # trade_stage omitted from trait/shape too (consistent with canonical key).
     return [
         (
             "trait",
-            _token("trait", *base, session, stage, option_state, score, pressure_state, move, recent2, onset, dipole, acl1, vol, news),
+            _token("trait", *base, session, option_state, score, pressure_state, move, recent2, onset, dipole, acl1, vol, news),
         ),
         (
             "shape",
-            _token("shape", *base, session, stage, score, pressure_state, move, recent2, onset),
+            _token("shape", *base, session, score, pressure_state, move, recent2, onset),
         ),
         ("context", _token("context", *base, session)),
         ("route", _token("route", *base)),
