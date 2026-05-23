@@ -13,7 +13,7 @@
         "liquidity_squeeze",
         "news_breakout"
       ],
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -91,7 +91,7 @@
         "must_record_attempt_json": true,
         "mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -113,7 +113,7 @@
         "liquidity_squeeze",
         "news_breakout"
       ],
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -229,7 +229,7 @@
         "must_record_attempt_json": true,
         "mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -279,7 +279,7 @@
         "must_record_attempt_json": true,
         "mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -339,7 +339,7 @@
         "must_record_attempt_json": true,
         "mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -428,7 +428,7 @@
         "must_record_attempt_json": true,
         "mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -472,7 +472,7 @@
         "must_record_attempt_json": true,
         "mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.812197Z",
+      "updated_at": "2026-05-23T13:14:16.580564Z",
       "source": "live_hindsight_evolve_worker",
       "run_id": "live_hindsight",
       "status": "queued",
@@ -494,7 +494,7 @@
       ]
     }
   ],
-  "updated_at": "2026-05-23T13:09:10.812197Z",
+  "updated_at": "2026-05-23T13:14:16.580564Z",
   "cleanup_log": [
     {
       "at": "2026-05-23T12:09:44.000000Z",

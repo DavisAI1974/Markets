@@ -8165,7 +8165,7 @@
     "hindsight_missed_winner__no_strategy_eth_bybit_sell_remaining18h": {
       "family": "small_move_fade",
       "variant_id": "hindsight_missed_winner__no_strategy_eth_bybit_sell_remaining18h",
-      "updated_at": "2026-05-23T13:05:23.087993Z",
+      "updated_at": "2026-05-23T13:14:14.926410Z",
       "source": "mock_trade_replay_open",
       "run_id": "evolve_live",
       "forced_exploration": true,
@@ -8190,13 +8190,13 @@
       },
       "latest_learning": {
         "what_it_saw": [
-          "Oracle-distilled no-side context: SMALL_MOVE_FADE sell has 54 missed winners and $111.81 incremental oracle PnL"
+          "Oracle-distilled no-side context: SMALL_MOVE_FADE sell has 27 missed winners and $61.76 incremental oracle PnL"
         ],
         "why_it_failed_or_worked": [
           "opened; awaiting close/outcome scoring"
         ],
         "features_to_preserve": [
-          "Oracle-distilled no-side context: SMALL_MOVE_FADE sell has 54 missed winners and $111.81 incremental oracle PnL"
+          "Oracle-distilled no-side context: SMALL_MOVE_FADE sell has 27 missed winners and $61.76 incremental oracle PnL"
         ],
         "features_to_mutate": [],
         "next_family": "",
@@ -8747,5 +8747,5 @@
       }
     }
   },
-  "updated_at": "2026-05-23T13:08:16.633322Z"
+  "updated_at": "2026-05-23T13:14:14.926410Z"
 }

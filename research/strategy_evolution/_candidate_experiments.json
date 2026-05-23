@@ -5654,49 +5654,6 @@
       "run_id": "evolve_live"
     },
     {
-      "experiment_id": "hindsight_missed_winner__no_strategy_eth_bybit_sell_remaining18h__open_attempt",
-      "family": "small_move_fade",
-      "source_family": "small_move_fade",
-      "source_variant_id": "hindsight_missed_winner__no_strategy_eth_bybit_sell_remaining18h",
-      "action": "observe_then_route_by_positive_pnl",
-      "priority": "high",
-      "force_learning_trade": false,
-      "requested_strategy_families": [
-        "SMALL_MOVE_FADE"
-      ],
-      "exact_context": {
-        "asset": "ETH",
-        "venue": "Bybit",
-        "side": "sell",
-        "session": "remaining18h"
-      },
-      "entry_logic": {
-        "side_policy": "follow_pressure",
-        "required_context": [],
-        "risk_tags": [
-          "forced_exploration",
-          "hindsight_missed_winner",
-          "mock_only",
-          "oracle_distilled_context"
-        ],
-        "allowed_to_trade_bad_bucket": false,
-        "source_queue_action": "oracle_distilled_no_side_context"
-      },
-      "mutation_notes": [
-        "Use the oracle-derived side/family as a live-observable mock route; promotion still requires live/shadow PnL."
-      ],
-      "success_criteria": {
-        "min_closed_trades": 1,
-        "profit_R_floor": 0.0,
-        "promote_only_if_pnl_positive": true,
-        "avoid_exact_context_if_pnl_non_positive": true,
-        "must_record_attempt_json": true
-      },
-      "updated_at": "2026-05-23T13:05:23.119010Z",
-      "source": "mock_trade_replay_open",
-      "run_id": "evolve_live"
-    },
-    {
       "experiment_id": "hindsight_missed_winner__no_strategy_btc_kraken_sell_remaining18h__open_attempt",
       "family": "small_move_fade",
       "source_family": "small_move_fade",
@@ -5826,6 +5783,49 @@
       "run_id": "evolve_live"
     },
     {
+      "experiment_id": "hindsight_missed_winner__no_strategy_eth_bybit_sell_remaining18h__open_attempt",
+      "family": "small_move_fade",
+      "source_family": "small_move_fade",
+      "source_variant_id": "hindsight_missed_winner__no_strategy_eth_bybit_sell_remaining18h",
+      "action": "observe_then_route_by_positive_pnl",
+      "priority": "high",
+      "force_learning_trade": false,
+      "requested_strategy_families": [
+        "SMALL_MOVE_FADE"
+      ],
+      "exact_context": {
+        "asset": "ETH",
+        "venue": "Bybit",
+        "side": "sell",
+        "session": "remaining18h"
+      },
+      "entry_logic": {
+        "side_policy": "follow_pressure",
+        "required_context": [],
+        "risk_tags": [
+          "forced_exploration",
+          "hindsight_missed_winner",
+          "mock_only",
+          "oracle_distilled_context"
+        ],
+        "allowed_to_trade_bad_bucket": false,
+        "source_queue_action": "oracle_distilled_no_side_context"
+      },
+      "mutation_notes": [
+        "Use the oracle-derived side/family as a live-observable mock route; promotion still requires live/shadow PnL."
+      ],
+      "success_criteria": {
+        "min_closed_trades": 1,
+        "profit_R_floor": 0.0,
+        "promote_only_if_pnl_positive": true,
+        "avoid_exact_context_if_pnl_non_positive": true,
+        "must_record_attempt_json": true
+      },
+      "updated_at": "2026-05-23T13:14:14.953535Z",
+      "source": "mock_trade_replay_open",
+      "run_id": "evolve_live"
+    },
+    {
       "experiment_id": "hindsight_pattern_gap__buy_fade",
       "family": "BUY_FADE",
       "source_family": "BUY_FADE",
@@ -5857,7 +5857,7 @@
         "must_improve_family_net_pnl_after_fees": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -5890,7 +5890,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -5923,7 +5923,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -5956,7 +5956,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -5989,7 +5989,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6022,7 +6022,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6057,7 +6057,7 @@
         "must_improve_family_net_pnl_after_fees": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6090,7 +6090,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6123,7 +6123,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6156,7 +6156,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6189,7 +6189,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6222,7 +6222,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6617,7 +6617,7 @@
         "must_improve_family_net_pnl_after_fees": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6650,7 +6650,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6683,7 +6683,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6716,7 +6716,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6749,7 +6749,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6782,7 +6782,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6815,7 +6815,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     },
     {
@@ -6848,7 +6848,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit",
       "source_variant_id": "hindsight_missed_winner__no_strategy_btc_kraken_sell_remaining18h",
       "requested_strategy_families": [
@@ -6900,7 +6900,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit",
       "source_variant_id": "hindsight_missed_winner__no_strategy_eth_coinbase_sell_remaining18h",
       "requested_strategy_families": [
@@ -6952,7 +6952,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit",
       "source_variant_id": "hindsight_missed_winner__no_strategy_eth_bybit_sell_remaining18h",
       "requested_strategy_families": [
@@ -7004,7 +7004,7 @@
         "must_improve_closed_actual_weekly_pace": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit",
       "source_variant_id": "hindsight_missed_winner__no_strategy_eth_kraken_sell_remaining18h",
       "requested_strategy_families": [
@@ -7058,11 +7058,11 @@
         "must_improve_family_net_pnl_after_fees": true,
         "must_remain_mock_only_until_promoted": true
       },
-      "updated_at": "2026-05-23T13:09:10.003984Z",
+      "updated_at": "2026-05-23T13:14:16.299872Z",
       "run_id": "live_hindsight_missed_winner_audit"
     }
   ],
-  "updated_at": "2026-05-23T13:09:10.003984Z",
+  "updated_at": "2026-05-23T13:14:16.299872Z",
   "source": "E:\\Markets\\research\\strategy_evolution\\_hindsight_missed_winner_queue.json",
   "run_id": "live_hindsight_missed_winner_audit"
 }
