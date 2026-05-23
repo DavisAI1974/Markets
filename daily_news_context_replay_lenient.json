@@ -1,0 +1,109 @@
+{
+  "generated_at": "2026-05-16T09:46:09.233761+00:00",
+  "max_age_hours": 240.0,
+  "notes": [
+    "Generated from news_events.jsonl by build_daily_news_context.py.",
+    "Routine news adjusts score/risk; high-confidence shocks can start defensive actions or confirmed directional trades.",
+    "Market confirmation remains UNKNOWN until coupling/live market checks update it."
+  ],
+  "global_blockers": [],
+  "assets": {
+    "BTC": {
+      "narrative_bias": "BULLISH",
+      "market_confirmation": "UNKNOWN",
+      "crowding_risk": "UNKNOWN",
+      "volatility_regime": "ELEVATED",
+      "trade_posture": "SECURITY_NEWS_MANUAL_REVIEW",
+      "risk_multiplier": 0.0,
+      "max_leverage": 2,
+      "requires_confirmation": true,
+      "auto_trade_mode": "MANUAL_REVIEW",
+      "allowed_strategies": [
+        "MOMENTUM",
+        "BREAKOUT_PULLBACK",
+        "CONFIRMED_FOLLOW"
+      ],
+      "disabled_strategies": [
+        "HIGH_LEVERAGE_SCALP",
+        "NEWS_ONLY_ENTRY"
+      ],
+      "summary": "23 recent item(s); top categories: UNKNOWN, SECURITY, REGULATORY; latest: Daily crypto TLDR says Bitcoin surged past $80K and Ethereum upgrade deployed | Bitcoin tops US$81,000 as Ethereum edges higher, but volatility lingers",
+      "blockers": [
+        "Security/exploit narrative is elevated; require manual review"
+      ],
+      "starter_actions": [
+        "PAUSE_NEW_ENTRIES",
+        "EXIT_SHORTS",
+        "ALLOW_HEDGE_LONG",
+        "START_LONG"
+      ],
+      "starter_reason": "Elevated security/exploit narrative can start exits, hedges, or fresh directional trades under shock-news risk rules.",
+      "starter_urgency": "HIGH",
+      "starter_valid_until": "2026-05-16T12:46:09.233761+00:00",
+      "starter_category": "MARKET_STRUCTURE",
+      "starter_horizon_min": 15,
+      "policy": {
+        "category": "MARKET_STRUCTURE",
+        "directional_bias": "BULLISH",
+        "horizon_min": 15,
+        "enabled": false,
+        "n": 4,
+        "min_samples": 3,
+        "signed_avg_bps": 1.395,
+        "placebo_signed_avg_bps": -0.718,
+        "signed_bps_edge_vs_placebo": 2.113,
+        "hit_rate": 50.0,
+        "volume_ratio_median": 16.818,
+        "risk_multiplier": 0.5,
+        "requires_confirmation": true,
+        "shock": {
+          "is_shock": false,
+          "valid_minutes": 0,
+          "starter_actions": []
+        }
+      },
+      "source_count": 23,
+      "bullish_pressure": 1.825,
+      "bearish_pressure": 0.934,
+      "news_dipole": 0.891
+    },
+    "ETH": {
+      "narrative_bias": "MIXED",
+      "market_confirmation": "UNKNOWN",
+      "crowding_risk": "UNKNOWN",
+      "volatility_regime": "ELEVATED",
+      "trade_posture": "SECURITY_NEWS_MANUAL_REVIEW",
+      "risk_multiplier": 0.0,
+      "max_leverage": 2,
+      "requires_confirmation": true,
+      "auto_trade_mode": "MANUAL_REVIEW",
+      "allowed_strategies": [
+        "MOMENTUM",
+        "BREAKOUT_PULLBACK",
+        "CONFIRMED_FOLLOW"
+      ],
+      "disabled_strategies": [
+        "HIGH_LEVERAGE_SCALP",
+        "NEWS_ONLY_ENTRY"
+      ],
+      "summary": "11 recent item(s); top categories: SECURITY, UNKNOWN, SOCIAL; latest: Daily crypto TLDR says Bitcoin surged past $80K and Ethereum upgrade deployed | Bitcoin tops US$81,000 as Ethereum edges higher, but volatility lingers",
+      "blockers": [
+        "Security/exploit narrative is elevated; require manual review"
+      ],
+      "starter_actions": [
+        "PAUSE_NEW_ENTRIES",
+        "REDUCE_GROSS_EXPOSURE"
+      ],
+      "starter_reason": "Elevated security/exploit narrative can start exits, hedges, or fresh directional trades under shock-news risk rules.",
+      "starter_urgency": "HIGH",
+      "starter_valid_until": "2026-05-16T12:46:09.233761+00:00",
+      "starter_category": "",
+      "starter_horizon_min": null,
+      "policy": {},
+      "source_count": 11,
+      "bullish_pressure": 0.85,
+      "bearish_pressure": 1.259,
+      "news_dipole": -0.409
+    }
+  }
+}

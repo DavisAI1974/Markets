@@ -1,0 +1,58 @@
+{
+  "enabled": true,
+  "backend_controller_enabled": false,
+  "initial_bank_usd": 1000.0,
+  "tier_high_bank_threshold_usd": 20000.0,
+  "tier_high_exposure_cap_usd": 1000000.0,
+  "tier_mid_bank_threshold_usd": 10000.0,
+  "tier_mid_exposure_pct": 1.0,
+  "tier_low_bank_threshold_usd": 5000.0,
+  "tier_low_exposure_cap_usd": 1000000.0,
+  "mock_fee_bps": 5.0,
+  "min_trade_notional_usd": 1.0,
+  "exit_params_path": "research/strategy_evolution/exit_params_h0_h168_v2_promoted_min5.json",
+  "scenarios": [
+    {
+      "id": "route_evidence",
+      "base_scenario_id": "route_evidence",
+      "label": "Route Evidence",
+      "enabled": true,
+      "min_present_score": 0,
+      "max_present_score": 100,
+      "notional_pct_bank": 1.0,
+      "cooldown_minutes": 0,
+      "stop_loss_bps": 10.0,
+      "take_profit_bps": 18.0,
+      "exit_score_drop": 12,
+      "allowed_stages": [
+        "onset",
+        "early_follow",
+        "mature"
+      ],
+      "allowed_trade_states": [
+        "watch",
+        "early_probe",
+        "confirmed"
+      ],
+      "allowed_pressure_states": [
+        "internal",
+        "forming",
+        "high_priority",
+        "confirmed",
+        "transition_risk"
+      ],
+      "hold_minutes": 10,
+      "rotation_enabled": false,
+      "enforce_bucket_health": false,
+      "enforce_daily_limits": false,
+      "rotation_min_score_advantage": 0,
+      "rotation_min_underperform_bps": 0.0,
+      "rotation_require_degrading": false,
+      "ignore_daily_news_blockers": true,
+      "fixed_mock_notional_usd": 1000.0,
+      "defer_unprofitable_pressure_exits": true,
+      "allow_context_probes": false,
+      "allow_promoted_context_rerun": false
+    }
+  ]
+}

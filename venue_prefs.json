@@ -1,0 +1,58 @@
+{
+  "default": {
+    "binance": 1.0,
+    "bybit": 1.0,
+    "coinbase": 0.7,
+    "kraken": 0.9
+  },
+  "families": {
+    "mean_reversion_chop": {
+      "binance": 0.8,
+      "bybit": 0.8,
+      "coinbase": 1.0,
+      "kraken": 1.0
+    },
+    "news_confirmed_directional": {
+      "binance": 1.0,
+      "bybit": 1.0,
+      "coinbase": 0.8,
+      "kraken": 0.9
+    },
+    "news_breakout": {
+      "binance": 1.0,
+      "bybit": 1.0,
+      "coinbase": 0.8,
+      "kraken": 0.9
+    },
+    "liquidity_squeeze": {
+      "binance": 1.0,
+      "bybit": 1.0,
+      "coinbase": 0.6,
+      "kraken": 0.8
+    },
+    "vol_breakout": {
+      "binance": 1.0,
+      "bybit": 1.0,
+      "coinbase": 0.7,
+      "kraken": 0.8
+    },
+    "basis_dislocation": {
+      "binance": 1.0,
+      "bybit": 1.0,
+      "coinbase": 0.5,
+      "kraken": 0.7
+    },
+    "relative_strength": {
+      "binance": 1.0,
+      "bybit": 0.9,
+      "coinbase": 0.7,
+      "kraken": 0.7
+    },
+    "session_structure": {
+      "binance": 1.0,
+      "bybit": 0.9,
+      "coinbase": 0.6,
+      "kraken": 0.7
+    }
+  }
+}

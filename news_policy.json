@@ -1,0 +1,309 @@
+{
+  "generated_at": "2026-05-16T09:46:55.516214+00:00",
+  "source": "news_coupling_research",
+  "version": 1,
+  "description": "Derived mapping from news coupling research to live news-risk rules. Low-sample entries remain visible but disabled.",
+  "globals": {
+    "min_samples_for_policy": 50,
+    "min_signed_bps_edge_vs_placebo": 3.0,
+    "min_hit_rate": 55.0,
+    "max_crowding_volume_ratio": 5.0,
+    "shock_valid_minutes_default": 180
+  },
+  "categories": {
+    "SECURITY": {
+      "BEARISH": {
+        "240": {
+          "enabled": false,
+          "n": 7,
+          "min_samples": 50,
+          "signed_avg_bps": 48.045,
+          "placebo_signed_avg_bps": 0.492,
+          "signed_bps_edge_vs_placebo": 47.553,
+          "hit_rate": 42.86,
+          "volume_ratio_median": 5.747,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "60": {
+          "enabled": false,
+          "n": 7,
+          "min_samples": 50,
+          "signed_avg_bps": 12.818,
+          "placebo_signed_avg_bps": -1.067,
+          "signed_bps_edge_vs_placebo": 13.885,
+          "hit_rate": 100.0,
+          "volume_ratio_median": 1.628,
+          "risk_multiplier": 0.25,
+          "requires_confirmation": false,
+          "shock": {
+            "is_shock": true,
+            "valid_minutes": 180,
+            "starter_actions": [
+              "PAUSE_NEW_ENTRIES",
+              "EXIT_LONGS",
+              "ALLOW_HEDGE_SHORT",
+              "START_SHORT_IF_CONFIRMED"
+            ]
+          }
+        },
+        "5": {
+          "enabled": false,
+          "n": 7,
+          "min_samples": 50,
+          "signed_avg_bps": 1.153,
+          "placebo_signed_avg_bps": -0.634,
+          "signed_bps_edge_vs_placebo": 1.787,
+          "hit_rate": 42.86,
+          "volume_ratio_median": 0.107,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "15": {
+          "enabled": false,
+          "n": 7,
+          "min_samples": 50,
+          "signed_avg_bps": -3.978,
+          "placebo_signed_avg_bps": -1.454,
+          "signed_bps_edge_vs_placebo": -2.524,
+          "hit_rate": 42.86,
+          "volume_ratio_median": 0.34,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        }
+      }
+    },
+    "MARKET_STRUCTURE": {
+      "BULLISH": {
+        "15": {
+          "enabled": false,
+          "n": 4,
+          "min_samples": 50,
+          "signed_avg_bps": 1.395,
+          "placebo_signed_avg_bps": -1.454,
+          "signed_bps_edge_vs_placebo": 2.849,
+          "hit_rate": 50.0,
+          "volume_ratio_median": 16.818,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "5": {
+          "enabled": false,
+          "n": 4,
+          "min_samples": 50,
+          "signed_avg_bps": -9.241,
+          "placebo_signed_avg_bps": -0.634,
+          "signed_bps_edge_vs_placebo": -8.607,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 5.537,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "60": {
+          "enabled": false,
+          "n": 4,
+          "min_samples": 50,
+          "signed_avg_bps": -32.787,
+          "placebo_signed_avg_bps": -1.067,
+          "signed_bps_edge_vs_placebo": -31.72,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 61.382,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "240": {
+          "enabled": false,
+          "n": 4,
+          "min_samples": 50,
+          "signed_avg_bps": -39.161,
+          "placebo_signed_avg_bps": 0.492,
+          "signed_bps_edge_vs_placebo": -39.653,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 189.349,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        }
+      }
+    },
+    "PROTOCOL": {
+      "BULLISH": {
+        "5": {
+          "enabled": false,
+          "n": 3,
+          "min_samples": 50,
+          "signed_avg_bps": -4.406,
+          "placebo_signed_avg_bps": -0.634,
+          "signed_bps_edge_vs_placebo": -3.772,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 0.092,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "15": {
+          "enabled": false,
+          "n": 3,
+          "min_samples": 50,
+          "signed_avg_bps": -79.744,
+          "placebo_signed_avg_bps": -1.454,
+          "signed_bps_edge_vs_placebo": -78.29,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 0.545,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "60": {
+          "enabled": false,
+          "n": 3,
+          "min_samples": 50,
+          "signed_avg_bps": -94.505,
+          "placebo_signed_avg_bps": -1.067,
+          "signed_bps_edge_vs_placebo": -93.438,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 1.483,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "240": {
+          "enabled": false,
+          "n": 3,
+          "min_samples": 50,
+          "signed_avg_bps": -183.542,
+          "placebo_signed_avg_bps": 0.492,
+          "signed_bps_edge_vs_placebo": -184.034,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 3.339,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        }
+      }
+    },
+    "SOCIAL": {
+      "BULLISH": {
+        "5": {
+          "enabled": false,
+          "n": 2,
+          "min_samples": 50,
+          "signed_avg_bps": -15.723,
+          "placebo_signed_avg_bps": -0.634,
+          "signed_bps_edge_vs_placebo": -15.089,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 0.158,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "15": {
+          "enabled": false,
+          "n": 2,
+          "min_samples": 50,
+          "signed_avg_bps": -28.322,
+          "placebo_signed_avg_bps": -1.454,
+          "signed_bps_edge_vs_placebo": -26.868,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 0.337,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "60": {
+          "enabled": false,
+          "n": 2,
+          "min_samples": 50,
+          "signed_avg_bps": -54.431,
+          "placebo_signed_avg_bps": -1.067,
+          "signed_bps_edge_vs_placebo": -53.364,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 0.839,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        },
+        "240": {
+          "enabled": false,
+          "n": 2,
+          "min_samples": 50,
+          "signed_avg_bps": -227.708,
+          "placebo_signed_avg_bps": 0.492,
+          "signed_bps_edge_vs_placebo": -228.2,
+          "hit_rate": 0.0,
+          "volume_ratio_median": 5.26,
+          "risk_multiplier": 0.5,
+          "requires_confirmation": true,
+          "shock": {
+            "is_shock": false,
+            "valid_minutes": 0,
+            "starter_actions": []
+          }
+        }
+      }
+    }
+  },
+  "assets_overrides": {}
+}

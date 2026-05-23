@@ -1,0 +1,32 @@
+{
+  "default": {
+    "max_loss_R": -3.0
+  },
+  "families": {
+    "mean_reversion_chop": {
+      "max_loss_R": -2.0
+    },
+    "news_confirmed_directional": {
+      "max_loss_R": -2.0
+    },
+    "news_breakout": {
+      "max_loss_R": -3.0
+    },
+    "liquidity_squeeze": {
+      "max_loss_R": -2.5
+    },
+    "vol_breakout": {
+      "max_loss_R": -3.0
+    },
+    "basis_dislocation": {
+      "max_loss_R": -2.0
+    },
+    "relative_strength": {
+      "max_loss_R": -2.5
+    },
+    "session_structure": {
+      "max_loss_R": -2.0
+    }
+  },
+  "buckets": {}
+}

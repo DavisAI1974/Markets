@@ -1,0 +1,90 @@
+{
+  "generated_at": "2026-05-16T09:46:55.873169+00:00",
+  "max_age_hours": 36.0,
+  "notes": [
+    "Generated from news_events.jsonl by build_daily_news_context.py.",
+    "Routine news adjusts score/risk; high-confidence shocks can start defensive actions or confirmed directional trades.",
+    "Market confirmation remains UNKNOWN until coupling/live market checks update it."
+  ],
+  "global_blockers": [],
+  "assets": {
+    "BTC": {
+      "narrative_bias": "BULLISH",
+      "market_confirmation": "UNKNOWN",
+      "crowding_risk": "UNKNOWN",
+      "volatility_regime": "ELEVATED",
+      "trade_posture": "SECURITY_NEWS_MANUAL_REVIEW",
+      "risk_multiplier": 0.0,
+      "max_leverage": 2,
+      "requires_confirmation": true,
+      "auto_trade_mode": "MANUAL_REVIEW",
+      "allowed_strategies": [
+        "MOMENTUM",
+        "BREAKOUT_PULLBACK",
+        "CONFIRMED_FOLLOW"
+      ],
+      "disabled_strategies": [
+        "HIGH_LEVERAGE_SCALP",
+        "NEWS_ONLY_ENTRY"
+      ],
+      "summary": "21 recent item(s); top categories: UNKNOWN, REGULATORY, SECURITY; latest: Strive rallies 5.8% as it clears debt in Q1, unveils daily dividends | Strategy\u2019s STRC hits record $1.5B trading volume",
+      "blockers": [
+        "Security/exploit narrative is elevated; require manual review"
+      ],
+      "starter_actions": [
+        "PAUSE_NEW_ENTRIES",
+        "EXIT_SHORTS",
+        "ALLOW_HEDGE_LONG",
+        "START_LONG"
+      ],
+      "starter_reason": "Elevated security/exploit narrative can start exits, hedges, or fresh directional trades under shock-news risk rules.",
+      "starter_urgency": "HIGH",
+      "starter_valid_until": "2026-05-16T12:46:55.873169+00:00",
+      "starter_category": "",
+      "starter_horizon_min": null,
+      "policy": {},
+      "source_count": 21,
+      "bullish_pressure": 1.84,
+      "bearish_pressure": 0.78,
+      "news_dipole": 1.06
+    },
+    "ETH": {
+      "narrative_bias": "MIXED",
+      "market_confirmation": "UNKNOWN",
+      "crowding_risk": "UNKNOWN",
+      "volatility_regime": "ELEVATED",
+      "trade_posture": "SECURITY_NEWS_MANUAL_REVIEW",
+      "risk_multiplier": 0.0,
+      "max_leverage": 2,
+      "requires_confirmation": true,
+      "auto_trade_mode": "MANUAL_REVIEW",
+      "allowed_strategies": [
+        "MOMENTUM",
+        "BREAKOUT_PULLBACK",
+        "CONFIRMED_FOLLOW"
+      ],
+      "disabled_strategies": [
+        "HIGH_LEVERAGE_SCALP",
+        "NEWS_ONLY_ENTRY"
+      ],
+      "summary": "7 recent item(s); top categories: UNKNOWN, SECURITY, REGULATORY; latest: Thorchain halts trading after $10 million cross-chain exploit, RUNE token drops 12% | THORChain pauses trading after suspected $10M exploit",
+      "blockers": [
+        "Security/exploit narrative is elevated; require manual review"
+      ],
+      "starter_actions": [
+        "PAUSE_NEW_ENTRIES",
+        "REDUCE_GROSS_EXPOSURE"
+      ],
+      "starter_reason": "Elevated security/exploit narrative can start exits, hedges, or fresh directional trades under shock-news risk rules.",
+      "starter_urgency": "HIGH",
+      "starter_valid_until": "2026-05-16T12:46:55.873169+00:00",
+      "starter_category": "",
+      "starter_horizon_min": null,
+      "policy": {},
+      "source_count": 7,
+      "bullish_pressure": 0.52,
+      "bearish_pressure": 0.78,
+      "news_dipole": -0.26
+    }
+  }
+}

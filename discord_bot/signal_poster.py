@@ -3,7 +3,7 @@ signal_poster.py — Discord bot for the markets-watch closed signal feed.
 
 Subscribes to the backend's SSE stream at /api/stream and posts each signal
 event to a configured Discord channel. Plain-language headlines (no math
-jargon), confidence-tiered colors, multi-embed cascade posts, and an
+jargon), read-quality colors, multi-embed cascade posts, and an
 optional matplotlib-rendered price/volume chart attachment.
 
 Setup:
@@ -13,7 +13,8 @@ Setup:
      Read Message History, Use Slash Commands, Attach Files
   4. Set DISCORD_CHANNEL_ID env var to the channel where signals should post
   5. Set MARKETS_WATCH_API env var to your backend URL (default localhost:8000)
-  6. (Optional) set SIGNAL_POSTER_ATTACH_CHART=0 to skip chart attachments
+  6. Set MARKETS_WATCH_APP_URL env var to the mobile app URL for deep links
+  7. (Optional) set SIGNAL_POSTER_ATTACH_CHART=0 to skip chart attachments
 
 Run: python signal_poster.py
 """
@@ -35,29 +36,48 @@ from discord.ext import tasks
 BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
 CHANNEL_ID = int(os.environ.get("DISCORD_CHANNEL_ID", "0"))
 API_BASE = os.environ.get("MARKETS_WATCH_API", "http://localhost:8000")
+APP_BASE_URL = os.environ.get("MARKETS_WATCH_APP_URL", "").rstrip("/")
 ATTACH_CHART = os.environ.get("SIGNAL_POSTER_ATTACH_CHART", "1") not in ("0", "false", "no")
 BOT_DISPLAY_NAME = os.environ.get("SIGNAL_POSTER_NAME", "markets-watch")
 BOT_AVATAR_URL = os.environ.get("SIGNAL_POSTER_AVATAR_URL", "")
 
 
-# Regime → (base color int, label, emoji). Color is the "max confidence"
-# anchor; we shade lighter for low-conviction signals so a glance at the
-# stripe tells you both regime AND strength.
+# Regime → (base color int, label, emoji). Color is the clean-read anchor;
+# lower signal strength is shaded lighter so the stripe still hints at quality.
 REGIME_STYLES = {
-    "WHALE_UP":             (0x16a34a, "Big buyer detected",  "🐋"),
-    "WHALE_DOWN":           (0xdc2626, "Big seller detected", "🐋"),
-    "HERD_UP":              (0xf97316, "Buying cascade",       "🌊"),
-    "HERD_DOWN":            (0xb91c1c, "Selling cascade",      "🌊"),
-    "EQUILIBRIUM_TWO_SIDED":(0x3b82f6, "Healthy two-sided",   "⚖️"),
-    "WASH_PAIRED":          (0xeab308, "Wash pattern — skip",  "⚠️"),
-    "WASH_HAWKES":          (0xeab308, "Hawkes wash — skip",   "⚠️"),
-    "DEPLETED":             (0x9ca3af, "Market quiet",         "💤"),
-    "UNKNOWN":              (0x6b7280, "Unclassified",         "❓"),
+    "WHALE_UP":             (0x16a34a, "Whale buyer detected", "🐋"),
+    "WHALE_DOWN":           (0xdc2626, "Whale seller detected", "🐋"),
+    "WHALE_NASCENT_UP":     (0x10b981, "Buy pressure forming", "🐋"),
+    "WHALE_NASCENT_DOWN":   (0xf43f5e, "Sell pressure forming", "🐋"),
+    "HERD_UP":              (0xf97316, "Herd buying",          "🌊"),
+    "HERD_DOWN":            (0xb91c1c, "Herd selling",         "🌊"),
+    "EQUILIBRIUM_TWO_SIDED":(0x3b82f6, "Equilibrium",          "⚖️"),
+    "WASH_PAIRED":          (0xeab308, "Suspect flow - skip",  "⚠️"),
+    "WASH_HAWKES":          (0xeab308, "Suspect flow - skip",  "⚠️"),
+    "DEPLETED":             (0x9ca3af, "Quiet market",         "💤"),
+    "UNKNOWN":              (0x6b7280, "Watching",             "❓"),
     # Composite regimes from cross-venue cascade detection
     "CROSS_VENUE_WHALE_HERD_UP":   (0x10b981, "Cross-venue cascade ↑", "🌊"),
     "CROSS_VENUE_HERD_WHALE_UP":   (0x10b981, "Cross-venue cascade ↑", "🌊"),
     "CROSS_VENUE_WHALE_HERD_DOWN": (0xb91c1c, "Cross-venue cascade ↓", "🌊"),
     "CROSS_VENUE_HERD_WHALE_DOWN": (0xb91c1c, "Cross-venue cascade ↓", "🌊"),
+}
+
+MARKET_STRUCTURE_COPY = {
+    "WHALE_UP": "Concentrated buyer: a big player is lifting offers. Piggyback early, but watch for exhaustion.",
+    "WHALE_DOWN": "Concentrated seller: a big player is hitting bids. Pressure can end fast when inventory is done.",
+    "WHALE_NASCENT_UP": "Early buyer pressure: forming, not confirmed. Wait for more volume or venue confirmation before sizing up.",
+    "WHALE_NASCENT_DOWN": "Early seller pressure: forming, not confirmed. Wait for persistence before leaning into it.",
+    "HERD_UP": "Broad crowd buying: many participants are moving together. Momentum can run, but overshoots can snap back.",
+    "HERD_DOWN": "Broad crowd selling: many participants are rushing the same way. Avoid catching it until the cascade slows.",
+    "EQUILIBRIUM_TWO_SIDED": "Two-sided flow: buyers and sellers are pushing back. No clear directional edge yet.",
+    "WASH_PAIRED": "Artificial-looking flow: price discovery is suspect. Skip it until cleaner participation returns.",
+    "WASH_HAWKES": "Artificial-looking flow: price discovery is suspect. Skip it until cleaner participation returns.",
+    "DEPLETED": "Quiet market: not enough flow to trust the read. Wait for activity to return.",
+    "CROSS_VENUE_WHALE_HERD_UP": "Big-player buying is spilling into crowd buying across venues. Momentum can accelerate.",
+    "CROSS_VENUE_HERD_WHALE_UP": "Crowd buying and big-player buying are aligned across venues. Stronger than a single-venue read.",
+    "CROSS_VENUE_WHALE_HERD_DOWN": "Big-player selling is spilling into crowd selling across venues. Watch for cascade, then exhaustion.",
+    "CROSS_VENUE_HERD_WHALE_DOWN": "Crowd selling and big-player selling are aligned across venues. Avoid fighting it until pressure slows.",
 }
 
 
@@ -113,13 +133,67 @@ def _shade(color: int, factor: float) -> int:
 
 
 def _confidence_color(base_color: int, conf: float) -> int:
-    """Confidence 0–1 → shaded version of base color. <0.5 = washed out,
+    """Signal strength 0–1 → shaded version of base color. <0.5 = washed out,
     >=0.7 = full saturation."""
     if conf >= 0.7:
         return base_color
     if conf >= 0.5:
         return _shade(base_color, 0.75)
     return _shade(base_color, 0.5)
+
+
+def _read_quality_label(sig: dict) -> str:
+    regime = sig.get("regime") or "UNKNOWN"
+    if regime == "EQUILIBRIUM_TWO_SIDED":
+        return "Two-sided"
+    if regime == "WHALE_UP":
+        return "Clean buyer"
+    if regime == "WHALE_DOWN":
+        return "Clean seller"
+    if regime in ("WHALE_NASCENT_UP", "WHALE_NASCENT_DOWN"):
+        return "Forming"
+    if regime in ("HERD_UP", "HERD_DOWN"):
+        return "Crowd"
+    if regime.startswith("CROSS_VENUE_"):
+        return "Confirmed"
+    if regime.startswith("WASH"):
+        return "Noisy"
+    if regime == "DEPLETED":
+        return "Thin"
+
+    adjusted = sig.get("adjusted_confidence", sig.get("confidence", 0.0)) or 0.0
+    if adjusted >= 0.7:
+        return "Strong"
+    if adjusted >= 0.45:
+        return "Mixed"
+    return "Incomplete"
+
+
+def _app_url(path: str) -> str:
+    if not APP_BASE_URL:
+        return ""
+    if not path.startswith("/"):
+        path = "/" + path
+    return f"{APP_BASE_URL}{path}"
+
+
+def _signal_url(sig: dict) -> str:
+    signal_id = sig.get("signal_id")
+    if signal_id:
+        return _app_url(f"/signal/{signal_id}")
+    return _tape_url(sig)
+
+
+def _tape_url(sig: dict) -> str:
+    asset = sig.get("asset", "")
+    venue = sig.get("venue", "")
+    if not asset or not venue:
+        return _app_url("/")
+    return _app_url(f"/tape/{asset}/{venue}")
+
+
+def _market_structure(regime: str) -> str:
+    return MARKET_STRUCTURE_COPY.get(regime, "Watching: the tape has not formed a clean market read yet.")
 
 
 # ---------------------------------------------------------------------------
@@ -229,9 +303,18 @@ def make_main_embed(sig: dict) -> discord.Embed:
         drift_marker = " ⚠ recently-flipped"
     elif drift == "decaying":
         drift_marker = " ⚠ edge-decaying"
+    structure = _market_structure(sig.get("regime", "UNKNOWN"))
+    playbook = sig.get("playbook") or ""
+    desc_parts = [f"**Market structure:** {structure}"]
+    if playbook:
+        desc_parts.append(f"**Playbook:** {playbook}")
+    signal_url = _signal_url(sig)
+    if signal_url:
+        desc_parts.append(f"[Open signal detail]({signal_url})")
+
     e = discord.Embed(
-        title=f"{title_prefix}{emoji} {headline}{drift_marker} — {sig['asset']}-USD on {sig['venue']}",
-        description=sig.get("playbook", "(no playbook)"),
+        title=f"{title_prefix}{emoji} {headline}{drift_marker} - {sig['asset']}-USD on {sig['venue']}",
+        description="\n\n".join(desc_parts),
         color=color,
         timestamp=datetime.fromtimestamp(sig["timestamp_utc"], tz=timezone.utc),
     )
@@ -250,8 +333,8 @@ def make_main_embed(sig: dict) -> discord.Embed:
               if (bid or ask) else "—",
         inline=True,
     )
-    cv_text = "✓ confirmed" if cvm > 1.0 else "✗ single-venue" if cvm < 1.0 else "—"
-    e.add_field(name="Confidence", value=f"{conf * 100:.0f}% ({cv_text})", inline=True)
+    cv_text = "confirmed" if cvm > 1.0 else "single venue" if cvm < 1.0 else "watching"
+    e.add_field(name="Read", value=f"{_read_quality_label(sig)} ({cv_text})", inline=True)
 
     # Aggressor split
     buy_v = sig.get("chunk_buy_volume", 0.0)
@@ -260,8 +343,10 @@ def make_main_embed(sig: dict) -> discord.Embed:
     n_tr = sig.get("chunk_n_trades", 0)
     if total_v > 0:
         buy_pct = buy_v / total_v * 100
+        leader = "buy" if buy_pct >= 50 else "sell"
+        leader_pct = max(buy_pct, 100 - buy_pct)
         e.add_field(
-            name="Buy / Sell volume",
+            name=f"Flow: {leader_pct:.0f}% {leader}",
             value=(f"**{buy_pct:.0f}% buy / {100 - buy_pct:.0f}% sell**\n"
                    f"buy {_fmt_qty(buy_v)}  ·  sell {_fmt_qty(sell_v)}\n"
                    f"total {_fmt_qty(total_v)} {sig['asset']}"
@@ -270,6 +355,10 @@ def make_main_embed(sig: dict) -> discord.Embed:
         )
     elif n_tr:
         e.add_field(name="Trades", value=f"{n_tr}", inline=False)
+
+    tape_url = _tape_url(sig)
+    if tape_url:
+        e.add_field(name="Open tape", value=f"[{sig['asset']}-USD on {sig['venue']}]({tape_url})", inline=False)
 
     e.set_footer(text=f"signal_id={sig.get('signal_id', '?')} · research, not advice · closed group")
     return e
@@ -292,23 +381,23 @@ def make_cascade_secondary_embed(sig: dict) -> discord.Embed | None:
     )
     if cascade_event.startswith("CROSS_VENUE_WHALE_HERD"):
         e.add_field(
-            name="Why this is high conviction",
+            name="Why this read is cleaner",
             value=("Two independent venues are showing complementary "
                    "signal types in the same direction over the same "
                    "wall-clock window. Whale + herd alignment across "
-                   "venues is the strongest signal we emit."),
+                   "venues is the cleanest signal we emit."),
             inline=False,
         )
     elif cascade_event.startswith("WHALE_TO_HERD"):
         e.add_field(
-            name="Why this is high conviction",
+            name="Why this read is cleaner",
             value=("A big actor's flow tripped a multi-actor cascade in "
                    "the same direction with no quiet between them. Two "
                    "structurally distinct signals align — typical "
                    "whale-trips-the-herd pattern."),
             inline=False,
         )
-    e.set_footer(text="confidence boosted ×1.3 over base regime")
+    e.set_footer(text="read quality improves with cross-venue confirmation")
     return e
 
 
@@ -356,6 +445,7 @@ _DRIFT_TYPE_TITLES = {
     "edge_strengthen": "↑ Edge strengthening",
     "sample_milestone": "✓ Sample milestone",
     "outcome_contradiction_streak": "⚠ Outcome contradiction streak",
+    "pressure_watch_high_priority": "⚠ Pressure forming",
 }
 
 
@@ -393,6 +483,12 @@ async def post_drift_alert(channel: discord.abc.Messageable, alert: dict):
         e.add_field(name="Streak", value=str(alert.get("streak", "?")), inline=True)
         e.add_field(name="Cell predicted",
                     value=alert.get("expected_direction", "?"), inline=True)
+    elif a_type == "pressure_watch_high_priority":
+        e.add_field(name="Direction", value=alert.get("direction", "?"), inline=True)
+        e.add_field(name="Venues", value=", ".join(alert.get("venues") or []) or "—", inline=True)
+        reasons = alert.get("reasons") or []
+        if reasons:
+            e.add_field(name="Why", value="\n".join(f"- {r}" for r in reasons[:4]), inline=False)
     e.set_footer(text=f"alert_id={alert.get('id', '?')} · review the registry on next rebuild")
     try:
         await channel.send(embed=e)
@@ -405,11 +501,33 @@ async def post_drift_alert(channel: discord.abc.Messageable, alert: dict):
 # ---------------------------------------------------------------------------
 
 
+async def resolve_signal_channel():
+    channel = client.get_channel(CHANNEL_ID)
+    if channel is not None:
+        return channel
+
+    try:
+        return await client.fetch_channel(CHANNEL_ID)
+    except discord.Forbidden:
+        print(
+            f"[discord-bot] cannot access channel id {CHANNEL_ID}; "
+            "invite the bot to the server and grant View Channel + Send Messages",
+            flush=True,
+        )
+    except discord.NotFound:
+        print(
+            f"[discord-bot] channel id {CHANNEL_ID} does not exist or the bot is not in that server",
+            flush=True,
+        )
+    except Exception as ex:
+        print(f"[discord-bot] channel lookup error for {CHANNEL_ID}: {ex}", flush=True)
+    return None
+
+
 @tasks.loop(reconnect=True)
 async def stream_listener():
-    channel = client.get_channel(CHANNEL_ID)
+    channel = await resolve_signal_channel()
     if channel is None:
-        print(f"[discord-bot] channel id {CHANNEL_ID} not found yet")
         await asyncio.sleep(5)
         return
 
@@ -456,7 +574,7 @@ async def before():
 # ---------------------------------------------------------------------------
 
 
-@tree.command(name="status", description="Current regime per asset/venue")
+@tree.command(name="status", description="Current Whale, Herd, and Equilibrium reads by asset and venue")
 async def cmd_status(interaction: discord.Interaction):
     await interaction.response.defer(thinking=True)
     async with aiohttp.ClientSession() as s:
@@ -464,22 +582,25 @@ async def cmd_status(interaction: discord.Interaction):
             data = await r.json()
     statuses = data.get("statuses", [])
     if not statuses:
-        await interaction.followup.send("No regime data yet.")
+        await interaction.followup.send("No market reads yet.")
         return
     lines = []
     for st in statuses:
         emoji = REGIME_STYLES.get(st["regime"], REGIME_STYLES["UNKNOWN"])[2]
         label = REGIME_STYLES.get(st["regime"], REGIME_STYLES["UNKNOWN"])[1]
         price = _fmt_price(st.get("current_price", 0))
-        conf = st.get("adjusted_confidence", st.get("confidence", 0)) * 100
+        cvm = st.get("cross_venue_multiplier", 1.0)
+        venue_note = "confirmed" if cvm > 1.0 else "single" if cvm < 1.0 else "watch"
+        pressure = "" if st.get("pressure_watch_state") == "internal" else (st.get("pressure_watch_label") or "")
+        pressure_note = f"  | {pressure}" if pressure else ""
         lines.append(
             f"{emoji} `{st['asset']}-USD on {st['venue']:<8}` {label:<22}  "
-            f"{price}  conf {conf:.0f}%"
+            f"{price}  read {_read_quality_label(st):<12}  {venue_note}{pressure_note}"
         )
     await interaction.followup.send("```\n" + "\n".join(lines) + "\n```")
 
 
-@tree.command(name="stats", description="Recent signal counts and top regimes")
+@tree.command(name="stats", description="Recent signal counts by market read and asset")
 async def cmd_stats(interaction: discord.Interaction, limit: int = 50):
     await interaction.response.defer(thinking=True)
     async with aiohttp.ClientSession() as s:
@@ -490,17 +611,26 @@ async def cmd_stats(interaction: discord.Interaction, limit: int = 50):
         await interaction.followup.send("No signals yet.")
         return
     from collections import Counter
-    by_regime = Counter(s["regime"] for s in sigs)
+    by_read = Counter(REGIME_STYLES.get(s["regime"], REGIME_STYLES["UNKNOWN"])[1] for s in sigs)
     by_asset = Counter(s["asset"] for s in sigs)
     n_cascade = sum(1 for s in sigs if s.get("cascade_event"))
     lines = [
-        f"Last {len(sigs)} signals · {n_cascade} cascade",
-        "By regime:",
-        *[f"  {r}: {n}" for r, n in by_regime.most_common()],
+        f"Last {len(sigs)} signals · {n_cascade} cross-venue cascade",
+        "By market read:",
+        *[f"  {r}: {n}" for r, n in by_read.most_common()],
         "By asset:",
         *[f"  {a}: {n}" for a, n in by_asset.most_common()],
     ]
     await interaction.followup.send("```\n" + "\n".join(lines) + "\n```")
+
+
+@tree.command(name="tape", description="Open the mobile tape view for an asset and venue")
+async def cmd_tape(interaction: discord.Interaction, asset: str = "BTC", venue: str = "bybit"):
+    url = _app_url(f"/tape/{asset.upper()}/{venue.lower()}")
+    if not url:
+        await interaction.response.send_message("Set MARKETS_WATCH_APP_URL on the bot to enable app links.", ephemeral=True)
+        return
+    await interaction.response.send_message(f"Open tape: {url}")
 
 
 def main():

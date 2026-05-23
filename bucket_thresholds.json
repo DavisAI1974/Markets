@@ -1,0 +1,59 @@
+{
+  "default": {
+    "min_trades": 80,
+    "win_rate_floor": 0.45,
+    "max_loss_R": -3.0,
+    "paper_only_trades": 40
+  },
+  "families": {
+    "mean_reversion_chop": {
+      "min_trades": 80,
+      "win_rate_floor": 0.48,
+      "max_loss_R": -2.0,
+      "paper_only_trades": 60
+    },
+    "news_confirmed_directional": {
+      "min_trades": 80,
+      "win_rate_floor": 0.5,
+      "max_loss_R": -2.0,
+      "paper_only_trades": 60
+    },
+    "news_breakout": {
+      "min_trades": 120,
+      "win_rate_floor": 0.55,
+      "max_loss_R": -3.0,
+      "paper_only_trades": 80
+    },
+    "liquidity_squeeze": {
+      "min_trades": 150,
+      "win_rate_floor": 0.55,
+      "max_loss_R": -2.5,
+      "paper_only_trades": 100
+    },
+    "vol_breakout": {
+      "min_trades": 120,
+      "win_rate_floor": 0.52,
+      "max_loss_R": -3.0,
+      "paper_only_trades": 80
+    },
+    "basis_dislocation": {
+      "min_trades": 80,
+      "win_rate_floor": 0.55,
+      "max_loss_R": -2.0,
+      "paper_only_trades": 60
+    },
+    "relative_strength": {
+      "min_trades": 120,
+      "win_rate_floor": 0.53,
+      "max_loss_R": -2.5,
+      "paper_only_trades": 80
+    },
+    "session_structure": {
+      "min_trades": 80,
+      "win_rate_floor": 0.53,
+      "max_loss_R": -2.0,
+      "paper_only_trades": 60
+    }
+  },
+  "buckets": {}
+}

@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-05-16T08:25:00+00:00",
+  "max_age_hours": 240,
+  "notes": [
+    "Replay-only context: auto-trade enabled so historical trade behavior can be inspected.",
+    "Do not use this file for live auto-trade."
+  ],
+  "global_blockers": [],
+  "assets": {
+    "BTC": {
+      "narrative_bias": "BULLISH",
+      "market_confirmation": "MEDIUM",
+      "crowding_risk": "UNKNOWN",
+      "volatility_regime": "ELEVATED",
+      "trade_posture": "REPLAY_AUTO_ENABLED_REDUCED_SIZE",
+      "risk_multiplier": 0.5,
+      "max_leverage": 2,
+      "requires_confirmation": true,
+      "auto_trade_mode": "ALLOW",
+      "allowed_strategies": ["MOMENTUM", "BREAKOUT_PULLBACK", "CONFIRMED_FOLLOW"],
+      "disabled_strategies": ["HIGH_LEVERAGE_SCALP", "NEWS_ONLY_ENTRY"],
+      "summary": "Replay-only context keeps auto-trade enabled while preserving news-derived risk reduction.",
+      "blockers": [],
+      "source_count": 23,
+      "bullish_pressure": 1.825,
+      "bearish_pressure": 0.934,
+      "news_dipole": 0.891
+    },
+    "ETH": {
+      "narrative_bias": "MIXED",
+      "market_confirmation": "MEDIUM",
+      "crowding_risk": "UNKNOWN",
+      "volatility_regime": "ELEVATED",
+      "trade_posture": "REPLAY_AUTO_ENABLED_REDUCED_SIZE",
+      "risk_multiplier": 0.5,
+      "max_leverage": 2,
+      "requires_confirmation": true,
+      "auto_trade_mode": "ALLOW",
+      "allowed_strategies": ["MOMENTUM", "BREAKOUT_PULLBACK", "CONFIRMED_FOLLOW"],
+      "disabled_strategies": ["HIGH_LEVERAGE_SCALP", "NEWS_ONLY_ENTRY"],
+      "summary": "Replay-only context keeps auto-trade enabled while preserving news-derived risk reduction.",
+      "blockers": [],
+      "source_count": 11,
+      "bullish_pressure": 0.85,
+      "bearish_pressure": 1.259,
+      "news_dipole": -0.409
+    }
+  }
+}
