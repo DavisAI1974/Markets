@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import os
 import sys
 import time
@@ -29,6 +30,7 @@ import uuid
 from collections import deque
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, asdict, field
+from datetime import datetime
 from typing import Any
 
 # Allow imports from the parent Markets directory
@@ -36,6 +38,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from sse_starlette.sse import EventSourceResponse
 
 from markets_adapter import (
@@ -51,6 +54,16 @@ from regime_classifier import (
     apply_event_multiplier,
 )
 from event_calendar import EventCalendar
+from daily_news_context import adjust_present_score_with_news, load_daily_news_context, news_adjusted_trade_option
+from strategy_switcher import (
+    DISABLED_STRATEGIES,
+    NO_TRADE,
+    apply_strategy_to_option,
+    classify_strategy,
+)
+from strategy_family_evolution import record_trade_attempt_open_json
+import trade_exit_strategy
+from high_conviction_ticket import build_high_conviction_ticket
 from edge_tracker import MultiHorizonEdgeTracker, CellTags
 from backend.auth import verify_token, ACCESS_TOKEN
 from backend.push import (
@@ -91,32 +104,342 @@ from pydantic import BaseModel
 # ---------------------------------------------------------------------------
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_AUTO_TRADE_SETTINGS_PATH = os.path.join(REPO_ROOT, "backend_auto_trade_settings.json")
+_MOCK_TRADE_SETTINGS_PATH = os.path.join(REPO_ROOT, "backend_mock_trade_settings.json")
+_DEFAULT_MOCK_EXIT_PARAMS_PATH = os.path.join(
+    REPO_ROOT,
+    "research",
+    "strategy_evolution",
+    "exit_params_h0_h168_v2_promoted_min5.json",
+)
+_LIVE_MOCK_OPPORTUNITIES_PATH = os.path.join(
+    REPO_ROOT,
+    "research",
+    "strategy_evolution",
+    "_live_mock_opportunities.jsonl",
+)
+_LIVE_HINDSIGHT_AUDIT_PATH = os.path.join(
+    REPO_ROOT,
+    "research",
+    "strategy_evolution",
+    "live_mock_replay",
+    "live_hindsight_missed_winner_audit.json",
+)
+_EVOLVE_REQUESTS_PATH = os.path.join(REPO_ROOT, "backend_evolve_requests.jsonl")
+_DAILY_NEWS_CONTEXT_PATH = os.environ.get(
+    "MARKETS_WATCH_DAILY_NEWS_CONTEXT",
+    os.path.join(REPO_ROOT, "daily_news_context.json"),
+)
+
+LIVE_MODE = os.environ.get("MARKETS_WATCH_LIVE", "0").lower() in ("1", "true", "yes")
+LIVE_DATA_DIR = os.path.abspath(os.environ.get(
+    "MARKETS_WATCH_LIVE_DATA_DIR",
+    os.path.join(REPO_ROOT, "live_data"),
+))
+
+def _source_path(filename: str) -> str:
+    return os.path.join(LIVE_DATA_DIR if LIVE_MODE else REPO_ROOT, filename)
 
 DATA_SOURCES = [
     # (asset, venue, bins_path)
-    ("BTC", "Coinbase", os.path.join(REPO_ROOT, "phase1_bins.json")),
-    ("BTC", "Kraken",   os.path.join(REPO_ROOT, "kraken_bins.json")),
-    ("ETH", "Coinbase", os.path.join(REPO_ROOT, "eth_coinbase_bins.json")),
-    ("ETH", "Kraken",   os.path.join(REPO_ROOT, "eth_kraken_bins.json")),
+    ("BTC", "Coinbase", _source_path("btc_coinbase_bins.json")),
+    ("BTC", "Kraken",   _source_path("btc_kraken_bins.json")),
+    ("BTC", "Bybit",    _source_path("btc_bybit_perp_bins.json")),
+    ("ETH", "Coinbase", _source_path("eth_coinbase_bins.json")),
+    ("ETH", "Kraken",   _source_path("eth_kraken_bins.json")),
+    ("ETH", "Bybit",    _source_path("eth_bybit_perp_bins.json")),
 ]
+
+
+def _source_freshness() -> list[dict[str, Any]]:
+    out = []
+    now = time.time()
+    for asset, venue, path in DATA_SOURCES:
+        exists = os.path.exists(path)
+        mtime = os.path.getmtime(path) if exists else 0.0
+        age = (now - mtime) if mtime else None
+        out.append({
+            "asset": asset,
+            "venue": venue,
+            "path": path,
+            "exists": exists,
+            "age_seconds": round(age, 1) if age is not None else None,
+            "fresh": bool(age is not None and age <= max(15.0, POLL_INTERVAL_S * 3)),
+        })
+    return out
+
+
+def _live_bucket_session(ts: float | None = None) -> str:
+    """Match live mock trades to the historical first6h/remaining18h buckets."""
+    basis_ts = time.time() if ts is None else float(ts)
+    hour = datetime.utcfromtimestamp(basis_ts).hour
+    return "first6h" if hour < 6 else "remaining18h"
 
 # Spot/perp paths for the basis_monitor. Per-asset; we pick whichever
 # spot venue is deepest (KR for both ETH/BTC at present) and whichever
-# perp source has the longest history (Binance Vision once backfilled,
-# else the RT Bybit collector).
+# perp source exists locally. Bybit is the live public perp feed; Binance
+# files are only used when a historical backfill is present.
 BASIS_SPOT_PATHS = {
     "BTC": os.path.join(REPO_ROOT, "kraken_bins.json"),
     "ETH": os.path.join(REPO_ROOT, "eth_kraken_bins.json"),
 }
+
+def _first_existing_path(*paths: str) -> str:
+    for path in paths:
+        if os.path.exists(path):
+            return path
+    return paths[0]
+
 BASIS_PERP_PATHS = {
-    "BTC": os.path.join(REPO_ROOT, "btc_binance_perp_bins.json"),
-    "ETH": os.path.join(REPO_ROOT, "eth_binance_perp_bins.json"),
+    "BTC": _first_existing_path(
+        os.path.join(REPO_ROOT, "btc_bybit_perp_bins.json"),
+        os.path.join(REPO_ROOT, "btc_binance_perp_bins.json"),
+    ),
+    "ETH": _first_existing_path(
+        os.path.join(REPO_ROOT, "eth_bybit_perp_bins.json"),
+        os.path.join(REPO_ROOT, "eth_binance_perp_bins.json"),
+    ),
 }
 
-POLL_INTERVAL_S = 30.0
+POLL_INTERVAL_S = float(os.environ.get("MARKETS_WATCH_POLL_INTERVAL_S", "30.0"))
 RECENT_SIGNALS_CAP = 200
 CHUNK_MAX_SIZE = 30
-CHUNK_MIN_SEGMENT = 10
+CHUNK_MIN_SEGMENT = int(os.environ.get("MARKETS_WATCH_CHUNK_MIN_SEGMENT", "10"))
+ALLOW_LIVE_AUTO_TRADE = os.environ.get(
+    "MARKETS_WATCH_ALLOW_LIVE_AUTO_TRADE", "0").lower() in ("1", "true", "yes")
+
+
+def _default_auto_trade_settings() -> dict[str, Any]:
+    return {
+        "enabled": False,
+        "practice": True,
+        "tolerance": "balanced",
+        "profiles": ["early_probe", "confirmed_follow"],
+        "min_readiness": 65,
+        "max_open_trades": 3,
+        "base_notional_usd": 1000.0,
+    }
+
+
+AUTO_TRADE_TOLERANCE_PRESETS: dict[str, dict[str, Any]] = {
+    "conservative": {
+        "profiles": ["confirmed_follow"],
+        "min_readiness": 75,
+        "max_open_trades": 1,
+        "base_notional_usd": 750.0,
+    },
+    "balanced": {
+        "profiles": ["early_probe", "confirmed_follow"],
+        "min_readiness": 65,
+        "max_open_trades": 3,
+        "base_notional_usd": 1000.0,
+    },
+    "aggressive": {
+        "profiles": ["early_probe", "confirmed_follow"],
+        "min_readiness": 55,
+        "max_open_trades": 6,
+        "base_notional_usd": 1500.0,
+    },
+}
+
+
+def _load_auto_trade_settings() -> dict[str, Any]:
+    settings = _default_auto_trade_settings()
+    if os.path.exists(_AUTO_TRADE_SETTINGS_PATH):
+        try:
+            with open(_AUTO_TRADE_SETTINGS_PATH, encoding="utf-8") as f:
+                raw = json.load(f)
+            if isinstance(raw, dict):
+                settings.update(raw)
+        except Exception as e:
+            print(f"[auto-trade] settings load error: {e}", flush=True)
+    settings["enabled"] = bool(settings.get("enabled"))
+    settings["practice"] = bool(settings.get("practice", True))
+    tolerance = str(settings.get("tolerance") or "balanced")
+    if tolerance not in AUTO_TRADE_TOLERANCE_PRESETS:
+        tolerance = "balanced"
+    settings["tolerance"] = tolerance
+    preset = AUTO_TRADE_TOLERANCE_PRESETS[tolerance]
+    for key, value in preset.items():
+        settings.setdefault(key, value)
+    if not settings["practice"] and not ALLOW_LIVE_AUTO_TRADE:
+        settings["practice"] = True
+        settings["live_blocked_reason"] = "live auto disabled by server policy"
+    settings["profiles"] = [
+        str(p) for p in (settings.get("profiles") or ["early_probe"])
+        if str(p) in ("early_probe", "confirmed_follow")
+    ] or ["early_probe"]
+    settings["min_readiness"] = int(settings.get("min_readiness") or 55)
+    settings["max_open_trades"] = int(settings.get("max_open_trades") or 3)
+    settings["base_notional_usd"] = float(settings.get("base_notional_usd") or 1000.0)
+    settings["allow_live_auto"] = ALLOW_LIVE_AUTO_TRADE
+    settings.pop("apply_preset", None)
+    return settings
+
+
+def _save_auto_trade_settings(settings: dict[str, Any]) -> dict[str, Any]:
+    merged = _default_auto_trade_settings()
+    merged.update(settings)
+    tolerance = str(merged.get("tolerance") or "balanced")
+    if tolerance not in AUTO_TRADE_TOLERANCE_PRESETS:
+        tolerance = "balanced"
+    merged["tolerance"] = tolerance
+    if bool(settings.get("apply_preset", False)):
+        merged.update(AUTO_TRADE_TOLERANCE_PRESETS[tolerance])
+    if not bool(merged.get("practice", True)) and not ALLOW_LIVE_AUTO_TRADE:
+        merged["practice"] = True
+        merged["live_blocked_reason"] = "live auto disabled by server policy"
+    merged.pop("apply_preset", None)
+    tmp = _AUTO_TRADE_SETTINGS_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(merged, f, indent=2)
+    os.replace(tmp, _AUTO_TRADE_SETTINGS_PATH)
+    return _load_auto_trade_settings()
+
+
+def _default_mock_trade_settings() -> dict[str, Any]:
+    scenarios = [
+        {
+            "id": "route_evidence",
+            "base_scenario_id": "route_evidence",
+            "label": "Route Evidence",
+            "min_present_score": 0,
+            "max_present_score": 100,
+            "notional_pct_bank": 1.00,
+            "cooldown_minutes": 0,
+            "stop_loss_bps": 10.0,
+            "take_profit_bps": 18.0,
+            "exit_score_drop": 12,
+            "allowed_stages": ["onset", "early_follow", "mature"],
+            "allowed_trade_states": ["watch", "early_probe", "confirmed"],
+            "allowed_pressure_states": ["internal", "forming", "high_priority", "confirmed"],
+            "hold_minutes": 10,
+            "rotation_enabled": False,
+            "enabled": True,
+            "enforce_bucket_health": True,
+            "enforce_daily_limits": True,
+            "rotation_min_score_advantage": 0,
+            "rotation_min_underperform_bps": 0.0,
+            "rotation_require_degrading": False,
+        }
+    ]
+    return {
+        "enabled": False,
+        "initial_bank_usd": 10000.0,
+        "tier_high_bank_threshold_usd": 20000.0,
+        "tier_high_exposure_cap_usd": 1000000.0,
+        "tier_mid_bank_threshold_usd": 10000.0,
+        "tier_mid_exposure_pct": 1.00,
+        "tier_low_bank_threshold_usd": 5000.0,
+        "tier_low_exposure_cap_usd": 1000000.0,
+        "mock_fee_bps": 5.0,
+        "min_trade_notional_usd": 25.0,
+        "exit_params_path": _DEFAULT_MOCK_EXIT_PARAMS_PATH,
+        "scenarios": scenarios,
+    }
+
+
+def _resolve_mock_exit_params_path(path: Any) -> str:
+    raw = str(path or "").strip()
+    if not raw:
+        raw = _DEFAULT_MOCK_EXIT_PARAMS_PATH
+    if not os.path.isabs(raw):
+        raw = os.path.join(REPO_ROOT, raw)
+    return os.path.abspath(raw)
+
+
+def _load_mock_exit_params(settings: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    path = _resolve_mock_exit_params_path(settings.get("exit_params_path"))
+    params = trade_exit_strategy.load_exit_params(path)
+    return params, path
+
+
+def _load_mock_trade_settings(load_exit_params: bool = False) -> dict[str, Any]:
+    settings = _default_mock_trade_settings()
+    if os.path.exists(_MOCK_TRADE_SETTINGS_PATH):
+        try:
+            with open(_MOCK_TRADE_SETTINGS_PATH, encoding="utf-8") as f:
+                raw = json.load(f)
+            if isinstance(raw, dict):
+                settings.update(raw)
+        except Exception as e:
+            print(f"[mock-trade] settings load error: {e}", flush=True)
+    settings["enabled"] = bool(settings.get("enabled"))
+    settings["backend_controller_enabled"] = bool(settings.get("backend_controller_enabled", settings["enabled"]))
+    settings["initial_bank_usd"] = max(0.0, float(settings.get("initial_bank_usd") or 10000.0))
+    settings["tier_high_bank_threshold_usd"] = max(0.0, float(settings.get("tier_high_bank_threshold_usd") or 20000.0))
+    settings["tier_high_exposure_cap_usd"] = max(0.0, float(settings.get("tier_high_exposure_cap_usd") or 10000.0))
+    settings["tier_mid_bank_threshold_usd"] = max(0.0, float(settings.get("tier_mid_bank_threshold_usd") or 10000.0))
+    settings["tier_mid_exposure_pct"] = max(0.0, min(1.0, float(settings.get("tier_mid_exposure_pct") or 0.5)))
+    settings["tier_low_bank_threshold_usd"] = max(0.0, float(settings.get("tier_low_bank_threshold_usd") or 5000.0))
+    settings["tier_low_exposure_cap_usd"] = max(0.0, float(settings.get("tier_low_exposure_cap_usd") or 5000.0))
+    settings["mock_fee_bps"] = max(0.0, float(settings.get("mock_fee_bps") or 5.0))
+    settings["min_trade_notional_usd"] = max(1.0, float(settings.get("min_trade_notional_usd") or 25.0))
+    exit_params_map, exit_params_path = _load_mock_exit_params(settings)
+    settings["exit_params_path"] = exit_params_path
+    settings["exit_params_loaded"] = bool(exit_params_map)
+    if load_exit_params and exit_params_map:
+        settings["exit_params_map"] = exit_params_map
+    defaults_by_id = {s["id"]: s for s in _default_mock_trade_settings()["scenarios"]}
+    legacy_scenario_ids = {
+        "pressure_scout",
+        "pressure_scout_rotation_off",
+        "pressure_scout_rotation_on",
+        "early_low_band",
+        "early_low_band_rotation_off",
+        "early_low_band_rotation_on",
+        "next_tier_low_band",
+        "next_tier_low_band_rotation_off",
+        "next_tier_low_band_rotation_on",
+        "almost_sure_thing",
+        "almost_sure_thing_rotation_off",
+        "almost_sure_thing_rotation_on",
+    }
+    scenarios = []
+    for raw in settings.get("scenarios") or []:
+        if not isinstance(raw, dict):
+            continue
+        sid = str(raw.get("id") or "")
+        base_id = str(raw.get("base_scenario_id") or sid)
+        if sid in legacy_scenario_ids or base_id in legacy_scenario_ids:
+            continue
+        base = dict(defaults_by_id.get(sid, {}))
+        base.update(raw)
+        if not base.get("id"):
+            continue
+        if str(base.get("id") or "") == "route_evidence":
+            base["notional_pct_bank"] = 1.0
+            base["cooldown_minutes"] = 0
+        base["enabled"] = bool(base.get("enabled", True))
+        base["min_present_score"] = int(max(0, min(100, int(base.get("min_present_score") or 0))))
+        base["max_present_score"] = int(max(base["min_present_score"], min(100, int(base.get("max_present_score") or 100))))
+        base["notional_pct_bank"] = max(0.0, float(base.get("notional_pct_bank") or 0.0))
+        base["hold_minutes"] = max(1.0, float(base.get("hold_minutes") or 10.0))
+        base["cooldown_minutes"] = max(0.0, float(base.get("cooldown_minutes") or 0.0))
+        base["stop_loss_bps"] = max(0.0, float(base.get("stop_loss_bps") or 0.0))
+        base["take_profit_bps"] = max(0.0, float(base.get("take_profit_bps") or 0.0))
+        base["exit_score_drop"] = int(max(0, int(base.get("exit_score_drop") or 0)))
+        base["rotation_enabled"] = bool(base.get("rotation_enabled", False))
+        base["rotation_min_score_advantage"] = int(max(0, int(base.get("rotation_min_score_advantage") or 10)))
+        base["rotation_min_underperform_bps"] = float(base.get("rotation_min_underperform_bps", -5.0))
+        base["rotation_require_degrading"] = bool(base.get("rotation_require_degrading", True))
+        scenarios.append(base)
+    if not scenarios:
+        scenarios = list(defaults_by_id.values())
+    settings["scenarios"] = scenarios
+    return settings
+
+
+def _save_mock_trade_settings(settings: dict[str, Any]) -> dict[str, Any]:
+    merged = _default_mock_trade_settings()
+    merged.update(settings)
+    merged.pop("exit_params_map", None)
+    merged.pop("exit_params_loaded", None)
+    tmp = _MOCK_TRADE_SETTINGS_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(merged, f, indent=2)
+    os.replace(tmp, _MOCK_TRADE_SETTINGS_PATH)
+    return _load_mock_trade_settings()
 
 # ---------------------------------------------------------------------------
 # DEMO MODE — emits synthetic signals for empty-state UI demonstration
@@ -298,6 +621,52 @@ class RegimeStatus:
     convergence_tier: str = ""
     convergence_bonus: float = 1.0
     convergence_summary: str = ""
+    # Internal pressure-watch layer. Built from dipole-derived features but
+    # exposed only in trader-native language. This is an amber state, not an
+    # actionable signal by itself.
+    pressure_watch_state: str = ""       # "" | internal | forming | transition_risk | high_priority | confirmed
+    pressure_watch_label: str = ""       # e.g. Buy pressure forming
+    pressure_watch_direction: str = ""   # buy | sell
+    pressure_watch_intensity: str = ""   # weak | moderate | high
+    pressure_watch_priority: int = 0     # 0-3
+    pressure_watch_reasons: list[str] = field(default_factory=list)
+    # Optional trade setup guidance. This is a decision aid for practice/live
+    # intent flow, not automatic execution.
+    trade_option_state: str = ""         # "" | watch | early_probe | confirmed
+    trade_option_label: str = ""
+    trade_option_side: str = ""          # buy | sell
+    trade_option_readiness: int = 0      # 0-100
+    trade_option_profile: str = ""       # early_probe | confirmed_follow | late_no_trade
+    trade_option_size_hint: str = ""
+    trade_option_notional_scale: float = 0.0
+    trade_option_hold_minutes: int = 0
+    trade_stage: str = ""                # onset | early_follow | mature | late
+    trade_age_chunks: int = 0
+    trade_present_score: int = 0
+    trade_score_band: str = ""
+    trade_from_onset_bps: float = 0.0
+    trade_current_chunk_bps: float = 0.0
+    trade_recent_2chunk_bps: float = 0.0
+    trade_option_entry_reasons: list[str] = field(default_factory=list)
+    trade_option_exit_rules: list[str] = field(default_factory=list)
+    trade_option_blockers: list[str] = field(default_factory=list)
+    trade_strategy_id: str = ""
+    trade_strategy_label: str = ""
+    trade_strategy_confidence: float = 0.0
+    trade_strategy_side_override: str = ""
+    trade_strategy_reasons: list[str] = field(default_factory=list)
+    trade_strategy_blockers: list[str] = field(default_factory=list)
+    trade_strategy_stop_loss_bps: float = 0.0
+    trade_strategy_take_profit_bps: float = 0.0
+    trade_strategy_exit_score_drop: int = 0
+    trade_strategy_forced: bool = False
+    trade_strategy_variant_id: str = ""
+    trade_strategy_risk_tags: list[str] = field(default_factory=list)
+    trade_strategy_handoff_hint: str = ""
+    trade_strategy_source_queue_action: str = ""
+    high_conviction_ticket: dict[str, Any] = field(default_factory=dict)
+    daily_news_context: dict[str, Any] = field(default_factory=dict)
+    daily_news_status: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -371,6 +740,42 @@ class SignalEvent:
     convergence_tier: str = ""
     convergence_bonus: float = 1.0
     convergence_summary: str = ""
+    # Pressure-watch context present when this signal fired. Derived from
+    # internal dipole features, surfaced only as trader-safe copy.
+    pressure_watch_state: str = ""
+    pressure_watch_label: str = ""
+    pressure_watch_direction: str = ""
+    pressure_watch_intensity: str = ""
+    pressure_watch_priority: int = 0
+    pressure_watch_reasons: list[str] = field(default_factory=list)
+    trade_option_state: str = ""
+    trade_option_label: str = ""
+    trade_option_side: str = ""
+    trade_option_readiness: int = 0
+    trade_option_profile: str = ""
+    trade_option_size_hint: str = ""
+    trade_option_notional_scale: float = 0.0
+    trade_option_hold_minutes: int = 0
+    trade_option_entry_reasons: list[str] = field(default_factory=list)
+    trade_option_exit_rules: list[str] = field(default_factory=list)
+    trade_option_blockers: list[str] = field(default_factory=list)
+    trade_strategy_id: str = ""
+    trade_strategy_label: str = ""
+    trade_strategy_confidence: float = 0.0
+    trade_strategy_side_override: str = ""
+    trade_strategy_reasons: list[str] = field(default_factory=list)
+    trade_strategy_blockers: list[str] = field(default_factory=list)
+    trade_strategy_stop_loss_bps: float = 0.0
+    trade_strategy_take_profit_bps: float = 0.0
+    trade_strategy_exit_score_drop: int = 0
+    trade_strategy_forced: bool = False
+    trade_strategy_variant_id: str = ""
+    trade_strategy_risk_tags: list[str] = field(default_factory=list)
+    trade_strategy_handoff_hint: str = ""
+    trade_strategy_source_queue_action: str = ""
+    high_conviction_ticket: dict[str, Any] = field(default_factory=dict)
+    daily_news_context: dict[str, Any] = field(default_factory=dict)
+    daily_news_status: dict[str, Any] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -406,6 +811,410 @@ EVENT_LABELS: dict[str, str] = {
     "EQUILIBRIUM_TWO_SIDED": "Healthy two-sided trading",
     "UNKNOWN":     "Unclassified pattern",
 }
+
+
+STRONG_PRESSURE_REGIMES = {
+    "WHALE_UP", "WHALE_DOWN", "HERD_UP", "HERD_DOWN",
+}
+
+
+def _pressure_direction(sign: int) -> str:
+    return "buy" if sign > 0 else "sell" if sign < 0 else ""
+
+
+def _pressure_label(direction: str, state: str) -> str:
+    side = "Buy" if direction == "buy" else "Sell" if direction == "sell" else ""
+    if state == "high_priority":
+        return f"{side} pressure across venues".strip()
+    if state == "transition_risk":
+        return f"{side} pressure transition risk".strip()
+    if state == "confirmed":
+        return f"{side} pressure confirmed".strip()
+    if state == "forming":
+        return f"{side} pressure forming".strip()
+    if state == "internal":
+        return f"{side} pressure watch".strip()
+    return ""
+
+
+def _pressure_watch_from_features(
+    *,
+    regime: str,
+    mean_dipole: float,
+    volume_zscore: float,
+    dipole_acl1: float,
+    prev_mean_dipole: float | None,
+) -> dict[str, Any]:
+    """Return trader-safe pressure-watch metadata.
+
+    Dipole stays internal; output is the reusable platform primitive. The
+    states intentionally describe watch quality, not trade instructions.
+    """
+    sign = 1 if mean_dipole > 0 else -1 if mean_dipole < 0 else 0
+    if sign == 0:
+        return {}
+    abs_d = abs(float(mean_dipole))
+    direction = _pressure_direction(sign)
+    prev_abs = abs(float(prev_mean_dipole)) if prev_mean_dipole is not None else 0.0
+    prev_sign = (
+        1 if (prev_mean_dipole or 0.0) > 0
+        else -1 if (prev_mean_dipole or 0.0) < 0
+        else 0
+    )
+    persistent = prev_sign == sign and prev_abs >= 0.15
+    weak = 0.15 <= abs_d < 0.25
+    moderate = abs_d >= 0.30
+    volume_confirmed = moderate and volume_zscore >= 0.0
+    autocorr_confirmed = moderate and dipole_acl1 >= 0.0
+
+    if regime in STRONG_PRESSURE_REGIMES:
+        state = "confirmed"
+        priority = 3
+        intensity = "high"
+        reasons = ["Whale/Herd confirmation is active"]
+    elif regime.startswith("WHALE_NASCENT"):
+        state = "forming"
+        priority = 2
+        intensity = "moderate"
+        reasons = ["Early Whale pressure is already visible"]
+    elif volume_confirmed:
+        state = "forming"
+        priority = 2
+        intensity = "moderate"
+        reasons = ["Directional pressure with elevated volume"]
+    elif autocorr_confirmed:
+        state = "transition_risk"
+        priority = 2
+        intensity = "moderate"
+        reasons = ["Sustained pressure pattern can precede a regime change"]
+    elif weak and persistent:
+        state = "forming"
+        priority = 1
+        intensity = "weak"
+        reasons = ["Pressure persisted across consecutive chunks"]
+    elif weak:
+        state = "internal"
+        priority = 1
+        intensity = "weak"
+        reasons = ["Early imbalance watch"]
+    else:
+        return {}
+
+    return {
+        "pressure_watch_state": state,
+        "pressure_watch_label": _pressure_label(direction, state),
+        "pressure_watch_direction": direction,
+        "pressure_watch_intensity": intensity,
+        "pressure_watch_priority": priority,
+        "pressure_watch_reasons": reasons,
+    }
+
+
+def _apply_pressure_fields(target: Any, watch: dict[str, Any]) -> None:
+    target.pressure_watch_state = str(watch.get("pressure_watch_state") or "")
+    target.pressure_watch_label = str(watch.get("pressure_watch_label") or "")
+    target.pressure_watch_direction = str(watch.get("pressure_watch_direction") or "")
+    target.pressure_watch_intensity = str(watch.get("pressure_watch_intensity") or "")
+    target.pressure_watch_priority = int(watch.get("pressure_watch_priority") or 0)
+    target.pressure_watch_reasons = list(watch.get("pressure_watch_reasons") or [])
+
+
+def _trade_stage_from_age(age_chunks: int) -> str:
+    if age_chunks <= 1:
+        return "onset"
+    if age_chunks <= 3:
+        return "early_follow"
+    if age_chunks <= 8:
+        return "mature"
+    return "late"
+
+
+def _trade_score_band(score: int) -> str:
+    if score >= 85:
+        return "85_100"
+    if score >= 70:
+        return "70_84"
+    if score >= 55:
+        return "55_69"
+    if score >= 40:
+        return "40_54"
+    return "0_39"
+
+
+def _signed_bps(entry: float, exit_price: float, side: str) -> float:
+    if entry <= 0 or exit_price <= 0:
+        return 0.0
+    sign = 1 if side == "buy" else -1 if side == "sell" else 0
+    if sign == 0:
+        return 0.0
+    return sign * math.log(max(exit_price, 1e-12) / max(entry, 1e-12)) * 10000.0
+
+
+def _present_trade_score(status: RegimeStatus, inputs: dict[str, Any]) -> int:
+    score = min(35.0, float(status.adjusted_confidence or status.confidence or 0.0) * 35.0)
+    pressure_state = status.pressure_watch_state
+    if status.regime in STRONG_PRESSURE_REGIMES:
+        score += 25.0
+    elif status.regime.startswith("WHALE_NASCENT"):
+        score += 18.0
+    elif pressure_state in ("forming", "high_priority"):
+        score += 12.0
+    elif pressure_state == "internal":
+        score += 6.0
+
+    abs_d = abs(float(inputs.get("mean_dipole") or status.mean_dipole or 0.0))
+    if abs_d >= 0.50:
+        score += 15.0
+    elif abs_d >= 0.30:
+        score += 10.0
+    elif abs_d >= 0.15:
+        score += 5.0
+
+    volume_zscore = float(inputs.get("volume_zscore") or 0.0)
+    if volume_zscore >= 1.0:
+        score += 10.0
+    elif volume_zscore >= 0.0:
+        score += 6.0
+
+    score += min(10.0, max(-12.0, float(inputs.get("trade_from_onset_bps") or 0.0) / 2.5))
+    score += min(8.0, max(-12.0, float(inputs.get("trade_current_chunk_bps") or 0.0) / 2.0))
+
+    age = int(inputs.get("trade_age_chunks") or 0)
+    if age >= 9:
+        score -= 14.0
+    elif age >= 4:
+        score -= 6.0
+
+    if (float(inputs.get("trade_from_onset_bps") or 0.0) > 12.0
+            and float(inputs.get("trade_recent_2chunk_bps") or 0.0) <= 0.0):
+        score -= 8.0
+    if float(inputs.get("trade_from_onset_bps") or 0.0) < -8.0:
+        score -= 12.0
+
+    return int(max(0, min(100, round(score))))
+
+
+def _trade_option_from_status(status: RegimeStatus, inputs: dict[str, Any]) -> dict[str, Any]:
+    direction = status.pressure_watch_direction
+    if direction not in ("buy", "sell"):
+        decision = classify_strategy(status, inputs)
+        if decision.side_override not in ("buy", "sell"):
+            return {}
+        option = {
+            "trade_option_state": "watch",
+            "trade_option_label": f"{decision.side_override.title()} oracle-distilled watch",
+            "trade_option_side": "",
+            "trade_option_readiness": int(max(35, round(decision.confidence * 100))),
+            "trade_option_profile": "oracle_distilled_context",
+            "trade_option_size_hint": "practice learning size",
+            "trade_option_notional_scale": 0.0,
+            "trade_option_hold_minutes": 0,
+            "trade_stage": str(inputs.get("trade_stage") or ""),
+            "trade_age_chunks": int(inputs.get("trade_age_chunks") or 0),
+            "trade_present_score": int(inputs.get("trade_present_score") or 0),
+            "trade_score_band": str(inputs.get("trade_score_band") or ""),
+            "trade_from_onset_bps": float(inputs.get("trade_from_onset_bps") or 0.0),
+            "trade_current_chunk_bps": float(inputs.get("trade_current_chunk_bps") or 0.0),
+            "trade_recent_2chunk_bps": float(inputs.get("trade_recent_2chunk_bps") or 0.0),
+            "trade_option_entry_reasons": [],
+            "trade_option_exit_rules": [],
+            "trade_option_blockers": [],
+            "trade_strategy_mode": str(inputs.get("strategy_mode") or "product"),
+        }
+        return apply_strategy_to_option(option, decision)
+    side = direction
+    blockers: list[str] = []
+    reasons: list[str] = []
+    exits = [
+        "Exit if pressure flips the other way",
+        "Exit if Whale/Herd does not confirm within the hold window",
+        "Exit if price rejects the entry side",
+    ]
+
+    spread_bps = float(inputs.get("spread_bps") or 0.0)
+    signed_move_bps = float(inputs.get("signed_move_bps") or 0.0)
+    volume_zscore = float(inputs.get("volume_zscore") or 0.0)
+    realized_vol_bps = float(inputs.get("realized_vol_bps") or 0.0)
+    chunk_volume = float(inputs.get("chunk_total_volume") or 0.0)
+    stage = str(inputs.get("trade_stage") or "onset")
+    age_chunks = int(inputs.get("trade_age_chunks") or 0)
+    news_context = load_daily_news_context(_DAILY_NEWS_CONTEXT_PATH)
+    asset_news = news_context.for_asset(status.asset)
+    base_present_score = int(inputs.get("trade_present_score") or _present_trade_score(status, inputs))
+    present_score = base_present_score
+    if news_context.status == "ok" and not news_context.stale:
+        present_score = adjust_present_score_with_news(
+            base_present_score,
+            side,
+            asset_news,
+            news_dipole_value=asset_news.news_dipole,
+        )
+        inputs["trade_present_score"] = present_score
+    score_band = _trade_score_band(present_score)
+    from_onset_bps = float(inputs.get("trade_from_onset_bps") or 0.0)
+    current_chunk_bps = float(inputs.get("trade_current_chunk_bps") or signed_move_bps)
+    recent_2chunk_bps = float(inputs.get("trade_recent_2chunk_bps") or current_chunk_bps)
+
+    if spread_bps <= 0:
+        blockers.append("No usable bid/ask spread")
+    elif spread_bps > 8.0:
+        blockers.append(f"Spread too wide ({spread_bps:.1f} bps)")
+    else:
+        reasons.append(f"Spread acceptable ({spread_bps:.1f} bps)")
+
+    extension_limit = max(12.0, realized_vol_bps * 1.25)
+    if signed_move_bps > extension_limit:
+        blockers.append(f"Move already extended ({signed_move_bps:.1f} bps)")
+    else:
+        reasons.append("Entry is not chasing an extended move")
+
+    if chunk_volume <= 0:
+        blockers.append("No traded volume in the current chunk")
+
+    pressure_state = status.pressure_watch_state
+    pressure_priority = int(status.pressure_watch_priority or 0)
+    if pressure_state in ("forming", "high_priority"):
+        reasons.append(status.pressure_watch_label or "Pressure forming")
+    elif pressure_state == "transition_risk":
+        blockers.append("Transition risk without clean directional edge")
+    elif pressure_state == "confirmed":
+        reasons.append("Whale/Herd pressure already confirmed")
+    else:
+        blockers.append("Pressure is not visible enough for an early trade")
+
+    if status.regime in ("EQUILIBRIUM_TWO_SIDED", "DEPLETED", "UNKNOWN", "WASH_PAIRED", "WASH_HAWKES"):
+        maturity = "early"
+    elif status.regime.startswith("WHALE_NASCENT"):
+        maturity = "early"
+        reasons.append("Early Whale read is visible")
+    elif status.regime in STRONG_PRESSURE_REGIMES:
+        maturity = "confirmed"
+    else:
+        maturity = "watch"
+
+    readiness = present_score
+    legacy_readiness = int(round(float(status.adjusted_confidence or status.confidence or 0.0) * 45))
+    legacy_readiness += min(25, pressure_priority * 8)
+    if pressure_state == "high_priority":
+        legacy_readiness += 12
+    if volume_zscore >= 0:
+        legacy_readiness += 8
+    if spread_bps and spread_bps <= 4:
+        legacy_readiness += 5
+    if signed_move_bps <= 0:
+        legacy_readiness += 5
+    readiness = max(readiness, int(round(legacy_readiness * 0.75)))
+    readiness = max(0, min(100, readiness))
+
+    if present_score != base_present_score:
+        reasons.append(f"News-adjusted present score {present_score}/100 from {base_present_score}/100")
+    reasons.append(f"Present score {present_score}/100 ({stage.replace('_', ' ')}, age {age_chunks} chunks)")
+    if from_onset_bps > 0:
+        reasons.append(f"Move has worked {from_onset_bps:.1f} bps from setup onset")
+
+    if stage == "late":
+        blockers.append("Setup is late-stage; wait for a fresh onset or manual override")
+    if present_score < 55:
+        blockers.append(f"Present score below trade threshold ({present_score}/100)")
+    hot_onset_limit = max(25.0, realized_vol_bps * 1.5)
+    if stage == "onset" and present_score >= 85 and current_chunk_bps > hot_onset_limit:
+        blockers.append(f"Very hot onset ({current_chunk_bps:.1f} bps); avoid chasing")
+    if stage in ("mature", "late") and recent_2chunk_bps <= 0 and present_score >= 70:
+        blockers.append("Setup is strong but no longer advancing over the recent window")
+
+    if maturity == "confirmed" and stage in ("onset", "early_follow") and readiness >= 70 and not blockers:
+        state = "confirmed"
+        profile = "confirmed_follow"
+        label = f"{side.title()} confirmed setup"
+        size_hint = "normal size if risk gates pass"
+        scale = 1.0
+        hold = 15
+    elif readiness >= 55 and not blockers:
+        state = "early_probe"
+        profile = "early_probe"
+        label = (
+            f"{side.title()} continuation probe"
+            if stage == "mature" else f"{side.title()} early probe"
+        )
+        size_hint = "probe size, about 35% normal" if stage == "mature" else "probe size, about 25% normal"
+        scale = 0.35 if stage == "mature" else 0.25
+        hold = 10
+    else:
+        state = "watch"
+        profile = "early_watch"
+        label = f"{side.title()} watch only"
+        size_hint = "no position yet"
+        scale = 0.0
+        hold = 0
+
+    option = {
+        "trade_option_state": state,
+        "trade_option_label": label,
+        "trade_option_side": side,
+        "trade_option_readiness": readiness,
+        "trade_option_profile": profile,
+        "trade_option_size_hint": size_hint,
+        "trade_option_notional_scale": scale,
+        "trade_option_hold_minutes": hold,
+        "trade_stage": stage,
+        "trade_age_chunks": age_chunks,
+        "trade_present_score": present_score,
+        "trade_score_band": score_band,
+        "trade_from_onset_bps": from_onset_bps,
+        "trade_current_chunk_bps": current_chunk_bps,
+        "trade_recent_2chunk_bps": recent_2chunk_bps,
+        "trade_option_entry_reasons": reasons[:5],
+        "trade_option_exit_rules": exits,
+        "trade_option_blockers": blockers[:5],
+        "trade_strategy_mode": str(inputs.get("strategy_mode") or "product"),
+    }
+    option = apply_strategy_to_option(option, classify_strategy(status, inputs, asset_news))
+    return news_adjusted_trade_option(option, news_context, status.asset, side)
+
+
+def _apply_trade_option_fields(target: Any, option: dict[str, Any]) -> None:
+    target.trade_option_state = str(option.get("trade_option_state") or "")
+    target.trade_option_label = str(option.get("trade_option_label") or "")
+    target.trade_option_side = str(option.get("trade_option_side") or "")
+    target.trade_option_readiness = int(option.get("trade_option_readiness") or 0)
+    target.trade_option_profile = str(option.get("trade_option_profile") or "")
+    target.trade_option_size_hint = str(option.get("trade_option_size_hint") or "")
+    target.trade_option_notional_scale = float(option.get("trade_option_notional_scale") or 0.0)
+    target.trade_option_hold_minutes = int(option.get("trade_option_hold_minutes") or 0)
+    target.trade_stage = str(option.get("trade_stage") or "")
+    target.trade_age_chunks = int(option.get("trade_age_chunks") or 0)
+    target.trade_present_score = int(option.get("trade_present_score") or 0)
+    target.trade_score_band = str(option.get("trade_score_band") or "")
+    target.trade_from_onset_bps = float(option.get("trade_from_onset_bps") or 0.0)
+    target.trade_current_chunk_bps = float(option.get("trade_current_chunk_bps") or 0.0)
+    target.trade_recent_2chunk_bps = float(option.get("trade_recent_2chunk_bps") or 0.0)
+    target.trade_option_entry_reasons = list(option.get("trade_option_entry_reasons") or [])
+    target.trade_option_exit_rules = list(option.get("trade_option_exit_rules") or [])
+    target.trade_option_blockers = list(option.get("trade_option_blockers") or [])
+    target.trade_strategy_id = str(option.get("trade_strategy_id") or "")
+    target.trade_strategy_label = str(option.get("trade_strategy_label") or "")
+    target.trade_strategy_confidence = float(option.get("trade_strategy_confidence") or 0.0)
+    target.trade_strategy_side_override = str(option.get("trade_strategy_side_override") or "")
+    target.trade_strategy_reasons = list(option.get("trade_strategy_reasons") or [])
+    target.trade_strategy_blockers = list(option.get("trade_strategy_blockers") or [])
+    target.trade_strategy_stop_loss_bps = float(option.get("trade_strategy_stop_loss_bps") or 0.0)
+    target.trade_strategy_take_profit_bps = float(option.get("trade_strategy_take_profit_bps") or 0.0)
+    target.trade_strategy_exit_score_drop = int(option.get("trade_strategy_exit_score_drop") or 0)
+    target.trade_strategy_forced = bool(option.get("trade_strategy_forced"))
+    target.trade_strategy_variant_id = str(option.get("trade_strategy_variant_id") or "")
+    target.trade_strategy_risk_tags = list(option.get("trade_strategy_risk_tags") or [])
+    target.trade_strategy_handoff_hint = str(option.get("trade_strategy_handoff_hint") or "")
+    target.trade_strategy_source_queue_action = str(option.get("trade_strategy_source_queue_action") or "")
+    target.daily_news_context = dict(option.get("daily_news_context") or {})
+    target.daily_news_status = dict(option.get("daily_news_status") or {})
+
+
+def _apply_high_conviction_ticket(target: Any, inputs: dict[str, Any]) -> None:
+    target.high_conviction_ticket = build_high_conviction_ticket(
+        target,
+        inputs,
+        mode="practice",
+    )
 
 # Cascade playbooks override the base regime playbook when WHALE→HERD
 # direct transition fires (whale-tripped-the-herd; higher conviction).
@@ -480,6 +1289,15 @@ class SignalStore:
         # Latest fully-classified chunk per (asset, venue) — needed by
         # _emit_cross_venue_cascades to read wall-clock windows + bars
         self._latest_chunk_per_venue: dict[tuple[str, str], "MarketChunk"] = {}
+        # Latest pressure-watch inputs per (asset, venue). Raw dipole stays
+        # internal; _apply_pressure_watch converts this into trader-safe
+        # status fields after all venues have polled.
+        self._pressure_inputs: dict[tuple[str, str], dict[str, Any]] = {}
+        self._pressure_watch_alerted: set[tuple] = set()
+        self._mock_opportunity_logged: set[str] = set()
+        # Present-tense trade setup tracker. Historical pass-22 showed stage
+        # matters: a strong read at onset is different from a mature continuation.
+        self._trade_setup_tracker: dict[tuple[str, str], dict[str, Any]] = {}
         # Dedup set for cross-venue cascade emits (asset, frozenset(venues),
         # window_start_ts, window_end_ts). Reset on backend restart.
         self._cross_venue_cascade_emitted: set[tuple] = set()
@@ -736,6 +1554,13 @@ class SignalStore:
 
         # Apply F6 cross-venue multiplier to current statuses
         self._apply_cross_venue_F6()
+        # Convert internal dipole-derived pressure into reusable,
+        # trader-safe amber watch metadata.
+        self._apply_pressure_watch()
+        try:
+            await self._emit_high_priority_pressure_watch_alerts()
+        except Exception as e:
+            print(f"[pressure-watch] alert error: {e}", flush=True)
         # Emit cross-venue WHALE+HERD cascade signals (independent
         # confirmation across venues = top-of-book event)
         try:
@@ -804,6 +1629,28 @@ class SignalStore:
     async def _poll_one(self, asset: str, venue: str, bins_path: str):
         bars = self._bars_from_bins(bins_path)
         if len(bars) < CHUNK_MIN_SEGMENT:
+            if bars:
+                latest = bars[-1]
+                self.current_status[(asset, venue)] = RegimeStatus(
+                    asset=asset,
+                    venue=venue,
+                    regime="EQUILIBRIUM_TWO_SIDED",
+                    confidence=0.45,
+                    cross_venue_multiplier=1.0,
+                    adjusted_confidence=0.45,
+                    notes=[f"warming up live read ({len(bars)}/{CHUNK_MIN_SEGMENT} bars)"],
+                    mean_dipole=float(latest.dipole),
+                    realized_vol=0.0,
+                    chunk_window=(max(0, len(bars) - 1), len(bars)),
+                    last_update_utc=time.time(),
+                    current_price=float(latest.close),
+                    current_bid=float(latest.bid),
+                    current_ask=float(latest.ask),
+                    last_aggressor=str(latest.last_aggressor),
+                    chunk_buy_volume=float(latest.buy_vol),
+                    chunk_sell_volume=float(latest.sell_vol),
+                    chunk_n_trades=int(latest.n_trades),
+                )
             return
         chunker = MarketChunker(max_window_size=CHUNK_MAX_SIZE,
                                   stride=CHUNK_MAX_SIZE // 2,
@@ -894,6 +1741,84 @@ class SignalStore:
         prev_status = self.current_status.get((asset, venue))
         regime_changed = (prev_status is None) or (prev_status.regime != status.regime)
         self.current_status[(asset, venue)] = status
+        prev_feat = feats[-2] if len(feats) >= 2 else None
+        self._pressure_inputs[(asset, venue)] = {
+            "regime": status.regime,
+            "mean_dipole": float(latest_feat.mean_dipole),
+            "volume_zscore": float(latest_feat.volume_zscore),
+            "dipole_acl1": float(latest_feat.dipole_autocorr_lag1),
+            "prev_mean_dipole": (
+                float(prev_feat.mean_dipole) if prev_feat is not None else None
+            ),
+            "chunk_id": latest_chunk.chunk_id,
+            "spread_bps": (
+                ((status.current_ask - status.current_bid)
+                 / max((status.current_ask + status.current_bid) / 2.0, 1e-12)
+                 * 10000.0)
+                if status.current_ask > 0 and status.current_bid > 0
+                else 0.0
+            ),
+            "signed_move_bps": (
+                (1 if latest_feat.mean_dipole > 0 else -1)
+                * math.log(
+                    max(float(latest_chunk.bars[-1].close), 1e-12)
+                    / max(float(latest_chunk.bars[0].close), 1e-12)
+                ) * 10000.0
+                if latest_chunk.bars and latest_feat.mean_dipole != 0
+                else 0.0
+            ),
+            "realized_vol_bps": float(latest_feat.realized_vol) * 10000.0,
+            "chunk_total_volume": float(latest_feat.chunk_total_volume),
+            "chunk_start_price": (
+                float(latest_chunk.bars[0].close) if latest_chunk.bars else 0.0
+            ),
+            "chunk_close_price": (
+                float(latest_chunk.bars[-1].close) if latest_chunk.bars else 0.0
+            ),
+            "recent_2chunk_start_price": (
+                float(chunks[-2].bars[0].close)
+                if len(chunks) >= 2 and chunks[-2].bars else (
+                    float(latest_chunk.bars[0].close) if latest_chunk.bars else 0.0
+                )
+            ),
+            "strategy_mode": (
+                "live_paper"
+                if bool(_load_auto_trade_settings().get("practice", True))
+                else "product"
+            ),
+            "bucket_session": _live_bucket_session(),
+            "allow_context_probes": False,
+            "allow_promoted_context_rerun": False,
+            "requested_strategy_families": [
+                "SMALL_MOVE_FADE",
+                "BUY_UP_CONTINUATION",
+                "BUY_FADE",
+                "SELL_DOWN_CONTINUATION",
+                "MEAN_REVERSION_CHOP",
+                "NEWS_BREAKOUT",
+                "LIQUIDITY_SQUEEZE",
+                "VOL_BREAKOUT",
+                "BASIS_DISLOCATION",
+                "RELATIVE_STRENGTH",
+            ],
+        }
+        local_watch = _pressure_watch_from_features(
+            regime=status.regime,
+            mean_dipole=float(latest_feat.mean_dipole),
+            volume_zscore=float(latest_feat.volume_zscore),
+            dipole_acl1=float(latest_feat.dipole_autocorr_lag1),
+            prev_mean_dipole=(
+                float(prev_feat.mean_dipole) if prev_feat is not None else None
+            ),
+        )
+        _apply_pressure_fields(status, local_watch)
+        self._apply_present_trade_context((asset, venue), status, self._pressure_inputs[(asset, venue)])
+        _apply_trade_option_fields(
+            status,
+            _trade_option_from_status(
+                status, self._pressure_inputs[(asset, venue)]),
+        )
+        _apply_high_conviction_ticket(status, self._pressure_inputs[(asset, venue)])
 
         # Track new-chunk transitions for both the production and demo emit paths
         last_emitted = self.last_chunk_id_per_source.get((asset, venue))
@@ -1050,6 +1975,33 @@ class SignalStore:
                 convergence_tier=status.convergence_tier,
                 convergence_bonus=status.convergence_bonus,
                 convergence_summary=status.convergence_summary,
+                pressure_watch_state=status.pressure_watch_state,
+                pressure_watch_label=status.pressure_watch_label,
+                pressure_watch_direction=status.pressure_watch_direction,
+                pressure_watch_intensity=status.pressure_watch_intensity,
+                pressure_watch_priority=status.pressure_watch_priority,
+                pressure_watch_reasons=list(status.pressure_watch_reasons),
+                trade_option_state=status.trade_option_state,
+                trade_option_label=status.trade_option_label,
+                trade_option_side=status.trade_option_side,
+                trade_option_readiness=status.trade_option_readiness,
+                trade_option_profile=status.trade_option_profile,
+                trade_option_size_hint=status.trade_option_size_hint,
+                trade_option_notional_scale=status.trade_option_notional_scale,
+                trade_option_hold_minutes=status.trade_option_hold_minutes,
+                trade_option_entry_reasons=list(status.trade_option_entry_reasons),
+                trade_option_exit_rules=list(status.trade_option_exit_rules),
+                trade_option_blockers=list(status.trade_option_blockers),
+                trade_strategy_id=status.trade_strategy_id,
+                trade_strategy_label=status.trade_strategy_label,
+                trade_strategy_confidence=status.trade_strategy_confidence,
+                trade_strategy_reasons=list(status.trade_strategy_reasons),
+                trade_strategy_blockers=list(status.trade_strategy_blockers),
+                trade_strategy_stop_loss_bps=status.trade_strategy_stop_loss_bps,
+                trade_strategy_take_profit_bps=status.trade_strategy_take_profit_bps,
+                trade_strategy_exit_score_drop=status.trade_strategy_exit_score_drop,
+                daily_news_context=dict(status.daily_news_context),
+                daily_news_status=dict(status.daily_news_status),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -1094,6 +2046,33 @@ class SignalStore:
                 entry_price=float(latest_chunk.bars[-1].close) if latest_chunk.bars else 0.0,
                 expected_direction=expected_direction_from_signal(
                     "EQUILIBRIUM_EXTREME_DEMO", latest_feat.mean_dipole),
+                pressure_watch_state=status.pressure_watch_state,
+                pressure_watch_label=status.pressure_watch_label,
+                pressure_watch_direction=status.pressure_watch_direction,
+                pressure_watch_intensity=status.pressure_watch_intensity,
+                pressure_watch_priority=status.pressure_watch_priority,
+                pressure_watch_reasons=list(status.pressure_watch_reasons),
+                trade_option_state=status.trade_option_state,
+                trade_option_label=status.trade_option_label,
+                trade_option_side=status.trade_option_side,
+                trade_option_readiness=status.trade_option_readiness,
+                trade_option_profile=status.trade_option_profile,
+                trade_option_size_hint=status.trade_option_size_hint,
+                trade_option_notional_scale=status.trade_option_notional_scale,
+                trade_option_hold_minutes=status.trade_option_hold_minutes,
+                trade_option_entry_reasons=list(status.trade_option_entry_reasons),
+                trade_option_exit_rules=list(status.trade_option_exit_rules),
+                trade_option_blockers=list(status.trade_option_blockers),
+                trade_strategy_id=status.trade_strategy_id,
+                trade_strategy_label=status.trade_strategy_label,
+                trade_strategy_confidence=status.trade_strategy_confidence,
+                trade_strategy_reasons=list(status.trade_strategy_reasons),
+                trade_strategy_blockers=list(status.trade_strategy_blockers),
+                trade_strategy_stop_loss_bps=status.trade_strategy_stop_loss_bps,
+                trade_strategy_take_profit_bps=status.trade_strategy_take_profit_bps,
+                trade_strategy_exit_score_drop=status.trade_strategy_exit_score_drop,
+                daily_news_context=dict(status.daily_news_context),
+                daily_news_status=dict(status.daily_news_status),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -1167,6 +2146,33 @@ class SignalStore:
                 convergence_tier=status.convergence_tier,
                 convergence_bonus=status.convergence_bonus,
                 convergence_summary=status.convergence_summary,
+                pressure_watch_state=status.pressure_watch_state,
+                pressure_watch_label=status.pressure_watch_label,
+                pressure_watch_direction=status.pressure_watch_direction,
+                pressure_watch_intensity=status.pressure_watch_intensity,
+                pressure_watch_priority=status.pressure_watch_priority,
+                pressure_watch_reasons=list(status.pressure_watch_reasons),
+                trade_option_state=status.trade_option_state,
+                trade_option_label=status.trade_option_label,
+                trade_option_side=status.trade_option_side,
+                trade_option_readiness=status.trade_option_readiness,
+                trade_option_profile=status.trade_option_profile,
+                trade_option_size_hint=status.trade_option_size_hint,
+                trade_option_notional_scale=status.trade_option_notional_scale,
+                trade_option_hold_minutes=status.trade_option_hold_minutes,
+                trade_option_entry_reasons=list(status.trade_option_entry_reasons),
+                trade_option_exit_rules=list(status.trade_option_exit_rules),
+                trade_option_blockers=list(status.trade_option_blockers),
+                trade_strategy_id=status.trade_strategy_id,
+                trade_strategy_label=status.trade_strategy_label,
+                trade_strategy_confidence=status.trade_strategy_confidence,
+                trade_strategy_reasons=list(status.trade_strategy_reasons),
+                trade_strategy_blockers=list(status.trade_strategy_blockers),
+                trade_strategy_stop_loss_bps=status.trade_strategy_stop_loss_bps,
+                trade_strategy_take_profit_bps=status.trade_strategy_take_profit_bps,
+                trade_strategy_exit_score_drop=status.trade_strategy_exit_score_drop,
+                daily_news_context=dict(status.daily_news_context),
+                daily_news_status=dict(status.daily_news_status),
             )
             self.recent_signals.append(sig)
             self.signal_index[sig.signal_id] = sig
@@ -1190,7 +2196,734 @@ class SignalStore:
                     cells=live_cells, convergence=convergence)
             except Exception as e:
                 print(f"[forward-paper] open error {asset}/{venue}: {e}", flush=True)
+            try:
+                self._maybe_open_auto_trade_option(asset, venue, status, latest_chunk)
+            except Exception as e:
+                print(f"[auto-trade] open error {asset}/{venue}: {e}", flush=True)
+            try:
+                self._maybe_open_mock_trade_scenarios(asset, venue, status, latest_chunk)
+            except Exception as e:
+                print(f"[mock-trade] open/log error {asset}/{venue}: {e}", flush=True)
             self.last_paper_chunk_id_per_source[(asset, venue)] = latest_chunk.chunk_id
+
+    def _maybe_open_auto_trade_option(self, asset: str, venue: str,
+                                      status: RegimeStatus, chunk) -> None:
+        settings = _load_auto_trade_settings()
+        if not settings.get("enabled"):
+            return
+        if status.trade_option_state not in ("early_probe", "confirmed"):
+            return
+        profile = status.trade_option_profile or ""
+        if profile not in settings.get("profiles", []):
+            return
+        if int(status.trade_option_readiness or 0) < int(settings.get("min_readiness") or 55):
+            return
+        if status.trade_option_blockers:
+            return
+
+        trades = _load_practice_trades()
+        open_auto = [
+            t for t in trades
+            if t.get("status") == "open"
+            and t.get("auto") is True
+            and str(t.get("cell_id", "")).startswith("auto_trade_option_")
+        ]
+        if len(open_auto) >= int(settings.get("max_open_trades") or 3):
+            return
+        prefix = f"auto_trade_option_{asset.lower()}_{venue.lower()}_{profile}_"
+        for t in open_auto:
+            if str(t.get("cell_id", "")).startswith(prefix):
+                return
+
+        side = status.trade_option_side
+        if side not in ("buy", "sell"):
+            return
+        bid, ask, mid = _current_quote(asset, venue)
+        fill_price = float(ask if side == "buy" else bid) or float(mid)
+        if fill_price <= 0:
+            return
+
+        scale = float(status.trade_option_notional_scale or 0.0)
+        if scale <= 0:
+            return
+        notional = float(settings.get("base_notional_usd") or 1000.0) * scale
+        qty = notional / fill_price
+        fee_usd = notional * (_PRACTICE_FEE_BPS / 10000.0)
+        chunk_id = getattr(chunk, "chunk_id", str(round(time.time())))
+        trade = {
+            "intent_id": str(uuid.uuid4())[:12],
+            "asset": asset,
+            "venue": venue,
+            "side": side,
+            "price": float(fill_price),
+            "qty": float(qty),
+            "notional": float(notional),
+            "note": (
+                f"auto {status.trade_option_label}: "
+                f"readiness={status.trade_option_readiness}/100; "
+                f"{'; '.join(status.trade_option_entry_reasons[:3])}"
+            ),
+            "ts_utc": time.time(),
+            "practice": bool(settings.get("practice", True)),
+            "auto": True,
+            "cell_id": f"{prefix}{chunk_id}",
+            "kind": "practice" if settings.get("practice", True) else "live_intent",
+            "status": "open",
+            "fill_price": float(fill_price),
+            "fees_usd": float(fee_usd),
+            "fee_bps": _PRACTICE_FEE_BPS,
+            "bucket_session": str(self._pressure_inputs.get((asset, venue), {}).get("bucket_session") or _live_bucket_session()),
+            "exit_price": 0.0,
+            "exit_ts_utc": 0.0,
+            "realized_pnl_usd": 0.0,
+            "hold_minutes": float(status.trade_option_hold_minutes or 10),
+            "trade_option_state": status.trade_option_state,
+            "trade_option_profile": status.trade_option_profile,
+            "trade_option_readiness": status.trade_option_readiness,
+            "trade_stage": status.trade_stage,
+            "trade_age_chunks": status.trade_age_chunks,
+            "trade_present_score": status.trade_present_score,
+            "trade_score_band": status.trade_score_band,
+            "trade_from_onset_bps": status.trade_from_onset_bps,
+            "trade_current_chunk_bps": status.trade_current_chunk_bps,
+            "trade_recent_2chunk_bps": status.trade_recent_2chunk_bps,
+            "mean_dipole": float(status.mean_dipole),
+            "trade_option_exit_rules": list(status.trade_option_exit_rules),
+            "trade_strategy_id": status.trade_strategy_id,
+            "trade_strategy_label": status.trade_strategy_label,
+            "trade_strategy_mode": "live_paper" if settings.get("practice", True) else "product",
+            "trade_strategy_confidence": status.trade_strategy_confidence,
+            "trade_strategy_reasons": list(status.trade_strategy_reasons),
+            "trade_strategy_blockers": list(status.trade_strategy_blockers),
+            "trade_strategy_stop_loss_bps": status.trade_strategy_stop_loss_bps,
+            "trade_strategy_take_profit_bps": status.trade_strategy_take_profit_bps,
+            "trade_strategy_exit_score_drop": status.trade_strategy_exit_score_drop,
+            "trade_strategy_forced": bool(status.trade_strategy_forced),
+            "trade_strategy_variant_id": status.trade_strategy_variant_id,
+            "trade_strategy_risk_tags": list(status.trade_strategy_risk_tags),
+            "trade_strategy_handoff_hint": status.trade_strategy_handoff_hint,
+            "trade_strategy_source_queue_action": status.trade_strategy_source_queue_action,
+            "daily_news_context": dict(status.daily_news_context),
+            "daily_news_status": dict(status.daily_news_status),
+            "high_conviction_ticket": dict(status.high_conviction_ticket),
+            "dipole_coupling": dict((status.high_conviction_ticket.get("dipole_coupling") if status.high_conviction_ticket else {}) or {}),
+            "onchain_features": dict(((status.high_conviction_ticket.get("onchain_context") if status.high_conviction_ticket else {}) or {}).get("features") or {}),
+            "pressure_watch_state": status.pressure_watch_state,
+            "pressure_watch_label": status.pressure_watch_label,
+            "pressure_watch_reasons": list(status.pressure_watch_reasons),
+        }
+        if settings.get("practice", True):
+            _persist_practice_trade(trade)
+            print(
+                f"[auto-trade] practice opened {trade['cell_id']} "
+                f"{side} {asset}/{venue} @ {fill_price:.4f} "
+                f"notional={notional:.2f} readiness={status.trade_option_readiness}",
+                flush=True,
+            )
+            return
+
+        # Disabled unless MARKETS_WATCH_ALLOW_LIVE_AUTO_TRADE=1.
+        live_intent = dict(trade)
+        live_intent["status"] = "submitted"
+        with open(_MANUAL_INTENT_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(live_intent) + "\n")
+        self.event_queue.put_nowait({"type": "manual_trade_intent", "data": live_intent})
+
+    def _mock_scenario_blocker(self, scenario: dict, status: RegimeStatus) -> str:
+        route_action = str(status.trade_strategy_source_queue_action or "")
+        risk_tags = {str(tag) for tag in (status.trade_strategy_risk_tags or [])}
+        if bool(status.trade_strategy_forced) and (
+            route_action in {
+                "oracle_distilled_no_side_context",
+                "oracle_distilled_strategy_context",
+                "context_routing_exact_positive_pnl_instance",
+                "context_routing_exact_instance_avoided_bad_queue",
+            }
+            or "oracle_distilled_context" in risk_tags
+        ):
+            return ""
+        score = int(status.trade_present_score or status.trade_option_readiness or 0)
+        if score < int(scenario.get("min_present_score") or 0):
+            return f"present score {score} below scenario minimum"
+        if score > int(scenario.get("max_present_score") or 100):
+            return f"present score {score} above scenario maximum"
+        if status.trade_stage not in set(scenario.get("allowed_stages") or []):
+            return f"stage {status.trade_stage or 'unknown'} not allowed"
+        if status.trade_option_state not in set(scenario.get("allowed_trade_states") or []):
+            return f"trade state {status.trade_option_state or 'unknown'} not allowed"
+        if status.pressure_watch_state not in set(scenario.get("allowed_pressure_states") or []):
+            return f"pressure state {status.pressure_watch_state or 'none'} not allowed"
+        allowed_strategies = {str(x).upper() for x in scenario.get("allowed_strategies") or []}
+        disabled_strategies = {str(x).upper() for x in scenario.get("disabled_strategies") or []}
+        strategy_id = str(status.trade_strategy_id or NO_TRADE).upper()
+        if strategy_id in DISABLED_STRATEGIES:
+            return f"strategy {strategy_id} disabled globally"
+        if strategy_id == NO_TRADE:
+            return "strategy no trade"
+        if bool(status.trade_strategy_forced):
+            return "forced learning probe not eligible for compounding mock execution"
+        if route_action not in {
+            "context_routing_exact_positive_pnl_instance",
+            "context_routing_exact_instance_avoided_bad_queue",
+        }:
+            return "strategy lacks exact positive historical route"
+        if allowed_strategies and strategy_id not in allowed_strategies:
+            return f"strategy {strategy_id} not allowed"
+        if strategy_id in disabled_strategies:
+            return f"strategy {strategy_id} disabled"
+
+        if status.trade_strategy_blockers:
+            return str(status.trade_strategy_blockers[0])
+        for blocker in status.trade_option_blockers or []:
+            text = str(blocker)
+            if "Daily news context is stale" in text:
+                continue
+            return text
+        return ""
+
+    def _log_mock_trade_opportunity(
+        self,
+        *,
+        settings: dict,
+        scenario: dict,
+        status: RegimeStatus,
+        chunk_id: str,
+        decision: str,
+        reason: str,
+        side: str = "",
+        fill_price: float = 0.0,
+        notional: float = 0.0,
+        bankroll: dict[str, Any] | None = None,
+        cell_id: str = "",
+        inputs: dict[str, Any] | None = None,
+        trade: dict | None = None,
+    ) -> None:
+        sid = str(scenario.get("id") or "")
+        if not sid:
+            return
+        key = "|".join([
+            sid,
+            str(status.asset),
+            str(status.venue),
+            str(chunk_id),
+            str(decision),
+            str(reason),
+        ])
+        if key in self._mock_opportunity_logged:
+            return
+        self._mock_opportunity_logged.add(key)
+        if len(self._mock_opportunity_logged) > 50000:
+            self._mock_opportunity_logged = set(list(self._mock_opportunity_logged)[-25000:])
+
+        inputs = inputs or {}
+        row = {
+            "schema": "live_mock_trade_opportunity_v1",
+            "ts_utc": time.time(),
+            "source": "backend_live_mock_trade_opportunity",
+            "decision": decision,
+            "reason": reason,
+            "asset": status.asset,
+            "venue": status.venue,
+            "side": side or status.trade_option_side or status.pressure_watch_direction,
+            "cell_id": cell_id,
+            "chunk_id": str(chunk_id),
+            "bucket_session": str(inputs.get("bucket_session") or _live_bucket_session()),
+            "scenario_id": sid,
+            "scenario_label": str(scenario.get("label") or sid),
+            "notional_pct_bank": float(scenario.get("notional_pct_bank") or 0.0),
+            "initial_bank_usd": float(settings.get("initial_bank_usd") or 10000.0),
+            "mock_equity_usd": float((bankroll or {}).get("equity_usd") or 0.0),
+            "mock_bank_usd": float((bankroll or {}).get("bank_usd") or 0.0),
+            "mock_realized_pnl_usd": float((bankroll or {}).get("realized_pnl_usd") or 0.0),
+            "mock_open_exposure_usd": float((bankroll or {}).get("open_exposure_usd") or 0.0),
+            "planned_notional_usd": float(notional or 0.0),
+            "fill_price": float(fill_price or 0.0),
+            "actual_execution": False,
+            "actual_notional": 0.0,
+            "learning_capital_model": "full_bank_hypothetical_no_exposure_lock",
+            "exit_params_path": str(settings.get("exit_params_path") or ""),
+            "exit_params_loaded": bool(settings.get("exit_params_loaded")),
+            "trade_strategy_id": status.trade_strategy_id,
+            "trade_strategy_label": status.trade_strategy_label,
+            "trade_strategy_mode": "live_paper",
+            "trade_strategy_confidence": status.trade_strategy_confidence,
+            "trade_strategy_variant_id": status.trade_strategy_variant_id,
+            "trade_strategy_forced": bool(status.trade_strategy_forced),
+            "trade_strategy_reasons": list(status.trade_strategy_reasons),
+            "trade_strategy_blockers": list(status.trade_strategy_blockers),
+            "trade_strategy_risk_tags": list(status.trade_strategy_risk_tags),
+            "trade_strategy_source_queue_action": status.trade_strategy_source_queue_action,
+            "trade_option_state": status.trade_option_state,
+            "trade_option_profile": status.trade_option_profile,
+            "trade_option_readiness": status.trade_option_readiness,
+            "trade_option_blockers": list(status.trade_option_blockers),
+            "trade_stage": status.trade_stage,
+            "trade_age_chunks": status.trade_age_chunks,
+            "trade_present_score": status.trade_present_score,
+            "trade_score_band": status.trade_score_band,
+            "trade_from_onset_bps": status.trade_from_onset_bps,
+            "trade_current_chunk_bps": status.trade_current_chunk_bps,
+            "trade_recent_2chunk_bps": status.trade_recent_2chunk_bps,
+            "pressure_watch_state": status.pressure_watch_state,
+            "pressure_watch_label": status.pressure_watch_label,
+            "pressure_watch_direction": status.pressure_watch_direction,
+            "pressure_watch_reasons": list(status.pressure_watch_reasons),
+            "regime": status.regime,
+            "confidence": status.confidence,
+            "adjusted_confidence": status.adjusted_confidence,
+            "mean_dipole": status.mean_dipole,
+            "volume_zscore": float(inputs.get("volume_zscore") or 0.0),
+            "dipole_acl1": float(inputs.get("dipole_acl1") or 0.0),
+            "daily_news_context": dict(status.daily_news_context),
+            "daily_news_status": dict(status.daily_news_status),
+            "opened_trade_intent_id": str((trade or {}).get("intent_id") or ""),
+        }
+        try:
+            os.makedirs(os.path.dirname(_LIVE_MOCK_OPPORTUNITIES_PATH), exist_ok=True)
+            with open(_LIVE_MOCK_OPPORTUNITIES_PATH, "a", encoding="utf-8") as f:
+                f.write(json.dumps(row, sort_keys=True, default=str) + "\n")
+        except Exception as e:
+            print(f"[mock-trade] opportunity log error: {e}", flush=True)
+
+    def _maybe_open_mock_trade_scenarios(self, asset: str, venue: str,
+                                         status: RegimeStatus, chunk) -> None:
+        settings = _load_mock_trade_settings(load_exit_params=True)
+        if not settings.get("enabled") or not settings.get("backend_controller_enabled", True):
+            return
+        side = status.trade_option_side or status.pressure_watch_direction
+        bid, ask, mid = _current_quote(asset, venue)
+        fill_price = float((ask if side == "buy" else bid) if side in ("buy", "sell") else 0.0) or float(mid)
+
+        trades = _load_practice_trades()
+        min_notional = float(settings.get("min_trade_notional_usd") or 25.0)
+        inputs = self._pressure_inputs.get((asset, venue), {})
+        bucket_session = str(inputs.get("bucket_session") or _live_bucket_session())
+        exit_params_map = settings.get("exit_params_map") or {}
+
+        chunk_id = getattr(chunk, "chunk_id", str(round(time.time())))
+        for scenario in settings.get("scenarios") or []:
+            if not scenario.get("enabled", True):
+                continue
+            sid = str(scenario.get("id") or "")
+            if not sid:
+                continue
+            prefix = f"mock_trade_scenario_{sid}_{asset.lower()}_{venue.lower()}_"
+            cell_id = f"{prefix}{chunk_id}"
+            bankroll = _mock_trade_bankroll(settings, trades, scenario_id=sid)
+            if side not in ("buy", "sell"):
+                self._log_mock_trade_opportunity(
+                    settings=settings,
+                    scenario=scenario,
+                    status=status,
+                    chunk_id=str(chunk_id),
+                    decision="skipped",
+                    reason="no_trade_side",
+                    cell_id=cell_id,
+                    bankroll=bankroll,
+                    inputs=inputs,
+                )
+                continue
+            if fill_price <= 0:
+                self._log_mock_trade_opportunity(
+                    settings=settings,
+                    scenario=scenario,
+                    status=status,
+                    chunk_id=str(chunk_id),
+                    decision="skipped",
+                    reason="no_fill_price",
+                    side=side,
+                    cell_id=cell_id,
+                    bankroll=bankroll,
+                    inputs=inputs,
+                )
+                continue
+            blocker = self._mock_scenario_blocker(scenario, status)
+            if blocker:
+                self._log_mock_trade_opportunity(
+                    settings=settings,
+                    scenario=scenario,
+                    status=status,
+                    chunk_id=str(chunk_id),
+                    decision="blocked",
+                    reason=blocker,
+                    side=side,
+                    fill_price=fill_price,
+                    cell_id=cell_id,
+                    bankroll=bankroll,
+                    inputs=inputs,
+                )
+                continue
+            if any(str(t.get("cell_id", "")) == cell_id for t in trades):
+                self._log_mock_trade_opportunity(
+                    settings=settings,
+                    scenario=scenario,
+                    status=status,
+                    chunk_id=str(chunk_id),
+                    decision="skipped",
+                    reason="already_opened_for_chunk",
+                    side=side,
+                    fill_price=fill_price,
+                    cell_id=cell_id,
+                    bankroll=bankroll,
+                    inputs=inputs,
+                )
+                continue
+            notional = float(settings.get("initial_bank_usd") or 10000.0) * float(
+                scenario.get("notional_pct_bank") or 0.0
+            )
+            if notional < min_notional:
+                self._log_mock_trade_opportunity(
+                    settings=settings,
+                    scenario=scenario,
+                    status=status,
+                    chunk_id=str(chunk_id),
+                    decision="blocked",
+                    reason="below_min_notional",
+                    side=side,
+                    fill_price=fill_price,
+                    notional=notional,
+                    cell_id=cell_id,
+                    bankroll=bankroll,
+                    inputs=inputs,
+                )
+                continue
+            qty = notional / fill_price
+            fee_bps = float(settings.get("mock_fee_bps") or _PRACTICE_FEE_BPS)
+            fee_usd = notional * (fee_bps / 10000.0)
+            scenario_for_exit = dict(scenario)
+            if exit_params_map:
+                scenario_for_exit["exit_params_map"] = exit_params_map
+            exit_profile = trade_exit_strategy.exit_profile_from_scenario(scenario_for_exit)
+            trade = {
+                "intent_id": str(uuid.uuid4())[:12],
+                "asset": asset,
+                "venue": venue,
+                "side": side,
+                "price": float(fill_price),
+                "qty": float(qty),
+                "qty_initial": float(qty),
+                "qty_open": float(qty),
+                "notional": float(notional),
+                "note": (
+                    f"mock {scenario.get('label') or sid}: "
+                    f"score={status.trade_present_score}/100 stage={status.trade_stage}; "
+                    f"{'; '.join((status.trade_option_entry_reasons or [])[:2])}"
+                ),
+                "ts_utc": time.time(),
+                "practice": True,
+                "auto": True,
+                "source": "mock_scenario",
+                "cell_id": cell_id,
+                "kind": "practice",
+                "status": "open",
+                "fill_price": float(fill_price),
+                "fees_usd": float(fee_usd),
+                "entry_fees_usd": float(fee_usd),
+                "fee_bps": fee_bps,
+                "hypothetical_notional": float(notional),
+                "actual_notional": 0.0,
+                "actual_execution": False,
+                "actual_side": side,
+                "learning_capital_model": "full_bank_hypothetical_no_exposure_lock",
+                "bucket_session": bucket_session,
+                "exit_management_model": exit_profile.profile_id,
+                "exit_strategy_id": exit_profile.profile_id,
+                "exit_strategy_label": exit_profile.label,
+                "score_exit_min_hold_minutes": exit_profile.score_exit_min_hold_minutes,
+                "score_exit_min_profit_bps": exit_profile.score_exit_min_profit_bps,
+                "profitable_hold_extension_minutes": exit_profile.profitable_hold_extension_minutes,
+                "exit_tp1_bps": exit_profile.tp1_bps,
+                "exit_scale_out_fraction": exit_profile.scale_out_fraction,
+                "exit_runner_trail_bps": exit_profile.runner_trail_bps,
+                "exit_max_hold_minutes": exit_profile.max_hold_minutes,
+                "suggested_exit_strategy_id": trade_exit_strategy.suggested_exit_profile_id_for_strategy(status.trade_strategy_id),
+                "exit_stage": "stage1",
+                "scale_out_count": 0,
+                "scale_out_fraction_realized": 0.0,
+                "scale_out_tp1_bps": 0.0,
+                "runner_exit_reason": "",
+                "exit_legs": [],
+                "exit_price": 0.0,
+                "exit_ts_utc": 0.0,
+                "gross_pnl_usd": 0.0,
+                "realized_pnl_usd": 0.0,
+                "hold_minutes": float(scenario.get("hold_minutes") or status.trade_option_hold_minutes or 10),
+                "mock_scenario_id": sid,
+                "mock_scenario_label": str(scenario.get("label") or sid),
+                "mock_scenario_min_present_score": int(scenario.get("min_present_score") or 0),
+                "mock_scenario_exit_score_drop": int(scenario.get("exit_score_drop") or 0),
+                "mock_scenario_stop_loss_bps": float(scenario.get("stop_loss_bps") or 0.0),
+                "mock_scenario_take_profit_bps": float(scenario.get("take_profit_bps") or 0.0),
+                "mock_bank_usd_at_entry": float(settings.get("initial_bank_usd") or 10000.0),
+                "mock_equity_usd_at_entry": float(bankroll["equity_usd"]),
+                "mock_realized_pnl_usd_at_entry": float(bankroll["realized_pnl_usd"]),
+                "mock_exposure_cap_usd_at_entry": float(bankroll["exposure_cap_usd"]),
+                "trade_option_state": status.trade_option_state,
+                "trade_option_profile": status.trade_option_profile,
+                "trade_option_readiness": status.trade_option_readiness,
+                "trade_stage": status.trade_stage,
+                "trade_age_chunks": status.trade_age_chunks,
+                "trade_present_score": status.trade_present_score,
+                "trade_score_band": status.trade_score_band,
+                "trade_from_onset_bps": status.trade_from_onset_bps,
+                "trade_current_chunk_bps": status.trade_current_chunk_bps,
+                "trade_recent_2chunk_bps": status.trade_recent_2chunk_bps,
+                "mean_dipole": float(status.mean_dipole),
+                "trade_option_exit_rules": list(status.trade_option_exit_rules),
+                "trade_strategy_id": status.trade_strategy_id,
+                "trade_strategy_label": status.trade_strategy_label,
+                "trade_strategy_mode": "live_paper",
+                "trade_strategy_confidence": status.trade_strategy_confidence,
+                "trade_strategy_reasons": list(status.trade_strategy_reasons),
+                "trade_strategy_blockers": list(status.trade_strategy_blockers),
+                "trade_strategy_stop_loss_bps": status.trade_strategy_stop_loss_bps,
+                "trade_strategy_take_profit_bps": status.trade_strategy_take_profit_bps,
+                "trade_strategy_exit_score_drop": status.trade_strategy_exit_score_drop,
+                "trade_strategy_forced": bool(status.trade_strategy_forced),
+                "trade_strategy_variant_id": status.trade_strategy_variant_id,
+                "trade_strategy_risk_tags": list(status.trade_strategy_risk_tags),
+                "trade_strategy_handoff_hint": status.trade_strategy_handoff_hint,
+                "trade_strategy_source_queue_action": status.trade_strategy_source_queue_action,
+                "daily_news_context": dict(status.daily_news_context),
+                "daily_news_status": dict(status.daily_news_status),
+                "high_conviction_ticket": dict(status.high_conviction_ticket),
+                "dipole_coupling": dict((status.high_conviction_ticket.get("dipole_coupling") if status.high_conviction_ticket else {}) or {}),
+                "onchain_features": dict(((status.high_conviction_ticket.get("onchain_context") if status.high_conviction_ticket else {}) or {}).get("features") or {}),
+                "pressure_watch_state": status.pressure_watch_state,
+                "pressure_watch_label": status.pressure_watch_label,
+                "pressure_watch_reasons": list(status.pressure_watch_reasons),
+            }
+            _stamp_practice_exit_profile(trade, scenario_for_exit)
+            _persist_practice_trade(trade)
+            self._log_mock_trade_opportunity(
+                settings=settings,
+                scenario=scenario,
+                status=status,
+                chunk_id=str(chunk_id),
+                decision="opened",
+                reason="opened",
+                side=side,
+                fill_price=fill_price,
+                notional=notional,
+                bankroll=bankroll,
+                cell_id=cell_id,
+                inputs=inputs,
+                trade=trade,
+            )
+            print(
+                f"[mock-trade] opened {sid} {side} {asset}/{venue} "
+                f"notional={notional:.2f} bank={bankroll['bank_usd']:.2f} "
+                f"score={status.trade_present_score}",
+                flush=True,
+            )
+
+    def _maybe_rotate_mock_trade(self, scenario: dict, incoming_status: RegimeStatus,
+                                 trades: list[dict], min_notional: float) -> bool:
+        sid = str(scenario.get("id") or "")
+        incoming_score = int(incoming_status.trade_present_score or 0)
+        open_same = [
+            t for t in trades
+            if t.get("status") == "open"
+            and t.get("source") == "mock_scenario"
+            and str(t.get("mock_scenario_id") or "") == sid
+        ]
+        if not open_same:
+            return False
+
+        stage_penalty = {"late": 0, "mature": 1, "early_follow": 2, "onset": 3}
+
+        def _row(t: dict) -> tuple[float, int, int, bool, dict]:
+            unreal_bps = _practice_trade_unrealized_bps(t)
+            st = self.current_status.get((str(t.get("asset") or ""), str(t.get("venue") or "")))
+            live_score = int(
+                (st.trade_present_score if st is not None else 0)
+                or t.get("trade_present_score")
+                or 0
+            )
+            live_stage = str((st.trade_stage if st is not None else "") or t.get("trade_stage") or "")
+            entry_score = int(t.get("trade_present_score") or live_score or 0)
+            degrading = (
+                unreal_bps <= float(scenario.get("rotation_min_underperform_bps", -5.0))
+                or live_stage == "late"
+                or live_score <= entry_score - int(scenario.get("rotation_min_score_advantage") or 10)
+            )
+            return (
+                float(unreal_bps),
+                live_score,
+                int(stage_penalty.get(live_stage, 0)),
+                bool(degrading),
+                t,
+            )
+
+        ranked = sorted((_row(t) for t in open_same), key=lambda r: (r[0], r[1], r[2]))
+        weakest_unreal_bps, weakest_score, _stage_rank, degrading, weakest = ranked[0]
+        score_advantage = int(scenario.get("rotation_min_score_advantage") or 10)
+        if incoming_score < weakest_score + score_advantage:
+            return False
+        if bool(scenario.get("rotation_require_degrading", True)) and not degrading:
+            return False
+        if float(weakest.get("notional") or 0.0) < min_notional:
+            return False
+        if _close_practice_trade_at_market(weakest, "rotation_to_better_performer"):
+            weakest["rotation_to_asset"] = incoming_status.asset
+            weakest["rotation_to_venue"] = incoming_status.venue
+            weakest["rotation_to_score"] = incoming_score
+            weakest["rotation_from_score"] = weakest_score
+            weakest["rotation_from_unrealized_bps"] = round(float(weakest_unreal_bps), 4)
+            print(
+                f"[mock-trade] rotated {sid}: closed {weakest.get('asset')}/"
+                f"{weakest.get('venue')} score={weakest_score} "
+                f"unreal_bps={weakest_unreal_bps:.2f} for "
+                f"{incoming_status.asset}/{incoming_status.venue} score={incoming_score}",
+                flush=True,
+            )
+            return True
+        return False
+
+    def _auto_trade_invalidation_reason(self, trade: dict) -> str:
+        if trade.get("status") != "open":
+            return ""
+        if trade.get("auto") is not True:
+            return ""
+        cell_id = str(trade.get("cell_id", ""))
+        is_trade_option = cell_id.startswith("auto_trade_option_")
+        is_mock_scenario = cell_id.startswith("mock_trade_scenario_")
+        if not is_trade_option and not is_mock_scenario:
+            return ""
+
+        asset = str(trade.get("asset") or "")
+        venue = str(trade.get("venue") or "")
+        status = self.current_status.get((asset, venue))
+        if status is None:
+            return ""
+
+        side = str(trade.get("side") or "")
+        if side not in ("buy", "sell"):
+            return ""
+
+        pressure_dir = str(status.pressure_watch_direction or "")
+        if pressure_dir in ("buy", "sell") and pressure_dir != side:
+            return "pressure_flipped"
+
+        if status.regime in STRONG_PRESSURE_REGIMES:
+            strong_side = "buy" if status.regime.endswith("_UP") else "sell"
+            if strong_side != side:
+                return "opposite_whale_herd"
+
+        profile = str(trade.get("trade_option_profile") or "")
+        if profile == "early_probe" and status.trade_option_state == "watch":
+            return "setup_degraded_to_watch"
+
+        if status.trade_stage == "late":
+            return "setup_late"
+
+        min_score = int(trade.get("mock_scenario_min_present_score") or 55)
+        if int(status.trade_present_score or 0) and status.trade_present_score < min_score:
+            return "present_score_degraded"
+
+        if is_mock_scenario:
+            entry_score = int(trade.get("trade_present_score") or 0)
+            score_drop = int(trade.get("mock_scenario_exit_score_drop") or 0)
+            score_drop = score_drop or int(trade.get("trade_strategy_exit_score_drop") or 0)
+            if score_drop and entry_score and int(status.trade_present_score or 0) <= entry_score - score_drop:
+                return "present_score_dropped_from_entry"
+            u_bps = _practice_trade_unrealized_bps(trade)
+            stop_loss = float(trade.get("mock_scenario_stop_loss_bps") or 0.0)
+            take_profit = float(trade.get("mock_scenario_take_profit_bps") or 0.0)
+            stop_loss = stop_loss or float(trade.get("trade_strategy_stop_loss_bps") or 0.0)
+            take_profit = take_profit or float(trade.get("trade_strategy_take_profit_bps") or 0.0)
+            if stop_loss and u_bps <= -stop_loss:
+                return "stop_loss"
+            if take_profit and u_bps >= take_profit:
+                return "take_profit"
+
+        if status.trade_option_blockers:
+            return "setup_blocker"
+
+        news_ctx = status.daily_news_context or {}
+        starter_actions = {
+            str(action).upper()
+            for action in (news_ctx.get("starter_actions") or [])
+        }
+        if side == "buy" and (
+            "EXIT_LONGS" in starter_actions
+            or "REDUCE_GROSS_EXPOSURE" in starter_actions
+        ):
+            return "news_started_exit_longs"
+        if side == "sell" and (
+            "EXIT_SHORTS" in starter_actions
+            or "REDUCE_GROSS_EXPOSURE" in starter_actions
+        ):
+            return "news_started_exit_shorts"
+
+        return ""
+
+    def _mock_scenario_for_trade(self, trade: dict) -> dict:
+        settings = _load_mock_trade_settings(load_exit_params=True)
+        sid = str(trade.get("mock_scenario_id") or "")
+        scenario = next(
+            (
+                dict(raw)
+                for raw in (settings.get("scenarios") or [])
+                if str(raw.get("id") or "") == sid
+            ),
+            {},
+        )
+        if not scenario:
+            scenario = {
+                "id": sid,
+                "label": str(trade.get("mock_scenario_label") or sid),
+                "hold_minutes": float(trade.get("hold_minutes") or 10.0),
+                "min_present_score": int(trade.get("mock_scenario_min_present_score") or 55),
+                "exit_score_drop": int(trade.get("mock_scenario_exit_score_drop") or 0),
+                "stop_loss_bps": float(trade.get("mock_scenario_stop_loss_bps") or 0.0),
+                "take_profit_bps": float(trade.get("mock_scenario_take_profit_bps") or 0.0),
+            }
+        if settings.get("exit_params_map"):
+            scenario["exit_params_map"] = settings["exit_params_map"]
+        return scenario
+
+    def _handle_mock_scenario_exit(self, trade: dict) -> bool:
+        if trade.get("status") != "open" or trade.get("source") != "mock_scenario":
+            return False
+        asset = str(trade.get("asset") or "")
+        venue = str(trade.get("venue") or "")
+        status = self.current_status.get((asset, venue))
+        if status is None:
+            return False
+        bid, ask, mid = _current_quote(asset, venue)
+        if max(float(bid or 0.0), float(ask or 0.0), float(mid or 0.0)) <= 0:
+            return False
+        scenario = self._mock_scenario_for_trade(trade)
+        _stamp_practice_exit_profile(trade, scenario)
+        elapsed_min = (time.time() - float(trade.get("ts_utc") or time.time())) / 60.0
+        unreal_bps = trade_exit_strategy.unrealized_bps(trade, bid, ask, mid)
+        setup_blocker = self._mock_scenario_blocker(scenario, status)
+        decision = trade_exit_strategy.decide_trade_exit(
+            trade,
+            status,
+            scenario,
+            unreal_bps,
+            elapsed_min,
+            setup_blocker_reason=setup_blocker,
+        )
+        trade["last_exit_decision"] = decision.to_trade_metadata()
+        trade["exit_strategy_id"] = decision.profile_id
+        if decision.deferred_signal:
+            trade.setdefault("deferred_exit_signals", []).append(decision.deferred_signal)
+        if decision.action == "scale_out":
+            fraction = float((decision.metadata or {}).get("scale_out_fraction") or 0.0)
+            trade["exit_decision"] = decision.to_trade_metadata()
+            if _scale_out_practice_trade(trade, bid, ask, mid, time.time(), decision.reason, fraction):
+                _apply_practice_exit_decision_metadata(trade, decision)
+                return True
+            _apply_practice_exit_decision_metadata(trade, decision)
+            return bool(decision.metadata)
+        _apply_practice_exit_decision_metadata(trade, decision)
+        if decision.action == "close" and decision.reason:
+            trade["exit_decision"] = decision.to_trade_metadata()
+            return _close_practice_trade_at_market(trade, decision.reason)
+        return bool(decision.metadata or decision.deferred_signal)
 
     def _handle_carry_alert(self, alert: dict) -> None:
         """T3.3 carry paper-trade dispatcher. Open on
@@ -1351,7 +3084,20 @@ class SignalStore:
         now = time.time()
         any_changed = False
         for t in trades:
-            if not _fp_is_expired(t, now):
+            if t.get("status") == "open" and t.get("source") == "mock_scenario":
+                before_status = t.get("status")
+                if self._handle_mock_scenario_exit(t):
+                    any_changed = True
+                    if t.get("status") != before_status:
+                        print(f"[forward-paper] closed {t.get('cell_id')} "
+                              f"intent_id={t.get('intent_id')} "
+                              f"reason={t.get('close_reason', '')} "
+                              f"realized_pnl_usd={t.get('realized_pnl_usd', 0):.2f}",
+                              flush=True)
+                continue
+            invalid_reason = self._auto_trade_invalidation_reason(t)
+            expired = _fp_is_expired(t, now)
+            if not expired and not invalid_reason:
                 continue
             bid, ask, mid = _current_quote(t.get("asset", ""), t.get("venue", ""))
             before_status = t.get("status")
@@ -1363,10 +3109,13 @@ class SignalStore:
                     _fp_close_carry(t, close_px, close_reason="max_hold_elapsed")
             else:
                 _fp_close_trade(t, bid, ask, mid)
+                if invalid_reason and t.get("status") != before_status:
+                    t["close_reason"] = f"auto_{invalid_reason}"
             if t.get("status") != before_status:
                 any_changed = True
                 print(f"[forward-paper] closed {t.get('cell_id')} "
                       f"intent_id={t.get('intent_id')} "
+                      f"reason={t.get('close_reason', '')} "
                       f"realized_pnl_usd={t.get('realized_pnl_usd', 0):.2f}",
                       flush=True)
         if any_changed:
@@ -1574,6 +3323,33 @@ class SignalStore:
                         drift_status=get_drift_status(asset, primary_venue, primary_status.regime),
                         entry_price=cur_price,
                         expected_direction=+1 if primary_dir == "UP" else -1,
+                        pressure_watch_state=primary_status.pressure_watch_state,
+                        pressure_watch_label=primary_status.pressure_watch_label,
+                        pressure_watch_direction=primary_status.pressure_watch_direction,
+                        pressure_watch_intensity=primary_status.pressure_watch_intensity,
+                        pressure_watch_priority=primary_status.pressure_watch_priority,
+                        pressure_watch_reasons=list(primary_status.pressure_watch_reasons),
+                        trade_option_state=primary_status.trade_option_state,
+                        trade_option_label=primary_status.trade_option_label,
+                        trade_option_side=primary_status.trade_option_side,
+                        trade_option_readiness=primary_status.trade_option_readiness,
+                        trade_option_profile=primary_status.trade_option_profile,
+                        trade_option_size_hint=primary_status.trade_option_size_hint,
+                        trade_option_notional_scale=primary_status.trade_option_notional_scale,
+                        trade_option_hold_minutes=primary_status.trade_option_hold_minutes,
+                        trade_option_entry_reasons=list(primary_status.trade_option_entry_reasons),
+                        trade_option_exit_rules=list(primary_status.trade_option_exit_rules),
+                        trade_option_blockers=list(primary_status.trade_option_blockers),
+                        trade_strategy_id=primary_status.trade_strategy_id,
+                        trade_strategy_label=primary_status.trade_strategy_label,
+                        trade_strategy_confidence=primary_status.trade_strategy_confidence,
+                        trade_strategy_reasons=list(primary_status.trade_strategy_reasons),
+                        trade_strategy_blockers=list(primary_status.trade_strategy_blockers),
+                        trade_strategy_stop_loss_bps=primary_status.trade_strategy_stop_loss_bps,
+                        trade_strategy_take_profit_bps=primary_status.trade_strategy_take_profit_bps,
+                        trade_strategy_exit_score_drop=primary_status.trade_strategy_exit_score_drop,
+                        daily_news_context=dict(primary_status.daily_news_context),
+                        daily_news_status=dict(primary_status.daily_news_status),
                     )
                     self.recent_signals.append(sig)
                     self.signal_index[sig.signal_id] = sig
@@ -1647,6 +3423,151 @@ class SignalStore:
                     * status.event_multiplier
                     * status.hawkes_multiplier))
 
+    def _apply_present_trade_context(self, key: tuple[str, str],
+                                     status: RegimeStatus,
+                                     inputs: dict[str, Any]) -> None:
+        side = status.pressure_watch_direction
+        if side not in ("buy", "sell"):
+            self._trade_setup_tracker.pop(key, None)
+            return
+
+        chunk_id = str(inputs.get("chunk_id") or "")
+        start_price = float(inputs.get("chunk_start_price") or 0.0)
+        close_price = float(inputs.get("chunk_close_price") or status.current_price or 0.0)
+        recent_start = float(inputs.get("recent_2chunk_start_price") or start_price)
+        tracker = self._trade_setup_tracker.get(key)
+        if tracker is None or tracker.get("side") != side:
+            tracker = {
+                "side": side,
+                "age_chunks": 0,
+                "onset_price": start_price or close_price,
+                "last_chunk_id": chunk_id,
+            }
+        elif tracker.get("last_chunk_id") != chunk_id:
+            tracker["age_chunks"] = int(tracker.get("age_chunks") or 0) + 1
+            tracker["last_chunk_id"] = chunk_id
+        self._trade_setup_tracker[key] = tracker
+
+        age = int(tracker.get("age_chunks") or 0)
+        inputs["trade_age_chunks"] = age
+        inputs["trade_stage"] = _trade_stage_from_age(age)
+        inputs["trade_from_onset_bps"] = _signed_bps(
+            float(tracker.get("onset_price") or close_price), close_price, side)
+        inputs["trade_current_chunk_bps"] = _signed_bps(start_price, close_price, side)
+        inputs["trade_recent_2chunk_bps"] = _signed_bps(recent_start, close_price, side)
+        inputs["trade_present_score"] = _present_trade_score(status, inputs)
+        inputs["trade_score_band"] = _trade_score_band(int(inputs["trade_present_score"]))
+
+    def _apply_pressure_watch(self):
+        """Apply dipole-derived pressure watch fields to current statuses.
+
+        The status object is the right production home because this is a
+        current-market read, not necessarily a signal event. Cross-venue
+        promotion runs here after all venues have polled.
+        """
+        for key, status in self.current_status.items():
+            inputs = self._pressure_inputs.get(key)
+            if not inputs:
+                continue
+            watch = _pressure_watch_from_features(
+                regime=status.regime,
+                mean_dipole=float(inputs.get("mean_dipole") or 0.0),
+                volume_zscore=float(inputs.get("volume_zscore") or 0.0),
+                dipole_acl1=float(inputs.get("dipole_acl1") or 0.0),
+                prev_mean_dipole=inputs.get("prev_mean_dipole"),
+            )
+            _apply_pressure_fields(status, watch)
+
+        by_asset_dir: dict[tuple[str, str], list[tuple[str, str]]] = {}
+        for (asset, venue), status in self.current_status.items():
+            if not status.pressure_watch_direction:
+                continue
+            if status.pressure_watch_priority <= 0:
+                continue
+            by_asset_dir.setdefault((asset, status.pressure_watch_direction), []).append((asset, venue))
+
+        for (_asset, direction), keys in by_asset_dir.items():
+            if len(keys) < 2:
+                continue
+            venues = sorted({venue for _, venue in keys})
+            reason = f"Same-direction pressure on {len(venues)} venues: {', '.join(venues)}"
+            for key in keys:
+                status = self.current_status.get(key)
+                if status is None:
+                    continue
+                if status.pressure_watch_state != "confirmed":
+                    status.pressure_watch_state = "high_priority"
+                    status.pressure_watch_label = _pressure_label(direction, "high_priority")
+                    status.pressure_watch_priority = max(status.pressure_watch_priority, 3)
+                    if not status.pressure_watch_intensity:
+                        status.pressure_watch_intensity = "moderate"
+                if reason not in status.pressure_watch_reasons:
+                    status.pressure_watch_reasons.append(reason)
+
+        for key, status in self.current_status.items():
+            inputs = self._pressure_inputs.get(key)
+            if inputs:
+                self._apply_present_trade_context(key, status, inputs)
+                _apply_trade_option_fields(
+                    status, _trade_option_from_status(status, inputs))
+                _apply_high_conviction_ticket(status, inputs)
+
+    async def _emit_high_priority_pressure_watch_alerts(self):
+        """Emit a guarded drift_alert for cross-venue pressure watches.
+
+        Weak and single-venue watches stay quiet. This alert is for the
+        "something is forming across venues" scenario and is deduped by
+        asset/direction/current chunk ids.
+        """
+        by_asset_dir: dict[tuple[str, str], list[tuple[tuple[str, str], RegimeStatus]]] = {}
+        for key, status in self.current_status.items():
+            if status.pressure_watch_state != "high_priority":
+                continue
+            if status.pressure_watch_priority < 3:
+                continue
+            by_asset_dir.setdefault(
+                (status.asset, status.pressure_watch_direction),
+                [],
+            ).append((key, status))
+
+        for (asset, direction), rows in by_asset_dir.items():
+            if len(rows) < 2:
+                continue
+            chunk_ids = tuple(sorted(
+                str((self._pressure_inputs.get(key) or {}).get("chunk_id") or "")
+                for key, _status in rows
+            ))
+            venues = tuple(sorted(status.venue for _key, status in rows))
+            alert_key = (asset, direction, venues, chunk_ids)
+            if alert_key in self._pressure_watch_alerted:
+                continue
+            self._pressure_watch_alerted.add(alert_key)
+            if len(self._pressure_watch_alerted) > 1000:
+                for k in list(self._pressure_watch_alerted)[:200]:
+                    self._pressure_watch_alerted.discard(k)
+
+            side = "buy" if direction == "buy" else "sell"
+            labels = sorted({status.pressure_watch_label for _key, status in rows if status.pressure_watch_label})
+            reasons = []
+            for _key, status in rows:
+                reasons.extend(status.pressure_watch_reasons)
+            summary = (
+                f"{asset} {side} pressure is forming across "
+                f"{len(venues)} venues: {', '.join(venues)}"
+            )
+            await self._emit_drift_alert({
+                "type": "pressure_watch_high_priority",
+                "asset": asset,
+                "venues": list(venues),
+                "direction": direction,
+                "label": labels[0] if labels else f"{side.title()} pressure across venues",
+                "summary": summary,
+                "reasons": list(dict.fromkeys(reasons))[:4],
+                "priority": 3,
+                "ts_utc": time.time(),
+                "timestamp_utc": time.time(),
+            })
+
     async def tape_data(self, asset: str, venue: str, n_seconds: int = 60) -> dict:
         """1-second resolution tape feed for the click-to-trade UI's flash
         animation. Returns the last N seconds of raw bin records so the
@@ -1713,8 +3634,10 @@ store = SignalStore()
 # ---------------------------------------------------------------------------
 
 async def _polling_loop():
+    await asyncio.sleep(POLL_INTERVAL_S)
     while True:
         await store.poll_all()
+        write_frontend_live_preload()
         await store.resolve_pending_outcomes(
             hold_minutes=30, abandon_after_minutes=120, fee_bps_round_trip=50.0,
         )
@@ -1751,18 +3674,108 @@ app.add_middleware(
 async def health():
     return {
         "ok": True,
+        "mode": "live" if LIVE_MODE else "historical",
+        "live_data_dir": LIVE_DATA_DIR if LIVE_MODE else "",
         "tracked_sources": [{"asset": a, "venue": v, "has_data": (a, v) in store.current_status}
                              for a, v, _ in DATA_SOURCES],
+        "sources": _source_freshness(),
         "n_recent_signals": len(store.recent_signals),
+    }
+
+
+@app.get("/api/live-sources", dependencies=[Depends(verify_token)])
+async def live_sources():
+    return {
+        "mode": "live" if LIVE_MODE else "historical",
+        "live": LIVE_MODE,
+        "sources": _source_freshness(),
+        "as_of_utc": time.time(),
     }
 
 
 @app.get("/api/status", dependencies=[Depends(verify_token)])
 async def status():
+    return market_reads_payload()
+
+
+def market_reads_payload() -> dict:
     return {
         "statuses": [asdict(s) for s in store.current_status.values()],
+        "mode": "live" if LIVE_MODE else "historical",
+        "sources": _source_freshness(),
+        "tapes": _preload_tapes(),
         "as_of_utc": time.time(),
     }
+
+
+def _preload_tapes(n_seconds: int = 90) -> dict[str, Any]:
+    tapes: dict[str, Any] = {}
+    for asset, venue, path in DATA_SOURCES:
+        key = f"{asset}/{venue}".lower()
+        if not os.path.exists(path):
+            tapes[key] = {"asset": asset, "venue": venue, "data": []}
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                sec_bins = {float(k): v for k, v in json.load(f).items()}
+        except Exception:
+            tapes[key] = {"asset": asset, "venue": venue, "data": []}
+            continue
+        if not sec_bins:
+            tapes[key] = {"asset": asset, "venue": venue, "data": []}
+            continue
+        keys = sorted(sec_bins.keys())
+        cutoff = keys[-1] - n_seconds
+        data = []
+        for k in keys:
+            if k < cutoff:
+                continue
+            b = sec_bins[k]
+            data.append({
+                "ts": k,
+                "buy": b.get("buy", 0.0),
+                "sell": b.get("sell", 0.0),
+                "n_trades": b.get("n_trades", 0),
+                "bid": b.get("bid", 0.0),
+                "ask": b.get("ask", 0.0),
+                "last_aggressor": b.get("last_aggressor", ""),
+                "mid": b.get("mid", 0.0),
+            })
+        tapes[key] = {"asset": asset, "venue": venue, "data": data}
+    return tapes
+
+
+def write_frontend_live_preload() -> None:
+    """Write current market reads as static JS for demo browsers."""
+    payload = json.dumps(market_reads_payload(), separators=(",", ":"))
+    content = f"window.__MW_LIVE__={payload};\n"
+    for path in (
+        os.path.join(REPO_ROOT, "frontend", "public", "live-preload.js"),
+        os.path.join(REPO_ROOT, "frontend", "dist", "live-preload.js"),
+    ):
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            tmp = f"{path}.tmp"
+            with open(tmp, "w", encoding="utf-8") as f:
+                f.write(content)
+            os.replace(tmp, path)
+        except Exception as e:
+            print(f"[live-preload] write error for {path}: {e}", flush=True)
+
+
+@app.get("/api/market-reads", dependencies=[Depends(verify_token)])
+async def market_reads():
+    return market_reads_payload()
+
+
+@app.get("/api/market-reads.mjs", dependencies=[Depends(verify_token)])
+async def market_reads_module():
+    payload = json.dumps(market_reads_payload())
+    return Response(
+        content=f"export default {payload};\n",
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/api/signals", dependencies=[Depends(verify_token)])
@@ -1793,6 +3806,77 @@ async def tape(asset: str, venue: str, n_seconds: int = 60):
     return await store.tape_data(asset, venue, n_seconds=n_seconds)
 
 
+class AutoTradeSettingsBody(BaseModel):
+    enabled: bool = False
+    practice: bool = True
+    tolerance: str = "balanced"
+    apply_preset: bool = False
+    profiles: list[str] = ["early_probe", "confirmed_follow"]
+    min_readiness: int = 65
+    max_open_trades: int = 3
+    base_notional_usd: float = 1000.0
+
+
+class MockTradeSettingsBody(BaseModel):
+    enabled: bool = False
+    initial_bank_usd: float = 10000.0
+    tier_high_bank_threshold_usd: float = 20000.0
+    tier_high_exposure_cap_usd: float = 1000000.0
+    tier_mid_bank_threshold_usd: float = 10000.0
+    tier_mid_exposure_pct: float = 1.00
+    tier_low_bank_threshold_usd: float = 5000.0
+    tier_low_exposure_cap_usd: float = 1000000.0
+    min_trade_notional_usd: float = 25.0
+    scenarios: list[dict[str, Any]] = []
+
+
+@app.get("/api/auto-trade-settings", dependencies=[Depends(verify_token)])
+async def get_auto_trade_settings():
+    return _load_auto_trade_settings()
+
+
+@app.post("/api/auto-trade-settings", dependencies=[Depends(verify_token)])
+async def post_auto_trade_settings(body: AutoTradeSettingsBody):
+    settings = {
+        "enabled": body.enabled,
+        "practice": body.practice,
+        "tolerance": body.tolerance,
+        "apply_preset": body.apply_preset,
+        "profiles": body.profiles,
+        "min_readiness": max(0, min(100, int(body.min_readiness))),
+        "max_open_trades": max(0, min(25, int(body.max_open_trades))),
+        "base_notional_usd": max(1.0, float(body.base_notional_usd)),
+    }
+    return _save_auto_trade_settings(settings)
+
+
+@app.get("/api/mock-trade-settings", dependencies=[Depends(verify_token)])
+async def get_mock_trade_settings():
+    return _load_mock_trade_settings()
+
+
+@app.post("/api/mock-trade-settings", dependencies=[Depends(verify_token)])
+async def post_mock_trade_settings(body: MockTradeSettingsBody):
+    settings = {
+        "enabled": body.enabled,
+        "initial_bank_usd": max(0.0, float(body.initial_bank_usd)),
+        "tier_high_bank_threshold_usd": max(0.0, float(body.tier_high_bank_threshold_usd)),
+        "tier_high_exposure_cap_usd": max(0.0, float(body.tier_high_exposure_cap_usd)),
+        "tier_mid_bank_threshold_usd": max(0.0, float(body.tier_mid_bank_threshold_usd)),
+        "tier_mid_exposure_pct": max(0.0, min(1.0, float(body.tier_mid_exposure_pct))),
+        "tier_low_bank_threshold_usd": max(0.0, float(body.tier_low_bank_threshold_usd)),
+        "tier_low_exposure_cap_usd": max(0.0, float(body.tier_low_exposure_cap_usd)),
+        "min_trade_notional_usd": max(1.0, float(body.min_trade_notional_usd)),
+        "scenarios": body.scenarios or _default_mock_trade_settings()["scenarios"],
+    }
+    return _save_mock_trade_settings(settings)
+
+
+@app.get("/api/mock-trade-bankroll", dependencies=[Depends(verify_token)])
+async def get_mock_trade_bankroll():
+    return _mock_trade_bankroll()
+
+
 @app.get("/api/stats", dependencies=[Depends(verify_token)])
 async def stats(window_hours: int = 24):
     """Aggregate stats over recent signals: counts, distribution, top sources,
@@ -1804,6 +3888,10 @@ async def stats(window_hours: int = 24):
     by_asset: Counter[str] = Counter(s.asset for s in sigs)
     by_venue: Counter[str] = Counter(s.venue for s in sigs)
     by_source: Counter[str] = Counter(f"{s.asset}-{s.venue}" for s in sigs)
+    by_pressure_state: Counter[str] = Counter(
+        s.pressure_watch_state or "none" for s in sigs)
+    by_pressure_label: Counter[str] = Counter(
+        s.pressure_watch_label for s in sigs if s.pressure_watch_label)
     confirmed = sum(1 for s in sigs if s.cross_venue_multiplier > 1.0)
     disagreed = sum(1 for s in sigs if s.cross_venue_multiplier < 1.0)
     avg_conf = (sum(s.adjusted_confidence for s in sigs) / len(sigs)) if sigs else 0.0
@@ -1827,6 +3915,21 @@ async def stats(window_hours: int = 24):
             d["wins"] += 1
         d["total_bps"] += s.outcome_realized_bps
 
+    pressure_outcomes: dict[str, dict] = {}
+    for s in resolved:
+        key = s.pressure_watch_state or "none"
+        d = pressure_outcomes.setdefault(
+            key, {"n": 0, "wins": 0, "total_bps": 0.0})
+        d["n"] += 1
+        if s.outcome_realized_bps > 0:
+            d["wins"] += 1
+        d["total_bps"] += s.outcome_realized_bps
+    for d in pressure_outcomes.values():
+        n = int(d["n"] or 0)
+        d["win_rate"] = round((d["wins"] / n), 3) if n else None
+        d["avg_bps"] = round((d["total_bps"] / n), 2) if n else None
+        d["total_bps"] = round(float(d["total_bps"]), 2)
+
     by_source_series: dict[str, list[dict]] = defaultdict(list)
     for s in sigs:
         by_source_series[f"{s.asset}-{s.venue}"].append({
@@ -1840,6 +3943,11 @@ async def stats(window_hours: int = 24):
         "by_asset": dict(by_asset),
         "by_venue": dict(by_venue),
         "by_source": dict(by_source.most_common()),
+        "pressure_watch": {
+            "by_state": dict(by_pressure_state.most_common()),
+            "by_label": dict(by_pressure_label.most_common()),
+            "outcomes_by_state": pressure_outcomes,
+        },
         "cross_venue_confirmed": confirmed,
         "cross_venue_disagreed": disagreed,
         "avg_adjusted_confidence": round(avg_conf, 3),
@@ -1886,13 +3994,31 @@ async def regime_history(asset: str, venue: str, n_points: int = 60):
                                  vpin_elevated=vpin_elev,
                                  vpin_diffuse=vpin_diff) for f in feats]
     points = []
-    for c, f, r in zip(chunks[-n_points:], feats[-n_points:], results[-n_points:]):
+    start_i = max(0, len(chunks) - n_points)
+    for i in range(start_i, len(chunks)):
+        c = chunks[i]
+        f = feats[i]
+        r = results[i]
+        prev_f = feats[i - 1] if i > 0 else None
+        pressure = _pressure_watch_from_features(
+            regime=r.regime.value,
+            mean_dipole=float(f.mean_dipole),
+            volume_zscore=float(f.volume_zscore),
+            dipole_acl1=float(f.dipole_autocorr_lag1),
+            prev_mean_dipole=(
+                float(prev_f.mean_dipole) if prev_f is not None else None
+            ),
+        )
         points.append({
             "chunk_idx": c.window_start,
             "regime": r.regime.value,
             "mean_dipole": float(f.mean_dipole),
             "realized_vol": float(f.realized_vol),
             "confidence": r.confidence,
+            "pressure_watch_state": pressure.get("pressure_watch_state", ""),
+            "pressure_watch_label": pressure.get("pressure_watch_label", ""),
+            "pressure_watch_direction": pressure.get("pressure_watch_direction", ""),
+            "pressure_watch_priority": pressure.get("pressure_watch_priority", 0),
             "ts_start": float(bars[c.window_start].ts) if c.window_start < len(bars) else 0,
             "ts_end": float(bars[min(c.window_end - 1, len(bars) - 1)].ts) if bars else 0,
         })
@@ -1955,6 +4081,11 @@ def _persist_practice_trade(trade: dict) -> None:
     try:
         with open(_PRACTICE_TRADE_PATH, "a") as f:
             f.write(json.dumps(trade) + "\n")
+        record_trade_attempt_open_json(
+            trade,
+            source="backend_practice_trade_open",
+            run_id=str(trade.get("cell_id") or trade.get("intent_id") or "backend_practice_trade_open"),
+        )
     except Exception as e:
         print(f"[practice] persist error: {e}", flush=True)
 
@@ -1983,6 +4114,315 @@ def _load_practice_trades() -> list[dict]:
                 except Exception:
                     continue
     return out
+
+
+def _load_live_hindsight_audit(limit: int = 50) -> dict:
+    if not os.path.exists(_LIVE_HINDSIGHT_AUDIT_PATH):
+        return {"available": False, "summary": {}, "top_missed_entries": [], "top_exit_leaks": []}
+    try:
+        with open(_LIVE_HINDSIGHT_AUDIT_PATH, encoding="utf-8") as f:
+            audit = json.load(f)
+    except Exception as e:
+        return {"available": False, "error": str(e), "summary": {}, "top_missed_entries": [], "top_exit_leaks": []}
+    counts = audit.get("counts") or {}
+    pnl = audit.get("pnl") or {}
+    pace = audit.get("pace") or {}
+    return {
+        "available": True,
+        "created_at": audit.get("created_at"),
+        "summary": {
+            "oracle_winner_rows_after_fees": counts.get("oracle_winner_rows_after_fees", 0),
+            "missed_entry_rows": counts.get("missed_entry_rows", 0),
+            "exit_missed_or_fee_leak_rows": counts.get("exit_missed_or_fee_leak_rows", 0),
+            "captured_net_win_rows": counts.get("captured_net_win_rows", 0),
+            "closed_actual_realized_pnl_usd": pnl.get("closed_actual_realized_pnl_usd", 0.0),
+            "oracle_winner_net_pnl_usd": pnl.get("oracle_winner_net_pnl_usd", 0.0),
+            "missed_entry_oracle_net_pnl_usd": pnl.get("missed_entry_oracle_net_pnl_usd", 0.0),
+            "oracle_incremental_vs_closed_actual_usd": pnl.get("oracle_incremental_vs_closed_actual_usd", 0.0),
+            "oracle_winner_weekly_pace_usd": pace.get("oracle_winner_weekly_pace_usd"),
+            "closed_actual_weekly_pace_usd": pace.get("closed_actual_weekly_pace_usd"),
+        },
+        "by_blocker": (audit.get("by_blocker") or [])[:limit],
+        "by_context": (audit.get("by_context") or [])[:limit],
+        "top_missed_entries": (audit.get("top_missed_entries") or [])[:limit],
+        "top_exit_leaks": (audit.get("top_exit_leaks") or [])[:limit],
+    }
+
+
+def _mock_trade_exposure_cap(settings: dict[str, Any], equity_usd: float) -> float:
+    equity_usd = max(0.0, float(equity_usd))
+    return equity_usd
+
+
+def _mock_trade_bankroll(settings: dict[str, Any] | None = None,
+                         trades: list[dict] | None = None,
+                         scenario_id: str | None = None) -> dict[str, Any]:
+    settings = settings or _load_mock_trade_settings()
+    trades = trades if trades is not None else _load_practice_trades()
+    mock_trades = [t for t in trades if t.get("source") == "mock_scenario"]
+    if scenario_id:
+        mock_trades = [
+            t for t in mock_trades
+            if str(t.get("mock_scenario_id") or "") == str(scenario_id)
+        ]
+    realized = sum(
+        float(t.get("realized_pnl_usd") or 0.0)
+        for t in mock_trades
+        if t.get("status") == "closed"
+    )
+    initial_bank = float(settings.get("initial_bank_usd") or 10000.0)
+    equity = max(0.0, initial_bank + realized)
+    bank = equity
+    open_trades = [t for t in mock_trades if t.get("status") == "open"]
+    open_exposure = sum(float(t.get("notional") or 0.0) for t in open_trades)
+    exposure_cap = _mock_trade_exposure_cap(settings, equity)
+    remaining = max(0.0, min(equity, exposure_cap - open_exposure))
+    by_scenario: dict[str, dict[str, Any]] = {}
+    for t in mock_trades:
+        sid = str(t.get("mock_scenario_id") or "unknown")
+        row = by_scenario.setdefault(
+            sid, {"n": 0, "open": 0, "closed": 0, "wins": 0, "realized_pnl_usd": 0.0})
+        row["n"] += 1
+        if t.get("status") == "open":
+            row["open"] += 1
+        elif t.get("status") == "closed":
+            row["closed"] += 1
+            pnl = float(t.get("realized_pnl_usd") or 0.0)
+            row["realized_pnl_usd"] += pnl
+            if pnl > 0:
+                row["wins"] += 1
+    for row in by_scenario.values():
+        closed = int(row["closed"] or 0)
+        row["win_rate"] = round(row["wins"] / closed, 3) if closed else None
+        row["realized_pnl_usd"] = round(float(row["realized_pnl_usd"]), 4)
+    return {
+        "initial_bank_usd": float(initial_bank),
+        "equity_usd": float(equity),
+        "bank_usd": float(bank),
+        "realized_pnl_usd": float(realized),
+        "open_exposure_usd": float(open_exposure),
+        "exposure_cap_usd": float(exposure_cap),
+        "remaining_exposure_capacity_usd": float(remaining),
+        "n_open": len(open_trades),
+        "n_total": len(mock_trades),
+        "by_scenario": by_scenario,
+        "scenario_id": scenario_id or "",
+        "rule": (
+            "learning trades use the historical full-bank hypothetical model: "
+            "notional = initial_bank_usd * notional_pct_bank, open exposure is "
+            "reported but does not suppress later evidence trades"
+        ),
+    }
+
+
+def _practice_trade_unrealized_bps(trade: dict) -> float:
+    bid, ask, mid = _current_quote(str(trade.get("asset") or ""), str(trade.get("venue") or ""))
+    exit_price = bid if trade.get("side") == "buy" else ask
+    if exit_price <= 0:
+        exit_price = mid
+    fill = float(trade.get("fill_price") or 0.0)
+    if fill <= 0 or exit_price <= 0:
+        return 0.0
+    sign = 1 if trade.get("side") == "buy" else -1
+    return sign * math.log(max(exit_price, 1e-12) / max(fill, 1e-12)) * 10000.0
+
+
+def _practice_exit_price_for_trade(trade: dict, bid: float, ask: float, mid: float) -> float:
+    exit_price = bid if trade.get("side") == "buy" else ask
+    if exit_price <= 0:
+        exit_price = mid
+    return float(exit_price or 0.0)
+
+
+def _append_practice_exit_leg(
+    trade: dict,
+    *,
+    leg_type: str,
+    reason: str,
+    qty: float,
+    price: float,
+    ts: float,
+    gross: float,
+    entry_fee_alloc: float,
+    exit_fee: float,
+    realized: float,
+) -> None:
+    trade.setdefault("exit_legs", []).append({
+        "leg_type": leg_type,
+        "reason": reason,
+        "qty": round(float(qty), 12),
+        "price": round(float(price), 8),
+        "ts_utc": float(ts),
+        "gross_pnl_usd": round(float(gross), 8),
+        "entry_fee_alloc_usd": round(float(entry_fee_alloc), 8),
+        "exit_fee_usd": round(float(exit_fee), 8),
+        "leg_pnl_usd": round(float(realized), 8),
+    })
+
+
+def _refresh_practice_scaleout_summary(trade: dict) -> None:
+    qty_initial = max(float(trade.get("qty_initial") or trade.get("qty") or 0.0), 1e-12)
+    legs = trade.get("exit_legs") or []
+    scale_legs = [leg for leg in legs if leg.get("leg_type") == "scale_out"]
+    scale_qty = sum(float(leg.get("qty") or 0.0) for leg in scale_legs)
+    trade["scale_out_count"] = len(scale_legs)
+    trade["scale_out_fraction_realized"] = round(max(0.0, min(1.0, scale_qty / qty_initial)), 6)
+    if scale_legs and not trade.get("scale_out_tp1_bps"):
+        decision = trade.get("exit_decision") or trade.get("last_exit_decision") or {}
+        trade["scale_out_tp1_bps"] = float(decision.get("net_unrealized_bps") or 0.0)
+
+
+def _realize_practice_exit_leg(
+    trade: dict,
+    bid: float,
+    ask: float,
+    mid: float,
+    ts: float,
+    reason: str,
+    leg_type: str,
+    qty: float,
+) -> bool:
+    exit_price = _practice_exit_price_for_trade(trade, bid, ask, mid)
+    if exit_price <= 0:
+        return False
+    fill = float(trade.get("fill_price") or 0.0)
+    qty = max(0.0, float(qty))
+    qty_initial = max(float(trade.get("qty_initial") or trade.get("qty") or 0.0), 1e-12)
+    if fill <= 0 or qty <= 0:
+        return False
+    signed = 1 if trade.get("side") == "buy" else -1
+    gross = signed * (exit_price - fill) * qty
+    fee_bps = float(trade.get("fee_bps") or _PRACTICE_FEE_BPS)
+    exit_fee = exit_price * qty * (fee_bps / 10000.0)
+    entry_fee_total = float(trade.get("entry_fees_usd") or 0.0)
+    if entry_fee_total <= 0:
+        entry_fee_total = float(trade.get("notional") or 0.0) * (fee_bps / 10000.0)
+    entry_fee_alloc = entry_fee_total * (qty / qty_initial)
+    realized = gross - entry_fee_alloc - exit_fee
+    trade["gross_pnl_usd"] = float(trade.get("gross_pnl_usd") or 0.0) + float(gross)
+    trade["realized_pnl_usd"] = float(trade.get("realized_pnl_usd") or 0.0) + float(realized)
+    trade["fees_usd"] = float(trade.get("fees_usd") or 0.0) + float(exit_fee)
+    _append_practice_exit_leg(
+        trade,
+        leg_type=leg_type,
+        reason=reason,
+        qty=qty,
+        price=exit_price,
+        ts=ts,
+        gross=gross,
+        entry_fee_alloc=entry_fee_alloc,
+        exit_fee=exit_fee,
+        realized=realized,
+    )
+    return True
+
+
+def _scale_out_practice_trade(
+    trade: dict,
+    bid: float,
+    ask: float,
+    mid: float,
+    ts: float,
+    reason: str,
+    fraction: float,
+) -> bool:
+    if trade.get("status") != "open":
+        return False
+    qty_open = float(trade.get("qty_open") or trade.get("qty") or 0.0)
+    leg_qty = qty_open * max(0.0, min(1.0, float(fraction)))
+    if leg_qty <= 0 or leg_qty >= qty_open:
+        return False
+    if not _realize_practice_exit_leg(trade, bid, ask, mid, ts, reason, "scale_out", leg_qty):
+        return False
+    trade["qty_open"] = max(0.0, qty_open - leg_qty)
+    _refresh_practice_scaleout_summary(trade)
+    return True
+
+
+def _apply_practice_exit_decision_metadata(
+    trade: dict,
+    decision: trade_exit_strategy.ExitDecision,
+) -> None:
+    metadata = decision.metadata or {}
+    cfg = metadata.get("exit_config") or {}
+    if cfg:
+        trade["exit_config_level"] = str(cfg.get("config_level") or "")
+        trade["exit_config_key"] = str(cfg.get("config_key") or "")
+        if cfg.get("hold_minutes") is not None:
+            trade["hold_minutes"] = float(cfg.get("hold_minutes") or trade.get("hold_minutes") or 0.0)
+        trade["exit_tp1_bps"] = float(cfg.get("tp1_bps") or trade.get("exit_tp1_bps") or 0.0)
+        trade["exit_scale_out_fraction"] = float(cfg.get("scale_out_fraction") or trade.get("exit_scale_out_fraction") or 0.0)
+        trade["exit_runner_trail_bps"] = float(cfg.get("trail_bps") or trade.get("exit_runner_trail_bps") or 0.0)
+        trade["exit_max_hold_minutes"] = float(cfg.get("max_hold_minutes") or trade.get("exit_max_hold_minutes") or 0.0)
+        trade["score_exit_min_profit_bps"] = float(cfg.get("min_profit_bps_for_score_exit") or trade.get("score_exit_min_profit_bps") or 0.0)
+        trade["score_exit_min_hold_minutes"] = float(cfg.get("min_hold_minutes") or trade.get("score_exit_min_hold_minutes") or 0.0)
+    if metadata.get("next_exit_stage"):
+        trade["exit_stage"] = str(metadata["next_exit_stage"])
+    if metadata.get("mark_under_gate_trim_done"):
+        trade["exit_under_gate_trim_done"] = True
+    if metadata.get("runner_anchor_net_bps") is not None:
+        trade["exit_runner_anchor_net_bps"] = float(metadata["runner_anchor_net_bps"])
+    if metadata.get("runner_stop_net_bps") is not None:
+        trade["exit_runner_stop_net_bps"] = float(metadata["runner_stop_net_bps"])
+    if metadata.get("trail_bps") is not None:
+        trade["exit_active_trail_bps"] = float(metadata["trail_bps"])
+    if metadata.get("tighten_runner_stop"):
+        trade.setdefault("exit_stop_tighten_events", []).append({
+            "reason": str(metadata.get("tighten_reason") or decision.reason or ""),
+            "elapsed_min": decision.elapsed_min,
+            "net_unrealized_bps": decision.net_unrealized_bps,
+            "runner_stop_net_bps": float(metadata.get("runner_stop_net_bps") or 0.0),
+            "trail_bps": float(metadata.get("trail_bps") or 0.0),
+            "aggressive": bool(metadata.get("aggressive")),
+        })
+
+
+def _stamp_practice_exit_profile(trade: dict, scenario: dict) -> None:
+    profile, cfg = trade_exit_strategy.exit_profile_for_trade(trade, scenario)
+    trade["exit_strategy_id"] = profile.profile_id
+    trade["exit_strategy_label"] = profile.label
+    trade["exit_tp1_bps"] = float(profile.tp1_bps)
+    trade["exit_scale_out_fraction"] = float(profile.scale_out_fraction)
+    trade["exit_runner_trail_bps"] = float(profile.runner_trail_bps)
+    trade["exit_max_hold_minutes"] = float(profile.max_hold_minutes)
+    trade["score_exit_min_profit_bps"] = float(profile.score_exit_min_profit_bps)
+    trade["score_exit_min_hold_minutes"] = float(profile.score_exit_min_hold_minutes)
+    if cfg:
+        trade["exit_config_level"] = str(cfg.get("config_level") or "")
+        trade["exit_config_key"] = str(cfg.get("config_key") or "")
+        if cfg.get("hold_minutes") is not None:
+            trade["hold_minutes"] = float(cfg.get("hold_minutes") or trade.get("hold_minutes") or 0.0)
+
+
+def _close_practice_trade_at_market(trade: dict, close_reason: str) -> bool:
+    bid, ask, mid = _current_quote(str(trade.get("asset") or ""), str(trade.get("venue") or ""))
+    before = trade.get("status")
+    side = trade.get("side")
+    exit_price = _practice_exit_price_for_trade(trade, bid, ask, mid)
+    if exit_price <= 0:
+        return False
+    qty_open = float(trade.get("qty_open") or trade.get("qty") or 0.0)
+    if not _realize_practice_exit_leg(
+        trade,
+        bid,
+        ask,
+        mid,
+        time.time(),
+        close_reason,
+        "final_exit",
+        qty_open,
+    ):
+        return False
+    trade["status"] = "closed"
+    trade["exit_price"] = float(exit_price)
+    trade["exit_ts_utc"] = time.time()
+    trade["qty_open"] = 0.0
+    trade["close_reason"] = close_reason
+    trade["runner_exit_reason"] = close_reason
+    _refresh_practice_scaleout_summary(trade)
+    if trade.get("status") != before:
+        return True
+    return False
 
 
 def _current_quote(asset: str, venue: str) -> tuple[float, float, float]:
@@ -2095,6 +4535,58 @@ class DriftAlertBody(BaseModel):
     # Free-form fields preserved on persistence and forwarded via SSE
     # so the consumer (Discord embed, PWA banner) has full detail.
     extra: dict = {}
+
+
+class EvolveRequestBody(BaseModel):
+    prompt: str
+    mode: str = "codebase"
+    source: str = "evolve_tab"
+
+
+def _load_evolve_requests(limit: int = 20) -> list[dict[str, Any]]:
+    if not os.path.exists(_EVOLVE_REQUESTS_PATH):
+        return []
+    requests: list[dict[str, Any]] = []
+    try:
+        with open(_EVOLVE_REQUESTS_PATH, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    requests.append(json.loads(line))
+    except Exception as e:
+        print(f"[evolve-request] load error: {e}", flush=True)
+        return []
+    requests.reverse()
+    return requests[:limit]
+
+
+@app.get("/api/evolve-requests", dependencies=[Depends(verify_token)])
+async def get_evolve_requests(limit: int = 20):
+    return {"requests": _load_evolve_requests(max(1, min(limit, 100)))}
+
+
+@app.post("/api/evolve-request", dependencies=[Depends(verify_token)])
+async def post_evolve_request(body: EvolveRequestBody):
+    prompt = (body.prompt or "").strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="prompt is required")
+    if len(prompt) > 4000:
+        raise HTTPException(status_code=400, detail="prompt is too long")
+    record = {
+        "id": f"EVREQ-{uuid.uuid4().hex[:8].upper()}",
+        "ts_utc": time.time(),
+        "prompt": prompt,
+        "mode": body.mode,
+        "source": body.source,
+        "status": "new",
+    }
+    try:
+        with open(_EVOLVE_REQUESTS_PATH, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception as e:
+        print(f"[evolve-request] persist error: {e}", flush=True)
+        raise HTTPException(status_code=500, detail="could not save request")
+    return {"ok": True, "request": record}
 
 
 @app.post("/api/drift-alert", dependencies=[Depends(verify_token)])
@@ -2232,6 +4724,7 @@ async def get_practice_trades(limit: int = 100, source: str = "all"):
     for cid, agg in by_cell.items():
         agg["win_rate"] = (agg["wins"] / agg["n"]) if agg["n"] else None
         agg["realized_pnl_usd"] = round(agg["realized_pnl_usd"], 4)
+    mock_bankroll = _mock_trade_bankroll(trades=trades)
     return {
         "trades": trades[:limit],
         "n_open": sum(1 for t in trades if t.get("status") == "open"),
@@ -2239,7 +4732,14 @@ async def get_practice_trades(limit: int = 100, source: str = "all"):
         "win_rate": (n_wins / len(closed)) if closed else None,
         "total_realized_pnl_usd": float(total_realized),
         "by_cell": by_cell,
+        "mock_bankroll": mock_bankroll,
+        "live_hindsight_audit": _load_live_hindsight_audit(limit=min(max(int(limit), 1), 200)),
     }
+
+
+@app.get("/api/live-hindsight-audit", dependencies=[Depends(verify_token)])
+async def get_live_hindsight_audit(limit: int = 100):
+    return _load_live_hindsight_audit(limit=min(max(int(limit), 1), 500))
 
 
 class PracticeCloseBody(BaseModel):
@@ -2268,7 +4768,8 @@ async def close_practice_trade(body: PracticeCloseBody):
     notional_out = exit_price * target["qty"]
     signed = +1 if target["side"] == "buy" else -1
     gross_pnl = signed * (exit_price - target["fill_price"]) * target["qty"]
-    exit_fee = notional_out * (_PRACTICE_FEE_BPS / 10000.0)
+    fee_bps = float(target.get("fee_bps") or _PRACTICE_FEE_BPS)
+    exit_fee = notional_out * (fee_bps / 10000.0)
     realized = gross_pnl - target["fees_usd"] - exit_fee
     target["status"] = "closed"
     target["exit_price"] = float(exit_price)

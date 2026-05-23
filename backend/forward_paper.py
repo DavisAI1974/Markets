@@ -403,6 +403,8 @@ def open_carry_trade(spec: CarryCellSpec, funding_rate_at_open: float,
     qty = spec.notional_usd / perp_price if perp_price > 0 else 0.0
     notional = perp_price * qty
     fee_usd = notional * (_PRACTICE_FEE_BPS / 10000.0)
+    funding_bps = abs(float(funding_rate_at_open) * 1e4)
+    confidence = min(0.86, 0.45 + min(0.30, funding_bps / 20.0))
     return {
         "intent_id": str(uuid.uuid4())[:12],
         "asset": spec.asset, "venue": spec.perp_venue,
@@ -422,6 +424,23 @@ def open_carry_trade(spec: CarryCellSpec, funding_rate_at_open: float,
         "fill_price": float(perp_price),
         "fees_usd": float(fee_usd),
         "fee_bps": _PRACTICE_FEE_BPS,
+        "trade_strategy_id": "BASIS_DISLOCATION",
+        "trade_strategy_label": "Basis dislocation",
+        "trade_strategy_mode": "live_paper",
+        "trade_strategy_confidence": float(confidence),
+        "trade_strategy_reasons": [
+            "Funding carry alert opened a delta-neutral perp leg",
+            f"Funding rate at open was {funding_rate_at_open*1e4:+.2f}bps/8h",
+        ],
+        "trade_strategy_blockers": [],
+        "trade_strategy_stop_loss_bps": 0.0,
+        "trade_strategy_take_profit_bps": 0.0,
+        "trade_strategy_exit_score_drop": 0,
+        "trade_strategy_forced": False,
+        "trade_strategy_variant_id": f"basis_dislocation__carry_{spec.asset.lower()}_{spec.perp_venue.lower()}",
+        "trade_strategy_risk_tags": ["carry_perp_leg", "funding_overlevered", "basis_proxy"],
+        "trade_strategy_handoff_hint": "Report whether funding carry improved basis-dislocation evidence after fees.",
+        "trade_strategy_source_queue_action": "funding_carry_alert",
         "exit_price": 0.0,
         "exit_ts_utc": 0.0,
         "realized_pnl_usd": 0.0,

@@ -1,29 +1,24 @@
 """
-signal_allocator.py — cohort-based signal distribution with fairness tracking.
+signal_allocator.py — tier-based signal distribution.
 
-Solves the alpha-decay-through-crowding problem: when N subscribers all act on
-the same signal simultaneously, thin order books get consumed and the realized
-edge degrades. Solution: rotate which subscribers receive each occurrence so
-the subscriber base never acts as one cohort on a capacity-limited cell.
+Every subscriber receives every signal their tier allows, including all
+signals above that tier. The riskiest tier receives the most signals. Earlier
+versions rotated cohorts to avoid crowding, but rotation is disabled for this
+POC so tier behavior is transparent.
 
 Public API:
     select_cohort(cell_id, capacity_class, tier, all_endpoints) -> list[str]
-        Pure function. Returns the subset of endpoints that should receive
-        this signal occurrence.
+        Backward-compatible function name. Returns all endpoints whose risk
+        profile accepts this tier; no cohort rotation.
     record_allocation(cell_id, tier, endpoints) -> None
         Updates the persisted fairness ledger so the next call to
         select_cohort prefers subscribers who got less this round.
 
 Design choices:
-- Deterministic selection ordered by (fairness_score, last_alloc_ts,
-  registered_ts). No randomness; reproducible.
-- Fairness score = sum of tier weights of recently-received signals.
-  Tier-1 weighted 3x tier-2 — high-conviction signals "cost" more
-  fairness budget.
-- "Recently" = configurable lookback (default 7 days). Older allocations
-  decay so subscribers who joined long ago don't get unfair priority forever.
-- Capacity classes: tiny=5, small=20, medium=50, large=∞ (broadcast),
-  huge=∞ (broadcast; informational rather than tradeable).
+- No fairness/capacity rotation in the POC.
+- Risk profiles are inclusive: min_tier="tier_3" receives tier_1, tier_2,
+  and tier_3 signals, but not tier_4 or tier_5.
+- min_tier="tier_5" receives all tiers and therefore gets the most signals.
 - Ledger persisted as JSONL append-only at FAIRNESS_PATH; one line per
   allocation event for full audit.
 
@@ -283,44 +278,15 @@ def select_cohort(
     window_sec: float = DEFAULT_FAIRNESS_WINDOW_SEC,
     risk_profiles: dict[str, "SubscriberProfile"] | None = None,
 ) -> list[str]:
-    """Return the cohort of endpoints that should receive THIS occurrence
-    of the signal.
+    """Return every endpoint whose risk profile accepts this tier.
 
-    Selection rule:
-      1. If risk_profiles is supplied, drop endpoints whose profile does not
-         accept this tier (Pass-18: subscribers pick their own risk floor).
-      2. If capacity_class is large/huge → broadcast to all remaining (no rotation).
-      3. Otherwise, sort remaining endpoints by (weighted_count ASC,
-         last_alloc_ts ASC, registered_ts ASC) and take the first cohort_size.
-
-    The sort key ensures fairness over time: lowest fairness budget gets
-    the next signal; ties broken by longest-waiting; final tiebreak by
-    longest-subscribed (rewards loyalty when fairness is identical).
-
-    risk_profiles is optional and backward-compatible: if None, every
-    endpoint is treated as accepting all tiers (the pre-Pass-18 behavior).
-
-    Pure function: does NOT update state. Call record_allocation() after
-    delivering the signal to update the fairness ledger.
+    Cohort/capacity rotation is intentionally disabled. Risk profiles are
+    inclusive: a tier_3 subscriber receives tier_1, tier_2, and tier_3, while
+    tier_5 receives all tiers.
     """
     if not all_endpoints:
         return []
-    eligible = filter_endpoints_by_risk_profile(all_endpoints, tier, risk_profiles)
-    if not eligible:
-        return []
-    cohort_size = CAPACITY_COHORT_SIZE.get(capacity_class, 20)
-    if cohort_size >= len(eligible):
-        return list(eligible)
-    state = _compute_fairness_state(eligible, window_sec=window_sec,
-                                       now_ts=now_ts)
-    reg_ts = registered_ts_by_endpoint or {}
-
-    def _key(ep: str):
-        f = state[ep]
-        return (f.weighted_count, f.last_alloc_ts, reg_ts.get(ep, 0.0))
-
-    ordered = sorted(eligible, key=_key)
-    return ordered[:cohort_size]
+    return filter_endpoints_by_risk_profile(all_endpoints, tier, risk_profiles)
 
 
 def record_allocation(cell_id: str, tier: str, endpoints: list[str],
