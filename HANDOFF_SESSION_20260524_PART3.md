@@ -68,18 +68,20 @@ $20k start-of-day cap per trading platform. Position sizing math uses $20k as th
   - **Kraken admissions are too lenient** — 10bp deducted vs 20bp actual → some that don't actually clear net get admitted.
 - Recommended follow-up: per-venue fee table in the audit, not a single FEE_BPS constant.
 
-### Quantum taxonomy across all 1560 trajectories
-- **2 unique signatures only**: (11, 45) and (11, 46). Stable across recovered 648 AND the new 850 in-flight tranche. Final analysis on 1560 expected to remain at 2.
+### Quantum taxonomy across all 1560 trajectories (CONFIRMED final)
+- **2 unique signatures only**: (11, 45) n=1346 (86.3%), (11, 46) n=214 (13.7%). Held across recovered 648 + new 912 — no new signatures emerged.
 - **All 100% `spectral_target` mode** — no policy exploration; same as Markets.
+- **All 100% twobath source kind** — zero qd3set trajectories ever appeared. The data dir does not have any `2_epsilon-*.npy` files despite the adapter's regex supporting them.
 - **vp clusters**:
-  - (11, 45): vp ≈ 0.864, stdev ~0.003. Wide vp range — `0.793` to `0.866` but most at 0.864.
-  - (11, 46): vp ≈ 0.793, stdev ~0.0001. Essentially deterministic.
+  - (11, 45): n=1346, vp = 0.8643 ± 0.0031. Range [0.7930, 0.8665].
+  - (11, 46): n=214, vp = 0.7931 ± 0.0001. Essentially deterministic.
 - **Lambda=500 (strong system-bath coupling) is the deterministic discriminator** for the (11, 46) class:
-  - 100% of (11, 46) trajectories have lambda=500.
-  - Of lambda=500 trajectories: ~80% land in (11, 46), ~20% in (11, 45).
-  - Gamma=500 (strong damping) never appears in (11, 46) — strong damping stays in majority class regardless of coupling.
+  - **100% (perfect specificity)**: all 214 (11, 46) trajectories have lambda=500.
+  - **68.6% (partial sensitivity)**: of 312 lambda=500 trajectories, 214 land in (11, 46); the other 98 stay in (11, 45). Lambda=500 is necessary but not sufficient for the +1-edge signature.
+  - Gamma=500 (strong damping) never appears in (11, 46) — strong damping keeps trajectories in the majority class regardless of coupling.
 - **Temperature regime doesn't change the taxonomy**: Tavg span 77 → 500 produced no new signatures.
-- **n_steps is None on the 648 recovered** (recovery script artifact); populated correctly on the 850+ new ones.
+- **n_steps is None on the 648 recovered** (recovery script artifact); populated correctly on the 912 fresh ones.
+- **Run completed in 4188s (~70min)** with 0 errors.
 
 ### Quantum vs Markets cross-domain
 | | Markets winners | Quantum trajectories |
