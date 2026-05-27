@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import live_mock_trade_replay as live_rt
+import oracle_winner_evidence
 from mock_trade_replay import (
     close_open_for_status,
     current_status_from_visible,
@@ -138,8 +139,32 @@ def run(args: argparse.Namespace) -> None:
     global_start = min(all_ts)
 
     settings = live_rt._prepare_settings(Path(args.exit_params))
-    # No scenario overrides. Historical RT uses the same admission (current oracle_winner_trade_list.json)
-    # and the same exit rules as live RT — only the data feed differs (historical bins vs live tape).
+    # Enable the per-canonical-key evidence gate. Admission decisions read the
+    # outcome ledger (oracle_winner_evidence_ledger.jsonl) and reject keys whose
+    # Wilson LB falls below the rolling break-even win-rate.
+    # Mode "wilson" (default) is v1. Mode "protective" adds K-NN reject override
+    # on Wilson admit_bank/admit_shadow decisions when structural neighbors are losing.
+    evidence_mode = str(args.evidence_mode or "wilson")
+    # "in_flight_promote" is a layered mode: entry gate stays on protective (best
+    # defensive baseline), and the in-flight promotion hook in
+    # mock_trade_replay.close_open_for_status fires shadow -> bank when signals fire.
+    entry_evidence_mode = "protective" if evidence_mode == "in_flight_promote" else evidence_mode
+    in_flight_promote_enabled = (evidence_mode == "in_flight_promote")
+    # Optional per-run ledger override — lets a protective backtest run in parallel
+    # with the in-flight wilson backtest without contaminating each other's evidence.
+    if args.evidence_ledger_path:
+        ledger_path = Path(args.evidence_ledger_path)
+        ledger_path.parent.mkdir(parents=True, exist_ok=True)
+        oracle_winner_evidence.set_active_ledger_path(ledger_path)
+        print(f"[evidence] active ledger path override -> {ledger_path}", flush=True)
+    for scenario in settings.get("scenarios") or []:
+        scenario["oracle_winner_evidence_gate_enabled"] = True
+        scenario["oracle_winner_evidence_mode"] = entry_evidence_mode
+        scenario["oracle_winner_in_flight_promote_enabled"] = in_flight_promote_enabled
+        if args.evidence_ledger_path:
+            scenario["oracle_winner_evidence_ledger_path_override"] = str(args.evidence_ledger_path)
+    if in_flight_promote_enabled:
+        print(f"[evidence] entry_mode=protective + in_flight_promote layer ENABLED", flush=True)
 
     state: dict[str, Any] = {
         "schema": "historical_rt_run2_state_v2",
@@ -284,6 +309,21 @@ def main() -> None:
     parser.add_argument("--synthetic-spread-bps", type=float, default=2.0)
     parser.add_argument("--stride-minutes", type=int, default=15)
     parser.add_argument("--save-seconds", type=float, default=30.0)
+    parser.add_argument(
+        "--evidence-mode",
+        choices=("wilson", "protective", "in_flight_promote"),
+        default="wilson",
+        help="Evidence-gate logic. 'wilson' = v1 per-key Wilson LB. "
+             "'protective' = Wilson bank + K-NN reject override on marginal admissions. "
+             "'in_flight_promote' = protective + per-tick in-flight signal-based "
+             "shadow->bank promotion (see markets_in_flight_promote.py).",
+    )
+    parser.add_argument(
+        "--evidence-ledger-path",
+        default="",
+        help="Override the per-canonical-key evidence ledger path. Use this to run a "
+             "parallel backtest with its own ledger file (no contamination of the live one).",
+    )
     args = parser.parse_args()
     run(args)
 

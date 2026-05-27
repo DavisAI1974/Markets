@@ -5,6 +5,8 @@ import math
 from pathlib import Path
 from typing import Any
 
+import oracle_winner_evidence
+
 REPO_ROOT = Path(__file__).resolve().parent
 DEFAULT_ORACLE_WINNER_LIST_PATH = REPO_ROOT / "research" / "strategy_evolution" / "oracle_winner_trade_list.json"
 
@@ -251,6 +253,37 @@ def _entry_match_from_payload(row: Any, payload: dict[str, Any], path: str | Pat
     }
 
 
+def _apply_evidence_gate(match: dict[str, Any], scenario: dict[str, Any]) -> dict[str, Any]:
+    """Gate the match by current per-canonical-key evidence. Adds decision metadata
+    to the match dict; returns {} if evidence says reject. Returns match unchanged
+    if the scenario doesn't enable the gate (preserves legacy behavior)."""
+    if not match:
+        return match
+    if not bool(scenario.get("oracle_winner_evidence_gate_enabled", False)):
+        return match
+    canonical_key = match.get("canonical_trade_key") or match.get("match_key") or ""
+    if not canonical_key:
+        return match
+    n_min = int(scenario.get("oracle_winner_evidence_n_min_for_bank") or 10)
+    fees_bps = float(scenario.get("oracle_winner_evidence_fees_bps_override") or 0.0)
+    mode = str(scenario.get("oracle_winner_evidence_mode") or "wilson")
+    decision = oracle_winner_evidence.decide_admission(
+        canonical_key=str(canonical_key),
+        n_min_for_bank=n_min,
+        fees_bps=fees_bps,
+        mode=mode,
+    )
+    if decision["decision"] == "reject":
+        return {}
+    out = dict(match)
+    out["evidence_decision"] = decision["decision"]
+    out["evidence_reason"] = decision["reason"]
+    out["evidence_posterior"] = decision["posterior"]
+    out["evidence_break_even_winrate"] = decision["break_even_winrate"]
+    out["evidence_global_rolling"] = decision["global_rolling"]
+    return out
+
+
 def match_oracle_winner(row: Any, scenario: dict[str, Any] | None = None) -> dict[str, Any]:
     scenario = scenario or {}
     path = scenario.get("oracle_winner_list_path") or None
@@ -260,7 +293,7 @@ def match_oracle_winner(row: Any, scenario: dict[str, Any] | None = None) -> dic
         or scenario.get("oracle_winner_proven_entries_only")
     )
     if exact_entry_required:
-        return _entry_match_from_payload(row, payload, path)
+        return _apply_evidence_gate(_entry_match_from_payload(row, payload, path), scenario)
     indices = payload.get("indices") or {}
     if not isinstance(indices, dict) or not indices:
         return {}
@@ -269,7 +302,7 @@ def match_oracle_winner(row: Any, scenario: dict[str, Any] | None = None) -> dic
     if "entry" in levels:
         exact = _entry_match_from_payload(row, payload, path)
         if exact:
-            return exact
+            return _apply_evidence_gate(exact, scenario)
     min_count = max(1, _int(scenario.get("oracle_winner_min_count"), 1))
     min_avg_net_bps = _float(scenario.get("oracle_winner_min_avg_net_bps"), 0.0)
     keys = oracle_winner_route_keys(row)
@@ -289,12 +322,13 @@ def match_oracle_winner(row: Any, scenario: dict[str, Any] | None = None) -> dic
         selected = group.get("selected_exit") if isinstance(group.get("selected_exit"), dict) else {}
         if not selected:
             continue
-        return {
+        return _apply_evidence_gate({
             "schema": "oracle_winner_trade_match_v1",
             "source_path": str(payload.get("output_path") or payload.get("source_path") or (Path(path) if path else DEFAULT_ORACLE_WINNER_LIST_PATH)),
             "list_created_at": payload.get("created_at"),
             "match_level": level,
             "match_key": key,
+            "canonical_trade_key": key,
             "oracle_winner_count": _int(group.get("count")),
             "avg_net_bps": _float(group.get("avg_net_bps")),
             "total_net_pnl_usd": _float(group.get("total_net_pnl_usd")),
@@ -302,7 +336,7 @@ def match_oracle_winner(row: Any, scenario: dict[str, Any] | None = None) -> dic
             "selected_exit": dict(selected),
             "top_exits": list(group.get("top_exits") or [])[:8],
             "examples": list(group.get("examples") or [])[:8],
-        }
+        }, scenario)
     return {}
 
 

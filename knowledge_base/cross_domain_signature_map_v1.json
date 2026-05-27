@@ -1,0 +1,84 @@
+{
+  "_metadata": {
+    "schema_version": "1.0",
+    "finding_id": "cross_domain_signature_map_v1",
+    "generated_at_utc": "2026-05-24",
+    "source_session": "HANDOFF_SESSION_20260524_PART3",
+    "generated_by": "refrag spectral_retrieval pipeline run, identical pipeline_id (od_spectral_retrieval_pipeline) on both domains; only the input scalar series differs",
+    "pipeline_id": "od_spectral_retrieval_pipeline",
+    "comparability_note": "Same orchestrator, same operators, same query/task config. Inputs are 1D floats either way: markets feeds log_returns from price bins, quantum feeds Re(rho[t,0,0]) from density matrices. Resulting operator_coefficient embeddings live in the same coordinate system, making cross-domain spectral_similarity meaningful."
+  },
+  "finding": {
+    "headline": "Markets (financial) and Quantum (spin-boson) trajectories both saturate the pipeline's 11-node FAISS retrieval cap, but at different edge counts and very different validity_probability regimes. The (n_nodes, n_edges) signature labels do NOT overlap, so cross-domain transfer must be found in the operator_coefficients embedding space, not in the signature labels themselves.",
+    "confidence": "high"
+  },
+  "domains": {
+    "markets": {
+      "source_pipeline_output": "E:\\Markets\\_full_pipeline_winners\\summary.json",
+      "n_records": 1690,
+      "scalar_projection": "log_returns_from_1s_price_bins",
+      "scalar_projection_note": "1-second bin closes -> log returns. Sliced per oracle winner trade [entry_ts, exit_ts].",
+      "unique_signatures": 7,
+      "dominant_signature": {"n_nodes": 11, "n_edges": 53, "share_pct": 92},
+      "minority_signatures": [
+        {"n_nodes": 5,  "n_edges": 8,  "share_pct": 1.5,  "horizon_minutes_mean": 11},
+        {"n_nodes": 6,  "n_edges": 13, "share_pct": 1.9,  "horizon_minutes_mean": 19},
+        {"n_nodes": 7,  "n_edges": 19, "share_pct": 0.9,  "horizon_minutes_mean": 28},
+        {"n_nodes": 8,  "n_edges": 26, "share_pct": 1.2,  "horizon_minutes_mean": 25},
+        {"n_nodes": 9,  "n_edges": 34, "share_pct": 0.8,  "horizon_minutes_mean": 39},
+        {"n_nodes": 10, "n_edges": 43, "share_pct": 1.3,  "horizon_minutes_mean": 34}
+      ],
+      "validity_probability_mean": 0.314,
+      "validity_probability_stdev": 0.024,
+      "selected_retrieval_mode_share_pct": {"spectral_target": 100},
+      "natural_taxonomy_interpretation": "Monotonic: more nodes/edges = longer hold = higher net_bps. (11, 53) is the saturated long-hold class. Minority classes are the finer-structure short-horizon classes."
+    },
+    "quantum_spin_boson": {
+      "source_pipeline_output": "E:\\refrag\\_full_pipeline_quantum\\summary.json",
+      "n_records": 1560,
+      "scalar_projection": "excited_state_population_Re_rho00",
+      "scalar_projection_note": "Re(rho[t, 0, 0]) per timestep from 2x2 density matrix trajectories.",
+      "unique_signatures": 2,
+      "dominant_signature": {"n_nodes": 11, "n_edges": 45, "share_pct": 86},
+      "minority_signatures": [
+        {"n_nodes": 11, "n_edges": 46, "share_pct": 14, "physical_discriminator": "lambda=500 (strong system-bath coupling)"}
+      ],
+      "validity_probability_mean": 0.853,
+      "validity_probability_stdev": 0.027,
+      "selected_retrieval_mode_share_pct": {"spectral_target": 100},
+      "natural_taxonomy_interpretation": "Binary: weak/moderate coupling (lambda<=200) vs strong coupling (lambda=500). Coupling regime is the deterministic discriminator; temperature regime (Tavg 77-500) and initial state (exc/sup) do not introduce new signatures."
+    }
+  },
+  "cross_domain_observations": [
+    {
+      "name": "11-node saturation is shared",
+      "claim": "Both domains saturate at exactly n_nodes=11. This is the FAISS retrieval top_k cap of the spectral_retrieval pipeline, not a property of either domain.",
+      "implication": "The pipeline's dominant 'saturation regime' is a STRUCTURAL property of refrag, not of markets or quantum. Cross-domain comparison inside the saturated band is valid."
+    },
+    {
+      "name": "Edge-count regimes differ",
+      "claim": "Markets saturates at 53 edges; Quantum saturates at 45-46 edges. Both have the same 11 nodes, so Markets' retrieved chunks have substantially denser cross-chunk relationships than Quantum's.",
+      "implication": "Either Markets' price-bin log returns generate richer spectral overlap between adjacent windows than density-matrix populations do, OR the evidence_graph_builder is finding domain-specific edge types in one set that don't exist in the other. Worth a follow-up that inspects edge metadata, not just counts."
+    },
+    {
+      "name": "Validity probability regimes differ by ~2.7x",
+      "claim": "Markets vp ~0.31 mean; Quantum vp ~0.85 mean. Tight stdev within each domain (~0.024 / ~0.027).",
+      "implication": "The operator_validity_posterior is judging Quantum trajectories as much more 'valid' than Markets trajectories. Either quantum signal is genuinely cleaner (controlled physics, no measurement noise), or the validity scoring depends on a property that quantum dynamics satisfy more readily (e.g., spectral coherence, stationarity)."
+    },
+    {
+      "name": "Signatures do not overlap directly",
+      "claim": "No (n_nodes, n_edges) signature appears in BOTH domains' outputs.",
+      "implication": "Cross-domain transfer cannot be detected via signature-label matching. It must be detected via spectral_similarity on the operator_coefficients vectors (which live in the same embedding space because both runs used the same pipeline)."
+    },
+    {
+      "name": "Retrieval policy is degenerate",
+      "claim": "100% of trajectories in BOTH domains selected `spectral_target` mode (vs available alternatives candidate_similarity / hybrid).",
+      "implication": "The retrieval_policy_learner is not exploring. This is consistent across runs and probably means the policy has collapsed to one mode. Worth investigating whether exploration_policy_controller is producing meaningful gap signals."
+    }
+  ],
+  "open_question_for_next_run": {
+    "question": "Can the cross_domain_transfer_detector in spectral_similarity mode find Markets winners whose operator_coefficients fingerprint matches lambda=500 quantum trajectories more than they match lambda<=200 quantum trajectories?",
+    "why_it_matters": "If yes: the embedding space carries domain-specific physical-regime information that survives saturation. The cross-domain bridge is real, even though the signature labels don't overlap.",
+    "command": "from refrag_discovery.control_plane.cross_domain_transfer_detector import detect_cross_domain_transfer; detect_cross_domain_transfer(source_domain='markets', target_domain='quantum', comparison_mode='spectral_similarity', similarity_threshold=0.7)"
+  }
+}

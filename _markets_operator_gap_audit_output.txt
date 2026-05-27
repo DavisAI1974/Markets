@@ -1,0 +1,126 @@
+====================================================================================================
+MARKETS OPERATOR GAP AUDIT
+(refrag_discovery.operator_gap_finder applied to current admission + exit stack)
+====================================================================================================
+
+Registry: 7 operators
+  - wilson_admission               domain=per_trade_admission            caps=4
+  - protective_admission           domain=per_trade_admission            caps=4
+  - in_flight_promote              domain=per_trade_in_flight            caps=5
+  - promoted_context_allowlist     domain=per_trade_admission            caps=5
+  - fee_cover_15m_exit             domain=per_trade_exit                 caps=3
+  - trailing_safety_net_exit       domain=per_trade_exit                 caps=3
+  - oracle_horizon_exit            domain=per_trade_exit                 caps=2
+
+Probing:
+  target_domains = 10
+  known_data_types = 24
+  known_tasks = 11
+
+====================================================================================================
+GAP-FINDER OUTPUT
+====================================================================================================
+
+--- DOMAIN / DATA-TYPE GAPS (19) ---
+  [    domain]  severity=0.95  target='continuous_feature_similarity'  No operators cover this domain.
+  [    domain]  severity=0.95  target='chunk_pattern_matching'  No operators cover this domain.
+  [    domain]  severity=0.95  target='expected_value_ranking'  No operators cover this domain.
+  [    domain]  severity=0.95  target='bank_demote_in_flight'  No operators cover this domain.
+  [    domain]  severity=0.95  target='in_flight_reject'  No operators cover this domain.
+  [    domain]  severity=0.95  target='drawdown_invariants'  No operators cover this domain.
+  [    domain]  severity=0.95  target='operator_lifecycle_tracking'  No operators cover this domain.
+  [ data_type]  severity=0.85  target='tte_20bps_min'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='hold_min'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='net_bps_per_min'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='cover_by_15m'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='mfe_bps'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='mae_bps'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='continuous_feature_embedding'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='chunk_feature_vector'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='operator_lineage'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='drawdown_state'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='expected_value_score'  No manifest references this data type.
+  [ data_type]  severity=0.85  target='rolling_payoff_stats'  No manifest references this data type.
+
+--- DEAD-END OPERATORS (4) ---
+  (output type not consumed by any other manifest)
+    fee_cover_15m_exit
+    in_flight_promote
+    oracle_horizon_exit
+    trailing_safety_net_exit
+
+--- UNREACHABLE OUTPUT TYPES (3) ---
+  (produced by an operator but consumed by none — orphan data)
+    exit_decision
+    promotion_signal
+    role_flip
+
+--- ANOMALOUS TASKS (1) ---
+  (task description has zero token overlap with any operator)
+  err=1.00  'track operator lifecycle state (candidate, stable, decaying, promoted)'
+            -> No token overlap with current operator registry.
+
+--- COVERAGE HEATMAP ---
+  domain_counts:
+                 per_trade_admission  3
+                      per_trade_exit  3
+                 per_trade_in_flight  1
+  input_type_counts (top 10):
+                         trade_state  4
+                             net_bps  4
+                         elapsed_min  3
+                 canonical_trade_key  2
+                      outcome_ledger  2
+                        payoff_stats  1
+                  identity_neighbors  1
+                  admission_decision  1
+                context_family_tuple  1
+                     allowlist_state  1
+  output_type_counts (top 10):
+                  admission_decision  3
+                       exit_decision  3
+                           role_flip  1
+                    promotion_signal  1
+  capability_counts (top 10):
+                  wilson_lower_bound  2
+       break_even_winrate_derivation  1
+          per_canonical_key_evidence  1
+                cold_start_to_shadow  1
+                   knn_identity_pool  1
+    negative_evidence_override_to_reject  1
+        structural_correlation_guard  1
+     reached_20bps_within_30m_signal  1
+               hold_min_ge_60_signal  1
+        net_bps_per_min_quality_gate  1
+
+--- RECOMMENDATIONS (3) ---
+  Suggested operator: continuous_feature_similarity_bridge_operator
+    name: Continuous_Feature_Similarity Bridge Operator
+    description: Suggested to cover missing domain gap for continuous_feature_similarity.
+  Suggested operator: chunk_pattern_matching_bridge_operator
+    name: Chunk_Pattern_Matching Bridge Operator
+    description: Suggested to cover missing domain gap for chunk_pattern_matching.
+  Suggested operator: expected_value_ranking_bridge_operator
+    name: Expected_Value_Ranking Bridge Operator
+    description: Suggested to cover missing domain gap for expected_value_ranking.
+
+--- PRODUCTION-READINESS NOTES ---
+  criteria_version: heuristic_guardrails_v1
+  operator_id: operator_gap_finder
+  implementation_type: deterministic_heuristic_proxy
+  production_ready: False
+  confidence_calibration: uncalibrated_heuristic
+  requires_human_review: True
+  bounded_outputs: True
+  autonomy_level: advisory_only
+  side_effect_scope: none
+  guardrails:
+    - Treat scores and confidence fields as deterministic heuristics, not calibrated probabilities.
+    - Keep outputs behind human review or a stricter policy gate before irreversible external actions.
+    - Record benchmark or trace evidence for any production workflow that consumes this operator.
+  release_criteria:
+    - Benchmark missing-gap precision and recall against curated registry snapshots.
+    - Require reviewed draft manifests before any suggested gap-closure operator is created.
+  blocking_gaps:
+    - Gap severity is derived from manifest-count heuristics instead of demand data.
+    - Draft recommendations do not yet validate runtime feasibility or governance fit.

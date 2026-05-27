@@ -157,6 +157,13 @@ def _bank_entry_shadow_reason_for_status(status: Any, scenario: dict[str, Any]) 
 
 
 def _bank_entry_shadow_reason_for_trade(trade: dict[str, Any]) -> str:
+    # Structural: evidence ledger decision dominates if present. Match returns
+    # 'admit_bank' only when per-key Wilson LB clears break-even; anything else
+    # forces shadow regardless of legacy flags.
+    match = trade.get("oracle_winner_match") or {}
+    if isinstance(match, dict) and match.get("evidence_decision"):
+        if str(match.get("evidence_decision")) != "admit_bank":
+            return f"evidence_decision_{match.get('evidence_decision')}"
     return str(
         trade.get("bank_entry_shadow_reason")
         or trade.get("oracle_bank_shadow_reason")

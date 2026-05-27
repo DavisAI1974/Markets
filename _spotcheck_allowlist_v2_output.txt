@@ -1,0 +1,77 @@
+Allowlist loaded: 9 entries (pnl_R >= 100.0, trades >= 30)
+  BTC|bybit|buy|remaining18h     x buy_up_continuation           pnl_R=  376.4  n= 188  wr=0.48
+  BTC|bybit|sell|remaining18h    x small_move_fade               pnl_R=  123.2  n=  44  wr=0.59
+  BTC|coinbase|buy|remaining18h  x buy_up_continuation           pnl_R=  845.7  n= 228  wr=0.59
+  BTC|kraken|buy|remaining18h    x buy_up_continuation           pnl_R=  624.0  n= 141  wr=0.67
+  ETH|bybit|buy|remaining18h     x buy_up_continuation           pnl_R= 2059.5  n= 218  wr=0.81
+  ETH|bybit|sell|remaining18h    x small_move_fade               pnl_R=  122.4  n=  47  wr=0.53
+  ETH|coinbase|buy|remaining18h  x buy_up_continuation           pnl_R= 1906.4  n= 209  wr=0.79
+  ETH|kraken|buy|remaining18h    x buy_up_continuation           pnl_R= 1080.8  n= 146  wr=0.79
+  ETH|kraken|sell|remaining18h   x small_move_fade               pnl_R=  156.1  n=  44  wr=0.68
+
+Loading E:\Markets\_analysis_historical_rt_trade_shapes_20260523\per_trade.csv ...
+  loaded 67728 usable rows
+  ... 10000/67728  rate 1248/s  eta 46s  upgraded=0
+  ... 20000/67728  rate 1094/s  eta 44s  upgraded=0
+  ... 30000/67728  rate 1175/s  eta 32s  upgraded=0
+  ... 40000/67728  rate 1217/s  eta 23s  upgraded=0
+  ... 50000/67728  rate 1243/s  eta 14s  upgraded=0
+  ... 60000/67728  rate 1207/s  eta 6s  upgraded=0
+
+Replay complete in 56.4s
+
+=== AGGREGATE DECISION DISTRIBUTION ===
+  wilson         total=67728  bank=0  shadow=17276  reject=50452
+  protective_v1  total=67728  bank=0  shadow=264  reject=67464
+  allowlist      total=67728  bank=0  shadow=264  reject=67464
+
+=== ALLOWLIST UPGRADE SUMMARY ===
+  shadow candidates checked: 264
+  upgraded shadow -> bank:   0
+  not on allowlist:          264
+
+=== PER-DAY BREAKDOWN (n>=50, focus=allowlist) ===
+  Day        n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  5      13094       +0.0      +0.0      +0.0           0       +0.0
+  6      13089       +0.0      +0.0      +0.0           0       +0.0
+  4      12819       +0.0      +0.0      +0.0           0       +0.0
+  3      12143       +0.0      +0.0      +0.0           0       +0.0
+  2       9917       +0.0      +0.0      +0.0           0       +0.0
+  0       3418       +0.0      +0.0      +0.0           0       +0.0
+  1       3248       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: allowlist bank PnL non-negative across all day buckets (7 shown)
+
+=== PER-ASSET BREAKDOWN (n>=50, focus=allowlist) ===
+  Asset           n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  ETH         37786       +0.0      +0.0      +0.0           0       +0.0
+  BTC         29942       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: allowlist bank PnL non-negative across all asset buckets (2 shown)
+
+=== PER-VENUE BREAKDOWN (n>=50, focus=allowlist) ===
+  Venue             n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  Kraken        25096       +0.0      +0.0      +0.0           0       +0.0
+  Coinbase      23352       +0.0      +0.0      +0.0           0       +0.0
+  Bybit         19280       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: allowlist bank PnL non-negative across all venue buckets (3 shown)
+
+=== PER-SIDE BREAKDOWN (n>=50, focus=allowlist) ===
+  Side            n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  sell        33937       +0.0      +0.0      +0.0           0       +0.0
+  buy         33791       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: allowlist bank PnL non-negative across all side buckets (2 shown)
+
+=== PER-SESSION BREAKDOWN (n>=50, focus=allowlist) ===
+  Session               n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  remaining18h      51959       +0.0      +0.0      +0.0           0       +0.0
+  first6h           15769       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: allowlist bank PnL non-negative across all session buckets (2 shown)
+
+=== PER-STRATEGY BREAKDOWN (n>=50, focus=allowlist) ===
+  Strategy                      n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  MEAN_REVERSION_CHOP       11302       +0.0      +0.0      +0.0           0       +0.0
+  BASIS_DISLOCATION         11288       +0.0      +0.0      +0.0           0       +0.0
+  LIQUIDITY_SQUEEZE         11287       +0.0      +0.0      +0.0           0       +0.0
+  RELATIVE_STRENGTH         11287       +0.0      +0.0      +0.0           0       +0.0
+  NEWS_BREAKOUT             11282       +0.0      +0.0      +0.0           0       +0.0
+  VOL_BREAKOUT              11282       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: allowlist bank PnL non-negative across all strategy buckets (6 shown)

@@ -1,0 +1,1032 @@
+Side-by-side in-flight prediction: CHUNK-only vs CHUNK+STACK
+Test set: 276 trades, 213 winners / 63 losers
+Stack features: funding_rate, oi_zscore, news_flag (±60min)
+Score > 0 → predict WIN; Score ≤ 0 → predict LOSE
+====================================================================================================
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps= +182.6  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 80.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -6.31→LOSE ✗  ==  stack= -6.04→LOSE ✗
+   k=2/3  chunk= -3.81→LOSE ✗  ==  stack= -3.54→LOSE ✗
+   k=3/3  chunk= -3.77→LOSE ✗  ==  stack= -3.50→LOSE ✗
+
+BTC/Bybit  id=h150-156|5m|slice_  net_bps= +181.3  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 80.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -7.70→LOSE ✗  ==  stack= -7.43→LOSE ✗
+   k=2/4  chunk= -8.97→LOSE ✗  ==  stack= -8.70→LOSE ✗
+   k=3/4  chunk= -6.47→LOSE ✗  ==  stack= -6.20→LOSE ✗
+   k=4/4  chunk= -5.88→LOSE ✗  ==  stack= -5.61→LOSE ✗
+
+ETH/Coinbase  id=h144-150|15m|slice  net_bps= +151.6  truth=WIN  family=BASIS_DISLOCATION         hold=330.0min  n_chunks=11
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/11  chunk= +3.77→WIN ✓  ==  stack= +4.05→WIN ✓
+   k=2/11  chunk= +3.89→WIN ✓  ==  stack= +4.17→WIN ✓
+   k=3/11  chunk= +2.84→WIN ✓  ==  stack= +3.11→WIN ✓
+   k=4/11  chunk= +3.13→WIN ✓  ==  stack= +3.40→WIN ✓
+   k=5/11  chunk= +2.30→WIN ✓  ==  stack= +2.58→WIN ✓
+   k=6/11  chunk= +2.25→WIN ✓  ==  stack= +2.52→WIN ✓
+   k=7/11  chunk= +1.96→WIN ✓  ==  stack= +2.23→WIN ✓
+   k=8/11  chunk= +1.85→WIN ✓  ==  stack= +2.12→WIN ✓
+   k=9/11  chunk= +1.46→WIN ✓  ==  stack= +1.73→WIN ✓
+   k=10/11  chunk= +1.32→WIN ✓  ==  stack= +1.59→WIN ✓
+   k=11/11  chunk= +1.36→WIN ✓  ==  stack= +1.63→WIN ✓
+
+ETH/Coinbase  id=h144-150|15m|slice  net_bps= +135.8  truth=WIN  family=BASIS_DISLOCATION         hold=240.0min  n_chunks=9
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/9  chunk= +3.61→WIN ✓  ==  stack= +3.88→WIN ✓
+   k=2/9  chunk= +1.30→WIN ✓  ==  stack= +1.57→WIN ✓
+   k=3/9  chunk= +1.03→WIN ✓  ==  stack= +1.30→WIN ✓
+   k=4/9  chunk= +0.79→WIN ✓  ==  stack= +1.06→WIN ✓
+   k=5/9  chunk= +1.03→WIN ✓  ==  stack= +1.30→WIN ✓
+   k=6/9  chunk= +1.04→WIN ✓  ==  stack= +1.31→WIN ✓
+   k=7/9  chunk= +0.64→WIN ✓  ==  stack= +0.92→WIN ✓
+   k=8/9  chunk= +0.58→WIN ✓  ==  stack= +0.85→WIN ✓
+   k=9/9  chunk= +0.71→WIN ✓  ==  stack= +0.98→WIN ✓
+
+ETH/Bybit  id=h156-162|15m|slice  net_bps= +124.1  truth=WIN  family=BASIS_DISLOCATION         hold=111.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -0.02→LOSE ✗  !=  stack= +0.25→WIN ✓
+   k=2/4  chunk= +0.47→WIN ✓  ==  stack= +0.74→WIN ✓
+   k=3/4  chunk= +0.57→WIN ✓  ==  stack= +0.84→WIN ✓
+   k=4/4  chunk= -0.47→LOSE ✗  ==  stack= -0.20→LOSE ✗
+
+ETH/Coinbase  id=h150-156|15m|slice  net_bps= +121.4  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 90.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -6.17→LOSE ✗  ==  stack= -5.90→LOSE ✗
+   k=2/4  chunk= -4.63→LOSE ✗  ==  stack= -4.36→LOSE ✗
+   k=3/4  chunk= -7.42→LOSE ✗  ==  stack= -7.15→LOSE ✗
+   k=4/4  chunk= -6.13→LOSE ✗  ==  stack= -5.86→LOSE ✗
+
+ETH/Kraken  id=h150-156|15m|slice  net_bps= +119.3  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 90.0min  n_chunks=5
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/5  chunk= -5.91→LOSE ✗  ==  stack= -5.64→LOSE ✗
+   k=2/5  chunk= -4.33→LOSE ✗  ==  stack= -4.06→LOSE ✗
+   k=3/5  chunk= -6.89→LOSE ✗  ==  stack= -6.62→LOSE ✗
+   k=4/5  chunk= -6.83→LOSE ✗  ==  stack= -6.56→LOSE ✗
+   k=5/5  chunk= -5.79→LOSE ✗  ==  stack= -5.52→LOSE ✗
+
+ETH/Bybit  id=h150-156|15m|slice  net_bps= +116.9  truth=WIN  family=BASIS_DISLOCATION         hold= 90.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -5.19→LOSE ✗  ==  stack= -4.92→LOSE ✗
+   k=2/4  chunk= -3.22→LOSE ✗  ==  stack= -2.94→LOSE ✗
+   k=3/4  chunk= -7.30→LOSE ✗  ==  stack= -7.03→LOSE ✗
+   k=4/4  chunk= -6.28→LOSE ✗  ==  stack= -6.00→LOSE ✗
+
+ETH/Kraken  id=h156-162|5m|slice_  net_bps= +110.0  truth=WIN  family=VOL_BREAKOUT              hold= 75.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -1.35→LOSE ✗  ==  stack= -1.07→LOSE ✗
+   k=2/4  chunk= +0.02→WIN ✓  ==  stack= +0.29→WIN ✓
+   k=3/4  chunk= +0.82→WIN ✓  ==  stack= +1.09→WIN ✓
+   k=4/4  chunk= -0.05→LOSE ✗  !=  stack= +0.22→WIN ✓
+
+ETH/Kraken  id=h96-102|15m|slice_  net_bps= +107.7  truth=WIN  family=VOL_BREAKOUT              hold=150.0min  n_chunks=7
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/7  chunk= +0.11→WIN ✓  ==  stack= +0.39→WIN ✓
+   k=2/7  chunk= -1.69→LOSE ✗  ==  stack= -1.42→LOSE ✗
+   k=3/7  chunk= -1.49→LOSE ✗  ==  stack= -1.22→LOSE ✗
+   k=4/7  chunk= -1.31→LOSE ✗  ==  stack= -1.04→LOSE ✗
+   k=5/7  chunk= -0.77→LOSE ✗  ==  stack= -0.50→LOSE ✗
+   k=6/7  chunk= -0.26→LOSE ✗  !=  stack= +0.01→WIN ✓
+   k=7/7  chunk= -0.33→LOSE ✗  ==  stack= -0.06→LOSE ✗
+
+ETH/Kraken  id=h150-156|5m|slice_  net_bps= +103.7  truth=WIN  family=BASIS_DISLOCATION         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -9.27→LOSE ✗  ==  stack= -8.99→LOSE ✗
+
+ETH/Bybit  id=h156-162|15m|slice  net_bps= +102.4  truth=WIN  family=LIQUIDITY_SQUEEZE         hold=150.0min  n_chunks=5
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/5  chunk= -2.56→LOSE ✗  ==  stack= -2.29→LOSE ✗
+   k=2/5  chunk= -0.78→LOSE ✗  ==  stack= -0.51→LOSE ✗
+   k=3/5  chunk= -0.26→LOSE ✗  !=  stack= +0.01→WIN ✓
+   k=4/5  chunk= -1.68→LOSE ✗  ==  stack= -1.41→LOSE ✗
+   k=5/5  chunk= -1.13→LOSE ✗  ==  stack= -0.86→LOSE ✗
+
+ETH/Kraken  id=h150-156|5m|slice_  net_bps= +101.5  truth=WIN  family=VOL_BREAKOUT              hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -6.65→LOSE ✗  ==  stack= -6.37→LOSE ✗
+
+ETH/Kraken  id=h156-162|15m|slice  net_bps=  +94.8  truth=WIN  family=BASIS_DISLOCATION         hold= 66.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +0.79→WIN ✓  ==  stack= +1.06→WIN ✓
+   k=2/3  chunk= +1.61→WIN ✓  ==  stack= +1.88→WIN ✓
+   k=3/3  chunk= +0.39→WIN ✓  ==  stack= +0.66→WIN ✓
+
+BTC/Bybit  id=h156-162|15m|slice  net_bps=  +94.5  truth=WIN  family=BASIS_DISLOCATION         hold=180.0min  n_chunks=6
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/6  chunk= -0.88→LOSE ✗  ==  stack= -0.61→LOSE ✗
+   k=2/6  chunk= +0.15→WIN ✓  ==  stack= +0.42→WIN ✓
+   k=3/6  chunk= -0.18→LOSE ✗  !=  stack= +0.09→WIN ✓
+   k=4/6  chunk= +0.32→WIN ✓  ==  stack= +0.60→WIN ✓
+   k=5/6  chunk= +0.33→WIN ✓  ==  stack= +0.60→WIN ✓
+   k=6/6  chunk= +0.75→WIN ✓  ==  stack= +1.02→WIN ✓
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +93.0  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +1.04→WIN ✓  ==  stack= +1.31→WIN ✓
+   k=2/2  chunk= -3.00→LOSE ✗  ==  stack= -2.73→LOSE ✗
+
+ETH/Coinbase  id=h150-156|15m|slice  net_bps=  +87.8  truth=WIN  family=BASIS_DISLOCATION         hold= 65.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/3  chunk= +0.01→WIN ✓  !=  stack= -3.67→LOSE ✗
+   k=2/3  chunk= -4.26→LOSE ✗  ==  stack= -7.94→LOSE ✗
+   k=3/3  chunk= -3.21→LOSE ✗  ==  stack= -6.89→LOSE ✗
+
+BTC/Bybit  id=h150-156|15m|slice  net_bps=  -87.2  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk=-10.95→LOSE ✓  ==  stack=-10.68→LOSE ✓
+
+BTC/Kraken  id=h150-156|15m|slice  net_bps=  +83.3  truth=WIN  family=BASIS_DISLOCATION         hold= 65.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +0.92→WIN ✓  ==  stack= +1.19→WIN ✓
+   k=2/2  chunk= +0.95→WIN ✓  ==  stack= +1.22→WIN ✓
+
+BTC/Coinbase  id=h156-162|15m|slice  net_bps=  +82.6  truth=WIN  family=BASIS_DISLOCATION         hold=150.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -1.74→LOSE ✗  ==  stack= -1.46→LOSE ✗
+   k=2/4  chunk= -0.60→LOSE ✗  ==  stack= -0.33→LOSE ✗
+   k=3/4  chunk= +0.33→WIN ✓  ==  stack= +0.60→WIN ✓
+   k=4/4  chunk= +1.15→WIN ✓  ==  stack= +1.42→WIN ✓
+
+BTC/Coinbase  id=h150-156|15m|slice  net_bps=  +80.2  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 60.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -6.06→LOSE ✗  ==  stack= -5.79→LOSE ✗
+   k=2/2  chunk= -3.57→LOSE ✗  ==  stack= -3.29→LOSE ✗
+
+ETH/Coinbase  id=h156-162|15m|slice  net_bps=  +77.7  truth=WIN  family=BASIS_DISLOCATION         hold= 51.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -0.22→LOSE ✗  !=  stack= +0.05→WIN ✓
+   k=2/3  chunk= +0.49→WIN ✓  ==  stack= +0.76→WIN ✓
+   k=3/3  chunk= -0.69→LOSE ✗  ==  stack= -0.42→LOSE ✗
+
+ETH/Kraken  id=h96-102|5m|slice_0  net_bps=  +77.0  truth=WIN  family=BASIS_DISLOCATION         hold= 40.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.31→WIN ✓  ==  stack= +0.58→WIN ✓
+
+BTC/Kraken  id=h150-156|15m|slice  net_bps=  +75.9  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 60.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -5.67→LOSE ✗  ==  stack= -5.39→LOSE ✗
+   k=2/3  chunk= -4.17→LOSE ✗  ==  stack= -3.90→LOSE ✗
+   k=3/3  chunk= -3.41→LOSE ✗  ==  stack= -3.14→LOSE ✗
+
+ETH/Kraken  id=h144-150|15m|slice  net_bps=  +75.6  truth=WIN  family=VOL_BREAKOUT              hold=165.0min  n_chunks=7
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/7  chunk= -0.01→LOSE ✗  !=  stack= +0.27→WIN ✓
+   k=2/7  chunk= +1.71→WIN ✓  ==  stack= +1.98→WIN ✓
+   k=3/7  chunk= +1.52→WIN ✓  ==  stack= +1.80→WIN ✓
+   k=4/7  chunk= +0.45→WIN ✓  ==  stack= +0.72→WIN ✓
+   k=5/7  chunk= +0.45→WIN ✓  ==  stack= +0.72→WIN ✓
+   k=6/7  chunk= +0.21→WIN ✓  ==  stack= +0.48→WIN ✓
+   k=7/7  chunk= +0.60→WIN ✓  ==  stack= +0.87→WIN ✓
+
+ETH/Bybit  id=h96-102|15m|slice_  net_bps=  +75.1  truth=WIN  family=LIQUIDITY_SQUEEZE         hold=135.0min  n_chunks=5
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/5  chunk= -0.94→LOSE ✗  ==  stack= -0.67→LOSE ✗
+   k=2/5  chunk= -0.57→LOSE ✗  ==  stack= -0.30→LOSE ✗
+   k=3/5  chunk= +0.10→WIN ✓  ==  stack= +0.37→WIN ✓
+   k=4/5  chunk= +0.21→WIN ✓  ==  stack= +0.49→WIN ✓
+   k=5/5  chunk= -0.20→LOSE ✗  !=  stack= +0.07→WIN ✓
+
+ETH/Coinbase  id=h150-156|15m|slice  net_bps=  +70.5  truth=WIN  family=BASIS_DISLOCATION         hold= 60.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk=-11.75→LOSE ✗  ==  stack=-11.48→LOSE ✗
+   k=2/3  chunk= -9.51→LOSE ✗  ==  stack= -9.24→LOSE ✗
+   k=3/3  chunk= -6.83→LOSE ✗  ==  stack= -6.56→LOSE ✗
+
+ETH/Coinbase  id=h150-156|5m|slice_  net_bps=  +69.0  truth=WIN  family=BASIS_DISLOCATION         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -4.38→LOSE ✗  ==  stack= -4.11→LOSE ✗
+
+BTC/Bybit  id=h156-162|15m|slice  net_bps=  +68.4  truth=WIN  family=BASIS_DISLOCATION         hold=135.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -0.73→LOSE ✗  ==  stack= -0.46→LOSE ✗
+   k=2/4  chunk= +0.55→WIN ✓  ==  stack= +0.83→WIN ✓
+   k=3/4  chunk= +0.49→WIN ✓  ==  stack= +0.76→WIN ✓
+   k=4/4  chunk= +1.08→WIN ✓  ==  stack= +1.35→WIN ✓
+
+BTC/Bybit  id=h150-156|5m|slice_  net_bps=  +67.6  truth=WIN  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk=-11.30→LOSE ✗  ==  stack=-11.03→LOSE ✗
+
+ETH/Kraken  id=h150-156|5m|slice_  net_bps=  +67.5  truth=WIN  family=BASIS_DISLOCATION         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.96→LOSE ✗  ==  stack= -2.68→LOSE ✗
+
+BTC/Kraken  id=h120-126|15m|slice  net_bps=  +67.0  truth=WIN  family=BASIS_DISLOCATION         hold=210.0min  n_chunks=9
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/9  chunk= +4.43→WIN ✓  ==  stack= +4.70→WIN ✓
+   k=2/9  chunk= +4.63→WIN ✓  ==  stack= +4.90→WIN ✓
+   k=3/9  chunk= +3.87→WIN ✓  ==  stack= +4.14→WIN ✓
+   k=4/9  chunk= +3.94→WIN ✓  ==  stack= +4.21→WIN ✓
+   k=5/9  chunk= +3.58→WIN ✓  ==  stack= +3.85→WIN ✓
+   k=6/9  chunk= +3.86→WIN ✓  ==  stack= +4.13→WIN ✓
+   k=7/9  chunk= +3.63→WIN ✓  ==  stack= +3.91→WIN ✓
+   k=8/9  chunk= +3.36→WIN ✓  ==  stack= +3.63→WIN ✓
+   k=9/9  chunk= +3.34→WIN ✓  ==  stack= +3.62→WIN ✓
+
+ETH/Coinbase  id=h144-150|15m|slice  net_bps=  +64.7  truth=WIN  family=VOL_BREAKOUT              hold=120.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= +3.61→WIN ✓  ==  stack= +3.88→WIN ✓
+   k=2/4  chunk= +1.30→WIN ✓  ==  stack= +1.57→WIN ✓
+   k=3/4  chunk= +1.26→WIN ✓  ==  stack= +1.53→WIN ✓
+   k=4/4  chunk= +1.11→WIN ✓  ==  stack= +1.38→WIN ✓
+
+BTC/Coinbase  id=h150-156|15m|slice  net_bps=  +63.2  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 90.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= -0.54→LOSE ✗  ==  stack= -0.27→LOSE ✗
+   k=2/4  chunk= +0.26→WIN ✓  ==  stack= +0.53→WIN ✓
+   k=3/4  chunk= -1.95→LOSE ✗  ==  stack= -1.67→LOSE ✗
+   k=4/4  chunk= -1.52→LOSE ✗  ==  stack= -1.24→LOSE ✗
+
+ETH/Kraken  id=h120-126|15m|slice  net_bps=  +62.6  truth=WIN  family=RELATIVE_STRENGTH         hold=120.0min  n_chunks=5
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/5  chunk= +3.20→WIN ✓  ==  stack= +3.47→WIN ✓
+   k=2/5  chunk= +2.33→WIN ✓  ==  stack= +2.60→WIN ✓
+   k=3/5  chunk= +2.04→WIN ✓  ==  stack= +2.31→WIN ✓
+   k=4/5  chunk= +1.84→WIN ✓  ==  stack= +2.11→WIN ✓
+   k=5/5  chunk= +2.06→WIN ✓  ==  stack= +2.33→WIN ✓
+
+ETH/Kraken  id=h120-126|5m|slice_  net_bps=  +62.5  truth=WIN  family=BASIS_DISLOCATION         hold= 75.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= +2.50→WIN ✓  ==  stack= +2.77→WIN ✓
+   k=2/4  chunk= +1.51→WIN ✓  ==  stack= +1.78→WIN ✓
+   k=3/4  chunk= +1.79→WIN ✓  ==  stack= +2.06→WIN ✓
+   k=4/4  chunk= +1.71→WIN ✓  ==  stack= +1.98→WIN ✓
+
+ETH/Kraken  id=h150-156|5m|slice_  net_bps=  +61.5  truth=WIN  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk=-17.42→LOSE ✗  ==  stack=-17.15→LOSE ✗
+
+BTC/Bybit  id=h120-126|15m|slice  net_bps=  +61.5  truth=WIN  family=MEAN_REVERSION_CHOP       hold=210.0min  n_chunks=9
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/9  chunk= +3.67→WIN ✓  ==  stack= +3.94→WIN ✓
+   k=2/9  chunk= +1.65→WIN ✓  ==  stack= +1.92→WIN ✓
+   k=3/9  chunk= +1.70→WIN ✓  ==  stack= +1.98→WIN ✓
+   k=4/9  chunk= +1.76→WIN ✓  ==  stack= +2.03→WIN ✓
+   k=5/9  chunk= +2.26→WIN ✓  ==  stack= +2.54→WIN ✓
+   k=6/9  chunk= +2.37→WIN ✓  ==  stack= +2.64→WIN ✓
+   k=7/9  chunk= +2.69→WIN ✓  ==  stack= +2.96→WIN ✓
+   k=8/9  chunk= +2.47→WIN ✓  ==  stack= +2.74→WIN ✓
+   k=9/9  chunk= +2.36→WIN ✓  ==  stack= +2.63→WIN ✓
+
+BTC/Kraken  id=h150-156|15m|slice  net_bps=  +61.0  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 50.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -1.38→LOSE ✗  ==  stack= -1.11→LOSE ✗
+   k=2/2  chunk= -0.20→LOSE ✗  !=  stack= +0.07→WIN ✓
+
+ETH/Kraken  id=h150-156|5m|slice_  net_bps=  +60.9  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/1  chunk= -3.05→LOSE ✗  ==  stack= -6.73→LOSE ✗
+
+BTC/Kraken  id=h150-156|5m|slice_  net_bps=  +60.8  truth=WIN  family=NEWS_BREAKOUT             hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.49→LOSE ✗  ==  stack= -2.22→LOSE ✗
+
+ETH/Coinbase  id=h96-102|15m|slice_  net_bps=  +58.5  truth=WIN  family=BASIS_DISLOCATION         hold= 60.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +1.30→WIN ✓  ==  stack= +1.57→WIN ✓
+   k=2/2  chunk= -0.89→LOSE ✗  ==  stack= -0.62→LOSE ✗
+
+ETH/Kraken  id=h120-126|15m|slice  net_bps=  +58.1  truth=WIN  family=BASIS_DISLOCATION         hold=135.0min  n_chunks=6
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/6  chunk= +3.20→WIN ✓  ==  stack= +3.47→WIN ✓
+   k=2/6  chunk= +2.33→WIN ✓  ==  stack= +2.60→WIN ✓
+   k=3/6  chunk= +2.04→WIN ✓  ==  stack= +2.31→WIN ✓
+   k=4/6  chunk= +1.84→WIN ✓  ==  stack= +2.11→WIN ✓
+   k=5/6  chunk= +1.97→WIN ✓  ==  stack= +2.24→WIN ✓
+   k=6/6  chunk= +2.08→WIN ✓  ==  stack= +2.35→WIN ✓
+
+BTC/Coinbase  id=h144-150|5m|slice_  net_bps=  +56.3  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 90.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +0.89→WIN ✓  ==  stack= +1.16→WIN ✓
+   k=2/3  chunk= +2.23→WIN ✓  ==  stack= +2.50→WIN ✓
+   k=3/3  chunk= +2.32→WIN ✓  ==  stack= +2.59→WIN ✓
+
+ETH/Coinbase  id=h144-150|15m|slice  net_bps=  +55.9  truth=WIN  family=BASIS_DISLOCATION         hold=105.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= +0.58→WIN ✓  ==  stack= +0.85→WIN ✓
+   k=2/4  chunk= -0.57→LOSE ✗  ==  stack= -0.30→LOSE ✗
+   k=3/4  chunk= -0.34→LOSE ✗  ==  stack= -0.07→LOSE ✗
+   k=4/4  chunk= +0.18→WIN ✓  ==  stack= +0.45→WIN ✓
+
+BTC/Kraken  id=h150-156|5m|slice_  net_bps=  +55.5  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.45→LOSE ✗  ==  stack= -0.17→LOSE ✗
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +55.2  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -2.67→LOSE ✗  ==  stack= -2.40→LOSE ✗
+   k=2/2  chunk= -4.22→LOSE ✗  ==  stack= -3.95→LOSE ✗
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +54.7  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.60→LOSE ✗  ==  stack= -2.33→LOSE ✗
+
+BTC/Bybit  id=h150-156|15m|slice  net_bps=  -54.6  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -4.81→LOSE ✓  ==  stack= -4.54→LOSE ✓
+
+ETH/Coinbase  id=h156-162|5m|slice_  net_bps=  +54.3  truth=WIN  family=BASIS_DISLOCATION         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.78→LOSE ✗  ==  stack= -1.51→LOSE ✗
+
+ETH/Bybit  id=h96-102|15m|slice_  net_bps=  +53.5  truth=WIN  family=BASIS_DISLOCATION         hold= 60.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +0.01→WIN ✓  ==  stack= +0.29→WIN ✓
+   k=2/2  chunk= -0.93→LOSE ✗  ==  stack= -0.65→LOSE ✗
+
+ETH/Kraken  id=h144-150|15m|slice  net_bps=  +53.4  truth=WIN  family=VOL_BREAKOUT              hold= 90.0min  n_chunks=5
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/5  chunk= +0.39→WIN ✓  ==  stack= +0.66→WIN ✓
+   k=2/5  chunk= +1.46→WIN ✓  ==  stack= +1.73→WIN ✓
+   k=3/5  chunk= +0.57→WIN ✓  ==  stack= +0.84→WIN ✓
+   k=4/5  chunk= +0.72→WIN ✓  ==  stack= +0.99→WIN ✓
+   k=5/5  chunk= +1.03→WIN ✓  ==  stack= +1.30→WIN ✓
+
+ETH/Kraken  id=h156-162|15m|slice  net_bps=  +53.0  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 21.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.92→LOSE ✗  ==  stack= -0.65→LOSE ✗
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +52.6  truth=WIN  family=BASIS_DISLOCATION         hold= 90.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +3.63→WIN ✓  ==  stack= +3.90→WIN ✓
+   k=2/3  chunk= +1.31→WIN ✓  ==  stack= +1.58→WIN ✓
+   k=3/3  chunk= +1.39→WIN ✓  ==  stack= +1.66→WIN ✓
+
+ETH/Bybit  id=h156-162|5m|slice_  net_bps=  +52.6  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.43→LOSE ✗  ==  stack= -2.15→LOSE ✗
+
+ETH/Bybit  id=h156-162|5m|slice_  net_bps=  +52.2  truth=WIN  family=BASIS_DISLOCATION         hold= 65.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +0.36→WIN ✓  ==  stack= +0.63→WIN ✓
+   k=2/3  chunk= -0.45→LOSE ✗  ==  stack= -0.18→LOSE ✗
+   k=3/3  chunk= -0.34→LOSE ✗  ==  stack= -0.07→LOSE ✗
+
+ETH/Kraken  id=h96-102|15m|slice_  net_bps=  +50.8  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 50.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -1.39→LOSE ✗  ==  stack= -1.12→LOSE ✗
+   k=2/3  chunk= -0.75→LOSE ✗  ==  stack= -0.48→LOSE ✗
+   k=3/3  chunk= -1.43→LOSE ✗  ==  stack= -1.16→LOSE ✗
+
+ETH/Bybit  id=h96-102|15m|slice_  net_bps=  +49.1  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 50.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +0.00→WIN ✓  ==  stack= +0.27→WIN ✓
+   k=2/3  chunk= -0.80→LOSE ✗  ==  stack= -0.53→LOSE ✗
+   k=3/3  chunk= -1.73→LOSE ✗  ==  stack= -1.46→LOSE ✗
+
+ETH/Kraken  id=h150-156|15m|slice  net_bps=  +49.1  truth=WIN  family=BASIS_DISLOCATION         hold= 50.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/2  chunk= -5.35→LOSE ✗  ==  stack= -9.03→LOSE ✗
+   k=2/2  chunk= -3.76→LOSE ✗  ==  stack= -7.44→LOSE ✗
+
+ETH/Kraken  id=h156-162|5m|slice_  net_bps=  +45.8  truth=WIN  family=BASIS_DISLOCATION         hold= 50.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -1.35→LOSE ✗  ==  stack= -1.07→LOSE ✗
+   k=2/2  chunk= +0.45→WIN ✓  ==  stack= +0.73→WIN ✓
+
+BTC/Coinbase  id=h156-162|15m|slice  net_bps=  +45.8  truth=WIN  family=BASIS_DISLOCATION         hold= 94.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -3.28→LOSE ✗  ==  stack= -3.01→LOSE ✗
+   k=2/2  chunk= -0.71→LOSE ✗  ==  stack= -0.44→LOSE ✗
+
+ETH/Kraken  id=h144-150|5m|slice_  net_bps=  +45.5  truth=WIN  family=VOL_BREAKOUT              hold= 80.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= +0.39→WIN ✓  ==  stack= +0.66→WIN ✓
+   k=2/4  chunk= +1.46→WIN ✓  ==  stack= +1.73→WIN ✓
+   k=3/4  chunk= +0.57→WIN ✓  ==  stack= +0.84→WIN ✓
+   k=4/4  chunk= +0.96→WIN ✓  ==  stack= +1.23→WIN ✓
+
+ETH/Kraken  id=h96-102|15m|slice_  net_bps=  +44.7  truth=WIN  family=BASIS_DISLOCATION         hold= 60.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -0.10→LOSE ✗  !=  stack= +0.17→WIN ✓
+   k=2/3  chunk= -0.83→LOSE ✗  ==  stack= -0.56→LOSE ✗
+   k=3/3  chunk= -0.90→LOSE ✗  ==  stack= -0.63→LOSE ✗
+
+ETH/Bybit  id=h96-102|15m|slice_  net_bps=  +44.5  truth=WIN  family=BASIS_DISLOCATION         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -0.86→LOSE ✗  ==  stack= -0.59→LOSE ✗
+   k=2/2  chunk= -0.27→LOSE ✗  !=  stack= +0.00→WIN ✓
+
+ETH/Bybit  id=h96-102|5m|slice_0  net_bps=  +44.2  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 40.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +0.00→WIN ✓  ==  stack= +0.27→WIN ✓
+   k=2/2  chunk= -0.12→LOSE ✗  !=  stack= +0.15→WIN ✓
+
+ETH/Coinbase  id=h144-150|15m|slice  net_bps=  -44.2  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.25→LOSE ✓  ==  stack= -1.98→LOSE ✓
+
+BTC/Coinbase  id=h156-162|5m|slice_  net_bps=  +44.1  truth=WIN  family=BASIS_DISLOCATION         hold= 89.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.20→LOSE ✗  !=  stack= +0.07→WIN ✓
+
+BTC/Bybit  id=h156-162|15m|slice  net_bps=  +44.0  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 94.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -5.51→LOSE ✗  ==  stack= -5.24→LOSE ✗
+   k=2/2  chunk= -1.33→LOSE ✗  ==  stack= -1.06→LOSE ✗
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +43.1  truth=WIN  family=BASIS_DISLOCATION         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.36→LOSE ✗  ==  stack= -2.08→LOSE ✗
+
+ETH/Coinbase  id=h96-102|5m|slice_0  net_bps=  +42.9  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.96→WIN ✓  ==  stack= +1.23→WIN ✓
+
+ETH/Coinbase  id=h96-102|5m|slice_0  net_bps=  +42.6  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 40.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.30→WIN ✓  ==  stack= +1.57→WIN ✓
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +42.3  truth=WIN  family=BASIS_DISLOCATION         hold= 80.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +2.94→WIN ✓  ==  stack= +3.21→WIN ✓
+   k=2/3  chunk= +0.97→WIN ✓  ==  stack= +1.24→WIN ✓
+   k=3/3  chunk= +1.16→WIN ✓  ==  stack= +1.43→WIN ✓
+
+ETH/Coinbase  id=h96-102|5m|slice_0  net_bps=  +42.3  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -6.04→LOSE ✗  ==  stack= -5.77→LOSE ✗
+
+ETH/Bybit  id=h156-162|5m|slice_  net_bps=  +42.0  truth=WIN  family=BASIS_DISLOCATION         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.67→LOSE ✗  ==  stack= -2.39→LOSE ✗
+
+ETH/Coinbase  id=h120-126|5m|slice_  net_bps=  +40.6  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 65.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +4.11→WIN ✓  ==  stack= +4.38→WIN ✓
+
+ETH/Kraken  id=h120-126|5m|slice_  net_bps=  +40.6  truth=WIN  family=VOL_BREAKOUT              hold= 90.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= +3.62→WIN ✓  ==  stack= +3.89→WIN ✓
+   k=2/4  chunk= +2.98→WIN ✓  ==  stack= +3.25→WIN ✓
+   k=3/4  chunk= +2.47→WIN ✓  ==  stack= +2.75→WIN ✓
+   k=4/4  chunk= +2.48→WIN ✓  ==  stack= +2.76→WIN ✓
+
+BTC/Kraken  id=h150-156|5m|slice_  net_bps=  +40.5  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -6.83→LOSE ✗  ==  stack= -6.56→LOSE ✗
+
+ETH/Bybit  id=h150-156|5m|slice_  net_bps=  +40.3  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/1  chunk= -7.83→LOSE ✗  ==  stack=-11.51→LOSE ✗
+
+ETH/Kraken  id=h96-102|5m|slice_0  net_bps=  +39.7  truth=WIN  family=VOL_BREAKOUT              hold= 65.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +0.20→WIN ✓  ==  stack= +0.48→WIN ✓
+   k=2/3  chunk= -0.17→LOSE ✗  !=  stack= +0.11→WIN ✓
+   k=3/3  chunk= -0.04→LOSE ✗  !=  stack= +0.23→WIN ✓
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +38.3  truth=WIN  family=RELATIVE_STRENGTH         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.26→WIN ✓  ==  stack= +0.53→WIN ✓
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +38.2  truth=WIN  family=RELATIVE_STRENGTH         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.98→WIN ✓  ==  stack= +2.26→WIN ✓
+
+ETH/Bybit  id=h96-102|15m|slice_  net_bps=  -37.0  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.68→LOSE ✓  ==  stack= -0.40→LOSE ✓
+
+ETH/Coinbase  id=h144-150|15m|slice  net_bps=  +36.7  truth=WIN  family=RELATIVE_STRENGTH         hold= 60.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -0.42→LOSE ✗  ==  stack= -0.15→LOSE ✗
+   k=2/3  chunk= -0.49→LOSE ✗  ==  stack= -0.22→LOSE ✗
+   k=3/3  chunk= +0.43→WIN ✓  ==  stack= +0.70→WIN ✓
+
+ETH/Bybit  id=h144-150|15m|slice  net_bps=  +36.5  truth=WIN  family=BASIS_DISLOCATION         hold= 60.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +0.80→WIN ✓  ==  stack= +1.07→WIN ✓
+   k=2/2  chunk= +0.89→WIN ✓  ==  stack= +1.17→WIN ✓
+
+ETH/Kraken  id=h120-126|15m|slice  net_bps=  +36.1  truth=WIN  family=VOL_BREAKOUT              hold=105.0min  n_chunks=6
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/6  chunk= -0.62→LOSE ✗  ==  stack= -0.34→LOSE ✗
+   k=2/6  chunk= +0.93→WIN ✓  ==  stack= +1.20→WIN ✓
+   k=3/6  chunk= +1.51→WIN ✓  ==  stack= +1.78→WIN ✓
+   k=4/6  chunk= +1.49→WIN ✓  ==  stack= +1.76→WIN ✓
+   k=5/6  chunk= +1.42→WIN ✓  ==  stack= +1.69→WIN ✓
+   k=6/6  chunk= +1.40→WIN ✓  ==  stack= +1.67→WIN ✓
+
+ETH/Bybit  id=h156-162|5m|slice_  net_bps=  +35.9  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 50.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -1.14→LOSE ✗  ==  stack= -0.87→LOSE ✗
+   k=2/3  chunk= -0.61→LOSE ✗  ==  stack= -0.33→LOSE ✗
+   k=3/3  chunk= -0.49→LOSE ✗  ==  stack= -0.22→LOSE ✗
+
+ETH/Bybit  id=h144-150|5m|slice_  net_bps=  +35.2  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.65→WIN ✓  ==  stack= +1.93→WIN ✓
+
+ETH/Kraken  id=h144-150|15m|slice  net_bps=  +35.0  truth=WIN  family=VOL_BREAKOUT              hold= 60.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= -0.12→LOSE ✗  !=  stack= +0.15→WIN ✓
+   k=2/3  chunk= +0.90→WIN ✓  ==  stack= +1.17→WIN ✓
+   k=3/3  chunk= +1.36→WIN ✓  ==  stack= +1.63→WIN ✓
+
+ETH/Coinbase  id=h150-156|5m|slice_  net_bps=  +34.4  truth=WIN  family=BASIS_DISLOCATION         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -4.33→LOSE ✗  ==  stack= -4.06→LOSE ✗
+
+ETH/Bybit  id=h120-126|15m|slice  net_bps=  -34.3  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.34→WIN ✗  ==  stack= +1.61→WIN ✗
+
+BTC/Bybit  id=h150-156|15m|slice  net_bps=  -33.1  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -4.79→LOSE ✓  ==  stack= -4.52→LOSE ✓
+
+BTC/Bybit  id=h144-150|5m|slice_  net_bps=  +32.7  truth=WIN  family=BASIS_DISLOCATION         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -0.62→LOSE ✗  ==  stack= -0.35→LOSE ✗
+   k=2/2  chunk= +0.09→WIN ✓  ==  stack= +0.36→WIN ✓
+
+ETH/Coinbase  id=h156-162|15m|slice  net_bps=  -32.5  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.80→LOSE ✓  ==  stack= -0.53→LOSE ✓
+
+ETH/Coinbase  id=h150-156|5m|slice_  net_bps=  +31.9  truth=WIN  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/1  chunk=-10.28→LOSE ✗  ==  stack=-13.96→LOSE ✗
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +31.8  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.59→LOSE ✗  ==  stack= -2.32→LOSE ✗
+
+ETH/Coinbase  id=h96-102|15m|slice_  net_bps=  +31.3  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -2.43→LOSE ✗  ==  stack= -2.16→LOSE ✗
+   k=2/2  chunk= -1.98→LOSE ✗  ==  stack= -1.71→LOSE ✗
+
+BTC/Coinbase  id=h156-162|15m|slice  net_bps=  -31.3  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.42→LOSE ✓  ==  stack= -1.14→LOSE ✓
+
+ETH/Kraken  id=h144-150|5m|slice_  net_bps=  +31.2  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -2.76→LOSE ✗  ==  stack= -2.48→LOSE ✗
+   k=2/2  chunk= -0.87→LOSE ✗  ==  stack= -0.60→LOSE ✗
+
+ETH/Kraken  id=h102-108|15m|slice  net_bps=  +30.9  truth=WIN  family=BASIS_DISLOCATION         hold= 75.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +2.75→WIN ✓  ==  stack= +3.02→WIN ✓
+   k=2/3  chunk= +2.67→WIN ✓  ==  stack= +2.94→WIN ✓
+   k=3/3  chunk= +3.21→WIN ✓  ==  stack= +3.48→WIN ✓
+
+ETH/Bybit  id=h156-162|5m|slice_  net_bps=  +30.9  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 80.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -3.94→LOSE ✗  ==  stack= -3.67→LOSE ✗
+   k=2/2  chunk= -1.70→LOSE ✗  ==  stack= -1.43→LOSE ✗
+
+ETH/Bybit  id=h144-150|5m|slice_  net_bps=  +30.9  truth=WIN  family=RELATIVE_STRENGTH         hold= 40.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -1.90→LOSE ✗  ==  stack= -1.63→LOSE ✗
+   k=2/2  chunk= -0.61→LOSE ✗  ==  stack= -0.34→LOSE ✗
+
+ETH/Kraken  id=h132-138|15m|slice  net_bps=  -30.9  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.20→WIN ✗  ==  stack= +2.47→WIN ✗
+
+ETH/Kraken  id=h150-156|5m|slice_  net_bps=  +30.2  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +1.98→WIN ✓  ==  stack= +2.25→WIN ✓
+   k=2/2  chunk= +1.21→WIN ✓  ==  stack= +1.49→WIN ✓
+
+ETH/Kraken  id=h144-150|5m|slice_  net_bps=  +29.9  truth=WIN  family=RELATIVE_STRENGTH         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.08→LOSE ✗  ==  stack= -0.81→LOSE ✗
+
+BTC/Bybit  id=h162-168|15m|slice  net_bps=  -29.4  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.12→WIN ✗  ==  stack= +0.39→WIN ✗
+
+BTC/Coinbase  id=h162-168|15m|slice  net_bps=  +29.2  truth=WIN  family=BASIS_DISLOCATION         hold=105.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= +3.43→WIN ✓  ==  stack= +3.70→WIN ✓
+   k=2/4  chunk= +4.01→WIN ✓  ==  stack= +4.29→WIN ✓
+   k=3/4  chunk= +3.32→WIN ✓  ==  stack= +3.59→WIN ✓
+   k=4/4  chunk= +3.14→WIN ✓  ==  stack= +3.41→WIN ✓
+
+ETH/Coinbase  id=h120-126|15m|slice  net_bps=  +29.2  truth=WIN  family=RELATIVE_STRENGTH         hold= 60.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +3.42→WIN ✓  ==  stack= +3.69→WIN ✓
+   k=2/2  chunk= +2.57→WIN ✓  ==  stack= +2.84→WIN ✓
+
+BTC/Bybit  id=h150-156|15m|slice  net_bps=  +29.0  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -4.10→LOSE ✗  ==  stack= -3.82→LOSE ✗
+   k=2/2  chunk= -2.27→LOSE ✗  ==  stack= -2.00→LOSE ✗
+
+ETH/Coinbase  id=h144-150|15m|slice  net_bps=  -28.8  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.06→WIN ✗  ==  stack= +0.34→WIN ✗
+
+BTC/Kraken  id=h138-144|15m|slice  net_bps=  -28.4  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.92→WIN ✗  ==  stack= +3.19→WIN ✗
+
+BTC/Kraken  id=h96-102|5m|slice_0  net_bps=  +28.3  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.88→WIN ✓  ==  stack= +2.15→WIN ✓
+
+BTC/Bybit  id=h102-108|15m|slice  net_bps=  -28.3  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.78→WIN ✗  ==  stack= +2.05→WIN ✗
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +27.9  truth=WIN  family=RELATIVE_STRENGTH         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.71→LOSE ✗  ==  stack= -0.44→LOSE ✗
+
+ETH/Bybit  id=h120-126|15m|slice  net_bps=  -27.9  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.48→LOSE ✓  ==  stack= -1.21→LOSE ✓
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +27.8  truth=WIN  family=BASIS_DISLOCATION         hold= 50.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -0.42→LOSE ✗  ==  stack= -0.15→LOSE ✗
+   k=2/2  chunk= +0.63→WIN ✓  ==  stack= +0.90→WIN ✓
+
+BTC/Kraken  id=h144-150|15m|slice  net_bps=  +27.7  truth=WIN  family=BASIS_DISLOCATION         hold= 60.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +2.25→WIN ✓  ==  stack= +2.53→WIN ✓
+   k=2/2  chunk= +2.73→WIN ✓  ==  stack= +3.00→WIN ✓
+
+ETH/Bybit  id=h156-162|15m|slice  net_bps=  +27.2  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.80→LOSE ✗  ==  stack= -0.53→LOSE ✗
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +26.7  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.05→LOSE ✗  ==  stack= -1.78→LOSE ✗
+
+ETH/Kraken  id=h96-102|5m|slice_0  net_bps=  +26.5  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.50→LOSE ✗  ==  stack= -1.23→LOSE ✗
+
+BTC/Coinbase  id=h150-156|15m|slice  net_bps=  +26.4  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -5.28→LOSE ✗  ==  stack= -5.01→LOSE ✗
+   k=2/2  chunk= -2.52→LOSE ✗  ==  stack= -2.25→LOSE ✗
+
+ETH/Kraken  id=h156-162|15m|slice  net_bps=  -26.2  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.38→LOSE ✓  ==  stack= -2.11→LOSE ✓
+
+ETH/Kraken  id=h150-156|5m|slice_  net_bps=  +26.1  truth=WIN  family=VOL_BREAKOUT              hold= 50.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +1.98→WIN ✓  ==  stack= +2.25→WIN ✓
+   k=2/3  chunk= +1.29→WIN ✓  ==  stack= +1.56→WIN ✓
+   k=3/3  chunk= +0.94→WIN ✓  ==  stack= +1.21→WIN ✓
+
+BTC/Bybit  id=h150-156|15m|slice  net_bps=  -26.0  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.67→LOSE ✓  ==  stack= -0.40→LOSE ✓
+
+BTC/Kraken  id=h96-102|15m|slice_  net_bps=  +25.9  truth=WIN  family=BASIS_DISLOCATION         hold= 45.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.53→WIN ✓  ==  stack= +2.80→WIN ✓
+
+BTC/Kraken  id=h132-138|15m|slice  net_bps=  -25.7  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.48→WIN ✗  ==  stack= +2.75→WIN ✗
+
+ETH/Bybit  id=h144-150|5m|slice_  net_bps=  +25.7  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 40.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -1.16→LOSE ✗  ==  stack= -0.89→LOSE ✗
+   k=2/2  chunk= -0.35→LOSE ✗  ==  stack= -0.07→LOSE ✗
+
+ETH/Kraken  id=h96-102|5m|slice_0  net_bps=  +25.6  truth=WIN  family=RELATIVE_STRENGTH         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.79→WIN ✓  ==  stack= +2.06→WIN ✓
+
+ETH/Kraken  id=h132-138|15m|slice  net_bps=  +25.6  truth=WIN  family=VOL_BREAKOUT              hold=275.0min  n_chunks=9
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/9  chunk= +3.92→WIN ✓  ==  stack= +4.19→WIN ✓
+   k=2/9  chunk= +3.25→WIN ✓  ==  stack= +3.53→WIN ✓
+   k=3/9  chunk= +2.50→WIN ✓  ==  stack= +2.77→WIN ✓
+   k=4/9  chunk= +3.09→WIN ✓  ==  stack= +3.36→WIN ✓
+   k=5/9  chunk= +2.81→WIN ✓  ==  stack= +3.08→WIN ✓
+   k=6/9  chunk= +2.95→WIN ✓  ==  stack= +3.23→WIN ✓
+   k=7/9  chunk= +3.10→WIN ✓  ==  stack= +3.37→WIN ✓
+   k=8/9  chunk= +3.29→WIN ✓  ==  stack= +3.57→WIN ✓
+   k=9/9  chunk= +3.39→WIN ✓  ==  stack= +3.67→WIN ✓
+
+BTC/Bybit  id=h150-156|15m|slice  net_bps=  +25.2  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -4.15→LOSE ✗  ==  stack= -3.88→LOSE ✗
+   k=2/2  chunk= -2.78→LOSE ✗  ==  stack= -2.51→LOSE ✗
+
+ETH/Kraken  id=h96-102|15m|slice_  net_bps=  +25.1  truth=WIN  family=BASIS_DISLOCATION         hold= 45.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.17→WIN ✓  ==  stack= +0.44→WIN ✓
+
+BTC/Kraken  id=h96-102|5m|slice_0  net_bps=  +25.1  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.72→WIN ✓  ==  stack= +0.99→WIN ✓
+
+BTC/Bybit  id=h150-156|5m|slice_  net_bps=  +24.7  truth=WIN  family=BASIS_DISLOCATION         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -3.66→LOSE ✗  ==  stack= -3.39→LOSE ✗
+
+BTC/Kraken  id=h96-102|15m|slice_  net_bps=  -24.4  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.11→LOSE ✓  ==  stack= -0.84→LOSE ✓
+
+ETH/Kraken  id=h156-162|15m|slice  net_bps=  +23.5  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.45→WIN ✓  ==  stack= +0.72→WIN ✓
+
+ETH/Kraken  id=h156-162|15m|slice  net_bps=  -23.4  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/1  chunk= -4.70→LOSE ✓  ==  stack= -8.38→LOSE ✓
+
+ETH/Kraken  id=h144-150|15m|slice  net_bps=  -23.1  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.44→WIN ✗  ==  stack= +0.71→WIN ✗
+
+BTC/Kraken  id=h114-120|15m|slice  net_bps=  -22.5  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.13→WIN ✗  ==  stack= +2.41→WIN ✗
+
+ETH/Bybit  id=h150-156|5m|slice_  net_bps=  +22.3  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= -7.72→LOSE ✗  ==  stack= -7.44→LOSE ✗
+   k=2/2  chunk= -4.75→LOSE ✗  ==  stack= -4.48→LOSE ✗
+
+BTC/Coinbase  id=h156-162|15m|slice  net_bps=  -22.0  truth=LOSE  family=LIQUIDITY_SQUEEZE         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.35→LOSE ✓  ==  stack= -1.08→LOSE ✓
+
+BTC/Coinbase  id=h126-132|15m|slice  net_bps=  +21.9  truth=WIN  family=LIQUIDITY_SQUEEZE         hold=290.0min  n_chunks=7
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/7  chunk= +4.17→WIN ✓  ==  stack= +4.44→WIN ✓
+   k=2/7  chunk= +3.77→WIN ✓  ==  stack= +4.05→WIN ✓
+   k=3/7  chunk= +4.44→WIN ✓  ==  stack= +4.71→WIN ✓
+   k=4/7  chunk= +4.40→WIN ✓  ==  stack= +4.67→WIN ✓
+   k=5/7  chunk= +4.60→WIN ✓  ==  stack= +4.87→WIN ✓
+   k=6/7  chunk= +4.22→WIN ✓  ==  stack= +4.50→WIN ✓
+   k=7/7  chunk= +4.24→WIN ✓  ==  stack= +4.51→WIN ✓
+
+ETH/Bybit  id=h150-156|15m|slice  net_bps=  +21.8  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/2  chunk=-10.64→LOSE ✗  ==  stack=-14.32→LOSE ✗
+   k=2/2  chunk= -6.44→LOSE ✗  ==  stack=-10.12→LOSE ✗
+
+BTC/Bybit  id=h96-102|5m|slice_0  net_bps=  +21.7  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 65.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +1.84→WIN ✓  ==  stack= +2.11→WIN ✓
+   k=2/3  chunk= +1.59→WIN ✓  ==  stack= +1.86→WIN ✓
+   k=3/3  chunk= +1.17→WIN ✓  ==  stack= +1.44→WIN ✓
+
+ETH/Kraken  id=h150-156|15m|slice  net_bps=  +21.7  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/2  chunk=-11.08→LOSE ✗  ==  stack=-14.76→LOSE ✗
+   k=2/2  chunk= -6.69→LOSE ✗  ==  stack=-10.37→LOSE ✗
+
+ETH/Kraken  id=h108-114|5m|slice_  net_bps=  +21.6  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +3.93→WIN ✓  ==  stack= +4.20→WIN ✓
+
+BTC/Kraken  id=h108-114|15m|slice  net_bps=  -21.3  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.96→WIN ✗  ==  stack= +3.23→WIN ✗
+
+BTC/Coinbase  id=h150-156|15m|slice  net_bps=  -21.3  truth=LOSE  family=BASIS_DISLOCATION         hold= 75.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +2.79→WIN ✗  ==  stack= +3.06→WIN ✗
+   k=2/3  chunk= +3.38→WIN ✗  ==  stack= +3.65→WIN ✗
+   k=3/3  chunk= +2.28→WIN ✗  ==  stack= +2.56→WIN ✗
+
+ETH/Bybit  id=h108-114|5m|slice_  net_bps=  +20.9  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 55.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +3.92→WIN ✓  ==  stack= +4.19→WIN ✓
+   k=2/2  chunk= +3.38→WIN ✓  ==  stack= +3.65→WIN ✓
+
+ETH/Coinbase  id=h150-156|15m|slice  net_bps=  +20.6  truth=WIN  family=BASIS_DISLOCATION         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.58→WIN ✓  ==  stack= +2.85→WIN ✓
+
+ETH/Bybit  id=h102-108|15m|slice  net_bps=  +20.4  truth=WIN  family=BASIS_DISLOCATION         hold= 75.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +1.49→WIN ✓  ==  stack= +1.76→WIN ✓
+   k=2/3  chunk= +0.61→WIN ✓  ==  stack= +0.88→WIN ✓
+   k=3/3  chunk= +1.44→WIN ✓  ==  stack= +1.71→WIN ✓
+
+ETH/Bybit  id=h108-114|15m|slice  net_bps=  +20.3  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 60.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +3.83→WIN ✓  ==  stack= +4.11→WIN ✓
+   k=2/3  chunk= +2.99→WIN ✓  ==  stack= +3.26→WIN ✓
+   k=3/3  chunk= +2.55→WIN ✓  ==  stack= +2.83→WIN ✓
+
+ETH/Kraken  id=h144-150|5m|slice_  net_bps=  +20.2  truth=WIN  family=RELATIVE_STRENGTH         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.38→LOSE ✗  ==  stack= -0.11→LOSE ✗
+
+BTC/Kraken  id=h162-168|15m|slice  net_bps=  -20.0  truth=LOSE  family=BASIS_DISLOCATION         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +4.59→WIN ✗  ==  stack= +4.87→WIN ✗
+
+BTC/Bybit  id=h96-102|15m|slice_  net_bps=  +19.9  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 45.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.35→WIN ✓  ==  stack= +1.62→WIN ✓
+
+BTC/Kraken  id=h96-102|15m|slice_  net_bps=  +19.9  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 60.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.16→WIN ✓  ==  stack= +2.43→WIN ✓
+
+ETH/Kraken  id=h102-108|15m|slice  net_bps=  -19.4  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.81→WIN ✗  ==  stack= +1.08→WIN ✗
+
+BTC/Kraken  id=h144-150|5m|slice_  net_bps=  +19.0  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.38→WIN ✓  ==  stack= +2.65→WIN ✓
+
+BTC/Bybit  id=h132-138|15m|slice  net_bps=  -18.7  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.39→WIN ✗  ==  stack= +2.66→WIN ✗
+
+ETH/Kraken  id=h108-114|5m|slice_  net_bps=  +18.1  truth=WIN  family=VOL_BREAKOUT              hold= 65.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +3.37→WIN ✓  ==  stack= +3.64→WIN ✓
+   k=2/3  chunk= +3.08→WIN ✓  ==  stack= +3.35→WIN ✓
+   k=3/3  chunk= +3.25→WIN ✓  ==  stack= +3.52→WIN ✓
+
+ETH/Kraken  id=h144-150|5m|slice_  net_bps=  +18.0  truth=WIN  family=BASIS_DISLOCATION         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.32→WIN ✓  ==  stack= +0.60→WIN ✓
+
+BTC/Kraken  id=h120-126|5m|slice_  net_bps=  +17.7  truth=WIN  family=BASIS_DISLOCATION         hold= 45.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +4.20→WIN ✓  ==  stack= +4.47→WIN ✓
+
+ETH/Kraken  id=h150-156|15m|slice  net_bps=  +17.0  truth=WIN  family=RELATIVE_STRENGTH         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.78→WIN ✓  ==  stack= +3.05→WIN ✓
+
+ETH/Coinbase  id=h120-126|15m|slice  net_bps=  +16.9  truth=WIN  family=RELATIVE_STRENGTH         hold= 45.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +3.02→WIN ✓  ==  stack= +3.29→WIN ✓
+
+BTC/Coinbase  id=h156-162|15m|slice  net_bps=  +16.8  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.37→WIN ✓  ==  stack= +2.64→WIN ✓
+
+BTC/Coinbase  id=h138-144|15m|slice  net_bps=  -16.5  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +3.29→WIN ✗  ==  stack= +3.56→WIN ✗
+
+ETH/Coinbase  id=h120-126|15m|slice  net_bps=  -16.4  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.07→LOSE ✓  !=  stack= +0.20→WIN ✗
+
+BTC/Bybit  id=h150-156|5m|slice_  net_bps=  +16.3  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +3.96→WIN ✓  ==  stack= +4.23→WIN ✓
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +16.2  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -4.08→LOSE ✗  ==  stack= -3.81→LOSE ✗
+
+ETH/Kraken  id=h120-126|5m|slice_  net_bps=  +15.9  truth=WIN  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.61→LOSE ✗  ==  stack= -1.34→LOSE ✗
+
+BTC/Bybit  id=h144-150|15m|slice  net_bps=  -15.7  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.99→WIN ✗  ==  stack= +1.26→WIN ✗
+
+ETH/Coinbase  id=h120-126|15m|slice  net_bps=  -15.4  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.81→WIN ✗  ==  stack= +1.08→WIN ✗
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +15.3  truth=WIN  family=BASIS_DISLOCATION         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.24→LOSE ✗  !=  stack= +0.03→WIN ✓
+
+BTC/Kraken  id=h150-156|15m|slice  net_bps=  +15.3  truth=WIN  family=BASIS_DISLOCATION         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -1.75→LOSE ✗  ==  stack= -1.48→LOSE ✗
+
+BTC/Bybit  id=h96-102|15m|slice_  net_bps=  +15.3  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +0.79→WIN ✓  ==  stack= +1.06→WIN ✓
+   k=2/2  chunk= +0.42→WIN ✓  ==  stack= +0.69→WIN ✓
+
+BTC/Coinbase  id=h138-144|15m|slice  net_bps=  -15.2  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.15→WIN ✗  ==  stack= +2.42→WIN ✗
+
+ETH/Bybit  id=h102-108|15m|slice  net_bps=  -15.1  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.62→WIN ✗  ==  stack= +2.89→WIN ✗
+
+ETH/Kraken  id=h96-102|15m|slice_  net_bps=  +15.0  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.11→WIN ✓  ==  stack= +1.39→WIN ✓
+
+ETH/Coinbase  id=h138-144|15m|slice  net_bps=  -14.7  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.20→WIN ✗  ==  stack= +2.47→WIN ✗
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +14.6  truth=WIN  family=BASIS_DISLOCATION         hold= 35.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +0.98→WIN ✓  ==  stack= +1.25→WIN ✓
+   k=2/2  chunk= +1.74→WIN ✓  ==  stack= +2.01→WIN ✓
+
+ETH/Coinbase  id=h114-120|15m|slice  net_bps=  -14.5  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.12→WIN ✗  ==  stack= +1.39→WIN ✗
+
+ETH/Kraken  id=h96-102|15m|slice_  net_bps=  +14.3  truth=WIN  family=RELATIVE_STRENGTH         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.31→LOSE ✗  ==  stack= -0.04→LOSE ✗
+
+ETH/Coinbase  id=h150-156|5m|slice_  net_bps=  +14.2  truth=WIN  family=BASIS_DISLOCATION         hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.01→WIN ✓  ==  stack= +2.28→WIN ✓
+
+ETH/Coinbase  id=h108-114|15m|slice  net_bps=  +14.1  truth=WIN  family=BASIS_DISLOCATION         hold= 90.0min  n_chunks=4
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/4  chunk= +3.08→WIN ✓  ==  stack= +3.35→WIN ✓
+   k=2/4  chunk= +1.77→WIN ✓  ==  stack= +2.04→WIN ✓
+   k=3/4  chunk= +2.49→WIN ✓  ==  stack= +2.77→WIN ✓
+   k=4/4  chunk= +2.69→WIN ✓  ==  stack= +2.96→WIN ✓
+
+BTC/Coinbase  id=h162-168|15m|slice  net_bps=  +14.0  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 90.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/2  chunk= +4.56→WIN ✓  ==  stack= +4.84→WIN ✓
+   k=2/2  chunk= +4.05→WIN ✓  ==  stack= +4.32→WIN ✓
+
+BTC/Coinbase  id=h150-156|5m|slice_  net_bps=  +13.8  truth=WIN  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -5.78→LOSE ✗  ==  stack= -5.51→LOSE ✗
+
+ETH/Bybit  id=h156-162|15m|slice  net_bps=  +13.8  truth=WIN  family=BASIS_DISLOCATION         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/2  chunk= -2.84→LOSE ✗  ==  stack= -6.52→LOSE ✗
+   k=2/2  chunk= -3.12→LOSE ✗  ==  stack= -6.80→LOSE ✗
+
+ETH/Coinbase  id=h144-150|5m|slice_  net_bps=  +13.4  truth=WIN  family=BASIS_DISLOCATION         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.89→WIN ✓  ==  stack= +2.16→WIN ✓
+
+ETH/Kraken  id=h156-162|15m|slice  net_bps=  +13.3  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/2  chunk= -2.17→LOSE ✗  ==  stack= -5.85→LOSE ✗
+   k=2/2  chunk= -2.28→LOSE ✗  ==  stack= -5.96→LOSE ✗
+
+BTC/Kraken  id=h132-138|15m|slice  net_bps=  -13.1  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.82→WIN ✗  ==  stack= +3.09→WIN ✗
+
+ETH/Bybit  id=h120-126|15m|slice  net_bps=  +13.1  truth=WIN  family=BASIS_DISLOCATION         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +1.21→WIN ✓  ==  stack= +1.48→WIN ✓
+
+BTC/Coinbase  id=h138-144|15m|slice  net_bps=  -13.1  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +3.51→WIN ✗  ==  stack= +3.78→WIN ✗
+
+BTC/Kraken  id=h144-150|5m|slice_  net_bps=  +13.1  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 25.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +4.05→WIN ✓  ==  stack= +4.32→WIN ✓
+
+BTC/Coinbase  id=h138-144|15m|slice  net_bps=  -12.9  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.50→WIN ✗  ==  stack= +2.77→WIN ✗
+
+ETH/Coinbase  id=h156-162|15m|slice  net_bps=  +12.9  truth=WIN  family=BASIS_DISLOCATION         hold= 45.0min  n_chunks=2
+  stack: funding=+0.00000  oi_z=+0.00  news=1
+   k=1/2  chunk= -3.03→LOSE ✗  ==  stack= -6.71→LOSE ✗
+   k=2/2  chunk= -2.49→LOSE ✗  ==  stack= -6.17→LOSE ✗
+
+BTC/Kraken  id=h162-168|15m|slice  net_bps=  +12.5  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 67.0min  n_chunks=3
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/3  chunk= +3.85→WIN ✓  ==  stack= +4.12→WIN ✓
+   k=2/3  chunk= +2.47→WIN ✓  ==  stack= +2.74→WIN ✓
+   k=3/3  chunk= +2.76→WIN ✓  ==  stack= +3.03→WIN ✓
+
+ETH/Kraken  id=h108-114|15m|slice  net_bps=  -12.3  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.13→WIN ✗  ==  stack= +2.40→WIN ✗
+
+BTC/Kraken  id=h144-150|15m|slice  net_bps=  -11.9  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +2.58→WIN ✗  ==  stack= +2.85→WIN ✗
+
+ETH/Bybit  id=h126-132|15m|slice  net_bps=  -11.9  truth=LOSE  family=BASIS_DISLOCATION         hold= 15.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= +0.78→WIN ✗  ==  stack= +1.06→WIN ✗
+
+ETH/Bybit  id=h96-102|15m|slice_  net_bps=  +11.8  truth=WIN  family=MEAN_REVERSION_CHOP       hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.18→LOSE ✗  !=  stack= +0.09→WIN ✓
+
+ETH/Kraken  id=h96-102|5m|slice_0  net_bps=  +11.8  truth=WIN  family=BASIS_DISLOCATION         hold= 20.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -0.61→LOSE ✗  ==  stack= -0.34→LOSE ✗
+
+BTC/Coinbase  id=h150-156|15m|slice  net_bps=  +11.8  truth=WIN  family=LIQUIDITY_SQUEEZE         hold= 30.0min  n_chunks=1
+  stack: funding=+0.00000  oi_z=+0.00  news=0
+   k=1/1  chunk= -2.07→LOSE ✗  ==  stack= -1.80→LOSE ✗

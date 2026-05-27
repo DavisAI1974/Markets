@@ -1,0 +1,19 @@
+Archetype-match summary — count of chunks by archetype per cohort
+====================================================================================================
+
+Archetype labels: WIN_SHAPE (4/4 match winner direction), WIN_LEAN (3/4),
+                  MIXED (2/4), LOSE_LEAN (1/4), LOSE_SHAPE (0/4)
+4 dimensions: spectral_entropy↑, range_atr↓, realized_vol↓, spectral_energy↓
+
+  archetype      WIN_count  LOSE_count   WIN_pct  LOSE_pct    lift_W/L
+  ----------------------------------------------------------------------
+  WIN_SHAPE            210           5     52.5%      9.8%        5.35
+  WIN_LEAN              92           5     23.0%      9.8%        2.35
+  MIXED                 69           9     17.2%     17.6%        0.98
+  LOSE_LEAN             29          32      7.2%     62.7%        0.12
+  LOSE_SHAPE             0           0      0.0%      0.0%        0.00
+
+  Totals: WIN chunks=400, LOSE chunks=51
+
+  Winners with WIN_SHAPE or WIN_LEAN chunks: 302/400 = 75.5%
+  Losers  with LOSE_SHAPE or LOSE_LEAN chunks: 32/51 = 62.7%

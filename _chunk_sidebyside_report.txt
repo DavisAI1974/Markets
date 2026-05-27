@@ -1,0 +1,812 @@
+Side-by-side chunk mapping: top-100 winners vs top-100 losers
+Source: E:\Markets\_analysis_historical_rt_trade_shapes_20260523\per_trade.csv
+Features tracked: spectral_entropy, range_atr, realized_vol, ret_std, spectral_energy
+Archetype anchors (midpoints, 67k tape): spec_ent=0.843, range_atr=0.00125, realized_vol=0.0009, spec_energy=5e-06
+====================================================================================================
+
+
+####################################################################################################
+# BTC/Bybit  —  WIN n=5, LOSE n=3
+####################################################################################################
+
+--- WIN (n=5) ---
+
+[W#01] id=h150-156|5m|  net_bps= +181.3  side=buy   family=LIQUIDITY_SQUEEZE          hold= 80.0min  n_chunks=4
+   ck 0 [ 20bar]  se=0.882  rA=0.00161  rV=0.00117  rS=0.00117  sE=6.87e-07  ▆▇▆▆▅  MIXED      
+   ck 1 [ 16bar]  se=0.830  rA=0.00157  rV=0.00130  rS=0.00130  sE=8.45e-07  ▃▇▇▇▇  LOSE_LEAN  
+   ck 2 [ 16bar]  se=0.809  rA=0.00081  rV=0.00039  rS=0.00039  sE=7.50e-08  ▂▃▁▁▁  WIN_LEAN   
+   ck 3 [ 29bar]  se=0.894  rA=0.00125  rV=0.00091  rS=0.00091  sE=4.43e-07  ▆▅▅▅▄  WIN_LEAN   
+
+[W#02] id=h150-156|15m  net_bps= +176.1  side=buy   family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=4
+   ck 0 [ 20bar]  se=0.882  rA=0.00161  rV=0.00117  rS=0.00117  sE=6.87e-07  ▆▇▆▆▅  MIXED      
+   ck 1 [ 16bar]  se=0.830  rA=0.00157  rV=0.00130  rS=0.00130  sE=8.45e-07  ▃▇▇▇▇  LOSE_LEAN  
+   ck 2 [ 16bar]  se=0.809  rA=0.00081  rV=0.00039  rS=0.00039  sE=7.50e-08  ▂▃▁▁▁  WIN_LEAN   
+   ck 3 [ 39bar]  se=0.932  rA=0.00111  rV=0.00082  rS=0.00082  sE=3.61e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#03] id=h150-156|15m  net_bps= +176.1  side=buy   family=MEAN_REVERSION_CHOP        hold= 90.0min  n_chunks=4
+   ck 0 [ 20bar]  se=0.882  rA=0.00161  rV=0.00117  rS=0.00117  sE=6.87e-07  ▆▇▆▆▅  MIXED      
+   ck 1 [ 16bar]  se=0.830  rA=0.00157  rV=0.00130  rS=0.00130  sE=8.45e-07  ▃▇▇▇▇  LOSE_LEAN  
+   ck 2 [ 16bar]  se=0.809  rA=0.00081  rV=0.00039  rS=0.00039  sE=7.50e-08  ▂▃▁▁▁  WIN_LEAN   
+   ck 3 [ 39bar]  se=0.932  rA=0.00111  rV=0.00082  rS=0.00082  sE=3.61e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#04] id=h150-156|15m  net_bps= +176.1  side=buy   family=LIQUIDITY_SQUEEZE          hold= 90.0min  n_chunks=4
+   ck 0 [ 20bar]  se=0.882  rA=0.00161  rV=0.00117  rS=0.00117  sE=6.87e-07  ▆▇▆▆▅  MIXED      
+   ck 1 [ 16bar]  se=0.830  rA=0.00157  rV=0.00130  rS=0.00130  sE=8.45e-07  ▃▇▇▇▇  LOSE_LEAN  
+   ck 2 [ 16bar]  se=0.809  rA=0.00081  rV=0.00039  rS=0.00039  sE=7.50e-08  ▂▃▁▁▁  WIN_LEAN   
+   ck 3 [ 39bar]  se=0.932  rA=0.00111  rV=0.00082  rS=0.00082  sE=3.61e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#05] id=h150-156|5m|  net_bps= +150.7  side=buy   family=LIQUIDITY_SQUEEZE          hold= 75.0min  n_chunks=4
+   ck 0 [ 17bar]  se=0.882  rA=0.00129  rV=0.00078  rS=0.00078  sE=3.27e-07  ▆▅▄▄▃  WIN_LEAN   
+   ck 1 [ 16bar]  se=0.815  rA=0.00161  rV=0.00130  rS=0.00130  sE=8.42e-07  ▂▇▇▇▆  LOSE_LEAN  
+   ck 2 [ 16bar]  se=0.847  rA=0.00085  rV=0.00059  rS=0.00059  sE=1.76e-07  ▄▃▃▃▂  WIN_SHAPE  
+   ck 3 [ 27bar]  se=0.901  rA=0.00124  rV=0.00088  rS=0.00088  sE=4.20e-07  ▆▅▄▄▄  WIN_SHAPE  
+
+--- LOSE (n=3) ---
+
+[L#01] id=h150-156|15m  net_bps=  -87.2  side=sell  family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.812  rA=0.00173  rV=0.00127  rS=0.00127  sE=8.02e-07  ▂█▇▇▆  LOSE_LEAN  
+
+[L#02] id=h150-156|15m  net_bps=  -87.2  side=sell  family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.812  rA=0.00173  rV=0.00127  rS=0.00127  sE=8.02e-07  ▂█▇▇▆  LOSE_LEAN  
+
+[L#03] id=h150-156|15m  net_bps=  -87.2  side=sell  family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.812  rA=0.00173  rV=0.00127  rS=0.00127  sE=8.02e-07  ▂█▇▇▆  LOSE_LEAN  
+
+
+####################################################################################################
+# BTC/Coinbase  —  WIN n=10, LOSE n=3
+####################################################################################################
+
+--- WIN (n=10) ---
+
+[W#01] id=h150-156|5m|  net_bps= +182.6  side=buy   family=LIQUIDITY_SQUEEZE          hold= 80.0min  n_chunks=3
+   ck 0 [ 37bar]  se=0.932  rA=0.00150  rV=0.00121  rS=0.00121  sE=7.52e-07  █▇▆▆▆  MIXED      
+   ck 1 [ 24bar]  se=0.890  rA=0.00091  rV=0.00068  rS=0.00068  sE=2.31e-07  ▆▄▃▃▂  WIN_SHAPE  
+   ck 2 [ 20bar]  se=0.861  rA=0.00114  rV=0.00080  rS=0.00080  sE=3.18e-07  ▅▅▄▄▃  WIN_SHAPE  
+
+[W#02] id=h150-156|15m  net_bps= +178.1  side=buy   family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=3
+   ck 0 [ 37bar]  se=0.932  rA=0.00150  rV=0.00121  rS=0.00121  sE=7.52e-07  █▇▆▆▆  MIXED      
+   ck 1 [ 24bar]  se=0.890  rA=0.00091  rV=0.00068  rS=0.00068  sE=2.31e-07  ▆▄▃▃▂  WIN_SHAPE  
+   ck 2 [ 30bar]  se=0.912  rA=0.00097  rV=0.00070  rS=0.00070  sE=2.47e-07  ▇▄▃▃▂  WIN_SHAPE  
+
+[W#03] id=h150-156|15m  net_bps= +178.1  side=buy   family=MEAN_REVERSION_CHOP        hold= 90.0min  n_chunks=3
+   ck 0 [ 37bar]  se=0.932  rA=0.00150  rV=0.00121  rS=0.00121  sE=7.52e-07  █▇▆▆▆  MIXED      
+   ck 1 [ 24bar]  se=0.890  rA=0.00091  rV=0.00068  rS=0.00068  sE=2.31e-07  ▆▄▃▃▂  WIN_SHAPE  
+   ck 2 [ 30bar]  se=0.912  rA=0.00097  rV=0.00070  rS=0.00070  sE=2.47e-07  ▇▄▃▃▂  WIN_SHAPE  
+
+[W#04] id=h150-156|15m  net_bps= +178.1  side=buy   family=LIQUIDITY_SQUEEZE          hold= 90.0min  n_chunks=3
+   ck 0 [ 37bar]  se=0.932  rA=0.00150  rV=0.00121  rS=0.00121  sE=7.52e-07  █▇▆▆▆  MIXED      
+   ck 1 [ 24bar]  se=0.890  rA=0.00091  rV=0.00068  rS=0.00068  sE=2.31e-07  ▆▄▃▃▂  WIN_SHAPE  
+   ck 2 [ 30bar]  se=0.912  rA=0.00097  rV=0.00070  rS=0.00070  sE=2.47e-07  ▇▄▃▃▂  WIN_SHAPE  
+
+[W#05] id=h150-156|5m|  net_bps= +151.3  side=buy   family=LIQUIDITY_SQUEEZE          hold= 75.0min  n_chunks=3
+   ck 0 [ 32bar]  se=0.891  rA=0.00136  rV=0.00107  rS=0.00107  sE=5.74e-07  ▆▆▆▆▅  MIXED      
+   ck 1 [ 24bar]  se=0.890  rA=0.00091  rV=0.00068  rS=0.00068  sE=2.31e-07  ▆▄▃▃▂  WIN_SHAPE  
+   ck 2 [ 20bar]  se=0.861  rA=0.00114  rV=0.00080  rS=0.00080  sE=3.18e-07  ▅▅▄▄▃  WIN_SHAPE  
+
+[W#06] id=h150-156|5m|  net_bps= +141.9  side=buy   family=NEWS_BREAKOUT              hold= 40.0min  n_chunks=1
+   ck 0 [ 41bar]  se=0.908  rA=0.00143  rV=0.00116  rS=0.00116  sE=6.97e-07  ▇▆▆▆▅  MIXED      
+
+[W#07] id=h150-156|5m|  net_bps= +141.9  side=buy   family=MEAN_REVERSION_CHOP        hold= 40.0min  n_chunks=1
+   ck 0 [ 41bar]  se=0.908  rA=0.00143  rV=0.00116  rS=0.00116  sE=6.97e-07  ▇▆▆▆▅  MIXED      
+
+[W#08] id=h150-156|5m|  net_bps= +110.8  side=buy   family=NEWS_BREAKOUT              hold= 35.0min  n_chunks=2
+   ck 0 [ 20bar]  se=0.897  rA=0.00110  rV=0.00071  rS=0.00071  sE=2.51e-07  ▆▅▃▃▂  WIN_SHAPE  
+   ck 1 [ 16bar]  se=0.809  rA=0.00153  rV=0.00133  rS=0.00133  sE=8.87e-07  ▂▇▇▇▇  LOSE_LEAN  
+
+[W#09] id=h150-156|5m|  net_bps= +110.8  side=buy   family=MEAN_REVERSION_CHOP        hold= 35.0min  n_chunks=2
+   ck 0 [ 20bar]  se=0.897  rA=0.00110  rV=0.00071  rS=0.00071  sE=2.51e-07  ▆▅▃▃▂  WIN_SHAPE  
+   ck 1 [ 16bar]  se=0.809  rA=0.00153  rV=0.00133  rS=0.00133  sE=8.87e-07  ▂▇▇▇▇  LOSE_LEAN  
+
+[W#10] id=h150-156|5m|  net_bps= +108.0  side=buy   family=LIQUIDITY_SQUEEZE          hold= 55.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.854  rA=0.00148  rV=0.00130  rS=0.00130  sE=9.55e-07  ▄▆▇▇▇  MIXED      
+   ck 1 [ 19bar]  se=0.867  rA=0.00096  rV=0.00075  rS=0.00075  sE=2.88e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 20bar]  se=0.861  rA=0.00114  rV=0.00080  rS=0.00080  sE=3.18e-07  ▅▅▄▄▃  WIN_SHAPE  
+
+--- LOSE (n=3) ---
+
+[L#01] id=h150-156|15m  net_bps=  -85.3  side=sell  family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.819  rA=0.00164  rV=0.00125  rS=0.00125  sE=7.85e-07  ▂▇▇▇▆  LOSE_LEAN  
+
+[L#02] id=h150-156|15m  net_bps=  -85.3  side=sell  family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.819  rA=0.00164  rV=0.00125  rS=0.00125  sE=7.85e-07  ▂▇▇▇▆  LOSE_LEAN  
+
+[L#03] id=h150-156|15m  net_bps=  -85.3  side=sell  family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.819  rA=0.00164  rV=0.00125  rS=0.00125  sE=7.85e-07  ▂▇▇▇▆  LOSE_LEAN  
+
+
+####################################################################################################
+# BTC/Kraken  —  WIN n=5, LOSE n=3
+####################################################################################################
+
+--- WIN (n=5) ---
+
+[W#01] id=h150-156|15m  net_bps= +174.1  side=buy   family=VOL_BREAKOUT               hold= 90.0min  n_chunks=5
+   ck 0 [ 24bar]  se=0.877  rA=0.00107  rV=0.00095  rS=0.00095  sE=4.49e-07  ▅▄▅▅▄  WIN_LEAN   
+   ck 1 [ 16bar]  se=0.788  rA=0.00127  rV=0.00134  rS=0.00134  sE=8.95e-07  ▁▅▇▇▇  LOSE_LEAN  
+   ck 2 [ 17bar]  se=0.869  rA=0.00067  rV=0.00076  rS=0.00076  sE=2.99e-07  ▅▂▄▄▃  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.843  rA=0.00102  rV=0.00096  rS=0.00096  sE=5.94e-07  ▄▄▅▅▅  MIXED      
+   ck 4 [ 17bar]  se=0.831  rA=0.00059  rV=0.00066  rS=0.00066  sE=2.23e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#02] id=h150-156|15m  net_bps= +174.1  side=buy   family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=5
+   ck 0 [ 24bar]  se=0.877  rA=0.00107  rV=0.00095  rS=0.00095  sE=4.49e-07  ▅▄▅▅▄  WIN_LEAN   
+   ck 1 [ 16bar]  se=0.788  rA=0.00127  rV=0.00134  rS=0.00134  sE=8.95e-07  ▁▅▇▇▇  LOSE_LEAN  
+   ck 2 [ 17bar]  se=0.869  rA=0.00067  rV=0.00076  rS=0.00076  sE=2.99e-07  ▅▂▄▄▃  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.843  rA=0.00102  rV=0.00096  rS=0.00096  sE=5.94e-07  ▄▄▅▅▅  MIXED      
+   ck 4 [ 17bar]  se=0.831  rA=0.00059  rV=0.00066  rS=0.00066  sE=2.23e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#03] id=h150-156|15m  net_bps= +174.1  side=buy   family=BASIS_DISLOCATION          hold= 90.0min  n_chunks=5
+   ck 0 [ 24bar]  se=0.877  rA=0.00107  rV=0.00095  rS=0.00095  sE=4.49e-07  ▅▄▅▅▄  WIN_LEAN   
+   ck 1 [ 16bar]  se=0.788  rA=0.00127  rV=0.00134  rS=0.00134  sE=8.95e-07  ▁▅▇▇▇  LOSE_LEAN  
+   ck 2 [ 17bar]  se=0.869  rA=0.00067  rV=0.00076  rS=0.00076  sE=2.99e-07  ▅▂▄▄▃  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.843  rA=0.00102  rV=0.00096  rS=0.00096  sE=5.94e-07  ▄▄▅▅▅  MIXED      
+   ck 4 [ 17bar]  se=0.831  rA=0.00059  rV=0.00066  rS=0.00066  sE=2.23e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#04] id=h150-156|5m|  net_bps= +136.0  side=buy   family=BASIS_DISLOCATION          hold= 40.0min  n_chunks=2
+   ck 0 [ 24bar]  se=0.877  rA=0.00107  rV=0.00095  rS=0.00095  sE=4.49e-07  ▅▄▅▅▄  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.845  rA=0.00122  rV=0.00130  rS=0.00130  sE=8.97e-07  ▄▅▇▇▇  WIN_LEAN   
+
+[W#05] id=h150-156|5m|  net_bps= +110.2  side=buy   family=BASIS_DISLOCATION          hold= 35.0min  n_chunks=2
+   ck 0 [ 19bar]  se=0.877  rA=0.00083  rV=0.00068  rS=0.00068  sE=2.29e-07  ▅▃▃▃▂  WIN_SHAPE  
+   ck 1 [ 17bar]  se=0.845  rA=0.00122  rV=0.00130  rS=0.00130  sE=8.97e-07  ▄▅▇▇▇  WIN_LEAN   
+
+--- LOSE (n=3) ---
+
+[L#01] id=h150-156|15m  net_bps=  -82.8  side=sell  family=LIQUIDITY_SQUEEZE          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.806  rA=0.00127  rV=0.00107  rS=0.00107  sE=5.74e-07  ▂▅▆▆▅  LOSE_LEAN  
+
+[L#02] id=h150-156|15m  net_bps=  -82.8  side=sell  family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.806  rA=0.00127  rV=0.00107  rS=0.00107  sE=5.74e-07  ▂▅▆▆▅  LOSE_LEAN  
+
+[L#03] id=h150-156|15m  net_bps=  -82.8  side=sell  family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.806  rA=0.00127  rV=0.00107  rS=0.00107  sE=5.74e-07  ▂▅▆▆▅  LOSE_LEAN  
+
+
+####################################################################################################
+# ETH/Bybit  —  WIN n=18, LOSE n=6
+####################################################################################################
+
+--- WIN (n=18) ---
+
+[W#01] id=h150-156|15m  net_bps= +175.1  side=buy   family=MEAN_REVERSION_CHOP        hold= 90.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.885  rA=0.00147  rV=0.00081  rS=0.00081  sE=3.38e-07  ▆▆▄▄▃  WIN_LEAN   
+   ck 1 [ 52bar]  se=0.911  rA=0.00158  rV=0.00121  rS=0.00121  sE=7.29e-07  ▇▇▆▆▆  MIXED      
+   ck 2 [ 22bar]  se=0.889  rA=0.00096  rV=0.00063  rS=0.00063  sE=1.99e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#02] id=h150-156|15m  net_bps= +175.1  side=buy   family=LIQUIDITY_SQUEEZE          hold= 90.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.885  rA=0.00147  rV=0.00081  rS=0.00081  sE=3.38e-07  ▆▆▄▄▃  WIN_LEAN   
+   ck 1 [ 52bar]  se=0.911  rA=0.00158  rV=0.00121  rS=0.00121  sE=7.29e-07  ▇▇▆▆▆  MIXED      
+   ck 2 [ 22bar]  se=0.889  rA=0.00096  rV=0.00063  rS=0.00063  sE=1.99e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#03] id=h150-156|5m|  net_bps= +171.1  side=sell  family=LIQUIDITY_SQUEEZE          hold= 45.0min  n_chunks=2
+   ck 0 [ 20bar]  se=0.852  rA=0.00122  rV=0.00111  rS=0.00111  sE=6.12e-07  ▄▅▆▆▅  WIN_LEAN   
+   ck 1 [ 26bar]  se=0.916  rA=0.00182  rV=0.00141  rS=0.00141  sE=9.98e-07  ▇████  MIXED      
+
+[W#04] id=h150-156|5m|  net_bps= +133.0  side=buy   family=LIQUIDITY_SQUEEZE          hold= 40.0min  n_chunks=2
+   ck 0 [ 17bar]  se=0.885  rA=0.00147  rV=0.00081  rS=0.00081  sE=3.38e-07  ▆▆▄▄▃  WIN_LEAN   
+   ck 1 [ 24bar]  se=0.856  rA=0.00187  rV=0.00145  rS=0.00145  sE=1.05e-06  ▄████  MIXED      
+
+[W#05] id=h156-162|15m  net_bps= +124.1  side=sell  family=VOL_BREAKOUT               hold=111.0min  n_chunks=4
+   ck 0 [ 46bar]  se=0.915  rA=0.00090  rV=0.00060  rS=0.00060  sE=1.82e-07  ▇▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 32bar]  se=0.914  rA=0.00083  rV=0.00048  rS=0.00048  sE=1.13e-07  ▇▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.869  rA=0.00061  rV=0.00041  rS=0.00041  sE=8.31e-08  ▅▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.870  rA=0.00112  rV=0.00083  rS=0.00083  sE=3.44e-07  ▅▅▄▄▃  WIN_SHAPE  
+
+[W#06] id=h156-162|15m  net_bps= +124.1  side=sell  family=RELATIVE_STRENGTH          hold=111.0min  n_chunks=4
+   ck 0 [ 46bar]  se=0.915  rA=0.00090  rV=0.00060  rS=0.00060  sE=1.82e-07  ▇▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 32bar]  se=0.914  rA=0.00083  rV=0.00048  rS=0.00048  sE=1.13e-07  ▇▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.869  rA=0.00061  rV=0.00041  rS=0.00041  sE=8.31e-08  ▅▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.870  rA=0.00112  rV=0.00083  rS=0.00083  sE=3.44e-07  ▅▅▄▄▃  WIN_SHAPE  
+
+[W#07] id=h156-162|15m  net_bps= +124.1  side=sell  family=NEWS_BREAKOUT              hold=111.0min  n_chunks=4
+   ck 0 [ 46bar]  se=0.915  rA=0.00090  rV=0.00060  rS=0.00060  sE=1.82e-07  ▇▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 32bar]  se=0.914  rA=0.00083  rV=0.00048  rS=0.00048  sE=1.13e-07  ▇▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.869  rA=0.00061  rV=0.00041  rS=0.00041  sE=8.31e-08  ▅▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.870  rA=0.00112  rV=0.00083  rS=0.00083  sE=3.44e-07  ▅▅▄▄▃  WIN_SHAPE  
+
+[W#08] id=h156-162|15m  net_bps= +124.1  side=sell  family=BASIS_DISLOCATION          hold=111.0min  n_chunks=4
+   ck 0 [ 46bar]  se=0.915  rA=0.00090  rV=0.00060  rS=0.00060  sE=1.82e-07  ▇▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 32bar]  se=0.914  rA=0.00083  rV=0.00048  rS=0.00048  sE=1.13e-07  ▇▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.869  rA=0.00061  rV=0.00041  rS=0.00041  sE=8.31e-08  ▅▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.870  rA=0.00112  rV=0.00083  rS=0.00083  sE=3.44e-07  ▅▅▄▄▃  WIN_SHAPE  
+
+[W#09] id=h150-156|15m  net_bps= +121.1  side=buy   family=VOL_BREAKOUT               hold= 75.0min  n_chunks=4
+   ck 0 [ 20bar]  se=0.844  rA=0.00190  rV=0.00150  rS=0.00150  sE=1.13e-06  ▄████  MIXED      
+   ck 1 [ 16bar]  se=0.860  rA=0.00117  rV=0.00074  rS=0.00074  sE=2.74e-07  ▄▅▄▄▃  WIN_SHAPE  
+   ck 2 [ 18bar]  se=0.863  rA=0.00147  rV=0.00108  rS=0.00108  sE=5.83e-07  ▅▆▆▆▅  MIXED      
+   ck 3 [ 22bar]  se=0.889  rA=0.00096  rV=0.00063  rS=0.00063  sE=1.99e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#10] id=h150-156|15m  net_bps= +121.1  side=buy   family=RELATIVE_STRENGTH          hold= 75.0min  n_chunks=4
+   ck 0 [ 20bar]  se=0.844  rA=0.00190  rV=0.00150  rS=0.00150  sE=1.13e-06  ▄████  MIXED      
+   ck 1 [ 16bar]  se=0.860  rA=0.00117  rV=0.00074  rS=0.00074  sE=2.74e-07  ▄▅▄▄▃  WIN_SHAPE  
+   ck 2 [ 18bar]  se=0.863  rA=0.00147  rV=0.00108  rS=0.00108  sE=5.83e-07  ▅▆▆▆▅  MIXED      
+   ck 3 [ 22bar]  se=0.889  rA=0.00096  rV=0.00063  rS=0.00063  sE=1.99e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#11] id=h150-156|15m  net_bps= +121.1  side=buy   family=BASIS_DISLOCATION          hold= 75.0min  n_chunks=4
+   ck 0 [ 20bar]  se=0.844  rA=0.00190  rV=0.00150  rS=0.00150  sE=1.13e-06  ▄████  MIXED      
+   ck 1 [ 16bar]  se=0.860  rA=0.00117  rV=0.00074  rS=0.00074  sE=2.74e-07  ▄▅▄▄▃  WIN_SHAPE  
+   ck 2 [ 18bar]  se=0.863  rA=0.00147  rV=0.00108  rS=0.00108  sE=5.83e-07  ▅▆▆▆▅  MIXED      
+   ck 3 [ 22bar]  se=0.889  rA=0.00096  rV=0.00063  rS=0.00063  sE=1.99e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#12] id=h150-156|15m  net_bps= +116.9  side=sell  family=VOL_BREAKOUT               hold= 90.0min  n_chunks=4
+   ck 0 [ 21bar]  se=0.873  rA=0.00104  rV=0.00101  rS=0.00101  sE=6.21e-07  ▅▄▅▅▅  WIN_LEAN   
+   ck 1 [ 24bar]  se=0.893  rA=0.00110  rV=0.00060  rS=0.00060  sE=1.80e-07  ▆▅▃▃▂  WIN_SHAPE  
+   ck 2 [ 17bar]  se=0.815  rA=0.00216  rV=0.00159  rS=0.00159  sE=1.26e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 29bar]  se=0.914  rA=0.00108  rV=0.00096  rS=0.00096  sE=4.58e-07  ▇▄▅▅▄  WIN_LEAN   
+
+[W#13] id=h150-156|15m  net_bps= +116.9  side=sell  family=RELATIVE_STRENGTH          hold= 90.0min  n_chunks=4
+   ck 0 [ 21bar]  se=0.873  rA=0.00104  rV=0.00101  rS=0.00101  sE=6.21e-07  ▅▄▅▅▅  WIN_LEAN   
+   ck 1 [ 24bar]  se=0.893  rA=0.00110  rV=0.00060  rS=0.00060  sE=1.80e-07  ▆▅▃▃▂  WIN_SHAPE  
+   ck 2 [ 17bar]  se=0.815  rA=0.00216  rV=0.00159  rS=0.00159  sE=1.26e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 29bar]  se=0.914  rA=0.00108  rV=0.00096  rS=0.00096  sE=4.58e-07  ▇▄▅▅▄  WIN_LEAN   
+
+[W#14] id=h150-156|15m  net_bps= +116.9  side=sell  family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=4
+   ck 0 [ 21bar]  se=0.873  rA=0.00104  rV=0.00101  rS=0.00101  sE=6.21e-07  ▅▄▅▅▅  WIN_LEAN   
+   ck 1 [ 24bar]  se=0.893  rA=0.00110  rV=0.00060  rS=0.00060  sE=1.80e-07  ▆▅▃▃▂  WIN_SHAPE  
+   ck 2 [ 17bar]  se=0.815  rA=0.00216  rV=0.00159  rS=0.00159  sE=1.26e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 29bar]  se=0.914  rA=0.00108  rV=0.00096  rS=0.00096  sE=4.58e-07  ▇▄▅▅▄  WIN_LEAN   
+
+[W#15] id=h150-156|15m  net_bps= +116.9  side=sell  family=BASIS_DISLOCATION          hold= 90.0min  n_chunks=4
+   ck 0 [ 21bar]  se=0.873  rA=0.00104  rV=0.00101  rS=0.00101  sE=6.21e-07  ▅▄▅▅▅  WIN_LEAN   
+   ck 1 [ 24bar]  se=0.893  rA=0.00110  rV=0.00060  rS=0.00060  sE=1.80e-07  ▆▅▃▃▂  WIN_SHAPE  
+   ck 2 [ 17bar]  se=0.815  rA=0.00216  rV=0.00159  rS=0.00159  sE=1.26e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 29bar]  se=0.914  rA=0.00108  rV=0.00096  rS=0.00096  sE=4.58e-07  ▇▄▅▅▄  WIN_LEAN   
+
+[W#16] id=h156-162|15m  net_bps= +110.3  side=sell  family=NEWS_BREAKOUT              hold= 81.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.829  rA=0.00091  rV=0.00059  rS=0.00059  sE=1.99e-07  ▃▄▃▃▂  WIN_LEAN   
+   ck 1 [ 16bar]  se=0.808  rA=0.00078  rV=0.00053  rS=0.00053  sE=1.39e-07  ▂▃▂▂▂  WIN_LEAN   
+   ck 2 [ 49bar]  se=0.935  rA=0.00086  rV=0.00060  rS=0.00060  sE=1.80e-07  █▃▃▃▂  WIN_SHAPE  
+
+[W#17] id=h156-162|15m  net_bps= +110.3  side=sell  family=MEAN_REVERSION_CHOP        hold= 81.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.829  rA=0.00091  rV=0.00059  rS=0.00059  sE=1.99e-07  ▃▄▃▃▂  WIN_LEAN   
+   ck 1 [ 16bar]  se=0.808  rA=0.00078  rV=0.00053  rS=0.00053  sE=1.39e-07  ▂▃▂▂▂  WIN_LEAN   
+   ck 2 [ 49bar]  se=0.935  rA=0.00086  rV=0.00060  rS=0.00060  sE=1.80e-07  █▃▃▃▂  WIN_SHAPE  
+
+[W#18] id=h120-126|15m  net_bps= +106.7  side=buy   family=LIQUIDITY_SQUEEZE          hold=210.0min  n_chunks=9
+   ck 0 [ 26bar]  se=0.869  rA=0.00047  rV=0.00029  rS=0.00029  sE=4.24e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 1 [ 46bar]  se=0.913  rA=0.00054  rV=0.00035  rS=0.00035  sE=5.96e-08  ▇▂▁▁▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.788  rA=0.00048  rV=0.00028  rS=0.00028  sE=4.04e-08  ▁▁▁▁▁  WIN_LEAN   
+   ck 3 [ 18bar]  se=0.857  rA=0.00049  rV=0.00031  rS=0.00031  sE=4.70e-08  ▄▁▁▁▁  WIN_SHAPE  
+   ck 4 [ 28bar]  se=0.899  rA=0.00078  rV=0.00056  rS=0.00056  sE=1.56e-07  ▆▃▂▂▂  WIN_SHAPE  
+   ck 5 [ 16bar]  se=0.805  rA=0.00039  rV=0.00025  rS=0.00025  sE=3.05e-08  ▂▁▁▁▁  WIN_LEAN   
+   ck 6 [ 19bar]  se=0.869  rA=0.00044  rV=0.00038  rS=0.00038  sE=7.22e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 7 [ 20bar]  se=0.870  rA=0.00029  rV=0.00026  rS=0.00026  sE=3.38e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 8 [ 22bar]  se=0.909  rA=0.00058  rV=0.00054  rS=0.00054  sE=1.48e-07  ▇▂▂▂▂  WIN_SHAPE  
+
+--- LOSE (n=6) ---
+
+[L#01] id=h156-162|15m  net_bps=  -91.6  side=buy   family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.845  rA=0.00103  rV=0.00067  rS=0.00067  sE=2.24e-07  ▄▄▃▃▂  WIN_SHAPE  
+
+[L#02] id=h156-162|15m  net_bps=  -91.6  side=buy   family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.845  rA=0.00103  rV=0.00067  rS=0.00067  sE=2.24e-07  ▄▄▃▃▂  WIN_SHAPE  
+
+[L#03] id=h156-162|15m  net_bps=  -91.6  side=buy   family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.845  rA=0.00103  rV=0.00067  rS=0.00067  sE=2.24e-07  ▄▄▃▃▂  WIN_SHAPE  
+
+[L#04] id=h150-156|15m  net_bps=  -87.8  side=buy   family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.850  rA=0.00131  rV=0.00094  rS=0.00094  sE=4.40e-07  ▄▆▅▅▄  MIXED      
+
+[L#05] id=h150-156|15m  net_bps=  -87.8  side=buy   family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.850  rA=0.00131  rV=0.00094  rS=0.00094  sE=4.40e-07  ▄▆▅▅▄  MIXED      
+
+[L#06] id=h150-156|15m  net_bps=  -87.8  side=buy   family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.850  rA=0.00131  rV=0.00094  rS=0.00094  sE=4.40e-07  ▄▆▅▅▄  MIXED      
+
+
+####################################################################################################
+# ETH/Coinbase  —  WIN n=31, LOSE n=15
+####################################################################################################
+
+--- WIN (n=31) ---
+
+[W#01] id=h150-156|15m  net_bps= +175.3  side=buy   family=VOL_BREAKOUT               hold= 90.0min  n_chunks=3
+   ck 0 [ 47bar]  se=0.903  rA=0.00151  rV=0.00116  rS=0.00116  sE=6.76e-07  ▇▇▆▆▅  MIXED      
+   ck 1 [ 16bar]  se=0.820  rA=0.00137  rV=0.00101  rS=0.00101  sE=5.09e-07  ▃▆▅▅▄  LOSE_LEAN  
+   ck 2 [ 28bar]  se=0.895  rA=0.00095  rV=0.00071  rS=0.00071  sE=2.52e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#02] id=h150-156|15m  net_bps= +175.3  side=buy   family=RELATIVE_STRENGTH          hold= 90.0min  n_chunks=3
+   ck 0 [ 47bar]  se=0.903  rA=0.00151  rV=0.00116  rS=0.00116  sE=6.76e-07  ▇▇▆▆▅  MIXED      
+   ck 1 [ 16bar]  se=0.820  rA=0.00137  rV=0.00101  rS=0.00101  sE=5.09e-07  ▃▆▅▅▄  LOSE_LEAN  
+   ck 2 [ 28bar]  se=0.895  rA=0.00095  rV=0.00071  rS=0.00071  sE=2.52e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#03] id=h150-156|15m  net_bps= +175.3  side=buy   family=BASIS_DISLOCATION          hold= 90.0min  n_chunks=3
+   ck 0 [ 47bar]  se=0.903  rA=0.00151  rV=0.00116  rS=0.00116  sE=6.76e-07  ▇▇▆▆▅  MIXED      
+   ck 1 [ 16bar]  se=0.820  rA=0.00137  rV=0.00101  rS=0.00101  sE=5.09e-07  ▃▆▅▅▄  LOSE_LEAN  
+   ck 2 [ 28bar]  se=0.895  rA=0.00095  rV=0.00071  rS=0.00071  sE=2.52e-07  ▆▄▃▃▂  WIN_SHAPE  
+
+[W#04] id=h48-54|15m|s  net_bps= +164.9  side=sell  family=VOL_BREAKOUT               hold= 90.0min  n_chunks=3
+   ck 0 [ 51bar]  se=0.952  rA=0.00139  rV=0.00102  rS=0.00102  sE=5.21e-07  █▆▅▅▄  MIXED      
+   ck 1 [ 19bar]  se=0.894  rA=0.00147  rV=0.00099  rS=0.00099  sE=5.20e-07  ▆▆▅▅▄  MIXED      
+   ck 2 [ 21bar]  se=0.863  rA=0.00123  rV=0.00062  rS=0.00062  sE=1.98e-07  ▅▅▃▃▂  WIN_SHAPE  
+
+[W#05] id=h48-54|15m|s  net_bps= +164.9  side=sell  family=RELATIVE_STRENGTH          hold= 90.0min  n_chunks=3
+   ck 0 [ 51bar]  se=0.952  rA=0.00139  rV=0.00102  rS=0.00102  sE=5.21e-07  █▆▅▅▄  MIXED      
+   ck 1 [ 19bar]  se=0.894  rA=0.00147  rV=0.00099  rS=0.00099  sE=5.20e-07  ▆▆▅▅▄  MIXED      
+   ck 2 [ 21bar]  se=0.863  rA=0.00123  rV=0.00062  rS=0.00062  sE=1.98e-07  ▅▅▃▃▂  WIN_SHAPE  
+
+[W#06] id=h48-54|15m|s  net_bps= +164.9  side=sell  family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=3
+   ck 0 [ 51bar]  se=0.952  rA=0.00139  rV=0.00102  rS=0.00102  sE=5.21e-07  █▆▅▅▄  MIXED      
+   ck 1 [ 19bar]  se=0.894  rA=0.00147  rV=0.00099  rS=0.00099  sE=5.20e-07  ▆▆▅▅▄  MIXED      
+   ck 2 [ 21bar]  se=0.863  rA=0.00123  rV=0.00062  rS=0.00062  sE=1.98e-07  ▅▅▃▃▂  WIN_SHAPE  
+
+[W#07] id=h48-54|15m|s  net_bps= +164.9  side=sell  family=BASIS_DISLOCATION          hold= 90.0min  n_chunks=3
+   ck 0 [ 51bar]  se=0.952  rA=0.00139  rV=0.00102  rS=0.00102  sE=5.21e-07  █▆▅▅▄  MIXED      
+   ck 1 [ 19bar]  se=0.894  rA=0.00147  rV=0.00099  rS=0.00099  sE=5.20e-07  ▆▆▅▅▄  MIXED      
+   ck 2 [ 21bar]  se=0.863  rA=0.00123  rV=0.00062  rS=0.00062  sE=1.98e-07  ▅▅▃▃▂  WIN_SHAPE  
+
+[W#08] id=h48-54|5m|sl  net_bps= +161.5  side=sell  family=BASIS_DISLOCATION          hold= 85.0min  n_chunks=3
+   ck 0 [ 51bar]  se=0.952  rA=0.00139  rV=0.00102  rS=0.00102  sE=5.21e-07  █▆▅▅▄  MIXED      
+   ck 1 [ 19bar]  se=0.894  rA=0.00147  rV=0.00099  rS=0.00099  sE=5.20e-07  ▆▆▅▅▄  MIXED      
+   ck 2 [ 16bar]  se=0.826  rA=0.00122  rV=0.00060  rS=0.00060  sE=1.80e-07  ▃▅▃▃▂  WIN_LEAN   
+
+[W#09] id=h144-150|15m  net_bps= +151.6  side=buy   family=BASIS_DISLOCATION          hold=330.0min  n_chunks=11
+   ck 0 [ 32bar]  se=0.925  rA=0.00037  rV=0.00029  rS=0.00029  sE=4.23e-08  █▁▁▁▁  WIN_SHAPE  
+   ck 1 [ 32bar]  se=0.916  rA=0.00031  rV=0.00024  rS=0.00024  sE=2.80e-08  ▇▁▁▁▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.813  rA=0.00034  rV=0.00027  rS=0.00027  sE=3.76e-08  ▂▁▁▁▁  WIN_LEAN   
+   ck 3 [ 77bar]  se=0.950  rA=0.00042  rV=0.00035  rS=0.00035  sE=6.25e-08  █▁▁▁▁  WIN_SHAPE  
+   ck 4 [ 16bar]  se=0.866  rA=0.00084  rV=0.00057  rS=0.00057  sE=1.62e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 5 [ 34bar]  se=0.911  rA=0.00056  rV=0.00044  rS=0.00044  sE=9.69e-08  ▇▂▂▂▁  WIN_SHAPE  
+   ck 6 [ 19bar]  se=0.841  rA=0.00054  rV=0.00039  rS=0.00039  sE=7.76e-08  ▄▂▁▁▁  WIN_LEAN   
+   ck 7 [ 39bar]  se=0.940  rA=0.00072  rV=0.00063  rS=0.00063  sE=2.02e-07  █▃▃▃▂  WIN_SHAPE  
+   ck 8 [ 23bar]  se=0.811  rA=0.00061  rV=0.00054  rS=0.00054  sE=1.46e-07  ▂▂▂▂▂  WIN_LEAN   
+   ck 9 [ 21bar]  se=0.889  rA=0.00071  rV=0.00055  rS=0.00055  sE=1.60e-07  ▆▃▂▂▂  WIN_SHAPE  
+   ck10 [ 22bar]  se=0.866  rA=0.00040  rV=0.00034  rS=0.00034  sE=5.80e-08  ▅▁▁▁▁  WIN_SHAPE  
+
+[W#10] id=h144-150|15m  net_bps= +135.8  side=buy   family=BASIS_DISLOCATION          hold=240.0min  n_chunks=9
+   ck 0 [ 67bar]  se=0.942  rA=0.00046  rV=0.00037  rS=0.00037  sE=6.76e-08  █▁▁▁▁  WIN_SHAPE  
+   ck 1 [ 16bar]  se=0.866  rA=0.00084  rV=0.00057  rS=0.00057  sE=1.62e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 2 [ 19bar]  se=0.891  rA=0.00065  rV=0.00053  rS=0.00053  sE=1.48e-07  ▆▂▂▂▂  WIN_SHAPE  
+   ck 3 [ 16bar]  se=0.844  rA=0.00050  rV=0.00047  rS=0.00047  sE=1.09e-07  ▄▁▂▂▁  WIN_SHAPE  
+   ck 4 [ 18bar]  se=0.895  rA=0.00049  rV=0.00039  rS=0.00039  sE=7.67e-08  ▆▁▁▁▁  WIN_SHAPE  
+   ck 5 [ 39bar]  se=0.940  rA=0.00072  rV=0.00063  rS=0.00063  sE=2.02e-07  █▃▃▃▂  WIN_SHAPE  
+   ck 6 [ 23bar]  se=0.811  rA=0.00061  rV=0.00054  rS=0.00054  sE=1.46e-07  ▂▂▂▂▂  WIN_LEAN   
+   ck 7 [ 21bar]  se=0.889  rA=0.00071  rV=0.00055  rS=0.00055  sE=1.60e-07  ▆▃▂▂▂  WIN_SHAPE  
+   ck 8 [ 22bar]  se=0.866  rA=0.00040  rV=0.00034  rS=0.00034  sE=5.80e-08  ▅▁▁▁▁  WIN_SHAPE  
+
+[W#11] id=h156-162|15m  net_bps= +127.4  side=sell  family=VOL_BREAKOUT               hold=111.0min  n_chunks=6
+   ck 0 [ 17bar]  se=0.854  rA=0.00099  rV=0.00070  rS=0.00070  sE=2.48e-07  ▄▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 21bar]  se=0.864  rA=0.00074  rV=0.00055  rS=0.00055  sE=1.52e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.855  rA=0.00089  rV=0.00061  rS=0.00061  sE=1.83e-07  ▄▃▃▃▂  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 4 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 5 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#12] id=h156-162|15m  net_bps= +127.4  side=sell  family=RELATIVE_STRENGTH          hold=111.0min  n_chunks=6
+   ck 0 [ 17bar]  se=0.854  rA=0.00099  rV=0.00070  rS=0.00070  sE=2.48e-07  ▄▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 21bar]  se=0.864  rA=0.00074  rV=0.00055  rS=0.00055  sE=1.52e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.855  rA=0.00089  rV=0.00061  rS=0.00061  sE=1.83e-07  ▄▃▃▃▂  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 4 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 5 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#13] id=h156-162|15m  net_bps= +127.4  side=sell  family=NEWS_BREAKOUT              hold=111.0min  n_chunks=6
+   ck 0 [ 17bar]  se=0.854  rA=0.00099  rV=0.00070  rS=0.00070  sE=2.48e-07  ▄▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 21bar]  se=0.864  rA=0.00074  rV=0.00055  rS=0.00055  sE=1.52e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.855  rA=0.00089  rV=0.00061  rS=0.00061  sE=1.83e-07  ▄▃▃▃▂  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 4 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 5 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#14] id=h156-162|15m  net_bps= +127.4  side=sell  family=BASIS_DISLOCATION          hold=111.0min  n_chunks=6
+   ck 0 [ 17bar]  se=0.854  rA=0.00099  rV=0.00070  rS=0.00070  sE=2.48e-07  ▄▄▃▃▂  WIN_SHAPE  
+   ck 1 [ 21bar]  se=0.864  rA=0.00074  rV=0.00055  rS=0.00055  sE=1.52e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.855  rA=0.00089  rV=0.00061  rS=0.00061  sE=1.83e-07  ▄▃▃▃▂  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 4 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 5 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#15] id=h48-54|5m|sl  net_bps= +123.1  side=sell  family=BASIS_DISLOCATION          hold= 80.0min  n_chunks=3
+   ck 0 [ 46bar]  se=0.943  rA=0.00140  rV=0.00096  rS=0.00096  sE=4.62e-07  █▆▅▅▄  MIXED      
+   ck 1 [ 19bar]  se=0.894  rA=0.00147  rV=0.00099  rS=0.00099  sE=5.20e-07  ▆▆▅▅▄  MIXED      
+   ck 2 [ 16bar]  se=0.826  rA=0.00122  rV=0.00060  rS=0.00060  sE=1.80e-07  ▃▅▃▃▂  WIN_LEAN   
+
+[W#16] id=h144-150|15m  net_bps= +122.2  side=buy   family=BASIS_DISLOCATION          hold=210.0min  n_chunks=9
+   ck 0 [ 37bar]  se=0.918  rA=0.00045  rV=0.00036  rS=0.00036  sE=6.82e-08  ▇▁▁▁▁  WIN_SHAPE  
+   ck 1 [ 16bar]  se=0.866  rA=0.00084  rV=0.00057  rS=0.00057  sE=1.62e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 2 [ 19bar]  se=0.891  rA=0.00065  rV=0.00053  rS=0.00053  sE=1.48e-07  ▆▂▂▂▂  WIN_SHAPE  
+   ck 3 [ 16bar]  se=0.844  rA=0.00050  rV=0.00047  rS=0.00047  sE=1.09e-07  ▄▁▂▂▁  WIN_SHAPE  
+   ck 4 [ 18bar]  se=0.895  rA=0.00049  rV=0.00039  rS=0.00039  sE=7.67e-08  ▆▁▁▁▁  WIN_SHAPE  
+   ck 5 [ 39bar]  se=0.940  rA=0.00072  rV=0.00063  rS=0.00063  sE=2.02e-07  █▃▃▃▂  WIN_SHAPE  
+   ck 6 [ 23bar]  se=0.811  rA=0.00061  rV=0.00054  rS=0.00054  sE=1.46e-07  ▂▂▂▂▂  WIN_LEAN   
+   ck 7 [ 21bar]  se=0.889  rA=0.00071  rV=0.00055  rS=0.00055  sE=1.60e-07  ▆▃▂▂▂  WIN_SHAPE  
+   ck 8 [ 22bar]  se=0.866  rA=0.00040  rV=0.00034  rS=0.00034  sE=5.80e-08  ▅▁▁▁▁  WIN_SHAPE  
+
+[W#17] id=h150-156|15m  net_bps= +122.2  side=buy   family=VOL_BREAKOUT               hold= 75.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.814  rA=0.00140  rV=0.00117  rS=0.00117  sE=7.06e-07  ▂▆▆▆▆  LOSE_LEAN  
+   ck 1 [ 16bar]  se=0.822  rA=0.00159  rV=0.00141  rS=0.00141  sE=9.98e-07  ▃▇███  LOSE_LEAN  
+   ck 2 [ 43bar]  se=0.938  rA=0.00111  rV=0.00085  rS=0.00085  sE=3.92e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#18] id=h150-156|15m  net_bps= +122.2  side=buy   family=RELATIVE_STRENGTH          hold= 75.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.814  rA=0.00140  rV=0.00117  rS=0.00117  sE=7.06e-07  ▂▆▆▆▆  LOSE_LEAN  
+   ck 1 [ 16bar]  se=0.822  rA=0.00159  rV=0.00141  rS=0.00141  sE=9.98e-07  ▃▇███  LOSE_LEAN  
+   ck 2 [ 43bar]  se=0.938  rA=0.00111  rV=0.00085  rS=0.00085  sE=3.92e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#19] id=h150-156|15m  net_bps= +122.2  side=buy   family=BASIS_DISLOCATION          hold= 75.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.814  rA=0.00140  rV=0.00117  rS=0.00117  sE=7.06e-07  ▂▆▆▆▆  LOSE_LEAN  
+   ck 1 [ 16bar]  se=0.822  rA=0.00159  rV=0.00141  rS=0.00141  sE=9.98e-07  ▃▇███  LOSE_LEAN  
+   ck 2 [ 43bar]  se=0.938  rA=0.00111  rV=0.00085  rS=0.00085  sE=3.92e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#20] id=h150-156|15m  net_bps= +121.4  side=sell  family=RELATIVE_STRENGTH          hold= 90.0min  n_chunks=4
+   ck 0 [ 19bar]  se=0.840  rA=0.00098  rV=0.00103  rS=0.00103  sE=6.52e-07  ▄▄▅▅▅  MIXED      
+   ck 1 [ 17bar]  se=0.849  rA=0.00096  rV=0.00074  rS=0.00074  sE=2.79e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.807  rA=0.00178  rV=0.00144  rS=0.00144  sE=1.04e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 39bar]  se=0.935  rA=0.00115  rV=0.00088  rS=0.00088  sE=3.91e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#21] id=h150-156|15m  net_bps= +121.4  side=sell  family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=4
+   ck 0 [ 19bar]  se=0.840  rA=0.00098  rV=0.00103  rS=0.00103  sE=6.52e-07  ▄▄▅▅▅  MIXED      
+   ck 1 [ 17bar]  se=0.849  rA=0.00096  rV=0.00074  rS=0.00074  sE=2.79e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.807  rA=0.00178  rV=0.00144  rS=0.00144  sE=1.04e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 39bar]  se=0.935  rA=0.00115  rV=0.00088  rS=0.00088  sE=3.91e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#22] id=h150-156|15m  net_bps= +121.4  side=sell  family=MEAN_REVERSION_CHOP        hold= 90.0min  n_chunks=4
+   ck 0 [ 19bar]  se=0.840  rA=0.00098  rV=0.00103  rS=0.00103  sE=6.52e-07  ▄▄▅▅▅  MIXED      
+   ck 1 [ 17bar]  se=0.849  rA=0.00096  rV=0.00074  rS=0.00074  sE=2.79e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.807  rA=0.00178  rV=0.00144  rS=0.00144  sE=1.04e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 39bar]  se=0.935  rA=0.00115  rV=0.00088  rS=0.00088  sE=3.91e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#23] id=h150-156|15m  net_bps= +121.4  side=sell  family=LIQUIDITY_SQUEEZE          hold= 90.0min  n_chunks=4
+   ck 0 [ 19bar]  se=0.840  rA=0.00098  rV=0.00103  rS=0.00103  sE=6.52e-07  ▄▄▅▅▅  MIXED      
+   ck 1 [ 17bar]  se=0.849  rA=0.00096  rV=0.00074  rS=0.00074  sE=2.79e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.807  rA=0.00178  rV=0.00144  rS=0.00144  sE=1.04e-06  ▂████  LOSE_LEAN  
+   ck 3 [ 39bar]  se=0.935  rA=0.00115  rV=0.00088  rS=0.00088  sE=3.91e-07  █▅▄▄▃  WIN_SHAPE  
+
+[W#24] id=h0-6|15m|sli  net_bps= +117.7  side=buy   family=MEAN_REVERSION_CHOP        hold= 75.0min  n_chunks=3
+   ck 0 [ 18bar]  se=0.870  rA=0.00120  rV=0.00090  rS=0.00090  sE=4.04e-07  ▅▅▅▅▃  WIN_SHAPE  
+   ck 1 [ 31bar]  se=0.894  rA=0.00114  rV=0.00081  rS=0.00081  sE=3.31e-07  ▆▅▄▄▃  WIN_SHAPE  
+   ck 2 [ 27bar]  se=0.915  rA=0.00182  rV=0.00103  rS=0.00103  sE=5.55e-07  ▇█▅▅▄  MIXED      
+
+[W#25] id=h156-162|15m  net_bps= +113.4  side=sell  family=VOL_BREAKOUT               hold= 81.0min  n_chunks=4
+   ck 0 [ 24bar]  se=0.863  rA=0.00085  rV=0.00056  rS=0.00056  sE=1.60e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 1 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#26] id=h156-162|15m  net_bps= +113.4  side=sell  family=RELATIVE_STRENGTH          hold= 81.0min  n_chunks=4
+   ck 0 [ 24bar]  se=0.863  rA=0.00085  rV=0.00056  rS=0.00056  sE=1.60e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 1 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#27] id=h156-162|15m  net_bps= +113.4  side=sell  family=NEWS_BREAKOUT              hold= 81.0min  n_chunks=4
+   ck 0 [ 24bar]  se=0.863  rA=0.00085  rV=0.00056  rS=0.00056  sE=1.60e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 1 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#28] id=h156-162|15m  net_bps= +113.4  side=sell  family=BASIS_DISLOCATION          hold= 81.0min  n_chunks=4
+   ck 0 [ 24bar]  se=0.863  rA=0.00085  rV=0.00056  rS=0.00056  sE=1.60e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 1 [ 17bar]  se=0.852  rA=0.00074  rV=0.00043  rS=0.00043  sE=9.79e-08  ▄▃▂▂▁  WIN_SHAPE  
+   ck 2 [ 23bar]  se=0.922  rA=0.00058  rV=0.00037  rS=0.00037  sE=7.47e-08  █▂▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.863  rA=0.00104  rV=0.00076  rS=0.00076  sE=2.90e-07  ▅▄▄▄▃  WIN_SHAPE  
+
+[W#29] id=h0-6|5m|slic  net_bps= +112.4  side=sell  family=VOL_BREAKOUT               hold= 35.0min  n_chunks=1
+   ck 0 [ 36bar]  se=0.924  rA=0.00201  rV=0.00174  rS=0.00174  sE=1.52e-06  █████  MIXED      
+
+[W#30] id=h0-6|5m|slic  net_bps= +112.4  side=sell  family=NEWS_BREAKOUT              hold= 35.0min  n_chunks=1
+   ck 0 [ 36bar]  se=0.924  rA=0.00201  rV=0.00174  rS=0.00174  sE=1.52e-06  █████  MIXED      
+
+[W#31] id=h144-150|15m  net_bps= +107.6  side=buy   family=BASIS_DISLOCATION          hold=180.0min  n_chunks=8
+   ck 0 [ 20bar]  se=0.876  rA=0.00076  rV=0.00056  rS=0.00056  sE=1.58e-07  ▅▃▂▂▂  WIN_SHAPE  
+   ck 1 [ 18bar]  se=0.867  rA=0.00069  rV=0.00057  rS=0.00057  sE=1.65e-07  ▅▂▂▂▂  WIN_SHAPE  
+   ck 2 [ 19bar]  se=0.840  rA=0.00042  rV=0.00030  rS=0.00030  sE=4.63e-08  ▄▁▁▁▁  WIN_LEAN   
+   ck 3 [ 19bar]  se=0.841  rA=0.00054  rV=0.00039  rS=0.00039  sE=7.76e-08  ▄▂▁▁▁  WIN_LEAN   
+   ck 4 [ 39bar]  se=0.940  rA=0.00072  rV=0.00063  rS=0.00063  sE=2.02e-07  █▃▃▃▂  WIN_SHAPE  
+   ck 5 [ 23bar]  se=0.811  rA=0.00061  rV=0.00054  rS=0.00054  sE=1.46e-07  ▂▂▂▂▂  WIN_LEAN   
+   ck 6 [ 21bar]  se=0.889  rA=0.00071  rV=0.00055  rS=0.00055  sE=1.60e-07  ▆▃▂▂▂  WIN_SHAPE  
+   ck 7 [ 22bar]  se=0.866  rA=0.00040  rV=0.00034  rS=0.00034  sE=5.80e-08  ▅▁▁▁▁  WIN_SHAPE  
+
+--- LOSE (n=15) ---
+
+[L#01] id=h42-48|15m|s  net_bps= -127.6  side=sell  family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.831  rA=0.00167  rV=0.00104  rS=0.00104  sE=5.43e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#02] id=h42-48|15m|s  net_bps= -127.6  side=sell  family=NEWS_BREAKOUT              hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.831  rA=0.00167  rV=0.00104  rS=0.00104  sE=5.43e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#03] id=h42-48|15m|s  net_bps= -127.6  side=sell  family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.831  rA=0.00167  rV=0.00104  rS=0.00104  sE=5.43e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#04] id=h42-48|15m|s  net_bps= -127.6  side=sell  family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.831  rA=0.00167  rV=0.00104  rS=0.00104  sE=5.43e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#05] id=h0-6|15m|sli  net_bps=  -91.5  side=sell  family=NEWS_BREAKOUT              hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.769  rA=0.00200  rV=0.00147  rS=0.00147  sE=1.08e-06  ▁████  LOSE_LEAN  
+
+[L#06] id=h0-6|15m|sli  net_bps=  -91.5  side=sell  family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.769  rA=0.00200  rV=0.00147  rS=0.00147  sE=1.08e-06  ▁████  LOSE_LEAN  
+
+[L#07] id=h0-6|15m|sli  net_bps=  -90.4  side=sell  family=NEWS_BREAKOUT              hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.801  rA=0.00181  rV=0.00111  rS=0.00111  sE=6.14e-07  ▂█▆▆▅  LOSE_LEAN  
+
+[L#08] id=h0-6|15m|sli  net_bps=  -90.4  side=sell  family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.801  rA=0.00181  rV=0.00111  rS=0.00111  sE=6.14e-07  ▂█▆▆▅  LOSE_LEAN  
+
+[L#09] id=h150-156|15m  net_bps=  -89.1  side=buy   family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.832  rA=0.00124  rV=0.00094  rS=0.00094  sE=4.38e-07  ▃▅▅▅▄  MIXED      
+
+[L#10] id=h150-156|15m  net_bps=  -89.1  side=buy   family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.832  rA=0.00124  rV=0.00094  rS=0.00094  sE=4.38e-07  ▃▅▅▅▄  MIXED      
+
+[L#11] id=h0-6|15m|sli  net_bps=  -88.9  side=buy   family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.827  rA=0.00260  rV=0.00248  rS=0.00248  sE=3.07e-06  ▃████  LOSE_LEAN  
+
+[L#12] id=h156-162|15m  net_bps=  -88.7  side=buy   family=LIQUIDITY_SQUEEZE          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.843  rA=0.00097  rV=0.00061  rS=0.00061  sE=1.86e-07  ▄▄▃▃▂  WIN_SHAPE  
+
+[L#13] id=h156-162|15m  net_bps=  -88.7  side=buy   family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.843  rA=0.00097  rV=0.00061  rS=0.00061  sE=1.86e-07  ▄▄▃▃▂  WIN_SHAPE  
+
+[L#14] id=h48-54|15m|s  net_bps=  -75.4  side=buy   family=LIQUIDITY_SQUEEZE          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.868  rA=0.00146  rV=0.00130  rS=0.00130  sE=8.43e-07  ▅▆▇▇▆  MIXED      
+
+[L#15] id=h48-54|15m|s  net_bps=  -75.4  side=buy   family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.868  rA=0.00146  rV=0.00130  rS=0.00130  sE=8.43e-07  ▅▆▇▇▆  MIXED      
+
+
+####################################################################################################
+# ETH/Kraken  —  WIN n=31, LOSE n=21
+####################################################################################################
+
+--- WIN (n=31) ---
+
+[W#01] id=h150-156|15m  net_bps= +174.8  side=buy   family=VOL_BREAKOUT               hold= 90.0min  n_chunks=5
+   ck 0 [ 18bar]  se=0.864  rA=0.00105  rV=0.00076  rS=0.00076  sE=2.85e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 1 [ 23bar]  se=0.850  rA=0.00154  rV=0.00145  rS=0.00145  sE=1.05e-06  ▄▇███  MIXED      
+   ck 2 [ 16bar]  se=0.838  rA=0.00098  rV=0.00087  rS=0.00087  sE=3.78e-07  ▃▄▄▄▃  WIN_LEAN   
+   ck 3 [ 16bar]  se=0.812  rA=0.00096  rV=0.00090  rS=0.00090  sE=4.09e-07  ▂▄▅▅▃  MIXED      
+   ck 4 [ 18bar]  se=0.837  rA=0.00069  rV=0.00063  rS=0.00063  sE=2.00e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#02] id=h150-156|15m  net_bps= +174.8  side=buy   family=RELATIVE_STRENGTH          hold= 90.0min  n_chunks=5
+   ck 0 [ 18bar]  se=0.864  rA=0.00105  rV=0.00076  rS=0.00076  sE=2.85e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 1 [ 23bar]  se=0.850  rA=0.00154  rV=0.00145  rS=0.00145  sE=1.05e-06  ▄▇███  MIXED      
+   ck 2 [ 16bar]  se=0.838  rA=0.00098  rV=0.00087  rS=0.00087  sE=3.78e-07  ▃▄▄▄▃  WIN_LEAN   
+   ck 3 [ 16bar]  se=0.812  rA=0.00096  rV=0.00090  rS=0.00090  sE=4.09e-07  ▂▄▅▅▃  MIXED      
+   ck 4 [ 18bar]  se=0.837  rA=0.00069  rV=0.00063  rS=0.00063  sE=2.00e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#03] id=h150-156|15m  net_bps= +174.8  side=buy   family=BASIS_DISLOCATION          hold= 90.0min  n_chunks=5
+   ck 0 [ 18bar]  se=0.864  rA=0.00105  rV=0.00076  rS=0.00076  sE=2.85e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 1 [ 23bar]  se=0.850  rA=0.00154  rV=0.00145  rS=0.00145  sE=1.05e-06  ▄▇███  MIXED      
+   ck 2 [ 16bar]  se=0.838  rA=0.00098  rV=0.00087  rS=0.00087  sE=3.78e-07  ▃▄▄▄▃  WIN_LEAN   
+   ck 3 [ 16bar]  se=0.812  rA=0.00096  rV=0.00090  rS=0.00090  sE=4.09e-07  ▂▄▅▅▃  MIXED      
+   ck 4 [ 18bar]  se=0.837  rA=0.00069  rV=0.00063  rS=0.00063  sE=2.00e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#04] id=h150-156|5m|  net_bps= +172.1  side=sell  family=NEWS_BREAKOUT              hold= 45.0min  n_chunks=2
+   ck 0 [ 24bar]  se=0.892  rA=0.00100  rV=0.00102  rS=0.00102  sE=5.18e-07  ▆▄▅▅▄  WIN_LEAN   
+   ck 1 [ 22bar]  se=0.875  rA=0.00168  rV=0.00157  rS=0.00157  sE=1.23e-06  ▅▇███  MIXED      
+
+[W#05] id=h150-156|5m|  net_bps= +172.1  side=sell  family=MEAN_REVERSION_CHOP        hold= 45.0min  n_chunks=2
+   ck 0 [ 24bar]  se=0.892  rA=0.00100  rV=0.00102  rS=0.00102  sE=5.18e-07  ▆▄▅▅▄  WIN_LEAN   
+   ck 1 [ 22bar]  se=0.875  rA=0.00168  rV=0.00157  rS=0.00157  sE=1.23e-06  ▅▇███  MIXED      
+
+[W#06] id=h150-156|5m|  net_bps= +172.1  side=sell  family=LIQUIDITY_SQUEEZE          hold= 45.0min  n_chunks=2
+   ck 0 [ 24bar]  se=0.892  rA=0.00100  rV=0.00102  rS=0.00102  sE=5.18e-07  ▆▄▅▅▄  WIN_LEAN   
+   ck 1 [ 22bar]  se=0.875  rA=0.00168  rV=0.00157  rS=0.00157  sE=1.23e-06  ▅▇███  MIXED      
+
+[W#07] id=h48-54|15m|s  net_bps= +162.4  side=sell  family=VOL_BREAKOUT               hold= 90.0min  n_chunks=5
+   ck 0 [ 22bar]  se=0.858  rA=0.00123  rV=0.00111  rS=0.00111  sE=6.17e-07  ▄▅▆▆▅  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.860  rA=0.00101  rV=0.00088  rS=0.00088  sE=3.90e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.816  rA=0.00112  rV=0.00079  rS=0.00079  sE=3.15e-07  ▂▅▄▄▃  WIN_LEAN   
+   ck 3 [ 16bar]  se=0.861  rA=0.00119  rV=0.00109  rS=0.00109  sE=5.99e-07  ▅▅▆▆▅  WIN_LEAN   
+   ck 4 [ 20bar]  se=0.879  rA=0.00104  rV=0.00065  rS=0.00065  sE=2.12e-07  ▅▄▃▃▂  WIN_SHAPE  
+
+[W#08] id=h48-54|15m|s  net_bps= +162.4  side=sell  family=RELATIVE_STRENGTH          hold= 90.0min  n_chunks=5
+   ck 0 [ 22bar]  se=0.858  rA=0.00123  rV=0.00111  rS=0.00111  sE=6.17e-07  ▄▅▆▆▅  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.860  rA=0.00101  rV=0.00088  rS=0.00088  sE=3.90e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.816  rA=0.00112  rV=0.00079  rS=0.00079  sE=3.15e-07  ▂▅▄▄▃  WIN_LEAN   
+   ck 3 [ 16bar]  se=0.861  rA=0.00119  rV=0.00109  rS=0.00109  sE=5.99e-07  ▅▅▆▆▅  WIN_LEAN   
+   ck 4 [ 20bar]  se=0.879  rA=0.00104  rV=0.00065  rS=0.00065  sE=2.12e-07  ▅▄▃▃▂  WIN_SHAPE  
+
+[W#09] id=h48-54|15m|s  net_bps= +162.4  side=sell  family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=5
+   ck 0 [ 22bar]  se=0.858  rA=0.00123  rV=0.00111  rS=0.00111  sE=6.17e-07  ▄▅▆▆▅  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.860  rA=0.00101  rV=0.00088  rS=0.00088  sE=3.90e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.816  rA=0.00112  rV=0.00079  rS=0.00079  sE=3.15e-07  ▂▅▄▄▃  WIN_LEAN   
+   ck 3 [ 16bar]  se=0.861  rA=0.00119  rV=0.00109  rS=0.00109  sE=5.99e-07  ▅▅▆▆▅  WIN_LEAN   
+   ck 4 [ 20bar]  se=0.879  rA=0.00104  rV=0.00065  rS=0.00065  sE=2.12e-07  ▅▄▃▃▂  WIN_SHAPE  
+
+[W#10] id=h48-54|15m|s  net_bps= +162.4  side=sell  family=BASIS_DISLOCATION          hold= 90.0min  n_chunks=5
+   ck 0 [ 22bar]  se=0.858  rA=0.00123  rV=0.00111  rS=0.00111  sE=6.17e-07  ▄▅▆▆▅  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.860  rA=0.00101  rV=0.00088  rS=0.00088  sE=3.90e-07  ▄▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.816  rA=0.00112  rV=0.00079  rS=0.00079  sE=3.15e-07  ▂▅▄▄▃  WIN_LEAN   
+   ck 3 [ 16bar]  se=0.861  rA=0.00119  rV=0.00109  rS=0.00109  sE=5.99e-07  ▅▅▆▆▅  WIN_LEAN   
+   ck 4 [ 20bar]  se=0.879  rA=0.00104  rV=0.00065  rS=0.00065  sE=2.12e-07  ▅▄▃▃▂  WIN_SHAPE  
+
+[W#11] id=h150-156|5m|  net_bps= +131.9  side=buy   family=VOL_BREAKOUT               hold= 40.0min  n_chunks=2
+   ck 0 [ 18bar]  se=0.864  rA=0.00105  rV=0.00076  rS=0.00076  sE=2.85e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 1 [ 23bar]  se=0.850  rA=0.00154  rV=0.00145  rS=0.00145  sE=1.05e-06  ▄▇███  MIXED      
+
+[W#12] id=h156-162|15m  net_bps= +126.2  side=sell  family=NEWS_BREAKOUT              hold=111.0min  n_chunks=6
+   ck 0 [ 17bar]  se=0.846  rA=0.00067  rV=0.00069  rS=0.00069  sE=2.43e-07  ▄▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 21bar]  se=0.845  rA=0.00050  rV=0.00049  rS=0.00049  sE=1.19e-07  ▄▂▂▂▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.816  rA=0.00056  rV=0.00060  rS=0.00060  sE=1.80e-07  ▂▂▃▃▂  WIN_LEAN   
+   ck 3 [ 21bar]  se=0.907  rA=0.00044  rV=0.00057  rS=0.00057  sE=1.76e-07  ▇▁▂▂▂  WIN_SHAPE  
+   ck 4 [ 18bar]  se=0.876  rA=0.00035  rV=0.00029  rS=0.00029  sE=4.30e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 5 [ 18bar]  se=0.868  rA=0.00070  rV=0.00079  rS=0.00079  sE=3.11e-07  ▅▃▄▄▃  WIN_SHAPE  
+
+[W#13] id=h156-162|15m  net_bps= +126.2  side=sell  family=MEAN_REVERSION_CHOP        hold=111.0min  n_chunks=6
+   ck 0 [ 17bar]  se=0.846  rA=0.00067  rV=0.00069  rS=0.00069  sE=2.43e-07  ▄▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 21bar]  se=0.845  rA=0.00050  rV=0.00049  rS=0.00049  sE=1.19e-07  ▄▂▂▂▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.816  rA=0.00056  rV=0.00060  rS=0.00060  sE=1.80e-07  ▂▂▃▃▂  WIN_LEAN   
+   ck 3 [ 21bar]  se=0.907  rA=0.00044  rV=0.00057  rS=0.00057  sE=1.76e-07  ▇▁▂▂▂  WIN_SHAPE  
+   ck 4 [ 18bar]  se=0.876  rA=0.00035  rV=0.00029  rS=0.00029  sE=4.30e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 5 [ 18bar]  se=0.868  rA=0.00070  rV=0.00079  rS=0.00079  sE=3.11e-07  ▅▃▄▄▃  WIN_SHAPE  
+
+[W#14] id=h156-162|15m  net_bps= +126.2  side=sell  family=LIQUIDITY_SQUEEZE          hold=111.0min  n_chunks=6
+   ck 0 [ 17bar]  se=0.846  rA=0.00067  rV=0.00069  rS=0.00069  sE=2.43e-07  ▄▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 21bar]  se=0.845  rA=0.00050  rV=0.00049  rS=0.00049  sE=1.19e-07  ▄▂▂▂▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.816  rA=0.00056  rV=0.00060  rS=0.00060  sE=1.80e-07  ▂▂▃▃▂  WIN_LEAN   
+   ck 3 [ 21bar]  se=0.907  rA=0.00044  rV=0.00057  rS=0.00057  sE=1.76e-07  ▇▁▂▂▂  WIN_SHAPE  
+   ck 4 [ 18bar]  se=0.876  rA=0.00035  rV=0.00029  rS=0.00029  sE=4.30e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 5 [ 18bar]  se=0.868  rA=0.00070  rV=0.00079  rS=0.00079  sE=3.11e-07  ▅▃▄▄▃  WIN_SHAPE  
+
+[W#15] id=h150-156|15m  net_bps= +124.9  side=buy   family=VOL_BREAKOUT               hold= 75.0min  n_chunks=4
+   ck 0 [ 26bar]  se=0.872  rA=0.00142  rV=0.00145  rS=0.00145  sE=1.06e-06  ▅▆███  MIXED      
+   ck 1 [ 16bar]  se=0.838  rA=0.00098  rV=0.00087  rS=0.00087  sE=3.78e-07  ▃▄▄▄▃  WIN_LEAN   
+   ck 2 [ 16bar]  se=0.812  rA=0.00096  rV=0.00090  rS=0.00090  sE=4.09e-07  ▂▄▅▅▃  MIXED      
+   ck 3 [ 18bar]  se=0.837  rA=0.00069  rV=0.00063  rS=0.00063  sE=2.00e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#16] id=h150-156|15m  net_bps= +124.9  side=buy   family=RELATIVE_STRENGTH          hold= 75.0min  n_chunks=4
+   ck 0 [ 26bar]  se=0.872  rA=0.00142  rV=0.00145  rS=0.00145  sE=1.06e-06  ▅▆███  MIXED      
+   ck 1 [ 16bar]  se=0.838  rA=0.00098  rV=0.00087  rS=0.00087  sE=3.78e-07  ▃▄▄▄▃  WIN_LEAN   
+   ck 2 [ 16bar]  se=0.812  rA=0.00096  rV=0.00090  rS=0.00090  sE=4.09e-07  ▂▄▅▅▃  MIXED      
+   ck 3 [ 18bar]  se=0.837  rA=0.00069  rV=0.00063  rS=0.00063  sE=2.00e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#17] id=h150-156|15m  net_bps= +124.9  side=buy   family=BASIS_DISLOCATION          hold= 75.0min  n_chunks=4
+   ck 0 [ 26bar]  se=0.872  rA=0.00142  rV=0.00145  rS=0.00145  sE=1.06e-06  ▅▆███  MIXED      
+   ck 1 [ 16bar]  se=0.838  rA=0.00098  rV=0.00087  rS=0.00087  sE=3.78e-07  ▃▄▄▄▃  WIN_LEAN   
+   ck 2 [ 16bar]  se=0.812  rA=0.00096  rV=0.00090  rS=0.00090  sE=4.09e-07  ▂▄▅▅▃  MIXED      
+   ck 3 [ 18bar]  se=0.837  rA=0.00069  rV=0.00063  rS=0.00063  sE=2.00e-07  ▃▂▃▃▂  WIN_LEAN   
+
+[W#18] id=h150-156|15m  net_bps= +119.3  side=sell  family=NEWS_BREAKOUT              hold= 90.0min  n_chunks=5
+   ck 0 [ 17bar]  se=0.771  rA=0.00078  rV=0.00087  rS=0.00087  sE=4.23e-07  ▁▃▄▄▄  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.862  rA=0.00091  rV=0.00075  rS=0.00075  sE=3.11e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 20bar]  se=0.874  rA=0.00170  rV=0.00156  rS=0.00156  sE=1.21e-06  ▅████  MIXED      
+   ck 3 [ 18bar]  se=0.787  rA=0.00101  rV=0.00096  rS=0.00096  sE=4.57e-07  ▁▄▅▅▄  MIXED      
+   ck 4 [ 19bar]  se=0.882  rA=0.00077  rV=0.00072  rS=0.00072  sE=3.13e-07  ▆▃▃▃▃  WIN_SHAPE  
+
+[W#19] id=h150-156|15m  net_bps= +119.3  side=sell  family=MEAN_REVERSION_CHOP        hold= 90.0min  n_chunks=5
+   ck 0 [ 17bar]  se=0.771  rA=0.00078  rV=0.00087  rS=0.00087  sE=4.23e-07  ▁▃▄▄▄  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.862  rA=0.00091  rV=0.00075  rS=0.00075  sE=3.11e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 20bar]  se=0.874  rA=0.00170  rV=0.00156  rS=0.00156  sE=1.21e-06  ▅████  MIXED      
+   ck 3 [ 18bar]  se=0.787  rA=0.00101  rV=0.00096  rS=0.00096  sE=4.57e-07  ▁▄▅▅▄  MIXED      
+   ck 4 [ 19bar]  se=0.882  rA=0.00077  rV=0.00072  rS=0.00072  sE=3.13e-07  ▆▃▃▃▃  WIN_SHAPE  
+
+[W#20] id=h150-156|15m  net_bps= +119.3  side=sell  family=LIQUIDITY_SQUEEZE          hold= 90.0min  n_chunks=5
+   ck 0 [ 17bar]  se=0.771  rA=0.00078  rV=0.00087  rS=0.00087  sE=4.23e-07  ▁▃▄▄▄  WIN_LEAN   
+   ck 1 [ 17bar]  se=0.862  rA=0.00091  rV=0.00075  rS=0.00075  sE=3.11e-07  ▅▄▄▄▃  WIN_SHAPE  
+   ck 2 [ 20bar]  se=0.874  rA=0.00170  rV=0.00156  rS=0.00156  sE=1.21e-06  ▅████  MIXED      
+   ck 3 [ 18bar]  se=0.787  rA=0.00101  rV=0.00096  rS=0.00096  sE=4.57e-07  ▁▄▅▅▄  MIXED      
+   ck 4 [ 19bar]  se=0.882  rA=0.00077  rV=0.00072  rS=0.00072  sE=3.13e-07  ▆▃▃▃▃  WIN_SHAPE  
+
+[W#21] id=h0-6|5m|slic  net_bps= +118.2  side=sell  family=MEAN_REVERSION_CHOP        hold= 35.0min  n_chunks=2
+   ck 0 [ 17bar]  se=0.855  rA=0.00127  rV=0.00075  rS=0.00075  sE=2.84e-07  ▄▅▄▄▃  WIN_LEAN   
+   ck 1 [ 19bar]  se=0.838  rA=0.00205  rV=0.00233  rS=0.00233  sE=3.27e-06  ▃████  LOSE_LEAN  
+
+[W#22] id=h0-6|5m|slic  net_bps= +118.2  side=sell  family=LIQUIDITY_SQUEEZE          hold= 35.0min  n_chunks=2
+   ck 0 [ 17bar]  se=0.855  rA=0.00127  rV=0.00075  rS=0.00075  sE=2.84e-07  ▄▅▄▄▃  WIN_LEAN   
+   ck 1 [ 19bar]  se=0.838  rA=0.00205  rV=0.00233  rS=0.00233  sE=3.27e-06  ▃████  LOSE_LEAN  
+
+[W#23] id=h156-162|15m  net_bps= +112.9  side=sell  family=RELATIVE_STRENGTH          hold= 81.0min  n_chunks=4
+   ck 0 [ 21bar]  se=0.856  rA=0.00058  rV=0.00066  rS=0.00066  sE=2.23e-07  ▄▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 24bar]  se=0.914  rA=0.00043  rV=0.00056  rS=0.00056  sE=1.56e-07  ▇▁▂▂▂  WIN_SHAPE  
+   ck 2 [ 18bar]  se=0.876  rA=0.00035  rV=0.00029  rS=0.00029  sE=4.30e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.868  rA=0.00070  rV=0.00079  rS=0.00079  sE=3.11e-07  ▅▃▄▄▃  WIN_SHAPE  
+
+[W#24] id=h156-162|15m  net_bps= +112.9  side=sell  family=NEWS_BREAKOUT              hold= 81.0min  n_chunks=4
+   ck 0 [ 21bar]  se=0.856  rA=0.00058  rV=0.00066  rS=0.00066  sE=2.23e-07  ▄▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 24bar]  se=0.914  rA=0.00043  rV=0.00056  rS=0.00056  sE=1.56e-07  ▇▁▂▂▂  WIN_SHAPE  
+   ck 2 [ 18bar]  se=0.876  rA=0.00035  rV=0.00029  rS=0.00029  sE=4.30e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.868  rA=0.00070  rV=0.00079  rS=0.00079  sE=3.11e-07  ▅▃▄▄▃  WIN_SHAPE  
+
+[W#25] id=h156-162|15m  net_bps= +112.9  side=sell  family=BASIS_DISLOCATION          hold= 81.0min  n_chunks=4
+   ck 0 [ 21bar]  se=0.856  rA=0.00058  rV=0.00066  rS=0.00066  sE=2.23e-07  ▄▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 24bar]  se=0.914  rA=0.00043  rV=0.00056  rS=0.00056  sE=1.56e-07  ▇▁▂▂▂  WIN_SHAPE  
+   ck 2 [ 18bar]  se=0.876  rA=0.00035  rV=0.00029  rS=0.00029  sE=4.30e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.868  rA=0.00070  rV=0.00079  rS=0.00079  sE=3.11e-07  ▅▃▄▄▃  WIN_SHAPE  
+
+[W#26] id=h120-126|15m  net_bps= +111.7  side=buy   family=VOL_BREAKOUT               hold=210.0min  n_chunks=10
+   ck 0 [ 35bar]  se=0.928  rA=0.00029  rV=0.00026  rS=0.00026  sE=3.52e-08  █▁▁▁▁  WIN_SHAPE  
+   ck 1 [ 25bar]  se=0.881  rA=0.00030  rV=0.00037  rS=0.00037  sE=6.87e-08  ▆▁▁▁▁  WIN_SHAPE  
+   ck 2 [ 16bar]  se=0.851  rA=0.00033  rV=0.00035  rS=0.00035  sE=6.08e-08  ▄▁▁▁▁  WIN_SHAPE  
+   ck 3 [ 18bar]  se=0.857  rA=0.00036  rV=0.00037  rS=0.00037  sE=6.71e-08  ▄▁▁▁▁  WIN_SHAPE  
+   ck 4 [ 17bar]  se=0.838  rA=0.00035  rV=0.00031  rS=0.00031  sE=5.15e-08  ▃▁▁▁▁  WIN_LEAN   
+   ck 5 [ 33bar]  se=0.912  rA=0.00053  rV=0.00037  rS=0.00037  sE=7.35e-08  ▇▂▁▁▁  WIN_SHAPE  
+   ck 6 [ 19bar]  se=0.869  rA=0.00024  rV=0.00026  rS=0.00026  sE=4.41e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 7 [ 16bar]  se=0.856  rA=0.00037  rV=0.00036  rS=0.00036  sE=6.56e-08  ▄▁▁▁▁  WIN_SHAPE  
+   ck 8 [ 16bar]  se=0.879  rA=0.00030  rV=0.00055  rS=0.00055  sE=1.53e-07  ▅▁▂▂▂  WIN_SHAPE  
+   ck 9 [ 16bar]  se=0.824  rA=0.00031  rV=0.00026  rS=0.00026  sE=3.30e-08  ▃▁▁▁▁  WIN_LEAN   
+
+[W#27] id=h0-6|15m|sli  net_bps= +110.5  side=buy   family=BASIS_DISLOCATION          hold= 75.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.875  rA=0.00095  rV=0.00095  rS=0.00095  sE=4.66e-07  ▅▄▅▅▄  WIN_LEAN   
+   ck 1 [ 43bar]  se=0.908  rA=0.00115  rV=0.00100  rS=0.00100  sE=5.04e-07  ▇▅▅▅▄  WIN_LEAN   
+   ck 2 [ 16bar]  se=0.840  rA=0.00123  rV=0.00073  rS=0.00073  sE=2.64e-07  ▄▅▃▃▂  WIN_LEAN   
+
+[W#28] id=h0-6|15m|sli  net_bps= +110.5  side=buy   family=VOL_BREAKOUT               hold= 75.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.875  rA=0.00095  rV=0.00095  rS=0.00095  sE=4.66e-07  ▅▄▅▅▄  WIN_LEAN   
+   ck 1 [ 43bar]  se=0.908  rA=0.00115  rV=0.00100  rS=0.00100  sE=5.04e-07  ▇▅▅▅▄  WIN_LEAN   
+   ck 2 [ 16bar]  se=0.840  rA=0.00123  rV=0.00073  rS=0.00073  sE=2.64e-07  ▄▅▃▃▂  WIN_LEAN   
+
+[W#29] id=h0-6|15m|sli  net_bps= +110.5  side=buy   family=RELATIVE_STRENGTH          hold= 75.0min  n_chunks=3
+   ck 0 [ 17bar]  se=0.875  rA=0.00095  rV=0.00095  rS=0.00095  sE=4.66e-07  ▅▄▅▅▄  WIN_LEAN   
+   ck 1 [ 43bar]  se=0.908  rA=0.00115  rV=0.00100  rS=0.00100  sE=5.04e-07  ▇▅▅▅▄  WIN_LEAN   
+   ck 2 [ 16bar]  se=0.840  rA=0.00123  rV=0.00073  rS=0.00073  sE=2.64e-07  ▄▅▃▃▂  WIN_LEAN   
+
+[W#30] id=h156-162|5m|  net_bps= +110.0  side=sell  family=VOL_BREAKOUT               hold= 75.0min  n_chunks=4
+   ck 0 [ 17bar]  se=0.851  rA=0.00056  rV=0.00068  rS=0.00068  sE=2.33e-07  ▄▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 23bar]  se=0.907  rA=0.00044  rV=0.00057  rS=0.00057  sE=1.67e-07  ▇▁▂▂▂  WIN_SHAPE  
+   ck 2 [ 18bar]  se=0.876  rA=0.00035  rV=0.00029  rS=0.00029  sE=4.30e-08  ▅▁▁▁▁  WIN_SHAPE  
+   ck 3 [ 17bar]  se=0.860  rA=0.00072  rV=0.00081  rS=0.00081  sE=3.57e-07  ▄▃▄▄▃  WIN_SHAPE  
+
+[W#31] id=h96-102|15m|  net_bps= +107.7  side=buy   family=VOL_BREAKOUT               hold=150.0min  n_chunks=7
+   ck 0 [ 27bar]  se=0.892  rA=0.00068  rV=0.00058  rS=0.00058  sE=1.72e-07  ▆▂▃▃▂  WIN_SHAPE  
+   ck 1 [ 16bar]  se=0.747  rA=0.00062  rV=0.00053  rS=0.00053  sE=1.38e-07  ▁▂▂▂▂  WIN_LEAN   
+   ck 2 [ 16bar]  se=0.810  rA=0.00048  rV=0.00051  rS=0.00051  sE=1.28e-07  ▂▁▂▂▁  WIN_LEAN   
+   ck 3 [ 17bar]  se=0.823  rA=0.00053  rV=0.00049  rS=0.00049  sE=1.20e-07  ▃▂▂▂▁  WIN_LEAN   
+   ck 4 [ 20bar]  se=0.878  rA=0.00042  rV=0.00044  rS=0.00044  sE=9.88e-08  ▅▁▂▂▁  WIN_SHAPE  
+   ck 5 [ 25bar]  se=0.895  rA=0.00046  rV=0.00036  rS=0.00036  sE=6.48e-08  ▆▁▁▁▁  WIN_SHAPE  
+   ck 6 [ 30bar]  se=0.914  rA=0.00088  rV=0.00071  rS=0.00071  sE=2.52e-07  ▇▃▃▃▂  WIN_SHAPE  
+
+--- LOSE (n=21) ---
+
+[L#01] id=h42-48|15m|s  net_bps= -128.3  side=sell  family=LIQUIDITY_SQUEEZE          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.825  rA=0.00152  rV=0.00105  rS=0.00105  sE=5.54e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#02] id=h42-48|15m|s  net_bps= -128.3  side=sell  family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.825  rA=0.00152  rV=0.00105  rS=0.00105  sE=5.54e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#03] id=h42-48|15m|s  net_bps= -128.3  side=sell  family=NEWS_BREAKOUT              hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.825  rA=0.00152  rV=0.00105  rS=0.00105  sE=5.54e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#04] id=h42-48|15m|s  net_bps= -128.3  side=sell  family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.825  rA=0.00152  rV=0.00105  rS=0.00105  sE=5.54e-07  ▃▇▅▅▄  LOSE_LEAN  
+
+[L#05] id=h0-6|15m|sli  net_bps=  -90.8  side=sell  family=LIQUIDITY_SQUEEZE          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.780  rA=0.00175  rV=0.00134  rS=0.00134  sE=9.04e-07  ▁█▇▇▇  LOSE_LEAN  
+
+[L#06] id=h0-6|15m|sli  net_bps=  -90.8  side=sell  family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.780  rA=0.00175  rV=0.00134  rS=0.00134  sE=9.04e-07  ▁█▇▇▇  LOSE_LEAN  
+
+[L#07] id=h0-6|15m|sli  net_bps=  -90.8  side=sell  family=NEWS_BREAKOUT              hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.780  rA=0.00175  rV=0.00134  rS=0.00134  sE=9.04e-07  ▁█▇▇▇  LOSE_LEAN  
+
+[L#08] id=h156-162|15m  net_bps=  -87.4  side=buy   family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.821  rA=0.00071  rV=0.00071  rS=0.00071  sE=2.53e-07  ▃▃▃▃▂  WIN_LEAN   
+
+[L#09] id=h156-162|15m  net_bps=  -87.4  side=buy   family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.821  rA=0.00071  rV=0.00071  rS=0.00071  sE=2.53e-07  ▃▃▃▃▂  WIN_LEAN   
+
+[L#10] id=h156-162|15m  net_bps=  -87.4  side=buy   family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.821  rA=0.00071  rV=0.00071  rS=0.00071  sE=2.53e-07  ▃▃▃▃▂  WIN_LEAN   
+
+[L#11] id=h0-6|15m|sli  net_bps=  -87.0  side=buy   family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.784  rA=0.00219  rV=0.00253  rS=0.00253  sE=3.19e-06  ▁████  LOSE_LEAN  
+
+[L#12] id=h0-6|15m|sli  net_bps=  -87.0  side=buy   family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.784  rA=0.00219  rV=0.00253  rS=0.00253  sE=3.19e-06  ▁████  LOSE_LEAN  
+
+[L#13] id=h0-6|15m|sli  net_bps=  -87.0  side=buy   family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.784  rA=0.00219  rV=0.00253  rS=0.00253  sE=3.19e-06  ▁████  LOSE_LEAN  
+
+[L#14] id=h0-6|15m|sli  net_bps=  -86.6  side=sell  family=BASIS_DISLOCATION          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.764  rA=0.00133  rV=0.00104  rS=0.00104  sE=5.36e-07  ▁▆▅▅▄  LOSE_LEAN  
+
+[L#15] id=h0-6|15m|sli  net_bps=  -86.6  side=sell  family=NEWS_BREAKOUT              hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.764  rA=0.00133  rV=0.00104  rS=0.00104  sE=5.36e-07  ▁▆▅▅▄  LOSE_LEAN  
+
+[L#16] id=h0-6|15m|sli  net_bps=  -86.6  side=sell  family=RELATIVE_STRENGTH          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.764  rA=0.00133  rV=0.00104  rS=0.00104  sE=5.36e-07  ▁▆▅▅▄  LOSE_LEAN  
+
+[L#17] id=h0-6|15m|sli  net_bps=  -86.6  side=sell  family=VOL_BREAKOUT               hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.764  rA=0.00133  rV=0.00104  rS=0.00104  sE=5.36e-07  ▁▆▅▅▄  LOSE_LEAN  
+
+[L#18] id=h150-156|15m  net_bps=  -85.6  side=buy   family=LIQUIDITY_SQUEEZE          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.851  rA=0.00105  rV=0.00091  rS=0.00091  sE=4.18e-07  ▄▄▅▅▄  WIN_LEAN   
+
+[L#19] id=h150-156|15m  net_bps=  -85.6  side=buy   family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.851  rA=0.00105  rV=0.00091  rS=0.00091  sE=4.18e-07  ▄▄▅▅▄  WIN_LEAN   
+
+[L#20] id=h48-54|15m|s  net_bps=  -75.5  side=buy   family=LIQUIDITY_SQUEEZE          hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.866  rA=0.00127  rV=0.00118  rS=0.00118  sE=6.99e-07  ▅▅▆▆▅  MIXED      
+
+[L#21] id=h48-54|15m|s  net_bps=  -75.5  side=buy   family=MEAN_REVERSION_CHOP        hold= 15.0min  n_chunks=1
+   ck 0 [ 16bar]  se=0.866  rA=0.00127  rV=0.00118  rS=0.00118  sE=6.99e-07  ▅▅▆▆▅  MIXED      

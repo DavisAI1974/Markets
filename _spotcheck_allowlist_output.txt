@@ -1,0 +1,109 @@
+Allowlist loaded: 12 entries (pnl_R >= 50.0, trades >= 20)
+  BTC|bybit|buy|remaining18h     x buy_up_continuation           pnl_R=  376.4  n= 188  wr=0.48
+  BTC|bybit|sell|remaining18h    x small_move_fade               pnl_R=  123.2  n=  44  wr=0.59
+  BTC|coinbase|buy|remaining18h  x buy_up_continuation           pnl_R=  845.7  n= 228  wr=0.59
+  BTC|kraken|buy|remaining18h    x buy_up_continuation           pnl_R=  624.0  n= 141  wr=0.67
+  BTC|kraken|sell|remaining18h   x small_move_fade               pnl_R=   97.7  n=  41  wr=0.59
+  ETH|bybit|buy|remaining18h     x buy_up_continuation           pnl_R= 2059.5  n= 218  wr=0.81
+  ETH|bybit|sell|remaining18h    x small_move_fade               pnl_R=  122.4  n=  47  wr=0.53
+  ETH|coinbase|buy|remaining18h  x buy_up_continuation           pnl_R= 1906.4  n= 209  wr=0.79
+  ETH|kraken|buy|first6h         x vol_breakout                  pnl_R=   59.1  n=  20  wr=0.70
+  ETH|kraken|buy|remaining18h    x buy_up_continuation           pnl_R= 1080.8  n= 146  wr=0.79
+  ETH|kraken|sell|first6h        x mean_reversion_chop           pnl_R=   54.3  n=  20  wr=1.00
+  ETH|kraken|sell|remaining18h   x small_move_fade               pnl_R=  156.1  n=  44  wr=0.68
+
+Loading E:\Markets\_analysis_historical_rt_trade_shapes_20260523\per_trade.csv ...
+  loaded 67728 usable rows
+  ... 10000/67728  rate 1071/s  eta 54s  upgraded=17
+  ... 20000/67728  rate 1216/s  eta 39s  upgraded=17
+  ... 30000/67728  rate 1317/s  eta 29s  upgraded=17
+  ... 40000/67728  rate 1377/s  eta 20s  upgraded=17
+  ... 50000/67728  rate 1473/s  eta 12s  upgraded=17
+  ... 60000/67728  rate 1479/s  eta 5s  upgraded=17
+
+Replay complete in 45.9s
+
+=== AGGREGATE DECISION DISTRIBUTION ===
+  wilson         total=67728  bank=0  shadow=17276  reject=50452
+  protective_v1  total=67728  bank=0  shadow=264  reject=67464
+  allowlist      total=67728  bank=17  shadow=247  reject=67464
+
+=== ALLOWLIST UPGRADE SUMMARY ===
+  shadow candidates checked: 264
+  upgraded shadow -> bank:   17
+  not on allowlist:          247
+
+  Aggregate upgraded PnL: -94.7 bps  ($-95 at $10k notional)
+  avg per upgrade:        -5.57 bps  win_rate=17.6%
+  max_win=+110.5bps  max_loss=-87.0bps
+  FAIL: upgraded trades net NEGATIVE ($-95)
+
+  By context:
+    ETH|Kraken|buy|first6h|VOL_BREAKOUT                      n=  11  pnl_bps=    +6.3  wr=27.3%
+    ETH|Kraken|sell|first6h|MEAN_REVERSION_CHOP              n=   6  pnl_bps=  -101.0  wr=0.0%
+
+  By venue:
+    Kraken       n=  17  pnl_bps=   -94.7  wr=17.6%
+
+=== PER-DAY BREAKDOWN (n>=50, focus=allowlist) ===
+  Day        n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  5      13094       +0.0      +0.0      +0.0           0       +0.0
+  6      13089       +0.0      +0.0      +0.0           0       +0.0
+  4      12819       +0.0      +0.0      +0.0           0       +0.0
+  3      12143       +0.0      +0.0      +0.0           0       +0.0
+  2       9917       +0.0      +0.0      +0.0           0       +0.0
+ *0       3418       +0.0      +0.0     -94.7          17      -94.7
+  1       3248       +0.0      +0.0      +0.0           0       +0.0
+  REGRESSIONS (1): [(0, 'bank_negative', -94.7, 17)]
+
+=== PER-ASSET BREAKDOWN (n>=50, focus=allowlist) ===
+  Asset           n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+ *ETH         37786       +0.0      +0.0     -94.7          17      -94.7
+  BTC         29942       +0.0      +0.0      +0.0           0       +0.0
+  REGRESSIONS (1): [('ETH', 'bank_negative', -94.7, 17)]
+
+=== PER-VENUE BREAKDOWN (n>=50, focus=allowlist) ===
+  Venue             n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+ *Kraken        25096       +0.0      +0.0     -94.7          17      -94.7
+  Coinbase      23352       +0.0      +0.0      +0.0           0       +0.0
+  Bybit         19280       +0.0      +0.0      +0.0           0       +0.0
+  REGRESSIONS (1): [('Kraken', 'bank_negative', -94.7, 17)]
+
+=== PER-SIDE BREAKDOWN (n>=50, focus=allowlist) ===
+  Side            n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+ *sell        33937       +0.0      +0.0    -101.0           6     -101.0
+  buy         33791       +0.0      +0.0      +6.3          11       +6.3
+  REGRESSIONS (1): [('sell', 'bank_negative', -101.0, 6)]
+
+=== PER-SESSION BREAKDOWN (n>=50, focus=allowlist) ===
+  Session               n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+  remaining18h      51959       +0.0      +0.0      +0.0           0       +0.0
+ *first6h           15769       +0.0      +0.0     -94.7          17      -94.7
+  REGRESSIONS (1): [('first6h', 'bank_negative', -94.7, 17)]
+
+=== PER-STRATEGY BREAKDOWN (n>=50, focus=allowlist) ===
+  Strategy                      n     W_bank   P1_bank   AL_bank   AL_bank_n    AL-P1_$
+ *MEAN_REVERSION_CHOP       11302       +0.0      +0.0    -101.0           6     -101.0
+  BASIS_DISLOCATION         11288       +0.0      +0.0      +0.0           0       +0.0
+  LIQUIDITY_SQUEEZE         11287       +0.0      +0.0      +0.0           0       +0.0
+  RELATIVE_STRENGTH         11287       +0.0      +0.0      +0.0           0       +0.0
+  NEWS_BREAKOUT             11282       +0.0      +0.0      +0.0           0       +0.0
+  VOL_BREAKOUT              11282       +0.0      +0.0      +6.3          11       +6.3
+  REGRESSIONS (1): [('MEAN_REVERSION_CHOP', 'bank_negative', -101.0, 6)]
+
+=== TOP-15 ALLOWLIST UPGRADES BY |bps| ===
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net= +110.5  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  -87.0  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  +69.2  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  -40.3  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  +38.1  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  -27.8  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  -21.9  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /sell/first6h       MEAN_REVERSION_CHOP     net=  -20.7  (seed: pnl_R=54.3 n=20 wr=1.00)
+  ETH/Kraken  /sell/first6h       MEAN_REVERSION_CHOP     net=  -18.9  (seed: pnl_R=54.3 n=20 wr=1.00)
+  ETH/Kraken  /sell/first6h       MEAN_REVERSION_CHOP     net=  -18.5  (seed: pnl_R=54.3 n=20 wr=1.00)
+  ETH/Kraken  /sell/first6h       MEAN_REVERSION_CHOP     net=  -17.1  (seed: pnl_R=54.3 n=20 wr=1.00)
+  ETH/Kraken  /sell/first6h       MEAN_REVERSION_CHOP     net=  -14.8  (seed: pnl_R=54.3 n=20 wr=1.00)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  -12.4  (seed: pnl_R=59.1 n=20 wr=0.70)
+  ETH/Kraken  /sell/first6h       MEAN_REVERSION_CHOP     net=  -11.0  (seed: pnl_R=54.3 n=20 wr=1.00)
+  ETH/Kraken  /buy /first6h       VOL_BREAKOUT            net=  -10.8  (seed: pnl_R=59.1 n=20 wr=0.70)

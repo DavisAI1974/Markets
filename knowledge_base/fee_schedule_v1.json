@@ -1,0 +1,66 @@
+{
+  "_metadata": {
+    "schema_version": "1.0",
+    "finding_id": "fee_schedule_v1",
+    "generated_at_utc": "2026-05-24",
+    "source_session": "HANDOFF_SESSION_20260524_PART3",
+    "scope": "Reference fees for venues currently in the Markets trading pipeline. Used for any net-bps / EV / cross-strategy comparison. Per `feedback_fees_in_rate_analysis.md`: gross numbers can flip the ranking entirely."
+  },
+  "venues_active": [
+    {
+      "venue": "Bybit",
+      "instrument_kind": "perpetual_futures",
+      "round_trip_fee_bps": 4,
+      "one_way_fee_bps": 2,
+      "fee_source": "per `feedback_fees_in_rate_analysis.md` memory; reference rate for the primary perp venue"
+    },
+    {
+      "venue": "Coinbase",
+      "instrument_kind": "spot",
+      "round_trip_fee_bps": 10,
+      "one_way_fee_bps": 5,
+      "fee_source": "per memory; reference rate for the primary US spot venue"
+    },
+    {
+      "venue": "Kraken",
+      "instrument_kind": "spot",
+      "round_trip_fee_bps": 20,
+      "one_way_fee_bps": 10,
+      "fee_source": "per memory; reference rate"
+    }
+  ],
+  "venues_planned": [
+    {
+      "venue": "Hyperliquid",
+      "instrument_kind": "perpetual_futures",
+      "round_trip_fee_bps_range": [3, 9],
+      "maker_fee_bps": 1.5,
+      "taker_fee_bps": 4.5,
+      "fee_source": "documented in prior handoff; chosen as US-onshore execution venue",
+      "deployment_status": "not yet collecting; collector and executor are pending workstreams"
+    }
+  ],
+  "audit_pipeline_finding": {
+    "issue_id": "venue_uniform_fee_in_admission_audit",
+    "severity": "medium",
+    "where": "E:\\Markets\\build_live_hindsight_missed_winner_audit.py:25,297",
+    "code_observed": "FEE_BPS = 5.0  (one-way); net_bps = gross_bps - (2.0 * fee_bps) -> 10 bps round-trip across ALL venues",
+    "actual_per_venue_fees_round_trip_bps": {
+      "Bybit": 4,
+      "Coinbase": 10,
+      "Kraken": 20
+    },
+    "impact": {
+      "Bybit_trades": "Audit deducts 10 bps but actual is 4 bps -> net_bps understated by 6 bps -> admission gate (15 bps min, 0.30 bps/min min) REJECTS some genuine winners. Admissions are too STRICT for Bybit.",
+      "Coinbase_trades": "Audit matches actual (10 bps). Admission gate is correctly calibrated.",
+      "Kraken_trades": "Audit deducts 10 bps but actual is 20 bps -> net_bps overstated by 10 bps -> admission gate ADMITS some trades that won't actually clear net. Admissions are too LENIENT for Kraken."
+    },
+    "recommended_fix": "Replace flat FEE_BPS constant with per-venue lookup table. Re-run audit. Compare admission counts and net_bps distribution per venue before/after.",
+    "verdict": "Admission gate logic is correct (it compares avg_net_bps against thresholds named NET_BPS — the value IS net at that point). The bug is one layer up, in how net_bps was computed from gross_bps in the audit. Verdict per `pnl-review` skill's anti-pattern checklist: closest to 'preflight false negatives' but in this case the fee assumption itself is venue-uniform."
+  },
+  "implications_for_strategy_evaluation": [
+    "Any cross-venue strategy comparison must use venue-specific fees from the start. A strategy that 'wins on Kraken' may be artifact of the audit's understated fees.",
+    "The Markets winner list (1690 entries) is filtered against the flat-10bp net assumption. The true admissible set on real per-venue fees is different. How different needs measurement.",
+    "Hyperliquid's planned 3-9 bps round-trip is materially cheaper than Coinbase/Kraken and competitive with Bybit. Strategies that are venue-marginal today may become reliably profitable on Hyperliquid once the executor is live."
+  ]
+}

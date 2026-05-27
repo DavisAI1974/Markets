@@ -1,0 +1,69 @@
+Loading E:\Markets\_analysis_historical_rt_trade_shapes_20260523\per_trade.csv ...
+  loaded 67728 usable rows, 3033 unique keys
+  meaningful_floor_bps = 10.00
+  identity_min_for_payoff = 20
+  ... 10000/67728  rate 1932/s  eta 30s  ev_promoted=0
+  ... 20000/67728  rate 1922/s  eta 25s  ev_promoted=0
+  ... 30000/67728  rate 1997/s  eta 19s  ev_promoted=0
+  ... 40000/67728  rate 2052/s  eta 14s  ev_promoted=0
+  ... 50000/67728  rate 2063/s  eta 9s  ev_promoted=0
+  ... 60000/67728  rate 2085/s  eta 4s  ev_promoted=0
+
+Replay complete in 34.1s
+
+=== AGGREGATE DECISION DISTRIBUTION ===
+  wilson         total=67728  bank=0  shadow=17276  reject=50452
+  protective_v1  total=67728  bank=0  shadow=264  reject=67464
+  ev_ranker      total=67728  bank=0  shadow=264  reject=67464
+
+=== EV-RANKER PROMOTION SUMMARY ===
+  candidates_self_LB     (self_n >= 10):     0
+  candidates_identity_LB (self_n < 10, ident >= 20): 33
+  skipped_no_evidence: 231
+  NO PROMOTIONS.
+  EV_LB (identity)  n=33  median=-11.88  q90=-4.87  q99=-3.65  max=-2.84  floor=10.00
+
+=== PER-DAY BREAKDOWN (n>=50) ===
+  Columns: W=wilson, P1=protective_v1, EV=ev_ranker
+  Day        n    W_bank  P1_bank  EV_bank    W_shad  P1_shad  EV_shad     W_rej   P1_rej   EV_rej   EV_bank_n
+  5      13094      +0.0     +0.0     +0.0  -16366.9     +0.0     +0.0  -125847.5 -142214.4 -142214.4           0
+  6      13089      +0.0     +0.0     +0.0  -21148.1     +0.0     +0.0  -106783.9 -127932.0 -127932.0           0
+  4      12819      +0.0     +0.0     +0.0  -24913.4     +0.0     +0.0  -117281.2 -142194.6 -142194.6           0
+  3      12143      +0.0     +0.0     +0.0  -38033.9     +0.0     +0.0  -100046.0 -138079.9 -138079.9           0
+  2       9917      +0.0     +0.0     +0.0  -51061.5  -1486.3  -1486.3  -58938.2 -108513.4 -108513.4           0
+  0       3418      +0.0     +0.0     +0.0  -29595.2  -1730.0  -1730.0  -13551.4 -41416.6 -41416.6           0
+  1       3248      +0.0     +0.0     +0.0  -17130.3     +0.0     +0.0  -22981.5 -40111.8 -40111.8           0
+  GENERALITY OK: ev_ranker bank PnL non-negative across all day buckets (7 shown)
+
+=== PER-ASSET BREAKDOWN (n>=50) ===
+  Columns: W=wilson, P1=protective_v1, EV=ev_ranker
+  Asset           n    W_bank  P1_bank  EV_bank    W_shad  P1_shad  EV_shad     W_rej   P1_rej   EV_rej   EV_bank_n
+  ETH         37786      +0.0     +0.0     +0.0  -108794.8  -1730.0  -1730.0  -311903.4 -418968.2 -418968.2           0
+  BTC         29942      +0.0     +0.0     +0.0  -89454.7  -1486.3  -1486.3  -233526.2 -321494.6 -321494.6           0
+  GENERALITY OK: ev_ranker bank PnL non-negative across all asset buckets (2 shown)
+
+=== PER-VENUE BREAKDOWN (n>=50) ===
+  Columns: W=wilson, P1=protective_v1, EV=ev_ranker
+  Venue             n    W_bank  P1_bank  EV_bank    W_shad  P1_shad  EV_shad     W_rej   P1_rej   EV_rej   EV_bank_n
+  Kraken        25096      +0.0     +0.0     +0.0  -80915.7  -1989.6  -1989.6  -188852.8 -267778.8 -267778.8           0
+  Coinbase      23352      +0.0     +0.0     +0.0  -77490.0  -1226.7  -1226.7  -163079.4 -239342.7 -239342.7           0
+  Bybit         19280      +0.0     +0.0     +0.0  -39843.7     +0.0     +0.0  -193497.5 -233341.2 -233341.2           0
+  GENERALITY OK: ev_ranker bank PnL non-negative across all venue buckets (3 shown)
+
+=== PER-SIDE BREAKDOWN (n>=50) ===
+  Columns: W=wilson, P1=protective_v1, EV=ev_ranker
+  Side            n    W_bank  P1_bank  EV_bank    W_shad  P1_shad  EV_shad     W_rej   P1_rej   EV_rej   EV_bank_n
+  sell        33937      +0.0     +0.0     +0.0  -102488.2  -1766.8  -1766.8  -270795.3 -371516.7 -371516.7           0
+  buy         33791      +0.0     +0.0     +0.0  -95761.3  -1449.5  -1449.5  -274634.4 -368946.1 -368946.1           0
+  GENERALITY OK: ev_ranker bank PnL non-negative across all side buckets (2 shown)
+
+=== PER-STRATEGY BREAKDOWN (n>=50) ===
+  Columns: W=wilson, P1=protective_v1, EV=ev_ranker
+  Strategy                      n    W_bank  P1_bank  EV_bank    W_shad  P1_shad  EV_shad     W_rej   P1_rej   EV_rej   EV_bank_n
+  MEAN_REVERSION_CHOP       11302      +0.0     +0.0     +0.0  -31746.2   -163.3   -163.3  -91677.1 -123259.9 -123259.9           0
+  BASIS_DISLOCATION         11288      +0.0     +0.0     +0.0  -33807.2   -823.2   -823.2  -89270.1 -122254.1 -122254.1           0
+  LIQUIDITY_SQUEEZE         11287      +0.0     +0.0     +0.0  -31993.5   -405.5   -405.5  -91203.5 -122791.5 -122791.5           0
+  RELATIVE_STRENGTH         11287      +0.0     +0.0     +0.0  -38197.7   -981.4   -981.4  -87301.5 -124517.8 -124517.8           0
+  NEWS_BREAKOUT             11282      +0.0     +0.0     +0.0  -28092.4   -377.0   -377.0  -96253.1 -123968.5 -123968.5           0
+  VOL_BREAKOUT              11282      +0.0     +0.0     +0.0  -34412.5   -465.9   -465.9  -89724.4 -123671.0 -123671.0           0
+  GENERALITY OK: ev_ranker bank PnL non-negative across all strategy buckets (6 shown)

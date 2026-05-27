@@ -1,0 +1,93 @@
+Loading E:\Markets\_analysis_historical_rt_trade_shapes_20260523\per_trade.csv ...
+  signal thresholds: hold_min_ge_60  reached_20bps_within_30m  quality_floor_0.30bps/min
+  loaded 67728 usable rows, 3033 unique keys
+  ... 10000/67728  rate 1326/s  eta 44s  promoted=57
+  ... 20000/67728  rate 1312/s  eta 36s  promoted=57
+  ... 30000/67728  rate 1328/s  eta 28s  promoted=57
+  ... 40000/67728  rate 1427/s  eta 19s  promoted=57
+  ... 50000/67728  rate 1551/s  eta 11s  promoted=57
+  ... 60000/67728  rate 1601/s  eta 5s  promoted=57
+
+Replay complete in 42.2s
+
+=== AGGREGATE DECISION DISTRIBUTION ===
+  wilson             total=67728  bank=0  shadow=17276  reject=50452
+  protective_v1      total=67728  bank=0  shadow=264  reject=67464
+  in_flight_promote  total=67728  bank=57  shadow=207  reject=67464
+
+=== TRAJECTORY (bank PnL in bps over $10k notional) ===
+  wilson              bank_pnl=          +0$  bank_n=    0  shadow_pnl=     -198249$  shadow_n=17276  all_admitted=     -198249$
+                      if_ungated_would_be=     -743679$  (this strategy's saved-loss vs ungated)
+  protective_v1       bank_pnl=          +0$  bank_n=    0  shadow_pnl=       -3216$  shadow_n=  264  all_admitted=       -3216$
+                      if_ungated_would_be=     -743679$  (this strategy's saved-loss vs ungated)
+  in_flight_promote   bank_pnl=        +289$  bank_n=   57  shadow_pnl=       -3505$  shadow_n=  207  all_admitted=       -3216$
+                      if_ungated_would_be=     -743679$  (this strategy's saved-loss vs ungated)
+
+=== IN-FLIGHT PROMOTION SUMMARY ===
+  promoted_n=57  total_pnl_bps=+289.1  total_pnl_$=+289
+  avg_bps=+5.07  win_rate=35.1%  max_win=+117.7bps  max_loss=-87.0bps
+  PASS: promotions net positive (+289$)
+
+  By signal:
+    reached_20bps_within_30m       n=  57  pnl_bps=  +289.1  win_rate=35.1%  pnl_$=+289
+
+  By venue:
+    Coinbase     n=  23( 40.4%)  pnl_bps=  +202.4  win_rate=34.8%  pnl_$=+202
+    Kraken       n=  34( 59.6%)  pnl_bps=   +86.6  win_rate=35.3%  pnl_$=+87
+
+=== PER-DAY BREAKDOWN (n>=50, focus=in_flight_promote) ===
+  Day        n     W_bank   P1_bank  IFP_bank  IFP_bank_n   IFP-P1_$
+  5      13094       +0.0      +0.0      +0.0           0       +0.0
+  6      13089       +0.0      +0.0      +0.0           0       +0.0
+  4      12819       +0.0      +0.0      +0.0           0       +0.0
+  3      12143       +0.0      +0.0      +0.0           0       +0.0
+  2       9917       +0.0      +0.0      +5.6           4       +5.6
+  0       3418       +0.0      +0.0    +283.5          53     +283.5
+  1       3248       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: in_flight_promote bank PnL non-negative across all day buckets (7 shown)
+
+=== PER-ASSET BREAKDOWN (n>=50, focus=in_flight_promote) ===
+  Asset           n     W_bank   P1_bank  IFP_bank  IFP_bank_n   IFP-P1_$
+  ETH         37786       +0.0      +0.0    +283.5          53     +283.5
+  BTC         29942       +0.0      +0.0      +5.6           4       +5.6
+  GENERALITY OK: in_flight_promote bank PnL non-negative across all asset buckets (2 shown)
+
+=== PER-VENUE BREAKDOWN (n>=50, focus=in_flight_promote) ===
+  Venue             n     W_bank   P1_bank  IFP_bank  IFP_bank_n   IFP-P1_$
+  Kraken        25096       +0.0      +0.0     +86.6          34      +86.6
+  Coinbase      23352       +0.0      +0.0    +202.4          23     +202.4
+  Bybit         19280       +0.0      +0.0      +0.0           0       +0.0
+  GENERALITY OK: in_flight_promote bank PnL non-negative across all venue buckets (3 shown)
+
+=== PER-SIDE BREAKDOWN (n>=50, focus=in_flight_promote) ===
+  Side            n     W_bank   P1_bank  IFP_bank  IFP_bank_n   IFP-P1_$
+ *sell        33937       +0.0      +0.0    -370.8          22     -370.8
+  buy         33791       +0.0      +0.0    +659.9          35     +659.9
+  REGRESSIONS (1): [('sell', 'bank_negative', -370.8, 22)]
+
+=== PER-STRATEGY BREAKDOWN (n>=50, focus=in_flight_promote) ===
+  Strategy                      n     W_bank   P1_bank  IFP_bank  IFP_bank_n   IFP-P1_$
+  MEAN_REVERSION_CHOP       11302       +0.0      +0.0    +483.2          16     +483.2
+ *BASIS_DISLOCATION         11288       +0.0      +0.0    -117.6           6     -117.6
+  LIQUIDITY_SQUEEZE         11287       +0.0      +0.0    +128.5           4     +128.5
+ *RELATIVE_STRENGTH         11287       +0.0      +0.0     -31.9          10      -31.9
+ *NEWS_BREAKOUT             11282       +0.0      +0.0    -133.5           7     -133.5
+ *VOL_BREAKOUT              11282       +0.0      +0.0     -39.6          14      -39.6
+  REGRESSIONS (4): [('BASIS_DISLOCATION', 'bank_negative', -117.6, 6), ('RELATIVE_STRENGTH', 'bank_negative', -31.9, 10), ('NEWS_BREAKOUT', 'bank_negative', -133.5, 7), ('VOL_BREAKOUT', 'bank_negative', -39.6, 14)]
+
+=== TOP-15 PROMOTIONS BY |bps| ===
+  ETH/Coinbase/buy  MEAN_REVERSION_CHOP      signal=reached_20bps_within_30m     net=+117.7  tte_20=  15.3  hold=  75.0  bps/min=1.5692332086407543
+  ETH/Kraken/buy  VOL_BREAKOUT             signal=reached_20bps_within_30m     net=+110.5  tte_20=  16.5  hold=  75.0  bps/min=1.4727397829662328
+  ETH/Coinbase/buy  MEAN_REVERSION_CHOP      signal=reached_20bps_within_30m     net=+99.6  tte_20=8.816666666666666  hold=  60.0  bps/min=1.6598475490480915
+  ETH/Kraken/buy  LIQUIDITY_SQUEEZE        signal=reached_20bps_within_30m     net=+92.2  tte_20=10.166666666666666  hold=  60.0  bps/min=1.536345044034987
+  ETH/Kraken/buy  MEAN_REVERSION_CHOP      signal=reached_20bps_within_30m     net=+92.2  tte_20=10.166666666666666  hold=  60.0  bps/min=1.536345044034987
+  ETH/Kraken/buy  RELATIVE_STRENGTH        signal=reached_20bps_within_30m     net=+92.2  tte_20=10.166666666666666  hold=  60.0  bps/min=1.536345044034987
+  ETH/Kraken/buy  RELATIVE_STRENGTH        signal=reached_20bps_within_30m     net=-87.0  tte_20=   1.7  hold=  15.0  bps/min=-5.801678017618461
+  ETH/Kraken/buy  VOL_BREAKOUT             signal=reached_20bps_within_30m     net=-87.0  tte_20=   1.7  hold=  15.0  bps/min=-5.801678017618461
+  ETH/Kraken/buy  RELATIVE_STRENGTH        signal=reached_20bps_within_30m     net=-86.1  tte_20=   1.7  hold=   5.0  bps/min=-17.223331213305592
+  ETH/Coinbase/buy  MEAN_REVERSION_CHOP      signal=reached_20bps_within_30m     net=+77.8  tte_20=3.566666666666667  hold=  45.0  bps/min=1.7296237618921104
+  ETH/Kraken/buy  RELATIVE_STRENGTH        signal=reached_20bps_within_30m     net=+69.2  tte_20=   4.5  hold=  45.0  bps/min=1.538455738729312
+  ETH/Kraken/buy  VOL_BREAKOUT             signal=reached_20bps_within_30m     net=+69.2  tte_20=   4.5  hold=  45.0  bps/min=1.538455738729312
+  ETH/Coinbase/buy  MEAN_REVERSION_CHOP      signal=reached_20bps_within_30m     net=+53.3  tte_20=3.4833333333333334  hold=  45.0  bps/min=1.1835345535458333
+  ETH/Kraken/buy  LIQUIDITY_SQUEEZE        signal=reached_20bps_within_30m     net=+52.0  tte_20=4.066666666666666  hold=  45.0  bps/min=1.1558893412936275
+  ETH/Kraken/buy  MEAN_REVERSION_CHOP      signal=reached_20bps_within_30m     net=+52.0  tte_20=4.066666666666666  hold=  45.0  bps/min=1.1558893412936275

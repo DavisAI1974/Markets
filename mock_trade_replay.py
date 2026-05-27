@@ -46,6 +46,8 @@ from strategy_family_evolution import record_trade_attempt_open_json, write_evol
 from strategy_refrag_relay import build_refrag_relay
 import trade_exit_strategy
 import oracle_winner_trade_memory
+import oracle_winner_evidence
+import markets_in_flight_promote
 
 OPEN_DEBUG: dict[str, int] = {}
 
@@ -510,6 +512,26 @@ def close_trade(trade: dict[str, Any], bid: float, ask: float, mid: float, ts: f
     trade["bucket_id"] = bucket_id_for_trade(trade)
     trade["profit_R"] = profit_R_for_trade(trade)
     _refresh_scaleout_summary(trade)
+    # Structural learning loop: append outcome to per-canonical-key ledger.
+    try:
+        match = trade.get("oracle_winner_match") or {}
+        ck = match.get("canonical_trade_key") or oracle_winner_trade_memory.oracle_winner_canonical_trade_key(trade)
+        if ck:
+            notional = float(trade.get("notional") or 0.0)
+            realized = float(trade.get("realized_pnl_usd") or 0.0)
+            net_bps = (realized / notional * 10000.0) if notional > 0 else 0.0
+            scenario_id = str(trade.get("mock_scenario_id") or "")
+            source = "backtest" if ("historic" in scenario_id or "backtest" in scenario_id) else "live"
+            oracle_winner_evidence.record_close(
+                canonical_key=ck,
+                net_bps=net_bps,
+                role=str(trade.get("pnl_accounting_role") or ""),
+                source=source,
+                ts=float(ts),
+            )
+    except Exception:
+        # Ledger write failures must never break trade closes.
+        pass
     return True
 
 
@@ -1191,6 +1213,16 @@ def close_open_for_status(account: dict[str, Any], scenario: dict[str, Any], sta
         stamp_resolved_exit_profile(t, scenario)
         elapsed_min = (float(ts) - float(t["ts_utc"])) / 60.0
         u_bps = unrealized_bps(t, bid, ask, mid)
+
+        # In-flight promotion (offensive layer on top of wilson/protective).
+        # Gated by scenario flag — default off; live RT unaffected unless explicitly enabled.
+        # See markets_in_flight_promote.py and MARKETS_OFFENSIVE_LAYER_PLAN.md.
+        if scenario.get("oracle_winner_in_flight_promote_enabled"):
+            net_bps_tick = net_unrealized_bps(t, u_bps)
+            markets_in_flight_promote.check_and_promote_if_eligible(
+                t, net_bps_tick, elapsed_min, ts,
+            )
+
         decision = trade_exit_strategy.decide_trade_exit(
             t,
             status,

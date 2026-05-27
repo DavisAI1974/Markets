@@ -164,7 +164,7 @@ Three HIGH-priority scripts exist (`backfill_coinbase_spot.py`, `backfill_kraken
 - **DO NOT** invent knobs the arch doc doesn't sanction.
 - **DO NOT** invoke `markets_refrag_batched_adapter.py` (neutralized in part 2).
 - **DO NOT** enable `operator_graph_rewriter` (Phase 6, disabled until then).
-- **DO** push periodically per `feedback_periodic_git_push.md` (Greg works from phone, needs files on GitHub mid-session). Don't wait to be asked. The prior part 2 handoff said the opposite, which was an over-correction — the saved memory is authoritative.
+- **DO NOT** push to git. Greg confirmed on 2026-05-24: *"don't worry about git we aren't using."* Mirror artifacts across directories (e.g., OD knowledge_base + Markets knowledge_base) rather than relying on git to distribute them. The updated `feedback_periodic_git_push.md` memory is authoritative.
 - **DO NOT** appear as #1/#worst long or short on any public leaderboard.
 
 ## End of handoff

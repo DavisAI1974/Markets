@@ -1,0 +1,57 @@
+Side-by-side prediction summary
+====================================================================================================
+
+Test set: 276 trades
+  winners (net_bps > 0): 213
+  losers  (net_bps < 0): 63
+  base rate (winner prior): 77.2%
+
+ACCURACY VS RELATIVE CHUNK POSITION (k_frac = chunks_seen / total_chunks)
+====================================================================================================
+
+  k_frac           n_obs   chunk_acc   stack_acc   chunk_W_recall   stack_W_recall    lift
+  ------------------------------------------------------------------------------------------
+  [0.00-0.25]        21       0.714       0.762            0.714            0.762   1.067
+  [0.25-0.50]        74       0.662       0.703            0.671            0.712   1.061
+  [0.50-0.75]       128       0.594       0.641            0.598            0.646   1.079
+  [0.75-1.01]       315       0.521       0.562            0.583            0.639   1.079
+
+
+ACCURACY VS ABSOLUTE CHUNK INDEX k
+====================================================================================================
+
+    k   n_obs   chunk_acc   stack_acc
+  ----------------------------------------
+    1     276       0.464       0.507
+    2     116       0.578       0.621
+    3      65       0.662       0.708
+    4      34       0.735       0.765
+    5      16       0.750       0.812
+    6      11       0.909       1.000
+
+
+DISAGREEMENT ANALYSIS
+====================================================================================================
+(Rows where chunk_pred != stack_pred; resolution: which was correct)
+
+  Total disagreements: 27
+  Chunk was right: 2  (7.4%)
+  Stack was right: 25  (92.6%)
+  Net stack advantage: 23 predictions
+
+
+  Disagreement breakdown by k_frac bucket:
+
+  k_frac          n_disagree   chunk_right   stack_right
+  [0.00-0.25]             1             0             1
+  [0.25-0.50]             5             1             4
+  [0.50-0.75]             6             0             6
+  [0.75-1.01]            15             1            14
+
+
+EARLIEST RELIABLE PREDICTION
+====================================================================================================
+(First k_frac bucket where accuracy ≥ 0.7 for each predictor)
+
+  CHUNK-only:    k_frac ∈ [0.00, 0.25)  acc=0.714  (n=21)
+  CHUNK+STACK:    k_frac ∈ [0.00, 0.25)  acc=0.762  (n=21)
