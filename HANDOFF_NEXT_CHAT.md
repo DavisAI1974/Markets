@@ -1,168 +1,234 @@
-# Handoff for next chat — REAL DATA ONLY, original data group only
+# HANDOFF — Markets (Next Chat) — 2026-05-27
 
-## CRITICAL — read this first
+## TL;DR (read first)
 
-**The other chat handles `markets_btc_bybit_*` (BTC on Bybit, both sides).
-DO NOT TOUCH THOSE BUCKETS.** Greg is splitting work across two parallel
-chat sessions; running the same scope here would collide on shared on-disk
-state (evidence graph load-merge-save, lineage history append, policy
-history append, control plane state files).
+Yesterday proved the algebraic dipole **H_a² = poly(H_a·H_b)** holds in
+markets operator-coefficient space — same form as the 4 life sciences
+in `DavisAI1974/Basic_equations`. 5-fold CV (H_a > H_b rule) hits
+**0.993 acc / 1.000 AUC** across 11 pairs, **FN=0**. Chunker features
+are subsumed (stacking gives no lift). Dipole is the complete per-trade
+summary.
 
-**Your scope = MY ORIGINAL DATA GROUP** (everything EXCEPT BTC Bybit):
+**Critical caveat**: current fit uses `[entry_ts, exit_ts]` bars —
+post-hoc signature. **Pre-entry validation is the next required step**
+before this can be called a tradable predictor.
 
-| Bucket | Files in legacy (real-data, migrated) |
+## Today's priorities (in order)
+
+### P1 — Pre-entry validation (CRITICAL, gates tradability)
+
+Re-run the pipeline on `[entry_ts − 30m, entry_ts]` windows (no exit
+data leak). Refit dipole, re-run 5-fold.
+
+- **If accuracy stays high** → tradable signal, proceed to live wiring.
+- **If it collapses** → pure post-hoc signature; framework is for
+  analysis only.
+
+Files to touch:
+
+- Eligible filter: `E:\Markets\_eligible_cross_section.py` — change
+  window endpoint from `exit_ts` to `entry_ts`, keep 192-bar minimum
+  back from `entry_ts − 30m`. Pads ±6h on bar load to match the
+  adapter's `BUFFER_S`.
+- Runner: `E:\refrag\_run_top20_bottom20_pairs.py` — pass the
+  pre-entry mode flag through.
+- Adapter: `E:\refrag\adapters\markets_refrag_adapter.py` — no change
+  needed; honors the bar window the helper produces.
+- Dipole refit: `E:\refrag\_markets_algebraic_dipole.py`.
+- 5-fold CV: `E:\refrag\_markets_dipole_kfold.py`.
+
+Run commands (after pre-entry filter swap):
+
+```
+python E:\refrag\_run_top20_bottom20_pairs.py --resume --mode pre-entry
+python E:\refrag\_markets_algebraic_dipole.py
+python E:\refrag\_markets_dipole_kfold.py
+```
+
+Exit criteria: pooled OOF accuracy ≥ 0.90 (was 0.993 post-hoc).
+Stop earlier if any single pair drops below 0.70 — investigate before
+continuing.
+
+### P2 — Cross-pair generalization
+
+Do trained centroids transfer across sibling pairs (e.g., apply
+`btc_bybit_buy` centroids to `btc_bybit_sell` trades)? Tests whether
+dipole direction is per-cell or universal.
+
+Add a `--cross-pair SRC DST` mode to `_markets_dipole_kfold.py`:
+loads centroids from SRC's training folds, scores trades from DST.
+
+Pairs to test (same-asset/venue/opposite-side first):
+
+- btc_bybit_buy ↔ btc_bybit_sell
+- btc_coinbase_buy ↔ btc_coinbase_sell
+- btc_kraken_buy ↔ btc_kraken_sell
+- eth_bybit_buy ↔ eth_bybit_sell
+- eth_coinbase_buy ↔ eth_coinbase_sell (biggest pop, 909+176)
+- eth_kraken_buy ↔ eth_kraken_sell (sell-side has 0 eligible — skip)
+
+### P3 — Resolve `eth_kraken_sell_win` coverage gap
+
+139 trades, all <192 bars in the eligible filter (real coverage limit).
+Options:
+
+1. Accept skip (lose 1 of 12 pairs — current state).
+2. Venue-specific smaller chunker `window_size` for Kraken sell side.
+3. Backfill more recent kraken sell data from
+   `E:\Markets\live_data_history\` to find longer-held trades.
+
+Decision needed before broader pre-entry rollout.
+
+## Background — where we are
+
+### Trace store (per-pair populations)
+
+| Pair | Win | Lose |
+|---|---|---|
+| markets_btc_bybit_buy | 60 | 50 |
+| markets_btc_bybit_sell | 60 | 50 |
+| markets_btc_coinbase_buy | 60 | 50 |
+| markets_btc_coinbase_sell | 60 | 50 |
+| markets_btc_kraken_buy | 60 | 60 |
+| markets_btc_kraken_sell | 60 | 60 |
+| markets_eth_bybit_buy | 60 | 50 |
+| markets_eth_bybit_sell | 60 | 50 |
+| markets_eth_coinbase_buy | 60 | 50 |
+| **markets_eth_coinbase_sell** | **909** | **176** |
+| markets_eth_kraken_buy | 50 | 50 |
+| markets_eth_kraken_sell | **0** | 50 |
+
+### 5-fold CV — post-hoc baseline to beat
+
+- Pooled: **0.993 acc / 1.000 AUC / +5.5 mean Cohen's d / FN=0**
+- Worst pair: btc_kraken_sell (0.892 acc)
+- Best pairs (1.000 acc): btc_bybit_sell, btc_coinbase_sell, eth_bybit_buy
+- Only error mode: 47 FP (3.5% of losers misclassified)
+- Win precision 0.965, lose recall 0.932
+
+### Algebraic dipole fit — top quadratic R² per pair
+
+| Pair | R²_quad |
 |---|---|
-| `markets_btc_coinbase_buy` | 181 |
-| `markets_btc_coinbase_sell` | 53 |
-| `markets_btc_kraken_buy` | 205 |
-| `markets_btc_kraken_sell` | 86 |
-| `markets_eth_bybit_buy` | 120 |
-| `markets_eth_bybit_sell` | 102 |
-| `markets_eth_coinbase_buy` | 285 |
-| `markets_eth_coinbase_sell` | 2 |
-| `markets_eth_kraken_buy` | 294 |
-| `markets_eth_kraken_sell` | 13 |
-| `quantum_two_bath_exc_dT0` | 100 |
-| `quantum_two_bath_exc_dTon` | 717 |
-| `quantum_two_bath_sup_dT0` | 100 |
-| `quantum_two_bath_sup_dTon` | 717 |
-| `fixture` | 83 |
+| btc_bybit_sell | 0.975 |
+| eth_coinbase_sell | 0.956 (n=869) |
+| btc_kraken_buy | 0.951 |
+| btc_kraken_sell | 0.946 |
+| btc_coinbase_sell | 0.925 |
+| eth_kraken_buy | 0.910 |
 
-**OFF LIMITS (other chat):** `markets_btc_bybit_buy`, `markets_btc_bybit_sell`.
+Sign pattern in strong-fit pairs **matches chemistry**: β<0, γ>0
+(chemistry: H_a² = 0.007 − 0.093·X + 1.309·X²). Each pair has its OWN
+(α, β, γ); pooled R² low (0.493) because there's no universal
+constants — only universal **form**, same as the 4 sciences.
 
-## Rule: REAL DATA ONLY
+### Pipeline state (canonical wiring)
 
-Greg has been clear and repeatedly: no synthetic data, no synthetic verifiers,
-no "wiring tests." Every pipeline run must consume real input from:
+3 → 4 → 5 → 6 via `E:\refrag\adapters\markets_refrag_adapter.py`
+(alias `arch_workflow.py`). All Phases 1–6 wired; only
+`graph_rewriter` stays disabled per arch Rule 6.
 
-- **Crypto markets:** winners listed in
-  `E:\Markets\research\strategy_evolution\oracle_winner_trade_list.json`
-  (3553 entries), with raw bars from
-  `E:\Markets\live_data_history\<YYYY-MM-DD>\<asset>_<venue>_bins.jsonl`.
-  The markets adapter at `E:\refrag\adapters\markets_refrag_adapter.py`
-  already does this end-to-end and derives the granular domain via
-  `winner_domain(asset, venue, side)` →
-  `markets_<asset>_<venue>_<side>`. **Do not modify it.**
-- **Quantum:** the source_id format
-  `sb_twobath_Tavg-<T>_DeltaT-<dT>_lambda-<λ>_gamma-<γ>_init-<state>`
-  is used by `quantum_refrag_adapter.py`. Verify the adapter derives
-  granular `quantum_<sub_family>_<init>_<dT_regime>` per call. If not, fix
-  it before running.
+Patches that landed 2026-05-26:
 
-**If you write a "verifier" or "smoke test" that fabricates input series
-(linear ramps, sinusoids, anything not from disk), STOP. That's the
-mistake the prior chat made; Greg had me scrub everything. Use the adapters.**
+- bucket_tag regex normalizer (strips `.eligibleN`, `.primary.*`,
+  `.secondary.*` back to canonical `_(win|lose)`).
+- Fix H removed → Phase 4 + Phase 6 fire on `--resume` with 0 new winners.
+- Phase 5 trace-store rehydration on `--resume` (reloads
+  `execution_traces.sqlite`, synthesizes `policy_feedback` from
+  cumulative `retrieval_policy_benchmark.json`).
+- Phase reorder: 3 → 4 → 5 → 6 (Phase 4 was after Phase 5 — wrong per arch).
 
-## How to run YOUR scope without colliding with the other chat
+## Files & commands quick reference
 
-The markets adapter currently iterates over all `(asset, venue)` pairs in
-`BIN_AV` (BTC and ETH × kraken/coinbase/bybit). To avoid touching the
-other chat's BTC Bybit buckets, you have two options:
+| What | Where |
+|---|---|
+| Pipeline adapter | `E:\refrag\adapters\markets_refrag_adapter.py` |
+| Arch alias | `E:\refrag\adapters\arch_workflow.py` |
+| Eligible filter | `E:\Markets\_eligible_cross_section.py` |
+| Top20/Bot20 runner | `E:\refrag\_run_top20_bottom20_pairs.py` |
+| Dipole fit | `E:\refrag\_markets_algebraic_dipole.py` |
+| 5-fold CV | `E:\refrag\_markets_dipole_kfold.py` |
+| In-sample separation | `E:\refrag\_markets_dipole_separation.py` |
+| Stacking test | `E:\refrag\_markets_dipole_chunker_stack.py` |
+| Trace store | `E:\refrag\artifacts\execution_traces.sqlite` |
+| Per-trade ops | `E:\refrag\discoveries\operator_discoveries\<domain>\*.json` |
+| Live bars archive | `E:\Markets\live_data_history\<YYYY-MM-DD>\<asset>_<venue>_bins.jsonl` |
+| Pair lists | `E:\Markets\research\strategy_evolution\per_bucket\<pair>_<side>.<top\|bottom>20.json` |
+| Yesterday's full handoff | `E:\refrag\SESSION_HANDOFF_2026-05-26.md` |
+| Life-sciences source | `DavisAI1974/Basic_equations` on GitHub |
 
-**Option A — filter winners pre-flight (preferred, no code change to
-adapter):** wrap the adapter call to skip any winner whose
-`(asset, venue) == ("BTC", "Bybit")`. Run only on the other 5 venue/asset
-combos for markets, plus quantum/fixture.
+## Standing rules (DO NOT BREAK)
 
-**Option B — temporarily edit `BIN_AV` in `markets_refrag_adapter.py`** to
-omit `("BTC", "Bybit")` for the duration of your run, then revert.
+- **Real data only.** Bars come from `live_data_history` JSONLs. If a
+  chunker window can't be filled, pick a different entry — never
+  synthesize. No "wiring tests" with fabricated input series.
+- **Falsification-first.** Every claim needs data, math, or a falsifiable
+  test. P1 (pre-entry) IS the falsification test of yesterday's result.
+- **Save to E:\ AND mirror to `F:\Factory\knowledge\Markets\`.** Both.
+- **No emojis or special symbols** in docs or emails.
+- **Mantra**: better, stronger, faster, cheaper.
+- **MASTER_DISCOVERIES.json**: every OD discovery added immediately.
+- **Don't hardcode limits**; use dynamic convergence — people's lives
+  depend on it (OD principle, applies here).
+- **Incremental validation**: break compute-heavy runs into 15–17 min
+  chunks with stop gates. Canary runs (2 min) before full commitment.
 
-Either way, use `--resume` so already-migrated discoveries are skipped:
+## Conditional next step (only if P1 succeeds)
 
-```
-python E:\refrag\adapters\markets_refrag_adapter.py --resume
-```
+Draft these entries for `MASTER_DISCOVERIES.json`:
 
-For quantum, locate the spin-boson sim outputs (likely under
-`E:\refrag\_full_pipeline_quantum\` or similar — survey before running)
-and feed via `quantum_refrag_adapter.py`. Same rule: real data only.
+- **INFO-008-MARKETS** — algebraic dipole holds in markets
+  operator-coefficient space (R²=0.91–0.98 in 6/11 pairs, sign pattern
+  matches chemistry).
+- **INFO-008-MARKETS-PREDICTOR** — H_a > H_b rule achieves 0.993 OOF
+  accuracy / 1.000 AUC / FN=0 on top20/bottom20 dataset; pre-entry
+  validation confirmed.
 
-## Current on-disk state (post-scrub, 2026-05-25)
+If P1 fails, draft instead:
 
-- `discoveries/operator_discoveries/` — 3502 files across 16 buckets.
-  3477 are real-data legacy (migrated from
-  `artifacts/discoveries.legacy_20260525T020813Z/`). The extra 25 are
-  the other chat's real-data outputs in BTC Bybit (preserve, do not
-  touch).
-- `discoveries/evidence_graphs/` — 2 files
-  (`markets_btc_bybit_buy_evidence.json`,
-  `markets_btc_bybit_sell_evidence.json`) — both from the other chat,
-  do not touch. All other buckets have empty accumulators; your runs
-  will create them as `<your_domain>_evidence.json`.
-- `discoveries/index.json` — 3502 entries, current as of 2026-05-25T03:18.
-- `discoveries/cross_domain_transfers/` — empty (Phase 4 populates).
-- `discoveries/pipeline_discoveries/` — empty (Phase 2+ populates).
-- `registry/lineage/od_spectral_retrieval_pipeline.json` — 1303 history
-  entries (912 pre-session + 391 from other chat). My session entries
-  were trimmed during the scrub.
-- `artifacts/` — `policy_history.jsonl`, `execution_traces.jsonl`,
-  benchmark + control_loop, plus the 6 CP state files — all from the
-  other chat post-scrub. Don't delete; they're real-data accumulations.
-- `artifacts/discoveries.legacy_20260525T020813Z/` — 3477 real-data
-  legacy originals, preserved for reversibility. Don't delete.
+- **INFO-008-MARKETS** — dipole holds **as a post-hoc signature only**;
+  not predictive at entry time. Framework remains useful for trade
+  forensics and regime characterization.
 
-## Source-code state — what landed in MY work (real, keep)
+## Parked / lower priority
 
-These are pure infrastructure, no synthetic-data assumptions baked in:
+- **Eligible100 paired runs** for remaining 11 pairs — gives broader
+  population view (top/bottom 20 is extreme tails only). Patches ready;
+  runner pattern is `_run_top20_bottom20_pairs.py`.
+- **Dipole + flow-side cross_domain similarity stack** — Phase 4
+  similarities are a different object than dipole; worth testing if
+  P1 succeeds.
+- **Closed-loop iteration** — orchestrator currently writes
+  `"termination_condition": "single_pass_bootstrap"` with one iteration.
+  Arch §2 expects iteration until `posterior_width < threshold`.
+  Phase 2 gap, not blocking dipole work.
 
-- `refrag_discovery/runtime/operator_orchestrator.py` — `domain=` kwarg
-  threaded through; production writes route to
-  `discoveries/operator_discoveries/<domain>/<run_id>.json`;
-  per-domain evidence graphs at
-  `discoveries/evidence_graphs/<domain>_evidence.json`; lineage routing
-  fix (registry/lineage/ in production, sandboxed in artifacts_dir mode).
-- `refrag_discovery/runtime/od_spectral_retrieval_pipeline.py` — forwards
-  `domain=`.
-- `refrag_discovery/paths.py` — `REGISTRY_DIR`, `DISCOVERIES_DIR` etc.
-  per arch §3.1 / §4.
-- `refrag_discovery/control_plane/storage.py` — `operator_state_path`
-  routes lineage to `registry/lineage/` when `artifacts_dir is None`.
-- `refrag_discovery/registry/manifest_validator.py` — type reference
-  resolution for `array<...>`, `map<...>`, `enum(...)`.
-- `schema/spectral_chunk.schema.json`, `schema/operator_candidate.schema.json`.
-- `scripts/build_registry_indexes.py`, `scripts/build_registry_embeddings.py`,
-  `scripts/migrate_legacy_discoveries.py`, `scripts/build_discoveries_index.py`.
-- `tests/test_registry_build.py`, `tests/test_discoveries_layout.py`.
-- `tests/test_refrag_mcp_server.py` — autouse `_sandbox_discoveries`
-  fixture so MCP tests don't leak production discoveries.
-- `adapters/markets_refrag_adapter.py` — granular `winner_domain` helper
-  (other chat added this; **do not modify**).
+## Pointers
 
-## Things that were DELETED in the scrub (don't recreate)
+- **Yesterday's full session handoff** (deep tables, interpretation):
+  `E:\refrag\SESSION_HANDOFF_2026-05-26.md`
+- **Information-layer source** (life sciences dipole, 2026-05-25):
+  `DavisAI1974/Basic_equations/SESSION_HANDOFF_2026-05-25.md`
+- **Workspace CLAUDE.md**: `E:\Markets\CLAUDE.md` (mirrors refrag's)
+- **Arch spec v2.1**: `E:\refrag\_arch_spec_v21_extracted.txt`
+- **Prior parallel-chat coordination** (BTC-Bybit split, now historical):
+  `E:\Markets\HANDOFF_SESSION_20260525_PARALLEL_CHAT_COORDINATION.md`
 
-- `scripts/verify_phase1_roundtrip.py` — was synthetic-data wiring check.
-  If you need a verification harness, build it to drive the **real
-  adapters** end-to-end on **real winners**, not synthetic seeds.
-- All session-generated handoff docs (PART5, PART6, PART7).
-- All synthetic verifier discovery files + evidence graphs.
+## When this handoff goes stale
 
-## Open questions / known issues
+After P1 completes (pass or fail):
 
-1. **Sparse buckets** — `markets_eth_coinbase_sell` has 2 legacy files,
-   `markets_eth_kraken_sell` has 13. May need more sell-side ETH
-   captures from the live data archive. Run the adapter with `--resume`
-   so any new winners that have landed since the original capture get
-   processed.
-2. **Closed-loop iteration** — orchestrator currently writes
-   `"termination_condition": "single_pass_bootstrap"` with one iteration.
-   Arch §2 expects iteration until `posterior_width < threshold`. This
-   is the main Phase 2 gap.
-3. **Quantum adapter granular domain** — verify
-   `quantum_refrag_adapter.py` derives
-   `quantum_<sub_family>_<init>_<dT_regime>` correctly from its source_id
-   format. Markets adapter is confirmed updated; quantum adapter needs
-   a quick check.
-4. **MCP test sandbox** — was added late in the session via autouse
-   fixture. Confirm by running `pytest tests/test_refrag_mcp_server.py`
-   and checking no new files land in `discoveries/operator_discoveries/`.
+1. Rotate this file to `HANDOFF_SESSION_<YYYYMMDD>_<TOPIC>.md` for
+   archival.
+2. Write a new `HANDOFF_NEXT_CHAT.md` from this template — keep
+   sections: TL;DR, Today's priorities, Files & commands, Standing
+   rules, Parked, Pointers. Replace Background with the new
+   latest-session context.
+3. Mirror to `F:\Factory\knowledge\Markets\`.
+4. Commit + push to `DavisAI1974/Markets`.
 
-## Coordination protocol with the other chat
+---
 
-- Greg is the dispatcher. Don't probe the other chat directly.
-- If you finish your scope and want to extend into BTC Bybit, ASK GREG
-  first — the other chat may still be working that scope.
-- If state looks unfamiliar mid-run (e.g., new evidence graph files
-  appearing under buckets you didn't run), STOP and ask Greg. The other
-  chat may have started something.
-
-## End of handoff
+*Template v1 (2026-05-27). The Background section is the part that
+churns; everything else is a stable scaffold. Keep entries terse and
+actionable — this doc is read on a phone.*
