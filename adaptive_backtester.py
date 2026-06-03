@@ -64,8 +64,13 @@ class SignalGenerator:
 
 
 def build_generators() -> list[SignalGenerator]:
-    """The candidate operator library."""
-    return [
+    """The candidate operator library.
+
+    Includes the Operator-Discovery generators (odcore.generators.make_od_generators)
+    so the entropy-dipole operators compete in the same rolling-Sharpe selection as the
+    hand-specified ones. The OD generators degrade gracefully to [] if odcore is missing.
+    """
+    gens = [
         # Pure dipole (the hand-specified operator). Mean-reversion direction
         # because the empirical lag-1 r was negative on EQUILIBRIUM chunks.
         SignalGenerator(
@@ -96,6 +101,12 @@ def build_generators() -> list[SignalGenerator]:
             description="Fade dipole; reduce signal when one-side pressure is sustained (whale-like)",
         ),
     ]
+    try:
+        from odcore.generators import make_od_generators
+        gens.extend(make_od_generators())
+    except Exception:
+        pass
+    return gens
 
 
 # ---------------------------------------------------------------------------

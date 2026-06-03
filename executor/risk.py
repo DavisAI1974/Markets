@@ -42,6 +42,11 @@ class RiskConfig:
     max_hold_minutes: int = 35
     require_cross_venue_confirm: bool = False
     simulated_fee_bps: float = 25.0    # per-venue; Coinbase taker default
+    # --- OD-native sizing (opt-in; falls back to fixed position_size_usd when off) ---
+    od_sizing: bool = False            # size from OD confidence x measured edge (odcore.sizing)
+    position_floor_usd: float = 0.0    # below this OD notional, size to 0 (don't trade)
+    # --- circuit breaker (0 disables) ---
+    max_consecutive_losses: int = 0    # deny after this many trailing closed losers on a source
 
     @classmethod
     def from_dict(cls, d: dict) -> "RiskConfig":
@@ -158,6 +163,31 @@ def gate_daily_loss(signal: dict, cfg: RiskConfig, recent: list[dict]) -> GateRe
     return GateResult(True)
 
 
+def gate_circuit_breaker(signal: dict, cfg: RiskConfig, recent: list[dict]) -> GateResult:
+    """Trip after `max_consecutive_losses` trailing closed losing trades on this source.
+
+    A losing-streak guard independent of the calendar-day loss cap: it halts a source that
+    is bleeding regardless of the daily total. 0 disables the breaker.
+    """
+    if cfg.max_consecutive_losses <= 0:
+        return GateResult(True)
+    closed = [t for t in recent
+              if t.get("status") == "closed"
+              and t.get("asset") == signal["asset"]
+              and t.get("venue") == signal["venue"]]
+    # recent is append-ordered; count trailing losers
+    streak = 0
+    for t in reversed(closed):
+        if float(t.get("realized_pnl_usd", 0.0)) < 0:
+            streak += 1
+        else:
+            break
+    if streak >= cfg.max_consecutive_losses:
+        return GateResult(False, f"circuit breaker: {streak} consecutive losses on "
+                                  f"{signal['asset']}/{signal['venue']} (max {cfg.max_consecutive_losses})")
+    return GateResult(True)
+
+
 ALL_GATES = [
     gate_asset_whitelist,
     gate_venue_whitelist,
@@ -166,6 +196,7 @@ ALL_GATES = [
     gate_cross_venue_confirm,
     gate_daily_trade_count,
     gate_daily_loss,
+    gate_circuit_breaker,
 ]
 
 
