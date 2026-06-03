@@ -49,6 +49,7 @@ from backend.auth import verify_token, ACCESS_TOKEN
 from backend.push import (
     PushSubscription, add_sub, remove_sub, get_subs, send_to_all, VAPID_PUBLIC,
 )
+from backend.odcore_store import coupling_store
 from pydantic import BaseModel
 
 
@@ -496,6 +497,12 @@ async def _polling_loop():
         await store.resolve_pending_outcomes(
             hold_minutes=30, abandon_after_minutes=120, fee_bps_round_trip=50.0,
         )
+        # Refresh the OD coupling layer off-thread (compute is heavy and self-gated to
+        # REFRESH_INTERVAL_S, so most poll cycles are a no-op). Never blocks the event loop.
+        try:
+            await asyncio.to_thread(coupling_store.refresh)
+        except Exception as e:
+            print(f"[api_server] OD refresh error: {e}", flush=True)
         await asyncio.sleep(POLL_INTERVAL_S)
 
 
@@ -532,6 +539,12 @@ async def health():
         "tracked_sources": [{"asset": a, "venue": v, "has_data": (a, v) in store.current_status}
                              for a, v, _ in DATA_SOURCES],
         "n_recent_signals": len(store.recent_signals),
+        "od": {
+            "computed_utc": coupling_store.snapshot.computed_utc,
+            "n_pairs": len(coupling_store.snapshot.coupling_matrix),
+            "n_sources": len(coupling_store.snapshot.sources),
+            "resample_s": coupling_store.snapshot.resample_s,
+        },
     }
 
 
@@ -662,6 +675,59 @@ async def regime_history(asset: str, venue: str, n_points: int = 60):
             "ts_end": float(bars[min(c.window_end - 1, len(bars) - 1)].ts) if bars else 0,
         })
     return {"asset": asset, "venue": venue, "n_chunks_total": len(chunks), "points": points}
+
+
+# ---------------------------------------------------------------------------
+# Operator-Discovery coupling layer (S21) — backed by backend.odcore_store
+#
+# All five endpoints read the cached OD snapshot computed off the polling loop from
+# the REAL collector bins (realbins/). The snapshot may be empty until the first
+# refresh completes (~80s after startup) or if no real bins are materialized.
+# ---------------------------------------------------------------------------
+
+def _od_snapshot_meta() -> dict:
+    snap = coupling_store.snapshot
+    return {"computed_utc": snap.computed_utc, "resample_s": snap.resample_s,
+            "sources": snap.sources, "ready": bool(snap.computed_utc)}
+
+
+@app.get("/api/coupling_matrix", dependencies=[Depends(verify_token)])
+async def coupling_matrix():
+    """Pairwise lag-0 |cross-correlation| + structured-coupling verdict across all sources."""
+    return {**_od_snapshot_meta(), "pairs": coupling_store.snapshot.coupling_matrix}
+
+
+@app.get("/api/strength/{asset}/{venue}", dependencies=[Depends(verify_token)])
+async def strength(asset: str, venue: str):
+    """Rolling OD strength meters (biology MI-slope, chemistry residual fraction) over time
+    for one (asset, venue) source."""
+    key = f"{asset}/{venue}"
+    pts = coupling_store.snapshot.strength.get(key)
+    if pts is None:
+        raise HTTPException(404, f"no OD strength series for {key}")
+    return {**_od_snapshot_meta(), "asset": asset, "venue": venue, "points": pts}
+
+
+@app.get("/api/leadlag/{asset}", dependencies=[Depends(verify_token)])
+async def leadlag(asset: str):
+    """Cross-venue lead-lag for an asset: who moves first, by how many bars, z vs null."""
+    cells = coupling_store.snapshot.leadlag.get(asset)
+    if cells is None:
+        raise HTTPException(404, f"no OD lead-lag for asset {asset}")
+    return {**_od_snapshot_meta(), "asset": asset, "cells": cells}
+
+
+@app.get("/api/dipole_signals", dependencies=[Depends(verify_token)])
+async def dipole_signals():
+    """Per-source algebraic chem-dipole fit (a,b,c,R2) + current H_a>H_b direction."""
+    return {**_od_snapshot_meta(), "signals": coupling_store.snapshot.dipole_signals}
+
+
+@app.get("/api/decoupling", dependencies=[Depends(verify_token)])
+async def decoupling(limit: int = 100):
+    """Recent coupling-collapse (decoupling) events on the strongest cross-venue pair per asset."""
+    evs = coupling_store.snapshot.decoupling[:limit]
+    return {**_od_snapshot_meta(), "events": evs, "n_total": len(coupling_store.snapshot.decoupling)}
 
 
 # ---------------------------------------------------------------------------
