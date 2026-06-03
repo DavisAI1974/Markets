@@ -37,3 +37,15 @@ questions where your input would change direction. We can revisit any of these.
     validated only by fit quality on real data.
 - Decoupling detector found **145 real decoupling events** on Coinbase↔Bybit (coupling mean
   0.57). Default thresholds (lookback=20, drop_k=2.5σ) are a guess — tune later against P&L.
+
+## HONEST BACKTEST RESULT (real BTC minute bars, fee 2 + slip 1 bps)
+The simple signals I can build from the UNBLOCKED pieces have **NO net edge** — they all lose
+to trading costs because they flip almost every bar:
+  - ofi_momentum WF −178%, ofi_fade −188%, momentum5 −92%, dipole_direction −12%
+  - tautology-z ≈ 1–2 for all (i.e. indistinguishable from a circular-shift null = no real edge)
+This is the truthful Result-Discipline outcome: the validation harness correctly REJECTS these.
+It is NOT an engine failure — it's why the chem dipole (the blocked `Basic_equations` piece you're
+confident in) is the one that matters. Two honest paths to real edge, both queued:
+  (a) unblock `Basic_equations` and port the exact chem-dipole construction;
+  (b) lower-frequency signals (decoupling-convergence on dislocations; regime-gated entries) so
+      cost stops dominating — I'll prototype these but won't curve-fit a positive number.
