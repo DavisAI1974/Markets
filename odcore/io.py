@@ -93,14 +93,32 @@ def load_bins(path: str) -> BinSeries:
 
 
 def align(a: BinSeries, b: BinSeries) -> tuple[BinSeries, BinSeries]:
-    """Restrict two sources to their overlapping second-grid (for cross-source pairs)."""
-    lo = max(a.ts[0], b.ts[0])
-    hi = min(a.ts[-1], b.ts[-1])
+    """Restrict two sources to their overlapping, common time grid (step-aware).
+
+    Works whether the series are at 1-second or resampled (e.g. minute) cadence. Best
+    practice is to align at 1s FIRST and resample afterwards so both grids share a phase;
+    this function infers each series' step and clips by timestamp value rather than assuming
+    a 1-second grid.
+    """
+    da = int(a.ts[1] - a.ts[0]) if len(a) > 1 else 1
+    db = int(b.ts[1] - b.ts[0]) if len(b) > 1 else 1
+    if da != db:
+        raise ValueError(f"align requires equal cadence (got {da}s vs {db}s); "
+                         "align at 1s before resampling")
+    step = da
+    lo = max(int(a.ts[0]), int(b.ts[0]))
+    hi = min(int(a.ts[-1]), int(b.ts[-1]))
     if hi <= lo:
         raise ValueError("sources do not overlap in time")
 
     def clip(s: BinSeries) -> BinSeries:
-        i0 = int(lo - s.ts[0]); i1 = int(hi - s.ts[0]) + 1
+        i0 = (lo - int(s.ts[0])) // step
+        i1 = (hi - int(s.ts[0])) // step + 1
         return BinSeries(s.ts[i0:i1], s.buy[i0:i1], s.sell[i0:i1], s.mid[i0:i1],
                          s.volume[i0:i1], s.spread[i0:i1], s.n_trades[i0:i1])
-    return clip(a), clip(b)
+    ca, cb = clip(a), clip(b)
+    n = min(len(ca), len(cb))  # guard off-by-one from differing phases
+    def trunc(s):
+        return BinSeries(s.ts[:n], s.buy[:n], s.sell[:n], s.mid[:n], s.volume[:n],
+                         s.spread[:n], s.n_trades[:n])
+    return trunc(ca), trunc(cb)

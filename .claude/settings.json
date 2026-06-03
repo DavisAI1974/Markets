@@ -44,5 +44,14 @@
       "Edit",
       "MultiEdit"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash scripts/session_start.sh" }
+        ]
+      }
+    ]
   }
 }

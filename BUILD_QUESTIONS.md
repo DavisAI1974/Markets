@@ -49,3 +49,13 @@ confident in) is the one that matters. Two honest paths to real edge, both queue
   (a) unblock `Basic_equations` and port the exact chem-dipole construction;
   (b) lower-frequency signals (decoupling-convergence on dislocations; regime-gated entries) so
       cost stops dominating — I'll prototype these but won't curve-fit a positive number.
+
+## CROSS-VENUE REVERSION (prototyped, real signal but not net-profitable yet)
+Trade only when a venue dislocates from the 3-venue consensus (z-band entry/exit). Finding:
+the reversion is STATISTICALLY REAL — at 10s scale it survives the tautology null at **z=3.0–3.6**
+(gross structure is genuine) — but the per-trade edge is smaller than the 3 bps round-trip cost, so
+net is negative at every threshold (best: −2.6% at entry=3σ/60s, 100 trades). Conclusion: real
+coupling structure, no net-of-cost edge without (i) the directional chem dipole, (ii) cheaper
+execution (maker fills), or (iii) sub-second tick data for genuine latency lead-lag.
+QUESTION: do you have a maker-fee / rebate venue, or tick data? That changes the cost math and could
+flip the cross-venue signal positive. The signal itself is real (z=3).
