@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-06-03 Session 19 — body canonical through S19)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-06-03 Session 20 — body canonical through S20)
 
 ## START HERE (workflow block; JOB-1 drift fixed S17, 2026-06-02)
 
@@ -868,6 +868,38 @@ The v4 handoff (`SESSION_HANDOFF_2026-05-26_v4.md`) contains the Session
 The early-Session-3 handoff in repo (`SESSION_HANDOFF_2026-05-25.md`)
 contains the per-domain algebraic equation coefficients that are
 preserved through Session 5.
+
+## Note (Session 20 update — 2026-06-03) — MARKETS: OD signal-core rebuild on real data
+
+Branch `claude/crypto-trading-platform-plan-MpqwG` (DavisAI1974/Markets). No PR. All
+Operating Rules + Result Discipline in force. Zero synthetic data (Greg). Full detail:
+`SESSION_HANDOFF_2026-06-03_S20.md`; next steps: `KICKOFF_2026-06-03_S21.md`; decisions +
+open questions: `BUILD_QUESTIONS.md`.
+
+Headline: built a new `odcore/` package bringing the REAL OD machinery into the Markets repo
+(which previously had only a crude order-flow-imbalance dipole). The full pipeline runs
+end-to-end on REAL collector bins (BTC/ETH x Coinbase/Kraken/Bybit, ~10.7 days of 1s bins on
+the data/* branches), and PySR symbolic regression (Julia backend, 1.5.10) DISCOVERS equations
+from real market data (recovered `MI ~= -0.028*H_a*exp(H_b)+0.023` on real BTC order-flow).
+Modules: operators (windowed basis), null_extract (coupling discriminator + INFO-040/041
+guards + biology MI-slope / chemistry residual-fraction strength meters), leadlag (S19 raw
+cross-cov-over-lag right tool), dipole_predictor (algebraic chem dipole), symbolic (PySR),
+coupling_scanner (tautology-killing circular-shift null + decoupling events), channels, io,
+validation (walk-forward + real costs + tautology null), sizing (OD-native, NOT Kelly),
+stacking, generators. SessionStart hook added (PySR/Julia + real-bins bootstrap).
+
+REAL findings (Result Discipline): equal-entropy attractor reproduces on real data (quad
+|cos| 0.9996); cross-venue coupling Coinbase<>Bybit-perp lag-0 cc=0.656 z=580 (venues
+synchronous at 1s; sub-second leads need tick data); 145 real decoupling events. HONEST NULL:
+the signals buildable from the UNBLOCKED pieces have NO net-of-cost edge (all lose to 3bps
+costs; tautology-z ~1); cross-venue reversion is STATISTICALLY REAL (tautology z=3.0-3.6 at
+10s) but per-trade edge < cost. The chem QUADRATIC dipole does NOT reproduce on the
+reconstructed channels (real buy/sell entropies near-symmetric -> trivial identity, c~=0);
+tried 5 channels x 3 timescales x 3 conditionings. BLOCKER: the exact construction lives in
+`DavisAI1974/Basic_equations` (`_markets_algebraic_dipole.py` etc.), which is ACCESS-DENIED
+this session (scope locked to davisai1974/markets). ACTION (Greg): add `Basic_equations` to
+session scope so the originals port verbatim. Nothing fabricated; nulls reported. Prior S19
+below.
 
 ## Note (Session 19 update — 2026-06-03) — FLOW DIPOLE EQUATION: wrong tool, and the OTHER dipole solves for time
 
