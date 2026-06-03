@@ -871,6 +871,11 @@ preserved through Session 5.
 
 ## Note (Session 20 update — 2026-06-03) — MARKETS: OD signal-core rebuild on real data
 
+> ALREADY FOLDED IN — do not re-upload/re-apply. This S20 delta is merged into this master
+> in-repo. Per the START-HERE workflow rule (lines 14-21): never re-upload the whole master
+> and never re-paste an already-folded session note. Next session: read the handoff + kickoff,
+> then fold only the NEW (S21+) delta and bump the header line.
+
 Branch `claude/crypto-trading-platform-plan-MpqwG` (DavisAI1974/Markets). No PR. All
 Operating Rules + Result Discipline in force. Zero synthetic data (Greg). Full detail:
 `SESSION_HANDOFF_2026-06-03_S20.md`; next steps: `KICKOFF_2026-06-03_S21.md`; decisions +
