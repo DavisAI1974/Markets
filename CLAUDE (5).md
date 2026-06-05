@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-06-03 Session 20 — body canonical through S20)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-06-05 Session 21 — body canonical through S21)
 
 ## START HERE (workflow block; JOB-1 drift fixed S17, 2026-06-02)
 
@@ -868,6 +868,40 @@ The v4 handoff (`SESSION_HANDOFF_2026-05-26_v4.md`) contains the Session
 The early-Session-3 handoff in repo (`SESSION_HANDOFF_2026-05-25.md`)
 contains the per-domain algebraic equation coefficients that are
 preserved through Session 5.
+
+## Note (Session 21 update — 2026-06-05) — MARKETS: OD layer wired through the platform
+
+> ALREADY FOLDED IN — do not re-upload/re-apply. This S21 delta is merged into this master
+> in-repo. Per the START-HERE workflow rule (lines 14-21): never re-upload the whole master and
+> never re-paste an already-folded session note. Next session: read the handoff + kickoff, then
+> fold only the NEW (S22+) delta and bump the header line.
+
+Branch `claude/crypto-trading-platform-plan-MpqwG` (DavisAI1974/Markets). No PR. All Operating
+Rules + Result Discipline in force. Zero synthetic. Full detail: `SESSION_HANDOFF_2026-06-05_S21.md`;
+next steps: `KICKOFF_2026-06-05_S22.md`.
+
+Headline: continued the S20 OD signal-core rebuild by PLUMBING the OD machinery through the
+running platform (the unblocked Section-2 build; the chem-dipole port stayed BLOCKED on
+`Basic_equations`, files incoming from Greg). Built `backend/odcore_store.CouplingStore` (loads
+realbins, computes the OD layer, cached + refreshed off the polling loop on a thread, ~84s,
+self-gated, lock-guarded) + 5 authed endpoints (`/api/coupling_matrix`, `/api/leadlag/{asset}`,
+`/api/dipole_signals`, `/api/strength/{asset}/{venue}`, `/api/decoupling`). New frontend
+"Coupling" tab (CouplingMatrix / LeadLag / StrengthOverTime / DecouplingFeed). Executor: wired the
+OD generators into the adaptive_backtester pool, OD-native sizing (opt-in) and a circuit-breaker
+gate. Housekeeping: consolidated 5 duplicate minute-bar loaders into
+`markets_adapter.load_minute_bars` (kept odcore import-free of the platform shell so it stays
+portable to Basic_equations); defaulted `MARKETS_WATCH_DEMO_MODE` off.
+
+HONEST STATUS UNCHANGED (Result Discipline): re-ran the promotion gate on real BTC
+(`scripts/od_backtest.py`, 15,396 minute bars, buy-hold -4.52%) — every unblocked OD signal still
+LOSES net-of-cost (dipole_direction WF -11.8% taut z 1.2; ofi_momentum -177.9%; ofi_fade -188.2%;
+momentum5 -91.8%). So the OD layer is DIAGNOSTIC/shadow, NOT the live signal source — the regime
+classifier remains the source. Greg's S21 question "what to make OD the source": EARN it (clear
+the `odcore/validation.py` gate: net>0 after fees+slip, beat baselines under walk-forward,
+tautology z>>2-3) THEN WIRE it (flow od_* fields through /api/signals -> OD-native sizing; switch
+the emit decision to the OD generator; then unwire PELT). The two edge candidates remain the real
+chem dipole (#1, blocked) and cheaper execution (maker-rebate/tick data; cross-venue reversion is
+real at taut z 3.0-3.6 but cost-bound). Prior S20 below.
 
 ## Note (Session 20 update — 2026-06-03) — MARKETS: OD signal-core rebuild on real data
 
