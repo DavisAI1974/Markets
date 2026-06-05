@@ -59,3 +59,7 @@ operator_registry.json
 
 # Real bins materialized from data/* branches (large, do not commit)
 realbins/
+
+# Frontend build artifacts + installed deps (regenerated; package-lock.json IS tracked)
+frontend/node_modules/
+frontend/dist/
