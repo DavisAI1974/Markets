@@ -1,5 +1,7 @@
 # Handoff to the next agent — markets-watch, 2026-05-10 (Pass-14 in progress)
 
+> **QUOTE SERVICE (added 2026-06-08, S26) — FOLLOW `QUOTE_SERVICE_PLAN.md` (repo root).** It is the architect's canonical plan for the market-quoting / market-making capability, fusing the T3.1 `mm_passive` cells (resting bid/ask on EQUILIBRIUM, spread minus 2 fee legs) with the OD coupling/dipole layer (OD signals = gates + spread adjusters, NOT entry signals; maker-rebate spread capture is the edge lever; 1s = venues synchronous, no sub-bar lead edge). Includes the reusable-asset inventory (both code parts, exact paths), a 6-phase build sequence (each verified via forward paper), constraints, and 6 open questions to answer first. The OD layer lives on branch `claude/beautiful-shaw-040328` (`backend/odcore_store.py` + `odcore/`); Phase 0 merges it in.
+
 > The handoff doc below this section is the historical version (2026-05-05,
 > Phase 1.5j status). It is preserved for context. The CURRENT state of
 > the project — including major framing change from the user — is in
