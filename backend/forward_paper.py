@@ -31,6 +31,16 @@ from dataclasses import dataclass
 from typing import Callable, Optional
 
 
+# Per-leg fee assumptions (bps). The default is a conservative taker proxy
+# applied to spot cells — at the retail tier it is roughly equal to the real
+# Kraken maker fee, so spot mm_passive cells paper-lose by construction and
+# that loss is an honest measurement, not a sim artifact. The Bybit USDT-perp
+# maker fee is an order of magnitude smaller and is the only venue where
+# passive spread capture can net positive (verified 2026-06-08).
+_PRACTICE_FEE_BPS = 25.0          # default taker proxy (spot cells)
+_MAKER_FEE_BPS_BYBIT_PERP = 2.0   # Bybit USDT-perp maker, retail tier
+
+
 @dataclass
 class CellSpec:
     cell_id: str
@@ -60,6 +70,12 @@ class CellSpec:
                                # entry on the resting side of the book, exit
                                # on the opposite side, earning spread minus
                                # round-trip fees instead of paying it).
+    fee_bps: float = _PRACTICE_FEE_BPS  # per-leg fee. mm_passive perp cells
+                               # override with the real maker fee; the
+                               # round-trip cost is 2 x this.
+    is_perp: bool = False      # perp cells accrue funding while the
+                               # mm_passive leg holds inventory (see
+                               # close_paper_trade funding term).
 
 
 def _is_eth_kr_nascent_up(regime: str, feat: object, chunk: object) -> bool:
@@ -161,10 +177,30 @@ CELLS: list[CellSpec] = [
         note="forward paper: BTC CB EQUILIBRIUM passive-quote MM.",
         predicate=_is_equilibrium,
     ),
+    # Bybit USDT-perp EQUILIBRIUM market-making cells — the LIVE target.
+    # Unlike the spot cells above, the maker fee here (2 bps/leg) is small
+    # enough that captured spread can net positive. These cells carry the
+    # net-of-cost track record that gates any capital deployment. is_perp
+    # so the funding term applies while the quote holds inventory.
+    CellSpec(
+        cell_id="btc_bb_eq_mm_passive",
+        asset="BTC", venue="BB", side="buy", kind="mm_passive",
+        notional_usd=1000.0, hold_minutes=5.0,
+        fee_bps=_MAKER_FEE_BPS_BYBIT_PERP, is_perp=True,
+        note="forward paper: BTC Bybit-perp EQUILIBRIUM passive-quote MM "
+             "(2 bps maker; the only venue where spread capture can net +).",
+        predicate=_is_equilibrium,
+    ),
+    CellSpec(
+        cell_id="eth_bb_eq_mm_passive",
+        asset="ETH", venue="BB", side="buy", kind="mm_passive",
+        notional_usd=1000.0, hold_minutes=5.0,
+        fee_bps=_MAKER_FEE_BPS_BYBIT_PERP, is_perp=True,
+        note="forward paper: ETH Bybit-perp EQUILIBRIUM passive-quote MM "
+             "(2 bps maker; the only venue where spread capture can net +).",
+        predicate=_is_equilibrium,
+    ),
 ]
-
-
-_PRACTICE_FEE_BPS = 25.0
 
 
 # ---------------------------------------------------------------------------
@@ -402,7 +438,8 @@ def entry_price_for_cell(cell: CellSpec, bid: float, ask: float, mid: float
 
 
 def open_paper_trade(cell: CellSpec, fill_price: float,
-                       vol_multiplier: float = 1.0) -> dict:
+                       vol_multiplier: float = 1.0,
+                       funding_rate_at_open: float = 0.0) -> dict:
     """Build the open-trade dict matching backend_practice_trades.jsonl
     schema (same shape as the manual practice path in api_server.py).
     Caller persists via _persist_practice_trade().
@@ -410,11 +447,17 @@ def open_paper_trade(cell: CellSpec, fill_price: float,
     vol_multiplier: pass a value from `vol_target_multiplier(feat.realized_vol)`
     to scale notional inversely with chunk volatility. Defaults to 1.0
     (no scaling) so callers that haven't been migrated still get the
-    fixed-notional behavior."""
+    fixed-notional behavior.
+
+    funding_rate_at_open: per-8h funding rate captured at open for perp
+    cells (from the funding monitor). Stored so close_paper_trade can
+    accrue the funding cost/credit over the hold. Ignored for spot cells.
+    Defaults to 0.0 (no funding) for graceful degradation."""
     scaled_notional = float(cell.notional_usd) * float(vol_multiplier)
     qty = scaled_notional / fill_price if fill_price > 0 else 0.0
     notional = fill_price * qty
-    fee_usd = notional * (_PRACTICE_FEE_BPS / 10000.0)
+    fee_bps = float(cell.fee_bps)
+    fee_usd = notional * (fee_bps / 10000.0)
     return {
         "intent_id": str(uuid.uuid4())[:12],
         "asset": cell.asset,
@@ -428,11 +471,10 @@ def open_paper_trade(cell: CellSpec, fill_price: float,
         "practice": True,
         "auto": True,
         "cell_id": cell.cell_id,
-        "kind": "practice",
         "status": "open",
         "fill_price": float(fill_price),
         "fees_usd": float(fee_usd),
-        "fee_bps": _PRACTICE_FEE_BPS,
+        "fee_bps": float(fee_bps),
         "exit_price": 0.0,
         "exit_ts_utc": 0.0,
         "realized_pnl_usd": 0.0,
@@ -440,6 +482,8 @@ def open_paper_trade(cell: CellSpec, fill_price: float,
         "vol_multiplier": float(vol_multiplier),
         "base_notional_usd": float(cell.notional_usd),
         "kind": str(cell.kind),
+        "is_perp": bool(cell.is_perp),
+        "funding_rate_at_open": float(funding_rate_at_open),
     }
 
 
@@ -586,7 +630,8 @@ def is_expired(trade: dict, now_utc: float) -> bool:
     return (now_utc - float(trade.get("ts_utc", 0.0))) / 60.0 >= hold
 
 
-def close_paper_trade(trade: dict, bid: float, ask: float, mid: float) -> None:
+def close_paper_trade(trade: dict, bid: float, ask: float, mid: float,
+                       close_reason: str = "auto_hold_elapsed") -> None:
     """Mutates `trade` in place to closed status with exit_price + realized P&L.
     Mirrors the math of /api/practice-trade/close in api_server.py.
 
@@ -594,7 +639,17 @@ def close_paper_trade(trade: dict, bid: float, ask: float, mid: float) -> None:
     bid, a sell at ask — same as a market-order exit that crosses the
     spread. For mm_passive cells the exit also rests on the book
     (buy closes at ask, sell at bid), so the round trip captures
-    full bid-ask spread minus fees instead of paying it."""
+    full bid-ask spread minus fees instead of paying it.
+
+    Fees use the trade's own fee_bps (per-cell maker/taker), not a global
+    constant. For perp cells (is_perp) a funding term accrues over the
+    hold: a long pays funding when the rate is positive, a short receives
+    it, scaled by elapsed_hours / 8. funding_rate_at_open == 0 (the
+    default / no monitor) makes the term vanish.
+
+    `close_reason` is recorded as-is — the gate-pull path passes the
+    QuoteDecision.pull_reason here so closed mm trades carry why they
+    were pulled."""
     side = trade.get("side")
     kind = trade.get("kind", "directional")
     if kind == "mm_passive":
@@ -611,11 +666,23 @@ def close_paper_trade(trade: dict, bid: float, ask: float, mid: float) -> None:
     signed = +1 if side == "buy" else -1
     gross_pnl = signed * (exit_price - fill_price) * qty
     notional_out = exit_price * qty
-    exit_fee = notional_out * (_PRACTICE_FEE_BPS / 10000.0)
-    realized = gross_pnl - float(trade.get("fees_usd", 0.0)) - exit_fee
+    fee_bps = float(trade.get("fee_bps", _PRACTICE_FEE_BPS))
+    exit_fee = notional_out * (fee_bps / 10000.0)
+    # Funding accrual for perp inventory held over the hold window.
+    funding_pnl = 0.0
+    if trade.get("is_perp"):
+        rate = float(trade.get("funding_rate_at_open", 0.0))
+        elapsed_h = max(
+            0.0, time.time() - float(trade.get("ts_utc", 0.0))) / 3600.0
+        avg_notional = 0.5 * (float(trade.get("notional", 0.0)) + notional_out)
+        # long (buy) pays when rate>0; short (sell) receives. 8h cycle.
+        funding_pnl = -signed * rate * avg_notional * (elapsed_h / 8.0)
+    realized = (gross_pnl + funding_pnl
+                - float(trade.get("fees_usd", 0.0)) - exit_fee)
     trade["status"] = "closed"
     trade["exit_price"] = float(exit_price)
     trade["exit_ts_utc"] = time.time()
     trade["fees_usd"] = float(trade.get("fees_usd", 0.0)) + float(exit_fee)
+    trade["funding_pnl_usd"] = float(funding_pnl)
     trade["realized_pnl_usd"] = float(realized)
-    trade["close_reason"] = "auto_hold_elapsed"
+    trade["close_reason"] = str(close_reason)

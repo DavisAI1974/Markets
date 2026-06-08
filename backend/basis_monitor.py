@@ -29,6 +29,7 @@ import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 # Tunables. Z-thresholds chosen so that ~95th percentile of normal
@@ -196,6 +197,18 @@ class BasisMonitor:
                 "normal": "normal", "hot": "hot", "cold": "cold"
             }.get(st.current_state, st.current_state)),
         }
+
+    def current_state_for(self, asset: str,
+                          venue: Optional[str] = None) -> Optional[str]:
+        """Gate accessor: 'BASIS_DIVERGENT_HOT' / 'BASIS_DIVERGENT_COLD'
+        for the asset, or None when normal / unknown. Basis is per-asset
+        (spot vs its perp); `venue` is accepted but ignored for a uniform
+        accessor signature."""
+        st = self._state.get(asset)
+        if st is None:
+            return None
+        return {"hot": "BASIS_DIVERGENT_HOT",
+                "cold": "BASIS_DIVERGENT_COLD"}.get(st.current_state)
 
     def snapshot(self) -> dict[str, dict]:
         """Read-only summary for /api/basis-status."""

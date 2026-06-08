@@ -25,7 +25,7 @@ from quote_gate import (  # noqa: E402
 
 def _baseline(**overrides):
     """A benign EQUILIBRIUM call that should quote at base spread, size 1.0."""
-    kw = dict(asset="BTC", venue="BYBIT", regime=EQUILIBRIUM)
+    kw = dict(asset="BTC", venue="BB", regime=EQUILIBRIUM)
     kw.update(overrides)
     return evaluate(**kw)
 
@@ -34,7 +34,7 @@ def test_baseline_quotes_at_base_spread():
     d = _baseline()
     assert d.should_quote is True
     assert d.pull_reason is None
-    assert d.spread_bps == VENUE_BASE_SPREAD_BPS["BYBIT"]
+    assert d.spread_bps == VENUE_BASE_SPREAD_BPS["BB"]
     assert d.size_mult == 1.0
     assert d.notes  # always traced
 
@@ -80,7 +80,7 @@ def test_vpin_toxicity():
 
 
 def test_oi_building_widens():
-    base = VENUE_BASE_SPREAD_BPS["BYBIT"]
+    base = VENUE_BASE_SPREAD_BPS["BB"]
     assert _baseline(oi_state="OI_BUILDING_LONG").spread_bps == base + 2.0
     assert _baseline(oi_state="OI_BUILDING_SHORT").spread_bps == base + 2.0
     # benign OI states do not widen
@@ -88,30 +88,30 @@ def test_oi_building_widens():
 
 
 def test_cb_premium_widens():
-    base = VENUE_BASE_SPREAD_BPS["BYBIT"]
+    base = VENUE_BASE_SPREAD_BPS["BB"]
     assert _baseline(cb_premium_state="CB_PREMIUM_HOT").spread_bps == base + 1.0
 
 
 def test_hawkes_elevated_widens():
-    base = VENUE_BASE_SPREAD_BPS["BYBIT"]
+    base = VENUE_BASE_SPREAD_BPS["BB"]
     assert _baseline(hawkes_multiplier=0.8).spread_bps == base + 1.0
     assert _baseline(hawkes_multiplier=1.0).spread_bps == base  # boundary
 
 
 def test_cross_venue_disagreement_widens():
-    base = VENUE_BASE_SPREAD_BPS["BYBIT"]
+    base = VENUE_BASE_SPREAD_BPS["BB"]
     assert _baseline(cross_venue_multiplier=0.5).spread_bps == base + 2.0
 
 
 def test_decaying_self_trend_widens_and_shrinks():
-    base = VENUE_BASE_SPREAD_BPS["BYBIT"]
+    base = VENUE_BASE_SPREAD_BPS["BB"]
     d = _baseline(edge_intraday_self_trend="DECAYING")
     assert d.spread_bps == base + 1.0   # widened
     assert d.size_mult == 0.75          # and downsized
 
 
 def test_flipping_self_trend_widens_only():
-    base = VENUE_BASE_SPREAD_BPS["BYBIT"]
+    base = VENUE_BASE_SPREAD_BPS["BB"]
     d = _baseline(edge_intraday_self_trend="FLIPPING")
     assert d.spread_bps == base + 1.0
     assert d.size_mult == 1.0           # FLIPPING widens but does not downsize
@@ -146,12 +146,12 @@ def test_leadlag_only_btc_kr():
 def test_venue_base_spreads_distinct():
     assert _baseline(venue="KR").spread_bps == VENUE_BASE_SPREAD_BPS["KR"]
     assert _baseline(venue="CB").spread_bps == VENUE_BASE_SPREAD_BPS["CB"]
-    assert _baseline(venue="BYBIT").spread_bps == VENUE_BASE_SPREAD_BPS["BYBIT"]
+    assert _baseline(venue="BB").spread_bps == VENUE_BASE_SPREAD_BPS["BB"]
 
 
 def test_net_capture_note_is_honest():
     # Bybit perp: 6 base - 4 round-trip = +2 bps (the math can close)
-    note = "\n".join(_baseline(venue="BYBIT").notes)
+    note = "\n".join(_baseline(venue="BB").notes)
     assert "net spread capture @ maker: +2.0 bps" in note
     # Kraken spot: 12 base - 50 round-trip = -38 bps (structurally negative)
     note_kr = "\n".join(_baseline(venue="KR").notes)
@@ -161,7 +161,7 @@ def test_net_capture_note_is_honest():
 def test_graceful_degradation_no_od_inputs():
     # With no OD/monitor/calibration inputs at all, a benign EQ chunk still
     # quotes cleanly — no path requires the OD layer to exist.
-    d = evaluate(asset="ETH", venue="BYBIT", regime=EQUILIBRIUM)
+    d = evaluate(asset="ETH", venue="BB", regime=EQUILIBRIUM)
     assert d.should_quote is True
     assert d.pull_reason is None
 

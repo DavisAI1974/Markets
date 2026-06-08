@@ -313,6 +313,21 @@ class OIMonitor:
                 })
         return alerts
 
+    # Internal lowercase state -> gate-facing emitted literal.
+    _STATE_LITERAL = {
+        "building_long": "OI_BUILDING_LONG",
+        "building_short": "OI_BUILDING_SHORT",
+        "unwind_longs": "OI_UNWIND_LONGS",
+        "unwind_shorts": "OI_UNWIND_SHORTS",
+    }
+
+    def current_state_for(self, asset: str, venue: str) -> Optional[str]:
+        """Gate accessor: the current OI state literal (e.g.
+        'OI_BUILDING_LONG') for (asset, venue), or None when normal /
+        unknown. `venue` is the OI-native perp venue ('Binance'/'Bybit')."""
+        st = self._state.get((asset, venue))
+        return self._STATE_LITERAL.get(st.current_state) if st else None
+
     def snapshot(self) -> dict:
         out: dict = {}
         for (asset, venue), st in self._state.items():

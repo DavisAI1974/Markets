@@ -55,10 +55,12 @@ _SELF_TREND_FRAGILE = {"DECAYING", "FLIPPING"}
 # --- venue policy (plan §2: "policy until calibrated by calibrate_spread.py")
 # Base quoted spread (bps) per venue. MUST exceed the round-trip maker cost
 # to have any chance of net-positive capture.
+# Venue codes match the codebase convention: CB=Coinbase spot, KR=Kraken
+# spot, BB=Bybit USDT-perp.
 VENUE_BASE_SPREAD_BPS: dict[str, float] = {
     "KR": 12.0,      # Kraken spot — plan policy; does NOT cover 50 bps
     "CB": 15.0,      # Coinbase spot — plan policy; does NOT cover 120 bps
-    "BYBIT": 6.0,    # Bybit USDT-perp — clears the 4 bps round-trip + ~2 bps
+    "BB": 6.0,       # Bybit USDT-perp — clears the 4 bps round-trip + ~2 bps
 }
 _DEFAULT_BASE_SPREAD_BPS = 12.0
 
@@ -67,7 +69,7 @@ _DEFAULT_BASE_SPREAD_BPS = 12.0
 VENUE_ROUNDTRIP_MAKER_BPS: dict[str, float] = {
     "KR": 50.0,      # 25 bps/leg x 2
     "CB": 120.0,     # 60 bps/leg x 2
-    "BYBIT": 4.0,    # 2 bps/leg x 2
+    "BB": 4.0,       # 2 bps/leg x 2
 }
 
 

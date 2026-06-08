@@ -237,6 +237,18 @@ class CoinbasePremiumMonitor:
             })
         return alerts
 
+    def current_state_for(self, asset: str,
+                          venue: Optional[str] = None) -> Optional[str]:
+        """Gate accessor: 'CB_PREMIUM_HOT' / 'CB_PREMIUM_COLD' for the
+        asset, or None when normal / unknown. Premium is a per-asset
+        US-institutional-flow signal, so `venue` is accepted but ignored
+        (kept for a uniform monitor accessor signature)."""
+        st = self._state.get(asset)
+        if st is None:
+            return None
+        return {"hot": "CB_PREMIUM_HOT",
+                "cold": "CB_PREMIUM_COLD"}.get(st.current_state)
+
     def snapshot(self) -> dict[str, dict]:
         out = {}
         for asset, st in self._state.items():

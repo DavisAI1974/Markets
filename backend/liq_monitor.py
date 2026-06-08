@@ -31,6 +31,7 @@ import os
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from typing import Optional
 
 
 # Fallback thresholds, used only when liq_calibration.json is missing
@@ -63,6 +64,11 @@ def _load_liq_calibration(path: str) -> dict[str, dict]:
 class _AssetState:
     last_bar_ts_emitted: float = 0.0
     recent_volumes: deque = field(default_factory=lambda: deque(maxlen=ROLLING_BAR_WINDOW))
+    # Last liquidation-burst literal + wall-clock time it fired, for the
+    # gate's recent-burst hard stop (a burst is a transient bar event, not
+    # a sticky state, so we track recency explicitly).
+    last_burst_type: Optional[str] = None
+    last_burst_wall_ts: float = 0.0
 
 
 def _aggregate_to_minute_bars(bins: dict[float, dict]) -> list[dict]:
@@ -199,6 +205,8 @@ class LiqMonitor:
                 # in a clean burst). Skip rather than emit garbage.
                 return None
             st.last_bar_ts_emitted = bar["ts"]
+            st.last_burst_type = f"LIQ_BURST_{direction}"
+            st.last_burst_wall_ts = time.time()
             return {
                 "type": f"LIQ_BURST_{direction}",
                 "key": f"{asset}/perp/liq",
@@ -215,6 +223,19 @@ class LiqMonitor:
                 "sell_vol": float(bar["sell_vol"]),
             }
         return None
+
+    def current_state_for(self, asset: str, venue: Optional[str] = None,
+                          recency_s: float = 300.0) -> Optional[str]:
+        """Gate accessor: the most recent 'LIQ_BURST_UP'/'LIQ_BURST_DOWN'
+        if one fired within `recency_s` seconds, else None. A burst is a
+        transient bar event; the gate treats a recent one as a hard stop.
+        Liq is a per-asset perp signal; `venue` is accepted but ignored."""
+        st = self._state.get(asset)
+        if st is None or not st.last_burst_type:
+            return None
+        if (time.time() - st.last_burst_wall_ts) > recency_s:
+            return None
+        return st.last_burst_type
 
     def snapshot(self) -> dict:
         return {
