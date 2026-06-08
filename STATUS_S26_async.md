@@ -6,10 +6,11 @@ KEEP PAIRS SEPARATE; never pool; never standardize. Incremental validation: cana
 ## (A) DONE — validated 128-dim per-pair dipole at the larger available scale
 `E:\refrag\discoveries\operator_discoveries`. Honest tier `preentry_cs100`: mean acc 0.947, perm-null **z=+9.6**, 12/12 z>3 (reproduces S25). Deterministic GROUPED (non-random) split also holds (~0.945) -> not fold-optimism. eth_bybit buy/sell concave (kept). Harness `od_larger_set_val.py`; results `od_larger_set_results.json`. See [[dipole-real-on-128dim-per-pair]].
 
-## (B) RUNNING — full 16k btc/eth coefficient generation
-- LAUNCHED 2026-06-08 ~11:51. Cmd (cwd E:\refrag): `python E:\Markets\_run_top20_bottom20_pairs.py --pre-entry --cross-section --target-size 1075` -> all 12 btc/eth pairs -> isolated suffix **`preentry_cs1075`** (does NOT touch validated cs100). Log `C:\Users\A\AppData\Local\Temp\od_B_full16k.log`. `--resume`-able.
-- Canary(cs5)+5min gate(cs40) PASSED: coeffs 128-dim, **~2.3 s/trade**, ~100s lose-build/pair. EST ~10-11 h for ~16k (all ~3,104 win + ~12.9k lose).
-- WHEN DONE: re-run (A) harness on the `cs1075` buckets (per-pair z + algebraic R2); then net-of-cost.
+## (B) STOPPED — too slow at scale; ROOT-CAUSED; needs a chunked restart (a NEW CHAT can do it)
+- Ran `--target-size 1075` (suffix `preentry_cs1075`). **KEPT on disk:** `markets_btc_bybit_buy_win_preentry_cs1075` 482 + `_lose_` 726 (only pair 1/12 before stop). Stopped via TaskStop; trades preserved.
+- **SLOWDOWN:** per-trade cost rose **2.3 s (cs40) -> 9.2 s (cs1075 win, 482 trades)** -> realistic **~30-40 h**, not 10-11 h.
+- **ROOT CAUSE** (full analysis JSON: `E:\refrag\discoveries\_PERF_orchestrator_slowdown_S26.json` + `F:\Factory\knowledge\`): refrag `OperatorOrchestrator` accumulates a PER-DOMAIN evidence graph (`discoveries/evidence_graphs/<domain>_evidence.json`) loaded+rewritten every trade and GROWING within a bucket (super-linear); + global `discoveries/index.json` (2.5 MB) full-rewrite per trade; + closed-loop refinement (max_iterations default 100000); + 4.8 GB artifacts. cs100 stayed fast because accumulation was bounded to 100/bucket.
+- **FIX (Greg-approved) — chunked clear-every-100, interleaved across ALL buckets:** build all 24 bucket lists; generate in 100-trade batches each holding ~equal share of EVERY bucket (balanced partial progress if it stops + tiny between-clear accumulation); after each 100, DELETE `discoveries/evidence_graphs/*_evidence.json` (safe: orchestrator starts fresh on missing graph) to reset per-trade cost; resume-safe (skip done UUIDs); KEEP BUCKETS SEPARATE on disk; re-validate the result with `od_larger_set_val.py` permutation null. Caveat: clearing drops cross-trade learning so new coeffs may differ slightly — but closer to the validated cs100 regime; re-validate, don't assume identical.
 
 ## (B2) PLANNED — full 44h (all 57,017 btc/eth eligible) in CHUNKS
 Pools hold 57,017 total (win ~3,104 / lose ~53,913). The 16k run is the first slice; remaining ~41k lose to be done as SEPARATE chunked runs (Greg's call). Chunk by raising target-size with `--resume`, or by pair-groups, across sessions. ~44 h total at 2.3 s/trade.
