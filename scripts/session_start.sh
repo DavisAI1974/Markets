@@ -16,15 +16,25 @@ python3 -c "import pysr" >/dev/null 2>&1 \
 
 # Materialize the real collector bins from the data/* branches if missing (the container
 # is ephemeral, so this is a one-time-per-container fetch). Never commit realbins/.
+# Bins are stored gzipped on the branches (GitHub caps single files at 100 MiB; raw 30-day
+# JSON is 110-136 MiB). Prefer <name>.gz (gunzip), fall back to legacy raw <name>.
+materialize() {  # $1=branch  $2=basename e.g. btc_coinbase_bins.json
+  local branch="$1" name="$2"
+  if git cat-file -e "origin/${branch}:${name}.gz" 2>/dev/null; then
+    git show "origin/${branch}:${name}.gz" 2>/dev/null | gunzip -c > "realbins/${name}" 2>/dev/null || true
+  elif git cat-file -e "origin/${branch}:${name}" 2>/dev/null; then
+    git show "origin/${branch}:${name}" > "realbins/${name}" 2>/dev/null || true
+  fi
+}
 if [ ! -d realbins ] || [ -z "$(ls -A realbins 2>/dev/null)" ]; then
   echo "[session_start] materializing real bins from data/* branches..."
   mkdir -p realbins
   git fetch origin data/btc-bins data/eth-bins data/perp-history >/dev/null 2>&1
   for f in btc_coinbase_bins.json btc_kraken_bins.json btc_bybit_perp_bins.json; do
-    git show "origin/data/btc-bins:$f" > "realbins/$f" 2>/dev/null || true
+    materialize data/btc-bins "$f"
   done
   for f in eth_coinbase_bins.json eth_kraken_bins.json eth_bybit_perp_bins.json; do
-    git show "origin/data/eth-bins:$f" > "realbins/$f" 2>/dev/null || true
+    materialize data/eth-bins "$f"
   done
   echo "[session_start] realbins: $(ls realbins 2>/dev/null | wc -l) files"
 fi
