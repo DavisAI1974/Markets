@@ -30,8 +30,8 @@ The quote service = the **markets-watch** platform's market-making layer (T3.1 `
 - Core design: `mm_passive` quotes resting bid/ask on `EQUILIBRIUM_TWO_SIDED` (spread minus 2 fee legs), gated by regime + OI/CB-premium/basis/liq monitors; **OD signals (coupling/lead-lag/decoupling/dipole) are GATES + spread adjusters, NOT entry signals.** Edge lever = maker-rebate spread capture (signals lose net-of-cost; venues synchronous at 1s). Build = new `backend/quote_gate.py` + merge `CouplingStore`/`odcore/` into phase-2 + wire into `poll_all()` + htmx `QuoteStatus` fragment.
 - Open Qs awaiting Greg (in the plan): maker-rebate access; paper fee assumption; quote Bybit-perp?; decoupling pull threshold; live-exec location; dipole-integration bar.
 
-## NEXT
-1. 16k btc/eth coeff-gen running (notify on done) -> re-run (A) validation on cs1075 + net-of-cost.
-2. doge/link/xrp: upstream trade-gen + discovery HERE, after the 16k (refrag-bound, not cloud).
-3. 44h full-set chunks.
-4. Quote service: Greg builds per `QUOTE_SERVICE_PLAN.md` after the coins; answer its 6 open questions.
+## NEXT (-> `KICKOFF_2026-06-09_S27.md`)
+1. **Build the chunked coeff-gen driver AS A WORKFLOW** (clear-every-100-trades, interleaved across ALL buckets, resume-safe, buckets separate) -> re-run (A) validation. KEPT: btc_bybit_buy 482 win + 726 lose.
+2. doge/link/xrp: upstream trade-gen + discovery HERE (refrag-bound). Then 44h full-set chunks. Net-of-cost still owed.
+3. **KB policy (Greg):** every knowledge json -> 2 copies: Factory (`F:\Factory\knowledge`) + OD (`E:\refrag\discoveries` = the OD KB), plus refrag if relevant. Sync OD-relevant Factory jsons into OD.
+4. Quote service (separate): Greg builds per `QUOTE_SERVICE_PLAN.md` (phase-2 branch); answer its 6 open questions.
