@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-06-08 Session 24 — body canonical through S24)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-06-08 Session 25 — body canonical through S25)
 
 ## START HERE (workflow block; JOB-1 drift fixed S17, 2026-06-02)
 
@@ -868,6 +868,37 @@ The v4 handoff (`SESSION_HANDOFF_2026-05-26_v4.md`) contains the Session
 The early-Session-3 handoff in repo (`SESSION_HANDOFF_2026-05-25.md`)
 contains the per-domain algebraic equation coefficients that are
 preserved through Session 5.
+
+## Note (Session 25 update — 2026-06-08) — MARKETS: PySR/Julia toolchain FIXED; dipole VALIDATED real on the 128-dim per-pair basis
+
+S25 cleared the S24 blocker and executed kickoff §0–§2 on the RIGHT basis. Full detail:
+`SESSION_HANDOFF_2026-06-08_S25.md`; next steps `KICKOFF_2026-06-09_S26.md`; standalone note
+`CLAUDE_session_note_2026-06-08_S25.md`.
+
+- **Toolchain FIXED (durable).** The S24 "PySR hangs" was juliapkg's first-run Julia download stalling on the
+  flaky `julialang-s3` mirror (resets even curl). Pre-placed Julia 1.11.9 + set env `PYTHON_JULIAPKG_EXE`;
+  `import pysr` (1.5.10) + a real fit now work (~12s cached). [[pysr-julia-local-toolchain]]
+- **Dipole is REAL on the 128-dim per-pair basis.** Ran the verbatim originals (`_markets_algebraic_dipole.py`,
+  `_markets_dipole_kfold.py`) on real `result.operator_coefficients` (128-dim) from
+  `E:\refrag\discoveries\operator_discoveries\`: the algebraic surface reproduces per pair (R²_quad up to 0.975,
+  convex +γ) while POOLED collapses to 0.49. Honest validation on PRE-ENTRY (no look-ahead) coefficients
+  (`_preentry_cs100`, 100/100): classifier acc 0.947 AND a label-permutation null at chance (0.50) →
+  **real-vs-null z = +9.6 across all 12/12 pairs**. Genuine predictive signal, not a D≫N geometric artifact.
+  [[dipole-real-on-128dim-per-pair]]
+- **Why S24 collapsed (Greg, confirmed):** the earlier run **mashed all sources together instead of analyzing
+  them separately** — pooling forces the degenerate Hb=−Ha tautology. KEEP PAIRS SEPARATE; never pool across
+  pairs. (The S24 15-dim hand-built c_i + per-feature standardizer was also off-BUILD_PLAN.)
+- **PySR discovery (kickoff §2 — discover, don't hardcode):** PySR reproducibly discovers a convex dipole
+  surface per pair (5/12 identical form across 3 seeds), and the crypto data prefers a **cubic** over the
+  hardcoded quadratic ("data picks the form").
+- **Correct construction already in repo:** `odcore/dipole_predictor.py`
+  (`build_centroids`/`project`/`algebraic_dipole_over_trades`) is the verbatim 128-dim port; the fix is a
+  DATA-PATH change — feed raw 128-dim coeffs per pair, NOT the 15-dim `dipole_trade.py` vector.
+- **Still owed (Result Discipline):** walk-forward / non-random split (the discovery JSONs lack trade
+  timestamps), net-of-cost PnL, and the LARGER trade-set run — the 15-source 16–30 day (~16k-trade) set,
+  attached from an E-drive folder (Greg) — all S26.
+
+Prior S24 below.
 
 ## Note (Session 24 update — 2026-06-08) — MARKETS: dipole gate FAILS at full scale; root cause = off-BUILD_PLAN basis; reoriented
 
