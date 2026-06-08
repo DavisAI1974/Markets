@@ -1,5 +1,10 @@
 # KICKOFF — Quote Service (markets-watch market-making) — written 2026-06-08 (S26)
 
+## OPERATING CONTEXT (before you read)
+- Your **global `~/.claude/CLAUDE.md` (htmx/CRO) auto-loads** — use it for all frontend work (FastAPI returns HTML fragments, not JSON).
+- This branch has **no project `CLAUDE.md`**, and you do **NOT** need to read the OD-research master `CLAUDE (5).md` (on `claude/beautiful-shaw-040328`; ~2,749 lines, mostly physics — skip it).
+- The operating discipline you DO need is in the handoffs + `QUOTE_SERVICE_PLAN.md §4F`: **no synthetic data**; **Result Discipline** (every claim needs a falsifiable test — here, forward-paper validation); **Adaptive-Markets "cell strength" framing** (not "structural signal yes/no"); and the **SETTLED list — do not relitigate** (VPIN mults, sigma cuts, Gate I conventions, VOL_MULT bounds, notional, registry-driven playbooks, no math jargon in user strings).
+
 WORKING BRANCH: `claude/continue-phase-2-pipeline-UFiGY` (the markets-watch platform — this branch).
 The OD layer it fuses with lives on `claude/beautiful-shaw-040328` (`odcore/` + `backend/odcore_store.py`).
 
