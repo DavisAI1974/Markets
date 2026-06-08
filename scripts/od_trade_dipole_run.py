@@ -281,14 +281,32 @@ def main():
     ap.add_argument("--embargo", type=int, default=50)
     ap.add_argument("--max-trades", type=int, default=0, help="cap per source (0=all); even subsample")
     ap.add_argument("--standardize", default="all", choices=["all", "none", "scale", "pool"])
+    ap.add_argument("--cache-dir", default=os.path.join(REALBINS, "_dipole_cache"),
+                    help="per-source c_i cache (resumable; a kill just resumes)")
+    ap.add_argument("--eval-only", action="store_true", help="use cached sources only; build nothing")
+    ap.add_argument("--no-cache", action="store_true", help="ignore + overwrite cache")
     args = ap.parse_args()
 
     print(f"== S23 chem-dipole trade runner ==  pre_entry={args.pre_entry}s "
           f"fee={args.fee_bps}bps slip={args.slippage_bps}bps folds={args.n_folds} "
           f"embargo={args.embargo} leadlag_nnull={args.leadlag_nnull}")
 
+    os.makedirs(args.cache_dir, exist_ok=True)
+    tag = (f"pe{args.pre_entry}_w{args.window}_s{args.stride}_ml{args.max_lag}_"
+           f"ll{args.leadlag_nnull}_fee{int(args.fee_bps)}_mt{args.max_trades}")
     all_C, all_lab, all_gross, all_ts = [], [], [], []
     for src in args.sources:
+        cpath = os.path.join(args.cache_dir, f"{src}_{tag}.npz")
+        if os.path.exists(cpath) and not args.no_cache:
+            z = np.load(cpath)
+            C, lab, gross, ts = list(z["C"]), list(z["labels"]), list(z["gross"]), list(z["ts"])
+            print(f"  {src:<16} [cache] usable={len(C):>4} "
+                  f"(win={int(sum(1 for x in lab if x>0))})", flush=True)
+            all_C.extend(C); all_lab.extend(lab); all_gross.extend(gross); all_ts.extend(ts)
+            continue
+        if args.eval_only:
+            print(f"  {src:<16} [eval-only] no cache; skipped")
+            continue
         path = os.path.join(REALBINS, f"{src}_bins.json")
         if not os.path.exists(path):
             print(f"  [skip] {src}: no bins at {path}")
@@ -303,12 +321,15 @@ def main():
         C, lab, gross, kept, (sb, ss) = build_vectors(
             trades, series, args.pre_entry, args.window, args.stride,
             args.max_lag, args.leadlag_nnull)
+        ts = [tr.entry_ts for tr in kept]
+        if C:    # checkpoint this source immediately (crash-proof + resumable)
+            np.savez(cpath, C=np.asarray(C, float), labels=np.asarray(lab),
+                     gross=np.asarray(gross, float), ts=np.asarray(ts))
         n_win = sum(1 for x in lab if x > 0)
         print(f"  {src:<16} bars={len(bars):>6}min  trades={len(trades):>4}  "
               f"usable={len(C):>4} (win={n_win} lose={len(C)-n_win})  "
-              f"skip[bounds={sb} short={ss}]  {time.time()-t:.1f}s", flush=True)
-        all_C.extend(C); all_lab.extend(lab); all_gross.extend(gross)
-        all_ts.extend(tr.entry_ts for tr in kept)
+              f"skip[bounds={sb} short={ss}]  {time.time()-t:.1f}s -> cached", flush=True)
+        all_C.extend(C); all_lab.extend(lab); all_gross.extend(gross); all_ts.extend(ts)
 
     if len(all_C) < max(20, args.n_folds * 10):
         print(f"\n[STOP] only {len(all_C)} usable trades; need >= {max(20, args.n_folds*10)}. "
