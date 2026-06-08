@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-06-05 Session 21 — body canonical through S21)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-06-07 Session 22 — body canonical through S22)
 
 ## START HERE (workflow block; JOB-1 drift fixed S17, 2026-06-02)
 
@@ -868,6 +868,41 @@ The v4 handoff (`SESSION_HANDOFF_2026-05-26_v4.md`) contains the Session
 The early-Session-3 handoff in repo (`SESSION_HANDOFF_2026-05-25.md`)
 contains the per-domain algebraic equation coefficients that are
 preserved through Session 5.
+
+## Note (Session 22 update — 2026-06-07) — MARKETS: chem-dipole construction resolved + core ported
+
+> ALREADY FOLDED IN — do not re-upload/re-apply. This S22 delta is merged into this master
+> in-repo. Per the START-HERE workflow rule (lines 14-21): never re-upload the whole master and
+> never re-paste an already-folded session note. Next session: read the handoff + kickoff, then
+> fold only the NEW (S23+) delta and bump the header line.
+
+Branch `claude/crypto-trading-platform-plan-MpqwG` (DavisAI1974/Markets). No PR. All Operating
+Rules + Result Discipline in force. Zero synthetic. Full detail: `SESSION_HANDOFF_2026-06-07_S22.md`;
+next steps: `KICKOFF_2026-06-07_S23.md`.
+
+Headline: resolved S22 priority #1 (the chem dipole). The originals were NOT in `Basic_equations`
+(Greg checked) and NOT in Markets git history (all 15 refs searched); the verbatim original is a
+LOCAL untracked file at `E:\Markets\_markets_algebraic_dipole.py`. It defines H_a/H_b as NORMALIZED
+PROJECTIONS of a per-trade operator-coefficient vector onto in-sample win/lose centroids
+(H_a=<c,c_win>/||c_win||, H_b=<c,c_lose>/||c_lose||; fit H_a^2=a+b*(H_a*H_b)+c*(H_a*H_b)^2) -- NOT
+windowed Vasicek entropy of buy/sell volume. That mismatch is the entire c~=0 collapse (near-
+symmetric buy/sell entropies -> H_a~=H_b -> collinear regressor -> gamma unidentified; epistemic
+rule #4 confirmed: tool-wrong, not signal-absent). The two other "missing" files
+(s12_coupling_decomposition / s13_chemistry_residual) are already covered by `odcore/null_extract.py`
+(the 5-step coupling model), so only `dipole_predictor.py` was wrong.
+
+Pushed (commit `d129c19`): `odcore/dipole_predictor.py` rewritten to the verbatim construction
+(build_centroids / project / algebraic_dipole_over_trades; legacy window fit kept for
+coupling_scanner); `odcore/dipole_trade.py` NEW wires it onto the current 5-step model -- per-trade
+c_i = 15-feature coupling vector (Greg-approved decision #1), per-feature standardized, centroid-
+projected; portable (channel arrays + labels as args). NOT validated: reproducing R^2 is structural,
+not an edge; the predictor must clear `odcore/validation.py` (S20/S21: unblocked OD loses net-of-cost).
+NOT done (S23 #1): the runner that pulls labeled trades + pre-entry channels, fits with WALK-FORWARD
+centroids, and validates.
+
+Environment: `E:\Markets\.claude` is HARD-LOCKED (exFAT open handle) -- in-place checkout impossible;
+worked entirely from git refs and committed via git plumbing (temp index, no checkout). Avoid
+`Remove-Item` while cwd is `E:\Markets`. Prior S21 below.
 
 ## Note (Session 21 update — 2026-06-05) — MARKETS: OD layer wired through the platform
 
