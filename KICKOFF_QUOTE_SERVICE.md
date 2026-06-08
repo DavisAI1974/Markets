@@ -25,7 +25,7 @@ The OD layer it fuses with lives on `claude/beautiful-shaw-040328` (`odcore/` + 
 
 ## FIRST BUILD STEPS (from the plan)
 - **LAUNCH_PLAYBOOK §1.5** first (unblocks forward-paper data).
-- **Phase 0:** merge `CouplingStore` + the `odcore/` package from `claude/beautiful-shaw-040328` into this branch; register the 5 OD endpoints; ensure `odcore/` on `sys.path`. Degrades gracefully if `realbins/` absent.
+- **Phase 0:** merge `CouplingStore` + the `odcore/` package from `claude/beautiful-shaw-040328` into this branch; register the 5 OD endpoints; ensure `odcore/` on `sys.path`. Degrades gracefully if `realbins/` absent. **No Julia/PySR needed** — importing `odcore` is PySR-free (only `odcore/symbolic.py` uses PySR; the quote service never imports it). This branch has no PySR/Julia SessionStart hook and doesn't need one; just numpy/scipy/sklearn + `backend/requirements.txt`.
 - **Phase 1:** new `backend/quote_gate.py` (pure `evaluate(...) -> QuoteDecision`) + `tests/test_quote_gate.py`. Then Phase 2 (wire into `poll_all()` + monitor `current_state_for()` accessors), Phase 3 (`quote_state_change` SSE), Phase 4 (htmx `QuoteStatus` fragment + PracticeFeed MM tab), Phase 5 (calibrate/validate net-of-cost).
 
 ## CORE DESIGN — don't drift
