@@ -246,3 +246,96 @@ engineer can port the originals verbatim and diff them against the reconstructio
 ## Branch
 All work on `claude/crypto-trading-platform-plan-MpqwG` (already checked out); commit + push when
 each phase is complete. No PR unless requested.
+
+---
+
+# PART 2 — What THIS session (S20, 2026-06-03) actually built
+
+Self-contained pickup record of the work done in this session, so another session can continue
+from here. (Everything above is the original approved plan; this part is the execution state as
+of this session. Zero synthetic data — Greg's call. Result Discipline in force.)
+
+## Engine built (`odcore/`), all on REAL collector bins
+Every equation RECONSTRUCTED-FROM-CLAUDE.md (the master research log). Modules:
+- `operators.py` — windowed basis [H_a,H_b,H_a^2,H_b^2,H_a*H_b,MI]; Vasicek marginal entropy +
+  KSG(k=4) MI; window=40/stride=10 (INFO-012); `anti_frac` sufficiency proxy.
+- `null_extract.py` — centered-SVD null (NO z-score; MI is the scale-invariant, INFO-051);
+  coupling decomposition {equal-entropy / MI / residual}; biology MI-slope + chemistry
+  residual-fraction strength meters; `analyze_coupling()` with the INFO-041 (mere-correlation)
+  and INFO-024 (collapsed-MI-variance) guards.
+- `leadlag.py` — raw cross-cov-over-lag detector (the S19 right tool, INFO-066): who moves
+  first, z vs a time-slide null.
+- `dipole_predictor.py` — algebraic dipole `H_a^2 = a + b*(H_a*H_b) + c*(H_a*H_b)^2` fit +
+  `H_a>H_b` directional rule.  NOTE (this session's version): H_a/H_b were computed as windowed
+  entropies of buy/sell volume — this was a GUESS and it collapses to c~=0 because buy/sell
+  window entropies are near-symmetric. The correct construction is NOT entropy of volume (see
+  "Blocker" below).
+- `symbolic.py` — PySR (Julia, 1.5.10) symbolic discovery of dipole/MI equations from raw
+  operator data (ops {+,-,*,/,square,cube,exp,log,sqrt}, INFO-025). VERIFIED working on real
+  BTC: discovered `MI ~= -0.028*H_a*exp(H_b) + 0.023` (loss 0.0013).
+- `coupling_scanner.py` — score/rank pairs; tautology-killing circular-shift null (INFO-066) on
+  both lead-lag and operator-structure; `rolling_coupling` + `detect_decoupling` events.
+- `channels.py` — channel factory (orderflow/internal/cross-venue/cross-asset) + INFO-051
+  conditioning + pair enumerator.
+- `io.py` — single real-bins loader (BinSeries: gap-fill, minute resample, cadence-aware
+  `align`); loads the `data/*` branch bins from gitignored `realbins/`.
+- `validation.py` — walk-forward/block CV + embargo; real fees+slippage; random-vs-walkforward
+  gap (INFO-026); tautology-killing signal null.
+- `sizing.py` — OD-native sizing (residual-fraction + dipole R2 + leadlag stability, calibrated
+  to measured edge); Kelly only as a comparison helper (NOT the gold standard — Greg).
+- `stacking.py` — compose operators (weighted_sign/majority/unanimous) + coupling gate.
+- `generators.py` — real-bin OD signals + bridge to `adaptive_backtester.SignalGenerator`.
+- `scripts/` — `od_real_run.py`, `od_scan.py`, `od_pysr_discover.py`, `od_backtest.py`,
+  `od_xvenue_backtest.py`, `session_start.sh`.
+- `tests/` — `test_operator_real.py`, `test_leadlag_real.py` (run on REAL bins; 3 pass).
+- `.claude/settings.json` — Bash allowlist + SessionStart hook (PySR/Julia + real-bins bootstrap).
+
+## Real-data findings (honest, Result Discipline)
+- Pipeline + PySR/Julia work end-to-end on real bins (BTC/ETH x Coinbase/Kraken/Bybit, ~10.7d).
+- Equal-entropy attractor reproduces on real data: quad |cos| to (-1,-1,+2)/sqrt6 = 0.9996.
+- Cross-venue coupling is real + huge z: Coinbase<>Bybit-perp lag-0 cc=0.656 z=580; spot venues
+  looser. Venues synchronous at 1s (sub-second leads need tick data).
+- 145 real decoupling events on Coinbase<>Bybit (the tradeable regime signal).
+- HONEST NULL — no net-of-cost edge from the unblocked pieces. All simple signals lose to 3bps
+  costs (flip every bar): ofi_momentum WF -178%, dipole_direction -12%, tautology-z ~1.
+  Cross-venue reversion is STATISTICALLY REAL (tautology z=3.0-3.6 at 10s) but per-trade edge <
+  cost. The validation harness correctly REJECTS these. Nothing fabricated.
+- Chem QUADRATIC dipole did NOT reproduce on this session's reconstructed channels (buy/sell
+  entropies near-symmetric -> trivial identity, c~=0). Tried 5 channel types x 3 timescales x 3
+  conditionings.
+
+## Blocker (as seen this session)
+The exact chem-dipole CHANNEL CONSTRUCTION (what H_a and H_b are) was not reproducible from the
+master log alone; the original `_markets_algebraic_dipole.py` lives in `DavisAI1974/Basic_equations`,
+which was ACCESS-DENIED this session (scope locked to `davisai1974/markets`). Files needed from it
+(priority): (1) `_markets_algebraic_dipole.py` + whatever module it imports (the H_a/H_b/MI
+builder) + a sample of its input data; (2) `_markets_dipole_kfold.py`, `_markets_dipole_separation.py`,
+`_markets_dipole_chunker_stack.py`; (3) `s12_coupling_decomposition.py`, `s13_chemistry_residual.py`,
+`s12_consolidate_per_domain.py` + `od_per_domain_equations.json`.
+
+## Decisions made this session (best judgment)
+- Zero synthetic enforced; `odcore/synthetic.py` + synthetic tests removed; tests run on real
+  bins (lead-lag injects a KNOWN lag into a REAL return series).
+- New `odcore/` package; existing platform shell left intact (no destructive housekeeping).
+- KSG + Vasicek estimators; global channel conditioning (INFO-051) — note this symmetrizes
+  buy/sell, likely the wrong choice for the chem dipole.
+
+## Docs produced this session
+- `SESSION_HANDOFF_2026-06-03_S20.md` (full detail), `KICKOFF_2026-06-03_S21.md` (next steps),
+  `BUILD_QUESTIONS.md` (decisions + open questions), this `BUILD_PLAN.md`.
+- The master context `CLAUDE (5).md` header bumped to S20 with the rebuild note folded in.
+
+## Where this build plan came from
+Original plan-mode artifact (approved via ExitPlanMode): `/root/.claude/plans/i-uploaded-a-new-
+sorted-donut.md` (ephemeral). Copied verbatim into this `BUILD_PLAN.md` so it survives the
+container. The plan was designed by an architecture (Plan) agent that read the full `CLAUDE (5).md`
+research log, then refined with Greg's directives (chem dipole primary; OD-native sizing not Kelly;
+keep-but-unwire the chunker; use the basic_equations knowledge).
+
+## Next steps (as this session saw them)
+1. Unblock `Basic_equations` (or supply the files above) to get the real chem-dipole construction.
+2. Then: re-run the dipole + `H_a>H_b` predictor on real bins; validate with walk-forward + the
+   tautology null (both already in `odcore/validation.py`) before wiring anything live.
+3. Backend endpoints (coupling matrix / strength / lead-lag / dipole / decoupling) + frontend
+   views; executor wiring (OD generators + OD-native sizing + circuit breakers); keep PELT
+   chunker but unwire from the signal path. Promote ONLY what beats baselines net of cost.
