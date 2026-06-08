@@ -1,0 +1,248 @@
+# Rebuild the Markets signal core around Operator Discovery (OD)
+
+## Context
+
+`CLAUDE (5).md` (committed as the new master research log, identical to the upload) is a
+19-session log of "Operator Discovery" — a domain-agnostic method that extracts governing
+equations from raw data. Markets is treated as the "5th science." The current
+`/home/user/Markets` platform is a mature shell (exchange collectors + durable GitHub
+Actions, FastAPI backend with SSE/auth/push, React frontend, paper-only executor with risk
+gates, PELT chunker, backtester, operator registry) — **but its only "dipole" is crude
+order-flow imbalance** `(buy_vol - sell_vol)/(buy_vol + sell_vol)`. None of the real OD
+machinery the log developed is in this repo (the original scripts live in the separate
+`basic_equations`/`agent` repo, which is **not reachable from this session**).
+
+Goal: **reuse the shell, rebuild the signal core** around the real OD discoveries, in a new
+`odcore/` package — equations reconstructed from the log (line-cited below). Build BOTH the
+coupling scanner AND the directional predictor on one engine, let the process discover which
+channels carry the strongest signal, strip/​unwire the cruft the repo accumulated, and wire
+toward live with OD-native (not textbook-Kelly) sizing and honest validation.
+
+### Honest framing (load-bearing, per the log's own Result Discipline)
+The owner wants "100% winners betting max bank." No system delivers that, and max-bank sizing
+blows up a real edge on the first losing streak. The log itself says the ~0.993 dipole accuracy
+is **random-CV**, which **overstates** out-of-sample on correlated series (INFO-026, line 617).
+So we build the strongest signal the pieces allow, prove it with **walk-forward** validation +
+a **tautology-killing null**, and size from **measured OD confidence** with circuit breakers.
+That is how a real edge is kept, not thrown away.
+
+---
+
+## The OD parts list we are implementing (with log cites)
+
+- **A. Windowed operator basis + centered-SVD null** — basis `[H_a, H_b, H_a², H_b², H_a·H_b, MI]`,
+  window=40 / stride=10; **center (do NOT z-score)** then SVD, smallest singular vectors = the
+  null; rank-3 null subspace (INFO-022, l.609; INFO-012, l.597). The `(-1,-1,+2)/√6`
+  equal-entropy attractor is a **geometric artifact / baseline to project out**, not signal
+  (INFO-012/036/051, l.597/1033/2009).
+- **B. Coupling discriminator** (INFO-040 l.289-373; INFO-041 l.375-390) — decompose `null[0]`
+  into {equal-entropy, MI, residual} axes. **MI entering the null ⇒ structured, law-like
+  coupling**; the INFO-041 control proves generic correlation creates MI but it does NOT enter
+  the null — so this discriminates *structured* coupling from mere correlation.
+- **C. Two strength meters** — **biology** = MI-vs-H_a **slope** (`MI ≈ 0.28·H_a`, slope tracks
+  coupling knob g; INFO-040 l.340). **chemistry** = **residual-fraction** of the fixed relation
+  `0.54·H_a + 0.54·H_b + 0.32·H_a² − 0.55·H_b² ≈ 0`, which rises monotonically with the
+  Brusselator-B knob (0.169→0.342→0.400; INFO-044 l.1495-1512).
+- **D. PRIMARY signal — static algebraic (chem) dipole** `H_a² = a + b·(H_a·H_b) + c·(H_a·H_b)²`
+  (chemistry coeffs `a=0.007, b=−0.093, c=1.309, R²=0.943`, l.287), with the directional
+  `H_a > H_b` rule (~0.993 **random**-CV, l.244).
+- **E. CRITICAL S19 finding — the entropy/flow dipole is the WRONG tool** (INFO-065/066,
+  l.890-945). `dMI/dt ~ Σ c_self·H_i² + Σ c_cross·H_i·H_j` is FLAT on real data because windowed
+  marginal entropies are lag-independent, so coupling/time info never enters them
+  ("tool-blindness"). What DOES carry it: **(1) raw cross-covariance over lag** → recovers
+  lead-lag timing (7.32 ms in LIGO; |cc| z=37 in GPS), and **(2) the static algebraic dipole**
+  (D). In crypto, (1) = a **cross-venue / cross-asset lead-lag detector** (who moves first, by
+  how many bars). Design AROUND this; do not build the flow dipole.
+- **F. Tautology-killing null** (INFO-066 l.913) — circular-shift one channel: preserves
+  smoothness + shared factor, kills only the instantaneous pairing. The rigorous proof a
+  coupling/dipole excess is real (event z=2.7 genuine vs noise z≈0 tautology). Standard
+  validation gate.
+- **G. Per-domain functional families** (INFO-025 l.280-285) — physics `(H_b−H_a)²+c`, biology
+  `0.5·exp(H_a/2)`, chemistry `linear in H_a`, geology `const`. Candidate operators to try per
+  pair; data picks.
+- **H. Algebraic ratio** `C = H_self/H_cross` (l.274) — a by-scale meter per pair.
+- **I. Stationarity** (INFO-026, l.617) — chemistry is the **only** stationary domain → the
+  **only one with positive walk-forward** (+0.4..+0.8 vs −0.5..−80). This is *why* the chem
+  dipole transfers cleanly and survives honest validation. Report the **random-vs-walkforward
+  gap** as a stationarity signature.
+- **J. MI is the only scale-invariant quantity** (INFO-051, l.1051) — marginal-entropy asymmetry
+  is a units choice. Normalize channels so MI is the physical content; don't read asymmetry as
+  signal.
+- **K/L. Estimator + confidence** — KSG kNN MI holds (INFO-034); **singular-gap** = null-direction
+  confidence; **anti_frac ≈ 1/N_eff** = data-sufficiency flag (INFO-017/024).
+- **M. "They never stacked"** (l.124) + the `_markets_dipole_chunker_stack` concept (l.246) —
+  the edge is in composing pieces others used singly.
+
+---
+
+## Approach: new `odcore/` package, reuse the shell
+
+```
+odcore/
+  operators.py        # A,J,K: basis, KL/Vasicek marginals, KSG MI (k=4), build_operator_matrix(window=40,stride=10)
+  null_extract.py     # A,L: center(not z-score)+SVD, rank-3 null, singular_gap, anti_frac, project_out_equal_entropy
+  coupling.py         # B,C: decompose null -> {eqEnt,MI,residual}; structured-vs-correlation; MI-slope + residual-fraction meters
+  leadlag.py          # E: raw cross-cov over lag, argmax-lag = who-moves-first, z vs time-slide null  (the S19 right tool)
+  dipole_predictor.py # D: PRIMARY algebraic surface fit per (asset,venue,pair) + residual-fraction strength + H_a>H_b rule
+  symbolic.py         # PySR + Julia symbolic regression: DISCOVER the dipole/coupling equation from raw
+                      #   crypto operator data (Piece 1), not hardcode it; ops {+,-,*,/,square,cube,exp,log,sqrt}
+  functional_families.py # G: physics/biology/chemistry/geology candidate forms; data selects
+  channels.py         # channel constructors (cross-asset, cross-venue, order-flow, price/vol, exogenous); MI-preserving normalize (J)
+  coupling_scanner.py # enumerate pairings; rank by structured coupling gated by tautology-null (F); emit DECOUPLING events
+  stacking.py         # M: compose dipole + leadlag + strength + families into one stacked generator
+  validation.py       # I,F: walk-forward/block CV + embargo; random-vs-walkforward gap; fees+slippage; tautology null; baselines
+  sizing.py           # OD-native sizing (NOT Kelly): residual-fraction + live R^2 + leadlag stability, calibrated to measured edge
+  generators.py       # SignalGenerator wrappers so odcore plugs into the existing AdaptiveSelector
+  io.py               # single load_bars (consolidates 5 duplicate loaders)
+executor/sizing.py                  # bridge odcore.sizing -> position size (replaces fixed position_size_usd)
+executor/exchanges/ccxt_adapter.py  # env-gated real adapter; PaperExchange stays default
+tests/  test_synthetic_coupling.py, test_dipole_predictor.py, test_leadlag.py, test_validation.py
+```
+Every `odcore/*` equation header marked **RECONSTRUCTED-FROM-CLAUDE.md**, naming the original
+`basic_equations` script it would be a verbatim port of (so the repo can be added later and diffed).
+
+### Plug-in points (reuse, don't rebuild)
+- **MarketChunker** (`markets_adapter.py:237`): the new path uses odcore's own window=40/stride=10
+  and does **not** call `chunk()`. **Keep the class, unwire it from the signal path** (per
+  directive). It stays available for regime-history/exploratory segmentation only.
+- **SignalGenerator / AdaptiveSelector** (`adaptive_backtester.py:51-163`): `odcore.generators`
+  returns `SignalGenerator`s; they drop into the existing rolling-Sharpe selector unchanged. Extend
+  the single-`MarketFeatures` `predict_fn` via a closure / thin `PairFeatures` for cross-pair
+  operators; keep existing single-feature generators working.
+- **OperatorRegistry** (`operator_registry.py`): unchanged schema; OD generators register under the
+  same `ASSET.VENUE` keys; `preferred_for()` surfaces the winner.
+- **regime_classifier**: kept as gating/context; coupling scanner adds a new `DECOUPLING` event type.
+- **SSE / SignalEvent** (`backend/api_server.py:115`): extend with OD fields
+  (`coupling_strength`, `dipole_r2`, `leadlag_bars`, `leadlag_z`, `structured`, `od_size_fraction`).
+- **Risk gates** (`executor/risk.py:161`): add `gate_dipole_r2`, `gate_leadlag_stability`; keep
+  `gate_daily_loss` / `gate_daily_trade_count` / stop-loss as guardrails. `position_size_usd`
+  becomes a **cap**; actual size from `odcore.sizing`.
+- **Exchange protocol** (`executor/exchanges/base.py:39`): `ccxt_adapter` implements it; loaded only
+  when `MARKETS_LIVE_EXCHANGE=ccxt:<id>` is set; `PaperExchange` stays the default.
+
+### Estimator / windowing / numerical stability
+KSG MI (k=4), Vasicek/KL marginals (binning fallback for short windows); raw-cov path for leadlag
+(no entropy). window=40/stride=10. **center not z-score**; jitter near-constant channels; dedup
+zeros in order-flow; clamp `MI≥0`; refuse to emit when `singular_gap` < τ or `N_eff` too small;
+gate on extreme marginal-entropy asymmetry (MI variance collapses there).
+
+### Coupling scanner + lead-lag
+Enumerate cross-asset / cross-venue / order-flow / price-vol / exogenous pairings (repo already
+collects Coinbase/Kraken/Bybit BTC+ETH). For each: build matrix → null → decompose → strength;
+**a pair is "coupled" only if it beats its circular-shift control (F)**. Decoupling → first-class
+`DECOUPLING` signal. Lead-lag: raw cross-cov over a lag grid, `argmax|cc|` = leader + lag in bars,
+z vs time-slide null → `LEADLAG` signals (cross-venue = latency-arb; cross-asset = momentum
+transmission), sized by lead-lag stability.
+
+### Primary generator + alternatives + stacking
+Chem algebraic dipole is PRIMARY (fit per source, residual-fraction strength, `H_a>H_b` direction).
+Functional families (G) are alternative `predict_fn`s; the existing `AdaptiveSelector` picks the live
+winner per source ("data picks"). `stacking.py` builds the `dipole_chunker_stack` composite that
+competes in the same pool.
+
+### Symbolic-regression equation DISCOVERY — PySR + Julia (the per-session research workflow)
+This is the same machinery every research session used (INFO-025 l.615; "same PySR-from-raw-data
+machinery," l.472/567) — and the owner's directive. We do not just hardcode the reconstructed chem
+coefficients; we **run PySR (Julia backend) on the crypto operator-basis data to DISCOVER the dipole /
+coupling / MI-vs-H equation per channel-pair from raw data** (the "Piece 1: re-derive the governing
+equation without assuming it" step).
+- `odcore/symbolic.py` wraps PySR with the **extended operator set `{+,−,*,/,square,cube,exp,log,sqrt}`**
+  (exactly INFO-025), complexity-limited (the families landed at complexity 5–6), fitting targets like
+  `H_a²` and `MI` against the basis columns over the windowed ensemble.
+- **Acceptance discipline from the log**: a discovered form is only promoted if it reproduces across
+  **≥3 seeds with <5% coefficient variation** (INFO-025 / Result Discipline l.143) AND survives
+  walk-forward + the tautology-killing null. PySR output is a *candidate*, not a claim.
+- The reconstructed chem form `a=0.007,b=−0.093,c=1.309` becomes a **synthetic sanity anchor** (PySR on
+  a Brusselator must recover it) — the production equation per crypto pair is whatever PySR discovers
+  and validation promotes. Expect crypto pairs to land on the chemistry/algebraic family (the owner's
+  "chem dipole is the biggest boost", reinforced by the INFO-026 stationarity reason).
+- **Fallback**: when Julia/PySR is unavailable in an environment (it happened in the log, l.2057), fall
+  back to the pure-numpy reconstructed forms so the engine still runs — but flag that discovery is
+  degraded.
+
+### SessionStart hook + reproducible toolchain (set up with the `session-start-hook` skill)
+The log's sessions run a **SessionStart hook that re-bootstraps the numeric stack + PySR + Julia every
+session** (l.1721-1722, 2044-2045) so symbolic regression is always available; this repo never had that
+treatment (the open S9 question, l.249-258). We add it:
+- A `.claude/settings.json` SessionStart hook + a guarded `scripts/session_start.sh` that installs the
+  numeric stack (numpy/scipy/scikit-learn) + `pysr` + the Julia backend, **guarded so it always reaches
+  completion** even if a step fails (the latent-failure guard noted at l.2042). Authored via the
+  `session-start-hook` skill.
+- Pin `pysr` + Julia + the numeric stack in `requirements.txt` for reproducibility (the log pins PySR
+  1.5.10).
+- Per-session research workflow carried over from the log: work on the session branch, write a detailed
+  `SESSION_HANDOFF_*.md`, fold the headline + new ledger entries into the master context, bump the
+  header date/session, commit + push (the log's "keep the header current" rule).
+
+### Validation + OD-native sizing + live
+- **validation.py**: walk-forward/block CV + embargo; report random-vs-walkforward gap (I); realistic
+  fees + slippage via `kyle_proxy` (`markets_adapter.py:485`); tautology null (F); must beat
+  buy-hold, the existing `pure_dipole_fade`/`dipole_x_volz`, rolling-corr, cointegration,
+  transfer-entropy, and lead-lag — net of cost — to be promoted.
+- **sizing.py (NOT Kelly)**: `size_fraction = clip(w1·residual_fraction + w2·norm(dipole_R²) +
+  w3·leadlag_stability, 0, 1) · calibration`, where `calibration` = measured walk-forward edge, so
+  size tracks **realized** OD confidence. Notional = `min(size_fraction·max_position_usd,
+  max_position_usd)`. Circuit breakers stay purely as guardrails.
+- **ccxt_adapter.py**: env-gated; `PaperExchange` is the import default.
+
+### Backend / frontend
+New endpoints: `/api/coupling_matrix`, `/api/strength/{asset}/{venue}`, `/api/leadlag/{asset}`,
+`/api/dipole_signals`, `/api/decoupling` (all behind `verify_token`); OD fields also flow through the
+existing `/api/signals` + `/api/stream` to the executor. New React pages: `CouplingMatrix.jsx`
+(heatmap), `StrengthOverTime.jsx`, `LeadLag.jsx`, `DecouplingFeed.jsx`; extend `SignalCard`/
+`DipoleChart`; add fetchers to `api.js`.
+
+### Housekeeping (branch + move-don't-delete + grep-prove zero callers)
+- **PELT chunker**: keep in repo, unwire from signal path (above).
+- Consolidate **5 duplicate `load_bars`** (`backtester.py:48`, `adaptive_backtester.py:170`,
+  `phase1_5_evaluator.py`, `autoresearch_lite.py`, `api_server.py:224`) into `odcore/io.py` with
+  thin shims, then drop.
+- **DEMO_MODE** emitter (`api_server.py:89`): default off; strip once OD signals populate the feed.
+- DeepNova mirror-comment scaffolding in `markets_adapter.py` / `coinbase_*_canary_v2.py`: strip
+  stale "mirrors X exactly" framing, keep the working classes.
+- **autoresearch_lite.py**: superseded by `odcore.validation`; unwire from any scheduled path, keep
+  on branch as reference.
+
+---
+
+## Phased execution
+0. **Toolchain + engine + tests-first**: author the SessionStart hook (`session-start-hook` skill) that
+   installs the numeric stack + PySR + Julia (guarded); pin them in `requirements.txt`. Build
+   `operators`, `null_extract`, `test_synthetic_coupling` — OU recovers `(-1,-1,+2)/√6` (cos≥0.9994);
+   reproduce INFO-040 control (g=0→MI-frac~0.006, g>0→0.81-0.97 monotone slope) and INFO-041 control
+   (correlation makes MI but it stays out of the null).
+1. **Symbolic discovery + primary dipole + lead-lag**: `symbolic.py` runs PySR (ops
+   `{+,−,*,/,square,cube,exp,log,sqrt}`) — on a synthetic Brusselator it must **rediscover**
+   `a=0.007,b=−0.093,c=1.309,R²~0.943` (anchor test); on cached crypto bins it discovers the per-pair
+   dipole form (≥3 seeds, <5% coeff variation to promote). `dipole_predictor` consumes the discovered
+   form; known N-bar-lagged synthetic pair recovers lag + z (`leadlag`).
+2. **Scanner + strength + families + stacking**: chem residual-fraction tracks a swept synthetic
+   B-knob (0.169→0.342→0.400); generators wired into `AdaptiveSelector`.
+3. **Validation + sizing**: backtest cached bins (`phase1_bins.json`, `kraken_bins.json`, eth_*);
+   random-vs-walkforward gap small on chem-form / large on non-stationary baselines; tautology-null
+   kills artifacts; OD size tracks measured edge.
+4. **Backend + frontend + executor**: endpoints, SSE fields, views, new risk gates, env-gated
+   `ccxt_adapter`; paper-trade smoke test `python -m executor.executor --config
+   executor/config.example.json --dry-run` opens/closes OD-sized paper trades in `audit.jsonl`.
+5. **Housekeeping** on the same branch; grep-prove zero callers; DEMO_MODE off.
+
+## Verification (end-to-end acceptance)
+- (a) Synthetic unit tests green: INFO-040/041 controls, OU `(-1,-1,+2)/√6` recovery, known-lag
+  recovery, and **PySR rediscovers the chem coeffs** `a=0.007,b=−0.093,c=1.309` on a synthetic
+  Brusselator with <5% cross-seed coefficient variation.
+- (b) Walk-forward backtest on cached bins beats buy-hold + the existing dipole generators **net of
+  fees+slippage**, with the tautology-null passing.
+- (c) Paper-trade smoke test: OD signals → risk gates → OD-native sizing → paper fills → audit trail
+  → outcome resolution in `/api/stats`.
+
+## Open item — `basic_equations` repo
+The original scripts (`_markets_algebraic_dipole.py`, `_markets_dipole_kfold.py`,
+`_markets_dipole_separation.py`, `_markets_dipole_chunker_stack.py`, `s12_coupling_decomposition.py`,
+`s13_chemistry_residual.py`, `s12_consolidate_per_domain.py`) are **not reachable** from this
+session (scope is locked to `davisai1974/markets`; `list_repos`/`add_repo` tooling is unavailable).
+The plan reconstructs every equation from the log. If that repo is added to session scope, the
+engineer can port the originals verbatim and diff them against the reconstructions.
+
+## Branch
+All work on `claude/crypto-trading-platform-plan-MpqwG` (already checked out); commit + push when
+each phase is complete. No PR unless requested.
