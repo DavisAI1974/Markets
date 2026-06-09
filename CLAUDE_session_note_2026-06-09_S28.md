@@ -49,6 +49,11 @@ patch are NOT in this repo (refrag-bound). The collapse is in the refrag trade-g
 constant. Fix at source → rebuild win buckets → re-validate. This is also why `od_larger_set_val.py` says "no time
 key exists" (it read a 1-unique_ts file).
 
+**KB propagation (the JSONs are USED in the 3 KBs).** Discovery/evidence JSONs are replicated to OD/Refrag/Factory
+per the S27 3-copy policy, so a tainted coeff JSON is tainted in 3 places and downstream reads it. After re-running
+any affected bucket, re-archive corrected JSONs to all 3 KBs and supersede the bad snapshots by run_id/timestamp.
+coinbase/bybit clean → no churn.
+
 **Branch map (matters — live collectors are NOT on the working branch).** default `new-session-o3vnm` governs the
 scheduled workflow YAML; checkout `ref:` `continue-phase-2-pipeline-UFiGY` governs collector code; `beautiful-shaw-040328`
 is the canonical OD working branch (`zealous-cannon-aej9yf` is its session mirror). Next scheduled run (cron `0 */6 * * *`)

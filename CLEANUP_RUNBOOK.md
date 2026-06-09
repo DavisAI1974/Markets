@@ -44,6 +44,19 @@ python scripts/bins_integrity.py --report realbins/*.json --json integrity.json
 2. **Validation time-split** — blocked by the win-bucket `entry_ts` collapse (below),
    not by the bins.
 
+## Knowledge-base propagation (the JSONs are USED in the KBs)
+The per-trade discovery JSONs and evidence snapshots are replicated into all 3 KBs
+(OD `E:\refrag\discoveries`, Refrag `E:\refrag\docs`, Factory `F:\Factory\knowledge`)
+per the S27 3-copy policy, and downstream reads from them. So a tainted coeff JSON is
+tainted in THREE places. Cleanup is not done at re-run — it must propagate:
+- After re-running any affected bucket (kraken spikes; win side if the check says so),
+  **re-archive the corrected JSONs to all 3 KBs** and **supersede/retire the bad
+  snapshots** (don't leave a stale `evidence_snapshot_*` next to the corrected one —
+  mark it superseded by run_id/timestamp so a KB reader can't pick the tainted copy).
+- The integrity/repair outputs (`bins_integrity.py --report`/`--normalize`) are
+  knowledge JSONs too → write them to all 3 KBs.
+- coinbase/bybit JSONs are clean → their KB copies stay; no churn.
+
 ## Win-bucket date collapse (separate bug, refrag-side)
 The win/lose pool builder + `_patch_win_buckets_entry_ts.py` are **not in this repo**
 (refrag-bound, local). `markets_adapter.py` carries correct time keys
