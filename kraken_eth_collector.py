@@ -79,7 +79,11 @@ async def collect(duration_s: float, save_path: str) -> dict[float, dict]:
                     channel = msg.get("channel", "")
                     mtype = msg.get("type", "")
 
-                    if channel == "trade" and mtype in ("update", "snapshot"):
+                    # Live trades only. Kraken v2 replays a "snapshot" of recent
+                    # trades on every (re)subscribe; counting those re-ingests the
+                    # same trades on each reconnect (inflated buy/sell volume,
+                    # dumped into the reconnect second). Accumulate "update" only.
+                    if channel == "trade" and mtype == "update":
                         for trade in msg.get("data", []):
                             ts = int(time.time() / SECOND_BIN_S) * SECOND_BIN_S
                             side = str(trade.get("side", ""))
