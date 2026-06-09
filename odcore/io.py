@@ -60,8 +60,20 @@ class BinSeries:
             spread=block(self.spread, "mean"), n_trades=block(self.n_trades, "sum"))
 
 
-def load_bins(path: str) -> BinSeries:
-    """Load a bins JSON file into a gap-filled BinSeries on a 1-second grid."""
+def load_bins(path: str, mask_spikes: bool = False,
+              spike_k: float = 20.0, spike_floor: float = 50.0) -> BinSeries:
+    """Load a bins JSON file into a gap-filled BinSeries on a 1-second grid.
+
+    Spike handling (the Kraken snapshot-replay residue): a reconnect dumped a
+    whole replayed batch of already-counted trades into one wall-clock second,
+    so a few seconds carry duplicated volume. Two guards, both keeping `mid`
+    intact (only the inflated volume is removed):
+      - any second carrying ``"_suspect": True`` (set by scripts/bins_integrity.py
+        --normalize) has its buy/sell/n_trades zeroed, always; and
+      - with ``mask_spikes=True`` (opt-in, for raw un-normalized files) seconds
+        whose n_trades exceeds ``max(spike_k * median_nonzero, spike_floor)`` are
+        zeroed too. Off by default so liquid-venue news bursts aren't masked.
+    """
     with open(path) as fh:
         raw = json.load(fh)
     items = sorted((int(float(k)), v) for k, v in raw.items())
@@ -81,6 +93,14 @@ def load_bins(path: str) -> BinSeries:
         if bid and ask:
             spread[i] = float(ask) - float(bid)
         ntr[i] = float(v.get("n_trades", 0.0) or 0.0)
+        if v.get("_suspect"):              # repair tool already flagged this second
+            buy[i] = sell[i] = ntr[i] = 0.0
+    if mask_spikes:
+        nz = ntr[ntr > 0]
+        if nz.size:
+            thr = max(spike_k * float(np.median(nz)), spike_floor)
+            spike = ntr > thr
+            buy[spike] = 0.0; sell[spike] = 0.0; ntr[spike] = 0.0
     # forward-fill mid across empty seconds (price persists; volume does not)
     last = 0.0
     for i in range(n):
