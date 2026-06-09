@@ -128,6 +128,39 @@ jobs:
           cp eth_kraken_bins.json /tmp/bins/ 2>/dev/null || true
           cp eth_bybit_perp_bins.json /tmp/bins/ 2>/dev/null || true
 
+          # Guardrail (anti-clobber): this step is `if: always()` and force-pushes,
+          # so a crashed/partial collector run must NOT overwrite good cumulative
+          # seconds. The durable pattern restores+appends, so a healthy file is
+          # always >= the data-branch copy. If a fresh file regressed (fewer bins
+          # than what's already on data/eth-bins), restore the data-branch copy so
+          # the push preserves history instead of wiping it.
+          python - <<'PY'
+          import json, subprocess, os
+          BRANCH = "origin/data/eth-bins"
+          FILES = ["eth_coinbase_bins.json", "eth_kraken_bins.json", "eth_bybit_perp_bins.json"]
+          def count(path):
+              try:
+                  with open(path) as f: return len(json.load(f))
+              except Exception: return 0
+          def old_blob(fn):
+              try:
+                  return subprocess.run(["git", "show", f"{BRANCH}:{fn}"],
+                                        capture_output=True, check=True).stdout
+              except subprocess.CalledProcessError:
+                  return None
+          for fn in FILES:
+              newp = os.path.join("/tmp/bins", fn)
+              new = count(newp)
+              blob = old_blob(fn)
+              old = len(json.loads(blob)) if blob else 0
+              if old and new < old:
+                  with open(newp, "wb") as f: f.write(blob)
+                  print(f"[guardrail] {fn}: collected {new} bins < {old} on data branch "
+                        f"-> RESTORED data-branch copy (no regression)")
+              else:
+                  print(f"[guardrail] {fn}: {new} bins (>= {old} on data branch) -> keep")
+          PY
+
           git checkout --orphan data/eth-bins-tmp
           git rm -rf . > /dev/null 2>&1 || true
 
