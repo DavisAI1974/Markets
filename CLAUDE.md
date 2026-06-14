@@ -1,11 +1,21 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-06-11 Session 29 — body canonical through S25; S26-S29 deltas below. For S29, READ the dated handoff/kickoff, not this whole file)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-06-13 Session 30 — body canonical through S25; S26-S30 deltas below. For S30, READ the dated handoff/kickoff, not this whole file)
 
 <!-- AUTO-IMPORTED current lightweight state — bump these each session; full master/archive follows below -->
-@SESSION_HANDOFF_2026-06-11_S29.md
-@KICKOFF_2026-06-12_S30.md
+@SESSION_HANDOFF_2026-06-13_S30.md
+@KICKOFF_2026-06-13_S31.md
 @CLEANUP_RUNBOOK.md
 
 ---
+
+## S30 — WIN-ORACLE COLLAPSE ROOT-CAUSED + FIXED; DIPOLE = REAL-BUT-WEAK GATE PIECE (no standalone net edge); BACK TO THE PLAN (read the dated files)
+Live read: **`SESSION_HANDOFF_2026-06-13_S30.md` + `KICKOFF_2026-06-13_S31.md` + `CLEANUP_RUNBOOK.md`.** Env: `E:\refrag` mounted; 4-CPU box fragile (cap discovery at `--workers 3`).
+- **FRAMING (Greg): the dipole is ONE PIECE of the architecture** — a GATE / spread-adjuster (see `QUOTE_SERVICE_PLAN.md`), NOT a standalone entry signal. A negative *standalone* net-of-cost dipole result does NOT close anything down; it confirms what the plan already assumed. It's one story, not the whole story.
+- **Win-oracle collapse (S29 TODO#2) root-caused at SOURCE.** The hindsight audit computed each oracle exit by reading `E:\Markets\live_data` (the ~6h LRU snapshot); it ran 05-28 but trades entered 05-23/24, so EVERY oracle exit clamped to the 05-28 snapshot window. `oracle_net_bps = sign*(exit/entry-1)*1e4 - 10bps` exactly; real hold 3.4–5 DAYS not 1–6h; `oracle_entry_price` IS real, but the win **labels** are an audit-RUN-time artifact. Fix = regenerate via `markets_bar_loader.load_closes` (history archive); generator not in repo. [[markets-oracle-audit-snapshot-clamp]]
+- **Labels fixed** (`_relabel_true_horizon.py`): best-exit within EACH trade's own true horizon, from the history archive, −10bps. 17.3% of labels flip; win rate 10%→22.4%. **Coefficients are SOUND (pre-entry window, label-independent) → re-partitioned by corrected label, NOT recomputed** (each discovery JSON carries its `source_id`). Index `_cs2000_coeff_index.json(.gz)` (also the dropped S29 TODO#1 compact copy).
+- **Second confound found — win/lose pools disjoint in time+pipeline:** win = 1568 `chunkhash` opportunities (05-23/24), lose = 14181 `slice_..._basis_dislocation` backtest slices (05-04/11). S29's win-vs-lose was partly a date/source detector. [[markets-win-lose-pool-provenance-confound]]
+- **CLEAN verdict (both confounds controlled, pooled within-pair perm null):** dipole = a real but WEAK signal. AUC ~0.6; pooled z=+5.0 (05-23/24, 782w/259l) and **z=+13.6** (05-04/11, 2198w/10895l, 9/12 pairs z>3). NOT the +9.6 artifact, NOT dead. [[dipole-real-on-128dim-per-pair]] updated.
+- **Net-of-cost standalone test** (`_netcost_backtest.py`, walk-forward, REALISTIC fixed-horizon exit): NO standalone edge — realistic exit loses even at 0 cost (ALL −4.1bps), dipole gating edge −0.74bps. Consistent with the plan (dipole = gate) + standing net-of-cost nulls. Matched-objective / other combos deferred to S31 (one story, not the whole).
+- **NEXT: back to the canonical plan** — `QUOTE_SERVICE_PLAN.md` / `BUILD_PLAN.md` (OD layer as gates; maker-rebate spread capture is the edge lever).
 
 ## S29 — TRADE-POOL BUGS FIXED + CLEAN DISCOVERY RERUN + DIPOLE HEADLINE CORRECTED (read the dated files)
 Live read: **`SESSION_HANDOFF_2026-06-11_S29.md` + `KICKOFF_2026-06-12_S30.md` + `CLEANUP_RUNBOOK.md`.** Env note: `E:\refrag` IS mounted this session (code + data; pipeline is PySR/Julia-free) but the 4-CPU box can't sustain heavy reruns.
