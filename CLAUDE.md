@@ -1,4 +1,22 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-06-08 Session 25 — body canonical through S25)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-06-21 Session 32 — body canonical through S25; S32 BUILD_PLAN delta at top. READ `SESSION_HANDOFF_2026-06-21_S32.md`, not this whole file)
+
+## S32 — BUILD_PLAN crypto signal-core: Phase 0 + Phase 1(a) DONE (read `SESSION_HANDOFF_2026-06-21_S32.md`)
+**SCOPE (Greg, S32, hard):** work ONLY on the crypto trading platform per `BUILD_PLAN.md`. The quote service
+(`QUOTE_SERVICE_PLAN.md`) is OUT of scope. Zero-synthetic = no synthetic *trading* data; tool-validation
+synthetic anchors (Brusselator) are allowed. Follow the plan step by step. Memories:
+`scope-crypto-platform-only`, `zero-synthetic-scope`.
+- **Phase 0 DONE:** `requirements.txt` pins PySR 1.5.10 + numeric stack (hook installs from it); 3 engine
+  acceptance tests green (`tests/test_operator_real.py`: equal-entropy recovery, known-lag lead-lag, tautology-null).
+  Commit `10646ce`.
+- **Phase 1(a) DONE:** `tests/test_symbolic_anchor.py` green. The discovery engine recovers the convex chem dipole
+  FAMILY two ways on a Brusselator — algebraic fit `c≈0.68, R²≈0.99, <2% cross-seed`, AND PySR rediscovers
+  `square(H_a·H_b·0.825) → c≈0.68` across 3 seeds. The reference `a=0.007/b=−0.093/c=1.309` is a PRIOR from the
+  unreachable `basic_equations` construction; the `c≈0.68` delta is a DATA POINT, not a failure (Result Discipline).
+- **NEXT:** Phase 1(b) per-pair PySR discovery on real cached bins (≥3 seeds, <5% coeff var) → 1(c) `dipole_predictor`
+  consumes it → Phase 2.
+- **BRANCH NOTE:** this is `claude/crypto-trading-platform-plan-MpqwG`; its master body below is S25-era. The S25 dipole
+  headline `z=+9.6` is **SUPERSEDED** — S29/S30 (S30 line `30c2d37`) corrected it to an artifact → real-but-weak gate
+  piece, **NO net-of-cost edge**. Do not cite `+9.6`. (`dipole-real-on-128dim-per-pair`.)
 
 ## START HERE (workflow block; JOB-1 drift fixed S17, 2026-06-02)
 
