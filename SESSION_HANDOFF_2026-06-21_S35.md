@@ -149,6 +149,15 @@ Built `odcore/fingerprint.py` (the live encoder: verbatim `signed_bps`/`trade_sc
   branch-switch the shared root.
 - origin remote = `https://github.com/DavisAI1974/Markets.git`; "main" for PRs = `claude/new-session-o3vnm`.
   Other worktrees (beautiful-shaw, exciting-solomon, quote-service-s32, …) are unrelated to S35.
+- **STILL TO LAND IN GIT (note):** the S34-chat Direction-2 discovery scripts (`_run_sameperiod_cand.py`,
+  `_build_sameperiod_cand.py`, `_eligible_cross_section.py`, the detached-task `.bat`, etc.) are NOT yet
+  committed — they sit in the shared `E:\Markets` root on `claude/xenodochial-montalcini-f21fb6`. They are
+  the S34 chat's to push (committing them from here risks colliding with that active session). Sweep them in
+  on request. The local bins/data + `_full_pipeline*` dirs stay OUT of git by design (`markets-data-lives-local-not-git`).
+- **MEMORIES are separate from git (note):** Claude's memories live in the memory store
+  (`C:\Users\A\.claude\projects\E--Markets\memory\` + `MEMORY.md` index), NOT in the repo. They auto-load
+  each session and are saved regardless of pushes — so the S35 principles (`bucket-distinctiveness-is-the-goal`,
+  `git-is-source-of-truth`, `markets-deploy-feature-parity-gap`, etc.) carry into the new chat automatically.
 
 ## ENV / RULES
 - Crypto trading platform per BUILD_PLAN.md only. Quote service OUT. Zero-synthetic (no synthetic trading data).
