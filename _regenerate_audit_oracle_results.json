@@ -1,0 +1,154 @@
+{
+  "schema": "regenerate_audit_oracle_v1",
+  "approach": "per-row ts_utc anchor; best-favorable exit within oracle_horizon_minutes from history archive; fee 10bps",
+  "fee_bps": 10.0,
+  "notional_usd": 1000.0,
+  "source": "live_hindsight_missed_winner_audit_rows.csv",
+  "output": "live_hindsight_missed_winner_audit_rows.corrected.csv",
+  "rows_total": 21184,
+  "rows_corrected": 21182,
+  "rows_horizon_truncated": 0,
+  "rows_no_forward_bars": 0,
+  "rows_no_entry_bar": 2,
+  "new_split": {
+    "win": 17230,
+    "lose": 3952
+  },
+  "win_before": 11521,
+  "win_after": 17230,
+  "flips": 11331,
+  "was_win_now_lose": 2810,
+  "was_lose_now_win": 8521,
+  "miss_type_reconciled": true,
+  "miss_type_rows_changed": 11331,
+  "miss_type_before": {
+    "missed_entry": 11398,
+    "exit_missed_or_fee_leak": 123,
+    "not_a_hindsight_winner": 9663
+  },
+  "miss_type_after": {
+    "missed_entry": 15987,
+    "not_a_hindsight_winner": 3952,
+    "exit_missed_or_fee_leak": 1245
+  },
+  "entry_gap_max_s": 113.596,
+  "hold_seconds_corrected": {
+    "n": 21182,
+    "min": 0.0,
+    "p50": 6583.3,
+    "max": 21600.0,
+    "mean": 8816.2
+  },
+  "hold_seconds_original_clamped": {
+    "n": 21182,
+    "min": 294943.8,
+    "p50": 364831.1,
+    "max": 430252.4,
+    "mean": 365975.7
+  },
+  "per_asset_side_split": {
+    "BTC|buy": {
+      "win": 6542,
+      "lose": 882
+    },
+    "BTC|sell": {
+      "win": 1727,
+      "lose": 1433
+    },
+    "ETH|buy": {
+      "win": 7717,
+      "lose": 945
+    },
+    "ETH|sell": {
+      "win": 1244,
+      "lose": 692
+    }
+  },
+  "samples": [
+    {
+      "unique_key": "ETH|bybit|506b0ed732147464|sell",
+      "side": "sell",
+      "ts_utc": 1779570311.9364297,
+      "entry_price": 2131.665,
+      "exit_ts": 1779571828.0,
+      "exit_price": 2105.125,
+      "net_bps": 116.0733,
+      "hold_min_new": 25.27,
+      "old_exit_ts_utc": "1779950160.0",
+      "old_exit_utc": "2026-05-28 06:36:00",
+      "new_exit_utc": "2026-05-23 21:30:28",
+      "old_hold_days": 4.4
+    },
+    {
+      "unique_key": "ETH|bybit|506b0ed732147464|sell",
+      "side": "sell",
+      "ts_utc": 1779570313.7897942,
+      "entry_price": 2131.715,
+      "exit_ts": 1779571828.0,
+      "exit_price": 2105.125,
+      "net_bps": 116.3108,
+      "hold_min_new": 25.24,
+      "old_exit_ts_utc": "1779950160.0",
+      "old_exit_utc": "2026-05-28 06:36:00",
+      "new_exit_utc": "2026-05-23 21:30:28",
+      "old_hold_days": 4.4
+    },
+    {
+      "unique_key": "ETH|kraken|2ab13b0d01399077|sell",
+      "side": "sell",
+      "ts_utc": 1779571245.7081246,
+      "entry_price": 2125.895,
+      "exit_ts": 1779571807.0,
+      "exit_price": 2103.94,
+      "net_bps": 94.3518,
+      "hold_min_new": 9.35,
+      "old_exit_ts_utc": "1779950160.0",
+      "old_exit_utc": "2026-05-28 06:36:00",
+      "new_exit_utc": "2026-05-23 21:30:07",
+      "old_hold_days": 4.39
+    },
+    {
+      "unique_key": "ETH|bybit|5134a1078ec8e322|sell",
+      "side": "sell",
+      "ts_utc": 1779570860.0681546,
+      "entry_price": 2127.715,
+      "exit_ts": 1779571828.0,
+      "exit_price": 2105.125,
+      "net_bps": 97.3095,
+      "hold_min_new": 16.13,
+      "old_exit_ts_utc": "1779950160.0",
+      "old_exit_utc": "2026-05-28 06:36:00",
+      "new_exit_utc": "2026-05-23 21:30:28",
+      "old_hold_days": 4.39
+    },
+    {
+      "unique_key": "ETH|bybit|5134a1078ec8e322|sell",
+      "side": "sell",
+      "ts_utc": 1779570862.021245,
+      "entry_price": 2126.395,
+      "exit_ts": 1779571828.0,
+      "exit_price": 2105.125,
+      "net_bps": 91.0391,
+      "hold_min_new": 16.1,
+      "old_exit_ts_utc": "1779950160.0",
+      "old_exit_utc": "2026-05-28 06:36:00",
+      "new_exit_utc": "2026-05-23 21:30:28",
+      "old_hold_days": 4.39
+    },
+    {
+      "unique_key": "ETH|bybit|e78f1bd9fbf98f6a|sell",
+      "side": "sell",
+      "ts_utc": 1779570745.7051747,
+      "entry_price": 2127.175,
+      "exit_ts": 1779571828.0,
+      "exit_price": 2105.125,
+      "net_bps": 94.7444,
+      "hold_min_new": 18.04,
+      "old_exit_ts_utc": "1779950160.0",
+      "old_exit_utc": "2026-05-28 06:36:00",
+      "new_exit_utc": "2026-05-23 21:30:28",
+      "old_hold_days": 4.39
+    }
+  ],
+  "elapsed_s": 16.5
+}
