@@ -6,7 +6,9 @@
 set +e
 
 echo "[session_start] bootstrapping OD toolchain (numpy/scipy/sklearn + PySR + Julia)..."
-pip install --quiet numpy scipy scikit-learn pysr pytest >/dev/null 2>&1 \
+# Prefer the pinned manifest (BUILD_PLAN Phase 0); fall back to the explicit list.
+pip install --quiet -r requirements.txt >/dev/null 2>&1 \
+  || pip install --quiet numpy scipy scikit-learn pysr pytest >/dev/null 2>&1 \
   || echo "[session_start] pip step had issues (continuing)"
 
 # PySR pulls the Julia backend via juliacall; it precompiles on the first fit.
