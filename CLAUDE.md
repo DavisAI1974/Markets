@@ -1,4 +1,18 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-06-21 Session 32 — body canonical through S25; S32 BUILD_PLAN delta at top. READ `SESSION_HANDOFF_2026-06-21_S32.md`, not this whole file)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-06-21 Session 33 — body canonical through S25; S33+S32 BUILD_PLAN delta at top. READ `SESSION_HANDOFF_2026-06-21_S33.md`, not this whole file)
+
+## S33 — channel construction UNBLOCKED: real dipole is CENTROID-based, not bins; decision = Path C (read `SESSION_HANDOFF_2026-06-21_S33.md`)
+- **Blocker resolved.** The `_markets_*` scripts (the original chem-dipole construction) are **local/untracked in `E:\Markets`**, never lost; `DavisAI1974/Basic_equations` (public, cloned to `E:\basic_equations_src`) holds only the four-sciences chem code. The real markets dipole builds `H_a/H_b` from **per-trade 128-dim OD `operator_coefficients` projected on win/lose centroids** (`H_a=<c,c_win>/||c_win||`, `H_b=<c,c_lose>/||c_lose||`; data in `E:\refrag\discoveries\operator_discoveries`, 148 dirs, present) — NOT from price-bin entropies. So odcore's Phase 1(b)-on-`realbins` is a DIFFERENT object; the S33 bin canary correctly gave **c≈0** (btc cross-venue: numpy c=0.0004, PySR LINEAR). See `markets-dipole-construction-is-centroid-based`.
+- **Chronology (Greg's recall, verified on evidence).** Chem dipole first (S22–S25 = the `z=+9.6` headline); OD-coeff line is newest (S26–S30; cleanest `*_preentry_cs2000_clean`, 2026-06-11). "Different dipoles per coin" is directionally right but the real split is **per-VENUE (kraken outlier)**, not per-coin: cross-pair transfer AUC sibling 0.72 ≈ asset 0.67 > venue 0.61 (accuracy is junk — winners are 3–20% of each pair; use AUC).
+- **Still confounded.** Even `_clean` pools have win=05-23/24 vs lose=05-04/11 disjoint in time+pipeline → the transfer structure is of the *confounded* direction, NOT proof of coupling. `z=+9.6` stays SUPERSEDED; do not cite.
+- **DECISION = Path C** (Greg). Rebuild the centroid dipole with winners AND losers from the SAME same-period universe (discover same-period losers within 05-23/24), re-test per-pair with a within-period permutation null + cross-pair transfer; promote only if it survives same-period AND net-of-cost. Pure-numpy on local JSON — runs locally in seconds (no Lightsail needed). **Report PER-CELL and deploy on surviving cells — partial coverage is not failure; never discard a signal for failing on some pairs** (`deploy-signal-per-cell-not-universal`; the `AdaptiveSelector` picks the winner per source).
+
+## PLATFORM RULE (standing — all sessions, all tools) — per-cell deployment
+**Every tool, signal, generator, strategy, and gate is validated and deployed PER CELL** (asset×venue×side) — the whole
+OD toolkit (BUILD_PLAN parts A–M: algebraic dipole, coupling discriminator, strength meters, lead-lag, functional
+families, stacking, sizing). Anything that survives validation (same-period null + net-of-cost) on a SUBSET of cells is
+KEPT and used on those cells. Partial coverage is NOT failure; never discard a tool/signal for failing on some cells.
+Report "works on {X}, not {Y}", never "X failed." (Greg, S33; `deploy-signal-per-cell-not-universal`; the
+`AdaptiveSelector` already picks the winner per source.)
 
 ## S32 — BUILD_PLAN crypto signal-core: Phase 0 + Phase 1(a) DONE (read `SESSION_HANDOFF_2026-06-21_S32.md`)
 **SCOPE (Greg, S32, hard):** work ONLY on the crypto trading platform per `BUILD_PLAN.md`. The quote service

@@ -175,10 +175,15 @@ treatment (the open S9 question, l.249-258). We add it:
   header date/session, commit + push (the log's "keep the header current" rule).
 
 ### Validation + OD-native sizing + live
+- **PER-CELL PROMOTION (standing rule, Greg S33 — applies to EVERY tool A–M, not just the dipole).** All validation,
+  promotion, and deployment is **per cell** (asset×venue×side). A tool/signal that beats the bar on a SUBSET of cells
+  is PROMOTED and deployed **on those cells only** — partial coverage is NOT failure, and nothing is discarded for
+  failing on some cells. Output is a per-cell deployment map ("works on {X}, not {Y}"), never "X failed." This is
+  exactly what `AdaptiveSelector` ("data picks the winner per source") implements. (`deploy-signal-per-cell-not-universal`.)
 - **validation.py**: walk-forward/block CV + embargo; report random-vs-walkforward gap (I); realistic
   fees + slippage via `kyle_proxy` (`markets_adapter.py:485`); tautology null (F); must beat
   buy-hold, the existing `pure_dipole_fade`/`dipole_x_volz`, rolling-corr, cointegration,
-  transfer-entropy, and lead-lag — net of cost — to be promoted.
+  transfer-entropy, and lead-lag — net of cost — to be promoted **per cell**.
 - **sizing.py (NOT Kelly)**: `size_fraction = clip(w1·residual_fraction + w2·norm(dipole_R²) +
   w3·leadlag_stability, 0, 1) · calibration`, where `calibration` = measured walk-forward edge, so
   size tracks **realized** OD confidence. Notional = `min(size_fraction·max_position_usd,
