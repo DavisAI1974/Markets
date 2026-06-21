@@ -135,6 +135,21 @@ Built `odcore/fingerprint.py` (the live encoder: verbatim `signed_bps`/`trade_sc
 - Recover sources (git, not working tree): `mock_trade_replay.py` @ c486d3b, `live_mock_trade_replay.py`
   @ 1a92179. Live heavy tier: `_markets_gate_v2.py` (untracked, E:\Markets root).
 
+## GIT / BRANCHES (where everything lives — for the new chat)
+- **ALL S35 work is on branch `claude/crypto-trading-platform-plan-MpqwG`**, worktree
+  `E:\Markets\.claude\worktrees\xenodochial-montalcini-f21fb6`, **PUSHED to origin**
+  (`github.com/DavisAI1974/Markets`), latest commit `3599e24`. This includes the platform code, the S35
+  docs (MISSION/CLAUDE/HANDOFF/KICKOFF), `odcore/fingerprint.py`, `_canary_fingerprint.py`, and the analysis
+  scripts (`_balanced_rerun.py`, `_netcost_stack.py`, `_netcost_stack_balanced.py`, `_micro_attribution.py`).
+  **Open the new chat on THIS worktree/branch.**
+- The shared **`E:\Markets` root is on a DIFFERENT branch `claude/xenodochial-montalcini-f21fb6`** (commit
+  `decdf69`). The S34-chat Direction-2 discovery scripts (`_run_sameperiod_cand.py`,
+  `_build_sameperiod_cand.py`, etc.) and all the local bins/data + `_full_pipeline*` dirs live there,
+  UNTRACKED / not in git (data stays local by design; those scripts are the S34 chat's to commit). Do NOT
+  branch-switch the shared root.
+- origin remote = `https://github.com/DavisAI1974/Markets.git`; "main" for PRs = `claude/new-session-o3vnm`.
+  Other worktrees (beautiful-shaw, exciting-solomon, quote-service-s32, …) are unrelated to S35.
+
 ## ENV / RULES
 - Crypto trading platform per BUILD_PLAN.md only. Quote service OUT. Zero-synthetic (no synthetic trading data).
 - Did NOT branch-switch shared `E:\Markets`. **Commit + push working files (code/docs) REGULARLY — git is the
