@@ -63,3 +63,4 @@ realbins/
 # Frontend build artifacts + installed deps (regenerated; package-lock.json IS tracked)
 frontend/node_modules/
 frontend/dist/
+_episode_onsets_out/
