@@ -64,3 +64,5 @@ realbins/
 frontend/node_modules/
 frontend/dist/
 _episode_onsets_out/
+_onset_coeff/
+_full_pipeline_onset/
