@@ -1,0 +1,119 @@
+"""odcore/info_dipole.py — signed information-dipole FLOW operator (portable, numpy-only).
+
+The information dipole (davisai.ai/dipole) measures FLOW between two coupled channels and is
+naturally signed. In markets the two channels are taker BUY-flow vs SELL-flow, so the dipole
+gives a directional (+ buy-pressure / - sell-pressure) read the side-AGNOSTIC 128-dim OD coeff
+cannot (coeffs are built from price log-returns, so buy & sell trades on the same chunk get
+identical coeffs -- the S35b "bleed"). This operator supplies the missing direction.
+
+Faithful to the paper's primitives:
+  - discrete Shannon entropy via histogram binning,  H(X) = -sum p log p
+  - mutual information  MI(a,b) = H(a) + H(b) - H(a,b)   (2D histogram)
+  - the differential FLOW form  dMI/dt  (early-half vs late-half of the window)
+  - the ratio  C = H_self / H_cross
+
+SIGN CONVENTION (option a): direction from the (H_a - H_b) order-flow imbalance; magnitude from
+the information-dipole flow. The imbalance says which way flow leans; the dMI/dt flow says how
+strongly the coupling is evolving. `mi_flow` is the primary signed feature; `imb_flow` and
+`ent_dipole` are sibling signed forms kept because different cells earn lift from different ones
+(per-cell selection, never averaged -- averaging would flatten the per-bucket distinctiveness
+that is the whole point: `bucket-distinctiveness-is-the-goal`, `deploy-signal-per-cell-not-universal`).
+
+Reusable in multiple stages: pre-window info-gathering AND the per-cell entry fingerprint.
+Pure (numpy only); the caller slices the strictly pre-entry order-flow window and passes the
+buy/sell arrays in -- this module adds no look-ahead.
+"""
+from __future__ import annotations
+
+import math
+
+import numpy as np
+
+EPS = 1e-9
+
+# Per-cell deploy map: cell -> (feature, lift_over_base_rate, n). Populated from
+# _info_dipole_flow_probe.py (lift >= +5 over base rate, n >= 40 on the 05-22..24 test bars).
+# Small-n cells should be re-validated on fuller bins before trusting (see probe).
+DEPLOY: dict[str, tuple[str, float, int]] = {
+    "btc_kraken_sell":   ("mi_flow", 8.2, 140),
+    "eth_bybit_buy":     ("imb_flow", 11.1, 72),
+    "btc_coinbase_sell": ("mi_flow", 5.4, 74),
+    "eth_kraken_sell":   ("ent_dipole", 5.2, 71),
+}
+
+FEATURES = ("imb_level", "ent_dipole", "C_signed", "mi_flow", "imb_flow")
+
+
+def shannon(x, bins=None) -> float:
+    x = np.asarray(x, float)
+    if x.size < 2 or np.allclose(x, x[0]):
+        return 0.0
+    if bins is None:
+        bins = max(3, int(round(math.sqrt(x.size))))
+    h, _ = np.histogram(x, bins=bins)
+    p = h[h > 0] / h.sum()
+    return float(-(p * np.log(p)).sum())
+
+
+def mutual_info(a, b, bins=None) -> float:
+    a = np.asarray(a, float); b = np.asarray(b, float)
+    if a.size < 2:
+        return 0.0
+    if bins is None:
+        bins = max(3, int(round(math.sqrt(a.size))))
+    Ha, Hb = shannon(a, bins), shannon(b, bins)
+    hab, _, _ = np.histogram2d(a, b, bins=bins)
+    p = hab[hab > 0] / hab.sum()
+    Hab = float(-(p * np.log(p)).sum())
+    return max(0.0, Ha + Hb - Hab)
+
+
+def signed_flow_features(buy_vol, sell_vol) -> dict | None:
+    """Signed information-dipole flow features from one order-flow window.
+
+    buy_vol/sell_vol: equal-length per-bar taker buy/sell volume over the (pre-entry) window,
+    time-ordered. Returns the FEATURES dict, or None if the window is too short / empty.
+    """
+    A = np.asarray(buy_vol, float); S = np.asarray(sell_vol, float)
+    n = min(A.size, S.size)
+    if n < 6:
+        return None
+    A, S = A[:n], S[:n]
+    sB, sS = A.sum(), S.sum()
+    if sB + sS <= 0:
+        return None
+
+    imb_level = (sB - sS) / (sB + sS)                 # static order-flow dipole (signed)
+    sgn = 1.0 if imb_level >= 0 else -1.0             # option (a): direction from imbalance
+
+    Ha, Hb = shannon(A), shannon(S)
+    ent_dipole = (Ha - Hb) / (Ha + Hb + EPS)          # entropy-asymmetry dipole (signed)
+    mi = mutual_info(A, S)
+    C_signed = sgn * (0.5 * (Ha + Hb)) / (mi + EPS)    # signed C = H_self/H_cross
+
+    mid = n // 2                                       # differential dMI/dt: early vs late half
+    mi_e = mutual_info(A[:mid], S[:mid]); mi_l = mutual_info(A[mid:], S[mid:])
+    mi_flow = sgn * (mi_l - mi_e)                      # PRIMARY: imbalance-signed MI flow
+    def _imb(b, s):
+        t = b.sum() + s.sum()
+        return (b.sum() - s.sum()) / t if t > 0 else 0.0
+    imb_flow = _imb(A[mid:], S[mid:]) - _imb(A[:mid], S[:mid])   # signed imbalance flow
+
+    return {"imb_level": imb_level, "ent_dipole": ent_dipole, "C_signed": C_signed,
+            "mi_flow": mi_flow, "imb_flow": imb_flow}
+
+
+def cell_signal(cell: str, buy_vol, sell_vol):
+    """Per-cell signed flow signal: the deploy-selected feature for `cell`, else None.
+
+    Returns (value, feature_name) using the cell's earning feature from DEPLOY, or None if this
+    cell has not earned the operator (partial coverage is fine -- the stack uses it only where it
+    works). Never blends features; selects the one that earned lift for this bucket.
+    """
+    if cell not in DEPLOY:
+        return None
+    feats = signed_flow_features(buy_vol, sell_vol)
+    if feats is None:
+        return None
+    fname = DEPLOY[cell][0]
+    return feats[fname], fname
