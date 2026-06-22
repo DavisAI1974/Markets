@@ -474,3 +474,29 @@ FN-rate at matched FP, net of the per-leg fee floor, out-of-sample.** The OD cha
 clears the mandatory pre-entry-window validation (no validated challenger → no test yet). Architect's soft
 prediction: OD shows as an edge on turn FILTERING (which reversals are real), NOT on turn TIMING
 (fine-resolution price already pins the turn near the fee floor). The frozen-data test decides it.
+
+## LIVE EXECUTION — latency & placement (TODO before going live; record so we don't forget)
+The timing edge (+4.2 bps/turn at 1-sec, market-making is inherently sub-second) is captured by REACTION
+latency + placement, NOT by CPU count. Vertical-scaling AWS cores does NOT make us faster to the turn —
+it only adds research/parallel throughput. What actually buys live speed, in order of leverage:
+1. **REGION/PLACEMENT (the big, near-free win):** run the live box in the SAME AWS region/AZ as each
+   exchange's matching engine. **Coinbase runs on AWS us-east-1** → co-region is single-digit ms vs
+   50–100 ms cross-region. Find where **Kraken** and **Bybit** host and match each. For crypto this alone
+   beats every retail/1-min trader — no physical colo/FPGA/microwave needed to beat the slow guys.
+   ACTION: confirm each venue's (Coinbase/Kraken/Bybit) hosting region/AZ; place a live box per venue region.
+2. **Warm connections + kernel-bypass networking:** keep websocket/FIX sessions hot (no reconnects), good NIC.
+3. **Higher-CLOCK, not more-CORES, for the hot path:** compute-optimized / high-frequency instances
+   (c-series, z1d) beat big many-core boxes for per-message latency. More cores only = more cells in parallel.
+4. **Incremental/sliding operator update** (Architect): move per-tick recompute out of the hot path
+   (recursive rolling state). Cheapest latency win, pure software.
+More CPUs DO help the offline RESEARCH workload (operator discovery / PySR / the harness over multi-regime
+1-sec data is embarrassingly parallel across cells) — bucket that as "research speed", not "live edge".
+
+## Regime master-gate — PER-CELL (deploy where it earns its place; `deploy-signal-per-cell-not-universal`)
+The regime gate is NOT a universal improvement and must NOT be applied everywhere. On the harness (1-sec,
+OOS, maker floor) it HURTS the cells where the un-gated dipole already wins (btc_kraken +466 → +151 — it
+cuts good trades) but HELPS the cells where the dipole bleeds: btc_bybit_perp flips −173 → +16 (with 13
+real trades, not no-trade), eth_kraken cuts −1207 → −170. So KEEP the regime gate as a PER-CELL option —
+fire it only on the cells/instances where it earns its place (the bleeders), leave the winning cells
+un-gated. Confirm the per-cell on/off on the multi-regime 1-sec history before deploying; do not tune off
+the single window. (Things don't have to work on all cells all the time — that's the whole per-cell rule.)

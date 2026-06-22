@@ -211,13 +211,9 @@ stands FLAT in bad regimes, via two metrics over a trailing window: ER (efficien
 "don't fade a straight run") and C (dipole H_self/H_cross → toxic/decoupled flow). Scored on the harness,
 OOS, at the maker floor.
 
-**Two honest findings:**
-- **The regime gate did NOT demonstrate a robust edge.** Tuned to max in-sample net it DEGENERATES to
-  near-no-trade (recall collapses to ~0.01–0.06) — it doesn't selectively cut the *bad* trades, it just
-  trades less everywhere: it *removes good trades* on the good venue (btc_kraken challenger +466 → +151
-  gated) and only "helps" bad venues by standing aside. The pooled "+253" C-gate number is a no-trade
-  artifact, not an edge. This is the recurring **degenerate-tuning wall**: near breakeven on a SINGLE
-  window, "maximize net" rewards trading less, so no gate (or any refinement) can be validated here.
+**Three honest findings:**
+- **The regime gate is NOT a universal improvement — but it earns its place PER CELL** (`deploy-signal-per-cell-not-universal`). It HURTS the cells where the un-gated dipole already wins (btc_kraken +466 → +151 — it cuts good trades), so those stay un-gated. But it HELPS the cells where the dipole BLEEDS: btc_bybit_perp flips **−173 → +16** (with 13 real trades, not no-trade), eth_kraken cuts **−1207 → −170**. So KEEP the regime gate as a per-cell option, fired ONLY on the bleeder cells where it earns its place. Things don't have to work on every cell — that's the whole per-cell rule.
+- **Caveat on the tuning:** tuned to max in-sample net the gate tends toward near-no-trade (the degenerate "trade less = lose less" wall near breakeven on a SINGLE window), so the per-cell on/off must be confirmed on the multi-regime 1-sec history, not deployed off this one window.
 - **The genuinely encouraging result is MAKER execution on the un-gated dipole.** At the maker floor the
   un-gated challenger is **~breakeven pooled (−22)** and clearly **positive on 3/6 venues** — btc_kraken
   **+466** (recall 0.447, 82 calls), eth_bybit_perp **+670**, eth_coinbase **+392**. That's the best
