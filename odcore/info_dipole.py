@@ -114,6 +114,27 @@ def signed_flow_features(buy_vol, sell_vol) -> dict | None:
             "mi_flow": mi_flow, "imb_flow": imb_flow}
 
 
+def divergence(buy_vol, sell_vol, price_drift: float) -> dict | None:
+    """Order-flow DIVERGENCE vs the recent price trend -> continuation-vs-flip read.
+
+    The info dipole works as a flip detector, not a direct direction predictor: a trend tends to
+    CONTINUE when order flow confirms it and to FLIP when flow diverges (price up but sellers
+    stepping in = exhaustion). Validated pooled (_info_dipole_trend_flip.py): confirm -> 50%
+    continuation vs diverge -> 38% (+12pp edge, positive in both temporal halves); the STATIC
+    imb_level is the detector (the differential mi_flow/imb_flow do not detect the flip). Per cell:
+    strong (btc_bybit_sell +56) to inverted (btc_bybit_buy -10) -- use per cell, never pooled.
+
+    price_drift: recent price change over the same pre-entry window (close[-1]-close[0]).
+    Returns {imb_level, confirms, expect}, or None if the window is unusable.
+    """
+    feats = signed_flow_features(buy_vol, sell_vol)
+    if feats is None or price_drift == 0:
+        return None
+    confirms = (feats["imb_level"] > 0) == (price_drift > 0)
+    return {"imb_level": feats["imb_level"], "confirms": confirms,
+            "expect": "continue" if confirms else "flip"}
+
+
 def cell_signal(cell: str, buy_vol, sell_vol):
     """Per-cell signed flow signal: the deploy-selected feature for `cell`, else None.
 
