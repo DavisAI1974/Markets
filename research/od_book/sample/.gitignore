@@ -1,0 +1,4 @@
+# Transient real-data collection samples for harness development.
+# The durable dataset lives on the data/btc-book branch (GHA workflow).
+*.jsonl.gz
+*.jsonl
