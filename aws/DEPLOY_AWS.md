@@ -49,11 +49,26 @@ with S3 read/write on the bucket, submit. (Skeleton: `aws/batch_job_definition.j
 
 Local sanity (no S3): `NO_S3=1 python aws/run_discovery_s3.py` uses `./realbins` + `./_alt_labels` in place.
 
-## 4. Bedrock (the AWS-native agent path)
-For AWS data residency, run Claude Code **via Amazon Bedrock** (model access in your account) and wire
+## 4. Bedrock (the AWS-native agent path) — and which model
+For AWS data residency, run Claude Code **via Amazon Bedrock** (request model access in your account) and wire
 **Bedrock Knowledge Bases** to the S3 bins + the coeff index, so the agent orchestrates discovery and reasons
-over the fingerprint store without data leaving AWS. This is the path to running the *whole* loop (agent +
-GPU training + S3 data) on AWS.
+over the fingerprint store without data leaving AWS.
+
+Scope honesty: Bedrock is for the **agent/LLM layer ONLY** (orchestration + reasoning over the fingerprint
+store). It does NOT train or host the FNO decoder — that is custom PyTorch on a GPU (SageMaker / EC2 g5, §5);
+Bedrock Custom Model Import only ingests specific LLM families (Llama/Mistral-class), not an FNO. And the
+trading signal core stays model-free (low-dim numerics; the S36b quantum-resolution logic = keep it classical).
+
+Model choice (best-first; the model lever only matters HERE, not for §5 or the signal core):
+- **Claude Opus 4.7** — `anthropic.claude-opus-4-7` (Converse/Invoke). **GA, the default.** Use this for the
+  agent + Knowledge-Base reasoning.
+- **Claude Mythos** — gated research *preview*, **US East (N. Virginia) only**; Anthropic's most advanced for
+  cybersecurity/coding/reasoning. Use if you have preview access and want max reasoning headroom.
+- If/when **Opus 4.8** reaches Bedrock GA, prefer it over 4.7. Bedrock GA lags the latest Anthropic release, so
+  confirm the current GA list on Bedrock's **model cards** page (`models-supported.html` -> model cards) before
+  launching — IDs/Regions change.
+
+This is the path to running the *whole* loop on AWS: Bedrock agent (§4) + S3 data (§1) + GPU FNO training (§5).
 
 ## 5. GPU — train the production FNO decoder (the real upgrade)
 The committed coeffs are the DETERMINISTIC tier (mean-of-embeds + L2-normalize). The manifest's production
