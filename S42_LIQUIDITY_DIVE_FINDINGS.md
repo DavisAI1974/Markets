@@ -34,9 +34,27 @@ withdrawal, one-sided depth changes, depth-imbalance velocity).
 \* d_ask_depth predicts the *opposite* sign (asks refilling -> price down), a symmetric echo of imbalance.
 
 **PART A — agnostic 5-step coupler (`score_pair`, all 5 steps + circular-shift tautology null),
-10 time-slices for anti-fluke consistency:**
-<!-- FILLED FROM _liquidity_dive_partA.out -->
-(see `_liquidity_dive_results.json` / table below)
+10 time-slices for anti-fluke consistency (a coupling counts only if structure_z>2 in MULTIPLE
+slices — S41's single-slice winner was a fluke):**
+
+Directionally-relevant pairs (liquidity / flow vs SIGNED price), ranked by slices surviving the null:
+| pair | meanZ | #z>2 / N | lead | note |
+|------|------:|:--------:|:----:|------|
+| **depth_imb ~ signed_ret** | 4.4 | **7/10** | **LEADS +0.08s** | the headline coupling — consistent, NOT a fluke |
+| d_depth_imb ~ signed_ret | 17.0 | 5/10 | LEADS +0.09s | imbalance velocity couples too |
+| d_total_depth ~ signed_ret | 12.3 | 5/10 | LEADS +0.13s | couples to moves, but NULL for *direction* (PART B) |
+| d_bid_depth ~ signed_ret | 6.7 | 4/10 | LEADS | one-sided, weaker |
+| d_ask_depth ~ signed_ret | 5.0 | 2/10 | lags | one-sided, inconsistent |
+| depth_imb ~ flow | 1.6 | 4/10 | LEADS +0.6s | weak |
+| signed_ret ~ flow | 1.1 | 4/10 | LEADS | weak — flow<->price stays marginal (confirms S41) |
+| d_*_depth ~ flow | <0.5 | 1/10 | — | NULL |
+
+(The liquidity<->liquidity pairs — e.g. `d_depth_imb~d_bid_depth` meanZ 3.9e4, 10/10, coincident — are
+mechanical/definitional: a derivative vs its own components. Huge z, no tradeable content.)
+
+Reading: the directional **depth_imb -> signed_ret** coupling survives the tautology null in **7/10**
+independent time-slices and leads price — so it is a stable property, distinct from S41's single-window
+fluke. Flow->price stays weak (<=4/10, low z): the liquidity layer is where the structure is.
 
 **Causality (two-sided cross-correlation, the non-tradeability check):** `depth_imb` vs signed return
 peaks at **lag +1 (+0.1s) = imbalance LEADS price** (cc +0.134), and the lead side is stronger than the
