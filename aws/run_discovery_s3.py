@@ -15,6 +15,7 @@ Env (all optional except bucket):
   VENUE            default "bybit_perp"
   CAP              default "100"
   SIDES            default "buy,sell"
+  SAVE_EMBEDS      default "0"  -> if "1", also emit + upload alt_train_pairs.json.gz (FNO training X+y, §5)
 
 Local run for testing (no S3): set NO_S3=1 and it uses ./realbins + ./_alt_labels in place.
 """
@@ -35,6 +36,7 @@ VENUE = os.environ.get("VENUE", "bybit_perp")
 CAP = os.environ.get("CAP", "100")
 SIDES = os.environ.get("SIDES", "buy,sell")
 NO_S3 = os.environ.get("NO_S3") == "1"
+SAVE_EMBEDS = os.environ.get("SAVE_EMBEDS") == "1"
 
 REAL = Path("realbins"); LABELS = Path("_alt_labels"); COEFFS = LABELS / "coeffs"
 
@@ -84,17 +86,29 @@ def main() -> int:
                         "--asset", assets[coin], "--venue", VENUE, "--sides", SIDES],
                        check=True)
 
-    subprocess.run([sys.executable, "_run_alt_coeffs.py", "--cap", CAP], check=True)
+    coeff_cmd = [sys.executable, "_run_alt_coeffs.py", "--cap", CAP]
+    if SAVE_EMBEDS:
+        coeff_cmd.append("--save-embeds")   # also emit the FNO training pairs (X+y) for §5
+    subprocess.run(coeff_cmd, check=True)
 
     out = COEFFS / "alt_coeff_index.json.gz"
     if not out.exists():
         print("[done] no coeff index produced", flush=True); return 1
+    train = COEFFS / "alt_train_pairs.json.gz"   # X+y for FNO training (only if SAVE_EMBEDS)
     if NO_S3:
-        print(f"[done] {out} ({out.stat().st_size} bytes) — NO_S3, left local", flush=True)
+        msg = f"[done] {out} ({out.stat().st_size} bytes)"
+        if SAVE_EMBEDS and train.exists():
+            msg += f"; train pairs {train} ({train.stat().st_size} bytes)"
+        print(msg + " — NO_S3, left local", flush=True)
         return 0
+    s3 = _s3()
     key = f"{OUT_PREFIX}/alt_coeff_index.json.gz"
-    _s3().upload_file(str(out), BUCKET, key)
+    s3.upload_file(str(out), BUCKET, key)
     print(f"[done] uploaded s3://{BUCKET}/{key}", flush=True)
+    if SAVE_EMBEDS and train.exists():          # push the training set for SageMaker/EC2 GPU (§5)
+        tkey = f"{OUT_PREFIX}/alt_train_pairs.json.gz"
+        s3.upload_file(str(train), BUCKET, tkey)
+        print(f"[done] uploaded s3://{BUCKET}/{tkey} (FNO training pairs)", flush=True)
     return 0
 
 

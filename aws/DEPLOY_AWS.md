@@ -74,5 +74,14 @@ This is the path to running the *whole* loop on AWS: Bedrock agent (§4) + S3 da
 The committed coeffs are the DETERMINISTIC tier (mean-of-embeds + L2-normalize). The manifest's production
 decoder is an **FNO + Bayesian ensemble** (4 layers / 16 modes / width 64; loss = spectral_coefficient_mse +
 eigenvalue_preservation; ≥100 training pairs; ensemble 5 / mc_dropout 0.1). Training needs a GPU → SageMaker or
-an EC2 g5. The deterministic coeffs we already have are the **training pairs** (prefill-embeds → coef). See
-`aws/train_fno/` for the skeleton + launch doc. This is the one piece that genuinely requires AWS GPU.
+an EC2 g5. The deterministic coeffs we already have are the **training pairs** (prefill-embeds → coef).
+
+The training set (X=prefill_embeds + mask, y=coef) is produced by `python _run_alt_coeffs.py --save-embeds`
+→ `_alt_labels/coeffs/alt_train_pairs.json.gz` (gitignored; the committed coeff index stays lean = coef only).
+On AWS, run the discovery job with `SAVE_EMBEDS=1` and it also uploads `alt_train_pairs.json.gz` to
+`s3://<bucket>/<S3_OUT_PREFIX>/`. Then train (g5/SageMaker):
+```bash
+pip install torch
+python aws/train_fno/train_fno.py --train-pairs alt_train_pairs.json.gz --out fno_checkpoint.pt
+```
+See `aws/train_fno/` for the skeleton + launch doc. This is the one piece that genuinely requires AWS GPU.

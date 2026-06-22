@@ -67,3 +67,5 @@ _episode_onsets_out/
 _onset_coeff/
 _full_pipeline_onset/
 _alt_labels/*.jsonl
+# FNO training pairs (X=prefill_embeds + y=coef) — large, bound for S3/SageMaker, NOT git
+_alt_labels/coeffs/alt_train_pairs.json.gz
