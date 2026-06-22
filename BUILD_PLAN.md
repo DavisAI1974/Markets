@@ -448,23 +448,24 @@ Architect pulled the Hilbert-Space-Unification math and resolved it:
   for THAT application the Architect's answer does not apply, and it stays an OPEN thread he is exploring
   with the Architect. Settled = "build the swing turn-detector classically." Open = the broader merge-math edge.
 
-## Actionable edges (Architect, S36b) — one done, three queued
+## Actionable edges (Architect, S36b) — ALL 4 DONE
 - **DONE — per-leg ASYMMETRIC fee floor** (`_info_dipole_fee_floor.py`). The 22 bps floor is round-trip
   TAKER. Because the dipole PREDICTS the turn, you can REST a maker limit there → lower fee AND lower
   slippage (you fill at your price). Floor drops 22(taker/taker) → 13(maker-in/taker-out) → **4 bps
   (maker/maker)**, which **1.6–3.5× the oracle opportunity** (far more swings clear a lower floor). Caveat:
   maker-rest carries FILL RISK (limit only fills if price reaches it) — model per-venue before trusting.
   Model the floor PER-LEG, not as a flat 22.
-- **QUEUED — regime master-gate** via the dipole C ratio (H_self/H_cross): a predictive read of WHEN NOT to
-  trade (toxic flow, MM withdrawal, liquidity crises). Wire as a master enable/disable on top of the
-  filter+timing stack — going FLAT ahead of a liquidity crisis beats entering beautifully into a gap.
-- **QUEUED — incremental/sliding operator update** for latency: if the live operator is a fixed spectral
-  apply, precompute everything not dependent on the newest tick and keep a rolling state updated
-  incrementally (recursive/sliding) instead of recomputing the window each tick. Same math, moves work out
-  of the hot path. Cheapest real latency win, no new hardware.
-- **DISCIPLINE — pre-entry-window leakage check on EVERY new signal before it touches a backtest.** The
-  algebraic-dipole 0.993 OOF / FN=0 is UNVALIDATED and is exactly the shape leakage takes — it does NOT
-  enter the falsification harness until it survives a strict `[entry−30m, entry]` pre-entry validation.
+- **DONE — regime master-gate** (`_info_dipole_regime_gate.py`) via ER (trend-efficiency) + the dipole C
+  ratio (H_self/H_cross). NOT universal: it cuts good trades on the cells where the dipole already wins, but
+  rescues the bleeders (btc_bybit_perp −173→+16, eth_kraken −1207→−170). Deploy PER CELL — fire only where it
+  earns its place. Confirm the per-cell on/off on multi-regime 1-sec data (degenerate-tuning wall on one window).
+- **DONE — incremental/sliding operator update** (`odcore/incremental.py` `RollingFlow` + `_canary_incremental.py`).
+  O(1)-amortized rolling order-flow imbalance + exhaustion; bit-faithful to the batch operator (max err 7e-13,
+  0 exhaustion mismatches) at **1.70 µs/tick**. The per-tick window recompute is out of the hot path. Same math.
+- **DONE — pre-entry leakage check** (`odcore/leakage.py` `assert_no_leakage` + `_canary_leakage.py`). Model-
+  agnostic: corrupt all data AFTER i, require the signal at i unchanged. Canary CLEARS the dipole (leak-free)
+  and CATCHES a look-ahead control (40/40). **This is the mandatory gate** — the algebraic-dipole 0.993/FN=0
+  does NOT enter the harness until it passes `assert_no_leakage`.
 
 ## Falsification harness (Architect, D) — the decisive validation, when there's a validated challenger
 Do NOT run "quantum vs classical detector" — the unification thesis predicts a null there, so a null tells
