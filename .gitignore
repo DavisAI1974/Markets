@@ -72,3 +72,6 @@ _alt_labels/coeffs/alt_train_pairs.json.gz
 _alt_labels/preentry_flow_features.json
 turn_signature.png
 *.png
+
+# transient run logs (S41)
+*.log
