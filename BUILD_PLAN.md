@@ -441,6 +441,12 @@ Architect pulled the Hilbert-Space-Unification math and resolved it:
   FPGA/colo captures it. This independently CONFIRMS PART 4's split (dipole = filter; fine-res price = timing).
 - ("Quantum = speed" was the wrong frame, and our own theory is the proof. Greg's "time on atomic decay"
   noted as the joke it was.)
+- **SCOPE (Greg, load-bearing — do NOT over-read the closure):** this "no quantum edge" result is
+  CONDITIONAL on the turn-detector being LOW-DIMENSIONAL (an order-flow+price window with cheap classical
+  evaluation — that is what fails the quantum-advantage prongs). It does NOT generalize to other uses of the
+  merge-math. Greg believes the edge he has in mind is **something OTHER than the dipole/OD turn-detector**;
+  for THAT application the Architect's answer does not apply, and it stays an OPEN thread he is exploring
+  with the Architect. Settled = "build the swing turn-detector classically." Open = the broader merge-math edge.
 
 ## Actionable edges (Architect, S36b) — one done, three queued
 - **DONE — per-leg ASYMMETRIC fee floor** (`_info_dipole_fee_floor.py`). The 22 bps floor is round-trip
