@@ -31,14 +31,25 @@ import numpy as np
 
 EPS = 1e-9
 
-# Per-cell deploy map: cell -> (feature, lift_over_base_rate, n). Populated from
-# _info_dipole_flow_probe.py (lift >= +5 over base rate, n >= 40 on the 05-22..24 test bars).
-# Small-n cells should be re-validated on fuller bins before trusting (see probe).
+# Per-cell candidate map: cell -> (feature, lift_over_base_rate, n) from
+# _info_dipole_flow_probe.py (lift >= +5 over base rate on the 05-22..24 test bars), then
+# narrowed by the robustness sweep (_info_dipole_flow_robustness.py).
+#
+# RETAINED (Greg's call — keep the buckets it works in, `deploy-signal-per-cell-not-universal`):
+# only the 2 cells whose positive lift REPEATED across the window grid are kept; both are positive
+# specifically at the 30m pre-entry window (= FLOW_WINDOW_BARS the fingerprint uses):
+#   - eth_bybit_buy  [imb_flow]: positive in 7/9 window x forward grid cells (30m row +8.3/+11.1/+5.6)
+#   - btc_kraken_sell[mi_flow] : largest n=140, 30m row +5.7/+8.6, only cell with positive late-OOS (+7.1)
+# DROPPED as fragile: btc_coinbase_sell (20m row -21..-39), eth_kraken_sell (grid mostly negative).
+#
+# STILL PROVISIONAL (DEPLOY_VALIDATED=False): even the 2 keepers have weak temporal OOS on thin
+# 1-min/small-N data; the grid positivity is encouraging but a clean out-of-sample edge is NOT yet
+# proven. Real confirmation needs the local 1-sec onset-window history (not in git). Until
+# DEPLOY_VALIDATED is True, treat cell_signal as a research/stacking input, not a standalone live edge.
+DEPLOY_VALIDATED = False
 DEPLOY: dict[str, tuple[str, float, int]] = {
-    "btc_kraken_sell":   ("mi_flow", 8.2, 140),
-    "eth_bybit_buy":     ("imb_flow", 11.1, 72),
-    "btc_coinbase_sell": ("mi_flow", 5.4, 74),
-    "eth_kraken_sell":   ("ent_dipole", 5.2, 71),
+    "eth_bybit_buy":   ("imb_flow", 11.1, 72),
+    "btc_kraken_sell": ("mi_flow", 8.2, 140),
 }
 
 FEATURES = ("imb_level", "ent_dipole", "C_signed", "mi_flow", "imb_flow")
@@ -106,9 +117,12 @@ def signed_flow_features(buy_vol, sell_vol) -> dict | None:
 def cell_signal(cell: str, buy_vol, sell_vol):
     """Per-cell signed flow signal: the deploy-selected feature for `cell`, else None.
 
-    Returns (value, feature_name) using the cell's earning feature from DEPLOY, or None if this
-    cell has not earned the operator (partial coverage is fine -- the stack uses it only where it
-    works). Never blends features; selects the one that earned lift for this bucket.
+    Returns (value, feature_name) using the cell's candidate feature from DEPLOY, or None if this
+    cell is not a candidate. Never blends features; selects one per bucket.
+
+    NOTE: DEPLOY is PROVISIONAL (DEPLOY_VALIDATED is False) — the per-cell lifts failed robustness
+    (see module docstring). Use this for research/stacking; gate any LIVE decision on
+    DEPLOY_VALIDATED being True.
     """
     if cell not in DEPLOY:
         return None
