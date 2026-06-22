@@ -1,0 +1,74 @@
+{
+ "btc_bybit_buy": {
+  "lose_cs2000_clean": 1056,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 203,
+  "win_onset": 75
+ },
+ "btc_bybit_sell": {
+  "lose_cs2000_clean": 1050,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 66,
+  "win_onset": 25
+ },
+ "btc_coinbase_buy": {
+  "lose_cs2000_clean": 993,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 256,
+  "win_onset": 83
+ },
+ "btc_coinbase_sell": {
+  "lose_cs2000_clean": 976,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 53,
+  "win_onset": 28
+ },
+ "btc_kraken_buy": {
+  "lose_cs2000_clean": 1100,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 127,
+  "win_onset": 47
+ },
+ "btc_kraken_sell": {
+  "lose_cs2000_clean": 1130,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 127,
+  "win_onset": 26
+ },
+ "eth_bybit_buy": {
+  "lose_cs2000_clean": 1023,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 75,
+  "win_onset": 32
+ },
+ "eth_bybit_sell": {
+  "lose_cs2000_clean": 1029,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 81,
+  "win_onset": 42
+ },
+ "eth_coinbase_buy": {
+  "lose_cs2000_clean": 1331,
+  "win_cand_sp": 150,
+  "win_cs2000_clean": 127,
+  "win_onset": 71
+ },
+ "eth_coinbase_sell": {
+  "lose_cs2000_clean": 1077,
+  "win_cand_sp": 108,
+  "win_cs2000_clean": 28,
+  "win_onset": 18
+ },
+ "eth_kraken_buy": {
+  "lose_cs2000_clean": 1174,
+  "win_cand_sp": 133,
+  "win_cs2000_clean": 72,
+  "win_onset": 27
+ },
+ "eth_kraken_sell": {
+  "lose_cs2000_clean": 1156,
+  "win_cand_sp": 78,
+  "win_cs2000_clean": 25,
+  "win_onset": 6
+ }
+}

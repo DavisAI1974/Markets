@@ -1,0 +1,61 @@
+# Build questions / decisions for Greg (review when back)
+
+Running log of decisions I made with best judgment while building unattended, plus
+questions where your input would change direction. We can revisit any of these.
+
+## BLOCKERS needing your action
+1. **`DavisAI1974/Basic_equations` is access-denied this session** (scope locked to
+   `davisai1974/markets`). It almost certainly holds `_markets_algebraic_dipole.py`,
+   `s13_chemistry_residual.py`, `s12_coupling_decomposition.py` — the EXACT chem-dipole
+   construction. **Please add it (and maybe `od-engine`, `evolution`) to this session's
+   allowed repos.** Then I can port the originals verbatim and run them on the real bins.
+   - Until then: the chem QUADRATIC dipole does NOT reproduce on the channels I
+     reconstructed (real buy/sell entropies are near-symmetric H_a≈H_b → trivial identity
+     `H_a²≈H_a·H_b`, c≈0; nothing scores "structured"). I tried 5 channel types × 3
+     timescales × 3 conditionings. This may be a channel/preprocessing mismatch vs the
+     original — which the blocked repo would resolve. OR it's a genuine "construction not
+     nature" result (the log's own open question). I am NOT fabricating a chem-dipole win.
+
+## DECISIONS I made (best judgment; easy to change)
+- Built a new `odcore/` package; kept the existing platform shell intact (no destructive
+  housekeeping while you're away — I will NOT delete/unwire anything risky unattended).
+- Estimators: Vasicek m-spacing for marginal entropy, KSG (k=4) for MI (the log says these
+  agree on the structural core; INFO-022/034).
+- Channel conditioning: global log1p/z-score so entropies are comparable scale (INFO-051).
+  NOTE this symmetrizes buy/sell — possibly the wrong choice for the chem dipole (see #1).
+- All substantive runs are on the REAL data/* branch bins (materialized to gitignored
+  `realbins/`). Synthetic only used for unit-test controls.
+
+## QUESTIONS for you
+- **Zero synthetic enforced (your call).** Removed `odcore/synthetic.py` and all synthetic
+  tests. Tests now run on REAL bins (the lead-lag "known lag" test injects a known shift into
+  a REAL BTC return series and recovers it). Tests skip if `realbins/` isn't materialized.
+  - ONE place synthetic would otherwise help: proving PySR *rediscovers a known governing
+    equation* (e.g. the Brusselator chem coeffs) needs a system with a known closed-form law,
+    which real markets don't have. I did NOT bake that in. If you want that sanity check,
+    say so and I'll add a single clearly-labeled known-law fixture; otherwise PySR is
+    validated only by fit quality on real data.
+- Decoupling detector found **145 real decoupling events** on Coinbase↔Bybit (coupling mean
+  0.57). Default thresholds (lookback=20, drop_k=2.5σ) are a guess — tune later against P&L.
+
+## HONEST BACKTEST RESULT (real BTC minute bars, fee 2 + slip 1 bps)
+The simple signals I can build from the UNBLOCKED pieces have **NO net edge** — they all lose
+to trading costs because they flip almost every bar:
+  - ofi_momentum WF −178%, ofi_fade −188%, momentum5 −92%, dipole_direction −12%
+  - tautology-z ≈ 1–2 for all (i.e. indistinguishable from a circular-shift null = no real edge)
+This is the truthful Result-Discipline outcome: the validation harness correctly REJECTS these.
+It is NOT an engine failure — it's why the chem dipole (the blocked `Basic_equations` piece you're
+confident in) is the one that matters. Two honest paths to real edge, both queued:
+  (a) unblock `Basic_equations` and port the exact chem-dipole construction;
+  (b) lower-frequency signals (decoupling-convergence on dislocations; regime-gated entries) so
+      cost stops dominating — I'll prototype these but won't curve-fit a positive number.
+
+## CROSS-VENUE REVERSION (prototyped, real signal but not net-profitable yet)
+Trade only when a venue dislocates from the 3-venue consensus (z-band entry/exit). Finding:
+the reversion is STATISTICALLY REAL — at 10s scale it survives the tautology null at **z=3.0–3.6**
+(gross structure is genuine) — but the per-trade edge is smaller than the 3 bps round-trip cost, so
+net is negative at every threshold (best: −2.6% at entry=3σ/60s, 100 trades). Conclusion: real
+coupling structure, no net-of-cost edge without (i) the directional chem dipole, (ii) cheaper
+execution (maker fills), or (iii) sub-second tick data for genuine latency lead-lag.
+QUESTION: do you have a maker-fee / rebate venue, or tick data? That changes the cost math and could
+flip the cross-venue signal positive. The signal itself is real (z=3).

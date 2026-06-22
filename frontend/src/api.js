@@ -38,6 +38,38 @@ export async function fetchRegimeHistory(asset, venue, nPoints = 60) {
   return r.json();
 }
 
+// --- Operator-Discovery coupling layer (S21) ---
+
+export async function fetchCouplingMatrix() {
+  const r = await fetch(`${BASE}/api/coupling_matrix`);
+  if (!r.ok) throw new Error(`coupling_matrix ${r.status}`);
+  return r.json();
+}
+
+export async function fetchLeadLag(asset) {
+  const r = await fetch(`${BASE}/api/leadlag/${asset}`);
+  if (!r.ok) throw new Error(`leadlag ${r.status}`);
+  return r.json();
+}
+
+export async function fetchDipoleSignals() {
+  const r = await fetch(`${BASE}/api/dipole_signals`);
+  if (!r.ok) throw new Error(`dipole_signals ${r.status}`);
+  return r.json();
+}
+
+export async function fetchStrength(asset, venue) {
+  const r = await fetch(`${BASE}/api/strength/${asset}/${venue}`);
+  if (!r.ok) throw new Error(`strength ${r.status}`);
+  return r.json();
+}
+
+export async function fetchDecoupling(limit = 100) {
+  const r = await fetch(`${BASE}/api/decoupling?limit=${limit}`);
+  if (!r.ok) throw new Error(`decoupling ${r.status}`);
+  return r.json();
+}
+
 /** Subscribe to SSE stream. Returns a cleanup fn. */
 export function subscribeToStream({ onSignal, onSnapshot, onError }) {
   const es = new EventSource(`${BASE}/api/stream`);

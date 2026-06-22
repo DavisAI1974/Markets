@@ -149,7 +149,11 @@ class Executor:
         if direction is None:
             print(f"[exec] no direction for {sig['regime']}; skipping", flush=True)
             return
-        notional = min(cfg.position_size_usd, cfg.max_position_usd)
+        notional = self._size_notional(sig, cfg)
+        if notional <= 0:
+            print(f"[exec] OD sizing -> 0 notional for {sig['signal_id']}; skipping", flush=True)
+            audit(self.audit_path, {"kind": "sized_out", "signal_id": sig["signal_id"], "ts": time.time()})
+            return
         asset = sig["asset"]
         if direction == "long":
             r = self.exchange.market_buy(asset, notional)
@@ -183,6 +187,27 @@ class Executor:
 
         # Schedule exit using this source's config
         asyncio.create_task(self._exit_after_hold(trade, cfg))
+
+    def _size_notional(self, sig: dict, cfg: RiskConfig) -> float:
+        """OD-native sizing when enabled and the signal carries OD confidence inputs;
+        otherwise the fixed cfg.position_size_usd (capped). Non-destructive: a signal
+        without OD fields behaves exactly as before."""
+        if not getattr(cfg, "od_sizing", False):
+            return min(cfg.position_size_usd, cfg.max_position_usd)
+        try:
+            from odcore.sizing import SizingInputs, od_size_fraction, position_notional
+        except Exception:
+            return min(cfg.position_size_usd, cfg.max_position_usd)
+        inp = SizingInputs(
+            residual_fraction=float(sig.get("od_residual_fraction", 0.0)),
+            dipole_r2=float(sig.get("od_dipole_r2", 0.0)),
+            leadlag_stability=float(sig.get("od_leadlag_stability", 0.0)),
+            walkforward_edge=float(sig.get("od_walkforward_edge", 0.0)),
+        )
+        frac = od_size_fraction(inp)
+        return position_notional(equity=cfg.max_position_usd, size_fraction=frac,
+                                 max_position_usd=cfg.max_position_usd,
+                                 floor_usd=getattr(cfg, "position_floor_usd", 0.0))
 
     def _direction_from_regime(self, sig: dict) -> str | None:
         regime = sig["regime"]

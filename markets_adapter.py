@@ -29,7 +29,9 @@ Run the demo:
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -64,6 +66,39 @@ class MarketBar:
     def dipole(self) -> float:
         s = self.buy_vol + self.sell_vol
         return (self.buy_vol - self.sell_vol) / (s + 1e-9) if s > 0 else 0.0
+
+
+def load_minute_bars(bins_path: str) -> list["MarketBar"]:
+    """Load a 1-second collector bins JSON into minute MarketBars (OHLC + buy/sell volume).
+
+    The single source of this loader: the identical bodies that had been copy-pasted into
+    adaptive_backtester / backtester / autoresearch_lite / phase1_5_evaluator and the backend
+    SignalStore now all call here. (odcore.io.load_bins is the separate 1-second BinSeries
+    loader for the OD operator path; this is the minute-bar loader for the regime classifier.)
+    """
+    with open(bins_path) as f:
+        sec_bins = {float(k): v for k, v in json.load(f).items()}
+    minute_groups: dict[float, list[tuple[float, dict]]] = defaultdict(list)
+    for ts, b in sec_bins.items():
+        if b.get("mid") is None:
+            continue
+        m_ts = int(ts / 60.0) * 60.0
+        minute_groups[m_ts].append((ts, b))
+    bars: list[MarketBar] = []
+    for m_ts in sorted(minute_groups):
+        members = sorted(minute_groups[m_ts], key=lambda x: x[0])
+        mids = [b["mid"] for _, b in members if b["mid"] is not None]
+        if not mids:
+            continue
+        bars.append(MarketBar(
+            ts=float(m_ts),
+            close=float(mids[-1]), open_=float(mids[0]),
+            high=float(max(mids)), low=float(min(mids)),
+            volume=float(sum(b["buy"] + b["sell"] for _, b in members)),
+            buy_vol=float(sum(b["buy"] for _, b in members)),
+            sell_vol=float(sum(b["sell"] for _, b in members)),
+        ))
+    return bars
 
 
 @dataclass

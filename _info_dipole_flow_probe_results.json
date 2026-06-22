@@ -1,0 +1,399 @@
+{
+  "window_s": 1800,
+  "fwd_s": 1800,
+  "overall": {
+    "imb_level": {
+      "acc": 53.9,
+      "n": 1560
+    },
+    "ent_dipole": {
+      "acc": 47.2,
+      "n": 1475
+    },
+    "C_signed": {
+      "acc": 53.9,
+      "n": 1560
+    },
+    "mi_flow": {
+      "acc": 51.5,
+      "n": 1556
+    },
+    "imb_flow": {
+      "acc": 48.8,
+      "n": 1560
+    }
+  },
+  "per_cell": {
+    "imb_level": {
+      "eth_coinbase_sell": {
+        "acc": 65.5,
+        "base": 51.7,
+        "lift": 13.8,
+        "n": 29
+      },
+      "eth_bybit_buy": {
+        "acc": 65.3,
+        "base": 58.3,
+        "lift": 6.9,
+        "n": 72
+      },
+      "btc_kraken_sell": {
+        "acc": 53.9,
+        "base": 51.8,
+        "lift": 2.1,
+        "n": 141
+      },
+      "btc_coinbase_buy": {
+        "acc": 62.5,
+        "base": 62.9,
+        "lift": -0.4,
+        "n": 275
+      },
+      "btc_bybit_sell": {
+        "acc": 76.7,
+        "base": 77.9,
+        "lift": -1.2,
+        "n": 86
+      },
+      "eth_coinbase_buy": {
+        "acc": 56.9,
+        "base": 60.0,
+        "lift": -3.1,
+        "n": 130
+      },
+      "btc_kraken_buy": {
+        "acc": 47.1,
+        "base": 50.8,
+        "lift": -3.7,
+        "n": 187
+      },
+      "btc_bybit_buy": {
+        "acc": 43.9,
+        "base": 52.9,
+        "lift": -9.0,
+        "n": 244
+      },
+      "btc_coinbase_sell": {
+        "acc": 55.4,
+        "base": 64.9,
+        "lift": -9.5,
+        "n": 74
+      },
+      "eth_kraken_sell": {
+        "acc": 41.1,
+        "base": 51.1,
+        "lift": -10.0,
+        "n": 90
+      },
+      "eth_bybit_sell": {
+        "acc": 47.7,
+        "base": 59.4,
+        "lift": -11.7,
+        "n": 128
+      },
+      "eth_kraken_buy": {
+        "acc": 51.0,
+        "base": 69.2,
+        "lift": -18.3,
+        "n": 104
+      }
+    },
+    "ent_dipole": {
+      "eth_kraken_sell": {
+        "acc": 56.3,
+        "base": 51.1,
+        "lift": 5.2,
+        "n": 71
+      },
+      "eth_bybit_buy": {
+        "acc": 60.6,
+        "base": 58.3,
+        "lift": 2.2,
+        "n": 71
+      },
+      "eth_bybit_sell": {
+        "acc": 60.6,
+        "base": 59.4,
+        "lift": 1.3,
+        "n": 127
+      },
+      "btc_kraken_sell": {
+        "acc": 52.0,
+        "base": 51.8,
+        "lift": 0.2,
+        "n": 127
+      },
+      "eth_coinbase_sell": {
+        "acc": 51.7,
+        "base": 51.7,
+        "lift": 0.0,
+        "n": 29
+      },
+      "btc_bybit_buy": {
+        "acc": 51.5,
+        "base": 52.9,
+        "lift": -1.4,
+        "n": 235
+      },
+      "btc_kraken_buy": {
+        "acc": 35.2,
+        "base": 50.8,
+        "lift": -15.6,
+        "n": 162
+      },
+      "eth_coinbase_buy": {
+        "acc": 43.8,
+        "base": 60.0,
+        "lift": -16.2,
+        "n": 130
+      },
+      "btc_coinbase_buy": {
+        "acc": 46.1,
+        "base": 62.9,
+        "lift": -16.8,
+        "n": 267
+      },
+      "eth_kraken_buy": {
+        "acc": 42.4,
+        "base": 69.2,
+        "lift": -26.8,
+        "n": 99
+      },
+      "btc_bybit_sell": {
+        "acc": 42.4,
+        "base": 77.9,
+        "lift": -35.6,
+        "n": 85
+      },
+      "btc_coinbase_sell": {
+        "acc": 26.4,
+        "base": 64.9,
+        "lift": -38.5,
+        "n": 72
+      }
+    },
+    "C_signed": {
+      "eth_coinbase_sell": {
+        "acc": 65.5,
+        "base": 51.7,
+        "lift": 13.8,
+        "n": 29
+      },
+      "eth_bybit_buy": {
+        "acc": 65.3,
+        "base": 58.3,
+        "lift": 6.9,
+        "n": 72
+      },
+      "btc_kraken_sell": {
+        "acc": 53.9,
+        "base": 51.8,
+        "lift": 2.1,
+        "n": 141
+      },
+      "btc_coinbase_buy": {
+        "acc": 62.5,
+        "base": 62.9,
+        "lift": -0.4,
+        "n": 275
+      },
+      "btc_bybit_sell": {
+        "acc": 76.7,
+        "base": 77.9,
+        "lift": -1.2,
+        "n": 86
+      },
+      "eth_coinbase_buy": {
+        "acc": 56.9,
+        "base": 60.0,
+        "lift": -3.1,
+        "n": 130
+      },
+      "btc_kraken_buy": {
+        "acc": 47.1,
+        "base": 50.8,
+        "lift": -3.7,
+        "n": 187
+      },
+      "btc_bybit_buy": {
+        "acc": 43.9,
+        "base": 52.9,
+        "lift": -9.0,
+        "n": 244
+      },
+      "btc_coinbase_sell": {
+        "acc": 55.4,
+        "base": 64.9,
+        "lift": -9.5,
+        "n": 74
+      },
+      "eth_kraken_sell": {
+        "acc": 41.1,
+        "base": 51.1,
+        "lift": -10.0,
+        "n": 90
+      },
+      "eth_bybit_sell": {
+        "acc": 47.7,
+        "base": 59.4,
+        "lift": -11.7,
+        "n": 128
+      },
+      "eth_kraken_buy": {
+        "acc": 51.0,
+        "base": 69.2,
+        "lift": -18.3,
+        "n": 104
+      }
+    },
+    "mi_flow": {
+      "btc_kraken_sell": {
+        "acc": 60.0,
+        "base": 51.8,
+        "lift": 8.2,
+        "n": 140
+      },
+      "eth_coinbase_sell": {
+        "acc": 58.6,
+        "base": 51.7,
+        "lift": 6.9,
+        "n": 29
+      },
+      "btc_coinbase_sell": {
+        "acc": 70.3,
+        "base": 64.9,
+        "lift": 5.4,
+        "n": 74
+      },
+      "btc_kraken_buy": {
+        "acc": 55.4,
+        "base": 50.8,
+        "lift": 4.6,
+        "n": 186
+      },
+      "btc_coinbase_buy": {
+        "acc": 55.3,
+        "base": 62.9,
+        "lift": -7.6,
+        "n": 275
+      },
+      "btc_bybit_buy": {
+        "acc": 43.0,
+        "base": 52.9,
+        "lift": -9.8,
+        "n": 244
+      },
+      "eth_bybit_buy": {
+        "acc": 47.2,
+        "base": 58.3,
+        "lift": -11.1,
+        "n": 72
+      },
+      "eth_coinbase_buy": {
+        "acc": 46.9,
+        "base": 60.0,
+        "lift": -13.1,
+        "n": 130
+      },
+      "eth_bybit_sell": {
+        "acc": 46.0,
+        "base": 59.4,
+        "lift": -13.3,
+        "n": 126
+      },
+      "eth_kraken_buy": {
+        "acc": 55.8,
+        "base": 69.2,
+        "lift": -13.5,
+        "n": 104
+      },
+      "eth_kraken_sell": {
+        "acc": 36.7,
+        "base": 51.1,
+        "lift": -14.4,
+        "n": 90
+      },
+      "btc_bybit_sell": {
+        "acc": 51.2,
+        "base": 77.9,
+        "lift": -26.7,
+        "n": 86
+      }
+    },
+    "imb_flow": {
+      "eth_bybit_buy": {
+        "acc": 69.4,
+        "base": 58.3,
+        "lift": 11.1,
+        "n": 72
+      },
+      "eth_coinbase_sell": {
+        "acc": 62.1,
+        "base": 51.7,
+        "lift": 10.3,
+        "n": 29
+      },
+      "btc_kraken_buy": {
+        "acc": 50.3,
+        "base": 50.8,
+        "lift": -0.5,
+        "n": 187
+      },
+      "btc_kraken_sell": {
+        "acc": 49.6,
+        "base": 51.8,
+        "lift": -2.1,
+        "n": 141
+      },
+      "eth_kraken_sell": {
+        "acc": 44.4,
+        "base": 51.1,
+        "lift": -6.7,
+        "n": 90
+      },
+      "btc_bybit_buy": {
+        "acc": 42.6,
+        "base": 52.9,
+        "lift": -10.2,
+        "n": 244
+      },
+      "btc_coinbase_buy": {
+        "acc": 51.3,
+        "base": 62.9,
+        "lift": -11.6,
+        "n": 275
+      },
+      "eth_coinbase_buy": {
+        "acc": 47.7,
+        "base": 60.0,
+        "lift": -12.3,
+        "n": 130
+      },
+      "eth_bybit_sell": {
+        "acc": 44.5,
+        "base": 59.4,
+        "lift": -14.8,
+        "n": 128
+      },
+      "eth_kraken_buy": {
+        "acc": 51.9,
+        "base": 69.2,
+        "lift": -17.3,
+        "n": 104
+      },
+      "btc_coinbase_sell": {
+        "acc": 43.2,
+        "base": 64.9,
+        "lift": -21.6,
+        "n": 74
+      },
+      "btc_bybit_sell": {
+        "acc": 46.5,
+        "base": 77.9,
+        "lift": -31.4,
+        "n": 86
+      }
+    }
+  },
+  "deploy_criterion": "lift >= +5 over base rate, n >= 40"
+}

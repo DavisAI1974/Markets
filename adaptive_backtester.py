@@ -37,6 +37,7 @@ import numpy as np
 
 from markets_adapter import (
     MarketBar, MarketChunker, MarketChunkEncoder, MarketFeatures, MarketChunk,
+    load_minute_bars,
 )
 from regime_classifier import (
     Regime, classify_regime, baselines_from_corpus,
@@ -64,8 +65,13 @@ class SignalGenerator:
 
 
 def build_generators() -> list[SignalGenerator]:
-    """The candidate operator library."""
-    return [
+    """The candidate operator library.
+
+    Includes the Operator-Discovery generators (odcore.generators.make_od_generators)
+    so the entropy-dipole operators compete in the same rolling-Sharpe selection as the
+    hand-specified ones. The OD generators degrade gracefully to [] if odcore is missing.
+    """
+    gens = [
         # Pure dipole (the hand-specified operator). Mean-reversion direction
         # because the empirical lag-1 r was negative on EQUILIBRIUM chunks.
         SignalGenerator(
@@ -96,6 +102,12 @@ def build_generators() -> list[SignalGenerator]:
             description="Fade dipole; reduce signal when one-side pressure is sustained (whale-like)",
         ),
     ]
+    try:
+        from odcore.generators import make_od_generators
+        gens.extend(make_od_generators())
+    except Exception:
+        pass
+    return gens
 
 
 # ---------------------------------------------------------------------------
@@ -167,29 +179,9 @@ class AdaptiveSelector:
 # Simulation walker
 # ---------------------------------------------------------------------------
 
-def load_bars(bins_path: str) -> list[MarketBar]:
-    with open(bins_path) as f:
-        sec_bins = {float(k): v for k, v in json.load(f).items()}
-    minute_groups: dict[float, list[tuple[float, dict]]] = defaultdict(list)
-    for ts, b in sec_bins.items():
-        if b.get("mid") is None:
-            continue
-        m_ts = int(ts / 60.0) * 60.0
-        minute_groups[m_ts].append((ts, b))
-    bars: list[MarketBar] = []
-    for m_ts in sorted(minute_groups):
-        members = sorted(minute_groups[m_ts], key=lambda x: x[0])
-        mids = [b["mid"] for _, b in members if b["mid"] is not None]
-        if not mids:
-            continue
-        bars.append(MarketBar(
-            ts=float(m_ts), close=float(mids[-1]), open_=float(mids[0]),
-            high=float(max(mids)), low=float(min(mids)),
-            volume=float(sum(b["buy"] + b["sell"] for _, b in members)),
-            buy_vol=float(sum(b["buy"] for _, b in members)),
-            sell_vol=float(sum(b["sell"] for _, b in members)),
-        ))
-    return bars
+# load_bars consolidated into markets_adapter.load_minute_bars (single source of the
+# minute-bar loader that had been copy-pasted across the backtest/evaluator scripts).
+load_bars = load_minute_bars
 
 
 @dataclass
