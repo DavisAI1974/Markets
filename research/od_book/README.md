@@ -32,10 +32,20 @@ trade-bin collectors discard (they keep only `{buy,sell,mid,high,low,n_trades}`)
 | `book_state.py` | load snapshots → compact x(t) state matrix | **built + tested on real sample** |
 | `splits.py` | walk-forward, time-ordered split discipline | **built** |
 | `KILL_GATE.md` | pre-registered metrics + pass/fail bar | **frozen** |
-| `champion.py` | VAR(p) + ridge one-step baseline | TODO |
-| `challenger_od.py` | OD operator recovery (DMD + spectrum, piecewise) | TODO |
-| `metrics.py` | OOS R² + turn-as-consequence (net 22 bps) + spectrum stability | TODO |
-| `run_experiment.py` | §6 sequencing, single guarded T_test pass | TODO |
+| `champion.py` | VAR(p) + ridge one-step baseline | **built** |
+| `challenger_od.py` | OD operator recovery (exact-DMD + spectrum) | **built** |
+| `metrics.py` | OOS R² + turn-as-consequence (net 22 bps) + spectrum stability | **built** |
+| `run_experiment.py` | §6 sequencing, one-shot-guarded T_test | **built** |
+| `test_smoke.py` | single-window plumbing/early-read (NOT the gated test) | **built** |
+
+### Early read (single 18.8-min local window — NOT the gated T_test)
+Plumbing validated end-to-end on real BTC book data. On this one window the DMD
+operator **ties the VAR/ridge** (mid_price R² 0.076 vs 0.078 at 100ms; champion
+ahead at 500ms/1s), and the net-of-22bps swing PnL is deeply negative for *both*
+(fee floor dominates at 100ms–1s, ~200 flips/window). This is the spec's
+anticipated KILL-modes #1 (linear model absorbs the dynamics) and #2 (no edge
+after fees) showing early. **Not a verdict** — the gated decision runs ONCE on the
+multi-day `data/btc-book` dataset via `run_experiment.py --commit-ttest`.
 
 ## x(t) state vector (45-dim default, K=10)
 
