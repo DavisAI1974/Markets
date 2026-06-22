@@ -72,6 +72,19 @@ That is how a real edge is kept, not thrown away.
   confidence; **anti_frac ≈ 1/N_eff** = data-sufficiency flag (INFO-017/024).
 - **M. "They never stacked"** (l.124) + the `_markets_dipole_chunker_stack` concept (l.246) —
   the edge is in composing pieces others used singly.
+- **N. Order-flow DIVERGENCE + EXHAUSTION reversal detector (S36, `odcore/info_dipole.py`).** The raw
+  order-flow dipole `(buy−sell)/(buy+sell)` used NOT as a direction predictor but as a
+  trend-continuation-vs-**FLIP** detector — the per-cell signal that fills the S35b "bleed" (the
+  side-AGNOSTIC 128-dim coeff cannot encode direction). Frame: markets are mostly follow-the-leader (a
+  trend = a flow) until the leader exhausts → new leader, usually opposite; the edge is detecting the
+  changeover. Two validated factors STACK: (1) **DIVERGENCE** `aligned_flow = imb_level·sign(price_drift)`
+  (<0 = flow opposes price); strong divergence (≤−0.20) → ~65% reversal, temporally stable, 6/7 cells.
+  (2) **EXHAUSTION** = the dipole COLLAPSING toward 0.5 (|late imbalance| < |early|, leader weakening —
+  Greg's "dipole→0.5 = change in flow"; the MOVE toward balance, NOT the discrete crossing, which is a
+  coin flip). Combined: oppose+exhaust **64% reversal** vs with-trend+strengthen **49%** (healthy trend).
+  **REINFORCES Part E:** the entropy/differential flow (dMI/dt, `mi_flow`) is a TREND ARTIFACT (vanishes
+  under detrend + temporal OOS) — only the raw order-flow LEVEL divergence is real, exactly E's "design
+  around the raw signal, not the entropy flow." Per-cell, never pooled; deploy gated on net-of-cost.
 
 ---
 
@@ -90,6 +103,7 @@ odcore/
   channels.py         # channel constructors (cross-asset, cross-venue, order-flow, price/vol, exogenous); MI-preserving normalize (J)
   coupling_scanner.py # enumerate pairings; rank by structured coupling gated by tautology-null (F); emit DECOUPLING events
   stacking.py         # M: compose dipole + leadlag + strength + families into one stacked generator
+  info_dipole.py      # N: order-flow divergence + exhaustion -> per-cell trend-continuation-vs-FLIP detector (S36)
   validation.py       # I,F: walk-forward/block CV + embargo; random-vs-walkforward gap; fees+slippage; tautology null; baselines
   sizing.py           # OD-native sizing (NOT Kelly): residual-fraction + live R^2 + leadlag stability, calibrated to measured edge
   generators.py       # SignalGenerator wrappers so odcore plugs into the existing AdaptiveSelector
@@ -344,3 +358,31 @@ keep-but-unwire the chunker; use the basic_equations knowledge).
 3. Backend endpoints (coupling matrix / strength / lead-lag / dipole / decoupling) + frontend
    views; executor wiring (OD generators + OD-native sizing + circuit breakers); keep PELT
    chunker but unwire from the signal path. Promote ONLY what beats baselines net of cost.
+
+---
+
+# PART 3 — S36 (2026-06-22): the order-flow DIVERGENCE/EXHAUSTION reversal edge (Part N)
+
+Built `odcore/info_dipole.py` — the order-flow divergence + exhaustion **FLIP detector** (Part N), the
+per-cell signal that fills the S35b "bleed" (the side-agnostic 128-dim coeff can't encode direction).
+This is the order-flow dipole used the RIGHT way per Part E (raw level, not entropy flow).
+
+- **VALIDATED** (per cell, pooled n=1560, on the committed `fingerprint_dataset/` test_bars): DIVERGENCE
+  (flow opposing price) + EXHAUSTION (dipole collapsing toward 0.5) stack to a **64% reversal** gate;
+  temporally stable (early 70% / late 62%); 6/7 cells (btc_bybit_buy inverts).
+  `divergence(buy_vol, sell_vol, price_drift)` → `{imb_level, aligned_flow, confirms, opposing,
+  exhausting, expect∈{reversal,flip_risk,weakening,continue}, reversal_conviction}`. Reusable in the
+  pre-window stage AND stacked into `odcore/fingerprint.py` per cell.
+- **DISCIPLINE / what NOT to use:** the DIRECTIONAL probe (`cell_signal`/`DEPLOY`) is a TREND/base-rate
+  ARTIFACT (Simpson's paradox on a 2-day trending window) — it shows +5..+11 "lift" that VANISHES under
+  a window/forward sweep + temporal OOS + a detrended target. `DEPLOY_VALIDATED=False` — **do NOT trade
+  off it.** This REINFORCES Part E (the entropy dMI/dt flow is the wrong tool). The robust edge is the
+  raw order-flow LEVEL divergence/flip read.
+- **NEXT (decisive, per `KICKOFF_2026-06-22_S36.md`):** net-of-cost backtest of the reversal gate **per
+  cell** (a 64% hit-rate is only an EDGE if the moves beat fees+slippage; walk-forward); confirm on the
+  LOCAL 1-sec multi-regime history (test_bars are thin 1-min/2-day); wire `divergence()` into the regime
+  classifier (flow-opposed/collapsing → reversal/transition) + sizing (`reversal_conviction`) per cell;
+  investigate the 2 inverting cells; add the C ratio (H_self/H_cross) as a 3rd factor.
+- **Tools (bar-free, off committed data):** `_info_dipole_trend_flip.py` (the edge),
+  `_info_dipole_flow_detrend.py` (artifact-vs-real), `_info_dipole_flow_robustness.py`,
+  `_info_dipole_flow_probe.py`. Full detail: `SESSION_HANDOFF_2026-06-22_S36.md`.

@@ -1,7 +1,8 @@
 # SESSION HANDOFF — S36 (2026-06-22) — the info-dipole FLOW edge: order-flow divergence + exhaustion = a per-cell trend-continuation-vs-FLIP detector
 
 Branch `claude/crypto-trading-platform-plan-MpqwG` (PUSHED to origin). Read order: `CLAUDE.md`
-(S36 delta top) -> this file -> `KICKOFF_2026-06-22_S36.md`. Continues the S35b fingerprint thread;
+(S36 delta top) -> this file -> `KICKOFF_2026-06-22_S36.md` -> `BUILD_PLAN.md` (now has **Part N** =
+the order-flow divergence/exhaustion detector + a **PART 3** S36 execution note). Continues the S35b fingerprint thread;
 all S35 memories still apply (`bucket-distinctiveness-is-the-goal`, `tools-are-complementary-not-competing`,
 `deploy-signal-per-cell-not-universal`, `markets-data-lives-local-not-git`).
 
