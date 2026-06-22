@@ -205,6 +205,31 @@ Round-1 pooled OOS:
   local 1-sec MULTI-regime history so tuning isn't hostage to one window. The harness is the scoreboard for
   all of these; the algebraic-dipole 0.993/FN=0 stays OUT until it passes the pre-entry leakage check.
 
+## Regime master-gate (round 2) — no robust edge on one window; but MAKER makes the dipole ~breakeven
+`_info_dipole_regime_gate.py` → `_info_dipole_regime_gate_results.json`. Added a master enable/disable that
+stands FLAT in bad regimes, via two metrics over a trailing window: ER (efficiency ratio = trend strength →
+"don't fade a straight run") and C (dipole H_self/H_cross → toxic/decoupled flow). Scored on the harness,
+OOS, at the maker floor.
+
+**Two honest findings:**
+- **The regime gate did NOT demonstrate a robust edge.** Tuned to max in-sample net it DEGENERATES to
+  near-no-trade (recall collapses to ~0.01–0.06) — it doesn't selectively cut the *bad* trades, it just
+  trades less everywhere: it *removes good trades* on the good venue (btc_kraken challenger +466 → +151
+  gated) and only "helps" bad venues by standing aside. The pooled "+253" C-gate number is a no-trade
+  artifact, not an edge. This is the recurring **degenerate-tuning wall**: near breakeven on a SINGLE
+  window, "maximize net" rewards trading less, so no gate (or any refinement) can be validated here.
+- **The genuinely encouraging result is MAKER execution on the un-gated dipole.** At the maker floor the
+  un-gated challenger is **~breakeven pooled (−22)** and clearly **positive on 3/6 venues** — btc_kraken
+  **+466** (recall 0.447, 82 calls), eth_bybit_perp **+670**, eth_coinbase **+392**. That's the best
+  net-of-cost result in this whole thread, and it came from the per-leg maker fee floor, not the gate.
+
+**The bottleneck is now explicit:** every refinement (regime gate, conviction tuning, …) is blocked on the
+same thing — you cannot tune/validate a near-breakeven swing strategy on ONE 1-sec window without overfitting
+to "trade less." The **local 1-sec MULTI-regime history is the gating resource** (KICKOFF #2), and **maker
+execution + sub-second data is the required path** (Greg: "if we're going to be market makers we have to get
+under 1 sec" — resting/re-quoting faster than adverse selection is inherently a sub-second game). The harness
++ regime gate are built and waiting for that data; do NOT tune their params on this single window.
+
 ## Bottom line
 The 64% reversal rate is real but does NOT, by itself, clear 10-bps round-trip cost pooled — the moves
 are too small. The flow gate genuinely improves on blind trend-following (+3 bps/trade), and the edge

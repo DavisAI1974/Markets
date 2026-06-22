@@ -1,0 +1,194 @@
+{
+  "btc_bybit_perp": {
+    "CHAMPION": {
+      "net_maker": -307.3,
+      "recall": 0.406,
+      "precision": 0.635,
+      "bps_to_turn": 20.5,
+      "n_calls": 85
+    },
+    "CHALLENGER": {
+      "net_maker": -172.7,
+      "recall": 0.09,
+      "precision": 0.571,
+      "bps_to_turn": 22.6,
+      "n_calls": 21
+    },
+    "CHALL+ERgate": {
+      "net_maker": 74.6,
+      "gate": ">=0.2",
+      "recall": 0.0,
+      "precision": 0.0,
+      "bps_to_turn": null,
+      "n_calls": 1
+    },
+    "CHALL+Cgate": {
+      "net_maker": 16.4,
+      "gate": "<=16.0",
+      "recall": 0.045,
+      "precision": 0.462,
+      "bps_to_turn": 30.4,
+      "n_calls": 13
+    }
+  },
+  "btc_coinbase": {
+    "CHAMPION": {
+      "net_maker": -525.5,
+      "recall": 0.272,
+      "precision": 0.474,
+      "bps_to_turn": 20.4,
+      "n_calls": 78
+    },
+    "CHALLENGER": {
+      "net_maker": -171.4,
+      "recall": 0.213,
+      "precision": 0.674,
+      "bps_to_turn": 16.6,
+      "n_calls": 43
+    },
+    "CHALL+ERgate": {
+      "net_maker": 0.0,
+      "gate": ">=0.2",
+      "recall": 0.0,
+      "precision": null,
+      "bps_to_turn": null,
+      "n_calls": 0
+    },
+    "CHALL+Cgate": {
+      "net_maker": -62.1,
+      "gate": "<=2.0",
+      "recall": 0.007,
+      "precision": 1.0,
+      "bps_to_turn": 16.6,
+      "n_calls": 1
+    }
+  },
+  "btc_kraken": {
+    "CHAMPION": {
+      "net_maker": 212.3,
+      "recall": 0.491,
+      "precision": 0.651,
+      "bps_to_turn": 13.9,
+      "n_calls": 86
+    },
+    "CHALLENGER": {
+      "net_maker": 465.6,
+      "recall": 0.447,
+      "precision": 0.622,
+      "bps_to_turn": 11.2,
+      "n_calls": 82
+    },
+    "CHALL+ERgate": {
+      "net_maker": 151.2,
+      "gate": ">=0.35",
+      "recall": 0.044,
+      "precision": 1.0,
+      "bps_to_turn": 17.1,
+      "n_calls": 5
+    },
+    "CHALL+Cgate": {
+      "net_maker": 0.0,
+      "gate": "<=2.0",
+      "recall": 0.0,
+      "precision": null,
+      "bps_to_turn": null,
+      "n_calls": 0
+    }
+  },
+  "eth_bybit_perp": {
+    "CHAMPION": {
+      "net_maker": 325.9,
+      "recall": 0.207,
+      "precision": 0.73,
+      "bps_to_turn": 26.1,
+      "n_calls": 178
+    },
+    "CHALLENGER": {
+      "net_maker": 670.4,
+      "recall": 0.073,
+      "precision": 0.548,
+      "bps_to_turn": 19.2,
+      "n_calls": 84
+    },
+    "CHALL+ERgate": {
+      "net_maker": 121.7,
+      "gate": ">=0.2",
+      "recall": 0.0,
+      "precision": 0.0,
+      "bps_to_turn": null,
+      "n_calls": 1
+    },
+    "CHALL+Cgate": {
+      "net_maker": 469.1,
+      "gate": "<=4.0",
+      "recall": 0.003,
+      "precision": 0.667,
+      "bps_to_turn": 13.8,
+      "n_calls": 3
+    }
+  },
+  "eth_coinbase": {
+    "CHAMPION": {
+      "net_maker": 478.5,
+      "recall": 0.171,
+      "precision": 0.61,
+      "bps_to_turn": 17.1,
+      "n_calls": 182
+    },
+    "CHALLENGER": {
+      "net_maker": 392.2,
+      "recall": 0.151,
+      "precision": 0.557,
+      "bps_to_turn": 17.7,
+      "n_calls": 176
+    },
+    "CHALL+ERgate": {
+      "net_maker": -189.0,
+      "gate": ">=0.2",
+      "recall": 0.002,
+      "precision": 0.333,
+      "bps_to_turn": 44.0,
+      "n_calls": 3
+    },
+    "CHALL+Cgate": {
+      "net_maker": 0.0,
+      "gate": "<=2.0",
+      "recall": 0.0,
+      "precision": null,
+      "bps_to_turn": null,
+      "n_calls": 0
+    }
+  },
+  "eth_kraken": {
+    "CHAMPION": {
+      "net_maker": -876.2,
+      "recall": 0.319,
+      "precision": 0.619,
+      "bps_to_turn": 16.9,
+      "n_calls": 265
+    },
+    "CHALLENGER": {
+      "net_maker": -1206.6,
+      "recall": 0.344,
+      "precision": 0.525,
+      "bps_to_turn": 14.1,
+      "n_calls": 337
+    },
+    "CHALL+ERgate": {
+      "net_maker": -534.1,
+      "gate": ">=0.2",
+      "recall": 0.058,
+      "precision": 0.789,
+      "bps_to_turn": 31.5,
+      "n_calls": 38
+    },
+    "CHALL+Cgate": {
+      "net_maker": -170.3,
+      "gate": "<=4.0",
+      "recall": 0.006,
+      "precision": 0.6,
+      "bps_to_turn": 26.8,
+      "n_calls": 5
+    }
+  }
+}
