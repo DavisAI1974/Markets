@@ -12,7 +12,9 @@ Env (all optional except bucket):
   S3_BINS_PREFIX   default "realbins"   -> s3://<bucket>/<prefix>/<coin>_<venue>_bins.json[.gz]
   S3_OUT_PREFIX    default "coeffs"      -> s3://<bucket>/<prefix>/alt_coeff_index.json.gz
   CELLS            default "doge:DOGE,xrp:XRP,sol:SOL" (coin:ASSET, comma list)
-  VENUE            default "bybit_perp"
+  VENUES           default "bybit_perp"  (comma list; one job covers every coin x venue pair —
+                   e.g. CELLS="btc:BTC,eth:ETH" VENUES="coinbase,kraken,bybit_perp" = all 6 BTC/ETH cells).
+                   VENUE (singular) still accepted for back-compat.
   CAP              default "100"
   SIDES            default "buy,sell"
   SAVE_EMBEDS      default "0"  -> if "1", also emit + upload alt_train_pairs.json.gz (FNO training X+y, §5)
@@ -32,7 +34,8 @@ BUCKET = os.environ.get("S3_BUCKET")
 BINS_PREFIX = os.environ.get("S3_BINS_PREFIX", "realbins")
 OUT_PREFIX = os.environ.get("S3_OUT_PREFIX", "coeffs")
 CELLS = os.environ.get("CELLS", "doge:DOGE,xrp:XRP,sol:SOL")
-VENUE = os.environ.get("VENUE", "bybit_perp")
+# VENUES = comma list; one job covers every (coin, venue) pair. VENUE kept for back-compat.
+VENUES = [v.strip() for v in os.environ.get("VENUES", os.environ.get("VENUE", "bybit_perp")).split(",") if v.strip()]
 CAP = os.environ.get("CAP", "100")
 SIDES = os.environ.get("SIDES", "buy,sell")
 NO_S3 = os.environ.get("NO_S3") == "1"
@@ -46,10 +49,10 @@ def _s3():
     return boto3.client("s3")
 
 
-def pull_bins(coin: str):
+def pull_bins(coin: str, venue: str):
     """Download <coin>_<venue>_bins.json[.gz] from S3 into realbins/ (gunzip if needed)."""
     REAL.mkdir(exist_ok=True)
-    base = f"{coin}_{VENUE}_bins.json"
+    base = f"{coin}_{venue}_bins.json"
     dst = REAL / base
     if NO_S3:
         if dst.exists():
@@ -67,7 +70,7 @@ def pull_bins(coin: str):
             print(f"[s3] pulled {key}", flush=True); return True
         except Exception:
             continue
-    print(f"[s3] no bins for {coin} under s3://{BUCKET}/{BINS_PREFIX}/", flush=True)
+    print(f"[s3] no bins for {coin}_{venue} under s3://{BUCKET}/{BINS_PREFIX}/", flush=True)
     return False
 
 
@@ -78,13 +81,16 @@ def main() -> int:
     coins = [c.split(":")[0] for c in cells]
     assets = {c.split(":")[0]: c.split(":")[1] for c in cells}
 
+    # one job can cover all 15 cells: every (coin, venue) pair (VENUES = comma list, e.g.
+    # "coinbase,kraken,bybit_perp" for BTC/ETH; "bybit_perp" for the alts).
     for coin in coins:
-        if not pull_bins(coin):
-            continue
-        subprocess.run([sys.executable, "_build_alt_winner_labels.py",
-                        "--bins-path", str(REAL / f"{coin}_{VENUE}_bins.json"),
-                        "--asset", assets[coin], "--venue", VENUE, "--sides", SIDES],
-                       check=True)
+        for venue in VENUES:
+            if not pull_bins(coin, venue):
+                continue
+            subprocess.run([sys.executable, "_build_alt_winner_labels.py",
+                            "--bins-path", str(REAL / f"{coin}_{venue}_bins.json"),
+                            "--asset", assets[coin], "--venue", venue, "--sides", SIDES],
+                           check=True)
 
     coeff_cmd = [sys.executable, "_run_alt_coeffs.py", "--cap", CAP]
     if SAVE_EMBEDS:

@@ -33,19 +33,49 @@ docker tag od-discovery $ACCT.dkr.ecr.$AWS_REGION.amazonaws.com/od-discovery:lat
 docker push $ACCT.dkr.ecr.$AWS_REGION.amazonaws.com/od-discovery:latest
 ```
 
-## 3. Run the discovery (cheap — Fargate Batch or a tiny EC2)
+## 3. Run the discovery (cheap — Lightsail, a tiny EC2, or Fargate Batch)
 The container reads bins from S3, labels + discovers coeffs (the validated `_build_alt_winner_labels` +
 `_run_alt_coeffs`), and writes `coeffs/alt_coeff_index.json.gz` back to S3. Env-driven (see
-`run_discovery_s3.py`): `S3_BUCKET`, `S3_BINS_PREFIX`, `S3_OUT_PREFIX`, `CELLS`, `VENUE`, `CAP`, `SIDES`.
+`run_discovery_s3.py`): `S3_BUCKET`, `S3_BINS_PREFIX`, `S3_OUT_PREFIX`, `CELLS`, `VENUES`, `CAP`, `SIDES`,
+`SAVE_EMBEDS`.
 
-EC2 one-liner (simplest):
+**ALL 15 cells in one job** — `VENUES` is a comma list, so a single run covers every coin x venue:
+```bash
+# the 6 BTC/eth cells (coinbase/kraken/bybit_perp) — this is the kickoff TASK 2 "shared 1-sec basis":
+-e CELLS="btc:BTC,eth:ETH" -e VENUES="coinbase,kraken,bybit_perp"
+# the 6 alt cells:
+-e CELLS="doge:DOGE,xrp:XRP,sol:SOL" -e VENUES="bybit_perp"
+```
+
+### 3a. Lightsail (simplest; you have the account) — recommended for the CPU discovery job
+The discovery is CPU-only numpy, so a small fixed-price **Lightsail instance** is the cheapest home for it
+(no GPU needed; GPU is only §5 FNO training, which Lightsail does NOT offer — keep that on SageMaker/EC2 g5).
+```bash
+# one-time: create a Linux instance (e.g. 2 GB / 2 vCPU), SSH in, install Docker + AWS CLI.
+# give it S3 access: attach Lightsail instance role creds OR `aws configure` an IAM user with
+# s3:GetObject/PutObject on the bucket. Then pull + run the image (built/pushed in §2):
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS \
+  --password-stdin $ACCT.dkr.ecr.$AWS_REGION.amazonaws.com
+docker run --rm -e AWS_REGION=$AWS_REGION \
+  -e S3_BUCKET=davisai-markets -e CELLS="btc:BTC,eth:ETH" -e VENUES="coinbase,kraken,bybit_perp" \
+  -e CAP=100 -e SAVE_EMBEDS=1 \
+  $ACCT.dkr.ecr.$AWS_REGION.amazonaws.com/od-discovery:latest
+```
+Storage: a plain **S3 bucket** is what the runner expects (boto3). **Lightsail object storage** is
+S3-compatible — you can point the runner at a Lightsail bucket with its access keys instead — but S3 is the
+path of least resistance and what §1 sets up. (Lightsail = cheap durable home for compute + bins; the
+co-region latency play for LIVE trading is still EC2 in the exchange's region, BUILD_PLAN "LIVE EXECUTION".)
+
+### 3b. EC2 one-liner
 ```bash
 docker run --rm -e AWS_REGION=$AWS_REGION \
   -e S3_BUCKET=davisai-markets -e CELLS="doge:DOGE,xrp:XRP,sol:SOL" -e CAP=100 \
   $ACCT.dkr.ecr.$AWS_REGION.amazonaws.com/od-discovery:latest
 ```
-AWS Batch (Fargate): register a job definition pointing at the image with the same env, attach an IAM role
-with S3 read/write on the bucket, submit. (Skeleton: `aws/batch_job_definition.json`.)
+
+### 3c. AWS Batch (Fargate)
+Register a job definition pointing at the image with the same env, attach an IAM role with S3 read/write on
+the bucket, submit. (Skeleton: `aws/batch_job_definition.json`.)
 
 Local sanity (no S3): `NO_S3=1 python aws/run_discovery_s3.py` uses `./realbins` + `./_alt_labels` in place.
 

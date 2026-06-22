@@ -15,8 +15,9 @@
       {"name": "S3_BINS_PREFIX", "value": "realbins"},
       {"name": "S3_OUT_PREFIX", "value": "coeffs"},
       {"name": "CELLS", "value": "doge:DOGE,xrp:XRP,sol:SOL"},
-      {"name": "VENUE", "value": "bybit_perp"},
-      {"name": "CAP", "value": "100"}
+      {"name": "VENUES", "value": "bybit_perp"},
+      {"name": "CAP", "value": "100"},
+      {"name": "SAVE_EMBEDS", "value": "1"}
     ],
     "networkConfiguration": {"assignPublicIp": "ENABLED"}
   }

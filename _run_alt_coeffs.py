@@ -50,8 +50,16 @@ REFINE_ITERS = 8
 LABELS = Path("_alt_labels")
 OUT = LABELS / "coeffs"
 
-# bins file per coin/venue (1-second)
-BINS = {"bybit_perp": "realbins/{coin}_bybit_perp_bins.json"}
+# bins file per coin/venue (1-second). Venue-agnostic so the SAME pipeline does all 15 cells
+# (alts on bybit_perp AND btc/eth on coinbase/kraken/bybit_perp — the kickoff TASK 2 "shared 1-sec basis").
+BINS_TMPL = "realbins/{coin}_{venue}_bins.json"
+
+
+def parse_cell(cell: str):
+    """'doge_bybit_perp_buy' -> ('doge', 'bybit_perp', 'buy'); 'btc_coinbase_sell' -> ('btc','coinbase','sell').
+    coin = first token, side = last token, venue = everything in between (handles 'bybit_perp')."""
+    parts = cell.split("_")
+    return parts[0], "_".join(parts[1:-1]), parts[-1]
 
 
 def _cos(a, b):
@@ -103,9 +111,12 @@ def run_cell(cell: str, cap: int, save_embeds: bool = False) -> dict:
         return {}
     winners = json.load(open(fp))
     winners.sort(key=lambda r: -float(r.get("net_bps") or 0))   # strongest first
-    coin = cell.split("_")[0]
-    venue = "bybit_perp"
-    bs = load_bins(BINS[venue].format(coin=coin))
+    coin, venue, _side = parse_cell(cell)
+    bins_path = BINS_TMPL.format(coin=coin, venue=venue)
+    if not Path(bins_path).exists():
+        print(f"  [{cell}] no bins at {bins_path}", flush=True)
+        return {}
+    bs = load_bins(bins_path)
     ts = bs.ts; mid = bs.mid
     out = {}
     n_done = n_skip = 0
