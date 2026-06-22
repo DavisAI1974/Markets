@@ -77,3 +77,6 @@ turn_signature.png
 *.log
 *.log
 *.out
+
+# transient combined-results scratch (part-specific snapshots are committed instead)
+_liquidity_dive_results.json
