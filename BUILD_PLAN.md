@@ -1,5 +1,26 @@
 # Rebuild the Markets signal core around Operator Discovery (OD)
 
+## S39 ARCHITECTURE UPDATE (2026-06-22) — read with `SESSION_HANDOFF_2026-06-22_S39.md` + `KICKOFF_2026-06-23_S40.md`
+Three architecture facts changed how the plan below is executed:
+- **The coeff DECODER is the DETERMINISTIC tier, and it lives IN markets — runs in-container.** The committed
+  128-dim `operator_coefficients` are unit-L2 + all-non-negative = `OperatorDecoder.prefill` (mean of spectral-
+  magnitude embeds) + `refine` (L2-normalize), NOT a trained FNO. The pipeline is vendored: `odcore/od_refrag_adapter.py`
+  (+ `markets_adapter.py` with `np.fft.rfft`). So "the original scripts live in the separate refrag repo" (Context
+  below) is **superseded for the decoder** — no `E:\refrag`, no torch, no checkpoint needed to produce coeffs.
+  cs100_v2 config: 30-min window → 1-sec log-returns → `SpectralChunker(192,16)` → encoder `d_enc=128` →
+  `OperatorQuery.from_spectral_target([0.1,0.25])` → top_k=8/expand_budget=4 → `prefill`+`refine(8)`. The trained
+  **FNO+Bayesian decoder is the future GPU upgrade** (manifest tier; `aws/train_fno/`), not a prerequisite.
+- **1-SECOND is the standard** (Greg). Minute-bar aggregation (`load_minute_bars`/`MarketChunker`) smooths away the
+  sub-minute flow that carries the timing edge — it is the regime-classifier path, NOT the coeff/dipole path. All
+  labeling, oracle exits, micros, and coeff discovery are 1-sec-native off `odcore.io.load_bins`.
+- **Data layer: free-historical backfill exists** (`backfill_bybit.py` + binance_vision/coinbase/kraken;
+  `backfill_oneshot.yml` 5-coin gzip matrix). Multi-regime 1-sec history is now buildable in minutes; **S3 is the
+  durable off-git store** (`aws/`), retiring the gzip-data-branch band-aid.
+- **Validation discipline held:** the multi-regime gated-swing re-run KILLed the single-window deploy map (7/9
+  stand aside) — net-of-cost edge NOT established; the coeff fingerprint (this plan's core) is the complementary lever.
+- **NEW TOOLS:** `_build_alt_winner_labels.py` (1-sec oracle winner labels), `_run_alt_coeffs.py` (in-container
+  128-dim discovery, cap-100/cell, unique source_id), `odcore/od_refrag_adapter.py` (vendored engine), `aws/*`.
+
 ## Context
 
 `CLAUDE (5).md` (committed as the new master research log, identical to the upload) is a
