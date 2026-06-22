@@ -1,0 +1,196 @@
+name: Alt Collectors (SOL/DOGE/XRP, durable)
+
+# Collects 1-sec trade bins for SOL, DOGE, XRP across the normal 3 venues
+# (Coinbase spot, Kraken spot, Bybit USDT linear-perp) on GitHub compute, mirroring
+# the BTC/ETH durable collectors. One matrix job per coin, persisting to its own
+# data/<coin>-bins branch via orphan force-push.
+#
+# Bins are stored GZIPPED on the data branch from day one (<f>.json.gz) so they
+# never hit GitHub's 100 MiB/file push cap (the bug that stalled BTC/ETH). gunzip
+# on restore, gzip on push; the generic collectors read/write raw .json locally.
+#
+# Symbols verified live: Coinbase SOL-USD/DOGE-USD/XRP-USD, Kraken v2 SOL/DOGE/XRP
+# all "/USD" (NOT the legacy XDG), Bybit SOLUSDT/DOGEUSDT/XRPUSDT.
+#
+# Schedule: every 6h, 5h50m/run. Public repo = unlimited minutes.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC (default-branch only)
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: 'Collection duration in seconds (default 5h50m=21000)'
+        default: '21000'
+        type: string
+  push:
+    branches:
+      - claude/new-session-o3vnm
+      - claude/divergence-exhaustion-backtest-wj65sm
+    paths:
+      - '.github/workflows/alt_collectors_durable.yml'
+      - 'coinbase_collector.py'
+      - 'kraken_collector.py'
+      - 'bybit_perp_collector.py'
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355   # 5h55m, just under GitHub's 6hr hard limit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - coin: sol
+            cb: SOL-USD
+            kr: SOL/USD
+            by: SOLUSDT
+          - coin: doge
+            cb: DOGE-USD
+            kr: DOGE/USD
+            by: DOGEUSDT
+          - coin: xrp
+            cb: XRP-USD
+            kr: XRP/USD
+            by: XRPUSDT
+    concurrency:
+      group: alt-collectors-${{ matrix.coin }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/divergence-exhaustion-backtest-wj65sm
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install --quiet websockets numpy
+
+      - name: Restore previous bins from data/${{ matrix.coin }}-bins
+        run: |
+          COIN="${{ matrix.coin }}"
+          if git ls-remote --exit-code --heads origin "data/$COIN-bins" > /dev/null 2>&1; then
+            echo "[restore] data/$COIN-bins exists; fetching"
+            git fetch origin "data/$COIN-bins"
+            for v in coinbase kraken bybit_perp; do
+              f="${COIN}_${v}_bins"
+              if git checkout "origin/data/$COIN-bins" -- "$f.json.gz" 2>/dev/null; then
+                gunzip -f "$f.json.gz" && echo "[restore] $f from .gz"
+              elif git checkout "origin/data/$COIN-bins" -- "$f.json" 2>/dev/null; then
+                echo "[restore] $f from legacy raw .json"
+              else
+                echo "[restore] no prior $f"
+              fi
+            done
+          else
+            echo "[restore] data/$COIN-bins does not exist; first run, fresh"
+          fi
+          ls -la ${COIN}_*_bins.json 2>&1 || echo "[restore] no bins yet"
+
+      - name: Connectivity check
+        run: |
+          curl -sS --max-time 5 -o /dev/null -w "Coinbase WS: %{http_code}\n" https://ws-feed.exchange.coinbase.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Kraken WS:   %{http_code}\n" https://ws.kraken.com/ || true
+          curl -sS --max-time 5 -o /dev/null -w "Bybit WS:    %{http_code}\n" https://stream.bybit.com/ || true
+
+      - name: Run ${{ matrix.coin }} collectors (Coinbase + Kraken + Bybit perp)
+        timeout-minutes: 350
+        run: |
+          COIN="${{ matrix.coin }}"
+          DURATION="${{ github.event.inputs.duration_seconds || '21000' }}"
+          echo "[run] $COIN collectors ${DURATION}s on $(date -u)"
+          python coinbase_collector.py   --product "${{ matrix.cb }}" --duration "$DURATION" --bins-path "${COIN}_coinbase_bins.json"   > /tmp/cb.log 2>&1 &
+          CB=$!
+          python kraken_collector.py     --product "${{ matrix.kr }}" --duration "$DURATION" --bins-path "${COIN}_kraken_bins.json"     > /tmp/kr.log 2>&1 &
+          KR=$!
+          python bybit_perp_collector.py --symbol  "${{ matrix.by }}" --duration "$DURATION" --bins-path "${COIN}_bybit_perp_bins.json" > /tmp/by.log 2>&1 &
+          BY=$!
+          wait $CB; echo "[run] cb exit=$?"
+          wait $KR; echo "[run] kr exit=$?"
+          wait $BY; echo "[run] by exit=$?"
+          echo "=== cb tail ==="; tail -15 /tmp/cb.log
+          echo "=== kr tail ==="; tail -15 /tmp/kr.log
+          echo "=== by tail ==="; tail -15 /tmp/by.log
+
+      - name: Bin stats
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          for v in coinbase kraken bybit_perp; do
+            f="${COIN}_${v}_bins.json"
+            if [ -f "$f" ]; then
+              N=$(python -c "import json,sys; print(len(json.load(open(sys.argv[1]))))" "$f" 2>/dev/null || echo "?")
+              echo "$f: $(stat -c%s "$f") bytes, $N bins"
+            fi
+          done
+
+      - name: Commit gzipped bins to data/${{ matrix.coin }}-bins (force-push)
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          mkdir -p /tmp/bins
+          for v in coinbase kraken bybit_perp; do
+            cp "${COIN}_${v}_bins.json" /tmp/bins/ 2>/dev/null || true
+          done
+
+          # Anti-clobber guardrail (gz-aware): never let a partial run shrink the
+          # cumulative data. Data branch stores <f>.json.gz; local files are raw.
+          BRANCH="origin/data/$COIN-bins" python - <<'PY'
+          import json, subprocess, os, gzip
+          BRANCH = os.environ["BRANCH"]; COIN = BRANCH.split("/")[-1].replace("-bins", "")
+          FILES = [f"{COIN}_{v}_bins.json" for v in ("coinbase", "kraken", "bybit_perp")]
+          def count_raw(p):
+              try:
+                  with open(p) as f: return len(json.load(f))
+              except Exception: return 0
+          def old_branch(fn):
+              for ref in (fn + ".gz", fn):
+                  try:
+                      blob = subprocess.run(["git", "show", f"{BRANCH}:{ref}"], capture_output=True, check=True).stdout
+                  except subprocess.CalledProcessError:
+                      continue
+                  try:
+                      data = gzip.decompress(blob) if ref.endswith(".gz") else blob
+                      return len(json.loads(data)), data
+                  except Exception:
+                      continue
+              return 0, None
+          for fn in FILES:
+              newp = os.path.join("/tmp/bins", fn); new = count_raw(newp)
+              old, data = old_branch(fn)
+              if old and new < old:
+                  with open(newp, "wb") as f: f.write(data)
+                  print(f"[guardrail] {fn}: {new} < {old} on branch -> RESTORED branch copy")
+              else:
+                  print(f"[guardrail] {fn}: {new} bins (>= {old}) -> keep")
+          PY
+
+          for v in coinbase kraken bybit_perp; do
+            [ -f "/tmp/bins/${COIN}_${v}_bins.json" ] && gzip -f "/tmp/bins/${COIN}_${v}_bins.json" \
+              && echo "[gzip] ${COIN}_${v}_bins.json.gz $(stat -c%s /tmp/bins/${COIN}_${v}_bins.json.gz) bytes"
+          done
+
+          git checkout --orphan "data/$COIN-bins-tmp"
+          git rm -rf . > /dev/null 2>&1 || true
+          cp /tmp/bins/*.json.gz . 2>/dev/null || true
+
+          if ls *.json.gz > /dev/null 2>&1; then
+            git add *.json.gz
+            git commit -m "$COIN bins update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin "data/$COIN-bins-tmp:data/$COIN-bins"
+            echo "[commit] pushed gzipped bins to data/$COIN-bins"
+          else
+            echo "[commit] no bins to commit"
+          fi
