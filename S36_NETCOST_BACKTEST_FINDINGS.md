@@ -86,6 +86,51 @@ engine (price-stop and dipole-exit, with flip/flatten) is built and ready to poi
 tune its parameters on the 2-day window** (overfitting). Getting the 1-sec history is now the gating step
 for the whole exit-management question.
 
+## Swing model — buy valleys / short peaks, flip at each turn (Greg, S36)
+`_info_dipole_swing_backtest.py` → `_info_dipole_swing_backtest_results.json`. Greg's model: markets
+oscillate; go long at the valley as it turns up, short the peak as it rolls over, flip at each turn, no
+clock. Enter AT the turn, never the backside. Min tradeable swing = the one that beats the round-trip fee
+(10 bps), so I sweep swing size (ZigZag threshold θ) rather than guessing it. Three layers per venue series:
+ORACLE (perfect pivots = ceiling), DIPOLE (real-time turn detector = the edge), PRICE-CONFIRM (backside baseline).
+
+**1. The opportunity is REAL and large — oracle confirms Greg's thesis.** Perfect swing-trading nets, over
+the ~2-day window, thousands of bps per venue, and the swings beat the 10 bps fee by a wide margin:
+
+| θ (reversal) | mean swing | net per swing (after 10bps) | oracle net total (eth_kraken) |
+|---|---|---|---|
+| 10 bps | 27.9 bps | +17.9 | +6,478 over 356 swings |
+| 20 bps | 49.8 bps | +39.8 | +5,715 over 158 swings |
+| 50 bps | 140.6 bps | +130.6 | +3,163 over 27 swings |
+
+If you catch the turns, the swings pay 3–13× the fee. The opportunity is exactly as Greg drew it.
+
+**2. The whole game is entry accuracy at the turn — and every real-time detector enters on the BACKSIDE.**
+At θ=20 bps (mean swing ~50 bps), every detector loses, because each enters ~15–27 bps off the true turn:
+
+| venue | oracle net | dipole CROSS (entry off) | dipole EXHAUST (entry off) | price-confirm |
+|---|---|---|---|---|
+| btc_bybit | +1,932 | −470 (~22 bps) | −820 (~18 bps) | −324 |
+| eth_coinbase | +3,798 | −280 (~25 bps) | −152 (~18 bps) | −1,379 |
+| eth_kraken | +5,715 | −1,623 (~21 bps) | −1,645 (~17 bps) | −2,122 |
+
+Capture% is **negative** everywhere. You give up ~15–20 bps entering late + ~15–20 exiting late + 10 fee,
+which swamps a ~50 bps swing.
+
+**3. It's DETECTOR LAG, not bar granularity.** 1-min bars move only **~2–4 bps each** (p90 ~6–8 bps), so
+the turn *is* catchable within a few bps — but the order-flow dipole, in every form tried (imbalance
+sign-cross AND S36 exhaustion/collapse, full window/threshold grids), confirms the turn only ~15–20 bps
+*after* price already turned. A trailing flow signal on 1-min buckets is structurally late; a shorter
+window just whipsaws (more flips, more fees) without getting closer. Exhaustion (the S36 "dipole → 0.5")
+helps a little (entry off 27→18 bps on some cells) but not enough to clear cost.
+
+**4. What this says we need.** The swing edge is real (oracle) and the dipole is the right *kind* of turn
+detector, but on 1-min data it fires ~15–20 bps late. The flow's roll-over at a turn is smeared across
+1-min buckets; at **1-sec resolution** the exhaustion at a turn resolves within seconds, so the dipole can
+fire *at* the turn instead of 15 bars later. To clear cost we need entry-lag below ~(swing/2 − fee); on a
+50 bps swing that's <~15 bps, which 1-min data cannot deliver and 1-sec plausibly can. **This makes the
+local 1-sec multi-regime onset history (KICKOFF #2) the gating resource for the entire swing strategy** —
+the oracle proves the money is there; closing the entry lag is the build, and it needs 1-sec bars.
+
 ## Bottom line
 The 64% reversal rate is real but does NOT, by itself, clear 10-bps round-trip cost pooled — the moves
 are too small. The flow gate genuinely improves on blind trend-following (+3 bps/trade), and the edge
