@@ -121,11 +121,14 @@ def label_cell(bs, asset: str, venue: str, side: str, canary: bool) -> list[dict
         if flow is None:
             continue
         onset_ts = int(bs.ts[lo])
+        dts_i = int(bs.ts[i])
         chunk_id = hashlib.sha256(
-            f"{venue.lower()}-{asset.upper()}:{onset_ts}:{int(bs.ts[i])}".encode()).hexdigest()[:16]
+            f"{venue.lower()}-{asset.upper()}:{onset_ts}:{dts_i}".encode()).hexdigest()[:16]
         winners.append({
             "cell": cell,
-            "source_id": f"{asset.upper()}|{venue.lower()}|{chunk_id}|{side}",
+            # decision_ts embedded so source_id is UNIQUE per episode (S35 collision fix:
+            # a chunk-keyed id alone recurs across episodes -> overwrites in the coeff index).
+            "source_id": f"{asset.upper()}|{venue.lower()}|{chunk_id}_{dts_i}|{side}",
             "side": side, "asset": asset.upper(), "venue": venue,
             "decision_ts_utc": float(bs.ts[i]),
             "true_onset_ts_utc": float(onset_ts),

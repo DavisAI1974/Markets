@@ -176,21 +176,27 @@ class SpectralChunkEncoder:
         self.n_summary = 6  # mean, std, energy, entropy, peak_freq, centroid
 
     def _fft_magnitudes(self, values: list[float]) -> list[float]:
-        """Compute FFT magnitude spectrum (real-valued DFT via pure Python).
+        """Compute FFT magnitude spectrum (real-valued DFT).
 
-        For production, replace with numpy.fft. This is sandbox-compatible.
+        Production path = numpy.fft.rfft (the docstring's prescribed replacement; the markets
+        port markets_adapter uses the same np.fft.rfft). Mathematically identical to the old
+        pure-Python O(n^2) DFT |sum v_j e^{-2pi i kj/n}| / n, ~1000x faster. Pure-Python kept
+        as the sandbox fallback only if numpy is unavailable.
         """
         n = len(values)
         if n == 0:
             return []
-        # Only need positive frequencies
-        n_freq = n // 2 + 1
-        magnitudes = []
-        for k in range(n_freq):
-            re = sum(values[j] * math.cos(2.0 * math.pi * k * j / n) for j in range(n))
-            im = sum(values[j] * math.sin(2.0 * math.pi * k * j / n) for j in range(n))
-            magnitudes.append(math.sqrt(re * re + im * im) / n)
-        return magnitudes
+        try:
+            import numpy as _np
+            return (_np.abs(_np.fft.rfft(_np.asarray(values, float))) / n).tolist()
+        except Exception:  # pragma: no cover - numpy always present here
+            n_freq = n // 2 + 1
+            magnitudes = []
+            for k in range(n_freq):
+                re = sum(values[j] * math.cos(2.0 * math.pi * k * j / n) for j in range(n))
+                im = sum(values[j] * math.sin(2.0 * math.pi * k * j / n) for j in range(n))
+                magnitudes.append(math.sqrt(re * re + im * im) / n)
+            return magnitudes
 
     def _extract_features(self, values: list[float], sample_rate: float = 1.0) -> SpectralFeatures:
         """Extract spectral feature set from a single chunk's raw values."""
