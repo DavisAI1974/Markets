@@ -386,3 +386,49 @@ This is the order-flow dipole used the RIGHT way per Part E (raw level, not entr
 - **Tools (bar-free, off committed data):** `_info_dipole_trend_flip.py` (the edge),
   `_info_dipole_flow_detrend.py` (artifact-vs-real), `_info_dipole_flow_robustness.py`,
   `_info_dipole_flow_probe.py`. Full detail: `SESSION_HANDOFF_2026-06-22_S36.md`.
+
+# PART 4 — S36 cont. (2026-06-22): net-of-cost + the SWING reframe + the TIMING edge (branch `claude/divergence-exhaustion-backtest-wj65sm`)
+
+Ran KICKOFF #1 (net-of-cost the reversal gate per cell) and, following Greg's live reframe, turned it into
+a SWING strategy with an explicit timing model. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`. Tools:
+`_info_dipole_netcost_backtest.py`, `_info_dipole_trailing_backtest.py`, `_info_dipole_swing_backtest.py`
+(reads 1-min test_bars OR 1-sec `realbins/`), `_info_dipole_timing_test.py` (+ matching `*_results*.json`).
+
+- **Net-of-cost verdict (per cell, 5 bps/side = 10 bps round-trip).** The 64% reversal rate does NOT clear
+  10 bps pooled (FLOW policy −5.97 bps/trade; breakeven ≈ 4 bps round-trip). The flow gate DOES add
+  +3 bps/trade over blind trend-following. Per cell it CLEARS robustly (both walk-forward halves):
+  **btc_bybit_sell** (FLOW +9.1 t=3.1; fade gate +18.6 t=5.9) and **btc_bybit_buy** (fade gate +25.7 t=4.6).
+  eth "clears" are walk-forward-fragile single-regime artifacts on the thin 1-min/2-day data — not deployable.
+- **The SWING reframe (Greg, load-bearing).** Markets oscillate: **buy valleys, short peaks, flip at each
+  turn; NO clock horizon** — the only thing that ends a position is the next turning point. Rarer straight
+  runs = ride, don't fight (flow keeps confirming → no flip). Enter AT the turn, never the backside.
+- **ORACLE proves the opportunity.** Perfect swing-trading (ZigZag pivots) nets thousands of bps over the
+  window; swings beat the 10 bps fee 3–13× (θ=20 bps → mean swing ~42 bps, +32 net/swing). The money is real.
+- **The whole game is entry TIMING at the turn — and 1-sec is a quantified edge.** Order-flow imbalance
+  crossing is a MID-SWING trigger (~18 bps off the turn at ANY resolution — does NOT improve with finer
+  data). The thing that fires AT the turn is **price reversing**, and that sharpens with resolution. The
+  clean timing test (same real turns, same data, only the clock changes): **1-sec enters ~5.6–6.5 bps off
+  the true turn vs ~9.2–11.0 at 1-min → +4.2 bps penalty PER entry (~8 bps/round-trip swing) the 1-min
+  trader hands over, growing with volatility** ("not close unless the market is dead"). Per-second is required.
+- **FEE-FLOOR logic (Greg — never trade sub-fee).** R (reversal confirmation) is TIMING only — how close
+  you enter — and never fires a trade standalone (each fire pays the fee). The trade decision is the
+  swing-size filter: **min swing > round-trip fee + entry slippage + exit slippage ≈ 10 + ~6 + ~6 ≈ 22 bps
+  at 1-sec.** Tradeable zone = θ ≳ 20 bps swings (where the oracle net is fattest); sub-fee moves dropped.
+- **ARCHITECTURE locked.** **DIPOLE = the FILTER** (exhaustion/divergence → "a real ≥~22 bps turn is near",
+  the 64% read) decides WHICH turns to trade. **1-sec price-reversal = the TIMING** — enter within ~5–6 bps
+  of the top/bottom. Earlier whipsaw failures came from using a trigger as a filter; separating the two
+  roles + the fee floor is the fix.
+- **NEXT:** build the gated swing strategy (dipole filter arms the tight 1-sec trigger; ≥~22 bps swing
+  floor; ride to next confirmed turn; net-of-cost per cell). Confirm on the local 1-sec MULTI-REGIME onset
+  history (the in-git `realbins/` 1-sec is a single later window). Maker-rebate execution to lower the cost
+  floor. Investigate the inverting cells. Add the C ratio (H_self/H_cross) as a 3rd flow factor.
+
+## Research direction — quant/classical timing precision (Greg, S36; FRAME, not a claim)
+The timing test makes speed a MEASURED, compounding edge: every bp closer to the turn is money, and the
+gap to a 1-min trader is +4.2 bps/entry that grows with volatility. So anything that buys latency or
+turn-timing PRECISION (sub-second → 0.1 s and finer) is directly monetizable at the enter/exit. Greg's
+serious thread: the DavisAI quantum/classical-merge math (the "only ones in the world" advantage) is a
+candidate to push entry/exit timing precision past where classical-per-second tooling sits. Recorded as a
+RESEARCH FRAME to scope (Result Discipline: frames stay separate from claims; do not let it grade itself) —
+the empirical hook is concrete (timing penalty is quantified), the quantum-classical mechanism is to be
+investigated, not asserted. ("Time on atomic decay" = Greg's joke, noted as such.)
