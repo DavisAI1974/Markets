@@ -1,0 +1,82 @@
+{
+  "EXECUTED FLOW dipole": {
+    "pair": [
+      "buy",
+      "sell"
+    ],
+    "coupling": {
+      "structured": 0.0,
+      "mi_frac": 0.0121,
+      "chem_residual_frac": 0.201,
+      "eq_entropy_frac": 0.6605,
+      "mi_slope": -0.0945,
+      "mi_slope_r2": 0.1088,
+      "mi_mean": 0.3435,
+      "mi_var": 1.0228,
+      "singular_gap": 0.0004,
+      "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
+    },
+    "equations": {},
+    "rows": 20996
+  },
+  "LIQUIDITY dipole (the curve)": {
+    "pair": [
+      "bid_dep",
+      "ask_dep"
+    ],
+    "coupling": {
+      "structured": 0.0,
+      "mi_frac": 0.9997,
+      "chem_residual_frac": 0.0001,
+      "eq_entropy_frac": 0.0001,
+      "mi_slope": 0.0075,
+      "mi_slope_r2": 0.0113,
+      "mi_mean": 0.5477,
+      "mi_var": 0.0688,
+      "singular_gap": 0.0137,
+      "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
+    },
+    "equations": {},
+    "rows": 20996
+  },
+  "liquidity vs head pressure": {
+    "pair": [
+      "bid_dep",
+      "buy"
+    ],
+    "coupling": {
+      "structured": 0.0,
+      "mi_frac": 0.9991,
+      "chem_residual_frac": 0.0005,
+      "eq_entropy_frac": 0.0,
+      "mi_slope": -0.0047,
+      "mi_slope_r2": 0.0375,
+      "mi_mean": 0.0216,
+      "mi_var": 0.0082,
+      "singular_gap": 0.0015,
+      "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
+    },
+    "equations": {},
+    "rows": 20996
+  },
+  "flow vs price activity": {
+    "pair": [
+      "buy",
+      "absret"
+    ],
+    "coupling": {
+      "structured": 0.0,
+      "mi_frac": 0.0003,
+      "chem_residual_frac": 0.1021,
+      "eq_entropy_frac": 0.812,
+      "mi_slope": -0.0889,
+      "mi_slope_r2": 0.0907,
+      "mi_mean": 0.3613,
+      "mi_var": 1.0874,
+      "singular_gap": 0.0003,
+      "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
+    },
+    "equations": {},
+    "rows": 20996
+  }
+}
