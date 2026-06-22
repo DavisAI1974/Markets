@@ -38,6 +38,35 @@ export async function fetchRegimeHistory(asset, venue, nPoints = 60) {
   return r.json();
 }
 
+/** Web Push: fetch the server's VAPID public key (and whether push is configured). */
+export async function fetchVapidPublicKey() {
+  const r = await fetch(`${BASE}/api/push/vapid-public-key`);
+  if (!r.ok) throw new Error(`vapid key ${r.status}`);
+  return r.json();   // { public_key, configured }
+}
+
+/** Web Push: register a browser push subscription with the backend. */
+export async function subscribePush(body) {
+  const r = await fetch(`${BASE}/api/push/subscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`push subscribe ${r.status}`);
+  return r.json();
+}
+
+/** Web Push: remove a browser push subscription from the backend. */
+export async function unsubscribePush(body) {
+  const r = await fetch(`${BASE}/api/push/unsubscribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`push unsubscribe ${r.status}`);
+  return r.json();
+}
+
 /** Subscribe to SSE stream. Returns a cleanup fn. */
 export function subscribeToStream({ onSignal, onSnapshot, onError }) {
   const es = new EventSource(`${BASE}/api/stream`);
