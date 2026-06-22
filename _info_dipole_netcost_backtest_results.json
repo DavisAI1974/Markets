@@ -1,0 +1,301 @@
+{
+  "config": {
+    "cost_per_side_bps": 5.0,
+    "round_trip_bps": 10.0,
+    "pre_window_s": 1800,
+    "hold": "per-trade horizon_minutes",
+    "evaluable": 1546,
+    "total_onsets": 1560,
+    "strategy": "trend-following flow policy; no detrend; keep the trend"
+  },
+  "pooled": {
+    "FLOW (follow|fade)": {
+      "n": 1546,
+      "net_bps": -5.97,
+      "net_med_bps": -6.72,
+      "win_rate": 42.9,
+      "net_total_bps": -9228.5,
+      "se": 1.86
+    },
+    "FLOW_2F (healthy-only)": {
+      "n": 1546,
+      "net_bps": -5.56,
+      "net_med_bps": -5.46,
+      "win_rate": 42.7,
+      "net_total_bps": -8590.0,
+      "se": 1.86
+    },
+    "FADE_GATE (reversal)": {
+      "n": 415,
+      "net_bps": -6.34,
+      "net_med_bps": -1.14,
+      "win_rate": 48.0,
+      "net_total_bps": -2633.0,
+      "se": 2.92
+    },
+    "FOLLOW_ALL (baseline)": {
+      "n": 1546,
+      "net_bps": -9.01,
+      "net_med_bps": -11.86,
+      "win_rate": 38.1,
+      "net_total_bps": -13927.6,
+      "se": 1.86
+    }
+  },
+  "per_cell_FLOW": {
+    "btc_bybit_buy": {
+      "n": 236,
+      "net_bps": -8.56,
+      "net_med_bps": -0.65,
+      "win_rate": 50.0,
+      "net_total_bps": -2020.7,
+      "se": 4.3
+    },
+    "btc_bybit_sell": {
+      "n": 86,
+      "net_bps": 9.13,
+      "net_med_bps": 6.19,
+      "win_rate": 58.1,
+      "net_total_bps": 784.8,
+      "se": 2.98
+    },
+    "btc_coinbase_buy": {
+      "n": 272,
+      "net_bps": -13.64,
+      "net_med_bps": -3.81,
+      "win_rate": 48.2,
+      "net_total_bps": -3709.0,
+      "se": 3.45
+    },
+    "btc_coinbase_sell": {
+      "n": 74,
+      "net_bps": -3.63,
+      "net_med_bps": -2.95,
+      "win_rate": 40.5,
+      "net_total_bps": -268.4,
+      "se": 2.27
+    },
+    "btc_kraken_buy": {
+      "n": 187,
+      "net_bps": -20.65,
+      "net_med_bps": -8.49,
+      "win_rate": 41.7,
+      "net_total_bps": -3861.8,
+      "se": 4.65
+    },
+    "btc_kraken_sell": {
+      "n": 141,
+      "net_bps": -5.84,
+      "net_med_bps": -9.75,
+      "win_rate": 34.8,
+      "net_total_bps": -822.8,
+      "se": 2.07
+    },
+    "eth_bybit_buy": {
+      "n": 72,
+      "net_bps": 37.67,
+      "net_med_bps": 17.34,
+      "win_rate": 56.9,
+      "net_total_bps": 2712.1,
+      "se": 15.76
+    },
+    "eth_bybit_sell": {
+      "n": 128,
+      "net_bps": -14.96,
+      "net_med_bps": -12.45,
+      "win_rate": 28.1,
+      "net_total_bps": -1914.6,
+      "se": 2.92
+    },
+    "eth_coinbase_buy": {
+      "n": 127,
+      "net_bps": 10.77,
+      "net_med_bps": -2.52,
+      "win_rate": 48.8,
+      "net_total_bps": 1368.3,
+      "se": 11.96
+    },
+    "eth_coinbase_sell": {
+      "n": 29,
+      "net_bps": -5.21,
+      "net_med_bps": -6.63,
+      "win_rate": 31.0,
+      "net_total_bps": -151.0,
+      "se": 2.79
+    },
+    "eth_kraken_buy": {
+      "n": 104,
+      "net_bps": -1.65,
+      "net_med_bps": -24.75,
+      "win_rate": 39.4,
+      "net_total_bps": -171.4,
+      "se": 11.47
+    },
+    "eth_kraken_sell": {
+      "n": 90,
+      "net_bps": -13.05,
+      "net_med_bps": -14.19,
+      "win_rate": 21.1,
+      "net_total_bps": -1174.2,
+      "se": 2.2
+    }
+  },
+  "per_cell_FADE_GATE": {
+    "btc_bybit_buy": {
+      "n": 56,
+      "net_bps": 25.71,
+      "net_med_bps": 21.47,
+      "win_rate": 75.0,
+      "net_total_bps": 1440.0,
+      "se": 5.53
+    },
+    "btc_bybit_sell": {
+      "n": 32,
+      "net_bps": 18.57,
+      "net_med_bps": 10.27,
+      "win_rate": 90.6,
+      "net_total_bps": 594.3,
+      "se": 3.13
+    },
+    "btc_coinbase_buy": {
+      "n": 106,
+      "net_bps": -6.14,
+      "net_med_bps": 7.71,
+      "win_rate": 56.6,
+      "net_total_bps": -650.5,
+      "se": 4.51
+    },
+    "btc_coinbase_sell": {
+      "n": 17,
+      "net_bps": -2.31,
+      "net_med_bps": -2.44,
+      "win_rate": 35.3,
+      "net_total_bps": -39.2,
+      "se": 6.04
+    },
+    "btc_kraken_buy": {
+      "n": 43,
+      "net_bps": -29.23,
+      "net_med_bps": -34.13,
+      "win_rate": 23.3,
+      "net_total_bps": -1256.8,
+      "se": 7.16
+    },
+    "btc_kraken_sell": {
+      "n": 41,
+      "net_bps": -0.28,
+      "net_med_bps": -5.34,
+      "win_rate": 36.6,
+      "net_total_bps": -11.3,
+      "se": 2.98
+    },
+    "eth_bybit_buy": {
+      "n": 18,
+      "net_bps": -41.46,
+      "net_med_bps": -18.24,
+      "win_rate": 5.6,
+      "net_total_bps": -746.2,
+      "se": 20.22
+    },
+    "eth_bybit_sell": {
+      "n": 31,
+      "net_bps": -12.61,
+      "net_med_bps": -0.79,
+      "win_rate": 48.4,
+      "net_total_bps": -391.0,
+      "se": 9.49
+    },
+    "eth_coinbase_buy": {
+      "n": 20,
+      "net_bps": -24.59,
+      "net_med_bps": -26.72,
+      "win_rate": 35.0,
+      "net_total_bps": -491.9,
+      "se": 31.07
+    },
+    "eth_coinbase_sell": {
+      "n": 2,
+      "net_bps": 7.21,
+      "net_med_bps": 7.21,
+      "win_rate": 50.0,
+      "net_total_bps": 14.4,
+      "se": 8.28
+    },
+    "eth_kraken_buy": {
+      "n": 29,
+      "net_bps": -26.86,
+      "net_med_bps": -20.4,
+      "win_rate": 17.2,
+      "net_total_bps": -779.1,
+      "se": 18.46
+    },
+    "eth_kraken_sell": {
+      "n": 20,
+      "net_bps": -15.78,
+      "net_med_bps": -1.36,
+      "win_rate": 40.0,
+      "net_total_bps": -315.6,
+      "se": 7.31
+    }
+  },
+  "cells_clearing_FLOW": {
+    "btc_bybit_sell": 9.13,
+    "eth_bybit_buy": 37.67,
+    "eth_coinbase_buy": 10.77
+  },
+  "cells_clearing_FADE_GATE": {
+    "btc_bybit_buy": 25.71,
+    "btc_bybit_sell": 18.57
+  },
+  "cost_sweep_FLOW": {
+    "0": {
+      "n": 1546,
+      "net_bps": 4.03,
+      "net_med_bps": 3.28,
+      "win_rate": 54.9,
+      "net_total_bps": 6231.5,
+      "se": 1.86
+    },
+    "5": {
+      "n": 1546,
+      "net_bps": -0.97,
+      "net_med_bps": -1.72,
+      "win_rate": 48.8,
+      "net_total_bps": -1498.5,
+      "se": 1.86
+    },
+    "10": {
+      "n": 1546,
+      "net_bps": -5.97,
+      "net_med_bps": -6.72,
+      "win_rate": 42.9,
+      "net_total_bps": -9228.5,
+      "se": 1.86
+    },
+    "15": {
+      "n": 1546,
+      "net_bps": -10.97,
+      "net_med_bps": -11.72,
+      "win_rate": 39.0,
+      "net_total_bps": -16958.5,
+      "se": 1.86
+    },
+    "20": {
+      "n": 1546,
+      "net_bps": -15.97,
+      "net_med_bps": -16.72,
+      "win_rate": 33.3,
+      "net_total_bps": -24688.5,
+      "se": 1.86
+    },
+    "30": {
+      "n": 1546,
+      "net_bps": -25.97,
+      "net_med_bps": -26.72,
+      "win_rate": 24.1,
+      "net_total_bps": -40148.5,
+      "se": 1.86
+    }
+  },
+  "caveat": "thin 1-min/2-day test_bars, single trend regime, n<=1560; first cut, not deploy-grade"
+}
