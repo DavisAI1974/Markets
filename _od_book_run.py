@@ -23,7 +23,7 @@ from odcore.operators import windowed_operator_matrix
 from odcore.null_extract import analyze_coupling
 from odcore import symbolic
 
-BASIS = ["H_a", "H_b", "H_a2", "H_b2", "H_aHb", "MI"]
+BASIS = ["H_a", "H_b", "H_a^2", "H_b^2", "H_a*H_b", "MI"]
 
 
 def channels(path):
@@ -56,7 +56,7 @@ def run(path, window, stride, do_pysr, niter):
             print(f"   {k}: {val}")
         eqs = {}
         if do_pysr and symbolic.pysr_available():
-            for tgt in ("MI", "H_a2"):
+            for tgt in ("MI", "H_a^2"):
                 feats = [c for c in BASIS if c != tgt]
                 try:
                     eq = symbolic.discover(M, target=tgt, features=feats, niterations=niter, seed=0)
