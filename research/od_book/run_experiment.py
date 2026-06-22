@@ -40,6 +40,7 @@ SENTINEL = os.path.join(HERE, ".ttest_committed.json")
 HORIZONS = [1, 5, 10]          # 100ms, 500ms, 1s on the 100ms grid
 FEE_BPS = 22.0
 THETA_BPS = 22.0
+DEADBAND_GRID = (0.0, 1.0, 2.0, 5.0, 10.0, 20.0)   # min predicted move to take a side
 # KILL-gate margins (frozen)
 SKILL_MARGIN = 0.0             # challenger must EXCEED champion mid_price R²
 WANDER_MAX = 0.15              # max acceptable top-k spectral drift (rel. units)
@@ -88,11 +89,49 @@ def tune_challenger(Xtr, Xva, mid_tr, mid_va, cols):
     return best, {"energy": best_cfg[0], "rank": best_cfg[1], "val_mid_r2": best_key}
 
 
-def score(model, X, mid, cols):
+def tune_deadband(model, X, mid, cols, horizon) -> float:
+    """Pick the deadband (min predicted move to take a side) that maximizes net
+    swing PnL on the given (val) block — cuts fee churn without leaking test."""
+    best_db, best_net = 0.0, None
+    for db in DEADBAND_GRID:
+        tc = metrics.turn_as_consequence(model, X, mid, cols, horizon,
+                                         FEE_BPS, THETA_BPS, deadband_bps=db)
+        net = tc["pnl_net_bps"]
+        if best_net is None or net > best_net:
+            best_net, best_db = net, db
+    return best_db
+
+
+def score(model, X, mid, cols, deadbands: dict):
     fs = metrics.forecast_skill(model, X, mid, cols, HORIZONS)
-    tc = {h: metrics.turn_as_consequence(model, X, mid, cols, h, FEE_BPS, THETA_BPS)
+    tc = {h: metrics.turn_as_consequence(model, X, mid, cols, h, FEE_BPS, THETA_BPS,
+                                         deadband_bps=deadbands.get(h, 0.0))
           for h in HORIZONS}
-    return {"forecast_skill": fs, "turn": tc}
+    return {"forecast_skill": fs, "turn": tc, "deadbands": deadbands}
+
+
+def salvage(champ_sc, chal_sc, stab) -> dict:
+    """Even on a KILL, record what's REUSABLE — the components the operator
+    improves on and whether the operator is stable enough to serve as a
+    gate/feature in the larger architecture. One part not clearing the fee floor
+    does not mean the whole thing is discarded."""
+    comps = ["mid_price", "spread", "tob_imb", "depth_imb", "flow"]
+    wins = {}
+    for h in HORIZONS:
+        for c in comps:
+            cc = champ_sc["forecast_skill"][h].get(c, float("nan"))
+            dd = chal_sc["forecast_skill"][h].get(c, float("nan"))
+            if np.isfinite(dd) and np.isfinite(cc) and dd > cc:
+                wins.setdefault(c, []).append(h)
+    drift = stab.get("topk_drift_max", float("nan"))
+    usable = bool(np.isfinite(drift) and drift <= WANDER_MAX)
+    return {
+        "challenger_component_wins": wins,
+        "operator_stable_enough_as_feature": usable,
+        "note": ("Standalone-at-the-fee-floor is one verdict; components the "
+                 "operator wins on + a stable operator remain reusable as gates / "
+                 "spread-adjusters / features in the architecture (not discarded)."),
+    }
 
 
 def spectrum_walk(X, cols):
@@ -161,11 +200,21 @@ def main() -> None:
     print(f"[odbook] champion: {champ_cfg}")
     print(f"[odbook] challenger: {chal_cfg}")
 
+    # deadbands tuned on VAL (applied unchanged to TEST in the gated pass)
+    champ_db = {h: tune_deadband(champ, Xva, mid_va, bs.cols, h) for h in HORIZONS}
+    chal_db = {h: tune_deadband(chal, Xva, mid_va, bs.cols, h) for h in HORIZONS}
+    print(f"[odbook] tuned deadbands (bps) champ={champ_db} chal={chal_db}")
+
     if not args.commit_ttest:
         print("\n[odbook] VAL-ONLY (T_test NOT touched). Scoring on val:")
-        champ_sc = score(champ, Xva, mid_va, bs.cols)
-        chal_sc = score(chal, Xva, mid_va, bs.cols)
+        champ_sc = score(champ, Xva, mid_va, bs.cols, champ_db)
+        chal_sc = score(chal, Xva, mid_va, bs.cols, chal_db)
         _report(champ_sc, chal_sc)
+        # operator stability over train+val only (test untouched)
+        ntv = len(sp.train) + len(sp.val)
+        stab_va = spectrum_walk(bs.X[:ntv], bs.cols)
+        print(f"\n[odbook] salvage (reusable parts): "
+              f"{json.dumps(salvage(champ_sc, chal_sc, stab_va), indent=2)}")
         print("\n[odbook] Re-run with --commit-ttest on the multi-day dataset for "
               "the single gated decision.")
         return
@@ -180,13 +229,15 @@ def main() -> None:
         sys.exit(2)
 
     print("\n[odbook] === SINGLE T_TEST PASS (committing) ===")
-    champ_sc = score(champ, Xte, mid_te, bs.cols)
-    chal_sc = score(chal, Xte, mid_te, bs.cols)
+    champ_sc = score(champ, Xte, mid_te, bs.cols, champ_db)
+    chal_sc = score(chal, Xte, mid_te, bs.cols, chal_db)
     stab = spectrum_walk(bs.X, bs.cols)
     gate = kill_gate(champ_sc, chal_sc, stab)
+    salv = salvage(champ_sc, chal_sc, stab)
     _report(champ_sc, chal_sc)
     print(f"\n[odbook] spectrum stability: {stab}")
     print(f"[odbook] KILL GATE: {json.dumps(gate, indent=2)}")
+    print(f"[odbook] salvage (reusable even on KILL): {json.dumps(salv, indent=2)}")
     print(f"\n[odbook] *** VERDICT: {gate['VERDICT']} ***")
 
     result = {
@@ -195,7 +246,7 @@ def main() -> None:
         "data_hash": _data_hash(args.data), "n_states": bs.n, "grid_s": bs.grid_s,
         "champion_cfg": champ_cfg, "challenger_cfg": chal_cfg,
         "champion_score": _jsonable(champ_sc), "challenger_score": _jsonable(chal_sc),
-        "spectrum_stability": stab, "kill_gate": gate,
+        "spectrum_stability": stab, "kill_gate": gate, "salvage": salv,
     }
     json.dump(result, open(args.out, "w"), indent=2)
     json.dump({"utc": result["utc"], "git_sha": result["git_sha"],
