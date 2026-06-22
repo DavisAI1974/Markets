@@ -118,32 +118,60 @@ def signed_flow_features(buy_vol, sell_vol) -> dict | None:
 DIVERGE_STRONG = -0.20
 
 
-def divergence(buy_vol, sell_vol, price_drift: float) -> dict | None:
-    """Order-flow DIVERGENCE vs the recent price trend -> graded continuation-vs-flip read.
+def _imbalance(buy_vol, sell_vol) -> float:
+    b = float(np.sum(buy_vol)); s = float(np.sum(sell_vol)); t = b + s
+    return (b - s) / t if t > 0 else 0.0
 
-    Following the trend IS following the flow. The info dipole works as a flip detector, not a
-    direct direction predictor: a trend FLIPS when flow turns against it (exhaustion). The EDGE is
-    graded and asymmetric -- it lives on the divergence side (_info_dipole_trend_flip.py):
-      aligned_flow = imb_level * sign(price_drift)   (>0 flow confirms trend; <0 flow opposes it)
-      strong divergence (aligned <= -0.20) -> ~65% REVERSAL pooled (n=234), temporally stable
-        (early 70% / late 62%) and consistent per cell (btc_bybit_sell 100%, btc_kraken_buy 84%,
-        btc_coinbase_buy 67% ... only btc_bybit_buy neutral). Confirmation is NOT a reliable
-        continuation signal (strong-confirm ~49% -- very strong with-trend flow is itself exhaustion).
-    So use it per cell as a REVERSAL/flip gate, never pooled to deploy. Maps to the 5-state frame
-    (flow-opposed move = reversal/EQUILIBRIUM transition).
+
+def divergence(buy_vol, sell_vol, price_drift: float) -> dict | None:
+    """Order-flow flow-state read -> continuation vs FLIP, on two validated factors.
+
+    Markets are mostly follow-the-leader (a trend = a flow) until the leader exhausts, then a new
+    leader, usually opposite. Following the trend IS following the flow; the edge is detecting the
+    changeover. The info dipole detects it on TWO factors (_info_dipole_trend_flip.py, pooled n=1560):
+
+      (1) DIVERGENCE  aligned_flow = imb_level * sign(price_drift)  (>0 flow confirms trend; <0 opposes).
+          Strong divergence (aligned <= -0.20) -> ~65% reversal, temporally stable (early 70%/late 62%),
+          consistent per cell (btc_bybit_sell 100%, btc_kraken_buy 84% ... btc_bybit_buy neutral).
+      (2) EXHAUSTION  the order-flow dipole COLLAPSING toward 0.5 (|late-half imbalance| < |early-half|,
+          i.e. the leader weakening). Greg's "dipole going to 0.5 = change in flow" -- not the discrete
+          0.5 crossing (coin flip), but the dipole MOVING toward balance.
+
+    The two STACK monotonically: opposing+exhausting = 64% reversal (n=317) > opposing+strengthening 58%
+    > with-trend+weakening 52% > with-trend+strengthening 49% (= healthiest trend, 51% continuation).
+
+    Per cell, never pooled to deploy (DEPLOY_VALIDATED note applies -- thin 2-day/1-min data; confirm on
+    1-sec multi-regime history + net-of-cost). Maps to the 5-state frame (flow-opposed/collapsing =
+    reversal/transition; flow-confirmed/strengthening = CHANNELED/CASCADE continuation).
 
     price_drift: recent price change over the same pre-entry window (close[-1]-close[0]).
-    Returns {imb_level, aligned_flow, confirms, expect, reversal_conviction}, or None if unusable.
+    Returns {imb_level, aligned_flow, confirms, opposing, exhausting, expect, reversal_conviction},
+    or None if unusable.
     """
-    feats = signed_flow_features(buy_vol, sell_vol)
-    if feats is None or price_drift == 0:
+    A = np.asarray(buy_vol, float); S = np.asarray(sell_vol, float)
+    n = min(A.size, S.size)
+    if n < 6 or price_drift == 0:
         return None
-    aligned = feats["imb_level"] * (1.0 if price_drift > 0 else -1.0)
+    A, S = A[:n], S[:n]
+    lvl = _imbalance(A, S)
+    aligned = lvl * (1.0 if price_drift > 0 else -1.0)
     confirms = aligned > 0
-    strong_flip = aligned <= DIVERGE_STRONG
-    return {"imb_level": feats["imb_level"], "aligned_flow": aligned, "confirms": confirms,
-            "expect": "reversal" if strong_flip else ("continue" if confirms else "flip_risk"),
-            "reversal_conviction": max(0.0, -aligned)}   # 0..1, grows with opposing-flow strength
+    opposing = aligned < 0
+    mid = n // 2
+    exhausting = abs(_imbalance(A[mid:], S[mid:])) < abs(_imbalance(A[:mid], S[:mid]))  # dipole -> 0.5
+    strong_div = aligned <= DIVERGE_STRONG
+    if (opposing and exhausting) or strong_div:
+        expect = "reversal"
+    elif opposing:
+        expect = "flip_risk"
+    elif exhausting:
+        expect = "weakening"
+    else:
+        expect = "continue"
+    conv = max(0.0, -aligned) + (0.15 if (opposing and exhausting) else 0.0)
+    return {"imb_level": lvl, "aligned_flow": aligned, "confirms": confirms,
+            "opposing": opposing, "exhausting": exhausting,
+            "expect": expect, "reversal_conviction": round(min(1.0, conv), 4)}
 
 
 def cell_signal(cell: str, buy_vol, sell_vol):

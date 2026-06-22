@@ -131,6 +131,34 @@ def main():
         if msk.sum() >= 15:
             print(f"   {cell:20s} reversal={100-100*c2[msk].mean():>3.0f}%  (n={int(msk.sum())})")
 
+    # 2-factor gate: divergence x EXHAUSTION (dipole collapsing toward 0.5 = leader weakening),
+    # computed with the operator itself so the tool and odcore.info_dipole.divergence stay in sync.
+    print("\n2-FACTOR gate (divergence x exhaustion toward 0.5), reversal rate:")
+    from odcore.info_dipole import divergence as _dv
+    cats = {"oppose+exhaust": [], "oppose+strengthen": [], "withtrend+exhaust": [], "withtrend+strengthen": []}
+    for w in wo:
+        a_, v_ = w["asset"].lower(), w["venue"].lower()
+        if (a_, v_) not in bars:
+            continue
+        ts, bv, sv, cl = bars[(a_, v_)]; ot = w["true_onset_ts_utc"]
+        lo = bisect.bisect_left(ts, ot - WIN_S); hi = bisect.bisect_right(ts, ot)
+        f_ = bisect.bisect_right(ts, ot + FWD_S)
+        if f_ <= hi or hi == 0 or hi - lo < 6:
+            continue
+        pre = cl[hi - 1] - cl[lo]; fwd = cl[f_ - 1] - cl[hi - 1]
+        if pre == 0 or fwd == 0:
+            continue
+        dv = _dv(bv[lo:hi], sv[lo:hi], pre)
+        if dv is None:
+            continue
+        rev = np.sign(pre) != np.sign(fwd)
+        key = ("oppose" if dv["opposing"] else "withtrend") + "+" + ("exhaust" if dv["exhausting"] else "strengthen")
+        cats[key].append(rev)
+    for k in ["oppose+exhaust", "oppose+strengthen", "withtrend+exhaust", "withtrend+strengthen"]:
+        v = cats[k]
+        if v:
+            print(f"   {k:22s} n={len(v):>4d}  reversal={100*np.mean(v):>3.0f}%")
+
 
 if __name__ == "__main__":
     main()
