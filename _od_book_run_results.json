@@ -16,7 +16,10 @@
       "singular_gap": 0.0004,
       "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
     },
-    "equations": {},
+    "equations": {
+      "MI": "DiscoveredEquation(target='MI', features=['H_a', 'H_b', 'H_a^2', 'H_b^2', 'H_a*H_b'], best_equation='cube(H_axH_b * square(-0.036335703))', best_complexity=5, best_loss=0.7950349, best_score=0.15909829229437097, pareto=[{'complexity': 1, 'loss': 1.0227606, 'score': 0.0, 'equation': '0.34334746'}, {'complexity': 3, 'loss': 0.94208544, 'score': 0.041082374934838344, 'equation': 'H_axH_b * 0.00078570325'}, {'complexity': 4, 'loss': 0.9321412, 'score': 0.010611665744028907, 'equation': 'cube(-0.034050185 * H_a)'}, {'complexity': 5, 'loss': 0.7950349, 'score': 0.15909829229437097, 'equation': 'cube(H_axH_b * square(-0.036335703))'}, {'complexity': 6, 'loss': 0.7165632, 'score': 0.10391956312393019, 'equation': 'cube((H_axH_b * 0.0028026346) + -1.0947999)'}, {'complexity': 12, 'loss': 0.7153138, 'score': 0.0002908537341969654, 'equation': 'square(square((cube(log(log(H_axH_b)) - 1.3740635) + -0.047402848) / 0.08812838))'}])",
+      "H_a^2": "DiscoveredEquation(target='H_a^2', features=['H_a', 'H_b', 'H_b^2', 'H_a*H_b', 'MI'], best_equation='square(H_a)', best_complexity=2, best_loss=8.6230634e-10, best_score=30.52564974255412, pareto=[{'complexity': 1, 'loss': 15587.728, 'score': 0.0, 'equation': 'H_axH_b'}, {'complexity': 2, 'loss': 8.6230634e-10, 'score': 30.52564974255412, 'equation': 'square(H_a)'}, {'complexity': 6, 'loss': 8.6230356e-10, 'score': 8.059793695991559e-07, 'equation': '(0.0003257402 / H_bp2) + square(H_a)'}, {'complexity': 7, 'loss': 8.6230145e-10, 'score': 2.446937110632406e-06, 'equation': 'sqrt(square(square(H_a)) - exp(H_a))'}, {'complexity': 8, 'loss': 8.622259e-10, 'score': 8.76182103441918e-05, 'equation': 'cube(square(H_a / H_bp2)) + square(H_a)'}, {'complexity': 9, 'loss': 8.6195145e-10, 'score': 0.0003183547241448081, 'equation': 'square(H_a) + (square(MI / H_bp2) * -0.41903955)'}])"
+    },
     "rows": 20996
   },
   "LIQUIDITY dipole (the curve)": {
@@ -36,7 +39,10 @@
       "singular_gap": 0.0137,
       "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
     },
-    "equations": {},
+    "equations": {
+      "MI": "DiscoveredEquation(target='MI', features=['H_a', 'H_b', 'H_a^2', 'H_b^2', 'H_a*H_b'], best_equation='square(exp(-0.24722318 - square((H_b * -0.06664869) + -0.32633263)))', best_complexity=10, best_loss=0.06620442, best_score=0.008950163817943321, pareto=[{'complexity': 1, 'loss': 0.068781644, 'score': 0.0, 'equation': '0.54774874'}, {'complexity': 5, 'loss': 0.06744127, 'score': 0.004919940486345474, 'equation': '(H_ap2 * -0.0004479873) + 0.5585688'}, {'complexity': 6, 'loss': 0.0671566, 'score': 0.004229939514675136, 'equation': 'exp((-0.0012271213 * H_ap2) + -0.571771)'}, {'complexity': 7, 'loss': 0.06689534, 'score': 0.0038978970507989675, 'equation': 'exp(-0.59008765 - (cube(H_a) * -8.3051156e-5))'}, {'complexity': 8, 'loss': 0.06681946, 'score': 0.0011349530215833056, 'equation': 'square(exp(-0.28930107 - cube(H_a * -0.038088016)))'}, {'complexity': 9, 'loss': 0.06679962, 'score': 0.000296963579539631, 'equation': 'square(exp(exp(cube(H_a * 0.03983177))) * 0.27556524)'}, {'complexity': 10, 'loss': 0.06620442, 'score': 0.008950163817943321, 'equation': 'square(exp(-0.24722318 - square((H_b * -0.06664869) + -0.32633263)))'}, {'complexity': 11, 'loss': 0.065803684, 'score': 0.006071403479765939, 'equation': 'cube(square(exp(-0.08497438 - square((H_a * -0.033074703) + -0.17286141))))'}])",
+      "H_a^2": "DiscoveredEquation(target='H_a^2', features=['H_a', 'H_b', 'H_b^2', 'H_a*H_b', 'MI'], best_equation='square(H_a)', best_complexity=2, best_loss=2.3360843e-11, best_score=32.87336128566756, pareto=[{'complexity': 1, 'loss': 4417.819, 'score': 0.0, 'equation': 'H_axH_b'}, {'complexity': 2, 'loss': 2.3360843e-11, 'score': 32.87336128566756, 'equation': 'square(H_a)'}, {'complexity': 4, 'loss': 2.3320896e-11, 'score': 0.000855730969035585, 'equation': 'square(H_a) + 0.0'}, {'complexity': 7, 'loss': 2.282118e-11, 'score': 0.007220243525119068, 'equation': '(-8.472499e-11 * square(H_axH_b)) + square(H_a)'}, {'complexity': 10, 'loss': 2.2821009e-11, 'score': 2.4976891446108813e-06, 'equation': '(-8.472499e-11 * ((H_axH_b * H_axH_b) - H_bp2)) + square(H_a)'}, {'complexity': 11, 'loss': 2.2818235e-11, 'score': 0.0001215620488110825, 'equation': '(((H_axH_b - log(H_bp2)) * -8.472499e-11) * H_axH_b) + square(H_a)'}, {'complexity': 12, 'loss': 2.2808465e-11, 'score': 0.0004282580221371633, 'equation': '(((H_axH_b * -8.472499e-11) * H_axH_b) - (H_bp2 * -5.1492655e-10)) + square(H_a)'}])"
+    },
     "rows": 20996
   },
   "liquidity vs head pressure": {
@@ -56,7 +62,10 @@
       "singular_gap": 0.0015,
       "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
     },
-    "equations": {},
+    "equations": {
+      "MI": "DiscoveredEquation(target='MI', features=['H_a', 'H_b', 'H_a^2', 'H_b^2', 'H_a*H_b'], best_equation='H_ap2 * 0.00036427434', best_complexity=3, best_loss=0.007681224, best_score=0.031233954867381956, pareto=[{'complexity': 1, 'loss': 0.008176358, 'score': 0.0, 'equation': '0.021616744'}, {'complexity': 3, 'loss': 0.007681224, 'score': 0.031233954867381956, 'equation': 'H_ap2 * 0.00036427434'}, {'complexity': 4, 'loss': 0.007615685, 'score': 0.008568973121148878, 'equation': 'square(H_axH_b) * 5.9432534e-7'}, {'complexity': 5, 'loss': 0.007502066, 'score': 0.01503148706463056, 'equation': '(H_ap2 * 0.0003178311) + 0.013957885'}, {'complexity': 7, 'loss': 0.0074322815, 'score': 0.004672785865765604, 'equation': '((H_axH_b * H_axH_b) * 5.2470483e-7) - -0.014053834'}, {'complexity': 8, 'loss': 0.0073958454, 'score': 0.004914467427934538, 'equation': 'square((H_axH_b * H_b) * 2.9331102e-5) - -0.013803001'}, {'complexity': 10, 'loss': 0.007368939, 'score': 0.0018223381429550891, 'equation': 'square((-2.7504371e-5 * H_b) * H_axH_b) - (0.32260105 / H_b)'}])",
+      "H_a^2": "DiscoveredEquation(target='H_a^2', features=['H_a', 'H_b', 'H_b^2', 'H_a*H_b', 'MI'], best_equation='square(H_a)', best_complexity=2, best_loss=2.3360843e-11, best_score=33.28613131974859, pareto=[{'complexity': 1, 'loss': 6675.3135, 'score': 0.0, 'equation': '24.146868'}, {'complexity': 2, 'loss': 2.3360843e-11, 'score': 33.28613131974859, 'equation': 'square(H_a)'}, {'complexity': 5, 'loss': 2.0308954e-11, 'score': 0.04666645736497213, 'equation': 'H_axH_b * (H_a / H_b)'}, {'complexity': 9, 'loss': 2.0293326e-11, 'score': 0.00019245225602812697, 'equation': '((H_axH_b + 0.6313096) - 0.6313099) * (H_a / H_b)'}])"
+    },
     "rows": 20996
   },
   "flow vs price activity": {
@@ -76,7 +85,10 @@
       "singular_gap": 0.0003,
       "reason": "high-variance MI stays out of null (mere correlation; INFO-041)"
     },
-    "equations": {},
+    "equations": {
+      "MI": "DiscoveredEquation(target='MI', features=['H_a', 'H_b', 'H_a^2', 'H_b^2', 'H_a*H_b'], best_equation='cube(H_ap2) * 1.909617e-9', best_complexity=4, best_loss=0.9734273, best_score=0.05045254959024341, pareto=[{'complexity': 1, 'loss': 1.0874447, 'score': 0.0, 'equation': '0.36127928'}, {'complexity': 3, 'loss': 1.0237992, 'score': 0.03015510923731618, 'equation': 'H_ap2 * 0.00079412636'}, {'complexity': 4, 'loss': 0.9734273, 'score': 0.05045254959024341, 'equation': 'cube(H_ap2) * 1.909617e-9'}, {'complexity': 5, 'loss': 0.96769, 'score': 0.005911354977943993, 'equation': 'square(1.9208528e-9 * cube(H_axH_b))'}, {'complexity': 6, 'loss': 0.9625319, 'score': 0.005344579582502647, 'equation': 'cube(sqrt(1.9208528e-9 * cube(H_axH_b)))'}, {'complexity': 7, 'loss': 0.9435074, 'score': 0.019963000554767275, 'equation': 'square(1.9208528e-9 * cube(H_axH_b)) * 1.376202'}, {'complexity': 8, 'loss': 0.9425269, 'score': 0.0010397478861683105, 'equation': 'square(cube((sqrt(H_axH_b) * 0.06719562) - 0.84625447))'}, {'complexity': 10, 'loss': 0.94252217, 'score': 2.509218500016424e-06, 'equation': 'square(cube((sqrt(H_axH_b) * 0.06719562) - 0.84655786) / -0.99704826)'}, {'complexity': 12, 'loss': 0.94250953, 'score': 6.705457526383247e-06, 'equation': 'square(cube((0.84655786 - (sqrt(H_axH_b - 1.0700365) * 0.06719562)) / -0.99704826))'}])",
+      "H_a^2": "DiscoveredEquation(target='H_a^2', features=['H_a', 'H_b', 'H_b^2', 'H_a*H_b', 'MI'], best_equation='square(H_a)', best_complexity=2, best_loss=8.6230634e-10, best_score=29.91355967567616, pareto=[{'complexity': 1, 'loss': 8451.922, 'score': 0.0, 'equation': 'H_axH_b'}, {'complexity': 2, 'loss': 8.6230634e-10, 'score': 29.91355967567616, 'equation': 'square(H_a)'}, {'complexity': 6, 'loss': 8.6204016e-10, 'score': 7.718286380210224e-05, 'equation': '(square(H_a) - -0.45526433) + -0.45526433'}])"
+    },
     "rows": 20996
   }
 }

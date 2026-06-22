@@ -75,3 +75,4 @@ turn_signature.png
 
 # transient run logs (S41)
 *.log
+*.log
