@@ -1,0 +1,204 @@
+{
+ "schema": "onset_winner_bucket_v1",
+ "bucket": "eth_coinbase_sell",
+ "entries": [
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|5e270b65d79d8d0a_1779621960|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779621960.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 179.91631445
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|a40ad304e1a1b94c_1779622500|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779622500.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 179.50073663
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|45c3ca393b927375_1779622320|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779622320.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 173.91010305
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|2b7722c63a6accea_1779591960|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779591960.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 172.47676648
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|c12b0332b1e82b3c_1779623880|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779623880.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 172.43052285
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|69962abe929665ac_1779622140|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779622140.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 172.38427878
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|1eaaffa800de27b8_1779622980|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779622980.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 170.39537163
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|15c96b73b0924c9f_1779614400|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779614400.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 153.57312417
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|7bc209e36b49092c_1779618960|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779618960.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 153.16967778
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|7df2445d2c1198c8_1779611880|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779611880.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 150.97282344
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|d112e1011198406a_1779618240|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779618240.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 150.2675196
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|6fb9bfdd710872d3_1779617820|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779617820.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 149.43985949
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|c2279c1ef6aec015_1779617460|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779617460.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 145.44261707
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|e8e6e13b6f02aae2_1779613500|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779613500.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 145.44261707
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|430d6f3f5d00c786_1779617760|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779617760.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 145.02411329
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|45f5eebd57e326e6_1779618120|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779618120.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 144.88460412
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|8bd12e9e740503d2_1779631080|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779631080.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 87.49191131
+  },
+  {
+   "schema": "onset_winner_v1",
+   "source": "live_hindsight_winner_onset_reanchored",
+   "source_id": "ETH|coinbase|8bd12e9e740503d2_1779632460|sell",
+   "asset": "ETH",
+   "venue": "Coinbase",
+   "side": "sell",
+   "entry_ts_utc": 1779632460.0,
+   "horizon_minutes": 27.0,
+   "net_bps": 13.69305291
+  }
+ ]
+}
