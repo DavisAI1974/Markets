@@ -114,25 +114,36 @@ def signed_flow_features(buy_vol, sell_vol) -> dict | None:
             "mi_flow": mi_flow, "imb_flow": imb_flow}
 
 
-def divergence(buy_vol, sell_vol, price_drift: float) -> dict | None:
-    """Order-flow DIVERGENCE vs the recent price trend -> continuation-vs-flip read.
+# aligned-flow threshold below which a reversal is high-conviction (validated tier boundary)
+DIVERGE_STRONG = -0.20
 
-    The info dipole works as a flip detector, not a direct direction predictor: a trend tends to
-    CONTINUE when order flow confirms it and to FLIP when flow diverges (price up but sellers
-    stepping in = exhaustion). Validated pooled (_info_dipole_trend_flip.py): confirm -> 50%
-    continuation vs diverge -> 38% (+12pp edge, positive in both temporal halves); the STATIC
-    imb_level is the detector (the differential mi_flow/imb_flow do not detect the flip). Per cell:
-    strong (btc_bybit_sell +56) to inverted (btc_bybit_buy -10) -- use per cell, never pooled.
+
+def divergence(buy_vol, sell_vol, price_drift: float) -> dict | None:
+    """Order-flow DIVERGENCE vs the recent price trend -> graded continuation-vs-flip read.
+
+    Following the trend IS following the flow. The info dipole works as a flip detector, not a
+    direct direction predictor: a trend FLIPS when flow turns against it (exhaustion). The EDGE is
+    graded and asymmetric -- it lives on the divergence side (_info_dipole_trend_flip.py):
+      aligned_flow = imb_level * sign(price_drift)   (>0 flow confirms trend; <0 flow opposes it)
+      strong divergence (aligned <= -0.20) -> ~65% REVERSAL pooled (n=234), temporally stable
+        (early 70% / late 62%) and consistent per cell (btc_bybit_sell 100%, btc_kraken_buy 84%,
+        btc_coinbase_buy 67% ... only btc_bybit_buy neutral). Confirmation is NOT a reliable
+        continuation signal (strong-confirm ~49% -- very strong with-trend flow is itself exhaustion).
+    So use it per cell as a REVERSAL/flip gate, never pooled to deploy. Maps to the 5-state frame
+    (flow-opposed move = reversal/EQUILIBRIUM transition).
 
     price_drift: recent price change over the same pre-entry window (close[-1]-close[0]).
-    Returns {imb_level, confirms, expect}, or None if the window is unusable.
+    Returns {imb_level, aligned_flow, confirms, expect, reversal_conviction}, or None if unusable.
     """
     feats = signed_flow_features(buy_vol, sell_vol)
     if feats is None or price_drift == 0:
         return None
-    confirms = (feats["imb_level"] > 0) == (price_drift > 0)
-    return {"imb_level": feats["imb_level"], "confirms": confirms,
-            "expect": "continue" if confirms else "flip"}
+    aligned = feats["imb_level"] * (1.0 if price_drift > 0 else -1.0)
+    confirms = aligned > 0
+    strong_flip = aligned <= DIVERGE_STRONG
+    return {"imb_level": feats["imb_level"], "aligned_flow": aligned, "confirms": confirms,
+            "expect": "reversal" if strong_flip else ("continue" if confirms else "flip_risk"),
+            "reversal_conviction": max(0.0, -aligned)}   # 0..1, grows with opposing-flow strength
 
 
 def cell_signal(cell: str, buy_vol, sell_vol):

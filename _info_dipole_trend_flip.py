@@ -110,6 +110,27 @@ def main():
         c, d = split(sub)
         print(f"  temporal {name}: edge {cont(c) - cont(d):+.0f}  (conf {cont(c):.0f}% / div {cont(d):.0f}%)")
 
+    # graded: the edge lives on the divergence side, scaled by opposing-flow strength
+    af = np.array([r[3]["imb_level"] * r[1] for r in allR])     # aligned flow
+    ct = np.array([r[1] == r[2] for r in allR])
+    print("\nGraded by aligned flow (imb_level*sign(drift); + confirms, - opposes):")
+    edges = [-1.01, -0.5, -0.2, -0.05, 0.05, 0.2, 1.01]
+    labs = ["strong DIVERGE", "mod diverge", "weak diverge", "neutral", "weak confirm", "confirm"]
+    for i, lab in enumerate(labs):
+        m = (af >= edges[i]) & (af < edges[i + 1])
+        if m.sum():
+            print(f"   {lab:16s} n={m.sum():>4d}  continuation={100*ct[m].mean():>3.0f}%  "
+                  f"reversal={100-100*ct[m].mean():>3.0f}%")
+    print(f"\nDIVERGENCE reversal gate (aligned <= -0.2): "
+          f"pooled reversal={100-100*ct[af <= -0.2].mean():.0f}% (n={int((af <= -0.2).sum())}); "
+          f"per-cell reversal (n>=15):")
+    for cell in sorted(by_cell):
+        R = rows(bars, by_cell[cell])
+        a = np.array([r[3]["imb_level"] * r[1] for r in R]); c2 = np.array([r[1] == r[2] for r in R])
+        msk = a <= -0.2
+        if msk.sum() >= 15:
+            print(f"   {cell:20s} reversal={100-100*c2[msk].mean():>3.0f}%  (n={int(msk.sum())})")
+
 
 if __name__ == "__main__":
     main()
