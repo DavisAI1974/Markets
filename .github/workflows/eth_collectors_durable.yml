@@ -63,12 +63,21 @@ jobs:
 
       - name: Restore previous bins from data/eth-bins branch
         run: |
+          # Bins stored GZIPPED on the data branch (<f>.json.gz) to stay under GitHub's 100 MiB/file
+          # push cap (raw bins outgrew it, stalling collection). gunzip on restore, gzip on push;
+          # collectors read/write raw .json locally. Legacy raw .json fallback for the migration run.
           if git ls-remote --exit-code --heads origin data/eth-bins > /dev/null 2>&1; then
             echo "[restore] data branch exists; fetching"
             git fetch origin data/eth-bins
-            git checkout origin/data/eth-bins -- eth_coinbase_bins.json 2>/dev/null || echo "[restore] no eth_coinbase_bins.json on data branch yet"
-            git checkout origin/data/eth-bins -- eth_kraken_bins.json 2>/dev/null || echo "[restore] no eth_kraken_bins.json on data branch yet"
-            git checkout origin/data/eth-bins -- eth_bybit_perp_bins.json 2>/dev/null || echo "[restore] no eth_bybit_perp_bins.json on data branch yet"
+            for f in eth_coinbase_bins eth_kraken_bins eth_bybit_perp_bins; do
+              if git checkout origin/data/eth-bins -- "$f.json.gz" 2>/dev/null; then
+                gunzip -f "$f.json.gz" && echo "[restore] $f from .gz"
+              elif git checkout origin/data/eth-bins -- "$f.json" 2>/dev/null; then
+                echo "[restore] $f from legacy raw .json (will migrate to .gz on push)"
+              else
+                echo "[restore] no prior $f on data branch yet"
+              fi
+            done
           else
             echo "[restore] data branch does not exist; first run, starting fresh"
           fi
@@ -134,45 +143,53 @@ jobs:
           # always >= the data-branch copy. If a fresh file regressed (fewer bins
           # than what's already on data/eth-bins), restore the data-branch copy so
           # the push preserves history instead of wiping it.
+          # Data branch stores GZIPPED (<f>.json.gz); local files are raw .json.
           python - <<'PY'
-          import json, subprocess, os
+          import json, subprocess, os, gzip
           BRANCH = "origin/data/eth-bins"
           FILES = ["eth_coinbase_bins.json", "eth_kraken_bins.json", "eth_bybit_perp_bins.json"]
-          def count(path):
+          def count_raw(path):
               try:
                   with open(path) as f: return len(json.load(f))
               except Exception: return 0
-          def old_blob(fn):
-              try:
-                  return subprocess.run(["git", "show", f"{BRANCH}:{fn}"],
-                                        capture_output=True, check=True).stdout
-              except subprocess.CalledProcessError:
-                  return None
+          def old_branch(fn):
+              for ref in (fn + ".gz", fn):
+                  try:
+                      blob = subprocess.run(["git", "show", f"{BRANCH}:{ref}"],
+                                            capture_output=True, check=True).stdout
+                  except subprocess.CalledProcessError:
+                      continue
+                  try:
+                      data = gzip.decompress(blob) if ref.endswith(".gz") else blob
+                      return len(json.loads(data)), data
+                  except Exception:
+                      continue
+              return 0, None
           for fn in FILES:
               newp = os.path.join("/tmp/bins", fn)
-              new = count(newp)
-              blob = old_blob(fn)
-              old = len(json.loads(blob)) if blob else 0
+              new = count_raw(newp)
+              old, data = old_branch(fn)
               if old and new < old:
-                  with open(newp, "wb") as f: f.write(blob)
+                  with open(newp, "wb") as f: f.write(data)
                   print(f"[guardrail] {fn}: collected {new} bins < {old} on data branch "
                         f"-> RESTORED data-branch copy (no regression)")
               else:
                   print(f"[guardrail] {fn}: {new} bins (>= {old} on data branch) -> keep")
           PY
 
+          for f in eth_coinbase_bins eth_kraken_bins eth_bybit_perp_bins; do
+            [ -f "/tmp/bins/$f.json" ] && gzip -f "/tmp/bins/$f.json" && echo "[gzip] $f.json.gz $(stat -c%s /tmp/bins/$f.json.gz) bytes"
+          done
+
           git checkout --orphan data/eth-bins-tmp
           git rm -rf . > /dev/null 2>&1 || true
+          cp /tmp/bins/*.json.gz . 2>/dev/null || true
 
-          cp /tmp/bins/eth_coinbase_bins.json . 2>/dev/null || true
-          cp /tmp/bins/eth_kraken_bins.json . 2>/dev/null || true
-          cp /tmp/bins/eth_bybit_perp_bins.json . 2>/dev/null || true
-
-          if [ -f eth_coinbase_bins.json ] || [ -f eth_kraken_bins.json ] || [ -f eth_bybit_perp_bins.json ]; then
-            git add eth_coinbase_bins.json eth_kraken_bins.json eth_bybit_perp_bins.json 2>/dev/null || true
+          if ls *.json.gz > /dev/null 2>&1; then
+            git add *.json.gz
             git commit -m "ETH bins update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/eth-bins-tmp:data/eth-bins
-            echo "[commit] pushed to data/eth-bins"
+            echo "[commit] pushed gzipped bins to data/eth-bins"
           else
             echo "[commit] no bins to commit"
           fi
