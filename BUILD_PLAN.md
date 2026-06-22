@@ -423,12 +423,48 @@ a SWING strategy with an explicit timing model. Full detail: `S36_NETCOST_BACKTE
   history (the in-git `realbins/` 1-sec is a single later window). Maker-rebate execution to lower the cost
   floor. Investigate the inverting cells. Add the C ratio (H_self/H_cross) as a 3rd flow factor.
 
-## Research direction — quant/classical timing precision (Greg, S36; FRAME, not a claim)
-The timing test makes speed a MEASURED, compounding edge: every bp closer to the turn is money, and the
-gap to a 1-min trader is +4.2 bps/entry that grows with volatility. So anything that buys latency or
-turn-timing PRECISION (sub-second → 0.1 s and finer) is directly monetizable at the enter/exit. Greg's
-serious thread: the DavisAI quantum/classical-merge math (the "only ones in the world" advantage) is a
-candidate to push entry/exit timing precision past where classical-per-second tooling sits. Recorded as a
-RESEARCH FRAME to scope (Result Discipline: frames stay separate from claims; do not let it grade itself) —
-the empirical hook is concrete (timing penalty is quantified), the quantum-classical mechanism is to be
-investigated, not asserted. ("Time on atomic decay" = Greg's joke, noted as such.)
+## Quantum/classical-merge question — RESOLVED by the Architect (S36b): precision, NOT speed
+The timing test made speed a MEASURED, compounding edge (+4.2 bps/entry per resolution step, grows with
+vol). Greg's serious thread was whether the DavisAI quantum/classical-merge math buys a timing edge. The
+Architect pulled the Hilbert-Space-Unification math and resolved it:
+- **Classical-∞-dim ML and quantum ML are the SAME mathematics on different substrates** — same Hilbert
+  space, same spectral operator; the only difference is how the inner product is computed. The distinction
+  is COMPUTATIONAL, not mathematical.
+- Therefore the merge-math **FORBIDS a quantum-execution edge rather than enabling one**: any "step ahead
+  of price" would exist on both substrates equally, so it isn't a quantum thing. **Build the operator
+  OFFLINE, compile it, run it CLASSICALLY in the live path. No quantum hardware between tick and order.**
+  (A turn-detector on an order-flow+price window is low-dim with cheap classical eval — it fails every
+  prong of the quantum-advantage test: needs exp-large kernel space AND intractable classical eval AND
+  efficient state prep.)
+- **The edge is PRECISION (a better spectral operator = the dipole filter / turn-predictor), not speed.**
+  Latency stays pure classical HFT physics (colo, FPGA, kernel-bypass). The math gives the operator; the
+  FPGA/colo captures it. This independently CONFIRMS PART 4's split (dipole = filter; fine-res price = timing).
+- ("Quantum = speed" was the wrong frame, and our own theory is the proof. Greg's "time on atomic decay"
+  noted as the joke it was.)
+
+## Actionable edges (Architect, S36b) — one done, three queued
+- **DONE — per-leg ASYMMETRIC fee floor** (`_info_dipole_fee_floor.py`). The 22 bps floor is round-trip
+  TAKER. Because the dipole PREDICTS the turn, you can REST a maker limit there → lower fee AND lower
+  slippage (you fill at your price). Floor drops 22(taker/taker) → 13(maker-in/taker-out) → **4 bps
+  (maker/maker)**, which **1.6–3.5× the oracle opportunity** (far more swings clear a lower floor). Caveat:
+  maker-rest carries FILL RISK (limit only fills if price reaches it) — model per-venue before trusting.
+  Model the floor PER-LEG, not as a flat 22.
+- **QUEUED — regime master-gate** via the dipole C ratio (H_self/H_cross): a predictive read of WHEN NOT to
+  trade (toxic flow, MM withdrawal, liquidity crises). Wire as a master enable/disable on top of the
+  filter+timing stack — going FLAT ahead of a liquidity crisis beats entering beautifully into a gap.
+- **QUEUED — incremental/sliding operator update** for latency: if the live operator is a fixed spectral
+  apply, precompute everything not dependent on the newest tick and keep a rolling state updated
+  incrementally (recursive/sliding) instead of recomputing the window each tick. Same math, moves work out
+  of the hot path. Cheapest real latency win, no new hardware.
+- **DISCIPLINE — pre-entry-window leakage check on EVERY new signal before it touches a backtest.** The
+  algebraic-dipole 0.993 OOF / FN=0 is UNVALIDATED and is exactly the shape leakage takes — it does NOT
+  enter the falsification harness until it survives a strict `[entry−30m, entry]` pre-entry validation.
+
+## Falsification harness (Architect, D) — the decisive validation, when there's a validated challenger
+Do NOT run "quantum vs classical detector" — the unification thesis predicts a null there, so a null tells
+you nothing. The real test: **OD-recovered operator vs a strong CLASSICAL champion** (order-flow imbalance +
+tuned reversal filter), BOTH running classically, on frozen fine-resolution data. Metric = **bps-to-turn +
+FN-rate at matched FP, net of the per-leg fee floor, out-of-sample.** The OD challenger enters only AFTER it
+clears the mandatory pre-entry-window validation (no validated challenger → no test yet). Architect's soft
+prediction: OD shows as an edge on turn FILTERING (which reversals are real), NOT on turn TIMING
+(fine-resolution price already pins the turn near the fee floor). The frozen-data test decides it.
