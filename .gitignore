@@ -70,3 +70,5 @@ _alt_labels/*.jsonl
 # FNO training pairs (X=prefill_embeds + y=coef) — large, bound for S3/SageMaker, NOT git
 _alt_labels/coeffs/alt_train_pairs.json.gz
 _alt_labels/preentry_flow_features.json
+turn_signature.png
+*.png
