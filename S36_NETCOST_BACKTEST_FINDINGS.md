@@ -123,13 +123,57 @@ sign-cross AND S36 exhaustion/collapse, full window/threshold grids), confirms t
 window just whipsaws (more flips, more fees) without getting closer. Exhaustion (the S36 "dipole → 0.5")
 helps a little (entry off 27→18 bps on some cells) but not enough to clear cost.
 
-**4. What this says we need.** The swing edge is real (oracle) and the dipole is the right *kind* of turn
-detector, but on 1-min data it fires ~15–20 bps late. The flow's roll-over at a turn is smeared across
-1-min buckets; at **1-sec resolution** the exhaustion at a turn resolves within seconds, so the dipole can
-fire *at* the turn instead of 15 bars later. To clear cost we need entry-lag below ~(swing/2 − fee); on a
-50 bps swing that's <~15 bps, which 1-min data cannot deliver and 1-sec plausibly can. **This makes the
-local 1-sec multi-regime onset history (KICKOFF #2) the gating resource for the entire swing strategy** —
-the oracle proves the money is there; closing the entry lag is the build, and it needs 1-sec bars.
+**4. What this says we need (refined by the timing test below).** The swing edge is real (oracle). But
+order-flow imbalance is the wrong *trigger* — it crosses its threshold mid-swing (~18 bps off the turn) at
+ANY resolution, so it does not improve with finer data. The thing that fires *at* the turn is **price
+reversing**, and that DOES sharpen dramatically with resolution — see the timing section: a tight 1-sec
+price-reversal enters ~5–6 bps off the true turn vs ~9–11 at 1-min. So the architecture is two roles:
+the **dipole as the filter** (which turns are real) + a **1-sec price-reversal as the timing** (enter at the
+turn). The local 1-sec history is the gating resource; the oracle proves the money is there.
+
+## Timing — per-second granularity is a quantified edge (Greg, S36); 1-sec test + correction
+`_info_dipole_swing_backtest.py realbins` (1-sec) and `_info_dipole_timing_test.py`. The collectors' 1-sec
+bins (`realbins/`, 6 venues, 2026-06-08..14, ~130k–670k bins/venue) let us test resolution directly.
+
+**Correction of the earlier "1-sec doesn't help" reading (it was a measurement artifact).** Running the
+swing detector on 1-sec showed the same ~18 bps entry-lag as 1-min — but that was because (a) I reported
+the best-NET detector config, which is always the laggiest (longest window, fewest whipsaws), and (b) the
+entry-lag metric was polluted by the trigger firing on noise wiggles scattered mid-swing (verified: oracle
+entries score 0.0 bps off, a random mid-swing entry scores ~half-swing ≈ 17 bps — so any noisy detector
+averages ~mid-swing regardless of resolution). Order-flow imbalance crossing is a **mid-swing** trigger, not
+a turn trigger — that's why it doesn't improve with resolution.
+
+**The clean timing test (same real turns, same data, only the clock changes — 1-sec ticks vs that data
+downsampled to 1-min):** enter once price reverses 5 bps off the extreme; measure bps from the true top/bottom.
+
+| venue | 1-sec entry off | 1-min entry off | timing penalty | move/2s |
+|---|---|---|---|---|
+| btc_kraken | 5.9 bps | 9.3 bps | +3.4 | 0.11 |
+| btc_coinbase | 5.6 bps | 9.2 bps | +3.6 | 0.06 |
+| btc_bybit_perp | 5.6 bps | 9.4 bps | +3.8 | 0.00 |
+| eth_kraken | 6.5 bps | 11.0 bps | +4.5 | 0.71 |
+| eth_coinbase | 5.8 bps | 10.6 bps | +4.8 | 0.41 |
+| eth_bybit_perp | 5.8 bps | 10.8 bps | +5.0 | 0.00 |
+
+**1-sec halves the entry lag** (~5.6–6.5 vs ~9.2–11.0 bps), a **+4.2 bps mean penalty per entry** the 1-min
+trader pays — **~8 bps per round-trip swing** (entry + exit). The penalty **grows with volatility** (quiet
+btc_kraken +3.4, busier eth +4.5–5.0): "they shouldn't be close unless the market is dead." On a ~42 bps
+swing with 10 bps fees that's ~+20 bps net (1-sec) vs ~+12 (1-min) — a structural, compounding edge.
+
+**Architecture this locks in:** DIPOLE = the **filter** (exhaustion/divergence → "a real turn is near", the
+64% read) decides *which* turns to trade; a tight **1-sec price-reversal = the timing**, entering within
+~5 bps of the top/bottom. The earlier whipsaw failures came from using a trigger as a filter; separating
+the two roles is the fix. Per-second is required (and finer/0.1s shaves the residual sub-second overshoot,
+most on the fastest venues).
+
+**FEE-FLOOR LOGIC (load-bearing — Greg).** A trigger/swing smaller than the fee is a guaranteed loss; never
+trade one. Two distinct numbers, never conflated: **R (reversal confirmation) = timing only** (how close you
+enter, ~R bps off the turn) and **must never fire a trade standalone** (each fire pays the fee). Whether to
+trade at all is the **swing-size filter**: only take a swing whose expected size clears all costs —
+**min swing > round-trip fee + entry slippage + exit slippage ≈ 10 + ~6 + ~6 ≈ 22 bps at 1-sec.** So the
+tradeable zone is θ ≳ 20 bps (mean swing ~42 bps) and up — exactly where the oracle net is fattest; the
+θ=5 bps row (13 bps swings) was always sub-fee and is dropped by construction. The dipole filter arms the
+tight R-trigger only when a ≥~22 bps turn is expected; ride to the next confirmed turn; exit on the R-trigger.
 
 ## Bottom line
 The 64% reversal rate is real but does NOT, by itself, clear 10-bps round-trip cost pooled — the moves

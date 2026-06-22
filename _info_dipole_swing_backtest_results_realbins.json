@@ -1,0 +1,436 @@
+{
+  "config": {
+    "cost_per_side_bps": 5.0,
+    "round_trip_bps": 10.0,
+    "ref_theta_bps": 20.0,
+    "thetas_bps": [
+      5.0,
+      10.0,
+      15.0,
+      20.0,
+      30.0,
+      50.0,
+      100.0
+    ],
+    "source": "realbins"
+  },
+  "oracle_ceiling": {
+    "btc_bybit_perp": {
+      "5": {
+        "n": 6483,
+        "net_total": 14364.6,
+        "gross_total": 79194.6,
+        "net_per_leg": 2.22,
+        "mean_swing_bps": 12.2,
+        "n_pivots": 6484
+      },
+      "10": {
+        "n": 2385,
+        "net_total": 27122.9,
+        "gross_total": 50972.9,
+        "net_per_leg": 11.37,
+        "mean_swing_bps": 21.4,
+        "n_pivots": 2386
+      },
+      "15": {
+        "n": 1211,
+        "net_total": 24615.0,
+        "gross_total": 36725.0,
+        "net_per_leg": 20.33,
+        "mean_swing_bps": 30.3,
+        "n_pivots": 1212
+      },
+      "20": {
+        "n": 685,
+        "net_total": 20863.4,
+        "gross_total": 27713.4,
+        "net_per_leg": 30.46,
+        "mean_swing_bps": 40.5,
+        "n_pivots": 686
+      },
+      "30": {
+        "n": 324,
+        "net_total": 15754.5,
+        "gross_total": 18994.5,
+        "net_per_leg": 48.62,
+        "mean_swing_bps": 58.6,
+        "n_pivots": 325
+      },
+      "50": {
+        "n": 111,
+        "net_total": 9806.1,
+        "gross_total": 10916.1,
+        "net_per_leg": 88.34,
+        "mean_swing_bps": 98.3,
+        "n_pivots": 112
+      },
+      "100": {
+        "n": 27,
+        "net_total": 4974.1,
+        "gross_total": 5244.1,
+        "net_per_leg": 184.23,
+        "mean_swing_bps": 194.2,
+        "n_pivots": 28
+      }
+    },
+    "btc_coinbase": {
+      "5": {
+        "n": 6662,
+        "net_total": 13700.9,
+        "gross_total": 80320.9,
+        "net_per_leg": 2.06,
+        "mean_swing_bps": 12.1,
+        "n_pivots": 6663
+      },
+      "10": {
+        "n": 2413,
+        "net_total": 27119.2,
+        "gross_total": 51249.2,
+        "net_per_leg": 11.24,
+        "mean_swing_bps": 21.2,
+        "n_pivots": 2414
+      },
+      "15": {
+        "n": 1213,
+        "net_total": 24596.1,
+        "gross_total": 36726.1,
+        "net_per_leg": 20.28,
+        "mean_swing_bps": 30.3,
+        "n_pivots": 1214
+      },
+      "20": {
+        "n": 691,
+        "net_total": 20908.3,
+        "gross_total": 27818.3,
+        "net_per_leg": 30.26,
+        "mean_swing_bps": 40.3,
+        "n_pivots": 692
+      },
+      "30": {
+        "n": 314,
+        "net_total": 15598.1,
+        "gross_total": 18738.1,
+        "net_per_leg": 49.68,
+        "mean_swing_bps": 59.7,
+        "n_pivots": 315
+      },
+      "50": {
+        "n": 113,
+        "net_total": 9981.3,
+        "gross_total": 11111.3,
+        "net_per_leg": 88.33,
+        "mean_swing_bps": 98.3,
+        "n_pivots": 114
+      },
+      "100": {
+        "n": 27,
+        "net_total": 5017.2,
+        "gross_total": 5287.2,
+        "net_per_leg": 185.82,
+        "mean_swing_bps": 195.8,
+        "n_pivots": 28
+      }
+    },
+    "btc_kraken": {
+      "5": {
+        "n": 3624,
+        "net_total": 15171.1,
+        "gross_total": 51411.1,
+        "net_per_leg": 4.19,
+        "mean_swing_bps": 14.2,
+        "n_pivots": 3625
+      },
+      "10": {
+        "n": 1593,
+        "net_total": 21326.7,
+        "gross_total": 37256.7,
+        "net_per_leg": 13.39,
+        "mean_swing_bps": 23.4,
+        "n_pivots": 1594
+      },
+      "15": {
+        "n": 859,
+        "net_total": 19730.0,
+        "gross_total": 28320.0,
+        "net_per_leg": 22.97,
+        "mean_swing_bps": 33.0,
+        "n_pivots": 860
+      },
+      "20": {
+        "n": 541,
+        "net_total": 17486.9,
+        "gross_total": 22896.9,
+        "net_per_leg": 32.32,
+        "mean_swing_bps": 42.3,
+        "n_pivots": 542
+      },
+      "30": {
+        "n": 258,
+        "net_total": 13476.4,
+        "gross_total": 16056.4,
+        "net_per_leg": 52.23,
+        "mean_swing_bps": 62.2,
+        "n_pivots": 259
+      },
+      "50": {
+        "n": 99,
+        "net_total": 9008.7,
+        "gross_total": 9998.7,
+        "net_per_leg": 91.0,
+        "mean_swing_bps": 101.0,
+        "n_pivots": 100
+      },
+      "100": {
+        "n": 25,
+        "net_total": 4716.0,
+        "gross_total": 4966.0,
+        "net_per_leg": 188.64,
+        "mean_swing_bps": 198.6,
+        "n_pivots": 26
+      }
+    },
+    "eth_bybit_perp": {
+      "5": {
+        "n": 14877,
+        "net_total": 40263.8,
+        "gross_total": 189033.8,
+        "net_per_leg": 2.71,
+        "mean_swing_bps": 12.7,
+        "n_pivots": 14878
+      },
+      "10": {
+        "n": 5515,
+        "net_total": 69890.6,
+        "gross_total": 125040.6,
+        "net_per_leg": 12.67,
+        "mean_swing_bps": 22.7,
+        "n_pivots": 5516
+      },
+      "15": {
+        "n": 2809,
+        "net_total": 64236.5,
+        "gross_total": 92326.5,
+        "net_per_leg": 22.87,
+        "mean_swing_bps": 32.9,
+        "n_pivots": 2810
+      },
+      "20": {
+        "n": 1704,
+        "net_total": 56266.2,
+        "gross_total": 73306.2,
+        "net_per_leg": 33.02,
+        "mean_swing_bps": 43.0,
+        "n_pivots": 1705
+      },
+      "30": {
+        "n": 824,
+        "net_total": 43852.3,
+        "gross_total": 52092.3,
+        "net_per_leg": 53.22,
+        "mean_swing_bps": 63.2,
+        "n_pivots": 825
+      },
+      "50": {
+        "n": 322,
+        "net_total": 29724.6,
+        "gross_total": 32944.6,
+        "net_per_leg": 92.31,
+        "mean_swing_bps": 102.3,
+        "n_pivots": 323
+      },
+      "100": {
+        "n": 88,
+        "net_total": 16677.6,
+        "gross_total": 17557.6,
+        "net_per_leg": 189.52,
+        "mean_swing_bps": 199.5,
+        "n_pivots": 89
+      }
+    },
+    "eth_coinbase": {
+      "5": {
+        "n": 14142,
+        "net_total": 41847.9,
+        "gross_total": 183267.9,
+        "net_per_leg": 2.96,
+        "mean_swing_bps": 13.0,
+        "n_pivots": 14143
+      },
+      "10": {
+        "n": 5407,
+        "net_total": 69207.8,
+        "gross_total": 123277.8,
+        "net_per_leg": 12.8,
+        "mean_swing_bps": 22.8,
+        "n_pivots": 5408
+      },
+      "15": {
+        "n": 2777,
+        "net_total": 63653.1,
+        "gross_total": 91423.1,
+        "net_per_leg": 22.92,
+        "mean_swing_bps": 32.9,
+        "n_pivots": 2778
+      },
+      "20": {
+        "n": 1693,
+        "net_total": 55807.4,
+        "gross_total": 72737.4,
+        "net_per_leg": 32.96,
+        "mean_swing_bps": 43.0,
+        "n_pivots": 1694
+      },
+      "30": {
+        "n": 818,
+        "net_total": 43409.8,
+        "gross_total": 51589.8,
+        "net_per_leg": 53.07,
+        "mean_swing_bps": 63.1,
+        "n_pivots": 819
+      },
+      "50": {
+        "n": 320,
+        "net_total": 29442.0,
+        "gross_total": 32642.0,
+        "net_per_leg": 92.01,
+        "mean_swing_bps": 102.0,
+        "n_pivots": 321
+      },
+      "100": {
+        "n": 82,
+        "net_total": 16006.4,
+        "gross_total": 16826.4,
+        "net_per_leg": 195.2,
+        "mean_swing_bps": 205.2,
+        "n_pivots": 83
+      }
+    },
+    "eth_kraken": {
+      "5": {
+        "n": 7918,
+        "net_total": 43804.1,
+        "gross_total": 122984.1,
+        "net_per_leg": 5.53,
+        "mean_swing_bps": 15.5,
+        "n_pivots": 7919
+      },
+      "10": {
+        "n": 3663,
+        "net_total": 56543.2,
+        "gross_total": 93173.2,
+        "net_per_leg": 15.44,
+        "mean_swing_bps": 25.4,
+        "n_pivots": 3664
+      },
+      "15": {
+        "n": 2083,
+        "net_total": 53239.3,
+        "gross_total": 74069.3,
+        "net_per_leg": 25.56,
+        "mean_swing_bps": 35.6,
+        "n_pivots": 2084
+      },
+      "20": {
+        "n": 1314,
+        "net_total": 47693.0,
+        "gross_total": 60833.0,
+        "net_per_leg": 36.3,
+        "mean_swing_bps": 46.3,
+        "n_pivots": 1315
+      },
+      "30": {
+        "n": 702,
+        "net_total": 39066.0,
+        "gross_total": 46086.0,
+        "net_per_leg": 55.65,
+        "mean_swing_bps": 65.6,
+        "n_pivots": 703
+      },
+      "50": {
+        "n": 284,
+        "net_total": 27243.1,
+        "gross_total": 30083.1,
+        "net_per_leg": 95.93,
+        "mean_swing_bps": 105.9,
+        "n_pivots": 285
+      },
+      "100": {
+        "n": 76,
+        "net_total": 15258.8,
+        "gross_total": 16018.8,
+        "net_per_leg": 200.77,
+        "mean_swing_bps": 210.8,
+        "n_pivots": 77
+      }
+    }
+  },
+  "dipole_vs_oracle": {
+    "btc_bybit_perp": {
+      "oracle_net": 20863.4,
+      "oracle_n": 685,
+      "cross_net": -3883.7,
+      "cross_entry_off_bps": 21.1,
+      "exhaust_net": -4623.9,
+      "exhaust_entry_off_bps": 16.9,
+      "price_confirm_net": -8005.0,
+      "cross_capture_pct": -18.6,
+      "exhaust_capture_pct": -22.2
+    },
+    "btc_coinbase": {
+      "oracle_net": 20908.3,
+      "oracle_n": 691,
+      "cross_net": -3439.5,
+      "cross_entry_off_bps": 19.9,
+      "exhaust_net": -4238.2,
+      "exhaust_entry_off_bps": 17.4,
+      "price_confirm_net": -8147.6,
+      "cross_capture_pct": -16.5,
+      "exhaust_capture_pct": -20.3
+    },
+    "btc_kraken": {
+      "oracle_net": 17486.9,
+      "oracle_n": 541,
+      "cross_net": -5593.9,
+      "cross_entry_off_bps": 19.0,
+      "exhaust_net": -4482.7,
+      "exhaust_entry_off_bps": 15.9,
+      "price_confirm_net": -5555.7,
+      "cross_capture_pct": -32.0,
+      "exhaust_capture_pct": -25.6
+    },
+    "eth_bybit_perp": {
+      "oracle_net": 56266.2,
+      "oracle_n": 1704,
+      "cross_net": -5703.8,
+      "cross_entry_off_bps": 22.3,
+      "exhaust_net": -7918.4,
+      "exhaust_entry_off_bps": 15.9,
+      "price_confirm_net": -17758.1,
+      "cross_capture_pct": -10.1,
+      "exhaust_capture_pct": -14.1
+    },
+    "eth_coinbase": {
+      "oracle_net": 55807.4,
+      "oracle_n": 1693,
+      "cross_net": -2169.0,
+      "cross_entry_off_bps": 20.5,
+      "exhaust_net": -8572.5,
+      "exhaust_entry_off_bps": 17.3,
+      "price_confirm_net": -17303.3,
+      "cross_capture_pct": -3.9,
+      "exhaust_capture_pct": -15.4
+    },
+    "eth_kraken": {
+      "oracle_net": 47693.0,
+      "oracle_n": 1314,
+      "cross_net": -9381.4,
+      "cross_entry_off_bps": 20.6,
+      "exhaust_net": -5992.1,
+      "exhaust_entry_off_bps": 18.2,
+      "price_confirm_net": -11373.5,
+      "cross_capture_pct": -19.7,
+      "exhaust_capture_pct": -12.6
+    }
+  },
+  "caveat": "thin 1-min/2-day single-regime; oracle is exact arithmetic, dipole capture indicative; re-tune/validate on 1-sec multi-regime history"
+}

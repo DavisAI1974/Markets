@@ -36,15 +36,35 @@ COST_PER_SIDE_BPS = 5.0
 RT = 2 * COST_PER_SIDE_BPS
 
 
-def load_series():
+def load_series(source="testbars"):
+    """Return {venue: (ts, close, buy_vol, sell_vol)} from either source.
+
+    source='testbars' : fingerprint_dataset/test_bars/*.json  (1-min bars, 2026-05-23..24).
+    source='realbins'  : realbins/*_bins.json                 (1-SEC bins, the format the live collectors
+                          write — dict keyed by ts, each {buy, sell, mid, ...}). This is the live-ready path.
+    """
     out = {}
-    for fp in glob.glob("fingerprint_dataset/test_bars/*.json"):
-        d = json.load(open(fp)); a, v = d["asset"].lower(), d["venue"].lower()
-        B = sorted(d["bars"], key=lambda b: b["ts"])
-        out[f"{a}_{v}"] = (np.array([b["ts"] for b in B], float),
-                           np.array([b["close"] for b in B], float),
-                           np.array([b.get("buy_vol", 0.) for b in B], float),
-                           np.array([b.get("sell_vol", 0.) for b in B], float))
+    if source == "testbars":
+        for fp in glob.glob("fingerprint_dataset/test_bars/*.json"):
+            d = json.load(open(fp)); a, v = d["asset"].lower(), d["venue"].lower()
+            B = sorted(d["bars"], key=lambda b: b["ts"])
+            out[f"{a}_{v}"] = (np.array([b["ts"] for b in B], float),
+                               np.array([b["close"] for b in B], float),
+                               np.array([b.get("buy_vol", 0.) for b in B], float),
+                               np.array([b.get("sell_vol", 0.) for b in B], float))
+    elif source == "realbins":
+        for fp in sorted(glob.glob("realbins/*_bins.json")):
+            name = fp.split("/")[-1].replace("_bins.json", "")     # e.g. btc_bybit_perp
+            d = json.load(open(fp))
+            ks = sorted(d.keys(), key=float)
+            ts = np.array([float(k) for k in ks], float)
+            close = np.array([d[k].get("mid") or d[k].get("close") or 0.0 for k in ks], float)
+            buy = np.array([d[k].get("buy", 0.0) for k in ks], float)
+            sell = np.array([d[k].get("sell", 0.0) for k in ks], float)
+            ok = close > 0                                          # drop any bins with no price
+            out[name] = (ts[ok], close[ok], buy[ok], sell[ok])
+    else:
+        raise ValueError(f"unknown source {source!r}")
     return out
 
 
@@ -176,26 +196,35 @@ def price_confirm_swing(p, theta):
     return run_position_series(p, desired)
 
 
+def _nearest(sorted_idx, i):
+    pos = np.searchsorted(sorted_idx, i)
+    cands = sorted_idx[max(0, pos - 1):pos + 1]
+    return cands[np.argmin(np.abs(cands - i))]
+
+
 def entry_quality(p, entries, piv):
     """How close each entry lands to a true pivot of the matching type (turn vs backside), in bps off it."""
     if not entries or not piv:
         return None
-    Hs = [i for i, t in piv if t == "H"]; Ls = [i for i, t in piv if t == "L"]
+    Hs = np.array([i for i, t in piv if t == "H"]); Ls = np.array([i for i, t in piv if t == "L"])
     offs = []
     for i, d in entries:
         cand = Ls if d > 0 else Hs                       # long should enter near a valley; short near a peak
-        if not cand:
+        if cand.size == 0:
             continue
-        j = min(cand, key=lambda k: abs(k - i))
+        j = _nearest(cand, i)
         offs.append(abs(p[i] / p[j] - 1.0) * 1e4)         # bps away from the ideal top/bottom price
     return round(float(np.median(offs)), 1) if offs else None
 
 
 def main():
-    series = load_series()
+    import sys
+    source = sys.argv[1] if len(sys.argv) > 1 else "testbars"
+    series = load_series(source)
+    res_label = "1-SEC realbins (2026-06-08..14)" if source == "realbins" else "1-min test_bars (~2-day)"
     thetas = [0.0005, 0.0010, 0.0015, 0.0020, 0.0030, 0.0050, 0.0100]   # 5..100 bps reversal threshold
     print(f"SWING backtest — buy valleys / short peaks, flip at each turn. Fee {COST_PER_SIDE_BPS} bps/side "
-          f"(round-trip {RT} bps = the min-swing floor). {len(series)} venue series, 1-min/~2-day.\n")
+          f"(round-trip {RT} bps = the min-swing floor). {len(series)} venue series, {res_label}.\n")
 
     print("=" * 100)
     print("1) ORACLE CEILING vs swing size (perfect pivots; shows swings beat the fee and the sweet spot)")
@@ -227,16 +256,20 @@ def main():
         ts, p, bv, sv = series[s]
         o = oracle_swing(p, th_ref)
         piv = zigzag(p, th_ref)
+        # at 1-sec, SHORT windows can fire near the turn without being a single noisy bar
+        cross_wins = [10, 30, 60, 120, 300, 600] if source == "realbins" else [180, 300, 600, 1200]
+        exh_short = [10, 30, 60] if source == "realbins" else [120, 300]
+        exh_long = [120, 300, 900] if source == "realbins" else [900, 1800]
         bestc = None                                      # imbalance sign-cross detector
-        for win_s in [180, 300, 600, 1200]:
+        for win_s in cross_wins:
             for thr in [0.05, 0.10, 0.20]:
                 (net, legs, entries), _ = dipole_swing(ts, p, bv, sv, win_s, thr)
                 eq = entry_quality(p, entries, piv)
                 if bestc is None or net > bestc[0]:
                     bestc = (net, legs, win_s, thr, eq)
         beste = None                                      # exhaustion detector (fires before the cross)
-        for short_s in [120, 300]:
-            for long_s in [900, 1800]:
+        for short_s in exh_short:
+            for long_s in exh_long:
                 for col in [0.0, 0.3, 0.5]:
                     net, legs, entries = exhaustion_swing(ts, p, bv, sv, short_s, long_s, col)
                     eq = entry_quality(p, entries, piv)
@@ -266,9 +299,11 @@ def main():
            "dipole_vs_oracle": results,
            "caveat": "thin 1-min/2-day single-regime; oracle is exact arithmetic, dipole capture indicative; "
                      "re-tune/validate on 1-sec multi-regime history"}
-    with open("_info_dipole_swing_backtest_results.json", "w") as f:
+    out["config"]["source"] = source
+    fn = f"_info_dipole_swing_backtest_results_{source}.json"
+    with open(fn, "w") as f:
         json.dump(out, f, indent=2)
-    print("\nWrote _info_dipole_swing_backtest_results.json")
+    print(f"\nWrote {fn}")
 
 
 if __name__ == "__main__":

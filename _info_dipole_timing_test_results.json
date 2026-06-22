@@ -1,0 +1,57 @@
+{
+  "config": {
+    "R_bps": 5.0,
+    "swing_theta_bps": 20.0,
+    "note": "uses true pivots = perfect filter; isolates timing only"
+  },
+  "per_venue": {
+    "btc_bybit_perp": {
+      "sec_off_bps": 5.6,
+      "min_off_bps": 9.4,
+      "penalty_bps": 3.8,
+      "median_move_per_2s_bps": 0.0,
+      "n_turns_sec": 686,
+      "n_turns_min": 408
+    },
+    "btc_coinbase": {
+      "sec_off_bps": 5.6,
+      "min_off_bps": 9.2,
+      "penalty_bps": 3.6,
+      "median_move_per_2s_bps": 0.06,
+      "n_turns_sec": 692,
+      "n_turns_min": 404
+    },
+    "btc_kraken": {
+      "sec_off_bps": 5.9,
+      "min_off_bps": 9.3,
+      "penalty_bps": 3.4,
+      "median_move_per_2s_bps": 0.11,
+      "n_turns_sec": 542,
+      "n_turns_min": 383
+    },
+    "eth_bybit_perp": {
+      "sec_off_bps": 5.8,
+      "min_off_bps": 10.8,
+      "penalty_bps": 5.0,
+      "median_move_per_2s_bps": 0.0,
+      "n_turns_sec": 1705,
+      "n_turns_min": 871
+    },
+    "eth_coinbase": {
+      "sec_off_bps": 5.8,
+      "min_off_bps": 10.6,
+      "penalty_bps": 4.8,
+      "median_move_per_2s_bps": 0.41,
+      "n_turns_sec": 1694,
+      "n_turns_min": 887
+    },
+    "eth_kraken": {
+      "sec_off_bps": 6.5,
+      "min_off_bps": 11.0,
+      "penalty_bps": 4.5,
+      "median_move_per_2s_bps": 0.71,
+      "n_turns_sec": 1315,
+      "n_turns_min": 839
+    }
+  }
+}
