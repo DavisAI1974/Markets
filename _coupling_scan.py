@@ -26,15 +26,19 @@ def build_channels(path, K):
     }
 
 
-def run(path, K, window, stride, render):
+def run(path, K, window, stride, render, part=0, nparts=1):
     ch = build_channels(path, K)
     names = list(ch)
+    # break the DATA into nparts equal time-slices; run the FULL pair set on this slice
+    L = len(next(iter(ch.values())))
+    lo, hi = part * L // nparts, (part + 1) * L // nparts
+    ch = {k: v[lo:hi] for k, v in ch.items()}
+    print(f"# data part {part+1}/{nparts}: samples [{lo}:{hi}] ({(hi-lo)*0.1/3600:.2f}h); full pair set")
     scores = []
     for i in range(len(names)):
         for j in range(i + 1, len(names)):
             a, b = names[i], names[j]
-            ps = score_pair(ch[a], ch[b], f"{a}~{b}", "scan",
-                            window=window, stride=stride)
+            ps = score_pair(ch[a], ch[b], f"{a}~{b}", "scan", window=window, stride=stride)
             if ps is not None:
                 scores.append(ps)
     scores.sort(key=lambda p: p.rank_score, reverse=True)
@@ -50,9 +54,10 @@ def run(path, K, window, stride, render):
                         structure_z=p.structure_z, mi_frac=p.mi_frac, chem_frac=p.chem_frac,
                         dipole_r2=p.dipole_r2, leadlag=p.leadlag, leadlag_cc=p.leadlag_cc,
                         coupling_z=p.coupling_z))
-    json.dump(out, open("_coupling_scan_results.json", "w"), indent=2)
-    print("\n[saved] _coupling_scan_results.json")
-    if render:
+    fn = f"_coupling_scan_results_part{part}of{nparts}.json" if nparts > 1 else "_coupling_scan_results.json"
+    json.dump(out, open(fn, "w"), indent=2)
+    print(f"\n[saved] {fn}")
+    if render and nparts == 1:
         _render(out)
 
 
@@ -82,5 +87,7 @@ if __name__ == "__main__":
     ap.add_argument("--window", type=int, default=40)
     ap.add_argument("--stride", type=int, default=20)
     ap.add_argument("--no-render", action="store_true")
+    ap.add_argument("--part", type=int, default=0)
+    ap.add_argument("--nparts", type=int, default=1)
     a = ap.parse_args()
-    run(a.path, a.K, a.window, a.stride, not a.no_render)
+    run(a.path, a.K, a.window, a.stride, not a.no_render, a.part, a.nparts)
