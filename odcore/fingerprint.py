@@ -29,9 +29,14 @@ from dataclasses import dataclass
 from markets_adapter import MarketBar, MarketChunker, MarketChunkEncoder
 from regime_classifier import classify_regime, baselines_from_corpus
 
+from .info_dipole import signed_flow_features, cell_signal
+
 # chunker config — verbatim from current_status_from_visible @ c486d3b (constants from api_server)
 CHUNK_MAX_SIZE = 30
 CHUNK_MIN_SEGMENT = 10
+# signed info-dipole flow uses the recent pre-entry order-flow window (≈30 1-min bars, the
+# window the operator was validated on in _info_dipole_flow_probe.py)
+FLOW_WINDOW_BARS = 30
 
 MICRO_KEYS = ["mean_dipole", "dipole_acl1", "volume_zscore", "trade_present_score",
               "trade_recent_2chunk_bps", "trade_from_onset_bps"]
@@ -126,6 +131,13 @@ class Fingerprint:
     trade_present_score: int
     trade_score_band: str
     present_score_faithful: bool
+    # signed information-dipole flow (odcore.info_dipole) — the directional tool the
+    # side-agnostic coeff + price-bps micros lack. flow_signal is the PER-CELL selected
+    # signed feature (None where this cell hasn't earned the operator); flow_features holds
+    # all signed variants for stacking. Never averaged into the other tools.
+    flow_features: dict | None = None
+    flow_signal: float | None = None
+    flow_feature: str | None = None
 
     def micros(self) -> dict:
         return {
@@ -136,6 +148,17 @@ class Fingerprint:
             "trade_from_onset_bps": self.trade_from_onset_bps,
             "trade_present_score": self.trade_present_score,
         }
+
+    def stack(self) -> dict:
+        """The full stacked fingerprint: micros + the per-cell signed flow signal.
+
+        flow_signal is included only where the cell earned the operator (else None) —
+        a complementary directional input STACKED alongside the micros, not blended in.
+        """
+        out = self.micros()
+        out["flow_signal"] = self.flow_signal
+        out["flow_feature"] = self.flow_feature
+        return out
 
 
 def compute_fingerprint(asset: str, venue: str, side: str, visible_bars: list[MarketBar],
@@ -197,6 +220,15 @@ def compute_fingerprint(asset: str, venue: str, side: str, visible_bars: list[Ma
          "trade_recent_2chunk_bps": rec_bps, "trade_age_chunks": 0},
         regime, adj_conf, pressure_state, strong)
 
+    # signed information-dipole flow over the recent pre-entry order-flow window (no look-ahead:
+    # visible_bars are the bars visible at decision time). Per-cell gated via cell_signal.
+    fw = visible_bars[-FLOW_WINDOW_BARS:]
+    flow_feats = signed_flow_features([b.buy_vol for b in fw], [b.sell_vol for b in fw])
+    cell = f"{asset}_{venue}_{side}".lower()
+    sel = cell_signal(cell, [b.buy_vol for b in fw], [b.sell_vol for b in fw])
+    flow_signal = sel[0] if sel else None
+    flow_feature = sel[1] if sel else None
+
     return Fingerprint(
         asset=asset, venue=venue, side=side,
         chunk_id=chunk.chunk_id, window_start=chunk.window_start, window_end=chunk.window_end,
@@ -207,4 +239,5 @@ def compute_fingerprint(asset: str, venue: str, side: str, visible_bars: list[Ma
         trade_from_onset_bps=onset_bps,
         trade_present_score=pscore, trade_score_band=trade_score_band(pscore),
         present_score_faithful=present_faithful,
+        flow_features=flow_feats, flow_signal=flow_signal, flow_feature=flow_feature,
     )
