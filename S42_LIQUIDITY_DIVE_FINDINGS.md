@@ -68,7 +68,30 @@ recovered cleanly and OOS from our own data.
 - Re-run `_liquidity_dive.py` per cell once multi-cell book data exists; confirm the imbalance edge and
   its sign/lead are stable across venues (cross-segment consistency here is the stand-in).
 
+## QUIET FLOOR — stop the dipole firing through a trend (Greg, S42; `_quiet_floor.py`, `odcore/quiet_floor.py`)
+Chat's OD run found the book imbalance obeys a clean AR(1) RELAXATION that is quiet/still between
+trades: `imb(t+1)=phi*imb(t)+c`. Reproduced on our 11.67h: **phi_quiet=0.944** (Chat 0.947), quiet
+OOS-R2 0.76 > trade 0.62 — quiet is the stiller operator. Greg's idea: use it as a FLOOR so the
+directional dipole stops re-firing while the imbalance LEVEL just sits elevated and relaxes through a
+trend.
+
+- **The floor absorbs the between-trade bumps.** `innov(t)=imb(t)-(phi_q*imb(t-1)+c_q)` has std **0.15
+  on quiet cells vs 0.22 on trade cells**, while raw imbalance is 0.38 in both — the smooth relaxation
+  is removed, energy concentrates on shocks.
+- **Direction lives in the LEVEL, not the innovation.** Replacing level with innovation dilutes the
+  edge (next-cell hit 61.6% -> 57.4%). So do NOT replace it.
+- **Use the floor as a GATE (the deploy form).** Fire only when `|innov| > k*sigma` (imbalance breaks
+  the quiet floor = a real shock). At k=1.5sigma the gate opens **7% on quiet cells vs 16% on trade
+  cells (2.3x)** — silent between trades, fires on shocks — and the gated direction (sign of the level)
+  keeps the **62% hit** (k=2 sharpens to 62.7%). Raw level would hold "on" ~15% of ALL cells
+  continuously (the churn). **Direction kept, between-trade firing cut.**
+- `odcore/quiet_floor.py`: portable `fit(imb, quiet, train_frac)` -> `QuietFloor` with causal
+  `floor_hat / innovation / gate / gated_signal`. Leakage-safe (fits phi_q + gate sigma on TRAIN quiet
+  cells only). Fit one per cell. This is the wiring Greg asked for: the quiet operator is the floor; the
+  dipole fires on shocks, not through the trend.
+
 ## Files
+`_quiet_floor.py`, `odcore/quiet_floor.py` (quiet-floor gate),
 `_liquidity_dive.py` (PART A agnostic coupler x10 slices; PART B OOS exploitability + null + fee floor),
 `_liquidity_dive_results.json`. PNGs none. Builds on `_birth_probe.py`, `odcore.coupling_scanner`,
 `odcore.leadlag`.
