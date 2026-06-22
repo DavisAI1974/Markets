@@ -53,5 +53,8 @@ Method: linear first-order operator X[t+1]=φ·X[t]+c, OLS, 60/40 train/OOS, rol
 - Operator stress → fwd vol | current vol removed: corr −0.002.
 - Local lead/lag (loudness vs vol, 20-min): operator leads 18.9%, lags 58.9%, lag std 4.94 windows; mean |fwd move| leading 7.98e-4 / lagging 9.93e-4.
 
+## TO REVISIT (Greg, S41) — dive into LIQUIDITY signals more later
+Across this session the only structure that surfaced is on the liquidity side, not flow↔price: (a) `_birth_probe` LIQ→FLOW lead +0.7..0.9s; (b) `_rolling_coupler` depth-imbalance→price leads 75.5%; (c) the agnostic 10-slice `_coupling_scan` — the only pairs with any (intermittent) struct_z above the tautology null were liquidity↔flow/volume (ask_depth~taker_sell, bid_depth~ask_depth, bid_depth~volume), while every flow↔price / flow↔flow pair was consistently NULL (negative struct_z). Liquidity (book depth: withdrawal, one-sided depth, depth-imbalance dynamics) is the layer to mine next — more book data (multi-day, more venues/coins) + per-cell.
+
 ## Commits
 0c2f511 (BUILD_PLAN), 9627af2 (_trend_gate WIP), fa1e7ad (_birth_probe), 45c1209/8136111/d7ea08c (_od_book_run + PySR), 6fdd2c4/7a439ea (_rolling_coupler), bc95* (_dipole_trend_follow), 60b986b (_coupling_scan). PNGs gitignored.
