@@ -21,14 +21,15 @@ import argparse
 import numpy as np
 
 from odcore.fingerprint_predictor import (assemble, build_signatures, _signature_from, _l2,
-                                          coeff_sim, micro_sim, flow_sim, save_signatures)
+                                          coeff_sim, micro_sim, flow_sim, save_signatures,
+                                          global_mean_coeff)
 
 
 def _cv(cell: str) -> str:                       # coin_venue (strip the trailing side)
     p = cell.split("_"); return "_".join(p[:-1])
 
 
-def loo_identify(per_cell: dict, full_sigs: dict):
+def loo_identify(per_cell: dict, full_sigs: dict, g):
     """Leave-one-out: assign each winner to argmax-matching cell, per modality. Distinctiveness, not AUC."""
     cells = list(per_cell.keys())
     arrs = {c: {"C": np.array([r["coeff"] for r in per_cell[c]], float),
@@ -41,7 +42,7 @@ def loo_identify(per_cell: dict, full_sigs: dict):
         n = len(C)
         for i in range(n):
             keep = np.arange(n) != i
-            loo_sig = _signature_from(tc, C[keep], M[keep], F[keep])   # own cell minus the point
+            loo_sig = _signature_from(tc, C[keep], M[keep], F[keep], g)  # own cell minus the point
             sigs = dict(full_sigs); sigs[tc] = loo_sig                  # other cells unchanged
             co = {c: coeff_sim(s, C[i]) for c, s in sigs.items()}
             mi = {c: micro_sim(s, M[i]) for c, s in sigs.items()}
@@ -83,27 +84,17 @@ def main() -> int:
         row = "".join(f"{float(_l2(cents[a])@_l2(cents[b])):14.3f}" for b in cells)
         print(f"{a:28s}{row}")
 
-    tot, per = loo_identify(per_cell, sigs)
+    g = global_mean_coeff(per_cell)            # shared common shape; coeff_sim works on the residual
+    tot, per = loo_identify(per_cell, sigs, g)
     N = tot["n"]
     print(f"\n=== leave-one-out cell IDENTIFICATION (distinctiveness, NOT win/lose AUC); n={N} ===")
+    print(f"  (coeff scored on the CENTERED residual — the distinctive ~9%, not the shared shape)")
     print(f"  coeff-only      : {tot['coeff']/N:6.1%}   (coin/venue-only: {tot['coeff_cv']/N:6.1%})")
     print(f"  micros-only     : {tot['micro']/N:6.1%}")
     print(f"  flow-only       : {tot['flow']/N:6.1%}")
     print(f"  STACK (all 3)   : {tot['stack']/N:6.1%}   (coin/venue: {tot['stack_cv']/N:6.1%})")
     chance = 1.0 / len(cells)
-    print(f"  (chance = {chance:.1%}; coeff is side-AGNOSTIC so it should win on coin/venue, "
-          f"micros/stack should add SIDE)")
-
-    # WHITENED coeff: standardize each of the 128 dims across ALL winners so the DISTINCTIVE dims
-    # (not the common spectral profile every coeff shares) drive the per-cell signature.
-    allC = np.vstack([np.array([r["coeff"] for r in per_cell[c]], float) for c in cells])
-    mu, sd = allC.mean(0), allC.std(0) + 1e-9
-    wper = {c: [{"coeff": ((np.array(r["coeff"]) - mu) / sd).tolist(),
-                 "micros": r["micros"], "flow": r["flow"]} for r in per_cell[c]] for c in cells}
-    wsigs = build_signatures(wper)
-    wtot, _ = loo_identify(wper, wsigs)
-    print(f"  coeff WHITENED  : {wtot['coeff']/N:6.1%}   (coin/venue-only: {wtot['coeff_cv']/N:6.1%})")
-    print(f"  STACK WHITENED  : {wtot['stack']/N:6.1%}   (coin/venue: {wtot['stack_cv']/N:6.1%})")
+    print(f"  (chance = {chance:.1%}; coeff carries coin/venue + side via the residual, micros add side)")
 
     print("\n  per-cell STACK identification:")
     for c in cells:

@@ -35,15 +35,21 @@ def _l2(v) -> np.ndarray:
 
 @dataclass
 class CellSignature:
-    """The distinctive winner fingerprint of one cell (asset x venue x side)."""
+    """The distinctive winner fingerprint of one cell (asset x venue x side).
+
+    The coeff signature lives in the RESIDUAL after removing the shared common shape: the deterministic
+    decoder makes ~91% of every coeff one common direction, so raw coeffs sit at ~0.99 cosine ("merged").
+    Centering by `global_mean` exposes the distinctive ~9% — where buy/sell are mirror images and the
+    cells separate (diagnosed in _diag_coeff_merge.py)."""
     cell: str
     n: int
-    coeff_centroid: list   # 128-dim, L2-normalized
+    coeff_centroid: list   # 128-dim, L2-normalized CENTERED-residual centroid (coeff - global_mean)
     micro_mean: list
     micro_std: list
     flow_mean: list
     flow_std: list
-    cohesion: float        # mean cosine of member coeffs to the centroid (intra-cell tightness)
+    cohesion: float        # mean cosine of centered member residuals to the centroid (intra-cell tightness)
+    global_mean: list      # 128-dim shared common shape removed before the cosine (same for all cells)
 
 
 # --------------------------------------------------------------------------------------
@@ -74,21 +80,30 @@ def assemble(coeff_index_path: str, labels_dir: str) -> dict:
     return per_cell
 
 
-def _signature_from(cell: str, C: np.ndarray, M: np.ndarray, F: np.ndarray) -> CellSignature:
-    centroid = _l2(C.mean(0))
-    cohesion = float(np.mean([float(_l2(c) @ centroid) for c in C])) if len(C) else 0.0
+def global_mean_coeff(per_cell: dict) -> np.ndarray:
+    """The shared common shape across ALL cells' winner coeffs (removed before the coeff cosine)."""
+    allC = np.vstack([np.array([r["coeff"] for r in recs], float) for recs in per_cell.values()])
+    return allC.mean(0)
+
+
+def _signature_from(cell: str, C: np.ndarray, M: np.ndarray, F: np.ndarray, g: np.ndarray) -> CellSignature:
+    R = C - g                                              # centered residual (the distinctive part)
+    centroid = _l2(R.mean(0))
+    cohesion = float(np.mean([float(_l2(r) @ centroid) for r in R])) if len(R) else 0.0
     return CellSignature(cell, len(C), centroid.tolist(),
                          M.mean(0).tolist(), (M.std(0) + 1e-9).tolist(),
-                         F.mean(0).tolist(), (F.std(0) + 1e-9).tolist(), cohesion)
+                         F.mean(0).tolist(), (F.std(0) + 1e-9).tolist(), cohesion, g.tolist())
 
 
-def build_signatures(per_cell: dict) -> dict:
+def build_signatures(per_cell: dict, g: np.ndarray = None) -> dict:
+    if g is None:
+        g = global_mean_coeff(per_cell)
     sigs = {}
     for cell, recs in per_cell.items():
         C = np.array([r["coeff"] for r in recs], float)
         M = np.array([r["micros"] for r in recs], float)
         F = np.array([r["flow"] for r in recs], float)
-        sigs[cell] = _signature_from(cell, C, M, F)
+        sigs[cell] = _signature_from(cell, C, M, F, g)
     return sigs
 
 
@@ -96,7 +111,8 @@ def build_signatures(per_cell: dict) -> dict:
 # match scores: how well a candidate fingerprint matches a cell's winner signature
 # --------------------------------------------------------------------------------------
 def coeff_sim(sig: CellSignature, coeff) -> float:
-    return float(_l2(coeff) @ np.asarray(sig.coeff_centroid))          # cosine, in [0,1] (coeffs >=0)
+    r = _l2(np.asarray(coeff, float) - np.asarray(sig.global_mean))    # center -> distinctive residual
+    return float(r @ np.asarray(sig.coeff_centroid))                   # cosine in [-1,1]
 
 
 def _z_sim(x, mean, std) -> float:
