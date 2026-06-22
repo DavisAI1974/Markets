@@ -1,0 +1,225 @@
+{
+  "config": {
+    "fee_rt_bps": 10.0,
+    "swing_theta_bps": 20.0,
+    "is_frac": 0.6
+  },
+  "per_venue": {
+    "btc_bybit_perp": {
+      "champion": {
+        "n_calls": 50,
+        "TP": 30,
+        "FP": 20,
+        "FN": 103,
+        "n_turns": 133,
+        "recall": 0.226,
+        "precision": 0.6,
+        "bps_to_turn": 18.3,
+        "net_oos": -492.6,
+        "net_oos_maker": -192.6,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 4,
+        "TP": 3,
+        "FP": 1,
+        "FN": 130,
+        "n_turns": 133,
+        "recall": 0.023,
+        "precision": 0.75,
+        "bps_to_turn": 16.8,
+        "net_oos": -245.2,
+        "net_oos_maker": -221.2,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 1800,
+          "T": 0.5
+        }
+      }
+    },
+    "btc_coinbase": {
+      "champion": {
+        "n_calls": 78,
+        "TP": 37,
+        "FP": 41,
+        "FN": 99,
+        "n_turns": 136,
+        "recall": 0.272,
+        "precision": 0.474,
+        "bps_to_turn": 20.4,
+        "net_oos": -993.5,
+        "net_oos_maker": -525.5,
+        "params": {
+          "R_bps": 8.0,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 12,
+        "TP": 8,
+        "FP": 4,
+        "FN": 128,
+        "n_turns": 136,
+        "recall": 0.059,
+        "precision": 0.667,
+        "bps_to_turn": 21.7,
+        "net_oos": -327.6,
+        "net_oos_maker": -255.6,
+        "params": {
+          "R_bps": 8.0,
+          "W_s": 900,
+          "T": 0.5
+        }
+      }
+    },
+    "btc_kraken": {
+      "champion": {
+        "n_calls": 62,
+        "TP": 39,
+        "FP": 23,
+        "FN": 75,
+        "n_turns": 114,
+        "recall": 0.342,
+        "precision": 0.629,
+        "bps_to_turn": 13.3,
+        "net_oos": -406.4,
+        "net_oos_maker": -34.4,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 32,
+        "TP": 19,
+        "FP": 13,
+        "FN": 95,
+        "n_turns": 114,
+        "recall": 0.167,
+        "precision": 0.594,
+        "bps_to_turn": 11.4,
+        "net_oos": -90.5,
+        "net_oos_maker": 101.5,
+        "params": {
+          "R_bps": 8.0,
+          "W_s": 1800,
+          "T": 0.5
+        }
+      }
+    },
+    "eth_bybit_perp": {
+      "champion": {
+        "n_calls": 123,
+        "TP": 93,
+        "FP": 30,
+        "FN": 536,
+        "n_turns": 629,
+        "recall": 0.148,
+        "precision": 0.756,
+        "bps_to_turn": 21.7,
+        "net_oos": 287.0,
+        "net_oos_maker": 1025.0,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 6,
+        "TP": 4,
+        "FP": 2,
+        "FN": 625,
+        "n_turns": 629,
+        "recall": 0.006,
+        "precision": 0.667,
+        "bps_to_turn": 12.8,
+        "net_oos": 86.8,
+        "net_oos_maker": 122.8,
+        "params": {
+          "R_bps": 8.0,
+          "W_s": 1800,
+          "T": 0.5
+        }
+      }
+    },
+    "eth_coinbase": {
+      "champion": {
+        "n_calls": 112,
+        "TP": 79,
+        "FP": 33,
+        "FN": 572,
+        "n_turns": 651,
+        "recall": 0.121,
+        "precision": 0.705,
+        "bps_to_turn": 16.0,
+        "net_oos": -554.4,
+        "net_oos_maker": 117.6,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 42,
+        "TP": 24,
+        "FP": 18,
+        "FN": 627,
+        "n_turns": 651,
+        "recall": 0.037,
+        "precision": 0.571,
+        "bps_to_turn": 13.5,
+        "net_oos": -633.2,
+        "net_oos_maker": -381.2,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 1800,
+          "T": 0.3
+        }
+      }
+    },
+    "eth_kraken": {
+      "champion": {
+        "n_calls": 161,
+        "TP": 118,
+        "FP": 43,
+        "FN": 396,
+        "n_turns": 514,
+        "recall": 0.23,
+        "precision": 0.733,
+        "bps_to_turn": 15.5,
+        "net_oos": -1022.4,
+        "net_oos_maker": -56.4,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 93,
+        "TP": 58,
+        "FP": 35,
+        "FN": 456,
+        "n_turns": 514,
+        "recall": 0.113,
+        "precision": 0.624,
+        "bps_to_turn": 14.0,
+        "net_oos": -782.0,
+        "net_oos_maker": -224.0,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 1800,
+          "T": 0.5
+        }
+      }
+    }
+  }
+}

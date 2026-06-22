@@ -175,6 +175,36 @@ tradeable zone is θ ≳ 20 bps (mean swing ~42 bps) and up — exactly where th
 θ=5 bps row (13 bps swings) was always sub-fee and is dropped by construction. The dipole filter arms the
 tight R-trigger only when a ≥~22 bps turn is expected; ride to the next confirmed turn; exit on the R-trigger.
 
+## Falsification harness — round 1 (Architect's test D): OD dipole filter vs classical OFI champion
+`_info_dipole_harness.py` → `_info_dipole_harness_results.json`. Both detectors share the SAME timing
+trigger (price reverses R bps off the extreme) and differ ONLY in the FILTER: champion = raw order-flow
+imbalance threshold; challenger = the OD dipole `divergence()` (exhaustion/divergence). Scored on FROZEN
+1-sec realbins, OUT-OF-SAMPLE (tune on first 60%, score last 40%), vs ZigZag 20 bps true turns. The dipole
+passes the pre-entry leakage check (strictly-prior window) so it's allowed in.
+
+Round-1 pooled OOS:
+
+| detector | recall (1−FN) | precision | bps-to-turn | net @10 taker | net @4 maker |
+|---|---|---|---|---|---|
+| CHAMPION (OFI) | 0.223 | 0.649 | 17.5 | −3182 (1/6+) | **+334 (2/6+)** |
+| CHALLENGER (dipole) | 0.236* | **0.690** | **13.9** | −7429 | −2923 |
+
+(*at matched binary gate; when given a tunable conviction knob it tunes to very few trades, recall→0.067.)
+
+**Honest read:**
+- **The dipole filter has a real but MODEST per-call quality edge** — better precision (0.690 vs 0.649) and
+  tighter timing (13.9 vs 17.5 bps-to-turn) than raw OFI. Direction matches the Architect's soft prediction
+  (OD wins on *filtering*, not timing). The edge is small, not decisive.
+- **Maker execution is the decisive economic lever**, not the detector: the champion goes from −3182 (taker)
+  to **+334 (maker)** — the per-leg fee floor flips the sign. Re-confirms maker-rest is load-bearing.
+- **Neither clears taker fees on this single frozen 1-sec window**, and "maximize net" is a degenerate
+  tuning objective near breakeven (it just says "trade less" → recall collapses). So net alone is noisy here.
+- **Next (not chased now, to avoid overfitting one window):** (1) compare at MATCHED FP/selectivity (the
+  Architect's exact metric) instead of each detector's own net-optimum; (2) add the regime master-gate
+  (stand aside in bad regimes — should lift precision); (3) model maker fills properly; (4) score on the
+  local 1-sec MULTI-regime history so tuning isn't hostage to one window. The harness is the scoreboard for
+  all of these; the algebraic-dipole 0.993/FN=0 stays OUT until it passes the pre-entry leakage check.
+
 ## Bottom line
 The 64% reversal rate is real but does NOT, by itself, clear 10-bps round-trip cost pooled — the moves
 are too small. The flow gate genuinely improves on blind trend-following (+3 bps/trade), and the edge
