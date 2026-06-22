@@ -7,6 +7,22 @@ Worktree `E:\Markets\.claude\worktrees\xenodochial-montalcini-f21fb6` (branch
 `deploy-signal-per-cell-not-universal`, `markets-deploy-feature-parity-gap`,
 `refrag-parallel-discovery-race-fix`.
 
+## S35b ADD-ON (2026-06-21, later) — fingerprint look-ahead DIAGNOSED + FIXED (per-episode onset re-anchor); coeff re-run RUNNING
+**Kickoff step 0 is DONE.** Full writeup: `FINGERPRINT_PROVENANCE_FINDINGS_S35.md` (committed). Memory:
+[[fingerprint-micros-lookahead-coeffs-clean]].
+
+- **Verdict:** the stored bucket **6 micros are mid-trade LOOK-AHEAD snapshots**; the **128-dim coeffs are pre-entry/CLEAN**.
+  - Micros: passed through verbatim from `_live_mock_opportunities.jsonl` mid-trade rows (`build_live_hindsight_missed_winner_audit.py:667-670` @`75a4268`); `mock_trade_replay.apply_trade_context` (L877-888 @`c486d3b`) freezes onset_price at age 0 then ACCUMULATES the post-onset move. 48/48 sampled WIN entries matched their exact-micro provenance row; 37/48 age>0/late (median 2, max 14). Exemplar btc_kraken_sell: stored `cur_bps=98.4` from the age-11 snapshot ~10h after onset.
+  - Coeffs: `_preentry`/`cs2000_clean`/`cand_sp` use STRICTLY pre-entry `[entry_ts-30m, entry_ts]` (`refrag/adapters/markets_refrag_adapter.py:553-558`, `window_hi=entry_ts`, no post-entry bars). The ORIGINAL `markets_<cell>_win` lineage used `[entry,exit]` = look-ahead -> do NOT deploy. **So the micro fix does NOT force a coeff re-run for look-ahead.**
+- **Anchor weakness (what DID trigger the re-run):** both tiers anchored on `entry_ts = min(ts_utc per asset|venue|chunk_id|side)`; `chunk_id` recurs across episodes (`_patch_win_buckets_entry_ts.py`); `cell_id`=chunk_id_market_ts is row-unique not episode-unique. 76% of winners' true onset moved >90s from that anchor.
+- **FIX (Greg approved "full anchor fix"):** `_build_episode_onsets.py` reconstructs TRUE onsets (new episode whenever `trade_age_chunks`==0; gap-tolerant) -> 1560/1568 winners mapped; fresh onset micros recovered (exemplar onset 20:34, `cur_bps=0.0`). Re-run set after per-episode dedup = **611 unique winning episodes**, cap **100**/cell (Greg: "100 at a time"), isolated domain `markets_<cell>_win_onset/`, **running DETACHED** as schtasks `markets_onset_disc` (`_run_onset_coeffs.py --workers 4`, `--pre-entry-minutes 30`; canary PASS eth_coinbase_sell 18/18). Per-episode source_id e.g. `ETH|coinbase|<chunk>_<onset_ts>|sell`.
+- **MONITOR / RESUME:** `schtasks /query /tn markets_onset_disc /fo LIST` (Status); log `E:\Markets\_pipeline_logs\_onset_driver.out`; coeffs in `E:\refrag\discoveries\operator_discoveries\markets_<cell>_win_onset\`. The runner is RESUME-SAFE — if it dies, re-run `_run_onset_coeffs.py --workers 4` (skips done). `schtasks /delete /tn markets_onset_disc /f` to clean up when done.
+- **NEXT (after the run; do NOT wire until the onset canary passes):**
+  1. **Rebuild per-cell win buckets keyed by episode onset** — onset micros (`_episode_onsets_out/winner_onsets.json`) + the new `_win_onset` coeff ref. ("have them in there 2 times": entry fingerprint for prediction + the mid-trade snapshot kept for management.)
+  2. **Entry-fingerprint canary** — the encoder (`odcore/fingerprint.py`) must reproduce the ONSET micros from strictly pre-entry bars. (v1 `_canary_fingerprint.py` failed on the OLD mid-trade anchor; v2 `_canary_fingerprint_v2.py` re-anchored to chunk_end gave perfect 6/6 repros -> encoder math/chunker/bar-source are correct. The onset canary is the wiring GATE.)
+  3. **Wire the per-cell distinctive fingerprint predictor** (`bucket-distinctiveness-is-the-goal`); deploy per cell.
+- **Scripts (worktree, committed):** `_diag_lookahead.py`, `_canary_fingerprint_v2.py`, `_build_episode_onsets.py`, `_build_onset_coeff_lists.py`, `_run_onset_coeffs.py`, `_run_onset_detached.bat`. Data/lists/coeffs stay LOCAL (gitignored). Runtime copies of the run scripts also live in `E:\Markets` root (where refrag + `_run_clean_rerun.py` are).
+
 ## THE REFRAME (Greg, S35, load-bearing — this is the whole frame)
 **The goal is to PREDICT WINNING TRADES by their DISTINCTIVE FINGERPRINT, as EARLY and as ACCURATE as
 possible.** Each winning trade has a distinctive fingerprint built by STACKING the whole complementary
