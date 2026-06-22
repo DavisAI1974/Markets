@@ -42,7 +42,12 @@ from pathlib import Path
 import numpy as np
 
 from markets_adapter import load_minute_bars
-from odcore.fingerprint import compute_fingerprint, MICRO_KEYS
+from odcore.fingerprint import compute_fingerprint
+
+# match the BTC/ETH winner_onsets.json onset_micros schema EXACTLY (NOT odcore.MICRO_KEYS,
+# which carries the regime-derived trade_present_score instead of trade_current_chunk_bps)
+ONSET_MICRO_KEYS = ["trade_current_chunk_bps", "trade_recent_2chunk_bps", "trade_from_onset_bps",
+                    "mean_dipole", "dipole_acl1", "volume_zscore"]
 
 HORIZON_MIN = {"buy": 360.0, "sell": 60.0}   # per-side horizons (verbatim from the oracle fix)
 FEE_RT_BPS = 10.0                            # 5 bps/side round-trip
@@ -103,7 +108,7 @@ def label_cell(bins_path: str, asset: str, venue: str, side: str, stride: int) -
             "true_onset_ts_utc": float(onset_ts),
             "onset_chunk_id": fp.chunk_id,
             "onset_moved": True,
-            "onset_micros": {k: float(fp.micros().get(k, 0.0)) for k in MICRO_KEYS},
+            "onset_micros": {k: float(getattr(fp, k, 0.0) or 0.0) for k in ONSET_MICRO_KEYS},
             "net_bps": round(float(net), 4),
             "horizon_minutes": HORIZON_MIN[side],
         })
