@@ -1,0 +1,143 @@
+{
+  "config": {
+    "cost_per_side_bps": 5.0,
+    "horizon": "NONE (price+dipole exits only)",
+    "backslide": 0.1,
+    "activate": 30.0,
+    "floor_bps": 15.0,
+    "flip_thresh": 0.05,
+    "max_legs": 4
+  },
+  "pooled": {
+    "ride_stop_flatten": {
+      "n": 1560,
+      "net_bps": -8.45,
+      "win_rate": 26.0,
+      "se": 0.55,
+      "avg_legs": 1.0,
+      "avg_bars_held": 30.9,
+      "total": -13175.7
+    },
+    "ride_stop_flip": {
+      "n": 1560,
+      "net_bps": -11.4,
+      "win_rate": 30.1,
+      "se": 0.7,
+      "avg_legs": 1.38,
+      "avg_bars_held": 42.0,
+      "total": -17780.7
+    }
+  },
+  "per_cell_ride_stop_flip": {
+    "btc_bybit_buy": {
+      "n": 244,
+      "net_bps": -19.35,
+      "win_rate": 27.5,
+      "se": 2.04,
+      "avg_legs": 1.61,
+      "avg_bars_held": 48.4,
+      "total": -4722.6
+    },
+    "btc_bybit_sell": {
+      "n": 86,
+      "net_bps": -7.48,
+      "win_rate": 44.2,
+      "se": 3.38,
+      "avg_legs": 1.42,
+      "avg_bars_held": 49.4,
+      "total": -642.9
+    },
+    "btc_coinbase_buy": {
+      "n": 275,
+      "net_bps": -3.78,
+      "win_rate": 34.2,
+      "se": 1.45,
+      "avg_legs": 1.25,
+      "avg_bars_held": 49.6,
+      "total": -1038.7
+    },
+    "btc_coinbase_sell": {
+      "n": 74,
+      "net_bps": -7.56,
+      "win_rate": 23.0,
+      "se": 2.45,
+      "avg_legs": 1.45,
+      "avg_bars_held": 63.4,
+      "total": -559.5
+    },
+    "btc_kraken_buy": {
+      "n": 187,
+      "net_bps": -23.21,
+      "win_rate": 17.6,
+      "se": 2.07,
+      "avg_legs": 1.58,
+      "avg_bars_held": 49.5,
+      "total": -4339.6
+    },
+    "btc_kraken_sell": {
+      "n": 141,
+      "net_bps": -4.53,
+      "win_rate": 41.8,
+      "se": 2.42,
+      "avg_legs": 1.24,
+      "avg_bars_held": 42.1,
+      "total": -638.6
+    },
+    "eth_bybit_buy": {
+      "n": 72,
+      "net_bps": -3.78,
+      "win_rate": 40.3,
+      "se": 2.95,
+      "avg_legs": 1.11,
+      "avg_bars_held": 19.2,
+      "total": -271.9
+    },
+    "eth_bybit_sell": {
+      "n": 128,
+      "net_bps": -10.8,
+      "win_rate": 27.3,
+      "se": 2.31,
+      "avg_legs": 1.2,
+      "avg_bars_held": 28.2,
+      "total": -1383.0
+    },
+    "eth_coinbase_buy": {
+      "n": 130,
+      "net_bps": -9.82,
+      "win_rate": 20.8,
+      "se": 1.8,
+      "avg_legs": 1.26,
+      "avg_bars_held": 27.9,
+      "total": -1277.1
+    },
+    "eth_coinbase_sell": {
+      "n": 29,
+      "net_bps": -8.6,
+      "win_rate": 44.8,
+      "se": 7.01,
+      "avg_legs": 1.24,
+      "avg_bars_held": 38.5,
+      "total": -249.5
+    },
+    "eth_kraken_buy": {
+      "n": 104,
+      "net_bps": -8.03,
+      "win_rate": 41.3,
+      "se": 2.42,
+      "avg_legs": 1.42,
+      "avg_bars_held": 33.6,
+      "total": -834.7
+    },
+    "eth_kraken_sell": {
+      "n": 90,
+      "net_bps": -20.25,
+      "win_rate": 16.7,
+      "se": 2.54,
+      "avg_legs": 1.41,
+      "avg_bars_held": 29.8,
+      "total": -1822.5
+    }
+  },
+  "cells_clearing": [],
+  "caveat": "horizon-free; overlapping correlated trades; thin 1-min/2-day single-regime; tunable exits; mechanism demo"
+}

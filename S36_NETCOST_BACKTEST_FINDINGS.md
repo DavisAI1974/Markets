@@ -55,6 +55,37 @@ The single-regime window is exactly why the eth "clearing" cells are walk-forwar
 the bybit survivors need confirmation on the **local 1-sec multi-regime onset history** (not in git;
 KICKOFF #2). Treat the bybit-BTC clears as promising, not deployment-grade, until that confirmation.
 
+## Exit management — ditch the horizon, ride until price reverses, flip-or-flatten (Greg, S36)
+`_info_dipole_trailing_backtest.py` → `_info_dipole_trailing_backtest_results.json`. Greg's directive:
+no clock; a trade ends ONLY on an adverse price move; then the dipole says go-long / go-short / flatten.
+Built two horizon-free exit engines (both look-ahead free): **PRICE-stop** (trailing backslide off the
+peak favorable excursion — "+50 peak, 10% → exit +45") and **DIPOLE-exit** (exit when order-flow imbalance
+flips against the position). At each exit the dipole flips (if it confirms the reversal) or flattens.
+
+Result on this data — **both underperform the fixed-horizon hold**, pooled net bps/trade @ 10 bps/leg:
+
+| | pooled net | note |
+|---|---|---|
+| fixed-horizon FLOW (hold) | −5.97 | baseline |
+| PRICE-stop + flip (horizon-free) | −11.40 | |
+| DIPOLE-exit + flip (horizon-free) | −22.29 | more legs → more cost |
+
+**Why (the decisive diagnosis):** on **1-min bars** a reactive stop is whipsawed — average hold collapses
+to ~19–50 min and the stop fires on ordinary intra-trend pullbacks before the move develops, paying 10 bps
+per leg each time. The clearest case is exactly the cell Greg flagged: **eth_bybit_buy's early +79.7
+(fixed-horizon) is DESTROYED by trailing** (early +2.3 price-stop / +16.9 dipole-exit) — the trailing stop
+exits the big winning ride early. The fixed-horizon only "won" there by blindly holding through one big
+~4h trend leg that happened in this 2-day window (a single-regime artifact). A 10–30 bps trailing stop
+cannot tell a healthy 1-min pullback from a reversal.
+
+**This is a data-resolution problem, not a logic problem.** Greg's ride-and-trail-and-flip idea is sound
+but is **untestable and untunable on 1-min / 2-day / single-regime data** — it needs the local **1-sec
+multi-regime onset history** (KICKOFF #2) where (a) a trailing stop isn't tripped by single-bar 1-min
+noise, (b) there are many trend legs so we aren't fitting one, (c) far more independent events. The exit
+engine (price-stop and dipole-exit, with flip/flatten) is built and ready to point at that data; **do not
+tune its parameters on the 2-day window** (overfitting). Getting the 1-sec history is now the gating step
+for the whole exit-management question.
+
 ## Bottom line
 The 64% reversal rate is real but does NOT, by itself, clear 10-bps round-trip cost pooled — the moves
 are too small. The flow gate genuinely improves on blind trend-following (+3 bps/trade), and the edge
