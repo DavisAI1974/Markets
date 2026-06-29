@@ -1,18 +1,18 @@
-name: Book Collectors (BTC/ETH/SOL/DOGE/XRP, durable)
+name: Book Collectors (ETH/SOL/DOGE/XRP, durable)
 
 # Collects Coinbase L2 order-book snapshots (top-10/side depth on a regular
-# 100ms grid) for 5 coins on GitHub compute, independent of any local device.
-# One matrix job per coin, each persisting to its own data/<coin>-book branch
-# via orphan force-push (cumulative state, history-less), with the same
-# anti-clobber guardrail the trade collectors use.
+# 100ms grid) for the wider-spread alt coins on GitHub compute, independent of
+# any local device. One matrix job per coin, each persisting to its own
+# data/<coin>-book branch via orphan force-push (cumulative state, history-less),
+# with the same anti-clobber guardrail the trade collectors use.
 #
 # SUPERSEDES book_collector_btc.yml: that workflow collected btc_coinbase only
 # (via coinbase_btcusd_book_collector.py) and its checkout ref pointed at a now-
 # dead branch. This unified matrix uses the symbol-parameterized
-# coinbase_book_collector.py and covers btc + the wider-spread alts. btc keeps
-# writing the SAME file (btc_coinbase_book.jsonl.gz) to the SAME branch
-# (data/btc-book), and the anti-clobber guardrail protects the existing ~1.68M
-# accrued rows from any partial-run regression.
+# coinbase_book_collector.py. btc is intentionally NOT collected here: it is the
+# spread-starved 1-tick control (~46.7h already frozen on data/btc-book) and
+# continued 100ms collection would cross GitHub's 100 MiB/file push cap in ~3
+# days (the S37 stall bug). The edge is in the wider-spread alts below.
 #
 # WHY the alts: the S43 maker-fill model (odcore/maker_book.py) found the binding
 # constraint on btc_coinbase is the ABSENT SPREAD (1-tick book, half-spread
@@ -70,8 +70,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - coin: btc
-            product: BTC-USD
+          # btc dropped (S44): btc_coinbase is the spread-starved 1-tick control (~46.7h already on
+          # data/btc-book, frozen) and continued 100ms collection would cross GitHub's 100 MiB/file
+          # push cap in ~3 days (the S37 stall bug). The wider-spread alts are where the maker edge is.
           - coin: eth
             product: ETH-USD
           - coin: sol
