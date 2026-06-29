@@ -52,12 +52,32 @@ def dipole_direction(s: BinSeries, window: int = 40) -> np.ndarray:
     return sig
 
 
+def dipole_gated(s: BinSeries, train_frac: float = 0.6, k: float = 1.5) -> np.ndarray:
+    """The order-flow dipole with the QuietFloor gate wired in (S43 NEXT #4).
+
+    DIRECTION lives in the order-flow imbalance LEVEL (sign of ofi = (buy-sell)/(buy+sell)); the
+    QuietFloor decides WHEN to fire so the dipole stops churning through a trend. In a trend the ofi
+    level stays elevated and slowly relaxes (the quiet AR(1) floor absorbs it → small innovation →
+    gate shut); only a shock that breaks the relaxation opens the gate.
+
+    Leakage-safe: the QuietFloor is fit on the TRAINING slice's quiet cells only (`quiet_floor.fit`,
+    same train_frac), and the gate is causal (innovation at t uses imb[t-1]). Returns sign(ofi) where
+    the gate is open, else 0 (stand aside)."""
+    from .quiet_floor import fit as fit_quiet
+    tot = s.buy + s.sell
+    imb = np.where(tot > 0, (s.buy - s.sell) / (tot + 1e-12), 0.0)
+    quiet = tot <= 0.0                      # 'still' cells: no taker volume
+    floor = fit_quiet(imb, quiet, train_frac=train_frac)
+    return floor.gated_signal(imb, k=k)     # sign(level) where the gate opens, else 0
+
+
 # Registry of standalone signals for the honest backtest harness
 SIGNALS = {
     "ofi_momentum": ofi_signal,
     "ofi_fade": ofi_fade,
     "momentum5": lambda s: momentum(s, 5),
     "dipole_direction": dipole_direction,
+    "dipole_gated": dipole_gated,
 }
 
 
