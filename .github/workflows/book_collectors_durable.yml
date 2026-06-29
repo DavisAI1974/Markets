@@ -1,0 +1,205 @@
+name: Book Collectors (BTC/ETH/SOL/DOGE/XRP, durable)
+
+# Collects Coinbase L2 order-book snapshots (top-10/side depth on a regular
+# 100ms grid) for 5 coins on GitHub compute, independent of any local device.
+# One matrix job per coin, each persisting to its own data/<coin>-book branch
+# via orphan force-push (cumulative state, history-less), with the same
+# anti-clobber guardrail the trade collectors use.
+#
+# SUPERSEDES book_collector_btc.yml: that workflow collected btc_coinbase only
+# (via coinbase_btcusd_book_collector.py) and its checkout ref pointed at a now-
+# dead branch. This unified matrix uses the symbol-parameterized
+# coinbase_book_collector.py and covers btc + the wider-spread alts. btc keeps
+# writing the SAME file (btc_coinbase_book.jsonl.gz) to the SAME branch
+# (data/btc-book), and the anti-clobber guardrail protects the existing ~1.68M
+# accrued rows from any partial-run regression.
+#
+# WHY the alts: the S43 maker-fill model (odcore/maker_book.py) found the binding
+# constraint on btc_coinbase is the ABSENT SPREAD (1-tick book, half-spread
+# ~0.0008 bps), not the signal. Lower-liquidity coins carry materially wider
+# spreads (smoke-tested live: SOL-USD half-spread ~0.69 bps, ~860x BTC), so the
+# same signal-as-filter + QuietFloor gate should clear net there. These cells are
+# what _maker_fill_model.py needs to run the decisive per-cell deploy test.
+#
+# This is SEPARATE from the trade-bin collectors: those capture aggregated
+# {buy,sell,mid,...}; this captures resting-size depth.
+#
+# ACTIVATION NOTE: GitHub only fires `schedule:` (cron) triggers from a workflow
+# file on the repository DEFAULT branch. While this file lives only on a feature
+# branch it can be launched manually (workflow_dispatch) against this branch;
+# recurring cron collection requires enabling it on the default branch. The cron
+# block below is therefore inert until then (kept so enabling is a one-step
+# merge, not a rewrite).
+#
+# Storage: ~6 MB gzipped per 5h50m run per coin at 100ms grid, comfortably under
+# GitHub's 100 MiB file cap.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC (default-branch only)
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: 'Collection duration in seconds (default 5h50m=21000)'
+        default: '21000'
+        type: string
+      grid_ms:
+        description: 'Snapshot grid in milliseconds'
+        default: '100'
+        type: string
+      depth:
+        description: 'Top-K levels per side'
+        default: '10'
+        type: string
+  push:
+    branches:
+      - claude/crypto-liquidity-signals-5c5vg9
+      - claude/crypto-liquidity-signals-5c5vg9-kb2i5c
+    paths:
+      - '.github/workflows/book_collectors_durable.yml'
+      - 'coinbase_book_collector.py'
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355   # 5h55m, just under GitHub's 6hr hard limit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - coin: btc
+            product: BTC-USD
+          - coin: eth
+            product: ETH-USD
+          - coin: sol
+            product: SOL-USD
+          - coin: doge
+            product: DOGE-USD
+          - coin: xrp
+            product: XRP-USD
+    concurrency:
+      group: book-collector-${{ matrix.coin }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/crypto-liquidity-signals-5c5vg9
+          fetch-depth: 0   # need full history to access data branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install --quiet websockets numpy
+
+      - name: Restore previous book file from data/${{ matrix.coin }}-book branch
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_coinbase_book.jsonl.gz"
+          if git ls-remote --exit-code --heads origin "data/$COIN-book" > /dev/null 2>&1; then
+            echo "[restore] data/$COIN-book exists; fetching"
+            git fetch origin "data/$COIN-book"
+            git checkout "origin/data/$COIN-book" -- "$FN" 2>/dev/null \
+              || echo "[restore] no $FN on data branch yet"
+          else
+            echo "[restore] data/$COIN-book does not exist; first run, starting fresh"
+          fi
+          ls -la "$FN" 2>&1 || echo "[restore] no book file present"
+
+      - name: Connectivity check
+        run: |
+          curl -sS --max-time 5 -o /dev/null -w "Coinbase WS: %{http_code}\n" \
+            https://ws-feed.exchange.coinbase.com/ || true
+
+      - name: Run ${{ matrix.coin }} book collector
+        timeout-minutes: 350
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_coinbase_book.jsonl.gz"
+          DURATION="${{ github.event.inputs.duration_seconds || '21000' }}"
+          GRID="${{ github.event.inputs.grid_ms || '100' }}"
+          DEPTH="${{ github.event.inputs.depth || '10' }}"
+          echo "[run] $COIN book collector ${DURATION}s grid=${GRID}ms depth=${DEPTH} on $(date -u)"
+          python coinbase_book_collector.py \
+            --product "${{ matrix.product }}" --out "$FN" \
+            --duration "$DURATION" --grid-ms "$GRID" --depth "$DEPTH" > /tmp/cb_book.log 2>&1 || true
+          echo "=== book collector log tail ==="
+          tail -40 /tmp/cb_book.log
+
+      - name: Book file stats
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_coinbase_book.jsonl.gz"
+          if [ -f "$FN" ]; then
+            SIZE=$(stat -c%s "$FN")
+            N=$(python -c "import gzip,sys; print(sum(1 for l in gzip.open(sys.argv[1],'rt') if l.strip()))" \
+                "$FN" 2>/dev/null || echo "?")
+            echo "$FN: $SIZE bytes, $N rows"
+          fi
+
+      - name: Commit book to data/${{ matrix.coin }}-book branch (force-push, history-less)
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_coinbase_book.jsonl.gz"
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          mkdir -p /tmp/book
+          cp "$FN" /tmp/book/ 2>/dev/null || true
+
+          # Anti-clobber guardrail: this step is `if: always()` + force-push, so a
+          # crashed/partial run must NOT overwrite good cumulative rows. The
+          # append/resume pattern means a healthy file is always >= the data-branch
+          # copy; if a fresh file regressed (fewer rows), restore the data-branch
+          # copy so the push preserves history instead of wiping it.
+          BRANCH="origin/data/$COIN-book" FN="$FN" python - <<'PY'
+          import gzip, subprocess, os
+          BRANCH = os.environ["BRANCH"]
+          FN = os.environ["FN"]
+          def count_path(path):
+              try:
+                  with gzip.open(path, "rt") as f:
+                      return sum(1 for l in f if l.strip())
+              except Exception:
+                  return 0
+          newp = os.path.join("/tmp/book", FN)
+          new = count_path(newp)
+          try:
+              blob = subprocess.run(["git", "show", f"{BRANCH}:{FN}"],
+                                    capture_output=True, check=True).stdout
+          except subprocess.CalledProcessError:
+              blob = None
+          old = 0
+          if blob:
+              tmp = "/tmp/_old_book.jsonl.gz"
+              with open(tmp, "wb") as f: f.write(blob)
+              old = count_path(tmp)
+          if old and new < old:
+              with open(newp, "wb") as f: f.write(blob)
+              print(f"[guardrail] {FN}: collected {new} rows < {old} on data branch "
+                    f"-> RESTORED data-branch copy (no regression)")
+          else:
+              print(f"[guardrail] {FN}: {new} rows (>= {old} on data branch) -> keep")
+          PY
+
+          git checkout --orphan "data/$COIN-book-tmp"
+          git rm -rf . > /dev/null 2>&1 || true
+          cp "/tmp/book/$FN" . 2>/dev/null || true
+
+          if [ -f "$FN" ]; then
+            git add "$FN"
+            git commit -m "$COIN book update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin "data/$COIN-book-tmp:data/$COIN-book"
+            echo "[commit] pushed to data/$COIN-book"
+          else
+            echo "[commit] no book file to commit"
+          fi
