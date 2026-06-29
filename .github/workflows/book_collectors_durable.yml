@@ -51,13 +51,10 @@ on:
         description: 'Top-K levels per side'
         default: '10'
         type: string
-  push:
-    branches:
-      - claude/crypto-liquidity-signals-5c5vg9
-      - claude/crypto-liquidity-signals-5c5vg9-kb2i5c
-    paths:
-      - '.github/workflows/book_collectors_durable.yml'
-      - 'coinbase_book_collector.py'
+  # NOTE: no `push:` trigger. Collection is driven ONLY by the 6h cron (default branch) and the
+  # manual Run-workflow button. A push trigger would spawn a full ~6h x 4-coin run on every code
+  # push to these branches (the duplicate/cancelled runs seen in S44), which is wasteful and races
+  # on the data/<coin>-book branches.
 
 permissions:
   contents: write
