@@ -25,11 +25,9 @@ name: Book Collectors (ETH/SOL/DOGE/XRP, durable)
 # {buy,sell,mid,...}; this captures resting-size depth.
 #
 # ACTIVATION NOTE: GitHub only fires `schedule:` (cron) triggers from a workflow
-# file on the repository DEFAULT branch. While this file lives only on a feature
-# branch it can be launched manually (workflow_dispatch) against this branch;
-# recurring cron collection requires enabling it on the default branch. The cron
-# block below is therefore inert until then (kept so enabling is a one-step
-# merge, not a rewrite).
+# file on the repository DEFAULT branch (this file is on it). Manual runs use the
+# Run-workflow button (workflow_dispatch). The job checks out the 5c5vg9 branch
+# for the collector code regardless of which branch the run is dispatched from.
 #
 # Storage: ~6 MB gzipped per 5h50m run per coin at 100ms grid, comfortably under
 # GitHub's 100 MiB file cap.
@@ -51,13 +49,10 @@ on:
         description: 'Top-K levels per side'
         default: '10'
         type: string
-  push:
-    branches:
-      - claude/crypto-liquidity-signals-5c5vg9
-      - claude/crypto-liquidity-signals-5c5vg9-kb2i5c
-    paths:
-      - '.github/workflows/book_collectors_durable.yml'
-      - 'coinbase_book_collector.py'
+  # NOTE: no `push:` trigger. Collection is driven ONLY by the 6h cron (default branch) and the
+  # manual Run-workflow button. A push trigger would spawn a full ~6h x 4-coin run on every code
+  # push to these branches (the duplicate/cancelled runs seen in S44), which is wasteful and races
+  # on the data/<coin>-book branches.
 
 permissions:
   contents: write
