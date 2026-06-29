@@ -26,6 +26,21 @@ more cells, especially WIDER-spread ones.
   BTC's 0.0008 bps (~860× wider).** This is the whole point: SOL/DOGE/XRP are the wider-spread cells where
   half-spread (2–5 bps) ≫ adverse selection (~0.5 bps), so the gated signal-as-filter should clear net.
 
+**COLLECTOR OPS (end of S44 — final state):**
+- **btc DROPPED from the matrix** — workflow is now "Book Collectors (ETH/SOL/DOGE/XRP, durable)".
+  btc_coinbase is the spread-starved 1-tick control (~46.7h frozen on `data/btc-book`) and continued
+  100ms collection would cross GitHub's 100 MiB/file push cap in ~3 days (the S37 stall bug).
+- **Workflow file added to the DEFAULT branch** (`claude/new-session-o3vnm`) so the Run-workflow button
+  appears AND the 6h cron is live → collection self-sustains. The job checks out `5c5vg9` for code.
+- **`push:` trigger REMOVED** — it was spawning a full ~6h × matrix run on every code push (the
+  duplicate/cancelled runs seen mid-session). Now cron + manual dispatch only.
+- **In flight at session end:** run #1 (push-triggered by the first S44 commit, BEFORE the btc-drop) is
+  still running the OLD 5-coin matrix — so it does ONE more btc pass (harmless, ~47 MB, under cap) and
+  bootstraps all alt books now. Run #4 (`workflow_dispatch`, eth/sol/doge/xrp) is queued behind it.
+  Greg: "it's fine, we'll fix on next run" — i.e. let #1 finish; from #4 + cron onward it's alts-only.
+  No further action needed; nothing to clean up beyond letting the matrix settle to eth/sol/doge/xrp.
+- The integration token can't dispatch/cancel runs (403 actions:write) — runs are Greg's button.
+
 **BLOCKER (unchanged): needs Greg's manual GHA trigger.** The session token 403s on `workflow_dispatch`.
 Greg: GitHub → Actions → **"Book Collectors (BTC/ETH/SOL/DOGE/XRP, durable)"** → Run workflow on branch
 `claude/crypto-liquidity-signals-5c5vg9`. Data accrual is the ONLY remaining gate on the decisive
