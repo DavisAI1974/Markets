@@ -66,3 +66,17 @@ frontend/dist/
 _episode_onsets_out/
 _onset_coeff/
 _full_pipeline_onset/
+_alt_labels/*.jsonl
+# FNO training pairs (X=prefill_embeds + y=coef) — large, bound for S3/SageMaker, NOT git
+_alt_labels/coeffs/alt_train_pairs.json.gz
+_alt_labels/preentry_flow_features.json
+turn_signature.png
+*.png
+
+# transient run logs (S41)
+*.log
+*.log
+*.out
+
+# transient combined-results scratch (part-specific snapshots are committed instead)
+_liquidity_dive_results.json

@@ -1,0 +1,199 @@
+{
+  "path": "/tmp/book.jsonl.gz",
+  "K": 5,
+  "W": 20,
+  "window": 40,
+  "stride": 40,
+  "nparts": 10,
+  "part_a": [
+    {
+      "pair": "d_depth_imb~d_bid_depth",
+      "meanZ": 39619.30097443292,
+      "nZgt2": 10,
+      "nslices": 10,
+      "meanLL_s": 0.0,
+      "meanLLz": 210.51022620860326,
+      "meanR2": 0.9489271906506399
+    },
+    {
+      "pair": "d_total_depth~d_bid_depth",
+      "meanZ": 5609.8861843551085,
+      "nZgt2": 10,
+      "nslices": 10,
+      "meanLL_s": 0.0,
+      "meanLLz": 194.09234138655654,
+      "meanR2": 0.9493329577467623
+    },
+    {
+      "pair": "depth_imb~d_depth_imb",
+      "meanZ": 127.83108643302667,
+      "nZgt2": 10,
+      "nslices": 10,
+      "meanLL_s": 0.05,
+      "meanLLz": 165.53988878688477,
+      "meanR2": 0.947709697495168
+    },
+    {
+      "pair": "d_total_depth~d_ask_depth",
+      "meanZ": 1740.1620954487303,
+      "nZgt2": 9,
+      "nslices": 10,
+      "meanLL_s": 0.0,
+      "meanLLz": 214.78854560632013,
+      "meanR2": 0.9549977358706527
+    },
+    {
+      "pair": "depth_imb~d_total_depth",
+      "meanZ": 18.91773705454615,
+      "nZgt2": 9,
+      "nslices": 10,
+      "meanLL_s": 0.020000000000000004,
+      "meanLLz": 16.137209258621002,
+      "meanR2": 0.9320340112786344
+    },
+    {
+      "pair": "depth_imb~d_ask_depth",
+      "meanZ": 9.624785234887991,
+      "nZgt2": 9,
+      "nslices": 10,
+      "meanLL_s": 0.05,
+      "meanLLz": 79.0126270860621,
+      "meanR2": 0.9141923545866835
+    },
+    {
+      "pair": "d_depth_imb~d_ask_depth",
+      "meanZ": 764.8226231854945,
+      "nZgt2": 8,
+      "nslices": 10,
+      "meanLL_s": 0.0,
+      "meanLLz": 186.10797499880218,
+      "meanR2": 0.9510411291946206
+    },
+    {
+      "pair": "d_depth_imb~d_total_depth",
+      "meanZ": 145.99551190041365,
+      "nZgt2": 8,
+      "nslices": 10,
+      "meanLL_s": 0.0,
+      "meanLLz": 34.25321409592196,
+      "meanR2": 0.9894030663371444
+    },
+    {
+      "pair": "d_bid_depth~d_ask_depth",
+      "meanZ": 4.2756702433865446,
+      "nZgt2": 8,
+      "nslices": 10,
+      "meanLL_s": 0.13999999999999999,
+      "meanLLz": 18.5003308891706,
+      "meanR2": 0.8090072365995423
+    },
+    {
+      "pair": "depth_imb~signed_ret",
+      "meanZ": 4.443655672290118,
+      "nZgt2": 7,
+      "nslices": 10,
+      "meanLL_s": 0.08000000000000002,
+      "meanLLz": 41.783407735371306,
+      "meanR2": 0.99187179570011
+    },
+    {
+      "pair": "depth_imb~d_bid_depth",
+      "meanZ": 6.831155732467603,
+      "nZgt2": 6,
+      "nslices": 10,
+      "meanLL_s": 0.020000000000000004,
+      "meanLLz": 79.9945509528079,
+      "meanR2": 0.9043411711898562
+    },
+    {
+      "pair": "d_depth_imb~signed_ret",
+      "meanZ": 16.997498029238837,
+      "nZgt2": 5,
+      "nslices": 10,
+      "meanLL_s": 0.09000000000000001,
+      "meanLLz": 29.660745618496538,
+      "meanR2": 0.9908863805819841
+    },
+    {
+      "pair": "d_total_depth~signed_ret",
+      "meanZ": 12.30206369418499,
+      "nZgt2": 5,
+      "nslices": 10,
+      "meanLL_s": 0.13,
+      "meanLLz": 4.566329352705389,
+      "meanR2": 0.9890452535026709
+    },
+    {
+      "pair": "d_bid_depth~signed_ret",
+      "meanZ": 6.709700881213266,
+      "nZgt2": 4,
+      "nslices": 10,
+      "meanLL_s": 0.03,
+      "meanLLz": 19.95597583930744,
+      "meanR2": 0.9811344071399655
+    },
+    {
+      "pair": "depth_imb~flow",
+      "meanZ": 1.6031249410649413,
+      "nZgt2": 4,
+      "nslices": 10,
+      "meanLL_s": 0.63,
+      "meanLLz": 9.229166020020736,
+      "meanR2": 0.6929774838573782
+    },
+    {
+      "pair": "signed_ret~flow",
+      "meanZ": 1.1169683501861165,
+      "nZgt2": 4,
+      "nslices": 10,
+      "meanLL_s": 0.32000000000000006,
+      "meanLLz": 32.33936850859375,
+      "meanR2": 0.16697621216794384
+    },
+    {
+      "pair": "d_ask_depth~signed_ret",
+      "meanZ": 5.017847364839896,
+      "nZgt2": 2,
+      "nslices": 10,
+      "meanLL_s": -0.020000000000000004,
+      "meanLLz": 22.228672651184432,
+      "meanR2": 0.9760649645086529
+    },
+    {
+      "pair": "d_depth_imb~flow",
+      "meanZ": 0.4587470211467989,
+      "nZgt2": 1,
+      "nslices": 10,
+      "meanLL_s": -0.13,
+      "meanLLz": 11.69722431124675,
+      "meanR2": 0.6276247234259611
+    },
+    {
+      "pair": "d_bid_depth~flow",
+      "meanZ": 0.4297418165552343,
+      "nZgt2": 1,
+      "nslices": 10,
+      "meanLL_s": -0.13999999999999999,
+      "meanLLz": 4.546812512505203,
+      "meanR2": 0.472334343360989
+    },
+    {
+      "pair": "d_total_depth~flow",
+      "meanZ": 0.2898307817500111,
+      "nZgt2": 1,
+      "nslices": 10,
+      "meanLL_s": -0.06,
+      "meanLLz": 0.5832582110106308,
+      "meanR2": 0.6249883444821529
+    },
+    {
+      "pair": "d_ask_depth~flow",
+      "meanZ": 0.2245289711107703,
+      "nZgt2": 1,
+      "nslices": 10,
+      "meanLL_s": -0.09000000000000001,
+      "meanLLz": 6.281915704302416,
+      "meanR2": 0.4981442001805655
+    }
+  ]
+}

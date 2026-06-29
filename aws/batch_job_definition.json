@@ -1,0 +1,24 @@
+{
+  "jobDefinitionName": "od-discovery",
+  "type": "container",
+  "platformCapabilities": ["FARGATE"],
+  "containerProperties": {
+    "image": "<ACCT>.dkr.ecr.<REGION>.amazonaws.com/od-discovery:latest",
+    "resourceRequirements": [
+      {"type": "VCPU", "value": "2"},
+      {"type": "MEMORY", "value": "8192"}
+    ],
+    "executionRoleArn": "arn:aws:iam::<ACCT>:role/ecsTaskExecutionRole",
+    "jobRoleArn": "arn:aws:iam::<ACCT>:role/od-discovery-s3 (needs s3:GetObject/PutObject on the bucket)",
+    "environment": [
+      {"name": "S3_BUCKET", "value": "davisai-markets"},
+      {"name": "S3_BINS_PREFIX", "value": "realbins"},
+      {"name": "S3_OUT_PREFIX", "value": "coeffs"},
+      {"name": "CELLS", "value": "doge:DOGE,xrp:XRP,sol:SOL"},
+      {"name": "VENUES", "value": "bybit_perp"},
+      {"name": "CAP", "value": "100"},
+      {"name": "SAVE_EMBEDS", "value": "1"}
+    ],
+    "networkConfiguration": {"assignPublicIp": "ENABLED"}
+  }
+}

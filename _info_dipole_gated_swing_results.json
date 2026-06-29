@@ -3,52 +3,134 @@
     "min_calls": 10,
     "thin_recall": 0.15,
     "is_frac": 0.6,
-    "window": "single in-git 1-sec; PROVISIONAL"
+    "data": "realbins/ (free-historical backfill: Bybit/Binance dumps + Coinbase/Kraken REST); multi-coin / multi-regime",
+    "cell_spans": {
+      "btc_bybit_perp": {
+        "n": 1504783,
+        "span_days": 21.0
+      },
+      "btc_coinbase": {
+        "n": 452145,
+        "span_days": 13.93
+      },
+      "btc_kraken": {
+        "n": 276401,
+        "span_days": 13.94
+      },
+      "doge_bybit_perp": {
+        "n": 682121,
+        "span_days": 21.0
+      },
+      "eth_bybit_perp": {
+        "n": 1499123,
+        "span_days": 21.0
+      },
+      "eth_coinbase": {
+        "n": 475849,
+        "span_days": 13.93
+      },
+      "eth_kraken": {
+        "n": 162007,
+        "span_days": 13.94
+      },
+      "sol_bybit_perp": {
+        "n": 1060621,
+        "span_days": 21.0
+      },
+      "xrp_bybit_perp": {
+        "n": 1247184,
+        "span_days": 21.0
+      }
+    }
   },
   "deploy_map": {
     "btc_bybit_perp": {
-      "config": "CHALL+Cgate",
-      "verdict": "deploy dipole + C stand-aside (net@maker +16, recall 0.045) [THIN \u2014 low coverage, confirm before sizing]"
+      "config": null,
+      "verdict": "stand aside (best net@maker -25, no positive config with real trades)"
     },
     "btc_coinbase": {
       "config": null,
-      "verdict": "stand aside (best net@maker +0, no positive config with real trades)"
+      "verdict": "stand aside (best net@maker -3, no positive config with real trades)"
     },
     "btc_kraken": {
-      "config": "CHALLENGER",
-      "verdict": "deploy dipole (un-gated) (net@maker +466, recall 0.447)"
+      "config": "CHALL+ERgate",
+      "verdict": "deploy dipole + ER stand-aside (net@maker +32, recall 0.056) [THIN \u2014 low coverage, confirm before sizing]"
+    },
+    "doge_bybit_perp": {
+      "config": null,
+      "verdict": "stand aside (best net@maker +0, no positive config with real trades)"
     },
     "eth_bybit_perp": {
-      "config": "CHALLENGER",
-      "verdict": "deploy dipole (un-gated) (net@maker +670, recall 0.073) [THIN \u2014 low coverage, confirm before sizing]"
+      "config": null,
+      "verdict": "stand aside (best net@maker +0, no positive config with real trades)"
     },
     "eth_coinbase": {
       "config": "CHALLENGER",
-      "verdict": "deploy dipole (un-gated) (net@maker +392, recall 0.151)"
+      "verdict": "deploy dipole (un-gated) (net@maker +60, recall 0.151)"
     },
     "eth_kraken": {
       "config": null,
-      "verdict": "stand aside (best net@maker -170, no positive config with real trades)"
+      "verdict": "stand aside (best net@maker +280, no positive config with real trades)"
+    },
+    "sol_bybit_perp": {
+      "config": null,
+      "verdict": "stand aside (best net@maker +0, no positive config with real trades)"
+    },
+    "xrp_bybit_perp": {
+      "config": null,
+      "verdict": "stand aside (best net@maker +0, no positive config with real trades)"
     }
   },
   "per_cell": {
     "btc_bybit_perp": {
       "CHAMPION": {
-        "net_maker": -307.3,
-        "recall": 0.406,
-        "precision": 0.635,
-        "bps_to_turn": 20.5,
-        "n_calls": 85
+        "net_maker": -1148.7,
+        "recall": 0.276,
+        "precision": 0.672,
+        "bps_to_turn": 22.8,
+        "n_calls": 290
       },
       "CHALLENGER": {
-        "net_maker": -172.7,
-        "recall": 0.09,
-        "precision": 0.571,
-        "bps_to_turn": 22.6,
-        "n_calls": 21
+        "net_maker": -1306.0,
+        "recall": 0.079,
+        "precision": 0.554,
+        "bps_to_turn": 18.3,
+        "n_calls": 101
       },
       "CHALL+ERgate": {
-        "net_maker": 74.6,
+        "net_maker": -25.0,
+        "gate": ">=0.2",
+        "recall": 0.003,
+        "precision": 0.667,
+        "bps_to_turn": 15.3,
+        "n_calls": 3
+      },
+      "CHALL+Cgate": {
+        "net_maker": -577.5,
+        "gate": "<=8.0",
+        "recall": 0.008,
+        "precision": 0.667,
+        "bps_to_turn": 12.9,
+        "n_calls": 9
+      }
+    },
+    "btc_coinbase": {
+      "CHAMPION": {
+        "net_maker": -588.8,
+        "recall": 0.27,
+        "precision": 0.457,
+        "bps_to_turn": 20.9,
+        "n_calls": 81
+      },
+      "CHALLENGER": {
+        "net_maker": -145.3,
+        "recall": 0.204,
+        "precision": 0.636,
+        "bps_to_turn": 16.7,
+        "n_calls": 44
+      },
+      "CHALL+ERgate": {
+        "net_maker": -3.0,
         "gate": ">=0.2",
         "recall": 0.0,
         "precision": 0.0,
@@ -56,39 +138,7 @@
         "n_calls": 1
       },
       "CHALL+Cgate": {
-        "net_maker": 16.4,
-        "gate": "<=16.0",
-        "recall": 0.045,
-        "precision": 0.462,
-        "bps_to_turn": 30.4,
-        "n_calls": 13
-      }
-    },
-    "btc_coinbase": {
-      "CHAMPION": {
-        "net_maker": -525.5,
-        "recall": 0.272,
-        "precision": 0.474,
-        "bps_to_turn": 20.4,
-        "n_calls": 78
-      },
-      "CHALLENGER": {
-        "net_maker": -171.4,
-        "recall": 0.213,
-        "precision": 0.674,
-        "bps_to_turn": 16.6,
-        "n_calls": 43
-      },
-      "CHALL+ERgate": {
-        "net_maker": 0.0,
-        "gate": ">=0.2",
-        "recall": 0.0,
-        "precision": null,
-        "bps_to_turn": null,
-        "n_calls": 0
-      },
-      "CHALL+Cgate": {
-        "net_maker": -62.1,
+        "net_maker": -51.2,
         "gate": "<=2.0",
         "recall": 0.007,
         "precision": 1.0,
@@ -98,26 +148,26 @@
     },
     "btc_kraken": {
       "CHAMPION": {
-        "net_maker": 212.3,
-        "recall": 0.491,
-        "precision": 0.651,
-        "bps_to_turn": 13.9,
-        "n_calls": 86
+        "net_maker": -292.8,
+        "recall": 0.374,
+        "precision": 0.588,
+        "bps_to_turn": 19.7,
+        "n_calls": 250
       },
       "CHALLENGER": {
-        "net_maker": 465.6,
-        "recall": 0.447,
-        "precision": 0.622,
-        "bps_to_turn": 11.2,
-        "n_calls": 82
+        "net_maker": -720.5,
+        "recall": 0.344,
+        "precision": 0.519,
+        "bps_to_turn": 18.9,
+        "n_calls": 260
       },
       "CHALL+ERgate": {
-        "net_maker": 151.2,
-        "gate": ">=0.35",
-        "recall": 0.044,
-        "precision": 1.0,
-        "bps_to_turn": 17.1,
-        "n_calls": 5
+        "net_maker": 32.1,
+        "gate": ">=0.2",
+        "recall": 0.056,
+        "precision": 0.667,
+        "bps_to_turn": 21.7,
+        "n_calls": 33
       },
       "CHALL+Cgate": {
         "net_maker": 0.0,
@@ -128,55 +178,87 @@
         "n_calls": 0
       }
     },
-    "eth_bybit_perp": {
+    "doge_bybit_perp": {
       "CHAMPION": {
-        "net_maker": 325.9,
-        "recall": 0.207,
-        "precision": 0.73,
-        "bps_to_turn": 26.1,
-        "n_calls": 178
+        "net_maker": -2999.2,
+        "recall": 0.281,
+        "precision": 0.637,
+        "bps_to_turn": 20.1,
+        "n_calls": 641
       },
       "CHALLENGER": {
-        "net_maker": 670.4,
-        "recall": 0.073,
-        "precision": 0.548,
-        "bps_to_turn": 19.2,
-        "n_calls": 84
+        "net_maker": -1335.8,
+        "recall": 0.145,
+        "precision": 0.477,
+        "bps_to_turn": 12.1,
+        "n_calls": 442
       },
       "CHALL+ERgate": {
-        "net_maker": 121.7,
-        "gate": ">=0.2",
+        "net_maker": 0.0,
+        "gate": ">=0.35",
         "recall": 0.0,
-        "precision": 0.0,
+        "precision": null,
         "bps_to_turn": null,
-        "n_calls": 1
+        "n_calls": 0
       },
       "CHALL+Cgate": {
-        "net_maker": 469.1,
-        "gate": "<=4.0",
-        "recall": 0.003,
-        "precision": 0.667,
-        "bps_to_turn": 13.8,
-        "n_calls": 3
+        "net_maker": -648.6,
+        "gate": "<=2.0",
+        "recall": 0.002,
+        "precision": 0.5,
+        "bps_to_turn": 43.7,
+        "n_calls": 6
+      }
+    },
+    "eth_bybit_perp": {
+      "CHAMPION": {
+        "net_maker": -2379.5,
+        "recall": 0.221,
+        "precision": 0.66,
+        "bps_to_turn": 24.4,
+        "n_calls": 391
+      },
+      "CHALLENGER": {
+        "net_maker": -142.2,
+        "recall": 0.079,
+        "precision": 0.582,
+        "bps_to_turn": 17.0,
+        "n_calls": 158
+      },
+      "CHALL+ERgate": {
+        "net_maker": 0.0,
+        "gate": ">=0.2",
+        "recall": 0.0,
+        "precision": null,
+        "bps_to_turn": null,
+        "n_calls": 0
+      },
+      "CHALL+Cgate": {
+        "net_maker": -656.6,
+        "gate": "<=8.0",
+        "recall": 0.015,
+        "precision": 0.474,
+        "bps_to_turn": 17.7,
+        "n_calls": 38
       }
     },
     "eth_coinbase": {
       "CHAMPION": {
-        "net_maker": 478.5,
+        "net_maker": 126.7,
         "recall": 0.171,
-        "precision": 0.61,
+        "precision": 0.607,
         "bps_to_turn": 17.1,
-        "n_calls": 182
+        "n_calls": 183
       },
       "CHALLENGER": {
-        "net_maker": 392.2,
+        "net_maker": 59.6,
         "recall": 0.151,
-        "precision": 0.557,
+        "precision": 0.554,
         "bps_to_turn": 17.7,
-        "n_calls": 176
+        "n_calls": 177
       },
       "CHALL+ERgate": {
-        "net_maker": -189.0,
+        "net_maker": 90.4,
         "gate": ">=0.2",
         "recall": 0.002,
         "precision": 0.333,
@@ -194,34 +276,98 @@
     },
     "eth_kraken": {
       "CHAMPION": {
-        "net_maker": -876.2,
-        "recall": 0.319,
-        "precision": 0.619,
-        "bps_to_turn": 16.9,
-        "n_calls": 265
+        "net_maker": -1670.5,
+        "recall": 0.306,
+        "precision": 0.59,
+        "bps_to_turn": 17.6,
+        "n_calls": 376
       },
       "CHALLENGER": {
-        "net_maker": -1206.6,
-        "recall": 0.344,
-        "precision": 0.525,
-        "bps_to_turn": 14.1,
-        "n_calls": 337
+        "net_maker": -1410.2,
+        "recall": 0.343,
+        "precision": 0.519,
+        "bps_to_turn": 13.9,
+        "n_calls": 480
       },
       "CHALL+ERgate": {
-        "net_maker": -534.1,
-        "gate": ">=0.2",
-        "recall": 0.058,
-        "precision": 0.789,
-        "bps_to_turn": 31.5,
-        "n_calls": 38
+        "net_maker": 280.2,
+        "gate": ">=0.35",
+        "recall": 0.007,
+        "precision": 1.0,
+        "bps_to_turn": 39.4,
+        "n_calls": 5
       },
       "CHALL+Cgate": {
-        "net_maker": -170.3,
+        "net_maker": -503.8,
         "gate": "<=4.0",
         "recall": 0.006,
-        "precision": 0.6,
-        "bps_to_turn": 26.8,
+        "precision": 0.8,
+        "bps_to_turn": 22.9,
         "n_calls": 5
+      }
+    },
+    "sol_bybit_perp": {
+      "CHAMPION": {
+        "net_maker": -2481.6,
+        "recall": 0.226,
+        "precision": 0.712,
+        "bps_to_turn": 23.8,
+        "n_calls": 605
+      },
+      "CHALLENGER": {
+        "net_maker": -854.1,
+        "recall": 0.089,
+        "precision": 0.472,
+        "bps_to_turn": 14.4,
+        "n_calls": 358
+      },
+      "CHALL+ERgate": {
+        "net_maker": 0.0,
+        "gate": ">=0.2",
+        "recall": 0.0,
+        "precision": null,
+        "bps_to_turn": null,
+        "n_calls": 0
+      },
+      "CHALL+Cgate": {
+        "net_maker": -140.7,
+        "gate": "<=4.0",
+        "recall": 0.004,
+        "precision": 0.667,
+        "bps_to_turn": 19.8,
+        "n_calls": 12
+      }
+    },
+    "xrp_bybit_perp": {
+      "CHAMPION": {
+        "net_maker": -3409.0,
+        "recall": 0.233,
+        "precision": 0.643,
+        "bps_to_turn": 22.2,
+        "n_calls": 493
+      },
+      "CHALLENGER": {
+        "net_maker": -76.5,
+        "recall": 0.113,
+        "precision": 0.495,
+        "bps_to_turn": 12.0,
+        "n_calls": 309
+      },
+      "CHALL+ERgate": {
+        "net_maker": 0.0,
+        "gate": ">=0.2",
+        "recall": 0.0,
+        "precision": null,
+        "bps_to_turn": null,
+        "n_calls": 0
+      },
+      "CHALL+Cgate": {
+        "net_maker": 0.0,
+        "gate": "<=2.0",
+        "recall": 0.0,
+        "precision": null,
+        "bps_to_turn": null,
+        "n_calls": 0
       }
     }
   }

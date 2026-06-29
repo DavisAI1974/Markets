@@ -1,0 +1,122 @@
+{
+  "btc_bybit_perp": {
+    "W": 300,
+    "buyhold": 148.2,
+    "sweep": [
+      {
+        "thr": 0.05,
+        "flips": 1576,
+        "gross_bps": -1162.2,
+        "net_bps": -16922.2,
+        "in_mkt": 1.0,
+        "buyhold_bps": 148.2,
+        "per_flip": -10.74
+      },
+      {
+        "thr": 0.1,
+        "flips": 1200,
+        "gross_bps": -1478.9,
+        "net_bps": -13478.9,
+        "in_mkt": 1.0,
+        "buyhold_bps": 148.2,
+        "per_flip": -11.23
+      },
+      {
+        "thr": 0.15,
+        "flips": 990,
+        "gross_bps": -1295.1,
+        "net_bps": -11195.1,
+        "in_mkt": 1.0,
+        "buyhold_bps": 148.2,
+        "per_flip": -11.31
+      },
+      {
+        "thr": 0.2,
+        "flips": 844,
+        "gross_bps": -1089.5,
+        "net_bps": -9529.5,
+        "in_mkt": 1.0,
+        "buyhold_bps": 148.2,
+        "per_flip": -11.29
+      },
+      {
+        "thr": 0.3,
+        "flips": 555,
+        "gross_bps": -397.9,
+        "net_bps": -5947.9,
+        "in_mkt": 1.0,
+        "buyhold_bps": 148.2,
+        "per_flip": -10.72
+      },
+      {
+        "thr": 0.4,
+        "flips": 381,
+        "gross_bps": -379.3,
+        "net_bps": -4189.3,
+        "in_mkt": 1.0,
+        "buyhold_bps": 148.2,
+        "per_flip": -11.0
+      }
+    ]
+  },
+  "eth_bybit_perp": {
+    "W": 300,
+    "buyhold": 111.1,
+    "sweep": [
+      {
+        "thr": 0.05,
+        "flips": 2270,
+        "gross_bps": -1929.3,
+        "net_bps": -24629.3,
+        "in_mkt": 1.0,
+        "buyhold_bps": 111.1,
+        "per_flip": -10.85
+      },
+      {
+        "thr": 0.1,
+        "flips": 1754,
+        "gross_bps": -1577.0,
+        "net_bps": -19117.0,
+        "in_mkt": 1.0,
+        "buyhold_bps": 111.1,
+        "per_flip": -10.9
+      },
+      {
+        "thr": 0.15,
+        "flips": 1450,
+        "gross_bps": -609.9,
+        "net_bps": -15109.9,
+        "in_mkt": 1.0,
+        "buyhold_bps": 111.1,
+        "per_flip": -10.42
+      },
+      {
+        "thr": 0.2,
+        "flips": 1236,
+        "gross_bps": -1091.1,
+        "net_bps": -13451.1,
+        "in_mkt": 1.0,
+        "buyhold_bps": 111.1,
+        "per_flip": -10.88
+      },
+      {
+        "thr": 0.3,
+        "flips": 886,
+        "gross_bps": -1480.7,
+        "net_bps": -10340.7,
+        "in_mkt": 1.0,
+        "buyhold_bps": 111.1,
+        "per_flip": -11.67
+      },
+      {
+        "thr": 0.4,
+        "flips": 576,
+        "gross_bps": -708.8,
+        "net_bps": -6468.8,
+        "in_mkt": 1.0,
+        "buyhold_bps": 111.1,
+        "per_flip": -11.23
+      }
+    ]
+  }
+}

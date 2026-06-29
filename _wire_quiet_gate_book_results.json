@@ -1,0 +1,31 @@
+{
+  "cell": "btc_coinbase",
+  "n": 1682107,
+  "hours": 46.73,
+  "K": 10,
+  "k": 1.5,
+  "split": 0.6,
+  "quietfloor": {
+    "phi": 0.9346222152290218,
+    "c": -9.018777382953907e-05,
+    "sigma": 0.1600454995090911,
+    "r2_quiet": 0.9361769861750479,
+    "n_quiet_train": 648454
+  },
+  "churn": {
+    "raw_fire": 1.0,
+    "gated_fire": 0.06894983493915667
+  },
+  "selectivity": {
+    "open_quiet": 0.048534087472516696,
+    "open_trade": 0.1234113252964763,
+    "ratio": 2.5427762572813886
+  },
+  "direction": {
+    "raw_hit": 0.6980988953681316,
+    "raw_n": 21093,
+    "gated_hit": 0.7094972067039106,
+    "gated_n": 4117
+  },
+  "hot_path_mismatches": 0
+}

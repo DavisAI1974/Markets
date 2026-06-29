@@ -1,0 +1,14 @@
+{
+  "btc_coinbase": {
+    "K": 10,
+    "c": -9.018777382953907e-05,
+    "cell": "btc_coinbase",
+    "hours": 46.73,
+    "k": 1.5,
+    "n_quiet": 648454,
+    "phi": 0.9346222152290218,
+    "r2_quiet": 0.9361769861750479,
+    "sigma": 0.1600454995090911,
+    "source": "/tmp/btc_coinbase_book.jsonl.gz"
+  }
+}

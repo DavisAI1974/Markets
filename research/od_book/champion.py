@@ -62,7 +62,9 @@ def fit_var(X: np.ndarray, p: int = 1, alpha: float = 0.0) -> LinearForecaster:
     G = Phi1.T @ Phi1
     reg = alpha * np.eye(G.shape[0])
     reg[-1, -1] = 0.0  # don't penalize intercept
-    W = np.linalg.solve(G + reg, Phi1.T @ Y)   # (D*p+1, D)
+    # lstsq (not solve) so a zero-variance book level / collinear lags at alpha=0 give the
+    # minimum-norm solution instead of a Singular matrix crash; identical when well-conditioned.
+    W = np.linalg.lstsq(G + reg, Phi1.T @ Y, rcond=None)[0]   # (D*p+1, D)
     A = W[:-1].T                                 # (D, D*p)
     c = W[-1]                                    # (D,)
     return LinearForecaster(A=A, c=c, p=p, mu=mu, sd=sd, kind=f"var{p}")

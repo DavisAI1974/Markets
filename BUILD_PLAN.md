@@ -1,5 +1,36 @@
 # Rebuild the Markets signal core around Operator Discovery (OD)
 
+## S40 ARCHITECTURE UPDATE (2026-06-22) — the GATE reframe + the honest edge map (read `SESSION_HANDOFF_2026-06-22_S40.md` + `KICKOFF_2026-06-23_S41.md`; full detail in PART 5 below)
+The S36b architecture (DIPOLE = FILTER, 1-sec price-reversal = TIMING) is confirmed and sharpened by reverse-engineering the turn second-by-second. The plan's central open problem is now precisely located: **TIMING is solved, the FILTER is missing.** What changed for how the plan executes:
+- **THE GATE TARGET IS SWING MAGNITUDE, NOT WIN/LOSE (Greg, load-bearing).** The signal we need is "which turns precede a tradeable move (big |Δprice|) vs a dud" — cut by **BIG vs SMALL price CHANGE**, never by P&L sign and never over the ~breakeven middle. The population is ~breakeven (~43% win-rate, winners bigger than losers), so any feature averaged over it → ~0. This is the missing FILTER half of PART 4's architecture; the TIMING half (1-sec price reversal, ~1–6 bps to the turn) is done.
+- **THE TURN IS 94–99.6% SYMMETRIC (= time-reversible = NO edge).** The whole edge is the small **ODD/asymmetric remainder, and it lives in the FLOW (~5.7%), not price (~0.4%)**. Price near a turn is a symmetric trap; flow carries the prediction. This is the data-level reason the entropy/price-only views are blind (reinforces Part E) and the gate must be built on the flow STATE.
+- **THE FIRST REAL SWING-SIZE GATE INPUT: lean DEPTH → move SIZE.** On the corrected big-vs-small cut, a **deeper dipole lean at the pivot predicts a bigger swing in ALL 4 cells** (corr +0.045..+0.067, full population, consistent sign). Weak but real and on the right target. **dive STEEPNESS is DEAD** (the −0.13 on winners was SURVIVORSHIP; +0.004 full pop; ~0 per cell) — set steepness down, build the gate on dipole STATE (lean DEPTH + the S36 divergence/exhaustion 64% read), not dive sharpness.
+- **THREE LOAD-BEARING LESSONS (do not re-learn):** (1) **never pool sign-blind** — buy/sell are perfect mirrors (lean@turn buy −0.43 / sell +0.43 → pooled ~0; a pooled directional signal → ~0 is the FINGERPRINT of the anti-symmetry, sign-align always); (2) **cut by big-vs-small |move|**, not the breakeven middle, not win/lose; (3) **winner-only data = survivorship** — you need the NEGATIVES (dud/small-move turns) to learn which turns are big.
+- **THE COEFF BASIS + FINGERPRINT (TASK 2/3 of S39 done).** 14-cell 1-sec deterministic coeff basis committed (bybit×5 coins + kraken×{btc,eth}; coinbase=REST dud). Per-cell distinctive fingerprint predictor built (`odcore/fingerprint_predictor.py`). The coeff **"merge" is solved**: the deterministic decoder = L2norm(mean of magnitude embeds) → **~91% of every coeff is one shared shape; the distinctiveness is the centered ~9% residual** ("distinct" = unique vectors, not separated cosine — fix = subtract the global mean). **BUY/SELL = perfect mirror (−1.000)** in the residual. This motivates the **FNO decoder upgrade** (a trained decoder should make coeffs that don't collapse onto one shared shape; `aws/train_fno/`, prefill_embeds persisted as the X's).
+- **VALIDATION DISCIPLINE HELD (S38 KILL):** the S37 single-window gated-swing deploy map (btc_kraken +466 / eth_coinbase +392 / eth_bybit_perp +670) was **OVERFIT** — the multi-regime re-run stands aside on 7/9 cells (only 2/9 clear, both thin). No capital on one window. The flip detector (`odcore/flip_detector.py`, leakage PASS) confirms: TIMING 1–4 bps to turn, but **net-of-cost LOSES everywhere** (over-fires the breakeven middle, gross ~0.2 bps << fees). The gate is the fix.
+- **AWS package done + run:** Bedrock IDs (agent layer only), venue-agnostic discovery, Lightsail runbook, FNO prefill_embeds → S3; Greg ran the Lightsail job to produce the 14-cell basis. Heavy/GPU jobs (FNO training, multi-cell discovery) run on AWS; the signal core stays model-free in-container.
+
+## S39 ARCHITECTURE UPDATE (2026-06-22) — read with `SESSION_HANDOFF_2026-06-22_S39.md` + `KICKOFF_2026-06-23_S40.md`
+Three architecture facts changed how the plan below is executed:
+- **The coeff DECODER is the DETERMINISTIC tier, and it lives IN markets — runs in-container.** The committed
+  128-dim `operator_coefficients` are unit-L2 + all-non-negative = `OperatorDecoder.prefill` (mean of spectral-
+  magnitude embeds) + `refine` (L2-normalize), NOT a trained FNO. The pipeline is vendored: `odcore/od_refrag_adapter.py`
+  (+ `markets_adapter.py` with `np.fft.rfft`). So "the original scripts live in the separate refrag repo" (Context
+  below) is **superseded for the decoder** — no `E:\refrag`, no torch, no checkpoint needed to produce coeffs.
+  cs100_v2 config: 30-min window → 1-sec log-returns → `SpectralChunker(192,16)` → encoder `d_enc=128` →
+  `OperatorQuery.from_spectral_target([0.1,0.25])` → top_k=8/expand_budget=4 → `prefill`+`refine(8)`. The trained
+  **FNO+Bayesian decoder is the future GPU upgrade** (manifest tier; `aws/train_fno/`), not a prerequisite.
+- **1-SECOND is the standard** (Greg). Minute-bar aggregation (`load_minute_bars`/`MarketChunker`) smooths away the
+  sub-minute flow that carries the timing edge — it is the regime-classifier path, NOT the coeff/dipole path. All
+  labeling, oracle exits, micros, and coeff discovery are 1-sec-native off `odcore.io.load_bins`.
+- **Data layer: free-historical backfill exists** (`backfill_bybit.py` + binance_vision/coinbase/kraken;
+  `backfill_oneshot.yml` 5-coin gzip matrix). Multi-regime 1-sec history is now buildable in minutes; **S3 is the
+  durable off-git store** (`aws/`), retiring the gzip-data-branch band-aid.
+- **Validation discipline held:** the multi-regime gated-swing re-run KILLed the single-window deploy map (7/9
+  stand aside) — net-of-cost edge NOT established; the coeff fingerprint (this plan's core) is the complementary lever.
+- **NEW TOOLS:** `_build_alt_winner_labels.py` (1-sec oracle winner labels), `_run_alt_coeffs.py` (in-container
+  128-dim discovery, cap-100/cell, unique source_id), `odcore/od_refrag_adapter.py` (vendored engine), `aws/*`.
+
 ## Context
 
 `CLAUDE (5).md` (committed as the new master research log, identical to the upload) is a
@@ -501,3 +532,45 @@ real trades, not no-trade), eth_kraken cuts −1207 → −170. So KEEP the regi
 fire it only on the cells/instances where it earns its place (the bleeders), leave the winning cells
 un-gated. Confirm the per-cell on/off on the multi-regime 1-sec history before deploying; do not tune off
 the single window. (Things don't have to work on all cells all the time — that's the whole per-cell rule.)
+
+---
+
+# PART 5 — S37→S40 (2026-06-22): the multi-regime KILL, the coeff basis + fingerprint, the ANATOMY OF A TURN, and the GATE reframe (branch `claude/crypto-backfill-validation-31tubb`)
+
+Self-contained pickup for the S37→S40 arc. Full detail: `SESSION_HANDOFF_2026-06-22_S40.md` (+ S37/S38/S39 handoffs). The S36b architecture (PART 4) is intact and sharpened; this part records what reverse-engineering the turn taught us and the resulting reframe of the gate.
+
+## What got built (all committed)
+- **AWS package** (`aws/`): Bedrock model IDs (agent/LLM layer only — signal core stays model-free, FNO training = SageMaker/EC2 GPU); `_run_alt_coeffs.py --save-embeds` persists prefill_embeds (the FNO training X's, S3-bound); venue-agnostic discovery (one job does all 15 coin×venue cells); `aws/LIGHTSAIL_SETUP.md` from-zero runbook; `aws/train_fno/train_fno.py` loader.
+- **14-cell 1-sec deterministic coeff basis** (`_alt_labels/coeffs/alt_coeff_index.json.gz`, 1400 coeffs): bybit_perp × {btc,eth,sol,doge,xrp} + kraken × {btc,eth}. coinbase = REST walk-back dud (~86 bins). Produced by Greg on Lightsail.
+- **Per-cell distinctive fingerprint predictor** (`odcore/fingerprint_predictor.py`, `_build_fingerprint_predictor.py`): per-cell winner signature = stack(128-dim coeff + 6 micros + 5 flow), never pooled/separation-graded. The whitened/centered STACK beats every single tool on leave-one-out cell-ID.
+- **Causal flip detector** (`odcore/flip_detector.py`, leakage PASS) + harness (`_flip_backtest.py`, `_flip_gate_test.py`, `_flip_gate_split.py`).
+- Turn-anatomy tools: `_render_turn.py`, `_turn_coeff_trajectory.py`, `_turn_quadratic.py`, `_turn_accel.py`, `_turn_symmetry.py`, `_dipole_price_overlay.py`, `_dd_vs_price.py`, `_diag_coeff_merge.py`, `_diag_flip_states.py`, `_preentry_flow_scan.py`.
+
+## The coeff "merge" — diagnosed (`_diag_coeff_merge.py`)
+The deterministic decoder = L2norm(mean of spectral-magnitude embeds) → **~91% of every coeff is one shared common shape**; the distinctive part is the **centered ~9% residual**. "Distinct" means unique vectors, NOT separated cosine (that is why raw cross-cell centroids sit at ~0.998). FIX: the predictor **centers** coeffs (subtract global mean) → cells separate (0.998 → −0.105). **BUY/SELL are perfect mirrors in the residual (cosine −1.000).** This is the concrete motivation for the **FNO decoder upgrade** — a trained decoder should produce coeffs that don't collapse onto one shared shape.
+
+## The S38 multi-regime KILL (validation discipline)
+Re-ran `_info_dipole_gated_swing.py` (leakage PASS 9/9) on the multi-regime backfill set: **only 2/9 cells clear net>0 at maker (both thin); 7/9 stand aside, including all 5 bybit_perp.** The S37 single-window deploy map (btc_kraken +466 / eth_coinbase +392 / eth_bybit_perp +670 / btc_bybit_perp +16) was **OVERFIT to one window.** No capital on that evidence. (This is the `never-tune-off-one-window` rule paying off.)
+
+## ANATOMY OF A TURN (the core finding — reverse-engineered second-by-second on 1-sec bins, turn-aligned, sign-aligned)
+- **33% of moves are reversals/flips** (won against the prior move), localized to the recent foreground (~last 10 min).
+- **At the turn = a capitulation CLIMAX** (`_render_turn.py`): ~2× volume + peak flow strength in the DYING direction, then the imbalance flips. NOT a quiet exhaustion-to-zero.
+- **The coeff/operator FLIPS through the turn** (`_turn_coeff_trajectory.py`): buy/sell-axis projection negative before → crosses 0 AT the turn → positive after. CONFIRMS at the turn; does NOT lead.
+- **The turn is a QUADRATIC** (`_turn_quadratic.py`): vertex = the turn; **sharpness does NOT predict quality** (gentle turns pay ~76 bps vs sharp ~58; corr −0.09). → dive STEEPNESS is not the gate.
+- **Acceleration LEADS** (`_turn_accel.py`): the lean begins decelerating ~3 s BEFORE the rate-zero turn — the only LEADING signal (everything else is coincident). Small, smoothed, noise-sensitive.
+- **SYMMETRY** (`_turn_symmetry.py`): the turn is **94–99.6% a perfect mirror** (time-reversible = NO edge). The edge is the small **ODD/asymmetric remainder, in the FLOW (~5.7%), not price (~0.4%)**. (The odd part == the leading rate/accel asymmetry — two lenses on one edge.)
+- **Dipole↔price COUPLING** (`_dipole_price_overlay.py`): corr(dipole dive rate, price rate) = **+0.26 but COINCIDENT** (peaks at lag 0). Coupled, no lead → dipole = confirmation/FILTER, price = TIMING. (Independently confirms PART 4's split.)
+
+## The honest net-of-cost verdict (what the detector says today)
+`odcore/flip_detector.py` (causal, leakage PASS) + `_flip_backtest.py`: trailing-W flow-lean ZigZag, flip when the lean retraces past `reversal` (the "did the defense fail" gate). **TIMING is excellent (1–4 bps to the turn). Net-of-cost LOSES everywhere** (gross ~0.2 bps/swing << fees; fires 24k–100k times = over-trades the breakeven middle). FILTERING is the missing half. **dive STEEPNESS gate is EXHAUSTED** (`_dd_vs_price.py`, `_flip_gate_*`): −0.13 on winners was SURVIVORSHIP → +0.004 full population; per-cell ~0 (not Simpson's); mixed sign on the corrected cut. Set steepness down.
+
+## GREG'S REFRAME (S40 close, load-bearing) — the cut is BIG vs SMALL price CHANGE
+When Greg said "big winners vs losers" he meant **big vs small price MOVES (|swing|)**, not P&L sign. That is the correct gate target (which turns precede a tradeable move vs a dud) and it pulled a real signal out of the noise the win/lose and steepness cuts missed:
+- **lean DEPTH → move SIZE:** big-move turns (top 25% |swing|) have a **DEEPER lean at the pivot in ALL 4 cells** (diff +0.020..+0.078; corr(depth,|move|) +0.045..+0.067). Weak (~0.05–0.07) but **consistent in sign across every cell, on the full population, on the right target.** Deeper dipole dive → bigger swing. **This is the first real swing-size gate INPUT** (steepness is noise; DEPTH is the signal).
+
+## S41 plan (next phase — extends Phased execution, gate-first)
+1. **Predict |MOVE| (big vs small swing) per cell, via the dipole STATE.** Build per-cell big-|move| vs small-|move| labels, then test the STRONGER features through that cut, sign-aligned, never pooled: dipole STATE = **lean DEPTH + divergence/exhaustion (the S36 64% read, NOT dive-steepness)** + the coeff fingerprint + volume climax. Deploy per cell where it separates big from small moves.
+2. **Loser coeffs** (greenlit): discover loser-onset coeffs (mirror of `_build_alt_winner_labels` + `_run_alt_coeffs`) so win-vs-lose fingerprint distinctiveness is testable — the SEPARATE second question (Greg's "buy/sell AND win/lose" bar), not conflated with move-size.
+3. **The swing-size GATE** off whatever separates the tails (timing is solved; filter is missing) + re-run net-of-cost. **FNO decoder training** on AWS GPU (prefill_embeds ready; the merge finding says the deterministic coeff is shape-collapsed → the FNO is the real distinctiveness upgrade).
+4. **OD-BOOK committed T_test** once `data/btc-book` is multi-day (S37 exploratory panel = KILL-lean; lstsq fix in).
+5. **Cross-domain falsification (Greg, serious):** run the SAME turn operator (lean → even/odd → odd leads) on a NON-market contested flow (World Cup momentum / win-probability around the cooling break — an exogenous intervention). 3–4 unrelated domains with the same even-mirror + odd-edge = a real "law." Frame, not claim — test it, don't declare it.

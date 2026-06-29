@@ -1,0 +1,902 @@
+{
+  "data": "od_book.jsonl.gz",
+  "n_test": 251890,
+  "fee_bps": 22.0,
+  "models": {
+    "champion": {
+      "1": {
+        "hit_rate_all": 0.06195238341002116,
+        "hit_rate_nonzero_pred": 0.06195238341002116,
+        "n_scored": 251887,
+        "magnitude": {
+          "pred_abs_bps": {
+            "p50": 0.023646101853676008,
+            "p75": 0.03926513735683754,
+            "p90": 0.05948553392025727,
+            "p95": 0.07911418178488933,
+            "p99": 0.1605067138526656
+          },
+          "real_abs_bps": {
+            "p50": 0.0,
+            "p75": 0.0,
+            "p90": 0.0,
+            "p95": 0.07874803407923053,
+            "p99": 0.710103304425467
+          }
+        },
+        "deadband_curve_taker22": {
+          "0.0": {
+            "gross_bps": 4629.626490302794,
+            "n_flips": 32602,
+            "fee_bps": 717244.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -712614.3735096972,
+            "gross_per_flip": 0.1420043706000489
+          },
+          "0.5": {
+            "gross_bps": 56.42111359119184,
+            "n_flips": 417,
+            "fee_bps": 9174.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -9117.578886408808,
+            "gross_per_flip": 0.13530243067432096
+          },
+          "1.0": {
+            "gross_bps": 10.077321194206235,
+            "n_flips": 104,
+            "fee_bps": 2288.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -2277.9226788057936,
+            "gross_per_flip": 0.09689731917505995
+          },
+          "2.0": {
+            "gross_bps": 7.226845843391061,
+            "n_flips": 8,
+            "fee_bps": 176.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -168.77315415660894,
+            "gross_per_flip": 0.9033557304238826
+          },
+          "5.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 2,
+            "fee_bps": 44.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -39.630954774643584,
+            "gross_per_flip": 2.184522612678208
+          },
+          "10.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "20.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        },
+        "execution_models": {
+          "taker_fee22_db0": {
+            "gross_bps": 4629.626490302794,
+            "n_flips": 32602,
+            "fee_bps": 717244.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -712614.3735096972,
+            "gross_per_flip": 0.1420043706000489
+          },
+          "taker_fee22_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "maker_fee0_db0": {
+            "gross_bps": 4629.626490302794,
+            "n_flips": 32602,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 4629.626490302794,
+            "gross_per_flip": 0.1420043706000489
+          },
+          "maker_rebate1bps_db0": {
+            "gross_bps": 4629.626490302794,
+            "n_flips": 32602,
+            "fee_bps": 0.0,
+            "credit_bps": 32602.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 37231.62649030279,
+            "gross_per_flip": 0.1420043706000489
+          },
+          "maker_halfspread_db0": {
+            "gross_bps": 4629.626490302794,
+            "n_flips": 32602,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 347.00611835625034,
+            "net_bps": 4976.632608659044,
+            "gross_per_flip": 0.1420043706000489
+          },
+          "maker_fee0_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        }
+      },
+      "5": {
+        "hit_rate_all": 0.168641790037438,
+        "hit_rate_nonzero_pred": 0.168641790037438,
+        "n_scored": 251883,
+        "magnitude": {
+          "pred_abs_bps": {
+            "p50": 0.08894954161293626,
+            "p75": 0.14157400687269228,
+            "p90": 0.1954899857229738,
+            "p95": 0.23265030686218935,
+            "p99": 0.35867194883915815
+          },
+          "real_abs_bps": {
+            "p50": 0.0,
+            "p75": 0.0,
+            "p90": 0.45195459306264035,
+            "p95": 0.7575901977620629,
+            "p99": 1.5227508827331022
+          }
+        },
+        "deadband_curve_taker22": {
+          "0.0": {
+            "gross_bps": 4679.832717974026,
+            "n_flips": 20624,
+            "fee_bps": 453728.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -449048.16728202597,
+            "gross_per_flip": 0.22691198205847685
+          },
+          "0.5": {
+            "gross_bps": 107.39419536760053,
+            "n_flips": 585,
+            "fee_bps": 12870.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -12762.6058046324,
+            "gross_per_flip": 0.1835798211411975
+          },
+          "1.0": {
+            "gross_bps": 40.81989844372913,
+            "n_flips": 310,
+            "fee_bps": 6820.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -6779.1801015562705,
+            "gross_per_flip": 0.13167709175396494
+          },
+          "2.0": {
+            "gross_bps": 9.796375032884441,
+            "n_flips": 80,
+            "fee_bps": 1760.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -1750.2036249671155,
+            "gross_per_flip": 0.12245468791105552
+          },
+          "5.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 2,
+            "fee_bps": 44.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -39.630954774643584,
+            "gross_per_flip": 2.184522612678208
+          },
+          "10.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 2,
+            "fee_bps": 44.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -39.630954774643584,
+            "gross_per_flip": 2.184522612678208
+          },
+          "20.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        },
+        "execution_models": {
+          "taker_fee22_db0": {
+            "gross_bps": 4679.832717974026,
+            "n_flips": 20624,
+            "fee_bps": 453728.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -449048.16728202597,
+            "gross_per_flip": 0.22691198205847685
+          },
+          "taker_fee22_dbBest": {
+            "deadband": 20.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "maker_fee0_db0": {
+            "gross_bps": 4679.832717974026,
+            "n_flips": 20624,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 4679.832717974026,
+            "gross_per_flip": 0.22691198205847685
+          },
+          "maker_rebate1bps_db0": {
+            "gross_bps": 4679.832717974026,
+            "n_flips": 20624,
+            "fee_bps": 0.0,
+            "credit_bps": 20624.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 25303.832717974026,
+            "gross_per_flip": 0.22691198205847685
+          },
+          "maker_halfspread_db0": {
+            "gross_bps": 4679.832717974026,
+            "n_flips": 20624,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 274.2024785874909,
+            "net_bps": 4954.035196561517,
+            "gross_per_flip": 0.22691198205847685
+          },
+          "maker_fee0_dbBest": {
+            "deadband": 20.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        }
+      },
+      "10": {
+        "hit_rate_all": 0.2509508571610065,
+        "hit_rate_nonzero_pred": 0.2509508571610065,
+        "n_scored": 251878,
+        "magnitude": {
+          "pred_abs_bps": {
+            "p50": 0.14827040557723278,
+            "p75": 0.23573758527500496,
+            "p90": 0.32151406717067704,
+            "p95": 0.37755434990991205,
+            "p99": 0.5206391842072181
+          },
+          "real_abs_bps": {
+            "p50": 0.0,
+            "p75": 0.17692558797248864,
+            "p90": 0.769779203200339,
+            "p95": 1.1195855981489684,
+            "p99": 2.0624704398012064
+          }
+        },
+        "deadband_curve_taker22": {
+          "0.0": {
+            "gross_bps": 4649.3629085807515,
+            "n_flips": 17422,
+            "fee_bps": 383284.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -378634.63709141925,
+            "gross_per_flip": 0.26686734637703774
+          },
+          "0.5": {
+            "gross_bps": 283.2661502702294,
+            "n_flips": 1769,
+            "fee_bps": 38918.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -38634.73384972977,
+            "gross_per_flip": 0.16012784074066105
+          },
+          "1.0": {
+            "gross_bps": 42.97123548454351,
+            "n_flips": 295,
+            "fee_bps": 6490.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -6447.028764515457,
+            "gross_per_flip": 0.1456652050323509
+          },
+          "2.0": {
+            "gross_bps": 11.602166715469764,
+            "n_flips": 154,
+            "fee_bps": 3388.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -3376.3978332845304,
+            "gross_per_flip": 0.07533874490564782
+          },
+          "5.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 6,
+            "fee_bps": 132.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -127.63095477464358,
+            "gross_per_flip": 0.7281742042260694
+          },
+          "10.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 2,
+            "fee_bps": 44.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -39.630954774643584,
+            "gross_per_flip": 2.184522612678208
+          },
+          "20.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        },
+        "execution_models": {
+          "taker_fee22_db0": {
+            "gross_bps": 4649.3629085807515,
+            "n_flips": 17422,
+            "fee_bps": 383284.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -378634.63709141925,
+            "gross_per_flip": 0.26686734637703774
+          },
+          "taker_fee22_dbBest": {
+            "deadband": 20.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "maker_fee0_db0": {
+            "gross_bps": 4649.3629085807515,
+            "n_flips": 17422,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 4649.3629085807515,
+            "gross_per_flip": 0.26686734637703774
+          },
+          "maker_rebate1bps_db0": {
+            "gross_bps": 4649.3629085807515,
+            "n_flips": 17422,
+            "fee_bps": 0.0,
+            "credit_bps": 17422.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 22071.36290858075,
+            "gross_per_flip": 0.26686734637703774
+          },
+          "maker_halfspread_db0": {
+            "gross_bps": 4649.3629085807515,
+            "n_flips": 17422,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 248.05026486571873,
+            "net_bps": 4897.41317344647,
+            "gross_per_flip": 0.26686734637703774
+          },
+          "maker_fee0_dbBest": {
+            "deadband": 20.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        }
+      }
+    },
+    "challenger": {
+      "1": {
+        "hit_rate_all": 0.062384621797696604,
+        "hit_rate_nonzero_pred": 0.062384621797696604,
+        "n_scored": 251889,
+        "magnitude": {
+          "pred_abs_bps": {
+            "p50": 0.026669093562923914,
+            "p75": 0.043706020100044686,
+            "p90": 0.0617078612294775,
+            "p95": 0.07380231509699298,
+            "p99": 0.1119718157329534
+          },
+          "real_abs_bps": {
+            "p50": 0.0,
+            "p75": 0.0,
+            "p90": 0.0,
+            "p95": 0.07874803407923053,
+            "p99": 0.710103304425467
+          }
+        },
+        "deadband_curve_taker22": {
+          "0.0": {
+            "gross_bps": 4623.92087481442,
+            "n_flips": 15182,
+            "fee_bps": 334004.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -329380.07912518556,
+            "gross_per_flip": 0.3045659909639323
+          },
+          "0.5": {
+            "gross_bps": 48.35510146836697,
+            "n_flips": 126,
+            "fee_bps": 2772.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -2723.644898531633,
+            "gross_per_flip": 0.383770646574341
+          },
+          "1.0": {
+            "gross_bps": 10.40056257506805,
+            "n_flips": 26,
+            "fee_bps": 572.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -561.5994374249319,
+            "gross_per_flip": 0.4000216375026173
+          },
+          "2.0": {
+            "gross_bps": 7.226845843391061,
+            "n_flips": 6,
+            "fee_bps": 132.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -124.77315415660894,
+            "gross_per_flip": 1.2044743072318436
+          },
+          "5.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 2,
+            "fee_bps": 44.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -39.630954774643584,
+            "gross_per_flip": 2.184522612678208
+          },
+          "10.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "20.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        },
+        "execution_models": {
+          "taker_fee22_db0": {
+            "gross_bps": 4623.92087481442,
+            "n_flips": 15182,
+            "fee_bps": 334004.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -329380.07912518556,
+            "gross_per_flip": 0.3045659909639323
+          },
+          "taker_fee22_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "maker_fee0_db0": {
+            "gross_bps": 4623.92087481442,
+            "n_flips": 15182,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 4623.92087481442,
+            "gross_per_flip": 0.3045659909639323
+          },
+          "maker_rebate1bps_db0": {
+            "gross_bps": 4623.92087481442,
+            "n_flips": 15182,
+            "fee_bps": 0.0,
+            "credit_bps": 15182.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 19805.92087481442,
+            "gross_per_flip": 0.3045659909639323
+          },
+          "maker_halfspread_db0": {
+            "gross_bps": 4623.92087481442,
+            "n_flips": 15182,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 210.2116517502711,
+            "net_bps": 4834.132526564691,
+            "gross_per_flip": 0.3045659909639323
+          },
+          "maker_fee0_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        }
+      },
+      "5": {
+        "hit_rate_all": 0.1666038072930107,
+        "hit_rate_nonzero_pred": 0.1666038072930107,
+        "n_scored": 251885,
+        "magnitude": {
+          "pred_abs_bps": {
+            "p50": 0.11310596276990309,
+            "p75": 0.18481571671089977,
+            "p90": 0.2559993110076375,
+            "p95": 0.30200520108702184,
+            "p99": 0.403120135203488
+          },
+          "real_abs_bps": {
+            "p50": 0.0,
+            "p75": 0.0,
+            "p90": 0.45195459306264035,
+            "p95": 0.7575901977620629,
+            "p99": 1.5227508827331022
+          }
+        },
+        "deadband_curve_taker22": {
+          "0.0": {
+            "gross_bps": 4558.662375855409,
+            "n_flips": 14706,
+            "fee_bps": 323532.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -318973.33762414457,
+            "gross_per_flip": 0.30998656166567445
+          },
+          "0.5": {
+            "gross_bps": 80.26053395465027,
+            "n_flips": 445,
+            "fee_bps": 9790.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -9709.73946604535,
+            "gross_per_flip": 0.18036075045988825
+          },
+          "1.0": {
+            "gross_bps": 30.819403244315424,
+            "n_flips": 160,
+            "fee_bps": 3520.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -3489.1805967556847,
+            "gross_per_flip": 0.1926212702769714
+          },
+          "2.0": {
+            "gross_bps": 7.226845843391061,
+            "n_flips": 10,
+            "fee_bps": 220.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -212.77315415660894,
+            "gross_per_flip": 0.7226845843391061
+          },
+          "5.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 2,
+            "fee_bps": 44.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -39.630954774643584,
+            "gross_per_flip": 2.184522612678208
+          },
+          "10.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "20.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        },
+        "execution_models": {
+          "taker_fee22_db0": {
+            "gross_bps": 4558.662375855409,
+            "n_flips": 14706,
+            "fee_bps": 323532.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -318973.33762414457,
+            "gross_per_flip": 0.30998656166567445
+          },
+          "taker_fee22_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "maker_fee0_db0": {
+            "gross_bps": 4558.662375855409,
+            "n_flips": 14706,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 4558.662375855409,
+            "gross_per_flip": 0.30998656166567445
+          },
+          "maker_rebate1bps_db0": {
+            "gross_bps": 4558.662375855409,
+            "n_flips": 14706,
+            "fee_bps": 0.0,
+            "credit_bps": 14706.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 19264.66237585541,
+            "gross_per_flip": 0.30998656166567445
+          },
+          "maker_halfspread_db0": {
+            "gross_bps": 4558.662375855409,
+            "n_flips": 14706,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 214.33459173969896,
+            "net_bps": 4772.996967595108,
+            "gross_per_flip": 0.30998656166567445
+          },
+          "maker_fee0_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        }
+      },
+      "10": {
+        "hit_rate_all": 0.24845561378434175,
+        "hit_rate_nonzero_pred": 0.24845561378434175,
+        "n_scored": 251880,
+        "magnitude": {
+          "pred_abs_bps": {
+            "p50": 0.1836281114637046,
+            "p75": 0.30121693528872145,
+            "p90": 0.4172228193598777,
+            "p95": 0.49294167127216865,
+            "p99": 0.6521287874210574
+          },
+          "real_abs_bps": {
+            "p50": 0.0,
+            "p75": 0.17692558797248864,
+            "p90": 0.769779203200339,
+            "p95": 1.1195855981489684,
+            "p99": 2.0624704398012064
+          }
+        },
+        "deadband_curve_taker22": {
+          "0.0": {
+            "gross_bps": 4509.2628490315965,
+            "n_flips": 14578,
+            "fee_bps": 320716.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -316206.7371509684,
+            "gross_per_flip": 0.309319718001893
+          },
+          "0.5": {
+            "gross_bps": 831.7507943912972,
+            "n_flips": 4225,
+            "fee_bps": 92950.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -92118.2492056087,
+            "gross_per_flip": 0.1968640933470526
+          },
+          "1.0": {
+            "gross_bps": 41.15406125691834,
+            "n_flips": 205,
+            "fee_bps": 4510.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -4468.845938743081,
+            "gross_per_flip": 0.20075151832643093
+          },
+          "2.0": {
+            "gross_bps": 8.360374749223354,
+            "n_flips": 60,
+            "fee_bps": 1320.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -1311.6396252507766,
+            "gross_per_flip": 0.13933957915372255
+          },
+          "5.0": {
+            "gross_bps": 4.369045225356416,
+            "n_flips": 2,
+            "fee_bps": 44.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -39.630954774643584,
+            "gross_per_flip": 2.184522612678208
+          },
+          "10.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "20.0": {
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        },
+        "execution_models": {
+          "taker_fee22_db0": {
+            "gross_bps": 4509.2628490315965,
+            "n_flips": 14578,
+            "fee_bps": 320716.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": -316206.7371509684,
+            "gross_per_flip": 0.309319718001893
+          },
+          "taker_fee22_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          },
+          "maker_fee0_db0": {
+            "gross_bps": 4509.2628490315965,
+            "n_flips": 14578,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 4509.2628490315965,
+            "gross_per_flip": 0.309319718001893
+          },
+          "maker_rebate1bps_db0": {
+            "gross_bps": 4509.2628490315965,
+            "n_flips": 14578,
+            "fee_bps": 0.0,
+            "credit_bps": 14578.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 19087.2628490316,
+            "gross_per_flip": 0.309319718001893
+          },
+          "maker_halfspread_db0": {
+            "gross_bps": 4509.2628490315965,
+            "n_flips": 14578,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 216.69020496244977,
+            "net_bps": 4725.953053994046,
+            "gross_per_flip": 0.309319718001893
+          },
+          "maker_fee0_dbBest": {
+            "deadband": 10.0,
+            "gross_bps": 0.0,
+            "n_flips": 0,
+            "fee_bps": 0.0,
+            "credit_bps": 0.0,
+            "spread_credit_bps": 0.0,
+            "net_bps": 0.0,
+            "gross_per_flip": 0.0
+          }
+        }
+      }
+    }
+  },
+  "turn_census": {
+    "n_turns_ge_22bps": 12,
+    "test_len": 251890,
+    "turns_per_hour": 0.6419696961780151,
+    "swing_amp_bps": {
+      "p50": 48.93600932521114,
+      "p75": 57.68075735072653,
+      "p90": 80.72381974977505,
+      "p95": 103.80314054531325,
+      "p99": 122.26659718174383
+    },
+    "step_ret_bps": {
+      "p50": 0.0,
+      "p75": 0.0,
+      "p90": 0.0,
+      "p95": 0.07874803407759114,
+      "p99": 0.7101033044229152
+    },
+    "spread_bps": {
+      "p50": 0.001596782291231104,
+      "p75": 0.0016006620981962685,
+      "p90": 0.0016066064947609397,
+      "p95": 0.0016084194961933633,
+      "p99": 0.23849117441531337
+    },
+    "_note": "turn_census recomputed after label_turns fix (pre-fix value was 0 turns due to the direction=0 bug)"
+  }
+}

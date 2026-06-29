@@ -1,0 +1,155 @@
+{
+  "note": "10 equal time-slices of 5.83h btc_coinbase book; full 15-pair agnostic 5-step coupler per slice; no pair robustly structured (best 3/10 z>2); part-0 ask_depth~volume was a fluke (mean sz -0.22)",
+  "pairs": [
+    {
+      "pair": "ask_depth~taker_sell",
+      "n_parts": 10,
+      "sz_mean": 2.802,
+      "sz_sd": 6.122,
+      "parts_z_gt2": 3,
+      "parts_structured": 1,
+      "leadlag_median": 1.0,
+      "leadlag_sign_mean": 0.3
+    },
+    {
+      "pair": "bid_depth~ask_depth",
+      "n_parts": 10,
+      "sz_mean": 1.779,
+      "sz_sd": 2.682,
+      "parts_z_gt2": 3,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": 0.0
+    },
+    {
+      "pair": "bid_depth~volume",
+      "n_parts": 10,
+      "sz_mean": 0.508,
+      "sz_sd": 1.513,
+      "parts_z_gt2": 2,
+      "parts_structured": 1,
+      "leadlag_median": 1.0,
+      "leadlag_sign_mean": 0.7
+    },
+    {
+      "pair": "bid_depth~taker_buy",
+      "n_parts": 10,
+      "sz_mean": 0.211,
+      "sz_sd": 0.905,
+      "parts_z_gt2": 1,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": 0.0
+    },
+    {
+      "pair": "bid_depth~taker_sell",
+      "n_parts": 10,
+      "sz_mean": 0.13,
+      "sz_sd": 1.145,
+      "parts_z_gt2": 1,
+      "parts_structured": 1,
+      "leadlag_median": 2.5,
+      "leadlag_sign_mean": 0.2
+    },
+    {
+      "pair": "ask_depth~taker_buy",
+      "n_parts": 10,
+      "sz_mean": -0.138,
+      "sz_sd": 0.868,
+      "parts_z_gt2": 1,
+      "parts_structured": 0,
+      "leadlag_median": 0.5,
+      "leadlag_sign_mean": 0.1
+    },
+    {
+      "pair": "ask_depth~volume",
+      "n_parts": 10,
+      "sz_mean": -0.22,
+      "sz_sd": 0.953,
+      "parts_z_gt2": 1,
+      "parts_structured": 1,
+      "leadlag_median": 1.0,
+      "leadlag_sign_mean": 0.4
+    },
+    {
+      "pair": "bid_depth~abs_return",
+      "n_parts": 10,
+      "sz_mean": -0.636,
+      "sz_sd": 0.344,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 1.0,
+      "leadlag_sign_mean": 0.2
+    },
+    {
+      "pair": "ask_depth~abs_return",
+      "n_parts": 10,
+      "sz_mean": -0.742,
+      "sz_sd": 0.256,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 1.0,
+      "leadlag_sign_mean": 0.5
+    },
+    {
+      "pair": "taker_buy~taker_sell",
+      "n_parts": 10,
+      "sz_mean": -1.623,
+      "sz_sd": 1.496,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": 0.0
+    },
+    {
+      "pair": "taker_sell~abs_return",
+      "n_parts": 10,
+      "sz_mean": -3.509,
+      "sz_sd": 2.512,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": 0.1
+    },
+    {
+      "pair": "abs_return~volume",
+      "n_parts": 10,
+      "sz_mean": -4.869,
+      "sz_sd": 4.376,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": -0.1
+    },
+    {
+      "pair": "taker_buy~volume",
+      "n_parts": 10,
+      "sz_mean": -6.99,
+      "sz_sd": 5.255,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": 0.0
+    },
+    {
+      "pair": "taker_buy~abs_return",
+      "n_parts": 10,
+      "sz_mean": -7.294,
+      "sz_sd": 7.492,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": 0.1
+    },
+    {
+      "pair": "taker_sell~volume",
+      "n_parts": 10,
+      "sz_mean": -16.316,
+      "sz_sd": 9.832,
+      "parts_z_gt2": 0,
+      "parts_structured": 0,
+      "leadlag_median": 0.0,
+      "leadlag_sign_mean": 0.0
+    }
+  ]
+}

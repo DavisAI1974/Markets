@@ -16,9 +16,11 @@ Discipline (load-bearing):
   3. PER-CELL deploy decision: pick the best config {un-gated | ER-gated | C-gated} that clears net>0
      at the maker floor WITH real trades (guards against the degenerate "trade less = lose less"
      no-trade wall on a single window).
-  4. THIS RUNS ON ONE in-git 1-sec window -> the per-cell map is PROVISIONAL. The whole point is to
-     have the unified challenger built and ready to point at the local 1-sec MULTI-REGIME history
-     (NEXT #1); do NOT treat this window's selection as deployment-grade.
+  4. Runs on whatever realbins/ holds. With the free-historical backfill (Bybit/Binance dumps +
+     Coinbase/Kraken REST) materialized, this is now the MULTI-COIN / MULTI-REGIME re-run (S36b
+     NEXT #1) — the data span per cell is recorded in the result JSON config. The KILL gate is
+     honest: deploy ONLY cells that clear net>0 at the maker floor across the span; stand aside
+     elsewhere. Do NOT size real capital off a cell that only clears thin/marginal.
 
 Run: python _info_dipole_gated_swing.py
 """
@@ -119,8 +121,11 @@ def main():
 
     deploy_map = {}
     out = {}
+    spans = {}
     for s in sorted(series):
         ts, p, bv, sv = series[s]
+        if len(ts):
+            spans[s] = {"n": int(len(ts)), "span_days": round(float(ts[-1] - ts[0]) / 86400, 2)}
         cut = int(len(p) * IS_FRAC)
         seg_is = (ts[:cut], p[:cut], bv[:cut], sv[:cut])
         seg_oos = (ts[cut:], p[cut:], bv[cut:], sv[cut:])
@@ -135,7 +140,7 @@ def main():
               f"{str(d['precision']):>5s} {str(d['bps_to_turn']):>8s} {d['net_maker']:>+7.0f}   {verdict}")
     print("-" * 100)
 
-    print("\nPER-CELL DEPLOY MAP (PROVISIONAL — single window; confirm on the multi-regime 1-sec history):")
+    print("\nPER-CELL DEPLOY MAP (on the materialized realbins span; deploy ONLY net>0 cells, stand aside else):")
     for s in sorted(deploy_map):
         print(f"  {s:16s} -> {deploy_map[s]['verdict']}")
     n_deploy = sum(1 for v in deploy_map.values() if v["config"])
@@ -144,7 +149,10 @@ def main():
 
     with open("_info_dipole_gated_swing_results.json", "w") as f:
         json.dump({"config": {"min_calls": MIN_CALLS, "thin_recall": THIN_RECALL,
-                              "is_frac": IS_FRAC, "window": "single in-git 1-sec; PROVISIONAL"},
+                              "is_frac": IS_FRAC,
+                              "data": "realbins/ (free-historical backfill: Bybit/Binance dumps + "
+                                      "Coinbase/Kraken REST); multi-coin / multi-regime",
+                              "cell_spans": spans},
                    "deploy_map": deploy_map, "per_cell": out}, f, indent=2)
     print("\nWrote _info_dipole_gated_swing_results.json")
 
