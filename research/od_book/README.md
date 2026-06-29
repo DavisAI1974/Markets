@@ -47,6 +47,30 @@ anticipated KILL-modes #1 (linear model absorbs the dynamics) and #2 (no edge
 after fees) showing early. **Not a verdict** — the gated decision runs ONCE on the
 multi-day `data/btc-book` dataset via `run_experiment.py --commit-ttest`.
 
+### GATED VERDICT (S43, 2026-06-29) — **KILL** (one-shot pass committed; sentinel frozen)
+Single T_test pass on the multi-day `data/btc-book` dataset (1,259,450 states, 45
+dims, 0 dropped, **46.7 h** = 2803.5 min, 100 ms grid; data_hash `7d69fda097989dc9`,
+sha `bb1b394`). Result in `od_book_result.json`; sentinel `.ttest_committed.json`
+locks the pre-registration (a second pass is refused).
+
+| KILL-gate leg | result | test detail |
+|---|---|---|
+| 1. forecast skill (mid R², ≥1 horizon) | **PASS** | OD challenger (DMD r43) BEATS the VAR(3)/ridge champion at all 3 horizons OOS: chal +0.0120/+0.0049/−0.0043 vs champ −0.0045/−0.0086/−0.0168. The strong linear champion overfit val → negative OOS; the rank-truncated operator generalized. |
+| 2. turn net-of-22 bps fee | **FAIL** | both net **−39.6 bps**; sub-bp moves never clear the fee floor (deadband 5 bps lets 2 flips through, both lose). KILL *for trading*. |
+| 3. operator stable (no wander) | **PASS** | top-k spectral drift 0.040 ≪ 0.15; radius ≈ 0.961 ± 0.008 across 6 walk-forward windows. |
+
+**Verdict: KILL** (miss any one leg). This is anticipated **KILL-mode #2** (prettier
+forecast, no tradeable edge after fees) — explicitly NOT mode #1: OD did not merely
+tie the linear model, it out-forecast it OOS and recovered a *stable* operator.
+**Salvage (reusable, not discarded):** the DMD operator wins `mid_price` at all 3
+horizons + `spread` at h10 and is stable enough to serve as a feature/gate/
+spread-adjuster in the wider architecture. Per the gate, the dynamics-recoverer
+thesis for the book is KILLED as a standalone strategy; the validated dipole
+*detector* stands; **threads 2 (regime operator) and 3 (cross-asset transfer) are
+NOT built.** Caveat: single venue/coin (btc_coinbase), ~2 days — a multi-venue
+re-confirm is the only thing that would revisit this, and it would still need to
+clear the same frozen gate.
+
 ## x(t) state vector (45-dim default, K=10)
 
 `mid_ret, spread, tob_imb, depth_imb, flow` + per-level `bid_sz_k / ask_sz_k /
@@ -57,9 +81,9 @@ by design — dimensionality is the enemy of clean operator recovery.
 ## Sequencing (spec §6)
 
 1. ✅ x(t) extractor + walk-forward splitter; freeze splits.
-2. ⬜ Fit champion (VAR + ridge). Record OOS skill = the bar.
-3. ⬜ OD recovery on T_train, tune on T_val; inspect operator spectrum.
+2. ✅ Fit champion (VAR + ridge). Record OOS skill = the bar.
+3. ✅ OD recovery on T_train, tune on T_val; inspect operator spectrum.
 4. ✅ Freeze metrics + KILL gate in writing (`KILL_GATE.md`).
-5. ⬜ Single T_test pass. Both competitors. Score.
-6. ⬜ Log to MASTER_DISCOVERIES.json regardless of outcome.
-7. ⬜ If it passes: consider thread 2 / thread 3. Not before.
+5. ✅ Single T_test pass. Both competitors. Score. → **KILL** (S43; `od_book_result.json`).
+6. ✅ Logged in-repo (`od_book_result.json` + this README; no E:\ `MASTER_DISCOVERIES.json` in cloud).
+7. ⛔ Does NOT pass → threads 2 / 3 NOT built (gate held).
