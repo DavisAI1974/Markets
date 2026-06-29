@@ -93,24 +93,32 @@ def label_turns(mid: np.ndarray, theta_bps: float = 22.0):
         return []
     theta = theta_bps / 1e4
     turns = []
-    last_ext_i = 0
-    last_ext_p = mid[0]
+    # Track the running high and low (with indices) independently. A peak
+    # confirms when price retraces >= theta below the running high; a valley
+    # confirms when it rises >= theta above the running low. NOTE: a single
+    # `last_ext` with direction-gated updates is WRONG while direction is
+    # unknown (0) — both `>=0` and `<=0` branches fire, so the extreme chases
+    # price in both directions and no reversal ever registers (it returned 0
+    # turns on real data). Separate hi/lo fixes that. This is a turn-timing /
+    # FN diagnostic only — the KILL-gate leg 2 scores swing PnL, which never
+    # called this, so the frozen verdict is unaffected.
+    hi = lo = mid[0]
+    hi_i = lo_i = 0
     direction = 0  # +1 rising leg, -1 falling leg, 0 unknown
     for i in range(1, len(mid)):
         p = mid[i]
-        if direction >= 0 and p > last_ext_p:
-            last_ext_p, last_ext_i = p, i
-        elif direction <= 0 and p < last_ext_p:
-            last_ext_p, last_ext_i = p, i
-        # reversal check
-        if direction >= 0 and p <= last_ext_p * (1 - theta):
-            turns.append((last_ext_i, "peak", last_ext_p))
+        if p > hi:
+            hi, hi_i = p, i
+        if p < lo:
+            lo, lo_i = p, i
+        if direction >= 0 and p <= hi * (1 - theta):
+            turns.append((hi_i, "peak", hi))
             direction = -1
-            last_ext_p, last_ext_i = p, i
-        elif direction <= 0 and p >= last_ext_p * (1 + theta):
-            turns.append((last_ext_i, "valley", last_ext_p))
+            lo, lo_i = p, i
+        elif direction <= 0 and p >= lo * (1 + theta):
+            turns.append((lo_i, "valley", lo))
             direction = +1
-            last_ext_p, last_ext_i = p, i
+            hi, hi_i = p, i
     return turns
 
 
