@@ -58,6 +58,9 @@ def main():
     ap.add_argument("--k", type=float, default=1.5, help="gate threshold in sigma")
     ap.add_argument("--split", type=float, default=0.6, help="train fraction")
     ap.add_argument("--out", default="_wire_quiet_gate_book_results.json")
+    ap.add_argument("--write-registry", action="store_true",
+                    help="persist this cell's fitted QuietFloor (phi/c/sigma/K/k) to the per-cell "
+                         "registry (odcore/quiet_floor_registry.json) for production wiring")
     a = ap.parse_args()
 
     floor, imb, quiet, sret, gated = build_live_gated_dipole(a.path, a.K, a.k, a.split)
@@ -112,6 +115,14 @@ def main():
     with open(a.out, "w") as f:
         json.dump(rec, f, indent=2)
     print(f"\nwrote {a.out}")
+
+    if a.write_registry:
+        from odcore.quiet_registry import CellGateParams, save as save_gate
+        save_gate(CellGateParams(cell=a.cell, phi=floor.phi, c=floor.c, sigma=floor.sigma,
+                                 K=a.K, k=a.k, r2_quiet=floor.r2_quiet, n_quiet=floor.n_quiet,
+                                 hours=round(n * 0.1 / 3600, 2), source=a.path))
+        print(f"registry: wrote gate params for cell '{a.cell}' "
+              f"(odcore/quiet_floor_registry.json)")
     print("READING: gate = WHEN (fires on shocks, stands aside through the quiet relaxation = trends), "
           "level = DIRECTION (OOS hit retained). Wired per cell; ready for the multi-venue book.")
 
