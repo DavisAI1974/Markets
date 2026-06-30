@@ -23,6 +23,9 @@ from odcore.swing_maker import simulate_swing_maker
 
 FLOW_W, TRAIN_FRAC, WFLIP, REV, DIVW = 20, 0.6, 600, 0.1, 600
 CELLS = [("sol", 1), ("doge", 1), ("xrp", 1), ("eth", 1), ("btc", 10)]
+# S48 cover-grace (cells, 0.1s grid): the smarter last-option that rests the maker cover before crossing as
+# taker. Per cell (deploy rule): ~300=30s saturates sol/xrp/eth/btc; doge's longer falling-knife wants ~600.
+GRACE = {"sol": 300, "doge": 600, "xrp": 300, "eth": 300, "btc": 300}
 LEDGER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "paper_ledger.jsonl")
 
 
@@ -31,7 +34,7 @@ def _z(x):
     return (x - x.mean()) / (s + 1e-12)
 
 
-def cell_trades(coin, K, maker_fee, taker_fee, alpha, roll):
+def cell_trades(coin, K, maker_fee, taker_fee, alpha, roll, grace):
     path = f"/tmp/{coin}_coinbase_book.jsonl.gz"
     if not os.path.exists(path):
         return []
@@ -48,7 +51,7 @@ def cell_trades(coin, K, maker_fee, taker_fee, alpha, roll):
     allf = detect_flips(lean, REV)[0]
     piv = {int(c): int(p) for (c, p, s) in allf}
     res = simulate_swing_maker(mid, bb, ba, buy, sell, allf, half_spread_bps=hs,
-                               maker_fee_bps=maker_fee, taker_fee_bps=taker_fee)
+                               maker_fee_bps=maker_fee, taker_fee_bps=taker_fee, cover_grace=grace)
     # per-leg causal features at the flip (decision) cell
     legs = res.legs
     clmx, size_score = [], []
@@ -82,7 +85,8 @@ def cell_trades(coin, K, maker_fee, taker_fee, alpha, roll):
                         entry=round(float(l.open_px), 6), exit=round(float(l.close_px), 6),
                         net_bps=round(float(l.net_bps), 4), size_mult=round(size_mult, 3),
                         sized_net=round(float(l.net_bps) * size_mult, 4),
-                        swing_bps=round(float(l.swing_bps), 3), maker_close=bool(l.close_maker)))
+                        swing_bps=round(float(l.swing_bps), 3), maker_close=bool(l.close_maker),
+                        grace=int(grace)))
     return out
 
 
@@ -97,13 +101,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--maker", type=float, default=0.0); ap.add_argument("--taker", type=float, default=5.0)
     ap.add_argument("--alpha", type=float, default=1.0); ap.add_argument("--roll", type=int, default=200)
+    ap.add_argument("--grace", type=int, default=-1, help="cover-grace cells; -1 = per-cell GRACE map")
     a = ap.parse_args()
     existing = load_ledger()
     seen = {(r["cell"], r["ts"]) for r in existing}
     new = []
     for coin, K in CELLS:
+        grace = a.grace if a.grace >= 0 else GRACE.get(coin, 300)
         try:
-            for tr in cell_trades(coin, K, a.maker, a.taker, a.alpha, a.roll):
+            for tr in cell_trades(coin, K, a.maker, a.taker, a.alpha, a.roll, grace):
                 if (tr["cell"], tr["ts"]) not in seen:
                     new.append(tr); seen.add((tr["cell"], tr["ts"]))
         except Exception as e:

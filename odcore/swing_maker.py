@@ -95,7 +95,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                          half_spread_bps: float = 0.0, maker_fee_bps: float = 0.0,
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
                          confirm=None, confirm_lookback: int = 0, entry_gate=None,
-                         arm: str = "") -> SwingResult:
+                         cover_grace: int = 0, arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
     NO time/fill window (Greg S46: "take the time windows out, they are irrelevant"). The conviction quote
@@ -112,6 +112,17 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     ACTIONABLE only if BOTH gates pass at the confirm cell. A non-actionable flip is NOT trusted as a real
     turn: we FLATTEN any open position (taker, last resort — caps the wrong-tail/inventory) and do NOT open
     a new one, waiting for the next confirmed+exhausted turn. Both default None = flips only.
+
+    cover_grace (cells, S48): the SMARTER LAST-OPTION. When the cover quote does not fill before the next
+    turn (the forced-taker case — the doge cost sink, 36-47% of exits), DON'T cross the spread immediately.
+    Keep the maker cover resting up to `cover_grace` cells past the turn and take the first opposing trade
+    (still maker, EARNING the half-spread instead of crossing it); cross as taker only if it is still
+    unfilled at the grace cap. Cover-ONLY — we do not open a late new leg (S47: late entries degrade), so
+    inventory stays capped to one swing; intervening flips during the cover are skipped (no leg overlap).
+    Default 0 == the prior immediate-taker behavior (bit-identical). On the S46/S47 window this drops the
+    taker rate to ~0% and lifts net-of-fee on all 5 cells (doge flips -510 -> +1011), saturating ~G=300
+    (30s); per-cell deploy (doge wants ~600). Faithful to the existing fill model (same `_next_positive`,
+    fixed limit at the post cell) so it is an apples-to-apples execution improvement, not new optimism.
     """
     mid = np.asarray(mid, float)
     bb = np.asarray(best_bid_sz, float); ba = np.asarray(best_ask_sz, float)
@@ -129,10 +140,13 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     legs: list[SwingLeg] = []
     pos = None            # open leg: dict(side, open_idx, open_px)
     n_fills = 0           # flips that produced a maker fill (opened a leg)
+    hold_until = -1       # cells through which we are committed (a fill/cover in progress); skip flips <= it
 
     flips = list(flips)
     for k, (ci, _pivot, s) in enumerate(flips):
         ci = int(ci)
+        if ci <= hold_until:   # a maker fill / grace cover is resolving past this flip — do not act yet
+            continue
         if ci <= 0 or ci >= n - 1:
             continue
         # the quote RESTS until the next flip (the strategy "rides it down keeping the best offer" until the
@@ -166,17 +180,36 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 legs.append(SwingLeg(osd, fl, oi, op, fi, limit, True, gross, net, swing))
             # open the new leg at the maker fill
             pos = dict(side=int(s), flip_idx=int(ci), open_idx=int(fi), open_px=float(limit))
+            hold_until = int(fi)                  # no-op at cover_grace=0 (fi < next_ci <= the next flip)
         else:
-            # no climax volume to fill the passive quote -> skip the turn; flatten any open leg as taker.
+            # no climax volume to fill the passive quote -> skip the turn; flatten any open leg.
             # a taker flatten CROSSES the spread: closing a long sells into the bid (mid*(1-hs)), closing a
             # short buys the ask (mid*(1+hs)) — so the half-spread is a real cost on the exit, not free at mid.
             if pos is not None and taker_fallback:
                 fl = pos["flip_idx"]; op = pos["open_px"]; oi = pos["open_idx"]; osd = pos["side"]
-                cpx = mid[ci] * (1.0 - hs) if osd > 0 else mid[ci] * (1.0 + hs)
-                gross = osd * (cpx - op) / op * 1e4
-                net = gross - maker_fee_bps - taker_fee_bps      # maker open + taker close (+ spread crossed in cpx)
-                swing = abs(mid[ci] - mid[fl]) / mid[fl] * 1e4    # anchored on the POST (decision) cell
-                legs.append(SwingLeg(osd, fl, oi, op, ci, float(cpx), False, gross, net, swing))
+                # SMARTER LAST-OPTION (S48): rest the maker cover up to `cover_grace` cells; take the first
+                # opposing trade as a MAKER (earn the half-spread) before resorting to a taker cross.
+                # cover side osd: long(+1)->post ASK lifted by next BUY; short(-1)->post BID hit by next SELL.
+                cf = int(fill_ask[ci]) if osd > 0 else int(fill_bid[ci])
+                cap = min(n - 1, ci + cover_grace)
+                if cover_grace > 0 and cf <= cap:
+                    # maker cover fills within grace: fixed limit at the turn (mid[ci] +/- hs), close idx = cf
+                    cpx = mid[ci] * (1.0 + hs) if osd > 0 else mid[ci] * (1.0 - hs)
+                    gross = osd * (cpx - op) / op * 1e4
+                    net = gross - maker_fee_bps - maker_fee_bps           # both legs maker
+                    swing = abs(mid[cf] - mid[fl]) / mid[fl] * 1e4
+                    legs.append(SwingLeg(osd, fl, oi, op, int(cf), float(cpx), True, gross, net, swing))
+                    hold_until = int(cf)
+                else:
+                    # unfilled within grace (or grace off) -> taker cross. With grace we crossed at the cap
+                    # cell (held then crossed, the realistic downside); without grace, at this turn cell.
+                    xc = cap if cover_grace > 0 else ci
+                    cpx = mid[xc] * (1.0 - hs) if osd > 0 else mid[xc] * (1.0 + hs)
+                    gross = osd * (cpx - op) / op * 1e4
+                    net = gross - maker_fee_bps - taker_fee_bps          # maker open + taker close
+                    swing = abs(mid[xc] - mid[fl]) / mid[fl] * 1e4
+                    legs.append(SwingLeg(osd, fl, oi, op, int(xc), float(cpx), False, gross, net, swing))
+                    hold_until = int(xc)
                 pos = None
 
     nlegs = len(legs)
