@@ -21,19 +21,201 @@ import matplotlib.pyplot as plt
 from _liquidity_dive import build_channels, median_spread_bps
 from odcore import quiet_floor
 from odcore.maker_book import _first_fill_index
+from odcore.flip_detector import lean_series, detect_flips
+from odcore.swing_maker import simulate_swing_maker
 
-FLOW_W, TRAIN_FRAC, FILL_WINDOW, HOLD, QUEUE_FRAC = 20, 0.6, 10, 1, 1.0
+FLOW_W, TRAIN_FRAC, FILL_WINDOW, HOLD, QUEUE_FRAC, KGATE = 20, 0.6, 10, 1, 1.0, 1.5
+# flip-detector operating point = the VALIDATED S40 point (W=60,REV=0.10 on 1-sec bins) scaled to the 100ms
+# book grid: 60s lean = 600 cells. NOT tuned on this one 11.7h window (the RULES line: never tune off one
+# window) — fixed, principled; we report, we do not grid-search for net.
+WFLIP, REV = 600, 0.10
+FEE_FLOOR_BPS = 20.0   # S36b: trade only swings >= ~20 bps (round-trip fee + 2x entry slippage); a GATE, not a knob
 CTX = 60   # context cells each side (6s) so the valley/peak shape is visible
 
 BLUE = "#1414dc"
+
+
+def render_swing(coin, K, path, ctx=CTX):
+    """Maker-at-the-turn re-evaluation (STRATEGY_maker_at_the_turn_S45.md): one-sided quoting gated on the
+    CAUSAL flip detector, with the QuietFloor confirming the shock. Prints the per-cell verdict and renders
+    the swing legs (short=peaks, long=valleys) so we can confirm the S45 losers invert."""
+    ch, g = build_channels(path, K, FLOW_W)
+    imb = ch["depth_imb"]; mid = np.asarray(g["mid"], float)
+    bb, ba = np.asarray(g["bidK"][1], float), np.asarray(g["askK"][1], float)
+    buy, sell = np.asarray(g["buy"], float), np.asarray(g["sell"], float)
+    n = len(mid); cut = int(n * TRAIN_FRAC)
+    hs_bps = median_spread_bps(path) / 2.0
+
+    # QuietFloor shock gate (fit on TRAIN; the kickoff's "floor confirms the shock"). gated_signal != 0 = open.
+    quiet = (buy + sell) <= 0.0
+    qf = quiet_floor.fit(imb, quiet, train_frac=TRAIN_FRAC)
+    confirm = qf.gated_signal(imb, k=KGATE) != 0
+
+    # CAUSAL flips on the trailing flow lean; restrict the executor to the held-out TEST slice
+    lean = lean_series(buy, sell, WFLIP)
+    flips_all, _ = detect_flips(lean, REV)
+    flips = [(ci, pv, sd) for (ci, pv, sd) in flips_all if ci >= cut]
+
+    # swing maker: the quote rests until the NEXT turn, so the fill window is large and the executor caps it
+    # at the next flip internally (a resting quote, not a 1s gate). 3000 cells = 5 min comfortably covers it.
+    res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
+                               fill_window=3000, queue_frac=QUEUE_FRAC,
+                               maker_fee_bps=0.0, taker_fee_bps=0.0, taker_fallback=True,
+                               confirm=confirm, confirm_lookback=WFLIP,
+                               arm=f"{coin}_swing")
+    d = res.as_dict()
+    # the S36b fee-floor GATE: report the subset of legs whose swing cleared ~20 bps (the tradeable scale)
+    big = [l for l in res.legs if l.swing_bps >= FEE_FLOOR_BPS]
+    big_net = float(np.mean([l.net_bps for l in big])) if big else float("nan")
+    big_tot = float(np.sum([l.net_bps for l in big])) if big else 0.0
+    print(f"\n# {coin.upper()}_coinbase MAKER-AT-THE-TURN (K={K}, Wflip={WFLIP}, REV={REV}, floor k={KGATE}, "
+          f"half_sp={hs_bps:.4f} bps, test slice {cut:,}:{n:,})")
+    print(f"#   flips(test)={len(flips)}  legs={d['n_legs']}  maker_fill_rate={100*d['fill_rate']:.0f}%  "
+          f"taker_closes={d['n_taker_closes']}")
+    print(f"#   ALL legs:   gross/leg={d['gross_per_leg_bps']:+.3f}  net/leg={d['net_per_leg_bps']:+.3f}  "
+          f"total_net={d['total_net_bps']:+.1f} bps  win={100*d['win_frac']:.0f}%  "
+          f"mean_swing={d['mean_swing_bps']:.2f} bps")
+    print(f"#   swings>={FEE_FLOOR_BPS:.0f}bps (fee-floor gate): n={len(big)}  net/leg={big_net:+.3f}  "
+          f"total_net={big_tot:+.1f} bps")
+
+    legs = res.legs
+    if not legs:
+        print("#   no closed legs — nothing to render"); return d
+    # render up to 10 legs sampled across net (worst losers .. best winners), each on its mid curve
+    legs_sorted = sorted(legs, key=lambda l: l.net_bps)
+    pick_ix = np.linspace(0, len(legs_sorted) - 1, min(10, len(legs_sorted))).round().astype(int)
+    picks = [legs_sorted[i] for i in pick_ix]
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
+    fig.suptitle(f"{coin.upper()}_coinbase MAKER-AT-THE-TURN — one-sided, flip-gated (K={K}). "
+                 f"Short legs sit at PEAKS, long legs at VALLEYS. o=entry(turn) x=exit(next turn). "
+                 f"Green=net+, Red=net-.", fontsize=12)
+    for ax, l in zip(axes.flat, picks):
+        oi, ei = l.open_idx, l.close_idx
+        lo, hi = max(0, oi - ctx), min(n - 1, ei + ctx)
+        xs = np.arange(lo, hi + 1) - oi
+        ax.plot(xs, mid[lo:hi + 1], color=BLUE, lw=2.4, solid_capstyle="round")
+        col = "#0a8f2a" if l.net_bps > 0 else "#cc1414"
+        ax.scatter([0], [l.open_px], s=80, facecolors="none", edgecolors="k", lw=1.8, zorder=5)
+        ax.scatter([ei - oi], [l.close_px], marker="x", s=95, color=col, lw=2.4, zorder=6)
+        ax.axhline(l.open_px, color=col, ls=":", lw=1.2, alpha=0.8)
+        label = "Short top" if l.side < 0 else "Long valley"
+        ax.annotate(label, xy=(0, l.open_px), xytext=(-ctx * 0.9, l.open_px),
+                    fontsize=12, color=BLUE, weight="bold", va="center")
+        ax.set_title(f"{'ASK/short' if l.side < 0 else 'BID/long'}  hold={ei-oi}c  "
+                     f"net={l.net_bps:+.2f} bps{'' if l.close_maker else ' (taker exit)'}",
+                     fontsize=9, color=col)
+        ax.set_xticks([]); ax.set_yticks([])
+        ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    out = f"_render_trades_{coin}_swing.png"
+    fig.savefig(out, dpi=110)
+    print(f"# wrote {out}")
+    return d
+
+
+def swing_walk(coin, K, kgate, path, ctx=CTX):
+    """Walk-through: the SAME 10 trades the original (floor) render samples, each annotated with what the
+    new MAKER-AT-THE-TURN strategy does at that exact moment. The point (Greg): the S45 losers were BIDs
+    posted at peaks (bought the falling knife); under maker-at-the-turn the same peak shows an OFFER ->
+    short the top -> cover the valley. Prints a side-by-side table + a paired render."""
+    ch, g = build_channels(path, K, FLOW_W)
+    imb = ch["depth_imb"]; mid = np.asarray(g["mid"], float)
+    bb, ba = np.asarray(g["bidK"][1], float), np.asarray(g["askK"][1], float)
+    buy, sell = np.asarray(g["buy"], float), np.asarray(g["sell"], float)
+    n = len(mid); cut = int(n * TRAIN_FRAC); hs_bps = median_spread_bps(path) / 2.0
+    quiet = (buy + sell) <= 0.0
+    qf = quiet_floor.fit(imb, quiet, train_frac=TRAIN_FRAC)
+    gated = qf.gated_signal(imb, k=kgate)
+
+    # --- ORIGINAL floor-signal fills (identical to the default render) ---
+    side = np.zeros(n); side[cut:] = gated[cut:]
+    qa = np.where(side > 0, bb, ba) * QUEUE_FRAC
+    filled_at = np.where(side > 0, _first_fill_index(qa, sell, FILL_WINDOW),
+                         np.where(side < 0, _first_fill_index(qa, buy, FILL_WINDOW), -1))
+    filled = (side != 0) & (filled_at >= 0) & ((filled_at + HOLD) <= (n - 1))
+    idx = np.where(filled)[0]; fi = filled_at; ei = np.clip(fi + HOLD, 0, n - 1)
+    hs_price = (hs_bps / 1e4) * mid
+    o_entry = np.where(side > 0, mid - hs_price, mid + hs_price)
+    o_gross = side[idx] * (mid[ei[idx]] - o_entry[idx]) / mid[idx] * 1e4
+    order = np.argsort(o_gross)
+    picks = order[np.linspace(0, len(idx) - 1, 10).round().astype(int)]
+
+    # --- NEW maker-at-the-turn legs (flip-gated + floor-confirmed) ---
+    confirm = gated != 0
+    lean = lean_series(buy, sell, WFLIP)
+    flips_all, _ = detect_flips(lean, REV)
+    flips = [(ci, pv, sd) for (ci, pv, sd) in flips_all if ci >= cut]
+    res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
+                               fill_window=3000, queue_frac=QUEUE_FRAC, maker_fee_bps=0.0,
+                               taker_fee_bps=0.0, taker_fallback=True, confirm=confirm,
+                               confirm_lookback=WFLIP, arm=f"{coin}_swing")
+
+    def leg_at(t):  # the swing leg governing cell t: from the flip that DECIDED the side (flip_idx, before
+        for l in res.legs:           # the fill lag) through the cover, so the few-cell fill lag doesn't read as flat
+            if l.flip_idx <= t <= l.close_idx:
+                return l
+        return None
+
+    print(f"\n# {coin.upper()}_coinbase WALK-THROUGH — same 10 floor-signal trades, OLD vs MAKER-AT-THE-TURN")
+    print(f"# (K={K}, gate k={kgate}, Wflip={WFLIP}, REV={REV}, half_sp={hs_bps:.3f} bps; test slice {cut:,}:{n:,})")
+    print(f"#{'':2}{'cell':>8}{'OLD side':>10}{'OLD gross':>11}   ||  NEW maker-at-the-turn")
+    sumold = sumnew = 0.0
+    for r, k in enumerate(picks):
+        t = int(idx[k]); osd = "BID/long" if side[idx][k] > 0 else "ASK/short"; og = float(o_gross[k])
+        sumold += og
+        l = leg_at(t)
+        if l is None:
+            newtxt = "flat (no confirmed turn here)"
+        else:
+            nsd = "SHORT(ask)" if l.side < 0 else "LONG(bid)"
+            ex = "maker" if l.close_maker else "taker"
+            newtxt = (f"{nsd}  entry {l.open_px:.5f} @c{l.open_idx} -> exit {l.close_px:.5f} @c{l.close_idx} "
+                      f"({ex})  net {l.net_bps:+.2f} bps  swing {l.swing_bps:.1f}")
+            sumnew += l.net_bps
+        flag = "  <-- inverted" if (l is not None and (side[idx][k] > 0) == (l.side < 0)) else ""
+        print(f"#{r:2}{t:>8}{osd:>10}{og:>+11.2f}   ||  {newtxt}{flag}")
+    print(f"# {'':18}OLD sum {sumold:+.2f} bps  ||  NEW sum (legs covering these moments) {sumnew:+.2f} bps")
+
+    # paired render: each panel = mid curve with the OLD marker (o post) and the NEW leg entry/exit
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
+    fig.suptitle(f"{coin.upper()}_coinbase — same 10 trades: OLD floor fill (black o, dotted = old entry) "
+                 f"vs NEW maker-at-the-turn (green/red entry o -> exit x). Old BIDs at peaks become SHORTs.",
+                 fontsize=11)
+    for ax, k in zip(axes.flat, picks):
+        t = int(idx[k]); l = leg_at(t)
+        lo = max(0, (l.open_idx if l else t) - ctx); hi = min(n - 1, (l.close_idx if l else int(ei[t])) + ctx)
+        xs = np.arange(lo, hi + 1) - t
+        ax.plot(xs, mid[lo:hi + 1], color=BLUE, lw=2.2, solid_capstyle="round")
+        ax.scatter([0], [mid[t]], s=70, facecolors="none", edgecolors="k", lw=1.8, zorder=5)
+        ax.axhline(o_entry[t], color="k", ls=":", lw=1.0, alpha=0.6)
+        if l is not None:
+            col = "#0a8f2a" if l.net_bps > 0 else "#cc1414"
+            ax.scatter([l.open_idx - t], [l.open_px], s=80, color=col, zorder=6)
+            ax.scatter([l.close_idx - t], [l.close_px], marker="x", s=95, color=col, lw=2.4, zorder=6)
+            ax.set_title(f"OLD {'BID' if side[idx][k]>0 else 'ASK'} {o_gross[k]:+.1f} | NEW "
+                         f"{'SHORT' if l.side<0 else 'LONG'} {l.net_bps:+.1f} bps", fontsize=9, color=col)
+        else:
+            ax.set_title(f"OLD {'BID' if side[idx][k]>0 else 'ASK'} {o_gross[k]:+.1f} | NEW flat",
+                         fontsize=9, color="#888")
+        ax.set_xticks([]); ax.set_yticks([]); ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    out = f"_render_trades_{coin}_swingwalk.png"
+    fig.savefig(out, dpi=110); print(f"# wrote {out}")
 
 
 def main():
     coin = sys.argv[1] if len(sys.argv) > 1 else "sol"
     K = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     kgate = float(sys.argv[3]) if len(sys.argv) > 3 else 1.5
-    mode = sys.argv[4] if len(sys.argv) > 4 else "floor"   # floor | both (floor AND at-a-turn)
+    mode = sys.argv[4] if len(sys.argv) > 4 else "floor"   # floor | confirm | opposing | both | swing | swingwalk
     path = f"/tmp/{coin}_coinbase_book.jsonl.gz"
+
+    if mode == "swing":
+        render_swing(coin, K, path)
+        return
+    if mode == "swingwalk":
+        swing_walk(coin, K, kgate, path)
+        return
 
     ch, g = build_channels(path, K, FLOW_W)
     imb = ch["depth_imb"]; mid = np.asarray(g["mid"], float)
