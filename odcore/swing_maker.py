@@ -55,6 +55,7 @@ class SwingLeg:
     gross_bps: float     # side * (close - open)/open * 1e4  (both half-spreads already in open/close px)
     net_bps: float       # gross - fees (maker on the open leg; maker or taker on the close leg)
     swing_bps: float     # |mid move| open->close (the raw swing size, for the fee-floor gate)
+    size: float = 1.0    # conviction size multiplier (set by size_legs; 1.0 = flat/unsized)
 
 
 @dataclass
@@ -226,3 +227,47 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
         mean_swing_bps=float(np.mean([l.swing_bps for l in legs])),
         fill_rate=n_fills / max(1, len(flips)), legs=legs,
     )
+
+
+def size_legs(legs, quality, size_axis, *, alpha: float = 1.0, roll: int = 200,
+              lo_clip: float = 0.25, hi_clip: float = 4.0, warmup: int = 20) -> float:
+    """Two-factor conviction SIZING (S47, validated OOS S49) — set leg.size in place, return the sized total.
+
+    The edge is sizing, NOT gating (S47/Greg): keep EVERY leg, concentrate capital on the high-conviction
+    turns. `E[net] = P(reversal) x E[|move|]`, so conviction = rank(QUALITY axis) x rank(SIZE axis):
+      - QUALITY axis (predicts win/lose): clmx_60 = vm(60)/vm(600) — the only sign-consistent net lever.
+      - SIZE axis (predicts |move|): z(vol_60)+z(volat_120)+z(runup)+z(dive_depth) — sign-consistent on all 5.
+    Both are CAUSAL features at the leg's flip (decision) cell; `quality[i]`/`size_axis[i]` are one value per
+    leg, in chronological order. Normalization is CAUSAL ROLLING (trailing `roll` PRIOR legs only) so it is
+    leakage-free by construction (verified by assert_no_leakage on the underlying features, S49).
+
+    pass 1: conviction[i] = frac(prior quality < quality[i]) * frac(prior size_axis < size_axis[i])  (0..1)
+    pass 2: leg.size = clip(1 + alpha * z(conviction over trailing roll), lo_clip, hi_clip), centered on 1
+            (matched-capital: mean size ~ 1). Warmup (< `warmup` priors) -> flat size 1.0.
+
+    Bit-identical to the inline pass that paper_trade.py used before this was extracted. Deploy per cell
+    (S49: lift positive OOS on all 5; biggest on doge +0.82/leg). Returns sum(leg.net_bps * leg.size).
+    """
+    q = np.asarray(quality, float); sa = np.asarray(size_axis, float)
+    m = len(legs)
+    if m == 0:
+        return 0.0
+    conv = np.full(m, lo_clip)
+    for i in range(m):
+        lo = max(0, i - roll)
+        if i - lo >= warmup:
+            pr = slice(lo, i)
+            rq = float((q[pr] < q[i]).mean())
+            rs = float((sa[pr] < sa[i]).mean())
+            conv[i] = rq * rs
+    total = 0.0
+    for i, l in enumerate(legs):
+        lo = max(0, i - roll)
+        if i - lo >= warmup:
+            pri = conv[lo:i]; sd = pri.std()
+            zc = (conv[i] - pri.mean()) / (sd + 1e-9)
+            l.size = float(np.clip(1.0 + alpha * zc, lo_clip, hi_clip))
+        else:
+            l.size = 1.0
+        total += l.net_bps * l.size
+    return total

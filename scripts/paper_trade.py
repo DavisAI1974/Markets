@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from _liquidity_dive import build_channels, median_spread_bps
 from _birth_probe import load_book
 from odcore.flip_detector import lean_series, detect_flips
-from odcore.swing_maker import simulate_swing_maker
+from odcore.swing_maker import simulate_swing_maker, size_legs
 
 FLOW_W, TRAIN_FRAC, WFLIP, REV, DIVW = 20, 0.6, 600, 0.1, 600
 CELLS = [("sol", 1), ("doge", 1), ("xrp", 1), ("eth", 1), ("btc", 10)]
@@ -61,30 +61,16 @@ def cell_trades(coin, K, maker_fee, taker_fee, alpha, roll, grace):
         v60 = vm(ci, 60); vlt = float(np.std(sret[max(0, ci - 120):ci + 1])) * 1e4
         rnp = abs(mid[ci] - mid[lo]) / mid[lo] * 1e4; dp = abs(lean[p])
         clmx.append(cx); size_score.append(v60 + vlt + rnp + dp)   # crude SIZE proxy (predicts |move|)
-    # pass 1: CAUSAL conviction = rank(quality) x rank(size) vs the trailing `roll` PRIOR legs only (0..1)
-    conv = np.full(len(legs), 0.25)
-    for i in range(len(legs)):
-        lo = max(0, i - roll)
-        if i - lo >= 20:
-            pr = list(range(lo, i))
-            rq = float((np.array([clmx[j] for j in pr]) < clmx[i]).mean())
-            rs = float((np.array([size_score[j] for j in pr]) < size_score[i]).mean())
-            conv[i] = rq * rs                              # E[net] ~ P(reversal)*E[|move|]
+    # two-factor conviction SIZING — extracted to odcore.swing_maker.size_legs (CAUSAL rolling rank+z;
+    # leakage-clean per assert_no_leakage, S49). Sets leg.size in place; bit-identical to the old inline pass.
+    size_legs(legs, clmx, size_score, alpha=alpha, roll=roll)
     out = []
     for i, l in enumerate(legs):
-        # pass 2: matched-capital, CAUSAL size multiplier — trailing z of conv, centered on 1 (mean size ~= 1)
-        lo = max(0, i - roll)
-        if i - lo >= 20:
-            pr = conv[lo:i]; sd = pr.std()
-            zc = (conv[i] - pr.mean()) / (sd + 1e-9)
-            size_mult = float(np.clip(1.0 + alpha * zc, 0.25, 4.0))
-        else:
-            size_mult = 1.0                                  # warmup: flat
         ts = t0 + int(l.open_idx) * 0.1
         out.append(dict(cell=f"{coin}_coinbase", coin=coin, ts=round(ts, 3), side=int(l.side),
                         entry=round(float(l.open_px), 6), exit=round(float(l.close_px), 6),
-                        net_bps=round(float(l.net_bps), 4), size_mult=round(size_mult, 3),
-                        sized_net=round(float(l.net_bps) * size_mult, 4),
+                        net_bps=round(float(l.net_bps), 4), size_mult=round(l.size, 3),
+                        sized_net=round(float(l.net_bps) * l.size, 4),
                         swing_bps=round(float(l.swing_bps), 3), maker_close=bool(l.close_maker),
                         grace=int(grace)))
     return out
