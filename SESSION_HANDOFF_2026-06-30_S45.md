@@ -113,3 +113,26 @@ swing-diagram style; "the dipole flip is nailed — are we using it?"
   is trend-CONTINUATION liquidity provision, not swing-reversal.
 - Files: `_maker_flip_floor.py` (opposing version — flip to confirming), `_flip_debug.py` (the per-condition
   autopsy), `_hold_sweep.py`, `_render_trades.py` (+`confirm`/`opposing` modes). Renders gitignored.
+
+## S45 FINAL — THE STRATEGY (supersedes "flip to confirming"): MAKER-AT-THE-TURN / asymmetric conviction quoting
+The confirm-vs-opposing result was for a SYMMETRIC hold=1 maker. Walking the losers one-by-one (`_render_one.py`)
+with Greg surfaced the real strategy, a different execution model entirely. Full spec:
+`STRATEGY_maker_at_the_turn_S45.md`. In brief:
+- A symmetric two-sided passive maker is at the counterparty's mercy — mid-trend you are the adversely-selected
+  victim (loser #1: posted a BID at a peak, filled by the sell flush, −9.98 bps).
+- **Be a maker ONLY at the turns, ONE-SIDED, skewing the quote with the alpha:** at a PEAK (flip=top) post the
+  best OFFER + pull the bid → euphoric buyers lift it → SHORT the top (maker, +spread); ride down keeping the
+  best offer, bid PULLED (never catch the knife); at the VALLEY (flip=bottom) post the best BID + pull the offer
+  → capitulation sellers hit it → cover the bottom (maker). BOTH legs maker; the S40 climax aggressor (~2x vol AT
+  the turn) is the adversely-selected victim on both ends; you never cross the spread (taker only as fallback).
+- Loser #1 under this logic: post the OFFER at the peak → short ~75.09 → cover at the ~74.96 valley ≈ **+16 bps**
+  instead of −9.98. Same instant, same book, correct execution.
+- **S46 BUILD = wire it** (new `odcore/swing_maker.py` or extend `maker_book.py`): position state machine
+  {flat,short,long}; one-sided quoting that swaps sides at each flip; direction from the flip detector at a causal
+  price extreme; hold to the NEXT turn; maker-both-legs + taker fallback. Then re-evaluate the SAME SOL losers
+  (expect them to invert) and produce the per-cell verdict. Validation gates in the spec (flip marks the extreme
+  in time? enough climax volume to fill the passive quote? round-trip net of two maker legs vs the flip's ~36%
+  wrong-tail; trade only swings ≳ 20 bps per the S36b fee floor). PROVISIONAL on one 11.7h window — confirm as the
+  book accrues.
+- Renders for the build are committed in `docs/renders/` (`_render_trades_sol_{floor,confirm,opposing}.png`,
+  `_loser_sol_floor_0.png`) — gitignore overridden so any session has them.
