@@ -82,3 +82,77 @@ def make_signal_at(W: int, reversal: float):
         _, pos = detect_flips(ln, reversal)
         return int(pos[-1])
     return signal_at
+
+
+# ---------------------------------------------------------------------------------------------------------
+# S47 job #2 — ENTRY TIMING: the S36b two-tool split (the kickoff's "biggest remaining edge").
+#
+# PROBLEM: detect_flips confirms a flip only after the lean RETRACES `reversal` past its extremum, and the
+# executor posts the entry at that LATE confirm cell -> entries sit 6-10 bps off the true price extreme
+# (the "money left on the table"). The lean is doing BOTH the FILTER (which turns are real + direction) AND
+# the TIMING, so the timing lags.
+#
+# FIX (S36b): keep the lean as the FILTER (regime/direction); add a fast CAUSAL PRICE-REVERSAL as the
+# TIMING. Within each lean regime we ARM for the side it is hunting (d==1 buying-climax -> hunt a peak/SHORT;
+# d==-1 selling-climax -> hunt a valley/LONG) and FIRE the entry at the first price reversal -- price
+# retraces `eps_bps` from the regime's running price extremum -> lands near the true turn, EARLIER than the
+# lean's confirm (early-arm). If no price reversal fires before the lean confirms, we FALL BACK to entering
+# at confirm (== the S46 baseline timing), so eps_bps -> inf recovers detect_flips exactly. The lean confirm
+# still bounds the regime (lean-confirms / flips the hunted side). One entry per regime.
+# CAUSAL by construction (every decision uses data <= t) -> passes odcore.leakage.assert_no_leakage.
+# ---------------------------------------------------------------------------------------------------------
+def retime_flips(mid: np.ndarray, bv: np.ndarray, sv: np.ndarray, W: int, reversal: float, eps_bps: float):
+    """Early-arm + price-reversal entry timing. Returns (entries, pos):
+       entries = list of (entry_idx, pivot_idx, side)  side +1 long / -1 short  (drop-in for the executor's
+                 flip list -- entry_idx replaces confirm_idx so the executor posts EARLIER/nearer the extreme)
+       pos     = held side per cell (for odcore.leakage)."""
+    mid = np.asarray(mid, float)
+    lean = lean_series(np.asarray(bv, float), np.asarray(sv, float), W)
+    n = len(lean)
+    pos = np.zeros(n, dtype=np.int8)
+    entries: list = []
+    if n < 2:
+        return entries, pos
+    d = 1; lean_ext = lean[0]; lean_exti = 0      # lean zigzag (== detect_flips) = the FILTER
+    px_ext = mid[0]; fired = False; cur = 0       # regime price extremum + one-fire-per-regime guard
+    eps = eps_bps / 1e4
+    for t in range(1, n):
+        x = lean[t]
+        hunt = -1 if d == 1 else 1                # side this regime is hunting (peak->short / valley->long)
+        # track the regime's running price extremum and test the price reversal for the hunted side
+        if hunt < 0:
+            if mid[t] > px_ext: px_ext = mid[t]
+            reversed_ = px_ext > 0 and mid[t] <= px_ext * (1.0 - eps)
+        else:
+            if mid[t] < px_ext and mid[t] > 0: px_ext = mid[t]
+            reversed_ = px_ext > 0 and mid[t] >= px_ext * (1.0 + eps)
+        if (not fired) and reversed_:             # FIRE: early entry at the price reversal (near the extreme)
+            entries.append((t, lean_exti, hunt)); fired = True; cur = hunt
+        # lean zigzag + confirm (the FILTER; also the fallback entry timing when no reversal fired)
+        confirmed = False; conf_side = 0
+        if d == 1:
+            if x > lean_ext: lean_ext = x; lean_exti = t
+            elif x <= lean_ext - reversal: confirmed = True; conf_side = -1
+        else:
+            if x < lean_ext: lean_ext = x; lean_exti = t
+            elif x >= lean_ext + reversal: confirmed = True; conf_side = 1
+        if confirmed:
+            if not fired:                         # no price reversal this regime -> baseline (confirm) timing
+                entries.append((t, lean_exti, conf_side)); cur = conf_side
+            d = conf_side; lean_ext = x; lean_exti = t
+            px_ext = mid[t]; fired = False        # reset the regime for the new hunted side
+        pos[t] = cur
+    return entries, pos
+
+
+def make_retimed_signal(W: int, reversal: float, eps_bps: float):
+    """signal_at(i, ts, p, bv, sv) -> retimed side as of i (for odcore.leakage; recomputes causally).
+    p is the price/mid series; bv/sv the taker buy/sell volumes."""
+    def signal_at(i, ts, p, bv, sv):
+        i = int(i)
+        if i < W:
+            return 0
+        _, pos = retime_flips(np.asarray(p[:i + 1], float), np.asarray(bv[:i + 1], float),
+                              np.asarray(sv[:i + 1], float), W, reversal, eps_bps)
+        return int(pos[-1])
+    return signal_at
