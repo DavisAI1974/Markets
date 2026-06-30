@@ -50,10 +50,18 @@ Fill model is optimistic (same both windows → relative reproduction fair, abso
 is THIN and **requires maker fee ≤ 0** (a +1 bp maker fee is fatal at 2–4 bps mean swing). Two windows is two,
 not many — but the forward ledger auto-accrues so the OOS record keeps growing.
 
+### Job #2 — maker fee ≤ 0 on Coinbase — ANSWERED (the binding deploy gate)
+Coinbase Advanced Trade (2026 published schedule): maker fee floor is **0.00% (ZERO), never negative** — only at
+the top tier ($250M+/30d) or the fee-upgrade program (≥$500K/mo proof → as low as 0.0% maker). Retail tiers are
+0.25–0.60% maker (25–60 bps, fatal). **No maker REBATE on Coinbase**, so S47's rebate column (rescues XRP/ETH)
+needs a different, rebate-paying venue. Deployable scenario = **mk0/tk5 (zero maker)** — cover-grace clears it on
+all 5 cells OOS, but mk0 on Coinbase requires the top VIP/upgrade tier.
+
 ## NEXT (S50)
-1. **Confirm maker fee ≤ 0 / rebate is real on Coinbase** for these cells (job #2 — a business fact; the deploy
-   set SOL/BTC[/DOGE] is provisional until this is known). This is now the binding gate.
+1. **Pick the deploy venue path** (the binding gate): EITHER (a) qualify for Coinbase's zero-maker tier
+   (top VIP / fee-upgrade with ≥$500K/mo proof), OR (b) stand up book collection + execution on a rebate-paying
+   venue (then S47's rebate column returns, rescuing XRP/ETH and fattening SOL/BTC). Greg's call.
 2. Wire `size_legs` into the per-cell **emit path** — a sizing analogue of `odcore/quiet_registry.py` (per-cell
-   alpha/roll + deploy flag) — once a maker≤0 venue is confirmed.
+   alpha/roll + deploy flag) — once a maker ≤ 0 venue is secured.
 3. Keep watching the auto-accruing forward ledger (3rd/4th window strengthens the OOS record).
 DEAD (don't re-chase): entry-timing retiming, wrong-tail entry-gates, spread/dive as timing.

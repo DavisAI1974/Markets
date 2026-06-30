@@ -64,9 +64,25 @@ no look-ahead. The pivot used in dive_depth is causal (forward ZigZag, depends o
 - `scripts/paper_trade.py`: now calls `size_legs` instead of its inline pass (no behavior change).
 - `scripts/_s49_window_confirm.py`, `scripts/_s49_conviction_leakage.py`: the two S49 gates.
 
+## Job #2 — maker fee ≤ 0 on Coinbase — ANSWERED (the binding deploy gate)
+Checked Coinbase Advanced Trade's published fee schedule (2026):
+- **Maker fee floor is 0.00% (ZERO), never negative.** Reached only at the TOP volume tier (**$250M+/30d**),
+  or via the fee-upgrade program (proof of **≥ $500K/mo** volume on another venue → fast-track to as low as
+  **0.0% maker**). Retail/low tiers are **0.25%–0.60% maker = 25–60 bps**, i.e. ~10–30× the 2–4 bps mean swing
+  → categorically fatal (consistent with S47's mk1 = fatal).
+- **A true maker REBATE (negative fee) does NOT exist on Coinbase.** So S47's "mkRebate-0.5 rescues XRP/ETH /
+  fattens SOL/BTC" scenario is **NOT achievable on Coinbase** — it requires a different venue (a rebate-paying
+  book). The OD-BOOK collection is Coinbase-only today.
+- **The deployable scenario is mk0/tk5 (zero maker).** The cover-grace executor clears it net-positive on all 5
+  cells OOS (this session) — but **mk0 on Coinbase requires the top VIP tier (or the fee-upgrade program).**
+  Below that tier the strategy is NOT deployable on Coinbase as-is.
+- **DECISION for Greg (S50):** deploy is gated on EITHER (a) qualifying for Coinbase's zero-maker tier
+  (top VIP / fee-upgrade with ≥$500K/mo proof), OR (b) standing up book collection + execution on a venue that
+  pays a maker rebate (then S47's rebate column — which rescues XRP/ETH and fattens SOL/BTC — comes back).
+
 ## NEXT (still gated)
-1. **Confirm maker fee ≤ 0 / rebate** is real on Coinbase for these cells (job #2) — a business fact; the
-   whole edge dies at a +1 bp maker fee. Until this is known, the deploy set is provisional.
+1. **Pick the deploy venue path** per the job-#2 decision above (Coinbase zero-maker tier vs a rebate venue).
+   Until a maker ≤ 0 venue is secured, the deploy set is provisional.
 2. Wire `size_legs` into the per-cell **emit path** (a sizing analogue of `odcore/quiet_registry.py`:
    per-cell alpha/roll + deploy flag) once #1 confirms a venue that pays maker ≤ 0.
 3. Keep watching the auto-accruing forward ledger — a 3rd, 4th window strengthens the OOS record further.
