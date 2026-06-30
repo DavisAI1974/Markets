@@ -53,9 +53,19 @@ S45 chat + messages); the final executor matches his spec exactly:
   `exhaustion_gate()`; existing floor/confirm/opposing modes untouched (QUEUE_FRAC kept = S45 baseline only).
 - Renders: `_render_trades_sol_swingwalk.png`, `_render_trades_<coin>_swing.png` (gitignored).
 
+## ★ STILL LEAVING MONEY ON THE TABLE (Greg, S46) — entries don't hit the extremes
+The `swingwalk` now prints `[X bps off the top/bottom]` per leg. On SOL the shorts enter **6–10 bps BELOW the
+peak** (longs above the valley) because the flip CONFIRMS late (W=600 lean + REV=0.10 retrace). The S36b fix is
+the two-tool split: **dipole/flip = the FILTER (which turns are real); 1-sec PRICE REVERSAL = the TIMING (enters
+~5–6 bps off the true turn).** Today the flow lean does both detection AND timing → it lags. Sharpening the entry
+to the extreme is the biggest remaining edge (S47 job #2). The 10-trade walk (with the off-top column) is in
+`KICKOFF_2026-07-01_S47.md` — keep walking them.
+
 ## NEXT (S47)
 1. **Confirm on a 2nd window / as the book accrues** — every S46 number is one 11.7h window. The 6h cron is
    accruing the alt books; re-run the per-cell verdict + walk-through on a fresh window before sizing.
+1b. **ENTRY TIMING (the money on the table)** — add a 1-sec price-reversal entry trigger (keep the flip as the
+   filter) so we post the best offer/bid closer to the peak/valley; watch the `bps off the top/bottom` shrink.
 2. **The inventory/scaling refinement** — the spec's "re-quote the ask at each new lower price, EXTENDING the
    short all the way down" is approximated by a single entry per leg; model the scale-in for a better avg entry.
 3. **Wrong-tail** — the exhaustion gate is marginal; try climax-volume confirmation (S40 ~2x vol AT the turn)

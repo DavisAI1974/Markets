@@ -190,6 +190,16 @@ def swing_walk(coin, K, kgate, path, ctx=CTX):
                 return l
         return None
 
+    def edge_gap(l, w=300):
+        """How much we LEAVE ON THE TABLE: distance of the entry from the local extreme it should hit
+        (a short should sell the PEAK, a long should buy the VALLEY), in bps. The flip confirms late, so
+        we enter past the true turn. Window +/- w cells (30s) around the entry."""
+        lo, hi = max(0, l.open_idx - w), min(n - 1, l.open_idx + w)
+        seg = mid[lo:hi + 1]
+        if l.side < 0:                         # short: ideal = local PEAK; gap = how far BELOW the top we sold
+            return (seg.max() - l.open_px) / seg.max() * 1e4
+        return (l.open_px - seg.min()) / seg.min() * 1e4   # long: how far ABOVE the bottom we bought
+
     print(f"\n# {coin.upper()}_coinbase WALK-THROUGH — same 10 floor-signal trades, OLD vs MAKER-AT-THE-TURN")
     print(f"# (K={K}, gate k={kgate}, Wflip={WFLIP}, REV={REV}, half_sp={hs_bps:.3f} bps; test slice {cut:,}:{n:,})")
     print(f"#{'':2}{'cell':>8}{'OLD side':>10}{'OLD gross':>11}   ||  NEW maker-at-the-turn")
@@ -203,8 +213,10 @@ def swing_walk(coin, K, kgate, path, ctx=CTX):
         else:
             nsd = "SHORT(ask)" if l.side < 0 else "LONG(bid)"
             ex = "maker" if l.close_maker else "taker"
+            gap = edge_gap(l)
             newtxt = (f"{nsd}  entry {l.open_px:.5f} @c{l.open_idx} -> exit {l.close_px:.5f} @c{l.close_idx} "
-                      f"({ex})  net {l.net_bps:+.2f} bps  swing {l.swing_bps:.1f}")
+                      f"({ex})  net {l.net_bps:+.2f}  swing {l.swing_bps:.1f}  "
+                      f"[{gap:.1f} bps off the {'top' if l.side < 0 else 'bottom'}]")
             sumnew += l.net_bps
         flag = "  <-- inverted" if (l is not None and (side[idx][k] > 0) == (l.side < 0)) else ""
         print(f"#{r:2}{t:>8}{osd:>10}{og:>+11.2f}   ||  {newtxt}{flag}")
