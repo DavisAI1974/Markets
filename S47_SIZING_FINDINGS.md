@@ -45,6 +45,27 @@ size levers are causal-at-the-flip. Sizing, NOT gating.
 - **Causal rolling normalization** of the conviction z-scores + re-run `assert_no_leakage` before wiring.
 - Then wire conviction->size into `simulate_swing_maker` (the job #3 scale-in) and the emit path.
 
+## JOB #5 NET-OF-COST — DONE (the survival gate). RAZOR-THIN + FEE-CRITICAL.
+simulate_swing_maker(maker_fee_bps, taker_fee_bps); open always maker, close maker-at-turn or taker-on-last-option.
+Per cell, net/leg by scenario (✓ survives / ✗ negative):
+| cell (taker%) | gross | mk0/tk5 (realistic) | mk1/tk5 | mkRebate-0.5/tk5 |
+| SOL (10%)  | +2.19 | +1.68 ✓ (sized 1791) | -0.22 ✗ | +2.63 ✓ |
+| BTC (3%)   | +0.60 | +0.47 ✓ (sized 834)  | -1.51 ✗ | +1.45 ✓ |
+| XRP (16%)  | +1.01 | +0.23 ~              | -1.61 ✗ | +1.16 ✓ |
+| ETH (10%)  | +0.40 | -0.10 ✗             | -2.00 ✗ | +0.85 ✓ |
+| DOGE (47%) | +1.09 | -1.28 ✗             | -2.80 ✗ | -0.51 ✗ |
+VERDICT:
+1. Mean swing 2-4 bps -> even a 1 bp maker fee (x2 legs) is FATAL (all cells negative at mk1/tk5, win% craters).
+   The strategy REQUIRES maker fee <= 0 (zero or rebate). Load-bearing execution requirement.
+2. At realistic mk0/tk5 it SURVIVES on SOL (+1.68) and BTC (+0.47); two-factor sizing IMPROVES net-of-fee there
+   (sol 1337->1791, btc 591->834). DEPLOYABLE cells = SOL, BTC.
+3. DOGE DIES despite its +3.2sig sizing signal -- 47% of exits are forced TAKER flattens. Signal real, EXECUTION
+   kills it. Taker rate is as important as the signal. (Fix: better maker fill / front-of-queue, or skip doge.)
+4. A maker REBATE rescues XRP/ETH (and fattens SOL/BTC); not DOGE.
+5. Sizing helps net-of-fee everywhere and rescues marginal cells (eth flat -75 -> sized +15).
+BOTTOM LINE: real but thin. Deploy net-of-fee on SOL/BTC with maker<=0; rebate extends to XRP/ETH; DOGE blocked
+by taker rate. STILL one window -> 2nd window remains the outstanding gate before sizing for real.
+
 ## Files (scratchpad prototypes, not committed; logic to port if it survives the 2nd window)
 proto_job2*/proto_walk_decomp (timing), proto_wrongtail*/proto_stop (gating), proto_spread/proto_sizing/
 proto_levers_corr/proto_dive/proto_size_screen/proto_twoaxis (sizing). Committed: `retime_flips` in
