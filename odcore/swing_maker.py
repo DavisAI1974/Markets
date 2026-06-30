@@ -13,26 +13,24 @@ side where the aggressor is WRONG:
 Both legs are MAKER; we earn the spread on both turns and never cross it. Taker is only a FALLBACK to
 flatten if a turn does not bring enough opposing (climax) volume to fill the passive quote.
 
-This module is a thin SEQUENCING layer over the validated S45 fill model: it reuses
-`odcore.maker_book._first_fill_index` (the queue-position + opposing-taker-volume fill logic the autopsy
-was built on) verbatim, and only adds the position state machine the swing strategy needs (a single
-sequential pass that depends on the open leg, which the vectorized per-cell arm simulator cannot express).
+This module is a thin SEQUENCING layer adding the position state machine the swing strategy needs (a
+single sequential pass that depends on the open leg, which a vectorized per-cell simulator cannot express).
 
-Execution model (the S45 Architect reframe — "post ONLY the conviction side, re-quote it as price moves,
-NEVER show the other side"; one maker fill at the turn closes the prior leg AND opens the next, since in
-production you post 2x size so the climax aggressor flattens and re-establishes in one fill):
+Execution model (the S45 Architect reframe + Greg S46 — "post ONLY the conviction side, re-quote it as
+price moves, NEVER show the other side"; one maker fill at the turn closes the prior leg AND opens the
+next, since in production you post 2x size so the turn aggressor flattens and re-establishes in one fill):
   - `flips` come from odcore.flip_detector.detect_flips (CAUSAL zigzag on the trailing flow lean). Each is
     (confirm_idx, pivot_idx, side); side +1 = valley -> go LONG (post BID), -1 = peak -> go SHORT (post ASK).
-  - At flip k we post the ONE-SIDED conviction quote (offer for a short, bid for a long) and accept a MAKER
-    fill ONLY within the CLIMAX WINDOW after the flip — `fill_window` is the climax-burst duration, NOT the
-    whole leg. "The only fills we accept are the ones moving into our position favorably" (S45): the climax
-    aggressor (S40 ~2x volume AT the turn) lifts our offer / hits our bid right at the extreme; a fill that
-    only arrives long after the turn is the stale, adversely-selected fill we must REFUSE -> skip the turn.
+  - best BID on the valley + all the way UP (be long, sellers hit us as price rises); best OFFER at the peak
+    + all the way DOWN (be short, buyers lift us as price falls). Flip the shown side at each turn.
+  - We HAVE THE BEST price (front of queue), so the fill is simply the next REAL opposing trade after the
+    turn — NO time/climax window (Greg S46: "the time windows are irrelevant"). The quote rests at the best
+    price the whole leg, re-quoted as price moves; it is capped only at the next turn.
   - A maker fill at flip k closes the prior (opposite) leg (the cover IS a maker fill — at the valley our bid
     is hit by capitulation sellers; "be the maker and have the best bid for people to hit", Greg S46) and
     opens the new leg. Both legs maker captures the two half-spreads.
-  - No maker (climax) fill within the window: the cover instead "crosses as TAKER at the next turn" (Greg's
-    fallback) — flatten any open leg by crossing the spread at the flip cell; do NOT open a new leg. Caps
+  - No opposing trade before the next turn: the cover "crosses as TAKER at the next turn" (Greg: "only do
+    taker as last option") — flatten the open leg by crossing the spread; do NOT open a new leg. Caps
     inventory to one swing and removes the falling-knife class (we NEVER rest the off-side during the slide).
 
 Causal: every entry decision uses only the flip (data <= confirm_idx) and the post-cell book; fills/marks
@@ -43,8 +41,6 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict, field
 
 import numpy as np
-
-from odcore.maker_book import _first_fill_index
 
 
 @dataclass
@@ -82,13 +78,30 @@ class SwingResult:
         return d
 
 
+def _next_positive(vol: np.ndarray) -> np.ndarray:
+    """For each cell t, the first index j > t with vol[j] > 0 (else n). O(n). This is the front-of-queue
+    fill: posting the BEST price, we are first in line, so the next REAL opposing trade lifts/hits us."""
+    n = len(vol)
+    nxt = np.full(n, n, dtype=int)
+    last = n
+    for t in range(n - 1, -1, -1):
+        nxt[t] = last
+        if vol[t] > 0:
+            last = t
+    return nxt
+
+
 def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips, *,
-                         half_spread_bps: float = 0.0, fill_window: int = 10,
-                         queue_frac: float = 1.0, maker_fee_bps: float = 0.0,
+                         half_spread_bps: float = 0.0, maker_fee_bps: float = 0.0,
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
                          confirm=None, confirm_lookback: int = 0,
                          arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
+
+    NO time/fill window (Greg S46: "take the time windows out, they are irrelevant"). The conviction quote
+    rests at the BEST price the WHOLE leg (turn to turn), re-quoted as price moves; the fill is simply the
+    first REAL opposing trade after the turn (front of queue), capped at the next turn. best bid on the
+    valley/up-leg (long), best offer on the peak/down-leg (short).
 
     fees are PER LEG in bps (maker_fee NEGATIVE = rebate). The open leg always pays maker_fee; the close
     leg pays maker_fee when it is a maker fill at the opposite turn, taker_fee when it is a taker flatten.
@@ -105,13 +118,10 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     hs = half_spread_bps / 1e4
     conf = None if confirm is None else np.asarray(confirm).astype(bool)
 
-    # Reuse the validated S45 fill model (maker_book): per cell, the first fill index for an ask (filled by
-    # BUY flow clearing the best-ask queue) and for a bid (filled by SELL flow clearing the best-bid queue).
-    # Floor the queue at EPS so queue_frac=0 ("have the BEST bid/offer" = front of queue, price improvement)
-    # means "fill on the first REAL opposing trade", not the degenerate "fill next cell with zero volume".
-    EPS = 1e-9
-    fill_ask = _first_fill_index(np.maximum(ba * queue_frac, EPS), bv, fill_window)
-    fill_bid = _first_fill_index(np.maximum(bb * queue_frac, EPS), sv, fill_window)
+    # Front-of-queue fill, NO window: the offer (short) is lifted by the next BUY trade; the bid (long) is
+    # hit by the next SELL trade. We have the best price, so the first real opposing trade fills us.
+    fill_ask = _next_positive(bv)
+    fill_bid = _next_positive(sv)
 
     legs: list[SwingLeg] = []
     pos = None            # open leg: dict(side, open_idx, open_px)

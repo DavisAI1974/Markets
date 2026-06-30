@@ -25,20 +25,16 @@ from odcore.flip_detector import lean_series, detect_flips
 from odcore.swing_maker import simulate_swing_maker
 
 FLOW_W, TRAIN_FRAC, FILL_WINDOW, HOLD, KGATE = 20, 0.6, 10, 1, 1.5
-# QUEUE_FRAC=0 = "have the BEST bid/offer" (Greg S46): post the best price (price improvement), be alone at
-# the front, fill on the first REAL opposing trade. This is the whole strategy — joining behind the deep
-# SOL top-of-book (qf=1) fills <10% in the climax and bleeds to taker; at the front the climax aggressor
-# hits us as a MAKER and taker is the last-option minority. Caveat: assumes best-price priority
-# (latency/colocation) and the model still credits the full half-spread (price improvement gives up a bit).
-QUEUE_FRAC = 0.0
+# Maker-at-the-turn = "have the BEST bid/offer" (front of queue, price improvement): fill on the first REAL
+# opposing trade, NO time window (Greg S46: time windows are irrelevant). The conviction quote rests the
+# whole leg, re-quoted as price moves; taker is the last-option flatten. Caveat: assumes best-price priority
+# (latency/colocation) and the model credits the full half-spread (price improvement gives up a little).
 # flip-detector operating point = the VALIDATED S40 point (W=60,REV=0.10 on 1-sec bins) scaled to the 100ms
 # book grid: 60s lean = 600 cells. NOT tuned on this one 11.7h window (the RULES line: never tune off one
 # window) — fixed, principled; we report, we do not grid-search for net.
 WFLIP, REV = 600, 0.10
-CLIMAX_WINDOW = 50     # S45 reframe: accept a MAKER fill only within the climax burst (~5s) after the turn —
-                       # "the only fills we accept are the ones moving into our position favorably"; a fill
-                       # arriving long after the turn is the stale, adversely-selected one we refuse (skip).
-                       # Principled climax-burst duration, NOT swept for PnL.
+QUEUE_FRAC = 1.0       # S45 baseline ONLY (the original floor/confirm/opposing maker model = join the queue).
+                       # The maker-at-the-turn swing executor no longer uses it (front-of-queue, no window).
 FEE_FLOOR_BPS = 20.0   # S36b: trade only swings >= ~20 bps (round-trip fee + 2x entry slippage); a GATE, not a knob
 CTX = 60   # context cells each side (6s) so the valley/peak shape is visible
 
@@ -66,10 +62,9 @@ def render_swing(coin, K, path, ctx=CTX):
     flips_all, _ = detect_flips(lean, REV)
     flips = [(ci, pv, sd) for (ci, pv, sd) in flips_all if ci >= cut]
 
-    # maker entry accepted only within the CLIMAX window after the turn (favorable near-turn fills); taker is
-    # the LAST-RESORT flatten when no climax fill (Greg S46: "only do taker as last option").
+    # front-of-queue, NO time window (Greg S46): conviction quote rests the whole leg, fills on the first
+    # opposing trade; taker is the last-option flatten when no opposing trade arrives before the next turn.
     res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
-                               fill_window=CLIMAX_WINDOW, queue_frac=QUEUE_FRAC,
                                maker_fee_bps=0.0, taker_fee_bps=0.0, taker_fallback=True,
                                confirm=confirm, confirm_lookback=WFLIP,
                                arm=f"{coin}_swing")
@@ -156,9 +151,8 @@ def swing_walk(coin, K, kgate, path, ctx=CTX):
     flips_all, _ = detect_flips(lean, REV)
     flips = [(ci, pv, sd) for (ci, pv, sd) in flips_all if ci >= cut]
     res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
-                               fill_window=CLIMAX_WINDOW, queue_frac=QUEUE_FRAC, maker_fee_bps=0.0,
-                               taker_fee_bps=0.0, taker_fallback=True, confirm=confirm,
-                               confirm_lookback=WFLIP, arm=f"{coin}_swing")
+                               maker_fee_bps=0.0, taker_fee_bps=0.0, taker_fallback=True,
+                               confirm=confirm, confirm_lookback=WFLIP, arm=f"{coin}_swing")
 
     def leg_at(t):  # the swing leg governing cell t: from the flip that DECIDED the side (flip_idx, before
         for l in res.legs:           # the fill lag) through the cover, so the few-cell fill lag doesn't read as flat
