@@ -24,11 +24,21 @@ from odcore.maker_book import _first_fill_index
 from odcore.flip_detector import lean_series, detect_flips
 from odcore.swing_maker import simulate_swing_maker
 
-FLOW_W, TRAIN_FRAC, FILL_WINDOW, HOLD, QUEUE_FRAC, KGATE = 20, 0.6, 10, 1, 1.0, 1.5
+FLOW_W, TRAIN_FRAC, FILL_WINDOW, HOLD, KGATE = 20, 0.6, 10, 1, 1.5
+# QUEUE_FRAC=0 = "have the BEST bid/offer" (Greg S46): post the best price (price improvement), be alone at
+# the front, fill on the first REAL opposing trade. This is the whole strategy — joining behind the deep
+# SOL top-of-book (qf=1) fills <10% in the climax and bleeds to taker; at the front the climax aggressor
+# hits us as a MAKER and taker is the last-option minority. Caveat: assumes best-price priority
+# (latency/colocation) and the model still credits the full half-spread (price improvement gives up a bit).
+QUEUE_FRAC = 0.0
 # flip-detector operating point = the VALIDATED S40 point (W=60,REV=0.10 on 1-sec bins) scaled to the 100ms
 # book grid: 60s lean = 600 cells. NOT tuned on this one 11.7h window (the RULES line: never tune off one
 # window) — fixed, principled; we report, we do not grid-search for net.
 WFLIP, REV = 600, 0.10
+CLIMAX_WINDOW = 50     # S45 reframe: accept a MAKER fill only within the climax burst (~5s) after the turn —
+                       # "the only fills we accept are the ones moving into our position favorably"; a fill
+                       # arriving long after the turn is the stale, adversely-selected one we refuse (skip).
+                       # Principled climax-burst duration, NOT swept for PnL.
 FEE_FLOOR_BPS = 20.0   # S36b: trade only swings >= ~20 bps (round-trip fee + 2x entry slippage); a GATE, not a knob
 CTX = 60   # context cells each side (6s) so the valley/peak shape is visible
 
@@ -56,10 +66,10 @@ def render_swing(coin, K, path, ctx=CTX):
     flips_all, _ = detect_flips(lean, REV)
     flips = [(ci, pv, sd) for (ci, pv, sd) in flips_all if ci >= cut]
 
-    # swing maker: the quote rests until the NEXT turn, so the fill window is large and the executor caps it
-    # at the next flip internally (a resting quote, not a 1s gate). 3000 cells = 5 min comfortably covers it.
+    # maker entry accepted only within the CLIMAX window after the turn (favorable near-turn fills); taker is
+    # the LAST-RESORT flatten when no climax fill (Greg S46: "only do taker as last option").
     res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
-                               fill_window=3000, queue_frac=QUEUE_FRAC,
+                               fill_window=CLIMAX_WINDOW, queue_frac=QUEUE_FRAC,
                                maker_fee_bps=0.0, taker_fee_bps=0.0, taker_fallback=True,
                                confirm=confirm, confirm_lookback=WFLIP,
                                arm=f"{coin}_swing")
@@ -127,9 +137,9 @@ def swing_walk(coin, K, kgate, path, ctx=CTX):
     qf = quiet_floor.fit(imb, quiet, train_frac=TRAIN_FRAC)
     gated = qf.gated_signal(imb, k=kgate)
 
-    # --- ORIGINAL floor-signal fills (identical to the default render) ---
+    # --- ORIGINAL floor-signal fills (identical to the S45 default render: join-the-queue, queue_frac=1.0) ---
     side = np.zeros(n); side[cut:] = gated[cut:]
-    qa = np.where(side > 0, bb, ba) * QUEUE_FRAC
+    qa = np.where(side > 0, bb, ba) * 1.0
     filled_at = np.where(side > 0, _first_fill_index(qa, sell, FILL_WINDOW),
                          np.where(side < 0, _first_fill_index(qa, buy, FILL_WINDOW), -1))
     filled = (side != 0) & (filled_at >= 0) & ((filled_at + HOLD) <= (n - 1))
@@ -146,7 +156,7 @@ def swing_walk(coin, K, kgate, path, ctx=CTX):
     flips_all, _ = detect_flips(lean, REV)
     flips = [(ci, pv, sd) for (ci, pv, sd) in flips_all if ci >= cut]
     res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
-                               fill_window=3000, queue_frac=QUEUE_FRAC, maker_fee_bps=0.0,
+                               fill_window=CLIMAX_WINDOW, queue_frac=QUEUE_FRAC, maker_fee_bps=0.0,
                                taker_fee_bps=0.0, taker_fallback=True, confirm=confirm,
                                confirm_lookback=WFLIP, arm=f"{coin}_swing")
 

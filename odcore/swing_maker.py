@@ -18,17 +18,22 @@ This module is a thin SEQUENCING layer over the validated S45 fill model: it reu
 was built on) verbatim, and only adds the position state machine the swing strategy needs (a single
 sequential pass that depends on the open leg, which the vectorized per-cell arm simulator cannot express).
 
-Execution model (one maker fill at the turn closes the prior leg AND opens the next — in production you
-post 2x size so the climax aggressor flattens and re-establishes in one fill):
+Execution model (the S45 Architect reframe — "post ONLY the conviction side, re-quote it as price moves,
+NEVER show the other side"; one maker fill at the turn closes the prior leg AND opens the next, since in
+production you post 2x size so the climax aggressor flattens and re-establishes in one fill):
   - `flips` come from odcore.flip_detector.detect_flips (CAUSAL zigzag on the trailing flow lean). Each is
     (confirm_idx, pivot_idx, side); side +1 = valley -> go LONG (post BID), -1 = peak -> go SHORT (post ASK).
-  - At flip k we post the ONE-SIDED quote dictated by side s_k at the confirm cell; the fill index comes
-    from `_first_fill_index` (cumulative OPPOSING taker volume clears the queue ahead within fill_window).
-  - A maker fill closes the prior (opposite) open leg at this price (both legs maker -> the two half-spreads
-    add to the swing) and opens the new leg.
-  - No maker fill within the window (no climax volume = "skip the turn"): if a position is open and
-    taker_fallback, flatten it by crossing the spread at the confirm-cell mid (maker-open / taker-close);
-    do NOT open the new leg. This caps inventory to one swing.
+  - At flip k we post the ONE-SIDED conviction quote (offer for a short, bid for a long) and accept a MAKER
+    fill ONLY within the CLIMAX WINDOW after the flip — `fill_window` is the climax-burst duration, NOT the
+    whole leg. "The only fills we accept are the ones moving into our position favorably" (S45): the climax
+    aggressor (S40 ~2x volume AT the turn) lifts our offer / hits our bid right at the extreme; a fill that
+    only arrives long after the turn is the stale, adversely-selected fill we must REFUSE -> skip the turn.
+  - A maker fill at flip k closes the prior (opposite) leg (the cover IS a maker fill — at the valley our bid
+    is hit by capitulation sellers; "be the maker and have the best bid for people to hit", Greg S46) and
+    opens the new leg. Both legs maker captures the two half-spreads.
+  - No maker (climax) fill within the window: the cover instead "crosses as TAKER at the next turn" (Greg's
+    fallback) — flatten any open leg by crossing the spread at the flip cell; do NOT open a new leg. Caps
+    inventory to one swing and removes the falling-knife class (we NEVER rest the off-side during the slide).
 
 Causal: every entry decision uses only the flip (data <= confirm_idx) and the post-cell book; fills/marks
 use cells AFTER the post. Pure numpy; portable. Evaluate on a held-out slice.
@@ -102,8 +107,11 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
 
     # Reuse the validated S45 fill model (maker_book): per cell, the first fill index for an ask (filled by
     # BUY flow clearing the best-ask queue) and for a bid (filled by SELL flow clearing the best-bid queue).
-    fill_ask = _first_fill_index(ba * queue_frac, bv, fill_window)
-    fill_bid = _first_fill_index(bb * queue_frac, sv, fill_window)
+    # Floor the queue at EPS so queue_frac=0 ("have the BEST bid/offer" = front of queue, price improvement)
+    # means "fill on the first REAL opposing trade", not the degenerate "fill next cell with zero volume".
+    EPS = 1e-9
+    fill_ask = _first_fill_index(np.maximum(ba * queue_frac, EPS), bv, fill_window)
+    fill_bid = _first_fill_index(np.maximum(bb * queue_frac, EPS), sv, fill_window)
 
     legs: list[SwingLeg] = []
     pos = None            # open leg: dict(side, open_idx, open_px)
