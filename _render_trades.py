@@ -23,6 +23,26 @@ from odcore import quiet_floor
 from odcore.maker_book import _first_fill_index
 from odcore.flip_detector import lean_series, detect_flips
 from odcore.swing_maker import simulate_swing_maker
+from odcore.info_dipole import divergence
+
+DIVW = 600   # trailing order-flow window (cells) for the dipole exhaustion/divergence read at each flip
+
+
+def exhaustion_gate(flips, buy, sell, mid, n):
+    """Per-cell entry gate (default True) set FALSE at flips that the info-dipole does NOT confirm as a real
+    reversal — i.e. the flow still CONFIRMS the move and the dipole is strengthening ('continue': the ~49%
+    healthy-trend tail). Causal: uses only the trailing DIVW window of buy/sell + price drift up to the flip.
+    Gating these out caps the flip's wrong-tail (shorting into continued buying / buying into continued
+    selling)."""
+    g = np.ones(n, dtype=bool)
+    for (ci, _pv, _s) in flips:
+        ci = int(ci)
+        lo = max(0, ci - DIVW)
+        d = divergence(buy[lo:ci + 1], sell[lo:ci + 1], float(mid[ci] - mid[lo]))
+        if d is None:
+            continue                      # too short / empty window -> leave True (don't over-filter)
+        g[ci] = bool(d["opposing"] or d["exhausting"])   # real reversal needs flow opposition OR exhaustion
+    return g
 
 FLOW_W, TRAIN_FRAC, FILL_WINDOW, HOLD, KGATE = 20, 0.6, 10, 1, 1.5
 # Maker-at-the-turn = "have the BEST bid/offer" (front of queue, price improvement): fill on the first REAL
@@ -64,10 +84,20 @@ def render_swing(coin, K, path, ctx=CTX):
 
     # front-of-queue, NO time window (Greg S46): conviction quote rests the whole leg, fills on the first
     # opposing trade; taker is the last-option flatten when no opposing trade arrives before the next turn.
-    res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
-                               maker_fee_bps=0.0, taker_fee_bps=0.0, taker_fallback=True,
-                               confirm=confirm, confirm_lookback=WFLIP,
-                               arm=f"{coin}_swing")
+    egate = exhaustion_gate(flips, buy, sell, mid, n)   # dipole exhaustion/divergence wrong-tail gate
+    def sim(eg, label):
+        return simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=hs_bps,
+                                    maker_fee_bps=0.0, taker_fee_bps=0.0, taker_fallback=True,
+                                    confirm=confirm, confirm_lookback=WFLIP, entry_gate=eg, arm=label)
+    res_exh = sim(egate, f"{coin}_swing_exh")      # + exhaustion gate (wrong-tail A/B)
+    res = sim(None, f"{coin}_swing")               # PRIMARY = no exhaustion gate (better net/win on this window)
+    dng = res.as_dict(); de = res_exh.as_dict()
+    print(f"\n# {coin.upper()}_coinbase MAKER-AT-THE-TURN wrong-tail gate A/B (K={K}, Wflip={WFLIP}, REV={REV}):")
+    print(f"#   NO gate (primary): legs={dng['n_legs']:>4}  net/leg={dng['net_per_leg_bps']:+.3f}  "
+          f"win={100*dng['win_frac']:.0f}%  total={dng['total_net_bps']:+.1f}  taker={dng['n_taker_closes']}")
+    print(f"#   + EXH gate       : legs={de['n_legs']:>4}  net/leg={de['net_per_leg_bps']:+.3f}  "
+          f"win={100*de['win_frac']:.0f}%  total={de['total_net_bps']:+.1f}  taker={de['n_taker_closes']} "
+          f"(marginal on this window — revisit as data accrues)")
     d = res.as_dict()
     # the S36b fee-floor GATE: report the subset of legs whose swing cleared ~20 bps (the tradeable scale)
     big = [l for l in res.legs if l.swing_bps >= FEE_FLOOR_BPS]

@@ -94,7 +94,7 @@ def _next_positive(vol: np.ndarray) -> np.ndarray:
 def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips, *,
                          half_spread_bps: float = 0.0, maker_fee_bps: float = 0.0,
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
-                         confirm=None, confirm_lookback: int = 0,
+                         confirm=None, confirm_lookback: int = 0, entry_gate=None,
                          arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
@@ -107,9 +107,11 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     leg pays maker_fee when it is a maker fill at the opposite turn, taker_fee when it is a taker flatten.
 
     confirm: optional per-cell boolean array — the QuietFloor shock gate (the kickoff's "floor confirms the
-    shock"). When supplied, a flip is only acted on if the floor fired at the confirm cell (or within the
-    prior `confirm_lookback` cells — causal). A non-confirmed flip is skipped entirely (no open, no close):
-    we don't trust it is a real turn, so we hold to the next confirmed turn. Default None = flips only.
+    shock"). entry_gate: optional per-cell boolean array — the EXHAUSTION/reversal confirmation (e.g.
+    info_dipole.divergence: order flow opposes price + the dipole collapsing toward 0.5). A flip is
+    ACTIONABLE only if BOTH gates pass at the confirm cell. A non-actionable flip is NOT trusted as a real
+    turn: we FLATTEN any open position (taker, last resort — caps the wrong-tail/inventory) and do NOT open
+    a new one, waiting for the next confirmed+exhausted turn. Both default None = flips only.
     """
     mid = np.asarray(mid, float)
     bb = np.asarray(best_bid_sz, float); ba = np.asarray(best_ask_sz, float)
@@ -117,6 +119,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     n = len(mid)
     hs = half_spread_bps / 1e4
     conf = None if confirm is None else np.asarray(confirm).astype(bool)
+    egate = None if entry_gate is None else np.asarray(entry_gate).astype(bool)
 
     # Front-of-queue fill, NO window: the offer (short) is lifted by the next BUY trade; the bid (long) is
     # hit by the next SELL trade. We have the best price, so the first real opposing trade fills us.
@@ -135,8 +138,13 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
         # the quote RESTS until the next flip (the strategy "rides it down keeping the best offer" until the
         # next turn); the fill search is therefore capped at the next flip's confirm cell, not a fixed window.
         next_ci = int(flips[k + 1][0]) if k + 1 < len(flips) else n
-        # QuietFloor confirmation (causal): only act on a flip the floor flags as a real shock
-        if conf is not None and not conf[max(0, ci - confirm_lookback):ci + 1].any():
+        # ACTIONABLE = the floor confirms the shock AND the exhaustion gate confirms the reversal (causal).
+        floor_ok = conf is None or conf[max(0, ci - confirm_lookback):ci + 1].any()
+        exh_ok = egate is None or bool(egate[ci])
+        if not (floor_ok and exh_ok):
+            continue                       # turn not trusted -> HOLD the prior position (ride the trend)
+        # if we already hold the conviction side (a flip was skipped), HOLD -- do not re-open/overwrite it
+        if pos is not None and pos["side"] == s:
             continue
         # one-sided quote for side s: short(-1)->post ASK (filled by BUY); long(+1)->post BID (filled by SELL)
         if s < 0:
