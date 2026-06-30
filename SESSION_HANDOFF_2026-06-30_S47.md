@@ -57,6 +57,21 @@ Per cell net/leg (✓ survives / ✗ negative):
   (timing); proto_wrongtail*/proto_stop (gating); proto_spread/proto_sizing/proto_levers_corr/proto_dive/
   proto_size_screen/proto_twoaxis/proto_fees (sizing + fees).
 
+## PAPER TRADING — set up + seeded (Greg S47: "bring them all into paper trades, see how they shake out")
+`scripts/paper_trade.py` — forward paper-trading harness, ALL 5 cells: the causal maker-at-the-turn executor
+(`simulate_swing_maker` over `detect_flips`) + two-factor conviction sizing with CAUSAL ROLLING normalization
+(size_mult = clip(1+alpha·trailing-z(rank(clmx)·rank(size-axis))), centered ~1, trailing `roll`=200 PRIOR legs
+only — no look-ahead). Net-of-fee (maker/taker configurable; default mk0/tk5). Appends to `paper_ledger.jsonl`,
+DEDUPED by (cell, entry_ts) so repeated runs over the rolling book accumulate a genuine FORWARD record.
+SEED (current window, maker0/taker5; flat -> sized net-of-fee): sol +3053->+4314, btc +2434->+3618,
+xrp +1208->+1662, eth +654->+1153, doge -510->+16 (sizing RESCUES doge to breakeven). **Causal sizing lifts
+net-of-fee on ALL 5 cells (+38-76%)** — stronger + more honest than the full-window backtest. 4/5 flat-positive;
+doge flat-negative (36% taker) but sizing pulls it to ~0. CAVEAT: mean_sz ~1.06-1.12 (clip asymmetry = a little
+extra capital); STILL one window — the LEDGER ACCRUING FORWARD is the real multi-window test.
+`.github/workflows/paper_trade.yml` — cron (30 min after the book cron) to run it + commit the ledger; ⚠ only
+auto-fires once placed on the DEFAULT branch (Greg's action; token can't dispatch GHA). Until then: run
+`python scripts/paper_trade.py` each session (dedups + accrues) or use the Run-workflow button.
+
 ## Data / env notes
 - Books load GZIPPED (`load_book` uses `gzip.open`) — keep the blob gzipped in /tmp; the kickoff's
   `| gunzip` is a bins-workflow copy-paste, WRONG for books. Re-fetch: `git show origin/data/<c>-book:<c>_coinbase_book.jsonl.gz > /tmp/<c>_coinbase_book.jsonl.gz` (NO gunzip).
