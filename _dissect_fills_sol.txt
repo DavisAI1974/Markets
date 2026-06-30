@@ -1,0 +1,45 @@
+
+# FILL AUTOPSY — sol_coinbase  K=1 (top-of-book imbalance)  gate k=1.5  hold=1 cell (100ms)  fill_window=10 (1s)
+# half_spread = 0.6700 bps   test fills = 169   (gross = half_spread + drift; drift = d_wait + d_hold, signed in our direction)
+
+  # side wait    mid_post    mid_fill    mid_exit  half_sp   d_wait   d_hold    drift    GROSS
+  1  bid    1    75.08500    75.03500    75.00500   0.6700  -6.6591  -3.9955 -10.6546  -9.9846
+  2  bid    7    75.80500    75.77500    75.77500   0.6700  -3.9575   0.0000  -3.9575  -3.2875
+  3  bid    4    75.42500    75.41500    75.40500   0.6700  -1.3258  -1.3258  -2.6516  -1.9816
+  4  bid    8    75.08500    75.07500    75.07500   0.6700  -1.3318   0.0000  -1.3318  -0.6618
+  5  bid    6    75.55500    75.55000    75.54500   0.6700  -0.6618  -0.6618  -1.3235  -0.6535
+  6  ask    1    75.50500    75.50500    75.51000   0.6700  -0.0000  -0.6622  -0.6622   0.0078
+  7  ask    4    75.87500    75.87500    75.87500   0.6700  -0.0000  -0.0000  -0.0000   0.6700
+  8  bid    5    75.85500    75.86500    75.85500   0.6700   1.3183  -1.3183   0.0000   0.6700
+  9  ask    1    75.86000    75.85500    75.84500   0.6700   0.6591   1.3182   1.9773   2.6473
+ 10  ask    9    75.92500    75.84500    75.81500   0.6700  10.5367   3.9513  14.4880  15.1580
+
+# AGGREGATE over all 169 test fills (this is what the deploy-map verdict averages):
+#   mean half_spread =   0.6700 bps   (what you earn if the mid never moves)
+#   mean d_wait      =  -0.9320 bps   (adverse selection while queued, post->fill)
+#   mean d_hold      =  -0.0359 bps   (move during the 1-cell hold)
+#   mean drift       =  -0.9678 bps   (= d_wait + d_hold; the adverse-selection term)
+#   mean GROSS/fill  =  -0.2978 bps   (= half_spread + drift)
+#   fills with gross<0: 52.1%   median wait = 5 cells (500ms)
+#   when filled: mid moved AGAINST us 58.6% of the time (that is the adverse selection).
+# FILL AUTOPSY — eth_coinbase  K=1 (top-of-book imbalance)  gate k=1.5  hold=1 cell (100ms)  fill_window=10 (1s)
+#   mean half_spread =   0.0316 bps   (what you earn if the mid never moves)
+#   mean d_wait      =  -0.1513 bps   (adverse selection while queued, post->fill)
+#   mean d_hold      =  -0.1403 bps   (move during the 1-cell hold)
+#   mean drift       =  -0.2917 bps   (= d_wait + d_hold; the adverse-selection term)
+#   mean GROSS/fill  =  -0.2600 bps   (= half_spread + drift)
+#   when filled: mid moved AGAINST us 64.4% of the time (that is the adverse selection).
+# FILL AUTOPSY — doge_coinbase  K=1 (top-of-book imbalance)  gate k=1.5  hold=1 cell (100ms)  fill_window=10 (1s)
+#   mean half_spread =   0.6908 bps   (what you earn if the mid never moves)
+#   mean d_wait      =  -0.4442 bps   (adverse selection while queued, post->fill)
+#   mean d_hold      =  -0.2094 bps   (move during the 1-cell hold)
+#   mean drift       =  -0.6536 bps   (= d_wait + d_hold; the adverse-selection term)
+#   mean GROSS/fill  =   0.0372 bps   (= half_spread + drift)
+#   when filled: mid moved AGAINST us 61.8% of the time (that is the adverse selection).
+# FILL AUTOPSY — xrp_coinbase  K=1 (top-of-book imbalance)  gate k=1.5  hold=1 cell (100ms)  fill_window=10 (1s)
+#   mean half_spread =   0.4736 bps   (what you earn if the mid never moves)
+#   mean d_wait      =  -0.6129 bps   (adverse selection while queued, post->fill)
+#   mean d_hold      =  -0.0657 bps   (move during the 1-cell hold)
+#   mean drift       =  -0.6786 bps   (= d_wait + d_hold; the adverse-selection term)
+#   mean GROSS/fill  =  -0.2049 bps   (= half_spread + drift)
+#   when filled: mid moved AGAINST us 56.5% of the time (that is the adverse selection).

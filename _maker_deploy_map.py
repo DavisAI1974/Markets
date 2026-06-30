@@ -50,6 +50,18 @@ CELLS = {
     "xrp_coinbase":  ("data/xrp-book",  "xrp_coinbase_book.jsonl.gz"),
 }
 
+# PER-CELL depth-K operator (S45 `_gate_param_sweep.py` per coin): the thin alt books carry their
+# depth-imbalance signal at TOP-OF-BOOK (K=1), not the deep K=10 that btc_coinbase wants. This is the
+# big structural per-cell lever ("different operators for each coin"). k held at the locked 1.5 to
+# avoid over-tuning the gate threshold on a single 11.7h window. Absent -> the locked global K.
+PER_CELL_K = {
+    "btc_coinbase": 10,
+    "eth_coinbase": 1,
+    "sol_coinbase": 1,
+    "doge_coinbase": 1,
+    "xrp_coinbase": 1,
+}
+
 
 def fetch_book(cell: str, fetch: bool) -> str | None:
     """Fetch+extract the cell's book to /tmp; return the path, or None if not yet accrued."""
@@ -79,7 +91,8 @@ def hit(sig, fwd, cut, n):
 
 
 def run_cell(cell: str, path: str) -> dict:
-    ch, g = build_channels(path, K, FLOW_W)
+    k_depth = PER_CELL_K.get(cell, K)        # per-cell depth operator (S45); falls back to locked K
+    ch, g = build_channels(path, k_depth, FLOW_W)
     imb = ch["depth_imb"]
     mid, bb, ba, buy, sell = g["mid"], g["bidK"][1], g["askK"][1], g["buy"], g["sell"]
     n = len(mid)
@@ -111,7 +124,7 @@ def run_cell(cell: str, path: str) -> dict:
     ot = float(gate_open[te][~quiet[te]].mean()) if (~quiet[te]).any() else float("nan")
     base_gross = 0.5 * (base_b["gross_per_fill_bps"] + base_a["gross_per_fill_bps"])
     return dict(
-        cell=cell, n=n, hours=round(n * 0.1 / 3600, 2), half_spread_bps=hs_bps,
+        cell=cell, n=n, k_depth=k_depth, hours=round(n * 0.1 / 3600, 2), half_spread_bps=hs_bps,
         phi=qf.phi, fire=fire, selectivity=ot / (oq + 1e-12),
         raw_hit_h1=hit(sign, fwd1, cut, n), gated_hit_h1=hit(gated, fwd1, cut, n),
         fav_gross=fav["gross_per_fill_bps"], anti_gross=anti["gross_per_fill_bps"],
@@ -139,21 +152,21 @@ def main():
         rows.append(run_cell(cell, path))
 
     if rows:
-        print(f"\n# PER-CELL MAKER DEPLOY MAP (K={K}, gate k={KGATE}, hold={HOLD} cell, "
-              f"half-spread from data; gross/fill BEFORE rebate)")
-        hdr = (f"{'cell':<14}{'hrs':>6}{'half_sp':>9}{'gated_hit':>10}{'fav-anti':>10}"
+        print(f"\n# PER-CELL MAKER DEPLOY MAP (PER-CELL depth-K operator, gate k={KGATE}, hold={HOLD} "
+              f"cell, half-spread from data; gross/fill BEFORE rebate)")
+        hdr = (f"{'cell':<14}{'K':>3}{'hrs':>6}{'half_sp':>9}{'gated_hit':>10}{'fav-anti':>10}"
                f"{'gate_gross':>11}{'breakeven':>10}{'verdict':>9}")
         print(hdr)
         for r in rows:
             verdict = "NET+" if r["gate_gross"] > 0 else ("rebate" if r["gate_gross"] > -1.0 else "no")
-            print(f"{r['cell']:<14}{r['hours']:>6.1f}{r['half_spread_bps']:>9.4f}"
+            print(f"{r['cell']:<14}{r['k_depth']:>3}{r['hours']:>6.1f}{r['half_spread_bps']:>9.4f}"
                   f"{100*r['gated_hit_h1']:>9.1f}%{r['fav_minus_anti']:>10.4f}"
                   f"{r['gate_gross']:>11.4f}{r['gate_breakeven_fee']:>10.4f}{verdict:>9}")
         print("\n# verdict: NET+ = gross/fill > 0 before any rebate (half-spread beats adverse "
               "selection — DEPLOYABLE); rebate = needs a maker rebate to clear; no = bleeds.")
     if skipped:
         print(f"\n# not yet accrued (trigger/await the book matrix): {', '.join(skipped)}")
-    json.dump(json.loads(json.dumps(dict(K=K, kgate=KGATE, hold=HOLD, rows=rows,
+    json.dump(json.loads(json.dumps(dict(per_cell_K=PER_CELL_K, kgate=KGATE, hold=HOLD, rows=rows,
               skipped=skipped), default=float)), open("_maker_deploy_map_results.json", "w"), indent=2)
     print("# wrote _maker_deploy_map_results.json")
 
