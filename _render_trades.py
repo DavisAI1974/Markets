@@ -32,6 +32,7 @@ def main():
     coin = sys.argv[1] if len(sys.argv) > 1 else "sol"
     K = int(sys.argv[2]) if len(sys.argv) > 2 else 1
     kgate = float(sys.argv[3]) if len(sys.argv) > 3 else 1.5
+    mode = sys.argv[4] if len(sys.argv) > 4 else "floor"   # floor | both (floor AND at-a-turn)
     path = f"/tmp/{coin}_coinbase_book.jsonl.gz"
 
     ch, g = build_channels(path, K, FLOW_W)
@@ -43,6 +44,13 @@ def main():
     quiet = (buy + sell) <= 0.0
     qf = quiet_floor.fit(imb, quiet, train_frac=TRAIN_FRAC)
     gated = qf.gated_signal(imb, k=kgate)
+    if mode in ("both", "opposing", "confirm"):
+        # aligned = depth_imb * sign(trailing price drift); >0 book CONFIRMS the move, <0 OPPOSES it
+        lm = np.log(np.where(mid > 0, mid, np.nan)); pdwin = 30
+        pd = np.zeros(n); pd[pdwin:] = np.nan_to_num(lm[pdwin:] - lm[:-pdwin])
+        aligned = np.sign(imb) * np.sign(pd)
+        cond = (aligned > 0) if mode == "confirm" else (aligned < 0)   # confirm=continuation, else reversal
+        gated = np.where((gated != 0) & cond, np.sign(imb), 0.0)
     side = np.zeros(n); side[cut:] = gated[cut:]
 
     qa = np.where(side > 0, bb, ba) * QUEUE_FRAC
@@ -60,8 +68,8 @@ def main():
     picks = order[np.linspace(0, len(idx) - 1, 10).round().astype(int)]
 
     fig, axes = plt.subplots(2, 5, figsize=(20, 8))
-    fig.suptitle(f"{coin.upper()}_coinbase maker fills (K={K} top-of-book, gate k={kgate})  —  "
-                 f"blue=mid; we BUY the valleys / SELL-SHORT the peaks. Green=favorable fill, Red=adverse.",
+    fig.suptitle(f"{coin.upper()}_coinbase maker fills — {mode.upper()} signal (K={K} top-of-book, gate "
+                 f"k={kgate})  —  blue=mid; o post, • fill, x exit(+hold). Green=favorable, Red=adverse.",
                  fontsize=13)
     for ax, k in zip(axes.flat, picks):
         t = int(idx[k]); f = int(fi[t]); e = int(ei[t]); is_bid = sgn[k] > 0
@@ -88,7 +96,7 @@ def main():
     axes.flat[0].text(0.02, 0.02, "o post   • fill   x exit(+hold)",
                       transform=axes.flat[0].transAxes, fontsize=9)
     fig.tight_layout(rect=[0, 0, 1, 0.95])
-    out = f"_render_trades_{coin}.png"
+    out = f"_render_trades_{coin}_{mode}.png"
     fig.savefig(out, dpi=110)
     print(f"wrote {out}  (mean gross over all {len(idx)} fills = {gross.mean():+.4f} bps)")
 

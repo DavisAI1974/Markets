@@ -91,3 +91,25 @@ swing-diagram style; "the dipole flip is nailed — are we using it?"
 - `_maker_deploy_map.py` MODIFIED — `PER_CELL_K` operator map + per-cell K in the table/results.
 - `_gate_param_sweep_results.json`, `_maker_deploy_map_results.json` refreshed (last run = the per-cell-K map).
 - Discipline: OD-BOOK sentinel untouched. All results PROVISIONAL on one 11.7h window per alt.
+
+## S45 ADDENDUM — the flip filter was wired BACKWARDS; CONFIRMING (continuation) polarity clears sol/doge/xrp NET+
+- **Built the floor+flip combination (`_maker_flip_floor.py`).** First cut gated on `opposing` (book leans
+  AGAINST the recent price move = the S36 reversal condition, `aligned = depth_imb*sign(price_drift) < 0`).
+  It made the maker WORSE everywhere (sol −0.30→−0.86, doge +0.04→−0.33). Hold sweep (`_hold_sweep.py`) did
+  not rescue it; reversing the direction (`_revtest`, deleted) lost on every cell (follow ≫ fade) — so the
+  signal is NOT direction-reversed.
+- **`_flip_debug.py` found the bug (Greg: "it's how we code it").** Splitting gated test fills by condition
+  (sol): `confirming` (aligned>0) gross **+0.745** (d_wait −0.09) vs `opposing` gross −0.863 (d_wait −1.43);
+  `confirm+exhaust` **+0.908**. CONFIRMING beats OPPOSING on ALL 4 cells. **The S36 flip detector predicts
+  REVERSALS — a TAKER concept; a MAKER with queue priority can't get a clean fill at the turn (the turn fill
+  IS the flush), it earns by providing liquidity WITH the flow (buy dips in uptrends).** So the detector is
+  right, we pointed it the wrong way. Direction stays `sign(imb)`; only the flip POLARITY flips.
+- **Corrected result (floor + flip=CONFIRMING [+ exhaustion], per-cell K=1, gross/fill before rebate, PROVISIONAL
+  one 11.7h window, small n):** sol +0.75 (exhaust +0.91, n=33), xrp +0.14, doge +0.12 (exhaust), eth −0.20
+  (0.03 bps half-spread — structurally rebate-only). 3/4 wide-spread alts clear NET+.
+- **NEXT (revised #1):** flip `_maker_flip_floor.py` to the CONFIRMING polarity (`aligned>0`), add the exhaustion
+  factor, re-run the deploy map, and CONFIRM on a 2nd window as the book accrues (fill counts are tiny: sol
+  n=33–52, doge n=13–22). Then wire floor + confirming-flip into the production emit path. The maker edge here
+  is trend-CONTINUATION liquidity provision, not swing-reversal.
+- Files: `_maker_flip_floor.py` (opposing version — flip to confirming), `_flip_debug.py` (the per-condition
+  autopsy), `_hold_sweep.py`, `_render_trades.py` (+`confirm`/`opposing` modes). Renders gitignored.
