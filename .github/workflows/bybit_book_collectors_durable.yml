@@ -1,0 +1,174 @@
+name: Bybit Book Collectors (SOL/ETH perps, durable)
+
+# S51 Job 3 — the REBATE-VENUE decision data. Collects Bybit USDT linear-perp L2
+# order-book snapshots (top-10/side depth on a regular 100ms grid) so the maker
+# pipeline can re-measure spread + turn-flow + fill ON THE VENUE (per-cell rule:
+# a rebate on a tight/deep book won't print — the S43 btc lesson; the S51 v2
+# queue-honest model says deep books may favor ETH there, so both are collected).
+#
+# Venue context (S51, primary-source verified): Bybit SOL perp turns over
+# ~$47M/hr vs Coinbase spot ~$4.7M/hr (10x); ETH ~$111M/hr vs ~$10.7M/hr. Bybit's
+# MM Incentive Program is the reachable rebate path (maker-share bar, not a
+# volume wall). Whether the 10x flow converts to 10x OUR $/hr depends on the
+# venue's turn structure — which is exactly what this data decides.
+#
+# Mirrors book_collectors_durable.yml (same guardrail, same orphan force-push
+# pattern, same row schema via bybit_book_collector.py) with per-coin
+# data/<coin>-bybit-book branches. Bybit WS is reachable from GHA runners (the
+# bins collectors have run on it since S37); REST is CloudFront-geoblocked in
+# some regions, which is why the collector is WS-only.
+#
+# ACTIVATION NOTE: GitHub only fires `schedule:` (cron) triggers from a workflow
+# file on the repository DEFAULT branch (this file is on it). The job checks out
+# the 5c5vg9 branch for the collector code regardless of dispatch branch.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC (default-branch only)
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: 'Collection duration in seconds (default 5h50m=21000)'
+        default: '21000'
+        type: string
+      grid_ms:
+        description: 'Snapshot grid in milliseconds'
+        default: '100'
+        type: string
+      depth:
+        description: 'Top-K levels per side'
+        default: '10'
+        type: string
+  # NOTE: no `push:` trigger (see book_collectors_durable.yml — push triggers spawn
+  # duplicate ~6h runs on every code push and race on the data branches).
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355   # 5h55m, just under GitHub's 6hr hard limit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - coin: sol
+            symbol: SOLUSDT
+          - coin: eth
+            symbol: ETHUSDT
+    concurrency:
+      group: bybit-book-collector-${{ matrix.coin }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/crypto-liquidity-signals-5c5vg9
+          fetch-depth: 0   # need full history to access data branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install --quiet websockets numpy
+
+      - name: Restore previous book file from data/${{ matrix.coin }}-bybit-book branch
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_bybit_book.jsonl.gz"
+          if git ls-remote --exit-code --heads origin "data/$COIN-bybit-book" > /dev/null 2>&1; then
+            echo "[restore] data/$COIN-bybit-book exists; fetching"
+            git fetch origin "data/$COIN-bybit-book"
+            git checkout "origin/data/$COIN-bybit-book" -- "$FN" 2>/dev/null \
+              || echo "[restore] no $FN on data branch yet"
+          else
+            echo "[restore] data/$COIN-bybit-book does not exist; first run, starting fresh"
+          fi
+          ls -la "$FN" 2>&1 || echo "[restore] no book file present"
+
+      - name: Run ${{ matrix.coin }} Bybit book collector
+        timeout-minutes: 350
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_bybit_book.jsonl.gz"
+          DURATION="${{ github.event.inputs.duration_seconds || '21000' }}"
+          GRID="${{ github.event.inputs.grid_ms || '100' }}"
+          DEPTH="${{ github.event.inputs.depth || '10' }}"
+          echo "[run] $COIN bybit book collector ${DURATION}s grid=${GRID}ms depth=${DEPTH} on $(date -u)"
+          python bybit_book_collector.py \
+            --symbol "${{ matrix.symbol }}" --out "$FN" \
+            --duration "$DURATION" --grid-ms "$GRID" --depth "$DEPTH" > /tmp/by_book.log 2>&1 || true
+          echo "=== bybit book collector log tail ==="
+          tail -40 /tmp/by_book.log
+
+      - name: Book file stats
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_bybit_book.jsonl.gz"
+          if [ -f "$FN" ]; then
+            SIZE=$(stat -c%s "$FN")
+            N=$(python -c "import gzip,sys; print(sum(1 for l in gzip.open(sys.argv[1],'rt') if l.strip()))" \
+                "$FN" 2>/dev/null || echo "?")
+            echo "$FN: $SIZE bytes, $N rows"
+          fi
+
+      - name: Commit book to data/${{ matrix.coin }}-bybit-book branch (force-push, history-less)
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_bybit_book.jsonl.gz"
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          mkdir -p /tmp/book
+          cp "$FN" /tmp/book/ 2>/dev/null || true
+
+          # Anti-clobber guardrail (same as the Coinbase book collectors): a
+          # crashed/partial run must NOT overwrite good cumulative rows.
+          BRANCH="origin/data/$COIN-bybit-book" FN="$FN" python - <<'PY'
+          import gzip, subprocess, os
+          BRANCH = os.environ["BRANCH"]
+          FN = os.environ["FN"]
+          def count_path(path):
+              try:
+                  with gzip.open(path, "rt") as f:
+                      return sum(1 for l in f if l.strip())
+              except Exception:
+                  return 0
+          newp = os.path.join("/tmp/book", FN)
+          new = count_path(newp)
+          try:
+              blob = subprocess.run(["git", "show", f"{BRANCH}:{FN}"],
+                                    capture_output=True, check=True).stdout
+          except subprocess.CalledProcessError:
+              blob = None
+          old = 0
+          if blob:
+              tmp = "/tmp/_old_book.jsonl.gz"
+              with open(tmp, "wb") as f: f.write(blob)
+              old = count_path(tmp)
+          if old and new < old:
+              with open(newp, "wb") as f: f.write(blob)
+              print(f"[guardrail] {FN}: collected {new} rows < {old} on data branch "
+                    f"-> RESTORED data-branch copy (no regression)")
+          else:
+              print(f"[guardrail] {FN}: {new} rows (>= {old} on data branch) -> keep")
+          PY
+
+          git checkout --orphan "data/$COIN-bybit-book-tmp"
+          git rm -rf . > /dev/null 2>&1 || true
+          cp "/tmp/book/$FN" . 2>/dev/null || true
+
+          if [ -f "$FN" ]; then
+            git add "$FN"
+            git commit -m "$COIN bybit book update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin "data/$COIN-bybit-book-tmp:data/$COIN-bybit-book"
+            echo "[commit] pushed to data/$COIN-bybit-book"
+          else
+            echo "[commit] no book file to commit"
+          fi
