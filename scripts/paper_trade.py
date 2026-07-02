@@ -38,13 +38,14 @@ def cell_trades(coin, K, maker_fee, taker_fee, alpha, roll, grace):
     path = f"/tmp/{coin}_coinbase_book.jsonl.gz"
     if not os.path.exists(path):
         return []
-    ch, g = build_channels(path, K, FLOW_W)
+    raw = load_book(path)                                    # parse the gzip ONCE; reuse for every consumer
+    ch, g = build_channels(path, K, FLOW_W, raw=raw)
     mid = np.asarray(g["mid"], float)
     bb, ba = np.asarray(g["bidK"][1], float), np.asarray(g["askK"][1], float)
     buy, sell = np.asarray(g["buy"], float), np.asarray(g["sell"], float)
     sret = ch["signed_ret"]
-    n = len(mid); hs = median_spread_bps(path) / 2.0
-    t0 = float(load_book(path)["ts"][0])                     # grid idx -> ts = t0 + idx*0.1
+    n = len(mid); hs = median_spread_bps(path, raw=raw) / 2.0
+    t0 = float(raw["ts"][0])                                 # grid idx -> ts = t0 + idx*0.1
     vol = buy + sell; cvol = np.concatenate([[0.0], np.cumsum(vol)])
     vm = lambda t, w: (cvol[t + 1] - cvol[max(0, t + 1 - w)]) / (t + 1 - max(0, t + 1 - w))
     lean = lean_series(buy, sell, WFLIP)

@@ -35,8 +35,8 @@ from odcore.coupling_scanner import score_pair
 from odcore.leadlag import cross_correlation
 
 
-def build_channels(path, K, W):
-    g = to_grid(load_book(path), 0.1)
+def build_channels(path, K, W, raw=None):
+    g = to_grid(raw if raw is not None else load_book(path), 0.1)
     bd, ad = g["bidK"][K], g["askK"][K]
     tot = bd + ad
     depth_imb = (bd - ad) / (tot + 1e-12)
@@ -165,8 +165,15 @@ def part_b(ch, g, horizons, split=0.6, n_null=200, seed=0):
     return out, half_spread_bps
 
 
-def median_spread_bps(path):
-    """Median top-of-book spread in bps from the raw file (the maker-execution floor reference)."""
+def median_spread_bps(path, raw=None):
+    """Median top-of-book spread in bps (the maker-execution floor reference). Subsamples every 50th record.
+    If a preloaded `raw` dict (from load_book) is passed, reuse it instead of re-reading the gzip — the raw
+    arrays are 1:1 with the file rows, so [::50] with the same mid>0 / spread-present filters is bit-identical."""
+    if raw is not None:
+        mid = raw["mid"][::50]; sp = raw["spread"][::50]
+        m = (mid > 0) & ~np.isnan(sp)
+        sb = (sp[m] / mid[m] * 1e4)
+        return float(np.median(sb)) if sb.size else float("nan")
     sb = []
     with __import__("gzip").open(path, "rt") as f:
         for i, line in enumerate(f):

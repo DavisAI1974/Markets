@@ -23,22 +23,35 @@ import argparse, json, gzip
 import numpy as np
 
 
+def _depthK(levels):
+    """Cumulative top-K depth (K=1,3,5,10) for one side's [(px,size),...]. Sequential prefix for K<8 is
+    bit-identical to np.sum; K=10 keeps np.sum so its 8-way-unrolled reduction order matches the old code
+    EXACTLY (verified bit-identical). ~2x faster than 4x np.sum/side by dropping the small-slice np.sum calls."""
+    n = len(levels)
+    s1 = levels[0][1] if n > 0 else 0.0
+    s3 = s1 + (levels[1][1] if n > 1 else 0.0) + (levels[2][1] if n > 2 else 0.0)
+    s5 = s3 + (levels[3][1] if n > 3 else 0.0) + (levels[4][1] if n > 4 else 0.0)
+    s10 = float(np.sum([s for (_, s) in levels[:10]]))
+    return s1, s3, s5, s10
+
+
 def load_book(path):
-    ts, mid, buy, sell = [], [], [], []
-    bidK = {1: [], 3: [], 5: [], 10: []}
-    askK = {1: [], 3: [], 5: [], 10: []}
+    """Parse the gzipped book JSONL into columnar numpy arrays. Also captures `spread` (top-of-book, in the
+    quote unit) so median_spread_bps can reuse this single parse instead of re-reading the file."""
+    ts, mid, buy, sell, spread = [], [], [], [], []
+    b1, b3, b5, b10 = [], [], [], []
+    a1, a3, a5, a10 = [], [], [], []
     with gzip.open(path, "rt") as f:
         for line in f:
             r = json.loads(line)
-            ts.append(r["ts"]); mid.append(r["mid"])
+            ts.append(r["ts"]); mid.append(r["mid"]); spread.append(r.get("spread"))
             buy.append(r.get("buy", 0.0) or 0.0); sell.append(r.get("sell", 0.0) or 0.0)
-            b = [s for (_, s) in r["bids"]]; a = [s for (_, s) in r["asks"]]
-            for K in bidK:
-                bidK[K].append(float(np.sum(b[:K]))); askK[K].append(float(np.sum(a[:K])))
-    ts = np.array(ts); mid = np.array(mid)
-    return dict(ts=ts, mid=mid, buy=np.array(buy), sell=np.array(sell),
-                bidK={K: np.array(v) for K, v in bidK.items()},
-                askK={K: np.array(v) for K, v in askK.items()})
+            x1, x3, x5, x10 = _depthK(r["bids"]); b1.append(x1); b3.append(x3); b5.append(x5); b10.append(x10)
+            y1, y3, y5, y10 = _depthK(r["asks"]); a1.append(y1); a3.append(y3); a5.append(y5); a10.append(y10)
+    return dict(ts=np.array(ts), mid=np.array(mid), buy=np.array(buy), sell=np.array(sell),
+                spread=np.array([np.nan if x is None else x for x in spread], float),
+                bidK={1: np.array(b1), 3: np.array(b3), 5: np.array(b5), 10: np.array(b10)},
+                askK={1: np.array(a1), 3: np.array(a3), 5: np.array(a5), 10: np.array(a10)})
 
 
 def to_grid(d, dt=0.1):
