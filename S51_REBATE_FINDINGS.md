@@ -1,5 +1,12 @@
 # S51 FINDINGS — the rebate lever QUANTIFIED (it's super-linear) + venue shortlist + 4x pipeline speedup
 
+> ⚠ **NO SINGLE NUMBER IN THIS DOC IS "THE CEILING" (Greg, S51 close).** Every $/hr below is one cell of the
+> matrix {venue, maker fee, FLAT|SIZED, v1|v2 fill, window}: the SAME SOL legs read +$18/hr (mk0·flat·v1)
+> to +$142/hr (−2bp·wider book·v1) to −$7/+$20 (v2 worst-case mk0/−1bp) — and everything here is measured on
+> Coinbase's ~$4.7M/hr tape, i.e. PRE-Bybit (~10x tape). Cite the cell, not "the ceiling." The sizing-on-
+> winners contribution is NOT finalized in these numbers — that accounting is S52 JOB 1; treat the sized
+> columns as a floor on what sizing adds, per the forward ledger (+16% SOL … +47% doge OOS).
+
 Jobs 1+2 of `KICKOFF_2026-07-02_S51.md`, plus a verified-bit-identical performance pass on the shared pipeline.
 Tools changed IN PLACE per the standing rule: `scripts/_capacity_model.py` (rebate/spread scenario sweep),
 `_birth_probe.load_book` + `_liquidity_dive.{build_channels,median_spread_bps}` (single-parse reuse).
