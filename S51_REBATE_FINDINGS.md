@@ -104,11 +104,79 @@ at 3.0 and xrp at 1.5 by ~1% noise margins. The loaded-up legs are net-positive 
 does not need bounding beyond the existing 4x clip. **No code change; hi_clip=4.0 IS the validated cap.**
 (S50's "add a per-leg size cap" idea is hereby closed by falsification, like the rebate x sizing hypothesis.)
 
+## Job 3 WIRED — Bybit venue-book collection is LIVE + the total-$/hr venue read (Greg's frame)
+
+- `bybit_book_collector.py` (new, on 5c5vg9): Bybit v5 linear-perp L2 collector, SAME row schema as the
+  Coinbase one so the whole pipeline consumes venue books unchanged. **Smoke-tested live** (584 rows/60s,
+  0 reconnects; `load_book`/`median_spread_bps` read it). `bybit_book_collectors_durable.yml` pushed to the
+  DEFAULT branch (cron 0 */6, SOL+ETH → `data/{sol,eth}-bybit-book`), same guardrail as the Coinbase crons.
+- **Venue stats (primary sources = the venues' own APIs, this session):**
+  | venue | SOL market | turnover | spread |
+  |-------|-----------|----------|--------|
+  | Bybit perp | SOLUSDT | **~$47M/hr** (24h WS ticker) | 1.24 bps |
+  | Coinbase spot | SOL-USD | ~$4.7M/hr | 1.36 bps |
+  | Backpack perp | SOL_USDC_PERP | ~$1.0M/hr | 1.24 bps |
+  | Bitfinex perp (zero-fee) | SOLF0:USTF0 | ~$0.05M/hr | 6.6 bps |
+  (ETH: Bybit ~$111M/hr vs Coinbase ~$10.7M/hr.)
+- **Greg's frame (load-bearing): maximize OUR $/hr, not rebate size, not venue volume.** Venue volume converts
+  to our $ through (a) fill fraction at our capital and (b) the saturation wall. So: Bitfinex's zero fee +
+  fat 6.6 bps spread is the best PER-TRADE economics on paper and the WORST per-hour (flow-dead: our wall
+  ~$2/hr). Bybit's 10x flow is the real lever — BUT Bybit's standard maker fee is +2 bps, which makes our
+  ~1.7 bps edge NEGATIVE: the MM program (or 0-maker VIP) is the VIABILITY gate there, and any rebate beyond
+  it is gravy. The projections (same turn structure assumed — the accruing venue book decides): Bybit at
+  MM1 ~+$18-25/hr at $1k/leg (~full fills), ~+$100-150/hr at $10k/leg; at MM2/3 rebates roughly 2-3x that.
+
+## Greg's scale-in picture — probed hard (falsification-first). Verdict: architecture right, mechanism
+## backwards, NOT deployable off this model class; re-test on the venue book under a rebate.
+
+Greg (S51): "offers lifted on the way down the slide on winners, flatten at the valley, flip, bids hit on
+the way up" — i.e. scale IN along the leg instead of one fill at the turn, and size should ride winners.
+Two probes built (execution-layer only, same flips, no new signal):
+
+1. **`scripts/_scale_in_probe.py`** (per-leg, every opposing trade fills our pegged quote, all inventory
+   marked to the leg's actual close):
+   - **Q1 (the mechanism) FALSIFIED: LOSERS fill more, not winners** (SOL median opposing flow $6.7k on
+     losing legs vs $3.6k on winning; ETH same direction). A resting quote fills hardest when price rips
+     AGAINST it — the S45 adverse-selection autopsy, re-confirmed. "Sizing up on winners not losers" cannot
+     be had for free from flow; the market hands more size to your losers.
+   - **Q2 (total $) looked spectacular** (SOL mk0 +$15.6/hr @$1k/leg → +$169 @$25k vs one-shot +$7/+$24)
+     — BUT the honesty flag maxed out: accumulated inventory = 4-20x the exit-turn flow. The single-point
+     flatten is IMPOSSIBLE at size; these numbers are mark-to-close fiction at large caps.
+2. **`scripts/_inventory_sim.py`** — the FAITHFUL version of Greg's picture (the flatten IS the next leg's
+   entry: fills unwind carried inventory then build the new side; no separate exit; cash/coins accounting;
+   maxDD + tape-share honesty metrics):
+   - mk0 conviction: SOL +$3-6/hr at $1-5k caps, NEGATIVE at $25k; ETH negative — the naive scale-in $
+     evaporate under honest exit accounting.
+   - maker −1 bp: SOL +$18-43/hr, ETH +$11-87/hr — the rebate makes volume-multiplication profitable.
+   - **REVERSED-SIDE CONTROL FIRES (the disqualifier): on SOL the control (quote AGAINST the conviction
+     side) makes MORE at mk0 (+$9→+$60/hr) because it fills 50% more volume.** In this front-of-queue model
+     class, fill VOLUME x half-spread dominates any signal content → the class cannot validate the strategy
+     change (it would bless literally any always-on one-sided quote — which S45 measured as the adversely-
+     selected victim, and the v2 queue model marks 80% of legs unfillable). Tape share at the bigger caps
+     (16-72% of the venue's one-sided flow) is independently implausible on Coinbase.
+
+**Where this lands (per-cell rule, honest):** the executor's one-shot-at-the-turn design SURVIVES — it was
+built precisely to avoid the always-resting adverse-selection trap the probes just re-measured. The scale-in/
+netting ARCHITECTURE (Greg's flatten=flip insight) is credible AND becomes genuinely interesting only under
+(a) a rebate (marginal fills profitable) + (b) a 10x tape (our fill share plausible: the same $150k/hr of
+fills is 0.3-1.5% of Bybit's tape vs 6.5% of Coinbase's) + (c) a QUEUE-AWARE fill model (the v2/maker_book
+discipline, not front-of-queue). All three land together on the accruing Bybit book — that is the S52 test,
+gated on real venue data, NOT deployable off this window.
+
+## The "why are profits so low" question (Greg) — answered with measurements, not vibes
+The code is not leaving money on the table within its model: (1) trades verified bit-identical through the
+speedup; (2) sizing cap already optimal (forward-ledger falsification); (3) the one-shot executor beats the
+scale-in alternatives once exits are honest; (4) the S50 capacity correction (entry-window fill) was RIGHT —
+the whole-hold version's fatter numbers were the same mark-to-close fiction the scale-in probe just re-found.
+The $/hr is structurally capped by **per-fill edge (thin, 1.7 bps at mk0) x honestly-fillable volume (queue-
+limited)**. The levers that survive every falsification run this session: the REBATE (fee bps on every fill),
+VENUE FLOW (10x tape → 10x the saturation wall AND plausible fill share), and capital-per-leg up to the wall.
+All three = the Bybit MM path. The venue book now accruing decides it with measurements.
+
 ## NEXT
-1. **Job 3 (decisive): collect Bybit (and/or Backpack) SOL book** — extend the venue-parameterized collector,
-   re-measure spread + fill + the swing edge on THAT book before believing the rebate math prints there.
-   Queue-honesty says ALSO collect/compare ETH there (v2 favors deep books).
-2. Greg action: fire the Bybit MM application / Backpack VIP-desk email (the qualification is an application,
-   not a wall — nothing blocks starting it now).
-3. Optional refinement: a queue_frac sweep (0..1) to interpolate the v1/v2 bracket once we can observe real
-   queue position on the venue book (needs order-level data or our own resting orders).
+1. Let `data/{sol,eth}-bybit-book` accrue (cron live) → re-run the FULL stack on the venue book: spread,
+   turn structure, v1/v2 capacity, and the netting sim under the reachable MM rebate. The decisive test.
+2. Greg action: fire the Bybit MM application (institutional_services@bybit.com) / Backpack VIP desk
+   (vip@backpack.exchange) — application-gated, not volume-gated; nothing blocks starting now.
+3. Optional: queue_frac interpolation of the v1/v2 bracket once real queue position is observable on the
+   venue (order-level data or our own resting orders).
