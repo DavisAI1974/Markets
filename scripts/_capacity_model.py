@@ -69,17 +69,27 @@ def _leg_features(legs, mid, sret, buy, sell, lean, piv):
     return clmx, size_score
 
 
-def _leg_caps(legs, mid, buy, sell):
-    """flow-bounded $ capacity per leg (entry-window opposing flow) — fee/spread independent."""
-    caps = []
+def _leg_caps(legs, mid, buy, sell, bb, ba, queue_frac=1.0):
+    """flow-bounded $ capacity per leg (entry-window opposing flow) — fee/spread independent.
+    Returns (v1, v2):
+      v1 = ALL opposing $ flow in the entry window (the S50 model — optimistic: assumes we are alone at
+           the level and first in line).
+      v2 = QUEUE-HONEST (Job 4, odcore.maker_book discipline): we join the BACK of the best level at the
+           post cell, so the size already resting AHEAD of us (best-level size x queue_frac) must trade
+           through before our first unit fills -> fillable$ = max(0, window_opp_flow - queue_ahead) x px.
+    Exit side stays un-marked (turns are ~2x volume climaxes, S40) — flagged, same as v1."""
+    v1, v2 = [], []
     for l in legs:
         o, c = int(l.open_idx), int(l.close_idx)
         if c <= o:
-            caps.append(0.0); continue
+            v1.append(0.0); v2.append(0.0); continue
         end = min(c, o + FILL_W)
-        opp = sell[o:end + 1] if l.side > 0 else buy[o:end + 1]
-        caps.append(float(np.sum(opp)) * float(mid[o]))   # coin units * price = $ fillable at our quote
-    return np.asarray(caps)
+        opp = float(np.sum(sell[o:end + 1] if l.side > 0 else buy[o:end + 1]))   # coin units
+        qa = float((bb if l.side > 0 else ba)[o]) * queue_frac                    # resting ahead of us
+        px = float(mid[o])
+        v1.append(opp * px)
+        v2.append(max(0.0, opp - qa) * px)
+    return np.asarray(v1), np.asarray(v2)
 
 
 def _dollars(nets, sizes, caps, hrs, S):
@@ -106,13 +116,13 @@ def cell_scenarios(coin, K, grace):
     piv = {int(c): int(p) for (c, p, s) in allf}
 
     scen_out = []
-    caps = feats = None
+    caps = caps2 = feats = None
     for label, mk, smul in SCEN:
         res = simulate_swing_maker(mid, bb, ba, buy, sell, allf, half_spread_bps=hs * smul,
                                    maker_fee_bps=mk, taker_fee_bps=5.0, cover_grace=grace)
         legs = res.legs
         if caps is None:                       # leg indices are scenario-independent — compute caps/feats once
-            caps = _leg_caps(legs, mid, buy, sell)
+            caps, caps2 = _leg_caps(legs, mid, buy, sell, bb, ba)
             feats = _leg_features(legs, mid, sret, buy, sell, lean, piv)
         nets = np.asarray([float(l.net_bps) for l in legs])
         # conviction sizing (sets leg.size in place, leakage-clean) — same features across scenarios
@@ -123,12 +133,18 @@ def cell_scenarios(coin, K, grace):
         sized_rep = _dollars(nets, sizes, caps, hrs, REP_S)
         flat_ceil = _dollars(nets, ones, caps, hrs, 1e12)
         sized_ceil = _dollars(nets, sizes, caps, hrs, 1e12)
+        # v2 queue-honest (Job 4): the same policy marked down by the size resting ahead of us
+        flat_rep2 = _dollars(nets, ones, caps2, hrs, REP_S)
+        sized_rep2 = _dollars(nets, sizes, caps2, hrs, REP_S)
+        flat_ceil2 = _dollars(nets, ones, caps2, hrs, 1e12)
         lift = (sized_rep - flat_rep) / abs(flat_rep) * 100 if flat_rep else float("nan")
         scen_out.append(dict(label=label, maker=mk, spread_mult=smul, mean_net=float(nets.mean()),
                              flat_rep=flat_rep, sized_rep=sized_rep, flat_ceil=flat_ceil,
-                             sized_ceil=sized_ceil, sizing_lift_pct=lift))
+                             sized_ceil=sized_ceil, sizing_lift_pct=lift,
+                             v2_flat_rep=flat_rep2, v2_sized_rep=sized_rep2, v2_flat_ceil=flat_ceil2))
     return dict(coin=coin, hrs=hrs, n_legs=len(caps), turns_hr=len(caps) / hrs,
-                med_cap=float(np.median(caps)), scen=scen_out)
+                med_cap=float(np.median(caps)), med_cap_v2=float(np.median(caps2)),
+                fillable_leg_frac_v2=float(np.mean(caps2 > 0)), scen=scen_out)
 
 
 def main():
@@ -140,12 +156,14 @@ def main():
         if r is None:
             print(f"[{coin}] no book\n"); continue
         results.append(r)
-        print(f"[{coin.upper()}]  {r['hrs']:.1f}h  turns/hr={r['turns_hr']:.1f}  med leg-cap ${r['med_cap']:,.0f}")
+        print(f"[{coin.upper()}]  {r['hrs']:.1f}h  turns/hr={r['turns_hr']:.1f}  med leg-cap ${r['med_cap']:,.0f}"
+              f"  | v2 queue-honest: med ${r['med_cap_v2']:,.0f}, {r['fillable_leg_frac_v2']*100:.0f}% legs fillable")
         print(f"   {'scenario':11s}{'net/leg':>9}{'flat $/hr':>11}{'sized $/hr':>12}{'lift%':>7}"
-              f"{'flat ceil':>11}{'sized ceil':>12}")
+              f"{'flat ceil':>11}{'sized ceil':>12}{'v2 flat':>9}{'v2 sized':>10}{'v2 ceil':>9}")
         for s in r["scen"]:
             print(f"   {s['label']:11s}{s['mean_net']:>+8.2f}b{s['flat_rep']:>+11,.0f}{s['sized_rep']:>+12,.0f}"
-                  f"{s['sizing_lift_pct']:>+6.0f}%{s['flat_ceil']:>+11,.0f}{s['sized_ceil']:>+12,.0f}")
+                  f"{s['sizing_lift_pct']:>+6.0f}%{s['flat_ceil']:>+11,.0f}{s['sized_ceil']:>+12,.0f}"
+                  f"{s['v2_flat_rep']:>+9,.0f}{s['v2_sized_rep']:>+10,.0f}{s['v2_flat_ceil']:>+9,.0f}")
         print()
     # SOL rebate summary (the focus cell) — how much a rebate + wider book buys, and the sizing interaction
     sol = next((r for r in results if r["coin"] == "sol"), None)

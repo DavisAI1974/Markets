@@ -69,10 +69,46 @@ Fixes, all backward-compatible:
 - **Verification (sandboxed old-vs-new at efd646b in a worktree): doge 1865 trades, sol 5376 trades — 0
   differing fields. The forward ledger is unaffected; this buys iteration speed, not P&L.**
 
+## Job 4 — v2 QUEUE-HONEST fill model (the lower bound; wired into `_capacity_model.py`)
+
+v1 assumed every opposing $ in the entry window fills US (front-of-queue / we set the new best price). v2
+applies the `odcore/maker_book.py` queue discipline: we join the BACK of the existing best level, so the size
+already resting there must trade through before our first unit fills → fillable$ = max(0, window_flow −
+best_level_size). The two are a truth BRACKET: the executor posts at the turn, so when our quote IMPROVES the
+book we are front-of-queue (v1); when we join an existing level we are back-of-queue (v2). Reality is between.
+
+Key v2 numbers (flat, $1k/leg rep | ceiling):
+| cell | legs fillable (v2) | mk0 v2 | −1bp v2 | −2bp v2 ceiling |
+|------|--------------------|--------|---------|-----------------|
+| SOL  | 20% (med cap $0)   | +$1 \| **−$7** | +$4 \| +$20 | +$46 |
+| ETH  | 44%                | +$0 \| −$6 | +$7 \| +$43 | **+$92** |
+| XRP  | 22%                | −$0 \| −$2 | +$3 \| +$22 | +$46 |
+| BTC  | 22%                | +$0 \| −$7 | +$2 \| +$19 | +$46 |
+| DOGE | 32%                | +$0 \| +$3 | +$1 \| +$7  | +$10 |
+
+Three honest reads:
+1. **At mk0, worst-case queue position, the strategy does NOT print** (v2 ceilings NEGATIVE on 4/5 cells) —
+   the sharpest statement yet of why Coinbase-without-a-rebate is not deployable at size.
+2. **The rebate flips even the worst case positive** (−1 bp: every cell's v2 ceiling > 0). The rebate is not
+   just a magnitude lever, it is the VIABILITY guarantee under pessimistic queue assumptions.
+3. **Queue-honesty favors DEEP books: ETH overtakes SOL in the v2 world** (44% of legs fillable vs 20%;
+   −2 bp v2 ceiling +$92 vs +$46). If the rebate venue's SOL book is thin at the turns, ETH may be the better
+   first cell THERE — Job 3's venue-book measurement decides, per the per-cell rule.
+
+## Job 5 — per-leg size cap: tested on the forward ledger, answer = DON'T tighten (falsified)
+
+The cap mechanism already exists (`size_legs` `hi_clip=4.0`). Tested cap ∈ {1,1.5,2,2.5,3,4} on the FORWARD
+LEDGER (25,845 trades, multi-window — not one-window tuning), matched-capital normalized, at mk0 AND +1 bp
+rebate: net rises MONOTONICALLY toward cap 4.0 on sol/eth/btc (sol +9,413 flat → +9,996 @cap4); doge peaks
+at 3.0 and xrp at 1.5 by ~1% noise margins. The loaded-up legs are net-positive in aggregate — the wrong-tail
+does not need bounding beyond the existing 4x clip. **No code change; hi_clip=4.0 IS the validated cap.**
+(S50's "add a per-leg size cap" idea is hereby closed by falsification, like the rebate x sizing hypothesis.)
+
 ## NEXT
 1. **Job 3 (decisive): collect Bybit (and/or Backpack) SOL book** — extend the venue-parameterized collector,
    re-measure spread + fill + the swing edge on THAT book before believing the rebate math prints there.
-2. Job 4: v2 walk-the-book mark-to-fill model (`odcore/maker_book.py` queue) — honest $/hr at larger size.
-3. Job 5: per-leg size cap wired alongside `size_legs` (bounds loaded-up wrong-tail legs; sizing stays ON).
-4. Greg action: fire the Bybit MM application / Backpack VIP-desk email (the qualification is an application,
+   Queue-honesty says ALSO collect/compare ETH there (v2 favors deep books).
+2. Greg action: fire the Bybit MM application / Backpack VIP-desk email (the qualification is an application,
    not a wall — nothing blocks starting it now).
+3. Optional refinement: a queue_frac sweep (0..1) to interpolate the v1/v2 bracket once we can observe real
+   queue position on the venue book (needs order-level data or our own resting orders).
