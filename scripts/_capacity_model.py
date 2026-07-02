@@ -31,6 +31,10 @@ from odcore.flip_detector import lean_series, detect_flips
 from odcore.swing_maker import simulate_swing_maker
 
 FLOW_W, WFLIP, REV = 20, 600, 0.1
+FILL_W = 10   # cells (1.0s) — a FIXED per-turn position fills near the turn (S40 climax volume), it does NOT
+              # keep scaling into the whole adverse leg. Bounding fill to this entry window (not the whole hold)
+              # removes the whole-hold-accumulation artifact that made the S->inf ceiling spuriously negative
+              # (Greg S50: "the wrong tail issue sounds like a coding issue" — confirmed, whole-hold was wrong).
 CELLS = [("sol", 1), ("doge", 1), ("xrp", 1), ("eth", 1), ("btc", 10)]
 GRACE = {"sol": 300, "doge": 600, "xrp": 300, "eth": 300, "btc": 300}
 SIZES = [100.0, 250.0, 500.0, 1_000.0, 2_500.0, 5_000.0, 10_000.0, 25_000.0, 50_000.0, 1e12]  # $ per leg; last = inf
@@ -49,14 +53,17 @@ def cell_capacity(coin, K, grace):
     allf = detect_flips(lean_series(buy, sell, WFLIP), REV)[0]
     res = simulate_swing_maker(mid, bb, ba, buy, sell, allf, half_spread_bps=hs,
                                maker_fee_bps=0.0, taker_fee_bps=5.0, cover_grace=grace)
-    # opposing $ flow available to fill each leg's ENTRY over the hold (open->close), the tighter constraint.
+    # opposing $ flow available to fill each leg's fixed-size ENTRY, over a realistic entry window near the
+    # turn (NOT the whole hold — that overstated capacity on losing legs where price runs against us and
+    # opposing flow floods for the whole leg; a fixed per-turn position fills near the turn and holds).
     caps, nets = [], []
     for l in res.legs:
         o, c = int(l.open_idx), int(l.close_idx)
         if c <= o:
             continue
+        end = min(c, o + FILL_W)
         # long (side+1) rests a BID -> lifted by SELL flow; short (side-1) rests an ASK -> lifted by BUY flow.
-        opp = sell[o:c + 1] if l.side > 0 else buy[o:c + 1]
+        opp = sell[o:end + 1] if l.side > 0 else buy[o:end + 1]
         cap_usd = float(np.sum(opp)) * float(mid[o])     # coin units * price = $ fillable at our quote
         caps.append(cap_usd); nets.append(float(l.net_bps))
     caps = np.asarray(caps); nets = np.asarray(nets)
