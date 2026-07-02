@@ -32,11 +32,14 @@ and that is the real finding, not a bug.
 
 ## Why the number is small — and what actually moves it (Greg: "$19/hr seems low")
 Two measured facts:
-1. **Conviction sizing is a ~+25% garnish, not a multiplier.** SOL flat vs sized at a $2k/turn budget:
-   1s +$11→+$14, 5s +$18→+$21, whole +$45→+$54. `corr(size, net) = +0.03` — the size multiplier is barely
-   aligned with which legs win, because (S47, DEAD) **winners are NOT separable from losers at entry**. Sizing
-   loads *big moves*, and big moves are ~half wrong-tail. So "load winners not losers" is not achievable; sizing
-   adds a real but modest lift.
+1. **Conviction sizing is a persistent ~+20–25%, not a multiplier — but we KEEP it (Greg S50: it compounds
+   hour after hour).** SOL flat vs sized at a $2k/turn budget: 1s +$11→+$14, 5s +$18→+$21, whole +$45→+$54.
+   `corr(size, net) = +0.03` — the size multiplier is barely aligned with which legs win, because (S47, DEAD)
+   **winners are NOT separable from losers at entry**; sizing loads *big moves*, and big moves are ~half
+   wrong-tail. So it can't turn $19 into $190 — but a standing +20–25% on the rate is real compounding money and
+   is already wired (`size_legs`, leakage-clean). It ALSO interacts with a rebate in our favor: a rebate adds
+   +2 bps to every leg, cushioning the wrong-tail you load into, so the sizing lift should grow under a rebate
+   (test in S51). Keep sizing on; add a per-leg size cap to bound the loaded-up wrong-tail legs.
 2. **Throughput = edge(bps) × passively-fillable notional, and 1.75 bps is THIN.** To make $100/hr on SOL you
    must passively fill ~$570k/hr of notional (~11% of SOL's one-sided volume) at the turns. The $/hr scales with
    capital-per-turn until the flow/adverse-selection wall (resting longer: whole-hold $54 vs 1s $14 — but that
