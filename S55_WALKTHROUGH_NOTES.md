@@ -157,3 +157,16 @@ saving applies at COARSE leg scales (price-theta exits) = the two-scale thread. 
 canary: executes, 344 shifted legs; proper evaluation needs an isolated run + controls (pending).
 dive_depth in the platform: `swing_maker.size_legs` SIZE axis (deployed, S49 OOS) + now recorded
 on every forward-ledger trade.
+
+## Round 11 — Greg: "paper trade sizes trades; the coarse thread has been going FULL size every time"
+CORRECT — process gap fixed: all S55 coarse-thread scoring was flat while the deployed path runs
+two-factor conviction sizing (sized>flat on all 5 cells OOS). STANDING (new): coarse-thread
+evaluations carry a SIZED column via the platform's own `odcore.swing_maker.size_legs` (one
+implementation, never a fork) alongside the NO-GATES flat base.
+MEASUREMENT (zz150 30d, quality=rev_conv, size axis=trailing-4h-range): sized beats flat 4/5
+coins, total −4,018 -> −1,556, DOGE/ETH flip positive — BUT NOT VALIDATED: shuffled-conviction
+control beats true conviction on 2/5 (eth shuffle +1,778 = fat-tail lottery) and mean size
+0.62-0.72 breaks matched-capital (roll=200 machinery needs thousands of legs; coarse cadence
+gives 94-214/coin/30d). True>shuffle on only 2/5. VERDICT: sizing mechanism wired into the
+coarse workflow; the coarse QUALITY/SIZE axes are NOT yet earned (rev_conv still z=1.8) — needs
+accrued history or per-week gate treatment before any adoption.
