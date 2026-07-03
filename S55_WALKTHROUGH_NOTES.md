@@ -170,3 +170,24 @@ control beats true conviction on 2/5 (eth shuffle +1,778 = fat-tail lottery) and
 gives 94-214/coin/30d). True>shuffle on only 2/5. VERDICT: sizing mechanism wired into the
 coarse workflow; the coarse QUALITY/SIZE axes are NOT yet earned (rev_conv still z=1.8) — needs
 accrued history or per-week gate treatment before any adoption.
+
+## Round 12 — THE ONE VERSION (Greg: "compile 1 version that is the best one — live, paper, all
+## sizes and whatever; keep zig zag separate, clone pieces")
+BUILT: `odcore/platform.py` = the single decision layer. Composes (imports, never duplicates —
+zigzag machinery stays its own component): flip_detector (WHEN), swing_maker (WHETHER/HOW: maker-
+at-the-turn + S48 cover-grace + S55R8 lean-exit + gates + NEW fill_mode="taker") + size_legs
+(S47/S49 sizing — ALWAYS on in run_cell; run_stream sizes via the same function when an axis is
+supplied), info_dipole (S36 gate + S55R1 descriptors). Registry `DEPLOYED` = the per-cell prod
+configs (grace map, fees, sizing). `scripts/paper_trade.py` -> THIN HARNESS over the platform
+(flags/ledger/print identical). Research runs through `run_stream` (any flip stream) so coarse
+verdicts are rendered by the platform's own mechanics — the "two versions" drift is dead.
+LIVE: no real-money order code exists yet (venue-gated, S49/S50); when it lands it consumes THIS
+module's decisions.
+CANARIES (all PASS):
+- baseline via platform: +0 new trades, ledger 25,845 intact, shakeout bit-identical
+  (sol +9225.4/+10705.2 ... btc +4063.9/+5425.4).
+- equivalence: zz150 coarse flips through the executor (fill_mode="taker") reproduce the S54 leg
+  tables EXACTLY on all 5 coins (214/+10.7/-0.3 sol ... 153/-3.7/-14.7 xrp).
+- variant routing: --dipole-exit/-entry -> sandbox ledger, executes, baseline untouched.
+- swing_maker taker-mode double-close bug (from the interrupted edit) FIXED before commit;
+  fee_open tracked per leg (correct maker/taker fee mixing in every close path).
