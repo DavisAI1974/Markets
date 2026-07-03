@@ -66,6 +66,39 @@ FIRST OBSERVATIONS (leg-slice; machines decide, per playbook rule 1):
    partly THIS, not just venue. Bins rows carry slmax60 (60s wall-clock) for the cross-check;
    any deploy read must be defined in WALL-CLOCK terms per venue.
 
+## ROUND 1b — WHERE THE BLEED IS (renders + same-leg trigger match; Greg's question)
+
+Renders: `docs/renders/s60/exit_bleed_<coin>_<venue>.png` (10 worst-giveback legs per registry
+cell, price + with-ride-lean strip, R8/dive trigger marks). Tool: `scripts/_s60_exit_renders.py`.
+
+**THE BLEED IS TWO POPULATIONS, not one:**
+1. **WRONG-SIDE legs** (= the entire worst-10 giveback board on every cell, both venues):
+   entry fires, tiny favorable blip (peak +0..+42bp inside the first ~0-6 min), then under
+   water the whole ride to the opposite θ-arm close at ~-θ (gross -64..-115bp). Their
+   "giveback" IS the bounded-loss design, not a squandered peak. In the renders the DIVE
+   (purple) fires within the first minutes on most of these legs — as a STOP it saves
+   60-100bp/leg here.
+2. **RIGHT-SIDE legs**: median giveback prints c·θ EXACTLY on all 8 registry cells (40.7-41.5
+   at th80, 51.2-52.1 at th100) = the close-side confirm lag — the structural toll of the
+   zigzag exit. Mean sits 10-25bp above median = the slow-confirm tail.
+
+**TRIGGER VERDICT (same-leg matched, registry cells):** R8(0.10,0) and dive(-0.30) as PEAK
+harvesters FAIL — they fire 61-97% PRE-peak, and their triggered subset has HIGHER zigzag
+gross than pooled (sol bins +9.4 vs +2.2) = they select the healthy rides and cut them.
+Δ(all-legs): sol -3.3/-18.9(books), doge -3.1/-6.3, xrp -0.8/-4.3 — NEGATIVE. The one
+positive: btc +1.3 bins / **+27.2 books** — because btc books legs are mostly wrong-side, so
+any early exit beats the -θ death (the STOP role, accidentally demonstrated).
+BINS/BOOKS trigger-rate gap (57-65% vs ~100%) is partly the lean wall-clock confound
+(600 cells = 600s bins / 60s books) — deploy reads must be wall-clock-defined.
+
+**ROUND 2 SHAPE THIS IMPLIES (split the role, graded per cell):**
+(a) close-side trailing retrace tighter than c·θ (price-only, portable — an ASYMMETRIC
+    zigzag: entry confirm c=0.5, exit retrace c_x<0.5) → targets the c·θ lag;
+(b) the DIVE as an UNDERWATER-ONLY stop (fires only when the leg never armed with-ride /
+    sits below entry) → targets wrong-side legs without touching winners.
+Both are MACHINE tests (composition changes: extra legs/fees for (a), flat-until-confirm
+for (b)) vs the zigzag baseline, all fee columns. Leg-slice numbers above are hypotheses.
+
 ## SESSION LOG (append per round)
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
