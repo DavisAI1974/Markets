@@ -159,6 +159,28 @@ Priority therefore shifts to the fallback refinement (price-only, the last named
 bleed), with regime-conditioning of the stack as the follow-on question ("WHEN does the
 stack help?" — likely a job for the regime gate thread, per-cell).
 
+## FINGERPRINTABLE SURFACES (Greg: "is there any other part fingerprintable?" — the map)
+
+Anything recurring with a per-cell distinctive signature at a decision moment. Preconditions
+for ALL: causal at the decision cell, assert_no_leakage, per-(cell, band) revalidation,
+enough examples per bucket (mid-band cadence 25-90 legs/day/coin fills buckets fast).
+
+ENTRY-SCOPE (this piece):
+1. WINNERS at onset — the standing wire-in item (S35 machinery).
+2. FALSE-FIRES that pass the stack — the anti-fingerprint (this round's agent question).
+   Entry quality = distance-to-winner-print minus distance-to-loser-print.
+3. THE DIP ITSELF — grade every candidate dip (real-turn vs mid-leg noise) as a flow/shape
+   object; no selection bias, max examples.
+4. FALLBACK FIRINGS — the 60-90s window before a trailing-ARM flip; pre-empt the trough-sell.
+5. MISSED LEGS — the PART% gaps, fingerprinted from the coverage side.
+6. THE REGIME — per-cell "stack-friendly tape" print (r3 controls showed the flow stack is
+   regime-conditional; this is the master conditioner for WHICH members to trust WHEN).
+   Possibly highest-leverage after winners.
+
+PARKED (other pieces): 7. the TOP/exit (R8 climax-collapse signature half-exists — Piece 2
+inherits). 8. MID-TRADE winner state (S35b "in there 2 times" — hold piece). 9. the maker
+"can't-refuse" fill moment (S45 dive=fillability — execution layer at deploy).
+
 ## PARKED FOR LATER PIECES (Greg: do NOT act on these while entry is open — record only)
 
 Findings about exit/hold/sizing that surfaced during entry work. Append here, never chase.
