@@ -43,6 +43,29 @@ AGREED and it matches the measured record exactly (tools-are-complementary):
 - Giveback math on Greg's window with dive-confirm (~12bp round) instead of θ-confirm:
   11 legs × (116 − 12 − 11) ≈ +1,000bp vs −87 (zz150) / −89 (zz60).
 
+## Round 4 — "have we wired this in anywhere?" -> the MULTI-ROLE decision (Greg)
+Wiring map (verified by grep, not memory):
+- Dive as flip TIMING/confirmer: wired NOWHERE (S53 C1 flag stands; no dive trigger in any executor).
+- Divergence as ENTRY GATE: available in `swing_maker(entry_gate=...)` but DEFAULT OFF; wired live
+  only in the `swing_accum` research thread (S52 SOL miniature).
+- Dive as DESCRIPTOR: DEPLOYED — `size_legs` SIZE axis includes z(dive_depth) (S47->S49 OOS,
+  sign-consistent all 5 cells). The one role that survived contact with the deployed executor.
+GREG DECISION (this round): the dipole dive is a MULTI-ROLE instrument — use it in multiple places
+in multiple roles; it is NOT a standalone signal. Role registry (each earns its place separately):
+  R1 DESCRIPTOR of trades: dipole read columns on every leg table (expect/aligned_flow/exhausting/
+     reversal_conviction at the opening flip). Status: PROPOSED, test defined below.
+  R2 DESCRIPTOR of graphs: dipole strip under every leg render panel. Status: PROPOSED.
+  R3 SIZING feature: z(dive_depth) in the SIZE axis. Status: DEPLOYED (S49 OOS).
+  R4 FLIP CONFIRMER (armed by coarse structure, replaces theta-confirm): JOB 1a. Status: SPEC ONLY.
+  R5 ENTRY GATE (divergence exhaustion): swing_accum thread. Status: R&D, SOL-only miniature.
+PACE RULE (Greg, this round): test each round before moving on — "we get too far ahead and forget
+things." One round = one defined test, run, read, THEN next.
+ROUND-4 TEST (defined, not yet run): label every zz100/zz150 leg in the existing 30d tables with
+the S36 `divergence()` read at its OPENING flip (causal window [pivot-DIVW, pivot]); report
+n/win%/gross/net per expect-class (reversal/flip_risk/weakening/continue), per theta, pooled +
+per coin. Descriptor only — NO gate, NO engine change. Pass = the classes separate outcomes
+(reversal-class legs beat continue-class); fail = flat across classes.
+
 ## JOB 1a SPEC (sharpened by this walkthrough)
 Two-scale machine, roles now precise:
 1. COARSE zigzag/leg-state = SCALE + SIDE ("extended ~θ into a leg; next opposing turn is
