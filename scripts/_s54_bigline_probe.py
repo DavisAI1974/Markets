@@ -31,7 +31,7 @@ from _birth_probe import load_book                      # noqa: E402
 from _liquidity_dive import build_channels, median_spread_bps  # noqa: E402
 from _capacity_model import FLOW_W                      # noqa: E402
 from _s52_accum_vs_oneshot import _price_zigzag         # noqa: E402  (reused, not copied)
-from odcore.swing_bigline import run_bigline, position_signal_at  # noqa: E402
+from odcore.swing_bigline import run_bigline, run_bigline_adaptive, position_signal_at  # noqa: E402
 from odcore.leakage import assert_no_leakage            # noqa: E402
 
 CELLS = [
@@ -48,6 +48,10 @@ ORACLE_THETAS = [60.0, 100.0, 150.0, 250.0]
 BL_GRID = [(tp, eps) for tp in (30.0, 60.0, 100.0) for eps in (5.0, 10.0)]
 FIXED_BL = (60.0, 10.0)      # walkthrough/split/render config — fixed in advance
 FIXED_ZZ = 100.0
+# Adaptive scale (Greg: "when it gets choppier, scale the lines down" — no zigzag fallback):
+# theta = frac x trailing hi-lo range over W hours, clip [15,120]bps, eps = theta/6.
+AD_GRID = [(frac, wh) for frac in (0.15, 0.25) for wh in (4.0, 8.0)]
+FIXED_AD = (0.25, 4.0)       # walkthrough/split/render config — fixed in advance
 NOTIONAL = 5_000.0
 N_SHUF = 3
 DEC = 10                     # 100ms -> 1-sec
@@ -93,8 +97,9 @@ def _zigzag_flip(mid, hrs, theta, rt_fees):
                 win=float((gross > 0).mean()), rows=rows)
 
 
-def _bigline(mid, hrs, tp, eps, rt_fees, cell_s=1.0):
-    legs = run_bigline(mid, tp, eps)
+def _bigline(mid, hrs, tp, eps, rt_fees, cell_s=1.0, adaptive=None, align=True):
+    legs = (run_bigline_adaptive(mid, adaptive[0], int(adaptive[1] * 3600), align=align)
+            if adaptive else run_bigline(mid, tp, eps, align=align))
     if not legs:
         return dict(n_legs=0)
     gross = np.asarray([l.gross_bps for l in legs])
@@ -133,7 +138,12 @@ def run_cell(cell, path, K, tk):
     hs = median_spread_bps(path, raw=raw) / 2.0
     hrs = (raw["ts"][-1] - raw["ts"][0]) / 3600.0
     rt_fees = {"rt_taker": 2 * tk, "rt_mk-1": -1.0 + tk}
-    out = dict(cell=cell, hrs=hrs, spread_bps=2 * hs, oracle={}, zigzag={}, bigline={}, splits={})
+    # collection-gap honesty (BTC has a multi-day ffilled hole): constant-mid runs > 10 min
+    chg = np.flatnonzero(np.diff(mid) != 0)
+    runs = np.diff(np.concatenate([[0], chg + 1, [len(mid)]]))
+    gap_hrs = float(runs[runs > 600].sum() / 3600.0)
+    out = dict(cell=cell, hrs=hrs, gap_hrs=gap_hrs, spread_bps=2 * hs,
+               oracle={}, zigzag={}, bigline={}, splits={})
 
     for th in ORACLE_THETAS:
         out["oracle"][f"{th:.0f}"] = _oracle(mid, hrs, th, rt_fees)
@@ -153,6 +163,18 @@ def run_cell(cell, path, K, tk):
             lambda m2, _tp=tp, _e=eps: [l.gross_bps for l in run_bigline(m2, _tp, _e)],
             rt_fees["rt_taker"])
         out["bigline"][f"tp{tp:.0f}_eps{eps:.0f}"] = b
+    # v1 unaligned reference at the fixed config — measures Greg's alignment correction
+    out["bigline"]["tp60_eps10_UNALIGNED"] = _bigline(mid, hrs, *FIXED_BL, rt_fees, align=False)
+
+    out["adaptive"] = {}
+    for (frac, wh) in AD_GRID:
+        b = _bigline(mid, hrs, 0, 0, rt_fees, adaptive=(frac, wh))
+        b["shuffle_dhr"] = _shuffle_dhr(
+            mid, hrs,
+            lambda m2, _f=frac, _w=wh: [l.gross_bps
+                                        for l in run_bigline_adaptive(m2, _f, int(_w * 3600))],
+            rt_fees["rt_taker"])
+        out["adaptive"][f"f{frac:.2f}_w{wh:.0f}h"] = b
 
     # window splits — FIXED configs only
     n_split = 4 if hrs > 120 else 2
@@ -162,6 +184,7 @@ def run_cell(cell, path, K, tk):
         h_w = hrs / n_split
         out["splits"][f"W{w+1}"] = dict(
             bigline=_bigline(m_w, h_w, *FIXED_BL, rt_fees),
+            adaptive=_bigline(m_w, h_w, 0, 0, rt_fees, adaptive=FIXED_AD),
             zigzag=_zigzag_flip(m_w, h_w, FIXED_ZZ, rt_fees))
     return out
 
@@ -180,10 +203,20 @@ def leakage_gate():
     def sig(i, ts_, p, bv, sv):
         return position_signal_at(i, ts_, p, bv, sv, theta_pivot_bps=tp, break_eps_bps=eps)
 
+    def sig_ad(i, ts_, p, bv, sv):
+        sub = np.asarray(p[: int(i) + 1], float)
+        legs = run_bigline_adaptive(sub, FIXED_AD[0], int(FIXED_AD[1] * 3600))
+        if not legs:
+            return 0
+        return int(legs[-1].side) if legs[-1].forced else 0
+
     ok, fails = assert_no_leakage(sig, ts, mid, dummy, dummy, idxs, reps=2)
     print(f"# LEAKAGE GATE (bigline tp{tp:.0f}/eps{eps:.0f}, sol prefix n={len(mid)}, "
           f"{len(idxs)} idxs): {'PASS' if ok else 'FAIL'} ({len(fails)} fails)")
-    return ok
+    ok2, fails2 = assert_no_leakage(sig_ad, ts, mid, dummy, dummy, idxs, reps=2)
+    print(f"# LEAKAGE GATE (adaptive f{FIXED_AD[0]:.2f}/w{FIXED_AD[1]:.0f}h): "
+          f"{'PASS' if ok2 else 'FAIL'} ({len(fails2)} fails)")
+    return ok and ok2
 
 
 def main():
@@ -199,7 +232,8 @@ def main():
         if r is None:
             continue
         results.append(r)
-        print(f"\n== {cell} ({r['hrs']:.1f}h, spread {r['spread_bps']:.2f}bps) ==")
+        print(f"\n== {cell} ({r['hrs']:.1f}h, gaps {r['gap_hrs']:.1f}h, "
+              f"spread {r['spread_bps']:.2f}bps) ==")
         print("  ORACLE   theta  swings/day  med_swing   $/day rt_taker   $/day rt_mk-1")
         for th, o in r["oracle"].items():
             if not o.get("net_day"):
@@ -220,16 +254,31 @@ def main():
                 print(f"           {cfg:<12} {b['n_legs']:>2}  (no legs)")
                 continue
             rw = b["rows"]["rt_taker"]
+            shuf = b.get("shuffle_dhr")
+            print(f"           {cfg:<12} {b['n_legs']:>2}  {b['gross_leg']:>+8.1f}  {rw['net_leg']:>+10.1f}"
+                  f"  {rw['dhr']:>+8.2f}  {rw['dhr_rev']:>+7.2f}  "
+                  f"{'    n/a ' if shuf is None else f'{shuf:>+8.2f}'}"
+                  f"  {b['exposure']:>4.0%}  {b['med_hold_h']:>6.2f}h  {b['n_forced']}")
+        print("  ADAPTIVE cfg          n  gross/leg  net/leg(tk)  $/hr(tk)  rev$/hr  shuf$/hr"
+              "  expo  medhold  forced")
+        for cfg, b in r.get("adaptive", {}).items():
+            if not b.get("rows"):
+                print(f"           {cfg:<12} {b['n_legs']:>2}  (no legs)")
+                continue
+            rw = b["rows"]["rt_taker"]
             print(f"           {cfg:<12} {b['n_legs']:>2}  {b['gross_leg']:>+8.1f}  {rw['net_leg']:>+10.1f}"
                   f"  {rw['dhr']:>+8.2f}  {rw['dhr_rev']:>+7.2f}  {b['shuffle_dhr']:>+8.2f}"
                   f"  {b['exposure']:>4.0%}  {b['med_hold_h']:>6.2f}h  {b['n_forced']}")
-        print("  SPLITS (fixed tp60/eps10 vs zz100), $/hr rt_taker:")
+        print("  SPLITS (fixed tp60/eps10 / adaptive f0.25w4h / zz100), $/hr rt_taker:")
         for w, s in r["splits"].items():
             bl = s["bigline"].get("rows", {}).get("rt_taker", {}).get("dhr")
+            ad = s.get("adaptive", {}).get("rows", {}).get("rt_taker", {}).get("dhr")
             zz = s["zigzag"].get("rows", {}).get("rt_taker", {}).get("dhr")
             nb = s["bigline"].get("n_legs", 0)
+            na = s.get("adaptive", {}).get("n_legs", 0)
             nz = s["zigzag"].get("n_legs", 0)
             print(f"           {w}: bigline {bl if bl is None else f'{bl:+.2f}'} (n={nb})   "
+                  f"adaptive {ad if ad is None else f'{ad:+.2f}'} (n={na})   "
                   f"zigzag {zz if zz is None else f'{zz:+.2f}'} (n={nz})")
 
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
