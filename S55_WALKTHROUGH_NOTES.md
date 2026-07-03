@@ -66,6 +66,32 @@ n/win%/gross/net per expect-class (reversal/flip_risk/weakening/continue), per t
 per coin. Descriptor only — NO gate, NO engine change. Pass = the classes separate outcomes
 (reversal-class legs beat continue-class); fail = flat across classes.
 
+## Round 4 RESULT (descriptor test, 30d x 5 Bybit)
+zz150: PROVISIONAL PASS — reversal-class = the ONLY positive class (+30.2 net/leg, win 52.5%, 8% of
+legs) vs continue-class −9.6; positive 4/5 coins (XRP −36 = outlier cell); BUT shuffle z=1.82,
+p=0.043 on n=61 — below the z>>2-3 adoption bar. zz100: FAIL/INVERTED (reversal-class worst).
+The S36 read is SCALE-DEPENDENT: describes zz150 flips, not zz100, on this tape. Round completes
+with a second venue (Binance spot) — QUEUED, not yet run.
+
+## Round 5 RESULT (the lag cut, Greg's dive-graph question)
+Measured on all 765 zz150 turns: theta-confirm enters 151bp / 54min (median) from the true pivot;
+a fine 25bp price-reversal confirm enters 26bp / ~1min — SAVES 125bp/side, available again at exit.
+Catches: (1) fine confirm is equally fast on fakeouts — speed does not discriminate; dipole read at
+that moment lifts P(real) only 0.36->0.48. (2) measurement was HINDSIGHT-ARMED (evaluated only
+inside real zz150 flip windows) — the causal ARMING RULE is the un-built piece.
+
+## Rounds 6-7 RESULT (Greg: clone the zigzag bounded-loss into the fine machine)
+v0 (fine zz25 executes, exit on ANY fine flip against, coarse zz150 side): FAIL −80/hr total.
+The CLONE WORKED (worst leg −73 vs −168) but free-running fine exits churned 45-103 tr/day at
+~-fees/leg. v1 (fine-25 entry, trailing-X stop, re-enter on agreeing fine confirm): FAIL at X=40/
+60/80 (−47/−22/−13/hr), monotone toward zz150 (−2.9/hr) as X grows; forward beats REVERSED by
++13-18/hr at every X (coarse side carries real signal) but churn fees dominate.
+JOINT LESSON (three rounds converge): the fine entry saves 125bp ONCE per leg; unlimited
+re-entries pay 11bp+ dozens of times. The machine must trade at COARSE CADENCE (~5 legs/coin/day)
+with fine EXECUTION — one-shot entry per coarse leg, stop-once-then-wait, armed exits. Every dead
+end this session points at the same missing part: the causal ARMING rule (when to listen to the
+fine machinery), entries AND exits.
+
 ## JOB 1a SPEC (sharpened by this walkthrough)
 Two-scale machine, roles now precise:
 1. COARSE zigzag/leg-state = SCALE + SIDE ("extended ~θ into a leg; next opposing turn is
