@@ -81,6 +81,7 @@ turn_signature.png
 # transient combined-results scratch (part-specific snapshots are committed instead)
 _liquidity_dive_results.json
 
-# S55: sandbox ledger = variant-run scratch (reproducible via paper_trade --dipole-* flags);
-# only the baseline forward ledger (paper_ledger.jsonl) is the committed record
-paper_ledger_sandbox.jsonl
+# S55 ignored the sandbox ledger as variant-run scratch; S57 TRACKS it — since S56 it holds
+# the SANDBOX cells' forward record (sol/eth bybit @ MM3, the go-live candidates), and the
+# S56 seed died with the container because this line kept it out of git. Legs regenerate
+# deterministically from the book branches, but the durable dedup-accrued record lives here.
