@@ -1,5 +1,15 @@
 # CLAUDE.md — DavisAI Master Context (Updated 2026-07-03 Session 56 — body canonical through S25; S56+S55+S54+S53+S52+S51+S50+S49+S48+S47+S46+S45+S44+S43+S42+S41+S40+S39+S38+S37+S36b+S36+S35+S34+S33+S32 delta at top. READ `SESSION_HANDOFF_2026-07-03_S56.md` + `KICKOFF_2026-07-05_S57.md`, not this whole file. BRANCH = designated `claude/crypto-liquidity-signals-*` (== canonical `5c5vg9`; keep synced).)
 
+## ⛔ STANDING BAN (S57, 2026-07-03, Greg): BYBIT — NEVER USE FOR ANYTHING
+Bybit is permanently off-limits for this project: the venue is US-INELIGIBLE (Bybit's own
+restricted-jurisdictions policy names the United States; the restriction applies at the UBO
+level for entities per their Business-KYC FAQ; no US-facing intermediary offers its books —
+post-Falcon-Labs CFTC enforcement). ALL bybit code, data, cells, collectors, and ledgers were
+STRUCK in S57. Never collect its data, never run its tape, never cite its cells or fee tiers,
+never propose it as a venue or benchmark. Primary-source record: `S57_VENUE_FINDINGS.md`.
+Two leftover data branches (data/{sol,eth}-bybit-book) await Greg's UI deletion.
+
+
 ## S56 UPDATE (2026-07-03) — JOB 1 run as a live walkthrough loop (worst-10/smallest-10 renders every round — Greg's standing rule) → EVERY armed/coarse-confirm variant KILLED by its own gate → THE MODEL = the DEPLOYED fine zigzag at NATURAL CADENCE (ARM0) on Bybit @ MM3: FULL S54 GATE PASS all 5 coins (z 6.8–14.4, 20/20 coin-weeks, reversed below the shuffle floor) → PROMOTED to platform SANDBOX cells → queue-honest capacity MEASURED (read `SESSION_HANDOFF_2026-07-03_S56.md` + `KICKOFF_2026-07-05_S57.md`)
 - **The autopsy (each variant killed by a measured mechanism):** v1 arming IDLES (98% of the month stranded in a stale leg, max 289h; loss NOT bounded — max adverse 1,905bp; 3.9 legs/day vs oracle 28–60; cadence, not fees, kept $/hr down). v2 (extreme-anchored + trailing fallback) fixes cadence (129/day) but the bare 25bp first-dip confirm = mid-trend COIN FLIP (47% win, gross −3bp; executor verified bit-exact vs hand P&L; toy path proved sides correct; "swapped losers" = drift + trough-selling fallbacks, not a bug). v2+R4 dipole veto lifts gross but ARM40's gate pass = KNIFE-EDGE (ARM30/35/45 response curve dead — sweep the knob before promoting a grid point). v3-ARM (deployed flip detector enter/exit + ARM chop filter): ARM filter family fails as a family.
 - **ARM0 = THE MODEL (Greg called it all session):** deployed lean-flip enter/exit at natural cadence (~127k legs/30d/coin): z = 9.0/11.3/13.0/14.4/6.8 (sol/eth/btc/doge/xrp) vs joint price+flow shuffle, 20/20 coin-weeks positive, reversed BELOW the floor all 5.
