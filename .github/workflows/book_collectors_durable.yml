@@ -102,8 +102,8 @@ jobs:
           if git ls-remote --exit-code --heads origin "data/$COIN-book" > /dev/null 2>&1; then
             echo "[restore] data/$COIN-book exists; fetching"
             git fetch origin "data/$COIN-book"
-            git checkout "origin/data/$COIN-book" -- "$FN" 2>/dev/null \
-              || echo "[restore] no $FN on data branch yet"
+            git checkout "origin/data/$COIN-book" -- . 2>/dev/null \
+              || echo "[restore] nothing on data branch yet"
           else
             echo "[restore] data/$COIN-book does not exist; first run, starting fresh"
           fi
@@ -150,7 +150,7 @@ jobs:
           git config user.email "actions@github.com"
 
           mkdir -p /tmp/book
-          cp "$FN" /tmp/book/ 2>/dev/null || true
+          cp ${COIN}_coinbase_book*.jsonl.gz /tmp/book/ 2>/dev/null || true
 
           # Anti-clobber guardrail: this step is `if: always()` + force-push, so a
           # crashed/partial run must NOT overwrite good cumulative rows. The
@@ -187,12 +187,23 @@ jobs:
               print(f"[guardrail] {FN}: {new} rows (>= {old} on data branch) -> keep")
           PY
 
+          # Rotation guardrail (S58): GitHub rejects any file > 100 MiB (the S37 stall
+          # bug). At >85MB freeze the live file as an archived segment on the same data
+          # branch and let the next run start a fresh live file. Loaders keep reading
+          # the live file; archived segments preserve the older history.
+          LIVE="/tmp/book/$FN"
+          if [ -f "$LIVE" ] && [ "$(stat -c%s "$LIVE")" -gt 85000000 ]; then
+            STAMP=$(date -u +%Y%m%dT%H%M%S)
+            mv "$LIVE" "/tmp/book/${COIN}_coinbase_book_arch_${STAMP}.jsonl.gz"
+            echo "[rotate] $FN >85MB -> frozen as arch_${STAMP}; fresh live file next run"
+          fi
+
           git checkout --orphan "data/$COIN-book-tmp"
           git rm -rf . > /dev/null 2>&1 || true
-          cp "/tmp/book/$FN" . 2>/dev/null || true
+          cp /tmp/book/*.jsonl.gz . 2>/dev/null || true
 
-          if [ -f "$FN" ]; then
-            git add "$FN"
+          if ls *coinbase_book*.jsonl.gz >/dev/null 2>&1; then
+            git add *coinbase_book*.jsonl.gz
             git commit -m "$COIN book update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin "data/$COIN-book-tmp:data/$COIN-book"
             echo "[commit] pushed to data/$COIN-book"

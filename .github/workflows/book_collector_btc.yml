@@ -29,8 +29,8 @@ on:
         default: '21000'
         type: string
       grid_ms:
-        description: 'Snapshot grid in milliseconds'
-        default: '100'
+        description: 'Snapshot grid in milliseconds (1000 default S58: 1-tick book, cap headroom)'
+        default: '1000'
         type: string
       depth:
         description: 'Top-K levels per side'
@@ -59,7 +59,7 @@ jobs:
       - name: Checkout code branch
         uses: actions/checkout@v4
         with:
-          ref: claude/divergence-exhaustion-backtest-wj65sm
+          ref: claude/crypto-liquidity-signals-5c5vg9
           fetch-depth: 0   # need full history to access data branch
 
       - name: Set up Python
@@ -75,8 +75,8 @@ jobs:
           if git ls-remote --exit-code --heads origin data/btc-book > /dev/null 2>&1; then
             echo "[restore] data branch exists; fetching"
             git fetch origin data/btc-book
-            git checkout origin/data/btc-book -- btc_coinbase_book.jsonl.gz 2>/dev/null \
-              || echo "[restore] no btc_coinbase_book.jsonl.gz on data branch yet"
+            git checkout origin/data/btc-book -- . 2>/dev/null \
+              || echo "[restore] nothing on data branch yet"
           else
             echo "[restore] data branch does not exist; first run, starting fresh"
           fi
@@ -91,7 +91,7 @@ jobs:
         timeout-minutes: 350
         run: |
           DURATION="${{ github.event.inputs.duration_seconds || '21000' }}"
-          GRID="${{ github.event.inputs.grid_ms || '100' }}"
+          GRID="${{ github.event.inputs.grid_ms || '1000' }}"
           DEPTH="${{ github.event.inputs.depth || '10' }}"
           echo "[run] book collector ${DURATION}s grid=${GRID}ms depth=${DEPTH} on $(date -u)"
           python coinbase_btcusd_book_collector.py \
@@ -117,7 +117,7 @@ jobs:
           git config user.email "actions@github.com"
 
           mkdir -p /tmp/book
-          cp btc_coinbase_book.jsonl.gz /tmp/book/ 2>/dev/null || true
+          cp btc_coinbase_book*.jsonl.gz /tmp/book/ 2>/dev/null || true
 
           # Anti-clobber guardrail: this step is `if: always()` + force-push, so a
           # crashed/partial run must NOT overwrite good cumulative rows. The
@@ -154,12 +154,21 @@ jobs:
               print(f"[guardrail] {FN}: {new} rows (>= {old} on data branch) -> keep")
           PY
 
+          # Rotation guardrail (S58): freeze the live file as an archived segment at
+          # >85MB (GitHub 100 MiB cap = the S37 stall bug; file was at 47MB when added).
+          LIVE="/tmp/book/btc_coinbase_book.jsonl.gz"
+          if [ -f "$LIVE" ] && [ "$(stat -c%s "$LIVE")" -gt 85000000 ]; then
+            STAMP=$(date -u +%Y%m%dT%H%M%S)
+            mv "$LIVE" "/tmp/book/btc_coinbase_book_arch_${STAMP}.jsonl.gz"
+            echo "[rotate] live btc book >85MB -> frozen as arch_${STAMP}"
+          fi
+
           git checkout --orphan data/btc-book-tmp
           git rm -rf . > /dev/null 2>&1 || true
-          cp /tmp/book/btc_coinbase_book.jsonl.gz . 2>/dev/null || true
+          cp /tmp/book/*.jsonl.gz . 2>/dev/null || true
 
-          if [ -f btc_coinbase_book.jsonl.gz ]; then
-            git add btc_coinbase_book.jsonl.gz
+          if ls btc_coinbase_book*.jsonl.gz >/dev/null 2>&1; then
+            git add btc_coinbase_book*.jsonl.gz
             git commit -m "BTC book update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin data/btc-book-tmp:data/btc-book
             echo "[commit] pushed to data/btc-book"
