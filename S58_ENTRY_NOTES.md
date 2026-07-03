@@ -453,3 +453,18 @@ DONE and Piece 2 (exit) opens.
   assumed per-trade, unverified; (d) queue/fill reality on Kraken books unknown.
 - NEXT (queued, not started): kraken book collector (new code, S37 bins collector as base) +
   re-price the S57/S58 tables with a kr_mk0 column (0/10).
+
+## FINE-BAND STATUS CHANGE (Greg: "is the fine grain back in?") — DEAD -> RESEARCH-REOPENED, KRAKEN-GATED
+- Live 24h volume snapshot (2026-07-03, both venues' public APIs): Kraken = 35-42% of
+  Coinbase on our pairs (SOL $21.5M vs $52.2M; BTC $112M vs $317M; ETH $49M vs $119M; XRP
+  $28M vs $67M; DOGE 71% at $5.9M vs $8.3M). Real venue, comparable order of magnitude.
+  Depth-at-touch (what fills) unmeasured — book collector required.
+- At kr_mk0 (0 maker/$10M/30d) the S57 fine-band toll term vanishes on maker legs: the
+  "positive only at the 0/6 ceiling" verdict becomes live because the ceiling is reachable.
+  SYNERGY: the fine machine's cadence itself sustains the $10M/30d tier for ALL cells
+  (lawful volume-paycheck logic, no rebate needed).
+- CONDITIONS before it counts (venue law, proven 2x this session): (1) re-measure the fine
+  edge on KRAKEN books (Coinbase-measured +1.9bp/leg does not port); (2) fill-depth reality
+  at ~40% Coinbase volume (fine band is fill-capped); (3) taker share ~0 revalidated with
+  Kraken cover mechanics; (4) July-9 schedule confirm. -> KRAKEN BOOK COLLECTOR = the next
+  infra build (gates fine-band reopen AND Kraken mid-band cells). Entry-piece focus stands.
