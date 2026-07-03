@@ -93,10 +93,16 @@ DEPLOYED = [CellConfig("sol"), CellConfig("doge", grace=600), CellConfig("xrp"),
 # venue cells (SOL +$115/hr, ETH +$113/hr @$5k MM3). Economics are MM3-CONTINGENT (standard
 # Bybit maker +2bp is fatal): fees below = the MM program tier. Books use TRUE fees — the
 # executor measures real maker/taker fills (the 10%-taker blend is a bins-only scoring rule).
-# Deploy gates: (1) Greg's Bybit MM application (existence condition), (2) queue-honest fill
-# capacity on the accruing bybit books. Until both: SANDBOX ledger only.
-SANDBOX = [CellConfig("sol", venue="bybit", maker_fee=-1.25, taker_fee=5.5, sandbox=True),
-           CellConfig("eth", venue="bybit", maker_fee=-1.25, taker_fee=5.5, sandbox=True)]
+# ⚠ S57 FEE CORRECTION (verified: bybit-exchange.github.io/docs/v5/market/fee-group-info):
+# the MM rebate is FEE-GROUP tiered — G1 majors (BTC/ETH/SOL/XRP) and G2 (DOGE) get -0.4bp
+# at MM3, NOT the -1.25bp booked S52-S56 (that is G5 long-tail only; G3 -0.75, G4 -1.0).
+# Cells re-based to -0.4 and the sandbox ledger reseeded at true fees. At -0.4 queue-honest:
+# SOL +$1.9-16.6/hr (0.62bp half-spread = real capture survives), ETH -$2.2..+$7.1/hr
+# (0.03bp spread = was ~all rebate). Weighted maker-share qualification: G2 counts 5x,
+# G4 15x, G5 20x. Deploy gates unchanged: (1) Greg's Bybit MM application (existence
+# condition), (2) queue-honest fill capacity on the accruing bybit books.
+SANDBOX = [CellConfig("sol", venue="bybit", maker_fee=-0.4, taker_fee=5.5, sandbox=True),
+           CellConfig("eth", venue="bybit", maker_fee=-0.4, taker_fee=5.5, sandbox=True)]
 
 
 def _dipole_descriptors(legs, lean, piv, buy, sell, mid):
