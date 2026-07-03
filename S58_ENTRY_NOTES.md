@@ -216,6 +216,15 @@ Findings about exit/hold/sizing that surfaced during entry work. Append here, ne
   the confirm cell. Where it slots: a 5th stack member (graded, per-cell) — "does this dip's
   pre-entry window match this cell's WINNER fingerprint" — complementing the flow reads that
   the r3 controls just demoted to conditional.
+  **DUAL-PRINT SPEC (Greg: "didn't losing trades have different coefficients?" — yes):**
+  the original centroid dipole was ALWAYS two-projection — H_a=<c,c_win>/||c_win||,
+  H_b=<c,c_LOSE>/||c_lose|| (odcore/dipole_predictor.py, verbatim S22/S25 construction, in
+  repo). Loser-side data exists (S34 Path-C relabeled losers + ~1,919 cand_sp per-cell
+  signatures — archives on Greg's LOCAL E: drive, not this container). S34 nuance:
+  de-confounded, the COEFF win/lose separation was weak/null; the MICROS carried it (AUC
+  0.72-0.84 on 5 cells), stack added on top. -> Wire the 5th member as match-to-winner
+  MINUS match-to-loser, micros-first, coeff tier behind it; the mid-band false-fire
+  fingerprint (coin agents, this round) is the new-band LOSE-print being built.
 
 - Fallback refinement: the trailing-ARM fallback legs are the bleed the veto cannot touch
   (structurally sell troughs). Candidate: fallback waits for its own fine flip instead of
