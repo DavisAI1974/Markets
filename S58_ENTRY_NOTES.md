@@ -423,3 +423,12 @@ DONE and Piece 2 (exit) opens.
   of adoption. Books re-check as windows accrue.
 - Piece 2 (exit/lean-collapse) and Piece 3 (staged all-in) DO NOT START until Greg calls the
   entry done.
+
+## ROUND 6b — BOOKS VENUE-CHECK of the machine maps (thin n, shape only)
+- SOL fade+climax INVERTS on Coinbase (-22/-36 gr/leg vs k0 +7.8/+22.1) — SOL Coinbase = NAIVE, final for this round.
+- **DOGE climax+exhaustion = the ONLY flow map that holds shape on Coinbase** (th100 +15.6 vs k0 +9.3, $real -0.05 ~= breakeven, n~23) — the top per-venue-validation candidate as books accrue.
+- BTC opposing-map right-signed on books but n=2-5 (anecdote). XRP death-combo veto never fired in the window (rare class; rider stays).
+- PROMOTION SET (entry definition-of-done): odcore gets the armed machine (mode-0 fix + baseline fallback + c-scaled confirm) with a per-cell config registry — Coinbase cells NAIVE (sol th100, xrp th80, doge th100 w/ clmxexh flagged candidate, btc pending collector), bins member maps flagged research-only.
+
+## INFRA (while waiting on books accrual)
+- BTC book: the "gap" is BY DESIGN (unified workflow excludes btc: 1-tick control + 100MB-cap risk at 100ms). BUT the superseded book_collector_btc.yml STILL FIRES from the default branch (data/btc-book pushed today; file at 47.2MB and growing toward the S37 cap-stall). SOL/ETH books at ~50MB — the cap will hit ALL book branches. FIX: rotation guardrail + btc grid 1000ms + checkout ref -> canonical.
