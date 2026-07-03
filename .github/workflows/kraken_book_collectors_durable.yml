@@ -1,0 +1,205 @@
+name: Kraken Book Collectors (SOL/ETH/BTC/DOGE/XRP, durable)
+
+# Collects KRAKEN L2 order-book snapshots (top-10/side depth on a regular 100ms
+# grid) for all 5 coins on GitHub compute. One matrix job per coin, each
+# persisting to its own data/<coin>-kraken-book branch via orphan force-push,
+# with the anti-clobber + rotation guardrails of the Coinbase book collectors.
+#
+# WHY (S58/S59): Kraken Pro US spot has a VERIFIED 0.00% maker tier at $10M/30d
+# (kr_mk0) — the S59 re-price flips every surviving mid-band entry config
+# positive at that fee. But venue law (S58 master finding: flow reads don't port;
+# fills are venue-local) means NOTHING validates on Kraken without Kraken book
+# truth: fill/queue depth at the touch. This accrual gates every Kraken cell AND
+# the research-reopened fine band (4 conditions, S58_ENTRY_NOTES.md).
+#
+# ALL 5 COINS from day one (Greg, S59): Kraken cells are their own cells
+# (per-cell law) — ETH's Coinbase mid-band drop and BTC's Coinbase 1-tick
+# starvation say nothing about their Kraken books. The accrual clock starts
+# everywhere; per-cell validation decides later.
+#
+# Kraken v2 WS symbols are friendly names: BTC/USD, ETH/USD, SOL/USD, XRP/USD,
+# and DOGE/USD (verified S37 — legacy XDG is REST-only, returns nothing on v2).
+#
+# ACTIVATION NOTE: GitHub only fires `schedule:` (cron) triggers from a workflow
+# file on the repository DEFAULT branch. Manual runs use the Run-workflow button
+# (workflow_dispatch — the token 403s on API dispatch, Greg clicks). The job
+# checks out the canonical 5c5vg9 branch for collector code regardless of which
+# branch the run is dispatched from.
+#
+# Storage: ~6 MB gzipped per 5h50m run per coin at 100ms grid; the >85MB
+# rotation guardrail freezes segments long before GitHub's 100 MiB cap.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC (default-branch only)
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: 'Collection duration in seconds (default 5h50m=21000)'
+        default: '21000'
+        type: string
+      grid_ms:
+        description: 'Snapshot grid in milliseconds'
+        default: '100'
+        type: string
+      depth:
+        description: 'Top-K levels per side'
+        default: '10'
+        type: string
+  # NOTE: no `push:` trigger (the S44 duplicate-run lesson) — cron + manual only.
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355   # 5h55m, just under GitHub's 6hr hard limit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - coin: sol
+            product: SOL/USD
+          - coin: eth
+            product: ETH/USD
+          - coin: btc
+            product: BTC/USD
+          - coin: doge
+            product: DOGE/USD
+          - coin: xrp
+            product: XRP/USD
+    concurrency:
+      group: kraken-book-collector-${{ matrix.coin }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/crypto-liquidity-signals-5c5vg9
+          fetch-depth: 0   # need full history to access data branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install --quiet websockets numpy
+
+      - name: Restore previous book file from data/${{ matrix.coin }}-kraken-book branch
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_kraken_book.jsonl.gz"
+          if git ls-remote --exit-code --heads origin "data/$COIN-kraken-book" > /dev/null 2>&1; then
+            echo "[restore] data/$COIN-kraken-book exists; fetching"
+            git fetch origin "data/$COIN-kraken-book"
+            git checkout "origin/data/$COIN-kraken-book" -- . 2>/dev/null \
+              || echo "[restore] nothing on data branch yet"
+          else
+            echo "[restore] data/$COIN-kraken-book does not exist; first run, starting fresh"
+          fi
+          ls -la "$FN" 2>&1 || echo "[restore] no book file present"
+
+      - name: Connectivity check
+        run: |
+          curl -sS --max-time 5 -o /dev/null -w "Kraken REST: %{http_code}\n" \
+            https://api.kraken.com/0/public/SystemStatus || true
+
+      - name: Run ${{ matrix.coin }} Kraken book collector
+        timeout-minutes: 350
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_kraken_book.jsonl.gz"
+          DURATION="${{ github.event.inputs.duration_seconds || '21000' }}"
+          GRID="${{ github.event.inputs.grid_ms || '100' }}"
+          DEPTH="${{ github.event.inputs.depth || '10' }}"
+          echo "[run] $COIN kraken book collector ${DURATION}s grid=${GRID}ms depth=${DEPTH} on $(date -u)"
+          python kraken_book_collector.py \
+            --product "${{ matrix.product }}" --out "$FN" \
+            --duration "$DURATION" --grid-ms "$GRID" --depth "$DEPTH" > /tmp/kr_book.log 2>&1 || true
+          echo "=== kraken book collector log tail ==="
+          tail -40 /tmp/kr_book.log
+
+      - name: Book file stats
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_kraken_book.jsonl.gz"
+          if [ -f "$FN" ]; then
+            SIZE=$(stat -c%s "$FN")
+            N=$(python -c "import gzip,sys; print(sum(1 for l in gzip.open(sys.argv[1],'rt') if l.strip()))" \
+                "$FN" 2>/dev/null || echo "?")
+            echo "$FN: $SIZE bytes, $N rows"
+          fi
+
+      - name: Commit book to data/${{ matrix.coin }}-kraken-book branch (force-push, history-less)
+        if: always()
+        run: |
+          COIN="${{ matrix.coin }}"
+          FN="${COIN}_kraken_book.jsonl.gz"
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          mkdir -p /tmp/book
+          cp ${COIN}_kraken_book*.jsonl.gz /tmp/book/ 2>/dev/null || true
+
+          # Anti-clobber guardrail: this step is `if: always()` + force-push, so a
+          # crashed/partial run must NOT overwrite good cumulative rows. The
+          # append/resume pattern means a healthy file is always >= the data-branch
+          # copy; if a fresh file regressed (fewer rows), restore the data-branch
+          # copy so the push preserves history instead of wiping it.
+          BRANCH="origin/data/$COIN-kraken-book" FN="$FN" python - <<'PY'
+          import gzip, subprocess, os
+          BRANCH = os.environ["BRANCH"]
+          FN = os.environ["FN"]
+          def count_path(path):
+              try:
+                  with gzip.open(path, "rt") as f:
+                      return sum(1 for l in f if l.strip())
+              except Exception:
+                  return 0
+          newp = os.path.join("/tmp/book", FN)
+          new = count_path(newp)
+          try:
+              blob = subprocess.run(["git", "show", f"{BRANCH}:{FN}"],
+                                    capture_output=True, check=True).stdout
+          except subprocess.CalledProcessError:
+              blob = None
+          old = 0
+          if blob:
+              tmp = "/tmp/_old_book.jsonl.gz"
+              with open(tmp, "wb") as f: f.write(blob)
+              old = count_path(tmp)
+          if old and new < old:
+              with open(newp, "wb") as f: f.write(blob)
+              print(f"[guardrail] {FN}: collected {new} rows < {old} on data branch "
+                    f"-> RESTORED data-branch copy (no regression)")
+          else:
+              print(f"[guardrail] {FN}: {new} rows (>= {old} on data branch) -> keep")
+          PY
+
+          # Rotation guardrail (S58): GitHub rejects any file > 100 MiB (the S37 stall
+          # bug). At >85MB freeze the live file as an archived segment on the same data
+          # branch and let the next run start a fresh live file. Loaders keep reading
+          # the live file; archived segments preserve the older history.
+          LIVE="/tmp/book/$FN"
+          if [ -f "$LIVE" ] && [ "$(stat -c%s "$LIVE")" -gt 85000000 ]; then
+            STAMP=$(date -u +%Y%m%dT%H%M%S)
+            mv "$LIVE" "/tmp/book/${COIN}_kraken_book_arch_${STAMP}.jsonl.gz"
+            echo "[rotate] $FN >85MB -> frozen as arch_${STAMP}; fresh live file next run"
+          fi
+
+          git checkout --orphan "data/$COIN-kraken-book-tmp"
+          git rm -rf . > /dev/null 2>&1 || true
+          cp /tmp/book/*.jsonl.gz . 2>/dev/null || true
+
+          if ls *kraken_book*.jsonl.gz >/dev/null 2>&1; then
+            git add *kraken_book*.jsonl.gz
+            git commit -m "$COIN kraken book update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin "data/$COIN-kraken-book-tmp:data/$COIN-kraken-book"
+            echo "[commit] pushed to data/$COIN-kraken-book"
+          else
+            echo "[commit] no book file to commit"
+          fi
