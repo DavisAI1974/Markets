@@ -1,0 +1,10 @@
+sol_coinbase ACCUM W1: side=+1 net=$+0.27 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W2: side=+1 net=$+0.76 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W3: side=+1 net=$+2.41 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W4: side=-1 net=$+2.53 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W5: side=-1 net=$+2.60 bought=$2,578 confirmed→ALL-IN
+sol_coinbase ACCUM W6: side=-1 net=$+2.92 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W7: side=-1 net=$+7.93 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W8: side=+1 net=$+10.71 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W9: side=-1 net=$+12.56 bought=$5,000 confirmed→ALL-IN
+sol_coinbase ACCUM W10: side=+1 net=$+14.98 bought=$5,000 confirmed→ALL-IN

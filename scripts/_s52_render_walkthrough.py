@@ -91,7 +91,7 @@ def render_oneshot(cell, path, K, grace, mk, tk, outdir):
     return index
 
 
-def render_accum(cell, path, K, grace, mk, tk, outdir, worst_losers=0):
+def render_accum(cell, path, K, grace, mk, tk, outdir, worst_losers=0, smallest_winners=0):
     mid, bb, ba, buy, sell, hs = _load(path, K)
     theta = _h2h.ZIG_K * (hs + tk)
     allf = _h2h._price_zigzag(mid, theta)
@@ -106,6 +106,10 @@ def render_accum(cell, path, K, grace, mk, tk, outdir, worst_losers=0):
         # S53 walkthrough: the tails, not a draw — losers most-negative first, winners biggest first
         sw = [int(i) for i in np.argsort(nets)[::-1][:worst_losers]]
         sl = [int(i) for i in np.argsort(nets)[:worst_losers]]
+    elif smallest_winners:
+        # S53 walkthrough: winners ranked SMALLEST first (the harvest-slack column), no losers
+        sw = [int(i) for i in wi[np.argsort(nets[wi])][:smallest_winners]]
+        sl = []
     else:
         sw, sl = _sample(wi, li)
     os.makedirs(outdir, exist_ok=True)
@@ -149,6 +153,16 @@ def main():
         out = os.path.join(os.path.dirname(OUT), "s53", "setB_sol_worst10")
         idx = render_accum("sol_coinbase", "/tmp/sol_coinbase_book.jsonl.gz", 1, 300, -1.0, 5.0,
                            out, worst_losers=10)
+        print("\n".join(idx))
+        with open(os.path.join(out, "INDEX.txt"), "w") as f:
+            f.write("\n".join(idx) + "\n")
+        print(f"\n{len(idx)} renders -> {out}")
+        return
+    if "--small-winners-accum" in sys.argv:
+        # S53: render the 10 SMALLEST accum winners — same window, same params as Set B
+        out = os.path.join(os.path.dirname(OUT), "s53", "setB_sol_smallwin10")
+        idx = render_accum("sol_coinbase", "/tmp/sol_coinbase_book.jsonl.gz", 1, 300, -1.0, 5.0,
+                           out, smallest_winners=10)
         print("\n".join(idx))
         with open(os.path.join(out, "INDEX.txt"), "w") as f:
             f.write("\n".join(idx) + "\n")
