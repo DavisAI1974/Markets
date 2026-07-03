@@ -7,7 +7,13 @@ agent fleet runs per AGENT_PLAYBOOK_PIECES.md (exit translation).
 GREG'S S60 CALLS AT OPEN: (1) he did NOT click Run workflow on the Kraken book collectors —
 first cron tick is 00:00Z Jul 4 (workflow landed on default 22:01Z Jul 3; 0 runs at check);
 (2) FULL FLEET on exit round 1; (3) nothing changes priorities — sequencing = Code's call
-(kickoff order kept: Kraken backfill launched first, exit fleet runs while it pulls).
+(kickoff order kept: Kraken backfill launched first, exit fleet runs while it pulls);
+(4) **ZIGZAG EXIT = the starting place** (flip-at-next-confirm is the round-1 anchor every
+candidate is measured against); (5) **DON'T FORGET THE DIPOLE DIVE that cuts down on exit
+lag** — the S55-R9 exhaustion wrinkle (negative coarse-top depth corr) / S45 can't-refuse
+fillability peak: opposing flow DIVING in at the forming top fires before the price confirm.
+Wired into the dump as first-class trigger columns: armed-dive r8 configs (collapse to
+-0.20/-0.30) + pure-dive dv20/dv30/dv40 (first sl <= -d, no arm) + slmin/t_slmin anatomy.
 
 SCORING FRAME (inherited): always-in-market mid-band flip machine (`odcore/entry_coinbase.py`
 armed_midband_flips, registry shapes, NAIVE k0, entry held FIXED), mid fills at confirms, $5k

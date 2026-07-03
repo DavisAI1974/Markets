@@ -61,7 +61,13 @@ THETAS = (80.0, 100.0)
 C = 0.5
 WFLIP = 600            # machine-faithful lean window (cells — platform constant)
 R8_CFGS = (("a05x0", 0.05, 0.0), ("a10x0", 0.10, 0.0),
-           ("a20x0", 0.20, 0.0), ("a10xm10", 0.10, -0.10))
+           ("a20x0", 0.20, 0.0), ("a10xm10", 0.10, -0.10),
+           # the DIPOLE DIVE (Greg S60: "cuts down on exit lag"; S55-R9 exhaustion wrinkle +
+           # S45 can't-refuse fillability peak): armed variants collapsing to a DEEP opposing
+           # lean, i.e. exit when the opposing flow DIVES in at the forming top
+           ("a10xm20", 0.10, -0.20), ("a10xm30", 0.10, -0.30))
+# pure-dive triggers (NO arm requirement — first opposing dive of the leg, sl <= -d):
+DIVE_CFGS = (("dv20", -0.20), ("dv30", -0.30), ("dv40", -0.40))
 CB_REAL = 8.0
 
 
@@ -93,9 +99,11 @@ def main():
                    "gross_bp", "net_real_bp", "peak_fav_bp", "t_peak_c", "giveback_bp",
                    "max_adv_bp", "dur_c", "frac_peak",
                    "clmx60_pk", "er600_pk", "slean_pk", "hod_pk",
-                   "slmax", "t_slmax_c", "slmax60"]
+                   "slmax", "t_slmax_c", "slmax60", "slmin", "t_slmin_c"]
             for tag, _a, _x in R8_CFGS:
                 hdr += [f"r8_{tag}_trig", f"r8_{tag}_t_c", f"r8_{tag}_gx"]
+            for tag, _d in DIVE_CFGS:
+                hdr += [f"{tag}_trig", f"{tag}_t_c", f"{tag}_gx"]
             hdr += ["dive_depth", "lag_bp", "hod_entry", "entry_idx"]
             wr.writerow(hdr)
 
@@ -121,6 +129,7 @@ def main():
 
                     sl = sd * lean[ci:xi + 1]                # with-ride lean walk (causal)
                     slmax = float(np.max(sl)); t_slmax = int(np.argmax(sl))
+                    slmin = float(np.min(sl)); t_slmin = int(np.argmin(sl))
                     r8cols = []
                     for _tag, ah, xl in R8_CFGS:
                         armed = False; te = -1
@@ -136,6 +145,13 @@ def main():
                         else:
                             gx = float(fav[te])
                             r8cols += [1, te, round(gx, 2)]
+                    for _tag, dth in DIVE_CFGS:              # pure dive: first sl <= dth, no arm
+                        hit_t = np.flatnonzero(sl <= dth)
+                        if len(hit_t) == 0:
+                            r8cols += [0, -1, ""]
+                        else:
+                            te = int(hit_t[0])
+                            r8cols += [1, te, round(float(fav[te]), 2)]
 
                     retrace = abs(ep - mid[pi]) / mid[pi] * 1e4
                     kind = "fallback" if retrace >= theta * 0.999 else "confirm"
@@ -149,6 +165,7 @@ def main():
                                  round(er_pk, 3), round(float(sd * lean[pkidx]), 4), hod_p,
                                  round(slmax, 4), t_slmax,
                                  round(float(np.max(sd * lean60[ci:xi + 1])), 4),
+                                 round(slmin, 4), t_slmin,
                                  *r8cols,
                                  round(abs(lean60[pi]), 4), round(retrace, 2), hod_e, ci])
         print(f"[{coin} {args.venue}] wrote {path}  ({hrs:.1f}h tape)")
