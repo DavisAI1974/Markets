@@ -1,0 +1,243 @@
+"""_s54_bigline_probe.py — S54 JOB 1: the BIG-TRENDS thread. Oracle at coarse theta + the BIG LINE
+strategy (Greg's trendline ride/break, odcore/swing_bigline.py) head-to-head vs the coarse causal
+zigzag flip. New files only — the deployed zigzag/one-shot/accum code paths are untouched.
+
+Design decisions FIXED before running (never tune off one window):
+  - Everything runs on a 1-SECOND decimated mid (mid[::10]). At theta >= 30bps and multi-hour holds,
+    100ms resolution adds nothing but cost; 1-sec is the S39 standard for swing-scale work.
+  - Fills are TAKER at entry and exit (mid at signal time, taker fee both ends). No queue model at
+    all -> the Q1 honest-queue problem does not apply to this thread by construction. RT fee tiers
+    reported: rt10 = tk5+tk5 Coinbase (rt11 Bybit), rt4 = mk-1 entry + tk5 exit (optimistic label).
+  - Oracle theta sweep: 60/100/150/250 bps (kickoff). Causal zigzag flip at the same thetas.
+  - Big line grid: theta_pivot in {30,60,100} x break_eps in {5,10} bps — all cells reported, none
+    selected. The FIXED walkthrough/render/split config is tp60/eps10, chosen here, in advance.
+  - Controls on every strategy row: shuffle (3 seeds, permuted 1-sec log-returns, path rebuilt) and
+    REVERSED (same legs, opposite side). Leakage gate on the big-line position signal (SOL prefix).
+  - Window splits: halves on every cell, quarters on BTC (196h) — fixed config only.
+
+Usage: python scripts/_s54_bigline_probe.py            (all cells -> _s54_bigline_results.json)
+       python scripts/_s54_bigline_probe.py --leakage  (leakage gate only, SOL)
+"""
+import json
+import os
+import sys
+
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from _birth_probe import load_book                      # noqa: E402
+from _liquidity_dive import build_channels, median_spread_bps  # noqa: E402
+from _capacity_model import FLOW_W                      # noqa: E402
+from _s52_accum_vs_oneshot import _price_zigzag         # noqa: E402  (reused, not copied)
+from odcore.swing_bigline import run_bigline, position_signal_at  # noqa: E402
+from odcore.leakage import assert_no_leakage            # noqa: E402
+
+CELLS = [
+    # (cell, path, K, taker_bps)
+    ("sol_coinbase",  "/tmp/sol_coinbase_book.jsonl.gz",  1, 5.0),
+    ("eth_coinbase",  "/tmp/eth_coinbase_book.jsonl.gz",  1, 5.0),
+    ("btc_coinbase",  "/tmp/btc_coinbase_book.jsonl.gz", 10, 5.0),
+    ("doge_coinbase", "/tmp/doge_coinbase_book.jsonl.gz", 1, 5.0),
+    ("xrp_coinbase",  "/tmp/xrp_coinbase_book.jsonl.gz",  1, 5.0),
+    ("sol_bybit",     "/tmp/sol_bybit_book.jsonl.gz",     1, 5.5),
+    ("eth_bybit",     "/tmp/eth_bybit_book.jsonl.gz",     1, 5.5),
+]
+ORACLE_THETAS = [60.0, 100.0, 150.0, 250.0]
+BL_GRID = [(tp, eps) for tp in (30.0, 60.0, 100.0) for eps in (5.0, 10.0)]
+FIXED_BL = (60.0, 10.0)      # walkthrough/split/render config — fixed in advance
+FIXED_ZZ = 100.0
+NOTIONAL = 5_000.0
+N_SHUF = 3
+DEC = 10                     # 100ms -> 1-sec
+
+
+def _shuffled_path(mid, seed):
+    r = np.diff(np.log(mid))
+    rng = np.random.default_rng(seed)
+    return float(mid[0]) * np.exp(np.concatenate([[0.0], np.cumsum(rng.permutation(r))]))
+
+
+def _oracle(mid, hrs, theta, rt_fees):
+    flips = _price_zigzag(mid, theta)
+    if len(flips) < 2:
+        return dict(n_swings=len(flips), swings_day=0.0, med_swing=None, net_day={})
+    sw = [abs(mid[int(b[1])] - mid[int(a[1])]) / mid[int(a[1])] * 1e4
+          for a, b in zip(flips[:-1], flips[1:])]           # pivot-to-pivot, perfect prices
+    days = hrs / 24.0
+    out = dict(n_swings=len(sw), swings_day=len(sw) / days, med_swing=float(np.median(sw)),
+               net_day={})
+    for lbl, rt in rt_fees.items():
+        out["net_day"][lbl] = float(sum(s - rt for s in sw) / 1e4 * NOTIONAL / days)
+    return out
+
+
+def _zigzag_flip(mid, hrs, theta, rt_fees):
+    """Causal always-in-market flip at confirm prices; leg = confirm to next confirm."""
+    flips = _price_zigzag(mid, theta)
+    if len(flips) < 3:
+        return dict(n_legs=max(0, len(flips) - 1), rows={})
+    gross = []
+    for a, b in zip(flips[:-1], flips[1:]):
+        ci, _pi, side = int(a[0]), int(a[1]), int(a[2])
+        cj = int(b[0])
+        gross.append(side * (mid[cj] - mid[ci]) / mid[ci] * 1e4)
+    gross = np.asarray(gross)
+    rows = {}
+    for lbl, rt in rt_fees.items():
+        net = gross - rt
+        rows[lbl] = dict(net_leg=float(net.mean()), dhr=float(net.sum() / 1e4 * NOTIONAL / hrs),
+                         dhr_rev=float((-gross - rt).sum() / 1e4 * NOTIONAL / hrs))
+    return dict(n_legs=len(gross), gross_leg=float(gross.mean()),
+                win=float((gross > 0).mean()), rows=rows)
+
+
+def _bigline(mid, hrs, tp, eps, rt_fees, cell_s=1.0):
+    legs = run_bigline(mid, tp, eps)
+    if not legs:
+        return dict(n_legs=0)
+    gross = np.asarray([l.gross_bps for l in legs])
+    hold_h = np.asarray([l.hold_cells * cell_s / 3600.0 for l in legs])
+    expo = float(sum(l.hold_cells for l in legs)) / len(mid)
+    rows = {}
+    for lbl, rt in rt_fees.items():
+        net = gross - rt
+        rows[lbl] = dict(net_leg=float(net.mean()), dhr=float(net.sum() / 1e4 * NOTIONAL / hrs),
+                         dhr_rev=float((-gross - rt).sum() / 1e4 * NOTIONAL / hrs))
+    return dict(n_legs=len(legs), gross_leg=float(gross.mean()), win=float((gross > 0).mean()),
+                med_hold_h=float(np.median(hold_h)), max_hold_h=float(hold_h.max()),
+                exposure=expo, n_forced=int(sum(l.forced for l in legs)),
+                n_long=int(sum(1 for l in legs if l.side > 0)), rows=rows)
+
+
+def _shuffle_dhr(mid, hrs, runner, rt, seeds=range(N_SHUF)):
+    vals = []
+    for s in seeds:
+        m2 = _shuffled_path(mid, 1000 + s)
+        r = runner(m2)
+        if r is None:
+            vals.append(0.0)
+            continue
+        vals.append(float((np.asarray(r) - rt).sum() / 1e4 * NOTIONAL / hrs) if len(r) else 0.0)
+    return float(np.mean(vals))
+
+
+def run_cell(cell, path, K, tk):
+    if not os.path.exists(path):
+        print(f"[{cell}] no book")
+        return None
+    raw = load_book(path)
+    ch, g = build_channels(path, K, FLOW_W, raw=raw)
+    mid = np.asarray(g["mid"], float)[::DEC]
+    hs = median_spread_bps(path, raw=raw) / 2.0
+    hrs = (raw["ts"][-1] - raw["ts"][0]) / 3600.0
+    rt_fees = {"rt_taker": 2 * tk, "rt_mk-1": -1.0 + tk}
+    out = dict(cell=cell, hrs=hrs, spread_bps=2 * hs, oracle={}, zigzag={}, bigline={}, splits={})
+
+    for th in ORACLE_THETAS:
+        out["oracle"][f"{th:.0f}"] = _oracle(mid, hrs, th, rt_fees)
+        z = _zigzag_flip(mid, hrs, th, rt_fees)
+        z["shuffle_dhr"] = _shuffle_dhr(
+            mid, hrs,
+            lambda m2, _t=th: [s * (m2[int(b[0])] - m2[int(a[0])]) / m2[int(a[0])] * 1e4
+                               for a, b in zip(_price_zigzag(m2, _t)[:-1], _price_zigzag(m2, _t)[1:])
+                               for s in [int(a[2])]],
+            rt_fees["rt_taker"])
+        out["zigzag"][f"{th:.0f}"] = z
+
+    for (tp, eps) in BL_GRID:
+        b = _bigline(mid, hrs, tp, eps, rt_fees)
+        b["shuffle_dhr"] = _shuffle_dhr(
+            mid, hrs,
+            lambda m2, _tp=tp, _e=eps: [l.gross_bps for l in run_bigline(m2, _tp, _e)],
+            rt_fees["rt_taker"])
+        out["bigline"][f"tp{tp:.0f}_eps{eps:.0f}"] = b
+
+    # window splits — FIXED configs only
+    n_split = 4 if hrs > 120 else 2
+    bounds = np.linspace(0, len(mid), n_split + 1).astype(int)
+    for w in range(n_split):
+        m_w = mid[bounds[w]:bounds[w + 1]]
+        h_w = hrs / n_split
+        out["splits"][f"W{w+1}"] = dict(
+            bigline=_bigline(m_w, h_w, *FIXED_BL, rt_fees),
+            zigzag=_zigzag_flip(m_w, h_w, FIXED_ZZ, rt_fees))
+    return out
+
+
+def leakage_gate():
+    path = CELLS[0][1]
+    raw = load_book(path)
+    ch, g = build_channels(path, CELLS[0][2], FLOW_W, raw=raw)
+    mid = np.asarray(g["mid"], float)[::DEC][:40_000]     # ~11h prefix, cost control
+    ts = np.arange(len(mid), dtype=float)
+    dummy = np.zeros(len(mid))
+    rng = np.random.default_rng(3)
+    idxs = np.sort(rng.integers(5_000, len(mid) - 1, size=16))
+    tp, eps = FIXED_BL
+
+    def sig(i, ts_, p, bv, sv):
+        return position_signal_at(i, ts_, p, bv, sv, theta_pivot_bps=tp, break_eps_bps=eps)
+
+    ok, fails = assert_no_leakage(sig, ts, mid, dummy, dummy, idxs, reps=2)
+    print(f"# LEAKAGE GATE (bigline tp{tp:.0f}/eps{eps:.0f}, sol prefix n={len(mid)}, "
+          f"{len(idxs)} idxs): {'PASS' if ok else 'FAIL'} ({len(fails)} fails)")
+    return ok
+
+
+def main():
+    if "--leakage" in sys.argv:
+        leakage_gate()
+        return
+    if not leakage_gate():
+        print("!! leakage FAIL — not running the probe")
+        return
+    results = []
+    for (cell, path, K, tk) in CELLS:
+        r = run_cell(cell, path, K, tk)
+        if r is None:
+            continue
+        results.append(r)
+        print(f"\n== {cell} ({r['hrs']:.1f}h, spread {r['spread_bps']:.2f}bps) ==")
+        print("  ORACLE   theta  swings/day  med_swing   $/day rt_taker   $/day rt_mk-1")
+        for th, o in r["oracle"].items():
+            if not o.get("net_day"):
+                continue
+            print(f"           {th:>5}  {o['swings_day']:>9.1f}  {o['med_swing']:>8.1f}bp"
+                  f"  {o['net_day']['rt_taker']:>+13.2f}  {o['net_day']['rt_mk-1']:>+13.2f}")
+        print("  ZIGZAG   theta  n_legs  gross/leg  net/leg(tk)   $/hr(tk)   rev$/hr   shuf$/hr")
+        for th, z in r["zigzag"].items():
+            if not z.get("rows"):
+                continue
+            rw = z["rows"]["rt_taker"]
+            print(f"           {th:>5}  {z['n_legs']:>6}  {z['gross_leg']:>+8.1f}  {rw['net_leg']:>+10.1f}"
+                  f"  {rw['dhr']:>+9.2f}  {rw['dhr_rev']:>+8.2f}  {z['shuffle_dhr']:>+8.2f}")
+        print("  BIGLINE  cfg          n  gross/leg  net/leg(tk)  $/hr(tk)  rev$/hr  shuf$/hr"
+              "  expo  medhold  forced")
+        for cfg, b in r["bigline"].items():
+            if not b.get("rows"):
+                print(f"           {cfg:<12} {b['n_legs']:>2}  (no legs)")
+                continue
+            rw = b["rows"]["rt_taker"]
+            print(f"           {cfg:<12} {b['n_legs']:>2}  {b['gross_leg']:>+8.1f}  {rw['net_leg']:>+10.1f}"
+                  f"  {rw['dhr']:>+8.2f}  {rw['dhr_rev']:>+7.2f}  {b['shuffle_dhr']:>+8.2f}"
+                  f"  {b['exposure']:>4.0%}  {b['med_hold_h']:>6.2f}h  {b['n_forced']}")
+        print("  SPLITS (fixed tp60/eps10 vs zz100), $/hr rt_taker:")
+        for w, s in r["splits"].items():
+            bl = s["bigline"].get("rows", {}).get("rt_taker", {}).get("dhr")
+            zz = s["zigzag"].get("rows", {}).get("rt_taker", {}).get("dhr")
+            nb = s["bigline"].get("n_legs", 0)
+            nz = s["zigzag"].get("n_legs", 0)
+            print(f"           {w}: bigline {bl if bl is None else f'{bl:+.2f}'} (n={nb})   "
+                  f"zigzag {zz if zz is None else f'{zz:+.2f}'} (n={nz})")
+
+    out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       "_s54_bigline_results.json")
+    with open(out, "w") as f:
+        json.dump(results, f, indent=1)
+    print(f"\n-> {out}")
+
+
+if __name__ == "__main__":
+    main()
