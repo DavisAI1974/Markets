@@ -63,15 +63,17 @@ class CellConfig:
     dipole_entry: bool = False      # S55: gate flip actionability on the S36 divergence read
     dipole_exit: tuple | None = None  # S55 R8: (arm_hi, exit_lo) lean-collapse exit
     fill_mode: str = "maker"        # "maker" = deployed model; "taker" = research/bins mode
-    book_path: str = ""             # default /tmp/<coin>_coinbase_book.jsonl.gz
+    book_path: str = ""             # default /tmp/<coin>_<venue>_book.jsonl.gz
+    venue: str = "coinbase"         # S56: venue is a first-class cell dimension (per-cell deploy)
+    sandbox: bool = False           # sandbox cells -> SANDBOX_LEDGER (S53 rule)
 
     @property
     def cell(self):
-        return f"{self.coin}_coinbase"
+        return f"{self.coin}_{self.venue}"
 
     @property
     def path(self):
-        return self.book_path or f"/tmp/{self.coin}_coinbase_book.jsonl.gz"
+        return self.book_path or f"/tmp/{self.coin}_{self.venue}_book.jsonl.gz"
 
     @property
     def is_variant(self):
@@ -81,6 +83,20 @@ class CellConfig:
 # the production registry (S47 "bring them all in"; grace map S48; per-cell deploy rule)
 DEPLOYED = [CellConfig("sol"), CellConfig("doge", grace=600), CellConfig("xrp"),
             CellConfig("eth"), CellConfig("btc", K=10)]
+
+# S56 SANDBOX registry — THE CURRENT MODEL awaiting its two deploy conditions.
+# The S56 full gate (30d x 5 Bybit bins, joint price+flow shuffle x5 + per-week + z) validated
+# the DEPLOYED machine — fine lean-flip enter/exit at NATURAL cadence (no ARM filter; every
+# coarse confirm variant v1/v2/v3-ARM failed its gate or knife-edged) — on the Bybit venue:
+# direction premium +$7-17/hr/coin ABOVE the shuffle rebate floor, z 6.8-14.4, 20/20 coin-weeks
+# positive, reversed below floor on all 5; independently consistent with the S52 book-measured
+# venue cells (SOL +$115/hr, ETH +$113/hr @$5k MM3). Economics are MM3-CONTINGENT (standard
+# Bybit maker +2bp is fatal): fees below = the MM program tier. Books use TRUE fees — the
+# executor measures real maker/taker fills (the 10%-taker blend is a bins-only scoring rule).
+# Deploy gates: (1) Greg's Bybit MM application (existence condition), (2) queue-honest fill
+# capacity on the accruing bybit books. Until both: SANDBOX ledger only.
+SANDBOX = [CellConfig("sol", venue="bybit", maker_fee=-1.25, taker_fee=5.5, sandbox=True),
+           CellConfig("eth", venue="bybit", maker_fee=-1.25, taker_fee=5.5, sandbox=True)]
 
 
 def _dipole_descriptors(legs, lean, piv, buy, sell, mid):

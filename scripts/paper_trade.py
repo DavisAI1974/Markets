@@ -16,7 +16,7 @@ from __future__ import annotations
 import sys, os, argparse
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from odcore.platform import (DEPLOYED, LEDGER, SANDBOX_LEDGER, run_cell, load_ledger,
+from odcore.platform import (DEPLOYED, SANDBOX, LEDGER, SANDBOX_LEDGER, run_cell, load_ledger,
                              append_ledger)
 
 # S48 cover-grace per-cell map lives in platform.DEPLOYED (doge 600, rest 300)
@@ -57,14 +57,34 @@ def main():
     ledger = existing + new
     print(f"# LEDGER TOTAL {len(ledger)} trades across all runs. per-cell shakeout (net-of-fee):")
     print(f"# {'cell':16s}{'n':>6}{'flat_net':>10}{'sized_net':>11}{'win%':>6}{'taker%':>8}{'mean_sz':>9}")
-    for cfg in DEPLOYED:
-        rs = [r for r in ledger if r["coin"] == cfg.coin]
-        if not rs:
-            print(f"# {cfg.cell:16s}{0:>6}"); continue
-        fn = sum(r["net_bps"] for r in rs); sn = sum(r["sized_net"] for r in rs)
-        win = 100 * np.mean([r["net_bps"] > 0 for r in rs]); tk = 100 * np.mean([not r["maker_close"] for r in rs])
-        msz = float(np.mean([r["size_mult"] for r in rs]))
-        print(f"# {cfg.cell:16s}{len(rs):>6}{fn:>+10.1f}{sn:>+11.1f}{win:>6.0f}{tk:>8.0f}{msz:>9.2f}")
+
+    def shakeout(rows_, cfgs):
+        for cfg in cfgs:
+            rs = [r for r in rows_ if r.get("cell") == cfg.cell]
+            if not rs:
+                print(f"# {cfg.cell:16s}{0:>6}"); continue
+            fn = sum(r["net_bps"] for r in rs); sn = sum(r["sized_net"] for r in rs)
+            win = 100 * np.mean([r["net_bps"] > 0 for r in rs])
+            tk = 100 * np.mean([not r["maker_close"] for r in rs])
+            msz = float(np.mean([r["size_mult"] for r in rs]))
+            print(f"# {cfg.cell:16s}{len(rs):>6}{fn:>+10.1f}{sn:>+11.1f}{win:>6.0f}{tk:>8.0f}{msz:>9.2f}")
+
+    shakeout(ledger, DEPLOYED)
+
+    # S56 SANDBOX cells (the current model: deployed machine on Bybit @ MM3 fees) — always run,
+    # always routed to the SANDBOX ledger; the baseline forward ledger stays pure (S53 rule).
+    sb_existing = load_ledger(SANDBOX_LEDGER)
+    sb_rows = []
+    for cfg in SANDBOX:
+        try:
+            sb_rows += run_cell(cfg)
+        except Exception as e:
+            print(f"# {cfg.cell} ERR {e}")
+    sb_new = append_ledger(sb_rows, SANDBOX_LEDGER, existing=sb_existing)
+    sb_ledger = sb_existing + sb_new
+    print(f"# SANDBOX (S56 bybit@MM3, deploy-gated on MM application + queue-honest capacity): "
+          f"+{len(sb_new)} new, {len(sb_ledger)} total")
+    shakeout(sb_ledger, SANDBOX)
 
 
 if __name__ == "__main__":

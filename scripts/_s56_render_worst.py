@@ -84,15 +84,18 @@ def gated_v2_tagged(mid, buy, sell, arm_bp, fine_bp, mode_gate="reversal"):
     return flips
 
 
-def v3_tagged(mid, buy, sell, arm):
-    """v3 legs (armed zigzag-flip machine) with the dipole read at each pivot as descriptor."""
+def v3_tagged(mid, buy, sell, arm, lazy_dv=False):
+    """v3 legs (armed zigzag-flip machine) with the dipole read at each pivot as descriptor.
+    lazy_dv: skip the per-flip divergence (ARM0 = 127k flips/coin); fill in post-selection."""
     from _s56_armed_gate import armed_zigzag_flips
     fl = armed_zigzag_flips(mid, buy, sell, arm)
     out = []
     for (c, p, s) in fl:
-        lo = max(0, p - DIVW)
-        dv = divergence(buy[lo:p + 1], sell[lo:p + 1], float(mid[p] - mid[lo])) \
-            if p - lo >= 12 else None
+        dv = None
+        if not lazy_dv:
+            lo = max(0, p - DIVW)
+            dv = divergence(buy[lo:p + 1], sell[lo:p + 1], float(mid[p] - mid[lo])) \
+                if p - lo >= 12 else None
         out.append((c, p, s, "zzflip", dv))
     return out
 
@@ -104,7 +107,7 @@ def legs_for_coin(coin, sym, arm, fine, machine="v2"):
     mid, buy, sell, cov, hrs = load_bins(p)
     mid = np.asarray(mid, float)
     buy = np.asarray(buy, float); sell = np.asarray(sell, float)
-    fl = v3_tagged(mid, buy, sell, arm) if machine == "v3" \
+    fl = v3_tagged(mid, buy, sell, arm, lazy_dv=(arm == 0)) if machine == "v3" \
         else gated_v2_tagged(mid, buy, sell, arm, fine)
     legs = []
     for (c1, p1, s1, tag, dv), (c2, p2, s2, _t2, _d2) in zip(fl[:-1], fl[1:]):
@@ -181,6 +184,14 @@ def main():
             dat[coin] = arrs
     worst = sorted(all_legs, key=lambda l: l["net_mm3"])[:10]
     winners = sorted([l for l in all_legs if l["net_mm3"] > 0], key=lambda l: l["net_mm3"])[:10]
+    for leg in worst + winners:                      # lazy_dv fill-in for the selected legs
+        if leg["dcls"] == "None" and leg["coin"] in dat:
+            m, b, s_ = dat[leg["coin"]]
+            p = leg["pivot_i"]; lo = max(0, p - DIVW)
+            dv = divergence(b[lo:p + 1], s_[lo:p + 1], float(m[p] - m[lo])) \
+                if p - lo >= 12 else None
+            leg["dcls"] = dv["expect"] if dv else "None"
+            leg["rconv"] = float(dv["reversal_conviction"]) if dv else float("nan")
     tag = (f"v3 zzflip-confirm ARM{arm:.0f}" if machine == "v3"
            else f"tight ARM{arm:.0f}/FINE{fine:.0f}") + " mm3 blend"
     pre = "" if machine == "v2" else "v3_"
