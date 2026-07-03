@@ -71,20 +71,20 @@ def main():
 
     shakeout(ledger, DEPLOYED)
 
-    # S56 SANDBOX cells (the current model: deployed machine on Bybit @ MM3 fees) — always run,
-    # always routed to the SANDBOX ledger; the baseline forward ledger stays pure (S53 rule).
-    sb_existing = load_ledger(SANDBOX_LEDGER)
-    sb_rows = []
-    for cfg in SANDBOX:
-        try:
-            sb_rows += run_cell(cfg)
-        except Exception as e:
-            print(f"# {cfg.cell} ERR {e}")
-    sb_new = append_ledger(sb_rows, SANDBOX_LEDGER, existing=sb_existing)
-    sb_ledger = sb_existing + sb_new
-    print(f"# SANDBOX (S56 bybit@MM3, deploy-gated on MM application + queue-honest capacity): "
-          f"+{len(sb_new)} new, {len(sb_ledger)} total")
-    shakeout(sb_ledger, SANDBOX)
+    # SANDBOX cells (always routed to the SANDBOX ledger; the baseline forward ledger stays
+    # pure — S53 rule). Registry EMPTY as of S57 (Bybit struck: US-ineligible venue).
+    if SANDBOX:
+        sb_existing = load_ledger(SANDBOX_LEDGER)
+        sb_rows = []
+        for cfg in SANDBOX:
+            try:
+                sb_rows += run_cell(cfg)
+            except Exception as e:
+                print(f"# {cfg.cell} ERR {e}")
+        sb_new = append_ledger(sb_rows, SANDBOX_LEDGER, existing=sb_existing)
+        sb_ledger = sb_existing + sb_new
+        print(f"# SANDBOX: +{len(sb_new)} new, {len(sb_ledger)} total")
+        shakeout(sb_ledger, SANDBOX)
 
 
 if __name__ == "__main__":

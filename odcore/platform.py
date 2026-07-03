@@ -84,25 +84,13 @@ class CellConfig:
 DEPLOYED = [CellConfig("sol"), CellConfig("doge", grace=600), CellConfig("xrp"),
             CellConfig("eth"), CellConfig("btc", K=10)]
 
-# S56 SANDBOX registry — THE CURRENT MODEL awaiting its two deploy conditions.
-# The S56 full gate (30d x 5 Bybit bins, joint price+flow shuffle x5 + per-week + z) validated
-# the DEPLOYED machine — fine lean-flip enter/exit at NATURAL cadence (no ARM filter; every
-# coarse confirm variant v1/v2/v3-ARM failed its gate or knife-edged) — on the Bybit venue:
-# direction premium +$7-17/hr/coin ABOVE the shuffle rebate floor, z 6.8-14.4, 20/20 coin-weeks
-# positive, reversed below floor on all 5; independently consistent with the S52 book-measured
-# venue cells (SOL +$115/hr, ETH +$113/hr @$5k MM3). Economics are MM3-CONTINGENT (standard
-# Bybit maker +2bp is fatal): fees below = the MM program tier. Books use TRUE fees — the
-# executor measures real maker/taker fills (the 10%-taker blend is a bins-only scoring rule).
-# ⚠ S57 FEE CORRECTION (verified: bybit-exchange.github.io/docs/v5/market/fee-group-info):
-# the MM rebate is FEE-GROUP tiered — G1 majors (BTC/ETH/SOL/XRP) and G2 (DOGE) get -0.4bp
-# at MM3, NOT the -1.25bp booked S52-S56 (that is G5 long-tail only; G3 -0.75, G4 -1.0).
-# Cells re-based to -0.4 and the sandbox ledger reseeded at true fees. At -0.4 queue-honest:
-# SOL +$1.9-16.6/hr (0.62bp half-spread = real capture survives), ETH -$2.2..+$7.1/hr
-# (0.03bp spread = was ~all rebate). Weighted maker-share qualification: G2 counts 5x,
-# G4 15x, G5 20x. Deploy gates unchanged: (1) Greg's Bybit MM application (existence
-# condition), (2) queue-honest fill capacity on the accruing bybit books.
-SANDBOX = [CellConfig("sol", venue="bybit", maker_fee=-0.4, taker_fee=5.5, sandbox=True),
-           CellConfig("eth", venue="bybit", maker_fee=-0.4, taker_fee=5.5, sandbox=True)]
+# SANDBOX registry — EMPTY as of S57 (Greg: strike Bybit — all references, data, and code).
+# The S56 Bybit sandbox cells were removed after eligibility verification: Bybit's own
+# restricted-jurisdictions policy excludes the United States, applies at the UBO level for
+# entities (Business-KYC FAQ), and no US-facing intermediary offers its books (post-Falcon-Labs
+# CFTC enforcement). The venue is not lawfully tradeable for us at any fee tier, so no research
+# cell may live here. Next sandbox cells must be on a US-lawful venue (per-cell rule, S33).
+SANDBOX = []
 
 
 def _dipole_descriptors(legs, lean, piv, buy, sell, mid):

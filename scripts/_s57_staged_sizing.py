@@ -25,7 +25,7 @@ P&L per $ deployed, and Greg's asymmetry metric: avg notional on losers vs winne
 
 Combos swept: s0 in {0.2, 0.4, 0.6} x c in {2, 5, 10}bp, F = 2.0 ($10k cap).
 Full-fill reference basis (fills at stated notional); the deploy number stays the
-queue-honest bracket. TRUE fees -0.4/5.5, sol/eth bybit books.
+queue-honest bracket. Default venue/fees: Coinbase books at mk0/tk5 (the deployed basis).
 """
 import os
 import sys
@@ -45,11 +45,13 @@ MID = 5000.0
 CAP_F = 2.0                     # $10k
 S0S = (0.2, 0.4, 0.6)
 CONFS = (2.0, 5.0, 10.0)        # bp favorable move to confirm
-MK, TK, GRACE = -0.4, 5.5, 300
+# venue/fees via CLI: --venue coinbase --maker X --taker Y (S57: bybit STRUCK — US-ineligible)
+VENUE = "coinbase"
+MK, TK, GRACE = 0.0, 5.0, 300
 
 
 def build(coin):
-    path = f"/tmp/{coin}_bybit_book.jsonl.gz"
+    path = f"/tmp/{coin}_{VENUE}_book.jsonl.gz"
     raw = load_book(path)
     _, g = build_channels(path, 1, FLOW_W, raw=raw)
     mid = np.asarray(g["mid"], float)
@@ -90,7 +92,7 @@ def run_cell(coin):
 
     flat5 = total_usd(np.full(n, MID))
     allin10 = total_usd(np.full(n, CAP_F * MID))
-    print(f"\n[{coin}_bybit] {n} legs {hrs:.2f}h | flat $5k ${flat5 / hrs:+.2f}/hr | "
+    print(f"\n[{coin}_{VENUE}] {n} legs {hrs:.2f}h | flat $5k ${flat5 / hrs:+.2f}/hr | "
           f"all-in $10k ${allin10 / hrs:+.2f}/hr | win {100 * np.mean(win):.0f}%")
     print(f"  {'s0':>4} {'c(bp)':>6} | {'add%':>5} | {'staged mk $/hr':>14} {'tk $/hr':>8} | "
           f"{'rand-add mk (20s)':>17} | {'rev(adverse) mk':>15} | {'L$:W$ avg':>9}")
@@ -152,6 +154,15 @@ def run_cell(coin):
 
 
 def main():
+    global VENUE, MK, TK
+    av = sys.argv
+    if "--venue" in av:
+        VENUE = av[av.index("--venue") + 1]
+    if "--maker" in av:
+        MK = float(av[av.index("--maker") + 1])
+    if "--taker" in av:
+        TK = float(av[av.index("--taker") + 1])
+    print(f"# staged sizing — venue={VENUE} maker={MK} taker={TK}")
     for coin in ("sol", "eth"):
         run_cell(coin)
 
