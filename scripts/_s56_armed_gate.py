@@ -362,6 +362,75 @@ def shuffle_mid(mid, seed):
     return float(mid[0]) * np.exp(np.concatenate([[0.0], np.cumsum(rng.permutation(r))]))
 
 
+def shuffle_joint(mid, buy, sell, seed):
+    """Joint price+flow shuffle: one permutation on (return, buy, sell) rows — kills temporal
+    structure, preserves marginals AND the contemporaneous price-flow link (v3's confirm is
+    flow-based, so flow must shuffle WITH price)."""
+    rng = np.random.default_rng(2000 + seed)
+    r = np.diff(np.log(mid))
+    perm = rng.permutation(len(r))
+    m2 = float(mid[0]) * np.exp(np.concatenate([[0.0], np.cumsum(r[perm])]))
+    b2 = np.concatenate([[buy[0]], buy[1:][perm]])
+    s2 = np.concatenate([[sell[0]], sell[1:][perm]])
+    return m2, b2, s2
+
+
+def gate_v3z(data, arms=(40.0, 50.0, 60.0)):
+    """S54-style full gate on the v3 machine: joint shuffle x N_SHUF + per-week + z, per cell.
+    Scored at the Greg blend (mm3) with taker as reference."""
+    from odcore.flip_detector import lean_series, detect_flips
+
+    def run(mid, buy, sell, arm, rev_=False):
+        lean = lean_series(buy, sell, 60)
+        ff, _ = detect_flips(lean, 0.1)
+        ff = [(int(c), int(p), int(s)) for (c, p, s) in ff]
+        fl = armed_zigzag_flips(mid, ff, None, arm)
+        if rev_:
+            fl = [(c, p, -s) for (c, p, s) in fl]
+        z = np.zeros(len(mid))
+        return simulate_swing_maker(mid, z, z, buy, sell, fl, half_spread_bps=0.0,
+                                    maker_fee_bps=5.5, taker_fee_bps=5.5, fill_mode="taker")
+
+    res_all = {}
+    for arm in arms:
+        print(f"\n== V3 GATE ARM {arm:.0f} (mm3 blend $/hr) ==")
+        print(f"{'coin':>6} {'n':>6} {'fwd':>8} {'rev':>8} {'shuf_mu':>8} {'shuf_sd':>7} "
+              f"{'z':>6}  weeks")
+        for coin, (mid, buy, sell, hrs) in data.items():
+            def mm3(r, h):
+                return (r.net_per_leg_bps + RT - TIERS["mm3_bl"]) * r.n_legs * CAP / 1e4 / h
+            r = run(mid, buy, sell, arm)
+            dv = mm3(r, hrs)
+            rv = mm3(run(mid, buy, sell, arm, rev_=True), hrs)
+            svals = []
+            for sd in range(N_SHUF):
+                m2, b2, s2 = shuffle_joint(mid, buy, sell, sd)
+                svals.append(mm3(run(m2, b2, s2, arm), hrs))
+            smu, ssd = float(np.mean(svals)), float(np.std(svals))
+            zz = (dv - smu) / ssd if ssd > 1e-9 else float("nan")
+            wk = []
+            nW = max(1, int(len(mid) // WEEK_S))
+            for w in range(nW):
+                sl = slice(w * WEEK_S, min(len(mid), (w + 1) * WEEK_S))
+                if sl.stop - sl.start < 12 * 3600:
+                    continue
+                h_w = (sl.stop - sl.start) / 3600.0
+                wk.append(float(mm3(run(mid[sl], buy[sl], sell[sl], arm), h_w)))
+            print(f"{coin:>6} {r.n_legs:>6} {dv:>+8.2f} {rv:>+8.2f} {smu:>+8.2f} {ssd:>7.2f} "
+                  f"{zz:>6.2f}  " + " ".join(f"{v:+.2f}" for v in wk))
+            res_all[f"{coin}_a{arm:.0f}"] = dict(n=int(r.n_legs), dhr_mm3=float(dv),
+                                                 rev_mm3=float(rv), shuf_mu=smu, shuf_sd=ssd,
+                                                 z=float(zz), weeks=wk)
+    prev = {}
+    if os.path.exists(OUT):
+        with open(OUT) as f:
+            prev = json.load(f)
+    prev["gate_v3z"] = res_all
+    with open(OUT, "w") as f:
+        json.dump(prev, f, indent=1)
+    print(f"\nsaved -> {OUT}")
+
+
 def gate(data, arms, fines):
     """Round 2: shuffle + per-week + z per cell on the (given) grid subset."""
     print("\nROUND 2 GATE — shuffle x%d + per-week splits + z" % N_SHUF)
@@ -422,6 +491,8 @@ if __name__ == "__main__":
              [float(x) for x in a.fines.split(",")])
     elif "--v2" in sys.argv:
         grid(d, fn=armed_fine_zigzag_v2, key="grid_v2")
+    elif "--gate-v3z" in sys.argv:
+        gate_v3z(d)
     elif "--v3z" in sys.argv:
         grid_v3z(d)
     elif "--v3" in sys.argv:
