@@ -45,6 +45,10 @@ NOTIONAL = 5_000.0
 # trend's scale (kickoff: "DIVW may need scale-up"). Sweep the detector scale:
 SCALE_GRID = [(60, 0.25), (600, 0.25), (600, 0.5), (1800, 0.25), (1800, 0.5)]
 K_GRID_COARSE = [0.0, 0.04, 0.09, 0.18, 0.25]
+# Greg (DOGE markup): the target cadence is ~2-5 fires/DAY (his black lines) — W=1800 at 10-14/day
+# is still chop. --coarse sweeps 1h/2h lean windows; per-cell n gets tiny, so a POOLED row
+# (all Coinbase cells, sign-aligned by construction) carries the inference.
+SCALE_GRID_XC = [(600, 0.5), (1800, 0.3), (1800, 0.5), (3600, 0.3), (3600, 0.5)]
 
 
 def rolling_range_bps(mid, W):
@@ -105,7 +109,8 @@ def run_cell(cell, path, K, tk):
     rt = 2 * tk
     out = dict(cell=cell, hrs=hrs, scales={})
 
-    for (W, rev) in SCALE_GRID:
+    grid = SCALE_GRID_XC if "--coarse" in sys.argv else SCALE_GRID
+    for (W, rev) in grid:
         lean = lean_series(buy1, sell1, W)
         flips, _pos = detect_flips(lean, rev)
         flips = [(int(c), int(p), int(s)) for (c, p, s) in flips if c > RANGE_W // 4]
@@ -147,7 +152,9 @@ def run_cell(cell, path, K, tk):
                 p_real=(real / acted) if acted else None,
                 net_leg=float(np.mean(pnl)) if pnl else None,
                 dhr=float(np.sum(pnl) / 1e4 * NOTIONAL / hrs) if pnl else 0.0,
-                med_lag_bps=float(np.median(lag)) if lag else None)
+                med_lag_bps=float(np.median(lag)) if lag else None,
+                **(dict(pnl=[float(x) for x in pnl], n_real=real)
+                   if "--coarse" in sys.argv else {}))
         out["scales"][f"W{W}_r{rev:.2f}"] = srow
     return out
 
@@ -168,8 +175,30 @@ def main():
                 nl = "   n/a" if row["net_leg"] is None else f"{row['net_leg']:+.1f}"
                 print(f"      {k}     {row['acted']:>5}  {row['act_frac']:>4.0%}    {pr}"
                       f"    {nl:>8}   {row['dhr']:>+7.2f}")
+    if "--coarse" in sys.argv:
+        cb = [r for r in results if "coinbase" in r["cell"]]
+        tot_hrs = sum(r["hrs"] for r in cb)
+        print(f"\n== POOLED (5 Coinbase cells, {tot_hrs:.0f}h) ==")
+        print("    scale        k    acted  P(real)  net/leg(tk)   $/hr")
+        scales = cb[0]["scales"].keys() if cb else []
+        for sname in scales:
+            for k in list(cb[0]["scales"][sname]["k"].keys()):
+                pnl = []
+                real = 0
+                for r in cb:
+                    row = r["scales"].get(sname, {}).get("k", {}).get(k)
+                    if row and row.get("pnl"):
+                        pnl += row["pnl"]
+                        real += row.get("n_real", 0)
+                if not pnl:
+                    continue
+                dhr = float(np.sum(pnl) / 1e4 * NOTIONAL / tot_hrs)
+                print(f"    {sname:<11} {k}  {len(pnl):>6}    {real/len(pnl):.2f}"
+                      f"    {np.mean(pnl):>+8.1f}   {dhr:>+7.2f}")
+
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                       "_s54_flip_threshold_results.json")
+                       "_s54_flip_threshold_results" +
+                       ("_coarse" if "--coarse" in sys.argv else "") + ".json")
     with open(out, "w") as f:
         json.dump(results, f, indent=1)
     print(f"\n-> {out}")
