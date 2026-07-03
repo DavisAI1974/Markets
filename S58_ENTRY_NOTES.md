@@ -121,6 +121,16 @@ step of conviction cost in PART%/CAP%?
   (parked — Piece 2). Entry-only may not reach cb_real+ alone; that is not failure, it is the
   budget the exit piece inherits.
 
+**Result (books — the INVERSION sharpens):** on SOL Coinbase books the stack INVERTS: k>=2
+stays healthy (+17..21bp/leg gross, cb_real +$0.6..+1.4/hr — barely filtered) but k>=3/k>=4
+DESTROY it (-9..-41bp/leg); member marginals flip sign vs bins (opposing -12.8bp/leg on books
+vs best-single on bins; chop/pass-all +23.2). The dips the flow reads call best on Binance
+are the WORST on the Coinbase SOL window. CONFOUND NOT YET SPLIT: venue microstructure vs
+regime/window (books = one ~4-day window; bins = 30d multi-regime). Resolution queued: run
+the bins stack restricted to the books' calendar window — if bins-last-4-days also inverts,
+it is regime not venue. Plus per-week z on the bins k>=3 lift (if the lift is week-unstable
+on bins, the books inversion is just one bad week showing up honestly).
+
 ## PARKED FOR LATER PIECES (Greg: do NOT act on these while entry is open — record only)
 
 Findings about exit/hold/sizing that surfaced during entry work. Append here, never chase.
