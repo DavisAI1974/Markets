@@ -103,3 +103,16 @@ Two-scale machine, roles now precise:
    Failure mode to watch: armed windows too wide -> 83/hr ringing re-derived.
 4. NO-GATES scoring (net $/hr AND legs/hr); controls mandatory: shuffle, reversed, leakage
    gate, per-week splits × 5 coins.
+
+## Round 8 RESULT (Greg: "invert that graph" — dive as EXIT fine-tuner)
+`inverted_exit_anatomy.png`: 765 zz150 legs aligned to the EXIT turn, flow signed WITH the ride.
+Flow lean CLIMAXES at the exact top (+0.40 at x=0 — the strongest with-ride lean in the +/-600s
+window = the S45 "can't refuse" maker-exit moment), then COLLAPSES through zero to -0.17 within
+60s, while price has given back only ~28bp (vs 151bp at the theta-exit). Dive min -0.267 at +60s
+— more violent than the entry-side dive. Exit-confirm saving ~123bp/side, mirroring round 5's
+125bp at entry (~250bp/leg total = the S54 giveback ledger prize, both sides now MEASURED).
+Asymmetry: entry dive fires AT x=0 (S40); exit collapse completes +30..+60s AFTER the top.
+Caveats: mean-of-765 (per-leg noisier); hindsight-aligned (arming still the un-built piece);
+post-top sell-lean partly price-correlated (but a full sign flip on 28bp giveback exceeds that).
+ROUND 9 (defined, not run): per-leg CAUSAL exit test — armed by leg extension, exit on lean
+zero-cross/dive threshold, vs theta-exit baseline, NO-GATES scoring + full controls.
