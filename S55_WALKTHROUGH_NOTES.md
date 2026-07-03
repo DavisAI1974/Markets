@@ -211,3 +211,19 @@ RESULTS (equivalence-proven):
   STILL ONE WINDOW + front-of-queue fill optimism (S51 v2 queue-honesty caveat) — the parked
   status stands, but the parked number at deploy mechanics is ~2x bigger, which raises the value
   of the Coinbase-history grind / book accrual. Bybit book windows negative both modes (chop).
+
+## Round 14 — Greg: "we're not picking up all the trades I drew" -> THE MIDDLE BAND priced
+CONFIRMED (round 2 measured it): the engines harvest the spectrum's ENDS — fine zigzag ~5bp
+ripples at 153 legs/hr, big line >=150bp trends at 0.4 legs/hr; Greg's pencil trades live in the
+MIDDLE (theta 60-100, ~100-175bp, 7-42 legs/day/coin), where theta-confirm nets −25..−40bp/leg
+on EVERY coin (confirm cost >= leg size) = structurally unharvestable by any confirm-theta
+engine. Cadence decomposition (same window/executor, SOL books): zigzag 153.4 legs/hr x 1.73bp
+= +$132/hr(front-of-queue) vs bigline 0.4 x 22.5bp = +$4.81/hr — capture% IDENTICAL (36%); the
+gap is pure cadence; coarse's real lever is SIZE (legs live hours -> can absorb 10-50x capital
+where fine is fill-capped ~$5k, S50).
+THE PRIZE TABLE (projection at MEASURED fine-confirm costs 26bp entry R5 + 28bp exit R8; oracle
+legs = NO fakeout cost included — prices the PRIZE not the strategy): theta60 +37..52bp/leg,
+theta100 +106..122bp/leg, positive every coin both fee models; SOL +$845-1,073/day @$5k flat;
+5-coin middle band ~+$2,900-3,700/day. The false-arm rate of the (un-built) ARMING RULE decides
+how much survives — breakeven precision ~13% (R5: naive arming already 36%, losses bounded at
+fine scale). JOB 1a = the single gate to the pool. NEXT BUILD.
