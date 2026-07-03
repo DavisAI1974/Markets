@@ -45,7 +45,82 @@ book validation is now the highest-information data acquisition in the program.
 Pass B (honest column with taker-share accounting, machine re-run) queued on the bins
 backfill (relaunched this session, /tmp died).
 
+## ENTRY DoD PROMOTION (the S58 definition-of-done, executed)
+
+**`odcore/entry_coinbase.py`** (venue in the title — Greg's platform-separation rule):
+`armed_midband_flips` = the round-6 reference machine promoted VERBATIM (v2 arming, c-scaled
+confirm, MODE-0 fallback fix, baseline fallback; bounce_frac carried as the BTC-only
+candidate; per-cell confirm-predicate SOCKET deliberately data-blind — flow maps stay
+research-only until per-venue books pass). `assert_truncation_invariance` = the machine's own
+leakage gate, run on every tape. Registry `COINBASE_MIDBAND` = the five-verdict board:
+sol mb100 / xrp mb80 / doge mb100 ACTIVE (all NAIVE k0), btc mb80 INACTIVE (pending book
+accrual), ETH absent (dropped; re-entry test in S58 notes). Execution through
+`platform.run_stream` (one-version law); legs FLAT size (mid-band sizing not earned, parked
+Piece 3); fees on config = cb_real 8/16. Wired into `scripts/paper_trade.py` as a SANDBOX
+section — mid-band rows accrue the SANDBOX ledger only, baseline forward ledger untouched.
+
+**CANARY (scripts/_s59_promotion_canary.py) — ALL PASS:**
+1. FAITHFUL PORT: bit-identical flips vs the S58 reference on all 5 Coinbase book tapes x
+   both thetas x bounce variant (sol 96/57, btc 23/15, doge 61/41, xrp 33/21, eth 59/38).
+2. LEAKAGE: truncation invariance PASS on every tape.
+3. BASELINE BIT-IDENTICAL: run_cell(DEPLOYED) rows with/without the module = identical
+   (26,784 rows) — the baseline forward record is untouched by the promotion.
+
+## KRAKEN BOOK COLLECTOR — LIVE (gates kr_mk0 validation + fine-band reopen)
+`kraken_book_collector.py` (v2 WS book+trade, coinbase row schema so loaders reuse
+unchanged, trade-snapshot-replay guard from the S37 bins collector, book truncated to
+subscribed depth) — live-smoke-tested on SOL/USD (428 rows/45s, 10 levels both sides, taker
+flow captured). Workflow `kraken_book_collectors_durable.yml`: ALL 5 COINS (Greg — per-cell
+law: ETH/BTC Kraken cells are their own cells), 6h cron, anti-clobber + >85MB rotation
+guardrails, data/<coin>-kraken-book branches. Committed to canonical AND the default branch
+(94a7428) — cron activates from default; Greg can click Run workflow for an immediate start.
+
+## BACKGROUND CHECKS
+- Coinbase books accrual: ALL 5 branches pushed within ~30min of check (BTC repair
+  CONFIRMED accruing: 47.2MB @21:03Z); all under the 85MB rotation threshold.
+- Kraken schedule: live fee page re-confirms 0.00% maker at $10M+/30d and the 6/4/2/0
+  ladder ($1M+) exactly as S58 verified; no Jul-9 table visible on the live page yet —
+  post-facto re-confirm after Jul 9 stays queued.
+
+## kr_mk0 RE-PRICE — PASS B (machine re-run on the re-pulled 30d bins; $top col = kr_mk0
+## under the maker-both-sides frame — taker-share honesty stays a KRAKEN-BOOKS question)
+
+Round-6 tables reproduce exactly (same tape window); Pass A arithmetic confirmed to the cent
+(sol_fadeclmx +3.19/+2.22, btc_opp_bnc +1.97, doge_clmxexh +1.64, ce_noopp +1.82 $/hr).
+**HONEST ASTERISK: XRP th80 — its COINBASE deploy shape — is NEGATIVE on bins even at 0 fee**
+(k0 -0.95, dcveto -0.41 $/hr; th100 variants positive +0.71/+1.19). The th80 shape was earned
+on the Coinbase books (where XRP inverts hardest vs bins), so the "every surviving config
+flips positive" headline reads precisely as: every surviving MEMBER-MAP config + the
+books-frame shapes; XRP's Kraken forecast genuinely waits on Kraken book accrual. SOL k0 th80
+also ~breakeven at 0 fee on bins (+0.08) — the paper prize is in the mapped/th100 cells.
+
+## FINGERPRINT PREP (micros tier) — NULL RESULT, recorded not tuned
+`scripts/_s59_fingerprint_prep.py`: per-cell dual-print (match-to-winner MINUS
+match-to-loser, cosine to standardized centroids) over the 10 causal onset descriptors
+(opposing/exhausting/clmx/ER/fade/runup/dur/hod/side) on the deploy-shape k0 legs,
+OOS half-split both directions, leakage spotcheck PASS all 4 cells.
+**VERDICT: no robust OOS separation** — AUC 0.47-0.59 and DIRECTION-UNSTABLE (sol topQ
++7.1 forward / -7.9 reverse; doge 0.593 forward only; xrp/btc ~chance). This CONFIRMS the
+five-agent S58 finding at the feature level: the winner side is invisible to the causal
+flow-read descriptor space, so a dual-print built FROM that space cannot carry it either.
+-> The 5th-member path narrows to the S35 ENCODER tier (chunker micros + 128-dim OD coeffs,
+match-to-winner minus match-to-loser), which stays gated on: (a) the S35b onset canary,
+(b) the win/lose archives on Greg's LOCAL E: drive (not in this container), (c) per-(cell,
+band) revalidation. No further micros-tier iteration off this one window (discipline).
+
 ## SESSION LOG (append per round)
-- Bins backfill x5 relaunched in background 21:34 (/tmp/backfill, ~40min).
-- Entry DoD promotion into odcore: IN PROGRESS (coinbase-titled files, sandbox-first,
-  baseline canary bit-identical, per-cell registry per the five-verdict board).
+- Bins backfill x5 relaunched 21:34 (/tmp/backfill) — all 5 complete.
+- Coinbase books x5 restored from data branches.
+- Promotion canary PASS (3/3 obligations); paper_trade end-to-end run + Pass B machine
+  re-run on fresh bins launched. Pass B complete (above).
+- Wired paper harness ran end-to-end: BASELINE +0 new trades, ledger intact (26,784) —
+  the DoD condition, live. MID-BAND SANDBOX record started (+128 rows, one books window):
+  sol_mb100 +418.1 net bps (n=56, taker 0%), xrp_mb80 -349.0 (n=32), doge_mb100 -212.4
+  (n=40), btc_mb80 inactive as designed. One window — the forward sandbox ledger accrues
+  the real verdict per cell from here.
+
+## ENTRY PIECE: **DONE** (promotion commit = this one). PIECE 2 (EXIT) IS OPEN.
+The per-leg budget Piece 2 inherits: surviving configs' gross ~+5.6..+9.3 bp/leg vs
+cb_real 16bp RT (deficit -1.4..-4 $/hr) — and the parked R8 exit prize (~123bp/side
+lean-collapse at coarse theta) is the first named candidate. Parked exit items in
+S58_ENTRY_NOTES.md ("PARKED FOR LATER PIECES").

@@ -86,6 +86,23 @@ def main():
         print(f"# SANDBOX: +{len(sb_new)} new, {len(sb_ledger)} total")
         shakeout(sb_ledger, SANDBOX)
 
+    # COINBASE MID-BAND entry cells (S59 promotion — the S58 entry piece's definition-of-done).
+    # SANDBOX ledger ALWAYS: these accrue the forward per-cell validation record; adoption into
+    # DEPLOYED is per cell via that record + controls, never by flag drift. Flips from
+    # odcore.entry_coinbase (armed machine, mode-0 fix, baseline fallback, naive k0 shapes);
+    # execution through the same platform run_stream as everything else.
+    from odcore.entry_coinbase import COINBASE_MIDBAND, run_midband_cell
+    mb_existing = load_ledger(SANDBOX_LEDGER)
+    mb_rows = []
+    for cfg in COINBASE_MIDBAND:
+        try:
+            mb_rows += run_midband_cell(cfg)
+        except Exception as e:
+            print(f"# {cfg.cell} ERR {e}")
+    mb_new = append_ledger(mb_rows, SANDBOX_LEDGER, existing=mb_existing)
+    print(f"# COINBASE MIDBAND (sandbox): +{len(mb_new)} new")
+    shakeout(mb_existing + mb_new, COINBASE_MIDBAND)
+
 
 if __name__ == "__main__":
     main()
