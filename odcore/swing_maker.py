@@ -97,7 +97,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                          half_spread_bps: float = 0.0, maker_fee_bps: float = 0.0,
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
                          confirm=None, confirm_lookback: int = 0, entry_gate=None,
-                         cover_grace: int = 0, lean=None, lean_exit=None,
+                         exit_gate=None, cover_grace: int = 0, lean=None, lean_exit=None,
                          fill_mode: str = "maker", arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
@@ -112,9 +112,17 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     confirm: optional per-cell boolean array — the QuietFloor shock gate (the kickoff's "floor confirms the
     shock"). entry_gate: optional per-cell boolean array — the EXHAUSTION/reversal confirmation (e.g.
     info_dipole.divergence: order flow opposes price + the dipole collapsing toward 0.5). A flip is
-    ACTIONABLE only if BOTH gates pass at the confirm cell. A non-actionable flip is NOT trusted as a real
-    turn: we FLATTEN any open position (taker, last resort — caps the wrong-tail/inventory) and do NOT open
-    a new one, waiting for the next confirmed+exhausted turn. Both default None = flips only.
+    ACTIONABLE only if BOTH gates pass at the confirm cell. ⚠ SEMANTICS (S55 correction of an
+    S46-original doc/code mismatch): a non-actionable flip is SKIPPED and the prior position is
+    HELD (ride the trend) — that is what the code has always done; the original docstring's
+    "flatten on non-actionable" was never implemented. All gated research since S46 (incl. the
+    S52 accum gate) ran under HOLD semantics. Both default None = flips only.
+
+    exit_gate (S55 round 13): optional per-cell boolean — the STRUCTURE-SAYS-OUT input. At a flip
+    cell where exit_gate is True, any open position is FLATTENED (same cover machinery:
+    cover-grace maker attempt, taker fallback; immediate cross in taker fill_mode) and NO new leg
+    opens. The missing three-state concept (long/short/FLAT) that lets structure engines (big
+    line breaks, coarse leg ends) speak to the executor. Default None = bit-identical.
 
     fill_mode (S55 round 12 — ONE EXECUTOR, ANY SCALE; default "maker" = bit-identical): "taker"
     makes every open/close an immediate spread-crossing fill at the decision cell (open at
@@ -154,6 +162,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     hs = half_spread_bps / 1e4
     conf = None if confirm is None else np.asarray(confirm).astype(bool)
     egate = None if entry_gate is None else np.asarray(entry_gate).astype(bool)
+    xgate = None if exit_gate is None else np.asarray(exit_gate).astype(bool)
     ln = None if (lean is None or lean_exit is None) else np.asarray(lean, float)
     arm_hi, exit_lo = (lean_exit if lean_exit is not None else (0.0, 0.0))
     taker_mode = fill_mode == "taker"
@@ -218,6 +227,30 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 pos = None
                 if ci <= hold_until:   # the cover resolution runs past this flip — do not act on it
                     continue
+        # S55 R13 STRUCTURE-SAYS-OUT: exit_gate flip = flatten (cover machinery), open NOTHING.
+        if xgate is not None and xgate[ci]:
+            if pos is not None and taker_fallback:
+                fl = pos["flip_idx"]; op = pos["open_px"]; oi = pos["open_idx"]; osd = pos["side"]
+                fo = pos.get("fee_open", maker_fee_bps)
+                cf = -1 if taker_mode else (int(fill_ask[ci]) if osd > 0 else int(fill_bid[ci]))
+                cap = min(n - 1, ci + cover_grace)
+                if not taker_mode and cover_grace > 0 and cf <= cap:
+                    cpx = mid[ci] * (1.0 + hs) if osd > 0 else mid[ci] * (1.0 - hs)
+                    gross = osd * (cpx - op) / op * 1e4
+                    net = gross - fo - maker_fee_bps
+                    swing = abs(mid[cf] - mid[fl]) / mid[fl] * 1e4
+                    legs.append(SwingLeg(osd, fl, oi, op, int(cf), float(cpx), True, gross, net, swing))
+                    hold_until = int(cf)
+                else:
+                    xc = ci if taker_mode or cover_grace <= 0 else cap
+                    cpx = mid[xc] * (1.0 - hs) if osd > 0 else mid[xc] * (1.0 + hs)
+                    gross = osd * (cpx - op) / op * 1e4
+                    net = gross - fo - taker_fee_bps
+                    swing = abs(mid[xc] - mid[fl]) / mid[fl] * 1e4
+                    legs.append(SwingLeg(osd, fl, oi, op, int(xc), float(cpx), False, gross, net, swing))
+                    hold_until = int(xc)
+                pos = None
+            continue
         # the quote RESTS until the next flip (the strategy "rides it down keeping the best offer" until the
         # next turn); the fill search is therefore capped at the next flip's confirm cell, not a fixed window.
         next_ci = int(flips[k + 1][0]) if k + 1 < len(flips) else n

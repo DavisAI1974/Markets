@@ -191,3 +191,23 @@ CANARIES (all PASS):
 - variant routing: --dipole-exit/-entry -> sandbox ledger, executes, baseline untouched.
 - swing_maker taker-mode double-close bug (from the interrupted edit) FIXED before commit;
   fee_open tracked per leg (correct maker/taker fee mixing in every close path).
+
+## Round 13 — BIG LINE rerun through THE ONE VERSION (Greg: "see where we actually sit")
+Adapter: bigline legs -> flip stream + NEW `exit_gate` executor input (structure-says-out:
+flatten via cover machinery, open nothing — the missing long/short/FLAT third state).
+⚠ FOUND ON THE WAY (S46-original doc/code mismatch): swing_maker's docstring said non-actionable
+flips FLATTEN; the code has always HELD (ride the trend). All gated research since S46 (incl.
+S52 accum) ran under HOLD. Docstring corrected; semantics NOT silently changed; exit_gate added
+as the explicit flatten input. First adapter version (entry_gate=False as break) was INVALID for
+this reason — caught by the leg-count equivalence check (192 vs 352), fixed, re-proven:
+executor 351 legs / net −3,775 vs probe 352 / −3,786 (diff = the final still-open leg).
+RESULTS (equivalence-proven):
+- Bybit 30d x 5 (taker rt11): REPRODUCES the S54 failed gate EXACTLY (sol −2.62/hr, doge −3.00,
+  xrp −4.61 = S54's numbers); reversed also negative; provisional sizing doesn't rescue.
+  Deep-tape verdict UNCHANGED: bigline-as-parameterized bleeds on Bybit.
+- Coinbase books at DEPLOY MECHANICS (maker fills mk0/tk5, cover-grace 300 — the number the S54
+  probe could not produce): SOL +4.81, DOGE +5.71, XRP +4.40, ETH +2.55, BTC −0.11 $/hr @$5k —
+  ~2x the parked taker result (taker column reproduces S54: +2.09/+3.71/+2.17/+1.17/−0.56).
+  STILL ONE WINDOW + front-of-queue fill optimism (S51 v2 queue-honesty caveat) — the parked
+  status stands, but the parked number at deploy mechanics is ~2x bigger, which raises the value
+  of the Coinbase-history grind / book accrual. Bybit book windows negative both modes (chop).
