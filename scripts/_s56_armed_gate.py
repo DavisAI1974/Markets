@@ -491,6 +491,8 @@ if __name__ == "__main__":
              [float(x) for x in a.fines.split(",")])
     elif "--v2" in sys.argv:
         grid(d, fn=armed_fine_zigzag_v2, key="grid_v2")
+    elif "--gate-curve" in sys.argv:
+        gate_v3z(d, arms=(30.0, 35.0, 45.0), key="gate_v3z_curve")
     elif "--gate-arm0" in sys.argv:
         gate_v3z(d, arms=(0.0,), key="gate_v3z_arm0")
     elif "--gate-v3z" in sys.argv:
