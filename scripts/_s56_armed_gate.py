@@ -375,7 +375,7 @@ def shuffle_joint(mid, buy, sell, seed):
     return m2, b2, s2
 
 
-def gate_v3z(data, arms=(40.0, 50.0, 60.0)):
+def gate_v3z(data, arms=(40.0, 50.0, 60.0), key="gate_v3z"):
     """S54-style full gate on the v3 machine: joint shuffle x N_SHUF + per-week + z, per cell.
     Scored at the Greg blend (mm3) with taker as reference."""
     from odcore.flip_detector import lean_series, detect_flips
@@ -425,7 +425,7 @@ def gate_v3z(data, arms=(40.0, 50.0, 60.0)):
     if os.path.exists(OUT):
         with open(OUT) as f:
             prev = json.load(f)
-    prev["gate_v3z"] = res_all
+    prev[key] = res_all
     with open(OUT, "w") as f:
         json.dump(prev, f, indent=1)
     print(f"\nsaved -> {OUT}")
@@ -491,6 +491,8 @@ if __name__ == "__main__":
              [float(x) for x in a.fines.split(",")])
     elif "--v2" in sys.argv:
         grid(d, fn=armed_fine_zigzag_v2, key="grid_v2")
+    elif "--gate-arm0" in sys.argv:
+        gate_v3z(d, arms=(0.0,), key="gate_v3z_arm0")
     elif "--gate-v3z" in sys.argv:
         gate_v3z(d)
     elif "--v3z" in sys.argv:
