@@ -157,11 +157,64 @@ def diagnostics(mid, bb, ba, buy, sell, hs, hrs, flips, gdip):
               f"false-dump share ${false_net:+.2f}]")
 
 
+VARIANTS = [
+    ("base (S52)",            {}),
+    ("C2 dump x0.75",         {"dump_mult": 0.75}),
+    ("C2 dump x1.5",          {"dump_mult": 1.5}),
+    ("C2 dump x2.0",          {"dump_mult": 2.0}),
+    ("C2 dump x3.0",          {"dump_mult": 3.0}),
+    ("C3 taker cap 0",        {"p2_taker_cap": 0.0}),
+    ("C3 taker cap 0.5",      {"p2_taker_cap": 0.5}),
+    ("B1 rungs 1/2/3",        {"harvest_rungs": [(1.0, 0.33), (2.0, 0.33), (3.0, 0.34)]}),
+    ("B1 rung 2x half",       {"harvest_rungs": [(2.0, 0.5)]}),
+    ("B2 slideX x0.5",        {"slide_x_mult": 0.5}),
+    ("B2 slideX x2.0",        {"slide_x_mult": 2.0}),
+]
+
+
+def sweep(mid, bb, ba, buy, sell, hs, hrs, flips, gdip):
+    rng = np.random.default_rng(7)
+    gshuf = rng.permutation(gdip)
+    rflips = [(c, p, -s) for (c, p, s) in flips]
+    base_kw = dict(half_spread_bps=hs, maker_fee_bps=MK, taker_fee_bps=TK, S_max=SMAX,
+                   unload_grace=GRACE)
+
+    def run(fl, g, qf, **kw):
+        r = simulate_swing_accum(mid, bb, ba, buy, sell, fl, queue_frac=qf, entry_ok=g,
+                                 **base_kw, **kw)
+        tak = r.taker_usd / max(1.0, r.maker_usd + r.taker_usd)
+        return dict(dphr=r.net_usd / hrs, legs=r.n_legs, win=r.win_frac,
+                    conf=r.n_confirmed / max(1, r.n_legs), dump=r.n_dumped / max(1, r.n_legs),
+                    tak=tak)
+
+    print("\n== S53 VARIANT SWEEP (SOL Coinbase zigzag window; $/hr; one window — no deploy verdicts) ==")
+    print(f"{'variant':18s} {'dipole':>8s} {'ungated':>8s} {'shuffle':>8s} {'REVERSED':>8s} "
+          f"{'Q1dip':>8s}   legs win% conf% dump% taker%")
+    out = {}
+    for name, kw in VARIANTS:
+        d = run(flips, gdip, 0.0, **kw)
+        u = run(flips, None, 0.0, **kw)
+        sh = run(flips, gshuf, 0.0, **kw)
+        rv = run(rflips, gdip, 0.0, **kw)
+        q1 = run(flips, gdip, 1.0, **kw)
+        out[name] = dict(dipole=d, ungated=u, shuffle=sh, reversed=rv, q1=q1)
+        print(f"{name:18s} {d['dphr']:+8.2f} {u['dphr']:+8.2f} {sh['dphr']:+8.2f} {rv['dphr']:+8.2f} "
+              f"{q1['dphr']:+8.2f}   {d['legs']:3d}  {d['win']*100:3.0f}  {d['conf']*100:3.0f}  "
+              f"{d['dump']*100:3.0f}  {d['tak']*100:3.0f}")
+    with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "_s53_accum_sandbox_results.json"), "w") as f:
+        json.dump(out, f, indent=2, default=float)
+    return out
+
+
 def main():
     mid, bb, ba, buy, sell, hs, hrs, theta, flips, gdip = load_cell()
     print(f"[sol_coinbase] {hrs:.2f}h  hs {hs:.2f}bps  zigzag theta {theta:.1f}bps  "
           f"flips {len(flips)} ({len(flips)/hrs:.1f}/hr)  dipole pass {gdip.mean()*100:.0f}%")
-    diagnostics(mid, bb, ba, buy, sell, hs, hrs, flips, gdip)
+    if "--sweep" in sys.argv:
+        sweep(mid, bb, ba, buy, sell, hs, hrs, flips, gdip)
+    else:
+        diagnostics(mid, bb, ba, buy, sell, hs, hrs, flips, gdip)
 
 
 if __name__ == "__main__":
