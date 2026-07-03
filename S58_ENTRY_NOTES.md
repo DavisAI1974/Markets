@@ -100,7 +100,26 @@ pivot candidate: B1 opposing (flow vs leg), B2 exhausting (dipole -> 0.5), B3 cl
 Includes mode-0 deadlock fix + member-marginal table at th100 c50.
 **Question:** does stacking separate entries beyond the best single veto, and what does each
 step of conviction cost in PART%/CAP%?
-**Result:** (pending — fill in when the sweep lands)
+**Result (bins, 30d x 5):**
+- CHOP (ER<=0.5) is a NON-FILTER as anchored — k>=0 == k>=1 rows identical everywhere, and
+  the chop marginal == the unfiltered machine on 3/5 coins. Effective stack = 3 members.
+  Fix or drop before reading k literally (it inflates agreement counts by ~1).
+- The agreement curve IS the round-2 story made robust: k>=3/k>=4 lifts gross/leg to +2..+7
+  across most cells (sol th80c50: +0.07 -> k3 +4.27 -> k4 +5.85; xrp th100c25: -2.25 -> k4
+  +6.88; btc th100c25: -2.84 -> k4 +5.42 — BTC now measurable thanks to the mode-0 fix) with
+  PART% 97-99 (coverage still ~free) and CAP% 3-6.
+- Stack ~= round-2's tight reversal veto in magnitude (not clearly better on gross/leg), but
+  from agreement of DISTINCT reads rather than one class — and it produced measurements where
+  the single tight veto deadlocked.
+- MEMBER MARGINALS (th100 c50): opposing = strongest single on 4/5 coins (+1.7..+4.7);
+  exhausting mixed (xrp +4.6 best, btc/doge negative); climax weak alone (doge +3.0 only);
+  chop non-filter. DOGE INVERTS opposing (-1.9) — per-cell heterogeneity again; the eventual
+  deploy is a PER-CELL member map, never pooled.
+- FEES: best cells now cb_real -1.5..-2.5 $/hr (was -4..-7 unfiltered). Breakeven at cb_real
+  needs gross/leg ~= 16bp at these cadences; best entry-only stack cells sit at +5..+7. The
+  known remaining bleeds: FALLBACK legs (theta-giveback, sell the trough) and the exit side
+  (parked — Piece 2). Entry-only may not reach cb_real+ alone; that is not failure, it is the
+  budget the exit piece inherits.
 
 ## PARKED FOR LATER PIECES (Greg: do NOT act on these while entry is open — record only)
 
