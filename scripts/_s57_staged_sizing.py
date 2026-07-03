@@ -41,8 +41,8 @@ from odcore.flip_detector import lean_series, detect_flips            # noqa: E4
 from odcore.platform import FLOW_W, WFLIP, REV                        # noqa: E402
 from odcore.swing_maker import simulate_swing_maker                   # noqa: E402
 
-MID = 5000.0
-CAP_F = 2.0                     # $10k
+MID = 5000.0                    # $5k = ALL-IN (Greg S57: no 10k — the cap IS 5k)
+CAP_F = 1.0                     # top-up target = $5k total
 S0S = (0.2, 0.4, 0.6)
 CONFS = (2.0, 5.0, 10.0)        # bp favorable move to confirm
 # venue/fees via CLI: --venue coinbase --maker X --taker Y (S57: bybit STRUCK — US-ineligible)
@@ -92,10 +92,10 @@ def run_cell(coin):
 
     flat5 = total_usd(np.full(n, MID))
     allin10 = total_usd(np.full(n, CAP_F * MID))
-    print(f"\n[{coin}_{VENUE}] {n} legs {hrs:.2f}h | flat $5k ${flat5 / hrs:+.2f}/hr | "
-          f"all-in $10k ${allin10 / hrs:+.2f}/hr | win {100 * np.mean(win):.0f}%")
-    print(f"  {'s0':>4} {'c(bp)':>6} | {'add%':>5} | {'staged mk $/hr':>14} {'tk $/hr':>8} | "
-          f"{'rand-add mk (20s)':>17} | {'rev(adverse) mk':>15} | {'L$:W$ avg':>9}")
+    print(f"\n[{coin}_{VENUE}] {n} legs {hrs:.2f}h | ALL-IN $5k every leg ${flat5 / hrs:+.2f}/hr "
+          f"| win {100 * np.mean(win):.0f}%")
+    print(f"  {'s0':>4} {'c(bp)':>6} | {'add%':>5} | {'staged $/hr':>14} | "
+          f"{'rand-add (20s)':>14} | {'rev(adverse)':>13} | {'L$:W$ avg':>9}")
 
     rng = np.random.default_rng(57)
     # precompute per-leg confirmation cell (first favorable c bp) and adverse cell for reversed
@@ -132,8 +132,7 @@ def run_cell(coin):
                         sizes[i] += ad_n
                 return tot, sizes
 
-            t_mk, sizes = staged_total(addi, True)
-            t_tk, _ = staged_total(addi, False)
+            t_mk, sizes = staged_total(addi, True)   # adds maker-posted (Coinbase pricing)
             addpct = 100 * np.mean(addi >= 0)
             # random-add control: same count, random legs, add at same relative delay?
             # honest cheap version: add at the leg's confirmation cell if chosen leg HAS one,
@@ -148,8 +147,8 @@ def run_cell(coin):
                 r_tots.append(staged_total(ra, True)[0])
             t_rev, _ = staged_total(advi, True)
             lw = (np.mean(sizes[~win]) / max(np.mean(sizes[win]), 1e-9)) if win.any() else 0
-            print(f"  {s0:>4.1f} {c:>6.1f} | {addpct:>4.0f}% | {t_mk / hrs:>+14.2f} "
-                  f"{t_tk / hrs:>+8.2f} | {np.mean(r_tots) / hrs:>+8.2f}±{np.std(r_tots) / hrs:>4.2f} | "
+            print(f"  {s0:>4.1f} {c:>6.1f} | {addpct:>4.0f}% | {t_mk / hrs:>+14.2f} | "
+                  f"{np.mean(r_tots) / hrs:>+8.2f}±{np.std(r_tots) / hrs:>4.2f} | "
                   f"{t_rev / hrs:>+15.2f} | {lw:>9.2f}")
 
 
