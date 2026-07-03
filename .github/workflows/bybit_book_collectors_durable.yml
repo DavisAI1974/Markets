@@ -1,4 +1,4 @@
-name: Bybit Book Collectors (SOL/ETH/DOGE/XRP/BTC perps, durable)
+name: Bybit Book Collectors (SOL/ETH/DOGE/XRP/BTC/ZEC perps, durable)
 
 # S51 Job 3 — the REBATE-VENUE decision data. Collects Bybit USDT linear-perp L2
 # order-book snapshots (top-10/side depth on a regular 100ms grid) so the maker
@@ -67,6 +67,12 @@ jobs:
             symbol: XRPUSDT
           - coin: btc
             symbol: BTCUSDT
+          # S57 cell hunt (Greg): ZEC — verified fee-group G4 (-1.0bp maker at MM3, 2.5x the
+          # G1 majors rebate), ~$119M/day tape, 0.61bp half-spread: the one candidate the
+          # S57 fee-group correction did not kill. Volume may be event-elevated; the books
+          # decide (capacity + gate on this tape before any cell claim).
+          - coin: zec
+            symbol: ZECUSDT
     concurrency:
       group: bybit-book-collector-${{ matrix.coin }}
       cancel-in-progress: false
