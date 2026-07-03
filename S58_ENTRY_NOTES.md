@@ -175,6 +175,43 @@ climax GRADES confirms but ANTI-grades fallbacks (sign flip per kind) — member
 per-KIND, never pooled. Honest positive kept: bins k3-confirm improves across 30d thirds
 (th100: -16.2 -> +6.5 -> +13.0) but k0 improved too = the regime effect, not an ETH edge.
 
+**SOL — KEEP AS LEAD (agent verdict).** Only coin with a shuffle-cleared k3 bins premium AND
+the only net-real-POSITIVE cell in the round: Coinbase books th100 k0 +6.11 net/leg (n=56,
+one window, shape only). CORRECTION to the fallback framing: at mid-band SOL fallbacks
+OUT-GROSS confirms (+5.5 vs +2.3) — the fallback bleed is a FEE/COUNT bleed (62-63% of stack
+legs are fallbacks), not a gross bleed; "refine the fallback" = need it less often. FALSE-FIRE
+(both-theta, half-split stable): 3-agreement WITHOUT climax = the false-fire bulk (win 26-27%,
+-21/-26 mnet; same sign on books); slow fade (Q1) false-fires, fast fade (>=~27bpm) = only
+positive quartile (transfers to books right-signed); DEEP dives passing the stack are fake
+(hump: Q2 best, Q4 worst); agree=4 NOT robust (half-split flips). FALLBACK worst = deep-dive
+trough-SELL (dive>0.55 & side=-1: win 21-23%, -29 mnet, stable). Books member map: exhausting
+HURTS on Coinbase both thetas; opposing softer than the r3 machine-marginal implied. Untuned
+combined read fade>=27 & climax=1 = the ONLY net-real-positive confirm region on bins
+(+11.5/+19.8 mnet, n=73/54). KNOB REGION (Coinbase): th100 > th80, k0 price mechanics, graded
+fade preference, exhausting dropped/negative, dive as size-grade. WINNER SIDE: big winners
+nearly INVISIBLE to the 6 causal reads (only climax leans winner) — direct support for the
+S35 onset-fingerprint 5th member.
+
+**BTC — KEEP as conditional research cell (agent verdict); NOT adoption; the gating action
+is FIXING THE COINBASE BTC BOOK COLLECTOR (155h gap = deploy-venue blind, books n=45).**
+Recent-window strength = mostly regime (k0 turns positive in the tail on both thetas) PLUS a
+real-looking th80-only stack lift: tail th80 k3 +18.2bp/leg (n=103, t=+2.3; ex-top-3 still
++10.2) — the only cb_real-positive BTC slice (+2.2bp/leg net, TAIL-ONLY, post-selection
+caveat). th100: stack does NOT earn (tail k0 +13.1 > k3 +4.1) — th100 naive or off. KNOBS
+(bins, pending Coinbase): th80/c0.5/k>=3 with OPPOSING-mandatory (k3^opp: full +7.65 n=55,
+tail +31.9 n=17; must re-run as a machine config, leg-slice caveat); agree==4 rare-and-golden
+(+67.5 n=8 / +55.7 n=5, same direction both thetas). FALSE-FIRE shape: "MID-EVERYTHING" —
+mid fade (13.5-21bpm), mid climax, mid ER, minimal-lag confirms, hod 00-05 UTC; the EXTREMES
+are fine (violent fade Q4 +32.2/+12.2, heavy climax Q4 +21.5/+2.1). Fallback worst = SHORT-
+DURATION trough-sells (dur Q1: -10.5/-26.6). WINNER SIDE: big winners vs big losers are
+NEAR-IDENTICAL on every continuous median (fade 12.6v13.8, clmx 1.84v1.78, er .16v.17) — no
+standalone separator; separation lives in bucket/agreement structure = the bucket-
+distinctiveness doctrine in the data; third independent argument for the S35 5th member.
+
+**CROSS-COIN CONVERGENCES (ETH+SOL+BTC):** (1) CLIMAX = the load-bearing member on both;
+(2) fast fade = winner mark / slow fade = false-fire on both; (3) per-kind AND per-venue
+member sign flips on both — member maps never pool.
+
 ## FINGERPRINTABLE SURFACES (Greg: "is there any other part fingerprintable?" — the map)
 
 Anything recurring with a per-cell distinctive signature at a decision moment. Preconditions
