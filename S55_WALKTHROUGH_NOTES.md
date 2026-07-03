@@ -227,3 +227,19 @@ theta100 +106..122bp/leg, positive every coin both fee models; SOL +$845-1,073/d
 5-coin middle band ~+$2,900-3,700/day. The false-arm rate of the (un-built) ARMING RULE decides
 how much survives — breakeven precision ~13% (R5: naive arming already 36%, losses bounded at
 fine scale). JOB 1a = the single gate to the pool. NEXT BUILD.
+
+## Round 15 — Greg: "I thought we wired in the part that shortened the lag?" -> the AIMER built
+HONEST ANSWER: the executor CAPABILITY was wired (R10 lean-exit, R12 fill_mode, R13 exit_gate)
+but nothing AIMED it — no engine fed coarse-armed fine confirms. Built the ARMING RULE v1
+(`_s55_armed_zigzag_probe.py::armed_fine_zigzag`): two-stage confirm zigzag — leg must EXTEND
+>= ARM bp from the last pivot (scale filter, paid DURING the ride, costless at the turn), then
+the first 25bp fine reversal confirms the flip (paid AT the turn: ~25bp instead of theta).
+Bounded loss by construction (fakeout re-arms opposite at ~ARM+25).
+FIRST PASS (30d x 5, taker rt11, $5k flat, platform executor): POSITIVE ON ALL 5 COINS AT ALL
+4 ARM LEVELS (20/20 cells) — first coarse config all session to clear zero on deep tape;
+REVERSED negative every row; net/leg tracks the R14 projection (ARM150 +100..+121bp/leg).
+Totals +$1.66..+$3.42/hr flat taker.
+NOT ADOPTED — caveats: n tiny on 4 coins (eth 2 legs); entries fire on the FIRST post-arm dip
+(often mid-leg, not the true turn — partly a mean-reversion capture; the R4 dipole reversal
+class is the natural veto for the false fires); the S54 FULL GATE (shuffle + per-week x 5)
+NOT yet run. NEXT: full gate, dipole-gated variant, maker tiers, promote to odcore only on PASS.
