@@ -32,6 +32,7 @@ from _liquidity_dive import build_channels, median_spread_bps  # noqa: E402
 from _capacity_model import FLOW_W                      # noqa: E402
 from _s52_accum_vs_oneshot import _price_zigzag         # noqa: E402  (reused, not copied)
 from odcore.swing_bigline import run_bigline, run_bigline_adaptive, position_signal_at  # noqa: E402
+from odcore.flip_detector import lean_series            # noqa: E402  (S40 causal flow lean)
 from odcore.leakage import assert_no_leakage            # noqa: E402
 
 CELLS = [
@@ -52,6 +53,11 @@ FIXED_ZZ = 100.0
 # theta = frac x trailing hi-lo range over W hours, clip [15,120]bps, eps = theta/6.
 AD_GRID = [(frac, wh) for frac in (0.15, 0.25) for wh in (4.0, 8.0)]
 FIXED_AD = (0.25, 4.0)       # walkthrough/split/render config — fixed in advance
+# Dipole-flip fast confirm (Greg: "for the bounce back you want the dipole flip + (x_price)"):
+# pivot also confirms at bounce >= X_FRAC*theta when the trailing flow lean has flipped sign.
+# XONLY = same cheaper bounce WITHOUT the flow requirement — the honesty ablation.
+X_FRAC = 0.5
+LEAN_W_1S = 60               # = WFLIP 600 x 100ms cells, on the 1-sec grid
 NOTIONAL = 5_000.0
 N_SHUF = 3
 DEC = 10                     # 100ms -> 1-sec
@@ -97,8 +103,10 @@ def _zigzag_flip(mid, hrs, theta, rt_fees):
                 win=float((gross > 0).mean()), rows=rows)
 
 
-def _bigline(mid, hrs, tp, eps, rt_fees, cell_s=1.0, adaptive=None, align=True):
-    legs = (run_bigline_adaptive(mid, adaptive[0], int(adaptive[1] * 3600), align=align)
+def _bigline(mid, hrs, tp, eps, rt_fees, cell_s=1.0, adaptive=None, align=True,
+             lean=None, require_flip=True):
+    legs = (run_bigline_adaptive(mid, adaptive[0], int(adaptive[1] * 3600), align=align,
+                                 lean=lean, x_frac=X_FRAC, require_flip=require_flip)
             if adaptive else run_bigline(mid, tp, eps, align=align))
     if not legs:
         return dict(n_legs=0)
@@ -135,6 +143,14 @@ def run_cell(cell, path, K, tk):
     raw = load_book(path)
     ch, g = build_channels(path, K, FLOW_W, raw=raw)
     mid = np.asarray(g["mid"], float)[::DEC]
+    buy0 = np.asarray(g["buy"], float)
+    sell0 = np.asarray(g["sell"], float)
+    n10 = (len(buy0) // DEC) * DEC
+    buy1 = buy0[:n10].reshape(-1, DEC).sum(1)       # 1-sec flow (block sums, not sampling)
+    sell1 = sell0[:n10].reshape(-1, DEC).sum(1)
+    L = min(len(mid), len(buy1))
+    mid, buy1, sell1 = mid[:L], buy1[:L], sell1[:L]
+    lean = lean_series(buy1, sell1, LEAN_W_1S)
     hs = median_spread_bps(path, raw=raw) / 2.0
     hrs = (raw["ts"][-1] - raw["ts"][0]) / 3600.0
     rt_fees = {"rt_taker": 2 * tk, "rt_mk-1": -1.0 + tk}
@@ -176,15 +192,39 @@ def run_cell(cell, path, K, tk):
             rt_fees["rt_taker"])
         out["adaptive"][f"f{frac:.2f}_w{wh:.0f}h"] = b
 
+    # dipole-flip fast confirm + price-only ablation, on the FIXED adaptive config
+    for (name, req) in [("DIPOLE", True), ("XONLY", False)]:
+        b = _bigline(mid, hrs, 0, 0, rt_fees, adaptive=FIXED_AD, lean=lean, require_flip=req)
+        vals = []
+        for s in range(N_SHUF):                     # joint shuffle: returns + flow, same perm
+            rng = np.random.default_rng(1000 + s)
+            r = np.diff(np.log(mid))
+            perm = rng.permutation(len(r))
+            m2 = float(mid[0]) * np.exp(np.concatenate([[0.0], np.cumsum(r[perm])]))
+            b2 = np.concatenate([[buy1[0]], buy1[1:][perm]])
+            s2 = np.concatenate([[sell1[0]], sell1[1:][perm]])
+            l2 = lean_series(b2, s2, LEAN_W_1S)
+            legs2 = run_bigline_adaptive(m2, FIXED_AD[0], int(FIXED_AD[1] * 3600),
+                                         lean=l2, x_frac=X_FRAC, require_flip=req)
+            g2 = [l.gross_bps for l in legs2]
+            vals.append(float((np.asarray(g2) - rt_fees["rt_taker"]).sum() / 1e4 * NOTIONAL / hrs)
+                        if g2 else 0.0)
+        b["shuffle_dhr"] = float(np.mean(vals))
+        out["adaptive"][f"f{FIXED_AD[0]:.2f}_w{FIXED_AD[1]:.0f}h_{name}"] = b
+
     # window splits — FIXED configs only
     n_split = 4 if hrs > 120 else 2
     bounds = np.linspace(0, len(mid), n_split + 1).astype(int)
     for w in range(n_split):
-        m_w = mid[bounds[w]:bounds[w + 1]]
+        sl = slice(bounds[w], bounds[w + 1])
+        m_w = mid[sl]
+        lean_w = lean_series(buy1[sl], sell1[sl], LEAN_W_1S)
         h_w = hrs / n_split
         out["splits"][f"W{w+1}"] = dict(
             bigline=_bigline(m_w, h_w, *FIXED_BL, rt_fees),
             adaptive=_bigline(m_w, h_w, 0, 0, rt_fees, adaptive=FIXED_AD),
+            dipole=_bigline(m_w, h_w, 0, 0, rt_fees, adaptive=FIXED_AD,
+                            lean=lean_w, require_flip=True),
             zigzag=_zigzag_flip(m_w, h_w, FIXED_ZZ, rt_fees))
     return out
 
@@ -194,6 +234,11 @@ def leakage_gate():
     raw = load_book(path)
     ch, g = build_channels(path, CELLS[0][2], FLOW_W, raw=raw)
     mid = np.asarray(g["mid"], float)[::DEC][:40_000]     # ~11h prefix, cost control
+    buy0 = np.asarray(g["buy"], float)
+    sell0 = np.asarray(g["sell"], float)
+    n10 = (len(buy0) // DEC) * DEC
+    buy1 = buy0[:n10].reshape(-1, DEC).sum(1)[:len(mid)]
+    sell1 = sell0[:n10].reshape(-1, DEC).sum(1)[:len(mid)]
     ts = np.arange(len(mid), dtype=float)
     dummy = np.zeros(len(mid))
     rng = np.random.default_rng(3)
@@ -210,13 +255,26 @@ def leakage_gate():
             return 0
         return int(legs[-1].side) if legs[-1].forced else 0
 
+    def sig_ad_dip(i, ts_, p, bv, sv):
+        j = int(i) + 1
+        sub = np.asarray(p[:j], float)
+        lb = lean_series(np.asarray(bv[:j], float), np.asarray(sv[:j], float), LEAN_W_1S)
+        legs = run_bigline_adaptive(sub, FIXED_AD[0], int(FIXED_AD[1] * 3600),
+                                    lean=lb, x_frac=X_FRAC, require_flip=True)
+        if not legs:
+            return 0
+        return int(legs[-1].side) if legs[-1].forced else 0
+
     ok, fails = assert_no_leakage(sig, ts, mid, dummy, dummy, idxs, reps=2)
     print(f"# LEAKAGE GATE (bigline tp{tp:.0f}/eps{eps:.0f}, sol prefix n={len(mid)}, "
           f"{len(idxs)} idxs): {'PASS' if ok else 'FAIL'} ({len(fails)} fails)")
     ok2, fails2 = assert_no_leakage(sig_ad, ts, mid, dummy, dummy, idxs, reps=2)
     print(f"# LEAKAGE GATE (adaptive f{FIXED_AD[0]:.2f}/w{FIXED_AD[1]:.0f}h): "
           f"{'PASS' if ok2 else 'FAIL'} ({len(fails2)} fails)")
-    return ok and ok2
+    ok3, fails3 = assert_no_leakage(sig_ad_dip, ts, mid, buy1, sell1, idxs, reps=2)
+    print(f"# LEAKAGE GATE (adaptive DIPOLE-confirm x{X_FRAC}): "
+          f"{'PASS' if ok3 else 'FAIL'} ({len(fails3)} fails)")
+    return ok and ok2 and ok3
 
 
 def main():
@@ -269,17 +327,18 @@ def main():
             print(f"           {cfg:<12} {b['n_legs']:>2}  {b['gross_leg']:>+8.1f}  {rw['net_leg']:>+10.1f}"
                   f"  {rw['dhr']:>+8.2f}  {rw['dhr_rev']:>+7.2f}  {b['shuffle_dhr']:>+8.2f}"
                   f"  {b['exposure']:>4.0%}  {b['med_hold_h']:>6.2f}h  {b['n_forced']}")
-        print("  SPLITS (fixed tp60/eps10 / adaptive f0.25w4h / zz100), $/hr rt_taker:")
+        print("  SPLITS (tp60/eps10 / adaptive f0.25w4h / +dipole / zz100), $/hr rt_taker:")
         for w, s in r["splits"].items():
-            bl = s["bigline"].get("rows", {}).get("rt_taker", {}).get("dhr")
-            ad = s.get("adaptive", {}).get("rows", {}).get("rt_taker", {}).get("dhr")
-            zz = s["zigzag"].get("rows", {}).get("rt_taker", {}).get("dhr")
-            nb = s["bigline"].get("n_legs", 0)
-            na = s.get("adaptive", {}).get("n_legs", 0)
-            nz = s["zigzag"].get("n_legs", 0)
-            print(f"           {w}: bigline {bl if bl is None else f'{bl:+.2f}'} (n={nb})   "
-                  f"adaptive {ad if ad is None else f'{ad:+.2f}'} (n={na})   "
-                  f"zigzag {zz if zz is None else f'{zz:+.2f}'} (n={nz})")
+            def _g(key):
+                d = s.get(key, {})
+                v = d.get("rows", {}).get("rt_taker", {}).get("dhr")
+                return (v if v is None else f"{v:+.2f}"), d.get("n_legs", 0)
+            bl, nb = _g("bigline")
+            ad, na = _g("adaptive")
+            dp, nd = _g("dipole")
+            zz, nz = _g("zigzag")
+            print(f"           {w}: bigline {bl} (n={nb})   adaptive {ad} (n={na})   "
+                  f"dipole {dp} (n={nd})   zigzag {zz} (n={nz})")
 
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                        "_s54_bigline_results.json")

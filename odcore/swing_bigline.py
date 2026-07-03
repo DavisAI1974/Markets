@@ -159,7 +159,9 @@ def run_bigline(mid: np.ndarray, theta_pivot_bps: float, break_eps_bps: float,
 
 def run_bigline_adaptive(mid: np.ndarray, frac: float, window_cells: int,
                          theta_min_bps: float = 15.0, theta_max_bps: float = 120.0,
-                         eps_frac: float = 1.0 / 6.0, align: bool = True) -> List[BigLineLeg]:
+                         eps_frac: float = 1.0 / 6.0, align: bool = True,
+                         lean: Optional[np.ndarray] = None, x_frac: float = 0.5,
+                         require_flip: bool = True) -> List[BigLineLeg]:
     """Adaptive-scale big line (Greg, S54: "when it gets choppier, scale the lines down").
 
     theta_pivot at time t = frac x trailing realized range (rolling hi-lo over `window_cells`,
@@ -170,6 +172,14 @@ def run_bigline_adaptive(mid: np.ndarray, frac: float, window_cells: int,
     era chord; "you don't want it hitting every little peak or valley, you want some bounce back
     first — it cuts the chop out" is the theta confirmation itself. Same single-position
     long/short state machine as run_bigline, trend-aligned entries included.
+
+    DIPOLE-FLIP fast confirm (Greg, S54: "for the bounce back you want the dipole flip +
+    (x_price)"): if `lean` (trailing flow imbalance, odcore.flip_detector.lean_series — causal)
+    is given, a pivot ALSO confirms on the fast path bounce >= x_frac*theta AND the lean's sign
+    agreeing with the new direction (flow already changed hands). The full-theta price bounce
+    stays as the flow-agnostic fallback, so no turn is ever eliminated — the dipole only
+    confirms it earlier. require_flip=False is the honesty ablation (same cheaper bounce, no
+    flow requirement): if that scores the same, the dipole adds nothing.
     """
     from collections import deque
 
@@ -218,13 +228,20 @@ def run_bigline_adaptive(mid: np.ndarray, frac: float, window_cells: int,
         if m > mid[hi_i]:
             hi_i = t
 
+        if lean is None:
+            fast_dn = fast_up = False
+        else:
+            fast_dn = (m <= mid[hi_i] * (1.0 - x_frac * th)
+                       and ((not require_flip) or lean[t] < 0))
+            fast_up = (m >= mid[lo_i] * (1.0 + x_frac * th)
+                       and ((not require_flip) or lean[t] > 0))
         new_valley = new_peak = False
-        if mode >= 0 and m <= mid[hi_i] * (1.0 - th):
+        if mode >= 0 and (m <= mid[hi_i] * (1.0 - th) or (mode != 0 and fast_dn)):
             peaks.append((hi_i, float(mid[hi_i])))
             mode = -1
             lo_i = t
             new_peak = True
-        elif mode <= 0 and m >= mid[lo_i] * (1.0 + th):
+        elif mode <= 0 and (m >= mid[lo_i] * (1.0 + th) or (mode != 0 and fast_up)):
             valleys.append((lo_i, float(mid[lo_i])))
             mode = +1
             hi_i = t
@@ -279,6 +296,138 @@ def run_bigline_adaptive(mid: np.ndarray, frac: float, window_cells: int,
                     n_redraws = 0
                     seg_start = t
                     segments = []
+
+    if pos != 0:
+        t = n - 1
+        segments.append((seg_start, t, anchor_px + slope * (seg_start - anchor_i), slope))
+        legs.append(BigLineLeg(pos, entry_i, t, entry_px, float(mid[t]), n_redraws, True, segments))
+    return legs
+
+
+def ride_from_entries(mid: np.ndarray, entries, frac: float, window_cells: int,
+                      theta_min_bps: float = 15.0, theta_max_bps: float = 120.0,
+                      eps_frac: float = 1.0 / 6.0) -> List[BigLineLeg]:
+    """Greg's S54 hybrid: ZIGZAG ENTRY + BIG LINE EXIT ("use our same entry strategy from zig
+    zag ... it's our exit that we want to deploy the big line on").
+
+    entries: [(confirm_idx, pivot_idx, side)] from the deployed fine-scale flip detector
+    (odcore.flip_detector.detect_flips or the causal price zigzag) — cloned, not modified.
+
+    Mechanics per ride: enter at the flip's confirm cell. The initial line is FLAT at the entry
+    flip's pivot extreme (if price falls back through the turn low, the turn failed). As new
+    pivots confirm at the ADAPTIVE line scale (frac x trailing range, continuous re-measure),
+    the line is redrawn through the two most recent same-side pivots — RATCHET ONLY (the new
+    line must sit at or above the old one at the current cell for longs; mirror for shorts) so
+    the trailing stop never loosens. Exit on the line break by eps. Entries firing while in a
+    ride are ignored (letting the winner ride IS the point). Single position, both sides.
+    """
+    from collections import deque
+
+    n = len(mid)
+    legs: List[BigLineLeg] = []
+    ent = sorted([(int(c), int(p), int(s)) for (c, p, s) in entries])
+    e_k = 0
+    maxq: "deque[int]" = deque()
+    minq: "deque[int]" = deque()
+
+    lo_i = hi_i = 0
+    mode = 0
+    valleys: List[Tuple[int, float]] = []
+    peaks: List[Tuple[int, float]] = []
+
+    pos = 0
+    anchor_i = -1
+    anchor_px = 0.0
+    slope = 0.0
+    entry_i = -1
+    entry_px = 0.0
+    n_redraws = 0
+    seg_start = -1
+    segments: List[Tuple[int, int, float, float]] = []
+    th = theta_min_bps / 1e4
+    eps = th * eps_frac
+
+    for t in range(1, n):
+        m = float(mid[t])
+        while maxq and mid[maxq[-1]] <= m:
+            maxq.pop()
+        maxq.append(t)
+        while minq and mid[minq[-1]] >= m:
+            minq.pop()
+        minq.append(t)
+        w0 = t - window_cells
+        while maxq[0] <= w0:
+            maxq.popleft()
+        while minq[0] <= w0:
+            minq.popleft()
+        rng_bps = (mid[maxq[0]] - mid[minq[0]]) / m * 1e4
+        th = min(max(frac * rng_bps, theta_min_bps), theta_max_bps) / 1e4
+        eps = th * eps_frac
+
+        if m < mid[lo_i]:
+            lo_i = t
+        if m > mid[hi_i]:
+            hi_i = t
+        new_valley = new_peak = False
+        if mode >= 0 and m <= mid[hi_i] * (1.0 - th):
+            peaks.append((hi_i, float(mid[hi_i])))
+            mode = -1
+            lo_i = t
+            new_peak = True
+        elif mode <= 0 and m >= mid[lo_i] * (1.0 + th):
+            valleys.append((lo_i, float(mid[lo_i])))
+            mode = +1
+            hi_i = t
+            new_valley = True
+
+        # ---- exit on line break ----
+        if pos == +1:
+            L = anchor_px + slope * (t - anchor_i)
+            if m < L * (1.0 - eps):
+                segments.append((seg_start, t, anchor_px + slope * (seg_start - anchor_i), slope))
+                legs.append(BigLineLeg(+1, entry_i, t, entry_px, m, n_redraws, False, segments))
+                pos = 0
+                segments = []
+        elif pos == -1:
+            L = anchor_px + slope * (t - anchor_i)
+            if m > L * (1.0 + eps):
+                segments.append((seg_start, t, anchor_px + slope * (seg_start - anchor_i), slope))
+                legs.append(BigLineLeg(-1, entry_i, t, entry_px, m, n_redraws, False, segments))
+                pos = 0
+                segments = []
+
+        # ---- ratcheting redraw while riding ----
+        if pos == +1 and new_valley and len(valleys) >= 2:
+            (i1, p1), (i2, p2) = valleys[-2], valleys[-1]
+            if p2 > p1:
+                s = (p2 - p1) / (i2 - i1)
+                if p2 + s * (t - i2) >= anchor_px + slope * (t - anchor_i):   # ratchet only
+                    segments.append((seg_start, t, anchor_px + slope * (seg_start - anchor_i), slope))
+                    anchor_i, anchor_px, slope = i2, p2, s
+                    n_redraws += 1
+                    seg_start = t
+        elif pos == -1 and new_peak and len(peaks) >= 2:
+            (i1, p1), (i2, p2) = peaks[-2], peaks[-1]
+            if p2 < p1:
+                s = (p2 - p1) / (i2 - i1)
+                if p2 + s * (t - i2) <= anchor_px + slope * (t - anchor_i):
+                    segments.append((seg_start, t, anchor_px + slope * (seg_start - anchor_i), slope))
+                    anchor_i, anchor_px, slope = i2, p2, s
+                    n_redraws += 1
+                    seg_start = t
+
+        # ---- zigzag entries (cloned stream), only when flat ----
+        while e_k < len(ent) and ent[e_k][0] <= t:
+            (ci, pi, side) = ent[e_k]
+            e_k += 1
+            if ci == t and pos == 0:
+                pos = int(side)
+                entry_i, entry_px = t, m
+                anchor_i, anchor_px = int(pi), float(mid[int(pi)])   # flat stop at the turn extreme
+                slope = 0.0
+                n_redraws = 0
+                seg_start = t
+                segments = []
 
     if pos != 0:
         t = n - 1
