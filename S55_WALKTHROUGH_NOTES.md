@@ -116,3 +116,18 @@ Caveats: mean-of-765 (per-leg noisier); hindsight-aligned (arming still the un-b
 post-top sell-lean partly price-correlated (but a full sign flip on 28bp giveback exceeds that).
 ROUND 9 (defined, not run): per-leg CAUSAL exit test — armed by leg extension, exit on lean
 zero-cross/dive threshold, vs theta-exit baseline, NO-GATES scoring + full controls.
+
+## Round 9 RESULT (Greg: wire the dive depth/steepness DESCRIPTION into the leg tables)
+Prior record located: S40 "steepness is noise; DEPTH is the signal" (depth->|move|, Greg's
+big-vs-small correction) -> S47 reproduced stronger (+0.07..+0.165 sign-consistent all 5, fine
+lean-pivot scale) -> DEPLOYED in the swing_maker SIZE axis. R1 WIRED: `_s55_dump_legs_dipole.py`
+-> `_s55_legs_zigzag_bybit30d_dipole.csv` (2,433 legs x dive_depth/lean_pivot_signed/steepness/
+dipole_class/rev_conv, all causal at the opening pivot).
+VALIDATION AT COARSE SCALE: does NOT reproduce — corr(depth,|move|) at zz150 sign-INCONSISTENT
+(sol −0.145, eth −0.160, doge −0.138, btc +0.196, xrp +0.059); steepness ~noise (S40 re-confirmed).
+Fine-scale deployed usage UNTOUCHED (different object: lean@lean-pivot at theta~23bp). Readings
+kept open: (a) scale-locality of dipole descriptions (matches round 4's zz150-vs-zz100 flip);
+(b) proxy mismatch (60s lean @ price-pivot vs deployed lean-pivot; coarse analogue may need a
+leg-scale lean window). Wrinkle (one data point): NEGATIVE depth corr at coarse tops fits round
+8's climax-burnout picture — deep coarse-pivot lean may mark exhaustion, not fuel.
+STANDING: every (scale, descriptor) pair earns its own validation before it feeds sizing/arming.
