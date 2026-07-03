@@ -96,12 +96,15 @@ def armed_fine_zigzag_v2_gated(mid, buy, sell, arm_bp, fine_bp, divw=600, mode_g
         if pi in cache:
             return cache[pi]
         lo = max(0, pi - divw)
-        ok = False
+        dv = None
         if pi - lo >= 12:
             dv = divergence(buy[lo:pi + 1], sell[lo:pi + 1], float(mid[pi] - mid[lo]))
-            if dv is not None:
-                ok = (dv["expect"] == "reversal") if mode_gate == "reversal" \
-                    else bool(dv["opposing"])
+        if mode_gate == "reversal":        # tight: require the R4 positive class
+            ok = bool(dv) and dv["expect"] == "reversal"
+        elif mode_gate == "opposing":      # medium: any flow-opposes-price read
+            ok = bool(dv) and bool(dv["opposing"])
+        else:                              # "not_continue" loose: veto only the known-worst
+            ok = (dv is None) or dv["expect"] != "continue"
         cache[pi] = ok
         return ok
 
@@ -211,7 +214,7 @@ def grid(data, fn=armed_fine_zigzag, key="grid"):
     print(f"\nsaved -> {OUT}")
 
 
-def grid_gated(data, fines=(25.0,), key="grid_v3"):
+def grid_gated(data, fines=(25.0,), key="grid_v3", mode_gate="reversal"):
     """Round 3: dipole-vetoed v2 grid. NO-GATES judging — print gated cells with gross/leg +
     all fee tiers; v2-ungated comparison read from the saved JSON."""
     prev = {}
@@ -221,7 +224,7 @@ def grid_gated(data, fines=(25.0,), key="grid_v3"):
     v2 = prev.get("grid_v2", {})
     rows = {}
     for fine in fines:
-        print(f"\n== ROUND 3 GATED (dipole reversal veto) — FINE {fine:.0f}bp ==")
+        print(f"\n== ROUND 3 GATED (dipole veto: {mode_gate}) — FINE {fine:.0f}bp ==")
         print(f"{'ARM':>5} | per coin: n gross $/hr@mm3 | totals: taker/std/mm3 (v2 ungated mm3)")
         for arm in ARMS:
             row = f"{arm:>5.0f} | "
@@ -229,7 +232,8 @@ def grid_gated(data, fines=(25.0,), key="grid_v3"):
             rtot_mm3 = 0.0
             cells = {}
             for coin, (mid, buy, sell, hrs) in data.items():
-                fl = armed_fine_zigzag_v2_gated(mid, buy, sell, arm, fine)
+                fl = armed_fine_zigzag_v2_gated(mid, buy, sell, arm, fine,
+                                                mode_gate=mode_gate)
                 z = np.zeros(len(mid))
                 res = simulate_swing_maker(mid, z, z, buy, sell, fl, half_spread_bps=0.0,
                                            maker_fee_bps=5.5, taker_fee_bps=5.5,
@@ -328,6 +332,8 @@ if __name__ == "__main__":
     elif "--v2" in sys.argv:
         grid(d, fn=armed_fine_zigzag_v2, key="grid_v2")
     elif "--v3" in sys.argv:
-        grid_gated(d, fines=(25.0,) if "--all-fines" not in sys.argv else FINES)
+        for mg in ("reversal", "not_continue"):
+            grid_gated(d, fines=(25.0,) if "--all-fines" not in sys.argv else FINES,
+                       key=f"grid_v3_{mg}", mode_gate=mg)
     else:
         grid(d)
