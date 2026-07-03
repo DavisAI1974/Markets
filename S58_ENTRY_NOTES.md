@@ -208,7 +208,78 @@ NEAR-IDENTICAL on every continuous median (fade 12.6v13.8, clmx 1.84v1.78, er .1
 standalone separator; separation lives in bucket/agreement structure = the bucket-
 distinctiveness doctrine in the data; third independent argument for the S35 5th member.
 
-**CROSS-COIN CONVERGENCES (ETH+SOL+BTC):** (1) CLIMAX = the load-bearing member on both;
+**ETH TOP-LEGS AUDIT (Greg: "are those 2 legs our biggest / confident at their start? keep
+ETH to fire on just those 2?"):** they ARE the biggest, but the sniper idea fails its own
+precondition. The +367/+347 pair = the SAME move in two theta-cells (as is +215/+193) —
+~4 independent big moves on the whole books tape. At ENTRY they looked QUIET/ordinary:
+climax 0.40 (tape median 1.77, bottom decile), dive 0.17 (median 0.47), fade = median, low
+ER. The top-4's only shared trait = quieter-than-average entries — and that exact print on
+the 30d tape selects LOSERS (win 28-35%, net -13..-28 across every top-leg-range condition).
+Their size came from DURATION (20-48h trend rides), not the entry — unrecognizable at start
+by construction. -> No print to snipe on; drop stands (re-entry test unchanged); if ETH's
+big riders ever become onset-recognizable it will be via the S35 fingerprint tier, not flow
+reads.
+
+**DOGE — KEEP with a REMAPPED stack (agent verdict).** The "inversion" is THETA-LOCAL:
+opposing +6.2 at th80 (n=245) but -7.0 at th100 (n=163; negative all 4 sub-windows) —
+th100 BUY+opposing = the worst discrete cell in the dataset (n=71, median -25.4bp) = meme
+CASCADE-CONTINUATION (persistent opposing flow deep into a 100bp move = still being sold
+into), while th80 catches normal absorption. EXHAUSTING = the only member sign-consistent
+positive at both thetas (+2.0/+5.3); climax works GRADED at top-quartile clmx60>=3.4 (win
+56-57%, +19-26bp), not as the 1.5 bit. Cleanest DOGE number: clmxQ4 & er>=0.14 -> +17.2/+17.0
+bp/leg BOTH thetas (z 2.95/2.07, positive 3/4 sub-windows). TOOLING BUG: the ER<=0.5 chop
+anchor passes 100% of DOGE legs (er600 range 0.002-0.46) — re-anchor per coin or use
+er-quartiles. Map: climax(graded)+exhausting core, opposing = th100-only veto (esp BUY),
+low-ER decline mark; th80 c50 the better band. COINBASE CAVEAT: books shape inverts again
+(clmxQ4 -29.3 n=28) — the map is a Binance-instrument read; deploy knobs UNSET pending venue
+thread. Winner side: lose-print MORE distinctive than win-print on DOGE — match-to-loser
+carries the dual-print signal here.
+
+**XRP — DROP THE STACK, KEEP THE NAIVE MACHINE (agent verdict).** The stack lift is a
+pooled-window artifact, shown 3 ways: (a) all-legs lift ~0 (CIs straddle zero); (b) week-
+concentrated (th100 lift = one early week; dropping w1 flips pooled to -2.3; recent suffix
+-16.7); (c) DECISIVE — the stack's own confirms are ANTI-selective: k3 confirm -5.0/-1.6 vs
+fallback +1.2/+5.6 (fallback beats confirm 8/10 theta-week cells) — the apparent lift was
+COMPOSITION (vetoed confirms replaced by fallback entries). agree=4 does NOT mark winners on
+XRP (inverted at th100). DURABLE ANTI-PRINT (the round's single strongest fingerprint):
+**opposing+climax WITHOUT exhausting = the death combo** — win 8-21%, -31..-53bp/leg,
+replicated 4x (both thetas x both machines, n~75; exhausting=1 legs near-flat). = the
+freight-train in member-bit form; matches S36 physics (no dipole collapse = continuation).
+Coinbase shape: th80 k0 the only healthy cell (+4.14 gross, 66% win, n=32, n-flagged);
+k3 destroys it (SOL-style inversion). Deploy shape: naive k0 th80 c50; death-combo carried
+as a graded per-cell veto CANDIDATE; short-side tilt -> sizing axis (Piece 3, parked).
+Fallback worst-decile INDISTINGUISHABLE on every descriptor — the fallback bleed is
+structural timing, not fingerprintable: supports the price-only fallback refinement.
+
+## THE FIVE-VERDICT BOARD (per-coin round, complete)
+
+| coin | verdict | deploy shape (Coinbase frame) |
+|---|---|---|
+| SOL  | KEEP — LEAD        | th100 k0 price mechanics; graded fade preference; exhausting negative-weighted |
+| BTC  | KEEP — conditional | th80 k>=3 opposing-weighted (bins read); GATED on book-collector fix |
+| DOGE | KEEP — remapped    | th80; climax(Q4-graded)+exhausting core; opposing = th100-only veto |
+| XRP  | KEEP — naive only  | th80 k0; stack dropped; death-combo anti-print carried |
+| ETH  | DROP               | re-entry test: ~100 book confirms, top-2-excluded mean >+10bp + k3^B3 gate |
+
+**THE ROUND'S MASTER FINDING:** on the DEPLOY venue every healthy shape is the NAIVE armed
+machine (SOL th100 k0 +6.1 net/leg; XRP th80 k0 +4.1 gross; DOGE/SOL books invert the flow
+maps; BTC blind). The flow stack is so far a BINANCE-INSTRUMENT phenomenon. PRICE MECHANICS
+PORT; FLOW READS DON'T (r3 controls + 5 independent agents, unanimous). Coinbase flow-read
+validation happens only on accrued Coinbase books, per cell.
+
+**NEXT-ROUND QUEUE (entry only, in order):**
+1. FALLBACK REFINEMENT (price-only, portable, the shared bleed): fallback waits for its own
+   fine dip; also targets SOL's fee/count bleed (fewer fallback legs) + BTC's short-dur
+   trough-sells + DOGE/XRP worst tails.
+2. MACHINE RE-RUNS of the per-coin member maps (leg-slice reads must be re-earned as machine
+   configs: DOGE climax-led map, BTC opposing-mandatory th80, XRP death-combo veto).
+3. CHOP RE-ANCHOR per coin (ER<=0.5 passes 100% on DOGE/XRP — bug-class fix).
+4. S35 fingerprint wire-in prep (dual-print, micros-first) — the winner side is invisible to
+   all six causal reads on every coin (SOL/BTC/DOGE agents independently); the lose-print is
+   the more distinctive half on DOGE.
+5. Books accrual + venue thread standing: nothing flow-based deploys without per-venue pass.
+
+**CROSS-COIN CONVERGENCES (ETH+SOL+BTC+DOGE+XRP):** (1) CLIMAX = the load-bearing member on both;
 (2) fast fade = winner mark / slow fade = false-fire on both; (3) per-kind AND per-venue
 member sign flips on both — member maps never pool.
 
