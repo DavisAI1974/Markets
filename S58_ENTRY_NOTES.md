@@ -102,6 +102,24 @@ Includes mode-0 deadlock fix + member-marginal table at th100 c50.
 step of conviction cost in PART%/CAP%?
 **Result:** (pending — fill in when the sweep lands)
 
+## PARKED FOR LATER PIECES (Greg: do NOT act on these while entry is open — record only)
+
+Findings about exit/hold/sizing that surfaced during entry work. Append here, never chase.
+
+- **PIECE 2 (exit):** `lean_exit` (R8 lean-collapse) is wired in the executor, INERT at fine
+  scale (REV=0.1 retrace IS the collapse exit there), value expected at coarse price-theta
+  exits (~28bp vs 151bp giveback). `lean_close` descriptor already recorded per leg. Dive
+  S55-R9 wrinkle: NEGATIVE coarse-top depth corr may mark exhaustion — candidate EXIT read.
+- **PIECE 3 (hold/size):** the validated 2-axis rank product (clmx_60 quality x size_score
+  magnitude) is the deployed sizing stack (S47/S49, leakage PASS all 5 cells) — extend it at
+  mid-band rather than invent. dive_depth belongs on the SIZE axis, not the entry veto.
+  Trailing-4h-range coarse size axis: sized beat flat 4/5 coins but shuffle beat true 2/5 —
+  NOT earned (S55 R11), needs accrued history. Staged-commit spec frozen S57 (starter ->
+  $5k all-in, adds maker-posted, confirm threshold scales with band).
+- **Fill/execution diagnostics:** taker-share is the cleanest realized net separator (corr
+  -0.31, S53) but is measured DURING the leg — diagnose fills with it, never grade entries.
+  Book-depth reads are maker/quoting signals (sub-fee-floor as taker entries).
+
 ## STANDING NEXT / OPEN
 
 - Fallback refinement: the trailing-ARM fallback legs are the bleed the veto cannot touch
