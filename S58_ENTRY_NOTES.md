@@ -190,6 +190,29 @@ OVERTURNED at mid-band.**
 carry bnc25 ONLY as a BTC per-cell candidate into the machine reruns (both BTC thetas
 improved, tail moderate 166-169 max); the reruns inherit baseline fallback everywhere else.
 
+## ROUND 6 — MEMBER-MAP MACHINE RERUNS (bins; books venue-check separate)
+
+The agent maps re-earned as machines vs their k0/k3 baselines. All maps derived from this
+tape — per-week stability is the internal check, OOS waits on books accrual.
+
+- **SOL fade+climax: the round's winner.** gr/leg +5.61/+5.65 at BOTH thetas (vs k3
+  +4.27/+2.79), $real -5.91/-4.06, and at th100 the FIRST positive weeks of the whole piece
+  (wk+ 2/5). Composition tax visible: leg-slice promised +11.5/+19.8, machine delivers
+  ~+5.6 — path effects cost half, as the XRP lesson predicted. Threshold caveat: fade>=27
+  is an in-sample quartile anchor — flagged.
+- **BTC opposing-mandatory: th80-only, confirmed.** btc_opp th80 +3.86 (vs k3 +3.13);
+  btc_opp+bnc25 th80 = the best BTC cell (gr +9.26, $real -1.44, CAP 6%) at the known
+  bounce costs (PART 83%). th100 versions negative — th100 stays naive-or-off.
+- **DOGE: the map works at th100, NOT th80** (agent had recommended th80 — the machine
+  corrects the leg-slice): clmxexh th100 +6.35 ($real -2.49), +cascade-veto +7.24 (-2.20)
+  = best DOGE cells; at th80 the map UNDERPERFORMS k3 (+2.74 vs +4.62). zw -8.2/-5.1 =
+  weeks uniformly negative at cb_real but tight.
+- **XRP death-combo veto: cheap and harmless rider.** Veto barely binds (rare class):
+  th100 +2.55 vs k0 +1.51, coverage untouched (PART 100). Keep as a rider on the naive
+  machine.
+- **Ceiling re-confirmed:** every $real still negative (best -1.44..-4.06/hr) — entry-alone
+  cannot cross cb_real; the surviving configs define the per-leg budget handed to Piece 2.
+
 ## PER-COIN VERDICTS (coin-specific agents on the leg dumps; Coinbase = deploy frame)
 
 **ETH — DROP from the mid-band deploy round (agent verdict, decisive).** The Coinbase
