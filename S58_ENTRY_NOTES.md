@@ -432,3 +432,24 @@ DONE and Piece 2 (exit) opens.
 
 ## INFRA (while waiting on books accrual)
 - BTC book: the "gap" is BY DESIGN (unified workflow excludes btc: 1-tick control + 100MB-cap risk at 100ms). BUT the superseded book_collector_btc.yml STILL FIRES from the default branch (data/btc-book pushed today; file at 47.2MB and growing toward the S37 cap-stall). SOL/ETH books at ~50MB — the cap will hit ALL book branches. FIX: rotation guardrail + btc grid 1000ms + checkout ref -> canonical.
+
+## ⭐ VENUE FINDING (S58 verification agent, primary sources, 2026-07-03) — KRAKEN PRO US SPOT: 0bp MAKER AT $10M/30d — VERIFIED
+- kraken.com/features/fee-schedule + API cross-check: maker ladder 25->0bp; **0.00% maker at
+  $10M+ 30d volume** (taker 10bp there). NOT a rebate (the -0.02 floor is stablecoin/FX pairs
+  only) — but a lawful, application-free, US-available (Ohio fine; ME/NY excluded) ZERO-maker
+  tier at a bar our paper cadence (~$25-30M/mo notional) CLEARS.
+- Tier-climb bleed to $10M: **$3,905 one-time** (~1.3-1.6bp effective month 1), then $0 maker
+  vs ~$20-24k/mo at Coinbase 8bp. SOL/USD, XRP/USD, XDG(DOGE)/USD online; rate limits trivial
+  at our cadence (0.09 events/sec vs Pro 3.75/sec decay). No minimum balance/application.
+- ⚠ SCHEDULE CHANGES JULY 9 2026 (6 days): new 17-tier table; $1M+ ladder UNCHANGED (6/4/2/0);
+  sub-$50k tiers worsen; adds AoP shortcut ($10M assets-on-platform = instant tier 12).
+- **IMPLICATION:** the S57 "cb_top 0/6 ceiling-only" column becomes REACHABLE as kr_mk0
+  (0 maker/10 taker at $10M/30d). Every entry table's $top column is suddenly a real venue
+  scenario — and the S57 fine-band verdict ("positive ONLY at the 0/6 ceiling") deserves a
+  Kraken-priced re-read. CAUTIONS: (a) venue-inversion law — nothing validated on
+  Binance/Coinbase ports to Kraken books; we have NO Kraken book collector (bins collector
+  exists from S37); building one is the prerequisite for any Kraken cell validation;
+  (b) XRP-US relisting implied-not-printed (flagged); (c) intra-month tier-update latency
+  assumed per-trade, unverified; (d) queue/fill reality on Kraken books unknown.
+- NEXT (queued, not started): kraken book collector (new code, S37 bins collector as base) +
+  re-price the S57/S58 tables with a kr_mk0 column (0/10).
