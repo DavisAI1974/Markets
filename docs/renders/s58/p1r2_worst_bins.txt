@@ -1,0 +1,115 @@
+
+[sol th100 c0.5 no-veto] WORST 10 LOSERS (net bp @cb_real):
+  entry_idx  1092871  net   -131.1
+  entry_idx   649176  net   -128.1
+  entry_idx   343538  net   -127.6
+  entry_idx  2124030  net   -125.4
+  entry_idx  1886671  net   -124.1
+  entry_idx  1538881  net   -123.5
+  entry_idx  1076591  net   -122.1
+  entry_idx  2268248  net   -121.2
+  entry_idx   349593  net   -120.1
+  entry_idx  1549108  net   -118.8
+[sol] SMALLEST 10 WINNERS:
+  entry_idx  2033135  net     +0.0
+  entry_idx   487033  net     +0.3
+  entry_idx  1004406  net     +0.3
+  entry_idx  1954213  net     +0.6
+  entry_idx    71427  net     +0.6
+  entry_idx   216393  net     +0.7
+  entry_idx   744984  net     +0.8
+  entry_idx  2248137  net     +0.9
+  entry_idx  2564276  net     +1.3
+  entry_idx  1866189  net     +1.4
+
+[eth th100 c0.5 no-veto] WORST 10 LOSERS (net bp @cb_real):
+  entry_idx   296601  net   -128.4
+  entry_idx   195804  net   -127.3
+  entry_idx   195930  net   -125.4
+  entry_idx  1250442  net   -125.0
+  entry_idx  2135845  net   -124.9
+  entry_idx  1991495  net   -124.2
+  entry_idx    95409  net   -123.7
+  entry_idx  1279311  net   -121.5
+  entry_idx  1955115  net   -120.2
+  entry_idx  1713750  net   -119.3
+[eth] SMALLEST 10 WINNERS:
+  entry_idx   426120  net     +0.1
+  entry_idx  2154025  net     +0.7
+  entry_idx  2270181  net     +0.8
+  entry_idx  2518071  net     +1.1
+  entry_idx   323371  net     +1.1
+  entry_idx  2035203  net     +1.5
+  entry_idx   267787  net     +2.0
+  entry_idx  2039412  net     +2.2
+  entry_idx  2496379  net     +2.2
+  entry_idx  2064613  net     +2.3
+
+[btc th100 c0.5 no-veto] WORST 10 LOSERS (net bp @cb_real):
+  entry_idx  1430318  net   -121.5
+  entry_idx  2513443  net   -119.0
+  entry_idx   830982  net   -117.5
+  entry_idx    86435  net   -117.5
+  entry_idx  1276422  net   -116.9
+  entry_idx  1173911  net   -116.4
+  entry_idx   188292  net   -116.0
+  entry_idx    72782  net   -115.8
+  entry_idx   274575  net   -115.8
+  entry_idx    17598  net   -115.6
+[btc] SMALLEST 10 WINNERS:
+  entry_idx   453291  net     +0.1
+  entry_idx   735671  net     +0.1
+  entry_idx    35399  net     +0.3
+  entry_idx  1131155  net     +0.5
+  entry_idx   392262  net     +0.9
+  entry_idx  1646622  net     +1.1
+  entry_idx   681033  net     +1.3
+  entry_idx  2240113  net     +1.4
+  entry_idx  1329118  net     +1.6
+  entry_idx   658769  net     +2.0
+
+[doge th100 c0.5 no-veto] WORST 10 LOSERS (net bp @cb_real):
+  entry_idx  2375959  net   -164.4
+  entry_idx  1950425  net   -128.7
+  entry_idx  1951562  net   -123.0
+  entry_idx  2421071  net   -122.8
+  entry_idx   231408  net   -122.1
+  entry_idx  1278852  net   -120.5
+  entry_idx   231303  net   -119.0
+  entry_idx   664207  net   -118.6
+  entry_idx   197640  net   -118.5
+  entry_idx  2249302  net   -118.0
+[doge] SMALLEST 10 WINNERS:
+  entry_idx   428494  net     +0.3
+  entry_idx   584319  net     +0.5
+  entry_idx  1831006  net     +0.5
+  entry_idx   197151  net     +0.7
+  entry_idx   170221  net     +1.0
+  entry_idx   830477  net     +1.6
+  entry_idx   196921  net     +1.9
+  entry_idx  2298325  net     +2.0
+  entry_idx  2388245  net     +2.4
+  entry_idx   240124  net     +2.5
+
+[xrp th100 c0.5 no-veto] WORST 10 LOSERS (net bp @cb_real):
+  entry_idx   196503  net   -124.6
+  entry_idx   649920  net   -119.3
+  entry_idx  2423803  net   -119.1
+  entry_idx   296602  net   -118.3
+  entry_idx   246868  net   -118.2
+  entry_idx    93105  net   -118.1
+  entry_idx   275284  net   -117.3
+  entry_idx  1455640  net   -117.1
+  entry_idx   300011  net   -116.9
+  entry_idx  2022946  net   -116.6
+[xrp] SMALLEST 10 WINNERS:
+  entry_idx   724538  net     +0.1
+  entry_idx   742014  net     +0.1
+  entry_idx   628686  net     +0.2
+  entry_idx   935325  net     +0.5
+  entry_idx   224326  net     +1.1
+  entry_idx  2270163  net     +1.2
+  entry_idx   426877  net     +1.3
+  entry_idx   575659  net     +1.7
+  entry_idx  2192491  net     +2.0
+  entry_idx  2295564  net     +2.1
