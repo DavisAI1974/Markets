@@ -179,6 +179,22 @@ Findings about exit/hold/sizing that surfaced during entry work. Append here, ne
 
 ## STANDING NEXT / OPEN
 
+- **⭐ WIRE THE WINNER FINGERPRINT INTO THE ENTRY (Greg, this session — NEEDS A DEDICATED
+  LOOK):** the S35 thread (`bucket-distinctiveness-is-the-goal`) built the per-cell winner
+  fingerprint machinery — `odcore/fingerprint.py` (verbatim cheap-micro ports + chunker
+  recipe), the 6 micros, the 128-dim OD coeffs + centroid projection (live in
+  `_markets_gate_v2.py` heavy tier), and the S35b per-episode ONSET re-anchor (entry
+  fingerprint = onset micros + onset coeffs, strictly pre-entry). Greg: predict winners by
+  their DISTINCTIVE fingerprint at entry — wire that read into the mid-band entry stack as a
+  per-cell member. PRECONDITIONS from the record: (a) the S35b onset canary (encoder must
+  reproduce ONSET micros from strictly pre-entry bars) MUST pass before wiring — it was the
+  blocking gate then and stays the gate now; (b) mid-band legs are a NEW bucket scale — the
+  fingerprint buckets were fine-scale episodes; per-(cell, band) revalidation required
+  (scale-locality law); (c) leakage gate (`assert_no_leakage`) on any fingerprint feature at
+  the confirm cell. Where it slots: a 5th stack member (graded, per-cell) — "does this dip's
+  pre-entry window match this cell's WINNER fingerprint" — complementing the flow reads that
+  the r3 controls just demoted to conditional.
+
 - Fallback refinement: the trailing-ARM fallback legs are the bleed the veto cannot touch
   (structurally sell troughs). Candidate: fallback waits for its own fine flip instead of
   flipping at raw theta-adverse. NOT yet tested.
