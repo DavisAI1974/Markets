@@ -135,6 +135,52 @@ def armed_fine_zigzag_v2_gated(mid, buy, sell, arm_bp, fine_bp, divw=600, mode_g
     return flips
 
 
+def armed_zigzag_flips(mid, buy, sell, arm_bp, lean_w=60, rev=0.1):
+    """S56 v3 (Greg: "use the enter and exit strategy from zig zag"): the DEPLOYED fine flip
+    detector (odcore.flip_detector lean retrace — the validated enter/exit on all 5 live cells)
+    does ALL entries/exits; the coarse ARM extension only selects WHICH fine flips to act on
+    (the chop filter — S54 close: "scale it up and eliminate the chop in between").
+
+    Machine: running extremes since the last TAKEN flip; when the leg has extended >= ARM in a
+    direction, the next fine flip AGAINST that direction (the flow-death turn call) is taken as
+    the confirm; extremes reset. Alternation enforced; no price-dip confirm; no trading fallback
+    (once an adverse move reaches ARM it arms the opposite side and the next agreeing fine flip
+    takes it — bounded without ever trading at the trough)."""
+    from odcore.flip_detector import lean_series, detect_flips
+    a = arm_bp / 1e4
+    if isinstance(buy, list) and buy and isinstance(buy[0], tuple):
+        fine = buy                                   # precomputed fine flips (grid efficiency)
+    else:
+        lean = lean_series(np.asarray(buy, float), np.asarray(sell, float), lean_w)
+        fine, _ = detect_flips(lean, rev)
+        fine = [(int(c), int(p), int(s)) for (c, p, s) in fine]
+    n = len(mid)
+    out = []
+    lo_i = hi_i = 0
+    last_side = 0
+    fi = 0
+    for t in range(1, n):
+        m = mid[t]
+        if m < mid[lo_i]:
+            lo_i = t
+        if m > mid[hi_i]:
+            hi_i = t
+        while fi < len(fine) and fine[fi][0] == t:
+            c, p, s = fine[fi]
+            fi += 1
+            if s == last_side:
+                continue
+            if s < 0 and last_side <= 0 and last_side != 0:
+                continue  # alternation: only opposite side (redundant guard)
+            if s < 0:     # fine says PEAK: need the up-leg extended >= ARM
+                if mid[hi_i] >= mid[lo_i] * (1 + a):
+                    out.append((c, p, s)); last_side = s; lo_i = hi_i = t
+            else:         # fine says VALLEY: need the down-leg extended >= ARM
+                if mid[lo_i] <= mid[hi_i] * (1 - a):
+                    out.append((c, p, s)); last_side = s; lo_i = hi_i = t
+    return out
+
+
 # fee tiers (Greg S56): score every run at the 10%-taker blend — each side pays
 # 0.9*maker + 0.1*taker. Executor runs at taker rt11; tiers are linear per-leg arithmetic.
 TIERS = {
@@ -265,6 +311,51 @@ def grid_gated(data, fines=(25.0,), key="grid_v3", mode_gate="reversal"):
     print(f"\nsaved -> {OUT}")
 
 
+def grid_v3z(data, key="grid_v3z"):
+    """v3 grid: deployed-flip-detector confirms, ARM chop filter. gross + all fee tiers."""
+    from odcore.flip_detector import lean_series, detect_flips
+    prev = {}
+    if os.path.exists(OUT):
+        with open(OUT) as f:
+            prev = json.load(f)
+    rows = {}
+    print("\nV3 GRID — armed zigzag-flip confirm (deployed detector), tiers per Greg blend")
+    print(f"{'ARM':>5} | per coin: n gross $/hr@mm3 | totals taker/std/mm3  rev_mm3")
+    fine_by_coin = {}
+    for coin, (mid, buy, sell, hrs) in data.items():
+        lean = lean_series(buy, sell, 60)
+        ff, _ = detect_flips(lean, 0.1)
+        fine_by_coin[coin] = [(int(c), int(p), int(s)) for (c, p, s) in ff]
+    for arm in (0.0,) + ARMS:
+        row = f"{arm:>5.0f} | "
+        tots = {k: 0.0 for k in TIERS}
+        rtot = 0.0
+        cells = {}
+        for coin, (mid, buy, sell, hrs) in data.items():
+            fl = armed_zigzag_flips(mid, fine_by_coin[coin], None, arm)
+            z = np.zeros(len(mid))
+            res = simulate_swing_maker(mid, z, z, buy, sell, fl, half_spread_bps=0.0,
+                                       maker_fee_bps=5.5, taker_fee_bps=5.5, fill_mode="taker")
+            rfl = [(c, p, -s) for (c, p, s) in fl]
+            rres = simulate_swing_maker(mid, z, z, buy, sell, rfl, half_spread_bps=0.0,
+                                        maker_fee_bps=5.5, taker_fee_bps=5.5, fill_mode="taker")
+            tr = tier_row(res, hrs)
+            rtr = tier_row(rres, hrs)
+            for k in TIERS:
+                tots[k] += tr[k]["dhr"]
+            rtot += rtr["mm3_bl"]["dhr"]
+            row += f"{tr['n']:>6}n {tr['gross_leg']:>+6.2f} {tr['mm3_bl']['dhr']:>+7.2f}"
+            cells[coin] = dict(tr, rev_mm3_dhr=rtr["mm3_bl"]["dhr"],
+                               legs_day=float(tr["n"] / hrs * 24.0))
+        print(row + f" | {tots['taker11']:>+9.2f}/{tots['std_bl']:>+8.2f}/"
+                    f"{tots['mm3_bl']:>+8.2f}  rev {rtot:+.2f}")
+        rows[f"a{arm:.0f}"] = cells
+    prev[key] = rows
+    with open(OUT, "w") as f:
+        json.dump(prev, f, indent=1)
+    print(f"\nsaved -> {OUT}")
+
+
 def shuffle_mid(mid, seed):
     rng = np.random.default_rng(2000 + seed)
     r = np.diff(np.log(mid))
@@ -331,6 +422,8 @@ if __name__ == "__main__":
              [float(x) for x in a.fines.split(",")])
     elif "--v2" in sys.argv:
         grid(d, fn=armed_fine_zigzag_v2, key="grid_v2")
+    elif "--v3z" in sys.argv:
+        grid_v3z(d)
     elif "--v3" in sys.argv:
         for mg in ("reversal", "not_continue"):
             grid_gated(d, fines=(25.0,) if "--all-fines" not in sys.argv else FINES,
