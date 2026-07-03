@@ -103,8 +103,9 @@ def render_accum(cell, path, K, grace, mk, tk, outdir, worst_losers=0):
     nets = np.asarray([l.net_usd for l in legs])
     wi, li = np.nonzero(nets > 0)[0], np.nonzero(nets <= 0)[0]
     if worst_losers:
-        # S53 walkthrough: the tail, not a draw — losers ranked most-negative first
-        sw, sl = [], [int(i) for i in np.argsort(nets)[:worst_losers]]
+        # S53 walkthrough: the tails, not a draw — losers most-negative first, winners biggest first
+        sw = [int(i) for i in np.argsort(nets)[::-1][:worst_losers]]
+        sl = [int(i) for i in np.argsort(nets)[:worst_losers]]
     else:
         sw, sl = _sample(wi, li)
     os.makedirs(outdir, exist_ok=True)
