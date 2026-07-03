@@ -56,6 +56,7 @@ class SwingLeg:
     net_bps: float       # gross - fees (maker on the open leg; maker or taker on the close leg)
     swing_bps: float     # |mid move| open->close (the raw swing size, for the fee-floor gate)
     size: float = 1.0    # conviction size multiplier (set by size_legs; 1.0 = flat/unsized)
+    lean_exit: bool = False  # True = closed by the dipole lean-collapse exit (S55 R8), not a turn
 
 
 @dataclass
@@ -96,7 +97,8 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                          half_spread_bps: float = 0.0, maker_fee_bps: float = 0.0,
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
                          confirm=None, confirm_lookback: int = 0, entry_gate=None,
-                         cover_grace: int = 0, arm: str = "") -> SwingResult:
+                         cover_grace: int = 0, lean=None, lean_exit=None,
+                         arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
     NO time/fill window (Greg S46: "take the time windows out, they are irrelevant"). The conviction quote
@@ -113,6 +115,18 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     ACTIONABLE only if BOTH gates pass at the confirm cell. A non-actionable flip is NOT trusted as a real
     turn: we FLATTEN any open position (taker, last resort — caps the wrong-tail/inventory) and do NOT open
     a new one, waiting for the next confirmed+exhausted turn. Both default None = flips only.
+
+    lean + lean_exit (S55 round 8, THE INVERTED GRAPH — opt-in, default None = bit-identical): the
+    dipole EXIT fine-tuner. `lean` = the causal flow-lean series (same array the flip detector runs
+    on); `lean_exit` = (arm_hi, exit_lo). Per open leg, the with-ride lean side*lean[t] is walked
+    between flips: once it reaches `arm_hi` (the flow is genuinely WITH the ride — prevents firing
+    at entry, where with-ride lean starts negative by construction), the first collapse to
+    `exit_lo` closes the leg via the SAME maker-preferred cover machinery (post the cover at the
+    trigger cell, cover_grace applies, taker fallback at the cap). Measured basis (765 zz150 exits,
+    30d x 5): flow climaxes AT the top and collapses through zero within ~60s at ~28bp giveback vs
+    151bp for the theta-exit; the climax is also the maker-fillability peak (S45 "can't refuse").
+    Legs closed this way carry SwingLeg.lean_exit=True. ADOPTION per cell via the forward ledger
+    ONLY (controls mandatory) — this parameter existing does not mean it is on anywhere.
 
     cover_grace (cells, S48): the SMARTER LAST-OPTION. When the cover quote does not fill before the next
     turn (the forced-taker case — the doge cost sink, 36-47% of exits), DON'T cross the spread immediately.
@@ -132,6 +146,8 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     hs = half_spread_bps / 1e4
     conf = None if confirm is None else np.asarray(confirm).astype(bool)
     egate = None if entry_gate is None else np.asarray(entry_gate).astype(bool)
+    ln = None if (lean is None or lean_exit is None) else np.asarray(lean, float)
+    arm_hi, exit_lo = (lean_exit if lean_exit is not None else (0.0, 0.0))
 
     # Front-of-queue fill, NO window: the offer (short) is lifted by the next BUY trade; the bid (long) is
     # hit by the next SELL trade. We have the best price, so the first real opposing trade fills us.
@@ -150,6 +166,46 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
             continue
         if ci <= 0 or ci >= n - 1:
             continue
+        # S55 R8 dipole lean-collapse EXIT: walk the with-ride lean over the cells since the last
+        # look (leg segments can span skipped flips); arm at arm_hi, close at the collapse to exit_lo.
+        if pos is not None and ln is not None:
+            osd = pos["side"]
+            te = -1
+            for t in range(pos["scan_from"], min(ci, n)):
+                sl = osd * ln[t]
+                if not pos["lean_armed"]:
+                    if sl >= arm_hi:
+                        pos["lean_armed"] = True
+                elif sl <= exit_lo:
+                    te = t
+                    break
+            if te < 0:
+                pos["scan_from"] = ci
+            else:
+                # close via the SAME maker-preferred cover machinery, anchored at the trigger cell:
+                # the cover rests INTO the dying climax (max fillability); grace cap, taker fallback.
+                fl = pos["flip_idx"]; op = pos["open_px"]; oi = pos["open_idx"]
+                cf = int(fill_ask[te]) if osd > 0 else int(fill_bid[te])
+                cap = min(n - 1, te + max(cover_grace, 0))
+                if cf <= cap:
+                    cpx = mid[te] * (1.0 + hs) if osd > 0 else mid[te] * (1.0 - hs)
+                    gross = osd * (cpx - op) / op * 1e4
+                    net = gross - maker_fee_bps - maker_fee_bps
+                    swing = abs(mid[cf] - mid[fl]) / mid[fl] * 1e4
+                    legs.append(SwingLeg(osd, fl, oi, op, int(cf), float(cpx), True, gross, net,
+                                         swing, lean_exit=True))
+                    hold_until = int(cf)
+                else:
+                    cpx = mid[cap] * (1.0 - hs) if osd > 0 else mid[cap] * (1.0 + hs)
+                    gross = osd * (cpx - op) / op * 1e4
+                    net = gross - maker_fee_bps - taker_fee_bps
+                    swing = abs(mid[cap] - mid[fl]) / mid[fl] * 1e4
+                    legs.append(SwingLeg(osd, fl, oi, op, int(cap), float(cpx), False, gross, net,
+                                         swing, lean_exit=True))
+                    hold_until = int(cap)
+                pos = None
+                if ci <= hold_until:   # the cover resolution runs past this flip — do not act on it
+                    continue
         # the quote RESTS until the next flip (the strategy "rides it down keeping the best offer" until the
         # next turn); the fill search is therefore capped at the next flip's confirm cell, not a fixed window.
         next_ci = int(flips[k + 1][0]) if k + 1 < len(flips) else n
@@ -180,7 +236,8 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 swing = abs(mid[fi] - mid[fl]) / mid[fl] * 1e4
                 legs.append(SwingLeg(osd, fl, oi, op, fi, limit, True, gross, net, swing))
             # open the new leg at the maker fill
-            pos = dict(side=int(s), flip_idx=int(ci), open_idx=int(fi), open_px=float(limit))
+            pos = dict(side=int(s), flip_idx=int(ci), open_idx=int(fi), open_px=float(limit),
+                       scan_from=int(fi) + 1, lean_armed=False)
             hold_until = int(fi)                  # no-op at cover_grace=0 (fi < next_ci <= the next flip)
         else:
             # no climax volume to fill the passive quote -> skip the turn; flatten any open leg.

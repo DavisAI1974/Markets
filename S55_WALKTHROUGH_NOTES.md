@@ -131,3 +131,29 @@ kept open: (a) scale-locality of dipole descriptions (matches round 4's zz150-vs
 leg-scale lean window). Wrinkle (one data point): NEGATIVE depth corr at coarse tops fits round
 8's climax-burnout picture — deep coarse-pivot lean may mark exhaustion, not fuel.
 STANDING: every (scale, descriptor) pair earns its own validation before it feeds sizing/arming.
+
+## Round 10 — WIRED INTO THE PLATFORM DECISION CODE (Greg: "we need to be using this")
+ANSWER to "what py decides entry/exit timing": `odcore/flip_detector.py` (WHEN — lean_series +
+detect_flips declare the turns) + `odcore/swing_maker.py::simulate_swing_maker` (WHETHER/HOW —
+actionability, hold, close mechanics). `scripts/paper_trade.py` is the HARNESS that runs that
+same executor over the accruing books. **There is NO separate live-trade codebase** — one decision
+path (odcore); no real-money order code exists yet (deploy gated on venue, S49/S50). So a fix
+wired into odcore is in everything; the historical failure mode was fixes living in probe
+scripts and never being promoted (dive timing: flagged C1 in S53, unwired until today).
+WIRED THIS ROUND (all opt-in, defaults bit-identical — canary: default run +0 trades, ledger
+25,845 intact, shakeout matches record):
+- `swing_maker(lean=, lean_exit=(arm_hi, exit_lo))`: the R8 lean-collapse EXIT in the decision
+  loop — arm when with-ride lean >= arm_hi, close at collapse to exit_lo via the same
+  maker-preferred cover machinery; legs carry SwingLeg.lean_exit.
+- `paper_trade --dipole-entry`: feeds the existing entry_gate socket with the S36 divergence
+  read at the pivot (expect=="reversal"). `--dipole-exit arm,lo`: the R8 exit. Both auto-route
+  to paper_ledger_sandbox.jsonl (S53 sandbox rule; the forward ledger stays pure baseline).
+- Ledger rows now carry the R1 descriptors: dive_depth (|lean@pivot|, the deployed S47 object),
+  lean_flip, lean_close (R8 exit-side), dipole_class, rev_conv, lean_exit, mode.
+CANARY FINDING (structural, important): at the FINE deployed scale the lean-exit NEVER fires
+(0/25,845) BECAUSE the flip detector (REV=0.1 lean retrace) always declares the next turn before
+the lean can collapse to 0 — at fine scale the exit-on-flow-death already IS the exit. The R8
+saving applies at COARSE leg scales (price-theta exits) = the two-scale thread. dipole-entry
+canary: executes, 344 shifted legs; proper evaluation needs an isolated run + controls (pending).
+dive_depth in the platform: `swing_maker.size_legs` SIZE axis (deployed, S49 OOS) + now recorded
+on every forward-ledger trade.
