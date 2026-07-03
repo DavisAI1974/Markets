@@ -133,7 +133,9 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                          starter_window: int = 100, complete_window: int = 50,
                          confirm_mode: str = "price", confirm_k: float = 0.25,
                          swing_roll: int = 100, unload_grace: int = 300, queue_frac: float = 1.0,
-                         lean=None, entry_ok=None, arm: str = "") -> AccumResult:
+                         lean=None, entry_ok=None, arm: str = "",
+                         dump_mult: float = 1.0, p2_taker_cap: float = 1.0,
+                         harvest_rungs=None, slide_x_mult: float = 1.0) -> AccumResult:
     """Run the accumulate executor over a (pre-gated) flip list. See module docstring.
 
     confirm_mode: 'price' — leg green by conf_bps = max(dump floor, confirm_k × rolling-median swing);
@@ -144,6 +146,16 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     opposite detected flip regardless of the gate (a gated-out exit would ride a position forever).
     The dump band mirrors the confirm band (symmetric, fee-floor floored). Thresholds derive from the
     fee/spread arithmetic + a causal rolling swing stat — fixed k across all cells, never per-window tuned.
+
+    S53 sandbox variants (ALL opt-in; defaults reproduce S52 behavior bit-exactly):
+      dump_mult    — dump band = dump_mult × confirm band (still fee-floor floored). >1 = wider dump
+                     band (the A3 false-dump lever); 1.0 = S52 symmetric baseline.
+      p2_taker_cap — cap on the taker share of the phase-2 remainder (0 = maker-only completion,
+                     1.0 = S52 baseline). The A2 taker-share lever, entry side.
+      harvest_rungs— list of (mult, frac): after confirmation, rest fixed maker exits at
+                     entry_ref ± mult×conf_bps selling frac of current inventory into strength
+                     (spike-top harvest — the smallest-winner lever). None = S52 baseline.
+      slide_x_mult — scales the unload slide-cross X = spread+taker (tighter/looser taker cross).
     """
     mid = np.asarray(mid, float)
     bb = np.asarray(best_bid_sz, float); ba = np.asarray(best_ask_sz, float)
@@ -169,14 +181,17 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     def _close(exit_maker_usd, exit_taker_usd, proceeds_usd, fees, close_idx):
         p = pos
         buy_cost = p["cost_usd"]
-        net = (proceeds_usd - buy_cost) if p["side"] > 0 else (buy_cost - proceeds_usd)
+        # harvest-rung exits (S53 B1) are maker proceeds banked during the ride; fees already in p["fees"]
+        proceeds_all = proceeds_usd + p.get("harvest", 0.0)
+        net = (proceeds_all - buy_cost) if p["side"] > 0 else (buy_cost - proceeds_all)
         # short legs: "cost_usd" is the SELL proceeds of the entry, proceeds_usd is the buy-back cost
         net -= fees
         vw = p["vw_height"] / p["bought"] if p["bought"] > 0 else 0.0
         legs.append(AccumLeg(p["side"], p["flip_idx"], close_idx, p["bought"], p["starter"],
                              p["p2m"], p["p2t"], p["confirmed"], p["cidx"], p["dumped"],
-                             exit_maker_usd, exit_taker_usd, float(net), float(fees + p["fees"]),
-                             float(vw), p["maker"] + exit_maker_usd, p["taker"] + exit_taker_usd))
+                             exit_maker_usd + p.get("harvest", 0.0), exit_taker_usd, float(net),
+                             float(fees + p["fees"]), float(vw),
+                             p["maker"] + exit_maker_usd, p["taker"] + exit_taker_usd))
 
     for k, (ci, _pv, s) in enumerate(flips):
         if ci <= 0 or ci >= n - 2:
@@ -191,7 +206,7 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
             gr = min(nxt - ci, unload_grace)
             # fee-aware slide-cross cell FIRST: past X = spread + taker fee of adverse slide, waiting has
             # provably cost more than crossing at the turn would have -> taker the remainder there.
-            X = (2 * half_spread_bps + taker_fee_bps) / 1e4
+            X = slide_x_mult * (2 * half_spread_bps + taker_fee_bps) / 1e4
             seg = mid[ci:ci + gr + 1]
             crossed = np.nonzero(seg < ref * (1 - X))[0] if osd > 0 else np.nonzero(seg > ref * (1 + X))[0]
             xcell = ci + int(crossed[0]) if len(crossed) else min(ci + gr, n - 1)
@@ -222,7 +237,7 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
         ref = mid[ci]
         ms = med_swing[k]
         conf_bps = max(fee_floor_bps, confirm_k * ms) if np.isfinite(ms) else fee_floor_bps
-        dump_bps = conf_bps
+        dump_bps = max(fee_floor_bps, dump_mult * conf_bps)
         # starter: fixed limit at the turn price, price-eligible + queue-honest
         opp_in = sv if s > 0 else bv
         ahead_in = bb[ci] if s > 0 else ba[ci]
@@ -235,7 +250,7 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
         qty = st_coins
         pos = dict(side=s, flip_idx=ci, qty=qty, cost_usd=st_usd, bought=st_usd, starter=st_usd,
                    p2m=0.0, p2t=0.0, confirmed=False, cidx=-1, dumped=False, fees=st_fee,
-                   vw_height=0.0, maker=st_usd, taker=0.0)
+                   vw_height=0.0, maker=st_usd, taker=0.0, harvest=0.0)
 
         # ---- 3. confirmation vs dump scan on [ci+1, nxt−1] ----
         seg = slice(ci + 1, nxt)
@@ -278,10 +293,11 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 tk2 = q3 = fee3 = 0.0
                 # fee-aware taker completion: only if the expected remaining move pays the crossing cost
                 height = abs(mid[min(tg + cw, n - 1)] - ref) / ref * 1e4
-                if R2 > 1.0 and np.isfinite(ms) and (ms - height) > (taker_fee_bps + half_spread_bps):
+                if R2 > 1.0 and p2_taker_cap > 0 and np.isfinite(ms) and \
+                   (ms - height) > (taker_fee_bps + half_spread_bps):
                     t3 = min(tg + cw, n - 1)
                     px3 = mid[t3] * (1.0 + hs) if s > 0 else mid[t3] * (1.0 - hs)
-                    tk2 = R2
+                    tk2 = min(R2, p2_taker_cap * R)
                     q3 = tk2 / px3
                     fee3 = tk2 * taker_fee_bps / 1e4
                     pos["taker"] += tk2
@@ -293,6 +309,27 @@ def simulate_swing_accum(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 pos["maker"] += mk2
                 add_px = (mk2 * px2 + (tk2 and tk2 * (mid[min(tg + cw, n-1)]))) / max(mk2 + tk2, 1e-9)
                 pos["vw_height"] += (mk2 + tk2) * abs(add_px - ref) / ref * 1e4
+            # ---- 3b. harvest-into-strength (S53 B1): rest fixed maker exits at profit rungs ----
+            # Sells frac of current inventory at entry_ref ± mult×conf_bps during the ride [tg, nxt-1];
+            # a spike top hits these resting orders on the way up instead of forcing a taker exit into
+            # the crash. Remaining inventory unloads at the next turn as before.
+            if harvest_rungs and pos["qty"] > 0 and nxt - 1 > tg:
+                opp_x = bv if s > 0 else sv                   # exiting long = we OFFER, buys lift us
+                ahead_x = (ba[tg] if s > 0 else bb[tg]) * queue_frac
+                for (mult, frac) in harvest_rungs:
+                    if pos["qty"] <= 0:
+                        break
+                    rung_px = ref * (1 + s * mult * conf_bps / 1e4)
+                    q_r = frac * pos["qty"]
+                    h_usd, h_coins, _ = _eligible_fill(mid, opp_x, ahead_x, tg, nxt - 1, rung_px,
+                                                       -s, hs, budget_coins=q_r, peg=False)
+                    h_coins = min(h_coins, pos["qty"])
+                    if h_usd <= 0:
+                        continue
+                    pos["qty"] -= h_coins
+                    pos["harvest"] += h_usd
+                    pos["fees"] += h_usd * maker_fee_bps / 1e4
+                    pos["maker"] += h_usd
         # unconfirmed & never red: ride the starter to the next turn (handled at the next flip)
 
     if pos is not None and not pos["dumped"] and len(flips):
