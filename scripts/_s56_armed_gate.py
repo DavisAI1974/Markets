@@ -76,6 +76,82 @@ def armed_fine_zigzag_v2(mid, arm_bp, fine_bp):
     return flips
 
 
+def armed_fine_zigzag_v2_gated(mid, buy, sell, arm_bp, fine_bp, divw=600, mode_gate="reversal"):
+    """Round 3 (JOB 1b): v2 with the R4 dipole VETO on fine confirms.
+
+    A fine 25bp dip only confirms the flip when the causal S36 divergence() read at the pivot
+    candidate (window [pivot-divw, pivot], flow vs drift) says expect=="reversal" — the only
+    positive descriptor class at zz150 (S55 R4: +30.2/leg, 4/5 coins). Vetoed dip -> keep
+    riding; a NEW extreme re-tests; the trailing ARM fallback still bounds loss (never vetoed).
+    mode_gate: "reversal" (class veto) or "opposing" (weaker: any flow-opposes-price read).
+    """
+    from odcore.info_dipole import divergence
+    a, f = arm_bp / 1e4, fine_bp / 1e4
+    n = len(mid)
+    cb = np.concatenate([[0.0], np.cumsum(buy)])
+    cs = np.concatenate([[0.0], np.cumsum(sell)])
+    cache = {}
+
+    def gate_ok(pi):
+        if pi in cache:
+            return cache[pi]
+        lo = max(0, pi - divw)
+        ok = False
+        if pi - lo >= 12:
+            dv = divergence(buy[lo:pi + 1], sell[lo:pi + 1], float(mid[pi] - mid[lo]))
+            if dv is not None:
+                ok = (dv["expect"] == "reversal") if mode_gate == "reversal" \
+                    else bool(dv["opposing"])
+        cache[pi] = ok
+        return ok
+
+    flips = []
+    lo_i = hi_i = 0
+    mode = 0
+    for t in range(1, n):
+        m = mid[t]
+        if m < mid[lo_i]:
+            lo_i = t
+        if m > mid[hi_i]:
+            hi_i = t
+        if mode >= 0:
+            armed = mid[hi_i] >= mid[lo_i] * (1 + a)
+            if armed and m <= mid[hi_i] * (1 - f) and gate_ok(hi_i):
+                flips.append((t, hi_i, -1)); mode = -1; lo_i = t
+                continue
+            if mode == 1 and m <= mid[hi_i] * (1 - a):      # fallback: never vetoed
+                flips.append((t, hi_i, -1)); mode = -1; lo_i = t
+                continue
+        if mode <= 0:
+            armed = mid[lo_i] <= mid[hi_i] * (1 - a)
+            if armed and m >= mid[lo_i] * (1 + f) and gate_ok(lo_i):
+                flips.append((t, lo_i, +1)); mode = +1; hi_i = t
+                continue
+            if mode == -1 and m >= mid[lo_i] * (1 + a):
+                flips.append((t, lo_i, +1)); mode = +1; hi_i = t
+    return flips
+
+
+# fee tiers (Greg S56): score every run at the 10%-taker blend — each side pays
+# 0.9*maker + 0.1*taker. Executor runs at taker rt11; tiers are linear per-leg arithmetic.
+TIERS = {
+    "taker11": 11.0,                                # no-MM floor (reference)
+    "std_bl": 2 * (0.9 * 2.0 + 0.1 * 5.5),          # Bybit standard maker +2  -> rt 4.70
+    "mm3_bl": 2 * (0.9 * -1.25 + 0.1 * 5.5),        # Bybit MM3 -1.25          -> rt -1.15
+}
+
+
+def tier_row(res, hrs):
+    """gross/leg + net/leg + $/hr per fee tier from one taker-rt11 executor run."""
+    gross = res.net_per_leg_bps + RT
+    out = dict(n=int(res.n_legs), gross_leg=float(gross))
+    for name, rt in TIERS.items():
+        nl = gross - rt
+        out[name] = dict(net_leg=float(nl),
+                         dhr=float(nl * res.n_legs * CAP / 1e4 / hrs))
+    return out
+
+
 def run_armed(mid, buy, sell, arm, fine, reverse=False, fn=armed_fine_zigzag):
     """Flips + platform executor at S55 first-pass mechanics (flat taker rt11)."""
     fl = fn(mid, arm, fine)
@@ -129,6 +205,56 @@ def grid(data, fn=armed_fine_zigzag, key="grid"):
     if os.path.exists(OUT):
         with open(OUT) as f:
             prev = json.load(f)
+    prev[key] = rows
+    with open(OUT, "w") as f:
+        json.dump(prev, f, indent=1)
+    print(f"\nsaved -> {OUT}")
+
+
+def grid_gated(data, fines=(25.0,), key="grid_v3"):
+    """Round 3: dipole-vetoed v2 grid. NO-GATES judging — print gated cells with gross/leg +
+    all fee tiers; v2-ungated comparison read from the saved JSON."""
+    prev = {}
+    if os.path.exists(OUT):
+        with open(OUT) as f:
+            prev = json.load(f)
+    v2 = prev.get("grid_v2", {})
+    rows = {}
+    for fine in fines:
+        print(f"\n== ROUND 3 GATED (dipole reversal veto) — FINE {fine:.0f}bp ==")
+        print(f"{'ARM':>5} | per coin: n gross $/hr@mm3 | totals: taker/std/mm3 (v2 ungated mm3)")
+        for arm in ARMS:
+            row = f"{arm:>5.0f} | "
+            tots = {k: 0.0 for k in TIERS}
+            rtot_mm3 = 0.0
+            cells = {}
+            for coin, (mid, buy, sell, hrs) in data.items():
+                fl = armed_fine_zigzag_v2_gated(mid, buy, sell, arm, fine)
+                z = np.zeros(len(mid))
+                res = simulate_swing_maker(mid, z, z, buy, sell, fl, half_spread_bps=0.0,
+                                           maker_fee_bps=5.5, taker_fee_bps=5.5,
+                                           fill_mode="taker")
+                rfl = [(c, p, -s) for (c, p, s) in fl]
+                rres = simulate_swing_maker(mid, z, z, buy, sell, rfl, half_spread_bps=0.0,
+                                            maker_fee_bps=5.5, taker_fee_bps=5.5,
+                                            fill_mode="taker")
+                tr = tier_row(res, hrs)
+                rtr = tier_row(rres, hrs)
+                for k in TIERS:
+                    tots[k] += tr[k]["dhr"]
+                rtot_mm3 += rtr["mm3_bl"]["dhr"]
+                row += f"{tr['n']:>6}n {tr['gross_leg']:>+6.1f} {tr['mm3_bl']['dhr']:>+7.2f}"
+                cells[coin] = dict(tr, rev_mm3_dhr=rtr["mm3_bl"]["dhr"],
+                                   legs_day=float(tr["n"] / hrs * 24.0))
+            v2tot = ""
+            k2 = f"a{arm:.0f}_f{fine:.0f}"
+            if k2 in v2:
+                v2mm3 = sum((c["net_leg"] + RT - TIERS["mm3_bl"]) * c["n"] * CAP / 1e4 / 720.0
+                            for c in v2[k2].values())
+                v2tot = f" (v2 {v2mm3:+.2f})"
+            print(row + f" | {tots['taker11']:>+8.2f}/{tots['std_bl']:>+8.2f}/"
+                        f"{tots['mm3_bl']:>+8.2f} rev_mm3 {rtot_mm3:+.2f}{v2tot}")
+            rows[k2] = cells
     prev[key] = rows
     with open(OUT, "w") as f:
         json.dump(prev, f, indent=1)
@@ -201,5 +327,7 @@ if __name__ == "__main__":
              [float(x) for x in a.fines.split(",")])
     elif "--v2" in sys.argv:
         grid(d, fn=armed_fine_zigzag_v2, key="grid_v2")
+    elif "--v3" in sys.argv:
+        grid_gated(d, fines=(25.0,) if "--all-fines" not in sys.argv else FINES)
     else:
         grid(d)
