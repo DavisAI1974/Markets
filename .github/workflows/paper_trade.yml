@@ -44,6 +44,12 @@ jobs:
             git fetch origin data/$c-book || true
             git show origin/data/$c-book:${c}_coinbase_book.jsonl.gz > /tmp/${c}_coinbase_book.jsonl.gz 2>/dev/null || echo "no book for $c yet"
           done
+          # S57: the S56 SANDBOX cells (sol/eth bybit @ MM3) read /tmp/<coin>_bybit_book.jsonl.gz;
+          # without this fetch they ERR silently on GHA and the sandbox ledger never accrues.
+          for c in sol eth doge xrp btc; do
+            git fetch origin data/$c-bybit-book 2>/dev/null || continue
+            git show origin/data/$c-bybit-book:${c}_bybit_book.jsonl.gz > /tmp/${c}_bybit_book.jsonl.gz 2>/dev/null || echo "no bybit book for $c yet"
+          done
       - name: Run paper trader (appends new trades, deduped)
         run: |
           python scripts/paper_trade.py \
@@ -54,5 +60,6 @@ jobs:
         run: |
           git config user.email noreply@anthropic.com && git config user.name Claude
           git add paper_ledger.jsonl
+          git add paper_ledger_sandbox.jsonl 2>/dev/null || true   # S57: sandbox forward record (tracked on 5c5vg9)
           git commit -m "paper_trade: forward ledger update $(date -u +%FT%TZ)" || echo "no new trades"
           git push origin HEAD:claude/crypto-liquidity-signals-5c5vg9 || echo "push failed (retry next cron)"

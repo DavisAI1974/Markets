@@ -1,4 +1,4 @@
-name: Bybit Book Collectors (SOL/ETH perps, durable)
+name: Bybit Book Collectors (SOL/ETH/DOGE/XRP/BTC perps, durable)
 
 # S51 Job 3 — the REBATE-VENUE decision data. Collects Bybit USDT linear-perp L2
 # order-book snapshots (top-10/side depth on a regular 100ms grid) so the maker
@@ -57,6 +57,16 @@ jobs:
             symbol: SOLUSDT
           - coin: eth
             symbol: ETHUSDT
+          # S57 JOB 6(b): doge/xrp/btc added — doge z=14.4 and btc z=13.0 were the two
+          # highest S56 direction premiums and had NO venue books; the cell hunt ranks
+          # by queue-honest $/hr which needs these tapes. (Greg: background accrual;
+          # sol/eth stay the initial-rollout focus.)
+          - coin: doge
+            symbol: DOGEUSDT
+          - coin: xrp
+            symbol: XRPUSDT
+          - coin: btc
+            symbol: BTCUSDT
     concurrency:
       group: bybit-book-collector-${{ matrix.coin }}
       cancel-in-progress: false
