@@ -336,6 +336,17 @@ Findings about exit/hold/sizing that surfaced during entry work. Append here, ne
   -0.31, S53) but is measured DURING the leg — diagnose fills with it, never grade entries.
   Book-depth reads are maker/quoting signals (sub-fee-floor as taker entries).
 
+## DEFINITION OF DONE — ENTRY PIECE (Greg, this session)
+
+When the entry is called finished: **PROMOTE the surviving fixes into the platform code and
+commit** — the armed mid-band machine + the winning fallback + whatever per-coin member maps
+re-earn as machine configs go from `scripts/_s58_*` probes into `odcore/` (platform-composed,
+one-version law: paper=live=research through `run_stream`). Standing preconditions carry:
+sandbox-first (SANDBOX registry cells, never the baseline), baseline canary bit-identical
+(+0 trades, ledger intact), `assert_no_leakage` on every wired read, per-cell registry
+entries with the gate record documented. Only after that promotion commit is the entry piece
+DONE and Piece 2 (exit) opens.
+
 ## STANDING NEXT / OPEN
 
 - **⭐ WIRE THE WINNER FINGERPRINT INTO THE ENTRY (Greg, this session — NEEDS A DEDICATED
