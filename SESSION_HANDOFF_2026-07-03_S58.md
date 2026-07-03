@@ -39,8 +39,10 @@ notes, never chased. Old kills are not verdicts (S56 grades were rebate-regime +
   column is now REACHABLE (kr_mk0 = 0/10). Live volume: Kraken = 35-42% of Coinbase.
 - **FINE BAND: DEAD -> RESEARCH-REOPENED, KRAKEN-GATED** (4 conditions in notes; the fine
   machine's cadence sustains the tier for all cells — lawful volume-paycheck synergy).
-- Coinbase CFM perp fee agent was still RUNNING at close — fold its report into
-  S57_VENUE_FINDINGS.md next session (check the session log / re-run if lost).
+- **CFM PERP FEES VERIFIED (folded into S57_VENUE_FINDINGS.md §6):** NO maker rebate at any
+  level (S57 UNCLEAR closed) — but all-in RT 4-7bp at maker tiers vs 16bp spot cb_real =
+  2-4x cheaper, US-lawful, nano contracts on all 4 coins. Tier grid login-gated: GREG
+  action — read the US Futures fee tab at ~$25-30M/mo. Fee ladder now: kr_mk0 < CFM < cb_real.
 
 ## 3. INFRA (done this session, on the default/crons branch, commit 45c145b)
 - Rotation guardrail on ALL book collectors (>85MB freezes live file as archived segment —

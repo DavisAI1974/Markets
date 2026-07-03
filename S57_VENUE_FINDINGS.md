@@ -84,3 +84,22 @@ dYdX (0 at $25M/30d, thin books).
   decisive test. Volume may be event-elevated — persistence unproven.
 - Collector matrix now: sol/eth/doge/xrp/btc/zec on bybit + 5-coin Coinbase books.
 - Coinbase fee-upgrade program verification (see §2).
+
+## 6. S58 UPDATE — CFM US PERP FEES VERIFIED (primary sources + CFTC filings, 2026-07-03)
+
+- **NO maker rebate exists on CFM at any level** (the S57 UNCLEAR is now CLOSED): the DCM fee
+  schedule (CFTC 2025-75, eff Dec 15 2025) has no negative fees — even signed Market Makers
+  PAY $0.07/contract/side; customer maker floor is +0.005% and the $0.15/contract fixed
+  pass-through is ADDITIVE (current page wording; the "0.0%/0.0%" figures are INTX non-US
+  only). MM-program economics redacted (requires signed two-sided quoting agreement).
+- **BUT all-in CFM cost beats our spot tier 2-4x:** per $5k notional RT: maker@0.005% = 4bp;
+  ~0.02% tier = 7bp; intro 0.05% = 13bp — vs spot maker-maker 16bp at cb_real 8/18. The
+  $0.15/contract fixed leg is the binding floor (1.5-2bp/side on ~$750-1k nano notionals).
+- Contracts (all US-lawful via CFM, 24/7 minus Fri 5-6pm ET, hourly funding, 5-yr cash-
+  settled): BIP 0.01 BTC (10x intraday), SLP 5 SOL (5x), DOP 5,000 DOGE (4x), XPP 500 XRP
+  (5x). Settlement index = Coinbase spot (MarketVector).
+- **UNVERIFIABLE publicly:** the CFM tier grid (login-gated). ACTION (GREG): Advanced ->
+  Fees -> US Futures tab — read the CFM futures tier row at ~$25-30M/mo; one screenshot
+  closes the gap. Realistic expectation 0.5-2bp maker + $0.15/contract (inference).
+- Fee landscape now: Kraken spot kr_mk0 (0 maker @$10M/30d) < CFM perp (~4-7bp RT) <
+  Coinbase spot cb_real (16bp RT). CFM adds leverage + a funding axis (cuts both ways).
