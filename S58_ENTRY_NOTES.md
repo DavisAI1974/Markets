@@ -159,6 +159,19 @@ Priority therefore shifts to the fallback refinement (price-only, the last named
 bleed), with regime-conditioning of the stack as the follow-on question ("WHEN does the
 stack help?" — likely a job for the regime gate thread, per-cell).
 
+## ROUND 5 — THE FALLBACK REFINEMENT (Greg's order: fallback, then machine reruns)
+
+STRUCTURAL FACT (why this round targets k>=3): in the k0 machine the fallback ~never fires —
+the first fine dip always confirms before adverse reaches theta ("k0 is all-confirm", XRP
+agent). The fallback bleed exists only in VETOED machines (54-63% of k>=3 legs) — and the
+member-map reruns will lean on fallbacks harder, so they inherit this fix.
+TEST: baseline (flip at raw theta-adverse = sell the trough tick) vs BOUNCE-fallback (once
+adverse >= theta with no vetted confirm, flip on the first f_fb recovery off the running
+adverse extreme; f_fb in {25%,50%} theta). RISK ACCOUNTING first-class: loss bound loosens
+from ~theta to theta+depth-to-first-bounce -> per-leg max-adverse p95/max printed; a blown
+tail kills the refinement regardless of P&L.
+**Result:** (pending)
+
 ## PER-COIN VERDICTS (coin-specific agents on the leg dumps; Coinbase = deploy frame)
 
 **ETH — DROP from the mid-band deploy round (agent verdict, decisive).** The Coinbase
