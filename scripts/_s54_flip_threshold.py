@@ -40,6 +40,11 @@ K_GRID = [0.0, 0.02, 0.04, 0.06, 0.09, 0.12, 0.18, 0.25]
 RANGE_W = 4 * 3600           # 4h, 1-sec cells
 BRACKET_FRAC = 0.25          # theta = 0.25 x range (the adaptive line scale)
 NOTIONAL = 5_000.0
+# S54 finding at (W=60s, REV=0.25): 17-87 flips/hr, P(real) ~ 0.50 at every k, all cells bleed —
+# the ripple-scale lean measures the CHOP, not the trend turns. The dive must be measured at the
+# trend's scale (kickoff: "DIVW may need scale-up"). Sweep the detector scale:
+SCALE_GRID = [(60, 0.25), (600, 0.25), (600, 0.5), (1800, 0.25), (1800, 0.5)]
+K_GRID_COARSE = [0.0, 0.04, 0.09, 0.18, 0.25]
 
 
 def rolling_range_bps(mid, W):
@@ -96,50 +101,54 @@ def run_cell(cell, path, K, tk):
     L = min(len(mid), len(buy1))
     mid, buy1, sell1 = mid[:L], buy1[:L], sell1[:L]
     hrs = (raw["ts"][-1] - raw["ts"][0]) / 3600.0
-    lean = lean_series(buy1, sell1, LEAN_W_1S)
     rng4 = rolling_range_bps(mid, RANGE_W)
-    flips, _pos = detect_flips(lean, REV)
-    flips = [(int(c), int(p), int(s)) for (c, p, s) in flips if c > RANGE_W // 4]
     rt = 2 * tk
-    out = dict(cell=cell, hrs=hrs, n_flips=len(flips), flips_hr=len(flips) / hrs, k={})
+    out = dict(cell=cell, hrs=hrs, scales={})
 
-    for k in K_GRID:
-        acted = 0
-        real = 0
-        pnl = []
-        lag = []
-        for (c, p, s) in flips:
-            rng = rng4[c]
-            if rng <= 0:
-                continue
-            xthr = k * rng / 1e4
-            base = mid[c]
-            # first t where the post-flip move reaches k x range (k=0 -> act at the flip)
-            t_act = None
-            horizon = min(len(mid), c + RANGE_W)      # give it up to 4h to confirm
-            if k == 0.0:
-                t_act = c
-            else:
-                for t in range(c + 1, horizon):
-                    if s * (mid[t] - base) / base >= xthr:
-                        t_act = t
-                        break
-            if t_act is None:
-                continue
-            theta = BRACKET_FRAC * rng4[t_act]
-            b = bracket_outcome(mid, t_act, s, theta)
-            if b is None:
-                continue
-            acted += 1
-            real += int(b[0])
-            pnl.append(b[1] - rt)
-            lag.append(s * (mid[t_act] - base) / base * 1e4)
-        row = dict(acted=acted, act_frac=acted / max(1, len(flips)),
-                   p_real=(real / acted) if acted else None,
-                   net_leg=float(np.mean(pnl)) if pnl else None,
-                   dhr=float(np.sum(pnl) / 1e4 * NOTIONAL / hrs) if pnl else 0.0,
-                   med_lag_bps=float(np.median(lag)) if lag else None)
-        out["k"][f"{k:.2f}"] = row
+    for (W, rev) in SCALE_GRID:
+        lean = lean_series(buy1, sell1, W)
+        flips, _pos = detect_flips(lean, rev)
+        flips = [(int(c), int(p), int(s)) for (c, p, s) in flips if c > RANGE_W // 4]
+        srow = dict(n_flips=len(flips), flips_hr=len(flips) / hrs, k={})
+        kg = K_GRID if (W, rev) == (60, 0.25) else K_GRID_COARSE
+        for k in kg:
+            acted = 0
+            real = 0
+            pnl = []
+            lag = []
+            for (c, p, s) in flips:
+                rng = rng4[c]
+                if rng <= 0:
+                    continue
+                xthr = k * rng / 1e4
+                base = mid[c]
+                # first t where the post-flip move reaches k x range (k=0 -> act at the flip)
+                t_act = None
+                horizon = min(len(mid), c + RANGE_W)      # give it up to 4h to confirm
+                if k == 0.0:
+                    t_act = c
+                else:
+                    for t in range(c + 1, horizon):
+                        if s * (mid[t] - base) / base >= xthr:
+                            t_act = t
+                            break
+                if t_act is None:
+                    continue
+                theta = BRACKET_FRAC * rng4[t_act]
+                b = bracket_outcome(mid, t_act, s, theta)
+                if b is None:
+                    continue
+                acted += 1
+                real += int(b[0])
+                pnl.append(b[1] - rt)
+                lag.append(s * (mid[t_act] - base) / base * 1e4)
+            srow["k"][f"{k:.2f}"] = dict(
+                acted=acted, act_frac=acted / max(1, len(flips)),
+                p_real=(real / acted) if acted else None,
+                net_leg=float(np.mean(pnl)) if pnl else None,
+                dhr=float(np.sum(pnl) / 1e4 * NOTIONAL / hrs) if pnl else 0.0,
+                med_lag_bps=float(np.median(lag)) if lag else None)
+        out["scales"][f"W{W}_r{rev:.2f}"] = srow
     return out
 
 
@@ -150,14 +159,15 @@ def main():
         if r is None:
             continue
         results.append(r)
-        print(f"\n== {cell} ({r['hrs']:.1f}h, {r['n_flips']} lean flips, "
-              f"{r['flips_hr']:.1f}/hr) ==")
-        print("    k(xrange)  acted  act%   P(real)  net/leg(tk)   $/hr")
-        for k, row in r["k"].items():
-            pr = "  n/a" if row["p_real"] is None else f"{row['p_real']:.2f}"
-            nl = "   n/a" if row["net_leg"] is None else f"{row['net_leg']:+.1f}"
-            print(f"      {k}     {row['acted']:>5}  {row['act_frac']:>4.0%}    {pr}"
-                  f"    {nl:>8}   {row['dhr']:>+7.2f}")
+        print(f"\n== {cell} ({r['hrs']:.1f}h) ==")
+        for sname, srow in r["scales"].items():
+            print(f"  {sname}: {srow['n_flips']} flips ({srow['flips_hr']:.1f}/hr)")
+            print("    k(xrange)  acted  act%   P(real)  net/leg(tk)   $/hr")
+            for k, row in srow["k"].items():
+                pr = "  n/a" if row["p_real"] is None else f"{row['p_real']:.2f}"
+                nl = "   n/a" if row["net_leg"] is None else f"{row['net_leg']:+.1f}"
+                print(f"      {k}     {row['acted']:>5}  {row['act_frac']:>4.0%}    {pr}"
+                      f"    {nl:>8}   {row['dhr']:>+7.2f}")
     out = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                        "_s54_flip_threshold_results.json")
     with open(out, "w") as f:
