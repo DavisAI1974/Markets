@@ -170,7 +170,25 @@ adverse >= theta with no vetted confirm, flip on the first f_fb recovery off the
 adverse extreme; f_fb in {25%,50%} theta). RISK ACCOUNTING first-class: loss bound loosens
 from ~theta to theta+depth-to-first-bounce -> per-leg max-adverse p95/max printed; a blown
 tail kills the refinement regardless of P&L.
-**Result:** (pending)
+**Result (bins, 30d x 5): REJECTED as a general fix — and the diagnosis it rested on is
+OVERTURNED at mid-band.**
+- P&L: bnc25 improves $real on ~6/10 (coin,theta) cells (best: BTC th80 -3.50 -> -2.09 with
+  gross +3.1 -> +7.4); bnc50 erratic (ETH/DOGE th80 up, XRP th100 blown: -7.4 gr/leg). No
+  uniform winner.
+- RISK: the tail price is real and steep — adv p95 78-99 (base) -> 103-140 (bnc25) -> 140-200
+  (bnc50); MAX 87-148 -> 154-286 -> 260-539bp. The bounded-loss property is the baseline's
+  crown jewel; bnc50 triples the tail.
+- COVERAGE: PART% 98-99 -> 84-90 (bnc25) -> 78-82 (bnc50) — bounce-waiting sits wrong-sided
+  through 10-20% of oracle legs (Greg's missed-trades axis, directly hit).
+- **THE DIAGNOSIS FLIP (the round's real finding): at mid-band the fallback was never the
+  bleed.** Base-machine fallbacks OUT-gross confirms on 7/10 cells (XRP th100: FB +5.6 vs
+  CONF -1.6; ETH th80: FB +6.4 vs CONF -1.7). The S56 "structurally sells troughs" narrative
+  was a FINE-scale/un-vetoed-v2 fact that does NOT transfer to the k>=3 mid-band machine
+  (scale-locality strikes again — it applied to the KILL narrative too). The true weak spot
+  on the weak coins is VETOED-CONFIRM QUALITY, which is the member-map rerun's business.
+**Verdict:** keep the BASELINE fallback (immediate flip, bounded ~theta) as the standard;
+carry bnc25 ONLY as a BTC per-cell candidate into the machine reruns (both BTC thetas
+improved, tail moderate 166-169 max); the reruns inherit baseline fallback everywhere else.
 
 ## PER-COIN VERDICTS (coin-specific agents on the leg dumps; Coinbase = deploy frame)
 
