@@ -131,6 +131,34 @@ the bins stack restricted to the books' calendar window — if bins-last-4-days 
 it is regime not venue. Plus per-week z on the bins k>=3 lift (if the lift is week-unstable
 on bins, the books inversion is just one bad week showing up honestly).
 
+## ROUND 3 CONTROLS (gate + window-match) — THE STACK IS CONDITIONAL, NOT UNIVERSAL
+
+`scripts/_s58_piece1_stack_gate.py`. Three findings, each load-bearing:
+
+1. **Shuffle gate: the k>=3 lift clears the structure-free floor ONLY on SOL** (fwd -7.48 vs
+   shuffle -11.93 at th80c50; -5.72 vs -9.21 at th100c50 — a real +3.5-4.4 $/hr structure
+   premium). ETH/BTC/DOGE th100 sit AT their shuffle floor (no separation); XRP th80 is BELOW
+   it. Leakage PASS everywhere. Per-week: 0/5 positive weeks on every cell at cb_real (fees
+   dominate every week; the stack never flips a week positive — entry-alone confirmed unable
+   to reach cb_real+).
+2. **Window-match splits the SOL inversion: it is VENUE, not regime.** On the SAME recent
+   ~4-day window, Binance SOL holds (k0 +2.42 -> k3 +5.18bp/leg) while Coinbase SOL books
+   invert — so the flow reads mean different things on the two venues (channel construction
+   and/or participant mix). Do NOT port flow-read grades across venues without per-venue
+   validation.
+3. **The k>=3 lift is REGIME-UNSTABLE on 4/5 coins:** on the recent bins suffixes the naive
+   k0 machine beats the stack (eth +0.12 -> -1.87; xrp +8.07 -> -2.11; btc +12.59 -> +6.00;
+   doge +5.24 -> +2.47) AND k0 gross is positive on ALL coins in the recent window (the
+   recent regime favors naive mid-band dip-entering everywhere). The stack's pooled-30d lift
+   is concentrated in other/earlier regimes.
+
+**Verdict:** flow-read confirm-grading is venue-specific AND regime-conditional — per-cell
+AND per-regime validation required before it is anything more than a research read. The
+venue-portable part of the entry is the PRICE MECHANICS (arming, confirm fraction, fallback).
+Priority therefore shifts to the fallback refinement (price-only, the last named entry
+bleed), with regime-conditioning of the stack as the follow-on question ("WHEN does the
+stack help?" — likely a job for the regime gate thread, per-cell).
+
 ## PARKED FOR LATER PIECES (Greg: do NOT act on these while entry is open — record only)
 
 Findings about exit/hold/sizing that surfaced during entry work. Append here, never chase.
