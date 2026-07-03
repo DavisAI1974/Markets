@@ -99,6 +99,48 @@ BINS/BOOKS trigger-rate gap (57-65% vs ~100%) is partly the lean wall-clock conf
 Both are MACHINE tests (composition changes: extra legs/fees for (a), flat-until-confirm
 for (b)) vs the zigzag baseline, all fee columns. Leg-slice numbers above are hypotheses.
 
+## ROUND 1c — THE SIGN-SWAP TESTS (Greg: "the signs are swapped" / "firing in the correct
+## spot but the opposite trade") — 5 exit families, leg-slice, bins (books lean saturated)
+
+Greg's reads tested directly. Δa = all-legs delta vs the zigzag exit, bp/leg, registry cells:
+
+| family (exit read)                  | sol   | btc   | doge  | xrp   |
+|-------------------------------------|-------|-------|-------|-------|
+| R8 collapse (0.10,0)                | -3.3  | +1.3  | -3.1  | -0.8  |
+| dive dv30 (opposing -0.30)          | -1.2  | +0.6  | -1.3  | +0.1  |
+| dive-as-FLIP corrector (underwater) | -1.6  | +0.4  | +1.9* | -1.1  |
+| climax first-cross (sl>=0.3/0.4/0.5)| -1.7  | +1.7  | -1.9  | -0.6  |
+| lean-trailing vertex (A,R grid)     | -2.3  | +2.2  | -3.5  | -0.6  |
+| PRICE trailing-retrace (X=15-35bp)  | -1.6  | +3.1  | +0.5  | +1.3  |
+(* doge dive-flip positive at dv20 only; dv30 negative — fragile)
+
+FINDINGS:
+1. **The flow-climax moment IS the right spot (Greg confirmed): exiting at fav@slmax = +18
+   to +25bp/leg over zigzag on ALL 4 coins.** But it is hindsight — every causal detector
+   tried (first-cross, collapse, trailing-on-lean) fires on earlier lesser climaxes and
+   loses on 3/4 coins. The winner's FINAL climax is not causally distinguishable from
+   mid-ride climaxes by the lean alone = the entry-side "winners invisible to causal flow
+   reads" convergence, now confirmed on the exit side. The +18-25 ceiling is the S35
+   fingerprint-tier target, not a threshold-knob target.
+2. **BTC is a flow-exit coin: EVERY family is positive on btc_bins** (+0.4..+3.1) — same
+   coin whose entry side rewarded flow reads (opposing-mandatory th80). DEFLATIONARY READ
+   (must be split by the agents): btc baseline is the worst (-2.97 gr/leg) — on a
+   negative-EV cell ANY earlier exit trivially helps; is the lift timing skill or just
+   exposure-shrink? Test: does the lift survive on btc's POSITIVE weeks / on the tail
+   window where btc k0 turned positive?
+3. **The dive-as-flip corrector (blanket, underwater-conditioned) does NOT pay pooled** —
+   the machine's entries are dip entries, so early opposing dives are ENTRY NOISE on
+   healthy legs; the old side recovers more often than it continues down (flip_gain
+   negative on most cells). It pays only where wrong-side legs dominate (btc books +5.1
+   dv30). The discriminator wrong-side-vs-entry-noise = an agent question (depth, age,
+   never-armed, graded).
+4. **SOL: NOTHING beats its zigzag exit** (all families negative) — the lead cell's exit
+   is already near-optimal among lean/price threshold reads; its prize sits only in the
+   hindsight ceiling. Protect it: any deployed exit read must be per-cell OFF for sol
+   until something clears controls.
+5. XRP mild positive on PRICE trailing only (+0.5..+1.3) — consistent with its "price
+   mechanics only" entry verdict.
+
 ## SESSION LOG (append per round)
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
