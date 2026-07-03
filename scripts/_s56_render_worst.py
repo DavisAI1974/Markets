@@ -84,14 +84,28 @@ def gated_v2_tagged(mid, buy, sell, arm_bp, fine_bp, mode_gate="reversal"):
     return flips
 
 
-def legs_for_coin(coin, sym, arm, fine):
+def v3_tagged(mid, buy, sell, arm):
+    """v3 legs (armed zigzag-flip machine) with the dipole read at each pivot as descriptor."""
+    from _s56_armed_gate import armed_zigzag_flips
+    fl = armed_zigzag_flips(mid, buy, sell, arm)
+    out = []
+    for (c, p, s) in fl:
+        lo = max(0, p - DIVW)
+        dv = divergence(buy[lo:p + 1], sell[lo:p + 1], float(mid[p] - mid[lo])) \
+            if p - lo >= 12 else None
+        out.append((c, p, s, "zzflip", dv))
+    return out
+
+
+def legs_for_coin(coin, sym, arm, fine, machine="v2"):
     p = f"/tmp/backfill/{sym}_30d_bins.json"
     if not os.path.exists(p):
         return [], None
     mid, buy, sell, cov, hrs = load_bins(p)
     mid = np.asarray(mid, float)
     buy = np.asarray(buy, float); sell = np.asarray(sell, float)
-    fl = gated_v2_tagged(mid, buy, sell, arm, fine)
+    fl = v3_tagged(mid, buy, sell, arm) if machine == "v3" \
+        else gated_v2_tagged(mid, buy, sell, arm, fine)
     legs = []
     for (c1, p1, s1, tag, dv), (c2, p2, s2, _t2, _d2) in zip(fl[:-1], fl[1:]):
         gross = s1 * (mid[c2] - mid[c1]) / mid[c1] * 1e4
@@ -155,22 +169,25 @@ def sheet(path, title, legs, dat_by_coin):
 def main():
     arm = float(sys.argv[sys.argv.index("--arm") + 1]) if "--arm" in sys.argv else 60.0
     fine = float(sys.argv[sys.argv.index("--fine") + 1]) if "--fine" in sys.argv else 25.0
+    machine = "v3" if "--v3" in sys.argv else "v2"
     os.makedirs(OUT, exist_ok=True)
     all_legs = []
     dat = {}
     for coin, sym in COINS:
-        legs, arrs = legs_for_coin(coin, sym, arm, fine)
+        legs, arrs = legs_for_coin(coin, sym, arm, fine, machine=machine)
         print(f"[{coin}] {len(legs)} legs")
         all_legs += legs
         if arrs is not None:
             dat[coin] = arrs
     worst = sorted(all_legs, key=lambda l: l["net_mm3"])[:10]
     winners = sorted([l for l in all_legs if l["net_mm3"] > 0], key=lambda l: l["net_mm3"])[:10]
-    tag = f"tight ARM{arm:.0f}/FINE{fine:.0f} mm3 blend"
-    sheet(os.path.join(OUT, "worst10.png"), f"S56 walkthrough — 10 WORST losers ({tag})",
-          worst, dat)
-    sheet(os.path.join(OUT, "smallwin10.png"), f"S56 walkthrough — 10 SMALLEST winners ({tag})",
-          winners, dat)
+    tag = (f"v3 zzflip-confirm ARM{arm:.0f}" if machine == "v3"
+           else f"tight ARM{arm:.0f}/FINE{fine:.0f}") + " mm3 blend"
+    pre = "" if machine == "v2" else "v3_"
+    sheet(os.path.join(OUT, f"{pre}worst10.png"),
+          f"S56 walkthrough — 10 WORST losers ({tag})", worst, dat)
+    sheet(os.path.join(OUT, f"{pre}smallwin10.png"),
+          f"S56 walkthrough — 10 SMALLEST winners ({tag})", winners, dat)
 
 
 if __name__ == "__main__":
