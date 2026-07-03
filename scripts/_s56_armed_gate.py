@@ -34,9 +34,51 @@ WEEK_S = 7 * 24 * 3600
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_s56_armed_gate_results.json")
 
 
-def run_armed(mid, buy, sell, arm, fine, reverse=False):
+def armed_fine_zigzag_v2(mid, arm_bp, fine_bp):
+    """S56 round 2 — v2 arming: extremes anchored SINCE THE LAST FLIP, symmetric watch.
+
+    v1's measured flaw (S56 round 1 instrumentation): arm referenced to the last PIVOT PRICE +
+    one-sided watch -> 98% of tape stranded in a stale leg (max 289h), max adverse ride 1905bp,
+    3.9 legs/day vs oracle 28-60 at the same scale. v2:
+      - peak flip ARMS when running-high >= running-low*(1+ARM) (the up-leg extended ARM from its
+        actual start); first fine_bp dip off the high CONFIRMS (cheap, at the turn);
+      - TRAILING FALLBACK (the symmetric watch): holding a position, price moving ARM against the
+        running favorable extreme without ever arming flips at that extreme anyway — plain
+        zigzag theta=ARM behavior; bounds the loss at ~ARM by construction.
+    Net: the theta=ARM zigzag, accelerated by fine confirms wherever legs extend (Greg's
+    "zigzag scaled up, firing slower, merged trends")."""
+    a, f = arm_bp / 1e4, fine_bp / 1e4
+    n = len(mid)
+    flips = []
+    lo_i = hi_i = 0
+    mode = 0
+    for t in range(1, n):
+        m = mid[t]
+        if m < mid[lo_i]:
+            lo_i = t
+        if m > mid[hi_i]:
+            hi_i = t
+        if mode >= 0:
+            armed = mid[hi_i] >= mid[lo_i] * (1 + a)
+            if armed and m <= mid[hi_i] * (1 - f):          # fine confirm at the peak
+                flips.append((t, hi_i, -1)); mode = -1; lo_i = t
+                continue
+            if mode == 1 and m <= mid[hi_i] * (1 - a):      # trailing fallback (bounded loss)
+                flips.append((t, hi_i, -1)); mode = -1; lo_i = t
+                continue
+        if mode <= 0:
+            armed = mid[lo_i] <= mid[hi_i] * (1 - a)
+            if armed and m >= mid[lo_i] * (1 + f):          # fine confirm at the valley
+                flips.append((t, lo_i, +1)); mode = +1; hi_i = t
+                continue
+            if mode == -1 and m >= mid[lo_i] * (1 + a):     # trailing fallback
+                flips.append((t, lo_i, +1)); mode = +1; hi_i = t
+    return flips
+
+
+def run_armed(mid, buy, sell, arm, fine, reverse=False, fn=armed_fine_zigzag):
     """Flips + platform executor at S55 first-pass mechanics (flat taker rt11)."""
-    fl = armed_fine_zigzag(mid, arm, fine)
+    fl = fn(mid, arm, fine)
     if reverse:
         fl = [(c, p, -s) for (c, p, s) in fl]
     z = np.zeros(len(mid))
@@ -59,8 +101,8 @@ def load_all():
     return data
 
 
-def grid(data):
-    print("\nROUND 1 GRID — armed_fine_zigzag, 30d x 5, flat $5k taker rt11, platform executor")
+def grid(data, fn=armed_fine_zigzag, key="grid"):
+    print(f"\nGRID [{key}] — 30d x 5, flat $5k taker rt11, platform executor")
     print("per cell: n legs | net/leg bp | $/hr  (REV = reversed $/hr)")
     rows = {}
     for fine in FINES:
@@ -72,8 +114,8 @@ def grid(data):
             tot = rtot = 0.0
             cells = {}
             for coin, (mid, buy, sell, hrs) in data.items():
-                res = run_armed(mid, buy, sell, arm, fine)
-                rres = run_armed(mid, buy, sell, arm, fine, reverse=True)
+                res = run_armed(mid, buy, sell, arm, fine, fn=fn)
+                rres = run_armed(mid, buy, sell, arm, fine, reverse=True, fn=fn)
                 dhr = res.total_net_bps * CAP / 1e4 / hrs
                 rdhr = rres.total_net_bps * CAP / 1e4 / hrs
                 tot += dhr; rtot += rdhr
@@ -83,8 +125,13 @@ def grid(data):
                                    legs_day=float(res.n_legs / hrs * 24.0))
             print(row + f" | {tot:>+8.2f}{rtot:>+8.2f}")
             rows[f"a{arm:.0f}_f{fine:.0f}"] = cells
+    prev = {}
+    if os.path.exists(OUT):
+        with open(OUT) as f:
+            prev = json.load(f)
+    prev[key] = rows
     with open(OUT, "w") as f:
-        json.dump({"grid": rows}, f, indent=1)
+        json.dump(prev, f, indent=1)
     print(f"\nsaved -> {OUT}")
 
 
@@ -152,5 +199,7 @@ if __name__ == "__main__":
         a = pa.parse_args()
         gate(d, [float(x) for x in a.arms.split(",")],
              [float(x) for x in a.fines.split(",")])
+    elif "--v2" in sys.argv:
+        grid(d, fn=armed_fine_zigzag_v2, key="grid_v2")
     else:
         grid(d)
