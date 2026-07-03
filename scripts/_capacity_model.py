@@ -69,22 +69,35 @@ def _leg_features(legs, mid, sret, buy, sell, lean, piv):
     return clmx, size_score
 
 
-def _leg_caps(legs, mid, buy, sell, bb, ba, queue_frac=1.0):
+def _leg_caps(legs, mid, buy, sell, bb, ba, queue_frac=1.0, window=FILL_W, price_eligible=True):
     """flow-bounded $ capacity per leg (entry-window opposing flow) — fee/spread independent.
     Returns (v1, v2):
-      v1 = ALL opposing $ flow in the entry window (the S50 model — optimistic: assumes we are alone at
-           the level and first in line).
+      v1 = opposing $ flow in the entry window that can actually reach our FIXED limit (see eligibility).
       v2 = QUEUE-HONEST (Job 4, odcore.maker_book discipline): we join the BACK of the best level at the
            post cell, so the size already resting AHEAD of us (best-level size x queue_frac) must trade
            through before our first unit fills -> fillable$ = max(0, window_opp_flow - queue_ahead) x px.
+    window: cells after the fill cell the order stays working (a TIF / cancel-remainder policy);
+            None = rest until the leg close (the executor's actual no-window design).
+    price_eligible (S52 correction): a fixed limit at the post cell only fills in cells where the venue's
+    best is at-or-through it (long: mid[t] <= mid[flip]; short: mid[t] >= mid[flip]). The old model summed
+    ALL window flow — crediting winners with flow that traded after price had left the limit. That
+    overstated mk0 $/hr on every cell (S52 fill-window audit); eligibility is now the default.
     Exit side stays un-marked (turns are ~2x volume climaxes, S40) — flagged, same as v1."""
     v1, v2 = [], []
+    W = window
     for l in legs:
-        o, c = int(l.open_idx), int(l.close_idx)
+        o, c, ci = int(l.open_idx), int(l.close_idx), int(l.flip_idx)
         if c <= o:
             v1.append(0.0); v2.append(0.0); continue
-        end = min(c, o + FILL_W)
-        opp = float(np.sum(sell[o:end + 1] if l.side > 0 else buy[o:end + 1]))   # coin units
+        end = c if W is None else min(c, o + W)
+        seg = slice(o, end + 1)
+        opp_arr = (sell if l.side > 0 else buy)[seg]
+        if price_eligible:
+            m = mid[seg]
+            ok = (m <= mid[ci]) if l.side > 0 else (m >= mid[ci])
+            opp = float(np.sum(opp_arr[ok]))
+        else:
+            opp = float(np.sum(opp_arr))                                          # coin units
         qa = float((bb if l.side > 0 else ba)[o]) * queue_frac                    # resting ahead of us
         px = float(mid[o])
         v1.append(opp * px)
