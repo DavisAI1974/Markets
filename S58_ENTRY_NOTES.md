@@ -159,6 +159,22 @@ Priority therefore shifts to the fallback refinement (price-only, the last named
 bleed), with regime-conditioning of the stack as the follow-on question ("WHEN does the
 stack help?" — likely a job for the regime gate thread, per-cell).
 
+## PER-COIN VERDICTS (coin-specific agents on the leg dumps; Coinbase = deploy frame)
+
+**ETH — DROP from the mid-band deploy round (agent verdict, decisive).** The Coinbase
+promise = 2 legs of one tape (top-2 legs = 155% of the cell total; remaining 11 avg -15.8bp;
+the same market moves recur across cells via entry_idx — books hold ~6-8 independent swings
+total) AND the lucky legs sit in b_climax=0 = the bins fingerprint's false-fire pool. Bins:
+k3 confirms -1.66bp/leg while fallbacks +6.4 (the stack selects nothing on ETH); everything
+cb_real-negative. RE-ENTRY TEST (named): ~100 accrued Coinbase book confirms in th100 k3
+with top-2-excluded mean > +10bp/leg + k3^B3 shuffle-gate pass. ETH false-fire fingerprint
+(both-theta): NO-climax + low-ER(<0.075) + slow-fade(<10bpm) + LONG side + hod 18-23 UTC
+(win 28-33%, -16..-32bp/leg). ETH winner marks (wire-in item): clmx60>=2.85 (strongest),
+er600>=0.18, fade>=28bpm, SHORT side, hod 06-11, dive_depth MID (Q3, not deep). STRUCTURAL:
+climax GRADES confirms but ANTI-grades fallbacks (sign flip per kind) — member maps are
+per-KIND, never pooled. Honest positive kept: bins k3-confirm improves across 30d thirds
+(th100: -16.2 -> +6.5 -> +13.0) but k0 improved too = the regime effect, not an ETH edge.
+
 ## FINGERPRINTABLE SURFACES (Greg: "is there any other part fingerprintable?" — the map)
 
 Anything recurring with a per-cell distinctive signature at a decision moment. Preconditions
