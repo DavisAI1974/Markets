@@ -28,25 +28,36 @@ _h2h = import_module("_s52_accum_vs_oneshot")
 PATH = "/tmp/sol_coinbase_book.jsonl.gz"
 K, GRACE, MK, TK, SMAX = 1, 300, -1.0, 5.0, 5000.0
 
+# cross-cell rerun: same cell params as the S52 head-to-head (Coinbase mk-1/tk5; Bybit MM3 target tier)
+CELLS = [
+    ("sol_coinbase",  "/tmp/sol_coinbase_book.jsonl.gz",  1, 300, -1.0, 5.0),
+    ("eth_coinbase",  "/tmp/eth_coinbase_book.jsonl.gz",  1, 300, -1.0, 5.0),
+    ("btc_coinbase",  "/tmp/btc_coinbase_book.jsonl.gz", 10, 300, -1.0, 5.0),
+    ("doge_coinbase", "/tmp/doge_coinbase_book.jsonl.gz", 1, 600, -1.0, 5.0),
+    ("xrp_coinbase",  "/tmp/xrp_coinbase_book.jsonl.gz",  1, 300, -1.0, 5.0),
+    ("sol_bybit",     "/tmp/sol_bybit_book.jsonl.gz",     1, 300, -1.25, 5.5),
+    ("eth_bybit",     "/tmp/eth_bybit_book.jsonl.gz",     1, 300, -1.25, 5.5),
+]
 
-def load_cell():
-    raw = load_book(PATH)
-    ch, g = build_channels(PATH, K, FLOW_W, raw=raw)
+
+def load_cell(path=PATH, k=K, tk=TK):
+    raw = load_book(path)
+    ch, g = build_channels(path, k, FLOW_W, raw=raw)
     mid = np.asarray(g["mid"], float)
     bb, ba = np.asarray(g["bidK"][1], float), np.asarray(g["askK"][1], float)
     buy, sell = np.asarray(g["buy"], float), np.asarray(g["sell"], float)
-    hs = median_spread_bps(PATH, raw=raw) / 2.0
+    hs = median_spread_bps(path, raw=raw) / 2.0
     hrs = (raw["ts"][-1] - raw["ts"][0]) / 3600.0
-    theta = _h2h.ZIG_K * (hs + TK)
+    theta = _h2h.ZIG_K * (hs + tk)
     flips = _h2h._price_zigzag(mid, theta)
     gdip = _h2h._dipole_gate(flips, mid, buy, sell)
     return mid, bb, ba, buy, sell, hs, hrs, theta, flips, gdip
 
 
-def rolling_conf_bps(flips, mid, hs, confirm_k=0.25, swing_roll=100):
+def rolling_conf_bps(flips, mid, hs, confirm_k=0.25, swing_roll=100, tk=TK):
     """Replicates the executor's causal rolling-median swing stat -> conf_bps per flip index."""
     n = len(mid)
-    fee_floor = hs + TK
+    fee_floor = hs + tk
     swings, med = [], np.full(len(flips), np.nan)
     for k in range(1, len(flips)):
         a, b = flips[k - 1][0], flips[k][0]
@@ -207,7 +218,87 @@ def sweep(mid, bb, ba, buy, sell, hs, hrs, flips, gdip):
     return out
 
 
+CANDIDATES = [
+    ("base",     {}),
+    ("d1.5",     {"dump_mult": 1.5}),
+    ("d3.0",     {"dump_mult": 3.0}),
+    ("cap0",     {"p2_taker_cap": 0.0}),
+    ("stack",    {"dump_mult": 3.0, "p2_taker_cap": 0.0, "slide_x_mult": 2.0}),
+]
+
+
+def run_cells():
+    """Cross-cell generalization check (Greg, S53): mechanism or SOL quirk? Per cell: A3 false-dump
+    rate + A2 taker corr on the base dipole arm, then base vs candidate configs with full controls.
+    Decision rule (stated up front): candidate graduates to 'awaiting time-OOS' only if the false-dump
+    mechanism shows broadly AND the lift holds on most cells; SOL-only => window/cell noise."""
+    allout = {}
+    for (cell, path, k, grace, mk, tk) in CELLS:
+        if not os.path.exists(path):
+            print(f"\n[{cell}] no book"); continue
+        mid, bb, ba, buy, sell, hs, hrs, theta, flips, gdip = load_cell(path, k, tk)
+        print(f"\n[{cell}] {hrs:.2f}h  hs {hs:.2f}bps  theta {theta:.1f}bps  flips {len(flips)} "
+              f"({len(flips)/hrs:.1f}/hr)  dipole pass {gdip.mean()*100:.0f}%")
+        if len(flips) < 20:
+            print(f"  TOO THIN ({len(flips)} flips) — reported, not scored"); continue
+        rng = np.random.default_rng(7)
+        gshuf = rng.permutation(gdip)
+        rflips = [(c, p, -s) for (c, p, s) in flips]
+        base_kw = dict(half_spread_bps=hs, maker_fee_bps=mk, taker_fee_bps=tk, S_max=SMAX,
+                       unload_grace=grace)
+
+        # diagnostics-lite on the base dipole arm: A3 false-dump rate + A2 taker corr
+        r0 = simulate_swing_accum(mid, bb, ba, buy, sell, flips, queue_frac=0.0, entry_ok=gdip,
+                                  **base_kw)
+        conf_of = rolling_conf_bps(flips, mid, hs, tk=tk)
+        confmap = {int(flips[j][0]): float(conf_of[j]) for j in range(len(flips))}
+        flip_cells = np.asarray([int(c) for (c, p, s) in flips])
+        n_dump = n_false = 0
+        for l in r0.legs:
+            if not l.dumped:
+                continue
+            n_dump += 1
+            ref, cb = mid[l.flip_idx], confmap.get(l.flip_idx, hs + tk)
+            nx = flip_cells[flip_cells > l.flip_idx]
+            nx = int(nx[0]) if len(nx) else len(mid) - 1
+            seg = mid[l.close_flip_idx:nx]
+            if len(seg) and ((seg >= ref * (1 + cb / 1e4)).any() if l.side > 0
+                             else (seg <= ref * (1 - cb / 1e4)).any()):
+                n_false += 1
+        tf = [l.taker_usd / max(1.0, l.maker_usd + l.taker_usd) for l in r0.legs if l.confirmed]
+        tn = [l.net_usd for l in r0.legs if l.confirmed]
+        print(f"  diag: false dumps {n_false}/{n_dump} ({100*n_false/max(1,n_dump):.0f}%)  "
+              f"taker-share corr vs net {_corr(tf, tn):+.2f}  (n_conf={len(tn)})")
+
+        rows = {}
+        print(f"  {'config':8s} {'dipole':>8s} {'shuffle':>8s} {'REVERSED':>8s} {'Q1dip':>8s}  legs win% dump%")
+        for name, kw in CANDIDATES:
+            d = simulate_swing_accum(mid, bb, ba, buy, sell, flips, queue_frac=0.0, entry_ok=gdip,
+                                     **base_kw, **kw)
+            s_ = simulate_swing_accum(mid, bb, ba, buy, sell, flips, queue_frac=0.0, entry_ok=gshuf,
+                                      **base_kw, **kw)
+            r_ = simulate_swing_accum(mid, bb, ba, buy, sell, rflips, queue_frac=0.0, entry_ok=gdip,
+                                      **base_kw, **kw)
+            q_ = simulate_swing_accum(mid, bb, ba, buy, sell, flips, queue_frac=1.0, entry_ok=gdip,
+                                      **base_kw, **kw)
+            rows[name] = dict(dipole=d.net_usd / hrs, shuffle=s_.net_usd / hrs,
+                              reversed=r_.net_usd / hrs, q1=q_.net_usd / hrs, legs=d.n_legs,
+                              win=d.win_frac, dump=d.n_dumped / max(1, d.n_legs))
+            print(f"  {name:8s} {rows[name]['dipole']:+8.2f} {rows[name]['shuffle']:+8.2f} "
+                  f"{rows[name]['reversed']:+8.2f} {rows[name]['q1']:+8.2f}  {d.n_legs:3d}  "
+                  f"{d.win_frac*100:3.0f}  {rows[name]['dump']*100:3.0f}")
+        allout[cell] = dict(hrs=hrs, theta=theta, n_flips=len(flips),
+                            false_dump=f"{n_false}/{n_dump}", taker_corr=_corr(tf, tn), rows=rows)
+    with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "_s53_accum_crosscell_results.json"), "w") as f:
+        json.dump(allout, f, indent=2, default=float)
+    return allout
+
+
 def main():
+    if "--cells" in sys.argv:
+        run_cells()
+        return
     mid, bb, ba, buy, sell, hs, hrs, theta, flips, gdip = load_cell()
     print(f"[sol_coinbase] {hrs:.2f}h  hs {hs:.2f}bps  zigzag theta {theta:.1f}bps  "
           f"flips {len(flips)} ({len(flips)/hrs:.1f}/hr)  dipole pass {gdip.mean()*100:.0f}%")
