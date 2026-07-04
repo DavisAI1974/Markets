@@ -351,6 +351,16 @@ net-negative even with it (-5.42) — its value frame is kr_mk0. Coinbase books 
 saturation fixed (100% -> 52-68%). VALIDATION PATHS: Coinbase = books accrual (dumps now
 unconfounded); Kraken = books + more tape (shuffle-floor fail stands until then).
 
+## ⭐ FOCUS DIRECTIVE (Greg, S60 mid-session — supersedes the round-3 framing)
+**WE ARE FIXING THE COINBASE EXIT STRATEGY. Everything else HALTED** except already-running
+background work. The exit fleet re-launched with COINBASE-frame charters: grade ON the
+Coinbase books (registry cells, cb_real 8bp frame, the sandbox deploy reality); bins =
+secondary support only. **DO NOT PUSH exit-fix work until Greg clears it** (local commits
+only). **PARKED FOR LATER (Greg): KRAKEN EXITS** — the whole Kraken exit analysis (incl.
+the shuffle-floor question on the DOGE flip, the btc plain40 Kraken premium, and any
+eth_kraken exit work) waits until the Coinbase exit is fixed; Kraken books accrual
+continues in the background meanwhile.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
