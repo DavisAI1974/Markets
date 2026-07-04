@@ -361,6 +361,28 @@ the shuffle-floor question on the DOGE flip, the btc plain40 Kraken premium, and
 eth_kraken exit work) waits until the Coinbase exit is fixed; Kraken books accrual
 continues in the background meanwhile.
 
+## ROUND 4 — COINBASE EXIT FIX (books-first, cb_real frame; Greg's focus directive)
+
+**XRP — "the cell's problem is NOT the exit" (decisive decomposition).** The -11.86 net/leg
+= **-16.00 fees on +4.14 gross**; winner giveback is -26.7 of which -26.3 is the structural
+c*theta toll (excess over toll: +0.70bp med, max +1.23 — the toll law now prints 4/4 coins
+BOTH venues). Death-side ceiling: a PERFECT oracle stop on all 11 deaths only lifts net to
++4.3 — the entire theoretical exit prize barely crosses zero at cb_real; realistic reads
+get +3..5 -> cell stays -7..-9. **The fix is fee-tier / entry-side / venue-shaped, not
+exit-shaped.** Keep zigzag; XRP stays OFF exit configs (round-2 re-confirmed on books).
+- Toll law on books: winners' giveback med 40.7 vs c*theta=40 EXACT; deaths close AT their
+  lows (adverse == |gross| leg-by-leg, both venues); books deaths discoverable ~12min in
+  (vs 2min bins — venue timing divergence, don't build on it yet).
+- **Death-combo label DOES NOT EXIST on Coinbase books:** 97% of books legs arm (slmax med
+  0.600 vs bins 0.275) — the never-armed state is not something the Coinbase feed produces;
+  the label is bins-only as defined. VENUE-RECALIBRATE thresholds before any books use.
+- One parked hypothesis: **underwater deep-dive corrector** (dv40 + >=10bp underwater) —
+  the cross-coin wrong-side structure appearing on XRP books (th80 +2.80, th100 +10.90,
+  beats the plain-stop null which kills winners) — but 4-6 fired legs inside a 41-cell
+  search on n=32; NAMED, NOT DECIDABLE. Re-grade bar: **150+ th80 book-legs across >=2
+  distinct weeks (~5x current tape)**; and even clearing it (+3/leg) does not rescue
+  cb_real economics — corrector rider, not the cell's fix.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
