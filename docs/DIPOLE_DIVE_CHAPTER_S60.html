@@ -1,0 +1,588 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>The Dive — DavisAI Dipole Paper Chapter (S60)</title>
+<style>
+@page { size: letter; margin: 1in; }
+body { font-family: Georgia, 'Times New Roman', serif; max-width: 7.5in; margin: 2em auto;
+       line-height: 1.55; color: #111; font-size: 11.5pt; padding: 0 1em; }
+h1 { font-size: 22pt; border-bottom: 2px solid #111; padding-bottom: 6px; }
+h2 { font-size: 15pt; margin-top: 1.6em; border-bottom: 1px solid #999; padding-bottom: 3px; }
+h3 { font-size: 12.5pt; margin-top: 1.3em; }
+table { border-collapse: collapse; margin: 1em 0; font-size: 10pt; width: 100%; }
+th, td { border: 1px solid #777; padding: 4px 8px; text-align: left; }
+th { background: #eee; }
+code { font-family: 'Courier New', monospace; font-size: 10pt; background: #f4f4f4; padding: 1px 3px; }
+pre { background: #f4f4f4; padding: 8px; overflow-x: auto; font-size: 9.5pt; }
+blockquote { border-left: 3px solid #999; margin-left: 0; padding-left: 1em; color: #333; }
+h2 { page-break-after: avoid; } table, pre { page-break-inside: avoid; }
+@media print { body { margin: 0; max-width: none; } a { color: #111; text-decoration: none; } }
+</style></head><body><h1>The Dive</h1>
+<h3>A chapter of the DavisAI dipole paper — Session 60, 2026-07-04</h3>
+<hr />
+<h2>0. The inquiry this chapter serves</h2>
+<p>This chapter answers a directive from Greg Davis, given verbatim:</p>
+<blockquote>
+<p>"make a note about that dipole finding. I'd also like to spin up a mit phd level scientific
+research agent to see what are the best uses for all of the different dipoles and their
+equations. in crypto but also anywhere else in the digital or physical world other than what
+they do now. and have him do experiments on the different types so that we can get a full
+explanation as to what it is and what it explains and what is its purpose. I'd like a paper
+written and printed out after he's done."</p>
+</blockquote>
+<p>and its follow-ups:</p>
+<blockquote>
+<p>"and to figure out best uses for dipole dive and other applications. that fascinates me"
+"not just the dive but the dipoles in general along with the dive."</p>
+</blockquote>
+<p>This chapter is the DIVE-specific answer. It states, at data level, <strong>what the dive is, what
+it explains, what its purpose is, and its best uses</strong> — in crypto and beyond — and it reports
+two new in-container experiments run for this chapter. It is written under the program's house
+rules: falsification-first, Result Discipline (data / interpretation / frame kept explicitly
+separate), OD mode (no invented mechanisms), literature treated as conjecture. Numbers from
+prior sessions are cited to their session; new numbers are from the experiments in §2.</p>
+<p>The one-line finding to note first (Greg's "make a note about that dipole finding"), already
+recorded as the S60 STANDING NOTE and formalized here: <strong>the dipole dive is not one signal with
+one job. It is a single physical object — the trailing taker-flow lean and its collapse — that
+serves three distinct offices, and each office earns or fails separately per cell, band, venue,
+and role. Conflating the offices is what made it look dead for two sessions. Separated, it is a
+real regime-boundary marker with a measured domain of usefulness and measured nulls.</strong></p>
+<hr />
+<h2>1. The dive, precisely</h2>
+<h3>1.1 The parent object</h3>
+<p>Every dive lives on a <strong>bounded two-flow imbalance ratio</strong>. In markets the two flows are taker
+BUY volume and taker SELL volume over a trailing window; the ratio is the flow lean</p>
+<pre><code>lean_W[t] = (B_W[t] - S_W[t]) / (B_W[t] + S_W[t])   ∈ [-1, +1]     (causal; odcore/flip_detector.py::lean_series)
+</code></pre>
+<p><code>+1</code> = pure buying, <code>-1</code> = pure selling, <code>0</code> = balanced. This is the signed information dipole
+of the paper's flow form specialized to the two order-flow channels (<code>odcore/info_dipole.py</code>);
+<code>imb_level</code> is the same object over a fixed window. The lean is bounded, signed, and causal — the
+three properties every "dive" definition below inherits.</p>
+<h3>1.2 The dive, as a parameterized definition family</h3>
+<p>A <strong>dive</strong> is a <em>rapid collapse or deep excursion of that bounded ratio, read against the price
+it is supposed to be driving.</em> The program has used five concrete variants. Naming them
+precisely is half the contribution, because they measure different things:</p>
+<table>
+<thead>
+<tr>
+<th>variant</th>
+<th>formal trigger</th>
+<th>what it is</th>
+<th>measures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>(a) pure dive</strong> <code>dv_d</code></td>
+<td>first second with <code>aligned[t] ≤ −d</code>, no prior arming, where <code>aligned = lean_W · sign(price_drift_W)</code></td>
+<td>opposing flow diving in against the prevailing move</td>
+<td>a flow that has turned against price</td>
+</tr>
+<tr>
+<td><strong>(b) dive depth</strong></td>
+<td><code>|lean_W|</code> sampled <em>at</em> a price pivot</td>
+<td>the magnitude of the lean at the turn</td>
+<td>S40: predicts <code>|move|</code> size at fine scale; S55-R9: sign-inconsistent at coarse</td>
+</tr>
+<tr>
+<td><strong>(c) armed-then-dive</strong></td>
+<td>with-ride lean first arms (<code>≥ +arm</code>), <em>then</em> collapses to <code>≤ exit_lo</code></td>
+<td>the sequence: flow confirmed the leg, then reversed</td>
+<td>flow-confirmed failure (S60 correctors)</td>
+</tr>
+<tr>
+<td><strong>(d) fill-moment dive</strong> (S45)</td>
+<td>the deep opposing excursion at a forming extreme</td>
+<td>capitulation flow lifting a resting quote</td>
+<td><em>hypothesis:</em> peak maker-fillability</td>
+</tr>
+<tr>
+<td><strong>(e) divergence-class dive</strong> (R4)</td>
+<td><code>divergence()</code> returns <code>opposing ∧ exhausting</code> or <code>aligned ≤ −0.20</code></td>
+<td>dive against price drift, graded reversal-vs-continuation</td>
+<td>~64% reversal at fine scale (n=317, S36)</td>
+</tr>
+</tbody>
+</table>
+<p>Two orthogonal parameters run through all of them:</p>
+<ul>
+<li><strong>Window <code>W</code></strong> (wall-clock, not cells — this is load-bearing). A 600-<em>cell</em> lean is 60 s on a
+  0.1 s book grid but 600 s on a 1 s bin grid. The S60 exit round found the bins-vs-books trigger
+  gap was <em>partly this confound, not venue</em> (S60 rounds 1a, 4b gap #2). <strong>Every dive definition
+  must be stated in wall-clock seconds per venue.</strong></li>
+<li><strong>Depth <code>d</code></strong> and whether the excursion is <strong>signed</strong> (opposing flow only, conditioned on price
+  drift — variants a/c/e) or <strong>unsigned</strong> (<code>|lean| ≥ d</code>, any deep one-sided pressure — used as a
+  control in §2).</li>
+</ul>
+<h3>1.3 The three offices (the core finding)</h3>
+<p>The same lean-collapse object was measured in three roles. They do not transfer to each other;
+each has its own measured numbers.</p>
+<p><strong>Office (i) — TURN / ENTRY CONFIRMATION (grading which turns are real).</strong>
+At <em>fine</em> scale the divergence read is a genuine reversal filter: opposing+exhausting flow →
+<strong>~64% reversal</strong> (n=317, pooled, S36 <code>_info_dipole_trend_flip.py</code>), stacking monotonically above
+the ~49% healthy-trend base. This is the office that seeded the entry machine (<code>entry_coinbase.py</code>,
+S58 member maps). But it is venue-gated and band-local: the entry-side master law is <strong>price
+mechanics port across venues; flow reads do not</strong> (S58), so this office deploys only per validated
+cell.</p>
+<p><strong>Office (ii) — FAILURE CONFIRMATION (the wrong-side corrector).</strong>
+This is the office the dive actually <em>earned</em> in S60. It is not "when to take profit" — it is
+"this leg is wrong, correct it." Two independent per-coin agents converged on the same structure:
+- <strong>SOL — armed-before discriminator:</strong> among underwater dive-triggered legs, whether the with-ride
+  lean had <em>already armed</em> (<code>≥ +0.10</code>) earlier splits deaths from recoveries. Armed → death rate
+  0.63–0.84, <strong>save +14…+15 bp/leg</strong>; unarmed → entry noise, save <strong>negative −13…−18</strong> (the old side
+  recovers). Sign-consistent 12/12 config strata and 9/9 depth×age strata; stratified permutation
+  <strong>z = +2.39 / +3.49</strong>. Reproduces on BTC (4/4 cells, perm z +2.1…+3.0). Cross-coin structural: 8/8
+  cells (S60 round 2 + recheck).
+- <strong>DOGE — cascade-join flip:</strong> BUY legs only; first pure dive (<code>lean_600s-wall ≤ −0.30</code>, no arm)
+  while <code>≥ 20 bp</code> underwater → <strong>flip to SELL</strong> (join the cascade). Leg-slice <strong>th100 +1.95 (t=+2.36),
+  th80 +1.05 (t=+2.01)</strong>, pooled +1.41 over 1,820 legs, fee-neutral. As a <em>machine</em> on the Binance
+  instrument: kr_mk0 +0.42 → <strong>+2.66 $/hr, structure premium ~+1.10/hr above its shuffle floor</strong>,
+  5/5 weeks, taker-robust (S60 round 3).</p>
+<p><strong>Office (iii) — FILL-MOMENT MARKING (where a resting order finds its counterparty).</strong>
+The S45 "can't-refuse" hypothesis: capitulation flow diving in at the turn lifts a resting cover,
+so the dive marks the moment of <strong>peak maker-fillability</strong>. This office has <em>never been measured
+separately</em> (S54 flagged it "UNMEASURED"; S60 round 4b confirmed our own forward ledger cannot see
+it — 128/128 mid-band sandbox rows are <code>maker_close=True</code> by construction, no queue model).
+<strong>§2 is the first direct measurement of this office</strong>, and it inverts the hypothesis (see below).</p>
+<p>The offices differ because they are answers to <em>different questions</em> about the same collapse:
+office (i) asks <em>is the turn real</em> (a classification of the flow's meaning), office (ii) asks <em>did
+my position's flow fail</em> (a conditional on an already-open leg), office (iii) asks <em>is liquidity
+thick right now</em> (a statement about counterparty volume, not direction at all). A collapse can be
+informative for one and null for another — and the data says it is.</p>
+<hr />
+<h2>2. Experiments run for this chapter</h2>
+<p>Two experiments, in-container, on the 30-day Binance-spot 1-second bins for <strong>SOL</strong> (720 h,
+coverage 0.612, baseline 34.9 taker vol/s) and <strong>DOGE</strong> (720 h, coverage 0.391, baseline 7,510
+vol/s). Loader = the program's <code>load_bins</code>. Code + full JSON in the scratchpad
+(<code>dive_lab/exp_dive.py</code>, <code>exp_dive_results.json</code>). The dive here is the leg-free pure-dive
+analogue of variant (a): <code>aligned[t] = lean_W[t]·sign(mid[t]−mid[t−W]) ≤ −d</code>, swept over
+<code>W ∈ {60, 300, 600}</code> s and <code>d ∈ {0.30, 0.40}</code>. Onsets are first-second-of-state with a 300 s
+refractory. All comparisons carry a null (circular-shift for volume, uniform-random-onset for
+timing, permutation for depth).</p>
+<h3>2.1 The FILL office — the headline, and it is an inversion</h3>
+<p><strong>Question:</strong> is taker volume concentrated at dive moments (the S45 capitulation-fillability
+premise)? <strong>Answer (data level): no — the opposite. The pure-lean dive marks THIN, one-sided
+tape, not thick capitulation volume.</strong></p>
+<table>
+<thead>
+<tr>
+<th>coin</th>
+<th style="text-align: right;">W (s)</th>
+<th style="text-align: right;">d</th>
+<th style="text-align: right;">dive vol / baseline</th>
+<th style="text-align: right;">circular-shift null</th>
+<th style="text-align: right;">z</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;"><strong>×0.84</strong></td>
+<td style="text-align: right;">×1.00</td>
+<td style="text-align: right;"><strong>−13.4</strong></td>
+</tr>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">×0.84</td>
+<td style="text-align: right;">×0.99</td>
+<td style="text-align: right;">−6.0</td>
+</tr>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">×0.86</td>
+<td style="text-align: right;">×0.99</td>
+<td style="text-align: right;">−3.1</td>
+</tr>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">600</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">×1.11</td>
+<td style="text-align: right;">×1.09</td>
+<td style="text-align: right;">+0.1</td>
+</tr>
+<tr>
+<td>DOGE</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;"><strong>×0.73</strong></td>
+<td style="text-align: right;">×1.00</td>
+<td style="text-align: right;"><strong>−11.6</strong></td>
+</tr>
+<tr>
+<td>DOGE</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">×0.70</td>
+<td style="text-align: right;">×1.01</td>
+<td style="text-align: right;">−7.5</td>
+</tr>
+<tr>
+<td>DOGE</td>
+<td style="text-align: right;">600</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">×0.69</td>
+<td style="text-align: right;">×1.00</td>
+<td style="text-align: right;">−4.3</td>
+</tr>
+</tbody>
+</table>
+<p>Taker volume <em>inside</em> the dive state runs <strong>0.70–0.92× baseline</strong>, significantly <em>below</em> it, on
+almost every (W, d). The unsigned deep-lean control (<code>|lean| ≥ d</code>, no drift conditioning) sits at
+roughly baseline (×0.95–1.25).</p>
+<p><strong>Data-level reading (and the confound, stated plainly):</strong> the imbalance ratio is <em>mechanically</em>
+extreme when total volume is thin — a handful of one-sided trades pushes <code>(B−S)/(B+S)</code> to the rail,
+whereas high-volume seconds trade both sides and pull the ratio toward zero. So a deep-lean dive
+threshold <strong>preferentially selects low-volume moments by construction.</strong> This is a genuine and
+important negative for the FILL office as we had imagined it: <strong>the pure-lean dive is not the
+volume-capitulation marker.</strong> The S45 "can't-refuse" premise — that the dive is <em>where capitulation
+flow is thickest</em> — is <strong>not supported by an aggregated-flow lean threshold.</strong> It fails on its own
+terms here.</p>
+<p><strong>What this does NOT close:</strong> the fill office asks about <em>resting-quote fill probability</em>, which is
+one-sided volume <em>against a specific limit price in the queue</em> — not total tape volume. A dive is
+deep one-sided pressure; a resting cover on the pressured side could still fill fast even as total
+volume dips. Measuring that requires book/queue data (<code>maker_book._first_fill_index</code>), which these
+trade-bins do not carry. <strong>The honest statement: the fill office is still unmeasured at the level
+that matters (queue fill), and the one proxy we could measure — total volume concentration —
+inverts the hypothesis.</strong> S54's "UNMEASURED" flag stands; §2 sharpens it from "unmeasured" to
+"the obvious volume proxy says the opposite, so the queue test must isolate one-sided against-price
+fill, not tape volume."</p>
+<h3>2.2 The TIMING office — weakly turn-clustered at the fine window, inverts at coarse, no lead</h3>
+<p><strong>Question:</strong> do dives cluster at price turns, at cascades, or uniformly? <strong>Answer: weakly near
+turns at the fine window; away from turns at coarse windows; and the dive does not <em>lead</em> the
+pivot.</strong></p>
+<table>
+<thead>
+<tr>
+<th>coin</th>
+<th style="text-align: right;">W (s)</th>
+<th style="text-align: right;">d</th>
+<th style="text-align: right;">frac onsets ≤300 s from a th100 pivot</th>
+<th style="text-align: right;">uniform null</th>
+<th style="text-align: right;">z</th>
+<th style="text-align: right;">frac pivot-<em>after</em>-onset</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;"><strong>0.16</strong></td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;"><strong>+5.4</strong></td>
+<td style="text-align: right;">0.48</td>
+</tr>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">0.08</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">−2.9</td>
+<td style="text-align: right;">0.49</td>
+</tr>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">600</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">0.08</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">−2.5</td>
+<td style="text-align: right;">0.48</td>
+</tr>
+<tr>
+<td>DOGE</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;"><strong>0.14</strong></td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;"><strong>+6.1</strong></td>
+<td style="text-align: right;">0.49</td>
+</tr>
+<tr>
+<td>DOGE</td>
+<td style="text-align: right;">600</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">−6.6</td>
+<td style="text-align: right;">0.48</td>
+</tr>
+</tbody>
+</table>
+<p>At <strong>W = 60 s</strong> dive onsets are modestly enriched near coarse (th100) price pivots — 14–16% within
+300 s vs 7–11% by chance (z +5 to +6). At <strong>W = 300 / 600 s</strong> the enrichment <em>inverts</em>: long-window
+dives occur <em>away</em> from pivots, mid-trend (z negative). And in every case the <strong>pivot-after fraction
+is ~0.48–0.50</strong> — the pivot is as likely to precede the dive as follow it. <strong>The dive does not lead
+the turn.</strong> This is the exit-side echo of S40's entry finding ("acceleration leads ~3 s, the lean
+confirms, it does not lead") and of S55's coarse sign-inconsistency.</p>
+<p>The trailing/forward 600 s classification says the same: dive onsets are <strong>80–99% "quiet"</strong> (neither
+a turn nor a cascade by a ±25 bp threshold), only mildly turn/cascade-enriched over baseline at
+W=60. <strong>Interpretation (labeled):</strong> at the fine window the dive is a weak, coincident turn-proximity
+marker; at the coarse window it is a mid-trend event, not a turn marker at all. Neither window gives
+a <em>leading</em> turn signal — consistent with the whole program's "no causal peak harvester exists"
+law (S60 round laws #1).</p>
+<h3>2.3 The SIZE office — null at mid-band (S40 does not reproduce coarse)</h3>
+<p><strong>Question:</strong> does dive depth (<code>|lean_600|</code> at a pivot) predict the size of the next swing (S40's
+fine-scale depth→|move|)? <strong>Answer: null at this band, and DOGE is weakly negative.</strong></p>
+<table>
+<thead>
+<tr>
+<th>coin</th>
+<th style="text-align: right;">zigzag θ</th>
+<th style="text-align: right;">n pivots</th>
+<th style="text-align: right;">Pearson</th>
+<th style="text-align: right;">Spearman</th>
+<th style="text-align: right;">perm z</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">100 bp</td>
+<td style="text-align: right;">468</td>
+<td style="text-align: right;">+0.040</td>
+<td style="text-align: right;">+0.029</td>
+<td style="text-align: right;">+0.7</td>
+</tr>
+<tr>
+<td>SOL</td>
+<td style="text-align: right;">50 bp</td>
+<td style="text-align: right;">1,735</td>
+<td style="text-align: right;">+0.014</td>
+<td style="text-align: right;">+0.018</td>
+<td style="text-align: right;">+0.7</td>
+</tr>
+<tr>
+<td>DOGE</td>
+<td style="text-align: right;">100 bp</td>
+<td style="text-align: right;">336</td>
+<td style="text-align: right;">−0.085</td>
+<td style="text-align: right;">−0.088</td>
+<td style="text-align: right;">−1.6</td>
+</tr>
+<tr>
+<td>DOGE</td>
+<td style="text-align: right;">50 bp</td>
+<td style="text-align: right;">1,265</td>
+<td style="text-align: right;">−0.029</td>
+<td style="text-align: right;">−0.005</td>
+<td style="text-align: right;">−0.0</td>
+</tr>
+</tbody>
+</table>
+<p>The S40 result — deeper dipole dive → bigger swing, corr +0.045…+0.067 at <em>fine</em> 1-sec scale —
+<strong>does not reproduce</strong> with a 600 s lean against coarse zigzag pivots. SOL is a null (+0.03, z+0.7);
+DOGE is weakly <em>negative</em> (−0.085). This <strong>confirms S55-R9's "sign-inconsistent at coarse"</strong> and
+locates the boundary: the depth→size office is a <em>fine-scale</em> office; it does not survive the trip
+to the mid-band. The size office and the confirmation office live at different W.</p>
+<h3>2.4 Experiments — net reading</h3>
+<p>Three offices, three verdicts on these tapes, all honest:
+- <strong>Fill office:</strong> the volume proxy <em>inverts</em> the capitulation premise (dive = thin, ×0.7–0.9,
+  z up to −13). The queue-level test remains genuinely unmeasured.
+- <strong>Timing office:</strong> weak coincident turn-proximity at W=60 (z+5/+6), inverts at coarse W, <strong>no
+  lead</strong> in any config.
+- <strong>Size office:</strong> null at mid-band; S40's fine-scale depth→|move| does not port up in scale.</p>
+<p>None of these contradicts the S60 exit result, because the <em>earned</em> office in S60 was neither of
+these three raw statistics — it was office (ii), the <strong>conditional</strong> corrector (dive <strong>while an
+armed/underwater leg is open</strong>), which these unconditional-tape experiments do not measure. That is
+the point of the three-office split: the dive's value is in a <em>conditional</em>, not in its marginal
+statistics.</p>
+<hr />
+<h2>3. Best uses in crypto, ranked</h2>
+<p>Each entry names the exact dive variant, the data needed, the first falsifiable test, and the
+deflationary read. Ranked by expected value net of the program's known nulls.</p>
+<p><strong>1. Wrong-side position corrector (office ii) — VALIDATED, deploy-gated.</strong>
+Variant (c) armed-then-dive (SOL) / (a) pure-dive-while-underwater flip (DOGE). Data: live leg
+state + trailing lean, wall-clock W. First test <em>already passed</em> — S60 machines: DOGE cascade-flip
++1.10 $/hr structure premium on the instrument, SOL armed-stop 8/8-cell information (deploy-shape
+per cell). Deflationary: per-cell law is strict — SOL wants a conditioned stop, BTC a plain price
+stop, DOGE a directional flip, XRP nothing; the flip does not turn a cell positive at real Coinbase
+fees (it shrinks the bleed). Value frame is kr_mk0 / low-fee. <strong>This is the one office that has
+earned a machine.</strong></p>
+<p><strong>2. Liquidation-cascade early warning (office ii, generalized).</strong> Variant (a) pure dive with a
+<em>forward</em> horizon: dive against price while already extended → cascade continuation, not reversal.
+The DOGE finding <em>is</em> this in miniature ("doge dumps cascade, pumps fade" — S58/S60 cascade law,
+directional). Data: per-venue trade tape + liquidation feed. First test: does a deep opposing dive
+at ≥Xbp extension predict the next N-second <em>continuation</em> magnitude, per side, vs a shuffle floor?
+Deflationary: the external literature is explicit that <strong>flow-based imbalance is a <em>consequence</em> of
+stress, not a precursor</strong> — structural depth metrics warn earlier (arXiv:2604.20949, "Early
+Detection of Latent Microstructure Regimes"). So a pure-flow dive is a <em>confirmation</em> of a cascade
+in progress, not an early warning; the early-warning version needs book depth, not just flow.</p>
+<p><strong>3. Maker-quote placement timing (office iii) — UNMEASURED, highest unknown upside.</strong> Variant (d).
+Post the resting cover <em>into</em> the dive, decision held fixed, and measure time-to-maker-fill vs
+posting at the confirm. Data: L2 book + queue position (<code>maker_book</code>). First test: the S60 round-4b
+build order — isolate <em>one-sided against-price</em> fill rate, NOT tape volume (§2.1 shows tape volume
+is the wrong proxy and inverts). Deflationary: §2.1 already dented the premise; the queue test could
+still rescue it (thin total volume with fast same-side fill), but the burden of proof has risen.</p>
+<p><strong>4. Cross-venue cascade propagation.</strong> Variant (a) computed per venue; test whether a dive on the
+high-volume venue (Binance) leads the same-coin dive on the deploy venue (Coinbase/Kraken) by a
+measurable lag. Data: synchronized multi-venue tapes (the program has these). First test: lagged
+cross-correlation of per-venue dive-onset series, tautology-nulled by circular shift (the S41
+method). Deflationary: S20 found venues synchronous at 1 s (lag-0 cc 0.656, z 580); sub-second lead
+needs tick data — the propagation edge may live entirely below 1 s.</p>
+<p><strong>5. Spoof / absorption detection.</strong> Variant (a) unsigned vs signed <em>divergence</em>: a deep lean with
+<em>no</em> price response = absorption (a wall eating the flow) or spoof (flow that isn't real). §2.1's
+observation that deep leans are thin-volume is directly relevant — it separates "real thin dive"
+from "absorbed thick dive." Data: book + trade tape. First test: classify deep-lean seconds by
+price response and check whether the no-response class predicts a subsequent reversal (absorbed
+pressure exhausts). Deflationary: needs cancel-message data to distinguish spoof from genuine
+absorption; on trades alone the two are indistinguishable.</p>
+<p><strong>6. Funding / squeeze detection (perps).</strong> Variant (a) on perp taker flow conditioned on the
+funding sign: a dive <em>against</em> an extreme funding rate marks the crowded side capitulating. Data:
+perp tape + funding history. First test: does a dive against extreme funding predict mean-reversion
+of the funding rate? Deflationary: entirely untested; perp-specific; the program's venue ban list
+constrains which perp tapes are usable.</p>
+<hr />
+<h2>4. The general abstraction and other domains</h2>
+<h3>4.1 What generalizes</h3>
+<p>Strip away "markets" and the dive is: <strong>the sudden collapse, or deep excursion, of a bounded
+two-flow imbalance ratio <code>r = (A − B)/(A + B) ∈ [−1, +1]</code>, read against the state variable the
+flow is supposed to be driving.</strong> Wherever two opposing flows sum into a driven quantity, that
+ratio exists, it is bounded, and it can dive. The dive marks a <strong>regime boundary in the flow
+ratio</strong> — the moment the dominant flow's grip on the state fails. The market instance (taker buy
+vs sell driving price) is one realization. The general question Greg posed — <em>where else does this
+object appear, and what would a dive detect there</em> — has concrete, testable answers.</p>
+<h3>4.2 Domain map</h3>
+<p>For each: the two flows, the dive definition, what a dive would mark, a public dataset, the first
+falsifiable test, and a novel-vs-adjacent flag (literature treated as conjecture).</p>
+<p><strong>Network security — exfiltration / DDoS pivot.</strong>
+Flows: inbound vs outbound bytes (or SYN vs ACK). <code>r</code> = traffic-direction imbalance. A dive =
+sudden collapse toward one-sided outbound = exfiltration burst; toward inbound = volumetric DDoS
+onset. Marks: the <em>pivot second</em> of an attack. Data: CIC-IDS2017 / MAWI traffic archives. First
+test: does an outbound dive lead the labeled exfil window vs a uniform-onset null? <strong>Adjacent</strong> —
+flow-asymmetry anomaly detection exists, but the bounded-ratio <em>dive</em> framing (collapse of a
+signed ratio, not a threshold on raw volume) is not standard. Testability: <strong>high</strong> (labeled
+public data).</p>
+<p><strong>Social / opinion cascades — sentiment flip.</strong>
+Flows: positive vs negative (or pro vs anti) message rate on a topic. <code>r</code> = sentiment imbalance. A
+dive = the sentiment ratio collapsing = an opinion cascade flipping the crowd. Marks: the turn of
+a viral narrative. Data: Twitter/Reddit topic streams with timestamps + sentiment labels. First
+test: does a sentiment dive lead a measured engagement/price/vote reversal? <strong>Adjacent</strong> —
+opinion-dynamics and cascade literature is large; the specific "bounded sentiment-flow ratio dive
+as the turn marker" is a clean unstacked framing. Testability: medium (labeling noise).</p>
+<p><strong>Epidemiology — transmission-source flip.</strong>
+Flows: new cases attributable to source-A vs source-B transmission (e.g. imported vs local, or two
+competing variants). <code>r</code> = source imbalance. A dive = one source suddenly dominating = the pivot to
+community transmission or a variant takeover. Marks: the changeover date. Data: GISAID variant
+frequencies / WHO line lists. First test: does a variant-share dive lead the growth-rate change vs
+null? <strong>Adjacent</strong> — variant-share tracking exists; the dive-as-early-marker of the changeover is
+testable and not framed this way. Testability: medium (reporting lag).</p>
+<p><strong>Neuroscience — inter-region flow collapse (seizure onset).</strong>
+Flows: directed information A→B vs B→A between two brain regions (or two hemispheres). <code>r</code> =
+directional-flow imbalance. A dive = the inter-region flow ratio collapsing/reversing = a possible
+seizure-onset or state-transition marker. Marks: the transition second. Data: CHB-MIT scalp EEG
+(seizure-annotated), public. First test: does an inter-hemisphere directed-flow dive lead the
+annotated seizure onset vs a uniform-onset null? <strong>Novel-leaning</strong> — seizure prediction uses many
+features, but "collapse of a <em>bounded signed inter-region flow ratio</em> as the onset marker" is not a
+standard framing; and it connects to the critical-slowing-down / non-equilibrium early-warning
+literature (arXiv landscape-flux, PNAS 2218663120) which is exactly the "two-flow ratio → tipping"
+object. Testability: <strong>high</strong> (annotated public EEG). <em>This is the most interesting cross-domain
+candidate.</em></p>
+<p><strong>Ecology — predator-prey pressure collapse.</strong>
+Flows: predation pressure vs prey recruitment. <code>r</code> = the pressure imbalance driving population. A
+dive = collapse of the ratio = the onset of a population tipping point. Marks: the pre-collapse
+turn. Data: yeast/plankton chemostat time series from the critical-slowing-down papers
+(PMC4267327). First test: does the flow-ratio dive lead collapse <em>earlier</em> than variance/AR(1)
+(the standard early-warning indicators)? <strong>Adjacent-to-novel</strong> — critical slowing down is
+established; the <em>signed-flow-dive</em> as a competing, possibly earlier indicator is a clean head-to-
+head test the literature invites. Testability: <strong>high</strong> (published time series).</p>
+<p><strong>Power grids — flow-direction reversal.</strong>
+Flows: import vs export on an interconnect (or generation vs load). <code>r</code> = the tie-line flow ratio.
+A dive = a rapid flow reversal = a stability event / cascade-failure precursor. Marks: the reversal
+second. Data: ENTSO-E / EIA tie-line flow archives. First test: does a tie-line dive lead a
+frequency-excursion event vs null? <strong>Adjacent</strong> — grid stability monitoring is mature; the bounded-
+ratio dive framing is a reformulation, likely not novel physics but a possibly-useful monitor.
+Testability: medium (event labels sparse).</p>
+<p><strong>Auction / marketplace — demand collapse.</strong>
+Flows: bid arrival vs ask arrival (or buy vs sell orders in any two-sided market). <code>r</code> = order-flow
+imbalance — the direct market analogue. A dive = demand evaporating. Marks: the liquidity-hole
+onset. Data: any public LOB (LOBSTER samples). First test: our own office (ii) corrector, ported.
+<strong>This is the market case itself</strong> — the closest transfer, and the one the program has already
+validated. Testability: <strong>high</strong>.</p>
+<h3>4.3 The unifying literature contact (conjecture)</h3>
+<p>The cross-domain object the dive most resembles in the published literature is <strong>non-equilibrium
+early-warning / landscape-flux theory</strong>: "average flux as the non-equilibrium driving force …
+time-irreversibility of cross-correlation functions serving as warning signals for critical
+transitions" (PNAS 2218663120; arXiv 2103.08198). That is a two-flow-ratio-approaching-a-tipping
+object. The program's dive is a <em>fast, causal, bounded-ratio</em> instance of it. <strong>Flag, treated as
+conjecture:</strong> the dive may be a computationally cheap, online early-warning statistic for the same
+class of transitions that critical-slowing-down (variance/AR(1)) addresses offline — with the honest
+caveat that the market evidence (§2, and S60) says the flow-ratio dive is a <em>coincident/confirming</em>
+marker more than a <em>leading</em> one, so any "early warning" claim in another domain must beat the
+uniform-onset null on <em>lead time</em>, not just association.</p>
+<hr />
+<h2>5. What the dive is — synthesis</h2>
+<p><strong>What it is (data level).</strong> The dive is a <strong>regime boundary in a bounded two-flow imbalance
+ratio</strong> — the second at which the dominant flow's grip on the driven state variable collapses. In
+markets: the trailing taker-flow lean reversing or diving deep against price. It is signed, bounded,
+causal, and scale-parameterized by a wall-clock window <code>W</code> and a depth <code>d</code>.</p>
+<p><strong>What it explains.</strong> It explains <em>changeovers</em> — the moment a follow-the-leader flow loses the
+lead. Empirically, across this program, a dive <strong>cleanly marks three things and cleanly fails to
+mark three others</strong>, and the pattern is consistent:
+- It <strong>marks</strong> (a) at fine scale, which turns are real reversals (~64% conditional, office i);
+  (b) that an already-open position's flow has failed (office ii, the earned corrector, 8/8 cells);
+  (c) directional cascade continuation on cascade-prone assets (DOGE dumps).
+- It <strong>does not mark</strong> (d) the coarse-scale size of the next move (§2.3 null; S55-R9); (e) the
+  fine-scale <em>timing</em> of a winner's exit turn — no causal peak harvester exists, the post-peak
+  giveback is the structural <code>c·θ</code> toll printed identically by runners and diers on all 4 coins
+  (S60 round laws #1); (f) — per §2.1 — the volume-capitulation moment, which the aggregated-flow
+  dive <em>inverts</em> (dive = thin tape, not thick).</p>
+<p><strong>What its purpose is.</strong> Its purpose is to be a <strong>conditional regime-boundary detector, deployed
+per office.</strong> It is not a standalone alpha and never was; the two sessions that treated it as an
+exit-timing knob failed precisely because they asked one office to do another's job. Its purpose,
+stated correctly: <em>given</em> an open position and <em>given</em> a validated cell, the dive answers "has the
+flow that justified this position collapsed?" — and where it can, act (flat, or flip). Secondarily,
+it is a research input to the S35 fingerprint tier (the armed-before signal is fingerprint-grade
+information even where it is not directly deployable).</p>
+<p><strong>Why the offices differ.</strong> Because a bounded-flow collapse carries different information depending
+on what you condition it against. Read against <em>the meaning of the turn</em>, it is a reversal
+classifier (office i). Read against <em>your own open leg's history</em>, it is a failure detector
+(office ii). Read against <em>counterparty liquidity</em>, it is — hypothetically — a fill-timing marker
+(office iii), but §2 shows the naive volume proxy inverts, so this office is still owed a proper
+queue-level test. Same object, three conditionals, three different answers. <strong>This is the general
+lesson for all the dipoles Greg asked about, not just the dive:</strong> a dipole operator's value is
+never a property of the operator alone — it is a property of (operator × what it is conditioned
+against). The program learned this the expensive way.</p>
+<p><strong>The discipline rule the program learned (the note to carry forward).</strong></p>
+<blockquote>
+<p><strong>Each office of the dive earns separately per (cell, band, venue, role). Never grade one office
+with another's numbers. The S45 fine/Bybit fill numbers do not authorize a mid-band Coinbase
+claim; the S40 fine depth→size does not port to the coarse band (§2.3); the DOGE cascade-flip does
+not port to SOL or to the Coinbase deploy without its own books pass. The dive is a family of
+role-specific detectors sharing one equation, not one detector.</strong></p>
+</blockquote>
+<p><strong>The best uses, directly.</strong> In crypto: (1) the wrong-side corrector (validated, office ii); (2)
+cascade <em>confirmation</em> on directional-cascade assets; and — pending a proper queue test that
+isolates one-sided against-price fill rather than tape volume — (3) maker-quote fill timing. Beyond
+crypto: the highest-value, most-testable, most-novel candidate is <strong>seizure-onset detection via
+collapse of a bounded inter-region directed-flow ratio in annotated EEG</strong>, tested head-to-head
+against critical-slowing-down indicators on lead time — because that is exactly the non-equilibrium
+tipping-point object the dive is a fast causal instance of, and the public labeled data exists to
+prove or kill it.</p>
+<hr />
+<h3>Appendix — provenance</h3>
+<ul>
+<li>New experiments: <code>scratchpad/dive_lab/exp_dive.py</code> + <code>exp_dive_results.json</code> (SOL + DOGE, 30d
+  Binance-spot bins, this session). Every number in §2 carries a null (circular-shift / uniform-
+  onset / permutation).</li>
+<li>Program numbers cited to session: S36 (64% reversal), S40 (depth→size fine-scale, climax
+  anatomy), S45 (can't-refuse / fill office / adverse selection), S52/S54 (fill office UNMEASURED),
+  S55-R9 (coarse sign-inconsistency), S58 (venue-gated flow law), S60 rounds 1–4b (the three-office
+  split, the correctors, the machines, the fill-layer gap). Primary record: <code>S60_EXIT_NOTES.md</code>
+  §STANDING NOTE.</li>
+<li>Literature (conjecture, not support): order-flow imbalance as consequence-not-precursor
+  (arXiv:2604.20949; sifx.com order-book-imbalance); critical slowing down / non-equilibrium
+  early warning (PNAS 10.1073/pnas.2218663120; arXiv:2103.08198; PMC4267327).</li>
+<li>House rules honored: falsification-first (§2 reports two nulls and one inversion), Result
+  Discipline (data / interpretation / frame labeled throughout), OD mode (no mechanism invented),
+  literature as conjecture, no emojis.</li>
+</ul>
+<hr><p style="font-size:9pt;color:#555">DavisAI Systems — S60 dipole research program, dive chapter.
+Generated 2026-07-04. Falsification-first; data-level findings separated from interpretation; nulls reported.</p>
+</body></html>
