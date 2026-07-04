@@ -87,11 +87,18 @@ def run_machine(mid, lean, flips, arm):
             if sd == +1:
                 h = np.flatnonzero((sl <= -0.30) & (fav <= -20.0))
                 te = int(h[0]) if len(h) else -1
+        elif arm in ("cascflip_sell", "cascstop_sell"):     # mirror: SELL legs only
+            if sd == -1:
+                h = np.flatnonzero((sl <= -0.30) & (fav <= -20.0))
+                te = int(h[0]) if len(h) else -1
+        elif arm in ("cascflip_both", "cascstop_both"):     # side-blind variant
+            h = np.flatnonzero((sl <= -0.30) & (fav <= -20.0))
+            te = int(h[0]) if len(h) else -1
         if te <= 0:
             out_g.append(float(fav[-1])); out_e.append(ci); out_s.append(0); out_x.append(0.0)
         else:
             out_g.append(float(fav[te])); out_e.append(ci); out_s.append(1)
-            if arm == "cascade_flip":
+            if arm in ("cascade_flip", "cascflip_sell", "cascflip_both"):
                 # next leg (side -sd) enters EARLY at the trigger: extension P&L from trigger
                 # to its normal confirm entry (xi), credited as flip_ext on THIS row.
                 tp = mid[ci + te]

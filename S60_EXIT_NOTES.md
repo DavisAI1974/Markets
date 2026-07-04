@@ -320,6 +320,26 @@ information (8/8 cells) filed for the fingerprint thread. The zigzag exit remain
 deploy exit everywhere; nothing wires into the platform this round (sandbox rule: a DOGE
 flip sandbox cell is the natural next promotion candidate AFTER a books-frame check).
 
+## ROUND 3b — CROSS-POLLINATION MATRIX (Greg: "see if the pieces fit the other coins")
+
+All 6 pieces x all 4 registry cells, Binance bins, prem = liveD - shuffle floor ($/hr kr_mk0):
+
+| piece \ cell    | sol_mb100 | btc_mb80 | doge_mb100 | xrp_mb80 |
+|-----------------|----------:|---------:|-----------:|---------:|
+| cascade_flip(BUY)|    -1.59 |    +0.37 |  **+0.90** |    +0.33 |
+| cascflip_SELL   |     -0.29 |    +0.42 |      -0.74 |    -0.64 |
+| cascflip_both   |     -1.88 |    +0.80 |      +0.16 |    -0.31 |
+| plain40         |     -1.97 | **+1.30**|      -0.29 |    -1.37 |
+| plain50         |     -0.31 |    +0.77 |      +0.16 |    -1.09 |
+| armed_stop      |     -0.89 |    +0.38 |      -0.89 |    -0.38 |
+
+**THE ASSIGNMENT MATRIX IS DIAGONAL:** sol = NONE (every piece negative-premium — the lead
+cell rejects all exit reads); btc = plain40 only (price-stop coin; cell still negative =
+rider); doge = BUY-flip only (its SELL mirror is NEGATIVE -0.74 — the cascade asymmetry is
+real and DIRECTIONAL: doge dumps cascade, pumps fade; side-blind dilutes to +0.16); xrp =
+none (all noise-or-negative). The pieces do NOT cross-pollinate — per-cell law in its purest
+print yet. No new machine candidates from the matrix; the round-3 verdicts stand unchanged.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
