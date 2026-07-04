@@ -159,3 +159,15 @@ loss-eliminators that survive controls are per-cell and already WIRED (doge casc
 plainstop rider). For SOL/XRP no causal read clears — winners-invisible law; the named path to
 killing SOL's big losers without winner damage is the S35 fingerprint tier (false-confirm
 recognition at entry), not exit knobs. The power bar stands guard.
+
+## ROUND 6 — GREG: "switch the positions of the biggest losers" — the ladder quantified
+
+ORACLE (flip the actual 10 biggest losers at entry): ~+38/leg on sol books — the prize exists.
+NAKED DEPTH-FLIP (switch at -X underwater, executor price_stop action=flip, both tapes):
+KILLED — sol books FLIP@-40 = -63.17/leg (40/56 legs touch -40 but only ~11 die; 29
+recoveries become double-losses); bins deltas 0 +/- 1 everywhere; doge/xrp books negative.
+Depth alone cannot tell a death from a dip on a dip-entry machine.
+FLOW-CONDITIONED FLIP (dive + underwater + side): earns on DOGE only — already wired
+(cascflip). RECOGNITION AT ENTRY: winner/loser entry features near-identical on every causal
+read (winners-invisible law) -> the oracle prize on SOL is S35 FINGERPRINT-TIER, not exit-knob
+tier. Greg's intuition = the cascade-flip family; its deployable instance is per-cell.
