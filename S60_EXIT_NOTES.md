@@ -501,6 +501,22 @@ STAYS-IRRELEVANT: all rebate-frame math (no Coinbase rebate exists); bigline bre
 (OOS-dead); harvest rungs (kills winners); fine retiming (dead 2x); S42 depth reads
 (entry-side + venue law); Kraken exits (PARKED, Greg).
 
+## ⭐ STANDING NOTE (Greg, S60): THE DIPOLE-DIVE ROLE FINDING
+The dipole dive was chased for two sessions as an exit TIMING read and died at mid-band —
+but S60 established its correct role split, and it is a program-level finding:
+- TIMING role (when to exit): DEAD at mid-band for winners (fires on earlier climaxes;
+  toll law leaves ~nothing to harvest) — alive ONLY as the wrong-side corrector
+  (flow-confirmed failure: SOL armed-before read, DOGE cascade-join flip).
+- FILL role (where the exit order finds its counterparty): the dive marks the maker-
+  fillability peak (S45 "can't-refuse" — capitulation flow lifts a resting cover AT the
+  turn) and this role has NEVER been measured separately (S54 flagged it UNMEASURED; still
+  true). The S60 Coinbase exit build order tests it as pure execution: post the cover into
+  the dive, decision held fixed.
+- The same physical object (trailing taker-flow lean) thus serves THREE distinct offices:
+  entry confirm grading (S58 member maps, venue-gated), wrong-side failure confirmation
+  (S60 correctors), and fill-moment marking (S45/S60, unmeasured). Never conflate the
+  offices when grading — each earns per (cell, band, venue, ROLE).
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
