@@ -437,6 +437,35 @@ as the SANDBOX VARIANT (not wired; ledger decides).**
   toll+fee-shaped — asymmetric exit retrace (c_x<c) is the one toll-attacking mechanic
   not yet machine-tested; fee tier is the bigger lever.
 
+## ROUND 4b — CODE MINER: THE COINBASE EXIT'S REAL GOLD IS THE FILL/FEE LAYER (unmeasured)
+
+**HEADLINE: the accruing sandbox record CANNOT see the Coinbase exit fill cost — 128/128
+mid-band rows have maker_close=True by construction** (`_next_positive` fills the resting
+cover on the first opposing trade, NO queue model; taker fallback ~never fires at mid-band
+durations). The 8-16bp/leg fill/fee question is invisible in our own forward ledger. The
+honest machinery EXISTS UNWIRED: `maker_book._first_fill_index` (queue-ahead) +
+`swing_accum._eligible_fill` / fee-aware unload trio (slide-cross past X=spread+taker,
+trailing-peg maker unload, harvest_rungs — S52, dormant).
+
+GAPS (file:line in the miner report, task output):
+1. mid-band sandbox runs **grace=0** (run_midband_cell passes no grace; ledger hardcodes 0)
+   — S48 cover-grace (doge -0.56->+1.41/leg, taker 36->2% at fine scale) is 3 lines away
+   BUT only pays once the fill model is honest (covers currently "always fill").
+2. **run_stream's lean = 600 CELLS = 60s wall on books** — the wall-clock confound is
+   INSIDE the platform; any wired flow exit needs a lean_w param (cascflip prerequisite).
+3. cascflip variant = ~25-35 line `exit_pred` generalization of the lean_exit walker
+   (no-arm knob expressible; needs underwater/side conditions + FLIP action; all
+   scan/cover/ledger machinery reuses). Must reproduce _s60_piece2_exit_machines trigger
+   cells leg-for-leg before any forward accrual.
+4. asymmetric close retrace c_x: ~6-line `trail{c_x}` arm in run_machine (research);
+   `swing_bigline.ride_from_entries` = zero-code ratchet-exit alternative.
+
+RANKED REUSE (movement per line): (1) honest close-leg fill model arm -> measure REAL
+maker_close% + net/leg on books; (2) swing_accum fee-aware unload rules; (3) grace
+exposure; (4) exit_pred/cascflip; (5) c_x trail arm; (6) ride_from_entries; (7) FREE:
+`lean_close` descriptor already accrues per paper leg — pull win/lose distributions from
+paper_ledger_sandbox.jsonl with zero code.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
