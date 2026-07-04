@@ -340,6 +340,17 @@ real and DIRECTIONAL: doge dumps cascade, pumps fade; side-blind dilutes to +0.1
 none (all noise-or-negative). The pieces do NOT cross-pollinate — per-cell law in its purest
 print yet. No new machine candidates from the matrix; the round-3 verdicts stand unchanged.
 
+## VENUE FRAME OF THE EXIT ROUND (Greg's check: "agents were looking for Coinbase exits?")
+Honest answer: NO — the exit verdicts are INSTRUMENT-frame (Binance bins); Coinbase books
+were shape-checks only (22-56 legs/cell, too thin to grade; S58 convention). The DOGE flip
+is a FLOW read -> venue law applies: it does NOT port to the Coinbase deploy without an
+accrued-books pass (same bar as the entry flow maps), and at cb_real 8bp the doge cell is
+net-negative even with it (-5.42) — its value frame is kr_mk0. Coinbase books shape check
+(wall-clock re-dump): flip condition fires 2-3/cell, EVERY fired leg a genuine death
+(zigzag -62..-89), deltas +21..+103bp/leg — direction agrees, n=anecdote. Trigger
+saturation fixed (100% -> 52-68%). VALIDATION PATHS: Coinbase = books accrual (dumps now
+unconfounded); Kraken = books + more tape (shuffle-floor fail stands until then).
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
