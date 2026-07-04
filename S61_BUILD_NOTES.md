@@ -361,3 +361,14 @@ defined R12/R13; the +6.79/hr prize). PRECONDITIONS (S58 record): the onset cana
 cell. Machinery in repo: odcore/fingerprint.py, dipole_predictor.py. => bring the E: coeff
 archives into a session, THEN build the heavy entry fingerprint. This is THE build to capture
 the big-loser prize.
+
+## ROUND 13c — CAN THE PRE NUMBER ALONE CATCH A PURE SUBSET? (Greg: range for the negatives; any winners there?)
+NO CLEAN ZONE. Winners have negative pre600 too AND go DEEPER: winner min -429 (p1 -194, p5 -89)
+vs big-loser min -217. At EVERY negative threshold winners OUTNUMBER big losers ~2.5:1
+(pre600<-100: 9 big / 22 win; <-200: 2 big / 5 win; <-140: 5/10). Below the deepest winner
+(-429): 0 big losers. => there is NO negative range where only big losers live. MECHANISM: the
+DEEPEST fades are WINNERS (fading a huge run = catching the reversal); big losers fade MODERATE
+runs that keep going. By fade-depth alone they are inseparable — the winners-invisible law holds
+even in the extreme tail. DEFINITIVE: the pre number at ANY range cannot be a pure fingerprint;
+separation requires the MULTIVARIATE coefficient tier (Greg's E: archives). Single-feature entry
+fingerprint CLOSED.
