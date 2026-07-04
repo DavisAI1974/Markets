@@ -132,3 +132,30 @@ verified key-stripped bytes equal on 4/4 cells, then rebaselined. PASS.
 
 **Build-queue state:** (a) DONE, (b) demoted to contingent shadow, (c) rejected for SOL /
 unranked elsewhere, (d) DONE (cascflip) + the BTC plainstop rider — all exit changes coded.
+
+## ROUND 5 — GREG'S SIGNS-FLIPPED CATCH ON THE RENDERS (sol; "xrp and doge look the same")
+
+**NOT a sign bug — verified 3 ways:** REVERSED control (all sides flipped) = −36.75 net/leg vs
+live +7.47 (a real flip would make reversed win); accounting spot-check on shorts exact;
+side labels in the renders correct. What Greg's eye caught is REAL though: on the SOL books
+window ALL profit is long-side (B +28.28 vs S −13.35 n=28/28) and 6/10 biggest losers are
+confirm-SHORTS entered at 1–17% of the local range — sold the dip bottom, price mean-reverted
+(the S60 "right spot, opposite trade" print, per-side).
+
+**DRIFT, not structure (the instrument kills it):** on 30d bins the asymmetry collapses —
+sol B +4.41 / S +0.84 (both positive), DOGE INVERTS (bins S +3.66 > B −0.26 vs books S −16.26),
+xrp ~0/~0, and every per-half split flips sign. The books per-side splits are ~4-day window
+drift; a side-conditioned exit is a regime bet.
+
+**Greg's reframe tested anyway ("don't raise SOL profits — eliminate the huge losses"):**
+side-conditioned stop X=40 aimed ONLY at each cell's bleeding side, executor-run on BOTH tapes:
+- SOL S-only: books d=−0.88/leg, bins d=−1.31 (side-blind: books −27.11) → even perfectly
+  side-targeted, the stop LOSES on both tapes. PROTECT survives its strongest challenger yet.
+- DOGE S-only: books +5.53 BUT bins −1.31 (both-sides bins +0.59 ≈ noise) → books drift
+  artifact; DOGE's earned loss-killer stays the flow-conditioned cascflip (wired).
+- XRP B-only: ~0 both tapes. Nothing.
+**BOTTOM LINE:** the −95..−121bp legs are the bounded-loss design (−θ−fees deaths). The
+loss-eliminators that survive controls are per-cell and already WIRED (doge cascflip, btc
+plainstop rider). For SOL/XRP no causal read clears — winners-invisible law; the named path to
+killing SOL's big losers without winner damage is the S35 fingerprint tier (false-confirm
+recognition at entry), not exit knobs. The power bar stands guard.
