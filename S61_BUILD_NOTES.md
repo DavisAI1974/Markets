@@ -183,3 +183,12 @@ FEE-SENSITIVE cell (2x the fee events) — Greg's fee-tier clicks are worth most
 the R4 diagnosis (−16 fees on +4.1 gross); (2) its oracle stays exit-knob-uncapturable
 (rounds 5-6 apply; dv40+uw corrector parked on the 150-leg bar); (3) XRP's cadence is the
 strongest argument for the Kraken lane when un-parked (0-maker + feeds the $10M/30d tier).
+
+## ⭐ STANDING METRIC RULE (Greg, S61 — restated hard): PROFIT PER HOUR IS THE SCOREBOARD.
+Per-trade averages are diagnostics only. Every result table leads with net $/hr (and legs/hr);
+per-leg bp appears in support. (Extends S53 "judge on net $/hr AND legs/hr".) The S61 board in
+$/hr (books, $5k, cb_real | kr_mk0 frame): sol +2.11|+6.62; doge_cascflip +0.23|+3.46 (flips
+DOGE positive at cb_real this window); doge base −1.07|+2.16; btc_plainstop −2.35|−1.45; btc
+base −2.49|−1.60; xrp −5.98|+2.79 — XRP = the biggest available $/hr swing on the board and it
+is pure FEE FRAME, no code. BTC's 0.11 legs/hr caps its $/hr relevance = rider-only confirmed
+in the right units.
