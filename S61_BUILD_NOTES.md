@@ -245,3 +245,14 @@ rounds 5/6, now shown GEOMETRIC not a tuning miss. => the switch-the-losers priz
 at ENTRY (move still ahead); by any diagnosable depth it's behind you. Routes to the fingerprint
 tier (confirmed by dipole Job C: cross-venue flow separates W-from-L loudly, death-from-recovery
 not at all). Flip-and-ride door CLOSED with numbers.
+
+## ROUND 10b — FINE HAZARD GRID (Greg: "how many are losers at 45/40/35/30?")
+SOL bins n=971, P(loss | reached -X): -30 82% / -35 84% / -40 86% / -45 89% / -50 91%. THE
+DIVERGENCE IS SHALLOW (~30, not 60) — but flip still loses at every shallow depth (flip $/hr Δ
+-0.17/-1.83/-0.25/-0.26/+0.29 = noise; books -17.77). TWO reasons the 82% doesn't convert:
+(1) "loser" ~= small stop-out near -X, NOT a plunge — still-falling% only ~52% at -30 -> nothing
+left to ride (front-loaded losses at fine res); (2) the ~18% winners reaching -30 are the FAT
+ones (books: 10/34 reaching -30 are winners = the +28/leg longs) — flipping them shorts the
+rally = the entire -17.77 $/hr books wipeout. Ride-capture negative/~0 at all shallow depths
+(-3.2..-0.9 bins) vs 32bp flip cost. => divergence is in OUTCOME LABEL not FUTURE PATH; prize
+stays entry-only (fingerprint tier). Flip-and-ride door stays closed, now at fine resolution.
