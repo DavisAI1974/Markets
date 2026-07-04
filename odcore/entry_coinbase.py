@@ -178,9 +178,14 @@ COINBASE_MIDBAND = [
 ]
 
 
-def run_midband_cell(cfg: MidbandCellConfig):
+def run_midband_cell(cfg: MidbandCellConfig, fill_model: str = "front", queue_frac: float = 1.0):
     """One Coinbase mid-band cell book -> flat-size, descriptor-carrying trade rows through the
-    platform executor (run_stream). SANDBOX rows (S53 rule) — caller routes the ledger."""
+    platform executor (run_stream). SANDBOX rows (S53 rule) — caller routes the ledger.
+
+    fill_model (S61 build (a), opt-in — default "front" = bit-identical): "queue" runs the HONEST
+    maker fill (queue-ahead at the posted level must trade through; see swing_maker) so the real
+    maker_close% / fill cost is measurable — a MEASUREMENT arm; the sandbox default is unchanged
+    until the honest model earns its own gate record."""
     import sys
     for p in (ROOT, os.path.join(ROOT, "scripts")):
         if p not in sys.path:
@@ -204,7 +209,8 @@ def run_midband_cell(cfg: MidbandCellConfig):
         return []
     res, desc = run_stream(mid, buy, sell, flips, best_bid_sz=bb, best_ask_sz=ba,
                            half_spread_bps=hs, maker_fee=cfg.maker_fee,
-                           taker_fee=cfg.taker_fee)
+                           taker_fee=cfg.taker_fee, fill_model=fill_model,
+                           queue_frac=queue_frac)
     out = []
     for i, l in enumerate(res.legs):
         ts = t0 + int(l.open_idx) * 0.1

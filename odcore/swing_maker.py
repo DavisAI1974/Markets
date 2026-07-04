@@ -93,12 +93,29 @@ def _next_positive(vol: np.ndarray) -> np.ndarray:
     return nxt
 
 
+def _queue_fill_index(cum_opp: np.ndarray, t: int, queue_ahead: float) -> int:
+    """HONEST fill for a post at cell t: first j > t with cumulative opposing taker volume in
+    (t, j] >= queue_ahead — the maker_book._first_fill_index rule (queue-ahead at the posted
+    level must trade through before we fill), reimplemented as searchsorted on the volume cumsum
+    so mid-band leg durations need no fill_window cap. cum_opp = concatenate([[0], cumsum(vol)])
+    (len n+1, monotone). Returns n (= len(cum_opp)-1) if never filled."""
+    n = len(cum_opp) - 1
+    if t >= n:
+        return n
+    target = cum_opp[t + 1] + max(queue_ahead, 0.0)
+    # first j with volume in (t, j] STRICTLY > queue_ahead — the marginal print has traded through
+    # the queue into our order. At queue_ahead=0 this reduces exactly to _next_positive.
+    j = int(np.searchsorted(cum_opp, target, side="right")) - 1
+    return min(max(j, t + 1), n)
+
+
 def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips, *,
                          half_spread_bps: float = 0.0, maker_fee_bps: float = 0.0,
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
                          confirm=None, confirm_lookback: int = 0, entry_gate=None,
                          exit_gate=None, cover_grace: int = 0, lean=None, lean_exit=None,
-                         fill_mode: str = "maker", arm: str = "") -> SwingResult:
+                         fill_mode: str = "maker", fill_model: str = "front",
+                         queue_frac: float = 1.0, arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
     NO time/fill window (Greg S46: "take the time windows out, they are irrelevant"). The conviction quote
@@ -123,6 +140,16 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     cover-grace maker attempt, taker fallback; immediate cross in taker fill_mode) and NO new leg
     opens. The missing three-state concept (long/short/FLAT) that lets structure engines (big
     line breaks, coarse leg ends) speak to the executor. Default None = bit-identical.
+
+    fill_model (S61 build (a), THE HONEST FILL ARM — opt-in, default "front" = bit-identical):
+    "queue" replaces the front-of-queue fill (_next_positive: the next opposing print of ANY size
+    fills us) with the maker_book queue-ahead rule (_queue_fill_index): a post at cell t fills only
+    when cumulative opposing taker volume after t strictly exceeds queue_frac x the best-level size
+    ahead of us at the post cell (best_bid_sz for a posted bid / best_ask_sz for a posted ask).
+    Applies to EVERY maker fill site — new-leg opens, lean-exit covers, exit-gate covers, grace
+    covers — so maker_close stops being True by construction and the real fill cost becomes
+    visible in the ledger (S60 R4b: 128/128 mid-band closes were maker=True under "front").
+    queue_frac scales the queue ahead (1.0 = full displayed size; the maker_book convention).
 
     fill_mode (S55 round 12 — ONE EXECUTOR, ANY SCALE; default "maker" = bit-identical): "taker"
     makes every open/close an immediate spread-crossing fill at the decision cell (open at
@@ -171,6 +198,15 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     # hit by the next SELL trade. We have the best price, so the first real opposing trade fills us.
     fill_ask = _next_positive(bv)
     fill_bid = _next_positive(sv)
+    if fill_model == "queue":
+        cum_bv = np.concatenate([[0.0], np.cumsum(bv)])
+        cum_sv = np.concatenate([[0.0], np.cumsum(sv)])
+        # posted ASK is lifted by BUY flow after clearing the ask-side queue; posted BID by SELL flow
+        fx = lambda t: _queue_fill_index(cum_bv, t, ba[t] * queue_frac)
+        fb_ = lambda t: _queue_fill_index(cum_sv, t, bb[t] * queue_frac)
+    else:
+        fx = lambda t: int(fill_ask[t])
+        fb_ = lambda t: int(fill_bid[t])
 
     legs: list[SwingLeg] = []
     pos = None            # open leg: dict(side, open_idx, open_px)
@@ -205,7 +241,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 # (taker fill_mode: immediate spread-crossing close at the trigger cell.)
                 fl = pos["flip_idx"]; op = pos["open_px"]; oi = pos["open_idx"]
                 fo = pos.get("fee_open", maker_fee_bps)
-                cf = -1 if taker_mode else (int(fill_ask[te]) if osd > 0 else int(fill_bid[te]))
+                cf = -1 if taker_mode else (fx(te) if osd > 0 else fb_(te))
                 cap = min(n - 1, te + max(cover_grace, 0))
                 if not taker_mode and cf <= cap:
                     cpx = mid[te] * (1.0 + hs) if osd > 0 else mid[te] * (1.0 - hs)
@@ -232,7 +268,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
             if pos is not None and taker_fallback:
                 fl = pos["flip_idx"]; op = pos["open_px"]; oi = pos["open_idx"]; osd = pos["side"]
                 fo = pos.get("fee_open", maker_fee_bps)
-                cf = -1 if taker_mode else (int(fill_ask[ci]) if osd > 0 else int(fill_bid[ci]))
+                cf = -1 if taker_mode else (fx(ci) if osd > 0 else fb_(ci))
                 cap = min(n - 1, ci + cover_grace)
                 if not taker_mode and cover_grace > 0 and cf <= cap:
                     cpx = mid[ci] * (1.0 + hs) if osd > 0 else mid[ci] * (1.0 - hs)
@@ -269,9 +305,9 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
             limit = mid[ci] * (1.0 - hs) if s < 0 else mid[ci] * (1.0 + hs)
             fi = ci
         elif s < 0:
-            limit = mid[ci] * (1.0 + hs); fi = int(fill_ask[ci])
+            limit = mid[ci] * (1.0 + hs); fi = fx(ci)
         else:
-            limit = mid[ci] * (1.0 - hs); fi = int(fill_bid[ci])
+            limit = mid[ci] * (1.0 - hs); fi = fb_(ci)
         if fi >= next_ci:    # didn't fill before the next turn superseded the quote
             fi = -1
 
@@ -300,7 +336,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 # SMARTER LAST-OPTION (S48): rest the maker cover up to `cover_grace` cells; take the first
                 # opposing trade as a MAKER (earn the half-spread) before resorting to a taker cross.
                 # cover side osd: long(+1)->post ASK lifted by next BUY; short(-1)->post BID hit by next SELL.
-                cf = int(fill_ask[ci]) if osd > 0 else int(fill_bid[ci])
+                cf = fx(ci) if osd > 0 else fb_(ci)
                 cap = min(n - 1, ci + cover_grace)
                 if cover_grace > 0 and cf <= cap:
                     # maker cover fills within grace: fixed limit at the turn (mid[ci] +/- hs), close idx = cf
