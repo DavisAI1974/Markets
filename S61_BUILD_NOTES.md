@@ -320,3 +320,20 @@ efficiency. The +6.79 prize is real but unreachable by any mid-leg causal read (
 price all flat) — the only separator is the future (oracle). Routes the prize to the ENTRY
 fingerprint (before the leg exists), the winners-invisible law at its most fundamental.
 FLIP-THE-LOSERS thread: prize confirmed real, all mid-leg classifiers exhausted; entry tier only.
+
+## ROUND 13 — THE ENTRY FINGERPRINT (Greg: what unique traits do the big losers have?)
+SOL bins, big losers (net<=-80, n=148) vs winners (n=508), STRICTLY-CAUSAL entry features:
+SINGLE-TRAIT (all weak = winners-invisible confirmed): strongest = PRE-ENTRY SIGNED RETURN
+(big -10.3 vs win +4.9, AUC 0.40) = the FREIGHT-TRAIN signature (big losers fade a move still
+running against them; winners' pre-move already turned). Next: confirm lag (win 62 vs big 52,
+winners wait for more turn), entry vol + arm size (big losers hotter/more-extended). None
+clean alone.
+STACK (8 cheap entry features, 5-fold OOS): AUC 0.606 — above chance, lifts big-loser precision
+0.23 base -> 0.33 (top-20% flag catches 44/148). Real multivariate signal, weak = the FLOOR.
+THE REAL TIER: S35 heavy fingerprint = 128-dim OD operator coeffs + centroid dual-print
+(win/lose) + 6 micros, historically AUC 0.72-0.84 (S34); machinery in repo
+(odcore/fingerprint.py, dipole_predictor.py) but built fine-scale -> needs onset-canary +
+per-(cell,mid-band) revalidation before wiring. ANSWER: the big losers ARE fingerprintable
+(pre-entry-fade seed + 0.606 cheap-stack proof); capturing the +6.79/hr prize = recognize the
+loser's distinctive ENTRY STATE before firing (heavy OD tier), NOT reading the leg after start
+(twins). = the concrete S35 build target, now with a defined population + proof-of-concept.
