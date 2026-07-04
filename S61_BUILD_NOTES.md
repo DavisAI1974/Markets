@@ -270,3 +270,25 @@ WINNERS (z+5-6.8) but CANNOT tell death-from-recovery (|z|<=2 chance). It gives 
 signal but CLOSES THE DOOR WITH PROOF — the "flip this dip now" call isn't in the flow family;
 its only glimmer (cross_major_nf_pre300 z~2) is PRE-ENTRY = fingerprint tier, where the move is
 still ahead. Flip-and-ride CLOSED both directions; prize is entry-only.
+
+## ROUND 11 — GREG'S 3-PART FRAMEWORK: oracle validated HUGE, flow-classifier dead, efficiency = the live thread
+Greg's complete rule at the first-underwater moment: (A) winner-dipping -> HOLD; (B) loser +
+weak move -> FLATTEN small; (C) loser + strong winning move against us -> FLIP and ride.
+SOL bins n=971, fee=0 (Greg handles fees), X=-20, powered, shuffle-floored:
+- baseline +1.77 $/hr
+- **ORACLE (best action/leg): +26.09 $/hr (15x), 508/508 winners kept** — the framework STRUCTURE
+  is perfect; adding the flip case lifted the ceiling from the +13.9 flatten-only oracle to +26.
+- REAL cross-major BTC flow classifier (the agent's z+5-6.8 troubled-vs-winner channel):
+  **+0.85 $/hr, 352/508 winners kept, z=+0.0 vs shuffle floor** = NO better than random per-leg,
+  BELOW baseline, kills 156 winners. The pooled z+5-6.8 does NOT sharpen to per-leg action
+  (5th confirmation: winner-dip and loser-start look identical to flow at the decision cell).
+  FLOW DOOR CLOSED for the mid-leg classifier.
+- REAL trend-efficiency classifier (Greg's graphs' smoothness signal, flow-free): **+1.89 $/hr,
+  491/508 winners kept, z=+0.7 vs threshold floor** = the BEST real classifier — preserves
+  winners (only touches 57 smooth-trend legs), EDGES baseline, but NOT yet significant on one
+  window.
+VERDICT: the framework is oracle-validated (+26/hr prize, winner-preserving); flow can't drive
+it; **trend-efficiency is the live candidate** — right shape + right (price-shape) selector,
+under-powered at z=0.7. NEXT = validate the efficiency-driven 3-part rule across more windows /
+accruing Coinbase books; deploy IF z climbs >2. First all-session read that both preserves
+winners AND beats baseline. (Fee frame = Coinbase; Greg handles the fee tier.)
