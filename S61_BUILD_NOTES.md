@@ -171,3 +171,15 @@ FLOW-CONDITIONED FLIP (dive + underwater + side): earns on DOGE only — already
 (cascflip). RECOGNITION AT ENTRY: winner/loser entry features near-identical on every causal
 read (winners-invisible law) -> the oracle prize on SOL is S35 FINGERPRINT-TIER, not exit-knob
 tier. Greg's intuition = the cascade-flip family; its deployable instance is per-cell.
+
+## ROUND 7 — GREG'S XRP CATCH: rate-adjusted, XRP is #2 (volume is its argument)
+
+Per-leg tables undersell XRP — it FIRES ~2x the rate on the books window (1.10 legs/hr vs sol
+0.56 / doge 0.40 / btc 0.11; caveat: 29.2h window — on 30d bins the gap mostly closes, xrp
+1.47 vs sol 1.35). Loss-elimination ORACLE in $/hr @$5k: sol +11.34 (cb_real) / +13.69
+(kr_mk0); **xrp +7.06 / +11.48 = #2, ahead of doge (+5.73/+7.49) and btc (+0.79/+1.09)**
+despite the worst per-leg print. IMPLICATIONS (no new code earned): (1) XRP = the most
+FEE-SENSITIVE cell (2x the fee events) — Greg's fee-tier clicks are worth most there, matching
+the R4 diagnosis (−16 fees on +4.1 gross); (2) its oracle stays exit-knob-uncapturable
+(rounds 5-6 apply; dv40+uw corrector parked on the 150-leg bar); (3) XRP's cadence is the
+strongest argument for the Kraken lane when un-parked (0-maker + feeds the $10M/30d tier).
