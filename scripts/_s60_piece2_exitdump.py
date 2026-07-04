@@ -87,8 +87,10 @@ def main():
     for coin, mid, buy, sell, hrs, _b in load_venue(args.venue):
         if coin == "eth":
             continue                                        # dropped (S58 board)
-        lean = lean_series(buy, sell, WFLIP)
-        lean60 = lean_series(buy, sell, 60)                 # S58 dive convention + wall-clock check
+        # WALL-CLOCK lean windows (S60 R2 fix — SOL+DOGE agents both flagged the cell-count
+        # confound: 600 cells = 60s on books vs 600s on bins; all derived reads are 600s-wall)
+        lean = lean_series(buy, sell, int(round(WFLIP / grid_s)))
+        lean60 = lean_series(buy, sell, int(round(60 / grid_s)))
         cvol = np.concatenate([[0.0], np.cumsum(buy + sell)])
         cpath = np.concatenate([[0.0], np.cumsum(np.abs(np.diff(np.log(mid))))])
 
