@@ -208,3 +208,26 @@ TWO EX-ANTE DISCRIMINATOR CANDIDATES SURFACED (leg-slice tier, n=10 — hypothes
 context; a graded don't-fade-a-monster-run read = the S58 ER/chop member re-anchor (was a
 non-filter as anchored, queued). (2) The dipole agent's Job C angle (cross-venue flow at these
 entries, per-leg — never tested). Both must clear the full battery before being anything.
+
+## ROUND 9 — DIPOLE FOLLOW-UPS DELIVERED (Jobs A/B/C; report `dipole_followups_s61.md`)
+**A — coupling decider: DIRECTIONAL, not vol-state — but fully LINEAR.** Vol-matched surrogate
+does NOT reproduce (real meanMI 0.130-0.204 vs surr 0.051-0.070; ~60-70% of above-floor MI is
+directional); survives WITHIN vol strata 17/18 cells; BUT per-window MI == Gaussian-implied MI
+of Pearson rho (excess -0.05, day_t -20..-40 = no beyond-linear content). OFFICE SPEC: the
+regime-conditioner descriptor = rolling cross-coin signed CORRELATION (~400s vs BTC), not KSG
+MI — same information, ~1/1000 compute. Descriptor tier only. Pair ordering coverage-confounded.
+**B — queue-level fill toxicity: NO overlay earned.** Skip-toxic-decile posting $/hr sub-noise
+vs 50-shift floor (sol +2.3 vs floor -9.0±9.5); fee wall reproduced at cb_real. Honest fills
+attenuate the decile map 25-70% (fill-prob confound real + measured: toxic posts fill
++4.5-9.3pp more, -2s faster); sole marginal survivor sol H10 -0.146bp z-2.0. SPEC: `bn_nf_pre`
+= FREE descriptor column on sol/doge sandbox fill rows only (promotion bar: split markout on
+the machine's own forward fills); nothing for xrp/btc; no quote consumption.
+**C — big losses vs the whole family: NOTHING NEW SURVIVES.** Cross-venue oppose-flow
+separates troubled legs from WINNERS (D-W z +5..+6.8) but CANNOT tell a DEATH from a RECOVERY
+(D-R |z|<=2 across horizons, ~128 tests = chance); inside-leg D6 coupling null; stacked
+flatten graded in $/hr = -0.25..-1.08 on all 4 cells, at/below shuffle floor. Lead time exists
+(deaths only -12..-22bp under at +300s) but nothing reads it. ANSWER STANDS: wired corrector
+diagonal + fingerprint tier. Watch item (costless): `cross_major_nf_pre300` D-R z~+2.0 pre-entry
+on sol/btc — chance-tier, filed as a fingerprint-encoder candidate column.
+=> Round-8's open question closes: the cross-venue angle does NOT discriminate death-vs-recovery;
+remaining ex-ante candidates = freight-train context grade (ER re-anchor) + the S35 fingerprint.
