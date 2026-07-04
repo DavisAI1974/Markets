@@ -466,6 +466,41 @@ exposure; (4) exit_pred/cascflip; (5) c_x trail arm; (6) ride_from_entries; (7) 
 `lean_close` descriptor already accrues per paper leg — pull win/lose distributions from
 paper_ledger_sandbox.jsonl with zero code.
 
+## ROUND 4c — ARCHIVE MINER: THE COINBASE-EXIT GOLD LIST (S38-S59, execution/fill lens)
+
+RANKED (full detail in the miner report; both miners CONVERGE on #1 independently):
+1. **COVER-GRACE NOT APPLIED TO MID-BAND (grace=0 hardcoded)** — S48: taker 36->2% doge,
+   -510 -> +1011 TOTAL (losing->profitable on execution alone), all 5 cells improved,
+   saturates G=300 (doge 600) — the one mechanic the archive PROVED on the close side has
+   never been on in the Coinbase sandbox. Wall-clock-defined grace arm belongs in the next
+   exit-machine run. Deflationary: fine-scale numbers; mid-band taker may already be ~0
+   except exactly on the wrong-side/stop legs (where grace's knife-catch risk also lives).
+2. **POST THE COVER INTO THE DIVE (S45 can't-refuse as a FILL role, not timing)** — the
+   dive's timing role died at mid-band but its fill role (where the cover finds its
+   counterparty fastest as maker) was NEVER graded separately (S54: "UNMEASURED"). Test:
+   time-to-maker-fill posting at confirm vs at the dive/climax cell, decision held fixed.
+3. **RESTING COVER AT (extreme - c_x*theta)** — the execution twin of the asymmetric
+   retrace: converts the close from cross-after-lag to maker-at-limit-before-lag (spread +
+   fee + part of the retrace). Deflationary: S53 harvest-rungs died (sell-into-strength
+   caps winners); expect a small execution win, not a toll repeal.
+4. **maker_close / taker-share = the exit acceptance metric** (S53 corr -0.31; on every
+   ledger row; fine executor measured 99.8% maker) — any execution fix must move taker
+   share on the wrong-side population BEFORE it moves net, else it's timing luck.
+5. **FILL-ASYMMETRY DOLLARS (S52/S51/S56):** losers' covers fill instantly/fully, winners'
+   get rationed (sol med fillable: win $483 vs lose $6,161) — cb_real 16bp-RT understates
+   winner cost / flatters losers; sandbox go-live needs a price-eligible size-aware cover
+   model. Scale-locality caveat: fine/Bybit numbers.
+6. **FEE TIER > THE WHOLE EXIT PRIZE:** Coinbase fee-upgrade program (>=$500K/mo proof ->
+   as low as 0.0% maker, S49/S57 unverified) + CFM 4-7bp RT — worth 12-16bp RT vs the
+   +3-5 best exit read. TWO GREG CLICKS, no tape. Deflationary: login-gated, unverified.
+7. S45 fill autopsy (d_wait bleed during continuation — shape grace per cell; doge covers
+   should NOT rest through cascades: flip, don't rest). 8. exit_gate carries full cover
+   machinery — wire correctors through it, both maker-rest and guaranteed-taker arms.
+
+STAYS-IRRELEVANT: all rebate-frame math (no Coinbase rebate exists); bigline break exits
+(OOS-dead); harvest rungs (kills winners); fine retiming (dead 2x); S42 depth reads
+(entry-side + venue law); Kraken exits (PARKED, Greg).
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
