@@ -304,3 +304,19 @@ design is SOUND. STILL MISSING: a per-leg classifier good enough to make the fli
 decisions pay robustly (neither flow nor efficiency clears it). The +26 oracle stands; the
 door it points to is the fingerprint/encoder tier as a MID-LEG read (untested; the S35
 machinery was entry-only).
+
+## ROUND 12 — THE AGENT'S SIGNAL ON THE BIG-LOSER TARGET (Greg: flip the huge render losses)
+PRIZE (SOL bins, fee=0): flip-ALL big losers (baseline<=-60, n=237) = -14.00 -> +6.79 $/hr
+(~$21/hr swing @$5k). Real and big. THE TEST — does the agent's cross-major BTC opposing-flow
+signal FLAG the huge losers (<=-80, n=148) vs the winners that also dipped to -20 (n=508)?
+  huge losers: agent sig mean -0.039 median -0.037 frac<0 0.55
+  winners:     agent sig mean -0.044 median -0.045 frac<0 0.57
+  separation t=+0.16 p=0.87 = NONE (winners even slightly MORE opposed).
+Flip-on-signal every threshold flips MORE winners at HIGHER cost than losers caught (thr-0.10:
+catch 60/148 +8583bp vs wrongly flip 93/508 -14995bp = net negative). VERDICT: the agent's
+z+5-6.8 (measured over-leg / diff population) does NOT translate to a decision-moment classifier
+on the huge-loss-vs-dipping-winner split — at -20 the two are TWINS in price, flow (p=0.87) AND
+efficiency. The +6.79 prize is real but unreachable by any mid-leg causal read (flow, efficiency,
+price all flat) — the only separator is the future (oracle). Routes the prize to the ENTRY
+fingerprint (before the leg exists), the winners-invisible law at its most fundamental.
+FLIP-THE-LOSERS thread: prize confirmed real, all mid-leg classifiers exhausted; entry tier only.
