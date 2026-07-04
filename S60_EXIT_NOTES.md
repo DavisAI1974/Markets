@@ -532,6 +532,26 @@ is universal; the CONDITIONING that makes it safe is per-cell (sol: armed-before
 BUY+depth; xrp: dv40+uw10; btc: any). Family with per-cell parameters = the per-cell law.
 No new wires from this grid; pooled exit configs would damage SOL first.
 
+## ROUND 5 — DIVE SPECIALIST CHAPTER (docs/DIPOLE_DIVE_CHAPTER_S60.md) — 3 new measured
+## facts; ONE CORRECTS THE COINBASE EXIT BUILD ORDER
+
+1. **FILL-OFFICE INVERSION (headline):** taker volume INSIDE dive states runs x0.70-0.92 of
+   baseline (z to -13.4) — the pure-lean dive marks THIN one-sided tape, not capitulation
+   volume. **BUILD-ORDER CORRECTION: "post the cover into the dive" is mis-aimed as
+   written.** The S45 fill moment is the WITH-RIDE CLIMAX (the dying direction's buying
+   surge at a long's top — S40 ~2x volume at turns), not the opposing dive. The execution
+   test re-aims: post-into-the-CLIMAX (slmax side of the lean); the queue-level test
+   (one-sided against-price fill) remains the genuinely unmeasured piece.
+2. TIMING office: dive onsets modestly turn-enriched at W=60s only (z+5/+6), INVERTS at
+   W=300/600 (mid-trend), pivot-after ~0.5 = NO LEAD — coincident/confirming, never early.
+3. SIZE office: dive-depth -> |next swing| NULL at mid-band (SOL z+0.7, DOGE negative) —
+   S40's depth read is fine-scale-only (S55-R9 confirmed again).
+Synthesis adopted into the program's language: the dive = a bounded-two-flow REGIME-
+BOUNDARY detector; its value is a property of (operator x what it is conditioned against),
+never the operator alone; offices earn separately per (cell, band, venue, role). Best
+cross-domain candidates flagged: seizure-onset flow collapse (novel-leaning), network
+exfil pivots, predator-prey collapse vs critical-slowing-down head-to-head.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
