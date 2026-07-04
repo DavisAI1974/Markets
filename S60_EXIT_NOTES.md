@@ -284,7 +284,46 @@ unharvestable (loss front-loaded before the mark confirms). Verdict: zigzag exit
 4. Theta-deaths are CONFIRM-kind; fallback legs never theta-die (doge 0/409; btc 98%).
 5. The bins->books divergence law extends to the EXIT side (xrp sign-flips everywhere).
 
+## ROUND 3 — THE MACHINES (`scripts/_s60_piece2_exit_machines.py`; bins + Kraken-tape race;
+## mid fills; fee cols incl. stop-as-taker sensitivity; per-week; 3-seed shuffle floor)
+
+BINANCE BINS (registry cells; d = kr_mk0 $/hr delta vs zigzag; shuf = the arm's delta on
+return-permuted tapes — the structure-free floor):
+- **SOL: armed_stop d-0.49 (live) vs shuffle +0.54 — BELOW its own floor. DEAD.** plain40/50
+  also negative. SOL EXIT VERDICT FINAL: zigzag stands, no exit read, both venues (on the
+  Kraken tape armed_stop costs -1.85 and 5/5wk -> 2/5wk). The lead cell stays untouched.
+- **DOGE: cascade_flip = the machine winner on the instrument** — kr_mk0 +0.42 -> +2.66
+  (d+2.24 vs shuffle +1.14 = **structure premium ~+1.10/hr**), 5/5 weeks, survives
+  stop-as-taker (+1.86), beats the flat-stop arm on live AND premium. cb_real still negative
+  (-5.42) — this is a KRAKEN/low-fee-frame result.
+- BTC: plain40 d+1.23 vs shuffle -0.17 (real premium) BUT the cell stays negative at kr_mk0
+  (-0.21 best) — the stop shrinks the bleed, doesn't turn the cell. Rider only; btc gated.
+- Timers ~0 (blind-timer null arm properly loses — the btc stop premium is not a timer).
+
+KRAKEN TAPE (cross-venue port test, flagged as such — venue law):
+- **DOGE flip adds $/hr on Kraken too (+2.11 -> +3.28, 4/5wk, taker-robust +2.27) BUT its
+  live delta (+1.17) does NOT exceed its Kraken shuffle floor (+1.31) — structure premium
+  ~0 on Kraken.** The lift there is the mechanical/drift component (shuffle preserves net
+  drift; BUY-only bail harvests a down window on any tape). VENUE LAW HOLDS: the flip is
+  VALIDATED-ON-INSTRUMENT (Binance premium +1.10), UNVALIDATED on Kraken — needs its own
+  per-venue pass as tape accrues. Do NOT deploy on Kraken cells yet.
+- BTC plain40 on Kraken: +0.12 -> +1.03, 4/5wk, premium ~+1.1 — real-looking but
+  taker-stop kills it (-0.51) and btc stays gated; parked as rider pending fill reality.
+- ETH flip: negative (-0.66) — the cascade read is DOGE-specific, per-cell law again.
+- SOL/XRP: zigzag only, confirmed.
+
+**PIECE 2 ROUND-3 BOTTOM LINE:** the exit piece's earned content this round = (1) the DOGE
+cascade-join flip, instrument-validated at ~+1.1/hr structure premium (deploy-gated on its
+own Kraken/books pass); (2) hard NULLS that protect the winners (SOL/XRP untouched; no peak
+harvester exists — that prize is S35 fingerprint-tier); (3) the armed-before cross-coin
+information (8/8 cells) filed for the fingerprint thread. The zigzag exit remains the
+deploy exit everywhere; nothing wires into the platform this round (sandbox rule: a DOGE
+flip sandbox cell is the natural next promotion candidate AFTER a books-frame check).
+
 ## SESSION LOG (append per round)
+- Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
+  failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
+  the fast path.
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
 - 22:4x Z: Kraken 30d backfill x5 launched sequential (/tmp/kraken_backfill, SOLUSD first).
