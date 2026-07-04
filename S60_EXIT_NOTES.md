@@ -141,6 +141,34 @@ FINDINGS:
 5. XRP mild positive on PRICE trailing only (+0.5..+1.3) — consistent with its "price
    mechanics only" entry verdict.
 
+## JOB 1 — THE KRAKEN TAPE VERDICT: **THE GROSS EXISTS ON KRAKEN'S OWN PRICES** ✅
+
+`scripts/_s60_kraken_tape_machines.py` — promoted machine (naive k0, venue law: no flow maps)
+on the 30d Kraken trade-history bins, all 5 coins x both thetas, leakage gate PASS all tapes.
+
+| cell (REG=registry)   | legs/h | gr/leg | kr_mk0 $/hr | wk+ | tape gap% |
+|-----------------------|-------:|-------:|------------:|----:|----------:|
+| sol_kraken_mb100  REG |   1.27 |  +4.93 |   **+3.14** | 5/5 |      87.7 |
+| doge_kraken_mb100 REG |   0.84 |  +5.01 |   **+2.11** | 3/5 |      96.9 |
+| xrp_kraken_mb80   REG |   1.39 |  +0.88 |       +0.61 | 4/5 |      86.7 |
+| btc_kraken_mb80   REG |   0.87 |  +0.29 |       +0.12 | 3/5 |      75.6 |
+| eth_kraken_mb100      |   0.88 |  +3.90 |   **+1.72** | 3/5 |      86.8 |
+| (doge mb80 non-reg    |   1.24 |  +3.15 |       +1.95 | 4/5 |     96.9) |
+
+- Best-per-coin sum ~**+$7.7/hr** @$5k flat on Kraken's OWN tape — confirms and slightly
+  exceeds the S59 Binance-instrument estimate (+$6). SOL 5/5 positive weeks.
+- **ETH LIVES ON KRAKEN** (+1.72 mb100): per-cell law vindicated — the Coinbase drop never
+  pre-judged eth_kraken. New candidate cell.
+- **XRP asterisk softens:** mildly POSITIVE on Kraken's own tape (+0.61, 4/5 wk) — the S59
+  "negative on bins at 0 fee" was the Binance instrument; Kraken's own prices disagree.
+- **STALE-FILL HONESTY CHECK PASS:** median fill-delay 0s (confirms only fire on traded
+  seconds by construction); next-trade fill re-score identical to the cent. The 76-97%
+  gap% is idle seconds, not stale decisions.
+- **TIER LADDER IS LOAD-BEARING:** at kr_mk2 most cells go negative — the $10M/30d 0bp
+  tier is the whole game (known; the paper cadence clears it only while running).
+- STILL UNKNOWN (b): do maker quotes FILL at Kraken volume? Books accruing (first cron
+  tick due 00:00Z; 0 runs at 00:19 check — GitHub cron delay is normal, re-check).
+
 ## SESSION LOG (append per round)
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
