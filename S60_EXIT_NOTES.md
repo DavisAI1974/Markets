@@ -590,6 +590,36 @@ VERDICT: a genuine, strong, SOL-specific signal surfaced — but it is a lagged-
 maker-quoting lead, not the absorption-reversal use as framed. Named, controls owed, NOT
 deployed. Fits the Coinbase focus (it is a Coinbase-venue read on book+trade).
 
+## ROUND 7 — ABSORPTION WIRE-IN RESOLVED (dive specialist, both controls) + PAPER DONE
+
+**ABSORPTION/SPOOF: DECIDED AGAINST — both controls decisive (nulls are the deliverable).**
+`scripts/_s60_absorption_wall.py`, chapter §3.5R.
+- C1 LATENCY (cross-venue lag): KILLED. Binance explains R^2=0.003 of the SOL continuation;
+  Binance-removed residual +6.11 of +6.20bp; corr(bin_lean, cb_fwd) -0.148 (contrarian, not
+  leading). The continuation is a SAME-VENUE effect Binance does not lead.
+- C2 WALL (real absorption test, book depth): FALSIFIED. Deep-wall vs thin, per cell: SOL
+  +5.69(z+3.0) vs +5.93(z+3.2) STATISTICALLY IDENTICAL; resting resisting-side depth carries
+  ZERO reversal information. Absorption-exhaustion is NOT the mechanism. DOGE/XRP at shuffle
+  floor; ETH/BTC tickless-degenerate.
+- VERDICT: a real, latency-independent, SOL-only signal (+6.2bp/300s z+3.0) that is NEITHER
+  absorption NOR spoof NOR latency NOR wall — it is a weak DELAYED ORDER-FLOW PRICE-DISCOVERY
+  lead (the no-response filter selects seconds where directional flow arrived but price
+  hasn't reflected it; price then follows). SOL-only (sole real-spread cell).
+- WIRE-IN: absorption falsified -> the emitted detector is NOT wired live (fires a reversal
+  the data denies). The real effect gets an honest spec: SOL Coinbase, MAKER-QUOTING FRAME
+  ONLY (taker-dead: +6.2 < 16bp cb_real RT); high adverse selection (rest on the side flow
+  hits); FILED to the entry/fill fingerprint thread, NOT a standalone machine. Unproven:
+  whether the maker version survives queue/adverse-selection (needs maker_book fill office).
+
+**THE PAPER: DONE.** `docs/DIPOLE_PAPER_S60.md` (+ print-ready .html) — the PI's full survey
+answering Greg's verbatim inquiry (Section 0): taxonomy of 8 constructions D1-D8 + the
+classification machinery; 4 experiments -> the coupling taxonomy (raw-cov = fixed-phase/lag,
+MI-in-null = dynamical coupling, algebraic convexity = secondary marker, flow dMI/dt =
+nothing standalone, opposition signature construction-generated — reproduced on market data
+first time); the three-offices finding; 29 candidate uses across crypto/digital/physical each
+with a first falsifiable test. Dive chapter (docs/DIPOLE_DIVE_CHAPTER_S60.md, +§3.5R) bound
+alongside. Crypto-uses working notes: docs/DIPOLE_CRYPTO_USES_S60.md.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still

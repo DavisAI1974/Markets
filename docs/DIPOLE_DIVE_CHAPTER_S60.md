@@ -270,19 +270,93 @@ cross-correlation of per-venue dive-onset series, tautology-nulled by circular s
 method). Deflationary: S20 found venues synchronous at 1 s (lag-0 cc 0.656, z 580); sub-second lead
 needs tick data — the propagation edge may live entirely below 1 s.
 
-**5. Spoof / absorption detection.** Variant (a) unsigned vs signed *divergence*: a deep lean with
-*no* price response = absorption (a wall eating the flow) or spoof (flow that isn't real). §2.1's
-observation that deep leans are thin-volume is directly relevant — it separates "real thin dive"
-from "absorbed thick dive." Data: book + trade tape. First test: classify deep-lean seconds by
-price response and check whether the no-response class predicts a subsequent reversal (absorbed
-pressure exhausts). Deflationary: needs cancel-message data to distinguish spoof from genuine
-absorption; on trades alone the two are indistinguishable.
+**5. Spoof / absorption detection — RESOLVED (S60, decided against; see §3.5R).** The candidate
+was carried to a full result on the Coinbase books with two controls, and **the absorption
+mechanism is falsified.** The finished resolution is in §3.5R; the one-line outcome: the
+"no-response deep lean" class does **not** reverse (absorption-exhaustion), it **continues** — and
+the continuation is neither cross-venue latency nor a wall effect. It is a weak same-venue
+delayed-OFI price-discovery lead (+6.2 bp/300 s on SOL), sub-cost as a taker, thin as a maker
+quoting signal. Recorded honestly below with its own spec.
 
 **6. Funding / squeeze detection (perps).** Variant (a) on perp taker flow conditioned on the
 funding sign: a dive *against* an extreme funding rate marks the crowded side capitulating. Data:
 perp tape + funding history. First test: does a dive against extreme funding predict mean-reversion
 of the funding rate? Deflationary: entirely untested; perp-specific; the program's venue ban list
 constrains which perp tapes are usable.
+
+### 3.5R — Absorption/spoof: the finished resolution (S60, decided)
+
+The §3.5 candidate was carried from proposal to result on the Coinbase books
+(`scripts/_s60_absorption_probe.py` first, then the two controls in `scripts/_s60_absorption_wall.py`).
+The house rule that nulls are deliverables applies in full here — the mechanism is falsified, and
+that is the finding.
+
+**The signal that had to be explained.** The first probe found the "no-response deep lean" class
+(deep taker lean `|lean_300s| ≥ 0.5` with *no* trailing price response, `|resp| < 0.25` half-spread)
+does **not** reverse (the absorption-exhaustion hypothesis) — it **continues**, and strongly on the
+one cell with a real spread: SOL absorbed forward return **+6.20 bp/300 s**, z ≈ +24 vs a 3-shuffle
+null (recomputed here at +6.20 vs +0.3, z = +3.0/+3.2 with 200 shuffles and a half-sample split —
+smaller z, same sign, real). The class is delayed price *discovery*, not absorption. Two controls
+decide what it is.
+
+**Control 1 — Latency (cross-venue lag): KILLED.** If the Coinbase "continuation" were the slow
+venue catching up to Binance, the contemporaneous Binance signed trailing return should explain it.
+It does not: on SOL, Binance explains **R² = 0.003** of the Coinbase absorbed forward move; the
+Binance-removed residual is **+6.11 bp** (essentially the entire +6.20); Binance has "already moved
+our way" by only **+0.15 bp**, and `corr(Binance-lean, CB-forward)` is **−0.148** (slightly
+*contrarian*, not leading). DOGE identical (R² = 0.000, residual +0.78 of +0.79). **The forward move
+is a same-venue effect that Binance does not lead — the cross-venue-latency explanation is dead.**
+
+**Control 2 — The Wall (the real absorption test, needs book depth): FALSIFIED.** True absorption
+requires a deep lean diving into large *resting depth on the resisting side* (bid depth for a
+sell-lean, ask depth for a buy-lean). Splitting the absorbed events by resisting-side depth (deep
+wall ≥ median vs thin) gives **no separation and no reversal**:
+
+| cell | hs (bp) | absorbed n | deep-wall fwd (z) | thin fwd (z) | verdict |
+|---|---:|---:|---|---|---|
+| **SOL** | 0.68 | 8,775 | **+5.69** (z+3.0) | **+5.93** (z+3.2) | both continue, wall irrelevant |
+| DOGE | 0.70 | 18,313 | +0.35 (z+0.4) | +1.36 (z+1.0) | null; deep-wall *lower* but insignificant |
+| XRP | 0.48 | 6,166 | +0.98 (z−0.0) | +1.27 (z+0.0) | null (both == shuffle floor) |
+| ETH | 0.03 | 340 | +1.33 (z+0.1) | +2.52 (z+0.5) | degenerate (tickless, n small) |
+| BTC | ~0.00 | — | — | — | degenerate (divide-by-~0, uninterpretable) |
+
+The deep-wall class does **not** reverse on any cell; on SOL it is statistically identical to the
+thin class (+5.69 vs +5.93). The depth quartiles show no monotone trend (SOL +6.2/+5.6/+4.0/+7.4).
+**Absorption-exhaustion is not the mechanism. Resting depth on the resisting side carries no
+reversal information here.**
+
+**Verdict — is there a real, mechanism-distinct signal separate from cross-venue latency?**
+Partly yes, but not the one proposed. There is a real, same-venue, positive signal on SOL
+(+6.2 bp/300 s, latency-independent, z+3.0) — but it is **neither absorption nor spoof nor latency.**
+It is a weak **delayed order-flow-imbalance price-discovery lead**: the "no-response" filter selects
+exactly the seconds where strong directional flow has arrived but price has not yet reflected it, and
+price then follows the flow. The wall does not gate it (control 2), and Binance does not front-run it
+(control 1) — it is Coinbase's own book discovering price with a lag. It exists **only on SOL** (the
+sole real-spread Coinbase cell); DOGE/XRP are at their shuffle floor, ETH/BTC are tickless-degenerate.
+
+**Wire-in / honest spec.** Because absorption is falsified, the emitted detector
+(`_s60_absorption_wall.absorption_wall_signal`, causal, expanding-percentile wall threshold, no
+look-ahead) is **NOT wired live** — it fires the reversal side that the data says does not exist. The
+thing that *is* real is the continuation lead, and its deploy reality is unforgiving:
+- **Cell:** SOL Coinbase only. **Read:** deep no-response lean → price continues in the lean
+  direction, +6.2 bp over 300 s. **Frame:** **maker-quoting only.** As a **taker** it is dead —
+  +6.2 bp < the 16 bp cb_real round trip (a 2.6× deficit), the same fee wall that kills every
+  mid-band taker read.
+- **As a maker lead** it says "the next 300 s drifts *with* the lean," so you would post the
+  cover/entry on the lean side and let price come to you — but that means resting on the side flow is
+  *hitting*, i.e. adverse-selection risk is high and fill is exactly when you are wrong. This is a
+  weak passive-quoting tilt, not an alpha; it belongs to the entry/fill fingerprint thread, not a
+  standalone machine.
+- **Accrual bar:** it already has n = 8,775 SOL events over 99 h of book — the *effect* is
+  established; what is unproven is whether the maker-quoting version survives queue/adverse-selection
+  once `maker_book._first_fill_index` is wired (the fill office, still owed). No new tape is needed to
+  confirm the continuation; new *book-with-queue* data is needed to price the only frame it could pay
+  in.
+
+**One-line resolution:** the spoof/absorption use is **decided against** — deep no-response leans do
+not reverse, no wall effect, no latency; the residual is a real but sub-cost same-venue OFI
+price-discovery lead on SOL, maker-frame only, filed to the fingerprint/fill thread rather than
+deployed. Nulls (DOGE/XRP at floor; the wall carrying zero reversal information) are the deliverable.
 
 ---
 
