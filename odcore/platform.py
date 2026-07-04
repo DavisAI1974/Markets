@@ -125,8 +125,8 @@ def _entry_gate(n, flips, buy, sell, mid):
 
 def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
                half_spread_bps=0.0, maker_fee=0.0, taker_fee=5.0, grace=0,
-               dipole_entry=False, dipole_exit=None, fill_mode="maker",
-               fill_model="front", queue_frac=1.0,
+               dipole_entry=False, dipole_exit=None, exit_spec=None, lean_w=None,
+               fill_mode="maker", fill_model="front", queue_frac=1.0,
                alpha=1.0, roll=200, quality=None, size_axis=None):
     """ANY flip stream through the platform's decision code — the single research entry point.
 
@@ -135,6 +135,10 @@ def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
     fill_model="queue" (S61 build (a), opt-in — default "front" = bit-identical) = the HONEST
     maker fill: queue-ahead at the posted level must trade through before any fill (see
     swing_maker); requires real best_bid_sz/best_ask_sz.
+    exit_spec (S61, opt-in — default None = bit-identical) = the per-cell exit corrector socket
+    (price_stop / armed_dive / casc_flip; see swing_maker). lean_w (CELLS) = the walker's lean
+    window for exit_spec — callers define it WALL-CLOCK per venue (600s = 600 cells on 1s bins,
+    6000 on 0.1s books; the S60 R4b confound fix). Descriptors stay on the platform WFLIP lean.
     quality/size_axis: per-leg causal arrays for size_legs; omit -> legs stay flat (size 1.0).
     Returns (SwingResult, descriptors list). Equivalence proof (S55 R12 canary): zz150 through
     this in taker mode reproduces the S54 leg tables bit-for-bit on all 5 coins.
@@ -147,10 +151,12 @@ def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
     lean = lean_series(buy, sell, WFLIP)
     piv = {int(c): int(p) for (c, p, s) in flips}
     egate = _entry_gate(len(mid), flips, buy, sell, mid) if dipole_entry else None
+    wl = lean if lean_w is None else lean_series(buy, sell, int(lean_w))
     res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=half_spread_bps,
                                maker_fee_bps=maker_fee, taker_fee_bps=taker_fee,
                                cover_grace=grace, entry_gate=egate,
-                               lean=lean if dipole_exit else None, lean_exit=dipole_exit,
+                               lean=lean if dipole_exit else (wl if exit_spec is not None else None),
+                               lean_exit=dipole_exit, exit_spec=exit_spec,
                                fill_mode=fill_mode, fill_model=fill_model,
                                queue_frac=queue_frac)
     if quality is not None and size_axis is not None and res.legs:

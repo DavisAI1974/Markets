@@ -97,3 +97,38 @@ fill-toxicity mark (queue-level test owed), per-cell regime conditioner (descrip
 - Record change owed (BTC Amendment 1): demote the armed-before robustness-file entry to
   SOL-only in the S60 record when next edited.
 - FEE TIER: still the biggest lever (Greg's 2 clicks). Kraken stays PARKED.
+
+## ROUND 4 — THE TWO COIN EXIT CHANGES CODED (Greg: "code all of the exit changes")
+
+**The wire:** `exit_spec` = the per-cell exit-corrector socket in `simulate_swing_maker` (the
+S60 code-miner's exit_pred generalization of the lean_exit walker) — kinds `price_stop` /
+`armed_dive` / `casc_flip`, actions `flat` / `flip`, per-side filter; every exit_spec close
+(and a flip's new open) is a TAKER cross (the conservative arm — a protective stop is
+structurally taker; the DOGE flip survives stop-as-taker on the record). `lean_w` param on
+`run_stream` = the walker's lean window in WALL-CLOCK terms per venue (the S60 R4b 60s-wall
+confound fix; 600s = 6000 cells on the 0.1s book grid). Legs carry `stop_exit`; sandbox rows
+carry the new column + variant-tagged `mode`.
+
+**Registry:** `COINBASE_MIDBAND_VARIANTS` = exactly the per-cell diagonal —
+`doge_coinbase_mb100_cascflip` (S60 R4 spec verbatim: BUY-only, pure dive <=-0.30 on 600s-wall
+lean, >=20bp underwater -> FLIP; ~30-fire accrual bar, stand-down rules in the config note) and
+`btc_coinbase_mb80_plainstop` (S61 rider: X=40 primary per Amendment 2, flat-until-next-confirm;
+ops bar blocks CAPITAL only — S60 R4 said sandbox day one). SOL and XRP get NO variant BY
+VERDICT. `paper_trade.py` accrues variants alongside base cells (distinct cell names, same
+SANDBOX ledger).
+
+**CANARY:** base-cell rows bit-identical modulo ONE new key (`stop_exit`, all False) —
+verified key-stripped bytes equal on 4/4 cells, then rebaselined. PASS.
+
+**FIRST NUMBERS (books, leg-slice tier — the LEDGER decides, these are the wire check):**
+- doge cascflip: 7 fires / 40 legs, cell face −5.31 -> **+1.15 net/leg** (direction matches the
+  S60 instrument read; n-tiny).
+- btc plainstop: 8 fires / 22 legs, −44.49 -> −41.96 (gap leg still in; ex-gap is where the
+  stop's tail-shape value lives). Cell stays gated for capital.
+
+**RENDERS (Greg's print order):** `docs/renders/s61/legs_<cell>.png` — 10 biggest losers +
+10 smallest winners per cell (4 base + 2 variants), rendered through the NEW executor path
+(red X = stop/flip fired). Tool: `scripts/_s61_exit_renders.py`.
+
+**Build-queue state:** (a) DONE, (b) demoted to contingent shadow, (c) rejected for SOL /
+unranked elsewhere, (d) DONE (cascflip) + the BTC plainstop rider — all exit changes coded.

@@ -91,17 +91,20 @@ def main():
     # DEPLOYED is per cell via that record + controls, never by flag drift. Flips from
     # odcore.entry_coinbase (armed machine, mode-0 fix, baseline fallback, naive k0 shapes);
     # execution through the same platform run_stream as everything else.
-    from odcore.entry_coinbase import COINBASE_MIDBAND, run_midband_cell
+    # S61: exit-variant sandbox cells (doge cascflip, btc plainstop) accrue alongside the
+    # base cells — distinct cell names, same SANDBOX ledger; ledger decides adoption.
+    from odcore.entry_coinbase import (COINBASE_MIDBAND, COINBASE_MIDBAND_VARIANTS,
+                                       run_midband_cell)
     mb_existing = load_ledger(SANDBOX_LEDGER)
     mb_rows = []
-    for cfg in COINBASE_MIDBAND:
+    for cfg in COINBASE_MIDBAND + COINBASE_MIDBAND_VARIANTS:
         try:
             mb_rows += run_midband_cell(cfg)
         except Exception as e:
             print(f"# {cfg.cell} ERR {e}")
     mb_new = append_ledger(mb_rows, SANDBOX_LEDGER, existing=mb_existing)
     print(f"# COINBASE MIDBAND (sandbox): +{len(mb_new)} new")
-    shakeout(mb_existing + mb_new, COINBASE_MIDBAND)
+    shakeout(mb_existing + mb_new, COINBASE_MIDBAND + COINBASE_MIDBAND_VARIANTS)
 
 
 if __name__ == "__main__":

@@ -148,10 +148,14 @@ class MidbandCellConfig:
     active: bool = True              # False = gated (btc: pending book accrual)
     research_note: str = ""          # flagged flow-map candidate, NOT wired (venue law)
     venue: str = "coinbase"
+    variant: str = ""                # sandbox exit-variant suffix (S61); "" = the base cell
+    exit_spec: dict = None           # per-cell exit corrector (see swing_maker exit_spec)
+    lean_w_s: float = 600.0          # exit-walker lean window, WALL-CLOCK seconds (S60 R4b fix)
 
     @property
     def cell(self):
-        return f"{self.coin}_{self.venue}_mb{int(self.theta_bp)}"
+        base = f"{self.coin}_{self.venue}_mb{int(self.theta_bp)}"
+        return f"{base}_{self.variant}" if self.variant else base
 
     @property
     def path(self):
@@ -175,6 +179,34 @@ COINBASE_MIDBAND = [
                       research_note="pending Coinbase book accrual (collector repaired S58); "
                                     "th80 opposing-mandatory stack + bnc25 fallback = bins "
                                     "research candidates"),
+]
+
+# S61 SANDBOX EXIT VARIANTS (paper accrual only — NEVER capital; every exit_spec close is
+# taker-accounted, the conservative arm). Per-cell law: the exit-corrector diagonal is
+# sol NONE / btc plain-stop / doge BUY-flip / xrp NONE (S60 R2-R4d + S61 agent verdicts) —
+# so exactly these two cells; SOL and XRP get NO variant by verdict, not by omission.
+COINBASE_MIDBAND_VARIANTS = [
+    # S60 R4 spec `doge_coinbase_mb100_cascflip`: entry identical; BUY legs only; first pure
+    # dive (600s-WALL lean <= -0.30, NO arm) while >= 20bp underwater -> FLIP (join the
+    # cascade). Instrument-validated (+1.10/hr structure premium over shuffle, 5/5wk, survives
+    # stop-as-taker); accrual bar ~30 fires; stand-down: per-fire mean < 0 after 10 fires OR
+    # 3 winner-kills before 3 saves. Ledger decides.
+    MidbandCellConfig("doge", 100.0, variant="cascflip",
+                      exit_spec=dict(kind="casc_flip", action="flip", side=+1,
+                                     dive_lo=-0.30, uw_bp=20.0),
+                      research_note="S60 R4 sandbox spec; flat-stop / SELL-fire shadows are "
+                                    "research arms (scripts), not registry cells"),
+    # S61 BTC rider `btc_coinbase_mb80_plainstop` (btc_armedbefore_report_s61.md §7): X=40
+    # primary (S61 Amendment 2: X=40 replaces X=50), flat-until-next-confirm, taker-accounted.
+    # S60 R4 verdict: activate btc_mb80 into SANDBOX with the stop attached day one — sandbox
+    # arms are free; the ops bar (exchange-side resting stop + staleness kill-switch) BLOCKS
+    # capital, not paper. Accrual: 57-leg disaster screen / 261-389-leg stop verdict;
+    # stand-down: per-fire mean < -8bp after 20 fires OR 3 winner-kills before 5 death-saves
+    # OR taker share > 90% over 30 fires. Tape-graded stop gives ZERO gap protection (S61).
+    MidbandCellConfig("btc", 80.0, K=10, variant="plainstop",
+                      exit_spec=dict(kind="price_stop", action="flat", side=0, x_bp=40.0),
+                      research_note="S61 rider spec; X=50/armed/timer75 shadows are research "
+                                    "arms (scripts), not registry cells"),
 ]
 
 
@@ -207,11 +239,13 @@ def run_midband_cell(cfg: MidbandCellConfig, fill_model: str = "front", queue_fr
     flips = armed_midband_flips(mid, cfg.theta_bp, cfg.c, bounce_frac=cfg.bounce_frac)
     if len(flips) < 2:
         return []
+    lean_w = int(round(cfg.lean_w_s / 0.1)) if cfg.exit_spec is not None else None  # 0.1s book grid
     res, desc = run_stream(mid, buy, sell, flips, best_bid_sz=bb, best_ask_sz=ba,
                            half_spread_bps=hs, maker_fee=cfg.maker_fee,
                            taker_fee=cfg.taker_fee, fill_model=fill_model,
-                           queue_frac=queue_frac)
+                           queue_frac=queue_frac, exit_spec=cfg.exit_spec, lean_w=lean_w)
     out = []
+    mode = f"mb{int(cfg.theta_bp)}c{cfg.c:g}" + (f"+{cfg.variant}" if cfg.variant else "")
     for i, l in enumerate(res.legs):
         ts = t0 + int(l.open_idx) * 0.1
         out.append(dict(cell=cfg.cell, coin=cfg.coin, ts=round(ts, 3), side=int(l.side),
@@ -219,6 +253,6 @@ def run_midband_cell(cfg: MidbandCellConfig, fill_model: str = "front", queue_fr
                         net_bps=round(float(l.net_bps), 4), size_mult=1.0,
                         sized_net=round(float(l.net_bps), 4),
                         swing_bps=round(float(l.swing_bps), 3), maker_close=bool(l.close_maker),
-                        grace=0, lean_exit=bool(l.lean_exit),
-                        mode=f"mb{int(cfg.theta_bp)}c{cfg.c:g}", **desc[i]))
+                        grace=0, lean_exit=bool(l.lean_exit), stop_exit=bool(l.stop_exit),
+                        mode=mode, **desc[i]))
     return out

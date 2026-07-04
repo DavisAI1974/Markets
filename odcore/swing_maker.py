@@ -57,6 +57,7 @@ class SwingLeg:
     swing_bps: float     # |mid move| open->close (the raw swing size, for the fee-floor gate)
     size: float = 1.0    # conviction size multiplier (set by size_legs; 1.0 = flat/unsized)
     lean_exit: bool = False  # True = closed by the dipole lean-collapse exit (S55 R8), not a turn
+    stop_exit: bool = False  # True = closed by an exit_spec trigger (S61 stop/corrector arms)
 
 
 @dataclass
@@ -114,7 +115,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
                          confirm=None, confirm_lookback: int = 0, entry_gate=None,
                          exit_gate=None, cover_grace: int = 0, lean=None, lean_exit=None,
-                         fill_mode: str = "maker", fill_model: str = "front",
+                         exit_spec=None, fill_mode: str = "maker", fill_model: str = "front",
                          queue_frac: float = 1.0, arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
@@ -140,6 +141,26 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     cover-grace maker attempt, taker fallback; immediate cross in taker fill_mode) and NO new leg
     opens. The missing three-state concept (long/short/FLAT) that lets structure engines (big
     line breaks, coarse leg ends) speak to the executor. Default None = bit-identical.
+
+    exit_spec (S61 build, THE PER-CELL EXIT CORRECTOR SOCKET — opt-in, default None =
+    bit-identical; the exit_pred generalization of the lean_exit walker the S60 code miner
+    specced): a dict {kind, action, side, ...params} walked per open leg, cell by cell, between
+    flips (same scan machinery as lean_exit; mutually exclusive with lean_exit). Kinds:
+      "price_stop": trigger when the leg's running fav (vs open_px) <= -x_bp — the S61 BTC
+                    plain-stop rider (X=40 primary).
+      "armed_dive": with-ride lean armed (>= arm_hi) earlier in the leg, then lean <= dive_lo
+                    while fav <= -uw_bp — SOL's armed-before shape (research/shadow only;
+                    NEVER deploy on SOL — S61 PROTECT verdict).
+      "casc_flip":  lean <= dive_lo (pure dive, NO arm) while fav <= -uw_bp — the S60 DOGE
+                    cascade-join conjunction.
+    action "flat" = close and stay flat until the next flip; "flip" = close AND open the
+    opposite side at the trigger cell (join the cascade). side (+1/-1/0) filters which legs are
+    walked (casc_flip is BUY-only per the S60 spec). HONEST ACCOUNTING: every exit_spec close
+    (and a flip's new open) is a TAKER cross at the trigger cell — a protective stop is
+    structurally taker (S60 R4 / S61 BTC recheck); the DOGE flip survives stop-as-taker on the
+    record, so the conservative arm is the wired one. Legs closed this way carry
+    SwingLeg.stop_exit=True. Requires `lean` for the lean-conditioned kinds. Adoption per cell
+    via the SANDBOX forward ledger ONLY — this parameter existing does not turn it on anywhere.
 
     fill_model (S61 build (a), THE HONEST FILL ARM — opt-in, default "front" = bit-identical):
     "queue" replaces the front-of-queue fill (_next_positive: the next opposing print of ANY size
@@ -190,8 +211,19 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     conf = None if confirm is None else np.asarray(confirm).astype(bool)
     egate = None if entry_gate is None else np.asarray(entry_gate).astype(bool)
     xgate = None if exit_gate is None else np.asarray(exit_gate).astype(bool)
+    assert not (exit_spec is not None and lean_exit is not None), \
+        "exit_spec and lean_exit are mutually exclusive exit walkers"
     ln = None if (lean is None or lean_exit is None) else np.asarray(lean, float)
     arm_hi, exit_lo = (lean_exit if lean_exit is not None else (0.0, 0.0))
+    xspec = exit_spec
+    xln = None
+    if xspec is not None:
+        xk = xspec["kind"]
+        x_action = xspec.get("action", "flat")
+        x_side = int(xspec.get("side", 0))
+        if xk in ("armed_dive", "casc_flip"):
+            assert lean is not None, f"exit_spec kind {xk} requires the lean series"
+            xln = np.asarray(lean, float)
     taker_mode = fill_mode == "taker"
 
     # Front-of-queue fill, NO window: the offer (short) is lifted by the next BUY trade; the bid (long) is
@@ -263,6 +295,53 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 pos = None
                 if ci <= hold_until:   # the cover resolution runs past this flip — do not act on it
                     continue
+        # S61 EXIT_SPEC WALKER (the exit_pred generalization): walk the open leg's cells since the
+        # last look; on a trigger, TAKER-cross close (a protective stop/corrector is structurally
+        # taker) and — for the flip action — taker-open the opposite side at the same cell.
+        if pos is not None and xspec is not None:
+            osd = pos["side"]
+            if x_side != 0 and osd != x_side:
+                pos["scan_from"] = ci          # side-filtered leg: not walked, keep pointer moving
+            else:
+                op = pos["open_px"]
+                te = -1
+                for t in range(pos["scan_from"], min(ci, n)):
+                    fav = osd * (mid[t] - op) / op * 1e4
+                    if xk == "price_stop":
+                        if fav <= -xspec["x_bp"]:
+                            te = t; break
+                    elif xk == "armed_dive":
+                        sl = osd * xln[t]
+                        if not pos["lean_armed"]:
+                            if sl >= xspec["arm_hi"]:
+                                pos["lean_armed"] = True
+                        elif sl <= xspec["dive_lo"] and fav <= -xspec["uw_bp"]:
+                            te = t; break
+                    elif xk == "casc_flip":
+                        if osd * xln[t] <= xspec["dive_lo"] and fav <= -xspec["uw_bp"]:
+                            te = t; break
+                if te < 0:
+                    pos["scan_from"] = ci
+                else:
+                    fl = pos["flip_idx"]; oi = pos["open_idx"]
+                    fo = pos.get("fee_open", maker_fee_bps)
+                    cpx = mid[te] * (1.0 - hs) if osd > 0 else mid[te] * (1.0 + hs)
+                    gross = osd * (cpx - op) / op * 1e4
+                    net = gross - fo - taker_fee_bps
+                    swing = abs(mid[te] - mid[fl]) / mid[fl] * 1e4
+                    legs.append(SwingLeg(osd, fl, oi, op, int(te), float(cpx), False, gross, net,
+                                         swing, stop_exit=True))
+                    hold_until = int(te)
+                    if x_action == "flip":
+                        s2 = -osd            # join the cascade: taker-open the opposite side now
+                        opx2 = mid[te] * (1.0 + hs) if s2 > 0 else mid[te] * (1.0 - hs)
+                        pos = dict(side=int(s2), flip_idx=int(te), open_idx=int(te),
+                                   open_px=float(opx2), scan_from=int(te) + 1,
+                                   lean_armed=False, fee_open=taker_fee_bps)
+                    else:
+                        pos = None
+                    if ci <= hold_until:
+                        continue
         # S55 R13 STRUCTURE-SAYS-OUT: exit_gate flip = flatten (cover machinery), open NOTHING.
         if xgate is not None and xgate[ci]:
             if pos is not None and taker_fallback:
