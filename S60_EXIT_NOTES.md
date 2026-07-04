@@ -552,6 +552,44 @@ never the operator alone; offices earn separately per (cell, band, venue, role).
 cross-domain candidates flagged: seizure-onset flow collapse (novel-leaning), network
 exfil pivots, predator-prey collapse vs critical-slowing-down head-to-head.
 
+## ROUND 6 — SPOOF/ABSORPTION PROBE (Greg: "we can definitely use this") — FIRES ON SOL BUT
+## INVERTS THE HYPOTHESIS: no-response deep lean = DELAYED CONTINUATION, not absorption-reversal
+
+`scripts/_s60_absorption_probe.py` on Coinbase books (book+trade tape). Deep lean |lean_300s|>=0.5,
+split by trailing price RESPONSE: absorbed=|resp|<0.25hs (leaned hard, price didn't move) vs
+moved=resp>1hs. Forward return SIGNED BY LEAN; hypothesis said absorbed -> NEGATIVE (exhaust+reverse).
+
+RESULT (fwd 300s, lean-signed, vs circular-shift null):
+- **SOL: absorbed +5.81bp (n=8779), moved +0.09bp, abs-mov +5.72; z=+24.2 vs null. STRONG +
+  REAL — but POSITIVE = CONTINUATION, the OPPOSITE of the absorption-exhaustion hypothesis.**
+- BTC: +4.98bp abs-mov +6.44 BUT hs=0.00bp (1-tick book, no spread -> the response/reversal
+  frame degenerates; z=6.7e8 is a divide-by-~0 artifact). DISCARD.
+- ETH: hs=0.03bp near-tickless, n=340, z=+0.4 NULL. DOGE: abs-mov +0.28, z=+0.7 NULL.
+  XRP: 60s negative, z=-1.4 NOISY/NULL.
+- REAL only on SOL — the one cell with genuine spread (0.68bp). Leakage-safe (resp trailing,
+  fwd forward, lean causal).
+
+READING (data-level then interpretation): a deep taker lean that has NOT yet moved Coinbase
+mid predicts the mid moving +5.8bp IN the lean direction over the next 300s. This is
+DELAYED PRICE DISCOVERY, not absorption. STRONGEST DEFLATIONARY (must rule out next):
+CROSS-VENUE LATENCY — Coinbase mid lagging global flow (Binance already moved); "no response"
+= Coinbase hasn't caught up; "+continuation" = it catches up. If so it is a MAKER-QUOTING
+lead (post ahead of the catch-up), NOT a taker edge (5.8bp/300s < 16bp RT taker), and NOT
+absorption. REFINEMENTS OWED before it is more than a lead:
+1. LATENCY CONTROL: does a Binance lean at t predict the Coinbase catch-up (lagged
+   cross-venue)? If the Coinbase "no-response" is explained by Binance already-moved, it is
+   pure latency.
+2. THE REAL ABSORPTION TEST NEEDS THE WALL: condition on BOOK DEPTH (bidK/askK — we have it)
+   on the resisting side. True absorption = deep lean INTO a big resting wall that eats it;
+   that is distinguishable from lagged discovery and is the chapter's actual mechanism.
+   (Trades alone cannot separate spoof from absorption — chapter's own caveat; depth can
+   separate absorption from latency.)
+3. Volume ratio uninformative here (median trailing-300s taker volume = 0 on sol/btc/doge =
+   the thin-tape confirmation from the dive chapter, but breaks the x-median normalization).
+VERDICT: a genuine, strong, SOL-specific signal surfaced — but it is a lagged-discovery /
+maker-quoting lead, not the absorption-reversal use as framed. Named, controls owed, NOT
+deployed. Fits the Coinbase focus (it is a Coinbase-venue read on book+trade).
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
