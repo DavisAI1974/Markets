@@ -398,3 +398,15 @@ better trigger — a REGIME GATE (stand aside from the flip in the wk4-type regi
 per-cell regime conditioner (dipole agent's cross-coin correlation state) OR the coeff tier to
 clean deep-zone winner contamination. Caveat: flip = taker cross (fee=0 shown; Greg handles fees).
 NEXT: gate the flip by regime; that turns the fragile +0.61 into a candidate robust edge.
+
+## ROUND 13f — GREG'S FLIP-THEN-MANAGE REFINEMENT (the wk4 mitigation, next-build spec)
+After the flip fires (pre600<-80 -> reverse), MANAGE the flipped leg: if the flipped position is
+ALSO moving away (the flip was wrong — we flipped a deep-fade WINNER that keeps running) -> FLATTEN
+small; if the flipped position is positive (flip going our way — a real big-loser caught) -> RIDE.
+= a stop-manage on the reversed leg that caps the mis-flip downside. DIRECTLY targets the wk4
+fragility: the winners we wrongly flip (the +291bp deep-fade winners) get cut small on the flip
+side instead of riding to a big loss. NEXT-BUILD SPEC (S62): flip pre600<-80, then flatten the
+reversed leg on adverse / ride on favorable; grade per-week (does it rescue wk4?) + shuffle floor,
+$/hr, fee-accounted (flip = taker). This is the concrete robustification of the session's best
+single-feature lever (13e) — a self-contained price-managed stop on the flip, no coeff tier needed
+to TEST it (coeff tier still the path to clean the mis-flips at source).
