@@ -54,19 +54,32 @@ def cheap_features(mid, legs):
     return np.array(rows, float)
 
 
-def oos_auc_and_flip(X, y, week, gross, winner, bigloss, ok, hrs, base):
+def oos_auc_and_flip(X, y, week, gross, winner, bigloss, ok, hrs, base,
+                     coeff_cols=None, sel_k=0):
+    """coeff_cols = indices of X that are coeff dims; sel_k>0 = keep only the top-k of those by
+    per-fold (TRAIN-only) big-loser-vs-winner |t| — leakage-safe faint-signal extraction."""
     from sklearn.ensemble import HistGradientBoostingClassifier
     from sklearn.metrics import roc_auc_score
+    from scipy import stats
     pred = np.full(len(y), np.nan)
     train = ok & (winner | bigloss)
     for w in sorted(set(week)):
         tr = train & (week != w); te = ok & (week == w)
         if tr.sum() < 40 or len(np.unique(y[tr])) < 2:
             continue
+        Xtr, Xte = X, X
+        if sel_k and coeff_cols is not None:
+            cc = np.asarray(coeff_cols)
+            tvals = np.array([abs(stats.ttest_ind(X[tr & bigloss, j], X[tr & winner, j],
+                                                  equal_var=False).statistic) for j in cc])
+            keep_coeff = cc[np.argsort(tvals)[::-1][:sel_k]]
+            noncoeff = np.array([j for j in range(X.shape[1]) if j not in set(cc)], int)
+            cols = np.r_[noncoeff, keep_coeff].astype(int)
+            Xtr = X[:, cols]; Xte = X[:, cols]
         clf = HistGradientBoostingClassifier(max_depth=3, max_iter=120,
                                              learning_rate=0.06, l2_regularization=1.0)
-        clf.fit(X[tr], y[tr])
-        pred[te] = clf.predict_proba(X[te])[:, 1]
+        clf.fit(Xtr[tr], y[tr])
+        pred[te] = clf.predict_proba(Xte[te])[:, 1]
     mm = train & ~np.isnan(pred)
     auc = roc_auc_score(bigloss[mm], pred[mm]) if len(np.unique(bigloss[mm])) > 1 else float("nan")
     best = (-1e9, None)
@@ -119,12 +132,22 @@ def main():
           f"big-losers={int(bigloss.sum())}  baseline {base:+.2f}  entry-flip ORACLE {orc:+.2f} $/hr")
     print(f"  dipole features: {'LOADED ' + str(Xd.shape) if have_dip else 'not present yet (slot ready)'}")
     print(f"  {'feature set':22} {'OOS AUC':>8} {'best flip $/hr':>14} {'vs base':>8}  (pctl,nflip,BL,winflip)")
-    sets = [("CHEAP (6)", Xc), ("COEFF (128)", Xco), ("CHEAP+COEFF", np.hstack([Xc, Xco]))]
+    ncheap = Xc.shape[1]
+    Xstack = np.hstack([Xc, Xco])
+    coeff_cols = list(range(ncheap, ncheap + Xco.shape[1]))
+    sets = [("CHEAP (6)", Xc, None, 0),
+            ("COEFF (128)", Xco, None, 0),
+            ("CHEAP+COEFF(all)", Xstack, coeff_cols, 0),
+            ("CHEAP+COEFF(sel8)", Xstack, coeff_cols, 8),
+            ("CHEAP+COEFF(sel16)", Xstack, coeff_cols, 16)]
     if have_dip:
-        sets += [("CHEAP+DIPOLE", np.hstack([Xc, Xd])),
-                 ("STACK all", np.hstack([Xc, Xco, Xd]))]
-    for name, X in sets:
-        auc, (d, info) = oos_auc_and_flip(X, y, week, gross, winner, bigloss, ok, hrs, base)
+        Xall = np.hstack([Xc, Xco, Xd])
+        cc2 = list(range(ncheap, ncheap + Xco.shape[1]))
+        sets += [("CHEAP+DIPOLE", np.hstack([Xc, Xd]), None, 0),
+                 ("STACK(sel16)", Xall, cc2, 16)]
+    for name, X, cc, k in sets:
+        auc, (d, info) = oos_auc_and_flip(X, y, week, gross, winner, bigloss, ok, hrs, base,
+                                          coeff_cols=cc, sel_k=k)
         print(f"  {name:22} {auc:>8.3f} {d:>+14.2f} {d - base:>+8.2f}  {info}")
 
 
