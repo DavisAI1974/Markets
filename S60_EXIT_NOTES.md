@@ -189,6 +189,26 @@ entry-time features IDENTICAL (S58 "winners invisible" law confirmed exit-side o
 Wrong-side discriminator: none with lead time (depth>30bp = 83% death but the info arrives
 after the money is gone; the 10-30bp decision band is a coin flip).
 
+**SOL — zigzag exit CONFIRMED near-optimal for winners + the round's FIND: the ARMED-BEFORE
+wrong-side discriminator.**
+(1) Winners' excess giveback over the c*theta toll is TINY: mean +1.8 / med +1.3 / p90 +3.9bp,
+zero legs under 0.35*theta — ~96% of winner giveback IS the structural toll; there is nothing
+for a detector to harvest (why every family failed). The +25.2 ceiling stays S35-tier.
+(2) **THE FIND — flow-confirmed failure:** among underwater dive-triggered legs, whether the
+with-ride lean had ALREADY ARMED (>=+0.10) earlier splits deaths from recoveries: ARMED =
+death 0.63-0.84, save +14..+15bp/leg; unarmed = entry noise, save NEGATIVE -13..-18 (old side
+recovers). Sign-consistent 12/12 config strata + 9/9 depth-x-age strata (not an age/depth
+proxy); stratified permutation z=+2.39/+3.49. Story fits S58: a dip that GOT its flow and is
+still underwater when the opposing dive lands = confirmed failure.
+(3) Proposed machine test: UNDERWATER ARMED-DIVE STOP (arm 0.10 / dive -0.30 / uw -10bp /
+600s wall-clock), expected +0.6-0.9 gross bp/leg (halves + quartiles stable, trigger ~5%).
+**Standing objection (agent's own): a dumb price stop X=40 BEATS it at th80 (+1.11 vs +0.63)
+— the machine must run BOTH arms; the lean conditioning hasn't earned its complexity yet.**
+(4) Anti-prints: pooled r8/dive/climax/lean-trailing; in-profit dives (dv40 at gx 10-40:
+-50.8); unarmed underwater stops. Books shape-consistent (n=4-6, wall-clock caveat).
+(5) Flag for dump builder: every sub-toll-giveback leg is a SHORT (longs 100% big-giveback
+both thetas) — check confirm/giveback accounting asymmetry (~10-15bp on 8-17% of shorts).
+
 ## SESSION LOG (append per round)
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
