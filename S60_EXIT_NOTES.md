@@ -169,6 +169,26 @@ on the 30d Kraken trade-history bins, all 5 coins x both thetas, leakage gate PA
 - STILL UNKNOWN (b): do maker quotes FILL at Kraken volume? Books accruing (first cron
   tick due 00:00Z; 0 runs at 00:19 check — GitHub cron delay is normal, re-check).
 
+## ROUND 2 — PER-COIN EXIT AGENT VERDICTS (falsification duty enforced)
+
+**BTC — NOTHING EARNED; round-1 "flow-exit coin" is DEAD (exposure-shrink, not timing).**
+Killed 4 ways: (1) winner/loser decomposition — every family's lift = loser-truncation that
+DAMAGES winners (R8: losers +22.1, winners **-19.5**; fires 88% pre-peak on winners, captures
+median 10% of the peak); (2) regime split — all lifts flip NEGATIVE where baseline is
+positive (wk3, day>=20 tail, th100 tail) + mechanical-shrink accounting closes the books
+(expected +2.4 from exposure cut alone ~= +3.2 observed); (3) blind time-exit control —
+exit @75% of dur (+4.79) BEATS the best causal config (+1.68): "a read that loses to a
+kitchen timer is not a read"; (4) top-3-excluded kills the dive family (+0.56 -> +0.21);
+books +27.2 was ONE -494bp leg (+4.8 without it, n=21). Side-asymmetric too (all lift on
+side +1; side -1 negative). VERDICT: keep zigzag exit; anti-print carried — never wire
+R8/dive on btc as harvest reads; bnc25 fallback candidate unaffected (fallback legs
+untouched by every trigger; theta-deaths are 98% confirm-kind).
+Giveback fingerprint: runners and diers BOTH print the c*theta=40 toll exactly (med 40.9 vs
+41.0) — the dier's peak (44bp) barely clears the toll, the runner's (109bp) outruns it;
+entry-time features IDENTICAL (S58 "winners invisible" law confirmed exit-side on btc).
+Wrong-side discriminator: none with lead time (depth>30bp = 83% death but the info arrives
+after the money is gone; the 10-30bp decision band is a coin flip).
+
 ## SESSION LOG (append per round)
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
