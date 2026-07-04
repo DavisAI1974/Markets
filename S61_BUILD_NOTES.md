@@ -292,3 +292,15 @@ it; **trend-efficiency is the live candidate** — right shape + right (price-sh
 under-powered at z=0.7. NEXT = validate the efficiency-driven 3-part rule across more windows /
 accruing Coinbase books; deploy IF z climbs >2. First all-session read that both preserves
 winners AND beats baseline. (Fee frame = Coinbase; Greg handles the fee tier.)
+
+## ROUND 11b — POWER-UP on the efficiency-3-part (per-coin + per-week): SOL-only, week-fragile
+Efficiency-driven 3-part rule, fee=0 $/hr Δ vs baseline: sol +0.12 / doge -0.62 / xrp -0.36 /
+btc -0.02 = SOL-ONLY (negative on the other 3 coins). SOL per-week: wk1 +0.98 / wk2 +0.35 /
+wk3 +0.76 / wk4 -2.22 = 3/4 weeks positive but wk4 cancels them = REGIME-FRAGILE. DOWNGRADE:
+efficiency classifier is better than flow (dead z=0) but SOL-only + week-unstable = a fragile
+per-cell residual, NOT a robust edge. WHAT HOLDS EVERYWHERE: winner-preservation (win-kept high
+on every coin/week — 491/508, 313/359, 498/530, 291/339) = Greg's "don't lose the winners"
+design is SOUND. STILL MISSING: a per-leg classifier good enough to make the flip/flatten
+decisions pay robustly (neither flow nor efficiency clears it). The +26 oracle stands; the
+door it points to is the fingerprint/encoder tier as a MID-LEG read (untested; the S35
+machinery was entry-only).
