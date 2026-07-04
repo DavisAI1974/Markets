@@ -192,3 +192,19 @@ DOGE positive at cb_real this window); doge base −1.07|+2.16; btc_plainstop �
 base −2.49|−1.60; xrp −5.98|+2.79 — XRP = the biggest available $/hr swing on the board and it
 is pure FEE FRAME, no code. BTC's 0.11 legs/hr caps its $/hr relevance = rider-only confirmed
 in the right units.
+
+## ROUND 8 — SOL LOSER WALKTHROUGH (Greg: "go through each loser and explain why it fired")
+
+All 10 biggest SOL losers = ONE mechanism, two directions: the machine believes a c*theta=50bp
+retrace off an extreme STARTS a new leg; on these 10 the retrace was a PAUSE inside a bigger
+move that resumed. Shorts #1,3-7: rallies of +126..+1102bp into the pivot, 50bp pullback ->
+SHORT fires = sold the breather in a live rally (best favorable +1..+12bp inside the first
+minute — wrong from the first tick). Longs #8-10: mirror (falls of -99..-129bp, 50bp bounce ->
+BUY = bought the relief move). #2 = the theta-fallback chase (flipped LONG at the top of a
++92bp run against the prior short). Switched trades would net +63..+89 each — but the SAME
+print fires every winner (winners-invisible law at its sharpest).
+TWO EX-ANTE DISCRIMINATOR CANDIDATES SURFACED (leg-slice tier, n=10 — hypotheses only):
+(1) FREIGHT-TRAIN CONTEXT: loser #1 armed off a +1,102bp run — no winner fires off that
+context; a graded don't-fade-a-monster-run read = the S58 ER/chop member re-anchor (was a
+non-filter as anchored, queued). (2) The dipole agent's Job C angle (cross-venue flow at these
+entries, per-leg — never tested). Both must clear the full battery before being anything.
