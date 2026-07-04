@@ -337,3 +337,27 @@ per-(cell,mid-band) revalidation before wiring. ANSWER: the big losers ARE finge
 (pre-entry-fade seed + 0.606 cheap-stack proof); capturing the +6.79/hr prize = recognize the
 loser's distinctive ENTRY STATE before firing (heavy OD tier), NOT reading the leg after start
 (twins). = the concrete S35 build target, now with a defined population + proof-of-concept.
+
+## ROUND 13b — FINGERPRINT THE PRE-ENTRY RETURN ALONE (Greg)
+SOL bins: pre-entry signed return alone, AUC(win>big) = 0.599 (big -10.3 vs win +4.9) = same
+weak level as the full 8-feature stack. As a SOLO entry filter (skip entries fading a running
+move) it is NET-NEGATIVE at every threshold (-0.41..-0.90 $/hr) because it cuts ~2.6 winners
+per big loser (thr-30: 42 big cut / 110 win cut). Confirms: the freight-train fade is the
+strongest single trait but too blunt alone; the prize needs the MULTIVARIATE heavy tier.
+
+## ⭐⭐ CARRY-FORWARD ACTION (Greg, S61) — GET THE 128-DIM OD COEFFICIENTS (the missing tier)
+The heavy fingerprint tier that historically hit AUC 0.72-0.84 (vs the 0.606 cheap-feature
+floor we can reach in-container) NEEDS the 128-dim OD operator-coefficient signatures that live
+on GREG'S LOCAL E: DRIVE, NOT in this container:
+  - the per-cell `markets_<cell>_win_cand_sp` coeff signatures (~1,919 per-cell, S34/S35) +
+    the WIN/LOSE centroids (odcore/dipole_predictor.py dual-print: H_a=<c,c_win>, H_b=<c,c_lose>)
+  - the S35b PER-EPISODE ONSET re-anchor (entry fingerprint = ONSET micros + ONSET coeffs,
+    strictly pre-entry) — archives on E: (markets_<cell>_win_onset/), not here.
+WITHOUT these we are capped at the cheap-feature floor (AUC 0.60, negative as a filter — R13b).
+WITH them: run the S35 heavy fingerprint on the mid-band big-loser-vs-winner population (target
+defined R12/R13; the +6.79/hr prize). PRECONDITIONS (S58 record): the onset canary MUST pass
+(encoder reproduces ONSET micros from strictly pre-entry bars) + per-(cell, MID-BAND) revalidation
+(scale-locality: the coeffs were fine-scale) + assert_no_leakage on every feature at the confirm
+cell. Machinery in repo: odcore/fingerprint.py, dipole_predictor.py. => bring the E: coeff
+archives into a session, THEN build the heavy entry fingerprint. This is THE build to capture
+the big-loser prize.
