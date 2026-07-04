@@ -108,7 +108,35 @@ match-to-winner minus match-to-loser), which stays gated on: (a) the S35b onset 
 (b) the win/lose archives on Greg's LOCAL E: drive (not in this container), (c) per-(cell,
 band) revalidation. No further micros-tier iteration off this one window (discipline).
 
-## SESSION LOG (append per round)
+## THE KRAKEN TAPE VERDICT (30d trade-history bins, promoted k0 machine, leakage PASS x5)
+
+`scripts/_s59_kraken_tape_run.py` on `backfill_kraken_trades.py` output (4.2M trades).
+**THE GROSS EXISTS ON KRAKEN'S OWN PRICES — 9/10 (coin,theta) cells positive at kr_mk0:**
+
+| cell (k0) | gr/leg | $kr0 (10M tier) | $kr2 (5M) | $kr6 (1M) | wk+ | zw |
+|---|---:|---:|---:|---:|---|---:|
+| sol th100  | +4.96 | **+3.16** | +0.61 | -4.48 | **5/5** | **+2.5** |
+| doge th100 | +5.01 | **+2.11** | +0.43 | -2.94 | 3/5 | +1.4 |
+| eth th100  | +3.91 | **+1.72** | -0.04 | -3.56 | 3/5 | +1.3 |
+| doge th80  | +3.08 | +1.91 | -0.57 | -5.53 | 4/5 | +1.4 |
+| eth th80   | +1.50 | +1.02 | -1.69 | -7.10 | 2/5 | +0.8 |
+| xrp th80   | +0.88 | +0.61 | -2.17 | -7.73 | 4/5 | +0.4 |
+| xrp th100  | +0.67 | +0.30 | -1.52 | -5.15 | 2/5 | +0.4 |
+| btc th80/100 | +0.31 | +0.13/+0.09 | neg | neg | 3/5,1/5 | ~0 |
+| sol th80   | -0.87 | -0.86 | neg | neg | 3/5 | -0.3 |
+
+- **SOL th100 = the first cell in program history with positive net $, ALL 5 weeks
+  positive, AND weekly z +2.5.** Best-cells sum ~+$7.4/hr at $5k flat (~$5.3k/mo paper).
+- **ETH IS ALIVE ON KRAKEN** (+1.72 th100) — per-cell law vindicated: its Coinbase drop
+  says nothing about its Kraken cell. th100 leads 4/5 coins (consistent with Coinbase).
+- **Climb economics:** at the $5M tier (2bp) SOL/DOGE th100 are ALREADY positive — the
+  late climb doesn't bleed on the lead cells; the $1M tier (6bp) bleeds everywhere =
+  the known one-time ~$3,905 early-climb cost.
+- **CAVEATS (both point at the live book collector):** (1) fills NOT modeled — every
+  number rides maker-both-sides at mid; (2) tape SPARSITY — bin coverage 3-24% (doge 3%),
+  mid forward-filled between trades, so confirm fills on price-jump seconds are optimistic.
+  Kraken books = the decisive gate for both. No theta picked here (discipline); the read
+  is existence + stability, not a deploy map.
 - Bins backfill x5 relaunched 21:34 (/tmp/backfill) — all 5 complete.
 - Coinbase books x5 restored from data branches.
 - Promotion canary PASS (3/3 obligations); paper_trade end-to-end run + Pass B machine
