@@ -209,6 +209,35 @@ still underwater when the opposing dive lands = confirmed failure.
 (5) Flag for dump builder: every sub-toll-giveback leg is a SHORT (longs 100% big-giveback
 both thetas) — check confirm/giveback accounting asymmetry (~10-15bp on 8-17% of shorts).
 
+**DOGE — one config earned a machine test: the CASCADE-JOIN FLIP (BUY-only).**
+Config: BUY legs only — first PURE dive (lean_600s-wall <= -0.30, NO arm) while leg >= 20bp
+underwater -> FLIP to SELL immediately (join the cascade). Leg-slice: **th100 +1.95 (t=+2.36),
+th80 +1.05 (t=+2.01, ALL 4 quarters positive), pooled +1.41 over 1,820 legs**; fee-neutral
+(moves the transition earlier, same count); fires median 0.37 of leg = ~28min exit-lag cut.
+Beat the side-bet null DECISIVELY at th80 (reverse-all-BUY -0.11, unconditioned flip -0.97,
+conditioned +1.05 4/4 quarters); top-3-excluded +1.35/+0.74; cross-theta convergent.
+Stop-variant (flat not flip) = half the edge (+0.98/+0.52) — machine tests BOTH arms.
+- Round-1 dv20 +1.9 RECLASSIFIED ARTIFACT (U=0 side-pooled regime bet; quarters decay).
+- **Cascade-mark INVERTED:** deep+early opposing dive marks WINNERS (entry noise absorbed);
+  the killing cascade arrives MID-leg. The mark is the CONJUNCTION (dive & >=20 underwater):
+  death rate 2x (49-56% vs 24.6% base). BUY dies 28.6% vs SELL ~20% both thetas (S58
+  cascade law reproduces exit-side: DOGE dumps cascade, pumps fade).
+- **Exhaustion-at-top: NULL on DOGE** — winners' giveback is 51.6-52.0 (= c*theta) across
+  ALL clmx/slean grades; the toll is flow-blind. DOGE rewards exit flow ONLY as loser's
+  cascade confirmation, never as winner's exhaustion. Winners-invisible law: 3/3 coins now.
+- Fallback legs NEVER theta-die (0/409 both thetas) — deaths are confirm-kind (matches btc).
+- BOOKS UNRESOLVED: dump's books lean = 60s wall-clock (confound) — **ACTION: re-dump books
+  with 600s wall-clock lean (6000 cells) before any books shape-check** (SOL flagged same).
+- Deflationary (stands): edge = 27 deaths saved vs 5 winners killed (th100); breakeven ~9-10
+  killed winners/39 corrections; if the 30d window is meme-cascade-rich the edge shrinks —
+  per-week machine splits + accruing tape are the arbiter.
+
+**CROSS-AGENT CONVERGENCE (playbook rule 5, isolated agents):** SOL and DOGE independently
+landed on the same STRUCTURE — opposing dive while underwater = flow-confirmed failure ->
+act (SOL: exit flat, armed-before conditioned; DOGE: flip, BUY+depth conditioned). Neither
+found a peak harvester; all three coins' winners are flow-invisible post-peak. The exit
+edge, where it exists, is a WRONG-SIDE CORRECTOR.
+
 ## SESSION LOG (append per round)
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
