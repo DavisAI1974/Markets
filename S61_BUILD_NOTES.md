@@ -384,3 +384,17 @@ winners a fixed skip forgoes). VERDICT: the deep negatives ARE marginally loser-
 (Greg's instinct right — dollars, not counts), giving a thin +0.24/hr deep-skip edge, but it is
 week-fragile + tail-risky = not a robust standalone cut. Same signature as every single-feature
 attempt: thin regime-dependent residual; robust separation needs the multivariate coeff tier.
+
+## ROUND 13e — FLIP the deep-fade zone (Greg: "big losers flip to big winners") — BEST single-feature result
+CONFIRMED -10.3 (round 13 "pre_ret_signed") == pre600 (same quantity; mean -10.3, median -1,
+left-skewed). FLIP framing (turn -90 into +90) not SKIP: on pre600<-80, FLIP-all = +2.38 $/hr
+vs SKIP-all +2.01 vs baseline +1.77 vs flip-big-oracle +3.31. FLIP BEATS SKIP (+0.61 vs +0.24
+over baseline) using ONLY the pre600<-80 threshold + flip, NO classifier — Greg's flip thesis
+carries it (deep-zone: flip 16 big losers +2214bp + small losers, outweighs flipping 38 winners
+-2395bp). PER-WEEK: wk1 +2.31 / wk2 -0.33 / wk3 +2.30 / wk4 -1.66 = 2/4 wks STRONGLY positive
+but WEEK-FRAGILE (wk4 kills it, same regime as every prior cut). = the STRONGEST single-feature
+candidate of the session, but not robust alone. ROBUSTIFICATION PATH (now concrete): NOT a
+better trigger — a REGIME GATE (stand aside from the flip in the wk4-type regime) via the
+per-cell regime conditioner (dipole agent's cross-coin correlation state) OR the coeff tier to
+clean deep-zone winner contamination. Caveat: flip = taker cross (fee=0 shown; Greg handles fees).
+NEXT: gate the flip by regime; that turns the fragile +0.61 into a candidate robust edge.
