@@ -372,3 +372,15 @@ runs that keep going. By fade-depth alone they are inseparable — the winners-i
 even in the extreme tail. DEFINITIVE: the pre number at ANY range cannot be a pure fingerprint;
 separation requires the MULTIVARIATE coefficient tier (Greg's E: archives). Single-feature entry
 fingerprint CLOSED.
+
+## ROUND 13d — VALUE (not count) of big losers vs winners in the pre-zone (Greg's reframe)
+Precision-by-count was the wrong metric; DOLLARS is (Greg). Skip-the-zone $/hr effect: SHALLOW
+zone winner-dominated (skip pre<-20 = -0.90/hr, pre<-40 = -0.48) but DEEP tail loser-dominated:
+skip pre600<-80 or <-100 = +0.24/hr, <-120 = +0.17. VALUE CROSSOVER ~-60/-80: only in the deep
+fade do the losers (big+small) outweigh the winners in dollars. BUT: (1) modest (+0.24 lifts
++1.77->+2.01); (2) WEEK-FRAGILE (+2.16/-0.33/+1.02/-1.81 — 2/4 wks negative, wk4 -1.81 kills it,
+same week that killed the efficiency rule); (3) tail risk (deep zone holds occasional +291bp
+winners a fixed skip forgoes). VERDICT: the deep negatives ARE marginally loser-heavy in value
+(Greg's instinct right — dollars, not counts), giving a thin +0.24/hr deep-skip edge, but it is
+week-fragile + tail-risky = not a robust standalone cut. Same signature as every single-feature
+attempt: thin regime-dependent residual; robust separation needs the multivariate coeff tier.
