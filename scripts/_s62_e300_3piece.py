@@ -44,8 +44,9 @@ def build(sym, cross, th):
     mc, bc, sc, *_ = load_bins(f"{BINS}/{cross}_30d_bins.json")
     bc = np.asarray(bc, float); sc = np.asarray(sc, float)
     n = min(len(m), len(bc)); Bx = np.concatenate([[0], np.cumsum(bc)]); Sx = np.concatenate([[0], np.cumsum(sc)])
+    cpath = np.concatenate([[0.0], np.cumsum(np.abs(np.diff(lm)))])       # for trend efficiency
     fl = armed_midband_flips(m, th, 0.5)
-    X, gross, r300, run, ec = [], [], [], [], []
+    X, gross, r300, run, eff, ec = [], [], [], [], [], []
     for k in range(len(fl) - 1):
         ci, _p, side = fl[k]; xi = fl[k + 1][0]; ci = int(ci); xi = int(xi); side = int(side)
         if xi <= ci + E or ci < 1802 or xi >= n:
@@ -54,16 +55,21 @@ def build(sym, cross, th):
         xo = -side * ((Bx[ci + E + 1] - Bx[ci]) - (Sx[ci + E + 1] - Sx[ci])) / \
             ((Bx[ci + E + 1] - Bx[ci]) + (Sx[ci + E + 1] - Sx[ci]) + 1e-9)
         rn = -side * (lm[ci] - lm[ci - 600]) * 1e4
-        X.append([rr, side * (lm[ci + E] - lm[ci + E - 60]) * 1e4, rn, xo])
-        gross.append(side * (lm[xi] - lm[ci]) * 1e4); r300.append(rr); run.append(rn); ec.append(ci)
+        # IN-LEG trend efficiency (Greg's render read): smooth adverse move = death, choppy = recovery
+        pl300 = cpath[ci + E] - cpath[ci]; e300 = abs(lm[ci + E] - lm[ci]) / pl300 if pl300 > 0 else 0.0
+        pl150 = cpath[ci + E] - cpath[ci + E - 150]; e150 = abs(lm[ci + E] - lm[ci + E - 150]) / pl150 if pl150 > 0 else 0.0
+        # signed efficiency = efficiency * direction-of-in-leg-move relative to our side (adverse=+)
+        adv_eff = e300 * np.sign(rr)          # >0 & large-magnitude depth = smooth ADVERSE trend
+        X.append([rr, side * (lm[ci + E] - lm[ci + E - 60]) * 1e4, rn, xo, e300, e150, adv_eff])
+        gross.append(side * (lm[xi] - lm[ci]) * 1e4); r300.append(rr); run.append(rn); eff.append(e300); ec.append(ci)
     return (np.array(X), np.array(gross), np.array(r300), np.array(run),
-            np.array(ec), (np.array(ec) // WK).astype(int))
+            np.array(eff), np.array(ec), (np.array(ec) // WK).astype(int))
 
 
 def main():
     print(f"{'coin':5}{'open@300':>9}{'AUC':>7}{'base':>8}{'3piece':>8}{'Δ':>7}  per-week Δ")
     for coin, sym, cross, th in CELLS:
-        X, gross, r300, run, ec, week = build(sym, cross, th)
+        X, gross, r300, run, eff, ec, week = build(sym, cross, th)
         death = gross <= -40; y = death.astype(int); pred = np.full(len(y), np.nan)
         for w in sorted(set(week)):
             tr = week != w; te = week == w
@@ -74,9 +80,11 @@ def main():
             pred[te] = c.predict_proba(X[te])[:, 1]
         ok = ~np.isnan(pred); auc = roc_auc_score(death[ok], pred[ok])
         thr = np.nanpercentile(pred[ok], 85)
-        rstrong = np.nanpercentile(run[ok], 60)         # strong-run split (faded a big trend -> flip)
-        act_flip = ok & (pred >= thr) & (run >= rstrong)
-        act_flat = ok & (pred >= thr) & (run < rstrong)
+        # ACTION split by TREND EFFICIENCY (Greg's render read): smooth adverse trend -> FLIP
+        # (follow the trend, these are the mislabeled-direction huge losers); choppy dip -> FLATTEN
+        esmooth = np.nanpercentile(eff[ok], 55)
+        act_flip = ok & (pred >= thr) & (eff >= esmooth)
+        act_flat = ok & (pred >= thr) & (eff < esmooth)
         pnl = np.where(act_flip, -(gross - r300) - FC, np.where(act_flat, r300, gross))
         base = np.sum(CAP * gross[ok] / 1e4) / 720.0
         tot = np.sum(CAP * pnl[ok] / 1e4) / 720.0
