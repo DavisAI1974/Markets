@@ -40,3 +40,20 @@ Branch reconciled to canonical 5c5vg9; sync canonical after every push. Fee fram
 via backfill_binance_spot.py). Coeff caches /tmp/s62cache (ephemeral). Dipole feature files +
 reports persisted in data_s62/dipole_feats/ + dipole_{paper,dive,s61alt}_s62.md. Renders in
 docs/renders/s62/. matplotlib needs `pip install matplotlib` in a fresh container.
+
+## GREG'S REFINED DESIGN (night-2 close — DO THIS FIRST next session)
+The pure armed-flip lost because it flipped BLIND at -10/-15. Fix = gate the flip with the
+win-long/win-short coeff, and sweep deeper arm numbers:
+1. SWEEP the arm number: -20, -25, -30, -35, -40 (not just -10/-15). Deeper = more info (the
+   confirm AUC rises with depth: 0.55 @ -15 -> 0.72 @ E300).
+2. WIN-LONG/WIN-SHORT COEFF as a second required test at the arm. Check whether the FLIP
+   direction (opposite of our side) is a WIN or LOSS per the direction coeff:
+     - coeff says LOSS (flip wouldn't win either -> just chop) -> FLATTEN (cut, don't flip).
+     - coeff says WIN  (flip direction is the real winner)     -> FIRE the flip on the number.
+3. Fire SOONER (earlier arm) when the coeff confidently knows long vs short.
+Net: arm at the number -> coeff gate -> WIN=flip / LOSS=flatten. This turns the blind early
+flip into a gated one (flatten the chop, flip only confirmed-winning-direction reversals).
+Build on `scripts/_s62_armed_flip.py` (add flatten action + coeff win/loss gate + arm sweep);
+render SOL after (`_s62_armed_render.py`) to verify the big losers flip and the dip-recoveries
+flatten (not flip). The direction coeff = win-long/win-short mirror axis (perfect -1.0), already
+in `coeff_dir_map()`; here use it as a WIN/LOSS gate on the flip direction, not just a feature.
