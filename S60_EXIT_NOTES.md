@@ -517,6 +517,21 @@ but S60 established its correct role split, and it is a program-level finding:
   (S60 correctors), and fill-moment marking (S45/S60, unmeasured). Never conflate the
   offices when grading — each earns per (cell, band, venue, ROLE).
 
+## ROUND 4d — CROSS-COIN GRID OF THE COINBASE SUGGESTIONS (books, registry rows; Greg)
+
+Delta bp/leg all-legs [bootstrap 95%], f=fires: XRP uw-deep-dive stop: sol -15.5 / btc +3.7 /
+doge -0.7 / xrp +2.8. DOGE cascade flip: sol +1.1 / btc +8.2 / doge +5.1 / xrp +3.6 (2-3
+fires each — every fired leg a death THIS WINDOW; bins 30d already ruled flip DOGE-only).
+BTC plain40: sol **-21.4 (29 fires — would shred the lead cell)** / btc +26.4 (the -494
+outlier) / doge +11.7 / xrp -1.6.
+READ: the diagonal HOLDS on books — sol rejects everything, xrp rejects stops, btc accepts
+any exposure cut (bleed arithmetic). The one all-positive row (DOGE flip) rests on 2-3
+fires/cell and cannot overturn the 1,800-leg instrument diagonal. DURABLE TAKEAWAY (matches
+4/4 agents): the wrong-side-corrector STRUCTURE (dive-while-underwater = confirmed failure)
+is universal; the CONDITIONING that makes it safe is per-cell (sol: armed-before; doge:
+BUY+depth; xrp: dv40+uw10; btc: any). Family with per-cell parameters = the per-cell law.
+No new wires from this grid; pooled exit configs would damage SOL first.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
