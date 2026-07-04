@@ -22,6 +22,16 @@
 │   S60.* + dive chapter + crypto-uses notes); absorption candidate RESOLVED against │
 │   (real SOL signal = maker-quoting price-discovery lead, filed to fill fingerprint).│
 │                                                                                     │
+│ ⭐ DO THESE TWO FIRST (Greg, explicit):                                             │
+│  A. SPIN UP THE 2 AGENTS THAT DIDN'T FINISH (S60 interrupt casualties): the SOL    │
+│     Coinbase-exit-fix agent + the BTC armed-before recheck. Charters are in the    │
+│     S60 record; conclusion is expected (SOL protect / BTC rider) but the explicit  │
+│     numbers were never delivered — GET THEM.                                        │
+│  B. EXPECT REAL CODING THIS SESSION: the S60 proposals (honest fill model, cover-  │
+│     grace at mid-band, fee-aware unload, doge _cascflip variant) + whatever the 2  │
+│     agents propose = code to WRITE and wire (sandbox-first, canary bit-identical). │
+│     This is a build session, not just analysis.                                    │
+│                                                                                     │
 │ JOBS — ONE ROUND = ONE DEFINED TEST (update S60_EXIT_NOTES or a S61 successor):    │
 │ 1 COINBASE EXIT FIX build order (Greg sign-off): (a) HONEST FILL MODEL FIRST (port │
 │   maker_book._first_fill_index into the mid-band close; measure real maker_close%  │
@@ -35,8 +45,6 @@
 │ 4 KRAKEN BOOKS accrual → the fill unknown (taker-share + fill-depth at kr_mk0).    │
 │ 5 RESEARCH MENU (Greg's fascination, background): paper's 29 candidate uses + dive │
 │   cross-domain map (seizure-onset flow collapse = novel standout); each pre-specced.│
-│ RE-RUN if wanted: SOL-cb-fix + BTC-armed-before-recheck (S60 interrupt casualties).│
-│                                                                                     │
 │ DATA (/tmp dies): Coinbase books x5 from data/<coin>-book (~2min); Binance 30d via │
 │   backfill_binance_spot.py x5 (~40min); Kraken 30d via backfill_kraken_trades.py   │
 │   x5 SEQUENTIAL (hours, START FIRST if needed); Kraken books from data/<coin>-      │
