@@ -231,3 +231,17 @@ diagonal + fingerprint tier. Watch item (costless): `cross_major_nf_pre300` D-R 
 on sol/btc — chance-tier, filed as a fingerprint-encoder candidate column.
 => Round-8's open question closes: the cross-venue angle does NOT discriminate death-vs-recovery;
 remaining ex-ante candidates = freight-train context grade (ER re-anchor) + the S35 fingerprint.
+
+## ROUND 10 — FLIP-AND-RIDE AT THE DIVERGENCE POINT (Greg: "how far past 50bp do W/L diverge?")
+HAZARD CURVE (SOL 30d bins, n=971, P(final loss | leg reached depth -X)): -30 82% / -50 91%
+/ -60 93% — winners & losers separate IMMEDIATELY (already-doomed the moment underwater), NO
+clean crossover to key a flip on = the entry-timing problem, not an exit-depth one.
+WHY FLIP-AND-RIDE CAN'T PAY (the ride-capture column): losses are FRONT-LOADED — by any depth
+where you can tell it's a loser, the leg is already near its low, so the reversal gross left to
+"ride" is +0..+2bp everywhere (at -50: 91% loss but only 47% keep falling), vs ~32bp round-trip
+flip cost. The reversal catches the bounce-UP as often as the continuation. $/hr flip sweep
+(bins, action=flip): baseline -19.81; FLIP@-40..-90 all d = -1.06..+0.39 = NOISE. Same wall as
+rounds 5/6, now shown GEOMETRIC not a tuning miss. => the switch-the-losers prize is real ONLY
+at ENTRY (move still ahead); by any diagnosable depth it's behind you. Routes to the fingerprint
+tier (confirmed by dipole Job C: cross-venue flow separates W-from-L loudly, death-from-recovery
+not at all). Flip-and-ride door CLOSED with numbers.
