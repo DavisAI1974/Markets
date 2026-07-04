@@ -124,13 +124,30 @@ def main():
 
     Xc = cheap_features(mid, legs)
     Xco = coefs
-    dipole_path = os.path.join(CACHE_DIR, f"{args.coin}_dipole.npz")
-    have_dip = os.path.exists(dipole_path)
-    Xd = np.load(dipole_path)["feats"] if have_dip else np.zeros((len(legs), 0))
+    # ingest every dipole feature file the agents drop ({coin}_dipole_<kind>.npz), align by ecell
+    import glob
+    dip_groups = {}       # kind -> (feats[n,k] aligned to legs, names)
+    for pth in sorted(glob.glob(os.path.join(CACHE_DIR, f"{args.coin}_dipole_*.npz"))):
+        kind = os.path.basename(pth).replace(f"{args.coin}_dipole_", "").replace(".npz", "")
+        z = np.load(pth, allow_pickle=True)
+        idx = {int(c): i for i, c in enumerate(z["ecell"])}
+        F = z["feats"]; k = F.shape[1]
+        A = np.full((len(legs), k), np.nan)
+        for r, ci in enumerate(ecell):
+            j = idx.get(int(ci))
+            if j is not None:
+                A[r] = F[j]
+        # median-fill any unaligned rows so the classifier can use the column
+        for cc in range(k):
+            col = A[:, cc]; col[np.isnan(col)] = np.nanmedian(col) if np.isfinite(np.nanmedian(col)) else 0.0
+        dip_groups[kind] = (A, list(z["names"]) if "names" in z else [f"{kind}{i}" for i in range(k)])
+    Xd = np.hstack([g[0] for g in dip_groups.values()]) if dip_groups else np.zeros((len(legs), 0))
+    have_dip = bool(dip_groups)
 
     print(f"[{args.coin}] legs={len(legs)}  winners={int(winner.sum())}  "
           f"big-losers={int(bigloss.sum())}  baseline {base:+.2f}  entry-flip ORACLE {orc:+.2f} $/hr")
-    print(f"  dipole features: {'LOADED ' + str(Xd.shape) if have_dip else 'not present yet (slot ready)'}")
+    print(f"  dipole groups: " + (", ".join(f"{k}({g[0].shape[1]})" for k, g in dip_groups.items())
+                                   if dip_groups else "none yet (slots ready)"))
     print(f"  {'feature set':22} {'OOS AUC':>8} {'best flip $/hr':>14} {'vs base':>8}  (pctl,nflip,BL,winflip)")
     ncheap = Xc.shape[1]
     Xstack = np.hstack([Xc, Xco])
@@ -141,10 +158,13 @@ def main():
             ("CHEAP+COEFF(sel8)", Xstack, coeff_cols, 8),
             ("CHEAP+COEFF(sel16)", Xstack, coeff_cols, 16)]
     if have_dip:
-        Xall = np.hstack([Xc, Xco, Xd])
-        cc2 = list(range(ncheap, ncheap + Xco.shape[1]))
-        sets += [("CHEAP+DIPOLE", np.hstack([Xc, Xd]), None, 0),
-                 ("STACK(sel16)", Xall, cc2, 16)]
+        # each dipole group alone + cheap, plus the full stack
+        for kind, (A, _n) in dip_groups.items():
+            sets.append((f"DIPOLE:{kind} ({A.shape[1]})", A, None, 0))
+            sets.append((f"CHEAP+{kind}", np.hstack([Xc, A]), None, 0))
+        sets.append(("CHEAP+ALLDIPOLE", np.hstack([Xc, Xd]), None, 0))
+        cc2 = list(range(ncheap + Xd.shape[1], ncheap + Xd.shape[1] + Xco.shape[1]))
+        sets.append(("STACK-all(coeffsel16)", np.hstack([Xc, Xd, Xco]), cc2, 16))
     for name, X, cc, k in sets:
         auc, (d, info) = oos_auc_and_flip(X, y, week, gross, winner, bigloss, ok, hrs, base,
                                           coeff_cols=cc, sel_k=k)
