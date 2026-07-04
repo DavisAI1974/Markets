@@ -238,6 +238,52 @@ act (SOL: exit flat, armed-before conditioned; DOGE: flip, BUY+depth conditioned
 found a peak harvester; all three coins' winners are flow-invisible post-peak. The exit
 edge, where it exists, is a WRONG-SIDE CORRECTOR.
 
+**SOL-agent BTC RECHECK (Greg: "use the good pieces, leave the bad"):**
+(1) **The armed-before discriminator REPRODUCES on BTC** — 4/4 cells, perm z +2.1..+3.0,
+armed>unarmed in every regime split, real lead time (~15-29min). Cross-coin structural:
+8/8 cells (SOL+BTC) with independent nulls. The BTC agent's "no causal discriminator" is
+AMENDED: armed-before is one. BUT as a deployable stop at registry th80 it FAILS the strict
+tail bar (all-legs -0.24 tail, wk3 -0.96; armed death-precision degrades 0.75->0.47 in the
+healthy regime). th100 passes the full battery (+2.47 all-legs, tail +0.62) = robustness
+file, not deploy. (2) **The surviving BTC piece is the DUMB one: plain price stop X=50 at
+th80** — +2.0..+3.2 all-legs, TAIL-ROBUST (+2.6-2.7 where base is +3.23 = NOT exposure
+shrink), 5/5 weeks, both sides, ex-top3, winner-cheap (-4.5). Taker-fee exposure at 29%
+trigger rate = the fee-sensitive arm (kr_mk0 unaffected). Blind-timer arm still owed in
+the machine. (3) Per-cell law in EXIT space: SOL wants the armed-conditioned stop (plain
+stop half-fragile there), BTC wants the plain stop (armed stop tail-fails) — same
+information, opposite deploy shapes.
+
+**XRP — NOTHING EARNED (decisive kill of round-1's own lead).** The price-trailing +1.3 =
+exposure-shrink artifact: week-corr(baseline health, lift) = **-0.89**; H2 sign-flips; a
+brainless fixed-T time-cap reproduces it without price info; 92% of winner legs amputated
+pre-peak (wealth transfer, not harvest); th100 no support; **books sign-flip on every X**
+(no wall-clock confound on price reads = genuine venue divergence — the S59 bins-divergent
+asterisk now covers the EXIT side). Death-combo exit analog (deep dive + never armed =
+-30.6/leg, 49% death) is REAL AS A LABEL, sign-stable both halves — but causally
+unharvestable (loss front-loaded before the mark confirms). Verdict: zigzag exit stands;
+**XRP stays OFF in any pooled exit machine config** (never promote off bins alone on XRP).
+
+## THE ROUND-2 EXIT BOARD (all 4 agents + recheck, falsification enforced)
+
+| coin | exit verdict | machine test owed |
+|------|--------------|-------------------|
+| SOL  | armed-dive underwater stop (+0.6-0.9 exp.) | vs plain-stop null (X=40/50) — both arms |
+| BTC  | plain price stop X=50 th80 (+2.0-3.2, tail-robust) | vs blind 75%-timer + taker-fee arm |
+| DOGE | cascade-join FLIP, BUY-only (+1.95/+1.05) | vs flat-stop variant — both arms |
+| XRP  | NOTHING — zigzag stands | none (keep OFF) |
+
+**ROUND LAWS (cross-agent convergence, isolated agents):**
+1. NO PEAK HARVESTER EXISTS on any coin — winners' post-peak giveback = the c*theta toll,
+   flow-blind, printed identically by runners/diers on all 4 coins. The +18-25bp ceiling
+   at the true flow-climax is hindsight = S35 fingerprint-tier, not knob-tier.
+2. The only exit edge family = the WRONG-SIDE CORRECTOR (Greg's "correct spot, opposite
+   trade") — and its deploy shape is PER-CELL (sol conditioned-stop / btc plain-stop /
+   doge flip / xrp off).
+3. ARMED-BEFORE (flow showed up, still underwater) = real cross-coin information, 8/8
+   cells — even where not deployable. Fingerprint-tier input.
+4. Theta-deaths are CONFIRM-kind; fallback legs never theta-die (doge 0/409; btc 98%).
+5. The bins->books divergence law extends to the EXIT side (xrp sign-flips everywhere).
+
 ## SESSION LOG (append per round)
 - 22:3x Z: branch reconciled (S60 designated branch was cut from default/crons AGAIN — third
   session running; reset --hard to canonical 396d534, pushed).
