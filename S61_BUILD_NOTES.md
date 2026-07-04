@@ -256,3 +256,17 @@ ones (books: 10/34 reaching -30 are winners = the +28/leg longs) — flipping th
 rally = the entire -17.77 $/hr books wipeout. Ride-capture negative/~0 at all shallow depths
 (-3.2..-0.9 bins) vs 32bp flip cost. => divergence is in OUTCOME LABEL not FUTURE PATH; prize
 stays entry-only (fingerprint tier). Flip-and-ride door stays closed, now at fine resolution.
+
+## ROUND 10c — FLIP SOONER (Greg: "it isn't waiting longer, it's sooner") + does the agent help?
+SHALLOW flip sweep (SOL, $/hr Δ vs baseline). BINS n=971: -5 -1.54 / -10 -1.55 / -15 -0.31 /
+-20 +1.91 / -25 -0.06 / -30 -0.17 — the -20 flicker fires on 782/971 legs (80%!) = inverting
+the machine, not selecting deaths; noise-adjacent; cell still -17.90/hr. BOOKS n=56: EVERY
+shallow flip -10..-18 $/hr; -5 fires 55/56 = shorts nearly every fat-winner long into its rally
+= wipeout. BOTH JAWS OF THE TRAP NOW MAPPED: sooner=more ride left but a -20 dip hits ~every
+leg (can't select), later=selective but plunge already happened (no ride). NO depth is both
+selective AND has ride left = the geometry. DOES THE AGENT HELP: Job C tested exactly the
+sooner-flip discriminator (cross-venue flow + whole dipole family): separates trouble-from-
+WINNERS (z+5-6.8) but CANNOT tell death-from-recovery (|z|<=2 chance). It gives no working
+signal but CLOSES THE DOOR WITH PROOF — the "flip this dip now" call isn't in the flow family;
+its only glimmer (cross_major_nf_pre300 z~2) is PRE-ENTRY = fingerprint tier, where the move is
+still ahead. Flip-and-ride CLOSED both directions; prize is entry-only.
