@@ -383,6 +383,60 @@ exit-shaped.** Keep zigzag; XRP stays OFF exit configs (round-2 re-confirmed on 
   distinct weeks (~5x current tape)**; and even clearing it (+3/leg) does not rescue
   cb_real economics — corrector rider, not the cell's fix.
 
+**BTC — READINESS VERDICT (Coinbase-frame agent): the -28.49 books gross is 78% ONE
+COLLECTOR-GAP ARTIFACT LEG; activate btc_mb80 into SANDBOX with the plain stop attached
+DAY ONE as taker-accounted variant arms.**
+- Gap anatomy: leg 18 (entry t=45.33h, dur 145.1h, gross -494.34) spans the 155h gap era
+  exactly (ends 190.44h = era-B start) — the bounded-loss fallback (~-80) cannot fire on a
+  stalled tape. Market-evidence mean = **-6.31 (n=21, se 13.2, 95% CI [-32.7, +20.1])** —
+  indistinguishable from bins -2.97, from 0, and from -16. Effective live tape ≈ 51h (era A
+  0-45.3h: 19 legs; era B 190.4-196h: 3 legs), not 196h. Normal -80 death instead: mean -9.66.
+- Anatomy n=22: wrong-side 8/22 = 36.4%±10.3 (bins 28.7%); right-side n=14 median giveback
+  40.22 = c*theta toll EXACT (toll law: btc books consistent with the 4/4-coins print);
+  winners 10/22 mean +43.0; only 5/22 clear cb_real 16 RT.
+- Stop X leg-slice on books EX-GAP (hypothesis-tier; theta-death saves are mechanical):
+  X=40 trig 8/21 (38%) +6.03/leg, 1 winner-kill (-49.7); X=50 trig 7/21 (33%) +2.29/leg.
+  Only 1 of 14 right-side legs ever crossed -40 → books adds RATE evidence only. The gap
+  leg is NOT creditable to a tape-graded stop (no cells to fire on) — but a LIVE
+  exchange-side stop would have fired (the market didn't gap; our collector did). OPS BAR
+  FOR ACTIVATION: staleness kill-switch / resting exchange-side stop.
+- **Taker term quantified (cb_real, stop leg 16 vs 8):** breakeven taker share X=40 = 112%
+  bins / 198% books-ex-gap (fee-safe at 100% taker, +0.35 bins residual); X=50 = 87% / 86%.
+  A Coinbase protective stop is structurally TAKER → X=40 is the only self-funding arm at
+  full taker; at full taker + 2bp slip both arms ≈ 0 mean — the stop's earned value is
+  TAIL-SHAPE (kills -80s), not mean. Run BOTH arms, books decide.
+- Accrual bars (gap-free legs, t=2): disaster screen |16bp| ≈ 57 legs (~5-6d @0.42/h);
+  stop verdict ≈ 261 (X=40) – 389 (X=50) legs (~4-6 wks); gross-vs-0 at bins scale (3bp,
+  sd 60.6) ≈ 1,700 legs (~6 months) — books will NEVER certify the small positive; that
+  stays the instrument's job. Sequential naive-first costs 4-6 weeks of calendar for zero
+  information (sandbox arms are free; flat-until-confirm, no composition interference).
+  ACTIVE ≠ capital: the stop is a rider; the cell is negative at every fee column.
+- Claimable at n=22: mechanics grade end-to-end on books; toll prints; headline is
+  artifact-dominated; wrong-side rate ~ bins; 1 winner-kill observed. NOT claimable: any
+  books gross/net verdict, weekly stability, side/hod splits, books stop-lift magnitude,
+  or "books worse than bins."
+
+**DOGE — Coinbase bleed = 43% deaths / 57% structural toll+fees; cascade-join flip spec'd
+as the SANDBOX VARIANT (not wired; ledger decides).**
+- Books anatomy (n=40 reg + 60 th80): deaths 11/40 @ -87.0 gross = -23.9bp/leg drag (43.1%
+  of giveback); winners' excess-over-toll +1.46/+1.05 (no-harvester law on books); deaths
+  28/28 confirm-kind; deaths side-BALANCED on books (BUY-only comes from the instrument's
+  cascade asymmetry, not death counts).
+- Flip on books: 2 registry fires, both genuine deaths (different moves), delta +102/+104
+  each; +5.14/leg face [n=2 — bootstrap floor artifact]; th80 semi-independent +1.04 (4
+  saves/1 kill). UNDERWATER GATE LOAD-BEARING (uw=0 arm flips a +335 winner for -677).
+  dv40 = first books winner-kill (-105). Flat-stop = half the flip (2:1, matches bins).
+  SELL-side: books + / bins - on 1,820 legs -> BUY-only stands, SELL shadow-logged.
+- **SANDBOX SPEC `doge_coinbase_mb100_cascflip`:** entry identical; BUY only; first
+  lean_600s-WALL <= -0.30 (pure dive, no arm) AND leg <= -20bp -> FLIP (fee-neutral).
+  Shadow: flat-stop, SELL fires, plain40, taker-fill scoring. Accrual bar ~30 fires
+  (~580 th100 legs; 14-34d pooled w/ th80 shadow); stand-down: per-fire mean<0 after 10
+  fires OR 3 winner-kills before 3 saves.
+- HONEST CEILING: flip does NOT turn the cell at cb_real (books face -6.71 -> -1.56;
+  instrument expectation nearer -5). Same conclusion as XRP: the residual gap is
+  toll+fee-shaped — asymmetric exit retrace (c_x<c) is the one toll-attacking mechanic
+  not yet machine-tested; fee tier is the bigger lever.
+
 ## SESSION LOG (append per round)
 - Kraken book branches: still 0 at 0x:xx Z (post-00:00Z tick) — cron delay or first-run
   failure; CHECK the Actions tab / re-check next round; Greg's Run-workflow click still
