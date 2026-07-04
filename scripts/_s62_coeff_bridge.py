@@ -62,6 +62,7 @@ def main():
     ap.add_argument("--theta", type=float, default=80.0)
     ap.add_argument("--bigloss", type=float, default=40.0)
     ap.add_argument("--limit", type=int, default=0, help="cap legs for a quick smoke run")
+    ap.add_argument("--save", default="", help="npz path to cache coefs/gross/ecell/side for the stack")
     args = ap.parse_args()
 
     cents = load_centroids(args.coin)
@@ -98,6 +99,11 @@ def main():
         score.append(Hb - Ha)                          # higher = more loser-aligned
         ok.append(True)
     gross = np.array(gross); score = np.array(score); ok = np.array(ok); coefs = np.array(coefs)
+    if args.save:
+        np.savez_compressed(args.save, coefs=coefs, gross=gross, ok=ok,
+                            ecell=np.array([ci for ci, _, _ in legs]),
+                            side=np.array([s for _, _, s in legs]))
+        print(f"  [cached {coefs.shape} coeffs -> {args.save}]")
     winner = gross > 0; bigloss = gross <= -args.bigloss
     m = ok & (winner | bigloss)
     from sklearn.metrics import roc_auc_score
@@ -138,7 +144,51 @@ def main():
     rd_auc = (roc_auc_score(bigloss[mm], rd[mm])
               if len(np.unique(bigloss[mm])) > 1 else float("nan"))
     print(f"  RE-DERIVED (current-leg centroids, per-week OOS) AUC = {rd_auc:.3f}   "
-          f"<- does the coeff separate at its OWN scale?")
+          f"<- centroid projection (common-mode collapsed — README says don't grade this way)")
+
+    # MULTIVARIATE — the RIGHT tool (Greg): a full classifier on all 128 coeff dims, per-week
+    # OOS, captures the residual the centroid collapses. Does the coeff DIFFER from winners
+    # consistently (per week)?
+    from sklearn.linear_model import LogisticRegression
+    mv = np.full(len(gross), np.nan)
+    for w in sorted(set(week)):
+        tr = train & (week != w); te = ok & (week == w)
+        if tr.sum() < 30 or len(np.unique(y[tr])) < 2:
+            continue
+        mu = coefs[tr].mean(0); sd = coefs[tr].std(0) + 1e-9
+        clf = LogisticRegression(max_iter=3000, C=0.3, class_weight="balanced")
+        clf.fit((coefs[tr] - mu) / sd, y[tr])
+        mv[te] = clf.predict_proba((coefs[te] - mu) / sd)[:, 1]
+    mv_m = m & ~np.isnan(mv)
+    mv_auc = (roc_auc_score(bigloss[mv_m], mv[mv_m])
+              if len(np.unique(bigloss[mv_m])) > 1 else float("nan"))
+    per_wk = "  ".join(
+        f"w{w}={roc_auc_score(bigloss[mv_m & (week == w)], mv[mv_m & (week == w)]):.2f}"
+        if (mv_m & (week == w)).sum() > 10 and len(np.unique(bigloss[mv_m & (week == w)])) > 1
+        else f"w{w}=--" for w in sorted(set(week)))
+    print(f"  MULTIVARIATE (128-dim logistic, per-week OOS) AUC = {mv_auc:.3f}   [{per_wk}]")
+
+    # DIAGNOSTIC (Greg: "consistently there + differs from winner = signal"). (1) coeffs distinct,
+    # not degenerate? (2) how many of 128 dims differ big-loser vs winner (Welch p<0.05) vs the
+    # ~6.4 expected by chance — and does it REPRODUCE across the two halves of the window (consistency)?
+    from scipy import stats
+    Cb = coefs[m & bigloss]; Cw = coefs[m & winner]
+    # distinctiveness: mean pairwise cosine among a sample (1.0 = all identical/degenerate)
+    samp = coefs[m][np.random.default_rng(0).choice(int(m.sum()), min(200, int(m.sum())), replace=False)]
+    sn = samp / (np.linalg.norm(samp, axis=1, keepdims=True) + 1e-12)
+    cos = sn @ sn.T; iu = np.triu_indices(len(sn), 1)
+    print(f"  coeff distinctiveness: mean pairwise cosine {cos[iu].mean():.3f} "
+          f"(1.0=degenerate; lower=distinct)")
+    p = np.array([stats.ttest_ind(Cb[:, j], Cw[:, j], equal_var=False).pvalue for j in range(128)])
+    ndiff = int((p < 0.05).sum())
+    # consistency across window halves (first vs second half of the 30d, per dim sign agreement)
+    ec = np.array([ci for ci, _, _ in legs]); half = ec > np.median(ec)
+    b1 = coefs[m & bigloss & half].mean(0) - coefs[m & winner & half].mean(0)
+    b0 = coefs[m & bigloss & ~half].mean(0) - coefs[m & winner & ~half].mean(0)
+    sig = p < 0.05
+    consist = int((np.sign(b1[sig]) == np.sign(b0[sig])).sum()) if sig.sum() else 0
+    print(f"  per-dim big-loser vs winner: {ndiff}/128 dims differ p<0.05 (chance ~6); of those, "
+          f"{consist}/{ndiff} keep the SAME sign in both window-halves (consistency)")
 
     # flip driver on the loser_score
     base = float(np.sum(CAP * gross / 1e4)) / hrs
