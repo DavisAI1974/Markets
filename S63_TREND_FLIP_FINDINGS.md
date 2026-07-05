@@ -88,3 +88,43 @@ Reads:
 standalone entry flip (selection wall) but (b) adds a small, honest lift as a FEATURE to the working
 E300 mid-leg rig on btc/sol/xrp. Needs a 2nd-window confirm (same caveat as the base E300 rig). The
 depth-based E300 rig remains the deployable earner; the 1h feature is a cheap add-on, the gate is not.
+
+## 6. THE BUY/SELL ANSWER (Greg's correction: entry is fine, only the SIDE is wrong)
+`_s63_direction.py` + `_s63_fade.py`. Reframed to the ONLY question: given the machine's (correct)
+entry, was the right side BUY or SELL? Graded as a DIRECTION-AT-ENTRY decision (pnl = pred_side*fwd,
+NO flip fee — the side is chosen once at entry, not a mid-position reversal).
+
+**The sign structure (all 5 coins, `_s63_direction.py`):** the machine's own side ≈ a coin flip
+(dir-acc 0.50–0.53). FOLLOWING the multi-hour trend (+sign mom) is systematically WRONG (0.43–0.49);
+FADING it (−sign mom) is RIGHT (0.52–0.57). That is precisely "reading the move correctly but
+trading the opposite side" — the fix is a SIGN FLIP: fade the N-hour trend.
+
+**Fade-horizon sweep (`_s63_fade.py`, pred_side = −sign(mom W); direct $/hr, per-week, sign-shuffle null):**
+
+| coin | machine base | machine acc | best W | acc | direct $/hr | Δbase | z_null (p) | weeks+ |
+|---|---|---|---|---|---|---|---|---|
+| doge | +0.28 | 0.500 | **8h** | 0.542 | **+2.72** | +2.44 | +2.06 (0.018) | **5/5** |
+| sol  | +1.06 | 0.517 | **4h** | 0.563 | **+2.95** | +1.89 | +2.11 (0.018) | 4/5 |
+| btc  | −0.91 | 0.511 | 6–8h | 0.55–0.56 | +1.2…+1.6 | +2.1…+2.5 | +1.5 (~0.06) | 4/5 |
+| xrp  | −0.63 | 0.496 | 8h | 0.532 | +2.01 | +2.65 | +1.70 (0.046) | 3/5 (lumpy) |
+| eth  | +0.90 | 0.527 | 6h | 0.535 | +1.92 | +1.02 | +1.60 (0.058) | 2/5 (fragile) |
+
+Reads:
+- **YES — the side is readable, and it's a sign flip: FADE the multi-hour trend, don't follow it.**
+  Fade beats the machine's direction accuracy by **+3 to +5 points** on every coin (consistent, not
+  $/hr noise).
+- **Best horizon is PER-COIN** (per-cell deploy rule): DOGE 8h and SOL 4h CLEAR the null (p=0.018)
+  at 4–5/5 weeks = deploy candidates. BTC 6–8h rescues a NEGATIVE machine baseline (−0.91→+1.6)
+  across a clean band, but z~1.5 is marginal. XRP/ETH weak/fragile (one horizon, lumpy weeks).
+- **Deeper horizons (4–8h) beat 1–2h** for the whole-population side decision — the 1h that the
+  handoff flagged is the big-loser *conditional* read; for choosing every leg's side, fading a
+  4–8h trend is stronger.
+- **Fee frame is decisive:** positive only in the direct (decide-at-entry) frame; the 22bp mid-
+  position flip fee erases it. Greg's "decide buy/sell at entry" = the correct, monetizable frame.
+
+CAVEATS (load-bearing): (1) ONE 30d window — the per-coin best-horizon MUST get a 2nd-window
+confirm before sizing ("never tune off one window"). (2) The sign-shuffle null only proves "beat
+random side"; a stronger circular-shift (tautology) null is owed — a fade rule flatters a range-
+bound month. (3) Mechanism = longer-horizon mean-reversion; it lifts average accuracy but may not
+specifically fix the trend-continuation fat tail. Next: 2nd-window confirm + circular-shift null on
+the DOGE-8h / SOL-4h / BTC-6-8h deploy candidates.
