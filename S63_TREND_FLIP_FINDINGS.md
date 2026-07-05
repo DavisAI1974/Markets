@@ -215,3 +215,33 @@ DOGE. XRP fade-8h +1.89 z=1.55 p=0.064 — marginal, lumpy per-week (−7.6/−1
 - **XRP, SOL: do NOT confirm on full data** — earlier positives were thin-sample. Do not deploy.
 - The whole thing remains **fill-bound** (dies at 2bp) → maker-fill via the books is the gate.
 Per the platform rule: deploy where it survives (btc/eth zigzag, doge fade), stand aside on xrp/sol.
+
+## 10. THE REAL BYBIT MODEL ON KRAKEN — flow-lean flip detector + win/loss anatomy
+Greg: run the deployed bybit zigzag (NOT the price toy) on Kraken. That model = the CAUSAL FLOW-LEAN
+flip detector `odcore/flip_detector.py` (WFLIP=600, REV=0.1, ARM0 no gates); it zigzags on the taker-
+flow LEAN, not price (S40: price at a turn is ~99.6% symmetric). Tools: `_s63_kraken_flipzz.py`
+(S54 gate: shuffle + reversed), `_s63_kraken_winloss.py`.
+
+**Gate (kr_mk0, 0bp, pure structure — Bybit's big $ was the MM3 rebate volume paycheck, absent here):**
+| coin | net $/hr | z vs shuffle | reversed | gate |
+|---|---|---|---|---|
+| eth | +4.86 | +4.0 (p=0.01) | −4.86 | **PASS** |
+| btc | +3.29..+4.45 | +3.0 (p=0.01) | −3.29 | **PASS** |
+| doge | +2.12 | +1.5 (p=0.07) | −2.12 | marginal (3% cov) |
+| xrp | +0.96 | +0.7 | −0.96 | not sig |
+| sol | −2.33 | −1.6 | +2.33 | FAIL (anti-predictive) |
+
+So the bybit flow-lean model DOES port to Kraken spot on BTC/ETH (real structure, reversed loses),
+NOT on SOL (anti-predictive — its edge on bybit was likely perp-microstructure + the rebate). Both
+the flow-lean detector AND the price zigzag independently flag BTC/ETH as the real Kraken cells.
+
+**WIN/LOSS anatomy (kr_mk0):** win% 41–47% (BELOW 50 on every coin) but avg WIN > avg LOSS
+(W/L 1.14–1.24). So:
+- **NOT hemorrhaging on loss size** — losses are already SMALLER than wins everywhere; loss control fine.
+- **The lever is HIT RATE + WIN SIZE.** Net is a thin residual between ~+$44/hr wins and −$40/hr losses.
+  SOL loses only because 41% hit rate can't clear its 1.18 win-size edge.
+- **Razor-thin fee headroom (~0.5 bp/swing on ETH/BTC)** at ~17.5 swings/hr → mandates a true 0bp
+  maker fill; a 1bp fee is fatal (kr_mk2 nets −13..−20). Quantifies the fill dependency.
+- **"Push wins up" lever = entry TIMING:** entries lag the true turn by 3.9–6.7 bp (the `lag`).
+  `retime_flips` (S47 early-arm price-reversal) enters nearer the extreme → adds to every win,
+  shrinks every loss, widens headroom. Next test.
