@@ -364,3 +364,20 @@ loss — fire only at BIG negative depth, not all depths. Conditional outcome of
 
 **DEPLOY UPDATE (per-cell):** add a deep bail — BTC −80, ETH −100 — as free tail-cap on top of the
 ride. SOL none. Still gated by maker fills for the ride entries; the bail is an honest taker exit.
+
+## 16. "reset + fire short to catch the rest of the slide" (Greg) — tested, DON'T (slide is spent)
+`_s63_kraken_bailshort.py`: after a deep bail, reset and fire a short — blind, or ONLY when the flow
+lean confirms the down-continuation ("fire correctly"). vs bail-flat:
+| ETH depth | flat | blind short | conf short | conf# | conf WIN% |
+|---|---|---|---|---|---|
+| -60 | +8.88 | +8.26 | +8.50 | 75 | 19% |
+| -80 | +9.16 | +8.82 | +8.90 | 42 | 19% |
+| -100 | +9.36 | +9.21 | +9.25 | 21 | 19% |
+(BTC/SOL same shape: flat >= conf >= blind.)
+
+- **conf WIN% ≈ 19%** — even a flow-CONFIRMED short at −80 wins only ~1 in 5. There's little slide left:
+  by the time a move is deep enough to confirm, it's near EXHAUSTION — entering short then catches the
+  BOUNCE, not more downslide (the same mean-reversion that makes riding profitable, against us here).
+- **bail-flat > confirmed-short > blind-flip** on all coins → at big depth, FLATTEN. Don't chase the slide.
+- Settles the deep-loss playbook: deep = dead loss (WIN%~0, §15) → flatten for a free tail-cap; do NOT
+  flip or re-short (slide spent, §16). Direction/continuation stays unpredictable-to-adverse everywhere.
