@@ -450,3 +450,21 @@ multi-day Kraken book on a normal-edge window to grade ETH fill-viability for re
   of winner $ but cut ~45% of trades → far fewer fills needed, each swing well above the fee/fill floor.
   Should help the FILL-realistic net most (the S36b fee-floor logic). NEXT: sweep REV / swing floor on
   the maker-fill model.
+
+## 20. SWING FLOOR (coarser REV) + "exiting too early?" — the fill-vs-edge knob; exits are well-timed
+`_s63_kraken_swingfloor.py`.
+PART A (tape, 0bp): coarser REV HURTS — fewer trades, bigger swings, lower net (ETH 0.10 +9.50 -> 0.30
++5.15). At 0bp the tiny trades are pure profit, so cutting them loses edge.
+PART B (real book, honest maker fill, cover_grace=300): coarser REV HELPS the fill-realistic net —
+| coin | REV0.10 -> 0.30 | fill% | honest $/hr |
+| eth  | | 31%->63% | -7.62 -> -3.17 |
+| btc  | | 31%->49% | -11.48 -> -6.40 |
+| sol* | | 28%->60% | -9.43 -> -2.57 |
+Bigger swings = far better maker fills + less taker bleed. So REV is a FILL-vs-EDGE knob: coarser
+(~0.2-0.3) for real-fill deployment, fine as-is at 0bp. (Still negative on this LOW-edge book window.)
+PART C (exiting too early?): NO. Post-exit 120s favorable move is NEGATIVE on all coins (ETH -0.62,
+BTC -0.58, SOL -0.03; only 46-47% kept going) -> price REVERTS after the flow-turn exit, the exit is
+well-timed (flip right as the move reverses = the next leg's mean-reversion win). Small winners peak
+~5-6bp mid-leg, exit ~2-3bp (gave back ~half WITHIN the leg, not harvestable per §18; peaks are small =
+genuinely small moves). Nothing more to squeeze from small winners via exit timing; the only lever is
+NOT taking them (the swing floor), a fill-side win.
