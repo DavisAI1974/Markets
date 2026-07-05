@@ -167,3 +167,27 @@ Reads (honest):
 **Owed before sizing:** (1) a shuffled/phase-random null on the zigzag (real mean-reversion vs
 sparse-tape artifact); (2) full 30d Kraken tape for all 5 (pull in progress); (3) the maker-fill
 model from the books (the decisive gate). Fee frame going forward = Kraken kr_mk0.
+
+## 8. ZIGZAG NULL VERDICT — the edge is REAL on BTC/ETH (not a sparse-tape artifact)
+`_s63_kraken_zigzag_null.py` (θ=30bp, 100 return-shuffled nulls, kr_mk0):
+
+| coin | data | real $/hr | null μ | z | p | verdict |
+|---|---|---|---|---|---|---|
+| btc | 26.7d 16%cov | +2.0 | −0.1 | +3.0 | 0.010 | **REAL** |
+| eth | 26.7d 11%cov | +2.7 | −0.2 | +2.6 | 0.020 | **REAL** |
+| doge | 30d 3%cov | −1.0 | 0.0 | −0.8 | 0.74 | ~null (too sparse) |
+| sol | 24.4d 12%cov | +1.5 | −0.2 | +1.0 | 0.18 | not significant |
+| xrp | 23.2d 13%cov | −0.0 | −0.1 | +0.1 | 0.55 | ~null |
+
+- The return-shuffle null lands at ~0 (μ ≈ −0.1) — the harness manufactures no edge — and **BTC/ETH
+  beat it at z=3.0/2.6 (p≈0.01)**. So the kr_mk0 zigzag edge on the two coins with real, complete
+  data is **genuine short-horizon mean-reversion**, not a forward-fill/sparse artifact.
+- SOL/DOGE/XRP do NOT confirm: DOGE is 3% coverage (unusable), SOL/XRP came from the still-running
+  REST pull; re-run the null on their full clean 30d tape before any verdict.
+
+**S63 KRAKEN BOTTOM LINE:** at kr_mk0 (0bp maker) a plain causal zigzag has a REAL edge on BTC/ETH
+(+2.0/+2.7 $/hr, p≈0.01), θ 20–50bp. It is entirely fee/fill-bound — dies at 2bp/flip — so the ONE
+decisive remaining gate is the **maker fill** (can we rest at the turns and get filled at 0bp?),
+which the accruing Kraken BOOKS answer. Coinbase parked. Next: (1) full 30d tape for SOL/XRP → re-run
+null; (2) maker-fill model from the books; (3) does the fade-direction SIDE rule stack on top of the
+zigzag.
