@@ -191,3 +191,27 @@ decisive remaining gate is the **maker fill** (can we rest at the turns and get 
 which the accruing Kraken BOOKS answer. Coinbase parked. Next: (1) full 30d tape for SOL/XRP → re-run
 null; (2) maker-fill model from the books; (3) does the fade-direction SIDE rule stack on top of the
 zigzag.
+
+## 9. FULL-TAPE RE-READ — XRP/SOL do NOT hold (thin-sample artifact); BTC/ETH zigzag + DOGE fade do
+The REST pull completed to ~full 30d for SOL/XRP (BTC-tape still partial; realbins BTC/ETH are the
+complete BTC/ETH windows). Re-ran the zigzag null + fade on the full tape. Result discipline — the
+earlier XRP/SOL strength was a THIN-SAMPLE artifact (2.3–3d), and it dissolves on the full month:
+
+Zigzag null (θ=30bp, kr_mk0), FULL tape:
+| coin | span | real $/hr | z | p | verdict |
+|---|---|---|---|---|---|
+| btc | 26.7d | +2.0 | +3.0 | 0.010 | **REAL** |
+| eth | 26.7d | +2.7 | +2.6 | 0.020 | **REAL** |
+| sol | 30.0d | +0.4 | +0.2 | 0.39 | ~null (was +8 on 3d = artifact) |
+| xrp | 30.0d | +0.4 | +0.3 | 0.38 | ~null (was +11/+16 on 2.3d = artifact) |
+| doge | 30.0d 3%cov | −1.0 | −0.8 | 0.74 | ~null (unusable coverage) |
+
+Fade (full tape): DOGE-8h +2.73 Δ+0.69 z=2.19 p=0.016 (3/5wk) — clears, cross-confirms Binance
+DOGE. XRP fade-8h +1.89 z=1.55 p=0.064 — marginal, lumpy per-week (−7.6/−10.2 weeks). SOL fade thin.
+
+**CONSOLIDATED S63 KRAKEN VERDICT (full data, per-cell deploy):**
+- **ZIGZAG @ kr_mk0: real edge on BTC (+2.0, p=0.01) and ETH (+2.7, p=0.02) ONLY.** θ 20–50bp.
+- **FADE-direction: real on DOGE-8h (p=0.016)** (Binance-confirmed); marginal elsewhere.
+- **XRP, SOL: do NOT confirm on full data** — earlier positives were thin-sample. Do not deploy.
+- The whole thing remains **fill-bound** (dies at 2bp) → maker-fill via the books is the gate.
+Per the platform rule: deploy where it survives (btc/eth zigzag, doge fade), stand aside on xrp/sol.
