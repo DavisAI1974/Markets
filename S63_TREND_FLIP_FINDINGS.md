@@ -411,3 +411,23 @@ Reads (per-cell):
 **S63 CLOSE:** direction unpredictable everywhere (rides the mean-reversion); deep bail = free tail-cap;
 maker fill = viable on ETH with cover_grace (~1/hr cost), lossy on BTC/SOL; grade for real once multi-day
 Kraken book accrues on a normal-edge window.
+
+## 18. PUSH THE WINNERS UP — already well-captured; no trail helps
+`_s63_kraken_winners.py` (30d tape): winners give back ~30% of peak but a mechanical peak-trail TP can't
+harvest it.
+| coin | winners | peak | exit | giveback | %peak captured | best trail vs ride |
+|---|---|---|---|---|---|---|
+| eth | 6159 | +16.3 | +11.1 | +5.2 | 68% | −1.37 (worse) |
+| btc | 6174 | +12.1 | +8.3 | +3.7 | 69% | −0.46 (worse) |
+| sol*| 6544 | +14.3 | +11.8 | +2.5 | 83% | −2.36 (worse) |
+
+- Winners already capture 68–83% of peak; the ~2.5–5.2bp giveback is real but EVERY peak-trail TP nets
+  BELOW ride-all (exits winners early on noisy retraces + taker cross) — same wall as the stop.
+- **Symmetric conclusion: the flow-turn ENTRY (early-arm) and EXIT are both near-optimal.** Mechanical
+  overlays (stop / take-profit / flip) all fight the mean-reversion + pay taker → hurt. The only lever
+  that pushed winners up is the early-arm ENTRY (already deployed).
+
+**S63 FULLY CLOSED (both sides):** ride the per-cell early-arm flow-lean zigzag (harvest the mean-
+reversion), deep bail for a free tail-cap, cover_grace for the maker fill (ETH viable ~1/hr, BTC/SOL
+lossy). No entry/mid-leg direction edge; no profitable stop or take-profit overlay. Remaining gate =
+multi-day Kraken book on a normal-edge window to grade ETH fill-viability for real.
