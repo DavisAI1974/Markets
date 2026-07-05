@@ -268,3 +268,27 @@ the flow-lean detector AND the price zigzag independently flag BTC/ETH as the re
 Kraken spot on BTC/ETH (S54 gate PASS, z 3-4, reversed loses), and early-arm timing pushes them to
 ~+8.5-9.5 $/hr @ $5k with ~1 bp/swing fee headroom at kr_mk0. NOT on SOL (anti-predictive) or
 XRP/DOGE (thin/marginal). Remaining gate = real maker fills from the Kraken books.
+
+## 12. FLIP-OR-BAIL loss management — a clean NEGATIVE (ride the zigzag instead)
+`_s63_kraken_flipbail.py`: at -arm underwater, FLIP if a multi-hour trend is against us (mom_W),
+else BAIL; retime entries; honest Kraken taker on the managed legs (flip 22bp, bail 11bp). vs the
+ride-all (retime, maker-only) baseline:
+| coin | ride-all | best managed | 0-fee ceiling |
+|---|---|---|---|
+| eth | +9.50 | +3.60 | +8.7 |
+| btc | +8.64 | +5.60 | +9.2 |
+| sol rev | −0.68 | −14 (≈1900 flips) | ~0 |
+
+- **Even at 0 fee, flip/bail does NOT beat ride-all.** The detector is already a zigzag; its own
+  next-flow-turn exit BEATS a fixed-depth stop because most −arm touches are DIPS THAT RECOVER above
+  the stop by the next turn — bail/flip clips them.
+- **Honest taker fees on the managed legs make it badly negative** (intervening = a taker cross the
+  maker ride avoids; SOL churns to ruin).
+- **The 10-loser "bail saves −1465bp" was a SELECTION ILLUSION** — only the 10 biggest, at 0 fee.
+  Across ALL trades, dips-that-recover vastly outnumber true trend-runovers. The trend gate fired
+  269–679×, far more than the few real runovers ("momentum against you at −arm" is trivially common
+  when you're underwater) → we CANNOT isolate the rare runover at the arm point (winners-invisible wall).
+- **CONCLUSION: drop mechanical loss-management.** Best exit = the plain early-arm zigzag riding each
+  swing to the next flow-turn (+9.50 ETH / +8.64 BTC at kr_mk0). The surviving edge is ENTRY TIMING +
+  the kr_mk0 MAKER venue → the decisive gate is the maker-fill model (can we get the 0bp fills the
+  ride depends on).
