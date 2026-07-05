@@ -1,6 +1,19 @@
 # CLAUDE.md — DavisAI Master Context (Updated 2026-07-05 Session 64 — READ `STRATEGY_INVENTORY.md` (all our live strategies/tools — read FIRST so nothing is missed) + `SESSION_HANDOFF_2026-07-07_S63.md` + `S63_TREND_FLIP_FINDINGS.md` + `KRAKEN_DEPLOY_MAP_S63.md` + `KICKOFF_2026-07-08_S64.md` + `DROPIN_S64.md`, not this whole file. S64/S63 delta at top; S62 below.)
 
-## ⭐ S64 STANDING RULE (Greg): `STRATEGY_INVENTORY.md` = the canonical list of EVERYTHING we have live/built (deployed cells + all strategy families + executor/infra + fee reality). We kept forgetting our own tools (S64: a whole benchmark ran on BARE flow-lean, ignoring the deployed stack + the E300 death-selector family). READ IT AT SESSION START and UPDATE IT whenever a strategy/tool/cell is added, tuned, or retired. It is the anti-amnesia doc — keep it in sync here + in every handoff/kickoff.
+## ⭐ S64 STANDING RULES (Greg) — the ANTI-CIRCLING protocol (we've wasted days/weeks reinventing the wheel):
+1. **`STRATEGY_INVENTORY.md` = the canonical list of EVERYTHING we have** (deployed cells + all strategy
+   families + executor/infra + fee reality + the TRIED-&-DEAD ledger). **READ IT AT SESSION START.**
+2. **UPDATE IT AS YOU GO — NOT at session end.** The moment a strategy/tool/cell is added, tuned, killed,
+   or a finding lands, append it to the inventory immediately (esp. the TRIED-&-DEAD ledger so we never
+   re-run a dead experiment). Don't wait for the handoff — mid-session updates are the whole point.
+3. **VENUE IN FILE NAMES for anything deployable** (Greg S59+S64): put `kraken` (or the venue) in the
+   filename/cell name so it's obvious what to deploy when the time comes. odcore engine modules stay
+   venue-agnostic; deployable configs/scripts get the venue tag.
+4. **PER-COIN LAW: what fails on one coin we DITCH FOR THAT COIN, but KEEP where it works.** Never globally
+   kill a tool because it failed one cell — deploy per-cell (S64: SHX/AIOZ pass only at W2400; E300 pays as
+   its own sleeve, not on the lean ride). Report "works on {X}, not {Y}", never "X failed."
+We kept forgetting our own tools (S64: a whole benchmark ran on BARE flow-lean, ignoring the deployed stack
++ the E300 death-selector family). This inventory + these rules are the fix.
 
 ## S63 UPDATE (2026-07-07) — KRAKEN PIVOT fully mapped: direction is DEAD, the edge is the mean-reversion RIDE, the gate is the maker FILL. Read `SESSION_HANDOFF_2026-07-07_S63.md` + `S63_TREND_FLIP_FINDINGS.md` (§1–20) + `KRAKEN_DEPLOY_MAP_S63.md`
 - **KRAKEN PIVOT (Greg): park Coinbase, fee frame = kr_mk0 (0bp maker).** Re-pulled the 30d Kraken tape + materialized the L2 book branches. All S63 tools = `scripts/_s63_kraken_*.py` (20). The S62 "1h-trend-fade flip" lead was built (`_s63_trend_flip/_fade/_direction`) — the buy/sell answer is FADE the multi-hour trend (+sign momentum is backwards; beats the machine +3–5pts), clears on DOGE-8h/SOL-4h, XRP/ETH fragile — then the whole thread moved to Kraken.

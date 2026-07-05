@@ -94,8 +94,22 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
 - Dead levers: entry/direction prediction (closed 4 ways); taker-entry as blanket rule; mk0 as a default basis.
 
 ---
+## 7. TRIED & DEAD — do NOT re-run these (per-coin caveats noted; kept where they work)
+- **Entry/direction prediction** — closed 4 ways (S62 coeff, S62 momentum, S63 fade-flip, S63 dipole agent);
+  direction ~0.50 at entry AND every mid-leg time. Depth predicts DEATH (magnitude), never direction.
+- **Taker-entry as a blanket rule** (S64) — taker fee (11bp/leg) > captured edge (1-7bp/leg avg). ORACLE
+  (perfect winner-pick) works (+11 ETH) but no entry-time swing-SIZE predictor exists (vol AUC 0.567≈chance).
+- **E300 death-cut ON the lean ride** (S64) — ~neutral (BTC +0.20, ETH −0.41); redundant with deep-bail on the
+  fast ride. E300 KEPT as its own SLEEVE (family B, Coinbase midband, +1.29/hr) — per-coin-law: keep where it works.
+- **Flip / re-short at depth** (S63) — slide spent (confirmed-short wins ~19%); bail-flat > confirmed-short > blind.
+- **Shallow stop (−15), take-profit trail** (S63) — clip recoveries / fight mean-reversion + pay taker. Deep-bail only.
+- **mk0 as a default fee basis** (S57) — 0bp is the $10M/30d tier, not a given. **Bybit / MEXC** — banned/dead.
+- **Grading a pair on ONE lean config** (S64) — under-calls per-coin; tune the WINDOW (SHX/AIOZ need W2400).
+
 ### S64 open threads (see handoff/kickoff)
-1. Full-stack + E300-on-lean measurement through the deployed executor (not bare lean).
-2. Rebate-eligible-pair BASKET (per-coin tuned gate; ~6 confirmed: APE/RE fwd, XDC/SHX/AIOZ/ARPA rev).
-3. Multi-sleeve basket simulator (majors unlock tier + eligible earn rebate + E300 sleeve; ~0-corr idle-fill).
+1. ✅ Full-stack + E300-on-lean measured (early-arm = the lift; E300-on-ride neutral → E300 = separate sleeve).
+2. Rebate-eligible-pair BASKET (per-coin tuned gate; ~6 confirmed: APE/RE fwd, XDC/SHX/AIOZ/ARPA rev). Needs
+   the full per-week+reversed re-gate on the shortlist + longer pulls on the 7-day pairs (SYN/GWEI/NIGHT/HYPE).
+3. **Multi-sleeve basket simulator** (majors unlock tier + eligible earn rebate + E300 sleeve; ~0-corr idle-fill)
+   — THE next build. Name it `*_kraken_*` (deployable). Run through the real executor, not bare lean.
 4. Kraken live adapter (WS v2 add/amend/cancel, executions, post_only; no spot testnet → tiny-size first).
