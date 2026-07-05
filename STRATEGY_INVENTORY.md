@@ -99,8 +99,9 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
   direction ~0.50 at entry AND every mid-leg time. Depth predicts DEATH (magnitude), never direction.
 - **Taker-entry as a blanket rule** (S64) — taker fee (11bp/leg) > captured edge (1-7bp/leg avg). ORACLE
   (perfect winner-pick) works (+11 ETH) but no entry-time swing-SIZE predictor exists (vol AUC 0.567≈chance).
-- **E300 death-cut ON the lean ride** (S64) — ~neutral (BTC +0.20, ETH −0.41); redundant with deep-bail on the
-  fast ride. E300 KEPT as its own SLEEVE (family B, Coinbase midband, +1.29/hr) — per-coin-law: keep where it works.
+- **E300 death-cut ON the lean ride — PER-COIN, NOT global** (S64, Greg): KEEP on **BTC** (+0.20, helps even if
+  marginal), DROP on **ETH** (−0.41, redundant with deep-bail there). Do NOT pool to "neutral" — per-coin law.
+  ⚠ one window (realbins); confirm 2nd window before sizing. E300 ALSO runs as its own SLEEVE (family B, +1.29/hr).
 - **Flip / re-short at depth** (S63) — slide spent (confirmed-short wins ~19%); bail-flat > confirmed-short > blind.
 - **Shallow stop (−15), take-profit trail** (S63) — clip recoveries / fight mean-reversion + pay taker. Deep-bail only.
 - **mk0 as a default fee basis** (S57) — 0bp is the $10M/30d tier, not a given. **Bybit / MEXC** — banned/dead.

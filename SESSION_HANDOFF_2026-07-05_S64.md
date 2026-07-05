@@ -34,9 +34,10 @@ Root cause this session: a whole benchmark ran on BARE flow-lean, ignoring the d
    (rev)**. SHX/AIOZ only pass at **W2400** (tune window per coin!). HYPE ($9.3M, most liquid) = null (efficiency
    gradient: liquid=weak edge, thin=strong). 7-day pairs (SYN/GWEI/NIGHT/HYPE) need longer pulls for per-week.
 8. **STACKING (Greg — don't treat lean as the only tool):** deployed majors = lean + **early-arm** (the lift:
-   ETH −0.83→+3.44 on realbins) + deep-bail + cover-grace. **E300 death-cut ON the lean ride = NEUTRAL** (redundant
-   with deep-bail on the fast ride) → **E300 belongs as its own SLEEVE** (family B). Window flag: early-arm HURT
-   BTC on realbins (opposite of S63 REST tape) — point estimates window-fragile.
+   ETH −0.83→+3.44 on realbins) + deep-bail + cover-grace. **E300 death-cut ON the lean ride is PER-COIN (Greg):
+   KEEP on BTC (+0.20, helps marginally), DROP on ETH (−0.41)** — do NOT pool to "neutral"/global-kill (per-coin
+   law). E300 ALSO runs as its own SLEEVE (family B). Window flag: early-arm HURT BTC on realbins (opposite of
+   S63 REST tape) — point estimates window-fragile; confirm 2nd window before sizing.
 
 ## THE ARCHITECTURE (where it's heading)
 Two-sleeve (+basket) Kraken book: **majors sleeve** (lean+early-arm+deep-bail+cover-grace; unlocks the $10M
