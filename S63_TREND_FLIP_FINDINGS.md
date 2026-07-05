@@ -316,3 +316,27 @@ at 1h) + multi-horizon momentum -> per-week-OOS direction classifier, on the ful
 **GAMEPLAN LOCK:** stop hunting entry signals. Deployable = ride the early-arm zigzag per-cell
 (BTC/ETH forward eps5/10, SOL reversed) + a WIDE bail (−50..−80) for tail-cap + kr_mk0 maker fills.
 The only remaining thing that changes the answer is the MAKER-FILL MODEL (do we get the 0bp fills).
+
+## 14. WHEN does the agent know direction? — NEVER (direction unpredictable at every time)
+`_s63_kraken_direction_timing.py` (Greg: "it doesn't have to be at 0"): predict the REMAINING move's
+direction at t = 0/60/120/300/600s into each leg, per-week OOS, Kraken tape.
+
+| coin | t=0 | t=60 | t=120 | t=300 | t=600 |
+|---|---|---|---|---|---|
+| eth | 0.518 | 0.518 | 0.513 | 0.505 | 0.504 |
+| btc | 0.493 | 0.522 | 0.494 | 0.504 | 0.507 |
+| sol | 0.499 | 0.505 | 0.499 | 0.513 | 0.456 |
+big-loser side-known% bounces 40–53% (coin flip) at every t.
+
+- **Direction is flat ~0.50 at EVERY time** — not hidden-at-entry-then-revealed; unpredictable the whole
+  way through.
+- **Reconciles E300:** E300 DEPTH predicts DEATH (magnitude/outcome, AUC 0.69 — winners don't go deep),
+  but DIRECTION of the next move is ~chance always. A deep loser is ~as likely to keep falling as bounce
+  (the ~40% recover from §11). Depth ≠ direction. This is WHY flip/bail can't win: even knowing a trade
+  is risky (deep), the next-move direction is a coin flip.
+- **DIRECTION is the fundamentally unpredictable axis** — at entry AND mid-leg, across every signal
+  (momentum/coeff/dipole/E300-timed).
+
+**FINAL S63 GAMEPLAN:** stop all direction/entry-signal hunting. Deployable = harvest the mean-reversion
+by RIDING the per-cell early-arm zigzag (BTC/ETH forward, SOL reversed) + WIDE bail (−50..−80) for tail
+cap. The only remaining lever that changes the answer is the MAKER-FILL model (do we get the 0bp fills).
