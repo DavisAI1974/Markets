@@ -292,3 +292,27 @@ ride-all (retime, maker-only) baseline:
   swing to the next flow-turn (+9.50 ETH / +8.64 BTC at kr_mk0). The surviving edge is ENTRY TIMING +
   the kr_mk0 MAKER venue → the decisive gate is the maker-fill model (can we get the 0bp fills the
   ride depends on).
+
+## 13. JOB 2 — the DIPOLE/TREND agent as a buy/sell signal: ~CHANCE, does NOT flip big losers
+`_s63_dipole_agent.py`: S36 divergence + dipole (imb_level/aligned_flow/exhausting/ent_dipole/mi_flow
+at 1h) + multi-horizon momentum -> per-week-OOS direction classifier, on the full Kraken tape.
+
+| coin | agent dir-acc | AUC | big-loser flip % | agent $/hr |
+|---|---|---|---|---|
+| eth | 0.514 | 0.514 | 41% | +0.05 |
+| btc | 0.504 | 0.491 | 41% | −1.16 |
+| sol | 0.531 | 0.510 | 53% | −0.07 |
+| xrp | 0.500 | 0.488 | 53% | +0.12 |
+| doge | 0.535 | 0.499 | 46% | −1.25 |
+
+- Direction accuracy 0.50–0.53 (chance); big-loser flip rate 41–53% (coin flip); $/hr ~0.
+- **The dipole/trend agent does NOT turn big losers into winners at entry.** The 0.69 big-loser read
+  from §1 was POST-HOC survivorship (conditional on already being a big loser); EX-ANTE the direction
+  is unpredictable — you can't select the big losers at entry to apply it.
+- **Entry-direction is now closed 4 ways** (S62 coeff, S62 momentum, S63 fade, S63 dipole agent).
+- README on trending = a caution (lucky trends fool the naive baseline; trust the shuffle null) +
+  the office rule (grade as precursor/confirmer/timing). Not a trend recipe.
+
+**GAMEPLAN LOCK:** stop hunting entry signals. Deployable = ride the early-arm zigzag per-cell
+(BTC/ETH forward eps5/10, SOL reversed) + a WIDE bail (−50..−80) for tail-cap + kr_mk0 maker fills.
+The only remaining thing that changes the answer is the MAKER-FILL MODEL (do we get the 0bp fills).
