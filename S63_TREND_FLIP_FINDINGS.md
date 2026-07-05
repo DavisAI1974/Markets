@@ -128,3 +128,42 @@ random side"; a stronger circular-shift (tautology) null is owed — a fade rule
 bound month. (3) Mechanism = longer-horizon mean-reversion; it lifts average accuracy but may not
 specifically fix the trend-continuation fat tail. Next: 2nd-window confirm + circular-shift null on
 the DOGE-8h / SOL-4h / BTC-6-8h deploy candidates.
+
+## 7. KRAKEN PIVOT (Greg): park Coinbase, kr_mk0 = 0bp maker is where the money is
+Ran the fade SIDE rule and a plain causal ZIGZAG on KRAKEN'S OWN tape. BTC/ETH from realbins
+(~26.7d ≈June, an independent cross-venue+cross-window check); SOL/DOGE/XRP from the REST pull
+(`backfill_kraken_trades.py`, rate-limited ~1req/s, partial as of writing). Tools:
+`scripts/_s63_kraken_fade.py`, `scripts/_s63_kraken_zigzag.py`.
+
+**Key economics:** the fade rule trades the SAME legs as the machine (only the side differs) so the
+fee CANCELS in the comparison — Kraken's value is the ABSOLUTE net: at kr_mk0 net==gross (positive),
+vs net-negative at Coinbase taker. The zigzag is a standalone strategy where the 0bp fee is the
+whole ballgame.
+
+**Fade on Kraken (partial):** DOGE (30d) fade-6h +3.81/hr Δ+2.63 z=1.99 (p=0.028) — echoes the
+Binance DOGE-8h across venue. ETH (26.7d) fade-4h +1.73 z=1.47 (marginal). SOL/XRP too thin yet.
+
+**ZIGZAG on Kraken (causal, no look-ahead), net $/hr @ $5k:**
+| coin (data) | θ band | kr_mk0 (0bp) | kr_mk2 (2bp) | taker (11bp) | per-week |
+|---|---|---|---|---|---|
+| btc (26.7d) | 20–50b | +1.4…+2.7 | +0.2…+0.9 | negative | small +, one −75 blowup wk at θ10 |
+| eth (26.7d) | 10–30b | +2.7…+8.3 | −4.7…+0.3 | negative | +13/+4/+6/+11 (steady at θ10) |
+| sol/doge/xrp | — | mixed | mostly neg | very neg | data too thin/sparse to trust yet |
+
+Reads (honest):
+- **Confirmed: at kr_mk0 (0bp) the zigzag is net-POSITIVE** on the coins with real data (BTC/ETH) —
+  Kraken's tape has real short-horizon mean-reversion (a random walk would net ~0). Greg's instinct
+  (no fee floor → zigzag works) holds.
+- **It lives or dies on the maker fill.** At just kr_mk2 (2bp/flip) most of the edge evaporates
+  (BTC θ10 +6.7→−0.8; only θ≥30 survives ~+0.7); at taker it's deeply negative. So the whole thing
+  hinges on actually getting **0bp maker fills at the turns** — exactly what the Kraken BOOKS
+  (accruing, ~18h) must validate. This is the load-bearing unknown.
+- **θ sweet spot ≈ 20–50bp:** tighter θ (10b) has higher gross but is fee-fragile and has blowup
+  weeks (BTC −75); wider θ is steadier and survives small fees.
+- **DATA CAVEATS:** Kraken tape is thin — BTC/ETH 11–16% second-coverage (mid forward-filled),
+  DOGE only 3% (sparse → zigzag turns detected on stale prices overstate capturable swings; DOGE/
+  SOL/XRP numbers unreliable until the full 30d REST pull + a coverage filter).
+
+**Owed before sizing:** (1) a shuffled/phase-random null on the zigzag (real mean-reversion vs
+sparse-tape artifact); (2) full 30d Kraken tape for all 5 (pull in progress); (3) the maker-fill
+model from the books (the decisive gate). Fee frame going forward = Kraken kr_mk0.
