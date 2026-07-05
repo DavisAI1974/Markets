@@ -431,3 +431,22 @@ harvest it.
 reversion), deep bail for a free tail-cap, cover_grace for the maker fill (ETH viable ~1/hr, BTC/SOL
 lossy). No entry/mid-leg direction edge; no profitable stop or take-profit overlay. Remaining gate =
 multi-day Kraken book on a normal-edge window to grade ETH fill-viability for real.
+
+## 19. 10 SMALLEST winners — the fill-fragile churn tail (points to a swing floor)
+`_s63_kraken_smallwinners.py` (30d tape). Winner-size distribution is a power law:
+| bucket bp | ETH #/$ | BTC #/$ | SOL #/$ |
+|---|---|---|---|
+| 0-2 | 19%/2% | 23%/2% | 11%/1% |
+| 2-5 | 23%/7% | 25%/10% | 20%/6% |
+| 5-10 | 22%/15% | 24%/21% | 26%/17% |
+| 10-20 | 19%/25% | 18%/30% | 31%/34% |
+| 20+ | 16%/52% | 10%/37% | 13%/42% |
+
+- ~40-48% of winners are TINY (<5bp) contributing only ~7-12% of winner $; top 10-16% carry ~40-52%.
+- **These tiny winners flip to LOSERS under real fills** (a 3bp winner forced to a taker exit at -5bp = a
+  -2bp loss) — a big part of why the fill-realistic win% collapsed 47%->29% (§17). They are fill-fragile
+  churn, each costing a full round-trip fill for ~nothing.
+- **SQUEEZE = a SWING FLOOR** (coarser detector REV / min-swing gate): skip the tiny turns → give up ~10%
+  of winner $ but cut ~45% of trades → far fewer fills needed, each swing well above the fee/fill floor.
+  Should help the FILL-realistic net most (the S36b fee-floor logic). NEXT: sweep REV / swing floor on
+  the maker-fill model.
