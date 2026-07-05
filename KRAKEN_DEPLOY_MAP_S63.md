@@ -31,3 +31,12 @@ Every KEEP row assumes **0bp maker fills at the turns**. That is now the decisiv
 build the maker-fill model from `data/*-kraken-book` (via `odcore/swing_maker.py`) and re-grade each
 KEEP cell fill-realistically. A cell that can't get filled at maker drops off the map regardless of
 its paper $/hr.
+
+## UPDATE (deep bail — Greg, §15): fire ONLY at big depth
+At big negative depth the trade is a DEAD loss (recover-to-PROFIT ~0% by −80). A deep bail clips no
+winners and caps the −150/−200 tail for free:
+- **BTC: deep bail at −80** (+8.74 vs ride +8.64 — a hair positive + tail cap).
+- **ETH: deep bail at −100** (+9.36 ≈ ride +9.50 — ~free tail cap).
+- **SOL: no deep bail** (reversed signal churns; taker bail nets negative).
+Bail (taker flatten) beats FLIP at depth (continuation only ~58%, not worth the 22bp flip). Fire ONLY
+at the deep threshold, never at shallow depths (shallow bail bled — §11/§12).

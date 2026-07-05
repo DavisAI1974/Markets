@@ -340,3 +340,27 @@ big-loser side-known% bounces 40–53% (coin flip) at every t.
 **FINAL S63 GAMEPLAN:** stop all direction/entry-signal hunting. Deployable = harvest the mean-reversion
 by RIDING the per-cell early-arm zigzag (BTC/ETH forward, SOL reversed) + WIDE bail (−50..−80) for tail
 cap. The only remaining lever that changes the answer is the MAKER-FILL model (do we get the 0bp fills).
+
+## 15. FIRE ONLY AT BIG DEPTH (Greg, correct) — deep bail = free tail-control
+`_s63_kraken_deepstop.py`. Greg: the biggest losers drop big & keep going; at big depth it's a dead
+loss — fire only at BIG negative depth, not all depths. Conditional outcome of trades reaching -D:
+| depth | ETH cont%/WIN% | ETH bail | BTC cont%/WIN% | BTC bail | (ride: ETH+9.50 BTC+8.64) |
+|---|---|---|---|---|---|
+| -40 | 57/13% | +7.15 | 56/6% | +7.73 | |
+| -60 | 60/5% | +8.88 | 46/1% | +8.30 | |
+| -80 | 58/2% | +9.16 | 62/0% | **+8.74** | |
+| -100 | 52/0% | +9.36 | 69/0% | +8.67 | |
+| -120 | 58/0% | +9.50 | 78/0% | +8.69 | |
+
+- **Greg RIGHT: WIN% (recover to PROFIT) -> ~0% by -80** on both coins → a DEEP bail clips essentially
+  NO winners. The earlier "bail clips recoveries" was a SHALLOW-stop (-15) artifact; does NOT apply at
+  big depth. Firing ONLY at big depth is the correct design.
+- Net ~neutral-to-marginal (deep events RARE — 55 hit -80/ETH in 30d; ~40% of -80s recover to a
+  smaller LOSS so not pure save). ETH -100 +9.36≈ride; **BTC -80 +8.74 > ride +8.64.**
+- **FLIP ≈ BAIL at deep** (cont% only ~58%, doesn't pay the 22bp flip over the 11bp bail) → prefer BAIL.
+- SOL churns → negative (no deep bail for SOL).
+- **CORRECTION to §12/§14:** depth DOES carry a usable signal at BIG depth — not fine direction, but
+  "this is a dead loss, won't recover to a win" (WIN%~0). Deep bail earns its place as ~free TAIL-CONTROL.
+
+**DEPLOY UPDATE (per-cell):** add a deep bail — BTC −80, ETH −100 — as free tail-cap on top of the
+ride. SOL none. Still gated by maker fills for the ride entries; the bail is an honest taker exit.
