@@ -245,3 +245,26 @@ the flow-lean detector AND the price zigzag independently flag BTC/ETH as the re
 - **"Push wins up" lever = entry TIMING:** entries lag the true turn by 3.9–6.7 bp (the `lag`).
   `retime_flips` (S47 early-arm price-reversal) enters nearer the extreme → adds to every win,
   shrinks every loss, widens headroom. Next test.
+
+## 11. PUSH WINS UP — early-arm entry timing (retime_flips) roughly DOUBLES BTC/ETH
+`_s63_kraken_retime.py`: keep the flow lean as FILTER, fire entry at the first fast PRICE reversal
+(eps bp from the regime extreme) instead of at the late lean-confirm. Kraken kr_mk0:
+
+| coin | base net $/h | best retime | win% | W/L | BE fee base→retime |
+|---|---|---|---|---|---|
+| eth | +4.86 | +9.50 (eps10) | 47.6 | 1.18→1.31 | 0.54 → 1.06 bp |
+| btc | +4.22 | +8.57 (eps5) | 46→49 | 1.25→1.28 | 0.49 → 0.99 bp |
+| xrp | +0.96 | +2.87 (eps10) | 45.4 | 1.15→1.24 | 0.11 → 0.33 bp |
+| doge| +2.12 | ~+2.2 | flat | — | flat (3% cov) |
+| sol | −2.33 | anti-predictive (timing can't fix wrong direction) | | | |
+
+- **Early-arm ~DOUBLES net AND fee headroom on BTC/ETH** — pure win-SIZE lever (win% barely moves):
+  bigger avg win, smaller avg loss, W/L up. Per-cell sweet spot (BTC eps5, ETH eps10).
+- **BE fee headroom ~1.0 bp/swing** now — BTC/ETH no longer need a LITERAL 0bp fill; they absorb
+  ~1bp of maker fee/slippage and stay positive. Materially eases the fill dependency (still the gate).
+- SOL stays anti-predictive (timing can't fix a wrong-direction filter); DOGE flat (sparse tape).
+
+**S63 KRAKEN SUMMARY (deployable read, per-cell):** the deployed flow-lean flip detector ports to
+Kraken spot on BTC/ETH (S54 gate PASS, z 3-4, reversed loses), and early-arm timing pushes them to
+~+8.5-9.5 $/hr @ $5k with ~1 bp/swing fee headroom at kr_mk0. NOT on SOL (anti-predictive) or
+XRP/DOGE (thin/marginal). Remaining gate = real maker fills from the Kraken books.
