@@ -381,3 +381,33 @@ lean confirms the down-continuation ("fire correctly"). vs bail-flat:
 - **bail-flat > confirmed-short > blind-flip** on all coins → at big depth, FLATTEN. Don't chase the slide.
 - Settles the deep-loss playbook: deep = dead loss (WIN%~0, §15) → flatten for a free tail-cap; do NOT
   flip or re-short (slide spent, §16). Direction/continuation stays unpredictable-to-adverse everywhere.
+
+## 17. MAKER-FILL GATE (real Kraken L2 book) + the cover_grace squeeze
+`_s63_kraken_makerfill.py` / `_makerfill_losers.py` / `_covergrace.py` on data/*-kraken-book (~18-23h).
+Honest queue fill (must trade through the displayed best-level size) vs ideal front-fill:
+
+Maker gate (grace=0): fill ~38-42%, taker-close 55-67%, honest net -13..-19 $/hr (ideal -2..+3.7).
+Post-fill win/loss: win% collapses 47%(paper)->23-33%; 64-77% of ALL losses are FORCED-TAKER closes
+-> the leak is the FILL, not the signal.
+
+cover_grace squeeze (rest the cover past the turn, S48) — honest vs IDEAL on the SAME window (the true
+fill cost):
+| coin | ideal | honest G=0 | honest G=600 | taker% 0->600 | fill cost (G=600 vs ideal) |
+|---|---|---|---|---|---|
+| eth | -2.05 | -12.87 | -2.97 | 55%->12% | ~-0.9/hr |
+| btc | -1.01 | -14.60 | -6.90 | 57%->37% | ~-5.9/hr |
+| sol*| +3.71 | -19.19 | -8.30 | 67%->30% | ~-12/hr |
+
+Reads (per-cell):
+- **cover_grace nearly CLOSES the fill gap on ETH** (taker 55%->12%, cost ~0.9/hr vs ideal) → ETH's
+  maker fill essentially WORKS. BTC/SOL still bleed on fills even with grace (BTC 0.01bp spread + deep
+  book; SOL worst).
+- **The book window is LOW-EDGE** — ideal (perfect-fill) net already NEGATIVE on eth/btc (-2/-1), so the
+  negative honest numbers are mostly the WINDOW, not the fill. This ~1-day book is NOT the +8-9/hr tape
+  regime; viability can't be graded on it.
+- **Implication:** on a NORMAL-edge window, ETH honest ≈ tape-edge(+8) − fill(~1) ≈ +7/hr; BTC/SOL fills
+  too lossy as-is. Blocker is DATA (multi-day book on a normal-edge window), not method. Collectors running.
+
+**S63 CLOSE:** direction unpredictable everywhere (rides the mean-reversion); deep bail = free tail-cap;
+maker fill = viable on ETH with cover_grace (~1/hr cost), lossy on BTC/SOL; grade for real once multi-day
+Kraken book accrues on a normal-edge window.
