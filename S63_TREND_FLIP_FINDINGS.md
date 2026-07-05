@@ -59,3 +59,32 @@ spread/bids/asks levels = the D6 book-imbalance input (Lean Lab `coinbase_book_l
 `research/od_book`). Kraken is PARKED for trading (fee frame = Coinbase), so this feeds the D6 /
 order-book-dynamics line, not the 1h-trend lead (which runs on Binance-spot trade bins). Keep
 accruing; revisit for the OD-BOOK thread-1 T_test when it's multi-day deep.
+
+## 5. THE SYNTHESIS — 1h trend folded into the E300 rig (`_s63_e300_trend.py`)
+Depth = death SELECTOR (the workhorse), 1h trend tested two ways: as classifier FEATURES and as a
+flip-DIRECTION GATE. Graded per-week; the stable metric is **Δ over baseline** (absolute $/hr
+wanders window-to-window — BTC E300 = +0.13 here vs the S62 drop-in's +1.29 on a slightly different
+30d window; "never tune off one window").
+
+| coin | base | E300 (repro) | E300+feat | +feat+gate | feat Δ over E300 |
+|---|---|---|---|---|---|
+| eth | +2.73 | +2.65 | +2.67 | +2.74 | +0.02 |
+| btc | −0.46 | −0.01 | **+0.28** | +0.29 | **+0.29** (4/5 wk +) |
+| sol | +2.86 | +2.69 | **+3.32** | +3.16 | **+0.63** |
+| xrp | +1.63 | +2.58 | **+2.88** | +2.61 | **+0.30** |
+| doge| +1.06 | +2.02 | +1.84 | +1.82 | −0.18 |
+
+Reads:
+- **The E300 depth rig is the workhorse** — lifts btc/xrp/doge well over baseline; eth/sol already
+  high, E300 ~neutral there.
+- **1h trend as FEATURES adds a modest lift on btc/sol/xrp** (3/5) — the depth classifier absorbs
+  the real 1h direction info (AUC barely moves, 0.73→0.74 btc, 0.756→0.762 xrp; the gain is in the
+  action, not the AUC). Neutral eth, slight negative doge.
+- **The explicit flip-direction GATE is redundant and slightly hurts** — a predicted death IS a
+  continued adverse move, so depth already encodes the 1h direction; gating on it just flattens
+  some good flips. Clean negative: don't add the gate.
+
+**Net S63 verdict:** the 1h trend is a real direction axis (diagnostic) that (a) does NOT support a
+standalone entry flip (selection wall) but (b) adds a small, honest lift as a FEATURE to the working
+E300 mid-leg rig on btc/sol/xrp. Needs a 2nd-window confirm (same caveat as the base E300 rig). The
+depth-based E300 rig remains the deployable earner; the 1h feature is a cheap add-on, the gate is not.
