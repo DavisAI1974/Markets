@@ -8,7 +8,7 @@ REPO=/home/user/Markets
 WT=/tmp/data_wt
 RAW=/tmp/ktape_sc
 DAYS=120
-PAR=4
+PAR=6
 LIST=/tmp/eligible_pairs.txt
 mkdir -p "$RAW" "$WT/bins"
 cd "$REPO"
