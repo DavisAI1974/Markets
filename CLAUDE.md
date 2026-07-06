@@ -1,4 +1,23 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-07-05 Session 64 — READ `STRATEGY_INVENTORY.md` (all our live strategies/tools — read FIRST so nothing is missed) + `SESSION_HANDOFF_2026-07-07_S63.md` + `S63_TREND_FLIP_FINDINGS.md` + `KRAKEN_DEPLOY_MAP_S63.md` + `KICKOFF_2026-07-08_S64.md` + `DROPIN_S64.md`, not this whole file. S64/S63 delta at top; S62 below.)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-07-06 Session 66 — READ `STRATEGY_INVENTORY.md` (S66 block) FIRST + `SESSION_HANDOFF_2026-07-06_S66.md`, not this whole file. S66 delta directly below; S64/S63 below that.)
+
+## S66 UPDATE (2026-07-06) — CAPACITY built + the fill-model saga + Greg's reframe → the CAPITAL MODEL is next. Read `SESSION_HANDOFF_2026-07-06_S66.md` + `S66_CAPACITY_FINDINGS.md`
+- **⭐ THE LANDING (Greg):** don't re-derive fill economics — keep last night's (S65) per-coin EDGE; make capacity a
+  VARIABLE SIZE cap (not $5k every trade); PIVOT to the CAPITAL MODEL (now the priority). Per-coin $/hr = edge ×
+  capacity; the pool is SHARED ($2k/$2k/$1k across coins), capacity-capped, correlation-aware. Variable capacity
+  REORDERS last night: BTC ~+5.2, XRP ~+7.4, SOL ~+2.8, ETH ~+1.8, DOGE ~+0.4 (thin books shrink hard; conservative tape read, pin on book).
+- **`odcore/capacity.py` built** (canary PASS). Fill-model saga: STATIC cap = too pessimistic (−13); PIVOT patch =
+  LEAKAGE (retracted, adversarial agent caught it); DYNAMIC following-maker (`_s66_dynamic_fill_kraken.py`, Greg's
+  re-quote-to-follow) = honest middle (fills 100%, ETH +0.45/BTC +1.35). Don't re-chase the fill nuance.
+- **Agent reads DONE:** dipole-expert + architect (converged: capacity first, capital model last, risk-axis
+  changes) + Kraken long-leg audit (⚠ its "all negative" used the STATIC/too-pessimistic model — superseded).
+- **Data:** majors 30d Kraken tape on box; 352 rebate-eligible (−2bp) USD alts banded (5 LARGE / 116 THIN-OK /
+  rest dead, `KRAKEN_ELIGIBLE_LIQUIDITY_S66.md`); eligible-alt 120d tape collecting → `data/kraken-smallcap-tape`
+  (fat-first, resumable; ⚠ in-container bg dies on idle → restart next session).
+- **NEXT:** restart collection; BUILD the capital model (variable capacity + shared-pool allocator, `odcore/
+  allocator.py` + `platform.run_portfolio`, sim=live; settle capacity-granularity + pool size); Kraken agent for
+  overlooked MAJORS (LINK/ADA/AVAX/LTC — NOT thin eligibles); re-grade eligibles+BTC/ETH with the DYNAMIC fill on the book.
+- **E300 on Kraken:** AUC 0.64–0.72 all 5 majors venue-robust — but on the DEPRECATED 3-piece harness (we've moved
+  off it), so NOT deployed-stack numbers; BTC/XRP the robust E300 cells (`S66_E300_KRAKEN_RESULTS.md`).
 
 ## ⭐ S64 STANDING RULES (Greg) — the ANTI-CIRCLING protocol (we've wasted days/weeks reinventing the wheel):
 1. **`STRATEGY_INVENTORY.md` = the canonical list of EVERYTHING we have** (deployed cells + all strategy

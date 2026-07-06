@@ -61,12 +61,22 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
   branch **`data/kraken-smallcap-tape`** (survives container recycle; resumable — skips committed pairs). Absorbs
   the SOL/XRP/DOGE majors at the end. 120d = ~17 weeks for the per-week+reversed gate (vs 5 on 30d).
 - **⚠ Ambiguity to resolve (Greg):** S64 "**RE**" isn't a bare Kraken pair — candidates `RED/REKT/RENDER/REN USD`.
-- **⭐ ORDER (Greg S66):** do the **dipole-EXPERT + ARCHITECT reads FIRST** — the capital model design "might
-  change after agents," so build them before, not after. (Launched S66: `DIPOLE_EXPERT_READ_S66.md`,
-  `ARCHITECT_READ_S66.md` — deep reads, not coverage audits.) THEN: Kraken E300 DOGE/XRP (deploy-grade); the
-  full improvement-test matrix per-cell on majors + the ~116 THIN-OK small-cap band (S54 gate: shuffle + reversed
-  + per-week; KRAKEN lean/E300/bigline/S42 stack, per-coin law); THEN the $5k-pool anti-resting capital model on
-  the complete cell set — with whatever the agent reads change about its design.
+- **⭐ ORDER (Greg S66):** dipole-EXPERT + ARCHITECT reads DONE (`DIPOLE_EXPERT_READ_S66.md`,
+  `ARCHITECT_READ_S66.md` — converged: capacity FIRST, capital model LAST, risk-axis changes). Kraken E300 DOGE/XRP
+  + 5 majors DONE (AUC 0.64–0.72 venue-robust; ⚠ on the DEPRECATED 3-piece harness — not deployed-stack numbers).
+- **⭐ CAPACITY BUILT + the reframe (S66 landing):** `odcore/capacity.py` (per-leg $ fill-cap, canary PASS). The
+  fill-model saga (see handoff): STATIC cap = too pessimistic (−13, winners "unfillable"); PIVOT patch = LEAKAGE
+  (retracted, agent caught it); **DYNAMIC following-maker** (`_s66_dynamic_fill_kraken.py`, Greg's re-quote-to-
+  follow mechanic) = the honest middle (fills 100%, ETH +0.45/BTC +1.35). **GREG'S CALL: don't chase fill-quality —
+  keep last night's per-coin EDGE, make capacity a VARIABLE SIZE cap, PIVOT to the capital model.** Per-coin $/hr =
+  edge × capacity; the pool is SHARED ($2k/$2k/$1k across coins), capacity-capped, correlation-aware. Variable
+  capacity REORDERS last night (BTC ~+5.2, XRP ~+7.4, SOL ~+2.8, ETH ~+1.8, DOGE ~+0.4 — thin books shrink hard).
+- **⭐ NEXT SESSION:** (1) restart the eligible-alt collection (`_s66_overnight_collect.sh`, resumes; ⚠ in-container
+  bg dies on idle); (2) **BUILD THE CAPITAL MODEL** — variable capacity + shared-pool allocator on the LIVE path
+  (`odcore/allocator.py` + `platform.run_portfolio`, architect spec; sim=live); settle capacity-granularity
+  (per-leg vs per-coin position) + pool size; (3) Kraken agent for **overlooked MAJORS** (LINK/ADA/AVAX/LTC — liquid
+  majors beyond our 5, NOT thin eligibles); (4) re-grade eligibles + BTC/ETH with the DYNAMIC fill (static kill
+  superseded) + pin on the ~30h book.
 
 ---
 
