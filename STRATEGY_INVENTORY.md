@@ -147,3 +147,181 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
 3. **Multi-sleeve basket simulator** (majors unlock tier + eligible earn rebate + E300 sleeve; ~0-corr idle-fill)
    — THE next build. Name it `*_kraken_*` (deployable). Run through the real executor, not bare lean.
 4. Kraken live adapter (WS v2 add/amend/cancel, executions, post_only; no spot testnet → tiny-size first).
+
+---
+## 8. PIECES — exhaustive catalog (S65, Greg's anti-amnesia audit)
+> Greg (S65): "go through all the handoff versions and list all the different inventory pieces. it doesn't
+> matter if they say dead or killed or whatever... I'm just not 100% we haven't missed something." Every
+> distinct strategy/signal/detector/gate/executor/sizing/fill-model/dipole-read/fingerprint/cross-venue
+> tool/feature/research-idea ever BUILT or seriously PROPOSED (S19→S65), regardless of dead/killed/parked
+> status. Sourced from all SESSION_HANDOFF_*, KICKOFF_*, *_FINDINGS/*_NOTES, CLAUDE.md deltas, code, and
+> docs/DIPOLE_PAPER_S60.md. The richest "buried but reusable" reservoirs are flagged at the bottom.
+
+### 8.1 Signals & detectors
+- **Flow-lean zigzag flip detector** (`odcore/flip_detector.py`, S36→S56) — causal taker-FLOW-lean zigzag (W600/REV0.1/ARM0); zigzags on flow lean not price. **live** — core deployed; ETH/BTC fwd, SOL rev.
+- **ARM0 natural-cadence fine zigzag** (`flip_detector.py`, S56) — the PEAK model; full S54 gate all 5 (z 6.8–14.4). **live**.
+- **Price-reversal zigzag (1-sec)** (S36b) — enter ~5–6bp of the true turn; the TIMING half. **live** (paired w/ dipole filter).
+- **Big-line / trendline ride-break** (`odcore/swing_bigline.py`, S54) — coarse-theta swing capture. **parked** — Coinbase-1-window +$1–4/hr didn't reproduce on 30d Bybit bins (per-window, not dead).
+- **Two-scale zigzag (fine executes, coarse selects)** (S54→S55) — **DEAD** — v0/v1 re-entry churn (global).
+- **Fade-the-N-hour-trend** (`_s63_kraken_fade.py`/`_s63_fade.py`, S62/S63) — pred_side=−sign(mom over W hrs). **live-per-coin** — DOGE-8h clears (p=0.016), SOL-4h; XRP/ETH fragile.
+- **1h-trend-fade flip** (`_s63_trend_flip.py`, S62/S63) — among big losers 1h trend predicts fwd dir 0.58–0.67; flip strongest. **research**.
+- **Multi-hour big-trend oracle** (S53→S54) — 100–300bp waves, fee 2–5% of swing. **research** — proved opportunity, capture open.
+- **OFI momentum / fade generators** (`odcore/generators.py`) — ofi_momentum/ofi_fade/momentum5/dipole_direction. **DEAD** — all lose net-of-cost (WF −11.8%..−188%, taut z~1); kept as diagnostics.
+- **Depth-imbalance next-move predictor** (`_liquidity_dive.py`, S42) — top-K depth_imb predicts SIGNED next move (OOS +0.164, 63% hit, leads +0.1s). **research** — sub-bp, a MAKER/quoting signal.
+- **buy/sell mirror leave-one-out** (`_diag_flip_states.py`, S41) — 63.5% flip-state classifier. **research/diagnostic**.
+- **Freight-train anatomy** (S56/S57) — worst-10 = counter-entries into violent moves; dipole `continue` rc=0.00 flags them. **DEAD as gate** — no subgroup sums negative; content in size axis.
+
+### 8.2 Entry timing
+- **Early-arm retime (`retime_flips`)** (`flip_detector.py`, S47) — fires at first price reversal near extreme; ~doubles $/hr. **live-per-coin** — eps10 ETH/eps5 BTC; HURTS SOL (−0.68) & hurt BTC on realbins (window-fragile S64).
+- **Arming rule v1 (two-stage confirm)** (`_s55_armed_zigzag_probe.py`, S55) — **DEAD** — idles 98% of month, unbounded loss (global, S56).
+- **v2 extreme-anchored + trailing fallback** (`_s56_armed_gate.py`, S56) — **DEAD** — 25bp first-dip = coin flip (47% win, global).
+- **ARM chop-filter family (v3-ARM)** (S56) — **DEAD** — fails as a family (global).
+- **Armed mid-band entry machine** (`odcore/entry_coinbase.py::armed_midband_flips`, S58→S59) — **deployed** — `COINBASE_MIDBAND` (sol mb100/xrp mb80/doge mb100; btc gated; eth absent).
+- **Theta-confirm baseline entry** (S55/S57) — **DEAD as edge** — theta-late (SOL −31bp/leg gross); the baseline to beat.
+- **Fine 25bp reversal confirm (the LAG cut)** (S55 R5) — theta-confirm 151bp/54min → 26bp/1min. **research** — ~250bp/leg recoverable.
+- **Bounce-back / trough-sell fallback** (S53/S56) — **DEAD** — rejected S58 R5; trough-sell fine-scale-local.
+- **Confirm threshold scaling with band** (S57) — **DEAD** — "+2bp as coarse confirm" listed dead.
+
+### 8.3 Exit & loss management
+- **Deep bail (BTC −80 / ETH −100)** (`_s63_kraken_deepstop/bail/widebail.py`, S63) — at big depth WIN%~0, taker-flatten caps the −150/−200 tail FREE. **live-per-coin** — ETH/BTC (SOL none).
+- **Shallow bail / stop (−15)** (S63) — **DEAD global** — BLED (clips recoveries + fights mean-reversion + taker).
+- **Flip / re-short at depth** (`_s63_kraken_flipbail/bailshort/flipzz.py`, S63) — **DEAD global** — slide spent, confirmed-short wins ~19%.
+- **Take-profit trail / peak harvester** (S60/S63) — **DEAD global** — winners already 68–83% of peak; toll law (giveback=c·θ) → no harvester exists.
+- **cover-grace** (`swing_maker.py::cover_grace`, S48) — rest cover past turn, first opposing=maker. **live** — taker→~0% all 5; flipped DOGE losing→profitable; grace map (doge 600).
+- **lean_exit / lean-collapse exit (R8)** (`swing_maker.py::lean_exit`, S55) — **parked** — INERT at fine scale (flip detector IS that exit); value at coarse, never aimed.
+- **exit_gate (structure-says-out / FLAT third state)** (`swing_maker.py::exit_gate`, S55) — **research** — fixes S46 non-actionable-flip-HELD mismatch.
+- **Wrong-side corrector (per-cell DIAGONAL)** (S60 Piece-2) — **research-per-coin** — SOL none / BTC plain-stop / DOGE casc-flip / XRP none.
+- **Plain price-stop rider (BTC)** (`btc_coinbase_mb80_plainstop`, S60/S61) — **parked/ops-blocked** — cell stays negative; ZERO gap protection → ops bar (needs exchange-side stop + staleness kill).
+- **Armed dive / armed-before uw-stop** (`exit_spec=armed_dive`, S60/S61) — **DEAD-per-coin** — fails BTC th80; SOL-only until re-shown.
+- **Cascade-join flip (casc_flip)** (`exit_spec=casc_flip`, S60) — **research DOGE-only** — BUY-only +1.10/hr; fails Kraken shuffle floor (venue law).
+- **Harvest-into-strength rungs (B1)** (`_s53_accum_sandbox.py`, S53) — **DEAD global** — LOSES (−$0.26), caps fat winners.
+- **c_x·theta retrace exit** (S61) — **DEAD** — wealth transfer (winners −65..−73 SOL).
+- **3-part exit oracle (hold/flatten/flip)** (`_s62_3piece_harness.py`, S61/S62) — **research (oracle)** — +26/hr (15×), 508/508 winners kept; NO causal mid-leg signal reaches it (winners-invisible law).
+- **Big-loser flip / flip pre600<−80** (`_s62_loser_flip.py`, S61) — **research** — +2.38–6.79/hr; WEEK-FRAGILE (wk4).
+- **Flip-then-manage** (S61 R13f) — flatten reversed leg on adverse / ride on favorable. **proposed** — the wk4 mitigation, unbuilt.
+- **Winner flip** (`_s62_winner_flip.py`, S62) — **DEAD** — winners fade DEEPER (min −429), outnumber losers 2.5:1.
+
+### 8.4 Gates & filters
+- **Dipole divergence (aligned_flow)** (`info_dipole.py::divergence`, S36) — imb·sign(drift); strong div → ~65% reversal. **research/gate** — the S36 "biggest edge" candidate.
+- **Dipole exhaustion (dipole→0.5)** (`info_dipole.py`, S36) — oppose+exhaust=64% reversal. **research** — stacks w/ divergence.
+- **QuietFloor gate** (`odcore/quiet_floor.py`+`IncrementalQuietGate`, S42/S44) — AR(1) book-depth relaxation; fire only on a shock breaking the floor. **research/wired** — fires 6.9% vs 100%; on the depth channel.
+- **Regime master-gate (per-cell)** (`_info_dipole_regime_gate.py`, S36b) — stand-aside; rescues bleeders. **research** — PER-CELL.
+- **E300 death-selector** (`_s62_e300_3piece.py`, S62) — at 300s realized DEPTH predicts DEATH (gross≤−40) AUC 0.69–0.77 all 5. **research/Family-B** — magnitude/death not direction.
+- **E300-on-the-ride death-cut** (S64) — **research-per-coin** — KEEP BTC (+0.20), DROP ETH (−0.41); one window.
+- **Deep-arm variant (arm −20/−30)** (`_s62_armed_trend.py`, S62) — ETH/BTC/DOGE +1.1..+1.6. **research** — one window.
+- **Climax-volume gate** (S40/S47) — **DEAD as wrong-tail gate** — removes winners, halves total; real as a fillability marker (S60).
+- **Adverse-excursion STOP gate** (S47) — **DEAD** — cuts winners that reverse.
+- **Dipole-exhaustion wrong-tail gate (entry_gate)** (S46) — **DEAD/marginal** — anti-predictive; off by default.
+- **Confirm-budget / D-class gates** (S53) — **DEAD** — confirm-budget dud (corr −0.10).
+- **Death-combo anti-print (opposing+climax w/o exhausting)** (S58) — 4×-replicated worst-entry (−31..−53bp/leg). **research (anti-print)** — avoid, not a positive gate.
+- **Coeff gate / loser-coeff tier** (S62) — **DEAD in-container** — ~chance at mid-band (date/regime confound).
+- **"No gates" scoring rule** (Greg S53) — judge net $/hr AND legs/hr. **standing rule**.
+
+### 8.5 Executors & platform
+- **swing_maker (THE one executor)** (`odcore/swing_maker.py`, S46→S55) — one-sided maker-at-the-turn; cover_grace/lean_exit/exit_spec/exit_gate/fill_mode/fill_model/fees. **live**.
+- **platform run_cell / run_stream** (`odcore/platform.py`, S55) — deployed cells / any flip stream; venue = 1st-class dim. **live**.
+- **DEPLOYED/SANDBOX/COINBASE_MIDBAND registries** (S55/S56/S59) — **live** (SANDBOX emptied S57).
+- **entry_coinbase** (`odcore/entry_coinbase.py`, S59) — armed mid-band + truncation-invariance leakage gate. **deployed**.
+- **swing_accum** (`odcore/swing_accum.py`, S52) — accumulate (starter + all-in-on-confirm + layered unload). **research** — +$1.3–1.6/hr SOL miniature; R&D not deploy.
+- **swing_bigline** (`odcore/swing_bigline.py`, S54) — **parked** (see 8.1).
+- **exit_spec socket** (`swing_maker.py`, S61) — price_stop/armed_dive/casc_flip, flat/flip, wall-clock lean_w. **research**.
+- **RollingFlow incremental** (`odcore/incremental.py`, S36b) — O(1)/tick, bit-faithful, 1.70µs/tick. **live** (hot-path form).
+- **paper_trade forward ledger** (`scripts/paper_trade.py`, S47) — causal executor + sizing all 5 cells, deduped accruing. **live**.
+- **3-piece harness** (`_s62_3piece_harness.py`, S62) — reproduces R11 (SOL +1.77/+13.93/+26.02). **research rig**.
+
+### 8.6 Sizing
+- **Two-factor conviction sizing** (`odcore/sizing.py::size_legs`, S47/S49) — QUALITY (clmx_60) × SIZE (vol_60/volat_120/runup/dive_depth). **live** — SOL +3.6σ/DOGE +3.2σ/BTC +2.2σ; XRP/ETH null. Leakage PASS.
+- **Staged-commit / accumulate sizing** (`swing_accum.py`, S52/S57) — starter → all-in on confirm (maker adds). **research/validated** — confirm adds beat random 10–14σ; NO across-trade signal.
+- **Dive-depth→size (|lean@pivot|)** (S40) — predicts big moves all 4 cells. **research/live** — the first swing-SIZE signal (a SIZE axis).
+- **Size cap / hi_clip tightening** (S51) — **DEAD** — FALSIFIED on forward ledger; net rises to hi_clip=4.0.
+- **Scale-in / netting variants** (`_scale_in_probe.py`, S51) — **DEAD** — losers soak ~2× flow (adverse selection); REVERSED control beats it.
+- **Anti-martingale / probe-across-trades** (S52/S57) — **DEAD** — P(w|prev w)==P(w|prev L) all 5.
+- **Taker-entry as blanket rule** (S64) — **DEAD global** — fee 11bp > edge 1–7bp/leg; no entry-time swing-size predictor (vol AUC 0.567≈chance).
+
+### 8.7 Fill models
+- **Front-of-queue (v1)** (`_capacity_model.py`, S45/S51) — best-price priority, full half-spread. **research (optimistic bound)**.
+- **Queue-honest (v2)** (`_capacity_model.py`, S51) — minus best-level size ahead. **research** — mk0 4/5 ceilings NEG; −1bp flips positive.
+- **maker_book honest queue-ahead** (`odcore/maker_book.py`, S43) — fill when opposing taker vol clears the queue + adverse selection. **research** — feeds `fill_model="queue"`; binding = PRICE ELIGIBILITY.
+- **Price-eligibility fill fix** (`_leg_caps` price_eligible, S52) — **live (bug fix)** — all pre-S52 mk0 $/hr were artifacts.
+- **1s entry-window fill bound (FILL_W)** (S50) — **live** — Greg-caught (SOL −$204→+$19/hr).
+- **Honest fill (queue + repeg-to-best)** (S61 #1) — queue clears median ~8s; repeg makes grace=0 fine. **research**.
+- **Fill-size binding constraint** (S56) — median fillable $137–169/leg is the cap, not the edge. **measured**.
+- **Taker-share acceptance / fill-asymmetry dollars** (S60) — **proposed (ranked archive levers)**.
+
+### 8.8 Dipole / OD reads (D1–D8 + turn anatomy)
+- **D1 flow dipole (dMI/dt)** (`info_dipole.py`, S60) — **DEAD standalone** — blind (R²<0.02, opposition is construction-generated).
+- **D2 algebraic ("chem") dipole** (`dipole_predictor.py`, S60) — H_a²=a+b(H_a·H_b)+c(·)². **DEAD on order-flow entropies** — no convex c>0; convexity is a D3 (coeff-space) property.
+- **D3 centroid dual-projection (markets H_a/H_b)** (`dipole_predictor.py`, S25) — coeff on win/lose centroids. **research** — real per-pair (z=+9.6) but confounded; needs same-period losers.
+- **D4 trading lean dipole (the deployed one)** (`flip_detector.py`, S36+) — trailing flow lean + causal zigzag. **live** — deepest record (z 6.8–14.4).
+- **D5 divergence/exhaustion** (`info_dipole.py`, S36) — see 8.4. **research/gate**.
+- **D6 raw-covariance dipole (solved for time)** (`odcore/leadlag.py`/`coupling_scanner.py`, S41/S60) — raw cross-cov over lag; recovers the lag. **research (rank-A)** — the lead-lag tool; entropy transforms destroy it.
+- **D7 entropy-asymmetry + C ratio** (S60) — **DEAD as signal** — units bookkeeping / MI-degeneracy.
+- **D8 fingerprint-space difference (dual-print / buy-sell mirror)** (S60) — see 8.9. **research** — population-relative.
+- **M1 mutual-info-in-null discriminator** (`odcore/null_extract.py`, S60) — state-dependent regime coupling. **research tool**.
+- **Turn anatomy — CLIMAX / coeff-flip / QUADRATIC+accel-leads-3s** (`_turn_*`, S40) — 94–99.6% symmetric; edge = ODD remainder in FLOW (5.7%) not price (0.4%). **research findings** — climax = fillability marker.
+- **Absorption / spoof wall** (`_s60_absorption_wall.py`, S60) — **DEAD (decided against)** — latency killed, wall falsified; residual SOL-only maker-frame price-discovery lead.
+- **Three-offices dipole framing** (S60) — one lean, three offices (entry-confirm/wrong-side/fill-moment). **standing note**.
+- **Fill-office INVERSION (dive marks THIN tape)** (S60) — dive marks ~70%-one-sided tape; with-ride climax = true fillability. **finding**.
+- **coupling_scanner tautology null** (`coupling_scanner.py`, S20/S41) — 5-step coupler + circular-shift (145 decoupling events). **research tool** — load-bearing null.
+- **dipole_trade 15-dim coupling vector** (`dipole_trade.py`, S22) — **DEAD as basis** — collinear (eff-rank 7.82); superseded by 128-dim.
+- **3 dipole flow agents (paper/dive/s61alt)** (S62) — **DEAD as death-vs-recovery** — ~chance (0.47–0.56); orthogonal but null.
+- **8 dipole-paper features F1–F8** (`dipole_paper_s62.md`, S62) — F1_lean..F8_entdipole. **research** — AUC ~0.5; F5 weak ETH, F2/F7 weak BTC.
+
+### 8.9 Fingerprint / 128-dim OD tier
+- **OD coeff deterministic decoder** (`odcore/od_refrag_adapter.py`/`fingerprint.py`, S39) — prefill+refine → 128-dim unit-L2, in-container (35s). **research**.
+- **Per-cell distinctive fingerprint predictor** (`fingerprint_predictor.py`, S40) — ~91% shared shape, distinctiveness = ~9% residual; buy/sell perfect mirror (−1.0). **research**.
+- **Centroid dual-print (match-winner MINUS match-loser)** (S59) — **DEAD at micros tier** — clean null; narrows to the S35 ENCODER tier.
+- **Onset re-anchor (per-episode)** (`_build_episode_onsets.py`, S35b) — reconstruct true onset. **research** — entry-fingerprint canary gate.
+- **6 micros feature set** (S34/S35) — mean_dipole/dipole_acl1/volume_zscore/trade_present/recent_2chunk/from_onset. **research** — stored micros were LOOK-AHEAD; coeffs CLEAN.
+- **cand_sp / win_onset coeff signatures** (`markets_<cell>_win_cand_sp/`, S35) — ~1,919 per-cell signatures, hist AUC 0.72–0.84. **research (archived LOCAL on E:)** — the heavy winner-side prize; not in container.
+- **HEAVY OD-coeff + centroid gate** (`_markets_gate_v2.py`, S35) — memoized, AWS-scalable. **research (validated tier)**.
+- **Fingerprint encoder + canary** (`_canary_fingerprint.py`, S35) — must reproduce ONSET micros from pre-entry bars. **research (gate)** — must pass before wiring.
+
+### 8.10 Cross-venue / coupling / lead-lag
+- **Cross-venue reversion** (`od_xvenue_backtest.py`, S20/S51) — Coinbase↔Bybit lag-0 cc=0.656 z=580. **DEAD as taker edge** — real (z 3.0–3.6 @10s) but per-trade edge < cost.
+- **leadlag raw cross-cov-over-lag** (`odcore/leadlag.py`, S19/S41) — a leads b 75.5%, mean +0.07s. **research tool**.
+- **Cross-venue lead-lag map (D6, rank A)** (S60 menu) — Binance-spot flow leads Kraken price 1–30s. **proposed** — kill if lag-0 dominates.
+- **Cross-coin dive propagation (D4+D6, rank A)** (S60) — BTC/ETH dive precedes alt dives → portfolio flatten overlay. **proposed**.
+- **Implied stablecoin-basis monitor (D6+D7, rank A)** (S60) — implied USDT/USD depeg early-warning. **proposed** (novel data object).
+- **Cross-coin rolling correlation regime descriptor** (F2/F3, S51/S62) — rolling 400s corr vs other major. **research feature**.
+- **Book-toxicity score (VPIN analogue) / lean-conditioned inventory skew** (D4+D6, rank A, S60) — **proposed**.
+- **Coupling-collapse vol overlay / dipole-class throttle / algebraic convexity cell-selector / centroid drift alarm** (D-menu rank B, S60) — **proposed (lower)**.
+
+### 8.11 Data & infra
+- **backfill_kraken_trades** (`.py`, S59) — REST tape → 1s bins, paced/resumable; 30d×5 pulled. **live**.
+- **kraken_book_collectors_durable** (`.yml`, all 5, S59) — 6h cron → `data/<coin>-kraken-book` L2. **live** (the FILLS truth).
+- **Coinbase book/bin collectors** (S37/S44) — **live (parked venue)**.
+- **Bybit book/perp collectors** (S37/S51) — **DEAD/STRUCK** (S57 ban; 2 branches await UI delete).
+- **Binance-vision / bybit backfill** (`backfill_binance_spot.py`, S39/S54) — bulk dumps → 30d×5 1-sec bins ~40min. **live** (the S54 unlock).
+- **build_realbins** (`scripts/build_realbins.py`, S23) — merge daily JSONL → realbins. **live**.
+- **Gzip data-branch storage + rotation guardrail** (S37/S58) — fixes 100MiB cap. **live** — off-git (S3/Render) is the durable answer.
+- **OD-BOOK L2 collector + dynamics-recoverer** (`research/od_book/`, S37/S43) — **DEAD (KILL S43)** — fee-floor not signal (leg-2 FAIL); DMD operator salvaged as a feature.
+- **CouplingStore + 5 OD endpoints** (`backend/odcore_store.py`, S21) — **research/diagnostic** — OD is shadow, not live source.
+
+### 8.12 Fee / venue reality (context)
+- **Real fee models** (S57) — cb_entry 40/60 .. cb_top 0/6 ceiling. **standing** — mk0 = unreached tier.
+- **Kraken kr_mk0 (0bp @ $10M/30d)** (S58/S59) — verified, no application, the existence condition. **live frame** — 1bp maker FATAL.
+- **Kraken alt-pair maker rebate (−2bp)** (S64) — select low-liq pairs, $10M+/30d, majors excluded. **research** — only US-legal rebate path.
+- **Bybit MM (−0.1..−1.25bp)** (S51/S52) — **DEAD/BANNED** (S57 US-ineligible).
+- **Fee-tier > all exit code** (S60/S61) — Greg's "2 clicks". **standing note**.
+
+### 8.13 Multi-sleeve / basket (open builds)
+- **Multi-sleeve basket simulator** (`scripts/basket_sim_kraken.py`, S65) — majors book-honest + eligible/E300 sleeves flagged; correlation + portfolio Sharpe. **BUILT v1 (S65)** — full per-coin stack via real executor; provisional on the 30h low-edge book.
+- **Rebate-eligible-pair basket** (S64 #2) — ~6 confirmed (APE/RE fwd; XDC/SHX/AIOZ/ARPA rev; SHX/AIOZ @W2400). **research** — needs full per-week+reversed re-gate.
+- **E300 as separate uncorrelated sleeve (Family B)** (S64) — +1.29/hr BTC, fills majors' idle. **research**.
+- **Kraken live adapter (WS v2)** (S64 #4) — add/amend/cancel, post_only; no spot testnet → tiny-size. **proposed**.
+
+### 8.14 Validation / discipline infra (gate everything)
+- **assert_no_leakage** (`odcore/leakage.py`, S36b) — mandatory pre-entry; catches look-ahead 40/40. **live (mandatory)**.
+- **validation (walk-forward + real costs + circular-shift null)** (`odcore/validation.py`, S20) — **live** (promotion gate).
+- **S54 full gate (shuffle + reversed + per-week ×5)** (S54/S56) — **live** (deep-history gate).
+- **Shuffle floor** (S56) — structure-free tape earns ~$90–106/hr/coin; premium = +$7–17 above. **standing** — never cite floor as edge.
+- **quiet_registry / size_legs per-cell emit** (S44/S49) — per-cell alpha/roll + deploy flag. **live**.
+- **Agent-fleet playbook** (`AGENT_PLAYBOOK_PIECES.md`, S58) — leg-dump-not-tape, falsification duty, convergence=evidence. **standing method**.
+- **Leg dump (entry/exit)** (`_s58_piece1_legdump.py`, S58) — causal descriptor row at the decision cell, leakage-gated. **live method**.
+
+### ⭐ Richest "may have missed something" reservoirs (Greg's concern → the audit agents' targets)
+1. **Per-coin-DEAD exit correctors kept for another coin** (§8.3) — casc_flip DOGE-only, plain-stop BTC-only, wrong-side corrector diagonal — never swept across ALL Kraken coins per-cell.
+2. **Gates alive as size/fill markers but DEAD as gates** (§8.4/8.8) — climax (fillability), death-combo (anti-print), dive (thin-tape marker) — reusable in a different office.
+3. **The S60 dipole-paper rank-A/B menu** (§8.10, docs/DIPOLE_PAPER_S60.md) — ~15 fully-specified but UNBUILT cross-venue/coupling proposals (cross-coin dive propagation, book-toxicity/VPIN, lean-conditioned inventory skew, stablecoin-basis).
+4. **The E-drive fingerprint archives** (§8.9) — cand_sp/win_onset coeffs (AUC 0.72–0.84), the heavy winner-side path never wired (needs E: + encoder).
