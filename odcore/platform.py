@@ -100,20 +100,19 @@ SANDBOX = []
 
 # KRAKEN flow-lean registry (S65) — the per-coin STACK, the single source of truth the sim consumes.
 # Fee frame kr_mk0 (0bp maker). All cells: FRONT-OF-LINE fill + enticing close (improve=0.5).
-# REV = 0.10 ALL coins (CONSERVATIVE). The S65 per-coin REV sweep (`_kraken_revsweep.py`, ONE 30h book
-# window) found coarser REV book-better for DOGE (0.30: +8.17 vs +6.05) and XRP (0.13: +16.05 vs +14.02),
-# but that is a BIG change off ONE window (Greg) — kept at 0.10 pending a 30d-tape/Tardis confirm. Majors'
-# fine churn is net-POSITIVE (coarsening loses money — Greg: "don't cut positive churn"), so 0.10 stands
-# for eth/btc/sol regardless. eth/btc keep early-arm (helps on book); sol/doge/xrp base.
-# ⚠ BOOK-PROVISIONAL: the direction re-adjudication (SOL fwd, XRP fwd, DOGE fwd flow-lean) is also ONE
-# window — the S63 30d-TAPE deploy map (SOL reversed, XRP aside, DOGE fade-8h) is the standing LIVE map
-# until a tape confirm. This registry = the current book-best for the SIM, not a live-capital decision.
+# PER-COIN REV (Greg's rule: cut churn ONLY where it's NEGATIVE, keep it where POSITIVE — S65 sweep
+# `_kraken_revsweep.py`): eth/btc/sol keep REV 0.10 (their fine churn is net-POSITIVE — coarsening loses
+# money); DOGE coarsened to 0.30 (+8.17 vs +6.05 — its churn is NEGATIVE) and XRP to 0.13 (+16.05 vs
+# +14.02 — negative churn cut). eth/btc keep early-arm (helps on book); sol/doge/xrp base.
+# ⚠ BOOK-PROVISIONAL (one 30h window): the direction re-adjudication (SOL fwd, XRP fwd, DOGE fwd) + the
+# coarsened DOGE/XRP REV are the SIM's current book-best; the S63 30d-TAPE deploy map (SOL reversed, XRP
+# aside, DOGE fade-8h) stands for LIVE CAPITAL until a 30d-tape/Tardis confirm.
 KRAKEN = [
     CellConfig("eth", venue="kraken", side=+1, rev=0.10, eps=10.0, bail=100.0, grace=300, improve=0.5),
     CellConfig("btc", venue="kraken", side=+1, rev=0.10, eps=5.0,  bail=80.0,  grace=300, improve=0.5, K=10),
     CellConfig("sol", venue="kraken", side=+1, rev=0.10, eps=None, bail=None,  grace=300, improve=0.5),
-    CellConfig("doge", venue="kraken", side=+1, rev=0.10, eps=None, bail=None, grace=600, improve=0.5),
-    CellConfig("xrp", venue="kraken", side=+1, rev=0.10, eps=None, bail=None,  grace=300, improve=0.5),
+    CellConfig("doge", venue="kraken", side=+1, rev=0.30, eps=None, bail=None, grace=600, improve=0.5),
+    CellConfig("xrp", venue="kraken", side=+1, rev=0.13, eps=None, bail=None,  grace=300, improve=0.5),
 ]
 
 

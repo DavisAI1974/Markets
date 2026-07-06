@@ -126,9 +126,11 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
   - **⭐ THE 2.5× LEG EXPLOSION AT FRONT-OF-LINE IS CHURN, NOT EDGE** (Greg S65; `_kraken_newlegs.py`/`_kraken_legbleed.py`):
     front-of-line fires ~2.5× more legs (eth 194→453) but ~same $/hr — the money is ONLY in the big swings (eth ≥20bp = 23
     legs = 97% of $/hr, net/leg +17bp; btc ≥10bp ~73%; xrp ≥20bp 109%); the mid legs [2,20)bp have winners ≈ losers (pure
-    churn, ±25/hr gross → +6.77 net on eth). Bleed = QUICK-REVERSAL whipsaws (87–96% of loss). **swing-floor sweep: keep
-    only |swing|≥5bp → SAME $/hr with ⅓–½ the legs.** ⇒ **REV=0.1 is TOO FINE (zigzagging on noise); coarsen REV per coin.**
-    This also serves capital: fewer/bigger/spaced legs = cleaner anti-resting rotation. front-of-line is optimistic on sub-bp legs.
+    churn, ±25/hr gross → +6.77 net on eth). Bleed = QUICK-REVERSAL whipsaws (87–96% of loss).
+    **PER-COIN REV (`_kraken_revsweep.py`, Greg's rule — cut churn ONLY where NEGATIVE):** eth/btc/sol keep 0.10 (their
+    fine churn is net-POSITIVE — coarsening LOSES money, causally); **DOGE→0.30 and XRP→0.13 ADOPTED** (negative churn cut:
+    doge +6.59→+9.13 win 54→63%, xrp +14.02→+16.05, portfolio Sharpe +0.810→**+0.946**). In the KRAKEN registry.
+    Fewer/bigger/spaced legs also serve the capital/anti-resting rotation. front-of-line is optimistic on sub-bp legs.
   - **⭐ DIRECTION RE-ADJUDICATION employed (agent finding; `_kraken_readjudicate.py`) — FWD wins ALL 5 on the book:**
     eth +3.42 / btc +1.80 / **sol +6.51 > rev +2.17 (CONTRADICTS deployed reversed)** / **xrp +14.02 (was stand-aside)** /
     **doge +5.46 fwd flow-lean** (deployed = fade-8h). Employed in `basket_sim_kraken.py` (SOL→fwd, DOGE activated fwd, XRP

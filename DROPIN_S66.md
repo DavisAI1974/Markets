@@ -11,14 +11,14 @@
 │                                                                                      │
 │ STATE (S65 close) — Job 1 DONE: `scripts/basket_sim_kraken.py` decides through the    │
 │   LIVE `platform.run_kraken_cell` (KRAKEN registry). All 5 cells POSITIVE front-of-   │
-│   line: eth +6.77 / btc +6.66 / sol +6.01 / doge +6.59 / xrp +14.02 $/hr @ $5k;       │
-│   corr ~0; portfolio Sharpe +0.810. ⚠ ONE 30h LOW-EDGE book window — provisional.     │
+│   line: eth +6.77 / btc +6.66 / sol +6.01 / doge +9.13 / xrp +16.05 $/hr @ $5k;       │
+│   corr ~0; portfolio Sharpe +0.946. ⚠ ONE 30h LOW-EDGE book window — provisional.     │
 │  • FILL solved: front-of-line + ENTICING close (`swing_maker.close_improve_bps`, opt- │
 │    in) = maker close not taker. Bleed WAS the back-of-line assumption; now forced-    │
 │    taker→0. New bleed = SIGNAL-LOSS (wrong-dir swings, direction is DEAD).            │
 │  • The 2.5× front-of-line legs are CHURN — money is only in the big swings (≥20bp).   │
-│    REV=0.10 kept ALL coins (majors' fine churn is net-POSITIVE — "don't cut positive  │
-│    churn", Greg). DOGE 0.30 / XRP 0.13 book-better but BIG change off 1 window → pend. │
+│    REV per-coin (Greg's "cut churn only where NEGATIVE"): eth/btc/sol 0.10 (positive  │
+│    churn kept); DOGE→0.30, XRP→0.13 ADOPTED (negative churn cut; +doge/xrp + Sharpe).  │
 │  • Direction RE-ADJUDICATED (exec agent): FWD wins all 5 on book (SOL/XRP/DOGE fwd) —  │
 │    employed in KRAKEN registry FLAGGED provisional; 30d-TAPE deploy map stands live.   │
 │  • XRP is a real positive cell "stand aside" missed (3 agents concur).                │

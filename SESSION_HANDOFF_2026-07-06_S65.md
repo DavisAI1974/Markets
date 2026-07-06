@@ -34,8 +34,9 @@ Read `STRATEGY_INVENTORY.md` FIRST (updated live all session, esp. §2.A + the S
   is ONLY in the big swings (eth ≥20bp = 23 legs = 97% of $/hr; net/leg +17bp); mid legs [2,20)bp have winners ≈
   losers (±25/hr gross → +6.77 net). Bleed = quick-reversal whipsaws (87–96% of loss).
 - **Per-coin REV sweep** (`_kraken_revsweep.py`) — Greg: "don't cut positive churn, only negative." Max-$/hr REV:
-  **majors stay 0.10** (fine churn is net-POSITIVE — coarsening loses money); DOGE 0.30 (+8.17 vs +6.05) and XRP 0.13
-  (+16.05 vs +14.02) are book-better but BIG changes off ONE window → **kept 0.10 pending a 30d-tape confirm** (Greg).
+  **eth/btc/sol stay 0.10** (fine churn is net-POSITIVE — coarsening loses money); **DOGE→0.30 and XRP→0.13 ADOPTED**
+  (Greg: cut churn where NEGATIVE): doge +6.59→+9.13 (win 54→63%), xrp +14.02→+16.05, portfolio Sharpe +0.810→+0.946.
+  Still book-provisional for LIVE CAPITAL (one window) but employed in the registry as the current book-best.
 - **Direction RE-ADJUDICATION employed** (execution agent; `_kraken_readjudicate.py`): FWD wins ALL 5 on the book —
   SOL +6.51 > rev +2.17 (contradicts deployed reversed), XRP +14.02 (was stand-aside), DOGE +5.46 fwd flow-lean.
   Employed in the KRAKEN registry (SOL/XRP/DOGE fwd), FLAGGED book-provisional — the 30d-tape deploy map stands live.
