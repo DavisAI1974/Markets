@@ -64,6 +64,22 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
 - **⚠ Code-vs-deploy nuance (flagged S65):** `_s63_kraken_deepstop/bail/*.py` list `("sol", "SOLUSD", 10.0)` —
   the `10.0` is an eps used only to generate SOL's *analysis* legs; **SOL's DEPLOYED config takes NO early-arm.**
   Don't read that constant as "SOL uses eps10."
+- **⭐ S65 PROVISIONAL LEAD (3 independent confirmations — basket sim + execution agent + dipole agent; ONE ~30h
+  book window, NOT the tape — do NOT overturn the deploy map yet):**
+  - **XRP is a clean-POSITIVE honest-fill cell** as the PLAIN base flow-lean ride (forward, NO early-arm, NO bail,
+    cover_grace): +12.5 $/hr honest, fill 49%, forced-taker only 11%, win 53%, W/L 1.44. Its book fills well where
+    the majors don't. The S63 "stand aside" was a 30d-TAPE direction call (z=0.7); the book-FILL picture is
+    materially positive. A dipole gate does NOT help XRP — leave it un-gated. **NEXT: confirm on a 30d tape / Tardis.**
+  - **The bleed on ETH/BTC/SOL is the FILL, not the signal** (`analyze_basket_kraken.py`): maker-closed legs are
+    net positive/breakeven; 54–79% of ALL loss is FORCED-TAKER closes (win% 11–32% vs 49–54% maker). Fill fix
+    (coarser swing-floor REV + bigger cover_grace, `_kraken_filllever.py`) mechanically lifts fill% 24→59% and
+    claws ETH→~breakeven / SOL→+1.2 / BTC still −1.9 — but this LOW-EDGE window can't show the payoff (need Tardis).
+  - **Dipole `divergence` as a leg-FILTER (never tried — only as a direction classifier)** lifts on 0bp-IDEAL
+    (ETH 0.34→1.60/leg, SOL-rev sign-flip +1.98, opp+exh stack > opp alone) BUT on the HONEST fill it WRECKS fill%
+    (the opposing-flow legs are exactly the adverse-selected worst-filling ones, S45) → net negative. Fill-idealization
+    artifact; re-grade on a real-tape honest-fill window before any wire-in.
+  - **Cheap coverage gaps found:** add xrp/doge to the `makerfill`/`covergrace`/`deepstop` CELLS (eth/btc/sol only);
+    run S42 book-depth DIRECTION + E300 death-selector on the Kraken TAPE for XRP/DOGE (never run on Kraken).
 
 ### B. Coinbase midband entry + E300 DEATH-SELECTOR — the mid-leg rig  ⭐ SEPARATE family
 - **Entry:** `odcore/entry_coinbase.py::armed_midband_flips` (S59 promoted; `COINBASE_MIDBAND` registry).
