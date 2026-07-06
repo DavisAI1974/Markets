@@ -32,6 +32,39 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
 - **DEAD levers (don't re-chase):** any entry/direction signal; flip/re-short at depth; shallow stop;
   take-profit trail; taker-entry (fee > captured edge — S64).
 
+#### ⭐ FINAL PER-COIN CONFIG — the authoritative deployed set (reconciled S65 from CODE + docs; cite this)
+> **Provenance (Greg's S65 concern — "best zigzag was the final Bybit, then per-coin fixes on Kraken; I don't
+> trust we documented it right"):** the PEAK model is the deployed fine flow-lean zigzag at **NATURAL CADENCE
+> (ARM0 — NO arming gates**; the S55/S56 *armed* fine-confirm variants were all killed by their own gate,
+> `SESSION_HANDOFF_2026-07-03_S56.md`). On Bybit it PASSED the full S54 gate on all 5 coins (z 6.8–14.4 @ MM3
+> rebate) — but Bybit's big $/hr was the **MM3 rebate volume paycheck**, not extra structure; the STRUCTURE is
+> what ports. S63 carried that structure to **Kraken spot @ kr_mk0 (0bp)** with per-coin fixes below. Bybit is
+> permanently banned (§6) so the config lives on Kraken now.
+>
+> Reconciled against BOTH the actual code constants (`scripts/_s63_kraken_*.py`: `WFLIP,REV=600,0.1`;
+> `EPS`/`REVERSED`/`DEPTHS`) AND the prose (`KRAKEN_DEPLOY_MAP_S63.md`, `S63_TREND_FLIP_FINDINGS.md`,
+> `SESSION_HANDOFF_2026-07-05_S64.md`). Core detector: `flip_detector.py` **WFLIP=600, REV=0.1, ARM0**, all coins.
+
+| coin | signal | direction | early-arm eps | deep-bail | cover_grace | E300-on-ride | paper $/hr | gate |
+|---|---|---|---|---|---|---|---|---|
+| **ETH** | flow-lean zigzag | **forward** | **eps10** | **−100** | 300 | **DROP** (−0.41, redundant w/ deep-bail) | +9.50 | z=4.0 PASS |
+| **BTC** | flow-lean zigzag (**K=10**) | **forward** | **eps5** | **−80** | 300 | **KEEP** (+0.20) | +8.64 | z=3.0 PASS |
+| **SOL** | flow-lean zigzag | **REVERSED** | **none** (early-arm HURTS SOL, −0.68) | none | 300 | — | +2.33 | fwd z=−1.6 → reversed (fragile) |
+| **DOGE** | **fade-8h TREND** (different tool, `_s63_kraken_fade.py`) | fade | — | — | 600 | — | +2.73 | fade p=0.016 (data-limited, 3% cov) |
+| **XRP** | — nothing clears — | — | — | — | — | — | ~0 | z=0.7 → **STAND ASIDE** |
+
+- **Fees:** kr_mk0 = 0bp maker; taker fallback ~5bp (deep-bail taker cross 11bp, flip 22bp). A 1bp maker fee is
+  FATAL (kr_mk2 nets −13..−20) — the 0bp tier is the existence condition, razor-thin ~0.5bp/swing headroom.
+- **Fill-mode knob (deployment vs paper):** detection **REV=0.1** = the paper edge; **swing-floor REV≈0.2 +
+  cover_grace≈300** = the real-fill config (raises fill% 31%→60%; a fill-vs-edge knob). The honest-fill re-grade
+  (Job 1) runs the swing-floor config, NOT bare REV=0.1.
+- **⚠ S64 window-fragility flag (do NOT size off one window):** early-arm is the lift on the 30d TAPE but it
+  **HURT BTC on the realbins book window** (opposite sign) — point estimates are window-fragile; confirm on a
+  2nd window before sizing. Same for the E300-per-coin split (one realbins window).
+- **⚠ Code-vs-deploy nuance (flagged S65):** `_s63_kraken_deepstop/bail/*.py` list `("sol", "SOLUSD", 10.0)` —
+  the `10.0` is an eps used only to generate SOL's *analysis* legs; **SOL's DEPLOYED config takes NO early-arm.**
+  Don't read that constant as "SOL uses eps10."
+
 ### B. Coinbase midband entry + E300 DEATH-SELECTOR — the mid-leg rig  ⭐ SEPARATE family
 - **Entry:** `odcore/entry_coinbase.py::armed_midband_flips` (S59 promoted; `COINBASE_MIDBAND` registry).
 - **The edge:** at 300 s into each leg a depth classifier (`scripts/_s62_e300_3piece.py`) predicts DEATH
