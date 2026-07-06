@@ -41,7 +41,26 @@ the knife → LOSER); it barely fills when price bounces your way (WINNER runs a
 S65 front-of-line **+$6–16/hr @ $5k was fiction in SIGN, not just magnitude** — it credited winner fills that don't
 happen at size. Capacity-capped, the fine-zigzag legs are dominated by loser fills.
 
+## ⭐ Finding 2 (Greg's code-fix instinct — CORRECT) — "winners unfillable" was largely a MODELING ARTIFACT
+The Finding-1 catastrophe used the OPEN-anchored window (count flow forward from open_idx). But a maker-at-the-turn
+(S45) fills from the capitulation CLIMAX at the PIVOT (S40 ~2x volume as price bottoms/turns), not from flow forward
+of open (which is the post-turn regime where a winner's price has already reverted away → price-ineligible → fake $0).
+Anchoring the window on the PIVOT ([flip−W, flip+W], `capacity.anchor="pivot"`, new S66) fixes it:
+| coin | corr(cap,net) open→pivot | winner:loser fill (pivot) | capacity-capped $/hr @$5k (pivot) |
+|---|---|---|---|
+| BTC | −0.32 → **−0.09** | ~2× (was 127×) | **+1.4 … +3.8** (best cell) |
+| ETH | −0.16 → **−0.00** | ~2× (was 360×) | **+0.4 … +0.7** |
+| SOL | −0.26 → −0.04 | ~2× | −2 … −7.6 (tape edge already weak) |
+| XRP | −0.29 → −0.05 | ~2× | −2.4 … −5.3 |
+| DOGE | −0.26 → −0.03 | ~1× (thin) | −0.2 … −1.3 |
+CORRECTED READ: capacity is a **real but NOT catastrophic** haircut (ETH +8.4→~+0.5, BTC +7.9→~+2-3.8 @$5k), NOT a
+winner-unfillable wall. WINNERS FILL at the turn. **BTC + ETH survive capacity-capped positive; SOL/XRP/DOGE do not**
+on this tape (their tape edge is already weak/negative — the fine SOL/XRP legs). Robust in SIGN across W∈{15,30,60}.
+The Finding-1 open-anchored numbers are SUPERSEDED for winner-fill (kept as the artifact record + the window lesson).
+
 ## Caveats (do NOT over-read the exact capped $/hr)
+- The PIVOT window ±W (climax duration) is a proxy that needs BOOK calibration to pin the magnitude (tape has no
+  depth; ±W symmetric double-counts pre/post-turn). SIGN (BTC/ETH+, SOL/XRP/DOGE−) is robust; magnitude is not.
 - TAPE price-eligibility is a proxy for the executor's real entry-fill mechanics (definitive grade needs the BOOK +
   the executor's own open-fill accounting; we have ~30h Kraken book). The DIRECTION (winners unfillable / losers
   fill / capacity-capped ≪ front-of-line) is robust and matches S45/S52/S56 across venues.

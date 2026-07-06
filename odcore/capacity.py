@@ -34,23 +34,42 @@ import numpy as np
 FILL_W = 10
 
 
+# S66 (Greg): a maker-at-the-turn (S45) fills from the capitulation CLIMAX at the pivot (S40 ~2x volume as
+# price bottoms/turns), NOT from flow forward of open_idx. Anchoring the fill window forward from open (>= flip,
+# the post-turn regime) made WINNERS look unfillable (price already reverting -> price-ineligible), a modeling
+# artifact: corr(cap,net) -0.3 -> ~0 when the window is anchored on the PIVOT instead. anchor="pivot" is the
+# physically-correct maker-at-the-turn model; anchor="open" is the S50/_leg_caps behavior (kept default = canary-
+# faithful). PIVOT_W (cells each side of the flip = the climax window) needs BOOK calibration to pin the magnitude.
+PIVOT_W = 30
+
+
 def leg_capacity_usd(side, open_idx, close_idx, flip_idx, mid, buy, sell,
-                     *, window=FILL_W, price_eligible=True, best_ahead=None, queue_frac=1.0):
+                     *, window=FILL_W, price_eligible=True, best_ahead=None, queue_frac=1.0,
+                     anchor="open", pivot_w=PIVOT_W):
     """$ fill-capacity for ONE maker leg, bounded by real opposing flow.
 
     side: +1 long (bid, filled by SELL flow) / -1 short (ask, filled by BUY flow).
-    open_idx/close_idx/flip_idx: leg cell indices (flip = where we decided the side / the price-eligibility ref).
+    open_idx/close_idx/flip_idx: leg cell indices (flip = the turn / the price-eligibility ref).
     mid/buy/sell: 1-cell-uniform arrays (mid price, taker BUY $-vol proxy, taker SELL $-vol proxy) in COIN units.
-    window: cells the order stays working after open (FILL_W); None = until close.
+    anchor: "open" = count flow forward from open over `window` cells (S50/_leg_caps); "pivot" = count flow in
+            [flip-pivot_w, flip+pivot_w] = the maker-at-the-turn CLIMAX fill window (S66 fix).
+    window: cells the order stays working after open (FILL_W), open-anchor only; None = until close.
     price_eligible: only count flow in cells where the venue best is at-or-through our post price (S52).
-    best_ahead: best-level resting size AHEAD of us at open (coin units) -> queue-honest haircut; None = flow-bound.
+    best_ahead: best-level resting size AHEAD of us (coin units) -> queue-honest haircut; None = flow-bound.
     Returns capacity in QUOTE ($) units.
     """
     o, c, ci = int(open_idx), int(close_idx), int(flip_idx)
     if c <= o:
         return 0.0
-    end = c if window is None else min(c, o + window)
-    seg = slice(o, end + 1)
+    if anchor == "pivot":
+        lo = max(0, ci - int(pivot_w))
+        hi = min(len(mid) - 1, ci + int(pivot_w))
+        seg = slice(lo, hi + 1)
+        px_i = ci
+    else:
+        end = c if window is None else min(c, o + window)
+        seg = slice(o, end + 1)
+        px_i = o
     opp_arr = (sell if side > 0 else buy)[seg]
     if price_eligible:
         m = mid[seg]
@@ -60,21 +79,24 @@ def leg_capacity_usd(side, open_idx, close_idx, flip_idx, mid, buy, sell,
         opp = float(np.sum(opp_arr))
     if best_ahead is not None:
         opp = max(0.0, opp - float(best_ahead) * queue_frac)
-    return opp * float(mid[o])
+    return opp * float(mid[px_i])
 
 
 def caps_for_legs(legs, mid, buy, sell, *, window=FILL_W, price_eligible=True,
-                  bb=None, ba=None, queue_frac=1.0):
+                  bb=None, ba=None, queue_frac=1.0, anchor="open", pivot_w=PIVOT_W):
     """Per-leg $ caps for a list of SwingLeg (needs .side/.open_idx/.close_idx/.flip_idx).
+    anchor: "open" (S50/_leg_caps) or "pivot" (maker-at-the-turn climax fill, S66 — winner-fill fix).
     bb/ba: best bid/ask resting sizes per cell (BOOK) -> queue-honest; None on both = flow-bound (tape)."""
     out = np.empty(len(legs), dtype=float)
     for k, l in enumerate(legs):
         ahead = None
         if bb is not None and ba is not None:
-            ahead = (bb if l.side > 0 else ba)[int(l.open_idx)]
+            aidx = int(l.flip_idx) if anchor == "pivot" else int(l.open_idx)
+            ahead = (bb if l.side > 0 else ba)[aidx]
         out[k] = leg_capacity_usd(l.side, l.open_idx, l.close_idx, l.flip_idx, mid, buy, sell,
                                   window=window, price_eligible=price_eligible,
-                                  best_ahead=ahead, queue_frac=queue_frac)
+                                  best_ahead=ahead, queue_frac=queue_frac,
+                                  anchor=anchor, pivot_w=pivot_w)
     return out
 
 
