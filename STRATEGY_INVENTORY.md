@@ -23,6 +23,43 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
 
 ---
 
+## ⭐ S66 IN-PROGRESS (2026-07-06, live) — the pre-capital-model gating work + the BIG small-cap data pull
+> Greg's S66 reorder (load-bearing): the capital model is BLOCKED — we CANNOT build it until (a) all the
+> proposed improvement tests are run per-cell on **majors AND small caps** (E300, bigline, S42 direction,
+> divergence-filter, etc.), and (b) the **small-cap coins are actually figured out** (we've only ever worked
+> the majors sleeve). So S66 = complete the per-cell test matrix + build out the small-cap sleeve FIRST.
+- **Branch reconciled:** `claude/davisai-s66-kickoff-4kjp87` was cut from a stale S59-infra parent; reset --hard
+  to canonical S65 tip `5a2b537` (the recurring wrong-parent bug). Origin matches. Dropped only a stale
+  `book_collector_btc.yml` infra variant (superseded on canonical).
+- **⚠ MISSING agent reads (S65):** only TWO coverage audits landed (`PIECES_TEST_execution_kraken.md`,
+  `PIECES_TEST_dipole.md`). The **dipole-EXPERT deep read** and the **ARCHITECT read** never landed — TODO.
+- **E300 death-selector on DOGE/XRP (Greg's directive):** RUN. Runs on Binance-vision 30d bins (`/tmp/backfill`,
+  the S62 substrate) — **Binance preview:** DOGE AUC **0.685**, base +0.63 → 3piece +1.32 (**Δ+0.69**, 4/5 wk+);
+  XRP AUC **0.768**, base +1.10 → 3piece +3.08 (**Δ+1.98**, 4/5 wk+). Matches S62's 0.69–0.77. Driver:
+  `scripts/_s66_e300_run.py {binance|kraken}` (drives `_s62_e300_3piece` unmodified — sim=live rule). **Kraken
+  re-run in progress** (waits on the XDG/XRP tape) — that is the deploy-grade number.
+- **⭐ BINANCE ≠ KRAKEN for deploy (the answer to Greg's Q):** Binance is a fast SIGNAL-EXISTENCE proxy for
+  MAJORS only (prices arb'd, lag-0 synchrony) — good for "does depth@300 predict death (AUC)". It is NOT the
+  deploy $/hr (fee kr_mk0=0bp, fill, spread, liquidity are Kraken-specific → grade on Kraken tape). For SMALL
+  CAPS Binance is useless: most eligibles (XDC/SHX/AIOZ/GWEI/NIGHT/HYPE) are **404 on Binance** and the edge is
+  Kraken low-liq microstructure. **⇒ all deploy-grade tests must run on Kraken tape.**
+- **⭐ DATA REALITY fixed (no 30d wait):** Kraken REST `Trades` gives HISTORICAL 30–120d NOW.
+  - Majors: BTC+ETH already have **27.7d** Kraken tape on box (`realbins/{btc,eth}_kraken_bins.json`,
+    2026-06-08→07-06). SOL/XRP/DOGE 30d pulling (`/tmp/ktape`, higher volume ~20–40min).
+  - **Small caps are SECONDS each** (XDCUSD 30d = 34k trades = 4s) → deep history is cheap.
+  - **⭐ THE ELIGIBLE UNIVERSE IS 352, NOT 6:** Kraken has **352 rebate-eligible (maker_deep = −2bp) USD alt
+    pairs** (`/tmp/eligible_pairs.txt`), not the S64 shortlist of ~6. Greg: "bigger sample of them."
+- **⭐ OVERNIGHT DURABLE COLLECTION (running while Greg away):** `scripts/_s66_overnight_collect.sh` pulls all
+  352 eligible alts @ **120d** Kraken tape (par=4, self-throttling), gzips + commits every 20 pairs to the orphan
+  branch **`data/kraken-smallcap-tape`** (survives container recycle; resumable — skips committed pairs). Absorbs
+  the SOL/XRP/DOGE majors at the end. 120d = ~17 weeks for the per-week+reversed gate (vs 5 on 30d).
+- **⚠ Ambiguity to resolve (Greg):** S64 "**RE**" isn't a bare Kraken pair — candidates `RED/REKT/RENDER/REN USD`.
+- **NEXT (when data lands):** Kraken E300 DOGE/XRP (deploy-grade); run the full improvement-test matrix per-cell
+  on majors + the small-cap universe (S54 gate: shuffle + reversed + per-week; the KRAKEN lean/E300/bigline/S42
+  stack); THEN the $5k-pool anti-resting capital model on the complete cell set. Get the dipole-expert+architect reads.
+
+---
+
 ## 1. DEPLOYED CELLS (`odcore/platform.py::DEPLOYED`) — the production registry
 Per-cell law: each cell = asset × venue × side, validated + deployed independently.
 - **⭐ WE ARE ON KRAKEN (Greg). `KRAKEN` registry (S65) = the ACTIVE live stack** (`odcore/platform.py::KRAKEN`
