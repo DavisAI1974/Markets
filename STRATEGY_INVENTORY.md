@@ -116,6 +116,21 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
     Deep-bail never fired (no −80/−100 leg on this calm window). So the CHEAP bleed (fill) is FIXED; the residual is the
     irreducible direction cost (direction is DEAD, closed 4 ways). Only SOL has a fatter tail (worst-10 = 33% of loss,
     W/L 1.05) — the one maybe-cheap probe left (a SOL bail was killed on tape; re-check on book), low priority.
+  - **⭐ THE 2.5× LEG EXPLOSION AT FRONT-OF-LINE IS CHURN, NOT EDGE** (Greg S65; `_kraken_newlegs.py`/`_kraken_legbleed.py`):
+    front-of-line fires ~2.5× more legs (eth 194→453) but ~same $/hr — the money is ONLY in the big swings (eth ≥20bp = 23
+    legs = 97% of $/hr, net/leg +17bp; btc ≥10bp ~73%; xrp ≥20bp 109%); the mid legs [2,20)bp have winners ≈ losers (pure
+    churn, ±25/hr gross → +6.77 net on eth). Bleed = QUICK-REVERSAL whipsaws (87–96% of loss). **swing-floor sweep: keep
+    only |swing|≥5bp → SAME $/hr with ⅓–½ the legs.** ⇒ **REV=0.1 is TOO FINE (zigzagging on noise); coarsen REV per coin.**
+    This also serves capital: fewer/bigger/spaced legs = cleaner anti-resting rotation. front-of-line is optimistic on sub-bp legs.
+  - **⭐ DIRECTION RE-ADJUDICATION employed (agent finding; `_kraken_readjudicate.py`) — FWD wins ALL 5 on the book:**
+    eth +3.42 / btc +1.80 / **sol +6.51 > rev +2.17 (CONTRADICTS deployed reversed)** / **xrp +14.02 (was stand-aside)** /
+    **doge +5.46 fwd flow-lean** (deployed = fade-8h). Employed in `basket_sim_kraken.py` (SOL→fwd, DOGE activated fwd, XRP
+    fwd), portfolio Sharpe → +0.810 with 5 uncorrelated cells. ⚠ ONE 30h BOOK window vs the 30d-TAPE deploy map — a
+    RE-ADJUDICATION, NOT an overturn; the live deploy map (SOL reversed / XRP aside) stands until a 30d-tape/Tardis confirm.
+  - **⚠ CAPITAL FRAMING (Greg S65): NO aggregate-as-sum.** $5k is the TOTAL, not per-cell; the sim's "aggregate @ $Nk"
+    line is the OLD wrong framing. Real portfolio = ONE $5k pool ALLOCATED across cells with an ANTI-RESTING strategy
+    (route capital to whichever uncorrelated cells are live so it's never idle — majors sit ~57% idle, small caps take
+    small size → need MANY cells). The $5k-shared-pool + anti-resting rebuild is the next build (not yet done).
 
 ### B. Coinbase midband entry + E300 DEATH-SELECTOR — the mid-leg rig  ⭐ SEPARATE family
 - **Entry:** `odcore/entry_coinbase.py::armed_midband_flips` (S59 promoted; `COINBASE_MIDBAND` registry).

@@ -51,15 +51,20 @@ TAKER_FEE = 5.0        # taker fallback / deep-bail cross (representative Kraken
 # ---- per-coin deployed config (STRATEGY_INVENTORY.md §2.A) + enticing (S65) ----
 # improve = per-coin close_improve_bps (enticing concession). Set from the enticing sweep: use it where
 # it lifts, 0 where it hurts. active=True runs book-honest here.
+# ⚠ S65 DIRECTION RE-ADJUDICATION employed (agent finding, `_kraken_readjudicate.py`): on the BOOK window
+# FORWARD wins all 5 coins. eth/btc keep deployed fwd+early-arm (early-arm HELPS eth on book, +6.77 vs base
+# +3.42; per-coin). SOL flipped to FWD here (book: FWD +6.51 > REV +2.17) — but the 30d-TAPE deploy map says
+# REVERSED; this is a book-window re-adjudication, NOT an overturn — needs a 30d-tape/Tardis confirm. DOGE
+# activated FWD flow-lean (book +5.46) though deployed signal is fade-8h. XRP FWD (was stand-aside).
 CELLS = [
     dict(coin="eth", sleeve="majors", side=+1, eps=10.0, bail=100.0, grace=300, improve=0.5, active=True),
     dict(coin="btc", sleeve="majors", side=+1, eps=5.0,  bail=80.0,  grace=300, improve=0.5, active=True),
-    dict(coin="sol", sleeve="majors", side=-1, eps=None, bail=None,  grace=300, improve=0.5, active=True),
-    dict(coin="doge", sleeve="majors", side=+1, eps=None, bail=None, grace=600, improve=0.5, active=False,
-         reason="deployed signal = fade-8h (tape-graded, 8h warmup) — too thin on a 30h book; tape-only"),
-    # XRP: deployed = stand-aside (S63 z=0.7) — but Greg (S65) wants it IN. Base flow-lean fwd, EXPLORATORY.
+    dict(coin="sol", sleeve="majors", side=+1, eps=None, bail=None,  grace=300, improve=0.5, active=True,
+         note="RE-ADJUDICATED FWD on book (FWD +6.51 > REV +2.17); tape deploy=reversed — needs tape confirm"),
+    dict(coin="doge", sleeve="majors", side=+1, eps=None, bail=None, grace=600, improve=0.5, active=True,
+         note="RE-ADJUDICATED: base flow-lean FWD +5.46 on book; deployed signal=fade-8h — provisional"),
     dict(coin="xrp", sleeve="majors", side=+1, eps=None, bail=None, grace=300, improve=0.5, active=True,
-         note="EXPLORATORY — no deployed solution; base flow-lean forward"),
+         note="RE-ADJUDICATED FWD +14.02 (was stand-aside, S63 z=0.7 on tape)"),
 ]
 
 
