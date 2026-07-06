@@ -55,15 +55,18 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
     edge sweet-spot; `/tmp/thinok_pairs.txt`) · TOO-THIN <$10k = 231 (median $3,856/24h) · **DEAD $0 = ~30
     (untradeable)**. So the real target sleeve = the ~116 THIN-OK, and liquidity is a first-class gating axis
     (edge strong on thin, weak on liquid). Collect all 352 (cheap) but GATE/BUILD on THIN-OK.
-  - **"RE" resolved = `REUSD`** (a THIN-OK eligible pair); no longer ambiguous.
+  - **"RE"** = probably a TYPO in the S64 notes (Greg), not a real intended pair — drop it (REUSD exists but ignore).
 - **⭐ OVERNIGHT DURABLE COLLECTION (running while Greg away):** `scripts/_s66_overnight_collect.sh` pulls all
   352 eligible alts @ **120d** Kraken tape (par=4, self-throttling), gzips + commits every 20 pairs to the orphan
   branch **`data/kraken-smallcap-tape`** (survives container recycle; resumable — skips committed pairs). Absorbs
   the SOL/XRP/DOGE majors at the end. 120d = ~17 weeks for the per-week+reversed gate (vs 5 on 30d).
 - **⚠ Ambiguity to resolve (Greg):** S64 "**RE**" isn't a bare Kraken pair — candidates `RED/REKT/RENDER/REN USD`.
-- **NEXT (when data lands):** Kraken E300 DOGE/XRP (deploy-grade); run the full improvement-test matrix per-cell
-  on majors + the small-cap universe (S54 gate: shuffle + reversed + per-week; the KRAKEN lean/E300/bigline/S42
-  stack); THEN the $5k-pool anti-resting capital model on the complete cell set. Get the dipole-expert+architect reads.
+- **⭐ ORDER (Greg S66):** do the **dipole-EXPERT + ARCHITECT reads FIRST** — the capital model design "might
+  change after agents," so build them before, not after. (Launched S66: `DIPOLE_EXPERT_READ_S66.md`,
+  `ARCHITECT_READ_S66.md` — deep reads, not coverage audits.) THEN: Kraken E300 DOGE/XRP (deploy-grade); the
+  full improvement-test matrix per-cell on majors + the ~116 THIN-OK small-cap band (S54 gate: shuffle + reversed
+  + per-week; KRAKEN lean/E300/bigline/S42 stack, per-coin law); THEN the $5k-pool anti-resting capital model on
+  the complete cell set — with whatever the agent reads change about its design.
 
 ---
 
