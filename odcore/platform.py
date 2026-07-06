@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from odcore.flip_detector import lean_series, detect_flips
+from odcore.flip_detector import lean_series, detect_flips, retime_flips
 from odcore.info_dipole import divergence
 from odcore.swing_maker import simulate_swing_maker, size_legs
 
@@ -66,6 +66,12 @@ class CellConfig:
     book_path: str = ""             # default /tmp/<coin>_<venue>_book.jsonl.gz
     venue: str = "coinbase"         # S56: venue is a first-class cell dimension (per-cell deploy)
     sandbox: bool = False           # sandbox cells -> SANDBOX_LEDGER (S53 rule)
+    # --- Kraken flow-lean STACK (S65; used by run_kraken_cell; defaults preserve the Coinbase run_cell) ---
+    side: int = +1                  # +1 forward / -1 reversed (per-coin direction)
+    rev: float = REV                # per-cell zigzag reversal threshold (S65 swing-floor; default 0.10)
+    eps: float | None = None        # early-arm retime eps_bps (None = base detect_flips)
+    bail: float | None = None       # deep-bail depth bp (None = no exit_spec price_stop)
+    improve: float = 0.0            # enticing-close concession bps (close_improve_bps)
 
     @property
     def cell(self):
@@ -91,6 +97,50 @@ DEPLOYED = [CellConfig("sol"), CellConfig("doge", grace=600), CellConfig("xrp"),
 # CFTC enforcement). The venue is not lawfully tradeable for us at any fee tier, so no research
 # cell may live here. Next sandbox cells must be on a US-lawful venue (per-cell rule, S33).
 SANDBOX = []
+
+# KRAKEN flow-lean registry (S65) — the per-coin STACK, the single source of truth the sim consumes.
+# Fee frame kr_mk0 (0bp maker). All cells: FRONT-OF-LINE fill + enticing close (improve=0.5).
+# REV = 0.10 ALL coins (CONSERVATIVE). The S65 per-coin REV sweep (`_kraken_revsweep.py`, ONE 30h book
+# window) found coarser REV book-better for DOGE (0.30: +8.17 vs +6.05) and XRP (0.13: +16.05 vs +14.02),
+# but that is a BIG change off ONE window (Greg) — kept at 0.10 pending a 30d-tape/Tardis confirm. Majors'
+# fine churn is net-POSITIVE (coarsening loses money — Greg: "don't cut positive churn"), so 0.10 stands
+# for eth/btc/sol regardless. eth/btc keep early-arm (helps on book); sol/doge/xrp base.
+# ⚠ BOOK-PROVISIONAL: the direction re-adjudication (SOL fwd, XRP fwd, DOGE fwd flow-lean) is also ONE
+# window — the S63 30d-TAPE deploy map (SOL reversed, XRP aside, DOGE fade-8h) is the standing LIVE map
+# until a tape confirm. This registry = the current book-best for the SIM, not a live-capital decision.
+KRAKEN = [
+    CellConfig("eth", venue="kraken", side=+1, rev=0.10, eps=10.0, bail=100.0, grace=300, improve=0.5),
+    CellConfig("btc", venue="kraken", side=+1, rev=0.10, eps=5.0,  bail=80.0,  grace=300, improve=0.5, K=10),
+    CellConfig("sol", venue="kraken", side=+1, rev=0.10, eps=None, bail=None,  grace=300, improve=0.5),
+    CellConfig("doge", venue="kraken", side=+1, rev=0.10, eps=None, bail=None, grace=600, improve=0.5),
+    CellConfig("xrp", venue="kraken", side=+1, rev=0.10, eps=None, bail=None,  grace=300, improve=0.5),
+]
+
+
+def kraken_flips(cfg, mid, buy, sell):
+    """Compose a Kraken cell's flip stream from its config (live): early-arm (retime) if eps set else
+    base detect_flips at cfg.rev; reverse for reversed cells."""
+    if cfg.eps is not None:
+        flips = retime_flips(mid, buy, sell, WFLIP, cfg.rev, cfg.eps)[0]
+    else:
+        flips = detect_flips(lean_series(buy, sell, WFLIP), cfg.rev)[0]
+    if cfg.side < 0:
+        flips = [(c, p, -s) for (c, p, s) in flips]
+    return flips
+
+
+def run_kraken_cell(cfg, mid, buy, sell, best_bid_sz, best_ask_sz, half_spread_bps):
+    """THE LIVE Kraken decision path (S65): compose the per-coin STACK (direction + early-arm + deep-bail
+    + enticing + per-cell REV) and run it through run_stream FRONT-OF-LINE. The basket sim calls THIS —
+    it does not reimplement the decision (the S65 sim=live-code rule). Book ARRAYS are passed in (Kraken
+    venue data-loading is the caller's job until a live Kraken loader lands). Returns (SwingResult, desc)."""
+    flips = kraken_flips(cfg, mid, buy, sell)
+    exit_spec = {"kind": "price_stop", "x_bp": float(cfg.bail), "action": "flat", "side": 0} \
+        if cfg.bail is not None else None
+    return run_stream(mid, buy, sell, flips, best_bid_sz=best_bid_sz, best_ask_sz=best_ask_sz,
+                      half_spread_bps=half_spread_bps, maker_fee=cfg.maker_fee, taker_fee=cfg.taker_fee,
+                      grace=cfg.grace, exit_spec=exit_spec, fill_model="front",
+                      close_improve_bps=cfg.improve)
 
 
 def _dipole_descriptors(legs, lean, piv, buy, sell, mid):

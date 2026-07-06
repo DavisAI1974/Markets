@@ -39,33 +39,30 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from odcore.flip_detector import lean_series, detect_flips, retime_flips  # noqa: E402  (flip composition)
-from odcore.platform import run_stream                                    # noqa: E402  (THE LIVE DECISION PATH)
+from odcore.platform import (KRAKEN, run_kraken_cell, kraken_flips,       # noqa: E402  (LIVE registry + path)
+                             run_stream)
 
 CAP = 5000.0
-WFLIP, REV = 600, 0.1
 KBOOK = "/tmp/kbook"
-MAKER_FEE = 0.0        # kr_mk0
+MAKER_FEE = 0.0        # kr_mk0 (also the KRAKEN registry default)
 TAKER_FEE = 5.0        # taker fallback / deep-bail cross (representative Kraken)
+WFLIP, REV = 600, 0.10  # re-exported for probe scripts (canonical values live in odcore/platform.py)
 
-# ---- per-coin deployed config (STRATEGY_INVENTORY.md §2.A) + enticing (S65) ----
-# improve = per-coin close_improve_bps (enticing concession). Set from the enticing sweep: use it where
-# it lifts, 0 where it hurts. active=True runs book-honest here.
-# ⚠ S65 DIRECTION RE-ADJUDICATION employed (agent finding, `_kraken_readjudicate.py`): on the BOOK window
-# FORWARD wins all 5 coins. eth/btc keep deployed fwd+early-arm (early-arm HELPS eth on book, +6.77 vs base
-# +3.42; per-coin). SOL flipped to FWD here (book: FWD +6.51 > REV +2.17) — but the 30d-TAPE deploy map says
-# REVERSED; this is a book-window re-adjudication, NOT an overturn — needs a 30d-tape/Tardis confirm. DOGE
-# activated FWD flow-lean (book +5.46) though deployed signal is fade-8h. XRP FWD (was stand-aside).
-CELLS = [
-    dict(coin="eth", sleeve="majors", side=+1, eps=10.0, bail=100.0, grace=300, improve=0.5, active=True),
-    dict(coin="btc", sleeve="majors", side=+1, eps=5.0,  bail=80.0,  grace=300, improve=0.5, active=True),
-    dict(coin="sol", sleeve="majors", side=+1, eps=None, bail=None,  grace=300, improve=0.5, active=True,
-         note="RE-ADJUDICATED FWD on book (FWD +6.51 > REV +2.17); tape deploy=reversed — needs tape confirm"),
-    dict(coin="doge", sleeve="majors", side=+1, eps=None, bail=None, grace=600, improve=0.5, active=True,
-         note="RE-ADJUDICATED: base flow-lean FWD +5.46 on book; deployed signal=fade-8h — provisional"),
-    dict(coin="xrp", sleeve="majors", side=+1, eps=None, bail=None, grace=300, improve=0.5, active=True,
-         note="RE-ADJUDICATED FWD +14.02 (was stand-aside, S63 z=0.7 on tape)"),
-]
+# ---- per-coin config = the LIVE KRAKEN registry (odcore/platform.py::KRAKEN) — ONE source of truth ----
+# The sim DECIDES through the live path (run_kraken_cell / kraken_flips + run_stream), never a
+# reimplementation (S65 rule). This file adds only: the Kraken book LOADER, sleeve/active metadata, and
+# the portfolio layer. Direction re-adjudication (SOL/XRP/DOGE fwd) + coarsened DOGE(0.30)/XRP(0.13) REV
+# are BOOK-PROVISIONAL in the registry (need a 30d-tape/Tardis confirm; see the KRAKEN comment).
+_META = {
+    "eth": dict(active=True, note=""),
+    "btc": dict(active=True, note=""),
+    "sol": dict(active=True, note="RE-ADJUDICATED FWD on book; tape deploy=reversed — needs tape confirm"),
+    "doge": dict(active=True, note="RE-ADJUDICATED FWD + REV0.30 (coarsened; deploy map=fade-8h)"),
+    "xrp": dict(active=True, note="RE-ADJUDICATED FWD (was stand-aside on tape)"),
+}
+CELLS = [dict(coin=c.coin, sleeve="majors", side=c.side, eps=c.eps, bail=c.bail, grace=c.grace,
+              improve=c.improve, rev=c.rev, cfg=c, **_META.get(c.coin, dict(active=False, note="")))
+         for c in KRAKEN]
 
 
 def load_book(coin):
@@ -105,30 +102,27 @@ def load_book(coin):
 
 
 def flips_for(cell, mid, buy, sell):
-    """Per-coin flip COMPOSITION via the live flip_detector: early-arm (retime) if eps set else base
-    detect_flips; reverse for reversed cells (SOL). (Signal composition, not executor logic.)"""
-    if cell["eps"] is not None:
-        entries, _ = retime_flips(mid, buy, sell, WFLIP, REV, cell["eps"])
-    else:
-        entries, _ = detect_flips(lean_series(buy, sell, WFLIP), REV)
-    if cell["side"] < 0:
-        entries = [(ci, pv, -s) for (ci, pv, s) in entries]
-    return entries
+    """Per-coin flip composition — delegates to the LIVE kraken_flips (no reimplementation)."""
+    return kraken_flips(cell["cfg"], mid, buy, sell)
 
 
 def run_cell(cell, bk, fill_model="front", improve=None):
-    """Full-stack cell run THROUGH THE LIVE DECISION PATH (platform.run_stream). Deep-bail = exit_spec
-    price_stop; cover_grace + enticing (close_improve_bps) recover the maker fill; kr_mk0 fees."""
+    """Full-stack cell run THROUGH THE LIVE DECISION PATH. Default (front, cfg.improve) calls the live
+    run_kraken_cell VERBATIM; research overrides (queue fill / custom improve) compose via the live
+    kraken_flips + run_stream. Returns (flips, SwingResult)."""
+    cfg = cell["cfg"]
     mid, bb, ba, buy, sell, hs = bk["mid"], bk["bb"], bk["ba"], bk["buy"], bk["sell"], bk["hs"]
-    entries = flips_for(cell, mid, buy, sell)
-    exit_spec = {"kind": "price_stop", "x_bp": float(cell["bail"]), "action": "flat", "side": 0} \
-        if cell["bail"] is not None else None
-    imp = cell["improve"] if improve is None else improve
-    res, _ = run_stream(mid, buy, sell, entries, best_bid_sz=bb, best_ask_sz=ba,
-                        half_spread_bps=hs, maker_fee=MAKER_FEE, taker_fee=TAKER_FEE,
-                        grace=cell["grace"], exit_spec=exit_spec, fill_model=fill_model,
-                        queue_frac=1.0, close_improve_bps=imp)
-    return entries, res
+    flips = kraken_flips(cfg, mid, buy, sell)
+    if fill_model == "front" and improve is None:
+        res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)          # LIVE entry, verbatim
+        return flips, res
+    exit_spec = {"kind": "price_stop", "x_bp": float(cfg.bail), "action": "flat", "side": 0} \
+        if cfg.bail is not None else None
+    imp = cfg.improve if improve is None else improve
+    res, _ = run_stream(mid, buy, sell, flips, best_bid_sz=bb, best_ask_sz=ba, half_spread_bps=hs,
+                        maker_fee=cfg.maker_fee, taker_fee=cfg.taker_fee, grace=cfg.grace,
+                        exit_spec=exit_spec, fill_model=fill_model, close_improve_bps=imp)
+    return flips, res
 
 
 def bucket_pnl(legs, m, bucket_sec):

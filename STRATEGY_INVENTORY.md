@@ -25,8 +25,15 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
 
 ## 1. DEPLOYED CELLS (`odcore/platform.py::DEPLOYED`) — the production registry
 Per-cell law: each cell = asset × venue × side, validated + deployed independently.
-- `DEPLOYED = [sol, doge(grace=600), xrp, eth, btc(K=10)]` — the paper/sandbox forward ledger cells.
-- **Fee frame (S63 pivot): KRAKEN kr_mk0 = 0 bp maker** (needs $10M/30d volume tier; Coinbase parked).
+- **⭐ WE ARE ON KRAKEN (Greg). `KRAKEN` registry (S65) = the ACTIVE live stack** (`odcore/platform.py::KRAKEN`
+  + `run_kraken_cell`): per-coin STACK (direction / early-arm eps / deep-bail / cover-grace / **enticing close** /
+  REV), FRONT-OF-LINE fill, kr_mk0. `scripts/basket_sim_kraken.py` DECIDES through `run_kraken_cell` (sim = live
+  code — S65 rule). CellConfig gained `side/rev/eps/bail/improve`. ⚠ BOOK-PROVISIONAL (one 30h window): direction
+  re-adjudication (SOL/XRP/DOGE fwd) + the REV pick are NOT a live-capital decision until a 30d-tape confirm.
+- `DEPLOYED = [sol, doge(grace=600), xrp, eth, btc(K=10)]` — **LEGACY Coinbase cells (venue PARKED, S63).** The
+  paper_trade cron still runs these (a parked-venue ledger). **S66 open: replace the paper/live path with the
+  KRAKEN registry** (needs a live Kraken book loader wired into a `run_cell`-style path + the paper cron repointed).
+- **Fee frame (S63 pivot): KRAKEN kr_mk0 = 0 bp maker** (needs $10M/30d volume tier; Coinbase parked/legacy).
 - `SANDBOX = []` (emptied S57 when Bybit was struck).
 
 ## 2. STRATEGY FAMILIES (we have MORE THAN ONE — do not treat lean as the only tool)
