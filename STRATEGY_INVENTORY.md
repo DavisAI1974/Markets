@@ -49,6 +49,13 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
   - **Small caps are SECONDS each** (XDCUSD 30d = 34k trades = 4s) → deep history is cheap.
   - **⭐ THE ELIGIBLE UNIVERSE IS 352, NOT 6:** Kraken has **352 rebate-eligible (maker_deep = −2bp) USD alt
     pairs** (`/tmp/eligible_pairs.txt`), not the S64 shortlist of ~6. Greg: "bigger sample of them."
+  - **⭐ LIQUIDITY-BANDED (Greg: "some of the small caps are actually large"; `KRAKEN_ELIGIBLE_LIQUIDITY_S66.md`,
+    24h Ticker):** eligible ≠ small — the 352 span the whole range. Bands: **LARGE >$1M/24h = 5** (HYPE $8.8M
+    = S64 NULL, SYN, CAP, SLX, AI → expect WEAK per S64 efficiency gradient) · **THIN-OK $10k–1M = 116** (the
+    edge sweet-spot; `/tmp/thinok_pairs.txt`) · TOO-THIN <$10k = 231 (median $3,856/24h) · **DEAD $0 = ~30
+    (untradeable)**. So the real target sleeve = the ~116 THIN-OK, and liquidity is a first-class gating axis
+    (edge strong on thin, weak on liquid). Collect all 352 (cheap) but GATE/BUILD on THIN-OK.
+  - **"RE" resolved = `REUSD`** (a THIN-OK eligible pair); no longer ambiguous.
 - **⭐ OVERNIGHT DURABLE COLLECTION (running while Greg away):** `scripts/_s66_overnight_collect.sh` pulls all
   352 eligible alts @ **120d** Kraken tape (par=4, self-throttling), gzips + commits every 20 pairs to the orphan
   branch **`data/kraken-smallcap-tape`** (survives container recycle; resumable — skips committed pairs). Absorbs
