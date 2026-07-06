@@ -34,25 +34,28 @@ import numpy as np
 FILL_W = 10
 
 
-# S66 (Greg): a maker-at-the-turn (S45) fills from the capitulation CLIMAX at the pivot (S40 ~2x volume as
-# price bottoms/turns), NOT from flow forward of open_idx. Anchoring the fill window forward from open (>= flip,
-# the post-turn regime) made WINNERS look unfillable (price already reverting -> price-ineligible), a modeling
-# artifact: corr(cap,net) -0.3 -> ~0 when the window is anchored on the PIVOT instead. anchor="pivot" is the
-# physically-correct maker-at-the-turn model; anchor="open" is the S50/_leg_caps behavior (kept default = canary-
-# faithful). PIVOT_W (cells each side of the flip = the climax window) needs BOOK calibration to pin the magnitude.
-PIVOT_W = 30
+# ⚠ S66 CAUSALITY LESSON (Greg's code-fix instinct + the adversarial Kraken agent): it is TEMPTING to say a
+# maker-at-the-turn fills from the capitulation CLIMAX at the pivot, and to count flow in a window [flip-W, flip+W].
+# That is LOOK-AHEAD for the DEPLOYED one-sided strategy: you post the bid only AFTER the flip CONFIRMS (WFLIP=600
+# lag), so any pre-flip climax already traded before your order existed — you cannot fill from it. Counting it
+# spuriously made WINNERS look fillable (winCap $15->$206) and flipped BTC/ETH capacity-capped $/hr fake-positive.
+# CAUSAL windows only: "open" = forward from the actual fill cell open_idx (S50/_leg_caps, the honest default);
+# "pivot" here = forward from the CONFIRM flip_idx (a hair more generous than open, still causal). Both give
+# winCap ~$15-41 and NEGATIVE capacity-capped $/hr on every major = the S45/S56 winners-invisible / fill-is-the-wall
+# law. A TWO-SIDED always-quoting MM (a different strategy) could capture the pre-turn climax; the one-sided cannot.
+PIVOT_W = None   # forward from flip to close by default (causal); an int caps the forward window in cells
 
 
 def leg_capacity_usd(side, open_idx, close_idx, flip_idx, mid, buy, sell,
                      *, window=FILL_W, price_eligible=True, best_ahead=None, queue_frac=1.0,
                      anchor="open", pivot_w=PIVOT_W):
-    """$ fill-capacity for ONE maker leg, bounded by real opposing flow.
+    """$ fill-capacity for ONE maker leg, bounded by real opposing flow (CAUSAL only — see the CAUSALITY LESSON above).
 
     side: +1 long (bid, filled by SELL flow) / -1 short (ask, filled by BUY flow).
-    open_idx/close_idx/flip_idx: leg cell indices (flip = the turn / the price-eligibility ref).
+    open_idx/close_idx/flip_idx: leg cell indices (flip = the confirm / the price-eligibility ref).
     mid/buy/sell: 1-cell-uniform arrays (mid price, taker BUY $-vol proxy, taker SELL $-vol proxy) in COIN units.
-    anchor: "open" = count flow forward from open over `window` cells (S50/_leg_caps); "pivot" = count flow in
-            [flip-pivot_w, flip+pivot_w] = the maker-at-the-turn CLIMAX fill window (S66 fix).
+    anchor: "open" = forward from the actual fill cell open_idx over `window` cells (S50/_leg_caps); "pivot" =
+            forward from the CONFIRM flip_idx to close (or +pivot_w cells) — causal, slightly more generous than open.
     window: cells the order stays working after open (FILL_W), open-anchor only; None = until close.
     price_eligible: only count flow in cells where the venue best is at-or-through our post price (S52).
     best_ahead: best-level resting size AHEAD of us (coin units) -> queue-honest haircut; None = flow-bound.
@@ -62,8 +65,8 @@ def leg_capacity_usd(side, open_idx, close_idx, flip_idx, mid, buy, sell,
     if c <= o:
         return 0.0
     if anchor == "pivot":
-        lo = max(0, ci - int(pivot_w))
-        hi = min(len(mid) - 1, ci + int(pivot_w))
+        lo = ci                                                    # CAUSAL: from the confirm forward (never pre-flip)
+        hi = c if pivot_w is None else min(c, ci + int(pivot_w))
         seg = slice(lo, hi + 1)
         px_i = ci
     else:

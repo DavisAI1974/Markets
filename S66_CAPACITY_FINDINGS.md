@@ -41,26 +41,34 @@ the knife → LOSER); it barely fills when price bounces your way (WINNER runs a
 S65 front-of-line **+$6–16/hr @ $5k was fiction in SIGN, not just magnitude** — it credited winner fills that don't
 happen at size. Capacity-capped, the fine-zigzag legs are dominated by loser fills.
 
-## ⭐ Finding 2 (Greg's code-fix instinct — CORRECT) — "winners unfillable" was largely a MODELING ARTIFACT
-The Finding-1 catastrophe used the OPEN-anchored window (count flow forward from open_idx). But a maker-at-the-turn
-(S45) fills from the capitulation CLIMAX at the PIVOT (S40 ~2x volume as price bottoms/turns), not from flow forward
-of open (which is the post-turn regime where a winner's price has already reverted away → price-ineligible → fake $0).
-Anchoring the window on the PIVOT ([flip−W, flip+W], `capacity.anchor="pivot"`, new S66) fixes it:
-| coin | corr(cap,net) open→pivot | winner:loser fill (pivot) | capacity-capped $/hr @$5k (pivot) |
-|---|---|---|---|
-| BTC | −0.32 → **−0.09** | ~2× (was 127×) | **+1.4 … +3.8** (best cell) |
-| ETH | −0.16 → **−0.00** | ~2× (was 360×) | **+0.4 … +0.7** |
-| SOL | −0.26 → −0.04 | ~2× | −2 … −7.6 (tape edge already weak) |
-| XRP | −0.29 → −0.05 | ~2× | −2.4 … −5.3 |
-| DOGE | −0.26 → −0.03 | ~1× (thin) | −0.2 … −1.3 |
-CORRECTED READ: capacity is a **real but NOT catastrophic** haircut (ETH +8.4→~+0.5, BTC +7.9→~+2-3.8 @$5k), NOT a
-winner-unfillable wall. WINNERS FILL at the turn. **BTC + ETH survive capacity-capped positive; SOL/XRP/DOGE do not**
-on this tape (their tape edge is already weak/negative — the fine SOL/XRP legs). Robust in SIGN across W∈{15,30,60}.
-The Finding-1 open-anchored numbers are SUPERSEDED for winner-fill (kept as the artifact record + the window lesson).
+## ⭐ Finding 2 — RETRACTED (a LOOK-AHEAD artifact; the adversarial Kraken agent caught it)
+I first "fixed" the winner-fill by anchoring the window as [flip-W, flip+W], which dropped corr(cap,net) to ~0 and
+flipped BTC/ETH capacity-capped POSITIVE (+0.6/+2.2). **That was leakage.** For the DEPLOYED ONE-SIDED maker-at-the-
+turn you post the bid only AFTER the flip CONFIRMS (WFLIP=600 lag), so the pre-flip climax [flip-W, flip] already
+traded before your order existed — you cannot fill from it. Counting it is look-ahead. CAUSAL check (flow only AFTER
+the post):
+| window | winner cap (ETH) | ETH cap$/hr@5k | BTC cap$/hr@5k | verdict |
+|---|---|---|---|---|
+| CAUSAL open-whole (from open_idx) | $15 | -13.1 | -7.0 | all majors NEGATIVE |
+| CAUSAL flip-forward (from flip_idx) | $41 | -12.2 | -6.1 | all majors NEGATIVE |
+| NON-CAUSAL pivot+/-30 (pre-flip) | $206 | +0.6 | +2.2 | LEAKAGE - retracted |
+`capacity.anchor="pivot"` is now CAUSAL forward-from-flip (the pre-flip window removed).
 
-## Caveats (do NOT over-read the exact capped $/hr)
-- The PIVOT window ±W (climax duration) is a proxy that needs BOOK calibration to pin the magnitude (tape has no
-  depth; ±W symmetric double-counts pre/post-turn). SIGN (BTC/ETH+, SOL/XRP/DOGE−) is robust; magnitude is not.
+## ⭐ Finding 2' (CORRECTED, causal) — the fill IS the wall; capacity-capped, EVERY major loses
+Causally, winners fill ~$15-41 and losers fill in full -> capacity-capped $/hr @$5k is NEGATIVE on all 5:
+**ETH -13 · BTC -7 · SOL -30 · XRP -22 · DOGE -12**. This is the S45/S56 winners-invisible / fill-is-the-wall law,
+now quantified on Kraken: the S65 front-of-line +$6-16 was fill-idealization; honest causal capacity-capped it is
+deeply negative. The adversarial agent (`KRAKEN_LONGLEG_AUDIT_S66.md`) independently confirmed and hardened this:
+no major, no eligible alt, no hold/swing filter, no coarser-REV, no size $50-$5k crosses zero; **big swings AMPLIFY**
+the adverse selection (winner cap flat ~$0-200 while loser cap explodes; eth sw>=50: $25 vs $206k). "Bigger swings
+fill better" and "long legs we can use" are FALSIFIED for the one-sided strategy.
+
+## Caveats (the one live-out)
+- All of this is a TAPE proxy (price-eligibility stands in for the executor's real open-fill; no book depth). The
+  DIRECTION (winners causally unfillable, capped << front-of-line, all-negative) is robust and matches S45/S52/S56.
+  The definitive magnitude needs the ~30h Kraken BOOK + the executor's own fill accounting — **BTC is the one cell to
+  re-grade first** (least-bad, deepest flow). A TWO-SIDED always-quoting MM (a different strategy that captures the
+  pre-turn climax causally) is the only structural way the winner-fill changes — not a fix to this one-sided model.
 - TAPE price-eligibility is a proxy for the executor's real entry-fill mechanics (definitive grade needs the BOOK +
   the executor's own open-fill accounting; we have ~30h Kraken book). The DIRECTION (winners unfillable / losers
   fill / capacity-capped ≪ front-of-line) is robust and matches S45/S52/S56 across venues.
