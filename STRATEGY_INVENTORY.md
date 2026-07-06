@@ -65,10 +65,29 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
   and name≠Kraken depth (DOT/ATOM/ARB/OP thin; MATIC/MKR no USD pair). LARGE-band candidate cells:
   HYPE·SUI·ADA·ZEC·XMR·AVAX·XLM·AAVE·LTC·NEAR·TAO·LINK·BCH·BNB·TON(+XPL). ⚠ liquidity ≠ edge (HYPE was the
   S64 NULL) — each needs a per-cell grade before it's a cell. ⚠ 0bp assumes we HOLD the $10M/30d tier.
-- **⭐ NEXT (S67+):** (1) restore sol/xrp/doge tape (data/kraken-smallcap-tape or backfill) + pull the
-  agent's LARGE candidates → run the FULL-roster capital model; (2) grade the candidate majors per-cell
-  (S54 gate) before seating; (3) later: swap per-coin cap → per-LEG cap (`capacity.py`); pin capacity on
-  the Kraken BOOK; wire run_portfolio to the paper cron. Restart eligible-alt collection (thin track).
+- **⭐ FULL ROSTER RUN + CANDIDATE GRADES (S67, 14d Kraken tape):** pulled sol/xrp/doge/ada/sui/ltc/avax
+  Kraken tape (`backfill_kraken_trades.py --days 14`; majors 28d already on box). New grading harness
+  `scripts/grade_coin_kraken.py` = per-cell S54 gate for a NEW coin (forward-vs-reversed + circular-shift
+  NULL floor + per-window sign consistency + REV sweep; LIVE run_stream, front-of-line, kr_mk0). Grades
+  of the agent's 4 candidate majors (deep book ≠ edge — the per-cell law):
+  **LTC=SEAT** (rev-side, REV0.30, +3.33 $/hr, 86% windows, clears floor) · **AVAX=MARGINAL** (+3.37 but
+  57% windows, barely over floor) · **ADA=MARGINAL** (+1.88, BELOW its own null floor +2.41) · **SUI=REJECT**
+  (−2.30, 43% windows — 2nd-deepest book, no mean-reversion edge). Registries added (additive):
+  `platform.KRAKEN_CANDIDATES` (LTC) + `KRAKEN_CANDIDATES_MARGINAL` (AVAX/ADA); `portfolio_sim_kraken
+  --seats {majors,graded,all}`. CANARY still PASS on the 6-cell roster.
+- **⭐⭐ THE POOL-BOUND FINDING (load-bearing — reframes "backup capacity"):** at a FIXED $5k pool the 5
+  majors ALREADY SATURATE it (98% util, 0% idle) → adding coins DILUTES the strong ones, LOWERING pool
+  return: majors +5.98 → +LTC +5.40 → +LTC/AVAX/ADA +5.11 $/hr (backups cannibalize BTC/ETH allocation +
+  XRP is a drag −0.68/hr, negative-edge on 14d tape, echoing S63 "XRP aside on tape"). Backup capacity
+  pays ONLY when the POOL GROWS to match: at $10k, +LTC ADDS (+11.04 vs +10.86 majors). Per-$ return is
+  ~flat 0.11%/hr until over-provisioned (all@$15k → 0.079%/hr, 73% util). **⇒ backup coins buy POOL
+  HEADROOM (capacity to deploy MORE), not per-$ edge; best per-$ config is majors-only; XRP tape-grade is
+  a review flag.** (⚠ 14d window, tape-proxy capacity, front-of-line — structure not sizing-grade.)
+- **⭐ NEXT (S67+):** (1) DISCUSS pool size vs roster with Greg (the pool-bound tradeoff — how much capital
+  to deploy decides how many backup coins earn their seat); re-grade XRP; longer-window confirm of LTC;
+  (2) **SMALL-CAP STRATEGY** (Greg's 3rd ask — the ~116 THIN-OK sleeve: −2bp rebate economics, queue-honest
+  fill, per-cell grade; the architect's S1–S3 thin-sleeve proof); (3) later: per-LEG cap swap; pin capacity
+  on the Kraken BOOK; wire run_portfolio to the paper cron. Restart eligible-alt collection (thin track).
 
 ---
 

@@ -116,6 +116,23 @@ KRAKEN = [
 ]
 
 
+# KRAKEN candidate cells (S67) — NEW majors beyond the deployed 5, graded per-cell on 14d Kraken tape
+# by scripts/grade_coin_kraken.py (the S54 gate: forward-vs-reversed + shift-null floor + per-window
+# sign consistency). These are CANDIDATES, NOT in DEPLOYED — seated in the capital model for backup
+# capacity, promoted to live only after a longer-window confirm. Each carries its S67 grade verdict.
+# Deep book != edge (Greg's "as much backup capacity as possible" is gated by the per-cell grade):
+#   SUI  REJECT   (-2.30 $/hr, 43% windows — 2nd-deepest book, no mean-reversion edge on tape)
+KRAKEN_CANDIDATES = [
+    CellConfig("ltc", venue="kraken", side=-1, rev=0.30, grace=300, improve=0.5),   # SEAT: +3.33 $/hr, rev-side, 86% windows, clears floor
+]
+# MARGINAL: positive edge that beats reversed but does NOT robustly clear the null floor / sub-window
+# consistency — usable as thin BACKUP capacity (low weight in the pool), not core. Off by default.
+KRAKEN_CANDIDATES_MARGINAL = [
+    CellConfig("avax", venue="kraken", side=+1, rev=0.13, grace=300, improve=0.5),   # +3.37 $/hr but 57% windows, barely over floor
+    CellConfig("ada", venue="kraken", side=+1, rev=0.10, grace=300, improve=0.5),    # +1.88 $/hr, BELOW its own null floor (+2.41)
+]
+
+
 def kraken_flips(cfg, mid, buy, sell):
     """Compose a Kraken cell's flip stream from its config (live): early-arm (retime) if eps set else
     base detect_flips at cfg.rev; reverse for reversed cells."""

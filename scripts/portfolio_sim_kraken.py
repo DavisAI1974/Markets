@@ -40,7 +40,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from odcore.io import load_bins, align                                       # noqa: E402  (tape I/O)
-from odcore.platform import KRAKEN, run_kraken_cell, run_portfolio           # noqa: E402  (LIVE path)
+from odcore.platform import (KRAKEN, KRAKEN_CANDIDATES, KRAKEN_CANDIDATES_MARGINAL,  # noqa: E402
+                             run_kraken_cell, run_portfolio)                 # LIVE path + registries
 from odcore.capacity import cell_capacity_summary                            # noqa: E402
 from odcore.allocator import pnl_correlation, cluster_by_corr                # noqa: E402
 
@@ -51,11 +52,17 @@ BUCKET = 3600           # 1s grid -> hourly buckets
 CORR_THRESH = 0.5       # PnL-correlation cluster threshold
 
 
-def available_cells():
-    """KRAKEN registry cells that have a realbins tape on box (majors-first; the roster grows as
-    sol/xrp/doge tape + the agent's LARGE candidates are restored)."""
+def available_cells(seats="graded"):
+    """Cells with a realbins Kraken tape on box. seats: 'majors' = the deployed KRAKEN 5 only;
+    'graded' = + KRAKEN_CANDIDATES (S67 SEAT grades, e.g. LTC); 'all' = + MARGINAL backup-capacity
+    candidates (AVAX/ADA). Candidates are NOT in DEPLOYED — seated in the pool for backup capacity."""
+    roster = list(KRAKEN)
+    if seats in ("graded", "all"):
+        roster += list(KRAKEN_CANDIDATES)
+    if seats == "all":
+        roster += list(KRAKEN_CANDIDATES_MARGINAL)
     out = []
-    for cfg in KRAKEN:
+    for cfg in roster:
         p = os.path.join(REALBINS, f"{cfg.coin}_kraken_bins.json")
         if os.path.exists(p):
             out.append((cfg, p))
@@ -117,9 +124,11 @@ def main():
     ap.add_argument("--corr-thresh", type=float, default=CORR_THRESH)
     ap.add_argument("--canary", action="store_true",
                     help="prove pool=inf + per-coin cap=CAP reproduces basket_sim's sum-of-cells")
+    ap.add_argument("--seats", default="graded", choices=["majors", "graded", "all"],
+                    help="majors=deployed 5; graded=+SEAT candidates (LTC); all=+MARGINAL backups (AVAX/ADA)")
     args = ap.parse_args()
 
-    cells = available_cells()
+    cells = available_cells(args.seats)
     if not cells:
         raise SystemExit("no realbins/<coin>_kraken_bins.json on box — restore the Kraken tape first")
     coins, arr, n, hours = load_aligned(cells)
@@ -211,8 +220,9 @@ def main():
     print(f"\n  (contrast — the acknowledged-WRONG framing: sum-of-cells @ ${CAP:.0f} each = "
           f"${indep_total:+.2f} over {hours:.1f}h on ${CAP*len(coins):.0f} of capital. The pool number above is "
           f"what ONE ${args.pool:.0f} pool actually earns spread + capacity-capped.)")
-    print("\n  ⚠ PROVISIONAL: 2-coin (BTC/ETH) tape-proxy capacity + front-of-line fill. Restore sol/xrp/doge "
-          "tape + add the KRAKEN_MAJORS_SWEEP_S67 LARGE candidates as ungraded seats for the full roster.")
+    print(f"\n  ⚠ PROVISIONAL: {len(coins)}-coin ({'/'.join(coins)}) tape-proxy capacity (whole-hold + price-eligible; "
+          "no book depth) + front-of-line fill. Capacity/fill magnitude re-grades on the Kraken BOOK; this "
+          "grades the POOL STRUCTURE. Majors 28d tape, candidates 14d -> common window is the shortest.")
 
 
 if __name__ == "__main__":
