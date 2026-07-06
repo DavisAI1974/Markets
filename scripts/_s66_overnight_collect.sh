@@ -51,7 +51,7 @@ while [ $i -lt ${#PAIRS[@]} ]; do
   done
   wait
   i=$((i + PAR)); batch=$((batch + 1))
-  [ $((batch % 5)) -eq 0 ] && commit_push
+  [ $((batch % 2)) -eq 0 ] && commit_push
 done
 wait
 
