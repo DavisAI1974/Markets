@@ -116,7 +116,8 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                          confirm=None, confirm_lookback: int = 0, entry_gate=None,
                          exit_gate=None, cover_grace: int = 0, lean=None, lean_exit=None,
                          exit_spec=None, fill_mode: str = "maker", fill_model: str = "front",
-                         queue_frac: float = 1.0, arm: str = "") -> SwingResult:
+                         queue_frac: float = 1.0, close_improve_bps: float = 0.0,
+                         arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
     NO time/fill window (Greg S46: "take the time windows out, they are irrelevant"). The conviction quote
@@ -426,15 +427,34 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                     legs.append(SwingLeg(osd, fl, oi, op, int(cf), float(cpx), True, gross, net, swing))
                     hold_until = int(cf)
                 else:
-                    # unfilled within grace (or grace off) -> taker cross. With grace we crossed at the cap
-                    # cell (held then crossed, the realistic downside); without grace, at this turn cell.
-                    xc = cap if cover_grace > 0 else ci
-                    cpx = mid[xc] * (1.0 - hs) if osd > 0 else mid[xc] * (1.0 + hs)
-                    gross = osd * (cpx - op) / op * 1e4
-                    net = gross - fo - taker_fee_bps                     # open fee as opened + taker close
-                    swing = abs(mid[xc] - mid[fl]) / mid[fl] * 1e4
-                    legs.append(SwingLeg(osd, fl, oi, op, int(xc), float(cpx), False, gross, net, swing))
-                    hold_until = int(xc)
+                    # ENTICING MAKER close (S65, opt-in close_improve_bps>0 — default 0 = bit-identical):
+                    # before crossing taker, post a price-IMPROVED (enticing) quote that CONCEDES
+                    # close_improve_bps of our half-spread to jump to the FRONT of the line (Greg S65:
+                    # "show a very enticing bid/offer to get a maker close"). Front-of-line -> fills on
+                    # the first opposing trade (fill_ask/fill_bid front index), booked MAKER at the
+                    # conceded price. Economics: converts a forced-taker close (cross the spread + pay
+                    # taker_fee) into a maker close that earns (hs - improve) and pays maker_fee — a win
+                    # whenever improve < 2*hs + (taker_fee - maker_fee). Cross taker ONLY if even the
+                    # enticing quote cannot fill before the next turn supersedes it.
+                    imp = close_improve_bps / 1e4
+                    cfr = int(fill_ask[ci]) if osd > 0 else int(fill_bid[ci])
+                    if close_improve_bps > 0 and cfr < next_ci:
+                        cpx = mid[cfr] * (1.0 + (hs - imp)) if osd > 0 else mid[cfr] * (1.0 - (hs - imp))
+                        gross = osd * (cpx - op) / op * 1e4
+                        net = gross - fo - maker_fee_bps
+                        swing = abs(mid[cfr] - mid[fl]) / mid[fl] * 1e4
+                        legs.append(SwingLeg(osd, fl, oi, op, int(cfr), float(cpx), True, gross, net, swing))
+                        hold_until = int(cfr)
+                    else:
+                        # unfilled within grace (or grace off) -> taker cross. With grace we crossed at the
+                        # cap cell (held then crossed, the realistic downside); without grace, at this turn.
+                        xc = cap if cover_grace > 0 else ci
+                        cpx = mid[xc] * (1.0 - hs) if osd > 0 else mid[xc] * (1.0 + hs)
+                        gross = osd * (cpx - op) / op * 1e4
+                        net = gross - fo - taker_fee_bps                 # open fee as opened + taker close
+                        swing = abs(mid[xc] - mid[fl]) / mid[fl] * 1e4
+                        legs.append(SwingLeg(osd, fl, oi, op, int(xc), float(cpx), False, gross, net, swing))
+                        hold_until = int(xc)
                 pos = None
 
     nlegs = len(legs)

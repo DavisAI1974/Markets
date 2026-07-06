@@ -80,6 +80,17 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
     artifact; re-grade on a real-tape honest-fill window before any wire-in.
   - **Cheap coverage gaps found:** add xrp/doge to the `makerfill`/`covergrace`/`deepstop` CELLS (eth/btc/sol only);
     run S42 book-depth DIRECTION + E300 death-selector on the Kraken TAPE for XRP/DOGE (never run on Kraken).
+  - **⭐ FRONT-OF-LINE vs the pessimistic bound (Greg S65 #2, `_kraken_enticing.py`):** the basket-sim "honest"
+    number used `fill_model="queue" queue_frac=1.0` = BACK-of-the-best-level-queue (pessimistic). The DEPLOYED
+    `run_cell` uses `fill_model="front"` = FRONT-of-line (the S46 "have the best bid/offer" premise). At front-of-line
+    (queue_frac→0) EVERY cell flips positive on this window (eth +3.4 / btc +1.8 / sol +2.2 / xrp +14.0, forced-taker→0).
+    So most of the ETH/BTC/SOL "bleed" was the back-of-line worst-case, not the signal.
+  - **⭐ ENTICING MAKER CLOSE (Greg S65 #1 — new opt-in `swing_maker.simulate_swing_maker(close_improve_bps=)`,
+    default 0 = bit-identical):** to EARN front-of-line, post a price-IMPROVED cover that CONCEDES a little half-spread
+    to jump the queue → maker close instead of a taker cross. Even from the pessimistic back-of-line base, a **0.5bp
+    concession converts forced-taker closes 26–47%→2–7%** and recovers ~half the bleed (eth −7.8→−3.1, sol −8.0→−3.1,
+    xrp +12.5→+14.7). **Sweet spot is MINIMAL (~0.5bp)** — more concession costs more than it saves. The enticing quote
+    is the mechanism that turns the back-of-line bound into the front-of-line ceiling. Re-grade on a normal-edge window.
 
 ### B. Coinbase midband entry + E300 DEATH-SELECTOR — the mid-leg rig  ⭐ SEPARATE family
 - **Entry:** `odcore/entry_coinbase.py::armed_midband_flips` (S59 promoted; `COINBASE_MIDBAND` registry).
