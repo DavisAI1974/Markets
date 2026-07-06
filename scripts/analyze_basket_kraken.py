@@ -1,19 +1,17 @@
-"""analyze_basket_kraken.py — WINNER/LOSER anatomy of the Kraken basket run (S65).
+"""analyze_basket_kraken.py — WHERE IS THE (NEW) BLEED at front-of-line? (S65).
 
-Greg: "split winners from losers and let's see if there's a bunch of bleed or if we can lift winners."
+After the fill fix (front-of-line + enticing close), the forced-taker leak is largely gone, so this
+re-locates the residual bleed. Runs each cell through the LIVE decision path (basket_sim_kraken.run_cell
+-> platform.run_stream) at FRONT-OF-LINE + per-coin enticing, then splits every cell's legs:
+  1. WIN/LOSS       — n, sum $, avg-W vs avg-L, W/L ratio.
+  2. CLOSE-TYPE     — maker-close (the signal's own turn-exit) / deep-bail (intentional taker risk-control)
+                      / residual FORCED-taker (fill still leaking?). Locates the bleed KIND.
+  3. TAIL           — worst-10 leg $ as a share of total loss. Fat tail = a deeper/tighter bail caps it.
+Verdict per cell: FILL-LEAK (residual forced-taker) / BAIL-COST (deep-bail crosses dominate) /
+SIGNAL-LOSS (maker-close losers = wrong-direction swings, irreducible) / FAT-TAIL (cappable).
 
-Runs the SAME honest-fill basket (basket_sim_kraken) per cell on the common overlap window, then
-dissects each cell's legs three ways to locate WHERE the money is:
-  1. WINNER/LOSER split      — n, sum $, mean bps, avg-W vs avg-L, W/L ratio. Is loss SIZE the problem?
-  2. CLOSE-TYPE split        — maker-close vs FORCED-TAKER-close vs deep-bail(stop). The S63 thesis:
-                               the bleed is forced-taker closes (the FILL leak), not the signal.
-  3. TAIL concentration      — worst-10 / best-10 leg $ as a share of total loss / total win. A FAT
-                               tail = cappable bleed; a thin even spread = systematic thin edge.
-  + IDEAL-vs-HONEST winners  — how many winners the honest fill LOSES to forced-taker (the liftable $).
-  + FILL CEILING             — $/hr if every forced-taker close were a maker close (signal-only ceiling).
-
-Verdict per cell: BLEED-FAT-TAIL (cap it) / BLEED-FORCED-TAKER (fix the fill) / THIN-EDGE (signal weak)
-/ LIFTABLE (winners given back to fill).  All PROVISIONAL — one ~30h low-edge book window.
+ARCHITECTURE: uses the live run_stream via basket_sim_kraken — NOT a reimplementation. PROVISIONAL:
+one ~30h low-edge book window.
 
 Usage:  python scripts/analyze_basket_kraken.py
 """
@@ -27,78 +25,60 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from basket_sim_kraken import CELLS, CAP, load_book, run_cell   # noqa: E402
+from basket_sim_kraken import CELLS, CAP, load_book, run_cell   # noqa: E402  (live decision path)
 
 
-def dollars(bps):
+def d(bps):
     return bps / 1e4 * CAP
 
 
-def anatomy(coin, cell, honest, ideal, hrs):
-    legs = honest.legs
-    net = np.array([l.net_bps for l in legs])
-    d = dollars(net)
-    win = d > 0
-    los = ~win
+def anatomy(coin, side, r, hrs):
+    legs = r.legs
+    dd = np.array([d(l.net_bps) for l in legs])
+    win = dd > 0; los = ~win
     maker = np.array([l.close_maker for l in legs])
     stop = np.array([bool(getattr(l, "stop_exit", False)) for l in legs])
-    forced_taker = (~maker) & (~stop)          # taker close that is NOT an intentional deep-bail
-
-    tot = d.sum()
-    sum_w, sum_l = d[win].sum(), d[los].sum()
-    print(f"\n[{coin}]  {len(legs)} legs, {hrs:.1f}h,  honest net {tot/hrs:+.2f} $/hr  (ideal {dollars(ideal.total_net_bps)/hrs:+.2f})")
-    print(f"  WIN/LOSS:  win% {100*win.mean():.0f}  |  winners n={win.sum():>3} sum={sum_w:+8.1f}$ avg={d[win].mean() if win.any() else 0:+6.2f}$"
-          f"  |  losers n={los.sum():>3} sum={sum_l:+8.1f}$ avg={d[los].mean() if los.any() else 0:+6.2f}$"
-          f"  |  W/L(avg)={(d[win].mean()/abs(d[los].mean())) if los.any() and win.any() else 0:.2f}")
-
-    # close-type split
-    for label, mask in [("maker-close ", maker & ~stop), ("FORCED-taker", forced_taker), ("deep-bail   ", stop)]:
+    ftaker = (~maker) & (~stop)
+    tot = dd.sum(); sum_w = dd[win].sum(); sum_l = dd[los].sum()
+    tag = f"{coin}{'*' if side < 0 else ''}"
+    print(f"\n[{tag}]  {len(legs)} legs, {hrs:.1f}h,  {tot/hrs:+.2f} $/hr   (win% {100*win.mean():.0f})")
+    print(f"  WIN/LOSS: winners n={win.sum():>3} sum={sum_w:+8.1f}$ avg={dd[win].mean() if win.any() else 0:+5.2f}$"
+          f"  |  losers n={los.sum():>3} sum={sum_l:+8.1f}$ avg={dd[los].mean() if los.any() else 0:+5.2f}$"
+          f"  |  W/L={(dd[win].mean()/abs(dd[los].mean())) if los.any() and win.any() else 0:.2f}")
+    for label, mask in [("maker-close  ", maker & ~stop), ("deep-bail    ", stop), ("FORCED-taker ", ftaker)]:
         if mask.any():
-            dm = d[mask]
+            dm = dd[mask]; loss = dm[dm < 0].sum()
             print(f"  {label}: n={mask.sum():>3}  net={dm.sum():+8.1f}$  win%={100*(dm>0).mean():>3.0f}  "
-                  f"avg={dm.mean():+6.2f}$  (share of |loss| {100*dm[dm<0].sum()/sum_l if sum_l<0 else 0:>4.0f}%)")
-
-    # tail concentration
-    order = np.argsort(d)
-    worst10 = d[order[:10]].sum(); best10 = d[order[::-1][:10]].sum()
-    print(f"  TAIL: worst-10 legs = {worst10:+8.1f}$ ({100*worst10/sum_l if sum_l<0 else 0:.0f}% of all loss)   "
-          f"best-10 = {best10:+8.1f}$ ({100*best10/sum_w if sum_w>0 else 0:.0f}% of all win)")
-
-    # fill ceiling: if every forced-taker close earned the maker half-spread instead of crossing.
-    # approximate the give-up as the taker-vs-maker fee delta + the crossed half-spread already in the leg;
-    # cleanest proxy = compare to the IDEAL (front-fill) run, which fills the same turns as maker.
-    lost_to_fill = dollars(ideal.total_net_bps - honest.total_net_bps)
-    print(f"  FILL COST (ideal - honest): {lost_to_fill:+.1f}$ total = {lost_to_fill/hrs:+.2f} $/hr given to the fill")
-
+                  f"loss={loss:+8.1f}$ ({100*loss/sum_l if sum_l<0 else 0:>3.0f}% of all loss)")
+    order = np.argsort(dd); worst10 = dd[order[:10]].sum()
+    print(f"  TAIL: worst-10 = {worst10:+8.1f}$ ({100*worst10/sum_l if sum_l<0 else 0:.0f}% of all loss)")
     # verdict
-    frac_tail = worst10 / sum_l if sum_l < 0 else 0
-    ft_loss = d[forced_taker & los].sum()
-    frac_ft = ft_loss / sum_l if sum_l < 0 else 0
-    verdict = []
-    if frac_tail > 0.5:
-        verdict.append("BLEED-FAT-TAIL (worst-10 carry >50% of loss -> a deeper/tighter bail caps it)")
-    if frac_ft > 0.5:
-        verdict.append("BLEED-FORCED-TAKER (>50% of loss is forced-taker closes -> FILL fix: cover_grace/swing-floor)")
-    if lost_to_fill / max(abs(tot), 1) > 1.0 and ideal.total_net_bps > 0:
-        verdict.append("LIFTABLE (ideal is positive; the honest loss is the fill giving winners back)")
-    if not verdict:
-        verdict.append("THIN-EDGE (loss spread evenly, ideal weak -> signal itself thin on this window)")
-    print(f"  => {' | '.join(verdict)}")
+    v = []
+    ft_loss = dd[ftaker & los].sum(); bail_loss = dd[stop & los].sum(); mk_loss = dd[(maker & ~stop) & los].sum()
+    if sum_l < 0:
+        if ft_loss / sum_l > 0.4:
+            v.append(f"FILL-LEAK (forced-taker still {100*ft_loss/sum_l:.0f}% of loss)")
+        if bail_loss / sum_l > 0.4:
+            v.append(f"BAIL-COST (deep-bail crosses {100*bail_loss/sum_l:.0f}% of loss — risk-control, expected)")
+        if mk_loss / sum_l > 0.4:
+            v.append(f"SIGNAL-LOSS (maker-close losers {100*mk_loss/sum_l:.0f}% — wrong-direction swings)")
+        if worst10 / sum_l > 0.5:
+            v.append("FAT-TAIL (worst-10 >50% of loss — cappable)")
+    print(f"  => {' | '.join(v) if v else 'net positive / no material loss'}")
 
 
 def main():
-    print("=== KRAKEN BASKET — WINNER/LOSER ANATOMY (S65) — honest fill, per cell, common window ===")
+    print("=== KRAKEN BASKET — WHERE IS THE BLEED (front-of-line + enticing, LIVE run_stream) ===")
     books = {}
     for cell in CELLS:
-        if not cell["active"]:
-            continue
-        bk = load_book(cell["coin"])
-        if bk is not None:
-            books[cell["coin"]] = bk
-        else:
-            cell["active"] = False
+        if cell["active"]:
+            bk = load_book(cell["coin"])
+            if bk is not None:
+                books[cell["coin"]] = bk
+            else:
+                cell["active"] = False
     if not books:
-        print("no books; materialize /tmp/kbook/*_book.jsonl first"); return
+        print("no books"); return
     ov0 = max(bk["t0"] for bk in books.values())
     ov1 = min(bk["t0"] + bk["n"] - 1 for bk in books.values())
     ov_sec = ov1 - ov0 + 1; ov_hrs = ov_sec / 3600.0
@@ -107,12 +87,11 @@ def main():
             continue
         bk = books[cell["coin"]]; s = ov0 - bk["t0"]; e = s + ov_sec
         clip = {k: (bk[k][s:e] if isinstance(bk[k], np.ndarray) else bk[k]) for k in bk}
-        _, honest = run_cell(cell, clip, "queue")
-        _, ideal = run_cell(cell, clip, "front")
-        if honest.legs:
-            anatomy(cell["coin"], cell, honest, ideal, ov_hrs)
-    print("\n  ⚠ one ~30h LOW-EDGE book window — provisional. 'FILL COST' uses ideal(front) as the "
-          "perfect-maker-fill reference; the gap is what the real queue fill gives up.")
+        _, r = run_cell(cell, clip, "front")            # front-of-line + per-coin enticing (deployed premise)
+        if r.legs:
+            anatomy(cell["coin"], cell["side"], r, ov_hrs)
+    print("\n  ⚠ one ~30h LOW-EDGE window — provisional. deep-bail loss is INTENTIONAL risk-control (a leg "
+          "that reached the bail depth); SIGNAL-LOSS = the irreducible wrong-direction swings.")
 
 
 if __name__ == "__main__":

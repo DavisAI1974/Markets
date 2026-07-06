@@ -127,7 +127,7 @@ def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
                half_spread_bps=0.0, maker_fee=0.0, taker_fee=5.0, grace=0,
                dipole_entry=False, dipole_exit=None, exit_spec=None, lean_w=None,
                fill_mode="maker", fill_model="front", queue_frac=1.0,
-               alpha=1.0, roll=200, quality=None, size_axis=None):
+               close_improve_bps=0.0, alpha=1.0, roll=200, quality=None, size_axis=None):
     """ANY flip stream through the platform's decision code — the single research entry point.
 
     flips: (confirm_idx, pivot_idx, side) tuples — fine detect_flips output OR a coarse price
@@ -158,7 +158,7 @@ def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
                                lean=lean if dipole_exit else (wl if exit_spec is not None else None),
                                lean_exit=dipole_exit, exit_spec=exit_spec,
                                fill_mode=fill_mode, fill_model=fill_model,
-                               queue_frac=queue_frac)
+                               queue_frac=queue_frac, close_improve_bps=close_improve_bps)
     if quality is not None and size_axis is not None and res.legs:
         size_legs(res.legs, quality, size_axis, alpha=alpha, roll=roll)
     desc = _dipole_descriptors(res.legs, lean, piv, buy, sell, mid)

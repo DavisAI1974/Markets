@@ -8,6 +8,21 @@
 
 ---
 
+## ⭐ STANDING RULE (Greg, S65) — SIM = LIVE CODE + NEW PIECES (things must MATCH)
+Every simulation / backtest / probe MUST run its DECISION through the LIVE code
+(`odcore/platform.py::run_cell`/`run_stream` → `odcore/swing_maker.py`), never a reimplementation. A sim
+only ADDS pieces the live path doesn't own yet: a data loader for a venue with no live loader, new signal
+COMPOSITION, portfolio/sleeve orchestration, parameter sweeps. It does NOT rewrite the executor, fill
+model, sizing, or fees. **New mechanics go INTO `odcore/` (live) FIRST, then the sim uses them** — e.g. the
+S65 enticing close is `swing_maker.close_improve_bps`, threaded through `run_stream`, then used by
+`basket_sim_kraken.py`. This RESTATES the standing no-rewrite-of-existing-files rule (Greg: "please make a
+note to not rewrite sim code in place of our actual code"). **MAKER NUMBERS ARE FRONT-OF-LINE** by default
+(`fill_model="front"` — the deployed S46 premise "have the best bid/offer"); back-of-line/`queue` is a
+pessimistic REFERENCE only. WHY THIS RULE: S65 caught the basket sim using `queue`/back-of-line while live
+uses `front` — the numbers didn't match. That mismatch is exactly the failure this rule prevents.
+
+---
+
 ## 1. DEPLOYED CELLS (`odcore/platform.py::DEPLOYED`) — the production registry
 Per-cell law: each cell = asset × venue × side, validated + deployed independently.
 - `DEPLOYED = [sol, doge(grace=600), xrp, eth, btc(K=10)]` — the paper/sandbox forward ledger cells.
@@ -91,6 +106,16 @@ Per-cell law: each cell = asset × venue × side, validated + deployed independe
     concession converts forced-taker closes 26–47%→2–7%** and recovers ~half the bleed (eth −7.8→−3.1, sol −8.0→−3.1,
     xrp +12.5→+14.7). **Sweet spot is MINIMAL (~0.5bp)** — more concession costs more than it saves. The enticing quote
     is the mechanism that turns the back-of-line bound into the front-of-line ceiling. Re-grade on a normal-edge window.
+  - **⭐ BASKET AT FRONT-OF-LINE (the corrected live-code run, `basket_sim_kraken.py` via `run_stream`):** all 4 active
+    cells POSITIVE — eth +6.77 / btc +6.66 / sol +4.79 / xrp +14.02 $/hr; aggregate **+32.24/hr @ $5k each**; correlations
+    near-zero (eth-btc 0.42, rest <0.22) so **portfolio Sharpe +0.674 > best single +0.629** (diversification real). The
+    enticing lever adds **+0.00 at front-of-line** (nothing to convert — front-of-line already fills maker); its value is
+    the back→front recovery it SECURES (+10/+17/+10/+1.5 per coin). Keep it on (free safety net; positive where needed).
+  - **⭐ THE NEW BLEED = SIGNAL-LOSS, not fill** (`analyze_basket_kraken.py` at front-of-line): forced-taker collapses to
+    0–1% of loss (1–2 legs); **100% of loss is now maker-close losers = wrong-direction swings** (win 52–57%, W/L 1.05–1.40).
+    Deep-bail never fired (no −80/−100 leg on this calm window). So the CHEAP bleed (fill) is FIXED; the residual is the
+    irreducible direction cost (direction is DEAD, closed 4 ways). Only SOL has a fatter tail (worst-10 = 33% of loss,
+    W/L 1.05) — the one maybe-cheap probe left (a SOL bail was killed on tape; re-check on book), low priority.
 
 ### B. Coinbase midband entry + E300 DEATH-SELECTOR — the mid-leg rig  ⭐ SEPARATE family
 - **Entry:** `odcore/entry_coinbase.py::armed_midband_flips` (S59 promoted; `COINBASE_MIDBAND` registry).
