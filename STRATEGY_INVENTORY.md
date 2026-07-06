@@ -23,6 +23,55 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
 
 ---
 
+## ⭐ S67 IN-PROGRESS (2026-07-06, live) — THE CAPITAL MODEL (v1 built, canary PASS) + overlooked-majors sweep
+> Greg's S67 landing (S66): keep the per-coin EDGE; make capacity a VARIABLE SIZE cap (not $5k/trade);
+> build the shared-POOL allocator on the LIVE path. Design LOCKED (Greg): MAJORS-FIRST (5 + agent's LARGE
+> candidates as ungraded seats; thin sleeve stays a parallel data track); POOL=$5k shared; capacity
+> granularity = PER-COIN position cap (an explicit JUMP-OFF scaffold — swappable `caps` dict migrates to
+> per-LEG later w/o touching the allocator; the cap is a SIZE scale, NEVER an inclusion gate — a thin-cap
+> coin gets small size, never dropped); fee = the $10M tier treated as REAL (majors 0bp, carried as the
+> per-cell maker_fee param so a pre-$10M adjustment is a value change, not a rewrite).
+- **Branch reconciled** (recurring wrong-parent bug): designated `claude/davisai-s67-capital-model-0mhh4j`
+  was cut from a stale S59 parent; `reset --hard` to canonical S67 tip `0e688fb`. Dropped only a superseded
+  `book_collector_btc.yml`; all Kraken collectors + paper cron intact on canonical.
+- **⭐ CAPITAL MODEL BUILT (v1) — 3 additive pieces, existing live path byte-untouched:**
+  - `odcore/allocator.py` (NEW): `allocate(demands,caps,pool,weights,clusters,cluster_caps)` = weighted
+    WATER-FILL under 3 caps in priority (per-key capacity → cluster/correlation → pool). Proportional by
+    return-on-capacity so best edge-per-$ funds first when the pool binds, but NOBODY is excluded (Greg's
+    rule). + `pnl_correlation`/`cluster_by_corr` (union-find) promoted from basket_sim's ad-hoc corrcoef.
+    6/6 sanity tests pass (unconstrained, cap-binds-thin-not-excluded, pool-binds-weighted-proportional,
+    cluster-cap, corr-cluster, equal-weight fallback).
+  - `odcore/platform.py::run_portfolio` (NEW, additive — run_cell/run_stream/run_kraken_cell untouched):
+    event-driven shared-pool replay OVER per-cell legs (never re-decides a trade; sim=live). Closes free
+    capital before opens at each cell; a batch opening competes for REMAINING pool via `allocate`; a held
+    leg isn't resized mid-hold nor preempted (realistic; v1 simplification). Leg PnL realizes on the
+    notional it held: `net_bps/1e4 * alloc`. Returns `PortfolioResult` (POOL RETURN, per-coin funded%/
+    realized, pool Sharpe, utilization/idle).
+  - `scripts/portfolio_sim_kraken.py` (NEW sim; only adds tape I/O + cap/weight/cluster construction):
+    loads realbins Kraken tape, LIVE `run_kraken_cell` → legs, `capacity.py` per-coin caps (S66 whole-hold
+    + price-eligible), return-on-capacity weights, corr clusters, `run_portfolio` over $5k. Reports POOL
+    RETURN vs the acknowledged-WRONG sum-@-$5k-each framing.
+- **⭐ CANARY PASS (load-bearing):** `--canary` proves `run_portfolio(pool=inf, cap=$5k/coin)` reproduces
+  basket_sim's sum-of-cells **bit-for-bit** (|diff|=0.00e+00; eth +5744.24 / btc +5374.06 / total
+  +11118.3043) → the capital model sits ON the proven per-cell path; "allocator off" == today's numbers.
+- **FIRST NUMBER (BTC+ETH Kraken tape, 677h/27.7d, front-of-line, $10M-tier 0bp — PROVISIONAL 2-coin):**
+  one **$5k shared pool** capacity-capped (ETH cap ~$1.3k, BTC ~$4.0k) earns **+8.11 $/hr = +0.162%/hr**,
+  pool util mean 89%/peak 100%/idle 1%, Sharpe/bucket +0.48, BTC/ETH PnL-corr just 0.10. Contrast the
+  WRONG framing (sum @ $5k each = +16.4 $/hr but on $10k of capital, crediting $5k fills BTC's ~$4k book
+  can't absorb). Per-$ rate nearly identical (0.162 vs 0.164 %/hr) because near-zero corr + idle capacity
+  → $5k shared ≈ as efficient as $10k split (the anti-resting/diversification benefit, architect §1.5).
+- **⭐ OVERLOOKED-MAJORS SWEEP DONE** (`KRAKEN_MAJORS_SWEEP_S67.md`, agent): fee gate is a NON-ISSUE (all
+  liquid majors share the majors' 0bp-at-$10M schedule; HYPE/XPL better at −2bp). Real gate = LIQUIDITY,
+  and name≠Kraken depth (DOT/ATOM/ARB/OP thin; MATIC/MKR no USD pair). LARGE-band candidate cells:
+  HYPE·SUI·ADA·ZEC·XMR·AVAX·XLM·AAVE·LTC·NEAR·TAO·LINK·BCH·BNB·TON(+XPL). ⚠ liquidity ≠ edge (HYPE was the
+  S64 NULL) — each needs a per-cell grade before it's a cell. ⚠ 0bp assumes we HOLD the $10M/30d tier.
+- **⭐ NEXT (S67+):** (1) restore sol/xrp/doge tape (data/kraken-smallcap-tape or backfill) + pull the
+  agent's LARGE candidates → run the FULL-roster capital model; (2) grade the candidate majors per-cell
+  (S54 gate) before seating; (3) later: swap per-coin cap → per-LEG cap (`capacity.py`); pin capacity on
+  the Kraken BOOK; wire run_portfolio to the paper cron. Restart eligible-alt collection (thin track).
+
+---
+
 ## ⭐ S66 IN-PROGRESS (2026-07-06, live) — the pre-capital-model gating work + the BIG small-cap data pull
 > Greg's S66 reorder (load-bearing): the capital model is BLOCKED — we CANNOT build it until (a) all the
 > proposed improvement tests are run per-cell on **majors AND small caps** (E300, bigline, S42 direction,

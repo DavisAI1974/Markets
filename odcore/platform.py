@@ -271,6 +271,143 @@ def run_cell(cfg: CellConfig):
     return out
 
 
+@dataclass
+class PortfolioResult:
+    """Result of a shared-pool portfolio replay (run_portfolio). POOL RETURN, not sum-@-$5k."""
+    pool: float
+    hours: float
+    total_pnl_usd: float
+    per_coin: dict                 # coin -> dict(realized_pnl_usd, n_legs, n_funded, mean_alloc_usd, ...)
+    pool_pnl_bucketed: np.ndarray  # per-bucket $ PnL of the whole pool (for pool Sharpe)
+    mean_util: float               # mean pool $ deployed / pool
+    max_util: float                # peak pool $ deployed / pool
+    idle_frac: float               # fraction of live steps with zero pool deployed
+
+    @property
+    def pool_return_per_hr(self):
+        return self.total_pnl_usd / self.hours if self.hours else 0.0
+
+
+def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=None,
+                  clusters=None, cluster_caps=None, n=None, bucket_cells=3600):
+    """Replay a set of per-cell leg streams as ONE shared capital pool (S67 capital model).
+
+    Sits ON TOP of the proven per-cell path: the legs are already the output of run_kraken_cell /
+    run_stream (this function never re-decides a trade — architect §2.3, sim=live). It answers the
+    question basket_sim's `aggregate (sum @ $5k each)` line cannot: what does ONE shared pool earn
+    when it is spread across the coins, capacity-capped and correlation-aware?
+
+    cell_legs:   {coin: [SwingLeg,...]} — legs on a COMMON time grid (caller clips to the overlap
+                 window so open_idx/close_idx share one 0..n index space). This strategy holds at
+                 most one open leg per coin at a time, so the allocation KEY is the coin.
+    pool:        shared pool $ (the ONLY place a total-$ figure enters — never a per-cell slice).
+    desired:     {coin: usd} each coin WANTS per open leg (v1 per-coin: the position cap). Default =
+                 caps (a coin wants to fill up to its capacity).
+    caps:        {coin: usd} hard per-coin capacity ceiling (the SWAPPABLE capacity — per-coin
+                 scaffold now, per-leg later without changing this function). Default = pool (uncapped
+                 vs the pool). NOTE: a low cap => small size, NEVER exclusion (allocator rule 1).
+    weights:     {coin: return-on-capacity} funding priority; default equal.
+    clusters/cluster_caps: correlation-cluster labels + per-cluster budgets (a correlated-flush cap).
+    n:           grid length in cells (default = max close_idx + 1). bucket_cells: bucket size for the
+                 pool-PnL series (3600 = hourly on a 1s grid).
+
+    Returns PortfolioResult. Event-driven: closes free capital before opens at the same cell; a batch
+    of coins opening at one cell competes for the REMAINING pool via allocator.allocate (weighted by
+    return-on-capacity, capped per-coin and per-cluster). A held leg is NOT resized mid-hold and is
+    never preempted by a later arrival (realistic: you don't yank a resting maker position — a v1
+    simplification, documented). Leg PnL realizes on the notional it actually held: net_bps/1e4 * alloc.
+    """
+    from odcore.allocator import allocate
+
+    coins = list(cell_legs)
+    caps = dict(caps) if caps else {c: float(pool) for c in coins}
+    desired = dict(desired) if desired else dict(caps)
+    weights = weights or {}
+    if n is None:
+        n = 1 + max((int(l.close_idx) for legs in cell_legs.values() for l in legs), default=0)
+    hours = n / float(bucket_cells)
+
+    # event list: (cell_idx, order, coin, leg_key, leg). order: closes (0) before opens (1) at a tie.
+    events = []
+    for coin, legs in cell_legs.items():
+        for k, l in enumerate(legs):
+            o, c = int(l.open_idx), int(l.close_idx)
+            if c < o:
+                continue
+            events.append((o, 1, coin, k, l))
+            events.append((c, 0, coin, k, l))
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    held = {}                         # coin -> allocated $ of its currently-open leg
+    cl_used = {}                      # cluster_id -> deployed $
+    per_coin = {c: dict(realized_pnl_usd=0.0, n_legs=0, n_funded=0, alloc_sum=0.0,
+                        desired_sum=0.0) for c in coins}
+    nb = max(1, n // bucket_cells)
+    pool_pnl = np.zeros(nb)
+    util_samples = []                 # pool_used sampled after every event (for utilization stats)
+
+    def pool_used():
+        return sum(held.values())
+
+    i = 0
+    E = len(events)
+    while i < E:
+        idx = events[i][0]
+        # 1) process all CLOSES at this cell first (free capital)
+        j = i
+        while j < E and events[j][0] == idx and events[j][1] == 0:
+            _, _, coin, _, l = events[j]
+            alloc = held.pop(coin, 0.0)
+            pnl = float(l.net_bps) / 1e4 * alloc
+            per_coin[coin]["realized_pnl_usd"] += pnl
+            b = min(int(l.close_idx) // bucket_cells, nb - 1)
+            pool_pnl[b] += pnl
+            if clusters and coin in clusters:
+                cl_used[clusters[coin]] = cl_used.get(clusters[coin], 0.0) - alloc
+            j += 1
+        # 2) batch all OPENS at this cell; they compete for the REMAINING pool
+        opens = []
+        while j < E and events[j][0] == idx and events[j][1] == 1:
+            opens.append(events[j])
+            j += 1
+        if opens:
+            rem_pool = float(pool) - pool_used()
+            oc = [e[2] for e in opens]
+            dem = {c: float(desired.get(c, caps.get(c, pool))) for c in oc}
+            cp = {c: float(caps.get(c, pool)) for c in oc}
+            ccaps = None
+            if cluster_caps and clusters:
+                ccaps = {cid: float(cluster_caps[cid]) - cl_used.get(cid, 0.0)
+                         for cid in set(clusters.get(c) for c in oc if c in clusters)}
+            alloc = allocate(dem, caps=cp, pool=max(0.0, rem_pool), weights=weights,
+                             clusters=clusters, cluster_caps=ccaps)
+            for e in opens:
+                coin, l = e[2], e[4]
+                a = alloc.get(coin, 0.0)
+                held[coin] = a
+                per_coin[coin]["n_legs"] += 1
+                per_coin[coin]["desired_sum"] += dem[coin]
+                if a > 1e-9:
+                    per_coin[coin]["n_funded"] += 1
+                    per_coin[coin]["alloc_sum"] += a
+                if clusters and coin in clusters:
+                    cl_used[clusters[coin]] = cl_used.get(clusters[coin], 0.0) + a
+        util_samples.append(pool_used())
+        i = j
+
+    total = float(sum(pc["realized_pnl_usd"] for pc in per_coin.values()))
+    for c, pc in per_coin.items():
+        pc["mean_alloc_usd"] = pc["alloc_sum"] / pc["n_funded"] if pc["n_funded"] else 0.0
+        pc["fill_share"] = pc["n_funded"] / pc["n_legs"] if pc["n_legs"] else 0.0
+    us = np.asarray(util_samples, float) if util_samples else np.zeros(1)
+    return PortfolioResult(
+        pool=float(pool), hours=hours, total_pnl_usd=total, per_coin=per_coin,
+        pool_pnl_bucketed=pool_pnl,
+        mean_util=float(us.mean() / pool) if pool else 0.0,
+        max_util=float(us.max() / pool) if pool else 0.0,
+        idle_frac=float(np.mean(us <= 1e-9)))
+
+
 def load_ledger(path=LEDGER):
     if not os.path.exists(path):
         return []
