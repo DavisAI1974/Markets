@@ -43,7 +43,7 @@ export REPO WT RAW DAYS
 export -f pull_one
 
 echo "[collect] START $(date -u) — ${#PAIRS[@]} eligible pairs @ ${DAYS}d, par=${PAR}"
-i=0; batch=0
+i=0; batch=0; last_commit=0
 while [ $i -lt ${#PAIRS[@]} ]; do
   for j in $(seq 0 $((PAR - 1))); do
     idx=$((i + j)); [ $idx -ge ${#PAIRS[@]} ] && break
@@ -51,7 +51,7 @@ while [ $i -lt ${#PAIRS[@]} ]; do
   done
   wait
   i=$((i + PAR)); batch=$((batch + 1))
-  [ $((batch % 2)) -eq 0 ] && commit_push
+  [ $((i - last_commit)) -ge 15 ] && { commit_push; last_commit=$i; }   # commit ~every 15 pairs
 done
 wait
 
