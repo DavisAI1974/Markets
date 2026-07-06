@@ -21,8 +21,13 @@ if venue == "binance":
 elif venue == "kraken":
     E.BINS = "/tmp/ktape"
     E.CELLS = [("doge", "XDGUSD", "XBTUSD", 100.0), ("xrp", "XRPUSD", "XBTUSD", 80.0)]
+elif venue == "kraken5":
+    E.BINS = "/tmp/ktape"
+    E.CELLS = [("eth", "ETHUSD", "XBTUSD", 80.0), ("btc", "XBTUSD", "ETHUSD", 80.0),
+               ("sol", "SOLUSD", "XBTUSD", 100.0), ("xrp", "XRPUSD", "XBTUSD", 80.0),
+               ("doge", "XDGUSD", "XBTUSD", 100.0)]
 else:
-    raise SystemExit("venue must be binance|kraken")
+    raise SystemExit("venue must be binance|kraken|kraken5")
 
 print(f"# E300 death-selector — venue={venue}  bins={E.BINS}")
 E.main()
