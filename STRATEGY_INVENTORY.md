@@ -225,9 +225,18 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   the live shape is built by the agent's original `research/shape_s71/arc_gate.py` + `regroup2.py` (the
   onset→exhaustion arc extraction + the regrouped reference curves + `quad_means.npz`). Do NOT write a new
   shape builder — REUSE these. The entry gate / selection logic sits ON TOP of that builder.
-- **Status (S73):** first cut run through the LIVE executor on SOL ($5k/trade, one-sided maker, no deep-bail);
-  the short-loser skip works off the shape, the long-loser skip is next (Greg: it's skippable too). Ungated
-  SOL baseline = 61.7% win / +$11.26/hr. NOT deploy-tuned yet.
+- **Status (S73, DONE — validated, not yet selective enough):** refined 4-cell cascade run through the LIVE
+  `run_kraken_cell` on SOL ($5k/trade, no deep-bail). Loser detection WORKS off the shape (short-loser recall
+  75%, long-loser 72%) BUT a midpoint threshold OVER-SKIPS (71% of winners too) because per-trade shapes
+  OVERLAP even though the MEANS separate → win% only 61.7→63.3 (OOS 60.8→62.2), $/hr halved, 28% fired.
+  Characteristics validated; threshold too blunt. `research/shape_s71/sol_ascent_eq.py` + `sol_loser_gate.py`.
+- **⭐ NEXT (S74) — FIND WHERE WINNER/LOSER DON'T OVERLAP, gate ONLY there (Greg):** the shapes separate on the
+  MEAN but overlap per-trade, so characterize the NON-OVERLAP regions (loser TAILS where winners never land —
+  bottom-decile peak for short-loser, deepest below-zero dips for long-loser, etc.) PER COIN × PER CELL and skip
+  only there (fewer skips, near-pure loser → win% lift, keep volume). Plus a NEUTRAL agent to measure pre-onset
+  buy/sell BALANCE + the non-overlap regions per coin × per cell (ratio/shape only, no volume/price; NO expected
+  outcome passed — a hypothesis is parked in the S73 handoff, keep it OUT of the instructions). Then cell-by-cell
+  BTC/ETH/XRP; **doge on its own separate track.** See `SESSION_HANDOFF_2026-07-07_S73.md`.
 - **Deep-bail DEMOTES to a thin backstop** once the gate skips the losers (the entry gate does selection +
   loss-avoidance). EXIT = winner-optimization only; current running exit (flow turn + cover-grace) is the fine
   default until the exit/turn read is built. Detailed research record: the S72 SHAPE STRATEGY block below.
