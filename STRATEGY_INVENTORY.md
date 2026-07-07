@@ -96,6 +96,12 @@ the thing that adapts to conditions is the **numeric values**, not the structure
   It is exactly the architecture the continuous re-tuner needs (tune numbers on a fixed structure, never rewrite
   the structure) and mirrors the shape thesis (structure/shape invariant; numbers regime-dependent — "same
   shape, same conditions, different numbers"). Firing stays Greg-only regardless.
+- **WHY (Greg, S71 — the reading-rule):** long-window AVERAGES rarely fit, because conditions are always
+  changing — averaging blends conditions that shouldn't be blended, so the real-time edge cancels in the mean.
+  The long window gives the SCAFFOLD (general shape/baseline); **you trade the REAL-TIME CORRECTION to it**, not
+  the average. Corollary for every backtest: a flat long-window average does NOT falsify a live signal — the
+  edge lives in the real-time deviation, so judge signals on the correction, not the mean. (This is the OD
+  adaptive-operator / energy-trader instinct: re-fit the numbers to CURRENT data continuously.)
 
 ## ⭐ EVOLUTION (Greg, S70) — REVIVE `research/strategy_evolution/` (structure good, needs updating)
 The hindsight missed-winner audit loop = the "evolution that suggests updates." Structure: replay what the
