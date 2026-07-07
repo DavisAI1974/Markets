@@ -135,54 +135,59 @@ def main():
     print(f"  (registry cells are all side=+1, but the zigzag ALTERNATES -> ~half the LEGS are genuine shorts.)")
 
     # ---- (1) net $/hr vs borrow rate ----
-    def net_per_hr(roll_4h, integ_hrs, open_vol):
-        roll_cost = (roll_4h / 4.0) * integ_hrs                 # $/window (roll_4h per 4h -> per-hr = /4)
-        open_cost = OPEN_BPS / 1e4 * open_vol                   # $ one-time on opened borrow volume
-        return (gross_pnl - roll_cost - open_cost) / hours
+    # borrow bases: UNBOUNDED (deploy full real cap) vs 5x-CAPPED (Kraken realistic max)
+    borrowed = np.maximum(0.0, dep - POOL)
+    integ_unb = float(borrowed.sum()) / 3600.0
+    openv_unb = float(np.maximum(0.0, np.diff(borrowed, prepend=0.0)).sum())
+    borrowed5 = np.maximum(0.0, dep5 - POOL)
+    integ_5x = float(borrowed5.sum()) / 3600.0
+    openv_5x = float(np.maximum(0.0, np.diff(borrowed5, prepend=0.0)).sum())
 
-    # shorts-EXPLICIT sensitivity: also borrow the full SHORT notional (asset borrow), plus long leverage excess
-    borrowed_se = np.maximum(0.0, long_dep - POOL) + short_dep
-    integ_se = float(borrowed_se.sum()) / 3600.0
-    open_vol_se = float(np.maximum(0.0, np.diff(borrowed_se, prepend=0.0)).sum())
+    def costs(roll_4h, integ_hrs, open_vol):
+        roll_cost = (roll_4h / 4.0) * integ_hrs                 # roll_4h per 4h -> per-hr = /4
+        open_cost = OPEN_BPS / 1e4 * open_vol
+        return roll_cost, open_cost
 
-    print(f"\n--- (1) NET POOL $/hr vs BORROW RATE  (gross, no borrow = {gross_per_hr:+.2f} $/hr) ---")
+    print(f"\n--- (1) NET POOL $/hr vs BORROW RATE ---")
+    print(f"  gross (no borrow): UNBOUNDED = {gross_per_hr:+.2f} $/hr   |   5x-capped = {gross5_per_hr:+.2f} $/hr")
     print(f"  anchors: A (leftover idle) = {A_ANCHOR:+.2f}   B_reserve = {BR_ANCHOR:+.2f}")
-    print(f"  {'rollover/4h':>12} | {'LEVERAGE-only net $/hr':>22} | {'+SHORTS-explicit net $/hr':>26} | beats B_reserve?")
+    print(f"  borrow cost split @ 0.02%/4h (5x-capped): rollover ${costs(0.0002,integ_5x,openv_5x)[0]:,.0f} + "
+          f"open-fee ${costs(0.0002,integ_5x,openv_5x)[1]:,.0f}  -> open fee DOMINATES (huge churn of leveraged $)")
+    print(f"\n  {'rollover/4h':>12} | {'net $/hr UNBOUNDED':>18} | {'net $/hr 5x-CAPPED':>18} | 5x beats B_reserve?")
     sweep = {}
     for r in ROLL_SWEEP:
-        nlev = net_per_hr(r, integral_borrowed_hrs, open_volume)
-        nse = net_per_hr(r, integ_se, open_vol_se)
-        sweep[f"{r*100:.2f}%/4h"] = {"leverage_only": round(nlev, 2), "shorts_explicit": round(nse, 2)}
-        beat = "YES" if nlev > BR_ANCHOR else "no"
-        print(f"  {r*100:>10.2f}% | {nlev:>+22.2f} | {nse:>+26.2f} | {beat}")
+        rc_u, oc_u = costs(r, integ_unb, openv_unb); net_u = (gross_pnl - rc_u - oc_u) / hours
+        rc5, oc5 = costs(r, integ_5x, openv_5x); net_5 = (pr5.total_pnl_usd - rc5 - oc5) / hours
+        sweep[f"{r*100:.2f}%/4h"] = {"unbounded": round(net_u, 2), "capped_5x": round(net_5, 2)}
+        beat = "YES" if net_5 > BR_ANCHOR else "no"
+        print(f"  {r*100:>10.2f}% | {net_u:>+18.2f} | {net_5:>+18.2f} | {beat}")
 
-    # breakeven rollover vs each anchor (leverage-only borrow base)
-    open_per_hr = (OPEN_BPS / 1e4 * open_volume) / hours
+    # breakeven rollover vs each anchor (5x-capped borrow base — the realistic one)
+    open_per_hr5 = (OPEN_BPS / 1e4 * openv_5x) / hours
     def breakeven(target):
-        # gross_per_hr - open_per_hr - (r/4)*integ/hours = target
-        num = (gross_per_hr - open_per_hr - target) * hours * 4.0
-        return num / integral_borrowed_hrs if integral_borrowed_hrs > 0 else float("inf")
+        num = (gross5_per_hr - open_per_hr5 - target) * hours * 4.0
+        return num / integ_5x if integ_5x > 0 else float("inf")
     be_A = breakeven(A_ANCHOR); be_BR = breakeven(BR_ANCHOR)
-    print(f"\n  BREAKEVEN rollover (leverage-only borrow): aggressive ties B_reserve at "
-          f"{be_BR*100:.3f}%/4h ; ties A at {be_A*100:.3f}%/4h.")
-    print(f"  => aggressive BEATS B_reserve if rollover < {be_BR*100:.3f}%/4h  "
-          f"(and open fee ~{OPEN_BPS}bp).")
+    print(f"\n  BREAKEVEN rollover (5x-capped): aggressive ties B_reserve at {be_BR*100:.3f}%/4h ; ties A at {be_A*100:.3f}%/4h.")
+    print(f"  (negative breakeven => even a ZERO rollover can't beat reservation, because the OPEN FEE alone "
+          f"on the churned leveraged $ ({open_per_hr5:+.2f} $/hr) already sinks it below the anchors.)")
 
     # ---- (4) directional verdict ----
-    mid_r = ROLL_SWEEP[1]  # 0.02%/4h representative
-    net_mid = net_per_hr(mid_r, integral_borrowed_hrs, open_volume)
-    net_mid_se = net_per_hr(mid_r, integ_se, open_vol_se)
-    verdict = ("RIGHT DIRECTION" if net_mid > BR_ANCHOR else
-               ("WASH" if abs(net_mid - BR_ANCHOR) < 0.5 else "WORSE"))
+    mid_r = ROLL_SWEEP[1]
+    rc5, oc5 = costs(mid_r, integ_5x, openv_5x); net_mid5 = (pr5.total_pnl_usd - rc5 - oc5) / hours
+    verdict = ("RIGHT DIRECTION" if net_mid5 > BR_ANCHOR else
+               ("WASH" if abs(net_mid5 - BR_ANCHOR) < 0.5 else "WORSE"))
     print(f"\n--- (4) DIRECTIONAL VERDICT ---")
-    print(f"  gross (no borrow)          = {gross_per_hr:+.2f} $/hr   ({gross_per_hr/BR_ANCHOR:.2f}x B_reserve)")
-    print(f"  net @ 0.02%/4h leverage    = {net_mid:+.2f} $/hr   (vs B_reserve {BR_ANCHOR:+.2f})")
-    print(f"  net @ 0.02%/4h +shorts     = {net_mid_se:+.2f} $/hr")
-    print(f"  VERDICT: aggressive/margin is **{verdict}** vs reservation at a representative 0.02%/4h borrow.")
+    print(f"  gross 5x-capped (no borrow) = {gross5_per_hr:+.2f} $/hr   ({gross5_per_hr/BR_ANCHOR:.2f}x B_reserve)")
+    print(f"  net 5x @ 0.02%/4h           = {net_mid5:+.2f} $/hr   (vs B_reserve {BR_ANCHOR:+.2f})")
+    print(f"  VERDICT: aggressive/margin is **{verdict}** vs reservation — the leverage gross uplift "
+          f"({gross5_per_hr/BR_ANCHOR:.1f}x) is swamped by borrow (open-fee on churned leveraged $).")
+    integral_borrowed_hrs = integ_5x; open_volume = openv_5x; integ_se = 0; open_vol_se = 0  # for JSON compat
 
     out = {
         "window": {"seconds": ov_sec, "hours": round(hours, 2), "coins": coins, "collateral": POOL},
-        "gross_per_hr_no_borrow": round(gross_per_hr, 2),
+        "gross_per_hr_no_borrow_unbounded": round(gross_per_hr, 2),
+        "gross_per_hr_no_borrow_5x": round(gross5_per_hr, 2),
         "anchors": {"A_idle": A_ANCHOR, "B_reserve": BR_ANCHOR},
         "leverage": {"median_mult": round(float(np.median(mult)), 2), "p90_mult": round(float(np.percentile(mult, 90)), 2),
                      "max_mult": round(float(mult.max()), 2), "pct_time_over_5k": round(100 * float((dep > POOL).mean()), 1),
@@ -191,8 +196,7 @@ def main():
                           "max_over_5k": round(float(dep.max() - POOL))},
         "shorts": {"n_long": n_long, "n_short": n_short, "short_notional_hours": round(short_hours),
                    "pct_of_deployed_hours": round(100 * short_hours / max(1e-9, total_dep_hours), 1)},
-        "borrow_integral_hrs_leverage": round(integral_borrowed_hrs),
-        "borrow_integral_hrs_shorts_explicit": round(integ_se),
+        "borrow_integral_hrs_5x": round(integ_5x), "open_volume_5x": round(openv_5x),
         "net_vs_rollover": sweep,
         "breakeven_rollover_pct_4h": {"vs_A": round(be_A * 100, 3), "vs_B_reserve": round(be_BR * 100, 3)},
         "verdict": verdict,
