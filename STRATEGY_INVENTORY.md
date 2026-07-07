@@ -84,6 +84,19 @@ version.** Every test/backtest/probe's DECISION goes through the live executor (
 (param loop, portfolio layer, reporting) AROUND the live calls. No scratch reimplementation of the
 executor/fill/fees/sizing, no tape proxy, no bolt-on. If a test isn't calling the live code, it doesn't run.
 
+## ⭐ STANDING PRINCIPLE #0d (Greg, S71) — STRUCTURE IS SCAFFOLDING; ONLY THE NUMBERS ARE TUNABLE
+Our STRUCTURE is good — treat it as fixed **scaffolding**. STOP changing the architecture session to session;
+the thing that adapts to conditions is the **numeric values**, not the structure.
+- **SCAFFOLDING (fixed):** the flow-lean zigzag detector, `swing_maker` executor, `run_portfolio` +
+  reserve-per-rest, the signal DEFINITIONS (the exhaustion/onset arc, dipole/divergence), the pipeline shape.
+- **TUNABLE (the only thing that moves):** per-cell params (`rev/eps/grace/bail/improve`), window/smoothing
+  sizes (incl. the ~60s/5s shape windows), capacity caps, ranking weights, signal thresholds (`DIVERGE_STRONG`,
+  …) — fitted to CURRENT conditions.
+- Generalizes #0b (firing locked) + #0c (live-code-only) + the no-rewrite rule into one: **scaffold + knobs.**
+  It is exactly the architecture the continuous re-tuner needs (tune numbers on a fixed structure, never rewrite
+  the structure) and mirrors the shape thesis (structure/shape invariant; numbers regime-dependent — "same
+  shape, same conditions, different numbers"). Firing stays Greg-only regardless.
+
 ## ⭐ EVOLUTION (Greg, S70) — REVIVE `research/strategy_evolution/` (structure good, needs updating)
 The hindsight missed-winner audit loop = the "evolution that suggests updates." Structure: replay what the
 live system DID (opened/skipped + actual PnL) → oracle = best favorable exit WITHIN each trade's real horizon
