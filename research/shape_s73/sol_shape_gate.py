@@ -81,16 +81,19 @@ def run_sol():
         dur.append((c-o)*0.1); dfeat.append(desc_feats(f))
     return (np.array(X), np.array(net), np.array(arcs), np.array(dur), np.array(dfeat), hours, len(res.legs))
 
-# ---- per-trade SHAPE GATE = k nearest INDIVIDUAL curves, WIGGLE ROOM = k (NO averaging, NO centroid) ----
-def knn_winfrac(A_ref, y_ref, A_q, k, exclude_self=False):
-    """Match each query curve to its k NEAREST INDIVIDUAL reference curves (exact shapes, no template),
-    return the winner-fraction among those k neighbours. The k neighbours ARE the wiggle room."""
+# ---- per-trade SHAPE GATE = match to the k nearest INDIVIDUAL curves, assign the NEAREST ARCHETYPE,
+#      then SKIP the trade if that archetype is a LOSER shape (NO averaging, NO centroid; k = wiggle) ----
+# bucket codes: 0=SHORT-WIN 1=LONG-WIN 2=SHORT-LOSE 3=LONG-LOSE ; winners={0,1} losers={2,3}
+def knn_bucket(A_ref, buk_ref, A_q, k, exclude_self=False):
+    """Assign each query curve the MAJORITY archetype among its k nearest INDIVIDUAL reference curves
+    (the exact shapes — nothing averaged). The k neighbours are the wiggle room."""
     q2 = (A_q**2).sum(1)[:, None]; r2 = (A_ref**2).sum(1)[None, :]
     d = q2 + r2 - 2.0 * A_q @ A_ref.T
     if exclude_self:
         np.fill_diagonal(d, np.inf)
     idx = np.argpartition(d, k, axis=1)[:, :k]
-    return y_ref[idx].mean(1)
+    neigh = buk_ref[idx]                                                # (nq, k) archetype of each neighbour
+    return np.array([np.bincount(row, minlength=4).argmax() for row in neigh])
 
 def money(net, keep, hours, tag):
     ung = net.sum(); n = len(net); g = net[keep].sum(); nk = int(keep.sum())
@@ -123,20 +126,30 @@ def main():
         print(f"    {k:11}{m.sum():>5}{pk:>11.3f}{sus:>11.1f}{ri:>9.1f}{net[m].mean():>9.3f}", flush=True)
     print("    (last-session tell: LONG-WIN 'took&rode' = tall peak/long sustain; SHORT-LOSE 'tried&died' = low peak/short sustain)\n", flush=True)
 
-    # ================= THE GATE: individual-curve k-NN, wiggle = k (NO averaging) =================
-    print("  ===== INDIVIDUAL-PIECE GATE (k nearest EXACT curves; k = wiggle room) =====", flush=True)
+    # bucket code per leg: 0=SW 1=LW 2=SL 3=LL
+    buk = np.where(win & short, 0, np.where(win & ~short, 1, np.where(~win & short, 2, 3)))
+    n_SL = int((buk == 2).sum()); n_LL = int((buk == 3).sum())
+
+    # ================= THE GATE: nearest-archetype, SKIP the loser shape (NO averaging) =================
+    print("  ===== INDIVIDUAL-PIECE GATE — assign nearest archetype, SKIP loser shape (k = wiggle) =====", flush=True)
     cut = int(n*0.6); tr = slice(0, cut); te = slice(cut, n)
     for k in (5, 11, 21):
         print(f"\n  --- wiggle k={k} nearest individual curves ---", flush=True)
         # IN-SAMPLE (leave-one-out; z-score on all)
         mu, sd = X.mean(0), X.std(0)+1e-9; Xz = (X-mu)/sd
-        wf_is = knn_winfrac(Xz, win.astype(float), Xz, k, exclude_self=True)
-        money(net, wf_is > 0.5, hours, f"IN-SAMPLE k={k}")
+        b_is = knn_bucket(Xz, buk, Xz, k, exclude_self=True)
+        for name, skipset in [("skip SHORT-LOSE only", {2}), ("skip BOTH losers", {2, 3})]:
+            keep = ~np.isin(b_is, list(skipset))
+            sl_skipped = int(((b_is == 2) & (buk == 2)).sum())        # short-losers correctly skipped
+            money(net, keep, hours, f"IN-SAMPLE k={k} [{name}]")
+            print(f"        (short-losers skipped: {sl_skipped}/{n_SL})", flush=True)
         # OOS (train = ref library, test = query; z-score on train)
         mu_t, sd_t = X[tr].mean(0), X[tr].std(0)+1e-9
-        wf_oos = knn_winfrac((X[tr]-mu_t)/sd_t, win[tr].astype(float), (X[te]-mu_t)/sd_t, k)
+        b_oos = knn_bucket((X[tr]-mu_t)/sd_t, buk[tr], (X[te]-mu_t)/sd_t, k)
         hours_te = hours*(n-cut)/n
-        money(net[te], wf_oos > 0.5, hours_te, f"OOS-last40% k={k}")
+        for name, skipset in [("skip SHORT-LOSE only", {2}), ("skip BOTH losers", {2, 3})]:
+            keep = ~np.isin(b_oos, list(skipset))
+            money(net[te], keep, hours_te, f"OOS-last40% k={k} [{name}]")
 
     # ---- picture: the 4 archetype mean arcs (reference ONLY, NOT the grader) ----
     tsec = (np.arange(PRE+POST+1)-PRE)*0.1

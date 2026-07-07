@@ -164,6 +164,32 @@ WFLIP=600 / ARM0 natural cadence + early-arm `retime` where eps set. DO NOT touc
 | doge | +1 | 0.30 | — | — | 600 | 0.5 | |
 | xrp | +1 | 0.13 | — | — | 300 | 0.5 | |
 
+**⭐⭐ THE ENTRY SHAPE GATE — THE WAY FORWARD (Greg, S73; LIVE direction, TUNING STILL TO DO).** On top of the
+LOCKED firing above sits a per-trade ENTRY SELECTION overlay: read each forming trade's PRE-TRADE exhaustion
+CURVE SHAPE (the onset ignition arc, per trade, live) and **DON'T FIRE ON THE LOSER SHAPES.** Firing/direction
+is untouched (Greg-only) — the gate only decides, for each fire the lean already produced, TAKE or SKIP.
+- **The object:** each INDIVIDUAL trade's pre-onset flow-shape arc (signed to side), read PER TRADE. NO
+  AVERAGING anywhere (#0d / #0e-GATE), NO AUC/snapshot scalar (#0e) — we match the CURVE.
+- **The 4 archetypes** (short/long × winner/loser) are FOUR SEPARATE SETS OF INDIVIDUAL CURVES (never a
+  centroid/mean). Match each forming trade to the exact individual curves with WIGGLE ROOM; SKIP if it matches
+  a LOSER shape (short-loser AND long-loser), FIRE $5k on the winner shapes.
+- **Winners vs losers have VISIBLY different pre-trade shapes** (Greg — "you can just see it"; the regrouped
+  arcs `research/shape_s71/regroup2.py` → `kraken_types_regrouped.png` are the reference curves). WINNER =
+  starts on-side/above zero, steep rate-of-ascent (hockey-stick BLADE), HIGH onset peak. LOSER = **DIPS BELOW
+  ZERO first**, shallower/later ascent, LOW peak.
+- **⚠ MULTIPLE PRE-TRADE SIGNALS, NOT YET TUNED (the work that remains):** the distinct difference is several
+  separate pre-trade tells — (1) start above/below zero (the below-zero DIP), (2) onset PEAK height, (3)
+  rate-of-ascent / BLADE steepness, (4) ascent TIMING ("ascent sooner"). Each is its own signal; none is
+  individually tuned yet. Also open: per-cell thresholds + wiggle-room, the LONG-loser skip, and the exit/turn
+  read. TUNE LATER (Greg) — do NOT get bogged down now.
+- **Status (S73):** first cut BUILT + RUN through the LIVE executor on SOL ($5k/trade, one-sided maker, no
+  deep-bail) — `research/shape_s73/sol_shape_gate.py`, reusing `regroup2.py`'s curve construction. The
+  short-loser skip works off the shape; the long-loser skip is next (Greg: it's skippable too). Ungated SOL
+  baseline = 61.7% win / +$11.26/hr. NOT deploy-tuned yet.
+- **Deep-bail DEMOTES to a thin backstop** once the gate skips the losers (the entry gate does selection +
+  loss-avoidance). EXIT = winner-optimization only; current running exit (flow turn + cover-grace) is the fine
+  default until the exit/turn read is built. Detailed research record: the S72 SHAPE STRATEGY block below.
+
 **⭐ THE GREEDY CAPITAL STRATEGY — LOCKED (Greg, S70; stop rehashing — this is settled).** In plain words,
 this is exactly what `odcore/allocator.py` (`mode="greedy"`) + `odcore/platform.py::run_portfolio` do (LIVE,
 canary-clean). Do NOT re-derive or re-litigate it; only IMPLEMENT/tune the inputs it names.
