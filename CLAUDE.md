@@ -1,4 +1,31 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-07-06 Session 66 — READ `STRATEGY_INVENTORY.md` (S66 block) FIRST + `SESSION_HANDOFF_2026-07-06_S66.md`, not this whole file. S66 delta directly below; S64/S63 below that.)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-07-07 Session 67 — READ `STRATEGY_INVENTORY.md` (S67 block) FIRST + `SESSION_HANDOFF_2026-07-07_S67.md` + `KICKOFF_2026-07-07_S68.md`, not this whole file. S67 delta directly below; S66/S64/S63 below that.)
+
+## S67 UPDATE (2026-07-07) — THE CAPITAL MODEL is BUILT (shared-pool allocator on the live path, CANARY PASS) + majors graded + Greg's deployment reframe. Read `SESSION_HANDOFF_2026-07-07_S67.md` + `STRATEGY_INVENTORY.md` (S67 block)
+- **⭐ THE LANDING (Greg):** the **$5k is the ENTIRE stack** (per-coin $5k was the temp tuning artifact). Job =
+  **best deployment of ONE $5k for max profit/hr**: **fill the best edge-per-$ coin FIRST** (greedy);
+  **NEVER DROP a coin — idle costs nothing**; don't fund negative edge (idle > a losing trade). Temp
+  harness-tuning setup — get mechanics + per-coin edge right, THEN tune deployment. Cautious/additive.
+- **CAPITAL MODEL BUILT (3 additive pieces; live path byte-untouched; CANARY bit-for-bit):** `odcore/
+  allocator.py` (`allocate(mode="greedy"|"proportional")` — 3 caps: per-coin capacity → corr-cluster → pool;
+  greedy fills best-edge-per-$ first, skips negatives, never drops) + `platform.run_portfolio` (event-driven
+  shared-pool replay OVER per-cell legs; POOL RETURN not sum-@-$5k) + `scripts/portfolio_sim_kraken.py`
+  (loads tape, LIVE run_kraken_cell→legs, caps/weights/clusters, run_portfolio; `--seats {majors,graded,all}`
+  `--mode` `--pool` `--canary`). CANARY: pool=inf+cap=$5k reproduces basket_sim sum-of-cells |diff|=0.
+- **`scripts/grade_coin_kraken.py` (NEW):** per-cell S54 gate for ANY new coin (fwd-vs-rev + circular-shift
+  null floor + per-window consistency + REV sweep, LIVE run_stream). Reusable for candidate majors + small-caps.
+- **RESULTS (14d Kraken tape, PROVISIONAL — structure not sizing-grade):** overlooked-majors agent
+  (`KRAKEN_MAJORS_SWEEP_S67.md`) — fee gate a NON-ISSUE (all liquid majors 0bp-@-$10M), real gate = liquidity,
+  name≠Kraken depth. Grades (deep book≠edge): **LTC=SEAT** (rev REV0.30 +3.33) · AVAX/ADA=MARGINAL · SUI=REJECT.
+  **XRP refigured (Greg right):** −0.68 was a book-overfit CONFIG → **REVERSED REV0.20 = +2.61** (sim
+  GRADED_OVERRIDE; live registry untouched). BTC FWD0.10 +5.10 / ETH FWD0.13 +5.89 SEAT. POOL-BOUND: 5 majors
+  saturate $5k (98% util) → backups buy POOL HEADROOM not per-$ edge. Greedy 9-coin @ $5k = +5.37/hr.
+- **⚠ OPEN (S68 job 1 — the real "best deployment" work):** per-batch greedy funds thin coins during BTC/ETH
+  idle windows + some lose on the 14d window (no preemption; idle-vs-deploy threshold unset). Tune that +
+  per-coin exposure cap + edge-weight source (tape vs book) + longer-window confirm before any live change.
+- **⭐ NEXT (S68):** (1) TUNE best $5k deployment; (2) SMALL-CAP STRATEGY (Greg's 3rd ask — ~116 THIN-OK −2bp
+  sleeve, per-cell grade via grade_coin_kraken, architect S1–S3 thin proof); (3) later: per-LEG cap swap, pin
+  capacity on the Kraken book, wire run_portfolio to paper cron. ⚠ Kraken tapes LOCAL + die on recycle →
+  restore via `backfill_kraken_trades.py --days 14 --pair {SOLUSD,XXRPZUSD,XDGUSD,ADAUSD,SUIUSD,LTCUSD,AVAXUSD}`.
 
 ## S66 UPDATE (2026-07-06) — CAPACITY built + the fill-model saga + Greg's reframe → the CAPITAL MODEL is next. Read `SESSION_HANDOFF_2026-07-06_S66.md` + `S66_CAPACITY_FINDINGS.md`
 - **⭐ THE LANDING (Greg):** don't re-derive fill economics — keep last night's (S65) per-coin EDGE; make capacity a

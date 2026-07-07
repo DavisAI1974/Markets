@@ -130,6 +130,7 @@ KRAKEN_CANDIDATES = [
 KRAKEN_CANDIDATES_MARGINAL = [
     CellConfig("avax", venue="kraken", side=+1, rev=0.13, grace=300, improve=0.5),   # +3.37 $/hr but 57% windows, barely over floor
     CellConfig("ada", venue="kraken", side=+1, rev=0.10, grace=300, improve=0.5),    # +1.88 $/hr, BELOW its own null floor (+2.41)
+    CellConfig("sui", venue="kraken", side=-1, rev=0.30, grace=300, improve=0.5),    # REJECT (-2.30) — seated only so it's not dropped; greedy never funds negative edge
 ]
 
 
@@ -306,7 +307,7 @@ class PortfolioResult:
 
 
 def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=None,
-                  clusters=None, cluster_caps=None, n=None, bucket_cells=3600):
+                  clusters=None, cluster_caps=None, mode="greedy", n=None, bucket_cells=3600):
     """Replay a set of per-cell leg streams as ONE shared capital pool (S67 capital model).
 
     Sits ON TOP of the proven per-cell path: the legs are already the output of run_kraken_cell /
@@ -397,7 +398,7 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
                 ccaps = {cid: float(cluster_caps[cid]) - cl_used.get(cid, 0.0)
                          for cid in set(clusters.get(c) for c in oc if c in clusters)}
             alloc = allocate(dem, caps=cp, pool=max(0.0, rem_pool), weights=weights,
-                             clusters=clusters, cluster_caps=ccaps)
+                             clusters=clusters, cluster_caps=ccaps, mode=mode)
             for e in opens:
                 coin, l = e[2], e[4]
                 a = alloc.get(coin, 0.0)

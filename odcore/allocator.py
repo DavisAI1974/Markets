@@ -35,8 +35,17 @@ _INF = float("inf")
 
 
 def allocate(demands, caps=None, pool=_INF, *, weights=None, clusters=None, cluster_caps=None,
-             tol=1e-9):
-    """Distribute a shared POOL across competing keys by weighted water-fill under 3 caps.
+             mode="greedy", tol=1e-9):
+    """Distribute a shared POOL across competing keys under 3 caps.
+
+    mode:
+      "greedy" (DEFAULT — Greg S67 "best profit potential per hour with our $5k, fill the best first"):
+        rank keys by weight (return-on-capacity = edge per $) DESCENDING and fill each to its ceiling
+        before the next. A NON-POSITIVE-weight key is NOT funded (idle pool earns 0 > deploying into a
+        losing trade) — but it is NOT dropped from the roster (idle costs nothing; it stays available
+        for a step/regime where its edge is positive). This maximises expected pool $/hr.
+      "proportional": weighted water-fill — every positive-demand key with headroom gets a share
+        proportional to its weight (spreads for Sharpe/diversification). Reference mode.
 
     demands:      {key: desired_usd}  — what each live key wants this step (>=0).
     caps:         {key: capacity_usd} — hard per-key ceiling (the SWAPPABLE capacity; per-coin v1).
@@ -53,6 +62,7 @@ def allocate(demands, caps=None, pool=_INF, *, weights=None, clusters=None, clus
     """
     keys = list(demands)
     caps = caps or {}
+    weights_given = bool(weights)
     weights = weights or {}
     # effective ceiling per key = min(demand, cap); clamp negatives to 0.
     ceil = {k: max(0.0, min(float(demands[k]), float(caps.get(k, _INF)))) for k in keys}
@@ -64,17 +74,34 @@ def allocate(demands, caps=None, pool=_INF, *, weights=None, clusters=None, clus
         w = float(weights.get(k, 0.0))
         return w if w > 0 else 0.0
 
-    # keys with any real weight fund by weight; if ALL weights are 0 fall back to equal shares.
-    if not any(key_weight(k) > 0 for k in keys):
-        weights = {k: 1.0 for k in keys}
-
-        def key_weight(k):  # noqa: F811 — equal-weight fallback
+    # NO priority info (caller passed no weights) -> equal priority in BOTH modes (fund all, e.g. the
+    # canary's pool=inf faithfulness check). When weights ARE given, respect them: greedy skips
+    # non-positive edge (idle pool beats a losing trade), even to funding nothing if the whole roster
+    # is negative — a coin is never DROPPED (it stays seated for a step/regime where its edge turns +).
+    if not weights_given:
+        def key_weight(k):  # noqa: F811 — equal-priority fallback
             return 1.0
 
     def cluster_room(k):
         if clus_rem is None or clusters is None or k not in clusters:
             return _INF
         return max(0.0, clus_rem.get(clusters[k], _INF))
+
+    if mode == "greedy":
+        # fill the BEST edge-per-$ coin to its ceiling first, then the next, until the pool is spent;
+        # skip non-positive edge (idle beats a losing trade). Ties broken by larger ceiling first.
+        order = sorted(keys, key=lambda k: (key_weight(k), ceil[k]), reverse=True)
+        for k in order:
+            if key_weight(k) <= 0 or remaining <= tol:
+                continue
+            grant = min(ceil[k] - alloc[k], cluster_room(k), remaining)
+            if grant <= tol:
+                continue
+            alloc[k] += grant
+            remaining -= grant
+            if clus_rem is not None and clusters is not None and k in clusters:
+                clus_rem[clusters[k]] = clus_rem.get(clusters[k], _INF) - grant
+        return alloc
 
     active = [k for k in keys if ceil[k] - alloc[k] > tol and key_weight(k) > 0
               and cluster_room(k) > tol]

@@ -45,11 +45,20 @@ from odcore.platform import (KRAKEN, KRAKEN_CANDIDATES, KRAKEN_CANDIDATES_MARGIN
 from odcore.capacity import cell_capacity_summary                            # noqa: E402
 from odcore.allocator import pnl_correlation, cluster_by_corr                # noqa: E402
 
+import dataclasses                                                        # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REALBINS = os.path.join(ROOT, "realbins")
 CAP = 5000.0            # basket_sim's flat per-cell slice (the canary reference)
 BUCKET = 3600           # 1s grid -> hourly buckets
 CORR_THRESH = 0.5       # PnL-correlation cluster threshold
+
+# S67 TAPE-GRADED direction/rev overrides (registry configs are BOOK-overfit; grade_coin_kraken.py on
+# 14d tape). Applied in the sim only — the live KRAKEN registry stays untouched (this is harness tuning).
+# eps/bail/grace/improve are kept from the registry; only side+rev change.
+GRADED_OVERRIDE = {
+    "xrp": dict(side=-1, rev=0.20),   # 14d tape: REVERSED +2.61 $/hr vs registry FORWARD -0.68 (the book-overfit)
+}
 
 
 def available_cells(seats="graded"):
@@ -65,6 +74,9 @@ def available_cells(seats="graded"):
     for cfg in roster:
         p = os.path.join(REALBINS, f"{cfg.coin}_kraken_bins.json")
         if os.path.exists(p):
+            ov = GRADED_OVERRIDE.get(cfg.coin)
+            if ov:
+                cfg = dataclasses.replace(cfg, **ov)   # tape-graded direction/rev (registry untouched)
             out.append((cfg, p))
     return out
 
@@ -124,8 +136,10 @@ def main():
     ap.add_argument("--corr-thresh", type=float, default=CORR_THRESH)
     ap.add_argument("--canary", action="store_true",
                     help="prove pool=inf + per-coin cap=CAP reproduces basket_sim's sum-of-cells")
-    ap.add_argument("--seats", default="graded", choices=["majors", "graded", "all"],
-                    help="majors=deployed 5; graded=+SEAT candidates (LTC); all=+MARGINAL backups (AVAX/ADA)")
+    ap.add_argument("--seats", default="all", choices=["majors", "graded", "all"],
+                    help="majors=deployed 5; graded=+SEAT candidates (LTC); all=+every seated backup (never drop a coin)")
+    ap.add_argument("--mode", default="greedy", choices=["greedy", "proportional"],
+                    help="greedy=fill best edge-per-$ first (max profit/hr); proportional=spread by weight")
     args = ap.parse_args()
 
     cells = available_cells(args.seats)
@@ -200,10 +214,10 @@ def main():
 
     # ---- THE SHARED-POOL REPLAY ----
     pr = run_portfolio(cell_legs, pool=args.pool, caps=caps, desired=caps, weights=weights,
-                       clusters=clusters, cluster_caps=cluster_caps, n=n, bucket_cells=BUCKET)
+                       clusters=clusters, cluster_caps=cluster_caps, mode=args.mode, n=n, bucket_cells=BUCKET)
 
-    print(f"\n  --- SHARED POOL = ${args.pool:.0f} (capacity-capped, {int(CLUSTER_FRAC*100)}% cluster cap, "
-          f"return-on-capacity weighted) ---")
+    print(f"\n  --- SHARED POOL = ${args.pool:.0f} ({args.mode}: fill best edge-per-$ first; capacity-capped, "
+          f"{int(CLUSTER_FRAC*100)}% cluster cap; ALL coins seated, none dropped) ---")
     print(f"  {'coin':5}{'legs':>6}{'funded%':>9}{'meanAlloc$':>12}{'realized$':>12}{'$/hr':>9}")
     for c in coins:
         pc = pr.per_coin[c]

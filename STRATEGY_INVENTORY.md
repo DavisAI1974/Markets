@@ -83,11 +83,30 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
   ~flat 0.11%/hr until over-provisioned (all@$15k → 0.079%/hr, 73% util). **⇒ backup coins buy POOL
   HEADROOM (capacity to deploy MORE), not per-$ edge; best per-$ config is majors-only; XRP tape-grade is
   a review flag.** (⚠ 14d window, tape-proxy capacity, front-of-line — structure not sizing-grade.)
-- **⭐ NEXT (S67+):** (1) DISCUSS pool size vs roster with Greg (the pool-bound tradeoff — how much capital
-  to deploy decides how many backup coins earn their seat); re-grade XRP; longer-window confirm of LTC;
-  (2) **SMALL-CAP STRATEGY** (Greg's 3rd ask — the ~116 THIN-OK sleeve: −2bp rebate economics, queue-honest
-  fill, per-cell grade; the architect's S1–S3 thin-sleeve proof); (3) later: per-LEG cap swap; pin capacity
-  on the Kraken BOOK; wire run_portfolio to the paper cron. Restart eligible-alt collection (thin track).
+- **⭐ GREG'S REFRAME (load-bearing, end of S67):** the **$5k is the ENTIRE stack**, not per-sleeve — the
+  per-coin $5k slice was always the temp tuning artifact. The job = **best deployment of ONE $5k for max
+  profit/hr**. Rules: (a) **fill the best edge-per-$ coin FIRST** (greedy, not spread); (b) **never DROP a
+  coin — idle costs nothing**, every coin stays seated & available, the allocator just doesn't fund it when
+  its edge is negative or better coins fill the pool; (c) don't fund negative-edge (idle > a losing trade).
+- **⭐ XRP REFIGURED (Greg was right):** −0.68 was a **book-overfit CONFIG**, not a bad coin. `grade_coin_kraken`
+  on 14d tape: XRP wants **REVERSED, REV0.20 → +2.61 $/hr** (registry had FORWARD; that's the S63 "XRP aside/
+  reversed on tape" signal; last night's +16 was the 30h book). Applied as a sim-only `GRADED_OVERRIDE`
+  (live registry untouched). Re-grade of all 5 majors on 14d tape: BTC FWD0.10 +5.10 SEAT · ETH FWD0.13
+  +5.89 SEAT · SOL/XRP/DOGE MARGINAL (positive with right config, below null floor on this window).
+- **⭐ GREEDY ALLOCATOR built** (`allocator.allocate(mode="greedy")`, now DEFAULT; `run_portfolio(mode=)`):
+  ranks seated coins by edge-per-$, fills the best to its cap first, then next, until $5k spent; **skips
+  non-positive edge (idle beats a loser); never drops a coin**. `portfolio_sim_kraken --seats all --mode
+  greedy` = 9 coins seated (5 majors + LTC + AVAX/ADA/SUI backups), XRP fixed. CANARY still PASS bit-for-bit.
+  ⚠ **OPEN (the real "best deployment" work, next session):** per-batch greedy funds THINNER coins during
+  BTC/ETH's idle windows and some lose on this 14d window (no preemption; idle-vs-deploy threshold unset) →
+  pool +5.37/hr @ $5k, ~flat vs proportional. Tuning the idle-vs-deploy / preemption / per-coin exposure cap
+  is the next lever. Numbers PROVISIONAL (14d tape-proxy capacity, front-of-line; not sizing-grade).
+- **⭐ NEXT (S68):** (1) **TUNE THE BEST $5k DEPLOYMENT** — idle-vs-deploy threshold (don't fund thin coins
+  just because majors are between legs unless edge clears a bar), optional preemption / per-coin exposure cap,
+  edge-weight source (tape vs book); confirm LTC + the marginal configs on a longer window; (2) **SMALL-CAP
+  STRATEGY** (Greg's 3rd ask — the ~116 THIN-OK −2bp sleeve: rebate economics, queue-honest fill, per-cell
+  grade via `grade_coin_kraken`; architect S1–S3 thin proof); (3) later: per-LEG cap swap; pin capacity on the
+  Kraken BOOK; wire run_portfolio to the paper cron. Restart eligible-alt collection (thin track).
 
 ---
 
