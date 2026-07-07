@@ -297,9 +297,11 @@ class PortfolioResult:
     total_pnl_usd: float
     per_coin: dict                 # coin -> dict(realized_pnl_usd, n_legs, n_funded, mean_alloc_usd, ...)
     pool_pnl_bucketed: np.ndarray  # per-bucket $ PnL of the whole pool (for pool Sharpe)
-    mean_util: float               # mean pool $ deployed / pool
+    mean_util: float               # mean pool $ deployed / pool  (EVENT-sampled — do not use for time-in-market)
     max_util: float                # peak pool $ deployed / pool
-    idle_frac: float               # fraction of live steps with zero pool deployed
+    idle_frac: float               # fraction of live EVENTS with zero pool deployed (event-sampled)
+    time_util: float = 0.0         # TIME-weighted deployed $ / pool over the whole window (the honest utilization)
+    time_in_play_frac: float = 0.0 # fraction of the window (wall-clock) with ANY capital deployed
 
     @property
     def pool_return_per_hr(self):
@@ -363,6 +365,7 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
     nb = max(1, n // bucket_cells)
     pool_pnl = np.zeros(nb)
     util_samples = []                 # pool_used sampled after every event (for utilization stats)
+    timeline = []                     # (cell_idx, deployed$) after each batch -> TIME-weighted utilization
 
     def pool_used():
         return sum(held.values())
@@ -410,8 +413,20 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
                     per_coin[coin]["alloc_sum"] += a
                 if clusters and coin in clusters:
                     cl_used[clusters[coin]] = cl_used.get(clusters[coin], 0.0) + a
-        util_samples.append(pool_used())
+        timeline.append((idx, pool_used()))       # deployed $ persists from idx until the next batch
+        util_samples.append(timeline[-1][1])
         i = j
+
+    # TIME-weighted deployment over [0, n): each batch's deployed $ holds until the next batch's cell.
+    cap_seconds = 0.0; play_seconds = 0.0
+    for k, (idx_k, dep_k) in enumerate(timeline):
+        end = timeline[k + 1][0] if k + 1 < len(timeline) else n
+        dur = max(0, end - idx_k)
+        cap_seconds += dep_k * dur
+        if dep_k > 1e-9:
+            play_seconds += dur
+    time_util = float(cap_seconds / (pool * n)) if (pool and n) else 0.0
+    time_in_play = float(play_seconds / n) if n else 0.0
 
     total = float(sum(pc["realized_pnl_usd"] for pc in per_coin.values()))
     for c, pc in per_coin.items():
@@ -423,7 +438,8 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
         pool_pnl_bucketed=pool_pnl,
         mean_util=float(us.mean() / pool) if pool else 0.0,
         max_util=float(us.max() / pool) if pool else 0.0,
-        idle_frac=float(np.mean(us <= 1e-9)))
+        idle_frac=float(np.mean(us <= 1e-9)),
+        time_util=time_util, time_in_play_frac=time_in_play)
 
 
 def load_ledger(path=LEDGER):

@@ -75,6 +75,9 @@ def main():
 
     print(f"\n  --- POOL (one ${POOL:.0f} bank, greedy, front-of-line) ---")
     print(f"  POOL $/hr            = {pr.pool_return_per_hr:+.2f}  (${pr.total_pnl_usd:+.2f} over {hours:.1f}h)")
+    print(f"  MONEY IN PLAY        = {100*pr.time_in_play_frac:.0f}% of the {hours:.1f}h (wall-clock; ANY capital deployed)")
+    print(f"  TIME-weighted deploy = {100*pr.time_util:.0f}% of the $5k on average "
+          f"(vs the misleading event-sampled {100*pr.mean_util:.0f}%)")
 
     # ---- CAPACITY OVER TIME (the real question — not the $5k snapshot) ----
     # TIME-weighted, uniform over the whole window (NOT event-sampled like mean_util).
