@@ -22,19 +22,25 @@ per-trade winner/loser shapes OVERLAP even though the MEANS separate cleanly. Ch
 too blunt. All the design principles were nailed down (see below).
 
 **⭐ NEXT (S74):**
-1. **FIND WHERE WINNER/LOSER DON'T OVERLAP, and gate ONLY there (Greg, load-bearing).** The shapes separate on
-   the MEAN but overlap per-trade, so a midpoint threshold over-skips. The fix = characterize the NON-OVERLAP
-   regions — the loser TAIL where winners essentially never land (bottom-decile peak for short-loser; deepest
-   below-zero dips for long-loser; and whatever other feature has a clean separable tail) — PER COIN × PER CELL,
-   and skip only there. Skip fewer trades, but the skipped ones are almost pure loser → win% lift without
-   gutting volume. Re-run on the same SOL book through the live code first, then cell-by-cell.
+1. **FIND WHERE WINNER/LOSER DON'T OVERLAP in the ENTRY shape, gate ONLY there (Greg, load-bearing).** The
+   shapes separate on the MEAN but overlap per-trade, so a midpoint threshold over-skips. The fix = characterize
+   the NON-OVERLAP regions of the pre-onset ENTRY shape — the loser TAILS where winners essentially never land —
+   PER COIN × PER CELL, and skip only there (fewer skips, near-pure loser → win% lift, keep volume).
+   **⭐ PRIME discriminator (Greg): the ASCENT EQUATION's LINEAR vs NON-LINEAR shape.** LOSER = LINEAR
+   (straight/flat, gradual rise); WINNER = NON-LINEAR / HOCKEY-STICK (flat handle → accelerates into onset).
+   This is scale-free (curvature, not magnitude → transfers across coins). ⚠ measure linearity PROPERLY —
+   linear-fit R² / convexity vs the start→peak chord — NOT the terminal blade slope (it saturates and reads
+   backwards, the S73 miss). Likely the cleanest non-overlap: losers cluster on "linear," winners on "curved."
+   Also test peak/energy tails (short-loser) + below-zero-dip tails (long-loser). Re-run on the same SOL book
+   through the live code first, then cell-by-cell.
 2. **Pre-onset PRESSURE/BALANCE agent (NEUTRAL).** Spin up an agent to (a) MEASURE the buy/sell flow BALANCE
-   (how balanced vs lopsided the buy-vs-sell flow is) during the pre-trade window, PER COIN × PER CELL (the 4
-   cells), through the live executor's legs on recent book, and (b) find WHERE the 4 cells' distributions do
-   NOT overlap (the cleanly-separable regions per feature per cell) so we can focus the gate there. Report
-   whether/where the 4 cells differ. Shape/RATIO-based only (scale-free — NO absolute volume, NO price, per the
-   S73 principle). **Give the agent NO expected outcome** (see "Greg's hypothesis" below — keep it OUT of the
-   instructions to avoid biasing).
+   (how balanced vs lopsided the buy-vs-sell flow is) during the pre-trade ENTRY window, PER COIN × PER CELL
+   (the 4 cells), through the live executor's legs on recent book, and (b) find WHERE in the ENTRY-shape
+   features the 4 cells' distributions do NOT overlap (the cleanly-separable regions per feature per cell) —
+   INCLUDING the ascent LINEARITY (linear-fit R²/convexity, the linear-vs-non-linear axis), peak/energy, and
+   below-zero dip — so we can focus the gate there. Report whether/where the 4 cells differ. Shape/RATIO-based
+   only (scale-free — NO absolute volume, NO price, per the S73 principle). **Give the agent NO expected
+   outcome** (see "Greg's hypothesis" below — keep it OUT of the instructions to avoid biasing).
 3. **Then cell-by-cell:** re-fit the (universal) shape thresholds for BTC/ETH/XRP (their OWN numbers) using the
    non-overlap regions, gate each; **doge on its own separate track** (doge is excluded from the 4-major rules).
 
@@ -69,10 +75,16 @@ through the LIVE `run_kraken_cell`. Ran on SOL's 73h Kraken book, $5k/trade, one
 - **LONG-WINNER** — long run, HIGHEST energy (peak 0.348), steepest ascent, stays above zero most.
 - **LONG-LOSER** — long run, lower peak (0.295), LOWER ascension rate, dips DEEPER/LONGER below zero
   (ascent-min −0.64 vs −0.56; 37% vs 33% below zero). Tell = below-zero dip.
+- **⭐ TWO UNIVERSAL WINNER SIGNATURES (Greg, hold in both categories):** (1) the winner ALWAYS has MORE ENERGY
+  than its PAIRED loser — short-win > short-lose (0.125 vs 0.014), long-win > long-lose (0.348 vs 0.295); the
+  within-pair winner>loser energy rule never flips (absolute levels differ short vs long, the relative rule does
+  not). (2) the winner's ascent is NON-LINEAR / hockey-stick; the loser's is LINEAR. Loser = LESS energy +
+  LINEAR (short-loser flat/near-zero; long-loser below-zero dip).
 - **Easiest discriminators:** (1) ENERGY = onset PEAK (ranks short-lose < short-win < longs, splits the short
-  pair 0.125 vs 0.014), then (2) BELOW-ZERO DIP to split the long pair. Run-length = the long/short axis.
+  pair 0.125 vs 0.014), then (2) BELOW-ZERO DIP to split the long pair, plus (3) ascent LINEARITY (winner
+  non-linear vs loser linear). Run-length = the long/short axis.
 - **Ascension rate:** winner steeper in both (per the graph); a rate SCALAR on the normalized signal reads
-  backwards (saturation) — use the shape/peak, not the scalar.
+  backwards (saturation) — use the shape (peak/energy + linear-vs-non-linear), not the scalar.
 
 ### The gate result (SOL, LIVE run_kraken_cell, same 73h book)
 - ungated: 61.7% win / +11.26 $/hr (100% fired).
