@@ -23,7 +23,8 @@
 #     performer ($/hr per $) first, up to what its BOOK can absorb / capital allows; the remainder
 #     cascades to the next-best LIVE coin, and so on to $5k. Breadth (majors + minors) is what keeps
 #     the bank full — no idle, no queue-waiting (if a coin is tapped, move to the next coin in line).
-#     Never fund negative edge (idle beats a loser).
+#     Never DROP a coin (all coins stay seated). "Never fund negative edge" is a WRONG rule (Greg, S70) —
+#     average edge does NOT predict a trade; we keep the $5k deployed, we do NOT idle it or exclude a coin.
 #
 # THE ONE JOB, ALWAYS: adjust how the live greedy allocator fills the $5k from the live BOOK,
 # front-of-line — firing untouched. That is the entire session surface unless Greg says otherwise.
@@ -133,15 +134,20 @@ canary-clean). Do NOT re-derive or re-litigate it; only IMPLEMENT/tune the input
 5. **Positions are per-coin and INDEPENDENT, mixed direction.** We can be **short BTC and long SOL at the same
    time** — nothing forces the whole book to one side. Multiple concurrent positions is the NORMAL state; that
    is how the $5k stays full.
-6. **Never fund negative edge** (idle beats a loser). **Never DROP a coin** — an unfunded coin stays seated and
-   available; greedy just doesn't fund it this round.
+6. **Never DROP a coin** — every coin stays seated and available. **"Never fund negative edge" is a WRONG rule
+   (Greg, S70; tested repeatedly).** Average edge is backward-looking and does NOT predict a trade's win/lose
+   (direction is unpredictable — closed 4 ways), so it does NOT gate a coin out and we do NOT idle capital to
+   dodge a negative-average coin. Edge sets the funding ORDER (best first); it never excludes. Keep the $5k
+   deployed to stay ~100% in play.
 7. **Always FRONT-OF-LINE maker** (`fill_model="front"` + enticing close `swing_maker.close_improve_bps`=0.5/coin):
    post the best bid/offer so we are first in line.
 8. **Breadth is the fuel.** More seated coins (majors + the 16 minors + the small-cap sleeve) = more concurrent
    fill opportunities = the $5k stays deployed. Thin books each take small size; that is why we need many coins.
 
-**The ONLY tuning surface on this** = the INPUTS greedy consumes: per-coin **counterparty capacity** (measured
-from the live book), the **edge-per-$ ranking**, and the **idle-vs-deploy** floor (rule 6). Firing is untouched.
+**The ONLY tuning surface on this** = the INPUTS greedy consumes: per-coin **counterparty capacity** (from the
+live BOOK DEPTH — the resting bid/ask sizes, NOT trade volume) and the **edge-per-$ ranking** (order only, never
+a gate). Firing is untouched. ⚠ the allocator CODE currently skips non-positive edge — that must be removed
+(fund to keep the $5k deployed), the concrete code change for the greedy test.
 
 **EXECUTOR / PLATFORM (the live decision path — ALL tests run through this):**
 - `odcore/swing_maker.py` — the one executor (maker-at-the-turn, cover_grace, exit_spec deep-bail, front fill, fees).

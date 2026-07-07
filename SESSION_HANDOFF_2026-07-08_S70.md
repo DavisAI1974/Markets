@@ -31,24 +31,22 @@ doc was a 560-line history log whose own drop-in Jobs said "queue" and "grade on
 ## THE ONE NEXT STEP (the greedy test, left for you)
 Give greedy the **counterparty capacity** so multiple positions run at once (short BTC + long SOL together),
 per the locked strategy rules 3–4: fill best up to what its book absorbs, cascade the leftover to next-best.
-- **Capacity source (Greg decided): the L2 BOOK DEPTH — the resting bid/ask SIZES** (top-10 levels in each
-  snapshot), NOT realized trade volume. We confirmed the book carries full depth per 100ms bin
-  (`bids[[offset,size]×10]`, `asks[...]`, plus `buy`/`sell` flow). `load_book` currently keeps only
-  top-of-book size — extend it to the depth you need.
-- ⚠ **Confirm the exact mapping with Greg in ONE exchange before wiring** (don't guess — this is where it
-  goes wrong): a maker-at-the-turn fills from *opposing taker flow*, while resting depth is standing
-  liquidity/queue. Pin "counterparty capacity for OUR trade" = which book quantity, then wire it.
+- **Capacity source (Greg's call, firm): the L2 BOOK DEPTH — the resting bid/ask SIZES = the COUNTER's
+  capacity, NOT trade volume.** The whole point was to read what's actually resting to trade against, not
+  sparse realized volume. The book carries full depth per 100ms bin (`bids[[offset,size]×10]`, `asks[...]`);
+  `load_book` currently keeps only top-of-book size — extend it to the depth you need, convert size→$ at mid.
 - **Mechanism:** add an optional per-leg cap to `run_portfolio` (built + reverted this session — ~6 lines: a
   `leg_caps={coin:[$per leg]}` param that bounds each opening leg's demand+cap; `None` = unchanged). Feed each
   leg its book-depth capacity → run `pool_book_kraken.py` → read POOL $/hr, funded%, and whether we now hold
-  several positions concurrently (funded should jump from 28%). ONE change; run it live; compare to the +14.51
-  baseline.
+  several positions concurrently (funded should jump from 28%). ONE change; run it live; compare to +14.51.
 
-## Second open question (separate change — do NOT bundle)
-**"Never fund negative edge"** (locked strategy rule 6): Greg flagged that "edge" is a per-coin AVERAGE $/hr and
-does NOT predict an individual trade's win/lose (direction is unpredictable, closed 4 ways). Plan: **strip the
-negative-edge floor, run, compare; if $/hr drops, put it back** — one change at a time. NOTE it won't bind on
-the current 5 (all have positive average edge); it only matters once coins with negative average are seated.
+## Also required for the greedy test — REMOVE the "never fund negative edge" rule
+Greg (S70, firm): **"never fund a negative edge" is a WRONG rule** — average edge does NOT predict a trade
+(direction unpredictable, closed 4 ways), and we run the $5k **100% deployed**, we do NOT idle capital or
+exclude a coin. Edge sets funding ORDER only, never a gate. **The allocator CODE currently skips non-positive
+edge in greedy mode — that must be removed** so the pool funds whatever keeps the $5k deployed. (Never DROP a
+coin still stands — all coins stay seated.) This is part of the same greedy test, not a separate window-
+dependent experiment.
 
 ## Data / infra state
 - Book branches: 5 majors `data/{btc,eth,sol,xrp,doge}-kraken-book` (BTC ~42h). **16 candidate minors now
