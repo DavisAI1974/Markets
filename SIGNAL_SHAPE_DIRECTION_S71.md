@@ -1,0 +1,54 @@
+# DIRECTION: the SHAPE of the signal, not its numeric value (Greg, S71 — 2026-07-07)
+
+> Greg's note (verbatim intent): "we need to look at the SHAPE of things. How much does the exhaustion
+> number change from second to second — not just an average over a couple of weeks. Find exhaustion in
+> previous trades and MAP THE CURVE of it. Not the numeric value but how quickly up and down our number
+> goes. I guarantee there's a curve to it, and it probably follows a SIMILAR shape for different times but
+> the SAME conditions — even if the numbers aren't the same each time." **This is more in-depth; Greg to
+> expand.**
+
+## The core reframe
+We've been reading exhaustion (and the flow signals) as a **level / average scalar** — e.g. exhaustion =
+`|late-half imbalance| < |early-half imbalance|`, reversal rate ~48% pooled over the window. That **collapses
+the dynamics to one number and averages it.** Greg: the signal is in the **SHAPE** — the second-by-second
+*trajectory* of exhaustion approaching the turn: how fast it rises/falls (velocity), its curvature/morphology.
+And it is **scale-invariant** — the same curve shape recurs under the same conditions even when absolute levels
+differ, so we match by **curve, not value.**
+
+## Why this likely explains the FLAT result
+The S36 dipole re-eval on the 42h Kraken book gave a **flat conviction ladder (~48% across all flow-states)**
+and `imb_flow` pooled 51.2% (~1σ = noise). Prime suspect: **we measured the wrong object.** Exhaustion was
+crushed into a 2-point flag (early vs late half) and the outcome averaged — that discards the curve where the
+predictive information may live. A signal can be **invisible in its average and sharp in its shape.** Two
+reversals with the same predictive shape but different levels both read as "48%."
+
+This is the **OD / flow thesis applied to our own signal**: don't read the value, recover the *governing curve*
+— its velocity (dExhaustion/dt), acceleration into the turn, morphology — and match by shape. The info-dipole is
+already a flow operator (dMI/dt, `odcore/info_dipole.py`); this pushes it to the **full trajectory**, not a
+2-point difference.
+
+## The concrete test (per cell; result-discipline, don't assume the curve — find it)
+1. **Extract second-by-second trajectories.** For past legs (reversals vs continuations), pull the per-second
+   exhaustion/imbalance series over the pre-entry window approaching each turn (the book carries per-sec buy/sell
+   + mid; `run_kraken_cell` gives the legs/turns; strictly pre-entry, no leakage).
+2. **Align at the turn** (t=0 at the pivot/onset) and OVERLAY the curves.
+3. **Do reversals share a shape distinct from continuations?** Look for a characteristic morphology (e.g.
+   imbalance decaying at an *accelerating* rate into the turn vs a flat/late collapse).
+4. **Characterize with LEVEL-INVARIANT shape features:** normalized slope, curvature, time-to-collapse, the
+   derivative (velocity/acceleration) profile, peak-to-turn timing — features of the *curve*, not the level.
+5. **Test whether the SHAPE features predict where the SCALAR was flat** (per-cell, net-of-cost, shift-null,
+   cross-window persistence). If shape clusters by regime → Greg's "same shape, same conditions, different
+   numbers." If it doesn't beat the scalar, that's an honest null.
+
+## Connections
+- **The fingerprint thesis** (`bucket-distinctiveness-is-the-goal`): the distinctive per-cell fingerprint may
+  live in the signal's DYNAMICS/shape, not its static value — this is the same idea sharpened.
+- **The AWS continuous re-tuner** (Greg, S71): a shape/curve library is exactly what a regime-adaptive tuner
+  would match live — "what curve are we on right now" → which config fits current conditions.
+- **Timing/swing thread** (S36b): the swing edge is real (oracle); the trigger is late. A shape-of-exhaustion
+  read could arm the tight price-reversal trigger EARLIER by recognizing the reversal *curve* before the level
+  crosses a threshold.
+
+## Status
+- Idea logged; **Greg to expand ("more in-depth").** Not yet run. Prime candidate to explain the flat scalar
+  ladder and to feed the shape-matching the continuous re-tuner would use.
