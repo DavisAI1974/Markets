@@ -192,10 +192,17 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   shape ≫ numbers. Corollary (the slope conflict): a literal slope/rate SCALAR on the normalized signal reads
   BACKWARDS (loser "steeper") — the "steeper winner ascension" the GRAPH shows IS the winner reaching a HIGHER
   PEAK (a shape/energy property, captured by peak). Read the SHAPE, trust the graph; do not chase a rate scalar.
-- **⛔ WHY PER-CELL, NEVER LUMPED (Greg, S73 — load-bearing):** the dominant tell DIFFERS by cell AND by
-  category (SOL-short = energy/peak; SOL-long = below-zero dip; BTC/ETH/XRP each have their OWN numbers). LUMP
-  them together and you average across different tells/thresholds → the signal CANCELS → a flat gate (that is
-  exactly why the earlier general/bunched gate came out flat). Grade PER CELL × PER CATEGORY, always.
+- **⭐ UNIVERSAL SHAPES, CELL-SPECIFIC NUMBERS (Greg, S73 — the clean architecture, across the 4 majors, NOT
+  doge):** the 4 archetype CHARACTERISTICS are COIN-UNIVERSAL — a short-loser is the flat/no-energy/near-zero-
+  peak/dips-below-zero one, a long-winner is the highest-energy/steepest/stays-above-zero one, etc., on BTC,
+  ETH, SOL, XRP alike. We characterize the 4 cells ONCE. Only the THRESHOLDS are cell-specific: SOL's short-
+  loser peak ~0.014 is not BTC's number, but BTC's short-loser is still the flattest/lowest-energy/below-zero
+  one of ITS four. Re-fit the numbers per coin; do NOT re-discover the shapes. This is #0d exactly — the shape
+  CHARACTERISTICS are the fixed SCAFFOLD (universal), the THRESHOLDS are the TUNABLE numbers (per cell).
+- **⛔ WHY PER-CELL (NUMBERS) NEVER LUMPED (Greg, S73 — load-bearing):** the dominant tell's THRESHOLD differs
+  by cell AND category (SOL-short split by energy/peak; SOL-long by below-zero dip; each major its OWN numbers).
+  LUMP the NUMBERS and you average across different thresholds → signal CANCELS → flat gate (exactly why the
+  earlier general/bunched gate came out flat). The SHAPES transfer; the NUMBERS are graded per cell × category.
 - **⭐ CELL-SPECIFIC + CATEGORY-SPECIFIC + SEQUENTIAL (Greg, S73).** Not general rules — each CELL (coin) has
   its OWN characteristics with its OWN thresholds, and each CATEGORY (short/long) its own. The loser gate is a
   SEQUENTIAL cascade: check each characteristic ONE AT A TIME; if the trade's shape shows a loser trait (fails
