@@ -21,6 +21,16 @@ note to not rewrite sim code in place of our actual code"). **MAKER NUMBERS ARE 
 pessimistic REFERENCE only. WHY THIS RULE: S65 caught the basket sim using `queue`/back-of-line while live
 uses `front` — the numbers didn't match. That mismatch is exactly the failure this rule prevents.
 
+> **⭐⭐ RE-STATED, LOUDER (Greg, S69): ALWAYS RUN THE LIVE CODE FOR EVERY TEST. NO EXCEPTIONS.**
+> Never estimate fills/capacity/edge with a tape PROXY, a hand-rolled reimplementation, or a bolt-on
+> ( `capacity.py`-on-tape, a scratch script that recomputes eligibility, etc.). Every fill/capacity/$hr
+> test MUST go through the actual executor (`run_stream`/`run_kraken_cell` → `swing_maker`) on the REAL
+> data — and the honest FILL comes from the L2 **BOOK** via `fill_model="queue"` + real `best_bid_sz`/
+> `best_ask_sz` (`scripts/basket_sim_kraken.py::load_book` already does this), **not** tape flow. If you
+> catch yourself reimplementing what the executor already does, STOP and call the live code. (S69 burned
+> a whole session estimating capacity from the tape — nonsense $25 "caps" — when the live queue-fill on
+> the real Kraken book was the answer the whole time: BTC fills ~34% queue / ~90% front of the $5k.)
+
 ---
 
 ## ⭐ S67 IN-PROGRESS (2026-07-06, live) — THE CAPITAL MODEL (v1 built, canary PASS) + overlooked-majors sweep
