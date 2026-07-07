@@ -18,8 +18,16 @@ overlay on the LOCKED firing that reads each trade's pre-onset CURVE SHAPE and s
 through the **LIVE** `run_kraken_cell` (agent's builder for the shape; nothing reinvented). The **shape
 characteristics are validated** (on SOL the gate catches 75% of short-losers + 72% of long-losers), but a
 **midpoint threshold over-skips** (71% of winners also skipped → win% only 61.7→63.3, $/hr halved) because
-per-trade winner/loser shapes OVERLAP even though the MEANS separate cleanly. Characteristics right; threshold
-too blunt. All the design principles were nailed down (see below).
+per-trade winner/loser shapes OVERLAP in ABSOLUTE level even though the MEANS separate. Characteristics right;
+threshold too blunt.
+
+**⭐⭐ THE VERY IMPORTANT S73 FINDING — WHERE WINNER/LOSER DON'T OVERLAP (Greg).** The separation lives in TWO
+scale-free signatures that hold in BOTH categories, NOT in absolute level: (1) **RELATIVE ENERGY** — the winner
+ALWAYS has more energy than its PAIRED loser (short-win > short-lose, long-win > long-lose; the within-pair rule
+never flips even though absolute levels overlap); (2) **LINEAR vs NON-LINEAR ASCENT** — winner non-linear/
+hockey-stick, loser linear (measure via linear-fit R²/convexity, NOT the saturating blade slope). The S74 gate
+is built on THESE non-overlap signatures (per coin × per cell), not on an absolute-level midpoint. All the other
+design principles were nailed down (see below).
 
 **⭐ NEXT (S74):**
 1. **FIND WHERE WINNER/LOSER DON'T OVERLAP in the ENTRY shape, gate ONLY there (Greg, load-bearing).** The

@@ -15,6 +15,14 @@
 > averaging and FAILS: when the arcs saturate the winner-mean ~= loser-mean, so a nearest-centroid gate cannot
 > separate (proven on SOL, S73). Match each forming trade to the EXACT individual curve shapes (nearest actual
 > curves / per-trade template), keep all 4 buckets distinct, output trade / don't-trade. No averaging anywhere.
+>
+> ⛔⛔ S73 — WHERE WINNER/LOSER DON'T OVERLAP (Greg, VERY IMPORTANT). Winner/loser shapes OVERLAP in ABSOLUTE
+> level (a blunt threshold over-skips). They SEPARATE — do NOT overlap — in TWO scale-free signatures that hold
+> in BOTH categories: (1) RELATIVE ENERGY — the winner ALWAYS has more energy than its PAIRED loser (short-win >
+> short-lose, long-win > long-lose; the within-pair rule never flips); (2) LINEAR vs NON-LINEAR ascent — winner
+> non-linear/hockey-stick, loser linear (measure via linear-fit R²/convexity, NOT the saturating blade slope).
+> Gate on these non-overlap signatures, per coin x per cell (universal shapes, cell-specific numbers), no volume/
+> price. This is the S73 finding / S74 build. See STRATEGY_INVENTORY LIVE block + SESSION_HANDOFF_2026-07-07_S73.
 
 > Greg's note (verbatim intent): "we need to look at the SHAPE of things. How much does the exhaustion
 > number change from second to second — not just an average over a couple of weeks. Find exhaustion in

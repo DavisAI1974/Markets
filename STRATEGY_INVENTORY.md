@@ -203,6 +203,17 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   by cell AND category (SOL-short split by energy/peak; SOL-long by below-zero dip; each major its OWN numbers).
   LUMP the NUMBERS and you average across different thresholds → signal CANCELS → flat gate (exactly why the
   earlier general/bunched gate came out flat). The SHAPES transfer; the NUMBERS are graded per cell × category.
+- **⭐⭐ WHERE WINNER/LOSER DON'T OVERLAP — THE TWO UNIVERSAL WINNER SIGNATURES (Greg, S73 — VERY IMPORTANT,
+  load-bearing).** The S73 gate over-skipped because winner/loser shapes OVERLAP in ABSOLUTE level. The
+  separation — where they do NOT overlap — is in TWO scale-free signatures that hold in BOTH categories:
+  1. **RELATIVE ENERGY:** the winner ALWAYS has MORE ENERGY than its PAIRED loser (short-win > short-lose,
+     long-win > long-lose). The within-pair winner>loser energy rule never flips — even though absolute peak
+     levels overlap across short/long, the PAIRED comparison separates cleanly.
+  2. **LINEAR vs NON-LINEAR ASCENT:** the winner's ascent is NON-LINEAR / hockey-stick; the loser's is LINEAR
+     (straight/flat). Measure via linear-fit R² / convexity vs the start→peak chord (NOT the terminal blade
+     slope, which saturates and reads backwards — the S73 miss).
+  Gate on THESE (the non-overlap signatures), NOT on an absolute-level midpoint threshold (the overlapping
+  middle is exactly what a blunt threshold fails on). This is the S74 build.
 - **⭐ CELL-SPECIFIC + CATEGORY-SPECIFIC + SEQUENTIAL (Greg, S73).** Not general rules — each CELL (coin) has
   its OWN characteristics with its OWN thresholds, and each CATEGORY (short/long) its own. The loser gate is a
   SEQUENTIAL cascade: check each characteristic ONE AT A TIME; if the trade's shape shows a loser trait (fails
