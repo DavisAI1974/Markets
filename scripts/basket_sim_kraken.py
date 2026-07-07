@@ -65,13 +65,25 @@ CELLS = [dict(coin=c.coin, sleeve="majors", side=c.side, eps=c.eps, bail=c.bail,
          for c in KRAKEN]
 
 
+# resting-depth level configs we cache per bin (Greg S71: counterparty capacity = RESTING L2 depth,
+# size x mid = $, NOT traded buy/sell volume). We keep a few cumulative-level sums so the capacity lever
+# can be studied at the touch (L1, what a front-of-line maker fills first) up to the full 10-level book.
+DEPTH_NLEVS = (1, 2, 3, 5, 10)
+
+
 def load_book(coin):
     """L2 book jsonl -> (t0_sec, arrays on a uniform 1-sec grid). Kraken venue DATA I/O — the one thing
-    the live run_cell has no loader for; the decision itself goes through run_stream (live)."""
+    the live run_cell has no loader for; the decision itself goes through run_stream (live).
+
+    ADDED (S71, additive): per-bin RESTING DEPTH in $ on each side, cumulative over the first N book
+    levels for N in DEPTH_NLEVS. `bid_depth`/`ask_depth` are dicts {N: array($)} = size x mid summed
+    over the top-N resting bids/asks. This is the counterparty-capacity source for the per-leg cap
+    (Greg: the resting bid/ask depth = the actual counter available to trade into, NOT buy/sell tape)."""
     path = f"{KBOOK}/{coin}_book.jsonl"
     if not os.path.exists(path):
         return None
     ts_l, mid_l, bb_l, ba_l, buy_l, sell_l, sp_l = [], [], [], [], [], [], []
+    bd_l = {N: [] for N in DEPTH_NLEVS}; ad_l = {N: [] for N in DEPTH_NLEVS}  # resting depth (COIN units)
     with open(path) as f:
         for line in f:
             try:
@@ -79,26 +91,39 @@ def load_book(coin):
             except Exception:
                 continue
             ts_l.append(d["ts"]); mid_l.append(d["mid"]); sp_l.append(d.get("spread", 0.0))
-            bb_l.append(d["bids"][0][1] if d.get("bids") else 0.0)
-            ba_l.append(d["asks"][0][1] if d.get("asks") else 0.0)
+            bids = d.get("bids") or []; asks = d.get("asks") or []
+            bb_l.append(bids[0][1] if bids else 0.0)
+            ba_l.append(asks[0][1] if asks else 0.0)
+            for N in DEPTH_NLEVS:
+                bd_l[N].append(sum(s for _, s in bids[:N]))
+                ad_l[N].append(sum(s for _, s in asks[:N]))
             buy_l.append(d.get("buy", 0.0)); sell_l.append(d.get("sell", 0.0))
     sec = np.array(ts_l).astype(np.int64)
     t0, t1 = int(sec.min()), int(sec.max()); n = t1 - t0 + 1
     mid = np.zeros(n); bb = np.zeros(n); ba = np.zeros(n); buy = np.zeros(n); sell = np.zeros(n)
     sp = np.zeros(n); have = np.zeros(n, bool)
+    bidD = {N: np.zeros(n) for N in DEPTH_NLEVS}; askD = {N: np.zeros(n) for N in DEPTH_NLEVS}
     idx = (sec - t0).astype(int)
     mid_a, bb_a, ba_a = np.array(mid_l), np.array(bb_l), np.array(ba_l)
     buy_a, sell_a, sp_a = np.array(buy_l), np.array(sell_l), np.array(sp_l)
+    bd_a = {N: np.array(bd_l[N]) for N in DEPTH_NLEVS}; ad_a = {N: np.array(ad_l[N]) for N in DEPTH_NLEVS}
     for i in range(len(idx)):
         j = idx[i]
         mid[j] = mid_a[i]; bb[j] = bb_a[i]; ba[j] = ba_a[i]; sp[j] = sp_a[i]
+        for N in DEPTH_NLEVS:
+            bidD[N][j] = bd_a[N][i]; askD[N][j] = ad_a[N][i]
         buy[j] += buy_a[i]; sell[j] += sell_a[i]; have[j] = True
     fi = np.where(have, np.arange(n), 0); np.maximum.accumulate(fi, out=fi)
     first = int(np.argmax(have))
-    for arr in (mid, bb, ba, sp):
+    ffill = [mid, bb, ba, sp] + [bidD[N] for N in DEPTH_NLEVS] + [askD[N] for N in DEPTH_NLEVS]
+    for arr in ffill:
         arr[:] = arr[fi]; arr[:first] = arr[first]
     hs_bps = float(np.median((sp[mid > 0] / mid[mid > 0]) / 2.0) * 1e4)
-    return dict(t0=t0, mid=mid, bb=bb, ba=ba, buy=buy, sell=sell, hs=hs_bps, n=n)
+    # convert resting depth from COIN units to $ at the (forward-filled) mid
+    bid_depth = {N: bidD[N] * mid for N in DEPTH_NLEVS}
+    ask_depth = {N: askD[N] * mid for N in DEPTH_NLEVS}
+    return dict(t0=t0, mid=mid, bb=bb, ba=ba, buy=buy, sell=sell, hs=hs_bps, n=n,
+                bid_depth=bid_depth, ask_depth=ask_depth)
 
 
 def flips_for(cell, mid, buy, sell):

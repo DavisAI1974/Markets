@@ -1,0 +1,211 @@
+{
+  "window": {
+    "seconds": 150777,
+    "hours": 41.88,
+    "coins": [
+      "eth",
+      "btc",
+      "sol",
+      "doge",
+      "xrp"
+    ],
+    "pool": 5000.0,
+    "primary": "xrp"
+  },
+  "capacity_table": {
+    "eth": {
+      "near_top1": {
+        "n": 454,
+        "med": 1641,
+        "p10": 198,
+        "p90": 25696,
+        "pct_lt5k": 75.0
+      },
+      "near_top3": {
+        "n": 454,
+        "med": 7151,
+        "p10": 2258,
+        "p90": 50869,
+        "pct_lt5k": 33.0
+      },
+      "flow": {
+        "n": 454,
+        "med": 4781,
+        "p10": 332,
+        "p90": 49547,
+        "pct_lt5k": 52.0
+      },
+      "real_min": {
+        "n": 454,
+        "med": 3266,
+        "p10": 312,
+        "p90": 10011,
+        "pct_lt5k": 68.0
+      }
+    },
+    "btc": {
+      "near_top1": {
+        "n": 633,
+        "med": 5130,
+        "p10": 94,
+        "p90": 152325,
+        "pct_lt5k": 48.0
+      },
+      "near_top3": {
+        "n": 633,
+        "med": 16234,
+        "p10": 206,
+        "p90": 231227,
+        "pct_lt5k": 37.0
+      },
+      "flow": {
+        "n": 633,
+        "med": 13310,
+        "p10": 1484,
+        "p90": 126648,
+        "pct_lt5k": 27.0
+      },
+      "real_min": {
+        "n": 633,
+        "med": 4213,
+        "p10": 155,
+        "p90": 31758,
+        "pct_lt5k": 54.0
+      }
+    },
+    "sol": {
+      "near_top1": {
+        "n": 426,
+        "med": 5895,
+        "p10": 503,
+        "p90": 47140,
+        "pct_lt5k": 50.0
+      },
+      "near_top3": {
+        "n": 426,
+        "med": 113081,
+        "p10": 40776,
+        "p90": 198140,
+        "pct_lt5k": 2.0
+      },
+      "flow": {
+        "n": 426,
+        "med": 5941,
+        "p10": 657,
+        "p90": 47239,
+        "pct_lt5k": 46.0
+      },
+      "real_min": {
+        "n": 426,
+        "med": 5742,
+        "p10": 611,
+        "p90": 43518,
+        "pct_lt5k": 47.0
+      }
+    },
+    "doge": {
+      "near_top1": {
+        "n": 164,
+        "med": 860,
+        "p10": 170,
+        "p90": 9067,
+        "pct_lt5k": 85.0
+      },
+      "near_top3": {
+        "n": 164,
+        "med": 2996,
+        "p10": 1184,
+        "p90": 12526,
+        "pct_lt5k": 70.0
+      },
+      "flow": {
+        "n": 164,
+        "med": 2468,
+        "p10": 77,
+        "p90": 29223,
+        "pct_lt5k": 59.0
+      },
+      "real_min": {
+        "n": 164,
+        "med": 1347,
+        "p10": 77,
+        "p90": 7994,
+        "pct_lt5k": 84.0
+      }
+    },
+    "xrp": {
+      "near_top1": {
+        "n": 319,
+        "med": 621,
+        "p10": 122,
+        "p90": 10239,
+        "pct_lt5k": 81.0
+      },
+      "near_top3": {
+        "n": 319,
+        "med": 6486,
+        "p10": 1148,
+        "p90": 29870,
+        "pct_lt5k": 38.0
+      },
+      "flow": {
+        "n": 319,
+        "med": 16369,
+        "p10": 955,
+        "p90": 123092,
+        "pct_lt5k": 27.0
+      },
+      "real_min": {
+        "n": 319,
+        "med": 4291,
+        "p10": 665,
+        "p90": 16309,
+        "pct_lt5k": 54.0
+      }
+    }
+  },
+  "xrp_reserve": 4291,
+  "worlds": {
+    "A_concentrate_idle": {
+      "pool_per_hr": 9.51,
+      "time_util": 0.488,
+      "primary_per_hr": 9.51
+    },
+    "B_naive_cascade": {
+      "pool_per_hr": 7.12,
+      "time_util": 0.875,
+      "per_coin_per_hr": {
+        "eth": 1.62,
+        "btc": 1.04,
+        "sol": 0.82,
+        "doge": 0.09,
+        "xrp": 3.55
+      },
+      "primary_per_hr": 3.55
+    },
+    "B_reserve_per_rest": {
+      "pool_per_hr": 9.65,
+      "time_util": 0.568,
+      "per_coin_per_hr": {
+        "eth": 0.45,
+        "btc": 0.29,
+        "sol": 0.26,
+        "doge": -0.04,
+        "xrp": 8.69
+      },
+      "primary_per_hr": 8.69,
+      "leftover_per_hr": 0.96
+    },
+    "B_preempt": {
+      "pool_per_hr": 4.44,
+      "lift_over_B_naive": -2.69,
+      "preempt_events": 292,
+      "time_util": 0.86,
+      "primary_per_hr": 9.51,
+      "leftover_per_hr": -5.07
+    }
+  },
+  "B_reserve_minus_A": 0.14,
+  "B_naive_minus_A": -2.38,
+  "caveat": "ONE 42h low-edge Kraken window; real cap = min(top-3 resting depth, taker flow/leg); reserve-per-rest v1 (no optimistic-over-resting yet)."
+}

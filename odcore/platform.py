@@ -309,7 +309,8 @@ class PortfolioResult:
 
 
 def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=None,
-                  clusters=None, cluster_caps=None, mode="greedy", n=None, bucket_cells=3600):
+                  clusters=None, cluster_caps=None, mode="greedy", n=None, bucket_cells=3600,
+                  leg_caps=None, preempt=False, preempt_cut_bps=5.0, mtm_prices=None):
     """Replay a set of per-cell leg streams as ONE shared capital pool (S67 capital model).
 
     Sits ON TOP of the proven per-cell path: the legs are already the output of run_kraken_cell /
@@ -328,6 +329,22 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
                  vs the pool). NOTE: a low cap => small size, NEVER exclusion (allocator rule 1).
     weights:     {coin: return-on-capacity} funding priority; default equal.
     clusters/cluster_caps: correlation-cluster labels + per-cluster budgets (a correlated-flush cap).
+    leg_caps:    {coin: [usd per leg]} — OPTIONAL per-LEG counterparty capacity (S71). When given, each
+                 opening leg's demand AND cap = leg_caps[coin][k] (k = its index in cell_legs[coin]),
+                 the $ its book depth can absorb at the moment it opens, INSTEAD of the per-coin scalar
+                 cap. This is the concurrency lever: a best coin whose leg caps at < pool leaves headroom
+                 that cascades to the next-best LIVE coin, so several coins hold at once on one $5k pool.
+                 None (default) = the old per-coin behaviour, byte-for-byte. A leg cap is a SIZE ceiling,
+                 never an inclusion gate (allocator rule 1): a thin cap => small notional, never dropped.
+    preempt:     OPTIONAL reactive preemption (S71, opt-in; default False = byte-identical). When a
+                 higher-edge coin FIRES and free pool < what it can absorb, CUT the lowest-edge HELD
+                 position (weight < the opener's) to fund the opener. Reactive AT the fire, never
+                 predictive (leakage-safe: the decision uses only weights known before the fire + the
+                 already-realized book state). The cut leg is realized CONSERVATIVELY FLAT minus a
+                 `preempt_cut_bps` taker cut cost on its allocation (we don't peek at its intra-leg mark),
+                 biasing AGAINST preemption so any lift is real. Its later natural close then realizes on
+                 0 held $ (no double count). This is "reserve-per-rest v1": the opener reserves only its
+                 real capacity; freed capital is genuinely free. preempt_cut_bps: the early-cut taker cost.
     n:           grid length in cells (default = max close_idx + 1). bucket_cells: bucket size for the
                  pool-PnL series (3600 = hourly on a 1s grid).
 
@@ -359,6 +376,8 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
     events.sort(key=lambda e: (e[0], e[1]))
 
     held = {}                         # coin -> allocated $ of its currently-open leg
+    held_leg = {}                     # coin -> the open SwingLeg (for honest preemption mark-to-market)
+    preempt_events = [0]              # count of reactive preemptions (S71, opt-in)
     cl_used = {}                      # cluster_id -> deployed $
     per_coin = {c: dict(realized_pnl_usd=0.0, n_legs=0, n_funded=0, alloc_sum=0.0,
                         desired_sum=0.0) for c in coins}
@@ -379,6 +398,7 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
         while j < E and events[j][0] == idx and events[j][1] == 0:
             _, _, coin, _, l = events[j]
             alloc = held.pop(coin, 0.0)
+            held_leg.pop(coin, None)              # this leg is done (or was already preempted -> alloc 0)
             pnl = float(l.net_bps) / 1e4 * alloc
             per_coin[coin]["realized_pnl_usd"] += pnl
             b = min(int(l.close_idx) // bucket_cells, nb - 1)
@@ -394,8 +414,54 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
         if opens:
             rem_pool = float(pool) - pool_used()
             oc = [e[2] for e in opens]
-            dem = {c: float(desired.get(c, caps.get(c, pool))) for c in oc}
-            cp = {c: float(caps.get(c, pool)) for c in oc}
+            # reactive PREEMPTION (opt-in): if the best-edge opener can't be fully funded from free pool,
+            # cut the lowest-edge HELD position (weight < opener's) to fund it. Reactive at the fire only.
+            if preempt and opens:
+                def _w(c):
+                    return float(weights.get(c, 0.0))
+                best_op = max(oc, key=_w)
+                # what the best opener can absorb this fire (its leg cap or per-coin cap)
+                if leg_caps is not None and best_op in leg_caps:
+                    k_op = next((e[3] for e in opens if e[2] == best_op), 0)
+                    want = float(leg_caps[best_op][k_op]) if k_op < len(leg_caps[best_op]) \
+                        else float(caps.get(best_op, pool))
+                else:
+                    want = float(caps.get(best_op, pool))
+                # cut lower-edge holders (lowest weight first) until the opener's want is covered
+                while rem_pool + 1e-9 < min(want, float(pool)):
+                    cand = [c for c in held if _w(c) < _w(best_op) and held[c] > 1e-9]
+                    if not cand:
+                        break
+                    victim = min(cand, key=_w)
+                    freed = held.pop(victim)
+                    vleg = held_leg.pop(victim, None)
+                    # HONEST cut mark-to-market from the BOOK mid at the cut time (leakage-free: mid[idx]
+                    # is known at idx). Realize the victim's actual intra-leg PnL, minus a taker cut cost.
+                    gross = 0.0
+                    if vleg is not None and mtm_prices is not None and victim in mtm_prices:
+                        mp = mtm_prices[victim]; o_v = int(vleg.open_idx)
+                        if 0 <= o_v < len(mp) and idx < len(mp) and mp[o_v] > 0:
+                            gross = int(vleg.side) * (float(mp[idx]) / float(mp[o_v]) - 1.0) * 1e4
+                    cut_pnl = (gross - float(preempt_cut_bps)) / 1e4 * freed
+                    per_coin[victim]["realized_pnl_usd"] += cut_pnl
+                    pool_pnl[min(idx // bucket_cells, nb - 1)] += cut_pnl
+                    if clusters and victim in clusters:
+                        cl_used[clusters[victim]] = cl_used.get(clusters[victim], 0.0) - freed
+                    preempt_events[0] += 1
+                    rem_pool = float(pool) - pool_used()
+            if leg_caps is not None:
+                # per-LEG counterparty capacity (S71): each opening leg's demand AND cap = the $ its
+                # book depth absorbs at open. e[3] = k, the leg's index in cell_legs[coin]. A coin opens
+                # at most one leg at a given cell, so oc has one entry per coin (keys stay unique).
+                dem = {}; cp = {}
+                for e in opens:
+                    c, k = e[2], e[3]
+                    lc = float(leg_caps[c][k]) if (c in leg_caps and k < len(leg_caps[c])) \
+                        else float(caps.get(c, pool))
+                    dem[c] = lc; cp[c] = lc
+            else:
+                dem = {c: float(desired.get(c, caps.get(c, pool))) for c in oc}
+                cp = {c: float(caps.get(c, pool)) for c in oc}
             ccaps = None
             if cluster_caps and clusters:
                 ccaps = {cid: float(cluster_caps[cid]) - cl_used.get(cid, 0.0)
@@ -406,6 +472,8 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
                 coin, l = e[2], e[4]
                 a = alloc.get(coin, 0.0)
                 held[coin] = a
+                if a > 1e-9:
+                    held_leg[coin] = l            # track the open leg for honest preemption MTM
                 per_coin[coin]["n_legs"] += 1
                 per_coin[coin]["desired_sum"] += dem[coin]
                 if a > 1e-9:
@@ -433,13 +501,15 @@ def run_portfolio(cell_legs, *, pool=5000.0, desired=None, caps=None, weights=No
         pc["mean_alloc_usd"] = pc["alloc_sum"] / pc["n_funded"] if pc["n_funded"] else 0.0
         pc["fill_share"] = pc["n_funded"] / pc["n_legs"] if pc["n_legs"] else 0.0
     us = np.asarray(util_samples, float) if util_samples else np.zeros(1)
-    return PortfolioResult(
+    pr = PortfolioResult(
         pool=float(pool), hours=hours, total_pnl_usd=total, per_coin=per_coin,
         pool_pnl_bucketed=pool_pnl,
         mean_util=float(us.mean() / pool) if pool else 0.0,
         max_util=float(us.max() / pool) if pool else 0.0,
         idle_frac=float(np.mean(us <= 1e-9)),
         time_util=time_util, time_in_play_frac=time_in_play)
+    pr.preempt_events = preempt_events[0]     # S71 opt-in reactive preemption count (attr; additive)
+    return pr
 
 
 def load_ledger(path=LEDGER):

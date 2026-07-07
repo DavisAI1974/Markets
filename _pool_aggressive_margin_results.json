@@ -1,0 +1,60 @@
+{
+  "window": {
+    "seconds": 150777,
+    "hours": 41.88,
+    "coins": [
+      "eth",
+      "btc",
+      "sol",
+      "doge",
+      "xrp"
+    ],
+    "collateral": 5000.0
+  },
+  "gross_per_hr_no_borrow": 28.16,
+  "anchors": {
+    "A_idle": 9.51,
+    "B_reserve": 9.65
+  },
+  "leverage": {
+    "median_mult": 4.62,
+    "p90_mult": 15.11,
+    "max_mult": 104.79,
+    "pct_time_over_5k": 91.6,
+    "median_deployed": 23105,
+    "p90_deployed": 75553
+  },
+  "margin_spikes": {
+    "episodes": 84,
+    "per_hr": 2.01,
+    "max_over_5k": 518972
+  },
+  "shorts": {
+    "n_long": 992,
+    "n_short": 1004,
+    "short_notional_hours": 803690,
+    "pct_of_deployed_hours": 52.6
+  },
+  "borrow_integral_hrs_leverage": 1328909,
+  "borrow_integral_hrs_shorts_explicit": 1385409,
+  "net_vs_rollover": {
+    "0.01%/4h": {
+      "leverage_only": -43.7,
+      "shorts_explicit": -40.36
+    },
+    "0.02%/4h": {
+      "leverage_only": -44.5,
+      "shorts_explicit": -41.19
+    },
+    "0.05%/4h": {
+      "leverage_only": -46.88,
+      "shorts_explicit": -43.67
+    }
+  },
+  "breakeven_rollover_pct_4h": {
+    "vs_A": -0.661,
+    "vs_B_reserve": -0.663
+  },
+  "verdict": "WORSE",
+  "caveat": "ONE 42h low-edge window; 5 majors only; borrow rate assumed/swept not confirmed; DIRECTIONAL, no tuning."
+}

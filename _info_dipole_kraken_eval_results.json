@@ -1,0 +1,1221 @@
+{
+  "window": {
+    "seconds": 150777,
+    "hours": 41.88,
+    "coins": [
+      "eth",
+      "btc",
+      "sol",
+      "doge",
+      "xrp"
+    ],
+    "pre_win_s": 1800,
+    "surface": "kraken L2 book, 1-sec grid, book buy/sell + mid",
+    "onsets": "LIVE run_kraken_cell legs"
+  },
+  "leakage_pass": true,
+  "A_pooled_netcost": {
+    "0": {
+      "FLOW (follow|fade)": {
+        "n": 1988,
+        "net_bps": -0.14,
+        "net_med_bps": 0.0,
+        "win_rate": 46.7,
+        "net_total_bps": -269.5,
+        "se": 0.26
+      },
+      "FLOW_2F (healthy)": {
+        "n": 1988,
+        "net_bps": -0.2,
+        "net_med_bps": 0.0,
+        "win_rate": 47.6,
+        "net_total_bps": -407.0,
+        "se": 0.26
+      },
+      "FADE_GATE (reversal)": {
+        "n": 641,
+        "net_bps": -0.17,
+        "net_med_bps": 0.0,
+        "win_rate": 47.4,
+        "net_total_bps": -109.4,
+        "se": 0.44
+      },
+      "FOLLOW_ALL (base)": {
+        "n": 1988,
+        "net_bps": 0.06,
+        "net_med_bps": 0.0,
+        "win_rate": 46.9,
+        "net_total_bps": 126.3,
+        "se": 0.26
+      }
+    },
+    "10": {
+      "FLOW (follow|fade)": {
+        "n": 1988,
+        "net_bps": -10.14,
+        "net_med_bps": -10.0,
+        "win_rate": 11.9,
+        "net_total_bps": -20149.5,
+        "se": 0.26
+      },
+      "FLOW_2F (healthy)": {
+        "n": 1988,
+        "net_bps": -10.2,
+        "net_med_bps": -10.0,
+        "win_rate": 11.7,
+        "net_total_bps": -20287.0,
+        "se": 0.26
+      },
+      "FADE_GATE (reversal)": {
+        "n": 641,
+        "net_bps": -10.17,
+        "net_med_bps": -10.0,
+        "win_rate": 12.2,
+        "net_total_bps": -6519.4,
+        "se": 0.44
+      },
+      "FOLLOW_ALL (base)": {
+        "n": 1988,
+        "net_bps": -9.94,
+        "net_med_bps": -10.0,
+        "win_rate": 12.2,
+        "net_total_bps": -19753.7,
+        "se": 0.26
+      }
+    }
+  },
+  "A_conviction_ladder": {
+    "opp+exh": {
+      "n": 400,
+      "reversal_rate": 48.0
+    },
+    "opp+str": {
+      "n": 390,
+      "reversal_rate": 46.4
+    },
+    "trend+weak": {
+      "n": 661,
+      "reversal_rate": 49.6
+    },
+    "trend+str": {
+      "n": 537,
+      "reversal_rate": 48.8
+    }
+  },
+  "A_per_cell": {
+    "btc_kraken_buy": {
+      "FLOW": {
+        "0": {
+          "n": 314,
+          "net_bps": -0.42,
+          "net_med_bps": -0.2,
+          "win_rate": 42.0,
+          "net_total_bps": -130.9,
+          "se": 0.31
+        },
+        "10": {
+          "n": 314,
+          "net_bps": -10.42,
+          "net_med_bps": -10.2,
+          "win_rate": 2.5,
+          "net_total_bps": -3270.9,
+          "se": 0.31
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 106,
+          "net_bps": -0.57,
+          "net_med_bps": -0.49,
+          "win_rate": 39.6,
+          "net_total_bps": -59.9,
+          "se": 0.6
+        },
+        "10": {
+          "n": 106,
+          "net_bps": -10.57,
+          "net_med_bps": -10.49,
+          "win_rate": 2.8,
+          "net_total_bps": -1119.9,
+          "se": 0.6
+        }
+      }
+    },
+    "btc_kraken_sell": {
+      "FLOW": {
+        "0": {
+          "n": 316,
+          "net_bps": 0.06,
+          "net_med_bps": 0.0,
+          "win_rate": 42.1,
+          "net_total_bps": 18.3,
+          "se": 0.33
+        },
+        "10": {
+          "n": 316,
+          "net_bps": -9.94,
+          "net_med_bps": -10.0,
+          "win_rate": 4.1,
+          "net_total_bps": -3141.7,
+          "se": 0.33
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 116,
+          "net_bps": 0.4,
+          "net_med_bps": 0.0,
+          "win_rate": 41.4,
+          "net_total_bps": 46.1,
+          "se": 0.49
+        },
+        "10": {
+          "n": 116,
+          "net_bps": -9.6,
+          "net_med_bps": -10.0,
+          "win_rate": 5.2,
+          "net_total_bps": -1113.9,
+          "se": 0.49
+        }
+      }
+    },
+    "doge_kraken_buy": {
+      "FLOW": {
+        "0": {
+          "n": 82,
+          "net_bps": 0.05,
+          "net_med_bps": -0.8,
+          "win_rate": 47.6,
+          "net_total_bps": 4.2,
+          "se": 1.91
+        },
+        "10": {
+          "n": 82,
+          "net_bps": -9.95,
+          "net_med_bps": -10.8,
+          "win_rate": 25.6,
+          "net_total_bps": -815.8,
+          "se": 1.91
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 29,
+          "net_bps": 1.23,
+          "net_med_bps": -0.02,
+          "win_rate": 48.3,
+          "net_total_bps": 35.6,
+          "se": 2.64
+        },
+        "10": {
+          "n": 29,
+          "net_bps": -8.77,
+          "net_med_bps": -10.02,
+          "win_rate": 24.1,
+          "net_total_bps": -254.4,
+          "se": 2.64
+        }
+      }
+    },
+    "doge_kraken_sell": {
+      "FLOW": {
+        "0": {
+          "n": 82,
+          "net_bps": 1.82,
+          "net_med_bps": 1.41,
+          "win_rate": 51.2,
+          "net_total_bps": 149.3,
+          "se": 2.15
+        },
+        "10": {
+          "n": 82,
+          "net_bps": -8.18,
+          "net_med_bps": -8.59,
+          "win_rate": 32.9,
+          "net_total_bps": -670.7,
+          "se": 2.15
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 30,
+          "net_bps": 1.79,
+          "net_med_bps": -1.92,
+          "win_rate": 43.3,
+          "net_total_bps": 53.6,
+          "se": 4.15
+        },
+        "10": {
+          "n": 30,
+          "net_bps": -8.21,
+          "net_med_bps": -11.92,
+          "win_rate": 30.0,
+          "net_total_bps": -246.4,
+          "se": 4.15
+        }
+      }
+    },
+    "eth_kraken_buy": {
+      "FLOW": {
+        "0": {
+          "n": 225,
+          "net_bps": -0.03,
+          "net_med_bps": 0.0,
+          "win_rate": 49.8,
+          "net_total_bps": -7.1,
+          "se": 0.67
+        },
+        "10": {
+          "n": 225,
+          "net_bps": -10.03,
+          "net_med_bps": -10.0,
+          "win_rate": 9.3,
+          "net_total_bps": -2257.1,
+          "se": 0.67
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 66,
+          "net_bps": -0.65,
+          "net_med_bps": 0.0,
+          "win_rate": 48.5,
+          "net_total_bps": -42.9,
+          "se": 1.13
+        },
+        "10": {
+          "n": 66,
+          "net_bps": -10.65,
+          "net_med_bps": -10.0,
+          "win_rate": 12.1,
+          "net_total_bps": -702.9,
+          "se": 1.13
+        }
+      }
+    },
+    "eth_kraken_sell": {
+      "FLOW": {
+        "0": {
+          "n": 229,
+          "net_bps": -0.68,
+          "net_med_bps": 0.06,
+          "win_rate": 51.1,
+          "net_total_bps": -155.0,
+          "se": 0.68
+        },
+        "10": {
+          "n": 229,
+          "net_bps": -10.68,
+          "net_med_bps": -9.94,
+          "win_rate": 10.9,
+          "net_total_bps": -2445.0,
+          "se": 0.68
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 73,
+          "net_bps": -1.53,
+          "net_med_bps": 0.54,
+          "win_rate": 56.2,
+          "net_total_bps": -111.8,
+          "se": 1.44
+        },
+        "10": {
+          "n": 73,
+          "net_bps": -11.53,
+          "net_med_bps": -9.46,
+          "win_rate": 12.3,
+          "net_total_bps": -841.8,
+          "se": 1.44
+        }
+      }
+    },
+    "sol_kraken_buy": {
+      "FLOW": {
+        "0": {
+          "n": 210,
+          "net_bps": -0.93,
+          "net_med_bps": -0.92,
+          "win_rate": 42.4,
+          "net_total_bps": -196.2,
+          "se": 0.78
+        },
+        "10": {
+          "n": 210,
+          "net_bps": -10.93,
+          "net_med_bps": -10.92,
+          "win_rate": 10.5,
+          "net_total_bps": -2296.2,
+          "se": 0.78
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 61,
+          "net_bps": -1.0,
+          "net_med_bps": -1.22,
+          "win_rate": 44.3,
+          "net_total_bps": -60.8,
+          "se": 1.39
+        },
+        "10": {
+          "n": 61,
+          "net_bps": -11.0,
+          "net_med_bps": -11.22,
+          "win_rate": 13.1,
+          "net_total_bps": -670.8,
+          "se": 1.39
+        }
+      }
+    },
+    "sol_kraken_sell": {
+      "FLOW": {
+        "0": {
+          "n": 211,
+          "net_bps": 0.24,
+          "net_med_bps": 0.0,
+          "win_rate": 46.9,
+          "net_total_bps": 50.7,
+          "se": 0.83
+        },
+        "10": {
+          "n": 211,
+          "net_bps": -9.76,
+          "net_med_bps": -10.0,
+          "win_rate": 13.3,
+          "net_total_bps": -2059.3,
+          "se": 0.83
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 73,
+          "net_bps": -0.04,
+          "net_med_bps": 1.82,
+          "win_rate": 53.4,
+          "net_total_bps": -2.8,
+          "se": 1.39
+        },
+        "10": {
+          "n": 73,
+          "net_bps": -10.04,
+          "net_med_bps": -8.18,
+          "win_rate": 13.7,
+          "net_total_bps": -732.8,
+          "se": 1.39
+        }
+      }
+    },
+    "xrp_kraken_buy": {
+      "FLOW": {
+        "0": {
+          "n": 159,
+          "net_bps": -0.26,
+          "net_med_bps": 0.44,
+          "win_rate": 51.6,
+          "net_total_bps": -41.8,
+          "se": 1.38
+        },
+        "10": {
+          "n": 159,
+          "net_bps": -10.26,
+          "net_med_bps": -9.56,
+          "win_rate": 22.0,
+          "net_total_bps": -1631.8,
+          "se": 1.38
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 41,
+          "net_bps": 1.5,
+          "net_med_bps": 2.65,
+          "win_rate": 56.1,
+          "net_total_bps": 61.5,
+          "se": 2.15
+        },
+        "10": {
+          "n": 41,
+          "net_bps": -8.5,
+          "net_med_bps": -7.35,
+          "win_rate": 24.4,
+          "net_total_bps": -348.5,
+          "se": 2.15
+        }
+      }
+    },
+    "xrp_kraken_sell": {
+      "FLOW": {
+        "0": {
+          "n": 160,
+          "net_bps": 0.24,
+          "net_med_bps": 0.77,
+          "win_rate": 51.9,
+          "net_total_bps": 39.1,
+          "se": 1.37
+        },
+        "10": {
+          "n": 160,
+          "net_bps": -9.76,
+          "net_med_bps": -9.23,
+          "win_rate": 23.1,
+          "net_total_bps": -1560.9,
+          "se": 1.37
+        }
+      },
+      "FADE_GATE": {
+        "0": {
+          "n": 46,
+          "net_bps": -0.61,
+          "net_med_bps": 0.88,
+          "win_rate": 54.3,
+          "net_total_bps": -28.0,
+          "se": 2.08
+        },
+        "10": {
+          "n": 46,
+          "net_bps": -10.61,
+          "net_med_bps": -9.12,
+          "win_rate": 17.4,
+          "net_total_bps": -488.0,
+          "se": 2.08
+        }
+      }
+    }
+  },
+  "A_walkforward_FLOW_0bp": {
+    "btc_kraken_buy": {
+      "early": {
+        "n": 157,
+        "net_bps": -0.38,
+        "net_med_bps": -0.65,
+        "win_rate": 40.8,
+        "net_total_bps": -60.4,
+        "se": 0.44
+      },
+      "late": {
+        "n": 157,
+        "net_bps": -0.45,
+        "net_med_bps": 0.0,
+        "win_rate": 43.3,
+        "net_total_bps": -70.5,
+        "se": 0.44
+      },
+      "both_pos": false
+    },
+    "btc_kraken_sell": {
+      "early": {
+        "n": 158,
+        "net_bps": 0.15,
+        "net_med_bps": 0.0,
+        "win_rate": 45.6,
+        "net_total_bps": 23.8,
+        "se": 0.44
+      },
+      "late": {
+        "n": 158,
+        "net_bps": -0.03,
+        "net_med_bps": -0.17,
+        "win_rate": 38.6,
+        "net_total_bps": -5.5,
+        "se": 0.5
+      },
+      "both_pos": false
+    },
+    "doge_kraken_buy": {
+      "early": {
+        "n": 41,
+        "net_bps": -0.14,
+        "net_med_bps": -0.07,
+        "win_rate": 48.8,
+        "net_total_bps": -5.8,
+        "se": 3.21
+      },
+      "late": {
+        "n": 41,
+        "net_bps": 0.24,
+        "net_med_bps": -1.53,
+        "win_rate": 46.3,
+        "net_total_bps": 10.0,
+        "se": 2.13
+      },
+      "both_pos": false
+    },
+    "doge_kraken_sell": {
+      "early": {
+        "n": 41,
+        "net_bps": 0.66,
+        "net_med_bps": -0.38,
+        "win_rate": 48.8,
+        "net_total_bps": 27.2,
+        "se": 2.58
+      },
+      "late": {
+        "n": 41,
+        "net_bps": 2.98,
+        "net_med_bps": 3.36,
+        "win_rate": 53.7,
+        "net_total_bps": 122.1,
+        "se": 3.46
+      },
+      "both_pos": true
+    },
+    "eth_kraken_buy": {
+      "early": {
+        "n": 112,
+        "net_bps": 0.06,
+        "net_med_bps": 0.0,
+        "win_rate": 49.1,
+        "net_total_bps": 6.4,
+        "se": 0.88
+      },
+      "late": {
+        "n": 113,
+        "net_bps": -0.12,
+        "net_med_bps": 0.11,
+        "win_rate": 50.4,
+        "net_total_bps": -13.5,
+        "se": 1.02
+      },
+      "both_pos": false
+    },
+    "eth_kraken_sell": {
+      "early": {
+        "n": 114,
+        "net_bps": -1.04,
+        "net_med_bps": 0.04,
+        "win_rate": 51.8,
+        "net_total_bps": -118.0,
+        "se": 0.92
+      },
+      "late": {
+        "n": 115,
+        "net_bps": -0.32,
+        "net_med_bps": 0.11,
+        "win_rate": 50.4,
+        "net_total_bps": -37.0,
+        "se": 1.0
+      },
+      "both_pos": false
+    },
+    "sol_kraken_buy": {
+      "early": {
+        "n": 105,
+        "net_bps": -1.08,
+        "net_med_bps": -1.22,
+        "win_rate": 41.0,
+        "net_total_bps": -113.9,
+        "se": 1.25
+      },
+      "late": {
+        "n": 105,
+        "net_bps": -0.78,
+        "net_med_bps": 0.0,
+        "win_rate": 43.8,
+        "net_total_bps": -82.3,
+        "se": 0.93
+      },
+      "both_pos": false
+    },
+    "sol_kraken_sell": {
+      "early": {
+        "n": 105,
+        "net_bps": 0.8,
+        "net_med_bps": 0.0,
+        "win_rate": 47.6,
+        "net_total_bps": 83.5,
+        "se": 1.3
+      },
+      "late": {
+        "n": 106,
+        "net_bps": -0.31,
+        "net_med_bps": 0.0,
+        "win_rate": 46.2,
+        "net_total_bps": -32.9,
+        "se": 1.03
+      },
+      "both_pos": false
+    },
+    "xrp_kraken_buy": {
+      "early": {
+        "n": 79,
+        "net_bps": -1.19,
+        "net_med_bps": 0.44,
+        "win_rate": 51.9,
+        "net_total_bps": -93.8,
+        "se": 2.37
+      },
+      "late": {
+        "n": 80,
+        "net_bps": 0.65,
+        "net_med_bps": 0.3,
+        "win_rate": 51.2,
+        "net_total_bps": 52.0,
+        "se": 1.44
+      },
+      "both_pos": false
+    },
+    "xrp_kraken_sell": {
+      "early": {
+        "n": 80,
+        "net_bps": 1.82,
+        "net_med_bps": 1.32,
+        "win_rate": 53.8,
+        "net_total_bps": 145.6,
+        "se": 2.12
+      },
+      "late": {
+        "n": 80,
+        "net_bps": -1.33,
+        "net_med_bps": 0.09,
+        "win_rate": 50.0,
+        "net_total_bps": -106.5,
+        "se": 1.72
+      },
+      "both_pos": false
+    }
+  },
+  "B_feature_lift": {
+    "overall": {
+      "imb_level": {
+        "acc": 48.9,
+        "n": 1990
+      },
+      "ent_dipole": {
+        "acc": 47.2,
+        "n": 1978
+      },
+      "C_signed": {
+        "acc": 48.9,
+        "n": 1990
+      },
+      "mi_flow": {
+        "acc": 48.6,
+        "n": 1989
+      },
+      "imb_flow": {
+        "acc": 51.2,
+        "n": 1990
+      }
+    },
+    "per_cell": {
+      "imb_level": {
+        "xrp_kraken_buy": {
+          "acc": 56.0,
+          "base": 52.8,
+          "lift": 3.1,
+          "n": 159
+        },
+        "doge_kraken_sell": {
+          "acc": 59.8,
+          "base": 57.3,
+          "lift": 2.4,
+          "n": 82
+        },
+        "eth_kraken_buy": {
+          "acc": 54.7,
+          "base": 52.4,
+          "lift": 2.2,
+          "n": 225
+        },
+        "xrp_kraken_sell": {
+          "acc": 52.5,
+          "base": 50.6,
+          "lift": 1.9,
+          "n": 160
+        },
+        "eth_kraken_sell": {
+          "acc": 51.5,
+          "base": 50.2,
+          "lift": 1.3,
+          "n": 229
+        },
+        "doge_kraken_buy": {
+          "acc": 59.8,
+          "base": 61.0,
+          "lift": -1.2,
+          "n": 82
+        },
+        "btc_kraken_sell": {
+          "acc": 42.6,
+          "base": 50.2,
+          "lift": -7.6,
+          "n": 317
+        },
+        "btc_kraken_buy": {
+          "acc": 45.2,
+          "base": 53.5,
+          "lift": -8.3,
+          "n": 312
+        },
+        "sol_kraken_sell": {
+          "acc": 43.2,
+          "base": 57.7,
+          "lift": -14.6,
+          "n": 213
+        },
+        "sol_kraken_buy": {
+          "acc": 44.1,
+          "base": 58.8,
+          "lift": -14.7,
+          "n": 211
+        }
+      },
+      "ent_dipole": {
+        "xrp_kraken_buy": {
+          "acc": 51.6,
+          "base": 52.8,
+          "lift": -1.3,
+          "n": 159
+        },
+        "btc_kraken_sell": {
+          "acc": 48.9,
+          "base": 50.2,
+          "lift": -1.3,
+          "n": 317
+        },
+        "eth_kraken_buy": {
+          "acc": 46.7,
+          "base": 52.4,
+          "lift": -5.8,
+          "n": 225
+        },
+        "xrp_kraken_sell": {
+          "acc": 44.4,
+          "base": 50.6,
+          "lift": -6.2,
+          "n": 160
+        },
+        "btc_kraken_buy": {
+          "acc": 46.6,
+          "base": 53.5,
+          "lift": -6.9,
+          "n": 311
+        },
+        "eth_kraken_sell": {
+          "acc": 42.1,
+          "base": 50.2,
+          "lift": -8.1,
+          "n": 228
+        },
+        "doge_kraken_buy": {
+          "acc": 52.6,
+          "base": 61.0,
+          "lift": -8.4,
+          "n": 78
+        },
+        "sol_kraken_sell": {
+          "acc": 48.4,
+          "base": 57.7,
+          "lift": -9.4,
+          "n": 213
+        },
+        "doge_kraken_sell": {
+          "acc": 47.4,
+          "base": 57.3,
+          "lift": -9.9,
+          "n": 76
+        },
+        "sol_kraken_buy": {
+          "acc": 47.4,
+          "base": 58.8,
+          "lift": -11.4,
+          "n": 211
+        }
+      },
+      "C_signed": {
+        "xrp_kraken_buy": {
+          "acc": 56.0,
+          "base": 52.8,
+          "lift": 3.1,
+          "n": 159
+        },
+        "doge_kraken_sell": {
+          "acc": 59.8,
+          "base": 57.3,
+          "lift": 2.4,
+          "n": 82
+        },
+        "eth_kraken_buy": {
+          "acc": 54.7,
+          "base": 52.4,
+          "lift": 2.2,
+          "n": 225
+        },
+        "xrp_kraken_sell": {
+          "acc": 52.5,
+          "base": 50.6,
+          "lift": 1.9,
+          "n": 160
+        },
+        "eth_kraken_sell": {
+          "acc": 51.5,
+          "base": 50.2,
+          "lift": 1.3,
+          "n": 229
+        },
+        "doge_kraken_buy": {
+          "acc": 59.8,
+          "base": 61.0,
+          "lift": -1.2,
+          "n": 82
+        },
+        "btc_kraken_sell": {
+          "acc": 42.6,
+          "base": 50.2,
+          "lift": -7.6,
+          "n": 317
+        },
+        "btc_kraken_buy": {
+          "acc": 45.2,
+          "base": 53.5,
+          "lift": -8.3,
+          "n": 312
+        },
+        "sol_kraken_sell": {
+          "acc": 43.2,
+          "base": 57.7,
+          "lift": -14.6,
+          "n": 213
+        },
+        "sol_kraken_buy": {
+          "acc": 44.1,
+          "base": 58.8,
+          "lift": -14.7,
+          "n": 211
+        }
+      },
+      "mi_flow": {
+        "eth_kraken_buy": {
+          "acc": 53.8,
+          "base": 52.4,
+          "lift": 1.3,
+          "n": 225
+        },
+        "doge_kraken_sell": {
+          "acc": 58.5,
+          "base": 57.3,
+          "lift": 1.2,
+          "n": 82
+        },
+        "eth_kraken_sell": {
+          "acc": 51.1,
+          "base": 50.2,
+          "lift": 0.9,
+          "n": 229
+        },
+        "xrp_kraken_buy": {
+          "acc": 49.7,
+          "base": 52.8,
+          "lift": -3.1,
+          "n": 159
+        },
+        "btc_kraken_sell": {
+          "acc": 46.5,
+          "base": 50.2,
+          "lift": -3.6,
+          "n": 316
+        },
+        "btc_kraken_buy": {
+          "acc": 47.8,
+          "base": 53.5,
+          "lift": -5.8,
+          "n": 312
+        },
+        "xrp_kraken_sell": {
+          "acc": 44.4,
+          "base": 50.6,
+          "lift": -6.2,
+          "n": 160
+        },
+        "doge_kraken_buy": {
+          "acc": 53.7,
+          "base": 61.0,
+          "lift": -7.3,
+          "n": 82
+        },
+        "sol_kraken_sell": {
+          "acc": 47.4,
+          "base": 57.7,
+          "lift": -10.3,
+          "n": 213
+        },
+        "sol_kraken_buy": {
+          "acc": 42.7,
+          "base": 58.8,
+          "lift": -16.1,
+          "n": 211
+        }
+      },
+      "imb_flow": {
+        "btc_kraken_sell": {
+          "acc": 53.9,
+          "base": 50.2,
+          "lift": 3.8,
+          "n": 317
+        },
+        "btc_kraken_buy": {
+          "acc": 55.8,
+          "base": 53.5,
+          "lift": 2.2,
+          "n": 312
+        },
+        "xrp_kraken_buy": {
+          "acc": 52.8,
+          "base": 52.8,
+          "lift": 0.0,
+          "n": 159
+        },
+        "xrp_kraken_sell": {
+          "acc": 47.5,
+          "base": 50.6,
+          "lift": -3.1,
+          "n": 160
+        },
+        "eth_kraken_sell": {
+          "acc": 46.3,
+          "base": 50.2,
+          "lift": -3.9,
+          "n": 229
+        },
+        "sol_kraken_buy": {
+          "acc": 53.6,
+          "base": 58.8,
+          "lift": -5.2,
+          "n": 211
+        },
+        "doge_kraken_sell": {
+          "acc": 51.2,
+          "base": 57.3,
+          "lift": -6.1,
+          "n": 82
+        },
+        "sol_kraken_sell": {
+          "acc": 50.7,
+          "base": 57.7,
+          "lift": -7.0,
+          "n": 213
+        },
+        "eth_kraken_buy": {
+          "acc": 45.3,
+          "base": 52.4,
+          "lift": -7.1,
+          "n": 225
+        },
+        "doge_kraken_buy": {
+          "acc": 51.2,
+          "base": 61.0,
+          "lift": -9.8,
+          "n": 82
+        }
+      }
+    }
+  },
+  "B_deploy_candidates": {},
+  "C_harness_per_venue": {
+    "btc_kraken": {
+      "champion": {
+        "n_calls": 17,
+        "TP": 9,
+        "FP": 8,
+        "FN": 9,
+        "n_turns": 18,
+        "recall": 0.5,
+        "precision": 0.529,
+        "bps_to_turn": 13.4,
+        "net_oos": -104.5,
+        "net_oos_maker": -2.5,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.05
+        }
+      },
+      "challenger": {
+        "n_calls": 7,
+        "TP": 5,
+        "FP": 2,
+        "FN": 13,
+        "n_turns": 18,
+        "recall": 0.278,
+        "precision": 0.714,
+        "bps_to_turn": 9.3,
+        "net_oos": -56.3,
+        "net_oos_maker": -14.3,
+        "params": {
+          "R_bps": 8.0,
+          "W_s": 1800,
+          "T": 0.5
+        }
+      }
+    },
+    "doge_kraken": {
+      "champion": {
+        "n_calls": 26,
+        "TP": 19,
+        "FP": 7,
+        "FN": 16,
+        "n_turns": 35,
+        "recall": 0.543,
+        "precision": 0.731,
+        "bps_to_turn": 16.0,
+        "net_oos": -374.6,
+        "net_oos_maker": -218.6,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 21,
+        "TP": 7,
+        "FP": 14,
+        "FN": 28,
+        "n_turns": 35,
+        "recall": 0.2,
+        "precision": 0.333,
+        "bps_to_turn": 12.9,
+        "net_oos": -109.7,
+        "net_oos_maker": 16.3,
+        "params": {
+          "R_bps": 8.0,
+          "W_s": 1800,
+          "T": 0.5
+        }
+      }
+    },
+    "eth_kraken": {
+      "champion": {
+        "n_calls": 7,
+        "TP": 6,
+        "FP": 1,
+        "FN": 4,
+        "n_turns": 10,
+        "recall": 0.6,
+        "precision": 0.857,
+        "bps_to_turn": 15.0,
+        "net_oos": -122.7,
+        "net_oos_maker": -80.7,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 3,
+        "TP": 2,
+        "FP": 1,
+        "FN": 8,
+        "n_turns": 10,
+        "recall": 0.2,
+        "precision": 0.667,
+        "bps_to_turn": 12.6,
+        "net_oos": -94.7,
+        "net_oos_maker": -76.7,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.5
+        }
+      }
+    },
+    "sol_kraken": {
+      "champion": {
+        "n_calls": 34,
+        "TP": 20,
+        "FP": 14,
+        "FN": 23,
+        "n_turns": 43,
+        "recall": 0.465,
+        "precision": 0.588,
+        "bps_to_turn": 13.9,
+        "net_oos": -319.1,
+        "net_oos_maker": -115.1,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 60,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 7,
+        "TP": 6,
+        "FP": 1,
+        "FN": 37,
+        "n_turns": 43,
+        "recall": 0.14,
+        "precision": 0.857,
+        "bps_to_turn": 13.7,
+        "net_oos": -85.2,
+        "net_oos_maker": -43.2,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 300,
+          "T": 0.5
+        }
+      }
+    },
+    "xrp_kraken": {
+      "champion": {
+        "n_calls": 7,
+        "TP": 3,
+        "FP": 4,
+        "FN": 7,
+        "n_turns": 10,
+        "recall": 0.3,
+        "precision": 0.429,
+        "bps_to_turn": 9.3,
+        "net_oos": -61.0,
+        "net_oos_maker": -19.0,
+        "params": {
+          "R_bps": 8.0,
+          "W_s": 300,
+          "T": 0.2
+        }
+      },
+      "challenger": {
+        "n_calls": 4,
+        "TP": 2,
+        "FP": 2,
+        "FN": 8,
+        "n_turns": 10,
+        "recall": 0.2,
+        "precision": 0.5,
+        "bps_to_turn": 36.9,
+        "net_oos": -85.7,
+        "net_oos_maker": -61.7,
+        "params": {
+          "R_bps": 11.999999999999998,
+          "W_s": 900,
+          "T": 0.5
+        }
+      }
+    }
+  },
+  "C_harness_pooled": {
+    "CHAMPION": {
+      "recall": 0.482,
+      "precision": 0.627,
+      "bps_to_turn": 13.5,
+      "net_taker": -982,
+      "net_maker": -436,
+      "venues_pos_taker": 0,
+      "venues_pos_maker": 0,
+      "n_venues": 5
+    },
+    "CHALLENGER": {
+      "recall": 0.204,
+      "precision": 0.614,
+      "bps_to_turn": 17.1,
+      "net_taker": -432,
+      "net_maker": -180,
+      "venues_pos_taker": 0,
+      "venues_pos_maker": 1,
+      "n_venues": 5
+    }
+  },
+  "caveat": "ONE 42h low-edge Kraken book window = current conditions; first cut, not deploy-grade"
+}
