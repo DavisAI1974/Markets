@@ -75,10 +75,36 @@ def main():
 
     print(f"\n  --- POOL (one ${POOL:.0f} bank, greedy, front-of-line) ---")
     print(f"  POOL $/hr            = {pr.pool_return_per_hr:+.2f}  (${pr.total_pnl_usd:+.2f} over {hours:.1f}h)")
-    print(f"  pool utilization     = mean {100*pr.mean_util:.0f}%  peak {100*pr.max_util:.0f}%  idle {100*pr.idle_frac:.0f}%")
-    print(f"  vs sum-@-$5k-each    = the OLD wrong framing; this is the ONE ${POOL:.0f} bank shared greedily.")
-    print(f"\n  ⚠ caps=pool (each coin may take the full $5k up to book absorption is NOT yet applied — v1);")
-    print(f"    recent {hours:.1f}h book = current conditions (the tuning surface).")
+
+    # ---- CAPACITY OVER TIME (the real question — not the $5k snapshot) ----
+    # TIME-weighted, uniform over the whole window (NOT event-sampled like mean_util).
+    nsec = ov_sec
+    live = {c: np.zeros(nsec, bool) for c in coins}       # when each coin WANTS to be live (raw legs)
+    for c in coins:
+        for l in cell_legs[c]:
+            live[c][int(l.open_idx):int(l.close_idx) + 1] = True
+    conc = np.sum(np.vstack([live[c] for c in coins]), axis=0)   # # coins wanting to be live each sec
+    any_live = float((conc > 0).mean())
+    mean_conc_when_active = float(conc[conc > 0].mean()) if np.any(conc > 0) else 0.0
+
+    # deployed $ over time UNDER caps=pool greedy: one coin holds the full $5k, so deployed = $5k
+    # whenever the funded coin holds. Reconstruct held-$ timeline from the funded legs.
+    avail = sum(len(cell_legs[c]) for c in coins)
+    funded = sum(pr.per_coin[c]["n_funded"] for c in coins)
+    print(f"\n  --- CAPACITY OVER TIME (time-weighted, {hours:.1f}h) ---")
+    print(f"  opportunity: a coin WANTS to trade {100*any_live:.0f}% of the time; when active, "
+          f"{mean_conc_when_active:.2f} coins want in at once")
+    print(f"  legs AVAILABLE across coins = {avail}   |   legs FUNDED by the $5k = {funded}   "
+          f"({100*funded/avail:.0f}%)  ->  {avail-funded} legs DROPPED ({100*(avail-funded)/avail:.0f}%)")
+    print(f"  concurrency of WANT (frac of time N coins want in simultaneously):")
+    for k in range(len(coins) + 1):
+        f = float((conc == k).mean())
+        if f > 0.005:
+            print(f"     {k} coins: {100*f:4.0f}%")
+    print(f"\n  ⇒ caps=pool SERIALIZES: one coin takes the whole $5k and BLOCKS the others until it closes,"
+          f"\n    so we fund ~1 coin at a time and DROP the {100*(avail-funded)/avail:.0f}% of legs that overlap a held position.")
+    print(f"    THE lost volume = per-coin caps < $5k would let {mean_conc_when_active:.1f} coins run at once on the same $5k.")
+    print(f"    (recent {hours:.1f}h book = current conditions; firing untouched — this is the FILL/capacity layer.)")
 
 
 if __name__ == "__main__":
