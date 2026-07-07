@@ -259,9 +259,15 @@ fill/capital-config updates for Greg's review. Never self-applies; never changes
   a ±1 square wave (data-resolution limit, not "exhaustion is meaningless"). ⇒ the ENTRY-QUALITY half is the
   ready prize; the EXIT/turn read needs a DENSER/aggregated tape or a BOOK-DEPTH-pressure proxy (both UNTESTED).
 - **⚠ REFINEMENT REQUIRED before deploy (Greg — this is the build, but not yet):** (1) per-cell OOS + shuffle-null of
-  the ascent-algebra entry classifier through the LIVE executor; (2) the correct EXIT turn-definition (price reversal,
-  not argmax) + the exhaustion-at-turn signature; (3) direction stays on the lean, firing Greg-only; (4) NO averaging
-  anywhere in the live path; (5) per-cell numbers (same shape, own thresholds, own wiggle room).
+  the ascent-algebra entry classifier through the LIVE executor; (2) direction stays on the lean, firing Greg-only;
+  (3) NO averaging anywhere in the live path; (4) per-cell numbers (same shape, own thresholds, own wiggle room).
+- **⭐ GREG'S S72 CLOSING REFRAME (simplification):** the entry gate does DOUBLE DUTY — **selection AND loss-avoidance**
+  — so **DEEP-BAIL is DEMOTED to a thin backstop** (we don't fire the losers it was there to cap; keep it only because
+  the gate is ~0.60–0.70 AUC, not perfect). The exit hunt was ONLY ever **exiting WINNERS at their top** (optimization,
+  not survival), so the S72 exhaustion-top NULL costs little — worst case ride the winner and exit on the CURRENT
+  running logic (detector's next flow turn / cover-grace). Net ballgame: DIRECTION (peak/valley, locked) → ENTRY
+  (fire only predicted-winner shapes = the prize, also kills loss-mgmt exits) → EXIT (winner-optimization only; current
+  logic is the fine default; the exhaustion-top read needs a DENSER tape / BOOK-DEPTH proxy to improve — both untested).
 
 ## ⭐ S67 IN-PROGRESS (2026-07-06, live) — THE CAPITAL MODEL (v1 built, canary PASS) + overlooked-majors sweep
 > Greg's S67 landing (S66): keep the per-coin EDGE; make capacity a VARIABLE SIZE cap (not $5k/trade);

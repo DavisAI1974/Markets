@@ -17,6 +17,14 @@
 > the SAME conditions — even if the numbers aren't the same each time." **This is more in-depth; Greg to
 > expand.**
 
+> ⭐ **S72 RESULT (2026-07-07):** the ENTRY-shape edge STANDS (pre-onset shape → winner/loser OOS AUC 0.60–0.70
+> all 5 cells) and is THE prize. The EXIT/turn read via 20s trade-flow exhaustion is a NULL on the sparse Kraken
+> book (peak-to-valley test: no leading/specific exhaustion tell at the price turns; ROOT CAUSE = trade sparsity
+> saturates `rolling_imb(20s)`; the 4 swing groups don't separate — opposite of the entry archetypes). The exit
+> is winner-optimization only (not survival), so the current running exit stays as the fine default; deep-bail
+> demoted (entry gate skips the losers). To pursue the exit read: denser/aggregated tape or a book-depth proxy.
+> See `research/exit_s72/PEAK_VALLEY_FINDINGS_S72.md` + `SESSION_HANDOFF_2026-07-07_S72.md`.
+
 ## The core reframe
 We've been reading exhaustion (and the flow signals) as a **level / average scalar** — e.g. exhaustion =
 `|late-half imbalance| < |early-half imbalance|`, reversal rate ~48% pooled over the window. That **collapses
