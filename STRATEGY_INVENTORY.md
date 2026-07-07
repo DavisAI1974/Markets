@@ -177,11 +177,24 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   arcs `research/shape_s71/regroup2.py` → `kraken_types_regrouped.png` are the reference curves). WINNER =
   starts on-side/above zero, steep rate-of-ascent (hockey-stick BLADE), HIGH onset peak. LOSER = **DIPS BELOW
   ZERO first**, shallower/later ascent, LOW peak.
-- **⚠ MULTIPLE PRE-TRADE SIGNALS, NOT YET TUNED (the work that remains):** the distinct difference is several
-  separate pre-trade tells — (1) start above/below zero (the below-zero DIP), (2) onset PEAK height, (3)
-  rate-of-ascent / BLADE steepness, (4) ascent TIMING ("ascent sooner"). Each is its own signal; none is
-  individually tuned yet. Also open: per-cell thresholds + wiggle-room, the LONG-loser skip, and the exit/turn
-  read. TUNE LATER (Greg) — do NOT get bogged down now.
+- **⭐ THE DIFFERENTIATOR = ENERGY GOING INTO THE TRADE (Greg, S73, from the graphs).** The WINNER always
+  carries MORE ENERGY into onset — a higher onset PEAK / bigger RISE (peak−start) / a steeper climb to a
+  higher level — for BOTH short-wins AND long-wins. The LOSER has less energy (lower peak/rise). SOL measured:
+  peak short-win 0.125 vs short-lose 0.014, long-win 0.348 vs long-lose 0.295; rise (energy) 0.217/0.127 short,
+  0.577/0.556 long (big gap on shorts, tighter on longs). The SHORT-loser additionally **DIPS BELOW ZERO**
+  before the upswing while the short-winner stays above. ⚠ do NOT use the terminal-15s "blade slope" as the
+  energy measure — a winner that reaches a HIGHER peak saturates/flattens near onset, so blade-slope reads
+  LOWER for the winner (an artifact); use PEAK / RISE, not terminal slope.
+- **⭐ CELL-SPECIFIC + CATEGORY-SPECIFIC + SEQUENTIAL (Greg, S73).** Not general rules — each CELL (coin) has
+  its OWN characteristics with its OWN thresholds, and each CATEGORY (short/long) its own. The loser gate is a
+  SEQUENTIAL cascade: check each characteristic ONE AT A TIME; if the trade's shape shows a loser trait (fails
+  a check), SKIP it — it must pass every check to fire. Build the shape in REAL TIME (the causal pre-onset
+  limb) for the live comparison. ⭐ SCOPE: these shape rules apply to the **4 MAJORS (BTC/ETH/SOL/XRP)**; **DOGE
+  is its OWN thing — EXCLUDED for now**, gets a doge-specific pass next.
+- **⚠ MULTIPLE PRE-TRADE SIGNALS, NOT YET TUNED (the work that remains):** the tells are several separate
+  pre-trade signals — (1) ENERGY = onset PEAK / RISE (winner higher, both categories), (2) below-zero DIP
+  (short-loser only), (3) ascent TIMING. Per-cell thresholds + wiggle-room, the LONG-loser (entry-strong →
+  likely a ride/exit handle), and the exit/turn read all remain. TUNE LATER (Greg) — do NOT get bogged down now.
 - **⭐ SHAPE BUILDER = THE ORIGINAL AGENT'S, for LIVE code (Greg, S73 — do NOT build another; his is PERFECT):**
   the live shape is built by the agent's original `research/shape_s71/arc_gate.py` + `regroup2.py` (the
   onset→exhaustion arc extraction + the regrouped reference curves + `quad_means.npz`). Do NOT write a new

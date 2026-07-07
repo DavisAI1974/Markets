@@ -34,8 +34,15 @@ def ascent_eq(pre):
     rise = np.clip(pre - pre.min(), 0, None)              # ascent above the limb's own floor
     center = float((x * rise).sum() / (rise.sum() + 1e-9))  # time-center of the rise: more NEGATIVE = ascent
     #                                                         STARTS SOONER (short-loser); near 0 = late launch
+    asc = pre[-25*CPS:]                                    # the ascent region (last 25s, into onset)
+    min_asc = float(asc.min())                            # Greg: SHORT-LOSER dips BELOW ZERO here, winner does NOT
+    below_asc = float((asc < 0).mean())                  # fraction of the ascent region spent below zero
+    rise_energy = float(pre[-1] - pre[0])                 # ENERGY into the trade (peak - start): winner HIGHER
+    #   NOTE: b_blade/hockey (terminal-15s slope) is a MISLEADING energy proxy — a winner reaching a higher
+    #   peak saturates near onset so its blade-slope reads LOWER (artifact). Use PEAK / rise_energy instead.
     return dict(b=b, b_blade=b_blade, b_early=b_early, hockey=hockey, c=c,
-                peak=float(pre[-1]), start=float(pre[0]), dip=float(pre.min()), center=center)
+                peak=float(pre[-1]), start=float(pre[0]), dip=float(pre.min()), center=center,
+                min_asc=min_asc, below_asc=below_asc, rise_energy=rise_energy)
 
 def extract():
     path = "/tmp/kbook/sol_book.jsonl"; cfg = [c for c in KRAKEN if c.coin == "sol"][0]
@@ -58,7 +65,7 @@ def main():
     print("=== S73 ASCENSION EQUATION — SOL, per-category slope differentiation (agent builder) ===", flush=True)
     rows, net, dur, hours = extract()
     n = len(rows)
-    keys = ["b", "b_blade", "b_early", "hockey", "peak", "start", "dip", "center"]
+    keys = ["peak", "rise_energy", "start", "min_asc", "b", "hockey", "center"]  # ENERGY (peak/rise) = the differentiator
     F = {k: np.array([r[k] for r in rows]) for k in keys}
     win = net > 0; med = np.median(dur); short = dur < med
     print(f"  SOL legs: {n}  ({hours:.1f}h)  base win%={win.mean()*100:.1f}  median dur={med:.0f}s\n", flush=True)
