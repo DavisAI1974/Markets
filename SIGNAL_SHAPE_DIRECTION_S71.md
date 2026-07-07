@@ -1,5 +1,15 @@
 # DIRECTION: the SHAPE of the signal, not its numeric value (Greg, S71 — 2026-07-07)
 
+> ⛔ **CORRECTION (Greg, S72) — NO AVERAGING. INDIVIDUAL TRADE SHAPES ONLY.** The signal is the shape of
+> EACH INDIVIDUAL trade's onset→exhaustion arc, read live on that one trade. It is NOT a mean/pooled/event-study
+> arc, and it is NOT graded on one. The mean "quad_means" arcs (all coins, doge-separate, etc.) were only ever a
+> PICTURE of the archetype — they are not the signal. Averaging destroys the per-trade shape and washes out the
+> edge, which is exactly why pooled scalars looked "flat/noisy" — that flatness is the averaging error, NOT
+> evidence against the signal. The per-trade differences may be MODEST IN SIZE but they are DISTINCT ON EACH
+> TRADE, and a small-but-consistent per-trade difference is a real edge. Clear all averaging framing from any
+> shape discussion. (Validation classifies EACH trade on its OWN shape and tallies the per-trade decisions —
+> that is counting decisions, not averaging curves.)
+
 > Greg's note (verbatim intent): "we need to look at the SHAPE of things. How much does the exhaustion
 > number change from second to second — not just an average over a couple of weeks. Find exhaustion in
 > previous trades and MAP THE CURVE of it. Not the numeric value but how quickly up and down our number
