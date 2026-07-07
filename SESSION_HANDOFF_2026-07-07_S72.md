@@ -21,6 +21,15 @@ cross-venue) or a BOOK-DEPTH-pressure proxy so the exhaustion read isn't saturat
 thread aside and BUILD + validate the confirmed ENTRY-QUALITY classifier (ascent algebra + peak height →
 fire/skip, per-cell OOS through the live executor) — that's the real, ready prize. Greg to steer.
 
+**⭐ GREG'S S72 CLOSING REFRAME (load-bearing simplification):** the entry gate does DOUBLE DUTY — selection
+AND loss-avoidance — so **DEEP-BAIL is DEMOTED** (we don't fire the losers it was there to cap; keep it only
+as a THIN BACKSTOP since the gate is ~0.60–0.70 AUC, not perfect). And the whole exit hunt was ONLY ever about
+exiting **WINNERS at their top** (optimization — capture more of a correctly-entered ride), NOT survival — so
+the exhaustion-top NULL costs us little: worst case ride the winner and exit on the current running logic
+(detector's next flow turn / cover-grace). The ballgame collapses to: DIRECTION (peak/valley, locked) → ENTRY
+(fire only predicted-winner shapes = the prize, also kills loss-mgmt exits) → EXIT (winner-optimization only;
+current logic is the fine default; exhaustion-top needs denser tape / book-depth to improve).
+
 # ══════════════════════════════════════════════════════════════════════════════
 
 ## What S72 did — the SHAPE thread, walked and pressure-tested
