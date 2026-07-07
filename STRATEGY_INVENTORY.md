@@ -185,6 +185,13 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   before the upswing while the short-winner stays above. ⚠ do NOT use the terminal-15s "blade slope" as the
   energy measure — a winner that reaches a HIGHER peak saturates/flattens near onset, so blade-slope reads
   LOWER for the winner (an artifact); use PEAK / RISE, not terminal slope.
+- **⛔ SHAPE, NOT NUMERICAL VALUES — NO VOLUME, NO PRICE (Greg, S73 — foundational):** we deliberately do NOT
+  use raw volume or price, because both SCALE differently per coin and per regime → constant re-scaling, nothing
+  transfers between cells. The signal object is the **normalized imbalance-ratio arc ([−1,1])**, so the CURVE
+  SHAPE is scale-invariant and comparable across coins even when absolute activity differs wildly. This is WHY
+  shape ≫ numbers. Corollary (the slope conflict): a literal slope/rate SCALAR on the normalized signal reads
+  BACKWARDS (loser "steeper") — the "steeper winner ascension" the GRAPH shows IS the winner reaching a HIGHER
+  PEAK (a shape/energy property, captured by peak). Read the SHAPE, trust the graph; do not chase a rate scalar.
 - **⛔ WHY PER-CELL, NEVER LUMPED (Greg, S73 — load-bearing):** the dominant tell DIFFERS by cell AND by
   category (SOL-short = energy/peak; SOL-long = below-zero dip; BTC/ETH/XRP each have their OWN numbers). LUMP
   them together and you average across different tells/thresholds → the signal CANCELS → a flat gate (that is

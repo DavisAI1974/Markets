@@ -37,10 +37,14 @@ def ascent_eq(pre):
     asc = pre[-25*CPS:]                                    # the ascent region (last 25s, into onset)
     min_asc = float(asc.min())                            # Greg: SHORT-LOSER dips BELOW ZERO here, winner does NOT
     below_asc = float((asc < 0).mean())                  # fraction of the ascent region spent below zero
+    # ACTIVE-CLIMB ascension rate = rise from the limb's dip up to its peak, per second (the rate the GRAPH
+    # shows: winner steeper). NOT the full-limb/terminal slope, which saturates and reads backwards.
+    i_min = int(np.argmin(pre)); i_peak = int(np.argmax(pre))
+    asc_rate = float((pre[i_peak] - pre[i_min]) / ((i_peak - i_min) * 0.1)) if i_peak > i_min else 0.0
     rise_energy = float(pre[-1] - pre[0])                 # ENERGY into the trade (peak - start): winner HIGHER
     #   NOTE: b_blade/hockey (terminal-15s slope) is a MISLEADING energy proxy — a winner reaching a higher
     #   peak saturates near onset so its blade-slope reads LOWER (artifact). Use PEAK / rise_energy instead.
-    return dict(b=b, b_blade=b_blade, b_early=b_early, hockey=hockey, c=c,
+    return dict(b=b, b_blade=b_blade, b_early=b_early, hockey=hockey, c=c, asc_rate=asc_rate,
                 peak=float(pre[-1]), start=float(pre[0]), dip=float(pre.min()), center=center,
                 min_asc=min_asc, below_asc=below_asc, rise_energy=rise_energy)
 
@@ -65,7 +69,7 @@ def main():
     print("=== S73 ASCENSION EQUATION — SOL, per-category slope differentiation (agent builder) ===", flush=True)
     rows, net, dur, hours = extract()
     n = len(rows)
-    keys = ["peak", "rise_energy", "start", "min_asc", "b", "hockey", "center"]  # ENERGY (peak/rise) = the differentiator
+    keys = ["peak", "rise_energy", "asc_rate", "start", "min_asc", "below_asc", "center"]  # ENERGY + active-climb RATE
     F = {k: np.array([r[k] for r in rows]) for k in keys}
     win = net > 0; med = np.median(dur); short = dur < med
     print(f"  SOL legs: {n}  ({hours:.1f}h)  base win%={win.mean()*100:.1f}  median dur={med:.0f}s\n", flush=True)
