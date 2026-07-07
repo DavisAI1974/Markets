@@ -1,69 +1,61 @@
-"""S73 CELL-SPECIFIC SEQUENTIAL LOSER GATE (selection on the agent's ORIGINAL builder; builds no shapes).
-Per Greg: NOT a general rule — SOL's OWN loser characteristics, checked ONE AT A TIME; if a forming trade's
-shape matches a loser trait (fails a check), SKIP it. Thresholds are CELL-SPECIFIC (derived from SOL's own
-short-category graphs) with WIGGLE ROOM. Real-time-comparable: every trait is read off the causal pre-onset
-limb. LIVE lean+exit, $5k/trade, one-sided maker, no deep-bail.
+"""S73 REFINED ENTRY GATE — SOL, 4-cell UNIVERSAL-SHAPE / CELL-SPECIFIC-NUMBER cascade (selection on the
+agent's ORIGINAL builder; DECISION through the LIVE run_kraken_cell — nothing reinvented). Same SOL 73h book.
 
-SOL SHORT-LOSER traits (from the ascension equation, short category): smaller PEAK@onset, dips further
-BELOW ZERO (start), and FLATTER / less hockey-stick. A trade that shows ALL of these short-loser traits is
-classified a short-loser and skipped. (Long-loser gets its own cell/category rule later — it's entry-strong.)
+The universal shapes (coin-universal across the 4 majors; doge separate), applied with SOL's OWN thresholds:
+  - classify each forming trade's shape SHORT vs LONG by ENERGY (onset peak magnitude),
+  - SHORT-LOSER  = the flat / low-energy / near-zero-peak short shape         -> SKIP,
+  - LONG-LOSER   = the long shape that dips DEEPER / LONGER below zero          -> SKIP,
+  - fire $5k on everything else (short-winner + long-winner).
+Sequential cascade: each characteristic checked in turn; a trade that shows a loser trait is skipped.
+Shape-only (normalized imbalance-ratio arc — NO volume, NO price). Thresholds derived on TRAIN, applied OOS.
+LIVE lean+exit, one-sided maker, no deep-bail.
 """
 import os, sys
 import numpy as np
 sys.path.insert(0, os.path.dirname(__file__))
-from sol_ascent_eq import extract, keys   # reuse the ascension-equation extractor (agent builder)
+from sol_ascent_eq import extract       # runs LIVE run_kraken_cell via the agent builder
 CAP = 5000.0
 
-def cat_mean(F, mask, k):
-    return float(F[k][mask].mean())
-
 def main():
-    print("=== S73 CELL-SPECIFIC SEQUENTIAL SHORT-LOSER GATE — SOL (agent builder) ===", flush=True)
+    print("=== S73 REFINED 4-CELL ENTRY GATE — SOL (LIVE run_kraken_cell; agent builder) ===", flush=True)
     rows, net, dur, hours = extract()
     n = len(rows)
-    F = {k: np.array([r[k] for r in rows]) for k in keys}
+    peak = np.array([r["peak"] for r in rows])
+    min_asc = np.array([r["min_asc"] for r in rows])       # below-zero dip depth in the ascent region
     win = net > 0; med = np.median(dur); short = dur < med
-    cut = int(n*0.6); tr = np.arange(cut); te = np.arange(cut, n)
+    cut = int(n*0.6); tr = np.arange(cut); te = np.arange(cut, n); hte = hours*(n-cut)/n
 
-    # --- CELL-SPECIFIC thresholds: midpoint of SOL's SHORT winner vs loser means, on TRAIN (with wiggle) ---
+    # ---- CELL-SPECIFIC thresholds from TRAIN (universal SHAPES, SOL's NUMBERS) ----
+    def m(mask, arr): return float(arr[mask].mean()) if mask.sum() else 0.0
     sw = win[tr] & short[tr]; sl = (~win[tr]) & short[tr]
-    thr = {}
-    for k in ("peak", "rise_energy", "start"):
-        w_ = cat_mean(F, tr[sw], k) if sw.sum() else 0.0
-        l_ = cat_mean(F, tr[sl], k) if sl.sum() else 0.0
-        thr[k] = 0.5*(w_+l_)                                  # skip-trait boundary (below = loser side)
-    print(f"  SOL short-category thresholds (train): peak<{thr['peak']:.4f}  "
-          f"rise_energy<{thr['rise_energy']:.4f}  start<{thr['start']:.4f}  (below = short-loser trait)\n", flush=True)
+    lw = win[tr] & ~short[tr]; ll = (~win[tr]) & ~short[tr]
+    P_split  = 0.5*(m(short[tr], peak[tr]) + m(~short[tr], peak[tr]))   # short vs long shape (by energy/peak)
+    peak_sl  = 0.5*(m(sw, peak[tr]) + m(sl, peak[tr]))                  # short-loser = peak below this (flat)
+    dip_ll   = 0.5*(m(lw, min_asc[tr]) + m(ll, min_asc[tr]))            # long-loser = ascent dips below this
+    print(f"  SOL thresholds (train): P_split(peak)={P_split:.3f}  short-loser peak<{peak_sl:.3f}  "
+          f"long-loser min_asc<{dip_ll:.3f}\n", flush=True)
 
-    # --- the SEQUENTIAL checks (each True if the trade shows the loser trait). ENERGY (peak/rise), not blade. ---
-    trait_lowpeak   = F["peak"] < thr["peak"]                 # smaller peak = less energy at onset
-    trait_lowenergy = F["rise_energy"] < thr["rise_energy"]   # smaller rise = less energy going in
-    trait_dip       = F["start"] < thr["start"]              # dips further below zero (short-loser tell)
+    # ---- the SHAPE classification + sequential loser skip ----
+    is_long_shape = peak >= P_split
+    skip_short_loser = (~is_long_shape) & (peak < peak_sl)             # flat / low-energy short  -> skip
+    skip_long_loser  = is_long_shape & (min_asc < dip_ll)             # deep below-zero long     -> skip
+    skip = skip_short_loser | skip_long_loser
 
-    def report(mask_eval, hrs, tag, skip):
-        ev = mask_eval
+    def report(ev, hrs, tag):
         fire = ~skip[ev]
-        ung = net[ev].sum(); g = net[ev][fire].sum(); nk = int(fire.sum()); ne = int(ev.sum())
+        ung = net[ev].sum(); g = net[ev][fire].sum(); nk = int(fire.sum()); ne = len(ev)
         wa = (net[ev] > 0).mean(); wk = (net[ev][fire] > 0).mean() if nk else float("nan")
-        # diagnostics: of actual short-losers, how many skipped; of winners, how many wrongly skipped
-        sl_ev = (~win[ev]) & short[ev]; w_ev = win[ev]
-        sl_skipped = int((skip[ev] & sl_ev).sum()); sl_tot = int(sl_ev.sum())
-        w_skipped = int((skip[ev] & w_ev).sum()); w_tot = int(w_ev.sum())
+        sl_ev = (~win[ev]) & short[ev]; ll_ev = (~win[ev]) & ~short[ev]; w_ev = win[ev]
         print(f"    [{tag}] UNGATED win%={wa*100:.1f} $/hr={ung/1e4*CAP/hrs:6.3f}  ->  "
               f"GATED win%={wk*100:.1f} $/hr={g/1e4*CAP/hrs:6.3f}  fired={nk}/{ne} ({fire.mean()*100:.0f}%)",
               flush=True)
-        print(f"        short-losers skipped {sl_skipped}/{sl_tot}  |  winners wrongly skipped {w_skipped}/{w_tot}",
-              flush=True)
+        print(f"        short-losers skipped {int((skip[ev]&sl_ev).sum())}/{int(sl_ev.sum())}  "
+              f"long-losers skipped {int((skip[ev]&ll_ev).sum())}/{int(ll_ev.sum())}  "
+              f"winners wrongly skipped {int((skip[ev]&w_ev).sum())}/{int(w_ev.sum())}", flush=True)
 
-    hte = hours*(n-cut)/n
-    # variant A: energy check only (the dominant SOL short-loser tell = low onset peak / low rise)
-    skipA = trait_lowpeak
-    # variant B: sequential cascade — low energy (peak) AND low rise AND dips below zero = short-loser
-    skipB = trait_lowpeak & trait_lowenergy & trait_dip
-    print("  --- A: single check (peak/energy too low) ---", flush=True)
-    report(np.arange(n), hours, "IN-SAMPLE", skipA); report(te, hte, "OOS-40%", skipA)
-    print("\n  --- B: sequential cascade (low peak AND low rise-energy AND dips below zero) ---", flush=True)
-    report(np.arange(n), hours, "IN-SAMPLE", skipB); report(te, hte, "OOS-40%", skipB)
+    print("  --- REFINED 4-cell cascade (skip short-loser on energy + long-loser on below-zero dip) ---", flush=True)
+    report(np.arange(n), hours, "IN-SAMPLE")
+    report(te, hte, "OOS-40%")
     print("\nDONE", flush=True)
 
 if __name__ == "__main__":
