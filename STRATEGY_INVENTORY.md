@@ -114,11 +114,34 @@ WFLIP=600 / ARM0 natural cadence + early-arm `retime` where eps set. DO NOT touc
 | doge | +1 | 0.30 | — | — | 600 | 0.5 | |
 | xrp | +1 | 0.13 | — | — | 300 | 0.5 | |
 
-**CAPITAL MODEL — ONE $5k bank, GREEDY, front-of-line maker** (LIVE, canary-clean):
-- `odcore/allocator.py` (`mode="greedy"`) + `odcore/platform.py::run_portfolio`. Fill best performer ($/hr per $)
-  first, up to book absorption / free capital; remainder cascades to the next-best LIVE coin until $5k is
-  deployed; never fund negative edge; never drop a coin. Breadth (majors + minors) keeps the bank ~100% full.
-- Fill = **FRONT-OF-LINE always** (`fill_model="front"`) + enticing close (`swing_maker.close_improve_bps`=0.5/coin).
+**⭐ THE GREEDY CAPITAL STRATEGY — LOCKED (Greg, S70; stop rehashing — this is settled).** In plain words,
+this is exactly what `odcore/allocator.py` (`mode="greedy"`) + `odcore/platform.py::run_portfolio` do (LIVE,
+canary-clean). Do NOT re-derive or re-litigate it; only IMPLEMENT/tune the inputs it names.
+
+1. **ONE $5k bank = the entire stack** (not per-coin, not per-sleeve). The goal is to keep that $5k **in play
+   as close to 100% of the time as possible.**
+2. **Fund the BEST performer FIRST.** "Best" = highest **edge per dollar** ($/hr per $ deployed). Rank all
+   seated coins by it every allocation.
+3. **Give the best coin as much as it can take** — bounded by TWO things: (a) our **free capital** in the $5k,
+   and (b) that coin's **counterparty capacity** = how much its book actually absorbs our front-of-line maker
+   order (i.e. how much the counter actually trades against us). If the best coin can absorb the full $5k
+   (e.g. BTC can), it **gets the full $5k — concentration on the best is FINE. We do NOT force-spread.**
+4. **Cascade the leftover.** Whatever the best coin can't take (capital it couldn't absorb / we still have free)
+   goes to the **next-best performer**, then the next, and so on **until the $5k is deployed.** Example (Greg):
+   we have $2500 to place and the counter on that coin only trades $1000 worth → we fill $1000 there and the
+   remaining $1500 cascades to the next coin.
+5. **Positions are per-coin and INDEPENDENT, mixed direction.** We can be **short BTC and long SOL at the same
+   time** — nothing forces the whole book to one side. Multiple concurrent positions is the NORMAL state; that
+   is how the $5k stays full.
+6. **Never fund negative edge** (idle beats a loser). **Never DROP a coin** — an unfunded coin stays seated and
+   available; greedy just doesn't fund it this round.
+7. **Always FRONT-OF-LINE maker** (`fill_model="front"` + enticing close `swing_maker.close_improve_bps`=0.5/coin):
+   post the best bid/offer so we are first in line.
+8. **Breadth is the fuel.** More seated coins (majors + the 16 minors + the small-cap sleeve) = more concurrent
+   fill opportunities = the $5k stays deployed. Thin books each take small size; that is why we need many coins.
+
+**The ONLY tuning surface on this** = the INPUTS greedy consumes: per-coin **counterparty capacity** (measured
+from the live book), the **edge-per-$ ranking**, and the **idle-vs-deploy** floor (rule 6). Firing is untouched.
 
 **EXECUTOR / PLATFORM (the live decision path — ALL tests run through this):**
 - `odcore/swing_maker.py` — the one executor (maker-at-the-turn, cover_grace, exit_spec deep-bail, front fill, fees).
