@@ -1,5 +1,34 @@
 # STRATEGY & TOOL INVENTORY — DavisAI Markets (living doc; started S64 2026-07-05)
 
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# ⛔ OPERATING CONTRACT — READ THIS FIRST, EVERY SESSION. THESE ARE LOCKED. (Greg, S70)
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# This is not history — it is the binding contract. Everything below this box is reference/log.
+# If anything below (a drop-in Job, an old S-block) contradicts this box, THIS BOX WINS.
+#
+#  1. FIRING IS FIXED. Each coin's detector stack (direction/side, REV, eps, deep-bail, cover-grace —
+#     §2.A "FINAL PER-COIN CONFIG") is LOCKED. Never re-adjudicate, sweep, reverse, or "compare"
+#     a coin's firing. It changes ONLY when Greg explicitly says to change a specific coin (and,
+#     once live, via the evolution review loop — never ad-hoc mid-session).
+#  2. GREEDY IS ALREADY LIVE (odcore/allocator.py mode="greedy" + platform.run_portfolio, canary-clean).
+#     Do NOT rebuild it. The ONLY work is ADJUSTING HOW GREEDY FILLS THE $5k.
+#  3. LIVE CODE ONLY. Every test/backtest runs its DECISION through the live executor
+#     (run_stream/run_kraken_cell → swing_maker) + the live allocator. NO tape proxy, NO
+#     reimplementation, NO bolt-on. (capacity.py-on-TAPE is RETIRED as a capacity source — S69.)
+#  4. ALWAYS FRONT-OF-LINE. We post the best bid/offer (enticing close) so we are first in line.
+#     "queue"/back-of-line is NOT an operating mode — never a choice, at most a worst-case footnote.
+#  5. BOOK = FILLS. TAPE = PLUMBING/STRUCTURE ONLY. Price/tune the fill on RECENT book (recent book =
+#     current conditions = the right surface; we do NOT wait weeks). Never grade/price a coin on tape.
+#  6. THE CAPITAL MODEL: ONE $5k bank, kept ~100% deployed as a MAKER, front-of-line. Fill the BEST
+#     performer ($/hr per $) first, up to what its BOOK can absorb / capital allows; the remainder
+#     cascades to the next-best LIVE coin, and so on to $5k. Breadth (majors + minors) is what keeps
+#     the bank full — no idle, no queue-waiting (if a coin is tapped, move to the next coin in line).
+#     Never fund negative edge (idle beats a loser).
+#
+# THE ONE JOB, ALWAYS: adjust how the live greedy allocator fills the $5k from the live BOOK,
+# front-of-line — firing untouched. That is the entire session surface unless Greg says otherwise.
+# ══════════════════════════════════════════════════════════════════════════════════════════
+
 > **WHY THIS EXISTS (Greg, S64):** we keep re-deriving from one tool and forgetting the rest of our
 > own toolkit (S64: a whole benchmark got run on *bare* flow-lean, ignoring the deployed stack + the
 > E300 family). This is the canonical list of EVERYTHING we have live/built so no session misses it.
