@@ -209,6 +209,10 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   1. **RELATIVE ENERGY:** the winner ALWAYS has MORE ENERGY than its PAIRED loser (short-win > short-lose,
      long-win > long-lose). The within-pair winner>loser energy rule never flips — even though absolute peak
      levels overlap across short/long, the PAIRED comparison separates cleanly.
+     **⭐ SOL JUMPING-OFF VALUES (the archetype energy anchors — cell-specific NUMBERS to start from):
+     SHORT-WIN 0.125 vs SHORT-LOSE 0.014 (EXTREMELY DISTINCT — ~9×, zero archetype overlap, you know right away
+     which is which); LONG-WIN 0.348 vs LONG-LOSE 0.295.** These are SOL's numbers; each other major re-fits its
+     OWN (universal shapes, cell-specific numbers). Jump off from these.
   2. **LINEAR vs NON-LINEAR ASCENT:** the winner's ascent is NON-LINEAR / hockey-stick; the loser's is LINEAR
      (straight/flat). Measure via linear-fit R² / convexity vs the start→peak chord (NOT the terminal blade
      slope, which saturates and reads backwards — the S73 miss).

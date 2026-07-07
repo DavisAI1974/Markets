@@ -26,8 +26,12 @@ scale-free signatures that hold in BOTH categories, NOT in absolute level: (1) *
 ALWAYS has more energy than its PAIRED loser (short-win > short-lose, long-win > long-lose; the within-pair rule
 never flips even though absolute levels overlap); (2) **LINEAR vs NON-LINEAR ASCENT** — winner non-linear/
 hockey-stick, loser linear (measure via linear-fit R²/convexity, NOT the saturating blade slope). The S74 gate
-is built on THESE non-overlap signatures (per coin × per cell), not on an absolute-level midpoint. All the other
-design principles were nailed down (see below).
+is built on THESE non-overlap signatures (per coin × per cell), not on an absolute-level midpoint.
+
+**⭐ SOL JUMPING-OFF VALUES (state these — the archetype energy anchors, SOL's cell-specific numbers):
+SHORT-WIN 0.125 vs SHORT-LOSE 0.014 (EXTREMELY DISTINCT — ~9×, zero archetype overlap, you know right away
+which is which); LONG-WIN 0.348 vs LONG-LOSE 0.295.** Jump off from these on SOL; each other major re-fits its
+OWN numbers (universal shapes, cell-specific numbers). All the other design principles were nailed down (below).
 
 **⭐ NEXT (S74):**
 1. **FIND WHERE WINNER/LOSER DON'T OVERLAP in the ENTRY shape, gate ONLY there (Greg, load-bearing).** The
