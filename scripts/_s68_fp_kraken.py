@@ -169,23 +169,27 @@ def legs_fingerprint(bk):
 
 # ================= CLASS 2/3: down-slides & up-hills =================
 def price_zigzag(mid, theta_bps):
-    """Zigzag pivots on price. Returns list of (pivot_idx, kind) kind='H'/'L' alternating."""
+    """Zigzag pivots on price (mirrors detect_flips: single direction state, if/elif — correct at any theta).
+    Returns list of (pivot_idx, kind) kind='H'(high pivot -> down-swing starts)/'L' alternating."""
     n = len(mid); th = theta_bps / 1e4
     piv = []
-    d = 0; ext = mid[0]; exti = 0
+    # seed direction from the first valid price move
+    d = 1; ext = mid[0]; exti = 0
     for t in range(1, n):
         x = mid[t]
         if x <= 0:
             continue
-        if d >= 0:
+        if ext <= 0:
+            ext = x; exti = t; continue
+        if d == 1:                                   # seeking a HIGH
             if x > ext:
                 ext = x; exti = t
-            elif ext > 0 and x <= ext * (1 - th):
+            elif x <= ext * (1 - th):                # retraced theta -> exti was a high
                 piv.append((exti, "H")); d = -1; ext = x; exti = t
-        if d <= 0:
-            if x < ext or ext <= 0:
+        else:                                        # seeking a LOW
+            if x < ext:
                 ext = x; exti = t
-            elif ext > 0 and x >= ext * (1 + th):
+            elif x >= ext * (1 + th):                # rebounded theta -> exti was a low
                 piv.append((exti, "L")); d = 1; ext = x; exti = t
     return piv
 

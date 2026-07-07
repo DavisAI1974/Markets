@@ -22,19 +22,40 @@ rev grid = [0.08,0.10,0.13,0.16,0.20,0.25,0.30,0.40]; eps ∈ [None,3,5,10,15,20
 
 ---
 
-## SUMMARY (updated as tapes backfill; * = 28d tape confirmed)
+## SUMMARY — ALL 9 on 28d tape, RANKED BY PREMIUM-OVER-FLOOR (the honest structural edge)
 
-| coin | current $/hr (28d) | best $/hr | delta | null floor | win% | verdict |
-|------|--------------------|-----------|-------|-----------|------|---------|
-| btc* | +7.99 | **+10.27** | +2.28 | +6.74 | 86% | **SEAT** |
-| eth* | +8.52 | **+10.47** | +1.95 | +7.69 | 100% | **SEAT** |
-| sol* | −1.96 | +1.08 | +3.04 | +2.69 | 71% | **MARGINAL** (best is REVERSED; below floor) |
-| xrp  | _pending 28d tape_ | | | | | |
-| doge | _pending_ | | | | | |
-| ada  | _pending_ | | | | | |
-| sui  | _pending_ | | | | | |
-| ltc  | _pending_ | | | | | |
-| avax*| +2.97 | **+7.88** | +4.91 | +7.81 | 100% | **SEAT** (thin floor margin) |
+**Load-bearing lens (applied uniformly, majors + candidates):** raw best $/hr includes the circular-shift
+NULL FLOOR (structure-free churn the front-of-line fill model over-credits at ~0 Kraken half-spread). The
+deployable structural edge is **PREMIUM = best − floor.** A coin with best $/hr >> 0 but best ≈ floor is
+churn, not edge. Judged this way the roster reorders: only **BTC, ADA, ETH, LTC** carry real structural edge;
+the 3 incumbents **SOL/XRP/DOGE fall BELOW their own floor on 28d**, as do candidates AVAX/SUI.
+
+| coin | best $/hr | null floor | **PREMIUM** | recency | verdict (premium lens) |
+|------|-----------|-----------|-------------|---------|------------------------|
+| **btc** | +10.27 | +6.74 | **+3.53** | robust | **SEAT** (real edge) |
+| **ada** ⭐new | +11.24 | +8.05 | **+3.20** | robust | **SEAT** — strongest new major, ~ties BTC |
+| **eth** | +10.47 | +7.69 | **+2.78** | robust | **SEAT** (real edge) |
+| **ltc** ⭐new | +2.97 | +1.87 | **+1.10** | robust | **SEAT** — modest, confirms S67 |
+| avax new | +7.88 | +7.81 | +0.07 | FRAGILE | CHURN — big raw $/hr is all floor; not a seat |
+| doge | +5.13 | +5.25 | −0.12 | FRAGILE | below floor — churn |
+| xrp | +1.47 | +1.86 | −0.40 | FRAGILE | below floor (best side = REVERSED rev0.20) |
+| sui new | +1.20 | +2.02 | −0.82 | robust | REJECT — confirms S67 |
+| sol | +1.08 | +2.69 | −1.61 | robust | below floor — deployed FWD loses −1.96; reversed still under floor |
+
+**Best-config per coin (proposed CellConfig knobs; NOT applied to live registry — review + longer window first):**
+- btc `side+1 rev0.08 eps3 bail100 grace300 K10` · eth `side+1 rev0.08 eps5 bail150 grace600`
+- **ada `side+1 rev0.08 eps10 grace600`** · **ltc `side-1 rev0.30 grace600`**
+- avax `side+1 rev0.13 eps20 grace600` · doge `side+1 rev0.10 eps15 bail100 grace600`
+- xrp `side-1 rev0.20 grace600` · sui `side-1 rev0.40 grace600` · sol `side-1 rev0.40`
+
+**Recency (last ~9d vs full 28d):** btc/eth/ada/ltc/sui/sol configs are recency-ROBUST (agree). avax/doge/xrp
+DIVERGE (recent 2nd-half goes negative) — extra fragility on exactly the coins already at/below floor.
+
+**⇒ On 28d structural edge the real seat list is BTC · ADA · ETH · LTC.** SOL/XRP/DOGE/AVAX/SUI stay seated
+(never dropped, Greg's rule) but the greedy allocator won't fund them — negative/zero premium. ADA is the
+headline: a new major with premium ≈ BTC, better than every current incumbent except BTC/ETH.
+⚠ One 28d window, front-of-line fill, structure-grade not sizing-grade; premium cancels fill-optimism but
+absolute $/hr are an upper bound. Confirm on a 2nd window before any live-registry change.
 
 ---
 
