@@ -1,5 +1,7 @@
 # CLAUDE.md — DavisAI Master Context (Updated 2026-07-07 Session 70 — READ `STRATEGY_INVENTORY.md` **OPERATING CONTRACT + LIVE section** FIRST: it is the binding contract and OVERRIDES any stale drop-in / S-block / handoff below. Then the latest `SESSION_HANDOFF_*`. Do NOT read this whole file. ⛔ Firing is FIXED; greedy is already live; live-code only; always front-of-line; book=fills/tape=plumbing; only tune how greedy fills the $5k.)
 
+> ⛔⛔ STANDING (Greg, S72) — THE SHAPE EDGE IS THE CURVE, NOT A SNAPSHOT/AUC SCALAR. The entry-quality edge is the individual trade's ASCENT CURVE SHAPE read PER TRADE (rate of ascent / hockey-stick blade, peak height, start above/below zero, matched to archetype shapes with wiggle room) — never a snapshot AUC or any single scalar. Any AUC quoted (e.g. S71 ~0.60–0.70) is ONLY a rough shape-carries-info check, NOT the signal/metric/deploy basis. Validate & deploy on the per-trade SHAPE MATCH. See STRATEGY_INVENTORY #0e. This is CLOSED — do not re-litigate.
+
 ## S67 UPDATE (2026-07-07) — THE CAPITAL MODEL is BUILT (shared-pool allocator on the live path, CANARY PASS) + majors graded + Greg's deployment reframe. Read `SESSION_HANDOFF_2026-07-07_S67.md` + `STRATEGY_INVENTORY.md` (S67 block)
 - **⭐ THE LANDING (Greg):** the **$5k is the ENTIRE stack** (per-coin $5k was the temp tuning artifact). Job =
   **best deployment of ONE $5k for max profit/hr**: **fill the best edge-per-$ coin FIRST** (greedy);

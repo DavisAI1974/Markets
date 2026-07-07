@@ -115,6 +115,16 @@ the thing that adapts to conditions is the **numeric values**, not the structure
   flip. Read/trade it in real time; never average it. The arc SHAPE is the profitable-churn filter (ride the
   trends whose ignition arc predicts a fee-clearing move; skip the rest).
 
+## ⛔⛔ STANDING PRINCIPLE #0e (Greg, S72 — EMPHATIC, STOP RE-LITIGATING) — WE READ THE CURVE SHAPE, NOT A SNAPSHOT/AUC SCALAR
+The entry-quality edge **IS the individual trade's ASCENT CURVE SHAPE** — its morphology, read PER TRADE: rate of
+ascent (the hockey-stick blade), peak height, start above/below zero — matched to the archetype shapes with WIGGLE
+ROOM. It is **NOT a snapshot AUC or any single scalar.** Any AUC ever quoted (e.g. the S71 ~0.60–0.70) was ONLY a
+rough one-off check that shape carries information — it is **NOT the signal, NOT the validation metric, and NOT how
+we deploy.** We validate and deploy on the per-trade **SHAPE MATCH**, never on a collapsed scalar. Do NOT re-describe
+this edge as "an AUC classifier" — that is the same snapshot/averaging error #0d forbids, applied to the OUTPUT
+instead of the input. When you write about this edge, write "the curve shape read per trade," not "the AUC." This
+battle is CLOSED — the object is the CURVE.
+
 ## ⭐ EVOLUTION (Greg, S70) — REVIVE `research/strategy_evolution/` (structure good, needs updating)
 The hindsight missed-winner audit loop = the "evolution that suggests updates." Structure: replay what the
 live system DID (opened/skipped + actual PnL) → oracle = best favorable exit WITHIN each trade's real horizon
@@ -247,8 +257,9 @@ fill/capital-config updates for Greg's review. Never self-applies; never changes
 - **EXIT (in refinement):** align on each trade's ACTUAL price peak/valley (first real price REVERSAL ≥θ, duration-
   invariant — NOT a max-over-window), read the exhaustion signature THERE; find the consistent exhaustion value/flatten
   that marks the turn across duration buckets.
-- **S72 EVIDENCE so far:** pre-onset shape predicts winner/loser OOS **AUC 0.60–0.70 all 5 cells** (S71, shuffle-z
-  1.8–2.6). Exit **clipping confirmed** — 65–69% of winner tops land past +120s; the +120s window cost a median
+- **S72 EVIDENCE so far:** the pre-onset **CURVE SHAPE separates winners from losers per trade** on all 5 cells
+  (S71; a rough one-off logistic check scored OOS ~0.60–0.70 with shuffle-z 1.8–2.6 — that scalar is ONLY a
+  "shape-carries-information" sanity check per #0e, NOT the signal/metric/deploy basis; the edge is the CURVE). Exit **clipping confirmed** — 65–69% of winner tops land past +120s; the +120s window cost a median
   **+4.6 (btc)…+11.3 (doge) bps**, p90 up to 34 (600s captures them). The **+20 arc jump = a smoothing-window artifact**
   of the onset volume climax (it moves 10→+10 / 20→+20 / 30→+30 with `SMOOTH_SEC`), NOT a turn — informational only.
   Flow-exhaustion (~60s) vs the 600s-argmax "top" (~250s): the argmax is the WRONG turn (catches later swings).
@@ -263,7 +274,7 @@ fill/capital-config updates for Greg's review. Never self-applies; never changes
   (3) NO averaging anywhere in the live path; (4) per-cell numbers (same shape, own thresholds, own wiggle room).
 - **⭐ GREG'S S72 CLOSING REFRAME (simplification):** the entry gate does DOUBLE DUTY — **selection AND loss-avoidance**
   — so **DEEP-BAIL is DEMOTED to a thin backstop** (we don't fire the losers it was there to cap; keep it only because
-  the gate is ~0.60–0.70 AUC, not perfect). The exit hunt was ONLY ever **exiting WINNERS at their top** (optimization,
+  the shape gate is not perfect — some predicted-winner curves still turn out losers). The exit hunt was ONLY ever **exiting WINNERS at their top** (optimization,
   not survival), so the S72 exhaustion-top NULL costs little — worst case ride the winner and exit on the CURRENT
   running logic (detector's next flow turn / cover-grace). Net ballgame: DIRECTION (peak/valley, locked) → ENTRY
   (fire only predicted-winner shapes = the prize, also kills loss-mgmt exits) → EXIT (winner-optimization only; current

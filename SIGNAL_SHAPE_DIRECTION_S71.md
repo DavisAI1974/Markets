@@ -17,8 +17,9 @@
 > the SAME conditions — even if the numbers aren't the same each time." **This is more in-depth; Greg to
 > expand.**
 
-> ⭐ **S72 RESULT (2026-07-07):** the ENTRY-shape edge STANDS (pre-onset shape → winner/loser OOS AUC 0.60–0.70
-> all 5 cells) and is THE prize. The EXIT/turn read via 20s trade-flow exhaustion is a NULL on the sparse Kraken
+> ⭐ **S72 RESULT (2026-07-07):** the ENTRY CURVE-SHAPE edge STANDS (the pre-onset ascent SHAPE separates winners
+> from losers per trade on all 5 cells) and is THE prize. ⛔ #0e: the edge is the CURVE SHAPE read per trade — NOT a
+> snapshot AUC; the ~0.60–0.70 OOS logistic score was only a rough shape-carries-info check, never the signal/metric. The EXIT/turn read via 20s trade-flow exhaustion is a NULL on the sparse Kraken
 > book (peak-to-valley test: no leading/specific exhaustion tell at the price turns; ROOT CAUSE = trade sparsity
 > saturates `rolling_imb(20s)`; the 4 swing groups don't separate — opposite of the entry archetypes). The exit
 > is winner-optimization only (not survival), so the current running exit stays as the fine default; deep-bail

@@ -14,7 +14,8 @@ If S72 files are missing, reconcile: `git reset --hard origin/claude/shape-arc-c
 ONE live curve gives direction (peak/valley, locked) + entry-quality (fire/skip) + duration + exit. Recorded
 as **THE SHAPE STRATEGY** (the intended build; needs refinement first). Two decisive tests ran: (1) exit
 CLIPPING confirmed (winner tops mostly past +120s), (2) the **peak-to-valley "exhaustion marks the price
-turn" test = NULL** on the sparse Kraken trade-flow. The entry-shape edge (S71, AUC 0.60–0.70) is untouched.
+turn" test = NULL** on the sparse Kraken trade-flow. The entry CURVE-SHAPE edge (S71) is untouched. (⛔ #0e: the
+edge is the per-trade CURVE SHAPE, NOT a snapshot AUC — any AUC quoted is only a rough shape-carries-info check.)
 
 **⭐ NEXT (S73):** decide the fork on the exit/turn read — either (a) get a DENSER trade tape (aggregated
 cross-venue) or a BOOK-DEPTH-pressure proxy so the exhaustion read isn't saturated, or (b) set the exit
@@ -23,7 +24,7 @@ fire/skip, per-cell OOS through the live executor) — that's the real, ready pr
 
 **⭐ GREG'S S72 CLOSING REFRAME (load-bearing simplification):** the entry gate does DOUBLE DUTY — selection
 AND loss-avoidance — so **DEEP-BAIL is DEMOTED** (we don't fire the losers it was there to cap; keep it only
-as a THIN BACKSTOP since the gate is ~0.60–0.70 AUC, not perfect). And the whole exit hunt was ONLY ever about
+as a THIN BACKSTOP since the shape gate is not perfect — some predicted-winner curves still lose). And the whole exit hunt was ONLY ever about
 exiting **WINNERS at their top** (optimization — capture more of a correctly-entered ride), NOT survival — so
 the exhaustion-top NULL costs us little: worst case ride the winner and exit on the current running logic
 (detector's next flow turn / cover-grace). The ballgame collapses to: DIRECTION (peak/valley, locked) → ENTRY
@@ -77,7 +78,9 @@ dropped as an exit marker.
 
 ### 5. Scoping the null (honest, load-bearing)
 - Does NOT contradict the S71 ENTRY finding — that's a different object (the flow-ONSET legs, short horizon at
-  the trade climax where flow HAS structure). **Pre-onset shape → winner/loser AUC 0.60–0.70 all 5 cells stands.**
+  the trade climax where flow HAS structure). **The pre-onset CURVE SHAPE separates winners from losers per trade on
+  all 5 cells — stands** (a one-off logistic check scored ~0.60–0.70 OOS, shuffle-z 1.8–2.6; per #0e that scalar is
+  only a shape-carries-info sanity check, NOT the signal/metric — the edge is the CURVE read per trade).
 - DOES say: "catch the price top/bottom via 20s trade-flow exhaustion" is not supported on this sparse book.
 - Untested alternatives for the price-turn/exit read: a DENSER/aggregated cross-venue trade tape (unsaturate
   the imbalance), or a BOOK-DEPTH-pressure proxy (resting bid/ask imbalance) instead of sparse trade-imbalance.
@@ -95,8 +98,9 @@ dropped as an exit marker.
 ## NEXT (S73) — Greg to steer the fork
 1. **THE READY PRIZE — build the ENTRY-QUALITY classifier.** Per-trade ascent ALGEBRA (slope/curvature) +
    peak height + start-above/below-zero → fire/skip, compared to the winner band with WIGGLE ROOM. Validate
-   per-cell OOS + shuffle-null THROUGH the live executor (`run_kraken_cell`). This is the confirmed edge (AUC
-   0.60–0.70) and does not depend on the exit null. Firing/direction stays on the lean (Greg-only).
+   per-cell OOS + shuffle-null THROUGH the live executor (`run_kraken_cell`). This is the confirmed CURVE-SHAPE edge
+   (validate/deploy on the per-trade SHAPE MATCH, NOT an AUC scalar — #0e) and does not depend on the exit null.
+   Firing/direction stays on the lean (Greg-only).
 2. **The EXIT/turn read** — only if pursued: get a denser/aggregated trade tape OR test a book-depth-pressure
    exhaustion proxy; the sparse 20s trade-imbalance is a dead end for the price turns.
 3. Standing: capacity/reserve-per-rest (+9.65/hr) settled S71; 16 candidates need Greg's book-collector trigger.
