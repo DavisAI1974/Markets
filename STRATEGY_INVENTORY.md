@@ -101,7 +101,13 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
   BTC/ETH's idle windows and some lose on this 14d window (no preemption; idle-vs-deploy threshold unset) →
   pool +5.37/hr @ $5k, ~flat vs proportional. Tuning the idle-vs-deploy / preemption / per-coin exposure cap
   is the next lever. Numbers PROVISIONAL (14d tape-proxy capacity, front-of-line; not sizing-grade).
-- **⭐ NEXT (S68):** (1) **TUNE THE BEST $5k DEPLOYMENT** — idle-vs-deploy threshold (don't fund thin coins
+- **✅ $10M-TIER VOLUME (Greg's Q, answered):** based on the 5 majors' tape, our capacity-capped $5k pool
+  trades **~$49M notional over 13.8d** (12,295 funded legs, open+close) = ~$3.5M/day → **~$106M/30d, crosses
+  $10M in ~2.8 days**. The 0bp/−2bp tier is SELF-SUSTAINING once running (churn ≈ 10× the threshold even at
+  $5k); the only cost is the pre-$10M RAMP (~first 3d at higher maker fee) = Greg's deferred "pre-10M" adjust.
+- **⭐ NEXT (S68):** (0) **TUNE ALL 4 CANDIDATE MAJORS** (Greg — ADA/SUI/AVAX/LTC: don't accept the base grade;
+  finer REV grid + eps/bail + side re-confirm via grade_coin_kraken before final seating); (1) **TUNE THE BEST
+  $5k DEPLOYMENT** — idle-vs-deploy threshold (don't fund thin coins
   just because majors are between legs unless edge clears a bar), optional preemption / per-coin exposure cap,
   edge-weight source (tape vs book); confirm LTC + the marginal configs on a longer window; (2) **SMALL-CAP
   STRATEGY** (Greg's 3rd ask — the ~116 THIN-OK −2bp sleeve: rebate economics, queue-honest fill, per-cell
