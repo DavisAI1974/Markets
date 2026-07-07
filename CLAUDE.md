@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-07-07 Session 67 — READ `STRATEGY_INVENTORY.md` (S67 block) FIRST + `SESSION_HANDOFF_2026-07-07_S67.md` + `KICKOFF_2026-07-07_S68.md`, not this whole file. S67 delta directly below; S66/S64/S63 below that.)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-07-07 Session 70 — READ `STRATEGY_INVENTORY.md` **OPERATING CONTRACT + LIVE section** FIRST: it is the binding contract and OVERRIDES any stale drop-in / S-block / handoff below. Then the latest `SESSION_HANDOFF_*`. Do NOT read this whole file. ⛔ Firing is FIXED; greedy is already live; live-code only; always front-of-line; book=fills/tape=plumbing; only tune how greedy fills the $5k.)
 
 ## S67 UPDATE (2026-07-07) — THE CAPITAL MODEL is BUILT (shared-pool allocator on the live path, CANARY PASS) + majors graded + Greg's deployment reframe. Read `SESSION_HANDOFF_2026-07-07_S67.md` + `STRATEGY_INVENTORY.md` (S67 block)
 - **⭐ THE LANDING (Greg):** the **$5k is the ENTIRE stack** (per-coin $5k was the temp tuning artifact). Job =

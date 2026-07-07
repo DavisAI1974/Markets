@@ -1,3 +1,9 @@
+> ⛔ CORRECTED IN S70 (Greg): read `STRATEGY_INVENTORY.md` OPERATING CONTRACT + LIVE section FIRST (binding).
+> This handoff calls the `queue`/back-of-line fill the "honest" fill — that is SUPERSEDED. **We ALWAYS operate
+> FRONT-OF-LINE** (we post the best bid/offer via the enticing close, so we are first in line); `queue` is a
+> worst-case footnote, never a mode. The capital model = ONE $5k greedy bank, front-of-line maker, best
+> performer first, remainder cascades to the next-best LIVE coin (no queue-waiting). Everything else stands.
+
 # SESSION HANDOFF — S69 (2026-07-07) — ZERO code changes; the lesson = ALWAYS RUN LIVE CODE FOR TESTS; the honest fill/capacity comes from the L2 BOOK, not the tape
 
 Read `STRATEGY_INVENTORY.md` (top standing rule, now re-stated louder) first. This session made **no code

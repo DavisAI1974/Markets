@@ -7,7 +7,7 @@
 # If anything below (a drop-in Job, an old S-block) contradicts this box, THIS BOX WINS.
 #
 #  1. FIRING IS FIXED. Each coin's detector stack (direction/side, REV, eps, deep-bail, cover-grace —
-#     §2.A "FINAL PER-COIN CONFIG") is LOCKED. Never re-adjudicate, sweep, reverse, or "compare"
+#     the LIVE section firing table = odcore/platform.py::KRAKEN) is LOCKED. Never re-adjudicate, sweep, reverse, or "compare"
 #     a coin's firing. It changes ONLY when Greg explicitly says to change a specific coin (and,
 #     once live, via the evolution review loop — never ad-hoc mid-session).
 #  2. GREEDY IS ALREADY LIVE (odcore/allocator.py mode="greedy" + platform.run_portfolio, canary-clean).
@@ -64,7 +64,7 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
 
 ## ⛔⛔ STANDING RULE #0b (Greg, S70) — DO NOT TOUCH HOW COINS FIRE. FILL-LAYER ONLY.
 **The per-coin FIRE strategy is FIXED and LOCKED.** Direction/side, REV threshold, early-arm eps, deep-bail,
-cover-grace — the entire per-coin detector stack in §2.A "FINAL PER-COIN CONFIG" — is DONE. Every session
+cover-grace — the entire per-coin detector stack in the LIVE section firing table (= odcore/platform.py::KRAKEN) — is DONE. Every session
 **RUNS what the strategy doc says, verbatim, through the live path.** You do NOT re-adjudicate direction,
 sweep REV/eps, "explore" alternative signals, or bracket strategy variants for a coin — that work is closed.
 - **The ONLY thing we tune is HOW CAPITAL GETS FILLED across the stack** — the fill model (front/queue), the
@@ -93,6 +93,66 @@ while `missed_entry` is REPORT-ONLY for Greg. It SUGGESTS fill/capital-config up
 self-applies, never changes firing. (Old machinery was Coinbase live-mock on E:; only one doc survived in git.)
 
 ---
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# ✅ LIVE — THE AGREED CURRENT STACK  (authoritative; EVERY change lands HERE immediately)
+# ══════════════════════════════════════════════════════════════════════════════════════════
+> This section is what is actually running / agreed. **When a strategy is replaced, the OLD line moves to
+> the SCRAP HEAP below and the NEW line lands here — immediately, same edit.** Source of truth for firing =
+> `odcore/platform.py::KRAKEN` (live code wins). Nothing is "live" unless it is in this section.
+
+**VENUE / FEES:** Kraken US spot. `kr_mk0` = **0bp maker** ($10M/30d tier, treated as real); taker ~5bp fallback.
+
+**FIRING — FIXED per coin** (= `odcore/platform.py::KRAKEN`; detector = flow-lean zigzag `flip_detector.py`
+WFLIP=600 / ARM0 natural cadence + early-arm `retime` where eps set. DO NOT touch except on Greg's explicit say-so):
+
+| coin | side | rev | early-arm eps | deep-bail | cover-grace | improve | note |
+|---|---|---|---|---|---|---|---|
+| eth | +1 fwd | 0.10 | 10 | −100 | 300 | 0.5 | |
+| btc | +1 fwd | 0.10 | 5 | −80 | 300 | 0.5 | K=10 |
+| sol | +1 | 0.10 | — | — | 300 | 0.5 | ⚠ registry=fwd; tape deploy map=reversed — UNRESOLVED, Greg decides (do not self-change) |
+| doge | +1 | 0.30 | — | — | 600 | 0.5 | |
+| xrp | +1 | 0.13 | — | — | 300 | 0.5 | |
+
+**CAPITAL MODEL — ONE $5k bank, GREEDY, front-of-line maker** (LIVE, canary-clean):
+- `odcore/allocator.py` (`mode="greedy"`) + `odcore/platform.py::run_portfolio`. Fill best performer ($/hr per $)
+  first, up to book absorption / free capital; remainder cascades to the next-best LIVE coin until $5k is
+  deployed; never fund negative edge; never drop a coin. Breadth (majors + minors) keeps the bank ~100% full.
+- Fill = **FRONT-OF-LINE always** (`fill_model="front"`) + enticing close (`swing_maker.close_improve_bps`=0.5/coin).
+
+**EXECUTOR / PLATFORM (the live decision path — ALL tests run through this):**
+- `odcore/swing_maker.py` — the one executor (maker-at-the-turn, cover_grace, exit_spec deep-bail, front fill, fees).
+- `odcore/platform.py` — `run_kraken_cell` / `run_stream` / `run_portfolio`; `KRAKEN` registry.
+- `odcore/flip_detector.py` (signal) · `odcore/incremental.py` RollingFlow (hot path) · `odcore/leakage.py` +
+  `odcore/validation.py` (MANDATORY gates).
+
+**DATA (book = fills, tape = plumbing only):**
+- Book collectors LIVE: 5 majors (`data/{btc,eth,sol,xrp,doge}-kraken-book`, 6h cron) + 16 candidate minors
+  accruing (`kraken_candidate_book_collectors_durable.yml`, S70). Price/tune the fill on RECENT book.
+- `backfill_kraken_trades.py` (tape) = structure/plumbing ONLY — never a pricing/capacity source.
+
+**MINORS / SMALL-CAPS (capacity breadth for the $5k):**
+- 16 LARGE candidates (HYPE·SUI·ADA·ZEC·XMR·AVAX·XLM·AAVE·LTC·NEAR·TAO·LINK·BCH·BNB·TON·XPL) — SEATED, books
+  accruing; grade **on BOOK** when deep, then apply the GENERAL stack. Never graded on tape.
+- ~116 THIN-OK −2bp small-cap sleeve — future capacity.
+
+**EVOLUTION (the adjustment mechanism — revive `research/strategy_evolution/`):** hindsight missed-winner audit
+through the live executor on recent book → surfaces `exit_missed_or_fee_leak` (the fill layer) → SUGGESTS
+fill/capital-config updates for Greg's review. Never self-applies; never changes firing.
+
+---
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# 🗑️ SCRAP HEAP — NOT LIVE  (dead / parked / replaced / research + the full session history)
+# ══════════════════════════════════════════════════════════════════════════════════════════
+> **NOTHING below this line runs.** It is the archive: retired strategies, parked venues, research threads,
+> and the session-by-session log. Kept so we never re-run a dead experiment or re-derive a solved thing.
+> See the LIVE section ABOVE for what is actually running. When something here gets promoted, it moves UP to
+> LIVE (and whatever it replaces moves down here) — in the same edit.
+>
+> Explicitly in the scrap heap (not live, do not reach for): `queue`/back-of-line fill (we are always
+> front-of-line) · `capacity.py`-on-TAPE as a capacity source (S69 dead end) · tape-grading as a pricing
+> path · Coinbase (parked) · Bybit/MEXC (banned) · every family/tool tagged dead/parked/research below.
 
 ## ⭐ S67 IN-PROGRESS (2026-07-06, live) — THE CAPITAL MODEL (v1 built, canary PASS) + overlooked-majors sweep
 > Greg's S67 landing (S66): keep the per-coin EDGE; make capacity a VARIABLE SIZE cap (not $5k/trade);
