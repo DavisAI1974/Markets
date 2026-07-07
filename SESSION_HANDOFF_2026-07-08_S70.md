@@ -40,13 +40,12 @@ per the locked strategy rules 3–4: fill best up to what its book absorbs, casc
   leg its book-depth capacity → run `pool_book_kraken.py` → read POOL $/hr, funded%, and whether we now hold
   several positions concurrently (funded should jump from 28%). ONE change; run it live; compare to +14.51.
 
-## Also required for the greedy test — REMOVE the "never fund negative edge" rule
-Greg (S70, firm): **"never fund a negative edge" is a WRONG rule** — average edge does NOT predict a trade
-(direction unpredictable, closed 4 ways), and we run the $5k **100% deployed**, we do NOT idle capital or
-exclude a coin. Edge sets funding ORDER only, never a gate. **The allocator CODE currently skips non-positive
-edge in greedy mode — that must be removed** so the pool funds whatever keeps the $5k deployed. (Never DROP a
-coin still stands — all coins stay seated.) This is part of the same greedy test, not a separate window-
-dependent experiment.
+## DONE in S70 — "never fund negative edge" gate STRIPPED (tested, +14.51 unchanged)
+Greg (S70, firm): "never fund a negative edge" is a WRONG rule. **Removed** the `key_weight<=0` skip in
+`allocator.allocate()` greedy mode — edge is now the funding ORDER only, never a gate; negatives fund last,
+never dropped. **Tested** (pool_book_kraken, 5 majors): POOL $/hr = **+14.51, identical to baseline** — the
+gate wasn't binding (all 5 have positive edge), so a clean/safe no-op on this window. It only bites once
+negative-average coins are seated (the 16 minors), which is the point. Do NOT re-add it.
 
 ## Data / infra state
 - Book branches: 5 majors `data/{btc,eth,sol,xrp,doge}-kraken-book` (BTC ~42h). **16 candidate minors now
