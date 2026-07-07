@@ -9,6 +9,12 @@
 > TRADE, and a small-but-consistent per-trade difference is a real edge. Clear all averaging framing from any
 > shape discussion. (Validation classifies EACH trade on its OWN shape and tallies the per-trade decisions —
 > that is counting decisions, not averaging curves.)
+>
+> ⛔⛔ S73 SHARPENING (Greg) — THIS APPLIES TO THE GATE TOO. Do NOT average the archetypes into the gate. The 4
+> archetypes (short/long x winner/loser) are FOUR SEPARATE SETS OF INDIVIDUAL CURVES. A centroid/mean gate is
+> averaging and FAILS: when the arcs saturate the winner-mean ~= loser-mean, so a nearest-centroid gate cannot
+> separate (proven on SOL, S73). Match each forming trade to the EXACT individual curve shapes (nearest actual
+> curves / per-trade template), keep all 4 buckets distinct, output trade / don't-trade. No averaging anywhere.
 
 > Greg's note (verbatim intent): "we need to look at the SHAPE of things. How much does the exhaustion
 > number change from second to second — not just an average over a couple of weeks. Find exhaustion in

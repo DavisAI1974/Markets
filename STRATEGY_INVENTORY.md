@@ -125,6 +125,14 @@ this edge as "an AUC classifier" — that is the same snapshot/averaging error #
 instead of the input. When you write about this edge, write "the curve shape read per trade," not "the AUC." This
 battle is CLOSED — the object is the CURVE.
 
+> ⛔⛔ #0e-GATE (Greg, S73 — DO NOT AVERAGE THE ARCHETYPES INTO THE GATE). The 4 archetypes (short/long ×
+> winner/loser) are FOUR SEPARATE SETS OF INDIVIDUAL CURVES — never collapse a set into one mean/centroid and
+> match to that. A centroid gate IS averaging (the winner-mean ≈ loser-mean when the arcs saturate, so it can't
+> separate — proven on SOL S73). The gate matches each forming trade to the EXACT individual curve shapes
+> (nearest actual curves / per-trade template match), keeping all 4 buckets as distinct reference sets, and
+> outputs trade / don't-trade. NO averaging ANYWHERE in the gate — not of the input arc, not of the archetype
+> references. "Pick the exact curve shapes and use those as trade-or-not" (Greg verbatim, S73).
+
 ## ⭐ EVOLUTION (Greg, S70) — REVIVE `research/strategy_evolution/` (structure good, needs updating)
 The hindsight missed-winner audit loop = the "evolution that suggests updates." Structure: replay what the
 live system DID (opened/skipped + actual PnL) → oracle = best favorable exit WITHIN each trade's real horizon
