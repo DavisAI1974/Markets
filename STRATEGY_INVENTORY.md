@@ -182,10 +182,13 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   rate-of-ascent / BLADE steepness, (4) ascent TIMING ("ascent sooner"). Each is its own signal; none is
   individually tuned yet. Also open: per-cell thresholds + wiggle-room, the LONG-loser skip, and the exit/turn
   read. TUNE LATER (Greg) — do NOT get bogged down now.
-- **Status (S73):** first cut BUILT + RUN through the LIVE executor on SOL ($5k/trade, one-sided maker, no
-  deep-bail) — `research/shape_s73/sol_shape_gate.py`, reusing `regroup2.py`'s curve construction. The
-  short-loser skip works off the shape; the long-loser skip is next (Greg: it's skippable too). Ungated SOL
-  baseline = 61.7% win / +$11.26/hr. NOT deploy-tuned yet.
+- **⭐ SHAPE BUILDER = THE ORIGINAL AGENT'S, for LIVE code (Greg, S73 — do NOT build another; his is PERFECT):**
+  the live shape is built by the agent's original `research/shape_s71/arc_gate.py` + `regroup2.py` (the
+  onset→exhaustion arc extraction + the regrouped reference curves + `quad_means.npz`). Do NOT write a new
+  shape builder — REUSE these. The entry gate / selection logic sits ON TOP of that builder.
+- **Status (S73):** first cut run through the LIVE executor on SOL ($5k/trade, one-sided maker, no deep-bail);
+  the short-loser skip works off the shape, the long-loser skip is next (Greg: it's skippable too). Ungated
+  SOL baseline = 61.7% win / +$11.26/hr. NOT deploy-tuned yet.
 - **Deep-bail DEMOTES to a thin backstop** once the gate skips the losers (the entry gate does selection +
   loss-avoidance). EXIT = winner-optimization only; current running exit (flow turn + cover-grace) is the fine
   default until the exit/turn read is built. Detailed research record: the S72 SHAPE STRATEGY block below.
