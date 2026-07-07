@@ -33,6 +33,38 @@ uses `front` — the numbers didn't match. That mismatch is exactly the failure 
 
 ---
 
+## ⛔⛔ STANDING RULE #0b (Greg, S70) — DO NOT TOUCH HOW COINS FIRE. FILL-LAYER ONLY.
+**The per-coin FIRE strategy is FIXED and LOCKED.** Direction/side, REV threshold, early-arm eps, deep-bail,
+cover-grace — the entire per-coin detector stack in §2.A "FINAL PER-COIN CONFIG" — is DONE. Every session
+**RUNS what the strategy doc says, verbatim, through the live path.** You do NOT re-adjudicate direction,
+sweep REV/eps, "explore" alternative signals, or bracket strategy variants for a coin — that work is closed.
+- **The ONLY thing we tune is HOW CAPITAL GETS FILLED across the stack** — the fill model (front/queue), the
+  shared-$5k allocation / capital layer, capacity. NOT how a coin fires.
+- **NEVER change how a coin fires except when Greg EXPLICITLY says to change a specific coin.** No exceptions,
+  no "quick check," no re-running a coin reversed "to compare."
+- **New coins get the GENERAL per-coin strategy applied as-is;** the only tuning is the FILL, on a couple days
+  of the most RECENT book (recent book = current trading conditions = the right tuning surface — we do NOT
+  need weeks to accrue). An `evolution` step will SUGGEST config updates for review — suggestions are never
+  self-applied, and even then a coin's firing changes only on Greg's explicit say-so.
+
+## ⛔⛔ STANDING RULE #0c (Greg, S70) — LIVE CODE ONLY FOR TESTS. ZERO TOLERANCE. TIGHTEN UP.
+Restates the SIM=LIVE rule with no exceptions: **we do NOT write testing programs that don't run the live
+version.** Every test/backtest/probe's DECISION goes through the live executor (`run_stream` /
+`run_kraken_cell` → `swing_maker`); a script may ONLY add I/O (a venue book loader) + orchestration
+(param loop, portfolio layer, reporting) AROUND the live calls. No scratch reimplementation of the
+executor/fill/fees/sizing, no tape proxy, no bolt-on. If a test isn't calling the live code, it doesn't run.
+
+## ⭐ EVOLUTION (Greg, S70) — REVIVE `research/strategy_evolution/` (structure good, needs updating)
+The hindsight missed-winner audit loop = the "evolution that suggests updates." Structure: replay what the
+live system DID (opened/skipped + actual PnL) → oracle = best favorable exit WITHIN each trade's real horizon
+→ classify (`missed_entry` / `exit_missed_or_fee_leak` / `not_a_hindsight_winner`) → aggregate the leaks.
+UPDATE it to: run through the CURRENT live Kraken executor on RECENT BOOK data; under the locked-firing rule
+its ACTIONABLE output is the FILL/exit-leak side (`exit_missed_or_fee_leak` = the capital/fill layer we tune),
+while `missed_entry` is REPORT-ONLY for Greg. It SUGGESTS fill/capital-config updates for review — never
+self-applies, never changes firing. (Old machinery was Coinbase live-mock on E:; only one doc survived in git.)
+
+---
+
 ## ⭐ S67 IN-PROGRESS (2026-07-06, live) — THE CAPITAL MODEL (v1 built, canary PASS) + overlooked-majors sweep
 > Greg's S67 landing (S66): keep the per-coin EDGE; make capacity a VARIABLE SIZE cap (not $5k/trade);
 > build the shared-POOL allocator on the LIVE path. Design LOCKED (Greg): MAJORS-FIRST (5 + agent's LARGE
