@@ -214,6 +214,50 @@ fill/capital-config updates for Greg's review. Never self-applies; never changes
 > front-of-line) · `capacity.py`-on-TAPE as a capacity source (S69 dead end) · tape-grading as a pricing
 > path · Coinbase (parked) · Bybit/MEXC (banned) · every family/tool tagged dead/parked/research below.
 
+## ⭐⭐ S72 — THE SHAPE STRATEGY (Greg: "this SHOULD be the build" — RECORD IT; NEEDS REFINEMENT FIRST, do NOT deploy yet)
+> Greg, S72: this is the direction. Read the **INDIVIDUAL trade's flow SHAPE** (the onset→exhaustion arc), never an
+> averaged scalar. The **whole ballgame reads off ONE live curve.** Recorded here as THE intended build; it needs
+> refinement (per-cell OOS validation + the exit turn-definition + the ascent algebra) BEFORE it goes live. Direction/
+> firing stays LOCKED (Greg-only) — the shape is the **selection + exit OVERLAY**, i.e. the tunable surface, not a
+> firing change. Artifacts: `research/shape_s71/` (arcs, `quad_means.npz`, doge_only), `research/exit_s72/`
+> (`exhaustion_price_exit.py`, `EXIT_EXHAUSTION_FINDINGS_S72.md`), `SIGNAL_SHAPE_DIRECTION_S71.md` (+ S72 no-averaging correction).
+
+- **THE OBJECT — individual trade flow shape, NO averaging.** Each trade's with-trade flow arc (`imb_signed×side`
+  over the pre-onset→exhaustion window). We read/classify EACH trade's own curve. The `quad_means` archetype arcs
+  (all-coin, doge-separate) are a PICTURE of the archetype ONLY — never the signal, never the grader. Averaging
+  destroys the per-trade shape; a flat pooled scalar is the averaging error, not a null. (S72 hard rule, Greg.)
+- **THE 2×2 ARCHETYPES = duration × outcome.** short/long (TIME the trade lasts) × winner/loser. 4 shapes, same
+  landmarks, different NUMBERS per cell (doge = same shape, own scale → same detector, own thresholds). DIRECTION is
+  NOT in these (it's normalized out by signing to the trade's side).
+- **WHOLE BALLGAME off the one curve:**
+  - **DIRECTION** = peak→SELL / valley→BUY (the lean/zigzag turn type; not a prediction; LOCKED/unchanged). Doesn't
+    collide with "direction is dead" — we react to a peak/valley, we don't guess price.
+  - **ENTRY QUALITY (fire / skip)** = the pre-onset ASCENSION shape. WINNER = starts on-side (≥0), climbs early,
+    **HOCKEY-STICK** (flat handle → steep LATE blade), tops HIGH. LOSER = **dips below zero first**, gradual rounded
+    rise, low peak. **Rate-of-ascent (the blade) is the headline pre-fire tell**; peak height + start-above/below-zero
+    corroborate. Skip predicted losers = **the biggest prize** (this is the QUALITY axis, NOT direction — the
+    closed-4-ways rule does not apply to it).
+  - **DURATION (short/long ride)** = ascent morphology (extended accelerating build → long ride; abrupt spike → short).
+  - **EXIT** = the exhaustion limb — the exhaustion **FLATTEN** (velocity→0, "no more movement") / price-turn-aligned;
+    get off before the crowd. (Zero-CROSSING is only a loose clock — the FLATTEN is the stronger candidate.)
+- **ENTRY CLASSIFIER (to build):** per-trade fit the ascension to an **algebraic ascent equation** (slope/curvature —
+  dipole-style algebra) + **peak height**; fire only if inside the **WINNER BAND** = archetype mean ± **WIGGLE ROOM**.
+  Build per-cell reference shape-graphs; match each forming pre-trade shape with tolerance. Validate per-cell OOS +
+  shuffle-null THROUGH the live executor before wiring.
+- **EXIT (in refinement):** align on each trade's ACTUAL price peak/valley (first real price REVERSAL ≥θ, duration-
+  invariant — NOT a max-over-window), read the exhaustion signature THERE; find the consistent exhaustion value/flatten
+  that marks the turn across duration buckets.
+- **S72 EVIDENCE so far:** pre-onset shape predicts winner/loser OOS **AUC 0.60–0.70 all 5 cells** (S71, shuffle-z
+  1.8–2.6). Exit **clipping confirmed** — 65–69% of winner tops land past +120s; the +120s window cost a median
+  **+4.6 (btc)…+11.3 (doge) bps**, p90 up to 34 (600s captures them). The **+20 arc jump = a smoothing-window artifact**
+  of the onset volume climax (it moves 10→+10 / 20→+20 / 30→+30 with `SMOOTH_SEC`), NOT a turn — informational only.
+  Flow-exhaustion (~60s) vs the 600s-argmax "top" (~250s): the argmax is the WRONG turn (catches later swings) →
+  price-turn-aligned read IN PROGRESS.
+- **⚠ REFINEMENT REQUIRED before deploy (Greg — this is the build, but not yet):** (1) per-cell OOS + shuffle-null of
+  the ascent-algebra entry classifier through the LIVE executor; (2) the correct EXIT turn-definition (price reversal,
+  not argmax) + the exhaustion-at-turn signature; (3) direction stays on the lean, firing Greg-only; (4) NO averaging
+  anywhere in the live path; (5) per-cell numbers (same shape, own thresholds, own wiggle room).
+
 ## ⭐ S67 IN-PROGRESS (2026-07-06, live) — THE CAPITAL MODEL (v1 built, canary PASS) + overlooked-majors sweep
 > Greg's S67 landing (S66): keep the per-coin EDGE; make capacity a VARIABLE SIZE cap (not $5k/trade);
 > build the shared-POOL allocator on the LIVE path. Design LOCKED (Greg): MAJORS-FIRST (5 + agent's LARGE
