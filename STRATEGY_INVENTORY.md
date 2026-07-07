@@ -185,6 +185,10 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   before the upswing while the short-winner stays above. ⚠ do NOT use the terminal-15s "blade slope" as the
   energy measure — a winner that reaches a HIGHER peak saturates/flattens near onset, so blade-slope reads
   LOWER for the winner (an artifact); use PEAK / RISE, not terminal slope.
+- **⛔ WHY PER-CELL, NEVER LUMPED (Greg, S73 — load-bearing):** the dominant tell DIFFERS by cell AND by
+  category (SOL-short = energy/peak; SOL-long = below-zero dip; BTC/ETH/XRP each have their OWN numbers). LUMP
+  them together and you average across different tells/thresholds → the signal CANCELS → a flat gate (that is
+  exactly why the earlier general/bunched gate came out flat). Grade PER CELL × PER CATEGORY, always.
 - **⭐ CELL-SPECIFIC + CATEGORY-SPECIFIC + SEQUENTIAL (Greg, S73).** Not general rules — each CELL (coin) has
   its OWN characteristics with its OWN thresholds, and each CATEGORY (short/long) its own. The loser gate is a
   SEQUENTIAL cascade: check each characteristic ONE AT A TIME; if the trade's shape shows a loser trait (fails
