@@ -49,6 +49,21 @@ already a flow operator (dMI/dt, `odcore/info_dipole.py`); this pushes it to the
   read could arm the tight price-reversal trigger EARLIER by recognizing the reversal *curve* before the level
   crosses a threshold.
 
+## THE WHOLE BALLGAME — the complete decision surface (Greg, S71)
+"Not only churn, but enter/exit times, good/bad trades — and factored against DIRECTION, that's the whole
+ballgame." The complete strategy is a small set of decisions, and **they all read off the SAME real-time arc:**
+- **DIRECTION** (the axis) = sign of the flow — the dipole as trend-follower (which way).
+- **ENTRY timing** = the ignition / rising limb (onset; the false-start-then-launch precursor).
+- **EXIT timing** = the exhaustion / collapse limb (flow returning to balance).
+- **GOOD/BAD trade (selection)** = does the arc SHAPE predict a fee-clearing move (the quality gate).
+- **CHURN** = falls out — take every arc that predicts profit, as often as they come (fee-floor-bounded).
+Everything is **conditioned on direction**: entry/exit/quality read differently for a long vs a short. THE
+UNIFICATION: dipole (direction/trend), arc (exhaustion/exit), price-reversal (timing), capacity (sizing) are
+NOT separate tools — they are all reads off ONE object, the live curve. One curve, every decision. That is
+what makes the continuous re-tuner tractable (tune thresholds on one object, not five). Sequence: confirm the
+ENTRY+QUALITY+CHURN legs (running now), then add EXIT-timing (read the collapse limb live vs fixed
+horizon/deep-bail) and full direction-conditioning. One at a time.
+
 ## Status
 - Idea logged; **Greg to expand ("more in-depth").** Not yet run. Prime candidate to explain the flat scalar
   ladder and to feed the shape-matching the continuous re-tuner would use.
