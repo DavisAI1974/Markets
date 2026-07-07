@@ -191,10 +191,18 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   a check), SKIP it — it must pass every check to fire. Build the shape in REAL TIME (the causal pre-onset
   limb) for the live comparison. ⭐ SCOPE: these shape rules apply to the **4 MAJORS (BTC/ETH/SOL/XRP)**; **DOGE
   is its OWN thing — EXCLUDED for now**, gets a doge-specific pass next.
-- **⚠ MULTIPLE PRE-TRADE SIGNALS, NOT YET TUNED (the work that remains):** the tells are several separate
-  pre-trade signals — (1) ENERGY = onset PEAK / RISE (winner higher, both categories), (2) below-zero DIP
-  (short-loser only), (3) ascent TIMING. Per-cell thresholds + wiggle-room, the LONG-loser (entry-strong →
-  likely a ride/exit handle), and the exit/turn read all remain. TUNE LATER (Greg) — do NOT get bogged down now.
+- **⭐ RUN LENGTH = the LONG/SHORT axis (Greg, S73).** Both long-winner AND long-loser have LONGER pre-trade
+  runs than their short counterparts — more momentum → longer run → bigger ascent (long peaks/rises ~0.3 vs
+  short ~0.02–0.12). That's the duration axis; the winner/loser split lives WITHIN each duration.
+- **⭐ THE TELLS ARE PER-CATEGORY (Greg, S73 — each pair has its own dominant tell):** SOL measured —
+  SHORT-win vs SHORT-lose: the ENERGY/PEAK gap is HUGE (0.125 vs 0.014) and carries it; below-zero barely
+  separates. LONG-win vs LONG-lose: the energy gap is TIGHTER (peak 0.348 vs 0.295) but the BELOW-ZERO DIP
+  does the separating — the long-loser dips LOWER and spends MORE of its run below zero (ascent-min −0.64 vs
+  −0.56; 37% vs 33% below zero), and starts lower (−0.261 vs −0.229). So the LONG-loser IS entry-catchable
+  (its own rule: less energy + more below-zero dip) — NOT "entry-invisible" (my earlier call was wrong).
+- **⚠ NOT YET TUNED (the work that remains):** per-cell + per-category thresholds and wiggle-room for the tells
+  (short-loser: low energy/peak; long-loser: below-zero dip + lower energy), plus the exit/turn read. TUNE
+  LATER (Greg) — do NOT get bogged down now.
 - **⭐ SHAPE BUILDER = THE ORIGINAL AGENT'S, for LIVE code (Greg, S73 — do NOT build another; his is PERFECT):**
   the live shape is built by the agent's original `research/shape_s71/arc_gate.py` + `regroup2.py` (the
   onset→exhaustion arc extraction + the regrouped reference curves + `quad_means.npz`). Do NOT write a new
