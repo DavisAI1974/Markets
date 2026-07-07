@@ -19,14 +19,23 @@ sys.path.insert(0, os.path.dirname(__file__))
 from arc_gate import (load_raw, rolling_imb, build_channels, median_spread_bps,   # the agent's builder
                       run_kraken_cell, KRAKEN, PRE, CPS)
 SMOOTH_SEC = 20; CAP = 5000.0
-BLADE = 15 * CPS                      # last 15s = the blade window
+BLADE = 15 * CPS                      # last 15s = the blade window (into onset)
+EARLY = 30 * CPS                      # first 30s = the handle (early part of the limb)
 
 def ascent_eq(pre):
-    """Fit the ascent equation to one trade's pre-onset limb; return its coefficients."""
+    """Fit the ascent equation to one trade's pre-onset limb; return its coefficients + Greg's
+    hockey-stick / ascent-timing tells."""
     x = (np.arange(len(pre)) - PRE) * 0.1                 # seconds -45..0
     c, b, a = np.polyfit(x, pre, 2)                       # a + b t + c t^2
-    b_blade = np.polyfit(x[-BLADE:], pre[-BLADE:], 1)[0]  # last-15s slope (the blade)
-    return dict(b=b, b_blade=b_blade, c=c, peak=float(pre[-1]), start=float(pre[0]), dip=float(pre.min()))
+    b_blade = np.polyfit(x[-BLADE:], pre[-BLADE:], 1)[0]  # last-15s slope (the blade, late)
+    b_early = np.polyfit(x[:EARLY], pre[:EARLY], 1)[0]    # first-30s slope (the handle, early)
+    hockey = b_blade - b_early                            # >0 = flat handle then steep blade (winner);
+    #                                                       ~0 = uniform LINEAR rise (short-loser)
+    rise = np.clip(pre - pre.min(), 0, None)              # ascent above the limb's own floor
+    center = float((x * rise).sum() / (rise.sum() + 1e-9))  # time-center of the rise: more NEGATIVE = ascent
+    #                                                         STARTS SOONER (short-loser); near 0 = late launch
+    return dict(b=b, b_blade=b_blade, b_early=b_early, hockey=hockey, c=c,
+                peak=float(pre[-1]), start=float(pre[0]), dip=float(pre.min()), center=center)
 
 def extract():
     path = "/tmp/kbook/sol_book.jsonl"; cfg = [c for c in KRAKEN if c.coin == "sol"][0]
@@ -49,7 +58,7 @@ def main():
     print("=== S73 ASCENSION EQUATION — SOL, per-category slope differentiation (agent builder) ===", flush=True)
     rows, net, dur, hours = extract()
     n = len(rows)
-    keys = ["b", "b_blade", "c", "peak", "start", "dip"]
+    keys = ["b", "b_blade", "b_early", "hockey", "peak", "start", "dip", "center"]
     F = {k: np.array([r[k] for r in rows]) for k in keys}
     win = net > 0; med = np.median(dur); short = dur < med
     print(f"  SOL legs: {n}  ({hours:.1f}h)  base win%={win.mean()*100:.1f}  median dur={med:.0f}s\n", flush=True)
@@ -66,14 +75,12 @@ def main():
     print("", flush=True)
     # the two axes Greg named, isolated:
     def gap(mask_a, mask_b, lab_a, lab_b):
-        print(f"  --- {lab_a} vs {lab_b} (winner-loser & long-short slope gaps) ---", flush=True)
-        for k in ("b", "b_blade", "c", "peak", "start", "dip"):
+        print(f"  --- {lab_a} vs {lab_b} ---", flush=True)
+        for k in keys:
             va, vb = F[k][mask_a].mean(), F[k][mask_b].mean()
             print(f"    {k:8}: {lab_a}={va:+.4f}  {lab_b}={vb:+.4f}  gap={va-vb:+.4f}", flush=True)
         print("", flush=True)
-    gap(win, ~win, "WINNER", "LOSER")
-    gap(short, ~short, "SHORT", "LONG")
-    # within-category winner/loser slope (the entry-gate axis)
+    # CELL-SPECIFIC, CATEGORY-SPECIFIC differentiation (the entry-gate axis, per Greg):
     gap(win & short, ~win & short, "SHORT-WIN", "SHORT-LOSE")
     gap(win & ~short, ~win & ~short, "LONG-WIN", "LONG-LOSE")
     print("DONE", flush=True)
