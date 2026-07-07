@@ -102,6 +102,18 @@ the thing that adapts to conditions is the **numeric values**, not the structure
   the average. Corollary for every backtest: a flat long-window average does NOT falsify a live signal — the
   edge lives in the real-time deviation, so judge signals on the correction, not the mean. (This is the OD
   adaptive-operator / energy-trader instinct: re-fit the numbers to CURRENT data continuously.)
+- **CHURN COROLLARY (Greg, S71):** don't throw churn away blindly. Churn is NEUTRAL, bounded only by the FEE
+  FLOOR — profitable churn (each trade clears its cost) is MORE money; only SUB-FEE churn bleeds. Do NOT
+  optimize for fewer trades; optimize for PROFITABLE trades, let the count be whatever the market gives. The
+  S71 "preemption thrashes" / "aggressive open-fee on churn" verdicts were the SAME averaging error — those
+  specific trades were sub-fee in ONE low-edge window, NOT proof churn is bad; where each ride clears the fee,
+  that churn is money.
+- **DIPOLE = REAL-TIME TREND-FOLLOWER, averaged out (Greg, S71):** we already established the dipole is a great
+  trend-follower (flow = trend; ride the flow = ride the trend, S36). We were AVERAGING OUT THE TREND — pooling
+  over long windows flattened exactly the trend it tracks (the flat conviction ladder). The onset→exhaustion
+  ARC (S71 shape work) IS that trend in real time: flow builds (ignition) → ride → exhausts (trend dies) →
+  flip. Read/trade it in real time; never average it. The arc SHAPE is the profitable-churn filter (ride the
+  trends whose ignition arc predicts a fee-clearing move; skip the rest).
 
 ## ⭐ EVOLUTION (Greg, S70) — REVIVE `research/strategy_evolution/` (structure good, needs updating)
 The hindsight missed-winner audit loop = the "evolution that suggests updates." Structure: replay what the
