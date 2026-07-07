@@ -56,6 +56,16 @@ OWN numbers (universal shapes, cell-specific numbers). All the other design prin
 3. **Then cell-by-cell:** re-fit the (universal) shape thresholds for BTC/ETH/XRP (their OWN numbers) using the
    non-overlap regions, gate each; **doge on its own separate track** (doge is excluded from the 4-major rules).
 
+**⭐ DATA / COLLECTION STATUS + THE START-THE-WORKFLOW ACTION (checked S73):**
+- **16 LARGE candidate BOOKS.** Workflow = **"Kraken Candidate Book Collectors (16 LARGE majors, durable)"**
+  (`.github/workflows/kraken_candidate_book_collectors_durable.yml`). It LIVES ON + runs from the DEFAULT branch
+  **`claude/new-session-o3vnm`** (6h cron 03/09/15/21 UTC → books accrue to `data/<coin>-kraken-book`). It is
+  ACTIVE (a scheduled run was queued 2026-07-07 17:12 UTC). **TO START AN IMMEDIATE RUN (Greg):** GitHub →
+  Actions → "Kraken Candidate Book Collectors" → Run workflow → select branch **`claude/new-session-o3vnm`** →
+  Run. (Our integration 403s on API dispatch — only the UI click forces an extra run; the cron covers it otherwise.)
+- **~116 THIN-OK small-cap SLEEVE = TAPE, needs in-session restart.** `scripts/_s66_overnight_collect.sh` →
+  `data/kraken-smallcap-tape` (NOT a durable GHA; dies on container idle). Restart in-session when we work the thin sleeve.
+
 **⛔ Greg's hypothesis — FOR OUR EYES ONLY, do NOT put in the S74 agent's instructions (avoid biasing the
 findings):** Greg's guess is that more BALANCED buy/sells may characterize the SHORT cells (both wins and
 losses) and more LOPSIDED flow the LONGER runs. Test it NEUTRALLY — the agent must not be told this.
