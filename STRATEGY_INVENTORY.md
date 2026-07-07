@@ -251,8 +251,13 @@ fill/capital-config updates for Greg's review. Never self-applies; never changes
   1.8–2.6). Exit **clipping confirmed** — 65–69% of winner tops land past +120s; the +120s window cost a median
   **+4.6 (btc)…+11.3 (doge) bps**, p90 up to 34 (600s captures them). The **+20 arc jump = a smoothing-window artifact**
   of the onset volume climax (it moves 10→+10 / 20→+20 / 30→+30 with `SMOOTH_SEC`), NOT a turn — informational only.
-  Flow-exhaustion (~60s) vs the 600s-argmax "top" (~250s): the argmax is the WRONG turn (catches later swings) →
-  price-turn-aligned read IN PROGRESS.
+  Flow-exhaustion (~60s) vs the 600s-argmax "top" (~250s): the argmax is the WRONG turn (catches later swings).
+  **EXIT/TURN read = NULL on the sparse Kraken trade-flow (S72):** the peak-to-valley test (segment by the price's
+  own zigzag peaks/valleys; `peak_valley_exhaustion.py`) shows the 20s trade-imbalance exhaustion does NOT mark,
+  lead, or predict the price turns — P(spent|turn)≈coin-flip, flow-flip LAGS, not specific, corr≈+0.1, 4 groups
+  don't separate — ROOT CAUSE: Kraken trades too sparse (~1.7%→0.2% of cells) so `rolling_imb(20s)` saturates to
+  a ±1 square wave (data-resolution limit, not "exhaustion is meaningless"). ⇒ the ENTRY-QUALITY half is the
+  ready prize; the EXIT/turn read needs a DENSER/aggregated tape or a BOOK-DEPTH-pressure proxy (both UNTESTED).
 - **⚠ REFINEMENT REQUIRED before deploy (Greg — this is the build, but not yet):** (1) per-cell OOS + shuffle-null of
   the ascent-algebra entry classifier through the LIVE executor; (2) the correct EXIT turn-definition (price reversal,
   not argmax) + the exhaustion-at-turn signature; (3) direction stays on the lean, firing Greg-only; (4) NO averaging
