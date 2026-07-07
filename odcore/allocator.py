@@ -39,11 +39,11 @@ def allocate(demands, caps=None, pool=_INF, *, weights=None, clusters=None, clus
     """Distribute a shared POOL across competing keys under 3 caps.
 
     mode:
-      "greedy" (DEFAULT — Greg S67 "best profit potential per hour with our $5k, fill the best first"):
-        rank keys by weight (return-on-capacity = edge per $) DESCENDING and fill each to its ceiling
-        before the next. A NON-POSITIVE-weight key is NOT funded (idle pool earns 0 > deploying into a
-        losing trade) — but it is NOT dropped from the roster (idle costs nothing; it stays available
-        for a step/regime where its edge is positive). This maximises expected pool $/hr.
+      "greedy" (DEFAULT — Greg "fill the best first"): rank keys by weight (edge per $) DESCENDING and
+        fill each to its ceiling before the next, until the pool is spent. Edge is the funding ORDER
+        ONLY — NEVER a gate (Greg S70: "never fund a negative edge" is a WRONG rule; average edge doesn't
+        predict a trade, and we keep the $5k deployed rather than idle it). Negative-edge keys are still
+        funded (ranked last); a key is never dropped. This keeps the pool ~100% in play.
       "proportional": weighted water-fill — every positive-demand key with headroom gets a share
         proportional to its weight (spreads for Sharpe/diversification). Reference mode.
 
@@ -75,9 +75,9 @@ def allocate(demands, caps=None, pool=_INF, *, weights=None, clusters=None, clus
         return w if w > 0 else 0.0
 
     # NO priority info (caller passed no weights) -> equal priority in BOTH modes (fund all, e.g. the
-    # canary's pool=inf faithfulness check). When weights ARE given, respect them: greedy skips
-    # non-positive edge (idle pool beats a losing trade), even to funding nothing if the whole roster
-    # is negative — a coin is never DROPPED (it stays seated for a step/regime where its edge turns +).
+    # pool=inf faithfulness check). When weights ARE given, greedy uses them for ORDER ONLY (best edge
+    # per $ first); it never gates a coin out for negative edge (Greg S70) — negatives fund last, never
+    # dropped. (The proportional mode below still uses positive-weight water-fill; that is its design.)
     if not weights_given:
         def key_weight(k):  # noqa: F811 — equal-priority fallback
             return 1.0
@@ -88,11 +88,14 @@ def allocate(demands, caps=None, pool=_INF, *, weights=None, clusters=None, clus
         return max(0.0, clus_rem.get(clusters[k], _INF))
 
     if mode == "greedy":
-        # fill the BEST edge-per-$ coin to its ceiling first, then the next, until the pool is spent;
-        # skip non-positive edge (idle beats a losing trade). Ties broken by larger ceiling first.
-        order = sorted(keys, key=lambda k: (key_weight(k), ceil[k]), reverse=True)
+        # fill the BEST edge-per-$ coin to its ceiling first, then the next, until the pool is spent.
+        # Edge sets the ORDER ONLY — it is NEVER a gate (Greg S70: "never fund a negative edge" is a WRONG
+        # rule; average edge doesn't predict a trade, and we keep the $5k deployed rather than idle it).
+        # Order by raw weight desc so a less-negative coin funds before a more-negative one; ties by ceiling.
+        raw_w = lambda k: float(weights.get(k, 0.0)) if weights_given else 1.0
+        order = sorted(keys, key=lambda k: (raw_w(k), ceil[k]), reverse=True)
         for k in order:
-            if key_weight(k) <= 0 or remaining <= tol:
+            if remaining <= tol:
                 continue
             grant = min(ceil[k] - alloc[k], cluster_room(k), remaining)
             if grant <= tol:
