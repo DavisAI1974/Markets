@@ -34,7 +34,7 @@ rev grid = [0.08,0.10,0.13,0.16,0.20,0.25,0.30,0.40]; eps ∈ [None,3,5,10,15,20
 | ada  | _pending_ | | | | | |
 | sui  | _pending_ | | | | | |
 | ltc  | _pending_ | | | | | |
-| avax | _pending_ | | | | | |
+| avax*| +2.97 | **+7.88** | +4.91 | +7.81 | 100% | **SEAT** (thin floor margin) |
 
 ---
 
@@ -67,3 +67,12 @@ rev grid = [0.08,0.10,0.13,0.16,0.20,0.25,0.30,0.40]; eps ∈ [None,3,5,10,15,20
 - **Proposed (if seated at all, thin backup only):** `CellConfig("sol", venue="kraken", side=-1, rev=0.40, grace=300, improve=0.5)`
   — MARGINAL; recommendation is to **pull sol forward from live capital** and treat reversed as unproven backup.
 - Flags: window-fragile (1st half flat), below floor. The edge is not robust; do not size.
+
+### avax — SEAT (28d, thin floor margin)
+- **Deployed:** side+1 rev0.13 base → **+2.97 $/hr** on 28d (S67 had graded avax MARGINAL at base).
+- **Best found:** `side+1 rev0.13 eps20 grace600 improve0.5` → **+7.88 $/hr** (delta **+4.91** — the full stack tune is the whole lift; eps=20 early-arm + grace=600 more than double base).
+- Gate: null floor **+7.81 — best clears it, but only just** (+7.88 vs +7.81, ~+0.07 margin; null mean +5.19 is high, so the flow-lean timing premium over random is small); **100% windows** positive [4.34, 8.89, 13.48, 5.08, 9.98, 13.24, 0.17]; halves [+7.90, +7.86] (very stable across the 28d).
+- Direction premium real: wrong side best −6.35. bail adds nothing (None best).
+- **Recency (last 9d):** best = `side+1 rev0.10 eps20 grace600` → +8.38 MARGINAL (win 57%, halves [+17.07, −0.31] — the recent window front-loads all the edge into the first half then goes flat/negative). **DIVERGE=True (rev 0.13→0.10).** 28d-best on recent = +7.72 (still strong); recent-best on 28d = +6.56. The divergence is minor (rev only) — deploy the 28d config; the recent flat 2nd-half is a fragility flag to watch but the 28d halves are stable.
+- **Proposed:** `CellConfig("avax", venue="kraken", side=+1, rev=0.13, eps=20.0, bail=None, grace=600, improve=0.5)`
+- Flags: floor margin thin (+0.07) — the edge is real but small over random-timing; recent 2nd-half went flat. Seat as a lighter allocation than btc/eth.
