@@ -55,19 +55,35 @@ def load_signifiers():
     return arcs, eqs
 
 
-def nearest(q, ref):
-    """Nearest archetype SHAPE to the live curve q by whole-curve L2. The nearest-of-4 IS the wiggle room —
-    a forming leg matches the closest archetype shape, never an exact numeric equality."""
-    return min(CELLS, key=lambda c: float(np.sum((q - ref[c]) ** 2)))
+WIGGLE = 0.15                        # a little wiggle room: a winner up to 15% farther than the nearest
+                                     # loser still counts (the archetype is an average; live legs won't match exactly)
 
 
-def build_gate(buy, sell, flips, arcs, eqs, n):
-    """Per-flip LIVE entry gate. At each flip build the strictly-causal pre-fire curve (birth->pivot), match
-    it to the ARC signifiers and the EQUATION signifiers; FIRE only if BOTH read a winner shape. egate is keyed
-    at the flip's confirm cell (what swing_maker consults). Returns (egate, tags)."""
+def znorm(y):
+    """Shape-only: map a curve to its own [0,1] range so we compare FORM (rise -> kink -> flatten), not level.
+    'It doesn't matter if it reaches a value — the shape is what matters' (Greg)."""
+    lo, hi = float(y.min()), float(y.max())
+    return (y - lo) / (hi - lo + 1e-9)
+
+
+def winner_match(qz, refz):
+    """Match the live SHAPE qz to the 4 archetype SHAPES; fire if a WINNER shape is within wiggle of the
+    nearest loser shape. Returns (fire, tag)."""
+    d = {c: float(np.sum((qz - refz[c]) ** 2)) for c in CELLS}
+    win_d = min(d["short-win"], d["long-win"])
+    lose_d = min(d["short-lose"], d["long-lose"])
+    fire = win_d <= lose_d * (1.0 + WIGGLE)                    # winner gets a little wiggle benefit
+    tag = "short" if d["short-win"] <= d["long-win"] else "long"
+    return fire, tag
+
+
+def build_gates(buy, sell, flips, arcs_z, eqs_z, n):
+    """Per-flip LIVE entry gates, built SEPARATELY for each signifier (arc-shape ALONE, equation ALONE).
+    At each flip build the strictly-causal pre-fire curve (birth->pivot), normalize to SHAPE, match to the 4
+    archetype shapes with wiggle; fire if a winner shape wins. egate keyed at the flip's confirm cell.
+    Returns (arc_gate, eq_gate, arc_tags, eq_tags)."""
     timb = rolling_imb(buy, sell, SMOOTH_SEC)
-    egate = np.zeros(n, bool)
-    tags = {}
+    a_g = np.zeros(n, bool); e_g = np.zeros(n, bool); a_t = {}; e_t = {}
     prev_p = -1
     for (c, p, s) in sorted(flips, key=lambda z: int(z[1])):
         c, p, s = int(c), int(p), int(s)
@@ -80,13 +96,14 @@ def build_gate(buy, sell, flips, arcs, eqs, n):
         pre = timb[birth:p + 1] * s
         if len(pre) < 12:
             continue
-        q = resample(pre, NRS)
-        arc_cell = nearest(q, arcs)      # ARC signifier verdict
-        eq_cell = nearest(q, eqs)        # EQUATION signifier verdict
-        if arc_cell in WIN and eq_cell in WIN:                 # BOTH must read winner -> fire $5k
-            egate[c] = True
-            tags[c] = "short" if arc_cell == "short-win" else "long"
-    return egate, tags
+        qz = znorm(resample(pre, NRS))                        # the live leg's pre-fire SHAPE
+        fa, ta = winner_match(qz, arcs_z)                     # ARC signifier alone
+        fe, te = winner_match(qz, eqs_z)                      # EQUATION signifier alone
+        if fa:
+            a_g[c] = True; a_t[c] = ta
+        if fe:
+            e_g[c] = True; e_t[c] = te
+    return a_g, e_g, a_t, e_t
 
 
 def summarize(res, hours, label):
@@ -100,6 +117,12 @@ def summarize(res, hours, label):
 
 
 def main():
+    # mode selects the ONE signifier this test uses: "arc" = sampled-arc shape alone, "eq" = equation alone.
+    # The two are run as SEPARATE tests, in parallel (Greg, S75).
+    mode = sys.argv[1] if len(sys.argv) > 1 else "arc"
+    assert mode in ("arc", "eq"), "mode must be 'arc' or 'eq'"
+    SIG = "ARC-shape" if mode == "arc" else "EQUATION"
+
     path = "/tmp/kbook/sol_book.jsonl"
     cfg = [c for c in KRAKEN if c.coin == "sol"][0]
     raw = load_raw(path)
@@ -112,24 +135,21 @@ def main():
 
     flips = kraken_flips(cfg, mid, buy, sell)
     arcs, eqs = load_signifiers()
-    egate, tags = build_gate(buy, sell, flips, arcs, eqs, n)
+    arcs_z = {c: znorm(arcs[c]) for c in CELLS}
+    eqs_z = {c: znorm(eqs[c]) for c in CELLS}
+    a_g, e_g, a_t, e_t = build_gates(buy, sell, flips, arcs_z, eqs_z, n)
+    egate, tags = (a_g, a_t) if mode == "arc" else (e_g, e_t)
     nsw = sum(v == "short" for v in tags.values()); nlw = sum(v == "long" for v in tags.values())
 
-    print("=== S75 CURVE-SHAPE GATE — SOL, LIVE (equation + arc, BOTH must read winner) ===", flush=True)
+    print(f"=== S75 SHAPE GATE — SOL, LIVE — SIGNIFIER: {SIG} ALONE (shape-normalized, wiggle={WIGGLE}) ===", flush=True)
     print(f"  book cells={n} (~{hours:.1f}h)  flips={len(flips)}  gate-fires={int(egate.sum())} "
           f"(short-winner {nsw} / long-winner {nlw})  $5k flat/signal", flush=True)
-    print("  (archetypes = SOL leg_imbalance arcs + their best-form equations; in-sample vs this window)\n", flush=True)
+    print("  (archetypes = SOL leg_imbalance pre-fire arcs / their best-form equations; in-sample this window)\n", flush=True)
 
-    # UNGATED, baseline exit (current live code)
-    res_u, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
-    summarize(res_u, hours, "UNGATED baseline exit")
-    # GATED, baseline exit
-    res_g, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs, entry_gate=egate)
-    summarize(res_g, hours, "GATED baseline exit")
-    # GATED + the S75 balance_exit finding (adopt only if it beats baseline)
-    for be in [(0.15, -0.10), (0.20, 0.0), (0.10, -0.20)]:
-        res_be, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs, entry_gate=egate, balance_exit=be)
-        summarize(res_be, hours, f"GATED balance_exit{be}")
+    res_u, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)                       # control
+    summarize(res_u, hours, "UNGATED baseline")
+    res_g, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs, entry_gate=egate)     # the test
+    summarize(res_g, hours, f"GATED {SIG} baseline exit")
     print("DONE", flush=True)
 
 
