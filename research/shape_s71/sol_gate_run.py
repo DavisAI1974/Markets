@@ -182,6 +182,41 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def smallloser():
+    """Greg's reframe: the ONLY genuine skip is the SMALL LOSER (a big loser is a big winner backwards).
+    Q1: do all small losers (short-lose) fall in the smallest-peak region? Q2: are any big winners (long-win)
+    hiding there? If small losers concentrate at low peak with no big winners, skip that region = air-tight
+    small-loser skip, everything else = yes trade (then solve direction). Live legs, pre-fire onset peak."""
+    pk, net, dur, hours = _legs_with_peak()
+    n = len(pk); win = net > 0; med = np.median(dur); short = dur < med
+    B = np.where(short & win, "SW", np.where(short & ~win, "SL", np.where(~short & win, "LW", "LL")))
+    order = np.argsort(pk)                                  # low peak -> high peak
+
+    print(f"=== SOL SMALL-LOSER hunt — {n} live legs, {hours:.1f}h (peak = pre-fire onset, low->high) ===", flush=True)
+    print(f"  buckets: SW(small-win)={ (B=='SW').sum()}  SL(SMALL-LOSER)={ (B=='SL').sum()}  "
+          f"LW(BIG-WIN)={ (B=='LW').sum()}  LL(big-lose)={ (B=='LL').sum()}\n", flush=True)
+    print(f"  {'peak decile':>11}{'peak-range':>16}{'SW':>5}{'SL':>5}{'LW':>5}{'LL':>5}{'mean_net':>10}", flush=True)
+    for d in range(10):
+        idx = order[d * n // 10:(d + 1) * n // 10]; pr = pk[idx]; b = B[idx]
+        print(f"  {d+1:>11}{f'{pr.min():+.2f}..{pr.max():+.2f}':>16}"
+              f"{(b=='SW').sum():>5}{(b=='SL').sum():>5}{(b=='LW').sum():>5}{(b=='LL').sum():>5}"
+              f"{net[idx].mean():>10.2f}", flush=True)
+
+    # Q1 / Q2 over the bottom-30% peak region
+    bot = order[:3 * n // 10]
+    sl_tot = (B == "SL").sum(); sl_bot = (B[bot] == "SL").sum()
+    lw_tot = (B == "LW").sum(); lw_bot = (B[bot] == "LW").sum()
+    print(f"\n  Q1 small losers in the bottom-30% peak: {sl_bot}/{sl_tot} = {sl_bot/sl_tot*100:.0f}% "
+          f"(are they concentrated at low peak?)", flush=True)
+    print(f"  Q2 BIG WINNERS in the bottom-30% peak:  {lw_bot}/{lw_tot} = {lw_bot/lw_tot*100:.0f}% "
+          f"(contamination we'd wrongly skip)", flush=True)
+    # skip-the-bottom test: of what we'd skip, how much is small-loser vs big-winner
+    skipped = B[bot]
+    print(f"\n  If we SKIP the bottom-30% peak ({len(bot)} legs): "
+          f"SL={ (skipped=='SL').sum()}  SW={ (skipped=='SW').sum()}  LW={ (skipped=='LW').sum()}  LL={ (skipped=='LL').sum()}", flush=True)
+    print("DONE", flush=True)
+
+
 def flipexit():
     """Dipole-driven MID-TRADE FLIP (Greg): take every trade barely-late, then when the with-ride flow lean
     reverses AGAINST the position, FLIP to the other side instead of riding to a loss. Reuses the live legs +
@@ -526,6 +561,8 @@ def main():
         buckets(); return
     if mode == "flip":
         flip(); return
+    if mode == 'smallloser':
+        smallloser(); return
     if mode == 'flipexit':
         flipexit(); return
     if mode == 'strength':
