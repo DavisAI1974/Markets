@@ -71,7 +71,7 @@ def main():
         cfg = picked(c)
         if not cfg:
             continue
-        imb, mid = series_1s(f"/tmp/kbook/{c}_book.jsonl")
+        imb, mid = series_1s(f"{os.environ.get('BOOK_DIR','/tmp/kbook')}/{c}_book.jsonl")
         n = len(imb); cut = int(n * 0.6); te_h = (n - cut) / 3600.0
         imb_te, mid_te = imb[cut:], mid[cut:]; z_te = zscores(imb_te)
         tier = "major" if c in MAJORS else "smallcap"

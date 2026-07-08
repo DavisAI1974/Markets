@@ -34,6 +34,9 @@ MINCONV = 0.5
 Z_GRID = (1.0, 1.5, 2.0, 2.5, 3.0, 4.0)
 
 
+BOOK_DIR = os.environ.get("BOOK_DIR", "/tmp/kbook")   # override to /tmp/cbook for Coinbase books
+
+
 def series_1s(path, k=es.DEFAULT_K, stride=STRIDE):
     imb, mid = [], []
     with open(path) as f:
@@ -85,7 +88,7 @@ def dph(p, hours):
 
 def main():
     coin = sys.argv[1] if len(sys.argv) > 1 else "btc"
-    imb, mid = series_1s(f"/tmp/kbook/{coin}_book.jsonl")
+    imb, mid = series_1s(f"{BOOK_DIR}/{coin}_book.jsonl")
     n = len(imb); cut = int(n * 0.6)
     tr_h, te_h = cut / 3600.0, (n - cut) / 3600.0
     imb_tr, mid_tr, imb_te, mid_te = imb[:cut], mid[:cut], imb[cut:], mid[cut:]
