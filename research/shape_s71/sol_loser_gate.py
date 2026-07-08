@@ -30,15 +30,17 @@ def main():
     sw = win[tr] & short[tr]; sl = (~win[tr]) & short[tr]
     lw = win[tr] & ~short[tr]; ll = (~win[tr]) & ~short[tr]
     P_split  = 0.5*(m(short[tr], peak[tr]) + m(~short[tr], peak[tr]))   # short vs long shape (by energy/peak)
-    peak_sl  = 0.5*(m(sw, peak[tr]) + m(sl, peak[tr]))                  # short-loser = peak below this (flat)
-    dip_ll   = 0.5*(m(lw, min_asc[tr]) + m(ll, min_asc[tr]))            # long-loser = ascent dips below this
-    print(f"  SOL thresholds (train): P_split(peak)={P_split:.3f}  short-loser peak<{peak_sl:.3f}  "
-          f"long-loser min_asc<{dip_ll:.3f}\n", flush=True)
+    peak_sl  = m(sl, peak[tr])                                         # short-loser's OWN energy number (its cell)
+    peak_ll  = m(ll, peak[tr])                                         # long-loser's OWN energy number (its cell)
+    print(f"  SOL ENERGY thresholds (train): P_split(peak)={P_split:.3f}  "
+          f"short-loser peak<{peak_sl:.3f}  long-loser peak<{peak_ll:.3f}", flush=True)
+    print(f"    cell energy numbers (train peak): SHORT-WIN {m(sw,peak[tr]):.3f} / SHORT-LOSE {m(sl,peak[tr]):.3f} | "
+          f"LONG-WIN {m(lw,peak[tr]):.3f} / LONG-LOSE {m(ll,peak[tr]):.3f}\n", flush=True)
 
-    # ---- the SHAPE classification + sequential loser skip ----
+    # ---- PURE-ENERGY fire gate: skip the low-energy loser in EACH category (peak = onset energy) ----
     is_long_shape = peak >= P_split
-    skip_short_loser = (~is_long_shape) & (peak < peak_sl)             # flat / low-energy short  -> skip
-    skip_long_loser  = is_long_shape & (min_asc < dip_ll)             # deep below-zero long     -> skip
+    skip_short_loser = (~is_long_shape) & (peak < peak_sl)             # low-energy short -> skip
+    skip_long_loser  = is_long_shape & (peak < peak_ll)               # low-energy long  -> skip
     skip = skip_short_loser | skip_long_loser
 
     def report(ev, hrs, tag):
