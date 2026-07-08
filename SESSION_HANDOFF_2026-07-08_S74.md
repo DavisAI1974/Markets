@@ -42,15 +42,27 @@ Scope: SOL 699 legs/73h, BTC 885/42h, ETH 623/67h, XRP 635/73h.
 ⚠ ALL CHARACTERIZATION — mean arcs, one book window/coin. NOT a per-trade gate, NOT sizing-grade. The tail-flip must
 be tested as a per-trade EXIT trigger (same overlap risk the entry energy had).
 
-## ⭐ NEXT (S74 cont. / S75)
-1. **THE EXIT TEST (immediate):** through the LIVE path, exit each leg when its post-onset TRADE imbalance returns
-   to balance / crosses zero (the exhaustion point) instead of waiting for the full reversal — does catching the
-   loser's flip early cut losses while leaving winners (end ≈0) intact? Per cell × per coin. This is the first real
-   test of the exit/turn read (the win/lose edge lives here).
-2. **THE BTC BOOK GATE (high value):** build + validate the BTC book pre-fire lean as a BTC ENTRY gate (skip legs
-   born book-negative); confirm OOS / on fresh book. The one pre-fire win/lose tell we have.
-3. **Keep the ENERGY gate on BTC/ETH/XRP** (doubles $/hr, in-sample) — validate walk-forward; SOL uses the
-   cumulative deep-hole skip. doge on its own track (excluded from the 4-major rules).
+### 3. EXIT TEST — DONE → NULL on all 4 majors (`exit_test_findings.md`, opt-in `balance_exit` OFF)
+Wired an opt-in `balance_exit=(arm_hi, exit_lo)` into `odcore/swing_maker.py` (threaded through `run_stream`/
+`run_kraken_cell`; default None = byte-identical, canary reproduced SOL 1522 / BTC 2395 / ETH 1459 / XRP 1518 legs
+leg-for-leg; coexists with deep-bail, earliest cell wins). Exiting at the flow zero-cross / return-to-balance does
+NOT beat the current exit on ANY major — best config per coin all negative (SOL +8.44/−2.82, BTC −2.91/−5.41, ETH
++0.31/−5.16, XRP +0.94/−1.53; full arm×window×exit_lo grid, no corner wins). **WHY:** (1) the current flip-turn exit
+ALREADY IS the balance exit at the trade's 60s scale; a faster window only fires premature; (2) **FLOW LAGS PRICE** —
+winners' flow returns to ~0 while their PRICE gain holds to the later price turn (exiting hands back 15–25% winner
+$/hr), losers' loss is already in the price by the time flow rebalances (no loss cut). Winners cut > losers saved.
+**The win/lose lever is ENTRY, not an earlier flow close; deep-bail already caps the loser price tail.** `balance_exit`
+adopted nowhere. → EXIT is CLOSED as a flow-timed lever; current exit (flow turn + cover-grace) STAYS the default.
+
+## ⭐ NEXT (S75)
+1. **⭐⭐ THE BTC BOOK GATE (highest value — Greg: "worth its weight in gold"):** the ONE pre-fire win/lose tell we
+   have. Build + validate the BTC book pre-fire lean as a BTC ENTRY gate (skip/ down-weight legs BORN book-negative
+   at the valley); confirm OOS / on fresh book. BTC-specific (flat on SOL, weak ETH, long-win-only XRP).
+2. **Validate the ENERGY gate on BTC/ETH/XRP walk-forward** (doubles $/hr in-sample: BTC 2.5→6.08, ETH 5.47→6.40,
+   XRP 2.47→5.18) — if it holds OOS it deploys; SOL uses the cumulative deep-hole (`late_integral`) skip instead.
+3. **Entry is the lever, not exit** (S74 exit null). The remaining entry edges are the energy gate (3 coins) + the
+   BTC book lean; per-trade pre-fire SHAPE separation is a wall (all cells same convex-cubic family). doge on its own
+   track (excluded from the 4-major rules).
 
 ## Files (all committed on the branch)
 `research/shape_s71/`: `leg_imbalance.py` (whole-leg 2-channel char), `leg_imbalance_findings.md`, `leg_imbalance_{coin}.png`,

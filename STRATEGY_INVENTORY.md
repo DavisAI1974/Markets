@@ -253,8 +253,10 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   outcome passed — a hypothesis is parked in the S73 handoff, keep it OUT of the instructions). Then cell-by-cell
   BTC/ETH/XRP; **doge on its own separate track.** See `SESSION_HANDOFF_2026-07-07_S73.md`.
 - **Deep-bail DEMOTES to a thin backstop** once the gate skips the losers (the entry gate does selection +
-  loss-avoidance). EXIT = winner-optimization only; current running exit (flow turn + cover-grace) is the fine
-  default until the exit/turn read is built. Detailed research record: the S72 SHAPE STRATEGY block below.
+  loss-avoidance). EXIT = winner-optimization only; the flow-based exit/turn read was BUILT + tested S74 and is a
+  NULL (flow lags price; the current flip-turn exit is already at the right scale) → **current running exit (flow
+  turn + cover-grace) STAYS the default, deep-bail caps the loser price tail.** Detailed research record: the S72
+  SHAPE STRATEGY block below.
 
 **⭐⭐ S74 WHOLE-LEG IMBALANCE FINDINGS (2026-07-08) — TRADE IMBALANCE IS THE DECIDER + a UNIVERSAL EXIT TELL +
 the BTC BOOK GOLD.** Characterized the 4 cells over WHOLE legs (extended TURN-TO-TURN: valley/birth → onset peak
@@ -274,9 +276,17 @@ K1/5/10. Per-cell mean arcs (archetype pictures; Greg-approved for the character
   flips); the **LOSER** tail decays THROUGH zero into strong negative (exh **−0.14..−0.42**) — the flow REVERSES
   onto the other side mid-tail, and THAT reversal IS the loss. The PRE-FIRE ascension shape is the SAME family for
   all 4 cells (deep-born hockey to the peak → **this is WHY entry win/lose is hard**, confirmed again); the win/lose
-  difference is entirely in the TAIL. **The exhaustion point = flow returning to balance (zero-cross); the live exit
-  currently lets losers reverse to ~−0.3 before closing → exit AT the zero-cross to cut the loss before the
-  reversal, while winners (who end ≈0 anyway) are untouched. S74 EXIT TEST = the immediate next build.**
+  difference is entirely in the TAIL. **⛔ S74 EXIT TEST DONE → NULL (opt-in `balance_exit`, default OFF,
+  canary bit-identical; `research/shape_s71/exit_test_findings.md` + `exit_balance_grid.py`).** Exiting at the flow
+  zero-cross / return-to-balance does NOT beat the current exit on ANY major (best config per coin all negative vs
+  baseline: SOL +8.44/−2.82, BTC −2.91/−5.41, ETH +0.31/−5.16, XRP +0.94/−1.53; swept arm{0.05–0.40}×window{20/40/60s}
+  ×exit_lo{+0.10..−0.20}, no corner wins). TWO reasons: (1) the current flip-turn exit ALREADY IS the balance exit at
+  the trade's own 60s WFLIP scale (the 60s-window balance exit fires on ~0–10 legs = subsumed; only a faster 20s
+  window differs, and it fires PREMATURELY); (2) **FLOW LAGS PRICE** — winners' FLOW returns to ~0 while their PRICE
+  gain HOLDS to the later price turn (exiting at flow-balance hands back 15–25% of winner $/hr), and losers' loss is
+  already booked IN PRICE by the time FLOW rebalances (flow-flip lags price → no loss cut). Winners cut > losers
+  saved → net negative. **The lever for the S74 win/lose split is ENTRY (direction/side), NOT an earlier flow-based
+  close; the deep-bail already caps the loser PRICE tail.** `balance_exit` stays opt-in, off, adopted nowhere.
 - **⭐⭐ BTC BOOK = A PRE-FIRE WIN/LOSE FORECAST (Greg: "could be worth its weight in gold") — COIN-SPECIFIC:** on
   **BTC** the BOOK imbalance forecasts win/lose BEFORE the leg fires — winners born book-POSITIVE (with-side) and
   stay positive valley→peak→close (short-win peak +0.13, long-win +0.20), losers born book-NEGATIVE and stay
