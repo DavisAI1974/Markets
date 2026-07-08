@@ -76,6 +76,8 @@ def main():
         imb_te, mid_te = imb[cut:], mid[cut:]; z_te = zscores(imb_te)
         tier = "major" if c in MAJORS else "smallcap"
         mk, tk = LEG[tier]["maker"], LEG[tier]["taker"]
+        if os.environ.get("RAMP_MAKER"):   # override for the pre-$10M ramp (standard Kraken fees)
+            mk, tk = float(os.environ["RAMP_MAKER"]), float(os.environ["RAMP_TAKER"])
         best = None; w0 = None
         for W in WAITS:
             p, mf = run_exit(imb_te, mid_te, z_te, cfg, W, mk, tk)
