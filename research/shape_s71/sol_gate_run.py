@@ -182,6 +182,29 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def losscap():
+    """Greg: cap losses ASAP, eat the small ones. SOL has NO deep-bail today (BTC -80 / ETH -100 do). Sweep a
+    price-stop loss cap through the LIVE run_kraken_cell and report $/hr, win%, mean loser, worst loss. Deep
+    bail should clip the extreme loser tail for ~free; shallow bail may bleed (mean-reversion) — let it show."""
+    import dataclasses
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg0 = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg0.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0; hours = len(mid) * 0.1 / 3600.0
+    print(f"=== SOL LOSS-CAP sweep — LIVE run_kraken_cell, {hours:.1f}h ===", flush=True)
+    print(f"  {'bail':>8}{'legs':>6}{'win%':>7}{'net_bps':>10}{'$/hr':>9}{'mean_lose':>11}{'worst':>9}", flush=True)
+    for bail in (None, -200, -150, -100, -80, -60, -40, -20):
+        cfg = cfg0 if bail is None else dataclasses.replace(cfg0, bail=bail)
+        res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+        net = np.array([float(l.net_bps) for l in res.legs])
+        nk = len(net); tot = net.sum(); wp = (net > 0).mean() * 100 if nk else float("nan")
+        ml = net[net < 0].mean() if (net < 0).any() else 0.0
+        print(f"  {str(bail):>8}{nk:>6}{wp:>7.1f}{tot:>10.0f}{tot/1e4*CAP/hours:>9.3f}{ml:>11.2f}{net.min():>9.1f}", flush=True)
+    print("DONE", flush=True)
+
+
 def smallloser():
     """Greg's reframe: the ONLY genuine skip is the SMALL LOSER (a big loser is a big winner backwards).
     Q1: do all small losers (short-lose) fall in the smallest-peak region? Q2: are any big winners (long-win)
@@ -561,6 +584,8 @@ def main():
         buckets(); return
     if mode == "flip":
         flip(); return
+    if mode == 'losscap':
+        losscap(); return
     if mode == 'smallloser':
         smallloser(); return
     if mode == 'flipexit':
