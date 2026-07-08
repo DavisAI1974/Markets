@@ -157,11 +157,18 @@ is BTC (all points, all K).
 
 ---
 
-## 4. THE EQUATIONS — 8 per coin (4 cells × 2 limbs, split at the fire)
+## 4. THE 8 CURVE-SHAPE DESCRIPTIONS — 8 per coin (4 cells × 2 limbs, split at the fire)
+
+⛔ These are **EQUATIONS OF CURVES** — each one is just how a distinct CURVE SHAPE is written down. They are
+**8 DISTINCTIVE PIECES per coin, ALWAYS KEPT SEPARATE, NEVER SUMMED** and never solved for a scalar/value. We
+MATCH a forming trade's whole curve to these SHAPES (enter = pre-fire limb, exit = tail limb), with wiggle room;
+we never add/collapse them into a number. (Greg, S75; #0f. The "mean fit-R²" line below is only a fit-quality
+note on how well each SHAPE is captured — not a metric we gate on.)
 
 Pre-fire x∈[0,1]: 0=birth/valley → 1=fire/onset. Tail x∈[0,1]: 0=fire → 1=close. Best functional form is
 chosen PER cell/limb by adjusted-R² among {linear, quadratic, cubic, hockey(2-seg kink), exp}; forms differ
-per cell as Greg allowed. "cleaner representation" = mean fit-R² across the 8 equations, per coin.
+per cell as Greg allowed (each SHAPE gets whatever form describes it best). "cleaner representation" = mean
+fit-R² across the 8 curve-shape descriptions, per coin — a fit-quality note only.
 
 ### SOL — cleaner in TRADE (R²: trade 0.968 vs book 0.926; book arcs are flat/uninformative)
 TRADE:
