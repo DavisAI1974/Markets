@@ -1,85 +1,69 @@
-"""S76: the paper's RIDE-TO-REVERSAL directional swing on the book early-signal (BTC/ETH Kraken).
+"""S76: the paper's RIDE-TO-REVERSAL directional swing, driving Greg's ACTUAL early_signal.EarlySignalTracker
+(his tested code — not a reimplementation) on our Kraken books (BTC/ETH).
 
-The book's directional edge (Kraken 60s hit BTC 71% / ETH 55%) is a SEPARATE signal from the maker zigzag
-(it's a coin-flip on the maker legs' spread-driven win/lose). Monetize it the paper's way: ENTER on a strong
-book lean (rolling z), RIDE the ~60s move, EXIT on a wide trailing-stop reversal or a max hold. Mid-price
-directional P&L (the book predicts mid direction), at 0% maker and at a taker cost. One position at a time.
+Feed each 1s book snapshot to the tracker; when it says ENTER, open a position in sig.direction; ride the
+~60s move; EXIT on the documented wide trailing stop (TRAIL_BPS_DEFAULT=30) or the max hold
+(MAX_HOLD_S_DEFAULT=600). Mid-price directional P&L at 0% maker and at a taker cost. One position at a time.
+The book's directional edge is a SEPARATE strategy from the maker zigzag (it's a coin-flip on the maker legs).
 
     python3 book_swing_kraken.py <btc|eth>
 """
 import os, sys, json, types
 import numpy as np
-from collections import deque
 sys.path.insert(0, os.path.dirname(__file__)); sys.path.insert(0, "/home/user/Markets")
 if "matplotlib" not in sys.modules:
     _m = types.ModuleType("matplotlib"); _m.use = lambda *a, **k: None
     _p = types.ModuleType("matplotlib.pyplot"); _p.__getattr__ = lambda n: (lambda *a, **k: None)
     _m.pyplot = _p; sys.modules["matplotlib"] = _m; sys.modules["matplotlib.pyplot"] = _p
-import early_signal as es
-from arc_gate import KRAKEN  # noqa (just to confirm shared import path)
+import early_signal as es                         # Greg's file — use it as-is
 
 CAP = 5000.0
-K = 10
-STRIDE = 10                          # 100ms book -> 1s grid
+STRIDE = 10                                       # 100ms book -> 1s grid
 DIR_SIGN = {"btc": +1, "eth": +1, "xrp": +1, "sol": +1, "doge": -1}
-SD_FLOOR = 0.02
+TRAIL = es.TRAIL_BPS_DEFAULT                       # 30 bps (documented ride-to-reversal stop)
+MAXHOLD = es.MAX_HOLD_S_DEFAULT                    # 600 s
 
 
-def series_1s(path, k=K, stride=STRIDE):
-    imb, mid = [], []
+def run(coin, enter_z, min_conv, fee):
+    """Drive es.EarlySignalTracker over the book; ride-to-reversal exit. Returns (pnl bps array, hours)."""
+    path = f"/tmp/kbook/{coin}_book.jsonl"
+    ds = DIR_SIGN.get(coin, +1)
+    trk = es.EarlySignalTracker(k=es.DEFAULT_K, roll=es.DEFAULT_ROLL, enter_z=enter_z,
+                                direction_sign=ds, min_conviction=min_conv)
+    pos = None; pnl = []; nsnap = 0
     with open(path) as f:
         for i, line in enumerate(f):
-            if i % stride:
+            if i % STRIDE:
                 continue
             r = json.loads(line); m = float(r["mid"])
-            bids = [[m + float(o), float(s)] for o, s in r["bids"][:k]]
-            asks = [[m + float(o), float(s)] for o, s in r["asks"][:k]]
-            bk = es.book_imbalance(bids, asks, k, m)
-            imb.append(bk["imb"] if bk["ok"] else 0.0); mid.append(m)
-    return np.array(imb), np.array(mid)
-
-
-def swing(imb, mid, ds, enter_z, trail_bps, max_hold_s, roll, fee_bps, min_conv=0.0):
-    """Ride-to-reversal. One position at a time. Returns per-trade net bps (mid-price directional).
-    Enter only on a STRONG lean: |z| >= enter_z AND |imb| >= min_conv (the paper's tracker filter)."""
-    n = len(imb); hist = deque(maxlen=roll); pos = None; pnl = []
-    for i in range(n):
-        z = 0.0
-        if len(hist) >= 5:
-            m = sum(hist) / len(hist)
-            sd = max((sum((v - m) ** 2 for v in hist) / len(hist)) ** 0.5, SD_FLOOR)
-            z = (imb[i] - m) / sd
-        hist.append(imb[i])
-        if pos is None:
-            if abs(z) >= enter_z and abs(imb[i]) >= min_conv:
-                d = ds if z > 0 else -ds                       # book lean -> direction (sign * dir_sign)
-                pos = {"d": d, "entry": mid[i], "best": 0.0, "t0": i}
-        else:
-            fav = pos["d"] * (mid[i] - pos["entry"]) / pos["entry"] * 1e4
-            pos["best"] = max(pos["best"], fav)
-            if (pos["best"] - fav) >= trail_bps or (i - pos["t0"]) >= max_hold_s:
-                pnl.append(fav - fee_bps); pos = None
-    return np.array(pnl)
+            bids = [[m + float(o), float(s)] for o, s in r["bids"]]     # tracker takes the top-k itself
+            asks = [[m + float(o), float(s)] for o, s in r["asks"]]
+            sig = trk.update(bids, asks, mid=m)
+            nsnap += 1
+            if pos is None:
+                if sig.enter and sig.direction != 0:
+                    pos = {"d": sig.direction, "entry": m, "best": 0.0, "t": 0}
+            else:
+                pos["t"] += 1
+                fav = pos["d"] * (m - pos["entry"]) / pos["entry"] * 1e4
+                pos["best"] = max(pos["best"], fav)
+                if (pos["best"] - fav) >= TRAIL or pos["t"] >= MAXHOLD:
+                    pnl.append(fav - fee); pos = None
+    return np.array(pnl), nsnap / 3600.0
 
 
 def main():
     coin = sys.argv[1] if len(sys.argv) > 1 else "btc"
-    path = f"/tmp/kbook/{coin}_book.jsonl"
-    imb, mid = series_1s(path); ds = DIR_SIGN.get(coin, +1)
-    hours = len(imb) / 3600.0
-    print(f"=== {coin.upper()} BOOK RIDE-TO-REVERSAL swing — {len(imb)} snaps @1s ({hours:.1f}h), dir_sign={ds:+d} ===", flush=True)
-    print(f"  {'enter_z':>7}{'minconv':>8}{'trail':>7}{'maxhold':>8}{'fee':>5}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
+    print(f"=== {coin.upper()} — es.EarlySignalTracker ride-to-reversal (trail {TRAIL:.0f} / hold {MAXHOLD}s) ===", flush=True)
+    print(f"  {'enter_z':>7}{'minconv':>8}{'fee':>5}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
     for ez in (1.0, 1.5):
-        for mc in (0.0, 0.3, 0.5):
-            for trail in (30.0,):
-                for mh in (600,):
-                    for fee in (0.0, 5.0):
-                        p = swing(imb, mid, ds, ez, trail, mh, 120, fee, min_conv=mc)
-                        if len(p) < 3:
-                            continue
-                        dph = p.sum() / 1e4 * CAP / hours
-                        print(f"  {ez:>7.1f}{mc:>8.1f}{trail:>7.0f}{mh:>8}{fee:>5.0f}{len(p):>7}{len(p)/hours:>6.1f}"
-                              f"{(p>0).mean()*100:>7.1f}{p.mean():>9.3f}{dph:>9.3f}", flush=True)
+        for mc in (0.0, 0.5):
+            for fee in (0.0, 5.0):
+                p, hours = run(coin, ez, mc, fee)
+                if len(p) < 3:
+                    print(f"  {ez:>7.1f}{mc:>8.1f}{fee:>5.0f}{len(p):>7}   (too few)", flush=True); continue
+                print(f"  {ez:>7.1f}{mc:>8.1f}{fee:>5.0f}{len(p):>7}{len(p)/hours:>6.1f}"
+                      f"{(p>0).mean()*100:>7.1f}{p.mean():>9.3f}{p.sum()/1e4*CAP/hours:>9.3f}", flush=True)
     print("DONE", flush=True)
 
 
