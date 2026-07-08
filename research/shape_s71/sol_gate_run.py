@@ -202,9 +202,9 @@ def eqpeak_run():
     print(f"  book cells={n} (~{hours:.1f}h)  flips={len(flips)}  gate-fires={int(egate.sum())} "
           f"(short-winner {nsw} / long-winner {nlw})  $5k flat/signal\n", flush=True)
     res_u, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
-    summarize(res_u, hours, "UNGATED baseline")
+    summarize(res_u, hours, "UNGATED (fire every flip)")
     res_g, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs, entry_gate=egate)
-    summarize(res_g, hours, "GATED eq+peak baseline exit")
+    summarize(res_g, hours, "eq+peak ENTRY yes/no")
     print("DONE", flush=True)
 
 
