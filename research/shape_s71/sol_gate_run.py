@@ -182,6 +182,50 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def flipexit():
+    """Dipole-driven MID-TRADE FLIP (Greg): take every trade barely-late, then when the with-ride flow lean
+    reverses AGAINST the position, FLIP to the other side instead of riding to a loss. Reuses the live legs +
+    the executor's own lean_series. Mid-price frame (honest first cut; fills not modeled — that's the wiring
+    step if this clears). Sweeps the adverse-flow threshold; reports losers rescued + $/hr vs no-flip."""
+    from odcore.platform import lean_series, WFLIP
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0; hours = len(mid) * 0.1 / 3600.0
+    res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+    lean = lean_series(buy, sell, WFLIP)                        # the SAME with-ride flow lean the executor uses
+    legs = [l for l in res.legs if int(l.close_idx) > int(l.open_idx)]
+
+    def ride(o, c, s):                                          # mid-price ride bps, side s over [o,c]
+        return s * (mid[c] - mid[o]) / mid[o] * 1e4
+
+    orig = np.array([ride(int(l.open_idx), int(l.close_idx), int(l.side)) for l in legs])
+    print(f"=== SOL DIPOLE MID-TRADE FLIP — {len(legs)} legs, {hours:.1f}h (mid-price frame) ===", flush=True)
+    print(f"  NO-FLIP ride:  win%={ (orig>0).mean()*100:.1f}  $/hr={orig.sum()/1e4*CAP/hours:.3f}\n", flush=True)
+    print(f"  {'adverse thr':>11}{'flip_fee':>9}{'flips':>7}{'rescued':>9}{'broke':>7}{'win%':>7}{'$/hr':>9}", flush=True)
+    for thr in (0.05, 0.10, 0.20, 0.30):
+        for fee in (0.0, 5.0):                                 # 0=maker flip, 5bps=taker flip cost
+            flipped = orig.copy(); nflip = resc = broke = 0
+            for i, l in enumerate(legs):
+                o, c, s = int(l.open_idx), int(l.close_idx), int(l.side)
+                seg = lean[o + 1:c + 1] * s                     # with-ride lean; <0 => flow against us
+                adv = np.where(seg <= -thr)[0]                  # first adverse-flow turn (causal)
+                if not len(adv):
+                    continue
+                tf = o + 1 + int(adv[0])
+                fg = ride(o, tf, s) + ride(tf, c, -s) - fee     # hold correct part, reverse the rest
+                flipped[i] = fg; nflip += 1
+                if orig[i] < 0 <= fg:
+                    resc += 1
+                elif orig[i] > 0 >= fg:
+                    broke += 1
+            print(f"  {thr:>11.2f}{fee:>9.1f}{nflip:>7}{resc:>9}{broke:>7}"
+                  f"{(flipped>0).mean()*100:>7.1f}{flipped.sum()/1e4*CAP/hours:>9.3f}", flush=True)
+    print("DONE", flush=True)
+
+
 def strength():
     """Repoint the dipole (Greg): NOT direction (that's a wall) — use it to tell STRENGTH (how big the move)
     and, within the SMALL trades, small-winner vs small-loser. Entry stays 'barely late' (SOL natural cadence).
@@ -482,6 +526,8 @@ def main():
         buckets(); return
     if mode == "flip":
         flip(); return
+    if mode == 'flipexit':
+        flipexit(); return
     if mode == 'strength':
         strength(); return
     if mode == 'dipole':
