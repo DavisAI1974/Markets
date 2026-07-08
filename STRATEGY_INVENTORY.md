@@ -363,6 +363,34 @@ NEVER the whole-curve SHAPE match — the untested piece. ⚠ honest note: enter
 shape; the tail shapes are the more distinct ones. Reference = the sampled ARCS (curve-as-points), not the lossy
 hand-written equations. Grade vs ungated + vs energy.
 
+**⛔⛔ S75 RESULT — THE SHAPE GATE WAS RUN ON SOL; IT HIT THE DIRECTION WALL. SOL IS DONE. (2026-07-08/09; full
+detail `SESSION_HANDOFF_2026-07-09_S75.md`; code `research/shape_s71/sol_gate_run.py`.)** The whole-curve shape gate
+was BUILT + run LIVE on SOL (raw curve, NO normalize/average/smooth; arcs + equations; opt-in `entry_gate` socket
+added to `run_stream`/`run_kraken_cell`, bit-identical default). **Every entry variant lands at ~62% win / below
+ungated $/hr** (arc 59.6/$6.68 · eq 59.6/$6.68 · eqpeak 49.0/$2.95 · ungated 61.7/$11.26). **WHY (load-bearing,
+reproduces S62): WIN/LOSE IS DIRECTION.** The `flip` test — reverse the side of SOL's losers — turns **82% of
+long-losers / 87% of short-losers into WINNERS** ($/hr 11.26 → 41.88 reverse-all HINDSIGHT ceiling). So a winner and
+its "loser" twin have the **IDENTICAL entry** → no entry feature (shape/peak/dipole/book) can separate them → **~62%
+is the detector's direction hit-rate, a HARD CEILING on entry filtering.** Direction is un-callable at entry (SOL
+book FLAT; dipole ~chance, all classes ~61%) AND mid-trade (flow-turn flip is a WASH — breaks ~as many winners as it
+rescues = winners-invisible) AND un-flip-on-distance (SOL barely moves: only 34/1522 legs reach 15 bps adverse, ZERO
+reach 30). **SOL is a small-band, mean-reverting, SPREAD-CAPTURE coin** (mid-price ride is −5.2/hr; the +11.26 edge is
+spread). ⭐ **SOL VERDICT: capped at ~62% / +11.26 $/hr, near its ceiling — the edge is the deployed spread capture;
+STOP fighting SOL.** (⚠ `losscap` mode is BUGGY — bail identical across depths; fix before use.)
+
+**⭐⭐ S75 THE REAL EDGE — THE BOOK EARLY-SIGNAL (direction; Greg drop-in `early_signal.py` + `early_signal_kraken.py`).**
+Proximity-weighted top-K book depth imbalance → MAGNITUDE (entry filter) + SIGN (direction); `fit_direction_sign()`
+fits the sign per venue×cell. Fit on OUR Kraken books (100ms→1s, horizon 60s, min_conv 0.5): **BTC sign +1, 71.4%
+directional hit at 60s on strong leans (n=83k) = HIGH ⭐; ETH +1 ~55% HIGH-ish; XRP +1 ~56% LOW; SOL FLAT (n=27=noise);
+DOGE −1 flat.** Confirms Greg's ranking (BTC/ETH biggest, SOL smallest). **The book gives DIRECTION on BTC/ETH that
+SOL never had — the piece that breaks the 62% wall on those coins.** Re-fit `direction_sign` per venue×cell.
+
+**⭐ S76 NEXT — BTC + ETH TOGETHER (Greg): shape gate WITH FALLBACKS + the book direction stack + ride-to-reversal
+exit, ~60s horizon.** REBUILD the per-cell archetypes on BTC/ETH (SOL's were the wrong coin). Stack the book
+`direction_sign` (HIGH on BTC/ETH). Exit = wide (~30 bps) trailing ride-to-reversal (the paper's first net-positive
+config). Validate multi-window (0% maker floor — Kraken $10M tier / Coinbase Liquidity Program). Full plan:
+`BTC_SIGNAL_SESSION_2026-07-08.md` (Greg's paper) + `SESSION_HANDOFF_2026-07-09_S75.md`.
+
 **⭐ THE LEVER STACK (Greg, S74 — LARGELY INDEPENDENT levers → they COMPOUND; validate each, then STACK; S64
 "tools are complementary, not competing").** ENTRY selection: whole-curve equation gate + ENERGY gate (doubles $/hr
 BTC/ETH/XRP, SOL=deep-hole) + BTC BOOK pre-fire tell. RISK control: long-duration cap / deep-bail (the worst-loser
