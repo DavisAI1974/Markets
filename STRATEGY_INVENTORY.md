@@ -392,15 +392,19 @@ it is its OWN directional strategy (predicts the 60s mid move the zigzag doesn't
 enter on a strong book lean (`early_signal.EarlySignalTracker`, |z|≥enter_z ∧ |imb|≥0.5), RIDE ~60s, exit on a wide
 trailing stop (30 bps) or max hold (600s). **60/40 WALK-FORWARD (Greg's "tune on 60%", fit sign + enter_z on train,
 validate OOS on the 40%):** **ETH ⭐ OOS +7.23 bps/trade @0% maker, +2.23 @taker (SURVIVES), 59.5% win** (train-picked
-enter_z 1.5) — reproduces the paper OOS on Kraken; **BTC OOS +2.09 @0% maker (dead at taker)** — moves too small, needs
-the 0% maker floor. **⚠ TUNING TRAP: optimizing train $/hr@0 overfits to CHURN (740 trades/45hr, +0.7 bps/trade, −90/hr
-at taker). Tune by per-trade QUALITY (bps/trade), keep the low-frequency ride (trail 30 / hold 600).** KRAKEN ONLY
-(Greg, S76) — 0% maker = the $10M tier; no other venues.
+enter_z 1.5). **⭐ OBJECTIVE = MAX $/hr @0% maker (Greg, S76) — trade count / per-trade size are IRRELEVANT.** Best OOS
+$/hr @0% maker (Kraken $10M tier): **ETH +21.7/hr** (z1.5, trail 30, hold 600, 6 trades/hr) · **BTC +15.9/hr** (z1.0,
+trail 15, hold 60, 45 trades/hr — more trades = more $/hr, fine). ⚠ TWO real caveats (NOT quality): (1) these assume
+**0% maker on BOTH entry AND exit** — the exit is a reversal that may need to cross (taker), and at taker they COLLAPSE
+(BTC −97/hr) → **the deployability gate is MAKER-EXIT at 0% on Kraken**, and ETH's ride is the most taker-tolerant
+(+2.23 bps/trd survives); (2) P&L is **mid-price (upper bound, no spread/slippage)**, worse for the 45-trd/hr BTC config.
+KRAKEN ONLY — 0% maker = the $10M tier; no other venues.
 
-**⭐ S77 NEXT (KRAKEN ONLY): MULTI-WINDOW CONFIRM (the decisive test) — S76 OOS is ONE ~35–40h window (ETH OOS n=84);**
-re-run the walk-forward as the Kraken books accrue / across regimes. If ETH's +7.23 holds, wire the ETH book-swing as
-its own SANDBOX directional cell (separate from the maker zigzag), BTC as a 0%-maker cell. Tune by QUALITY not churn.
-Firing LOCKED (Greg-only). Plan: `DROPIN_2026-07-09_S77.md` + `SESSION_HANDOFF_2026-07-09_S76.md`.
+**⭐ S77 NEXT (KRAKEN ONLY): MULTI-WINDOW CONFIRM (the decisive test) — S76 OOS is ONE ~35–40h window;** re-run the
+walk-forward as the Kraken books accrue / across regimes, selecting the **MAX $/hr @0% maker** config per coin. Nail the
+**maker-exit at 0%** question (can the reversal exit rest as a maker?). If it holds, wire the top-$/hr book-swing as its
+own SANDBOX directional cell (separate from the maker zigzag). Firing LOCKED (Greg-only). Plan:
+`DROPIN_2026-07-09_S77.md` + `SESSION_HANDOFF_2026-07-09_S76.md`.
 
 **⭐ THE LEVER STACK (Greg, S74 — LARGELY INDEPENDENT levers → they COMPOUND; validate each, then STACK; S64
 "tools are complementary, not competing").** ENTRY selection: whole-curve equation gate + ENERGY gate (doubles $/hr
