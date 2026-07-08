@@ -25,24 +25,30 @@ trailing stop (30 bps) or max hold (600s). Verified my swing == `es.EarlySignalT
 | **ETH** | sign+1, enter_z 1.5 | **+7.23  ($/hr 21.7)** | **+2.23  ($/hr 6.68) ✅** | 59.5 | 84 |
 | **BTC** | sign+1, enter_z 1.0 | **+2.09  ($/hr 6.07)** | −2.91 (dead) | 57.9 | 95 |
 
-- **⭐⭐ ETH is a deployment candidate: OOS +7.23 bps/trade at 0% maker AND taker-survivable (+2.23).** Reproduces the
-  paper's magnitude out-of-sample on Kraken with train-selected params — not a cherry-pick.
-- **BTC: OOS-positive at 0% maker (+2.09) but dead at taker** — BTC's moves are small (~1.4 bps/60s, most HFT-competed
-  book), so it needs the 0% maker floor. Real edge, thinner.
-- The strict, LOW-FREQUENCY entry is what recovers the fat per-trade edge (his ~0.5–1.5 trades/hr, not my first 5.8/hr).
+- **⭐ OBJECTIVE = MAX $/hr @0% maker (Greg, S76) — trade count / per-trade size are IRRELEVANT (more trades = more
+  $/hr is fine).** Best OOS $/hr @0% maker: **ETH +21.7/hr** (z1.5, trail 30, hold 600, 6 trd/hr — also taker-survivable
+  +2.23 bps/trd) · **BTC +15.9/hr** (z1.0, trail 15, hold 60, 45 trd/hr). The table above is the low-freq *ride*; the
+  higher-freq BTC config gives the higher $/hr.
+- **⭐ THE OTHER COINS HAVE THE BOOK EDGE TOO, JUST SMALLER (Greg + the paper: 5 wins, per-cell weighting).** BTC/ETH
+  biggest; SOL/XRP/DOGE a smaller version, weighted low — NOT zero. So run the per-cell max-$/hr swing on ALL 5.
+- ⚠ TWO real caveats (NOT quality): (1) these assume **0% maker on BOTH entry AND exit** — the reversal exit may need
+  to cross (taker), and at taker the high-freq configs COLLAPSE (BTC −97/hr) → **the deployability gate is MAKER-EXIT
+  at 0% on Kraken**; ETH's ride is the most taker-tolerant. (2) P&L is **mid-price (upper bound, no spread/slippage)**.
 
-### 3. ⚠ Tuning trap (do NOT repeat): optimizing train **$/hr @0% maker** overfits to CHURN
-Adding trail/hold to the grid and picking best train $/hr@0 chose trail15/hold60 → 740 trades (45/hr), +0.7 bps/trade:
-big $/hr @0 but **−90 to −97 $/hr at taker** — razor-thin, not robust. **Tune by per-trade QUALITY (bps/trade), not
-$/hr (which rewards fee-fragile churn).** The robust config is the low-frequency RIDE (trail 30 / hold 600).
+### 3. Code note — `book_swing_kraken.py` fixed to sweep `min_conv` (for the flat-book coins)
+SOL/XRP/DOGE books lean less, so `min_conv=0.5` almost never fires (SOL crashed — <10 train trades). The train grid now
+sweeps `min_conv` (0.0/0.2/0.3/0.5) so flat-book coins enter enough to measure their smaller edge, and guards the empty
+case. **The 5-coin max-$/hr walk-forward is READY to run — that's the first S77 task (saved for next session).**
 
 ## ⭐ NEXT (S77) — confirm + wire, KRAKEN ONLY
-1. **Multi-window confirm** — the S76 OOS is ONE ~35–40h window split 60/40 (ETH OOS n=84). Re-run the walk-forward
-   as the Kraken books accrue more hours / across regimes. This is the decisive robustness test before sizing.
-2. **Tune by bps/trade quality, not $/hr** (avoid the churn trap). Keep the low-frequency ride (trail 30 / hold 600).
-3. **Wire the ETH book-swing as its own sandbox cell** (directional, separate from the maker zigzag) once multi-window
-   holds; BTC as a 0%-maker-floor cell.
-4. Firing/direction stays LOCKED (Greg-only); the book swing is a NEW directional strategy, not a change to the zigzag.
+1. **Run the per-cell MAX $/hr walk-forward on ALL 5 coins** (`book_swing_kraken.py`, code ready) — rank by OOS $/hr
+   @0% maker. Expect BTC/ETH biggest, SOL/XRP/DOGE smaller-but-present (Greg).
+2. **Multi-window confirm** — S76 OOS is ONE ~35–40h window. Re-run as the Kraken books accrue / across regimes. The
+   decisive robustness test before sizing.
+3. **Nail the MAKER-EXIT question** — can the reversal exit rest as a 0% maker on Kraken? If not, the high-freq $/hr
+   collapses (taker). This gates deployability, not "quality."
+4. **Wire the top-$/hr book-swings as their own sandbox directional cells** (separate from the maker zigzag) once
+   multi-window holds. Firing/direction stays LOCKED (Greg-only); the swing is a NEW cell, not a change to the zigzag.
 
 ## Files (committed on the branch)
 `research/shape_s71/early_signal.py` (Greg's plugin: book imbalance → magnitude+direction; `fit_direction_sign`) ·
@@ -50,6 +56,7 @@ $/hr (which rewards fee-fragile churn).** The robust config is the low-frequency
 `book_swing_kraken.py` (ride-to-reversal swing + 60/40 walk-forward, drives `early_signal`).
 
 ## RULES (standing)
-KRAKEN ONLY (S76) · 0% maker = the $10M tier · firing LOCKED (Greg-only) · live-code / his-plugin-as-is · tune by
-per-trade QUALITY not $/hr churn · walk-forward (train 60% / test 40%) before any claim · the book swing is a SEPARATE
-directional cell from the maker zigzag · SOL is done (spread-capture wall) · doge on its own track.
+KRAKEN ONLY (S76) · 0% maker = the $10M tier · **objective = MAX $/hr @0% maker (trade count/quality irrelevant)** ·
+firing LOCKED (Greg-only) · use Greg's `early_signal.py` AS-IS · walk-forward (train 60% / test 40%) before any claim ·
+the book edge exists on ALL 5 coins, weighted per-cell (BTC/ETH biggest) · the book swing is a SEPARATE directional
+cell from the maker zigzag · the maker-exit-at-0% question is the deploy gate · doge on its own track.

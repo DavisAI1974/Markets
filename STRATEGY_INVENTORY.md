@@ -400,10 +400,14 @@ trail 15, hold 60, 45 trades/hr — more trades = more $/hr, fine). ⚠ TWO real
 (+2.23 bps/trd survives); (2) P&L is **mid-price (upper bound, no spread/slippage)**, worse for the 45-trd/hr BTC config.
 KRAKEN ONLY — 0% maker = the $10M tier; no other venues.
 
-**⭐ S77 NEXT (KRAKEN ONLY): MULTI-WINDOW CONFIRM (the decisive test) — S76 OOS is ONE ~35–40h window;** re-run the
-walk-forward as the Kraken books accrue / across regimes, selecting the **MAX $/hr @0% maker** config per coin. Nail the
-**maker-exit at 0%** question (can the reversal exit rest as a maker?). If it holds, wire the top-$/hr book-swing as its
-own SANDBOX directional cell (separate from the maker zigzag). Firing LOCKED (Greg-only). Plan:
+**⭐ ALL 5 COINS HAVE THE BOOK EDGE, JUST SMALLER (Greg + paper: 5 wins, per-cell weighting)** — BTC/ETH biggest,
+SOL/XRP/DOGE a smaller version, weighted low, NOT zero. `book_swing_kraken.py` now sweeps `min_conv` so the flat-book
+coins enter (SOL fires <10× at conv0.5); the 5-coin max-$/hr walk-forward is READY (saved for S77).
+
+**⭐ S77 NEXT (KRAKEN ONLY):** (1) run the per-cell **MAX $/hr @0% maker** walk-forward on ALL 5 coins (code ready),
+rank by $/hr; (2) **MULTI-WINDOW CONFIRM** (S76 OOS is ONE ~35–40h window) as the Kraken books accrue; (3) nail the
+**maker-exit at 0%** question (can the reversal exit rest as a maker? — gates the high-freq $/hr); (4) wire the top-$/hr
+book-swings as SANDBOX directional cells (separate from the maker zigzag). Firing LOCKED (Greg-only). Plan:
 `DROPIN_2026-07-09_S77.md` + `SESSION_HANDOFF_2026-07-09_S76.md`.
 
 **⭐ THE LEVER STACK (Greg, S74 — LARGELY INDEPENDENT levers → they COMPOUND; validate each, then STACK; S64

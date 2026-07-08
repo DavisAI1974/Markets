@@ -81,23 +81,28 @@ def main():
     ds = fit["sign"]
     print(f"=== {coin.upper()} WALK-FORWARD 60/40 — train {tr_h:.1f}h / test {te_h:.1f}h ===", flush=True)
     print(f"  TRAIN fit: direction_sign={ds:+d}  hit_rate={fit['hit_rate']:.3f}  weight={fit['recommend']}", flush=True)
-    # TRAIN: joint grid over (enter_z, trail, maxhold); pick best train $/hr @0% maker (>=15 trades)
+    # TRAIN: joint grid over (min_conv, enter_z, trail, maxhold); pick MAX train $/hr @0% maker (>=10 trades).
+    # min_conv is swept so flat-book coins (SOL/XRP/DOGE) still enter enough to measure their smaller edge.
     best = None
-    for ez in (1.0, 1.5, 2.0):
-        for trail in (10.0, 15.0, 20.0, 30.0):
-            for mh in (60, 300, 600):
-                p = swing(imb_tr, mid_tr, ds, ez, 0.0, trail, mh)
-                d = dph(p, tr_h)
-                if len(p) >= 15 and (best is None or d > best[0]):
-                    best = (d, ez, trail, mh)
-    _, ez, trail, mh = best
-    print(f"  -> TRAIN picks enter_z={ez:.1f} trail={trail:.0f} maxhold={mh}s (train $/hr@0={best[0]:.2f})\n", flush=True)
+    for mc in (0.0, 0.2, 0.3, 0.5):
+        for ez in (1.0, 1.5, 2.0):
+            for trail in (10.0, 15.0, 20.0, 30.0):
+                for mh in (60, 300, 600):
+                    p = swing(imb_tr, mid_tr, ds, ez, 0.0, trail, mh, min_conv=mc)
+                    d = dph(p, tr_h)
+                    if len(p) >= 10 and (best is None or d > best[0]):
+                        best = (d, ez, trail, mh, mc)
+    if best is None:
+        print("  -> insufficient signal on train (book too flat; no config with >=10 trades)\nDONE", flush=True)
+        return
+    _, ez, trail, mh, mc = best
+    print(f"  -> TRAIN picks enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} maxhold={mh}s (train $/hr@0={best[0]:.2f})\n", flush=True)
 
-    # TEST: frozen (ds, ez, trail, mh), report OOS
-    print(f"  TEST (OOS, frozen sign={ds:+d} enter_z={ez:.1f} trail={trail:.0f} hold={mh}s):", flush=True)
+    # TEST: frozen (ds, ez, trail, mh, mc), report OOS
+    print(f"  TEST (OOS, frozen sign={ds:+d} enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} hold={mh}s):", flush=True)
     print(f"  {'fee':>5}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
     for fee in (0.0, 5.0):
-        p = swing(imb_te, mid_te, ds, ez, fee, trail, mh)
+        p = swing(imb_te, mid_te, ds, ez, fee, trail, mh, min_conv=mc)
         if len(p) < 3:
             print(f"  {fee:>5.0f}{len(p):>7}   (too few)", flush=True); continue
         print(f"  {fee:>5.0f}{len(p):>7}{len(p)/te_h:>6.1f}{(p>0).mean()*100:>7.1f}{p.mean():>9.3f}{dph(p, te_h):>9.3f}", flush=True)
