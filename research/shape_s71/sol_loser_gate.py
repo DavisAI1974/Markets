@@ -37,13 +37,16 @@ def main():
     print(f"    cell energy numbers (train peak): SHORT-WIN {m(sw,peak[tr]):.3f} / SHORT-LOSE {m(sl,peak[tr]):.3f} | "
           f"LONG-WIN {m(lw,peak[tr]):.3f} / LONG-LOSE {m(ll,peak[tr]):.3f}\n", flush=True)
 
-    # ---- PURE-ENERGY fire gate: skip the low-energy loser in EACH category (peak = onset energy) ----
-    is_long_shape = peak >= P_split
-    skip_short_loser = (~is_long_shape) & (peak < peak_sl)             # low-energy short -> skip
-    skip_long_loser  = is_long_shape & (peak < peak_ll)               # low-energy long  -> skip
-    skip = skip_short_loser | skip_long_loser
+    # ---- 4-ANCHOR nearest-energy classification: FIRE the 2 winner energies, SKIP the 2 loser energies,
+    #      each anchor with a WIGGLE margin (a trade skips only if CLEARLY nearer a loser energy) ----
+    a_sl = m(sl, peak[tr]); a_sw = m(sw, peak[tr])          # short loser / winner energy anchors
+    a_ll = m(ll, peak[tr]); a_lw = m(lw, peak[tr])          # long  loser / winner energy anchors
+    d_lose = np.minimum(np.abs(peak - a_sl), np.abs(peak - a_ll))   # dist to nearest LOSER energy
+    d_win  = np.minimum(np.abs(peak - a_sw), np.abs(peak - a_lw))   # dist to nearest WINNER energy
+    print(f"  4 ENERGY ANCHORS (train peak): SHORT-LOSE {a_sl:.3f}  SHORT-WIN {a_sw:.3f}  "
+          f"LONG-LOSE {a_ll:.3f}  LONG-WIN {a_lw:.3f}\n", flush=True)
 
-    def report(ev, hrs, tag):
+    def report(skip, ev, hrs, tag):
         fire = ~skip[ev]
         ung = net[ev].sum(); g = net[ev][fire].sum(); nk = int(fire.sum()); ne = len(ev)
         wa = (net[ev] > 0).mean(); wk = (net[ev][fire] > 0).mean() if nk else float("nan")
@@ -55,9 +58,12 @@ def main():
               f"long-losers skipped {int((skip[ev]&ll_ev).sum())}/{int(ll_ev.sum())}  "
               f"winners wrongly skipped {int((skip[ev]&w_ev).sum())}/{int(w_ev.sum())}", flush=True)
 
-    print("  --- REFINED 4-cell cascade (skip short-loser on energy + long-loser on below-zero dip) ---", flush=True)
-    report(np.arange(n), hours, "IN-SAMPLE")
-    report(te, hte, "OOS-40%")
+    print("  --- 4-anchor nearest-energy gate: fire winner energies, skip loser energies (WIGGLE sweep) ---", flush=True)
+    for wig in (0.0, 0.01, 0.02, 0.03, 0.05):
+        skip = (d_lose + wig) < d_win                        # skip only if nearer a LOSER energy by margin `wig`
+        print(f"  wiggle={wig:.2f}", flush=True)
+        report(skip, np.arange(n), hours, "IN-SAMPLE")
+        report(skip, te, hte, "OOS-40%")
     print("\nDONE", flush=True)
 
 if __name__ == "__main__":
