@@ -70,6 +70,41 @@ def winner_match(q, ref):
     return fire, tag
 
 
+def classify_eqpeak(q, eqs, peaks):
+    """EQUATION is primary; if the top-2 equation matches look ALIKE (within wiggle), the PEAK decides
+    (nearest archetype onset-peak: SOL SW .123, SL .146, LL .306, LW .374). Returns (fire, cell)."""
+    d = {c: float(np.sum((q - eqs[c]) ** 2)) for c in CELLS}
+    ranked = sorted(CELLS, key=lambda c: d[c])
+    best, second = ranked[0], ranked[1]
+    if d[second] <= d[best] * (1.0 + WIGGLE):             # equation ambiguous -> the peak is the decider
+        lp = float(q[-1])                                 # this leg's pre-fire onset peak
+        cell = min((best, second), key=lambda c: abs(lp - peaks[c]))
+    else:
+        cell = best
+    return (cell in WIN), cell
+
+
+def build_eqpeak(buy, sell, flips, eqs, peaks, n):
+    """LIVE entry gate: equation-primary + peak-decider. Fire only when the chosen cell is a winner."""
+    timb = rolling_imb(buy, sell, SMOOTH_SEC)
+    g = np.zeros(n, bool); tg = {}
+    prev_p = -1
+    for (c, p, s) in sorted(flips, key=lambda z: int(z[1])):
+        c, p, s = int(c), int(p), int(s)
+        lo = max(0, p - LOOKBACK, prev_p + 1); prev_p = p
+        seg = timb[lo:p + 1] * s
+        if len(seg) < 30:
+            continue
+        birth = lo + ignition_idx(seg); pre = timb[birth:p + 1] * s
+        if len(pre) < 12:
+            continue
+        q = resample(pre, NRS)
+        fire, cell = classify_eqpeak(q, eqs, peaks)
+        if fire:
+            g[c] = True; tg[c] = "short" if cell == "short-win" else "long"
+    return g, tg
+
+
 def build_gates(buy, sell, flips, arcs, eqs, n):
     """Per-flip LIVE entry gates, built SEPARATELY for each signifier (arc-shape ALONE, equation ALONE).
     At each flip build the strictly-causal RAW pre-fire curve (birth->pivot; native amplitude, no normalize/
@@ -145,6 +180,32 @@ def _legs_with_peak():
             continue
         peak.append(float(pre[-1])); net.append(float(l.net_bps)); dur.append((c - o) * 0.1)
     return np.array(peak), np.array(net), np.array(dur), hours
+
+
+def eqpeak_run():
+    """The gate Greg specced: EQUATION shape primary, PEAK on top as the decider when two equation-matches
+    look alike. $5k flat. LIVE via run_kraken_cell. SOL."""
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0
+    n = len(mid); hours = n * 0.1 / 3600.0
+    flips = kraken_flips(cfg, mid, buy, sell)
+    arcs, eqs = load_signifiers()
+    peaks = {c: float(arcs[c][-1]) for c in CELLS}                 # archetype onset peaks: .123 .146 .306 .374
+    egate, tags = build_eqpeak(buy, sell, flips, eqs, peaks, n)
+    nsw = sum(v == "short" for v in tags.values()); nlw = sum(v == "long" for v in tags.values())
+    print("=== S75 GATE — SOL, LIVE — EQUATION primary + PEAK decider (raw curve, wiggle={:.2f}) ===".format(WIGGLE), flush=True)
+    print("  archetype peaks: " + "  ".join(f"{c}={peaks[c]:+.3f}" for c in CELLS), flush=True)
+    print(f"  book cells={n} (~{hours:.1f}h)  flips={len(flips)}  gate-fires={int(egate.sum())} "
+          f"(short-winner {nsw} / long-winner {nlw})  $5k flat/signal\n", flush=True)
+    res_u, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+    summarize(res_u, hours, "UNGATED baseline")
+    res_g, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs, entry_gate=egate)
+    summarize(res_g, hours, "GATED eq+peak baseline exit")
+    print("DONE", flush=True)
 
 
 def peak():
@@ -234,7 +295,9 @@ def main():
         walk(); return
     if mode == "peak":
         peak(); return
-    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk' or 'peak'"
+    if mode == "eqpeak":
+        eqpeak_run(); return
+    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk', 'peak' or 'eqpeak'"
     SIG = "ARC-shape" if mode == "arc" else "EQUATION"
 
     path = "/tmp/kbook/sol_book.jsonl"
