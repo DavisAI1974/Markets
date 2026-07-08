@@ -76,30 +76,34 @@ def main():
     tr_h, te_h = cut / 3600.0, (n - cut) / 3600.0
     imb_tr, mid_tr, imb_te, mid_te = imb[:cut], mid[:cut], imb[cut:], mid[cut:]
 
-    # TRAIN: fit direction_sign, then pick enter_z by best train $/hr @0% maker (>=10 trades)
-    fit = es.fit_direction_sign(imbalances=imb_tr.tolist(), mids=mid_tr.tolist(), horizon=60, min_conviction=MINCONV)
-    ds = fit["sign"]
     print(f"=== {coin.upper()} WALK-FORWARD 60/40 — train {tr_h:.1f}h / test {te_h:.1f}h ===", flush=True)
-    print(f"  TRAIN fit: direction_sign={ds:+d}  hit_rate={fit['hit_rate']:.3f}  weight={fit['recommend']}", flush=True)
-    # TRAIN: joint grid over (min_conv, enter_z, trail, maxhold); pick MAX train $/hr @0% maker (>=10 trades).
-    # min_conv is swept so flat-book coins (SOL/XRP/DOGE) still enter enough to measure their smaller edge.
+    # TRAIN: joint grid over (sign-fit HORIZON, min_conv, enter_z, trail, maxhold); pick MAX train $/hr @0%
+    # maker (>=10 trades). The sign-fit horizon is PER-CELL (Greg S77: small caps lead price at their own
+    # look-ahead, mostly 120-300s vs majors' 60s) — each coin auto-picks it on TRAIN. 60 stays a candidate so
+    # majors don't regress. min_conv swept so flat-book coins still enter. OBJECTIVE = MAX $/hr, count irrelevant.
+    hfits = {}
+    for hz in (30, 60, 120, 300):
+        f = es.fit_direction_sign(imbalances=imb_tr.tolist(), mids=mid_tr.tolist(), horizon=hz, min_conviction=MINCONV)
+        hfits[hz] = f["sign"]
     best = None
-    for mc in (0.0, 0.2, 0.3, 0.5):
-        for ez in (1.0, 1.5, 2.0):
-            for trail in (10.0, 15.0, 20.0, 30.0):
-                for mh in (60, 300, 600):
-                    p = swing(imb_tr, mid_tr, ds, ez, 0.0, trail, mh, min_conv=mc)
-                    d = dph(p, tr_h)
-                    if len(p) >= 10 and (best is None or d > best[0]):
-                        best = (d, ez, trail, mh, mc)
+    for hz, ds in hfits.items():
+        for mc in (0.0, 0.2, 0.3, 0.5):
+            for ez in (1.0, 1.5, 2.0):
+                for trail in (10.0, 15.0, 20.0, 30.0):
+                    for mh in (60, 300, 600):
+                        p = swing(imb_tr, mid_tr, ds, ez, 0.0, trail, mh, min_conv=mc)
+                        d = dph(p, tr_h)
+                        if len(p) >= 10 and (best is None or d > best[0]):
+                            best = (d, hz, ds, ez, trail, mh, mc)
     if best is None:
         print("  -> insufficient signal on train (book too flat; no config with >=10 trades)\nDONE", flush=True)
         return
-    _, ez, trail, mh, mc = best
-    print(f"  -> TRAIN picks enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} maxhold={mh}s (train $/hr@0={best[0]:.2f})\n", flush=True)
+    _, hz, ds, ez, trail, mh, mc = best
+    print(f"  -> TRAIN picks horizon={hz}s sign={ds:+d} enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} "
+          f"maxhold={mh}s (train $/hr@0={best[0]:.2f})\n", flush=True)
 
-    # TEST: frozen (ds, ez, trail, mh, mc), report OOS
-    print(f"  TEST (OOS, frozen sign={ds:+d} enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} hold={mh}s):", flush=True)
+    # TEST: frozen (hz, ds, ez, trail, mh, mc), report OOS
+    print(f"  TEST (OOS, frozen horizon={hz}s sign={ds:+d} enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} hold={mh}s):", flush=True)
     print(f"  {'fee':>5}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
     for fee in (0.0, 5.0):
         p = swing(imb_te, mid_te, ds, ez, fee, trail, mh, min_conv=mc)
