@@ -256,6 +256,53 @@ is untouched (Greg-only) — the gate only decides, for each fire the lean alrea
   loss-avoidance). EXIT = winner-optimization only; current running exit (flow turn + cover-grace) is the fine
   default until the exit/turn read is built. Detailed research record: the S72 SHAPE STRATEGY block below.
 
+**⭐⭐ S74 WHOLE-LEG IMBALANCE FINDINGS (2026-07-08) — TRADE IMBALANCE IS THE DECIDER + a UNIVERSAL EXIT TELL +
+the BTC BOOK GOLD.** Characterized the 4 cells over WHOLE legs (extended TURN-TO-TURN: valley/birth → onset peak
+→ exhaustion at the ACTUAL close, not the −45/+60 clip) through the LIVE `run_kraken_cell`, tracking TWO channels
+signed to side — **TRADE imbalance** `(buy−sell)/(buy+sell)` and **BOOK imbalance** `(bidK−askK)/(bidK+askK)`
+K1/5/10. Per-cell mean arcs (archetype pictures; Greg-approved for the characterization). Files:
+`research/shape_s71/leg_imbalance.py` + `leg_imbalance_findings.md` + `leg_imbalance_{coin}.png` + `fit_shapes.py`
+(8 equations/coin). ⚠ CHARACTERIZATION — mean arcs, one book window/coin, NOT yet a per-trade gate / sizing-grade.
+- **⭐ TRADE IMBALANCE IS THE DECIDER (Greg's hypothesis — CONFIRMED, and it does MORE):**
+  - **DIRECTION** = the trade-imbalance POLARITY. Born maximally AGAINST-side at the valley (~−0.85), FLIPS
+    with-side at onset; the SIGN at onset is the buy/sell call (gap **+0.47..+0.72 all 4 coins**). BOOK does NOT
+    decide direction (±0.02..0.06).
+  - **DURATION** (short vs long) = the onset **PEAK HEIGHT** (long fires from ~+0.33..+0.45 vs short ~+0.13..+0.25,
+    all 4 coins). The valley and the pre-fire MEAN carry NO duration/win-lose info.
+- **⭐⭐ THE UNIVERSAL EXIT TELL (all 4 coins) — win/lose lives in the TAIL, NOT the entry:** post-onset the
+  **WINNER** trade tail decays gently and HOLDS ≥0 to close (exh ≈ 0..+0.1 — the ride de-energizes, flow never
+  flips); the **LOSER** tail decays THROUGH zero into strong negative (exh **−0.14..−0.42**) — the flow REVERSES
+  onto the other side mid-tail, and THAT reversal IS the loss. The PRE-FIRE ascension shape is the SAME family for
+  all 4 cells (deep-born hockey to the peak → **this is WHY entry win/lose is hard**, confirmed again); the win/lose
+  difference is entirely in the TAIL. **The exhaustion point = flow returning to balance (zero-cross); the live exit
+  currently lets losers reverse to ~−0.3 before closing → exit AT the zero-cross to cut the loss before the
+  reversal, while winners (who end ≈0 anyway) are untouched. S74 EXIT TEST = the immediate next build.**
+- **⭐⭐ BTC BOOK = A PRE-FIRE WIN/LOSE FORECAST (Greg: "could be worth its weight in gold") — COIN-SPECIFIC:** on
+  **BTC** the BOOK imbalance forecasts win/lose BEFORE the leg fires — winners born book-POSITIVE (with-side) and
+  stay positive valley→peak→close (short-win peak +0.13, long-win +0.20), losers born book-NEGATIVE and stay
+  negative the whole leg (short-lose −0.25/−0.39, long-lose −0.10/−0.19); K1/5/10 all agree, and the born-book sign
+  already forecasts win/lose AT the valley (pre-ignition). This is a genuine **PRE-FIRE ENTRY tell on BTC** — the
+  one thing the pre-fire SHAPE alone could not give (the shapes are the same family). ⚠ **NOT universal:** FLAT on
+  SOL (±0.03 — book carries nothing, TRADE is the whole story there), WEAK on ETH, LONG-WIN-only on XRP. Book NEVER
+  FLIPS at the peak on any coin — it is a standing LEAN (context), not a turn-timed signal; the turn tell lives in
+  the TRADE channel. **NEXT (BTC): build + validate the BTC book pre-fire lean as a BTC entry gate, confirm OOS / on
+  fresh book.**
+- **Endpoint map:** TRADE valley NEVER separates (universal birth ~−0.85..−0.91); TRADE **exhaustion (close)** is
+  the cleanest universal win/lose separator; TRADE **peak** = duration. 8 distinct equations/coin (pre-fire + tail
+  per cell, split at the fire) in `leg_imbalance_findings.md` §4 — pre-fire = same convex-cubic/hockey family, TAIL
+  = the distinguishing shapes (win flattens near 0; lose declines through 0 to negative).
+- **⛔ CORRECTION to S73:** the S73 "LINEAR vs NON-LINEAR ascent" prime discriminator is **FALSE** — all 4 cells are
+  convex hockey sticks; linearity does not separate winner from loser. The real per-trade edge is NOT in the entry
+  shape at all — it is in the TAIL (exit) + (BTC only) the book pre-fire lean.
+
+**⭐ S74 ENTRY-ENERGY GATE (2026-07-08) — energy gate is GOOD on BTC/ETH/XRP, the SOL failure was SOL-SPECIFIC.**
+Tested the 4 cell ENERGY (onset peak) values as a standalone entry gate through the LIVE code (4 anchors, wiggle):
+it roughly **DOUBLES $/hr on BTC (2.5→6.08), ETH (5.47→6.40), XRP (2.47→5.18)** but HURTS SOL (11.26→10.08 — SOL
+winner/loser energy LEVELS overlap so it over-skips ~40% of winners). On SOL a cumulative deep-hole skip
+(`late_integral` lowest ~5%) beats it (11.43 > ungated 11.26 > energy 10.08). All IN-SAMPLE. Files
+`research/shape_s71/sol_loser_gate.py` / `gate3.py`. Reconciles the S73 "energy over-skips" result: it over-skips
+only on SOL; on the other 3 majors the energy gate is strongly $/hr-positive and should be kept.
+
 **⭐ THE GREEDY CAPITAL STRATEGY — LOCKED (Greg, S70; stop rehashing — this is settled).** In plain words,
 this is exactly what `odcore/allocator.py` (`mode="greedy"`) + `odcore/platform.py::run_portfolio` do (LIVE,
 canary-clean). Do NOT re-derive or re-litigate it; only IMPLEMENT/tune the inputs it names.
