@@ -26,23 +26,23 @@ Worst: −34.7 / −25.3 / −25.1 / −25.0 / −22.7 ... (mixed S/L). Weak ons
 
 ---
 
-## ⭐ WHAT'S OBVIOUS (my read — verify next session, do NOT treat as gospel)
-1. **The bleed is in LONG legs that RUN LONG.** Worst-10 durations exceed the loser average on ALL 4 coins
-   (SOL 64 vs 51, BTC 74 vs 45, ETH 66 vs 53, XRP 62 vs 52). A long leg that goes wrong has more time to
-   accumulate the loss. → candidate: a max-adverse / time cap on long legs, or long-loser entry selection; check
-   whether the deep-bail is even firing on these long ones (it may be too deep to catch them in time).
-2. **The worst losers end with the flow FULLY REVERSED against** (exh strongly negative, many at −1.00), far more
-   than typical losers (BTC −0.70 vs −0.40, ETH −0.84 vs −0.23). They rode into a complete flow flip.
-3. **COIN SPLIT on onset energy — two different bleeds:**
-   - **SOL / ETH / XRP worst losers fired with WEAK/NEGATIVE onset energy** (peak below the loser average, ETH
-     even negative). Fired on nothing. → the ENERGY GATE (which doubles $/hr on ETH/XRP) directly targets THIS
-     bleed — the energy-weak worst losers are exactly what it skips.
-   - **BTC worst losers fired with STRONG onset energy (+0.51) and still lost big** — fakeouts/traps. Energy will
-     NOT catch these. → this is where the ⭐ BTC BOOK pre-fire tell is the candidate: were these strong-onset BTC
-     losers BORN BOOK-NEGATIVE at the valley? If so the book gate catches the exact bleed energy can't.
-4. **Several worst losers fired with onset flow MAXIMALLY AGAINST the side (peak ≈ −1.00)** — the entry fired
-   directly into opposing flow. Firing is LOCKED (Greg-only), so flag for a FIRING REVIEW, not a self-change.
+## ⭐ THE PATTERNS (rigorous — over the WORST-DECILE, 66–96 legs/coin, NOT the top-10 eyeball)
+Split each coin's legs into WINNERS / TYPICAL-lose (net<0 above the 10th pct) / WORST-lose (bottom-10% net) and
+compare (script inline in the S74 chat; `{coin}_whole.npz`). What actually holds:
 
-**Net:** the two S74 leads map straight onto the two bleeds — the ENERGY gate kills the weak-onset losers
-(SOL/ETH/XRP), the BTC BOOK tell is the candidate for the strong-onset BTC fakeouts. Long-duration is the
-amplifier on both. Confirm these on the per-leg arcs (PNGs) next session before acting.
+1. **⭐ DURATION is the ONE clean, consistent pattern — the worst losers are LONG.** long% WINNERS→WORST:
+   SOL 47→**73%**, BTC 46→**80%**, ETH 49→59%, XRP 52→57%; dur SOL 47→61s, BTC 40→56s, ETH 53→59s, XRP 55→61s.
+   **The bleed is TIME** — a long leg that goes wrong runs long enough to pile up the big loss (strongest SOL/BTC).
+2. **Flow REVERSES hard at close, grading with severity — but it's the LOSS, not a pre-fire tell.** exh
+   WINNERS≈0 → TYPICAL≈−0.15 → WORST −0.3..−0.6; revExh% (exh<−0.5) 37→~45→~55–62%. Descriptive/co-incident
+   (flow follows price down), NOT observable before firing.
+3. **⛔ ONSET ENERGY does NOT separate the worst losers (corrects the top-10 eyeball).** Over the decile the
+   WALL(peak<−0.3)/MUSHY/STRONG(peak>+0.5) buckets OVERLAP heavily between winners and worst-losers — ~a THIRD of
+   WINNERS also fire "into the wall," ~half of both fire STRONG; peak barely differs (win +0.20..+0.35 vs worst
+   −0.10..+0.28). The earlier "BTC strong-onset fakeouts / ETH weak-onset" split was a top-10 TAIL artifact, not
+   the decile pattern. **The entry wall holds — you cannot pick the worst losers apart at entry by their shape.**
+
+**Net (honest):** the bleed lever is **MANAGING LONG LEGS** (a price-based max-adverse / time cap, or tighter
+deep-bail on long legs), NOT entry selection — entry can't separate them. ⚠ SOL runs NO deep-bail and its worst
+legs reach −21 bps → a concrete candidate (Greg's call, exit/risk). The S74 energy-gate + BTC-book leads still
+stand as ENTRY $/hr improvers, but they are NOT the worst-loser bleed fix — long-duration risk control is.
