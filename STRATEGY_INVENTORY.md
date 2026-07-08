@@ -146,7 +146,12 @@ with wiggle room** — fire on a winner-shape match, skip on a loser-shape match
   `short-win y=−0.875+2.117x (x≤0.32, blade +0.963) — −0.903 → +0.123`, the CURVE is `y=−0.875+2.117x` **+ its
   domain `x≤0.32`** (the kink; for the cubic long-win `y=−0.834+2.197x−2.292x²+1.543x³` there is no kink). The
   `blade +0.963` and the `−0.903 → +0.123` (start → peak) are **DERIVED SCALARS — NOT the curve** (the peak is the
-  "energy" scalar). Write the equations as `y=f(x)` + domain ONLY; drop blade and start→peak.
+  "energy" scalar). Write the equations as `y=f(x)` + domain ONLY; drop blade and start→peak. **Clean SOL ENTER
+  shapes (Greg, S75):** short-win `y=−0.875+2.117x, x≤0.32 (then flat)` · short-lose `y=−0.883+2.372x, x≤0.15` ·
+  long-win `y=−0.834+2.197x−2.292x²+1.543x³` (cubic) · long-lose `y=−0.883+2.203x, x≤0.15`.
+- **⛔ IT DOESN'T MATTER IF THE EQUATION "REACHES" A VALUE — THE SHAPE IS WHAT MATTERS (Greg, S75).** A hockey that
+  plateaus below the observed peak still describes the correct SHAPE (steep rise → kink → flat). We match SHAPE;
+  the absolute level/endpoint the curve arrives at is NOT the object and is never checked.
 - **⭐ TWO WAYS TO MATCH — TEST BOTH (Greg, S75; whole-curve "probably cleaner"):** (1) WHOLE-CURVE = match each
   forming trade's full leg curve (valley→onset→close) to the 4 archetype WHOLE-curves; (2) SPLIT = match the 8
   pre-fire/tail pieces separately. **The cleanest reference is NOT the hand-written equation** (lossy — the pasted

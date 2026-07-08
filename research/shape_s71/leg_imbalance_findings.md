@@ -165,6 +165,19 @@ MATCH a forming trade's whole curve to these SHAPES (enter = pre-fire limb, exit
 we never add/collapse them into a number. (Greg, S75; #0f. The "mean fit-R²" line below is only a fit-quality
 note on how well each SHAPE is captured — not a metric we gate on.)
 
+**⭐ CANONICAL CLEAN SOL ENTER (pre-fire) CURVE SHAPES (Greg, S75 — repasted clean; ONLY `y=f(x)` + domain, no
+derived scalars):**
+- short-win:  `y = −0.875 + 2.117x`, x≤0.32 (then flat)
+- short-lose: `y = −0.883 + 2.372x`, x≤0.15 (then flat)
+- long-win:   `y = −0.834 + 2.197x − 2.292x² + 1.543x³`  (whole range, cubic)
+- long-lose:  `y = −0.883 + 2.203x`, x≤0.15 (then flat)
+
+⛔ **IT DOESN'T MATTER IF THE EQUATION "REACHES" A VALUE — THE SHAPE IS WHAT MATTERS (Greg, S75).** A hockey that
+plateaus below the observed peak still describes the right SHAPE (steep rise to a kink, then flat). We match the
+SHAPE; the absolute level/endpoint the curve arrives at is NOT the object and is not checked. (The `blade` and
+`start → peak` annotations in the detailed §4 tables below are DERIVED SCALARS, not the curve — ignore them; the
+clean forms above are the SOL enter reference. The whole-curve match uses the sampled arcs, `leg_imbalance_arcs_sol.npz`.)
+
 Pre-fire x∈[0,1]: 0=birth/valley → 1=fire/onset. Tail x∈[0,1]: 0=fire → 1=close. Best functional form is
 chosen PER cell/limb by adjusted-R² among {linear, quadratic, cubic, hockey(2-seg kink), exp}; forms differ
 per cell as Greg allowed (each SHAPE gets whatever form describes it best). "cleaner representation" = mean
