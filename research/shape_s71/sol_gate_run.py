@@ -59,17 +59,10 @@ WIGGLE = 0.15                        # a little wiggle room: a winner up to 15% 
                                      # loser still counts (the archetype is an average; live legs won't match exactly)
 
 
-def znorm(y):
-    """Shape-only: map a curve to its own [0,1] range so we compare FORM (rise -> kink -> flatten), not level.
-    'It doesn't matter if it reaches a value — the shape is what matters' (Greg)."""
-    lo, hi = float(y.min()), float(y.max())
-    return (y - lo) / (hi - lo + 1e-9)
-
-
-def winner_match(qz, refz):
-    """Match the live SHAPE qz to the 4 archetype SHAPES; fire if a WINNER shape is within wiggle of the
-    nearest loser shape. Returns (fire, tag)."""
-    d = {c: float(np.sum((qz - refz[c]) ** 2)) for c in CELLS}
+def winner_match(q, ref):
+    """Match the live RAW curve q (native amplitude — NO normalize/average/smooth; the raw curve IS the edge)
+    to the 4 archetype curves; fire if a WINNER curve is within wiggle of the nearest loser. Returns (fire, tag)."""
+    d = {c: float(np.sum((q - ref[c]) ** 2)) for c in CELLS}
     win_d = min(d["short-win"], d["long-win"])
     lose_d = min(d["short-lose"], d["long-lose"])
     fire = win_d <= lose_d * (1.0 + WIGGLE)                    # winner gets a little wiggle benefit
@@ -77,11 +70,11 @@ def winner_match(qz, refz):
     return fire, tag
 
 
-def build_gates(buy, sell, flips, arcs_z, eqs_z, n):
+def build_gates(buy, sell, flips, arcs, eqs, n):
     """Per-flip LIVE entry gates, built SEPARATELY for each signifier (arc-shape ALONE, equation ALONE).
-    At each flip build the strictly-causal pre-fire curve (birth->pivot), normalize to SHAPE, match to the 4
-    archetype shapes with wiggle; fire if a winner shape wins. egate keyed at the flip's confirm cell.
-    Returns (arc_gate, eq_gate, arc_tags, eq_tags)."""
+    At each flip build the strictly-causal RAW pre-fire curve (birth->pivot; native amplitude, no normalize/
+    average/smooth), match to the 4 archetype curves with wiggle; fire if a winner curve wins. egate keyed at
+    the flip's confirm cell. Returns (arc_gate, eq_gate, arc_tags, eq_tags)."""
     timb = rolling_imb(buy, sell, SMOOTH_SEC)
     a_g = np.zeros(n, bool); e_g = np.zeros(n, bool); a_t = {}; e_t = {}
     prev_p = -1
@@ -96,9 +89,9 @@ def build_gates(buy, sell, flips, arcs_z, eqs_z, n):
         pre = timb[birth:p + 1] * s
         if len(pre) < 12:
             continue
-        qz = znorm(resample(pre, NRS))                        # the live leg's pre-fire SHAPE
-        fa, ta = winner_match(qz, arcs_z)                     # ARC signifier alone
-        fe, te = winner_match(qz, eqs_z)                      # EQUATION signifier alone
+        q = resample(pre, NRS)                                # the live leg's RAW pre-fire curve (native amplitude)
+        fa, ta = winner_match(q, arcs)                        # ARC signifier alone
+        fe, te = winner_match(q, eqs)                         # EQUATION signifier alone
         if fa:
             a_g[c] = True; a_t[c] = ta
         if fe:
@@ -138,7 +131,6 @@ def walk():
     res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)                  # ungated LIVE legs
     timb = rolling_imb(buy, sell, SMOOTH_SEC)
     arcs, eqs = load_signifiers()
-    arcs_z = {c: znorm(arcs[c]) for c in CELLS}; eqs_z = {c: znorm(eqs[c]) for c in CELLS}
 
     # archetype reference descriptors (native amplitude)
     print("=== SOL archetype pre-fire descriptors (native amplitude — what winners/losers actually look like) ===", flush=True)
@@ -161,10 +153,10 @@ def walk():
         birth = lo + ignition_idx(seg); pre = timb[birth:o + 1] * s
         if len(pre) < 12:
             continue
-        q = resample(pre, NRS); qz = znorm(q)
+        q = resample(pre, NRS)
         pk, sl, r2 = ramp(q)
-        fe, te = winner_match(qz, eqs_z)                                       # what the gate did (normalized eq)
-        near_raw = min(CELLS, key=lambda cc: float(np.sum((q - arcs[cc]) ** 2)))   # raw-amplitude nearest
+        fe, te = winner_match(q, eqs)                                          # the gate (raw equation)
+        near_raw = min(CELLS, key=lambda cc: float(np.sum((q - arcs[cc]) ** 2)))   # raw arc nearest
         recs.append(dict(net=float(l.net_bps), dur=(c - o) * 0.1, peak=pk, slope=sl, r2=r2,
                          fire=fe, tag=te, near_raw=near_raw))
 
@@ -174,15 +166,11 @@ def walk():
     print(f"\n=== q0 WORST LOSERS the EQUATION gate FIRED on ({k} of {len(fired_losers)} fired-losers; "
           f"{sum(r['fire'] for r in recs)} fires / {len(recs)} legs) ===", flush=True)
     print(f"  {'net_bps':>8}{'dur/s':>7}{'cls':>7} | {'peak':>7}{'slope':>7}{'linR²':>7} | "
-          f"{'gate(norm-eq)':>14}{'raw-nearest':>14}", flush=True)
+          f"{'gate(eq)':>12}{'raw-arc-near':>14}", flush=True)
     for r in fired_losers[:k]:
         cls = "short" if r["dur"] < med else "long"
         print(f"  {r['net']:8.1f}{r['dur']:7.1f}{cls:>7} | {r['peak']:+7.3f}{r['slope']:+7.3f}{r['r2']:7.3f} | "
-              f"{'FIRE '+r['tag']:>14}{r['near_raw']:>14}", flush=True)
-    # how many of the fired-losers would raw-amplitude matching have caught (nearest = a loser cell)?
-    caught = sum(1 for r in fired_losers if r["near_raw"] not in WIN)
-    print(f"\n  raw-amplitude nearest would tag {caught}/{len(fired_losers)} of these fired-losers as a LOSER cell "
-          f"(normalization erased peak+slope -> they matched a winner).", flush=True)
+              f"{'FIRE '+r['tag']:>12}{r['near_raw']:>14}", flush=True)
     print("DONE", flush=True)
 
 
@@ -207,13 +195,11 @@ def main():
 
     flips = kraken_flips(cfg, mid, buy, sell)
     arcs, eqs = load_signifiers()
-    arcs_z = {c: znorm(arcs[c]) for c in CELLS}
-    eqs_z = {c: znorm(eqs[c]) for c in CELLS}
-    a_g, e_g, a_t, e_t = build_gates(buy, sell, flips, arcs_z, eqs_z, n)
+    a_g, e_g, a_t, e_t = build_gates(buy, sell, flips, arcs, eqs, n)
     egate, tags = (a_g, a_t) if mode == "arc" else (e_g, e_t)
     nsw = sum(v == "short" for v in tags.values()); nlw = sum(v == "long" for v in tags.values())
 
-    print(f"=== S75 SHAPE GATE — SOL, LIVE — SIGNIFIER: {SIG} ALONE (shape-normalized, wiggle={WIGGLE}) ===", flush=True)
+    print(f"=== S75 SHAPE GATE — SOL, LIVE — SIGNIFIER: {SIG} ALONE (raw curve, wiggle={WIGGLE}) ===", flush=True)
     print(f"  book cells={n} (~{hours:.1f}h)  flips={len(flips)}  gate-fires={int(egate.sum())} "
           f"(short-winner {nsw} / long-winner {nlw})  $5k flat/signal", flush=True)
     print("  (archetypes = SOL leg_imbalance pre-fire arcs / their best-form equations; in-sample this window)\n", flush=True)
