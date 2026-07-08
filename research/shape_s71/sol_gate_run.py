@@ -182,6 +182,44 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def flipdist():
+    """Greg: flip the trade when price has moved X bps AGAINST us — is 15 too soon? For each leg, first time
+    the adverse mid excursion hits X bps, FLIP to the other side (ride the rest reversed). Sweep X incl. 15;
+    report rescued vs broke + $/hr. Mid-price frame (directional recovery); relative-depth comparison."""
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0; hours = len(mid) * 0.1 / 3600.0
+    res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+    legs = [l for l in res.legs if int(l.close_idx) > int(l.open_idx)]
+    ride = lambda o, c, s: s * (mid[c] - mid[o]) / mid[o] * 1e4
+    orig = np.array([ride(int(l.open_idx), int(l.close_idx), int(l.side)) for l in legs])
+    print(f"=== SOL FLIP-AT-DISTANCE — {len(legs)} legs, {hours:.1f}h (mid-price frame) ===", flush=True)
+    print(f"  NO-FLIP: win%={ (orig>0).mean()*100:.1f}  $/hr={orig.sum()/1e4*CAP/hours:.3f}\n", flush=True)
+    print(f"  {'adverse X':>9}{'fee':>5}{'flips':>7}{'rescued':>9}{'broke':>7}{'win%':>7}{'$/hr':>9}", flush=True)
+    for X in (10, 15, 20, 30, 50, 80):
+        for fee in (0.0, 5.0):
+            flipped = orig.copy(); nflip = resc = broke = 0
+            for i, l in enumerate(legs):
+                o, c, s = int(l.open_idx), int(l.close_idx), int(l.side)
+                adv = -s * (mid[o + 1:c + 1] - mid[o]) / mid[o] * 1e4      # bps AGAINST us over the ride
+                hit = np.where(adv >= X)[0]
+                if not len(hit):
+                    continue
+                tf = o + 1 + int(hit[0])
+                fg = ride(o, tf, s) + ride(tf, c, -s) - fee
+                flipped[i] = fg; nflip += 1
+                if orig[i] < 0 <= fg:
+                    resc += 1
+                elif orig[i] > 0 >= fg:
+                    broke += 1
+            print(f"  {X:>9}{fee:>5.0f}{nflip:>7}{resc:>9}{broke:>7}"
+                  f"{(flipped>0).mean()*100:>7.1f}{flipped.sum()/1e4*CAP/hours:>9.3f}", flush=True)
+    print("DONE", flush=True)
+
+
 def losscap():
     """Greg: cap losses ASAP, eat the small ones. SOL has NO deep-bail today (BTC -80 / ETH -100 do). Sweep a
     price-stop loss cap through the LIVE run_kraken_cell and report $/hr, win%, mean loser, worst loss. Deep
@@ -584,6 +622,8 @@ def main():
         buckets(); return
     if mode == "flip":
         flip(); return
+    if mode == 'flipdist':
+        flipdist(); return
     if mode == 'losscap':
         losscap(); return
     if mode == 'smallloser':
