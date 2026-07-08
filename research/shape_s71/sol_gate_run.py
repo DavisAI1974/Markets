@@ -116,11 +116,83 @@ def summarize(res, hours, label):
     return dph
 
 
+def ramp(y):
+    """Descriptors Greg reads by eye: peak (energy at onset), ascent SLOPE (steepness), and LINEARITY R²
+    (loser = flatter + more linear/straight; winner = steeper + curved hockey). Native amplitude."""
+    x = np.linspace(0, 1, len(y))
+    b = np.polyfit(x, y, 1); yh = np.polyval(b, x)
+    ss = ((y - y.mean()) ** 2).sum()
+    r2 = 1.0 - ((y - yh) ** 2).sum() / (ss + 1e-12)
+    return float(y[-1]), float(b[0]), float(r2)          # peak, slope, linear-R²
+
+
+def walk():
+    """Worst-loser walkthrough (Greg): the q0 (worst-decile) LOSING legs the EQUATION gate FIRED on — how
+    each slipped through. Shows raw peak/slope/linearity vs the archetypes, and normalized-vs-raw verdicts."""
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0
+    res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)                  # ungated LIVE legs
+    timb = rolling_imb(buy, sell, SMOOTH_SEC)
+    arcs, eqs = load_signifiers()
+    arcs_z = {c: znorm(arcs[c]) for c in CELLS}; eqs_z = {c: znorm(eqs[c]) for c in CELLS}
+
+    # archetype reference descriptors (native amplitude)
+    print("=== SOL archetype pre-fire descriptors (native amplitude — what winners/losers actually look like) ===", flush=True)
+    for c in CELLS:
+        pk, sl, r2 = ramp(arcs[c])
+        print(f"  {c:11}  peak={pk:+.3f}  slope={sl:+.3f}  linear-R²={r2:.3f}", flush=True)
+
+    legs = sorted(res.legs, key=lambda z: int(z.open_idx)); prev_close = -1
+    durs = np.array([(int(l.close_idx) - int(l.open_idx)) * 0.1 for l in legs if int(l.close_idx) > int(l.open_idx)])
+    med = float(np.median(durs))
+    recs = []
+    for l in legs:
+        o = int(l.open_idx); c = int(l.close_idx); s = int(l.side)
+        lo = max(0, o - LOOKBACK, prev_close + 1); prev_close = c
+        if c <= o:
+            continue
+        seg = timb[lo:o + 1] * s
+        if len(seg) < 30:
+            continue
+        birth = lo + ignition_idx(seg); pre = timb[birth:o + 1] * s
+        if len(pre) < 12:
+            continue
+        q = resample(pre, NRS); qz = znorm(q)
+        pk, sl, r2 = ramp(q)
+        fe, te = winner_match(qz, eqs_z)                                       # what the gate did (normalized eq)
+        near_raw = min(CELLS, key=lambda cc: float(np.sum((q - arcs[cc]) ** 2)))   # raw-amplitude nearest
+        recs.append(dict(net=float(l.net_bps), dur=(c - o) * 0.1, peak=pk, slope=sl, r2=r2,
+                         fire=fe, tag=te, near_raw=near_raw))
+
+    fired_losers = [r for r in recs if r["net"] < 0 and r["fire"]]
+    fired_losers.sort(key=lambda r: r["net"])                                  # worst first
+    k = max(10, len(fired_losers) // 10)                                       # q0 = worst decile (>= 10)
+    print(f"\n=== q0 WORST LOSERS the EQUATION gate FIRED on ({k} of {len(fired_losers)} fired-losers; "
+          f"{sum(r['fire'] for r in recs)} fires / {len(recs)} legs) ===", flush=True)
+    print(f"  {'net_bps':>8}{'dur/s':>7}{'cls':>7} | {'peak':>7}{'slope':>7}{'linR²':>7} | "
+          f"{'gate(norm-eq)':>14}{'raw-nearest':>14}", flush=True)
+    for r in fired_losers[:k]:
+        cls = "short" if r["dur"] < med else "long"
+        print(f"  {r['net']:8.1f}{r['dur']:7.1f}{cls:>7} | {r['peak']:+7.3f}{r['slope']:+7.3f}{r['r2']:7.3f} | "
+              f"{'FIRE '+r['tag']:>14}{r['near_raw']:>14}", flush=True)
+    # how many of the fired-losers would raw-amplitude matching have caught (nearest = a loser cell)?
+    caught = sum(1 for r in fired_losers if r["near_raw"] not in WIN)
+    print(f"\n  raw-amplitude nearest would tag {caught}/{len(fired_losers)} of these fired-losers as a LOSER cell "
+          f"(normalization erased peak+slope -> they matched a winner).", flush=True)
+    print("DONE", flush=True)
+
+
 def main():
     # mode selects the ONE signifier this test uses: "arc" = sampled-arc shape alone, "eq" = equation alone.
-    # The two are run as SEPARATE tests, in parallel (Greg, S75).
+    # The two are run as SEPARATE tests, in parallel (Greg, S75). "walk" = worst-loser walkthrough.
     mode = sys.argv[1] if len(sys.argv) > 1 else "arc"
-    assert mode in ("arc", "eq"), "mode must be 'arc' or 'eq'"
+    if mode == "walk":
+        walk(); return
+    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq' or 'walk'"
     SIG = "ARC-shape" if mode == "arc" else "EQUATION"
 
     path = "/tmp/kbook/sol_book.jsonl"
