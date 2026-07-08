@@ -182,6 +182,58 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def dipole():
+    """Causal dipole DIRECTION test (Greg): does divergence() call the SOL side at entry? For each live leg
+    read the dipole at its pivot (pre-pivot window, leakage-free); group win%/net by expect class; then FLIP
+    the side on the 'reversal' calls (opposite trade ~= -gross) and measure $/hr. Tests whether the dipole
+    converts the 82%-flippable losers WITHOUT peeking."""
+    from odcore.info_dipole import divergence
+    from odcore.platform import kraken_flips
+    DIVW = 600
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0; hours = len(mid) * 0.1 / 3600.0
+    res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+    flips = kraken_flips(cfg, mid, buy, sell); piv = {int(c): int(p) for (c, p, s) in flips}
+    legs = res.legs
+    net = np.array([float(l.net_bps) for l in legs]); gross = np.array([float(l.gross_bps) for l in legs])
+    expect = []
+    for l in legs:
+        ci = int(l.flip_idx); p = piv.get(ci, ci); plo = max(0, p - DIVW)
+        dv = divergence(buy[plo:p + 1], sell[plo:p + 1], float(mid[p] - mid[plo])) if p - plo >= 12 else None
+        expect.append(dv["expect"] if dv else "n/a")
+    expect = np.array(expect); n = len(net); win = net > 0
+    dph = lambda v: v.sum() / 1e4 * CAP / hours
+
+    print(f"=== SOL DIPOLE DIRECTION TEST — {n} live legs, {hours:.1f}h (causal, leakage-free) ===", flush=True)
+    print(f"  UNGATED win%={win.mean()*100:.1f}  $/hr={dph(net):.3f}\n", flush=True)
+    print(f"  {'dipole expect':14}{'n':>6}{'win%':>7}{'mean_net':>10}", flush=True)
+    for cls in ("reversal", "flip_risk", "weakening", "continue", "n/a"):
+        m = expect == cls
+        if not m.sum():
+            continue
+        print(f"  {cls:14}{int(m.sum()):>6}{win[m].mean()*100:>7.1f}{net[m].mean():>10.2f}", flush=True)
+
+    print("\n  --- FLIP the side on dipole calls (opposite trade ~= -gross) ---", flush=True)
+    for label, classes in (("reversal only", {"reversal"}),
+                           ("reversal+flip_risk", {"reversal", "flip_risk"})):
+        fm = np.isin(expect, list(classes))
+        v = net.copy(); v[fm] = -gross[fm]
+        conv = (net[fm] < 0) & (-gross[fm] > 0)                 # losers this flip converted to winners
+        print(f"  flip {label:20}: flipped {int(fm.sum())} legs  win%={ (v>0).mean()*100:.1f}  "
+              f"$/hr={dph(v):.3f}  (of flipped, {int(conv.sum())} losers->winners)", flush=True)
+    # precision/recall of 'reversal' as a wrong-direction detector
+    rev = expect == "reversal"; lose = ~win
+    if rev.sum():
+        prec = (rev & lose).sum() / rev.sum(); rec = (rev & lose).sum() / lose.sum()
+        print(f"\n  'reversal' as a loser-detector: precision={prec*100:.0f}% (of flagged are losers)  "
+              f"recall={rec*100:.0f}% (of losers flagged)", flush=True)
+    print("DONE", flush=True)
+
+
 def flip():
     """Greg's mirror test: are SOL's LONG-LOSERS just winners entered BACKWARDS? For each leg the opposite-side
     trade over the SAME [open,close] window nets ~= -gross_bps (mid-symmetric; off by ~2x half-spread). Measure
@@ -380,7 +432,9 @@ def main():
         buckets(); return
     if mode == "flip":
         flip(); return
-    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk', 'peak', 'eqpeak', 'buckets' or 'flip'"
+    if mode == 'dipole':
+        dipole(); return
+    assert mode in ('arc', 'eq'), 'unknown mode'
     SIG = "ARC-shape" if mode == "arc" else "EQUATION"
 
     path = "/tmp/kbook/sol_book.jsonl"
