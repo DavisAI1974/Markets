@@ -1,5 +1,15 @@
 # S74 WHOLE-LEG IMBALANCE SHAPES — findings (SOL / BTC / ETH / XRP)
 
+> ⛔⛔ S75 READING RULE (Greg, EMPHATIC) — THE §4 EQUATIONS DESCRIBE CURVE SHAPES; DO NOT SOLVE THEM FOR NUMBERS.
+> Each equation below is just how a CURVE is written down. The gate MATCHES a forming trade's WHOLE curve to the
+> archetype curve-SHAPES (with wiggle room), on ENTER (pre-fire limb) and EXIT (tail limb) — fire on winner-shape,
+> skip on loser-shape. NEVER solve an equation for a scalar, NEVER collapse a curve to a peak/blade/energy value,
+> NEVER sum. The book's two pieces are a joint SHAPE read, never a net-ratio sum ("even if the sums are close, the
+> 2 pieces aren't"). ⛔ S75 NEGATIVE (do not repeat): the scalar-feature gates (peak/blade15/kink/convexity and the
+> book-piece nearest-template, `sol_blade_gate.py`) are the WRONG FRAME — on SOL they lift win% ~2pts but over-skip
+> winners and DROP $/hr (5.88→~4.0), because a scalar/anchor is a snapshot, not a shape. The object is the CURVE.
+> See STRATEGY_INVENTORY #0f / CLAUDE.md S75 STANDING. NEXT = the whole-curve SHAPE-match gate, enter+exit.
+
 CHARACTERIZATION only (arcs + turn signals + endpoint tables + per-cell equations). No gate, no AUC.
 All legs come from the LIVE executor (`run_kraken_cell`), 4 majors, DOGE excluded. Shape/RATIO only —
 no volume, no price. 4 cells kept DISTINCT (short/long by median leg DURATION, win/lose by net_bps>0);

@@ -133,6 +133,25 @@ battle is CLOSED — the object is the CURVE.
 > outputs trade / don't-trade. NO averaging ANYWHERE in the gate — not of the input arc, not of the archetype
 > references. "Pick the exact curve shapes and use those as trade-or-not" (Greg verbatim, S73).
 
+## ⛔⛔ STANDING PRINCIPLE #0f (Greg, S75 — EMPHATIC) — WE MATCH CURVE SHAPES; WE DO NOT SOLVE EQUATIONS FOR NUMBERS
+The per-cell equations (`leg_imbalance_findings.md` §4) are **ALGEBRAIC DESCRIPTIONS OF A CURVE'S SHAPE** — that is
+simply how a curve is written down. **We do NOT solve them for a scalar. We do NOT collapse a curve to a peak /
+blade-number / energy / any single value. We do NOT sum anything.** "That's not how you show the shape of a curve"
+(Greg, S75). The gate = **match each forming trade's WHOLE curve to the archetype curve-shapes, with wiggle room** —
+fire on a winner-shape match, skip on a loser-shape match.
+- **The 4 archetype curve-shapes to test against** (SOL example numbers; universal shapes, per-cell numbers #0d):
+  short-win `x≤0.32, blade +0.963` · short-lose `x≤0.15, blade +1.208` · long-win `−2.292x²+1.543x³` (cubic) ·
+  long-lose `x≤0.15, blade +1.268`. Test the forming curve against THESE SHAPES — not a value derived from them.
+- **ENTER and EXIT are BOTH shape reads.** Pre-fire (ascension) curve shape = the entry read; post-fire (tail)
+  curve shape = the exit read. Both are matched as SHAPES.
+- **⛔ WHAT IS FORBIDDEN (the S75 wrong-frame, do not repeat):** extracting scalar features (peak, blade15, kink,
+  convexity, energy) and gating by nearest-anchor / thresholds / z-distance / any "sum" of numbers. That is a
+  SNAPSHOT, not a shape (proven wrong on SOL S75: scalar/book-piece nearest-template gates all over-skip winners
+  and lose $/hr; the object was never a scalar). Also FORBIDDEN: the two book numbers must be judged as a joint
+  SHAPE-of-the-book read, not summed to a net ratio — "even if the sums are close, the 2 pieces aren't" (Greg).
+- Generalizes #0e/#0e-GATE to the mechanism: the signal object is the CURVE, on enter and on exit, matched
+  shape-to-shape. CLOSED — do not re-frame the edge as a scalar/AUC/sum again.
+
 ## ⭐ EVOLUTION (Greg, S70) — REVIVE `research/strategy_evolution/` (structure good, needs updating)
 The hindsight missed-winner audit loop = the "evolution that suggests updates." Structure: replay what the
 live system DID (opened/skipped + actual PnL) → oracle = best favorable exit WITHIN each trade's real horizon
