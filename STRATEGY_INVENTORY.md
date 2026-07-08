@@ -385,11 +385,22 @@ directional hit at 60s on strong leans (n=83k) = HIGH ⭐; ETH +1 ~55% HIGH-ish;
 DOGE −1 flat.** Confirms Greg's ranking (BTC/ETH biggest, SOL smallest). **The book gives DIRECTION on BTC/ETH that
 SOL never had — the piece that breaks the 62% wall on those coins.** Re-fit `direction_sign` per venue×cell.
 
-**⭐ S76 NEXT — BTC + ETH TOGETHER (Greg): shape gate WITH FALLBACKS + the book direction stack + ride-to-reversal
-exit, ~60s horizon.** REBUILD the per-cell archetypes on BTC/ETH (SOL's were the wrong coin). Stack the book
-`direction_sign` (HIGH on BTC/ETH). Exit = wide (~30 bps) trailing ride-to-reversal (the paper's first net-positive
-config). Validate multi-window (0% maker floor — Kraken $10M tier / Coinbase Liquidity Program). Full plan:
-`BTC_SIGNAL_SESSION_2026-07-08.md` (Greg's paper) + `SESSION_HANDOFF_2026-07-09_S75.md`.
+**⭐⭐ S76 RESULT — THE BOOK RIDE-TO-REVERSAL SWING IS THE BTC/ETH EDGE; ETH WALK-FORWARD VALIDATES (KRAKEN ONLY).**
+(Full: `SESSION_HANDOFF_2026-07-09_S76.md`; code `research/shape_s71/book_swing_kraken.py` + `book_direction_kraken.py`.)
+The book is NOT a filter on the maker zigzag (coin-flip on the legs' spread-driven win/lose — BTC 50.1% / ETH 49.3%);
+it is its OWN directional strategy (predicts the 60s mid move the zigzag doesn't trade). Monetized the paper's way:
+enter on a strong book lean (`early_signal.EarlySignalTracker`, |z|≥enter_z ∧ |imb|≥0.5), RIDE ~60s, exit on a wide
+trailing stop (30 bps) or max hold (600s). **60/40 WALK-FORWARD (Greg's "tune on 60%", fit sign + enter_z on train,
+validate OOS on the 40%):** **ETH ⭐ OOS +7.23 bps/trade @0% maker, +2.23 @taker (SURVIVES), 59.5% win** (train-picked
+enter_z 1.5) — reproduces the paper OOS on Kraken; **BTC OOS +2.09 @0% maker (dead at taker)** — moves too small, needs
+the 0% maker floor. **⚠ TUNING TRAP: optimizing train $/hr@0 overfits to CHURN (740 trades/45hr, +0.7 bps/trade, −90/hr
+at taker). Tune by per-trade QUALITY (bps/trade), keep the low-frequency ride (trail 30 / hold 600).** KRAKEN ONLY
+(Greg, S76) — 0% maker = the $10M tier; no other venues.
+
+**⭐ S77 NEXT (KRAKEN ONLY): MULTI-WINDOW CONFIRM (the decisive test) — S76 OOS is ONE ~35–40h window (ETH OOS n=84);**
+re-run the walk-forward as the Kraken books accrue / across regimes. If ETH's +7.23 holds, wire the ETH book-swing as
+its own SANDBOX directional cell (separate from the maker zigzag), BTC as a 0%-maker cell. Tune by QUALITY not churn.
+Firing LOCKED (Greg-only). Plan: `DROPIN_2026-07-09_S77.md` + `SESSION_HANDOFF_2026-07-09_S76.md`.
 
 **⭐ THE LEVER STACK (Greg, S74 — LARGELY INDEPENDENT levers → they COMPOUND; validate each, then STACK; S64
 "tools are complementary, not competing").** ENTRY selection: whole-curve equation gate + ENERGY gate (doubles $/hr
