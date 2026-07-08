@@ -167,34 +167,38 @@ def zdist(F, keys, mask_ref, mask_other):
     return dref, doth
 
 
+CACHE = "/tmp/kbook/sol_blade_feats.npz"
+
+
 def main():
-    rows, net, dur, hours = extract()
+    if os.path.exists(CACHE) and "--fresh" not in sys.argv:
+        d = np.load(CACHE, allow_pickle=True)
+        rows = list(d["rows"]); net = d["net"]; dur = d["dur"]; hours = float(d["hours"])
+        print(f"(loaded cached feats: {len(rows)} legs)", flush=True)
+    else:
+        rows, net, dur, hours = extract()
+        np.savez(CACHE, rows=np.array(rows, dtype=object), net=net, dur=dur, hours=hours)
     F, win, short = sep_report(rows, net, dur)
+    lose = ~win
     print(f"\n  ---- GATES (through the live legs; CAP=${CAP:.0f}/trade, {hours:.1f}h) ----", flush=True)
     report("UNGATED", np.ones(len(net), bool), net, win, short, hours)
 
-    # ENERGY-only (4-anchor nearest peak) — the baseline to beat
-    peak = F["peak"]; med = np.median(dur)
+    # ENERGY-only (4-anchor nearest peak) — the reference
+    peak = F["peak"]
     a = {c: float(peak[m].mean()) for c, m in
          (("sl", short & ~win), ("sw", short & win), ("ll", ~short & ~win), ("lw", ~short & win))}
     dlose = np.minimum(np.abs(peak - a["sl"]), np.abs(peak - a["ll"]))
     dwin = np.minimum(np.abs(peak - a["sw"]), np.abs(peak - a["lw"]))
     report("ENERGY-only", ~(dlose < dwin), net, win, short, hours)
 
-    # LOSER-BLADE gate (duration-agnostic, both losers share it): nearest loser-template vs winner-template
-    lose = ~win
-    for keys in (["blade15", "kink"], ["blade15", "kink", "treach"], ["kink", "treach", "convex"]):
-        dref, doth = zdist(F, keys, lose, win)              # ref=loser template, other=winner template
-        report(f"BLADE {'+'.join(keys)}", ~(dref < doth), net, win, short, hours)
-
-    # BLADE + BOOK PIECES kept separate (Greg: keep both pieces) — second stage on the two book pieces
-    kb = ["blade15", "kink"]
-    dref, doth = zdist(F, kb, lose, win); skip_blade = dref < doth
-    dbref, dboth = zdist(F, ["bwith5", "bagn5"], lose, win); skip_book = dbref < dboth
-    report("BLADE (2f)", ~skip_blade, net, win, short, hours)
-    report("BOOK-pieces only", ~skip_book, net, win, short, hours)
-    report("BLADE OR BOOK skip", ~(skip_blade | skip_book), net, win, short, hours)
-    report("BLADE AND BOOK skip", ~(skip_blade & skip_book), net, win, short, hours)
+    # ⭐ THE 2-NUMBER BOOK GATE (Greg): the TWO book pieces judged TOGETHER — one pass/fail from BOTH
+    # numbers AT THE SAME TIME (joint 2-D nearest-template: loser region vs winner region in the
+    # (with-side depth, against-side depth) plane). NOT the net ratio, NOT one-then-the-other.
+    print(f"\n  ⭐ 2-NUMBER BOOK GATE — both pieces (with-side depth + against-side depth) judged jointly:", flush=True)
+    for K in LEVELS:
+        keys = [f"bwith{K}", f"bagn{K}"]
+        dref, doth = zdist(F, keys, lose, win)          # joint distance to loser vs winner template
+        report(f"BOOK-2 K={K} (with+agn)", ~(dref < doth), net, win, short, hours)
     print("\nDONE", flush=True)
 
 

@@ -46,6 +46,24 @@ arc gives a steeper blade (kink lands early ~0.15). But per trade the kink posit
   energy levels mostly overlap" (S74). Small.
 - The two long-only separators (`bwith1` with-side book depth + energy) are real but weak and long-only.
 
+## CORRECTION — the 2-NUMBER BOOK GATE, judged JOINTLY (Greg, S75)
+Greg: the two book pieces must decide pass/fail TOGETHER — one decision from BOTH numbers at the same time
+(joint (with-side depth, against-side depth) position → loser region vs winner region), NOT one-then-the-other
+and NOT the net ratio. Corrected in `sol_blade_gate.py::main` (joint 2-D nearest-template per level K).
+
+| gate | win% | $/hr | fired | winners skipped |
+|---|---|---|---|---|
+| UNGATED | 62.5 | **5.880** | 100% | 0 |
+| ENERGY (reference) | 63.4 | 6.170 | 96% | 13 |
+| BOOK-2 K=1 (with+agn jointly) | 63.9 | 4.100 | 40% | 258 |
+| BOOK-2 K=5 (with+agn jointly) | 64.9 | 4.021 | 51% | 208 |
+| BOOK-2 K=10 (with+agn jointly) | 61.7 | 3.794 | 48% | 229 |
+
+Result: the joint 2-number book gate lifts win% a hair (62.5→~65%) but over-skips winners (208–258/437) → $/hr
+5.88→~4.0. CONFIRMS the S74 finding "SOL book is FLAT (±0.03), no separation — trade imbalance is the whole
+story." The two-piece decomposition surfaced only ONE weak long-only gap (`bwith1`). SOL is the wrong coin for
+a book gate; BTC is where the book is the "gold" pre-fire tell (winners born book-+, losers book-−, all K).
+
 ## Next (open — Greg's call)
 1. Run this diagnostic on BTC/ETH/XRP — blade likely fails there too, but their peak (BTC short +0.257/+0.024)
    and book (BTC) separate better per the S74 tables.
