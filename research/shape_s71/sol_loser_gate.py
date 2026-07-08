@@ -50,10 +50,16 @@ def main():
               f"long-losers skipped {int((skip[ev]&ll_ev).sum())}/{int(ll_ev.sum())}  "
               f"winners wrongly skipped {int((skip[ev]&w_ev).sum())}/{int(w_ev.sum())}", flush=True)
 
-    print("  --- 4-anchor nearest-energy gate: fire winner energies, skip loser energies (WIGGLE sweep, all legs) ---", flush=True)
-    for wig in (0.0, 0.01, 0.02, 0.03, 0.05):
+    # wiggle scales with the NUMBER: margin = frac * (the loser anchor this trade is nearest to),
+    # so the bigger anchors (longs) get proportionally bigger wiggle room than the tiny short-lose one.
+    near_lose = np.where(np.abs(peak - a_sl) < np.abs(peak - a_ll), a_sl, a_ll)   # nearest loser anchor
+    print("  --- 4-anchor nearest-energy gate: fire winner energies, skip loser energies "
+          "(PROPORTIONAL wiggle = frac x loser-anchor, all legs) ---", flush=True)
+    for frac in (0.0, 0.10, 0.25, 0.50, 1.00):
+        wig = frac * np.abs(near_lose)                       # per-trade margin, scales with the number
         skip = (d_lose + wig) < d_win                        # skip only if nearer a LOSER energy by margin `wig`
-        report(skip, np.arange(n), hours, f"wiggle={wig:.2f}")
+        print(f"  wiggle={frac*100:.0f}%  (short-lose +-{frac*a_sl:.3f}, long-lose +-{frac*a_ll:.3f})", flush=True)
+        report(skip, np.arange(n), hours, f"frac={frac:.2f}")
     print("\nDONE", flush=True)
 
 if __name__ == "__main__":
