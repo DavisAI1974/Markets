@@ -22,8 +22,8 @@ STRIDE = 10
 FILL = 0.90   # ~90% front-of-line maker fill handicap (Greg S69/S77), applied flat on $/hr
 # Kraken $10M/30d tier. Majors: 0% maker / ~5bp taker. Small caps in Kraken's Spot Maker Rebate program:
 # maker -2bp (we get PAID) / taker +10bp. (⚠ confirm per-pair eligibility vs Kraken's rebate list before deploy.)
-MAJORS = {"btc", "eth", "sol"}   # non-rebate high-liquidity (0% maker). XRP/DOGE are alts -> rebate-eligible
-                                 # candidates (⚠ confirm vs Kraken's rebate list), so NOT here.
+MAJORS = {"btc", "eth", "sol", "xrp", "doge"}   # all 5 majors: 0% maker, NO rebate (Greg: XRP/DOGE don't
+                                                # get rebates — they're just untuned). Rebate = small caps only.
 LEG = {"major": {"maker": 0.0, "taker": 5.0}, "smallcap": {"maker": -2.0, "taker": 10.0}}
 DIR_SIGN0 = {"btc": +1, "eth": +1, "xrp": +1, "sol": +1, "doge": -1}
 TRAIL = es.TRAIL_BPS_DEFAULT          # 30
