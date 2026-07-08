@@ -147,7 +147,7 @@ def kraken_flips(cfg, mid, buy, sell):
 
 
 def run_kraken_cell(cfg, mid, buy, sell, best_bid_sz, best_ask_sz, half_spread_bps,
-                    balance_exit=None, bal_lean_w=None):
+                    balance_exit=None, bal_lean_w=None, entry_gate=None):
     """THE LIVE Kraken decision path (S65): compose the per-coin STACK (direction + early-arm + deep-bail
     + enticing + per-cell REV) and run it through run_stream FRONT-OF-LINE. The basket sim calls THIS —
     it does not reimplement the decision (the S65 sim=live-code rule). Book ARRAYS are passed in (Kraken
@@ -163,7 +163,7 @@ def run_kraken_cell(cfg, mid, buy, sell, best_bid_sz, best_ask_sz, half_spread_b
                       half_spread_bps=half_spread_bps, maker_fee=cfg.maker_fee, taker_fee=cfg.taker_fee,
                       grace=cfg.grace, exit_spec=exit_spec, fill_model="front",
                       close_improve_bps=cfg.improve,
-                      balance_exit=balance_exit, bal_lean_w=bal_lean_w)
+                      balance_exit=balance_exit, bal_lean_w=bal_lean_w, entry_gate=entry_gate)
 
 
 def _dipole_descriptors(legs, lean, piv, buy, sell, mid):
@@ -199,7 +199,7 @@ def _entry_gate(n, flips, buy, sell, mid):
 def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
                half_spread_bps=0.0, maker_fee=0.0, taker_fee=5.0, grace=0,
                dipole_entry=False, dipole_exit=None, exit_spec=None, lean_w=None,
-               balance_exit=None, bal_lean_w=None,
+               balance_exit=None, bal_lean_w=None, entry_gate=None,
                fill_mode="maker", fill_model="front", queue_frac=1.0,
                close_improve_bps=0.0, alpha=1.0, roll=200, quality=None, size_axis=None):
     """ANY flip stream through the platform's decision code — the single research entry point.
@@ -224,7 +224,12 @@ def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
     ba = z if best_ask_sz is None else np.asarray(best_ask_sz, float)
     lean = lean_series(buy, sell, WFLIP)
     piv = {int(c): int(p) for (c, p, s) in flips}
-    egate = _entry_gate(len(mid), flips, buy, sell, mid) if dipole_entry else None
+    # entry_gate (S75, opt-in): an external per-cell boolean array (e.g. the curve-shape gate) overrides
+    # the built-in dipole gate. True at a flip's confirm cell = ALLOW the open; default None = ungated.
+    if entry_gate is not None:
+        egate = np.asarray(entry_gate).astype(bool)
+    else:
+        egate = _entry_gate(len(mid), flips, buy, sell, mid) if dipole_entry else None
     wl = lean if lean_w is None else lean_series(buy, sell, int(lean_w))
     # the lean the executor's exit walkers see: balance_exit uses its own (opt-in) window (bal_lean_w
     # cells; default = the WFLIP flip-lean the executor already computes); price_stop ignores lean.
