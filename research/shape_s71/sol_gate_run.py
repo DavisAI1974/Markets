@@ -119,6 +119,58 @@ def ramp(y):
     return float(y[-1]), float(b[0]), float(r2)          # peak, slope, linear-R²
 
 
+def _legs_with_peak():
+    """Run SOL through the LIVE executor and lift each leg's (pre-fire onset PEAK, net_bps, dur, hours).
+    Peak = the with-side trade-imbalance at onset (native amplitude, raw). Leakage-free (birth->onset)."""
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0; hours = len(mid) * 0.1 / 3600.0
+    res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+    timb = rolling_imb(buy, sell, SMOOTH_SEC)
+    legs = sorted(res.legs, key=lambda z: int(z.open_idx)); prev_close = -1
+    peak, net, dur = [], [], []
+    for l in legs:
+        o = int(l.open_idx); c = int(l.close_idx); s = int(l.side)
+        lo = max(0, o - LOOKBACK, prev_close + 1); prev_close = c
+        if c <= o:
+            continue
+        seg = timb[lo:o + 1] * s
+        if len(seg) < 30:
+            continue
+        birth = lo + ignition_idx(seg); pre = timb[birth:o + 1] * s
+        if len(pre) < 12:
+            continue
+        peak.append(float(pre[-1])); net.append(float(l.net_bps)); dur.append((c - o) * 0.1)
+    return np.array(peak), np.array(net), np.array(dur), hours
+
+
+def peak():
+    """Greg's read: 'focus on the peak — watch it move up, the highest one is the biggest winner.'
+    Bin the live legs by their pre-fire onset PEAK and show net/win% climbing with it; then a fire-only-above
+    threshold sweep ($5k flat)."""
+    pk, net, dur, hours = _legs_with_peak()
+    n = len(pk); order = np.argsort(pk); win = net > 0
+    print(f"=== SOL PEAK vs OUTCOME — {n} live legs, {hours:.1f}h  (peak = with-side trade-imbalance at onset) ===", flush=True)
+    print(f"  UNGATED: win%={win.mean()*100:.1f}  net_bps={net.sum():.0f}  $/hr={net.sum()/1e4*CAP/hours:.3f}\n", flush=True)
+    print("  --- legs sorted into 10 equal PEAK deciles (low peak -> high peak) ---", flush=True)
+    print(f"  {'decile':>7}{'peak-range':>18}{'n':>5}{'mean_net':>10}{'win%':>7}{'mean_dur':>10}", flush=True)
+    for d in range(10):
+        idx = order[d * n // 10:(d + 1) * n // 10]
+        pr = pk[idx]
+        print(f"  {d+1:>7}{f'{pr.min():+.3f}..{pr.max():+.3f}':>18}{len(idx):>5}"
+              f"{net[idx].mean():>10.2f}{win[idx].mean()*100:>7.1f}{dur[idx].mean():>10.1f}", flush=True)
+    print("\n  --- FIRE ONLY legs with peak >= threshold ($5k flat) ---", flush=True)
+    print(f"  {'peak>=':>8}{'legs':>6}{'win%':>7}{'net_bps':>10}{'$/hr':>9}", flush=True)
+    for thr in (-0.1, 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35):
+        keep = pk >= thr; g = net[keep].sum()
+        wp = win[keep].mean() * 100 if keep.sum() else float("nan")
+        print(f"  {thr:>8.2f}{int(keep.sum()):>6}{wp:>7.1f}{g:>10.0f}{g/1e4*CAP/hours:>9.3f}", flush=True)
+    print("DONE", flush=True)
+
+
 def walk():
     """Worst-loser walkthrough (Greg): the q0 (worst-decile) LOSING legs the EQUATION gate FIRED on — how
     each slipped through. Shows raw peak/slope/linearity vs the archetypes, and normalized-vs-raw verdicts."""
@@ -180,7 +232,9 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "arc"
     if mode == "walk":
         walk(); return
-    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq' or 'walk'"
+    if mode == "peak":
+        peak(); return
+    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk' or 'peak'"
     SIG = "ARC-shape" if mode == "arc" else "EQUATION"
 
     path = "/tmp/kbook/sol_book.jsonl"
