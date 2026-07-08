@@ -182,6 +182,39 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def buckets():
+    """Split ALL live legs into the 4 buckets (short/long by median dur x win/lose by net>0) and show each
+    bucket's pre-fire onset PEAK distribution — do the categories live in distinct peak bands, or bleed over?"""
+    pk, net, dur, hours = _legs_with_peak()
+    n = len(pk); win = net > 0; med = np.median(dur); short = dur < med
+    masks = {"short-win": short & win, "short-lose": short & ~win,
+             "long-win": ~short & win, "long-lose": ~short & ~win}
+    print(f"=== SOL — {n} live legs split into 4 buckets; PRE-FIRE PEAK distribution per bucket ===", flush=True)
+    print(f"  (median dur = {med:.0f}s; peak = with-side trade-imbalance at onset, native amplitude)\n", flush=True)
+    print(f"  {'bucket':11}{'n':>5}{'mean':>8}{'min':>8}{'p10':>8}{'p25':>8}{'p50':>8}{'p75':>8}{'p90':>8}{'max':>8}", flush=True)
+    stats = {}
+    for cell, m in masks.items():
+        p = pk[m]; stats[cell] = p
+        qs = np.percentile(p, [0, 10, 25, 50, 75, 90, 100])
+        print(f"  {cell:11}{int(m.sum()):>5}{p.mean():>8.3f}" + "".join(f"{v:>8.3f}" for v in qs), flush=True)
+
+    # bleed-over: within each DURATION, how much do winner and loser peak ranges overlap?
+    def overlap(a, b):
+        # fraction of the loser legs whose peak falls inside the winner's [p25,p75] band, and vice versa
+        wlo, whi = np.percentile(a, [25, 75]); llo, lhi = np.percentile(b, [25, 75])
+        loser_in_win = ((b >= wlo) & (b <= whi)).mean()
+        win_in_loser = ((a >= llo) & (a <= lhi)).mean()
+        return wlo, whi, llo, lhi, loser_in_win, win_in_loser
+    print("\n  --- WITHIN-DURATION winner vs loser peak overlap (IQR bands) ---", flush=True)
+    for dcls, w, l in (("SHORT", "short-win", "short-lose"), ("LONG", "long-win", "long-lose")):
+        wlo, whi, llo, lhi, li, wi = overlap(stats[w], stats[l])
+        print(f"  {dcls:6}: WIN IQR[{wlo:+.3f},{whi:+.3f}] med={np.median(stats[w]):+.3f}   "
+              f"LOSE IQR[{llo:+.3f},{lhi:+.3f}] med={np.median(stats[l]):+.3f}", flush=True)
+        print(f"          bleed: {li*100:.0f}% of losers sit inside the winner IQR; "
+              f"{wi*100:.0f}% of winners sit inside the loser IQR", flush=True)
+    print("DONE", flush=True)
+
+
 def eqpeak_run():
     """The gate Greg specced: EQUATION shape primary, PEAK on top as the decider when two equation-matches
     look alike. $5k flat. LIVE via run_kraken_cell. SOL."""
@@ -297,7 +330,9 @@ def main():
         peak(); return
     if mode == "eqpeak":
         eqpeak_run(); return
-    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk', 'peak' or 'eqpeak'"
+    if mode == "buckets":
+        buckets(); return
+    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk', 'peak', 'eqpeak' or 'buckets'"
     SIG = "ARC-shape" if mode == "arc" else "EQUATION"
 
     path = "/tmp/kbook/sol_book.jsonl"
