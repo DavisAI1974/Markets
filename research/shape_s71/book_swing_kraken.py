@@ -39,8 +39,9 @@ def series_1s(path, k=K, stride=STRIDE):
     return np.array(imb), np.array(mid)
 
 
-def swing(imb, mid, ds, enter_z, trail_bps, max_hold_s, roll, fee_bps):
-    """Ride-to-reversal. One position at a time. Returns per-trade net bps (mid-price directional)."""
+def swing(imb, mid, ds, enter_z, trail_bps, max_hold_s, roll, fee_bps, min_conv=0.0):
+    """Ride-to-reversal. One position at a time. Returns per-trade net bps (mid-price directional).
+    Enter only on a STRONG lean: |z| >= enter_z AND |imb| >= min_conv (the paper's tracker filter)."""
     n = len(imb); hist = deque(maxlen=roll); pos = None; pnl = []
     for i in range(n):
         z = 0.0
@@ -50,7 +51,7 @@ def swing(imb, mid, ds, enter_z, trail_bps, max_hold_s, roll, fee_bps):
             z = (imb[i] - m) / sd
         hist.append(imb[i])
         if pos is None:
-            if abs(z) >= enter_z:
+            if abs(z) >= enter_z and abs(imb[i]) >= min_conv:
                 d = ds if z > 0 else -ds                       # book lean -> direction (sign * dir_sign)
                 pos = {"d": d, "entry": mid[i], "best": 0.0, "t0": i}
         else:
@@ -67,17 +68,18 @@ def main():
     imb, mid = series_1s(path); ds = DIR_SIGN.get(coin, +1)
     hours = len(imb) / 3600.0
     print(f"=== {coin.upper()} BOOK RIDE-TO-REVERSAL swing — {len(imb)} snaps @1s ({hours:.1f}h), dir_sign={ds:+d} ===", flush=True)
-    print(f"  {'enter_z':>7}{'trail':>7}{'maxhold':>8}{'fee':>5}{'trades':>7}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
-    for ez in (1.0, 1.5, 2.0):
-        for trail in (30.0, 50.0):
-            for mh in (600, 60):
-                for fee in (0.0, 5.0):
-                    p = swing(imb, mid, ds, ez, trail, mh, 120, fee)
-                    if len(p) < 5:
-                        continue
-                    dph = p.sum() / 1e4 * CAP / hours
-                    print(f"  {ez:>7.1f}{trail:>7.0f}{mh:>8}{fee:>5.0f}{len(p):>7}"
-                          f"{(p>0).mean()*100:>7.1f}{p.mean():>9.3f}{dph:>9.3f}", flush=True)
+    print(f"  {'enter_z':>7}{'minconv':>8}{'trail':>7}{'maxhold':>8}{'fee':>5}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
+    for ez in (1.0, 1.5):
+        for mc in (0.0, 0.3, 0.5):
+            for trail in (30.0,):
+                for mh in (600,):
+                    for fee in (0.0, 5.0):
+                        p = swing(imb, mid, ds, ez, trail, mh, 120, fee, min_conv=mc)
+                        if len(p) < 3:
+                            continue
+                        dph = p.sum() / 1e4 * CAP / hours
+                        print(f"  {ez:>7.1f}{mc:>8.1f}{trail:>7.0f}{mh:>8}{fee:>5.0f}{len(p):>7}{len(p)/hours:>6.1f}"
+                              f"{(p>0).mean()*100:>7.1f}{p.mean():>9.3f}{dph:>9.3f}", flush=True)
     print("DONE", flush=True)
 
 
