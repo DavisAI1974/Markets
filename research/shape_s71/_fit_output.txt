@@ -1,0 +1,41 @@
+# S74-corrected — 4 DISTINCT per-cell curves, 2 eqs each (pre-fire / tail), whole-curve gate
+
+==============================================================================
+## SOL  n=737  hours=73.1  base-win%=62.3  med-dur=43s
+  cell counts: short-win=243  short-lose=125  long-win=216  long-lose=153
+
+### (a) PRE-FIRE archetype equations — 4 DISTINCT curves (normalized time x: 0=birth, 1=fire)
+  [short-win  ] y = -0.807 +2.406·x -1.895·x² +0.709·x³   (R²=0.987)
+      start-y=-0.819  end-y(peak)=+0.087  born-depth(min)=-0.819  below-0=53%  ignition-t=0.53  blade-slope=+0.702
+  [short-lose ] y = -0.749 + +1.711·x (x≤0.25), blade-slope +1.033 (x>0.25)   (R²=0.979)
+      start-y=-0.802  end-y(peak)=+0.080  born-depth(min)=-0.802  below-0=59%  ignition-t=0.59  blade-slope=+0.939
+  [long-win   ] y = -0.817 + +2.135·x (x≤0.15), blade-slope +1.182 (x>0.15)   (R²=0.990)
+      start-y=-0.847  end-y(peak)=+0.332  born-depth(min)=-0.847  below-0=61%  ignition-t=0.61  blade-slope=+1.362
+  [long-lose  ] y = -0.836 + +2.128·x (x≤0.15), blade-slope +1.219 (x>0.15)   (R²=0.988)
+      start-y=-0.852  end-y(peak)=+0.299  born-depth(min)=-0.852  below-0=63%  ignition-t=0.63  blade-slope=+1.263
+
+### (b) ENTRY GATE — whole-curve nearest-archetype (native amp, whole pre-fire curve)
+  UNGATED:            win%=62.3  $/hr=6.028  legs=737
+  ENERGY gate:        win%=62.5  $/hr=5.377  fired=57%  SL-skip=61/125 LL-skip=60/153 WIN-skip=197/459
+  WHOLE-CURVE (in-s): win%=64.6  $/hr=3.892  fired=50%  SL-skip=66/125 LL-skip=81/153 WIN-skip=220/459
+  -- walk-forward (archetypes built on first 60%, scored on last 40%, 295 legs) --
+     UNGATED(OOS):     win%=62.7  $/hr=10.344
+     ENERGY(OOS):      win%=63.0  $/hr=9.120  fired=61%
+     WHOLE-CURVE(OOS): win%=62.6  $/hr=4.687  fired=72%  SL-skip=15/50 LL-skip=16/60 WIN-skip=53/185
+  per-cell fire (in-sample whole-curve): short-win:129/243fired  short-lose:59/125fired  long-win:110/216fired  long-lose:72/153fired
+
+### (c) TAIL archetype equations — 4 DISTINCT curves (normalized time x: 0=fire, 1=close)
+  [short-win  ] y = +0.071 +0.166·x -1.578·x² +0.904·x³   (R²=0.923)
+      start-y=+0.087  end-y=+0.012  tail-ext-med=24s
+  [short-lose ] y = +0.102 -0.665·x -0.728·x² +0.814·x³   (R²=0.975)
+      start-y=+0.080  end-y=-0.284  tail-ext-med=30s
+  [long-win   ] y = +0.314 + -0.557·x (x≤0.65), blade-slope -1.154 (x>0.65)   (R²=0.903)
+      start-y=+0.332  end-y=+0.076  tail-ext-med=63s
+  [long-lose  ] y = +0.379 + -1.143·x (x≤0.80), blade-slope +0.975 (x>0.80)   (R²=0.971)
+      start-y=+0.299  end-y=-0.126  tail-ext-med=65s
+
+### (d) EXHAUSTION / FLATTEN point per cell (from each distinct tail eq)
+  [short-win  ] peak     at norm-t=0.06  (~1s after fire, y=+0.076)
+  [short-lose ] valley   at norm-t=0.90  (~26s after fire, y=-0.493)
+  [long-win   ] monotone at norm-t=1.00  (~63s after fire, y=-0.452)
+  [long-lose  ] valley   at norm-t=0.80  (~52s after fire, y=-0.535)
