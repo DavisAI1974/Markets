@@ -146,18 +146,24 @@ def kraken_flips(cfg, mid, buy, sell):
     return flips
 
 
-def run_kraken_cell(cfg, mid, buy, sell, best_bid_sz, best_ask_sz, half_spread_bps):
+def run_kraken_cell(cfg, mid, buy, sell, best_bid_sz, best_ask_sz, half_spread_bps,
+                    balance_exit=None, bal_lean_w=None):
     """THE LIVE Kraken decision path (S65): compose the per-coin STACK (direction + early-arm + deep-bail
     + enticing + per-cell REV) and run it through run_stream FRONT-OF-LINE. The basket sim calls THIS —
     it does not reimplement the decision (the S65 sim=live-code rule). Book ARRAYS are passed in (Kraken
-    venue data-loading is the caller's job until a live Kraken loader lands). Returns (SwingResult, desc)."""
+    venue data-loading is the caller's job until a live Kraken loader lands). Returns (SwingResult, desc).
+
+    balance_exit (S75, opt-in — default None = the deployed exit, byte-identical): (arm_hi, exit_lo) for
+    the balance exit (with-ride flow-lean armed then decaying to <= exit_lo). Coexists with the deep-bail
+    (both walked, earliest cell wins). bal_lean_w = the balance-exit lean window in cells (None = WFLIP)."""
     flips = kraken_flips(cfg, mid, buy, sell)
     exit_spec = {"kind": "price_stop", "x_bp": float(cfg.bail), "action": "flat", "side": 0} \
         if cfg.bail is not None else None
     return run_stream(mid, buy, sell, flips, best_bid_sz=best_bid_sz, best_ask_sz=best_ask_sz,
                       half_spread_bps=half_spread_bps, maker_fee=cfg.maker_fee, taker_fee=cfg.taker_fee,
                       grace=cfg.grace, exit_spec=exit_spec, fill_model="front",
-                      close_improve_bps=cfg.improve)
+                      close_improve_bps=cfg.improve,
+                      balance_exit=balance_exit, bal_lean_w=bal_lean_w)
 
 
 def _dipole_descriptors(legs, lean, piv, buy, sell, mid):
@@ -193,6 +199,7 @@ def _entry_gate(n, flips, buy, sell, mid):
 def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
                half_spread_bps=0.0, maker_fee=0.0, taker_fee=5.0, grace=0,
                dipole_entry=False, dipole_exit=None, exit_spec=None, lean_w=None,
+               balance_exit=None, bal_lean_w=None,
                fill_mode="maker", fill_model="front", queue_frac=1.0,
                close_improve_bps=0.0, alpha=1.0, roll=200, quality=None, size_axis=None):
     """ANY flip stream through the platform's decision code — the single research entry point.
@@ -219,11 +226,21 @@ def run_stream(mid, buy, sell, flips, *, best_bid_sz=None, best_ask_sz=None,
     piv = {int(c): int(p) for (c, p, s) in flips}
     egate = _entry_gate(len(mid), flips, buy, sell, mid) if dipole_entry else None
     wl = lean if lean_w is None else lean_series(buy, sell, int(lean_w))
+    # the lean the executor's exit walkers see: balance_exit uses its own (opt-in) window (bal_lean_w
+    # cells; default = the WFLIP flip-lean the executor already computes); price_stop ignores lean.
+    if balance_exit is not None:
+        lean_arg = lean if bal_lean_w is None else lean_series(buy, sell, int(bal_lean_w))
+    elif dipole_exit:
+        lean_arg = lean
+    elif exit_spec is not None:
+        lean_arg = wl
+    else:
+        lean_arg = None
     res = simulate_swing_maker(mid, bb, ba, buy, sell, flips, half_spread_bps=half_spread_bps,
                                maker_fee_bps=maker_fee, taker_fee_bps=taker_fee,
                                cover_grace=grace, entry_gate=egate,
-                               lean=lean if dipole_exit else (wl if exit_spec is not None else None),
-                               lean_exit=dipole_exit, exit_spec=exit_spec,
+                               lean=lean_arg, lean_exit=dipole_exit, exit_spec=exit_spec,
+                               balance_exit=balance_exit,
                                fill_mode=fill_mode, fill_model=fill_model,
                                queue_frac=queue_frac, close_improve_bps=close_improve_bps)
     if quality is not None and size_axis is not None and res.legs:

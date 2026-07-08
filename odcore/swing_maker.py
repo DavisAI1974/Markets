@@ -58,6 +58,7 @@ class SwingLeg:
     size: float = 1.0    # conviction size multiplier (set by size_legs; 1.0 = flat/unsized)
     lean_exit: bool = False  # True = closed by the dipole lean-collapse exit (S55 R8), not a turn
     stop_exit: bool = False  # True = closed by an exit_spec trigger (S61 stop/corrector arms)
+    bal_exit: bool = False   # True = closed by the S75 balance exit (with-ride imbalance -> ~0), not a turn
 
 
 @dataclass
@@ -115,9 +116,9 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                          taker_fee_bps: float = 0.0, taker_fallback: bool = True,
                          confirm=None, confirm_lookback: int = 0, entry_gate=None,
                          exit_gate=None, cover_grace: int = 0, lean=None, lean_exit=None,
-                         exit_spec=None, fill_mode: str = "maker", fill_model: str = "front",
-                         queue_frac: float = 1.0, close_improve_bps: float = 0.0,
-                         arm: str = "") -> SwingResult:
+                         exit_spec=None, balance_exit=None, fill_mode: str = "maker",
+                         fill_model: str = "front", queue_frac: float = 1.0,
+                         close_improve_bps: float = 0.0, arm: str = "") -> SwingResult:
     """Run the one-sided maker-at-the-turn executor over a flip sequence. See module docstring.
 
     NO time/fill window (Greg S46: "take the time windows out, they are irrelevant"). The conviction quote
@@ -162,6 +163,21 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     record, so the conservative arm is the wired one. Legs closed this way carry
     SwingLeg.stop_exit=True. Requires `lean` for the lean-conditioned kinds. Adoption per cell
     via the SANDBOX forward ledger ONLY — this parameter existing does not turn it on anywhere.
+
+    balance_exit (S75 THE BALANCE EXIT — opt-in, default None = bit-identical): a tuple
+    (arm_hi, exit_lo). The whole-leg imbalance characterization (S74) showed the LOSER's
+    post-onset signed TRADE imbalance decays THROUGH zero into strong negative (the flow
+    reverses onto the other side mid-tail — THAT reversal IS the loss) while the WINNER's holds
+    >= 0 to close. This exit catches the reversal EARLIER: per open leg, the with-ride flow-lean
+    osd*lean[t] (the SAME imbalance the flip detector runs on) is walked; once it ARMS (reaches
+    arm_hi = the ride energized, so we don't fire at the low-lean entry) the first decay to
+    <= exit_lo closes the leg via the SAME maker-preferred cover machinery as lean_exit (rest the
+    cover, cover_grace, taker fallback — the CLOSE MECHANICS are unchanged; only the TRIGGER is
+    new). Legs closed this way carry SwingLeg.bal_exit=True. COEXISTS with exit_spec (the deep-bail
+    price_stop): both triggers are walked in ONE per-leg scan and the EARLIEST cell wins, so the
+    protective bail is preserved exactly. Mutually exclusive with lean_exit (both are lean-collapse
+    exits). Requires `lean` (pass the with-trade flow-lean; window is the caller's choice). Adoption
+    per cell via the forward ledger ONLY — this parameter existing does not turn it on anywhere.
 
     fill_model (S61 build (a), THE HONEST FILL ARM — opt-in, default "front" = bit-identical):
     "queue" replaces the front-of-queue fill (_next_positive: the next opposing print of ANY size
@@ -214,6 +230,13 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
     xgate = None if exit_gate is None else np.asarray(exit_gate).astype(bool)
     assert not (exit_spec is not None and lean_exit is not None), \
         "exit_spec and lean_exit are mutually exclusive exit walkers"
+    assert not (balance_exit is not None and lean_exit is not None), \
+        "balance_exit and lean_exit are mutually exclusive lean-collapse exits"
+    bxln = None
+    if balance_exit is not None:
+        assert lean is not None, "balance_exit requires the with-trade flow-lean series"
+        bxln = np.asarray(lean, float)
+        bx_arm, bx_exit = float(balance_exit[0]), float(balance_exit[1])
     ln = None if (lean is None or lean_exit is None) else np.asarray(lean, float)
     arm_hi, exit_lo = (lean_exit if lean_exit is not None else (0.0, 0.0))
     xspec = exit_spec
@@ -296,33 +319,73 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 pos = None
                 if ci <= hold_until:   # the cover resolution runs past this flip — do not act on it
                     continue
-        # S61 EXIT_SPEC WALKER (the exit_pred generalization): walk the open leg's cells since the
-        # last look; on a trigger, TAKER-cross close (a protective stop/corrector is structurally
-        # taker) and — for the flip action — taker-open the opposite side at the same cell.
-        if pos is not None and xspec is not None:
+        # S61 EXIT_SPEC WALKER + S75 BALANCE EXIT (unified per-leg scan): walk the open leg's cells
+        # since the last look, checking BOTH the exit_spec trigger (deep-bail price_stop / armed_dive
+        # / casc_flip — a structurally-TAKER stop) and the balance-exit trigger (with-ride flow-lean
+        # armed then decaying to <= exit_lo — a MAKER-preferred cover). The EARLIEST cell wins, so the
+        # protective bail is preserved exactly when both are active. When balance_exit is None this is
+        # byte-identical to the S61 exit_spec-only walker.
+        if pos is not None and (xspec is not None or balance_exit is not None):
             osd = pos["side"]
-            if x_side != 0 and osd != x_side:
-                pos["scan_from"] = ci          # side-filtered leg: not walked, keep pointer moving
+            walk_xspec = xspec is not None and (x_side == 0 or osd == x_side)
+            if not walk_xspec and balance_exit is None:
+                pos["scan_from"] = ci          # side-filtered leg, no balance exit: advance pointer
             else:
                 op = pos["open_px"]
-                te = -1
+                te = -1; trig = None
                 for t in range(pos["scan_from"], min(ci, n)):
                     fav = osd * (mid[t] - op) / op * 1e4
-                    if xk == "price_stop":
-                        if fav <= -xspec["x_bp"]:
-                            te = t; break
-                    elif xk == "armed_dive":
-                        sl = osd * xln[t]
-                        if not pos["lean_armed"]:
-                            if sl >= xspec["arm_hi"]:
-                                pos["lean_armed"] = True
-                        elif sl <= xspec["dive_lo"] and fav <= -xspec["uw_bp"]:
-                            te = t; break
-                    elif xk == "casc_flip":
-                        if osd * xln[t] <= xspec["dive_lo"] and fav <= -xspec["uw_bp"]:
-                            te = t; break
+                    if walk_xspec:
+                        hit = False
+                        if xk == "price_stop":
+                            hit = fav <= -xspec["x_bp"]
+                        elif xk == "armed_dive":
+                            sl = osd * xln[t]
+                            if not pos["lean_armed"]:
+                                if sl >= xspec["arm_hi"]:
+                                    pos["lean_armed"] = True
+                            elif sl <= xspec["dive_lo"] and fav <= -xspec["uw_bp"]:
+                                hit = True
+                        elif xk == "casc_flip":
+                            hit = osd * xln[t] <= xspec["dive_lo"] and fav <= -xspec["uw_bp"]
+                        if hit:
+                            te = t; trig = "xspec"; break
+                    if balance_exit is not None:
+                        bsl = osd * bxln[t]
+                        if not pos["bx_armed"]:
+                            if bsl >= bx_arm:
+                                pos["bx_armed"] = True
+                        elif bsl <= bx_exit:
+                            te = t; trig = "balance"; break
                 if te < 0:
                     pos["scan_from"] = ci
+                elif trig == "balance":
+                    # BALANCE EXIT: MAKER-preferred cover (same machinery as lean_exit) — rest the
+                    # cover into the de-energizing flow, cover_grace, taker fallback at the cap.
+                    fl = pos["flip_idx"]; oi = pos["open_idx"]
+                    fo = pos.get("fee_open", maker_fee_bps)
+                    cf = -1 if taker_mode else (fx(te) if osd > 0 else fb_(te))
+                    cap = min(n - 1, te + max(cover_grace, 0))
+                    if not taker_mode and cf <= cap:
+                        cpx = mid[te] * (1.0 + hs) if osd > 0 else mid[te] * (1.0 - hs)
+                        gross = osd * (cpx - op) / op * 1e4
+                        net = gross - fo - maker_fee_bps
+                        swing = abs(mid[cf] - mid[fl]) / mid[fl] * 1e4
+                        legs.append(SwingLeg(osd, fl, oi, op, int(cf), float(cpx), True, gross, net,
+                                             swing, bal_exit=True))
+                        hold_until = int(cf)
+                    else:
+                        xc = te if taker_mode else cap
+                        cpx = mid[xc] * (1.0 - hs) if osd > 0 else mid[xc] * (1.0 + hs)
+                        gross = osd * (cpx - op) / op * 1e4
+                        net = gross - fo - taker_fee_bps
+                        swing = abs(mid[xc] - mid[fl]) / mid[fl] * 1e4
+                        legs.append(SwingLeg(osd, fl, oi, op, int(xc), float(cpx), False, gross, net,
+                                             swing, bal_exit=True))
+                        hold_until = int(xc)
+                    pos = None
+                    if ci <= hold_until:
+                        continue
                 else:
                     fl = pos["flip_idx"]; oi = pos["open_idx"]
                     fo = pos.get("fee_open", maker_fee_bps)
@@ -338,7 +401,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                         opx2 = mid[te] * (1.0 + hs) if s2 > 0 else mid[te] * (1.0 - hs)
                         pos = dict(side=int(s2), flip_idx=int(te), open_idx=int(te),
                                    open_px=float(opx2), scan_from=int(te) + 1,
-                                   lean_armed=False, fee_open=taker_fee_bps)
+                                   lean_armed=False, bx_armed=False, fee_open=taker_fee_bps)
                     else:
                         pos = None
                     if ci <= hold_until:
@@ -404,7 +467,7 @@ def simulate_swing_maker(mid, best_bid_sz, best_ask_sz, buy_vol, sell_vol, flips
                 legs.append(SwingLeg(osd, fl, oi, op, fi, limit, not taker_mode, gross, net, swing))
             # open the new leg at the fill
             pos = dict(side=int(s), flip_idx=int(ci), open_idx=int(fi), open_px=float(limit),
-                       scan_from=int(fi) + 1, lean_armed=False, fee_open=fee_leg)
+                       scan_from=int(fi) + 1, lean_armed=False, bx_armed=False, fee_open=fee_leg)
             hold_until = int(fi)                  # no-op at cover_grace=0 (fi < next_ci <= the next flip)
         else:
             # no climax volume to fill the passive quote -> skip the turn; flatten any open leg.
