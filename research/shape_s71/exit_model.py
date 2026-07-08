@@ -20,7 +20,7 @@ if "matplotlib" not in sys.modules:
     _m = types.ModuleType("matplotlib"); _m.use = lambda *a, **k: None
     _p = types.ModuleType("matplotlib.pyplot"); _p.__getattr__ = lambda n: (lambda *a, **k: None)
     _m.pyplot = _p; sys.modules["matplotlib"] = _m; sys.modules["matplotlib.pyplot"] = _p
-from book_swing_kraken import series_1s, zscores, CAP, FILL, MAJORS, LEG
+from book_swing_kraken import series_1s, zscores, CAP, FILL, REBATE, LEG
 from collections import deque
 
 WAITS = (0, 30, 60, 120, 300)
@@ -74,7 +74,7 @@ def main():
         imb, mid = series_1s(f"{os.environ.get('BOOK_DIR','/tmp/kbook')}/{c}_book.jsonl")
         n = len(imb); cut = int(n * 0.6); te_h = (n - cut) / 3600.0
         imb_te, mid_te = imb[cut:], mid[cut:]; z_te = zscores(imb_te)
-        tier = "major" if c in MAJORS else "smallcap"
+        tier = "rebate" if c in REBATE else "zero"
         mk, tk = LEG[tier]["maker"], LEG[tier]["taker"]
         if os.environ.get("RAMP_MAKER"):   # override for the pre-$10M ramp (standard Kraken fees)
             mk, tk = float(os.environ["RAMP_MAKER"]), float(os.environ["RAMP_TAKER"])

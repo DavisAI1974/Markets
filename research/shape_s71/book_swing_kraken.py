@@ -22,9 +22,13 @@ STRIDE = 10
 FILL = 0.90   # ~90% front-of-line maker fill handicap (Greg S69/S77), applied flat on $/hr
 # Kraken $10M/30d tier. Majors: 0% maker / ~5bp taker. Small caps in Kraken's Spot Maker Rebate program:
 # maker -2bp (we get PAID) / taker +10bp. (⚠ confirm per-pair eligibility vs Kraken's rebate list before deploy.)
-MAJORS = {"btc", "eth", "sol", "xrp", "doge"}   # all 5 majors: 0% maker, NO rebate (Greg: XRP/DOGE don't
-                                                # get rebates — they're just untuned). Rebate = small caps only.
-LEG = {"major": {"maker": 0.0, "taker": 5.0}, "smallcap": {"maker": -2.0, "taker": 10.0}}
+# CORRECTED classification (Greg + S67 KRAKEN_MAJORS_SWEEP / S73 terminology fix):
+#   - 5 MAJORS + 16 LARGE MINORS all get 0% maker at the $10M tier (NO rebate).
+#   - ONLY HYPE + XPL get the -2bp maker rebate (S67: "HYPE/XPL better at -2bp").
+#   - The real -2bp small-cap sleeve is a separate ~116 THIN coins we don't have books for yet.
+REBATE = {"hype", "xpl"}                         # the only two rebate (-2bp maker) cells we have books for
+LEG = {"zero": {"maker": 0.0, "taker": 5.0}, "rebate": {"maker": -2.0, "taker": 10.0}}
+MAJORS = {"btc", "eth", "sol", "xrp", "doge"}   # kept for reference (all 0% maker anyway)
 DIR_SIGN0 = {"btc": +1, "eth": +1, "xrp": +1, "sol": +1, "doge": -1}
 TRAIL = es.TRAIL_BPS_DEFAULT          # 30
 MAXHOLD = es.MAX_HOLD_S_DEFAULT       # 600
@@ -121,7 +125,7 @@ def main():
           f"maxhold={mh}s (train $/hr@0={best[0]:.2f})\n", flush=True)
 
     # TEST: frozen (hz, ds, ez, trail, mh, mc), report OOS at the tier's fee scenarios.
-    tier = "major" if coin in MAJORS else "smallcap"
+    tier = "rebate" if coin in REBATE else "zero"
     mk, tk = LEG[tier]["maker"], LEG[tier]["taker"]
     # round-trip fee (subtracted once): both-maker (exit rests as maker) vs maker-entry+taker-exit (exit crosses)
     scen = [("both-maker", 2 * mk), ("maker+taker", mk + tk)]
