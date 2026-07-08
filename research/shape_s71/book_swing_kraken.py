@@ -56,8 +56,8 @@ def main():
     coin = sys.argv[1] if len(sys.argv) > 1 else "btc"
     print(f"=== {coin.upper()} — es.EarlySignalTracker ride-to-reversal (trail {TRAIL:.0f} / hold {MAXHOLD}s) ===", flush=True)
     print(f"  {'enter_z':>7}{'minconv':>8}{'fee':>5}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
-    for ez in (1.0, 1.5):
-        for mc in (0.0, 0.5):
+    for ez in (2.0, 3.0, 4.0):
+        for mc in (0.5,):
             for fee in (0.0, 5.0):
                 p, hours = run(coin, ez, mc, fee)
                 if len(p) < 3:
