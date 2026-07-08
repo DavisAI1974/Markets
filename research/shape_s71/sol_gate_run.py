@@ -182,6 +182,52 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def flip():
+    """Greg's mirror test: are SOL's LONG-LOSERS just winners entered BACKWARDS? For each leg the opposite-side
+    trade over the SAME [open,close] window nets ~= -gross_bps (mid-symmetric; off by ~2x half-spread). Measure
+    how many losers flip positive and the $/hr if we'd reversed the long-losers. LIVE executor legs."""
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0
+    res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+    hours = len(mid) * 0.1 / 3600.0
+    legs = res.legs
+    net = np.array([float(l.net_bps) for l in legs]); gross = np.array([float(l.gross_bps) for l in legs])
+    dur = np.array([(int(l.close_idx) - int(l.open_idx)) * 0.1 for l in legs])
+    n = len(net); win = net > 0; med = np.median(dur); short = dur < med
+    masks = {"short-win": short & win, "short-lose": short & ~win, "long-win": ~short & win, "long-lose": ~short & ~win}
+    flip_net = -gross                                       # opposite side over the same window (maker fees ~0)
+
+    print(f"=== SOL FLIP TEST — {n} live legs, {hours:.1f}h — are losers backwards winners? ===", flush=True)
+    print(f"  {'bucket':11}{'n':>5}{'mean_net':>10}{'mean_gross':>12}", flush=True)
+    for c in ("short-win", "short-lose", "long-win", "long-lose"):
+        m = masks[c]
+        print(f"  {c:11}{int(m.sum()):>5}{net[m].mean():>10.2f}{gross[m].mean():>12.2f}", flush=True)
+
+    print("\n  --- reverse the LOSERS (opposite side, same window ~= -gross) ---", flush=True)
+    for c in ("long-lose", "short-lose"):
+        m = masks[c]; f = flip_net[m]
+        print(f"  {c:11}: n={int(m.sum())}  mean orig net={net[m].mean():+.2f}  ->  flipped={f.mean():+.2f}  "
+              f"({(f > 0).mean()*100:.0f}% become winners)", flush=True)
+
+    print("\n  --- S62 mirror check (long-win vs long-lose gross) ---", flush=True)
+    lw, ll = masks["long-win"], masks["long-lose"]
+    print(f"  long-win mean gross={gross[lw].mean():+.2f}   long-lose mean gross={gross[ll].mean():+.2f}   "
+          f"(mirror if ~equal & opposite)", flush=True)
+
+    print("\n  --- $/hr if we had REVERSED the long-losers ---", flush=True)
+    dph = lambda v: v.sum() / 1e4 * CAP / hours
+    flipped_all = net.copy(); flipped_all[ll] = flip_net[ll]
+    print(f"  ungated               $/hr={dph(net):7.3f}", flush=True)
+    print(f"  reverse long-losers   $/hr={dph(flipped_all):7.3f}  (hindsight ceiling — proves the direction lever)", flush=True)
+    both = ll | masks["short-lose"]; flipped_both = net.copy(); flipped_both[both] = flip_net[both]
+    print(f"  reverse ALL losers    $/hr={dph(flipped_both):7.3f}", flush=True)
+    print("DONE", flush=True)
+
+
 def buckets():
     """Split ALL live legs into the 4 buckets (short/long by median dur x win/lose by net>0) and show each
     bucket's pre-fire onset PEAK distribution — do the categories live in distinct peak bands, or bleed over?"""
@@ -332,7 +378,9 @@ def main():
         eqpeak_run(); return
     if mode == "buckets":
         buckets(); return
-    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk', 'peak', 'eqpeak' or 'buckets'"
+    if mode == "flip":
+        flip(); return
+    assert mode in ("arc", "eq"), "mode must be 'arc', 'eq', 'walk', 'peak', 'eqpeak', 'buckets' or 'flip'"
     SIG = "ARC-shape" if mode == "arc" else "EQUATION"
 
     path = "/tmp/kbook/sol_book.jsonl"
