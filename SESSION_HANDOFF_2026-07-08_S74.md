@@ -56,9 +56,16 @@ back 15–25% winner $/hr), losers' loss already in price by the time flow rebal
 ENTRY; deep-bail caps the loser price tail. `research/shape_s71/exit_test_findings.md`.
 
 ## ⭐ NEXT (S75)
-1. **⭐⭐ THE PER-CELL EQUATIONS may be the winning part (Greg):** the pre-fire + tail equations (8/coin, split at
-   the fire) are in `research/shape_s71/leg_imbalance_findings.md` §4 (+ `fit_shapes.py`). Greg thinks THESE are the
-   winning piece — get them into usable form and build on them. (Not urgent per Greg, but the lead to chase.)
+1. **⭐⭐ RUN THE WHOLE-CURVE EQUATION-MATCH GATE (Greg: "if they're distinct, that's the gate") — the #1 UNTESTED
+   test.** 8 distinct per-cell equations in `leg_imbalance_findings.md` §4 (+ `fit_shapes.py`). Gate = match each
+   forming trade's WHOLE PRE-FIRE curve to the 4 DISTINCT archetype pre-fire equations (nearest curve, NO centroid =
+   #0e-GATE), fire winner-match / skip loser-match, LIVE `run_kraken_cell`. NEVER run (we tested energy + single
+   features alone = overlap). ⚠ catches: distinct equations are the TAILS (post-fire → EXIT, can't gate entry;
+   flow-exit is a null); pre-fire equations are SAME FAMILY (blade+peak = the energy dimension that overlaps). Test:
+   does the whole pre-fire curve BEAT energy-alone? vs ungated + vs energy gate.
+   **⭐ THE LEVER STACK (Greg — largely INDEPENDENT levers COMPOUND; validate each then stack):** ENTRY (equation
+   gate + energy gate + BTC book) · RISK (long-leg cap/deep-bail = the worst-loser bleed) · EXIT (`balance_exit` per
+   coin) · FOUNDATION (trade imbalance = the decider). Validate each first → "a lot of improvement."
 2. **⭐⭐ THE BTC BOOK GATE ("worth its weight in gold"):** the ONE pre-fire win/lose tell we have. Build + validate
    the BTC book pre-fire lean as a BTC ENTRY gate (skip/down-weight legs BORN book-negative at the valley); confirm
    OOS / on fresh book. BTC-specific (flat on SOL, weak ETH, long-win-only XRP).

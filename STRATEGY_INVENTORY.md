@@ -315,6 +315,23 @@ winner/loser energy LEVELS overlap so it over-skips ~40% of winners). On SOL a c
 `research/shape_s71/sol_loser_gate.py` / `gate3.py`. Reconciles the S73 "energy over-skips" result: it over-skips
 only on SOL; on the other 3 majors the energy gate is strongly $/hr-positive and should be kept.
 
+**⭐⭐ S74 → S75: THE WHOLE-CURVE EQUATION-MATCH GATE (Greg: "if they're distinct, that's the gate") — the #1
+UNTESTED test.** We have 8 distinct per-cell equations (pre-fire + tail, both channels; `leg_imbalance_findings.md`
+§4). The gate = match each forming trade's WHOLE PRE-FIRE curve to the 4 DISTINCT archetype pre-fire equations
+(nearest actual curve, NO centroid/averaging = #0e-GATE), fire winner-match / skip loser-match, through LIVE
+`run_kraken_cell`. We tested ENERGY + single features alone (overlap) but NEVER the whole-curve equation match — the
+untested piece. ⚠ Two honest catches: (a) the genuinely-distinct equations are the TAILS → POST-FIRE → an EXIT read,
+cannot gate entry (and flow-exit is a null); (b) the PRE-fire equations are the SAME FAMILY (differ mainly in
+blade-slope + peak = the energy dimension that overlaps per-trade). The test = does the WHOLE pre-fire curve
+(blade+peak+shape jointly) BEAT energy-alone? Run it vs ungated + vs energy gate.
+
+**⭐ THE LEVER STACK (Greg, S74 — LARGELY INDEPENDENT levers → they COMPOUND; validate each, then STACK; S64
+"tools are complementary, not competing").** ENTRY selection: whole-curve equation gate + ENERGY gate (doubles $/hr
+BTC/ETH/XRP, SOL=deep-hole) + BTC BOOK pre-fire tell. RISK control: long-duration cap / deep-bail (the worst-loser
+bleed is LONG legs — `worst_losers_S74.md`; SOL has NO deep-bail). EXIT tuning: `balance_exit` per coin where it
+beats baseline. FOUNDATION: TRADE imbalance = the real-time direction+duration decider. ⚠ several are in-sample/
+untested — each needs its own validation FIRST, then they stack → "a lot of improvement" (Greg).
+
 **⭐ THE GREEDY CAPITAL STRATEGY — LOCKED (Greg, S70; stop rehashing — this is settled).** In plain words,
 this is exactly what `odcore/allocator.py` (`mode="greedy"`) + `odcore/platform.py::run_portfolio` do (LIVE,
 canary-clean). Do NOT re-derive or re-litigate it; only IMPLEMENT/tune the inputs it names.
