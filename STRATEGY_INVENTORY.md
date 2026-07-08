@@ -154,10 +154,13 @@ with wiggle room** — fire on a winner-shape match, skip on a loser-shape match
   the absolute level/endpoint the curve arrives at is NOT the object and is never checked.
 - **⭐ TWO WAYS TO MATCH — TEST BOTH (Greg, S75; whole-curve "probably cleaner"):** (1) WHOLE-CURVE = match each
   forming trade's full leg curve (valley→onset→close) to the 4 archetype WHOLE-curves; (2) SPLIT = match the 8
-  pre-fire/tail pieces separately. **The cleanest reference is NOT the hand-written equation** (lossy — the pasted
-  linears don't reproduce their own endpoints) **but the actual SAMPLED MEAN ARC** (`leg_imbalance_arcs_{coin}.npz`)
-  — the curve as a vector of points = literally the entire curve shape, zero scalars, zero sums. Use the arcs as the
-  archetype reference; keep the 4 buckets as distinct reference sets (#0e-GATE, no centroid).
+  pre-fire/tail pieces separately. Keep the 4 buckets as distinct reference sets (#0e-GATE, no centroid).
+- **⭐ USE BOTH REPRESENTATIONS — THE EQUATIONS AND THE SAMPLED ARCS (Greg, S75).** The archetype curve exists two
+  ways: the clean **EQUATION** (`y=f(x)`+domain — the idealized intended shape) and the **SAMPLED ARC**
+  (`leg_imbalance_arcs_{coin}.npz` — the true empirical shape as points). **Use BOTH** — if combining them makes the
+  gate better, do so; at minimum use one as a CROSS-CHECK on the other (the equation guards against a noisy arc; the
+  arc guards against a lossy equation) so the shape is never built incorrectly. Neither is "solved for a number" —
+  both are matched as SHAPES.
 - **ENTER and EXIT are BOTH shape reads.** Pre-fire (ascension) shape = the entry read; post-fire (tail) shape = the
   exit read. Both matched as SHAPES.
 - **⛔ FORBIDDEN (the S75 wrong-frame, do not repeat):** extracting scalar features (peak, blade15, kink, convexity,
