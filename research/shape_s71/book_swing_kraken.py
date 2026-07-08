@@ -19,6 +19,11 @@ import early_signal as es
 
 CAP = 5000.0
 STRIDE = 10
+FILL = 0.90   # ~90% front-of-line maker fill handicap (Greg S69/S77), applied flat on $/hr
+# Kraken $10M/30d tier. Majors: 0% maker / ~5bp taker. Small caps in Kraken's Spot Maker Rebate program:
+# maker -2bp (we get PAID) / taker +10bp. (⚠ confirm per-pair eligibility vs Kraken's rebate list before deploy.)
+MAJORS = {"btc", "eth", "sol", "xrp", "doge"}
+LEG = {"major": {"maker": 0.0, "taker": 5.0}, "smallcap": {"maker": -2.0, "taker": 10.0}}
 DIR_SIGN0 = {"btc": +1, "eth": +1, "xrp": +1, "sol": +1, "doge": -1}
 TRAIL = es.TRAIL_BPS_DEFAULT          # 30
 MAXHOLD = es.MAX_HOLD_S_DEFAULT       # 600
@@ -42,20 +47,28 @@ def series_1s(path, k=es.DEFAULT_K, stride=STRIDE):
     return np.array(imb), np.array(mid)
 
 
-def swing(imb, mid, ds, enter_z, fee, trail=TRAIL, maxhold=MAXHOLD, min_conv=MINCONV):
-    """Ride-to-reversal on a precomputed imb/mid slice. Entry = es.EarlySignalTracker logic (|z|>=enter_z
-    AND |imb|>=min_conv), verified identical to the tracker. trail/maxhold tune the exit. Returns net bps."""
-    n = len(imb); hist = deque(maxlen=ROLL); pos = None; pnl = []
+def zscores(imb, roll=ROLL):
+    """Rolling z of imb over `roll`, bit-identical to the in-loop es.EarlySignalTracker computation:
+    z[i] uses the up-to-`roll` values BEFORE i (needs >=5), SD floored at SD_FLOOR, else 0. Computed ONCE
+    per slice and reused across the whole config grid (the z-series is independent of ds/enter_z/trail/etc)."""
+    n = len(imb); z = np.zeros(n); hist = deque(maxlen=roll)
     for i in range(n):
-        z = 0.0
         if len(hist) >= 5:
             m = sum(hist) / len(hist)
             sd = max((sum((v - m) ** 2 for v in hist) / len(hist)) ** 0.5, SD_FLOOR)
-            z = (imb[i] - m) / sd
+            z[i] = (imb[i] - m) / sd
         hist.append(imb[i])
+    return z
+
+
+def swing(imb, mid, z, ds, enter_z, fee, trail=TRAIL, maxhold=MAXHOLD, min_conv=MINCONV):
+    """Ride-to-reversal on a precomputed imb/mid/z slice. Entry = es.EarlySignalTracker logic (|z|>=enter_z
+    AND |imb|>=min_conv). trail/maxhold tune the exit. `fee` is round-trip bps. Returns net bps/trade."""
+    n = len(imb); pos = None; pnl = []
+    for i in range(n):
         if pos is None:
-            if abs(z) >= enter_z and abs(imb[i]) >= min_conv:
-                pos = {"d": (ds if z > 0 else -ds), "entry": mid[i], "best": 0.0, "t": 0}
+            if abs(z[i]) >= enter_z and abs(imb[i]) >= min_conv:
+                pos = {"d": (ds if z[i] > 0 else -ds), "entry": mid[i], "best": 0.0, "t": 0}
         else:
             pos["t"] += 1
             fav = pos["d"] * (mid[i] - pos["entry"]) / pos["entry"] * 1e4
@@ -75,6 +88,7 @@ def main():
     n = len(imb); cut = int(n * 0.6)
     tr_h, te_h = cut / 3600.0, (n - cut) / 3600.0
     imb_tr, mid_tr, imb_te, mid_te = imb[:cut], mid[:cut], imb[cut:], mid[cut:]
+    z_tr, z_te = zscores(imb_tr), zscores(imb_te)   # once per slice, reused across the whole grid
 
     print(f"=== {coin.upper()} WALK-FORWARD 60/40 — train {tr_h:.1f}h / test {te_h:.1f}h ===", flush=True)
     # TRAIN: joint grid over (sign-fit HORIZON, min_conv, enter_z, trail, maxhold); pick MAX train $/hr @0%
@@ -91,7 +105,7 @@ def main():
             for ez in (1.0, 1.5, 2.0):
                 for trail in (10.0, 15.0, 20.0, 30.0):
                     for mh in (60, 300, 600):
-                        p = swing(imb_tr, mid_tr, ds, ez, 0.0, trail, mh, min_conv=mc)
+                        p = swing(imb_tr, mid_tr, z_tr, ds, ez, 0.0, trail, mh, min_conv=mc)
                         d = dph(p, tr_h)
                         if len(p) >= 10 and (best is None or d > best[0]):
                             best = (d, hz, ds, ez, trail, mh, mc)
@@ -102,14 +116,21 @@ def main():
     print(f"  -> TRAIN picks horizon={hz}s sign={ds:+d} enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} "
           f"maxhold={mh}s (train $/hr@0={best[0]:.2f})\n", flush=True)
 
-    # TEST: frozen (hz, ds, ez, trail, mh, mc), report OOS
-    print(f"  TEST (OOS, frozen horizon={hz}s sign={ds:+d} enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} hold={mh}s):", flush=True)
-    print(f"  {'fee':>5}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}", flush=True)
-    for fee in (0.0, 5.0):
-        p = swing(imb_te, mid_te, ds, ez, fee, trail, mh, min_conv=mc)
+    # TEST: frozen (hz, ds, ez, trail, mh, mc), report OOS at the tier's fee scenarios.
+    tier = "major" if coin in MAJORS else "smallcap"
+    mk, tk = LEG[tier]["maker"], LEG[tier]["taker"]
+    # round-trip fee (subtracted once): both-maker (exit rests as maker) vs maker-entry+taker-exit (exit crosses)
+    scen = [("both-maker", 2 * mk), ("maker+taker", mk + tk)]
+    print(f"  TEST (OOS, {tier}: maker {mk:+.0f}bp / taker {tk:+.0f}bp; horizon={hz}s sign={ds:+d} "
+          f"enter_z={ez:.1f} minconv={mc:.1f} trail={trail:.0f} hold={mh}s):", flush=True)
+    print(f"  {'scenario':>13}{'rt_fee':>8}{'trades':>7}{'/hr':>6}{'win%':>7}{'bps/trd':>9}{'$/hr':>9}{'$/hr*.9':>9}", flush=True)
+    for name, fee in scen:
+        p = swing(imb_te, mid_te, z_te, ds, ez, fee, trail, mh, min_conv=mc)
         if len(p) < 3:
-            print(f"  {fee:>5.0f}{len(p):>7}   (too few)", flush=True); continue
-        print(f"  {fee:>5.0f}{len(p):>7}{len(p)/te_h:>6.1f}{(p>0).mean()*100:>7.1f}{p.mean():>9.3f}{dph(p, te_h):>9.3f}", flush=True)
+            print(f"  {name:>13}{fee:>8.0f}{len(p):>7}   (too few)", flush=True); continue
+        d = dph(p, te_h)
+        print(f"  {name:>13}{fee:>8.0f}{len(p):>7}{len(p)/te_h:>6.1f}{(p>0).mean()*100:>7.1f}"
+              f"{p.mean():>9.3f}{d:>9.3f}{d*FILL:>9.3f}", flush=True)
     print("DONE", flush=True)
 
 
