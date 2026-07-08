@@ -182,6 +182,56 @@ def _legs_with_peak():
     return np.array(peak), np.array(net), np.array(dur), hours
 
 
+def strength():
+    """Repoint the dipole (Greg): NOT direction (that's a wall) — use it to tell STRENGTH (how big the move)
+    and, within the SMALL trades, small-winner vs small-loser. Entry stays 'barely late' (SOL natural cadence).
+    Causal dipole at each leg's pivot (leakage-free)."""
+    from odcore.info_dipole import divergence
+    from odcore.platform import kraken_flips
+    DIVW = 600
+    path = "/tmp/kbook/sol_book.jsonl"
+    cfg = [c for c in KRAKEN if c.coin == "sol"][0]
+    raw = load_raw(path); ch, g = build_channels(path, cfg.K, 20, raw=raw)
+    mid = np.asarray(g["mid"], float); bb = np.asarray(g["bidK"][1], float); ba = np.asarray(g["askK"][1], float)
+    buy = np.asarray(g["buy"], float); sell = np.asarray(g["sell"], float)
+    hs = median_spread_bps(path, raw=raw) / 2.0; hours = len(mid) * 0.1 / 3600.0
+    res, _ = run_kraken_cell(cfg, mid, buy, sell, bb, ba, hs)
+    flips = kraken_flips(cfg, mid, buy, sell); piv = {int(c): int(p) for (c, p, s) in flips}
+    legs = res.legs
+    net = np.array([float(l.net_bps) for l in legs]); dur = np.array([(int(l.close_idx) - int(l.open_idx)) * 0.1 for l in legs])
+    conv, ali = [], []
+    for l in legs:
+        ci = int(l.flip_idx); p = piv.get(ci, ci); plo = max(0, p - DIVW)
+        dv = divergence(buy[plo:p + 1], sell[plo:p + 1], float(mid[p] - mid[plo])) if p - plo >= 12 else None
+        conv.append(float(dv["reversal_conviction"]) if dv else np.nan)
+        ali.append(abs(float(dv["aligned_flow"])) if dv else np.nan)
+    conv = np.array(conv); ali = np.array(ali)
+    n = len(net); win = net > 0; med = np.median(dur); short = dur < med
+    ok = ~np.isnan(conv)
+
+    print(f"=== SOL DIPOLE as STRENGTH + small-win/loser — {n} legs, {hours:.1f}h (causal) ===", flush=True)
+    # 1) does dipole STRENGTH track move MAGNITUDE?
+    def corr(a, b):
+        a = a[ok]; b = b[ok]; return float(np.corrcoef(a, b)[0, 1])
+    print(f"  strength vs magnitude:  corr(reversal_conv, |net|)={corr(conv, np.abs(net)):+.3f}   "
+          f"corr(|aligned_flow|, |net|)={corr(ali, np.abs(net)):+.3f}", flush=True)
+    # 2) within SMALL (short) and BIG (long): win% + mean |net| by dipole strength quartile
+    for name, m in (("SMALL (short-dur)", short & ok), ("BIG (long-dur)", ~short & ok)):
+        c = conv[m]; w = win[m]; a = np.abs(net[m])
+        if len(c) < 20:
+            continue
+        q = np.quantile(c, [0.25, 0.5, 0.75])
+        print(f"\n  {name}  n={m.sum()} — by dipole reversal_conviction quartile:", flush=True)
+        print(f"    {'quartile':10}{'n':>5}{'win%':>7}{'mean_net':>10}{'mean|net|':>11}", flush=True)
+        edges = [-np.inf, q[0], q[1], q[2], np.inf]
+        for i in range(4):
+            qm = (c > edges[i]) & (c <= edges[i + 1])
+            if not qm.sum():
+                continue
+            print(f"    Q{i+1:<9}{int(qm.sum()):>5}{w[qm].mean()*100:>7.1f}{net[m][qm].mean():>10.2f}{a[qm].mean():>11.2f}", flush=True)
+    print("DONE", flush=True)
+
+
 def dipole():
     """Causal dipole DIRECTION test (Greg): does divergence() call the SOL side at entry? For each live leg
     read the dipole at its pivot (pre-pivot window, leakage-free); group win%/net by expect class; then FLIP
@@ -432,6 +482,8 @@ def main():
         buckets(); return
     if mode == "flip":
         flip(); return
+    if mode == 'strength':
+        strength(); return
     if mode == 'dipole':
         dipole(); return
     assert mode in ('arc', 'eq'), 'unknown mode'
