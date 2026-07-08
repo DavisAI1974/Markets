@@ -249,9 +249,9 @@ sw/sl/ll book arcs are near-flat (|coeffs| small, R² 0.78–0.99 fitting low-am
   (winner tails end ≈0, loser tails end −0.14..−0.42). The BOOK equation separates win/lose ONLY on BTC
   (winner book-shapes stay POSITIVE, loser book-shapes stay NEGATIVE at both limbs; K1/5/10 agree), weakly
   on ETH, and only for the long-win cell on XRP; on SOL book equations are flat noise.
-- **The pre-fire ascension form is the same family everywhere** (deep-born hockey/convex-cubic rocketing to
-  the onset peak); cells differ mainly in blade slope and peak height, not in kind. The TAIL forms are the
-  distinguishing equations (win = flatten near 0; lose = decline through 0 to negative).
+- **Each cell's pre-fire ascension is its own distinct curve** (deep-born, rocketing to the onset peak; the
+  cells differ in slope, curvature and peak height). The TAIL forms are also distinct per cell (win = flatten
+  near 0; lose = decline through 0 to negative). We match the live leg to the per-cell equation + arc signifiers.
 
 ---
 

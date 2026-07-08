@@ -312,9 +312,9 @@ K1/5/10. Per-cell mean arcs (archetype pictures; Greg-approved for the character
 - **⭐⭐ THE UNIVERSAL EXIT TELL (all 4 coins) — win/lose lives in the TAIL, NOT the entry:** post-onset the
   **WINNER** trade tail decays gently and HOLDS ≥0 to close (exh ≈ 0..+0.1 — the ride de-energizes, flow never
   flips); the **LOSER** tail decays THROUGH zero into strong negative (exh **−0.14..−0.42**) — the flow REVERSES
-  onto the other side mid-tail, and THAT reversal IS the loss. The PRE-FIRE ascension shape is the SAME family for
-  all 4 cells (deep-born hockey to the peak → **this is WHY entry win/lose is hard**, confirmed again); the win/lose
-  difference is entirely in the TAIL. **⭐ S74 EXIT KNOB — `balance_exit` is a per-coin TUNING KNOB, opt-in
+  onto the other side mid-tail, and THAT reversal IS the loss. Each of the 4 cells has its OWN DISTINCT pre-fire and
+  tail curve shape (the §4 equation + the sampled arc); we match each forming leg's curve to those per-cell
+  signifiers on enter and exit. **⭐ S74 EXIT KNOB — `balance_exit` is a per-coin TUNING KNOB, opt-in
   (default OFF, canary bit-identical; `research/shape_s71/exit_test_findings.md` + `exit_balance_grid.py`).** The exit
   tool (close at the flow zero-cross / return-to-balance) is BUILT + wired LIVE and TUNES PER COIN — **this is the
   fine-tuning stage, still a win, NOT a dead end.** On the CURRENT window baseline still wins on all 4 majors (best
@@ -330,16 +330,16 @@ K1/5/10. Per-cell mean arcs (archetype pictures; Greg-approved for the character
   **BTC** the BOOK imbalance forecasts win/lose BEFORE the leg fires — winners born book-POSITIVE (with-side) and
   stay positive valley→peak→close (short-win peak +0.13, long-win +0.20), losers born book-NEGATIVE and stay
   negative the whole leg (short-lose −0.25/−0.39, long-lose −0.10/−0.19); K1/5/10 all agree, and the born-book sign
-  already forecasts win/lose AT the valley (pre-ignition). This is a genuine **PRE-FIRE ENTRY tell on BTC** — the
-  one thing the pre-fire SHAPE alone could not give (the shapes are the same family). ⚠ **NOT universal:** FLAT on
+  already forecasts win/lose AT the valley (pre-ignition). This is a genuine **PRE-FIRE ENTRY tell on BTC** — a
+  second, book-based signifier stacked on the per-cell pre-fire curve-shape match. ⚠ **NOT universal:** FLAT on
   SOL (±0.03 — book carries nothing, TRADE is the whole story there), WEAK on ETH, LONG-WIN-only on XRP. Book NEVER
   FLIPS at the peak on any coin — it is a standing LEAN (context), not a turn-timed signal; the turn tell lives in
   the TRADE channel. **NEXT (BTC): build + validate the BTC book pre-fire lean as a BTC entry gate, confirm OOS / on
   fresh book.**
 - **Endpoint map:** TRADE valley NEVER separates (universal birth ~−0.85..−0.91); TRADE **exhaustion (close)** is
   the cleanest universal win/lose separator; TRADE **peak** = duration. 8 distinct equations/coin (pre-fire + tail
-  per cell, split at the fire) in `leg_imbalance_findings.md` §4 — pre-fire = same convex-cubic/hockey family, TAIL
-  = the distinguishing shapes (win flattens near 0; lose declines through 0 to negative).
+  per cell, split at the fire) in `leg_imbalance_findings.md` §4 — each cell's pre-fire and TAIL curve is its own
+  distinct shape (win tail flattens near 0; lose tail declines through 0 to negative).
 - **⛔ CORRECTION to S73:** the S73 "LINEAR vs NON-LINEAR ascent" prime discriminator is **FALSE** — all 4 cells are
   convex hockey sticks; linearity does not separate winner from loser. The real per-trade edge is NOT in the entry
   shape at all — it is in the TAIL (exit) + (BTC only) the book pre-fire lean.

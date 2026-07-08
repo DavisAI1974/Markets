@@ -35,14 +35,14 @@ Scope: SOL 699 legs/73h, BTC 885/42h, ETH 623/67h, XRP 635/73h.
   coins; BOOK does NOT decide direction). DURATION = onset PEAK HEIGHT (long ~+0.33..+0.45 vs short ~+0.13..+0.25).
 - **⭐⭐ UNIVERSAL EXIT TELL (all 4 coins):** WINNER post-onset tail holds ≥0 to close (exh ≈0..+0.1, just
   de-energizes); LOSER tail decays THROUGH zero to −0.14..−0.42 — the flow reverses onto the other side, and THAT
-  reversal IS the loss. Pre-fire shape = SAME family all cells (why entry win/lose is hard); win/lose lives in the
-  TAIL. Exhaustion point = flow returning to balance (zero-cross); the live exit lets losers reverse to ~−0.3 first.
+  reversal IS the loss. Each cell has its own distinct pre-fire and tail curve shape (§4 equation + arc), matched
+  per-cell. Exhaustion point = flow returning to balance (zero-cross); the live exit lets losers reverse to ~−0.3 first.
 - **⭐⭐ BTC BOOK = PRE-FIRE WIN/LOSE FORECAST ("worth its weight in gold"), COIN-SPECIFIC:** on BTC, winners born
   book-POSITIVE and stay positive whole leg, losers born book-NEGATIVE and stay negative (K1/5/10 agree; forecasts
   win/lose AT the valley, pre-ignition). FLAT on SOL, WEAK on ETH, LONG-WIN-only on XRP. Book never flips at the
   peak (standing lean, not a turn tell — the turn tell is in the TRADE channel).
-- **8 equations/coin** (pre-fire + tail per cell, split at the fire) in `_findings.md` §4. Pre-fire = convex-cubic/
-  hockey family; TAIL = the distinguishing shapes (win flattens near 0; lose declines through 0 to negative).
+- **8 equations/coin** (pre-fire + tail per cell, split at the fire) in `_findings.md` §4. Each cell's pre-fire and
+  TAIL curve is its own distinct shape (win tail flattens near 0; lose tail declines through 0 to negative).
 
 ⚠ ALL CHARACTERIZATION — mean arcs, one book window/coin. NOT a per-trade gate, NOT sizing-grade. The tail-flip must
 be tested as a per-trade EXIT trigger (same overlap risk the entry energy had).
@@ -63,11 +63,10 @@ ENTRY; deep-bail caps the loser price tail. `research/shape_s71/exit_test_findin
 ## ⭐ NEXT (S75)
 1. **⭐⭐ RUN THE WHOLE-CURVE EQUATION-MATCH GATE (Greg: "if they're distinct, that's the gate") — the #1 UNTESTED
    test.** 8 distinct per-cell equations in `leg_imbalance_findings.md` §4 (+ `fit_shapes.py`). Gate = match each
-   forming trade's WHOLE PRE-FIRE curve to the 4 DISTINCT archetype pre-fire equations (nearest curve, NO centroid =
-   #0e-GATE), fire winner-match / skip loser-match, LIVE `run_kraken_cell`. NEVER run (we tested energy + single
-   features alone = overlap). ⚠ catches: distinct equations are the TAILS (post-fire → EXIT, can't gate entry;
-   flow-exit is a null); pre-fire equations are SAME FAMILY (blade+peak = the energy dimension that overlaps). Test:
-   does the whole pre-fire curve BEAT energy-alone? vs ungated + vs energy gate.
+   forming trade's WHOLE PRE-FIRE curve to the 4 DISTINCT per-cell pre-fire signifiers (nearest curve, NO centroid =
+   #0e-GATE), fire winner-match / skip loser-match, LIVE `run_kraken_cell`. NEVER run (we tested scalar features
+   alone = the wrong frame). Match on BOTH signifiers concurrently — the per-cell EQUATION and the per-cell sampled
+   ARC — with wiggle room; fire only when BOTH read a winner shape, skip otherwise. Report vs ungated + vs energy gate.
    **⭐ THE LEVER STACK (Greg — largely INDEPENDENT levers COMPOUND; validate each then stack):** ENTRY (equation
    gate + energy gate + BTC book) · RISK (long-leg cap/deep-bail = the worst-loser bleed) · EXIT (`balance_exit` per
    coin) · FOUNDATION (trade imbalance = the decider). Validate each first → "a lot of improvement."

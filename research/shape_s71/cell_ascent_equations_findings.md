@@ -129,12 +129,12 @@ zone). Result per coin:
   `extent`, `t_infl`, `rise_last3`, `below0`, `dip`, `peak` (loser-tail win% ~40-44 vs 56 base) where the
   45s-truncated version flagged only `peak`. ETH-LONG: `net_area_ratio`, `cum_final`, `min_asc` flag
   (loser-tail ~38-44 vs 52 base).
-- **XRP**: `b_blade` (SHORT, 37% vs 52) and the dip/`late_integral` family (LONG, ~42% vs 51) flag modestly.
+- **XRP**: `b_blade` (SHORT, 37% vs 52) and the dip/`late_integral` group (LONG, ~42% vs 51) flag modestly.
 
 **Every feature that shows an edge measures ONE physical thing** — losers spent more of the pre-onset limb
 DEEP and LONG below zero and ignited LATE. These are correlated views of the same "deep-hole / late-blade"
 tell:
-- integrated/cumulative flow (Greg's suggestion, and the cleanest single family):
+- integrated/cumulative flow (Greg's suggestion, and the cleanest single group):
   `late_integral` (time-weighted ∫arc), `cum_final` (∫arc), `net_area_ratio` (signed area above vs below 0),
 - hole depth: `min_asc`, `dip`;   time in hole: `below0`, `frac_late_neg`, `t_last_neg`;
 - born-early: `extent` (winners born earlier);   `b_blade` (late-blade sign).
