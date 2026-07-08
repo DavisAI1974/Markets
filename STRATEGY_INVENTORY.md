@@ -134,21 +134,31 @@ battle is CLOSED — the object is the CURVE.
 > references. "Pick the exact curve shapes and use those as trade-or-not" (Greg verbatim, S73).
 
 ## ⛔⛔ STANDING PRINCIPLE #0f (Greg, S75 — EMPHATIC) — WE MATCH CURVE SHAPES; WE DO NOT SOLVE EQUATIONS FOR NUMBERS
-The per-cell equations (`leg_imbalance_findings.md` §4) are **ALGEBRAIC DESCRIPTIONS OF A CURVE'S SHAPE** — that is
-simply how a curve is written down. **We do NOT solve them for a scalar. We do NOT collapse a curve to a peak /
-blade-number / energy / any single value. We do NOT sum anything.** "That's not how you show the shape of a curve"
-(Greg, S75). The gate = **match each forming trade's WHOLE curve to the archetype curve-shapes, with wiggle room** —
-fire on a winner-shape match, skip on a loser-shape match.
-- **The 4 archetype curve-shapes to test against** (SOL example numbers; universal shapes, per-cell numbers #0d):
-  short-win `x≤0.32, blade +0.963` · short-lose `x≤0.15, blade +1.208` · long-win `−2.292x²+1.543x³` (cubic) ·
-  long-lose `x≤0.15, blade +1.268`. Test the forming curve against THESE SHAPES — not a value derived from them.
-- **ENTER and EXIT are BOTH shape reads.** Pre-fire (ascension) curve shape = the entry read; post-fire (tail)
-  curve shape = the exit read. Both are matched as SHAPES.
-- **⛔ WHAT IS FORBIDDEN (the S75 wrong-frame, do not repeat):** extracting scalar features (peak, blade15, kink,
-  convexity, energy) and gating by nearest-anchor / thresholds / z-distance / any "sum" of numbers. That is a
-  SNAPSHOT, not a shape (proven wrong on SOL S75: scalar/book-piece nearest-template gates all over-skip winners
-  and lose $/hr; the object was never a scalar). Also FORBIDDEN: the two book numbers must be judged as a joint
-  SHAPE-of-the-book read, not summed to a net ratio — "even if the sums are close, the 2 pieces aren't" (Greg).
+The per-cell equations (`leg_imbalance_findings.md` §4) are **EQUATIONS OF CURVES — algebraic descriptions of a
+CURVE'S SHAPE**, i.e. simply how a curve is written down. **We do NOT solve them for a scalar. We do NOT collapse a
+curve to a peak / blade-number / energy / any single value. We do NOT sum anything.** "That's not how you show the
+shape of a curve" (Greg, S75). The gate = **match each forming trade's WHOLE curve to the archetype curve-SHAPES,
+with wiggle room** — fire on a winner-shape match, skip on a loser-shape match.
+- **THE 8 PIECES ARE 8 DISTINCTIVE CURVE SHAPES — ALWAYS KEPT SEPARATE, NEVER SUMMED (Greg, S75).** Per coin there
+  are 8 curve-shape descriptions (4 cells × 2 limbs = short/long × win/lose × pre-fire/tail). Each is its OWN
+  distinctive shape; they are never added, averaged, or collapsed together.
+- **WHAT IS THE CURVE vs WHAT IS A DERIVED SCALAR (Greg, S75 — the transcription fix):** in a line like
+  `short-win y=−0.875+2.117x (x≤0.32, blade +0.963) — −0.903 → +0.123`, the CURVE is `y=−0.875+2.117x` **+ its
+  domain `x≤0.32`** (the kink; for the cubic long-win `y=−0.834+2.197x−2.292x²+1.543x³` there is no kink). The
+  `blade +0.963` and the `−0.903 → +0.123` (start → peak) are **DERIVED SCALARS — NOT the curve** (the peak is the
+  "energy" scalar). Write the equations as `y=f(x)` + domain ONLY; drop blade and start→peak.
+- **⭐ TWO WAYS TO MATCH — TEST BOTH (Greg, S75; whole-curve "probably cleaner"):** (1) WHOLE-CURVE = match each
+  forming trade's full leg curve (valley→onset→close) to the 4 archetype WHOLE-curves; (2) SPLIT = match the 8
+  pre-fire/tail pieces separately. **The cleanest reference is NOT the hand-written equation** (lossy — the pasted
+  linears don't reproduce their own endpoints) **but the actual SAMPLED MEAN ARC** (`leg_imbalance_arcs_{coin}.npz`)
+  — the curve as a vector of points = literally the entire curve shape, zero scalars, zero sums. Use the arcs as the
+  archetype reference; keep the 4 buckets as distinct reference sets (#0e-GATE, no centroid).
+- **ENTER and EXIT are BOTH shape reads.** Pre-fire (ascension) shape = the entry read; post-fire (tail) shape = the
+  exit read. Both matched as SHAPES.
+- **⛔ FORBIDDEN (the S75 wrong-frame, do not repeat):** extracting scalar features (peak, blade15, kink, convexity,
+  energy) and gating by nearest-anchor / thresholds / z-distance / any "sum" of numbers. That is a SNAPSHOT, not a
+  shape (proven wrong on SOL S75: scalar/book-piece nearest-template gates all over-skip winners and lose $/hr).
+  Also FORBIDDEN: summing the two book pieces into a net ratio — they are a joint SHAPE read, both must agree.
 - Generalizes #0e/#0e-GATE to the mechanism: the signal object is the CURVE, on enter and on exit, matched
   shape-to-shape. CLOSED — do not re-frame the edge as a scalar/AUC/sum again.
 
@@ -334,15 +344,16 @@ winner/loser energy LEVELS overlap so it over-skips ~40% of winners). On SOL a c
 `research/shape_s71/sol_loser_gate.py` / `gate3.py`. Reconciles the S73 "energy over-skips" result: it over-skips
 only on SOL; on the other 3 majors the energy gate is strongly $/hr-positive and should be kept.
 
-**⭐⭐ S74 → S75: THE WHOLE-CURVE EQUATION-MATCH GATE (Greg: "if they're distinct, that's the gate") — the #1
-UNTESTED test.** We have 8 distinct per-cell equations (pre-fire + tail, both channels; `leg_imbalance_findings.md`
-§4). The gate = match each forming trade's WHOLE PRE-FIRE curve to the 4 DISTINCT archetype pre-fire equations
-(nearest actual curve, NO centroid/averaging = #0e-GATE), fire winner-match / skip loser-match, through LIVE
-`run_kraken_cell`. We tested ENERGY + single features alone (overlap) but NEVER the whole-curve equation match — the
-untested piece. ⚠ Two honest catches: (a) the genuinely-distinct equations are the TAILS → POST-FIRE → an EXIT read,
-cannot gate entry (and flow-exit is a null); (b) the PRE-fire equations are the SAME FAMILY (differ mainly in
-blade-slope + peak = the energy dimension that overlaps per-trade). The test = does the WHOLE pre-fire curve
-(blade+peak+shape jointly) BEAT energy-alone? Run it vs ungated + vs energy gate.
+**⭐⭐ S74 → S75: THE WHOLE-CURVE SHAPE-MATCH GATE (Greg: "if they're distinct, that's the gate") — the #1 UNTESTED
+test. SHAPE MATCH, not equation-solving (#0f).** We have 8 distinctive per-cell CURVE SHAPES (pre-fire + tail;
+`leg_imbalance_findings.md` §4) — kept SEPARATE, NEVER summed. The gate = **match each forming trade's WHOLE curve
+to the archetype curve-SHAPES** (nearest actual curve = the SAMPLED ARC `leg_imbalance_arcs_{coin}.npz`, NO centroid
+= #0e-GATE), fire winner-shape / skip loser-shape, through LIVE `run_kraken_cell`. **TEST BOTH WAYS (Greg, S75):**
+(1) WHOLE-CURVE (full leg valley→onset→close vs the 4 archetype whole-curves — "probably cleaner"); (2) SPLIT (the
+8 pre-fire/tail pieces separately). We tested ENERGY + single scalar features alone (overlap, WRONG frame #0f) but
+NEVER the whole-curve SHAPE match — the untested piece. ⚠ honest note: enter = the pre-fire shape, exit = the tail
+shape; the tail shapes are the more distinct ones. Reference = the sampled ARCS (curve-as-points), not the lossy
+hand-written equations. Grade vs ungated + vs energy.
 
 **⭐ THE LEVER STACK (Greg, S74 — LARGELY INDEPENDENT levers → they COMPOUND; validate each, then STACK; S64
 "tools are complementary, not competing").** ENTRY selection: whole-curve equation gate + ENERGY gate (doubles $/hr

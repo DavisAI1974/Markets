@@ -1,8 +1,13 @@
 # SESSION HANDOFF — S74 (2026-07-08)
 
+> ⛔⛔ S75 OVERRIDE (Greg) — read STRATEGY_INVENTORY #0f first. Every "equation"/"8 equations" below means an
+> EQUATION OF A CURVE = a distinctive CURVE SHAPE (8/coin, kept SEPARATE, NEVER summed). We MATCH curve shapes on
+> enter+exit (whole-curve via the sampled arcs, or the 8 split pieces — test both); we do NOT solve them for a
+> scalar and do NOT sum. The S74 "energy gate / single-feature" scalar results are the WRONG frame (S75).
+
 READ FIRST: `STRATEGY_INVENTORY.md` OPERATING CONTRACT + ✅ LIVE section — the **S74 WHOLE-LEG IMBALANCE
 FINDINGS** block + the **S74 ENTRY-ENERGY GATE** block carry the whole S74 result. Then this handoff. Then
-`research/shape_s71/leg_imbalance_findings.md` (the full tables + 8 equations/coin + per-cell PNGs).
+`research/shape_s71/leg_imbalance_findings.md` (the full tables + 8 curve-shape equations/coin + per-cell PNGs).
 
 BRANCH: `claude/entry-shape-classifier-s74-5lb1p5` (reconciled to the canonical S73 tip
 `origin/claude/entry-curve-shape-classifier-b5neon` at session start, then all S74 work on top). Books restored

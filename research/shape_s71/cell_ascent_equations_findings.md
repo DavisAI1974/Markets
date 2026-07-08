@@ -1,5 +1,12 @@
 # S74 — Per-cell ascension equations, clean discriminators, and the energy-gate fine-tune
 
+> ⛔⛔ S75 CORRECTION (Greg) — THIS DOC IS THE WRONG FRAME; KEPT AS A RECORD. It treats the equations as sources of
+> SCALAR "features" (peak / equation-derived numbers) and grades non-overlap of those scalars. That is a SNAPSHOT,
+> not a shape. The equations are EQUATIONS OF CURVES — 8 distinctive shapes/coin, kept SEPARATE, NEVER summed. The
+> gate MATCHES CURVE SHAPES (enter + exit), whole-curve via the sampled arcs or the 8 split pieces — never a
+> scalar/sum. See STRATEGY_INVENTORY #0f + CLAUDE.md S75. The scalar "clean discriminator / energy-gate" findings
+> below are IN-SAMPLE scalar results and are NOT the method going forward.
+
 Scope: BTC/ETH/SOL/XRP (majors). DOGE excluded. All trade decisions come through the LIVE
 `run_kraken_cell` via `sol_ascent_eq.extract()` / the `arc_gate.py` builder — nothing in the executor,
 fills, or fees was reimplemented. The signal object is the normalized signed imbalance-ratio arc in [-1,1]
