@@ -66,3 +66,8 @@ frontend/dist/
 _episode_onsets_out/
 _onset_coeff/
 _full_pipeline_onset/
+
+# Kalshi collector bins (durable copy goes gzipped to data/kalshi-bins branch)
+data/kalshi/*.jsonl
+data/kalshi/*.jsonl.gz
+data/kalshi/*.tmp
