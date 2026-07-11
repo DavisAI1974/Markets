@@ -13,34 +13,59 @@ from pathlib import Path
 from typing import Any
 
 
+# S78 Kalshi repoint: macro / energy / weather feeds (was CoinDesk/Cointelegraph/ETH).
+# PRIMARY = government release source. Reachability from this environment noted inline;
+# BLS blocks datacenter IPs (403 even with a browser UA) -> kept for box-side/other-IP
+# runs, skipped gracefully here. The news-coupling thread targets the EIA-energy,
+# Fed/CPI-macro, and NHC-hurricane contracts; the daily-high-temp city contracts are
+# served by the OD-weather thread, not by RSS news.
 DEFAULT_FEEDS = [
-    {
-        "source": "CoinDesk",
-        "source_quality": "TRUSTED_MEDIA",
-        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
-    },
-    {
-        "source": "Cointelegraph",
-        "source_quality": "TRUSTED_MEDIA",
-        "url": "https://cointelegraph.com/rss",
-    },
-    {
-        "source": "Ethereum Foundation Blog",
-        "source_quality": "PROTOCOL_PRIMARY",
-        "url": "https://blog.ethereum.org/feed.xml",
-    },
+    {"source": "EIA Today in Energy", "source_quality": "PRIMARY",
+     "url": "https://www.eia.gov/rss/todayinenergy.xml"},          # live (200)
+    {"source": "EIA Press", "source_quality": "PRIMARY",
+     "url": "https://www.eia.gov/rss/press_rss.xml"},              # live (200)
+    {"source": "Federal Reserve Press (all)", "source_quality": "PRIMARY",
+     "url": "https://www.federalreserve.gov/feeds/press_all.xml"}, # live (200)
+    {"source": "Federal Reserve Monetary", "source_quality": "PRIMARY",
+     "url": "https://www.federalreserve.gov/feeds/press_monetary.xml"},  # live (200)
+    {"source": "NOAA NHC Atlantic", "source_quality": "PRIMARY",
+     "url": "https://www.nhc.noaa.gov/index-at.xml"},              # live (200) hurricanes
+    {"source": "BLS Employment Situation", "source_quality": "PRIMARY",
+     "url": "https://www.bls.gov/feed/empsit.rss"},                # 403 from datacenter IPs
+    {"source": "BLS CPI", "source_quality": "PRIMARY",
+     "url": "https://www.bls.gov/feed/cpi.rss"},                   # 403 from datacenter IPs
 ]
 
-BTC_TERMS = re.compile(r"\b(bitcoin|btc|satoshi|lightning network)\b", re.I)
-ETH_TERMS = re.compile(r"\b(ethereum|ether|eth\b|staking|validator|mainnet|evm|defi)\b", re.I)
+# Contract-keyword map (was BTC_TERMS/ETH_TERMS). Each Kalshi series -> a regex; a news
+# item that matches tags that series in `assets`. EXTEND with Greg's domain edge (esp.
+# energy contracts once added to the collector watchlist). Downstream (coupling) is
+# unchanged: `assets` now holds Kalshi series tickers instead of BTC/ETH.
+CONTRACT_KEYWORDS: dict[str, "re.Pattern[str]"] = {
+    # --- macro scheduled prints (clean news->outcome causal events) ---
+    "KXUSNFP":    re.compile(r"\b(nonfarm|payroll|jobs report|employment situation|jobless|labor market)\b", re.I),
+    "KXCPIYOY":   re.compile(r"\b(cpi|consumer price|inflation)\b", re.I),
+    "KXCPICOREA": re.compile(r"\bcore (cpi|inflation)\b", re.I),
+    "PCECORE":    re.compile(r"\b(pce|core pce|personal consumption expenditure)\b", re.I),
+    "KXFEDHIKE":  re.compile(r"\b(fomc|federal reserve|fed\b|powell|rate (hike|decision|increase))\b", re.I),
+    "RATECUTS":   re.compile(r"\b(rate cut|fed cut|easing|dovish)\b", re.I),
+    "KXEFFR":     re.compile(r"\b(fed funds|effr|federal funds rate)\b", re.I),
+    # --- hurricanes / tropical (NHC feed) ---
+    "KXTROPSTORM": re.compile(r"\b(tropical storm|tropical depression|named storm|hurricane|cyclone)\b", re.I),
+    # --- weather daily-high cities: mostly OD-driven, tagged only on heat-wave macro news ---
+    "KXHIGHNY":   re.compile(r"\b(new york|nyc|central park)\b", re.I),
+    "KXHIGHCHI":  re.compile(r"\bchicago\b", re.I),
+    "KXHIGHTPHX": re.compile(r"\bphoenix\b", re.I),
+    # TODO(greg): add EIA energy contracts (crude/natgas storage, gasoline) once on the watchlist.
+}
+
 BEARISH_TERMS = re.compile(
-    r"\b(hack|exploit|lawsuit|charged|probe|outflow|selloff|drop|falls|bearish|"
-    r"liquidation|security|outage|ban|delay|risk|warning|crackdown)\b",
+    r"\b(hotter|higher|rose|rise|jump|surge|accelerat|beat|hawkish|above forecast|"
+    r"tighten|hike|elevated|sticky|shortfall|draw|deficit|storm|warning|risk)\b",
     re.I,
 )
 BULLISH_TERMS = re.compile(
-    r"\b(approval|inflow|surge|rally|launch|rollout|adoption|upgrade|record|"
-    r"accumulation|buy|bullish|partnership|integrat|support|etf)\b",
+    r"\b(cooler|lower|fell|drop|ease|eased|slow|decelerat|miss|dovish|below forecast|"
+    r"cut|soft|cooling|surplus|build|glut|calm|clear)\b",
     re.I,
 )
 NUMERIC_SIZE_TERMS = re.compile(r"(\$?\d+(?:\.\d+)?\s?(?:billion|million|bn|m|%|bps|bp))", re.I)
@@ -145,11 +170,8 @@ def _iter_feed_items(xml_bytes: bytes) -> list[dict[str, str]]:
 
 def classify_item(title: str, summary: str) -> dict[str, Any]:
     text = f"{title} {summary}"
-    assets = []
-    if BTC_TERMS.search(text):
-        assets.append("BTC")
-    if ETH_TERMS.search(text):
-        assets.append("ETH")
+    # `assets` now holds the Kalshi series ticker(s) the item bears on (contract map).
+    assets = [series for series, rx in CONTRACT_KEYWORDS.items() if rx.search(text)]
     bearish = len(BEARISH_TERMS.findall(text))
     bullish = len(BULLISH_TERMS.findall(text))
     if bullish > bearish:
@@ -160,24 +182,26 @@ def classify_item(title: str, summary: str) -> dict[str, Any]:
         bias = "MIXED"
     else:
         bias = "UNKNOWN"
+    # Macro/energy/weather categories (was crypto ETF/SECURITY/PROTOCOL/EXCHANGE).
     category = "UNKNOWN"
     lowered = text.lower()
-    if "etf" in lowered or "inflow" in lowered or "outflow" in lowered:
-        category = "ETF"
-    elif "hack" in lowered or "exploit" in lowered or "security" in lowered:
-        category = "SECURITY"
-    elif "sec" in lowered or "cftc" in lowered or "lawsuit" in lowered or "regulation" in lowered:
-        category = "REGULATORY"
-    elif "upgrade" in lowered or "mainnet" in lowered or "validator" in lowered:
-        category = "PROTOCOL"
-    elif "exchange" in lowered or "coinbase" in lowered or "binance" in lowered or "kraken" in lowered:
-        category = "EXCHANGE"
-    elif "fed" in lowered or "cpi" in lowered or "treasury" in lowered or "rates" in lowered:
-        category = "MACRO"
+    if any(k in lowered for k in ("crude", "petroleum", "natural gas", "gasoline", "opec", "barrel", "storage", "inventory", "energy")):
+        category = "ENERGY"
+    elif any(k in lowered for k in ("cpi", "pce", "inflation", "price index")):
+        category = "INFLATION"
+    elif any(k in lowered for k in ("payroll", "employment", "unemployment", "jobless", "labor")):
+        category = "JOBS"
+    elif any(k in lowered for k in ("fomc", "federal reserve", "powell", "rate cut", "rate hike", "fed funds", "monetary")):
+        category = "MONETARY"
+    elif any(k in lowered for k in ("hurricane", "tropical storm", "cyclone", "landfall")):
+        category = "HURRICANE"
+    elif any(k in lowered for k in ("temperature", "heat wave", "heatwave", "record high", "forecast")):
+        category = "WEATHER"
     confidence = 0.55 if assets else 0.25
     if bias in {"BULLISH", "BEARISH"}:
         confidence += 0.1
-    trade_starter_candidate = category in {"SECURITY", "REGULATORY"} and bias in {"BULLISH", "BEARISH"}
+    # Scheduled prints + storm warnings are the shock events that gate new entries.
+    trade_starter_candidate = category in {"INFLATION", "JOBS", "MONETARY", "ENERGY", "HURRICANE"} and bias in {"BULLISH", "BEARISH"}
     starter_actions = []
     if trade_starter_candidate:
         starter_actions.append("PAUSE_NEW_ENTRIES")
