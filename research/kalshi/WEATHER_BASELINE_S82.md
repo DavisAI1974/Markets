@@ -74,6 +74,14 @@ that leans on it) is weakest — never in the pooled mean.
 Rule: report "edge on {transition × Denver × spring}, not on {calm × LAX}", never a single yearly Brier.
 Partial coverage is not failure — a cell that clears is kept and deployed on that cell.
 
+**Two regimes is the MINIMUM, not the target (Greg S82).** calm vs transition is the coarsest useful cut;
+real synoptic weather has more, and lumping them all into "transition" is itself a mild averaging that will
+blur the distinctive cells. Split further as the data + a pre-hoc classifier allow, e.g.: ridge / heat-dome
+(persistence over-performs, ladder tight), cold-frontal passage (sharp cooling swing), warm-front / return
+-flow (warming swing), onshore / marine-layer clamp (LAX-style), post-frontal radiational, convective /
+overcast cap. Each is its own cell with its own edge and its own baseline failure mode — the finer split is
+strictly better once we can classify the regime BEFORE the day resolves. Start at 2, refine toward these.
+
 ## How a trade pays (worked example — REAL event `KXHIGHNY-26JUN29`, realized high = 88°F)
 Real ladder that day (6 buckets): `[<=79] [79-80] [81-82] [83-84] [85-86] [>=86]`. Realized 88°F →
 the top bucket **`>=86` resolved YES**; the day ran hotter than the ladder was centered.
