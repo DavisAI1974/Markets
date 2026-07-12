@@ -123,16 +123,55 @@ we periodically pull back out. All portable numpy; validated per-cell.
   `sizing.py` / `stacking.py` / `generators.py`** — coupling discriminator, tautology-killing
   circular-shift null, symbolic regression, the walk-forward net-of-cost promotion gate, OD-native
   sizing, stacking.
-- **Key carried-over findings** (detail in `CLAUDE_ARCHIVE_OD.md` + `S36_NETCOST_BACKTEST_FINDINGS.md`):
-  the swing reframe (buy valleys/short peaks, no clock horizon; the game is entry TIMING at the turn);
-  DIPOLE = filter (which turns are real) + fine-resolution PRICE-REVERSAL = timing; the fee-floor rule
-  (never trade a swing smaller than round-trip fee + 2× slippage; maker floor ~4bps vs taker ~22bps);
-  per-cell regime master-gate rescues bleeders; tools are COMPLEMENTARY, not competing — evaluate by
-  stacking, never head-to-head.
 - **Crypto data history** (for reaching back): `data/*-bins`, `data/*-book`, `data/*-kraken-book`,
   `data/perp-history` branches — 5 coins × 3 venues 1s bins + L2 books. Collector workflows were
   deleted from the trunk end-S82 (runner hog); the code is recoverable via git history if collection
   ever needs to restart.
+
+The research findings behind these tools are the next section — the dipole research stays LIVE here,
+not just in the archive.
+
+---
+
+## Dipole research (standing — the findings, kept live)
+
+The information dipole (davisai.ai/dipole) is our directional/flow tool; Greg: the trend-following /
+flow read may be one of our biggest edges, usable across the WHOLE platform — which is why this stays
+in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDOFF_2026-06-22_S36.md` /
+`_S36b` / `_S37`, and `CLAUDE_ARCHIVE_OD.md`.
+
+- **The core read (S36, 2 factors, stack monotonically):** markets are follow-the-leader (a trend = a
+  flow) until the leader exhausts → new leader, usually opposite; the edge is detecting the changeover.
+  (1) **DIVERGENCE** — `aligned_flow = imb_level × sign(price_drift)`; strong divergence (≤ −0.20) →
+  ~65% reversal, temporally stable, consistent 6/7 cells. (2) **EXHAUSTION** — the dipole COLLAPSING
+  toward 0.5 (leader weakening; the MOVE toward balance, NOT the discrete crossing, which is a coin
+  flip). Combined: oppose+exhaust 64% reversal > oppose+strengthen 58% > with-trend+exhaust 52% >
+  with-trend+strengthen 49% (healthiest trend).
+- **Discipline (load-bearing):** the signed flow is NOT a direct direction predictor — apparent
+  directional lifts were trend/base-rate artifacts (Simpson's on a trending window) and died under
+  window/forward sweep + temporal OOS + detrended targets. `DEPLOY_VALIDATED=False`; never trade the
+  directional `cell_signal` map. The DIVERGENCE/FLIP read is the robust edge; static `imb_level` is
+  the detector (differential flows are not).
+- **Net-of-cost (S36b, per cell):** the 64% does NOT clear a 10bps round-trip pooled; the flow gate
+  adds ~+3bps/trade over blind trend-following and clears walk-forward-robustly only on specific cells
+  (btc_bybit sell/buy). Direction is the easy part — the edge is SIZE-vs-FEE (the same finding Kalshi
+  S81/S82 reproduced on a different market).
+- **The architecture split:** DIPOLE = the FILTER (which turns are real) + fine-resolution
+  PRICE-REVERSAL = the TIMING (1-sec enters ~5–6bps off the true turn vs ~9–11 at 1-min). Fee-floor
+  rule: never trade a swing smaller than round-trip fee + 2× entry slippage (taker floor ~22bps;
+  resting a maker limit at the predicted turn drops it to ~4bps, with fill-risk). Per-cell regime
+  master-gate rescues bleeder cells; leave winning cells un-gated.
+- **The gated-swing stack (S37, `_info_dipole_gated_swing.py`):** timing (1-sec price-reversal) +
+  filter (dipole divergence) + regime gate + maker floor, leakage-gated (PASS 6/6); PROVISIONAL 4/6
+  cells clear on the single window — never size off one window.
+- **The centroid-dipole lineage (S33–S35):** the real markets dipole is CENTROID-based, not bins —
+  H_a/H_b = projections of a trade's 128-dim OD `operator_coefficients` on win/lose centroids; per-cell
+  exact coeffs + the distinctive-fingerprint program (`bucket-distinctiveness-is-the-goal`: predict
+  winners by their per-cell fingerprint, never by class-separation statistics).
+- **Standing meta-rules:** tools are COMPLEMENTARY, not competing — evaluate by STACKING, never
+  head-to-head ("even a 5% net edge is huge"). Per-cell always. On Kalshi today the dipole exhaustion
+  read is live inside `release_book_signal.py` (direction = book-imbalance sign, magnitude/fade =
+  imbalance + dipole exhaustion) and the level-hit context features.
 
 ---
 
