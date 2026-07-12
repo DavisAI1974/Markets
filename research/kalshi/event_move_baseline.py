@@ -35,9 +35,17 @@ tick after R. The forward move metrics are descriptive OUTCOMES (post-event), no
 Settle window: releases (14:30 UTC) sit well before the 21:00/22:00 UTC daily settle, and the forward
 window is capped at post seconds, so it never runs into settle. Zero synthetic. Provisional-until-live.
 
+DEPTH (S86, --depth): with the MBP-10 depth tape (databento_backfill.py --schema mbp-10) each event also
+carries the resting-book read — imbalance AT the release R (pre-event, leakage-gated: the direction tilt),
+and the book state at the INITIAL PUSH (fast-window peak): aligned_imb_push (book still supporting the move
+vs the leader exhausting/flipping = the dipole collapse-toward-balance), far_thinning (consumed-side
+liquidity eaten), spread_ratio. The run-length test contrasts these against sustain_s / retention: does a
+thinning / one-sidedly-exhausting book predict a LONGER or SHORTER run? Provisional (release-window n).
+
 Usage:
     python research/kalshi/event_move_baseline.py --symbol NG --series KXNATGASD --out data/event_move_NG.json
     python research/kalshi/event_move_baseline.py --symbol CL --series KXWTI --pre 120 --post 1800
+    python research/kalshi/event_move_baseline.py --symbol NG --depth --out data/event_move_NG_depth.json
     python research/kalshi/event_move_baseline.py --selftest      # math + leakage-closure unit check
 """
 from __future__ import annotations
@@ -60,6 +68,7 @@ sys.path.insert(0, _ROOT)
 from odcore.leakage import assert_no_leakage            # noqa: E402
 
 TAPE_DIR = "data/pyth_ticks"
+MBP10_DIR = "data/nymex_mbp10"                 # depth tape (databento_backfill.py --schema mbp-10)
 CONSENSUS = "data/kalshi/consensus.jsonl"
 
 # symbol -> underlying ROOT (for the definition store, reference spec, and release calendar).
@@ -127,6 +136,46 @@ def load_tape(symbol: str):
     # dedup exact-duplicate timestamps (keep last), keeps the leakage permutation well-defined
     keep = np.concatenate([np.diff(ts) > 0, [True]])
     return ts[keep], p[keep], sz[keep]
+
+
+def load_tape_depth(symbol: str, tape_dir: str = MBP10_DIR):
+    """MBP-10 depth tape -> time-sorted arrays (ts, price, size, bid_dep, ask_dep, bid_sz, ask_sz,
+    bid_px, ask_px). Records {ts,price,size,bid_px,ask_px,bid_sz,ask_sz,bid_dep,ask_dep,src=databento_mbp10}
+    from databento_backfill._write_mbp10_df (trade events + concurrent 10-level book). The price path is
+    the SAME trade prints as the trades tape (so move_metrics reproduces S85); the depth rides along."""
+    paths = sorted(glob.glob(os.path.join(tape_dir, f"{symbol}_*.jsonl")))
+    paths = [p for p in paths if "_definitions" not in os.path.basename(p)]
+    rows = []
+    for path in paths:
+        for line in open(path):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                r = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if r.get("price") is None or r.get("ts") is None:
+                continue
+            rows.append((_parse_ts(r["ts"]), float(r["price"]), float(r.get("size") or 0.0),
+                         float(r.get("bid_dep") or 0.0), float(r.get("ask_dep") or 0.0),
+                         float(r.get("bid_sz") or 0.0), float(r.get("ask_sz") or 0.0),
+                         float(r.get("bid_px") or 0.0), float(r.get("ask_px") or 0.0)))
+    if not rows:
+        return None
+    rows.sort(key=lambda x: x[0])
+    arr = np.array(rows, float)
+    keep = np.concatenate([np.diff(arr[:, 0]) > 0, [True]])   # dedup exact-dup ts (keep last)
+    arr = arr[keep]
+    return {"ts": arr[:, 0], "price": arr[:, 1], "size": arr[:, 2],
+            "bid_dep": arr[:, 3], "ask_dep": arr[:, 4], "bid_sz": arr[:, 5], "ask_sz": arr[:, 6],
+            "bid_px": arr[:, 7], "ask_px": arr[:, 8]}
+
+
+def _imbalance(bid, ask):
+    """(bid-ask)/(bid+ask) book imbalance in [-1,1]; +1 = all bid (buy pressure), 0 = balanced."""
+    tot = bid + ask
+    return float((bid - ask) / tot) if tot > 0 else 0.0
 
 
 def load_defs(root: str):
@@ -322,6 +371,52 @@ def move_metrics(rel_idx, ts, p, baseline, tick_size, tick_value, post_s, run_th
         "fast_usd": round(fast_ticks * tick_value, 2) if tick_value else None,
         "fast_capture": round(float(fast_capture), 3),
         "peaked_fast": bool(time_to_peak <= fast_s),
+        "_k_peak": int(k_peak),                          # global-peak offset from rel_idx
+        "_k_fast": int(kf),                              # fast-window (initial-push) peak offset
+    }
+
+
+# ---- depth (MBP-10) features: the book imbalance / thinning / exhaustion read ---------------------
+def depth_at_R_scalar(i, ts, p, bd, ad, *_):
+    """Leakage-safe pre-event book imbalance AT index i (reads only i's resting depth). Passed to the
+    leakage gate with bv=bid_dep, sv=ask_dep — invariant to every row after i by construction."""
+    if i < 0 or i >= len(bd):
+        return None
+    return round(_imbalance(float(bd[i]), float(ad[i])), 6)
+
+
+def depth_features(rel_idx, push_idx, move_sign, D):
+    """Book-depth read for one event on the MBP-10 tape, measured from the release R to the INITIAL PUSH
+    (fast-window peak — the immediate move, not a 30-min global peak that book recovery would dominate).
+    Distinguishes the two flow mechanisms in the dipole exhaustion frame:
+      - imb_R            resting-book imbalance AT the release (pre-event; the leakage-safe direction tilt).
+      - aligned_imb_R    imb_R * move_sign — did the pre-event book already lean the way price then moved?
+      - aligned_imb_push imbalance * move_sign AT the initial push — does the book still SUPPORT the move
+                         (>0 continuation fuel) or has the leader EXHAUSTED / flipped (<=0 = the dipole
+                         collapse-toward-balance that precedes reversal)?
+      - far_thinning     1 - far_dep_push/far_dep_R, far side = the one being CONSUMED (ask if up, bid if
+                         down): +ve = resting liquidity eaten as price ran (fuel spent into the move).
+      - spread_ratio     spread_push / spread_R — widening = liquidity stress.
+    All are DESCRIPTIVE outcomes except imb_R (pre-event). Distributions per cell, never a lone mean."""
+    bd, ad, bpx, apx = D["bid_dep"], D["ask_dep"], D["bid_px"], D["ask_px"]
+    imb_R = _imbalance(float(bd[rel_idx]), float(ad[rel_idx]))
+    imb_push = _imbalance(float(bd[push_idx]), float(ad[push_idx]))
+    aligned_R = imb_R * move_sign
+    aligned_push = imb_push * move_sign
+    # far side = the side being consumed by the move (ask lifted on up-moves, bid hit on down-moves)
+    far_R = float(ad[rel_idx]) if move_sign >= 0 else float(bd[rel_idx])
+    far_push = float(ad[push_idx]) if move_sign >= 0 else float(bd[push_idx])
+    far_thinning = (1.0 - far_push / far_R) if far_R > 0 else 0.0
+    spr_R = max(float(apx[rel_idx]) - float(bpx[rel_idx]), 0.0)
+    spr_push = max(float(apx[push_idx]) - float(bpx[push_idx]), 0.0)
+    spread_ratio = (spr_push / spr_R) if spr_R > 0 else 1.0
+    return {
+        "imb_R": round(imb_R, 4),
+        "aligned_imb_R": round(aligned_R, 4),
+        "aligned_imb_push": round(aligned_push, 4),
+        "exhaustion": round(aligned_R - aligned_push, 4),  # +ve = book support collapsed from R to push
+        "far_thinning": round(far_thinning, 4),
+        "spread_ratio": round(spread_ratio, 3),
     }
 
 
@@ -331,7 +426,16 @@ def tape_days(ts):
 
 
 def build(symbol, series, cfg):
-    ts, p, sz = load_tape(symbol)
+    D = None
+    if cfg.get("depth"):
+        D = load_tape_depth(symbol, cfg["depth_dir"])
+        if D is None:
+            return {"symbol": symbol, "status": "NO_DATA",
+                    "msg": f"no depth tape in {os.path.join(cfg['depth_dir'], symbol + '_*.jsonl')} — "
+                           f"run databento_backfill.py --schema mbp-10 first"}
+        ts, p, sz = D["ts"], D["price"], D["size"]
+    else:
+        ts, p, sz = load_tape(symbol)
     if ts.size == 0:
         return {"symbol": symbol, "status": "NO_DATA",
                 "msg": f"no tape in {os.path.join(TAPE_DIR, symbol + '_*.jsonl')} — "
@@ -367,11 +471,20 @@ def build(symbol, series, cfg):
         if mv is None:
             continue
         f, a, surp = surprise_for(series, d.isoformat(), consensus)
+        depth = {}
+        if D is not None:
+            # measure the book over the INITIAL push (fast-window peak), not the 30-min global peak —
+            # exhaustion/consumption reads on the immediate move; a global peak 18 min out is dominated
+            # by book recovery over the horizon, not by liquidity consumed during the move.
+            push_idx = idx + int(mv["_k_fast"])
+            move_sign = 1.0 if (mv["peak_signed_bps"] or 0) >= 0 else -1.0
+            depth = depth_features(idx, push_idx, move_sign, D)
+        mv = {k: v for k, v in mv.items() if k not in ("_k_peak", "_k_fast")}
         events.append({"day": d.isoformat(), "release_idx": idx,
                        "baseline": round(anc["baseline"], 5), "pre_vol": round(anc["pre_vol"], 6),
                        "n_pre": anc["n_pre"], "tick_size": tsz, "tick_value": tval,
                        "tick_source": tsrc, "forecast": f, "actual": a, "surprise": surp,
-                       "cell": surprise_cell(series, surp, cfg["big_surprise"]), **mv})
+                       "cell": surprise_cell(series, surp, cfg["big_surprise"]), **mv, **depth})
 
     if not events:
         return {"symbol": symbol, "status": "NO_EVENTS",
@@ -387,6 +500,11 @@ def build(symbol, series, cfg):
             lambda i, ts_, p_, bv_, sv_: _anchor_scalar(i, ts_, p_, bv_, sv_, cfg["pre_s"]),
             ts, p, bv, sv, idxs, reps=3, seed=0)
         leak_pass, leak_fails = bool(leak_pass), len(fails)
+        if D is not None:                          # gate the pre-event book-imbalance feature too
+            dpass, dfails = assert_no_leakage(depth_at_R_scalar, ts, p, D["bid_dep"], D["ask_dep"],
+                                              idxs, reps=3, seed=0)
+            leak_pass = leak_pass and bool(dpass)
+            leak_fails += len(dfails)
     else:
         leak_pass, leak_fails = True, 0
 
@@ -409,6 +527,8 @@ def build(symbol, series, cfg):
         "leakage_pass": leak_pass, "leakage_fails": leak_fails,
         "n_cells_reported": len(cells),
         "cells": cells,
+        "depth": ({k: _depth_summary(evs) for k, evs in by_cell.items() if len(evs) >= cfg["min_cell"]}
+                  if D is not None else None),
         "pooled_footnote": _move_dist(events),          # footnote only, never the headline
         "events": events if cfg["emit_events"] else None,
         "cfg": {k: v for k, v in cfg.items()},
@@ -458,6 +578,72 @@ def _move_dist(evs):
     }
 
 
+def _spear_sign(x, y):
+    """Spearman rank correlation (sign + value) — small-n robust, no scipy. None if degenerate."""
+    x = np.asarray(x, float); y = np.asarray(y, float)
+    if x.size < 3 or np.ptp(x) == 0 or np.ptp(y) == 0:
+        return None
+    rx = np.argsort(np.argsort(x)).astype(float)
+    ry = np.argsort(np.argsort(y)).astype(float)
+    rx -= rx.mean(); ry -= ry.mean()
+    d = np.sqrt((rx * rx).sum() * (ry * ry).sum())
+    return round(float((rx * ry).sum() / d), 3) if d > 0 else None
+
+
+def _depth_summary(evs):
+    """The MBP-10 depth read for a set of events (the exhaustion / run-length test). DESCRIPTIVE +
+    one pre-event predictor (imb_R). n is small (release windows) -> provisional; report the split and
+    the rank-correlation SIGN, never a lone mean. Two questions:
+
+      DIRECTION (pre-event, leakage-safe): does the resting-book imbalance AT the release lean the way
+        price then moved? hit = sign(imb_R)==move_dir; aligned_imb_R>0 = it led correctly.
+      RUN-LENGTH (the dipole exhaustion read): do LONGER runs show the book still SUPPORTING the move at
+        its peak (high aligned_imb_push, low exhaustion) vs blips where the leader collapses toward
+        balance (exhaustion>0)? Split events at the median sustain_s and contrast; also the Spearman sign
+        of exhaustion / aligned_imb_push / far_thinning against sustain_s and against retention."""
+    n = len(evs)
+    imb_R = np.array([e["imb_R"] for e in evs], float)
+    aligned_R = np.array([e["aligned_imb_R"] for e in evs], float)
+    aligned_pk = np.array([e["aligned_imb_push"] for e in evs], float)
+    exhaust = np.array([e["exhaustion"] for e in evs], float)
+    thin = np.array([e["far_thinning"] for e in evs], float)
+    sustain = np.array([e["sustain_s"] for e in evs], float)
+    retention = np.array([e["retention"] for e in evs], float)
+    hit = float(np.mean(np.sign(imb_R) == np.sign([e["peak_signed_bps"] or 0 for e in evs])))
+    # median-split on sustain_s: long vs short run
+    med = float(np.median(sustain))
+    long_m = sustain >= med
+    def _med(a, m):
+        return round(float(np.median(a[m])), 4) if m.any() else None
+    return {
+        "n": n,
+        "direction_pre_event": {
+            "imb_R_leans_move_frac": round(hit, 3),
+            "aligned_imb_R": _q(aligned_R, [10, 50, 90]),
+        },
+        "imb_R": _q(imb_R, [10, 50, 90]),
+        "aligned_imb_push": _q(aligned_pk, [10, 50, 90]),
+        "exhaustion": _q(exhaust, [10, 50, 90]),
+        "far_thinning": _q(thin, [10, 50, 90]),
+        "run_length_contrast": {
+            "sustain_median_s": round(med, 1),
+            "long_run": {"n": int(long_m.sum()), "exhaustion": _med(exhaust, long_m),
+                         "aligned_imb_push": _med(aligned_pk, long_m), "far_thinning": _med(thin, long_m)},
+            "short_run": {"n": int((~long_m).sum()), "exhaustion": _med(exhaust, ~long_m),
+                          "aligned_imb_push": _med(aligned_pk, ~long_m), "far_thinning": _med(thin, ~long_m)},
+        },
+        "spearman_vs_sustain": {
+            "exhaustion": _spear_sign(exhaust, sustain),
+            "aligned_imb_push": _spear_sign(aligned_pk, sustain),
+            "far_thinning": _spear_sign(thin, sustain),
+        },
+        "spearman_vs_retention": {
+            "exhaustion": _spear_sign(exhaust, retention),
+            "aligned_imb_push": _spear_sign(aligned_pk, retention),
+        },
+    }
+
+
 # ---- selftest (math + leakage-closure unit check; NOT trading data) -------------------------------
 def selftest():
     """Deterministic unit check of the conversion math and the leakage closure. Uses a constructed ramp
@@ -488,6 +674,26 @@ def selftest():
         print("  ok  leakage closure invariant to post-index ticks (3/3)")
     else:
         print(f"  FAIL leakage: {fails}"); ok = False
+    # 3. depth features: up-move, ask (far) side thinning, imbalance building toward the move.
+    D = {"bid_dep": np.array([100.0, 100.0, 100.0]), "ask_dep": np.array([100.0, 50.0, 50.0]),
+         "bid_px": np.array([2.999, 2.999, 2.999]), "ask_px": np.array([3.000, 3.001, 3.001])}
+    df = depth_features(0, 1, move_sign=1.0, D=D)
+    exp = {"imb_R": 0.0, "aligned_imb_push": round((100 - 50) / 150, 4),
+           "far_thinning": 0.5, "exhaustion": round(0.0 - (100 - 50) / 150, 4)}
+    dok = all(abs(df[k] - v) < 1e-6 for k, v in exp.items())
+    if dok:
+        print(f"  ok  depth: imb_R={df['imb_R']} aligned_imb_push={df['aligned_imb_push']} "
+              f"far_thinning={df['far_thinning']} exhaustion={df['exhaustion']}")
+    else:
+        print(f"  FAIL depth: {df} vs {exp}"); ok = False
+    # depth imb_R leakage-safe: invariant to book AFTER the index.
+    bd = np.array([80.0, 60.0, 40.0, 90.0]); ad = np.array([20.0, 60.0, 60.0, 10.0])
+    dpass, dfails = assert_no_leakage(depth_at_R_scalar, np.arange(4.0), np.zeros(4), bd, ad,
+                                      idxs=[1, 2], reps=3, seed=0)
+    if dpass:
+        print("  ok  depth imb_R invariant to post-index book (leakage-safe)")
+    else:
+        print(f"  FAIL depth leakage: {dfails}"); ok = False
     print("SELFTEST", "PASS" if ok else "FAIL")
     return ok
 
@@ -508,6 +714,9 @@ def main():
     ap.add_argument("--big-surprise", type=float, default=10.0,
                     help="|actual-forecast| >= this = a 'big' surprise (release-native units)")
     ap.add_argument("--min-cell", type=int, default=3, help="min events to report a cell")
+    ap.add_argument("--depth", action="store_true",
+                    help="consume the MBP-10 depth tape (imbalance/thinning/exhaustion run-length read)")
+    ap.add_argument("--tape-dir", default=MBP10_DIR, help="depth tape dir (with --depth)")
     ap.add_argument("--emit-events", action="store_true", help="include the per-event rows in the JSON")
     ap.add_argument("--out", default=None)
     ap.add_argument("--selftest", action="store_true")
@@ -519,7 +728,7 @@ def main():
     cfg = {"pre_s": args.pre_s, "post_s": args.post_s, "min_pre_ticks": args.min_pre_ticks,
            "max_anchor_gap_s": args.max_anchor_gap_s, "run_thr": args.run_thr, "blip_thr": args.blip_thr,
            "big_surprise": args.big_surprise, "min_cell": args.min_cell, "emit_events": args.emit_events,
-           "fast_s": args.fast_s}
+           "fast_s": args.fast_s, "depth": args.depth, "depth_dir": args.tape_dir}
     res = build(args.symbol, args.series, cfg)
     if args.out:
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
@@ -546,6 +755,23 @@ def main():
               f"max={d['fast_bps']['max']}  ${d['fast_usd']['p50'] if d['fast_usd'] else 'n/a'}(p50) "
               f"captures {d['fast_capture_of_peak']['p50']} of peak  peaked_fast={d['peaked_fast_frac']}")
         print(f"    shape_mix={d['shape_mix']}  dir_mix={d['dir_mix']}")
+    if res.get("depth"):
+        print("\n  === MBP-10 DEPTH read (imbalance / thinning / exhaustion — provisional, small-n) ===")
+        for k, dd in res["depth"].items():
+            de = dd["direction_pre_event"]
+            rc = dd["run_length_contrast"]
+            print(f"\n  DEPTH {k}  n={dd['n']}")
+            print(f"    DIRECTION (pre-event, leakage-safe): book imbalance at R leans the move "
+                  f"{de['imb_R_leans_move_frac']} of the time  (aligned_imb_R p50={de['aligned_imb_R']['p50']})")
+            print(f"    aligned_imb_push p50={dd['aligned_imb_push']['p50']}  "
+                  f"exhaustion p50={dd['exhaustion']['p50']}  far_thinning p50={dd['far_thinning']['p50']}")
+            lr, sr = rc["long_run"], rc["short_run"]
+            print(f"    RUN-LENGTH (split @ sustain={rc['sustain_median_s']}s): "
+                  f"long(n={lr['n']}) exhaustion={lr['exhaustion']} aligned_pk={lr['aligned_imb_push']} thin={lr['far_thinning']}"
+                  f"  |  short(n={sr['n']}) exhaustion={sr['exhaustion']} aligned_pk={sr['aligned_imb_push']} thin={sr['far_thinning']}")
+            print(f"    Spearman vs sustain: exhaustion={dd['spearman_vs_sustain']['exhaustion']} "
+                  f"aligned_imb_push={dd['spearman_vs_sustain']['aligned_imb_push']} "
+                  f"far_thinning={dd['spearman_vs_sustain']['far_thinning']}")
     pf = res["pooled_footnote"]
     print(f"\n  [footnote, pooled — never the headline] n={pf['n']} peak_bps p50={pf['peak_bps']['p50']} "
           f"shape_mix={pf['shape_mix']}")

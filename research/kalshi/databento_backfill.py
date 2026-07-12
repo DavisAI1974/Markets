@@ -20,6 +20,11 @@ Output: data/pyth_ticks/{symbol}_{YYYYMMDD}.jsonl, records {"ts","price","size",
 same shape the live collector + pyth_backfill write, so the lag/baseline code consumes all three feeds
 identically. Zero synthetic.
 
+MBP-10 (S86): with --schema mbp-10 the pull carries the 10-level book. The writer (`_write_mbp10_df`)
+keeps only TRADE events with their concurrent book (top-of-book + per-side 10-level depth totals) ->
+data/nymex_mbp10/{symbol}_{YYYYMMDD}.jsonl (its OWN dir, never mixed with the trades tape). This is the
+depth/imbalance/exhaustion read for event_move_baseline --depth.
+
 STATUS: written against the databento==0.81 client API (signatures verified); NOT yet run — needs the
 API key. Install: pip install databento.
 
@@ -44,6 +49,7 @@ ROOTS = {"CL", "NG"}                          # bare roots we resolve to continu
 # the nearest-expiry contract even after volume has migrated to the next month a week+ before it expires.
 ROLL = "v"
 OUT_DIR = "data/pyth_ticks"
+MBP10_DIR = "data/nymex_mbp10"                # depth tape lives in its OWN dir (never mixed with trades)
 
 
 def _retry(fn, tries=5, base=2.0):
@@ -104,6 +110,54 @@ def _write_df(df, symbol: str) -> int:
             handles[day] = fh
         fh.write(json.dumps({"ts": sec, "price": px, "size": size,
                              "symbol": symbol, "src": "databento_trades"}) + "\n")
+        n += 1
+    for fh in handles.values():
+        fh.close()
+    return n
+
+
+def _write_mbp10_df(df, symbol: str) -> int:
+    """MBP-10 DBNStore.to_df() -> per-day depth JSONL. We keep only TRADE events (action=='T') carrying
+    their CONCURRENT 10-level book snapshot — same lean density as the `trades` tape (so the S85 price
+    path reproduces byte-for-byte off the T prints), plus the book at each trade for the imbalance /
+    thinning (exhaustion) read. Book updates between trades (A/C/M) are dropped to keep the tape lean and
+    branch-storable; the raw MBP-10 is re-downloadable free within 30d if the full book is ever needed.
+
+    Record: {ts (ts_event), price, size, symbol, src, bid_px, ask_px, bid_sz, ask_sz, bid_dep, ask_dep}
+      bid_px/ask_px/bid_sz/ask_sz = top of book (level 00); bid_dep/ask_dep = sum of the 10 resting sizes
+      per side (the depth whose thinning = liquidity being consumed = the leader exhausting resistance).
+    Written to MBP10_DIR (NOT OUT_DIR) so load_tape() never mixes it with the trades tape."""
+    os.makedirs(MBP10_DIR, exist_ok=True)
+    bid_sz_cols = [f"bid_sz_0{i}" for i in range(10) if f"bid_sz_0{i}" in df.columns]
+    ask_sz_cols = [f"ask_sz_0{i}" for i in range(10) if f"ask_sz_0{i}" in df.columns]
+    handles: dict[str, object] = {}
+    n = 0
+    has_te = "ts_event" in df.columns
+    for idx, row in df.iterrows():
+        if str(row.get("action")) != "T":            # trades only (the price path + book-at-trade)
+            continue
+        te = row["ts_event"] if has_te else idx        # exchange event time (fall back to index=ts_recv)
+        sec = te.timestamp() if hasattr(te, "timestamp") else float(te) / 1e9
+        px = row.get("price")
+        if px is None or (isinstance(px, float) and px != px):   # skip NaN-priced (shouldn't happen for T)
+            continue
+        def _f(col):
+            v = row.get(col)
+            return float(v) if v is not None and v == v else 0.0
+        bid_dep = sum(_f(c) for c in bid_sz_cols)
+        ask_dep = sum(_f(c) for c in ask_sz_cols)
+        day = datetime.fromtimestamp(sec, timezone.utc).strftime("%Y%m%d")
+        fh = handles.get(day)
+        if fh is None:
+            fh = open(os.path.join(MBP10_DIR, f"{symbol}_{day}.jsonl"), "a", buffering=1)
+            handles[day] = fh
+        fh.write(json.dumps({
+            "ts": sec, "price": float(px), "size": int(row.get("size", 0) or 0),
+            "symbol": symbol, "src": "databento_mbp10",
+            "bid_px": _f("bid_px_00"), "ask_px": _f("ask_px_00"),
+            "bid_sz": _f("bid_sz_00"), "ask_sz": _f("ask_sz_00"),
+            "bid_dep": round(bid_dep, 1), "ask_dep": round(ask_dep, 1),
+        }) + "\n")
         n += 1
     for fh in handles.values():
         fh.close()
@@ -183,6 +237,10 @@ def window(client, symbol: str, release: str, pre: int, post: int, schema: str, 
     store = _retry(lambda: client.timeseries.get_range(dataset=DATASET, symbols=[sym], stype_in=stype,
                                                         schema=schema, start=start, end=end))
     df = store.to_df()                          # price scaled to float, ts_event index
+    if len(df) and schema.startswith("mbp-10"):
+        got = _write_mbp10_df(df, symbol)
+        print(f"[databento] window {symbol} {release} [-{pre}s,+{post}s]: {got} trade+book rows -> {MBP10_DIR}")
+        return
     got = _write_df(df, symbol) if len(df) else 0
     print(f"[databento] window {symbol} {release} [-{pre}s,+{post}s]: {got} trades -> {OUT_DIR}")
 

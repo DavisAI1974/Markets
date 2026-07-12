@@ -5,9 +5,10 @@ pipeline or an OLD/completed piece. Keep this current — add new files to the t
 superseded ones down. (Started S81, 2026-07-12.)
 
 Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (historical trades),
-`data/pyth_ticks/` (Pyth + Databento NYMEX ticks), `data/kalshi/` (live bins + consensus). Durable data
-accrues gzipped on branches: `data/kalshi-bins`, `data/pyth-ticks`, and **`data/nymex-ticks`** (S85:
-Databento NG/CL true-tick release windows + definitions + baselines). `kalshi-session-start` restores all.
+`data/pyth_ticks/` (Pyth + Databento NYMEX trades ticks), `data/nymex_mbp10/` (S86: MBP-10 trade+book
+depth tape), `data/kalshi/` (live bins + consensus). Durable data accrues gzipped on branches:
+`data/kalshi-bins`, `data/pyth-ticks`, and **`data/nymex-ticks`** (S85 trades tape under `nymex_tape/`;
+S86 MBP-10 depth tape under `nymex_mbp10/` + depth baselines). `kalshi-session-start` restores all.
 
 ---
 
@@ -19,7 +20,7 @@ Databento NG/CL true-tick release windows + definitions + baselines). `kalshi-se
 | `research/kalshi/kalshi_collector.py` | Live public-API order-book snapshot collector (28-series watchlist: weather/macro/energy/electricity). Unified YES book. → `data/kalshi/*_bins.jsonl`. |
 | `research/kalshi/kalshi_history.py` | Historical settled-market trade puller — per-ticker fills WITH signed `taker_side` (real signed flow) + candles. → `data/kalshi_hist_trades/` (local). |
 | `research/kalshi/pyth_collector.py` | **[S81]** Pyth Hermes sub-second tick collector for the NYMEX/ICE futures Kalshi settles on. SSE stream, dedup on advancing publish-time. → `data/pyth_ticks/`. NOTE (S84): the `NGDQ6` feed id is BOGUS (Pyth has no natgas) — fix pending; WTI works, Brent live-only. |
-| `research/kalshi/databento_backfill.py` | **[S84/S85]** TRUE-TICK historical NYMEX backfill from Databento (`GLBX.MDP3`): CL crude AND NG natgas at the `trades` schema (every print, nanosecond) — fixes Pyth's NG gap + 1-sec undersampling. Modes: cost / window (sync) / batch (large/cheap) / **defs** (S85: pulls the `definition` schema → `{ROOT}_definitions.jsonl` point-in-time tick size/value). `metadata.get_cost` gate. Needs `DATABENTO_API_KEY` secret. PRIMARY historical source. |
+| `research/kalshi/databento_backfill.py` | **[S84/S85/S86]** TRUE-TICK historical NYMEX backfill from Databento (`GLBX.MDP3`): CL crude AND NG natgas at the `trades` schema (every print, nanosecond) — fixes Pyth's NG gap + 1-sec undersampling. Modes: cost / window (sync) / batch (large/cheap) / **defs** (S85: `definition` schema → `{ROOT}_definitions.jsonl` point-in-time tick size/value). **S86: `--schema mbp-10`** → `_write_mbp10_df` keeps trade events + their concurrent 10-level book (top-of-book + per-side depth totals) → `data/nymex_mbp10/`. `metadata.get_cost` gate. Needs `DATABENTO_API_KEY` secret. PRIMARY historical source. |
 | `research/kalshi/pyth_backfill.py` | **[S84]** HISTORICAL per-second NYMEX backfill from Pyth's timestamp endpoint — windows around past releases, throttled (429/5xx backoff), dedup, → `data/pyth_ticks/` (tagged `src=pyth_hist_1s`). WTI only (Pyth has no NG; Brent-historical 404s). 1-sec UNDERSAMPLES — a lower bound, never the full tape. |
 | `research/kalshi/consensus_poll.py` | Polls the free ForexFactory weekly JSON for release forecasts (Crude/NatGas/CPI/NFP/FOMC). → `data/kalshi/consensus.jsonl`. |
 | `.github/workflows/kalshi_collectors_durable.yml` | 6h durable cron: restore→collect bins + poll consensus→gzip+push to `data/kalshi-bins`. |
@@ -30,6 +31,8 @@ Databento NG/CL true-tick release windows + definitions + baselines). `kalshi-se
 |------|--------------|
 | `research/kalshi/event_move_baseline.py` | **[S85]** Per-EVENT move MAGNITUDE + DURATION on the true-tick futures tape (the NYMEX canary), per surprise-cell. Anchors a strictly-pre-release baseline, measures the forward peak in TICKS/$/bps (tick size POINT-IN-TIME from the `definition` store, source aggregated per-event) + duration (time_to_peak, sustain_s, retention → run/blip/fade) + the **FAST (60s) window** (`--fast`): the sub-minute lag-scalp ceiling (fast_bps/$/capture, peaked_fast). Distributions not means, per-cell, leakage-gated. Expectation-setting, sizes the hold time. `--selftest` PASS. RAN on 12 NG + 12 CL real release windows (S85). |
 | `research/kalshi/EVENT_MOVE_FINDINGS_S85.md` | **[S85]** First real result: per-contract HOLD-TIME map. NG front-loaded (60s captures 66% of the move, ~$310/contract); CL slower (60s=27%, a longer hold gets the rest — e.g. $2,640 built over 17min). Both KEPT, different hold windows; EV-net-of-fee is the gate not frequency. Futures move = the CEILING, not Kalshi P&L (lag join next). Cost map + MBP-10 schema decision. |
+| `research/kalshi/event_move_baseline.py --depth` | **[S86]** MBP-10 depth read: per-event resting-book imbalance at R (pre-event, leakage-gated) + at the initial push (`aligned_imb_push`, `exhaustion`, `far_thinning`), contrasted against run length. `load_tape_depth`/`depth_features`/`_depth_summary`. `--selftest` PASS (depth math + leakage). Consumes `data/nymex_mbp10/`. |
+| `research/kalshi/DEPTH_RUNLENGTH_FINDINGS_S86.md` | **[S86]** The book run-length read on the canary (24 windows, leakage PASS 12/12). PER-CELL split: **NG = exhaustion** (one-sided book at the push → SHORTER run, Spearman −0.17/−0.40) vs **CL = continuation** (one-sided supportive book → LONGER run, +0.52). Corroborates the S85 magnitude split from resting-book dynamics. Provisional n=12; full-year pull confirms. `aligned_imb_push` = the hold-time signal for the lag join. |
 | file | what it does |
 |------|--------------|
 | `research/kalshi/futures_kalshi_lag.py` | Per-contract futures→Kalshi lead-lag (S19 operator + time-slide null). Result: futures lead, Kalshi never leads; ~half of contracts reprice a full minute late. |

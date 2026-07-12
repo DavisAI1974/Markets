@@ -62,6 +62,15 @@ for gz in $(git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_ta
   git show "origin/data/nymex-ticks:$gz" | gunzip > "$dest"
   echo "[restore] $base"
 done
+
+# NYMEX MBP-10 depth tape (S86: trade+book rows) -> data/nymex_mbp10/ ; depth baselines -> data/
+mkdir -p data/nymex_mbp10
+for gz in $(git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_mbp10/.*\.gz$'); do
+  base=$(basename "$gz" .gz)
+  dest="data/nymex_mbp10/$base"; [[ "$base" == *.json ]] && dest="data/$base"   # depth baselines live in data/
+  git show "origin/data/nymex-ticks:$gz" | gunzip > "$dest"
+  echo "[restore] $base"
+done
 ```
 
 ## 4. VERIFY accrual before trusting the data
