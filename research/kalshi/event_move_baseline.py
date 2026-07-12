@@ -269,6 +269,19 @@ def surprise_for(series, day, consensus):
     return None, None, None
 
 
+def load_surprise_file(path):
+    """{series: {release_iso: surprise_row}} — the historical seasonal-PROXY surprise from eia_surprise.py.
+    Used as a fallback when the real (forward) consensus is absent, so historical windows still split into
+    beat/miss x big/small cells. Tagged surprise_source='seasonal_proxy' so it is never confused with the
+    real desk number."""
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        return json.load(open(path))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
 def surprise_cell(series, surprise, big_abs):
     """Cell suffix from the surprise. 'unknown' when we lack consensus+actual (still a valid, coarser
     per-series cell — partial coverage is not failure)."""
@@ -447,6 +460,7 @@ def build(symbol, series, cfg):
     rhh, rmm, rwd = rel
     defs = load_defs(root)
     consensus = load_consensus()
+    proxy_surprise = load_surprise_file(cfg.get("surprise_file")).get(series, {})
 
     # one event per release-weekday present in the tape
     events = []
@@ -471,6 +485,11 @@ def build(symbol, series, cfg):
         if mv is None:
             continue
         f, a, surp = surprise_for(series, d.isoformat(), consensus)
+        surp_src = "consensus" if surp is not None else "none"
+        if surp is None:                               # fall back to the historical seasonal-proxy surprise
+            pr = proxy_surprise.get(d.isoformat())
+            if pr is not None:
+                a, surp, surp_src = pr.get("actual"), pr.get("surprise"), "seasonal_proxy"
         depth = {}
         if D is not None:
             # measure the book over the INITIAL push (fast-window peak), not the 30-min global peak —
@@ -484,6 +503,7 @@ def build(symbol, series, cfg):
                        "baseline": round(anc["baseline"], 5), "pre_vol": round(anc["pre_vol"], 6),
                        "n_pre": anc["n_pre"], "tick_size": tsz, "tick_value": tval,
                        "tick_source": tsrc, "forecast": f, "actual": a, "surprise": surp,
+                       "surprise_source": surp_src,
                        "cell": surprise_cell(series, surp, cfg["big_surprise"]), **mv, **depth})
 
     if not events:
@@ -518,12 +538,15 @@ def build(symbol, series, cfg):
             continue
         cells[k] = _move_dist(evs)
     src_counts = defaultdict(int)               # tick-source is PER EVENT (roll/definition-window), aggregate it
+    surp_src_counts = defaultdict(int)
     for e in events:
         src_counts[e["tick_source"]] += 1
+        surp_src_counts[e.get("surprise_source", "none")] += 1
     return {
         "symbol": symbol, "series": series, "status": "OK",
         "n_events": len(events), "tape_days": len(tape_days(ts)), "ticks": int(ts.size),
         "tick_source": dict(src_counts),
+        "surprise_source": dict(surp_src_counts),
         "leakage_pass": leak_pass, "leakage_fails": leak_fails,
         "n_cells_reported": len(cells),
         "cells": cells,
@@ -712,7 +735,10 @@ def main():
     ap.add_argument("--run-thr", type=float, default=0.5, help="retention >= this = a 'run'")
     ap.add_argument("--blip-thr", type=float, default=0.2, help="retention < this = a 'blip'")
     ap.add_argument("--big-surprise", type=float, default=10.0,
-                    help="|actual-forecast| >= this = a 'big' surprise (release-native units)")
+                    help="|surprise| >= this = a 'big' surprise (release-native units: Bcf for NG, Mbbl for CL)")
+    ap.add_argument("--surprise-file", default=None,
+                    help="historical seasonal-proxy surprise JSON from eia_surprise.py (fallback when the "
+                         "forward consensus is absent, so historical windows split beat/miss x big/small)")
     ap.add_argument("--min-cell", type=int, default=3, help="min events to report a cell")
     ap.add_argument("--depth", action="store_true",
                     help="consume the MBP-10 depth tape (imbalance/thinning/exhaustion run-length read)")
@@ -728,7 +754,8 @@ def main():
     cfg = {"pre_s": args.pre_s, "post_s": args.post_s, "min_pre_ticks": args.min_pre_ticks,
            "max_anchor_gap_s": args.max_anchor_gap_s, "run_thr": args.run_thr, "blip_thr": args.blip_thr,
            "big_surprise": args.big_surprise, "min_cell": args.min_cell, "emit_events": args.emit_events,
-           "fast_s": args.fast_s, "depth": args.depth, "depth_dir": args.tape_dir}
+           "fast_s": args.fast_s, "depth": args.depth, "depth_dir": args.tape_dir,
+           "surprise_file": args.surprise_file}
     res = build(args.symbol, args.series, cfg)
     if args.out:
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
