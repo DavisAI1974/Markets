@@ -16,6 +16,21 @@ What the energy/electricity Kalshi markets ACTUALLY settle on — corrects earli
   backfill does not exist to buy. (A power-futures market on an ISO hub — PJM/ERCOT — would be different
   and IS on Databento, but Kalshi's KXPOWERKWH is not that.)
 
+## Resolution + how we MEASURE moves (Greg, S84)
+
+- **Pull TICK data (`trades` schema = every print), never daily settle / OHLC.** Kalshi trades
+  continuously intraday, so the lag strategy needs the tick tape. Daily settle enters ONLY as the
+  settlement REFERENCE (KXNATGASD resolves on the NGDQ6 1-min candle close at 5PM EDT) — one value read
+  off the tape, not a reason to pull daily data.
+- **Measure moves in TICKS and DOLLARS, not just bps** (trader-native; ties directly to P&L). A move of
+  N ticks = N x tick_value $/contract. Blip vs run is defined in ticks: a blip = a few ticks that
+  revert; a run = many ticks sustained.
+- **Tick size + value come from Databento's `definition` schema** (`min_price_increment` x
+  `unit_of_measure_qty`), pulled POINT-IN-TIME per contract (the exchange can change tick size — do NOT
+  hardcode). `databento_backfill.py --schema definition` pulls it; `event_move_baseline.py` will read it
+  to express every move in ticks/$/bps. Reference to VERIFY against the definition (not to hardcode):
+  CL crude ~ $0.01/bbl tick, $10/tick (1,000 bbl); NG ~ $0.001/MMBtu tick, $10/tick (10,000 MMBtu).
+
 ## The principle (Greg, S84 — load-bearing)
 
 **NYMEX/ICE is the LEADER; Kalshi is the delayed FOLLOWER. We map/gather NYMEX data as our CANARY —
