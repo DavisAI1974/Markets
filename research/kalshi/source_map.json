@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "generated": "2026-07-12",
+    "purpose": "Per-contract-family news/data source map, 3 tiers (RELEASE / CONSENSUS / LEADING). Reachability actually tested through the session proxy (HTTP code shown). 'most-used by Kalshi counterparties' is partly unknowable (small venue, no trader survey) — ranked by canonical underlying-market importance + our own which-releases-move-the-market evidence.",
+    "reachability_legend": "200=ok, 302=redirect(reachable), 403=bot-blocked, 404=not found, key=needs API key"
+  },
+  "ENERGY": {
+    "contracts": ["KXWTI", "KXBRENTD", "KXNATGASD", "KXAAAGASD"],
+    "RELEASE": [
+      {"rank":1,"name":"EIA Weekly Natural Gas Storage Report","url":"https://ir.eia.gov/ngs/ngs.html","api":"https://api.eia.gov/v2/natural-gas/stor/wkly/data/ (key; DEMO_KEY works, rate-limited)","cadence":"weekly Thu 10:30 ET","free":true,"reachability":"page 302; API 200 with DEMO_KEY (returns actual values, 6896 rows deep)","load_bearing":"HIGHEST energy — measured NG=F release-hour move 1.57x placebo, z=5.2","in_news_ingest":"partial (EIA press yes; dedicated NGS report feed NO)"},
+      {"rank":2,"name":"EIA Weekly Petroleum Status Report (crude/gasoline/distillate stocks)","url":"https://www.eia.gov/petroleum/supply/weekly/","api":"https://api.eia.gov/v2/petroleum/stoc/wstk/data/ (key; DEMO_KEY works)","cadence":"weekly Wed 10:30 ET (Thu if Mon holiday)","free":true,"reachability":"weekly page 200; ir.eia.gov/wpsr/overview.html 403; API 200 with key","load_bearing":"crude moves WTI modestly (CL=F 1.12x, daily z=2.15); largely pre-empted by API report","in_news_ingest":"partial (EIA press/Today-in-Energy yes; WPSR data feed NO)"},
+      {"rank":3,"name":"EIA Short-Term Energy Outlook (STEO)","url":"https://www.eia.gov/outlooks/steo/","cadence":"monthly","free":true,"reachability":"eia.gov 200","load_bearing":"lower-frequency price-path guidance; secondary to weekly reports","in_news_ingest":"partial"}
+    ],
+    "CONSENSUS": [
+      {"rank":1,"name":"ForexFactory calendar JSON (forecast/previous)","url":"https://nfs.faireconomy.media/ff_calendar_thisweek.json","cadence":"current week only (lastweek/nextweek 404)","free":true,"reachability":"200 — VERIFIED carries 'Crude Oil Inventories' forecast=-1.9M and 'Natural Gas Storage' forecast=60B","load_bearing":"THE FREE ENERGY CONSENSUS UNLOCK — actual-minus-forecast surprise for both EIA reports. Limitation: no deep history, must poll weekly to accrue a surprise series.","UNLOCK":true},
+      {"rank":2,"name":"API Weekly Statistical Bulletin (crude inventory, ~Tue 4:30 ET, PRE-EIA)","url":"https://www.api.org/ (members/paid; number hits news wires)","cadence":"weekly Tue eve","free":false,"reachability":"paywalled; value disseminated via Reuters/news","load_bearing":"doubles as consensus AND leading indicator for crude — explains why EIA crude reaction is diffuse (API pre-empts). Capture via news_ingest headline parse."},
+      {"rank":3,"name":"TradingEconomics US energy calendar","url":"https://tradingeconomics.com/united-states/calendar","cadence":"rolling","free":"freemium","reachability":"200 (calendar reachable; deep history limited to latest+next)","load_bearing":"backup consensus + release-date list"},
+      {"rank":4,"name":"Reuters weekly natgas-storage / crude polls","url":"news wires","free":false,"reachability":"not a free API","load_bearing":"canonical street consensus; obtainable only via news text"}
+    ],
+    "LEADING": [
+      {"rank":1,"name":"API crude inventory (Tue night, before Wed EIA)","free":false,"reachability":"news-wire only","load_bearing":"strongest crude leading indicator; front-runs the EIA print"},
+      {"rank":2,"name":"NOAA GFS/NBM weather model runs (natgas demand)","url":"https://nomads.ncep.noaa.gov/","cadence":"4x daily","free":true,"reachability":"200","load_bearing":"heating/cooling-degree-day outlook drives natgas ahead of storage"},
+      {"rank":3,"name":"Kpler / Vortexa / Genscape flows & storage","free":false,"reachability":"paid — deprioritized","load_bearing":"real crude/product flows; institutional edge, not free"}
+    ]
+  },
+  "MACRO": {
+    "contracts": ["KXCPIYOY", "KXUSNFP", "KXFEDHIKE"],
+    "RELEASE": [
+      {"rank":1,"name":"FOMC statement + SEP","url":"https://www.federalreserve.gov/newsevents/pressreleases.htm","calendar":"https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm","cadence":"8/yr, 14:00 ET","free":true,"reachability":"200 (calendar + dates fetched cleanly)","load_bearing":"HEAVIEST macro — ZN=F 5.1x, ES=F 3.0x release-hour vs placebo","in_news_ingest":"yes (Fed Press)"},
+      {"rank":2,"name":"BLS Employment Situation (Nonfarm Payrolls)","url":"https://www.bls.gov/news.release/empsit.nr0.htm","schedule":"https://www.bls.gov/schedule/news_release/empsit.htm","cadence":"monthly ~1st Fri 8:30 ET","free":true,"reachability":"403 bot-blocked via proxy (needs UA workaround / alt mirror)","load_bearing":"ZN=F 3.0x, ES=F 1.9x release-hour","in_news_ingest":"NO — MISSING canonical feed"},
+      {"rank":3,"name":"BLS CPI","url":"https://www.bls.gov/news.release/cpi.nr0.htm","schedule":"https://www.bls.gov/schedule/news_release/cpi.htm","cadence":"monthly mid-month 8:30 ET","free":true,"reachability":"403 bot-blocked","load_bearing":"marquee rate event (literature ~ NFP); NOT measured here (no historical date list obtainable this session)","in_news_ingest":"NO — MISSING"},
+      {"rank":4,"name":"BEA PCE (Fed's preferred inflation gauge)","url":"https://www.bea.gov/news/schedule","cadence":"monthly 8:30 ET","free":true,"reachability":"not tested (bea.gov)","in_news_ingest":"NO — MISSING"}
+    ],
+    "CONSENSUS": [
+      {"rank":1,"name":"ForexFactory calendar JSON","url":"https://nfs.faireconomy.media/ff_calendar_thisweek.json","free":true,"reachability":"200 — carries CPI/NFP/FOMC/PPI forecast+previous+impact+exact ET timestamp","load_bearing":"THE FREE MACRO CONSENSUS UNLOCK. surprise = actual - forecast. Current-week only → accrue by polling.","UNLOCK":true},
+      {"rank":2,"name":"TradingEconomics economic calendar","url":"https://tradingeconomics.com/calendar","free":"freemium","reachability":"200","load_bearing":"actual+forecast+prior columns; broader coverage, freemium limits on history"},
+      {"rank":3,"name":"CNBC / econ RSS","url":"https://www.cnbc.com/id/10000664/device/rss/rss.html","free":true,"reachability":"200","load_bearing":"headline consensus + actual narration; text-parse"},
+      {"rank":4,"name":"Investing.com / ForexFactory HTML calendars","free":true,"reachability":"403 bot-blocked (both) — use the faireconomy JSON instead"}
+    ],
+    "LEADING": [
+      {"rank":1,"name":"CME Fed Funds futures (ZQ=F) / SOFR — market-implied policy path","url":"https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F","free":true,"reachability":"Yahoo 200 (futures chart API works)","load_bearing":"prices the FOMC decision ahead of the statement"},
+      {"rank":2,"name":"Fed speaker calendar","url":"ForexFactory 'FOMC Member X Speaks' entries","free":true,"reachability":"200 (in FF JSON)","load_bearing":"intra-meeting guidance shifts"},
+      {"rank":3,"name":"ADP employment (Wed before NFP), jobless claims (weekly Thu)","free":true,"reachability":"in FF JSON / FRED (ICSA)","load_bearing":"labor leading indicators before NFP"}
+    ]
+  },
+  "WEATHER": {
+    "contracts": ["Kalshi daily high-temp (e.g. KXHIGH*), hurricane/landfall"],
+    "RELEASE": [
+      {"rank":1,"name":"NWS/ASOS station observation (the settlement ob)","url":"https://api.weather.gov/stations/{KNYC}/observations/latest","alt":"https://aviationweather.gov/api/data/metar?ids=KNYC&format=json","cadence":"hourly + daily climate summary","free":true,"reachability":"both 200","load_bearing":"HIGHEST — the ASOS daily max IS what temperature contracts settle on","in_news_ingest":"NO — MISSING (station-specific ob feed)"},
+      {"rank":2,"name":"NHC advisories/forecast (hurricanes)","url":"https://www.nhc.noaa.gov/index-at.xml","cadence":"advisory (~6h in storms)","free":true,"reachability":"200","load_bearing":"defines landfall/category contracts","in_news_ingest":"yes (NOAA NHC)"}
+    ],
+    "CONSENSUS": [
+      {"rank":1,"name":"NWS NDFD / NBM forecast (official expected high)","url":"https://api.weather.gov/gridpoints/{office}/{x},{y}/forecast","free":true,"reachability":"api.weather.gov 200","load_bearing":"the 'forecast' the daily-high contract is priced against"}
+    ],
+    "LEADING": [
+      {"rank":1,"name":"GFS / NBM model runs (NOMADS)","url":"https://nomads.ncep.noaa.gov/","cadence":"4x daily","free":true,"reachability":"200","load_bearing":"traders update daily-high probability on each 00/06/12/18Z run"},
+      {"rank":2,"name":"ECMWF Open Data (IFS/AIFS)","url":"https://data.ecmwf.int/forecasts/","free":true,"reachability":"not tested (known open-data host)","load_bearing":"highest-skill global model; free open-data subset"}
+    ]
+  },
+  "ELECTRICITY": {
+    "contracts": ["ISO price/load spike markets (if listed)"],
+    "RELEASE": [
+      {"rank":1,"name":"ERCOT real-time fuel-mix / system load","url":"https://www.ercot.com/api/1/services/read/dashboards/fuel-mix.json","free":true,"reachability":"200","load_bearing":"RT grid state; settles/prices ERCOT contracts"},
+      {"rank":2,"name":"PJM DataMiner2","url":"https://dataminer2.pjm.com/","free":true,"reachability":"200 (feed definitions)","load_bearing":"PJM load/LMP"},
+      {"rank":3,"name":"MISO real-time","url":"https://api.misoenergy.org/MISORTWDDataBroker/DataBrokerServices.asmx?messageType=getfuelmix&returnType=json","free":true,"reachability":"200","load_bearing":"MISO fuel mix/load"}
+    ],
+    "CONSENSUS": [
+      {"rank":1,"name":"ISO day-ahead forecast load & DA LMP","url":"ERCOT/PJM/MISO DA feeds (same hosts)","free":true,"reachability":"same hosts 200","load_bearing":"the expected-load baseline spikes are measured against"}
+    ],
+    "LEADING": [
+      {"rank":1,"name":"ISO real-time load/price + weather models","free":true,"reachability":"200","load_bearing":"RT load ramp + temperature drive price-spike probability intraday"}
+    ]
+  }
+}

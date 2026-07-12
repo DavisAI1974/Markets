@@ -1,0 +1,505 @@
+{
+  "meta": {
+    "generated": "2026-07-12",
+    "method": "release-day/hour reaction of the UNDERLYING market vs matched placebo; NO Kalshi contract-price history (not collected). Intraday=Yahoo 60m futures ~730d (cleanest isolation of the 10:30/8:30/14:00 ET release). Daily=FRED close-to-close (deep history, but dilutes release into full-day noise + Monday weekend artifact).",
+    "weight_metric": "ratio = mean|move| on release day-or-hour / mean|move| on matched placebo (same ET hour, non-event weekdays for intraday; other weekdays for daily). welch_z on |move|, cohens_d effect size.",
+    "caveats": [
+      "Daily close-to-close cannot resolve sub-day moves; Monday spans the weekend (inflates Mon) \u2014 placebo mitigates but note it.",
+      "Underlying-reaction is a PROXY for the Kalshi contract move (contracts key on these underlyings); not the contract itself.",
+      "Unconditional event-window (no historical consensus/surprise merged yet) \u2014 a big release-day move can be coincident with other news; N + placebo handle this statistically, not causally.",
+      "Intraday N is modest (~19 FOMC, ~27 NFP, ~121 weekly-energy) due to 730d hourly limit; effect sizes are large and significant regardless."
+    ]
+  },
+  "ranked_weight_table": [
+    {
+      "rank": 1,
+      "event": "FOMC statement (2:00pm ET)",
+      "kalshi": [
+        "KXFEDHIKE"
+      ],
+      "cadence": "8/yr",
+      "primary_underlying": "ZN=F 10yr note / ES=F S&P fut",
+      "intraday_ratio_ZN": 5.058,
+      "intraday_z_ZN": 3.85,
+      "intraday_ratio_ES": 3.034,
+      "intraday_z_ES": 3.39,
+      "daily_2yr_ratio": 1.478,
+      "daily_2yr_z": 2.45,
+      "n_intraday": 19,
+      "verdict": "HEAVIEST macro event. ZN=F moves ~5x, ES=F ~3x vs same-hour placebo; 2yr yield +48% daily."
+    },
+    {
+      "rank": 2,
+      "event": "Nonfarm Payrolls (8:30am ET, 1st Fri)",
+      "kalshi": [
+        "KXUSNFP"
+      ],
+      "cadence": "12/yr",
+      "primary_underlying": "ZN=F / ES=F",
+      "intraday_ratio_ZN": 3.004,
+      "intraday_z_ZN": 3.77,
+      "intraday_ratio_ES": 1.856,
+      "intraday_z_ES": 2.37,
+      "daily_sp500_ratio": 1.252,
+      "n_intraday": 27,
+      "verdict": "Strong, rate-heavy: ZN=F ~3x, ES=F ~1.9x vs placebo. Caveat: first-Friday derived dates (~90% accurate)."
+    },
+    {
+      "rank": 3,
+      "event": "EIA Weekly Natural Gas Storage (10:30am ET Thu)",
+      "kalshi": [
+        "KXNATGASD"
+      ],
+      "cadence": "52/yr",
+      "primary_underlying": "NG=F Henry Hub fut",
+      "intraday_ratio": 1.5738831239711952,
+      "intraday_z": 5.211016529973871,
+      "intraday_d": 0.6273966830459409,
+      "n_intraday": 121,
+      "spot_daily_note": "Henry Hub SPOT (DHHNGSP) shows NO Thu effect (ratio 0.87) \u2014 spot does not react to storage like futures; MUST use NG=F.",
+      "verdict": "HEAVIEST recurring ENERGY event. NG=F release-hour moves 1.57x placebo (z=5.2, highest significance of all). Effect spills into 11am (1.32x)."
+    },
+    {
+      "rank": 4,
+      "event": "EIA Weekly Petroleum Status Report \u2014 crude (10:30am ET Wed)",
+      "kalshi": [
+        "KXWTI"
+      ],
+      "cadence": "52/yr",
+      "primary_underlying": "CL=F WTI fut",
+      "intraday_ratio": 1.1158132923496185,
+      "intraday_z": 1.074042964510677,
+      "daily_ratio": 1.062155761046338,
+      "daily_z": 2.1463780738558085,
+      "daily_n": 2094,
+      "verdict": "REAL but MODEST/diffuse. CL=F release-hour 1.12x (h11 1.18x); daily Wed +6% vs placebo (z=2.15, N=2094 back to 1986). Likely pre-empted by API report (Tue eve)."
+    },
+    {
+      "rank": 5,
+      "event": "EIA Petroleum Report \u2014 spillover to Brent",
+      "kalshi": [
+        "KXBRENTD"
+      ],
+      "cadence": "52/yr",
+      "primary_underlying": "Brent (DCOILBRENTEU)",
+      "daily_ratio": 0.9901490772224114,
+      "daily_z": -0.3457459807409605,
+      "verdict": "NULL. Brent is a European benchmark keyed to ICE/global balances, not US EIA weekly. Ratio 0.99, z=-0.35. A genuine non-mover finding."
+    },
+    {
+      "rank": "n/a",
+      "event": "CPI (8:30am ET, mid-month)",
+      "kalshi": [
+        "KXCPIYOY"
+      ],
+      "cadence": "12/yr",
+      "verdict": "NOT MEASURED \u2014 historical release dates not cleanly obtainable this session (BLS.gov 403, no FRED/EIA-releases API key, TradingEconomics exposes only latest+next). Intraday ZN=F/ES=F data IS in hand; methodology transfers immediately once a CPI date list is available (ForexFactory/TE going forward, or BLS schedule with a fetch that clears bot-block)."
+    }
+  ],
+  "raw": {
+    "energy_daily": {
+      "EIA_petroleum_status_WTI": {
+        "event_type": "EIA Weekly Petroleum Status Report (crude inventories)",
+        "kalshi_contract": "KXWTI",
+        "underlying": "DCOILWTICO",
+        "proxy": "day-of-week release proxy (release weekday=Wed)",
+        "date_range": [
+          "1986-01-02",
+          "2026-07-06"
+        ],
+        "event": {
+          "n": 2094,
+          "mean": 0.00038608541594763955,
+          "sd": 0.028032799542569823,
+          "mean_abs": 0.01865842889420896,
+          "p50_abs": 0.013759430835278709,
+          "p90_abs": 0.038275677567903205,
+          "p95_abs": 0.05278154809054289
+        },
+        "placebo_other_weekdays": {
+          "n": 8098,
+          "mean": 0.00011281133539644087,
+          "sd": 0.026674898897586324,
+          "mean_abs": 0.017566565638008118,
+          "p50_abs": 0.012390452785676041,
+          "p90_abs": 0.0371357864129034,
+          "p95_abs": 0.049601852525684505
+        },
+        "effect_vs_placebo": {
+          "mean_abs_event": 0.01865842889420896,
+          "mean_abs_placebo": 0.017566565638008118,
+          "ratio": 1.062155761046338,
+          "cohens_d": 0.053918235912730365,
+          "welch_z": 2.1463780738558085
+        },
+        "persistence_fwd2_mean_abs": 0.024341810847264844,
+        "dow_mean_abs": {
+          "Mon": 0.01949,
+          "Tue": 0.01758,
+          "Wed": 0.01866,
+          "Thu": 0.01724,
+          "Fri": 0.01605
+        }
+      },
+      "EIA_petroleum_status_Brent": {
+        "event_type": "EIA Weekly Petroleum Status Report (spillover to Brent)",
+        "kalshi_contract": "KXBRENTD",
+        "underlying": "DCOILBRENTEU",
+        "proxy": "day-of-week release proxy (release weekday=Wed)",
+        "date_range": [
+          "1987-05-20",
+          "2026-07-06"
+        ],
+        "event": {
+          "n": 2023,
+          "mean": 6.425960138441024e-05,
+          "sd": 0.02503373795941955,
+          "mean_abs": 0.016435242513160656,
+          "p50_abs": 0.011632670414923841,
+          "p90_abs": 0.035298869429345514,
+          "p95_abs": 0.045807329112825555
+        },
+        "placebo_other_weekdays": {
+          "n": 7903,
+          "mean": 0.00015024918781120092,
+          "sd": 0.025508047570811203,
+          "mean_abs": 0.016598755572509515,
+          "p50_abs": 0.011860450914747885,
+          "p90_abs": 0.035651055104023076,
+          "p95_abs": 0.04568734757152069
+        },
+        "effect_vs_placebo": {
+          "mean_abs_event": 0.016435242513160656,
+          "mean_abs_placebo": 0.016598755572509515,
+          "ratio": 0.9901490772224114,
+          "cohens_d": -0.00848549534670042,
+          "welch_z": -0.3457459807409605
+        },
+        "persistence_fwd2_mean_abs": 0.023797583827228637,
+        "dow_mean_abs": {
+          "Mon": 0.01767,
+          "Tue": 0.01676,
+          "Wed": 0.01644,
+          "Thu": 0.01642,
+          "Fri": 0.01559
+        }
+      },
+      "EIA_natgas_storage": {
+        "event_type": "EIA Weekly Natural Gas Storage Report",
+        "kalshi_contract": "KXNATGASD",
+        "underlying": "DHHNGSP",
+        "proxy": "day-of-week release proxy (release weekday=Thu)",
+        "date_range": [
+          "1997-01-07",
+          "2026-07-06"
+        ],
+        "event": {
+          "n": 1496,
+          "mean": -0.004835148705748758,
+          "sd": 0.05529037590623792,
+          "mean_abs": 0.030004831419543875,
+          "p50_abs": 0.019048194970694363,
+          "p90_abs": 0.06477083615778205,
+          "p95_abs": 0.09055120369475386
+        },
+        "placebo_other_weekdays": {
+          "n": 5908,
+          "mean": 0.0011990554512455915,
+          "sd": 0.06627416144555327,
+          "mean_abs": 0.03439431072914855,
+          "p50_abs": 0.02177379954956062,
+          "p90_abs": 0.07354001621183442,
+          "p95_abs": 0.09876441467241244
+        },
+        "effect_vs_placebo": {
+          "mean_abs_event": 0.030004831419543875,
+          "mean_abs_placebo": 0.03439431072914855,
+          "ratio": 0.8723777503735618,
+          "cohens_d": -0.08010987374761808,
+          "welch_z": -3.103578398971716
+        },
+        "persistence_fwd2_mean_abs": 0.05072595239343822,
+        "dow_mean_abs": {
+          "Mon": 0.03802,
+          "Tue": 0.03442,
+          "Wed": 0.02871,
+          "Thu": 0.03,
+          "Fri": 0.03682
+        }
+      },
+      "EIA_propane_weekly": {
+        "event_type": "EIA Weekly propane stocks (petroleum report)",
+        "kalshi_contract": "(energy breadth)",
+        "underlying": "DPROPANEMBTX",
+        "proxy": "day-of-week release proxy (release weekday=Wed)",
+        "date_range": [
+          "1992-07-09",
+          "2026-07-06"
+        ],
+        "event": {
+          "n": 1756,
+          "mean": 0.00043993405402704267,
+          "sd": 0.026185038570561973,
+          "mean_abs": 0.017170842802693303,
+          "p50_abs": 0.01145891780407149,
+          "p90_abs": 0.03922071315328133,
+          "p95_abs": 0.05351595334010785
+        },
+        "placebo_other_weekdays": {
+          "n": 6761,
+          "mean": -5.483602813320792e-06,
+          "sd": 0.026456935240345595,
+          "mean_abs": 0.01604198183775794,
+          "p50_abs": 0.010429296296985765,
+          "p90_abs": 0.036520071577617746,
+          "p95_abs": 0.05129329438755046
+        },
+        "effect_vs_placebo": {
+          "mean_abs_event": 0.017170842802693303,
+          "mean_abs_placebo": 0.01604198183775794,
+          "ratio": 1.0703691711131582,
+          "cohens_d": 0.054317265538148064,
+          "welch_z": 2.1033694907504947
+        },
+        "persistence_fwd2_mean_abs": 0.023935102231421864,
+        "dow_mean_abs": {
+          "Mon": 0.01785,
+          "Tue": 0.01583,
+          "Wed": 0.01717,
+          "Thu": 0.01571,
+          "Fri": 0.01488
+        }
+      }
+    },
+    "energy_intraday": {
+      "EIA_petroleum_WTI_intraday": {
+        "event_type": "EIA Weekly Petroleum Status (crude) \u2014 intraday",
+        "kalshi_contract": "KXWTI",
+        "symbol": "CL=F",
+        "window": "release-hour bar (ET hour 10:00-11:00, contains ~10:30 release) on Wed",
+        "date_range": [
+          "2024-02-15",
+          "2026-07-10"
+        ],
+        "event_hour": {
+          "n": 122,
+          "mean": -0.00014165506699835586,
+          "mean_abs": 0.005641314625576758,
+          "sd": 0.007900863571264792
+        },
+        "placebo_same_hour_other_days": {
+          "n": 482,
+          "mean": 9.084076669127334e-05,
+          "mean_abs": 0.005055787257828401,
+          "sd": 0.006994584407190842
+        },
+        "effect_vs_placebo": {
+          "n_event": 122,
+          "n_placebo": 482,
+          "mean_abs_event": 0.005641314625576758,
+          "mean_abs_placebo": 0.005055787257828401,
+          "ratio": 1.1158132923496185,
+          "welch_z": 1.074042964510677,
+          "cohens_d": 0.11773590671794827
+        }
+      },
+      "EIA_natgas_storage_intraday": {
+        "event_type": "EIA Weekly Natural Gas Storage \u2014 intraday",
+        "kalshi_contract": "KXNATGASD",
+        "symbol": "NG=F",
+        "window": "release-hour bar (ET hour 10:00-11:00, contains ~10:30 release) on Thu",
+        "date_range": [
+          "2024-02-15",
+          "2026-07-10"
+        ],
+        "event_hour": {
+          "n": 121,
+          "mean": -0.002250222314515246,
+          "mean_abs": 0.012841459325147728,
+          "sd": 0.015709172374653815
+        },
+        "placebo_same_hour_other_days": {
+          "n": 483,
+          "mean": -0.00012131218532412555,
+          "mean_abs": 0.008159093346617997,
+          "sd": 0.01072134014120486
+        },
+        "effect_vs_placebo": {
+          "n_event": 121,
+          "n_placebo": 483,
+          "mean_abs_event": 0.012841459325147728,
+          "mean_abs_placebo": 0.008159093346617997,
+          "ratio": 1.5738831239711952,
+          "welch_z": 5.211016529973871,
+          "cohens_d": 0.6273966830459409
+        }
+      }
+    },
+    "macro": {
+      "FOMC_daily_2yr": {
+        "event_type": "FOMC statement -> 2yr yield",
+        "kalshi_contract": "KXFEDHIKE",
+        "underlying": "DGS2",
+        "unit": "bps",
+        "date_range": [
+          "1976-06-01",
+          "2026-07-09"
+        ],
+        "n_events_in_window": 44,
+        "effect_vs_placebo": {
+          "n_event": 44,
+          "n_placebo": 12477,
+          "mean_abs_event": 7.0682,
+          "mean_abs_placebo": 4.781,
+          "ratio": 1.478,
+          "welch_z": 2.45,
+          "cohens_d": 0.358
+        }
+      },
+      "FOMC_daily_SP500": {
+        "event_type": "FOMC statement -> S&P500",
+        "kalshi_contract": "KXFEDHIKE",
+        "underlying": "SP500",
+        "unit": "%",
+        "date_range": [
+          "2016-07-11",
+          "2026-07-10"
+        ],
+        "n_events_in_window": 44,
+        "effect_vs_placebo": {
+          "n_event": 44,
+          "n_placebo": 2469,
+          "mean_abs_event": 0.9689,
+          "mean_abs_placebo": 0.7269,
+          "ratio": 1.333,
+          "welch_z": 1.85,
+          "cohens_d": 0.276
+        }
+      },
+      "FOMC_intraday_ES": {
+        "event_type": "FOMC statement -> ES=F (14:00 ET)",
+        "kalshi_contract": "KXFEDHIKE",
+        "symbol": "ES=F",
+        "unit": "%",
+        "window": "ET hour 14:00 bar",
+        "date_range": [
+          "2024-02-15",
+          "2026-07-10"
+        ],
+        "n_events": 19,
+        "effect_vs_placebo": {
+          "n_event": 19,
+          "n_placebo": 569,
+          "mean_abs_event": 0.4818,
+          "mean_abs_placebo": 0.1588,
+          "ratio": 3.034,
+          "welch_z": 3.39,
+          "cohens_d": 1.65
+        }
+      },
+      "FOMC_intraday_ZN": {
+        "event_type": "FOMC statement -> ZN=F 10yr note (14:00 ET)",
+        "kalshi_contract": "KXFEDHIKE",
+        "symbol": "ZN=F",
+        "unit": "%",
+        "window": "ET hour 14:00 bar",
+        "date_range": [
+          "2024-02-15",
+          "2026-07-10"
+        ],
+        "n_events": 19,
+        "effect_vs_placebo": {
+          "n_event": 19,
+          "n_placebo": 575,
+          "mean_abs_event": 0.218,
+          "mean_abs_placebo": 0.0431,
+          "ratio": 5.058,
+          "welch_z": 3.85,
+          "cohens_d": 3.115
+        }
+      },
+      "NFP_daily_2yr": {
+        "event_type": "Nonfarm Payrolls -> 2yr yield",
+        "kalshi_contract": "KXUSNFP",
+        "underlying": "DGS2",
+        "unit": "bps",
+        "date_range": [
+          "1976-06-01",
+          "2026-07-09"
+        ],
+        "n_events_in_window": 122,
+        "effect_vs_placebo": {
+          "n_event": 122,
+          "n_placebo": 12399,
+          "mean_abs_event": 5.5328,
+          "mean_abs_placebo": 4.7818,
+          "ratio": 1.157,
+          "welch_z": 1.37,
+          "cohens_d": 0.118
+        }
+      },
+      "NFP_daily_SP500": {
+        "event_type": "Nonfarm Payrolls -> S&P500",
+        "kalshi_contract": "KXUSNFP",
+        "underlying": "SP500",
+        "unit": "%",
+        "date_range": [
+          "2016-07-11",
+          "2026-07-10"
+        ],
+        "n_events_in_window": 113,
+        "effect_vs_placebo": {
+          "n_event": 113,
+          "n_placebo": 2400,
+          "mean_abs_event": 0.9054,
+          "mean_abs_placebo": 0.7229,
+          "ratio": 1.252,
+          "welch_z": 2.17,
+          "cohens_d": 0.209
+        }
+      },
+      "NFP_intraday_ES": {
+        "event_type": "Nonfarm Payrolls -> ES=F (8:30 ET)",
+        "kalshi_contract": "KXUSNFP",
+        "symbol": "ES=F",
+        "unit": "%",
+        "window": "ET hour 8:00 bar",
+        "date_range": [
+          "2024-02-15",
+          "2026-07-10"
+        ],
+        "n_events": 27,
+        "effect_vs_placebo": {
+          "n_event": 27,
+          "n_placebo": 92,
+          "mean_abs_event": 0.2596,
+          "mean_abs_placebo": 0.1399,
+          "ratio": 1.856,
+          "welch_z": 2.37,
+          "cohens_d": 0.693
+        }
+      },
+      "NFP_intraday_ZN": {
+        "event_type": "Nonfarm Payrolls -> ZN=F (8:30 ET)",
+        "kalshi_contract": "KXUSNFP",
+        "symbol": "ZN=F",
+        "unit": "%",
+        "window": "ET hour 8:00 bar",
+        "date_range": [
+          "2024-02-15",
+          "2026-07-10"
+        ],
+        "n_events": 27,
+        "effect_vs_placebo": {
+          "n_event": 27,
+          "n_placebo": 92,
+          "mean_abs_event": 0.2807,
+          "mean_abs_placebo": 0.0935,
+          "ratio": 3.004,
+          "welch_z": 3.77,
+          "cohens_d": 1.308
+        }
+      }
+    }
+  }
+}
