@@ -93,8 +93,9 @@ def events_by_volume(series: str) -> list[tuple[str, int, float, str]]:
     return rows
 
 
-def event_strikes(series: str, event: str) -> list[dict]:
-    return [m for m in list_settled_markets(series) if m.get("event_ticker") == event]
+def event_strikes(series: str, event: str, markets: list[dict] | None = None) -> list[dict]:
+    ms = markets if markets is not None else list_settled_markets(series)
+    return [m for m in ms if m.get("event_ticker") == event]
 
 
 # ---- per-contract history ------------------------------------------------------------------
@@ -161,8 +162,9 @@ def _write_jsonl(path: str, rows: list[dict]) -> None:
 
 
 def pull_event(series: str, event: str, top: int | None, candle_interval: int,
-               candle_days: int) -> dict:
-    strikes = event_strikes(series, event)
+               candle_days: int, markets: list[dict] | None = None,
+               skip_candles: bool = False) -> dict:
+    strikes = event_strikes(series, event, markets)
     if not strikes:
         return {"event": event, "status": "NO_STRIKES"}
     strikes.sort(key=lambda m: -(_num(m.get("volume_fp") or m.get("volume")) or 0.0))
@@ -178,7 +180,7 @@ def pull_event(series: str, event: str, top: int | None, candle_interval: int,
     for m in strikes:
         tk = m["ticker"]
         tr = fetch_trades(tk)
-        cd = fetch_candles(series, tk, start, now, candle_interval)
+        cd = [] if skip_candles else fetch_candles(series, tk, start, now, candle_interval)
         for r in tr:
             r["ticker"] = tk
         for r in cd:
@@ -202,9 +204,26 @@ def main() -> None:
     ap.add_argument("--list", action="store_true", help="list settled events by volume, then exit")
     ap.add_argument("--event", default=None, help="event_ticker to pull (a release's strike ladder)")
     ap.add_argument("--top", type=int, default=None, help="pull only the N most-liquid strikes")
+    ap.add_argument("--all", action="store_true", help="pull EVERY settled event for the series")
+    ap.add_argument("--skip-candles", action="store_true", help="trades only (skip candlestick calls)")
     ap.add_argument("--candle-interval", type=int, default=1, help="candlestick minutes (1/60/1440)")
     ap.add_argument("--candle-days", type=int, default=30, help="candlestick lookback days")
     args = ap.parse_args()
+
+    if args.all:
+        markets = list_settled_markets(args.series)              # enumerate ONCE
+        events = sorted({m.get("event_ticker") for m in markets if m.get("event_ticker")})
+        print(f"[{args.series}] pulling ALL {len(events)} settled events "
+              f"(top={args.top}, candles={'off' if args.skip_candles else 'on'})", flush=True)
+        grand_tr = 0
+        for i, e in enumerate(events, 1):
+            res = pull_event(args.series, e, args.top, args.candle_interval, args.candle_days,
+                             markets=markets, skip_candles=args.skip_candles)
+            n = res.get("n_trades", 0); grand_tr += n
+            print(f"  [{i:>2}/{len(events)}] {e:<26} {res['status']} strikes={res.get('n_strikes','-')} "
+                  f"trades={n}", flush=True)
+        print(f"[done] {len(events)} events, {grand_tr} trades -> {os.path.join(STORE, args.series)}")
+        return
 
     if args.list or not args.event:
         rows = events_by_volume(args.series)
@@ -214,7 +233,8 @@ def main() -> None:
         if not args.event:
             return
 
-    res = pull_event(args.series, args.event, args.top, args.candle_interval, args.candle_days)
+    res = pull_event(args.series, args.event, args.top, args.candle_interval, args.candle_days,
+                     skip_candles=args.skip_candles)
     print(f"[pull] {res['event']}: {res['status']}", flush=True)
     if res["status"] == "OK":
         print(f"    strikes={res['n_strikes']} trades={res['n_trades']} candles={res['n_candles']}")
