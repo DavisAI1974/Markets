@@ -39,6 +39,8 @@ DEFAULT_MACRO_SERIES = [
     "KXFEDHIKE", "RATECUTS", "KXEFFR", "KXTROPSTORM",
     # energy price contracts (react to scheduled EIA releases) — prime coupling targets
     "KXWTI", "KXBRENTD", "KXNATGASD", "KXAAAGASD",
+    # electricity / power (weather-driven; KXPOWERKWH live, regionals open periodically)
+    "KXPOWERKWH", "KXUTILITYERCOT", "KXUTILITYPJMWEST", "KXUTILITYNYC", "KXUTILITYSOCAL",
 ]
 
 

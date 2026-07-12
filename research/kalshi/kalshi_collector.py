@@ -86,7 +86,18 @@ ENERGY = [
     "KXNATGASD",   # Henry Hub natural gas, daily (the EIA storage reactant)
     "KXAAAGASD",   # US retail gasoline (AAA), daily
 ]
-DEFAULT_WATCHLIST = WEATHER_HIGH + ECON + ENERGY
+# Electricity / power price contracts — squarely Greg's energy-trading edge AND weather-
+# driven (temp -> demand -> price), so the OD-weather forecaster feeds price forecasting.
+# KXPOWERKWH is live now; the regional ISO series list on a periodic cadence (0 open at
+# check time) and are kept here so the durable collector auto-captures them when they open.
+POWER = [
+    "KXPOWERKWH",       # Avg US electricity price, monthly — LIVE
+    "KXUTILITYERCOT",   # Texas / ERCOT electricity price (opens periodically)
+    "KXUTILITYPJMWEST", # PJM West
+    "KXUTILITYNYC",     # NYC
+    "KXUTILITYSOCAL",   # SoCal
+]
+DEFAULT_WATCHLIST = WEATHER_HIGH + ECON + ENERGY + POWER
 
 
 # --- HTTP -----------------------------------------------------------------------------------

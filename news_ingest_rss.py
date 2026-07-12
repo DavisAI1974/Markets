@@ -54,6 +54,12 @@ CONTRACT_KEYWORDS: dict[str, "re.Pattern[str]"] = {
     "KXBRENTD":   re.compile(r"\b(brent|crude|oil price|opec|barrel)\b", re.I),
     "KXNATGASD":  re.compile(r"\b(natural gas|nat gas|natgas|henry hub|gas storage|lng)\b", re.I),
     "KXAAAGASD":  re.compile(r"\b(gasoline|gas price|pump price|retail gas)\b", re.I),
+    # --- electricity / power (weather-driven; EIA electricity data) ---
+    "KXPOWERKWH":      re.compile(r"\b(electricity price|power price|kwh|electric bill|retail electric)\b", re.I),
+    "KXUTILITYERCOT":  re.compile(r"\b(ercot|texas (grid|electric|power)|texas heat)\b", re.I),
+    "KXUTILITYPJMWEST": re.compile(r"\b(pjm|mid-atlantic (grid|power))\b", re.I),
+    "KXUTILITYNYC":    re.compile(r"\b(nyiso|con ?ed|new york (grid|electric))\b", re.I),
+    "KXUTILITYSOCAL":  re.compile(r"\b(caiso|socal|southern california (edison|electric|grid))\b", re.I),
     # --- hurricanes / tropical (NHC feed) ---
     "KXTROPSTORM": re.compile(r"\b(tropical storm|tropical depression|named storm|hurricane|cyclone)\b", re.I),
     # --- weather daily-high cities: mostly OD-driven, tagged only on heat-wave macro news ---
