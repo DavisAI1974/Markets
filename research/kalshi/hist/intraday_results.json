@@ -1,0 +1,64 @@
+{
+  "EIA_petroleum_WTI_intraday": {
+    "event_type": "EIA Weekly Petroleum Status (crude) \u2014 intraday",
+    "kalshi_contract": "KXWTI",
+    "symbol": "CL=F",
+    "window": "release-hour bar (ET hour 10:00-11:00, contains ~10:30 release) on Wed",
+    "date_range": [
+      "2024-02-15",
+      "2026-07-10"
+    ],
+    "event_hour": {
+      "n": 122,
+      "mean": -0.00014165506699835586,
+      "mean_abs": 0.005641314625576758,
+      "sd": 0.007900863571264792
+    },
+    "placebo_same_hour_other_days": {
+      "n": 482,
+      "mean": 9.084076669127334e-05,
+      "mean_abs": 0.005055787257828401,
+      "sd": 0.006994584407190842
+    },
+    "effect_vs_placebo": {
+      "n_event": 122,
+      "n_placebo": 482,
+      "mean_abs_event": 0.005641314625576758,
+      "mean_abs_placebo": 0.005055787257828401,
+      "ratio": 1.1158132923496185,
+      "welch_z": 1.074042964510677,
+      "cohens_d": 0.11773590671794827
+    }
+  },
+  "EIA_natgas_storage_intraday": {
+    "event_type": "EIA Weekly Natural Gas Storage \u2014 intraday",
+    "kalshi_contract": "KXNATGASD",
+    "symbol": "NG=F",
+    "window": "release-hour bar (ET hour 10:00-11:00, contains ~10:30 release) on Thu",
+    "date_range": [
+      "2024-02-15",
+      "2026-07-10"
+    ],
+    "event_hour": {
+      "n": 121,
+      "mean": -0.002250222314515246,
+      "mean_abs": 0.012841459325147728,
+      "sd": 0.015709172374653815
+    },
+    "placebo_same_hour_other_days": {
+      "n": 483,
+      "mean": -0.00012131218532412555,
+      "mean_abs": 0.008159093346617997,
+      "sd": 0.01072134014120486
+    },
+    "effect_vs_placebo": {
+      "n_event": 121,
+      "n_placebo": 483,
+      "mean_abs_event": 0.012841459325147728,
+      "mean_abs_placebo": 0.008159093346617997,
+      "ratio": 1.5738831239711952,
+      "welch_z": 5.211016529973871,
+      "cohens_d": 0.6273966830459409
+    }
+  }
+}

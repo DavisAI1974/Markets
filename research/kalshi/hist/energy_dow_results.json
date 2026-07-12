@@ -1,0 +1,174 @@
+{
+  "EIA_petroleum_status_WTI": {
+    "event_type": "EIA Weekly Petroleum Status Report (crude inventories)",
+    "kalshi_contract": "KXWTI",
+    "underlying": "DCOILWTICO",
+    "proxy": "day-of-week release proxy (release weekday=Wed)",
+    "date_range": [
+      "1986-01-02",
+      "2026-07-06"
+    ],
+    "event": {
+      "n": 2094,
+      "mean": 0.00038608541594763955,
+      "sd": 0.028032799542569823,
+      "mean_abs": 0.01865842889420896,
+      "p50_abs": 0.013759430835278709,
+      "p90_abs": 0.038275677567903205,
+      "p95_abs": 0.05278154809054289
+    },
+    "placebo_other_weekdays": {
+      "n": 8098,
+      "mean": 0.00011281133539644087,
+      "sd": 0.026674898897586324,
+      "mean_abs": 0.017566565638008118,
+      "p50_abs": 0.012390452785676041,
+      "p90_abs": 0.0371357864129034,
+      "p95_abs": 0.049601852525684505
+    },
+    "effect_vs_placebo": {
+      "mean_abs_event": 0.01865842889420896,
+      "mean_abs_placebo": 0.017566565638008118,
+      "ratio": 1.062155761046338,
+      "cohens_d": 0.053918235912730365,
+      "welch_z": 2.1463780738558085
+    },
+    "persistence_fwd2_mean_abs": 0.024341810847264844,
+    "dow_mean_abs": {
+      "Mon": 0.01949,
+      "Tue": 0.01758,
+      "Wed": 0.01866,
+      "Thu": 0.01724,
+      "Fri": 0.01605
+    }
+  },
+  "EIA_petroleum_status_Brent": {
+    "event_type": "EIA Weekly Petroleum Status Report (spillover to Brent)",
+    "kalshi_contract": "KXBRENTD",
+    "underlying": "DCOILBRENTEU",
+    "proxy": "day-of-week release proxy (release weekday=Wed)",
+    "date_range": [
+      "1987-05-20",
+      "2026-07-06"
+    ],
+    "event": {
+      "n": 2023,
+      "mean": 6.425960138441024e-05,
+      "sd": 0.02503373795941955,
+      "mean_abs": 0.016435242513160656,
+      "p50_abs": 0.011632670414923841,
+      "p90_abs": 0.035298869429345514,
+      "p95_abs": 0.045807329112825555
+    },
+    "placebo_other_weekdays": {
+      "n": 7903,
+      "mean": 0.00015024918781120092,
+      "sd": 0.025508047570811203,
+      "mean_abs": 0.016598755572509515,
+      "p50_abs": 0.011860450914747885,
+      "p90_abs": 0.035651055104023076,
+      "p95_abs": 0.04568734757152069
+    },
+    "effect_vs_placebo": {
+      "mean_abs_event": 0.016435242513160656,
+      "mean_abs_placebo": 0.016598755572509515,
+      "ratio": 0.9901490772224114,
+      "cohens_d": -0.00848549534670042,
+      "welch_z": -0.3457459807409605
+    },
+    "persistence_fwd2_mean_abs": 0.023797583827228637,
+    "dow_mean_abs": {
+      "Mon": 0.01767,
+      "Tue": 0.01676,
+      "Wed": 0.01644,
+      "Thu": 0.01642,
+      "Fri": 0.01559
+    }
+  },
+  "EIA_natgas_storage": {
+    "event_type": "EIA Weekly Natural Gas Storage Report",
+    "kalshi_contract": "KXNATGASD",
+    "underlying": "DHHNGSP",
+    "proxy": "day-of-week release proxy (release weekday=Thu)",
+    "date_range": [
+      "1997-01-07",
+      "2026-07-06"
+    ],
+    "event": {
+      "n": 1496,
+      "mean": -0.004835148705748758,
+      "sd": 0.05529037590623792,
+      "mean_abs": 0.030004831419543875,
+      "p50_abs": 0.019048194970694363,
+      "p90_abs": 0.06477083615778205,
+      "p95_abs": 0.09055120369475386
+    },
+    "placebo_other_weekdays": {
+      "n": 5908,
+      "mean": 0.0011990554512455915,
+      "sd": 0.06627416144555327,
+      "mean_abs": 0.03439431072914855,
+      "p50_abs": 0.02177379954956062,
+      "p90_abs": 0.07354001621183442,
+      "p95_abs": 0.09876441467241244
+    },
+    "effect_vs_placebo": {
+      "mean_abs_event": 0.030004831419543875,
+      "mean_abs_placebo": 0.03439431072914855,
+      "ratio": 0.8723777503735618,
+      "cohens_d": -0.08010987374761808,
+      "welch_z": -3.103578398971716
+    },
+    "persistence_fwd2_mean_abs": 0.05072595239343822,
+    "dow_mean_abs": {
+      "Mon": 0.03802,
+      "Tue": 0.03442,
+      "Wed": 0.02871,
+      "Thu": 0.03,
+      "Fri": 0.03682
+    }
+  },
+  "EIA_propane_weekly": {
+    "event_type": "EIA Weekly propane stocks (petroleum report)",
+    "kalshi_contract": "(energy breadth)",
+    "underlying": "DPROPANEMBTX",
+    "proxy": "day-of-week release proxy (release weekday=Wed)",
+    "date_range": [
+      "1992-07-09",
+      "2026-07-06"
+    ],
+    "event": {
+      "n": 1756,
+      "mean": 0.00043993405402704267,
+      "sd": 0.026185038570561973,
+      "mean_abs": 0.017170842802693303,
+      "p50_abs": 0.01145891780407149,
+      "p90_abs": 0.03922071315328133,
+      "p95_abs": 0.05351595334010785
+    },
+    "placebo_other_weekdays": {
+      "n": 6761,
+      "mean": -5.483602813320792e-06,
+      "sd": 0.026456935240345595,
+      "mean_abs": 0.01604198183775794,
+      "p50_abs": 0.010429296296985765,
+      "p90_abs": 0.036520071577617746,
+      "p95_abs": 0.05129329438755046
+    },
+    "effect_vs_placebo": {
+      "mean_abs_event": 0.017170842802693303,
+      "mean_abs_placebo": 0.01604198183775794,
+      "ratio": 1.0703691711131582,
+      "cohens_d": 0.054317265538148064,
+      "welch_z": 2.1033694907504947
+    },
+    "persistence_fwd2_mean_abs": 0.023935102231421864,
+    "dow_mean_abs": {
+      "Mon": 0.01785,
+      "Tue": 0.01583,
+      "Wed": 0.01717,
+      "Thu": 0.01571,
+      "Fri": 0.01488
+    }
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "FOMC_daily_2yr": {
+    "event_type": "FOMC statement -> 2yr yield",
+    "kalshi_contract": "KXFEDHIKE",
+    "underlying": "DGS2",
+    "unit": "bps",
+    "date_range": [
+      "1976-06-01",
+      "2026-07-09"
+    ],
+    "n_events_in_window": 44,
+    "effect_vs_placebo": {
+      "n_event": 44,
+      "n_placebo": 12477,
+      "mean_abs_event": 7.0682,
+      "mean_abs_placebo": 4.781,
+      "ratio": 1.478,
+      "welch_z": 2.45,
+      "cohens_d": 0.358
+    }
+  },
+  "FOMC_daily_SP500": {
+    "event_type": "FOMC statement -> S&P500",
+    "kalshi_contract": "KXFEDHIKE",
+    "underlying": "SP500",
+    "unit": "%",
+    "date_range": [
+      "2016-07-11",
+      "2026-07-10"
+    ],
+    "n_events_in_window": 44,
+    "effect_vs_placebo": {
+      "n_event": 44,
+      "n_placebo": 2469,
+      "mean_abs_event": 0.9689,
+      "mean_abs_placebo": 0.7269,
+      "ratio": 1.333,
+      "welch_z": 1.85,
+      "cohens_d": 0.276
+    }
+  },
+  "FOMC_intraday_ES": {
+    "event_type": "FOMC statement -> ES=F (14:00 ET)",
+    "kalshi_contract": "KXFEDHIKE",
+    "symbol": "ES=F",
+    "unit": "%",
+    "window": "ET hour 14:00 bar",
+    "date_range": [
+      "2024-02-15",
+      "2026-07-10"
+    ],
+    "n_events": 19,
+    "effect_vs_placebo": {
+      "n_event": 19,
+      "n_placebo": 569,
+      "mean_abs_event": 0.4818,
+      "mean_abs_placebo": 0.1588,
+      "ratio": 3.034,
+      "welch_z": 3.39,
+      "cohens_d": 1.65
+    }
+  },
+  "FOMC_intraday_ZN": {
+    "event_type": "FOMC statement -> ZN=F 10yr note (14:00 ET)",
+    "kalshi_contract": "KXFEDHIKE",
+    "symbol": "ZN=F",
+    "unit": "%",
+    "window": "ET hour 14:00 bar",
+    "date_range": [
+      "2024-02-15",
+      "2026-07-10"
+    ],
+    "n_events": 19,
+    "effect_vs_placebo": {
+      "n_event": 19,
+      "n_placebo": 575,
+      "mean_abs_event": 0.218,
+      "mean_abs_placebo": 0.0431,
+      "ratio": 5.058,
+      "welch_z": 3.85,
+      "cohens_d": 3.115
+    }
+  },
+  "NFP_daily_2yr": {
+    "event_type": "Nonfarm Payrolls -> 2yr yield",
+    "kalshi_contract": "KXUSNFP",
+    "underlying": "DGS2",
+    "unit": "bps",
+    "date_range": [
+      "1976-06-01",
+      "2026-07-09"
+    ],
+    "n_events_in_window": 122,
+    "effect_vs_placebo": {
+      "n_event": 122,
+      "n_placebo": 12399,
+      "mean_abs_event": 5.5328,
+      "mean_abs_placebo": 4.7818,
+      "ratio": 1.157,
+      "welch_z": 1.37,
+      "cohens_d": 0.118
+    }
+  },
+  "NFP_daily_SP500": {
+    "event_type": "Nonfarm Payrolls -> S&P500",
+    "kalshi_contract": "KXUSNFP",
+    "underlying": "SP500",
+    "unit": "%",
+    "date_range": [
+      "2016-07-11",
+      "2026-07-10"
+    ],
+    "n_events_in_window": 113,
+    "effect_vs_placebo": {
+      "n_event": 113,
+      "n_placebo": 2400,
+      "mean_abs_event": 0.9054,
+      "mean_abs_placebo": 0.7229,
+      "ratio": 1.252,
+      "welch_z": 2.17,
+      "cohens_d": 0.209
+    }
+  },
+  "NFP_intraday_ES": {
+    "event_type": "Nonfarm Payrolls -> ES=F (8:30 ET)",
+    "kalshi_contract": "KXUSNFP",
+    "symbol": "ES=F",
+    "unit": "%",
+    "window": "ET hour 8:00 bar",
+    "date_range": [
+      "2024-02-15",
+      "2026-07-10"
+    ],
+    "n_events": 27,
+    "effect_vs_placebo": {
+      "n_event": 27,
+      "n_placebo": 92,
+      "mean_abs_event": 0.2596,
+      "mean_abs_placebo": 0.1399,
+      "ratio": 1.856,
+      "welch_z": 2.37,
+      "cohens_d": 0.693
+    }
+  },
+  "NFP_intraday_ZN": {
+    "event_type": "Nonfarm Payrolls -> ZN=F (8:30 ET)",
+    "kalshi_contract": "KXUSNFP",
+    "symbol": "ZN=F",
+    "unit": "%",
+    "window": "ET hour 8:00 bar",
+    "date_range": [
+      "2024-02-15",
+      "2026-07-10"
+    ],
+    "n_events": 27,
+    "effect_vs_placebo": {
+      "n_event": 27,
+      "n_placebo": 92,
+      "mean_abs_event": 0.2807,
+      "mean_abs_placebo": 0.0935,
+      "ratio": 3.004,
+      "welch_z": 3.77,
+      "cohens_d": 1.308
+    }
+  }
+}
