@@ -76,7 +76,7 @@ Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (
 | `CLAUDE.md` | The lean live operating doc (S83 split; the pre-split OD/crypto/physics master is archived verbatim in `CLAUDE_ARCHIVE_OD.md`). |
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
 | `research/kalshi/EVENT_WEIGHT_STUDY.md` (+ `event_weight_study.json`, `source_map.json`) | Per-bucket event-weight study (weather→storage strong; storage-surprise→price null). |
-| `SESSION_HANDOFF_2026-07-14_S83.md` (+ S82, S81, S80, S79, S78) | Session handoffs (S83 latest). |
+| `SESSION_HANDOFF_2026-07-15_S84.md` (+ S83, S82, S81, S80, S79, S78) | Session handoffs (S84 latest: weather scoreboard, NYMEX-canary/Databento data thread, crypto-collector kill, settlement corrections). |
 | `KICKOFF_2026-07-15_S84.md` (+ S83, S82, S81, S80, S79, `KICKOFF_S78/S79_KALSHI.md`) | Session kickoffs (S84 next). |
 
 ---
