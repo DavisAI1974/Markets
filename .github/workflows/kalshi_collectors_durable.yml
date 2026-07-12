@@ -1,0 +1,161 @@
+name: Kalshi Collectors (durable)
+
+# Snapshots Kalshi prediction-market order books (weather daily-high cities + scheduled
+# macro prints) into per-series JSONL bins on GitHub compute, mirroring the crypto durable
+# collectors. Persists to a data/kalshi-bins branch via orphan force-push.
+#
+# UNLIKE the coin collectors (which grow a dict-JSON in place), kalshi_collector.py APPENDS
+# JSONL. So the durable cycle is: restore prior <SERIES>_bins.jsonl(.gz) from the data
+# branch -> the collector APPENDS new snapshots to them -> files grow monotonically ->
+# gzip + push. The anti-clobber guardrail compares LINE COUNTS (never let a partial run
+# shrink the cumulative history).
+#
+# Bins are stored GZIPPED on the data branch (<f>.jsonl.gz) so no file hits GitHub's
+# 100 MiB/file push cap. gunzip on restore, gzip on push; the collector reads/writes raw
+# .jsonl locally.
+#
+# The collector uses only the Python stdlib (urllib/gzip/json) -> no pip install needed.
+# Public market data needs no auth.
+#
+# Schedule: every 6h, ~5h50m/run = near-continuous daily coverage. Public repo = unlimited minutes.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC (default-branch only)
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: 'Collection duration in seconds (default 5h50m=21000)'
+        default: '21000'
+        type: string
+      interval_seconds:
+        description: 'Poll interval seconds (Kalshi books move slowly)'
+        default: '60'
+        type: string
+  push:
+    branches:
+      - claude/kalshi-s78-kickoff-jb5oyx
+    paths:
+      - '.github/workflows/kalshi_collectors_durable.yml'
+      - 'research/kalshi/kalshi_collector.py'
+
+permissions:
+  contents: write
+
+# The code branch this workflow checks out + pushes bins relative to. Kept in one place so
+# retargeting to the default branch (where cron actually fires) is a one-line change.
+env:
+  CODE_REF: claude/kalshi-s78-kickoff-jb5oyx
+  DATA_BRANCH: data/kalshi-bins
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355   # 5h55m, just under GitHub's 6hr hard limit
+    concurrency:
+      group: kalshi-collectors
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/kalshi-s78-kickoff-jb5oyx
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restore previous bins from data/kalshi-bins
+        run: |
+          mkdir -p data/kalshi
+          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" > /dev/null 2>&1; then
+            echo "[restore] $DATA_BRANCH exists; fetching"
+            git fetch origin "$DATA_BRANCH"
+            # bring every stored <SERIES>_bins.jsonl.gz into data/kalshi/ as raw .jsonl
+            for gz in $(git ls-tree -r --name-only "origin/$DATA_BRANCH" | grep '_bins\.jsonl\.gz$'); do
+              base=$(basename "$gz" .gz)
+              git show "origin/$DATA_BRANCH:$gz" | gunzip > "data/kalshi/$base" \
+                && echo "[restore] $base ($(wc -l < data/kalshi/$base) lines)"
+            done
+          else
+            echo "[restore] $DATA_BRANCH does not exist; first run, fresh"
+          fi
+          ls -la data/kalshi/ 2>&1 || echo "[restore] no bins yet"
+
+      - name: Connectivity check
+        run: |
+          curl -sS --max-time 8 -o /dev/null -w "Kalshi API: %{http_code}\n" \
+            "https://api.elections.kalshi.com/trade-api/v2/exchange/status" || true
+
+      - name: Run Kalshi collector
+        timeout-minutes: 350
+        run: |
+          DURATION="${{ github.event.inputs.duration_seconds || '21000' }}"
+          INTERVAL="${{ github.event.inputs.interval_seconds || '60' }}"
+          echo "[run] kalshi collector ${DURATION}s @ ${INTERVAL}s on $(date -u)"
+          python research/kalshi/kalshi_collector.py \
+            --duration "$DURATION" --interval "$INTERVAL" --out-dir data/kalshi \
+            > /tmp/kalshi.log 2>&1 || echo "[run] collector exit=$?"
+          echo "=== collector tail ==="; tail -20 /tmp/kalshi.log
+
+      - name: Bin stats
+        if: always()
+        run: |
+          for f in data/kalshi/*_bins.jsonl; do
+            [ -f "$f" ] && echo "$(basename "$f"): $(stat -c%s "$f") bytes, $(wc -l < "$f") lines"
+          done 2>/dev/null || echo "[stats] no bins"
+
+      - name: Commit gzipped bins to data/kalshi-bins (force-push)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          # Anti-clobber guardrail (line-count aware): never let a partial run publish FEWER
+          # lines than the branch already has for a series. Data branch stores <f>.jsonl.gz;
+          # local files are raw .jsonl (already restored+appended, so normally new >= old).
+          BRANCH="origin/$DATA_BRANCH" python - <<'PY'
+          import os, subprocess, gzip, glob
+          BRANCH = os.environ["BRANCH"]
+          def branch_lines(gzname):
+              try:
+                  blob = subprocess.run(["git", "show", f"{BRANCH}:{gzname}"],
+                                        capture_output=True, check=True).stdout
+                  return gzip.decompress(blob).count(b"\n"), gzip.decompress(blob)
+              except subprocess.CalledProcessError:
+                  return 0, None
+          for local in glob.glob("data/kalshi/*_bins.jsonl"):
+              base = os.path.basename(local)
+              with open(local, "rb") as f:
+                  new = f.read()
+              new_n = new.count(b"\n")
+              old_n, old_bytes = branch_lines(base + ".gz")
+              if old_n and new_n < old_n:
+                  with open(local, "wb") as f:
+                      f.write(old_bytes)
+                  print(f"[guardrail] {base}: {new_n} < {old_n} on branch -> RESTORED branch copy")
+              else:
+                  print(f"[guardrail] {base}: {new_n} lines (>= {old_n}) -> keep")
+          PY
+
+          mkdir -p /tmp/kbins
+          for f in data/kalshi/*_bins.jsonl; do
+            [ -f "$f" ] && gzip -c "$f" > "/tmp/kbins/$(basename "$f").gz" \
+              && echo "[gzip] $(basename "$f").gz $(stat -c%s "/tmp/kbins/$(basename "$f").gz") bytes"
+          done
+
+          git checkout --orphan "kalshi-bins-tmp"
+          git rm -rf . > /dev/null 2>&1 || true
+          cp /tmp/kbins/*.gz . 2>/dev/null || true
+
+          if ls *_bins.jsonl.gz > /dev/null 2>&1; then
+            git add *_bins.jsonl.gz
+            git commit -m "kalshi bins update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin "kalshi-bins-tmp:$DATA_BRANCH"
+            echo "[commit] pushed gzipped bins to $DATA_BRANCH"
+          else
+            echo "[commit] no bins to commit"
+          fi
