@@ -1,4 +1,37 @@
-# CLAUDE.md — DavisAI Master Context (Updated 2026-07-12 Session 79 — Kalshi: pipeline validated turnkey, consensus accrual live, event-weight study + the MERGED signal architecture. READ `SESSION_HANDOFF_2026-07-12_S79.md` first, then `SESSION_HANDOFF_2026-07-12_S78.md` + `KALSHI_BUILD_SCOPE.md`, not this whole file)
+# CLAUDE.md — DavisAI Master Context (Updated 2026-07-12 Session 80 — Kalshi: cron LIVE (s79=default), historical trades unblock (signed taker flow), futures→Kalshi LAG CONFIRMED one-directional, the level-hit reframe + herd>whale + each-trade-individually rule. READ `SESSION_HANDOFF_2026-07-12_S80.md` first, then S79/S78 handoffs, not this whole file)
+
+## S80 UPDATE (2026-07-12) — cron live; HISTORICAL Kalshi trades (signed flow); futures→Kalshi lag CONFIRMED; level-hit reframe (read `SESSION_HANDOFF_2026-07-12_S80.md`; branch `claude/kalshi-s79-kickoff-ij8t9o` = repo DEFAULT, push there)
+- **Cron UNBLOCKED:** Greg made s79 the default → 6h durable collector fires; bins+consensus accrue continuously
+  (data lands at END of each ~6h run). First run confirmed live.
+- **HISTORICAL Kalshi data retrievable (the unblock):** public API serves settled ladders + per-ticker trades WITH
+  `taker_side` = REAL SIGNED taker flow (the original info_dipole input) + candlesticks. Pulled 46 WTI daily events
+  × top-12 strikes = 496k trades (`kalshi_history.py`; local store, gitignored). Hubs: KXNATGASD=Henry Hub (NG
+  front-month, 5PM EDT close), KXWTI=Cushing (ICE daily settle), KXBRENTD=Brent — all DAILY price-settled.
+- **⭐ FUTURES→KALSHI LAG CONFIRMED, ONE-DIRECTIONAL (`futures_kalshi_lag.py`):** per-contract leadlag (S19
+  operator + time-slide null) — WTI 15/41 sig, lags {0m:6, +1m:8, +5m:1}; Brent replicates {0,+1,+1,+2}; across 19
+  significant contracts on 2 hubs **Kalshi NEVER leads**. ~Half of liquid contracts re-price a FULL MINUTE after
+  the futures move (busy strikes included). Near-ATM one futures level ≈ 10-25¢ probability vs ~5¢ toll → the
+  stale-quote reprice pays the toll; 1-2 more levels = profit (Greg). Natgas that day: tape too thin to measure
+  (not lag-absence). Two-layer architecture settled: futures ladder = DRIVER, Kalshi book = VEHICLE, lag = bridge.
+- **PLATFORM RULE added (Greg, S80): EACH TRADE INDIVIDUALLY, NEVER AVERAGE** (`each-trade-individually-never-
+  average`, full text in the platform-rules block below): pooled hit-rates manufacture nulls; per-trade context +
+  distributions/fingerprints, never lead with the mean. Proven in-session: pooled WTI signal test ≈ coin-flip =
+  the wrong lens.
+- **LEVEL-HIT REFRAME (Greg):** prediction unit = a level-hit event (bid 2.00 hit → predict BEFORE 1.95 trades:
+  hit or no momentum; if hit → continuation big/small). **HERD > WHALE for continuation** (corrects Phase-1.5):
+  whale = finite inventory + whipsaw incentive → scalp only; herd = fuel keeps arriving → steep AND sustained;
+  herd BREADTH (clip-diversity, arrival acceleration) = the magnitude predictor. News taxonomy beyond releases
+  (war/pipeline/capacity...) needs per-CATEGORY historical scores (news-first coupling + move-first unexplained-
+  jump budget). Weather: Greg's own spec — LEAVE THE WEATHER BUILD ALONE (bridge `kalshi_weather_forecast.py`
+  just scores any (value,sigma) forecast; climatology MAE 32.2 B baseline stands).
+- **Settlement-window rule (Greg's catch):** daily contracts snap to 0/100 into the daily settle (mechanical);
+  every historical decision window must exclude it (SETTLE_UTC + guard in `release_signal_history.py`; filtering
+  moved placebo 0.443→0.470 — the earlier "flow anti-predictive" read was substantially this artifact).
+- Signal code: `release_book_signal.py` (live; leakage PASS 0/30; fires on release-spanning bins — first shot Thu
+  7/16 EIA natgas 14:30 UTC). 7/9 natgas print: +61B vs +60B street = in-line non-event (thesis in data).
+- **NEXT (S81):** (1) per-trade LEVEL-HIT dataset on the 496k-trade WTI tape (context+outcome per event,
+  distributions not means) → the continuation predictor; (2) Thu 7/16 = live book test + busy-day natgas lag;
+  (3) sub-minute lag via Pyth; (4) move-first news-category budget; (5) consensus_poll around releases.
 
 ## S79 UPDATE (2026-07-12) — Kalshi pipeline TURNKEY; consensus accrual kicked off; event-weight study; the MERGED signal architecture (read `SESSION_HANDOFF_2026-07-12_S79.md`; branch `claude/kalshi-s79-kickoff-ij8t9o`, ff'd from the S78 tip)
 - **Pipeline validated end-to-end, turnkey.** All 4 stages confirmed on LIVE data: collector→bins, news→tagged events, coupling engine (`news_coupling_research --source kalshi`: 48 obs vs 960 placebo, signed-bps + hit-rate gate both compute), score harness (real settled NYC data, Brier/edge correct, post-hoc-baseline caveat confirmed live). GOTCHA: `--events` is joined onto `--data-dir` → pass the BASENAME.
