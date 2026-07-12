@@ -87,3 +87,4 @@ news_events.*.jsonl
 
 # Historical Kalshi trades+candles puller output (market data lives local)
 data/kalshi_hist_trades/
+data/pyth_ticks/

@@ -1,0 +1,145 @@
+name: Pyth Tick Collector (durable)
+
+# Streams sub-second NYMEX/ICE futures ticks (the price-discovery venue that LEADS Kalshi) from
+# Pyth Hermes -> per-symbol per-UTC-day JSONL in data/pyth_ticks. This is the sub-minute feed the
+# S81 lag finding needs: at 1-min the reprice is ~1c (< fee) and only rare big moves clear; the edge
+# lives BELOW a minute, so we capture the real tick tape to see the full intra-minute move and the
+# reprice before it decays. Pyth is Kalshi's own settlement source (Henry Hub NG, WTI, Brent).
+#
+# Mirrors kalshi_collectors_durable.yml: restore prior gzipped ticks from data/pyth-ticks -> stream
+# and APPEND -> gzip + orphan force-push. Line-count anti-clobber guardrail. Stored GZIPPED (<100 MiB
+# push cap). Stdlib-only collector (urllib SSE), public feed, no auth.
+#
+# Schedule: every 6h, ~5h50m/run = near-continuous coverage of the ~Sun 18:00 ET - Fri energy session.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC (default-branch only)
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: 'Stream duration in seconds (default 5h50m=21000)'
+        default: '21000'
+        type: string
+  push:
+    branches:
+      - claude/kalshi-s79-kickoff-ij8t9o
+    paths:
+      - '.github/workflows/pyth_collector_durable.yml'
+      - 'research/kalshi/pyth_collector.py'
+
+permissions:
+  contents: write
+
+env:
+  CODE_REF: claude/kalshi-s79-kickoff-ij8t9o
+  DATA_BRANCH: data/pyth-ticks
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355   # 5h55m, just under GitHub's 6hr hard limit
+    concurrency:
+      group: pyth-collector
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/kalshi-s79-kickoff-ij8t9o
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restore previous ticks from data/pyth-ticks
+        run: |
+          mkdir -p data/pyth_ticks
+          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" > /dev/null 2>&1; then
+            echo "[restore] $DATA_BRANCH exists; fetching"
+            git fetch origin "$DATA_BRANCH"
+            for gz in $(git ls-tree -r --name-only "origin/$DATA_BRANCH" | grep '\.jsonl\.gz$'); do
+              base=$(basename "$gz" .gz)
+              git show "origin/$DATA_BRANCH:$gz" | gunzip > "data/pyth_ticks/$base" \
+                && echo "[restore] $base ($(wc -l < data/pyth_ticks/$base) lines)"
+            done
+          else
+            echo "[restore] $DATA_BRANCH does not exist; first run, fresh"
+          fi
+          ls -la data/pyth_ticks/ 2>&1 || echo "[restore] no ticks yet"
+
+      - name: Connectivity check
+        run: |
+          curl -sS --max-time 8 -o /dev/null -w "Pyth Hermes: %{http_code}\n" \
+            "https://hermes.pyth.network/v2/updates/price/latest?ids[]=3ea3adf4dfa7eed79e357c9bdf8a15c6d4dc8fb5454cf71110c73390fb230436" || true
+
+      - name: Run Pyth collector
+        timeout-minutes: 350
+        run: |
+          DURATION="${{ github.event.inputs.duration_seconds || '21000' }}"
+          echo "[run] pyth collector ${DURATION}s on $(date -u)"
+          python research/kalshi/pyth_collector.py \
+            --seconds "$DURATION" --out-dir data/pyth_ticks \
+            > /tmp/pyth.log 2>&1 || echo "[run] collector exit=$?"
+          echo "=== collector tail ==="; tail -20 /tmp/pyth.log
+
+      - name: Tick stats
+        if: always()
+        run: |
+          for f in data/pyth_ticks/*.jsonl; do
+            [ -f "$f" ] && echo "$(basename "$f"): $(stat -c%s "$f") bytes, $(wc -l < "$f") ticks"
+          done 2>/dev/null || echo "[stats] no ticks"
+
+      - name: Commit gzipped ticks to data/pyth-ticks (force-push)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+
+          # Anti-clobber guardrail: never let a partial run publish FEWER ticks than the branch has.
+          BRANCH="origin/$DATA_BRANCH" python - <<'PY'
+          import os, subprocess, gzip, glob
+          BRANCH = os.environ["BRANCH"]
+          def branch_lines(gzname):
+              try:
+                  blob = subprocess.run(["git", "show", f"{BRANCH}:{gzname}"],
+                                        capture_output=True, check=True).stdout
+                  raw = gzip.decompress(blob)
+                  return raw.count(b"\n"), raw
+              except subprocess.CalledProcessError:
+                  return 0, None
+          for local in glob.glob("data/pyth_ticks/*.jsonl"):
+              base = os.path.basename(local)
+              with open(local, "rb") as f:
+                  new = f.read()
+              new_n = new.count(b"\n")
+              old_n, old_bytes = branch_lines(base + ".gz")
+              if old_n and new_n < old_n:
+                  with open(local, "wb") as f:
+                      f.write(old_bytes)
+                  print(f"[guardrail] {base}: {new_n} < {old_n} on branch -> RESTORED branch copy")
+              else:
+                  print(f"[guardrail] {base}: {new_n} ticks (>= {old_n}) -> keep")
+          PY
+
+          mkdir -p /tmp/pticks
+          for f in data/pyth_ticks/*.jsonl; do
+            [ -f "$f" ] && gzip -c "$f" > "/tmp/pticks/$(basename "$f").gz" \
+              && echo "[gzip] $(basename "$f").gz $(stat -c%s "/tmp/pticks/$(basename "$f").gz") bytes"
+          done
+
+          git checkout --orphan "pyth-ticks-tmp"
+          git rm -rf . > /dev/null 2>&1 || true
+          cp /tmp/pticks/*.gz . 2>/dev/null || true
+
+          if ls *.jsonl.gz > /dev/null 2>&1; then
+            git add *.jsonl.gz
+            git commit -m "pyth ticks update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
+            git push -f origin "pyth-ticks-tmp:$DATA_BRANCH"
+            echo "[commit] pushed gzipped ticks to $DATA_BRANCH"
+          else
+            echo "[commit] no ticks to commit"
+          fi
