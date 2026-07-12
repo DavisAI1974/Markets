@@ -34,10 +34,11 @@ on:
         type: string
   push:
     branches:
-      - claude/kalshi-s78-kickoff-jb5oyx
+      - claude/kalshi-s79-kickoff-ij8t9o
     paths:
       - '.github/workflows/kalshi_collectors_durable.yml'
       - 'research/kalshi/kalshi_collector.py'
+      - 'research/kalshi/consensus_poll.py'
 
 permissions:
   contents: write
@@ -45,7 +46,7 @@ permissions:
 # The code branch this workflow checks out + pushes bins relative to. Kept in one place so
 # retargeting to the default branch (where cron actually fires) is a one-line change.
 env:
-  CODE_REF: claude/kalshi-s78-kickoff-jb5oyx
+  CODE_REF: claude/kalshi-s79-kickoff-ij8t9o
   DATA_BRANCH: data/kalshi-bins
 
 jobs:
@@ -60,7 +61,7 @@ jobs:
       - name: Checkout code branch
         uses: actions/checkout@v4
         with:
-          ref: claude/kalshi-s78-kickoff-jb5oyx
+          ref: claude/kalshi-s79-kickoff-ij8t9o
           fetch-depth: 0
 
       - name: Set up Python
@@ -80,6 +81,11 @@ jobs:
               git show "origin/$DATA_BRANCH:$gz" | gunzip > "data/kalshi/$base" \
                 && echo "[restore] $base ($(wc -l < data/kalshi/$base) lines)"
             done
+            # restore the accruing consensus store too (forecast/actual per release)
+            if git ls-tree -r --name-only "origin/$DATA_BRANCH" | grep -q 'consensus\.jsonl\.gz$'; then
+              git show "origin/$DATA_BRANCH:consensus.jsonl.gz" | gunzip > data/kalshi/consensus.jsonl \
+                && echo "[restore] consensus.jsonl ($(wc -l < data/kalshi/consensus.jsonl) rows)"
+            fi
           else
             echo "[restore] $DATA_BRANCH does not exist; first run, fresh"
           fi
@@ -89,6 +95,12 @@ jobs:
         run: |
           curl -sS --max-time 8 -o /dev/null -w "Kalshi API: %{http_code}\n" \
             "https://api.elections.kalshi.com/trade-api/v2/exchange/status" || true
+
+      - name: Poll release consensus (forward-only surprise axis)
+        run: |
+          echo "[consensus] poll $(date -u)"
+          python research/kalshi/consensus_poll.py --out data/kalshi/consensus.jsonl \
+            || echo "[consensus] poll exit=$? (non-fatal)"
 
       - name: Run Kalshi collector
         timeout-minutes: 350
@@ -146,13 +158,16 @@ jobs:
             [ -f "$f" ] && gzip -c "$f" > "/tmp/kbins/$(basename "$f").gz" \
               && echo "[gzip] $(basename "$f").gz $(stat -c%s "/tmp/kbins/$(basename "$f").gz") bytes"
           done
+          # persist the consensus store alongside the bins
+          [ -f data/kalshi/consensus.jsonl ] && gzip -c data/kalshi/consensus.jsonl > /tmp/kbins/consensus.jsonl.gz \
+            && echo "[gzip] consensus.jsonl.gz $(stat -c%s /tmp/kbins/consensus.jsonl.gz) bytes"
 
           git checkout --orphan "kalshi-bins-tmp"
           git rm -rf . > /dev/null 2>&1 || true
           cp /tmp/kbins/*.gz . 2>/dev/null || true
 
-          if ls *_bins.jsonl.gz > /dev/null 2>&1; then
-            git add *_bins.jsonl.gz
+          if ls *.jsonl.gz > /dev/null 2>&1; then
+            git add *.jsonl.gz
             git commit -m "kalshi bins update $(date -u +%Y-%m-%dT%H:%M:%SZ)" -m "Run: ${{ github.run_id }}"
             git push -f origin "kalshi-bins-tmp:$DATA_BRANCH"
             echo "[commit] pushed gzipped bins to $DATA_BRANCH"
