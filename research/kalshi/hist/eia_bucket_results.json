@@ -1,0 +1,312 @@
+{
+  "natgas_storage": {
+    "event": "EIA Natural Gas Storage",
+    "contract": "KXNATGASD",
+    "symbol": "NG=F",
+    "surprise_proxy": "actual weekly change - 5yr same-ISO-week avg change (SEASONAL proxy for consensus)",
+    "n_releases_matched": 521,
+    "intraday_release_hour": {
+      "n_total": 126,
+      "corr_bull_reaction": -0.03,
+      "directional_hitrate_meaningful": 0.518,
+      "directional_hitrate_z_vs_placebo": 0.33,
+      "n_meaningful": 83,
+      "confirmation_vs_countermove": "43 vs 40",
+      "dose_response_hitrate_small_vs_large": {
+        "small": 0.537,
+        "large": 0.5
+      },
+      "conditional_weight": {
+        "mean_abs_meaningful": 1.3104,
+        "mean_abs_inline": 1.2171
+      },
+      "slope_pct_per_unit": -0.001,
+      "inline_threshold_abs_surprise": 13.8,
+      "buckets": {
+        "bearish-surprise -> DOWN (confirmation)": {
+          "N": 24,
+          "mean_signed": -1.0283,
+          "mean_abs": 1.0283,
+          "sd": 0.5599,
+          "pct_up": 0.0,
+          "mean_surprise": 44.83
+        },
+        "bearish-surprise -> UP (reversal)": {
+          "N": 17,
+          "mean_signed": 0.8744,
+          "mean_abs": 0.8744,
+          "sd": 0.5817,
+          "pct_up": 0.941,
+          "mean_surprise": 40.87
+        },
+        "bullish-surprise -> DOWN (sell-the-news)": {
+          "N": 23,
+          "mean_signed": -1.4328,
+          "mean_abs": 1.4328,
+          "sd": 1.0203,
+          "pct_up": 0.0,
+          "mean_surprise": -51.76
+        },
+        "in-line / small-surprise (stand-aside)": {
+          "N": 43,
+          "mean_signed": -0.4847,
+          "mean_abs": 1.2171,
+          "sd": 1.4739,
+          "pct_up": 0.395,
+          "mean_surprise": 1.18
+        },
+        "bullish-surprise -> UP (confirmation)": {
+          "N": 19,
+          "mean_signed": 1.9089,
+          "mean_abs": 1.9089,
+          "sd": 1.0678,
+          "pct_up": 1.0,
+          "mean_surprise": -42.11
+        }
+      }
+    },
+    "daily_release_day": {
+      "n_total": 521,
+      "corr_bull_reaction": -0.01,
+      "directional_hitrate_meaningful": 0.516,
+      "directional_hitrate_z_vs_placebo": 0.59,
+      "n_meaningful": 347,
+      "confirmation_vs_countermove": "179 vs 168",
+      "dose_response_hitrate_small_vs_large": {
+        "small": 0.474,
+        "large": 0.557
+      },
+      "conditional_weight": {
+        "mean_abs_meaningful": 3.0098,
+        "mean_abs_inline": 2.9956
+      },
+      "slope_pct_per_unit": -0.0012,
+      "inline_threshold_abs_surprise": 12.6,
+      "buckets": {
+        "in-line / small-surprise (stand-aside)": {
+          "N": 174,
+          "mean_signed": 0.2756,
+          "mean_abs": 2.9956,
+          "sd": 4.2161,
+          "pct_up": 0.511,
+          "mean_surprise": 0.23
+        },
+        "bullish-surprise -> UP (confirmation)": {
+          "N": 86,
+          "mean_signed": 2.8772,
+          "mean_abs": 2.8772,
+          "sd": 4.3118,
+          "pct_up": 1.0,
+          "mean_surprise": -43.17
+        },
+        "bullish-surprise -> DOWN (sell-the-news)": {
+          "N": 91,
+          "mean_signed": -3.7196,
+          "mean_abs": 3.7196,
+          "sd": 7.0747,
+          "pct_up": 0.0,
+          "mean_surprise": -45.83
+        },
+        "bearish-surprise -> UP (reversal)": {
+          "N": 77,
+          "mean_signed": 2.4852,
+          "mean_abs": 2.4852,
+          "sd": 2.1462,
+          "pct_up": 1.0,
+          "mean_surprise": 43.19
+        },
+        "bearish-surprise -> DOWN (confirmation)": {
+          "N": 93,
+          "mean_signed": -2.8723,
+          "mean_abs": 2.8723,
+          "sd": 2.74,
+          "pct_up": 0.0,
+          "mean_surprise": 42.26
+        }
+      }
+    },
+    "regimes_intraday": {
+      "withdrawal": {
+        "N": 51,
+        "corr_bull_reaction": -0.228
+      },
+      "injection": {
+        "N": 75,
+        "corr_bull_reaction": 0.339
+      },
+      "big_surprise_tercile": {
+        "N": 42,
+        "directional_hitrate": 0.5
+      }
+    },
+    "regimes_daily": {
+      "withdrawal": {
+        "N": 216,
+        "corr_bull_reaction": -0.047
+      },
+      "injection": {
+        "N": 305,
+        "corr_bull_reaction": 0.094
+      },
+      "big_surprise_tercile": {
+        "N": 174,
+        "directional_hitrate": 0.557
+      }
+    }
+  },
+  "crude_stocks": {
+    "event": "EIA Weekly Crude Stocks",
+    "contract": "KXWTI",
+    "symbol": "CL=F",
+    "surprise_proxy": "actual weekly change - 5yr same-ISO-week avg change (SEASONAL proxy for consensus)",
+    "n_releases_matched": 521,
+    "intraday_release_hour": {
+      "n_total": 126,
+      "corr_bull_reaction": -0.061,
+      "directional_hitrate_meaningful": 0.446,
+      "directional_hitrate_z_vs_placebo": -0.99,
+      "n_meaningful": 83,
+      "confirmation_vs_countermove": "37 vs 46",
+      "dose_response_hitrate_small_vs_large": {
+        "small": 0.415,
+        "large": 0.476
+      },
+      "conditional_weight": {
+        "mean_abs_meaningful": 0.5641,
+        "mean_abs_inline": 0.5456
+      },
+      "slope_pct_per_unit": -0.0102,
+      "inline_threshold_abs_surprise": 2.01,
+      "buckets": {
+        "bearish-surprise -> UP (reversal)": {
+          "N": 22,
+          "mean_signed": 0.4587,
+          "mean_abs": 0.4587,
+          "sd": 0.5304,
+          "pct_up": 1.0,
+          "mean_surprise": 5.4
+        },
+        "in-line / small-surprise (stand-aside)": {
+          "N": 43,
+          "mean_signed": 0.1241,
+          "mean_abs": 0.5456,
+          "sd": 0.7973,
+          "pct_up": 0.512,
+          "mean_surprise": 0.04
+        },
+        "bullish-surprise -> UP (confirmation)": {
+          "N": 21,
+          "mean_signed": 0.4823,
+          "mean_abs": 0.4823,
+          "sd": 0.2827,
+          "pct_up": 1.0,
+          "mean_surprise": -4.63
+        },
+        "bullish-surprise -> DOWN (sell-the-news)": {
+          "N": 24,
+          "mean_signed": -0.6721,
+          "mean_abs": 0.6721,
+          "sd": 0.6921,
+          "pct_up": 0.0,
+          "mean_surprise": -5.1
+        },
+        "bearish-surprise -> DOWN (confirmation)": {
+          "N": 16,
+          "mean_signed": -0.6543,
+          "mean_abs": 0.6543,
+          "sd": 0.4786,
+          "pct_up": 0.0,
+          "mean_surprise": 5.29
+        }
+      }
+    },
+    "daily_release_day": {
+      "n_total": 521,
+      "corr_bull_reaction": 0.041,
+      "directional_hitrate_meaningful": 0.599,
+      "directional_hitrate_z_vs_placebo": 3.7,
+      "n_meaningful": 347,
+      "confirmation_vs_countermove": "208 vs 139",
+      "dose_response_hitrate_small_vs_large": {
+        "small": 0.584,
+        "large": 0.615
+      },
+      "conditional_weight": {
+        "mean_abs_meaningful": 2.0849,
+        "mean_abs_inline": 2.0028
+      },
+      "slope_pct_per_unit": 0.0244,
+      "inline_threshold_abs_surprise": 2.28,
+      "buckets": {
+        "in-line / small-surprise (stand-aside)": {
+          "N": 174,
+          "mean_signed": -0.145,
+          "mean_abs": 2.0028,
+          "sd": 3.4078,
+          "pct_up": 0.552,
+          "mean_surprise": -0.16
+        },
+        "bearish-surprise -> UP (reversal)": {
+          "N": 65,
+          "mean_signed": 2.3609,
+          "mean_abs": 2.3609,
+          "sd": 4.5327,
+          "pct_up": 1.0,
+          "mean_surprise": 6.39
+        },
+        "bearish-surprise -> DOWN (confirmation)": {
+          "N": 88,
+          "mean_signed": -2.0727,
+          "mean_abs": 2.0727,
+          "sd": 1.5144,
+          "pct_up": 0.0,
+          "mean_surprise": 6.18
+        },
+        "bullish-surprise -> UP (confirmation)": {
+          "N": 120,
+          "mean_signed": 1.9176,
+          "mean_abs": 1.9176,
+          "sd": 1.4984,
+          "pct_up": 1.0,
+          "mean_surprise": -5.83
+        },
+        "bullish-surprise -> DOWN (sell-the-news)": {
+          "N": 74,
+          "mean_signed": -2.1282,
+          "mean_abs": 2.1282,
+          "sd": 2.0851,
+          "pct_up": 0.0,
+          "mean_surprise": -5.25
+        }
+      }
+    },
+    "regimes_intraday": {
+      "withdrawal": {
+        "N": 51,
+        "corr_bull_reaction": -0.14
+      },
+      "injection": {
+        "N": 75,
+        "corr_bull_reaction": -0.012
+      },
+      "big_surprise_tercile": {
+        "N": 42,
+        "directional_hitrate": 0.476
+      }
+    },
+    "regimes_daily": {
+      "withdrawal": {
+        "N": 216,
+        "corr_bull_reaction": 0.059
+      },
+      "injection": {
+        "N": 305,
+        "corr_bull_reaction": 0.03
+      },
+      "big_surprise_tercile": {
+        "N": 174,
+        "directional_hitrate": 0.615
+      }
+    }
+  }
+}

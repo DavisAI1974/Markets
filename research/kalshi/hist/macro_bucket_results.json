@@ -1,0 +1,71 @@
+{
+  "_PROXY_WARNING": "WEAK/PHASE-2: surprise = NFP vs trailing-12mo TREND, NOT street consensus. Real version needs ForexFactory forward polling. Intraday reaction window only ~730d (small N). Interpret as directional, not sized.",
+  "NFP_ZN_bonds": {
+    "symbol": "ZN=F",
+    "n_matched": 29,
+    "n_meaningful": 19,
+    "directional_hitrate": 0.526,
+    "hitrate_z_vs_placebo": 0.23,
+    "buckets": {
+      "in-line (stand-aside)": {
+        "N": 10,
+        "mean_signed": -0.03,
+        "pct_up": 0.3
+      },
+      "cool-payrolls -> fundamental": {
+        "N": 7,
+        "mean_signed": 0.384,
+        "pct_up": 1.0
+      },
+      "cool-payrolls -> counter": {
+        "N": 7,
+        "mean_signed": -0.2472,
+        "pct_up": 0.0
+      },
+      "hot-payrolls -> fundamental": {
+        "N": 3,
+        "mean_signed": -0.1807,
+        "pct_up": 0.0
+      },
+      "hot-payrolls -> counter": {
+        "N": 2,
+        "mean_signed": 0.021,
+        "pct_up": 1.0
+      }
+    }
+  },
+  "NFP_ES_stocks": {
+    "symbol": "ES=F",
+    "n_matched": 29,
+    "n_meaningful": 19,
+    "directional_hitrate": 0.526,
+    "hitrate_z_vs_placebo": 0.23,
+    "buckets": {
+      "in-line (stand-aside)": {
+        "N": 10,
+        "mean_signed": 0.1745,
+        "pct_up": 0.6
+      },
+      "cool-payrolls -> fundamental": {
+        "N": 8,
+        "mean_signed": 0.2851,
+        "pct_up": 1.0
+      },
+      "cool-payrolls -> counter": {
+        "N": 6,
+        "mean_signed": -0.3186,
+        "pct_up": 0.0
+      },
+      "hot-payrolls -> fundamental": {
+        "N": 2,
+        "mean_signed": -0.1041,
+        "pct_up": 0.0
+      },
+      "hot-payrolls -> counter": {
+        "N": 3,
+        "mean_signed": 0.0879,
+        "pct_up": 1.0
+      }
+    }
+  }
+}

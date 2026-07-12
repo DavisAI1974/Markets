@@ -8,6 +8,8 @@
 
 ## TL;DR — ranked event-weight table
 
+> **Read this table as the VOLATILITY / repricing lens only** (how much the market moves on the event). It does **not** tell you *which way* — for the tradeable **directional** edge see the **PER-BUCKET (conditional) analysis** immediately below, which supersedes any directional reading of these pooled numbers. Key correction: natgas is #3 by volatility here but its directional seasonal-surprise edge is a **coin flip**, while crude (#4) carries a **real ~60% day-direction edge**.
+
 "Weight" = how much bigger the **absolute move** in the relevant underlying is on the release day/hour vs a **matched placebo** (same ET hour on non-event weekdays for intraday; other weekdays for daily). `ratio` >1 and a `welch_z` on |move| clearly above ~2 means the event carries real weight. Ranked by best-isolated (intraday release-hour) effect; cadence matters for how often that weight is paid.
 
 | # | Event (ET time) | Kalshi | Underlying | Release-hour ratio (z) | Daily ratio (z) | Cadence | Verdict |
@@ -20,6 +22,39 @@
 | — | **CPI** (8:30am mid-month) | KXCPIYOY | ZN=F / ES=F | *not measured* | — | 12/yr | **GAP** — no historical date list this session (see gaps). Method ready. |
 
 **Single most important energy finding:** the **EIA Weekly Natural Gas Storage report is the dominant recurring energy catalyst.** At the 10:30 ET Thursday release, NG=F front-month futures move **1.57× a matched placebo** (mean |hourly move| 1.28% vs 0.82%, z=5.21, Cohen's d=0.63), with the effect spilling into the 11am hour (1.32×). Crucially, **Henry Hub SPOT (FRED DHHNGSP) shows NO Thursday effect (ratio 0.87)** — spot is a physical cash price that does not react to storage surprises the way futures do. Any study or signal keyed to natgas storage **must use NG=F futures, not spot.** The Kalshi KXNATGASD contract settles on the futures, so the futures reaction is the right proxy.
+
+---
+
+## ⚑ PER-BUCKET (conditional) analysis — the directional edge (methodology correction, 2026-07-12)
+
+**Hard rule (founder / project standing rule):** *never pool `|move|`.* The pooled ratio above (natgas 1.57×, etc.) measures **volatility / how much the market re-prices** — useful for volatility-style positioning — but it **averages bullish-surprise→up, bearish-surprise→down, and sell-the-news reversals into one number, destroying the directional structure that is the tradeable content.** Every release is bucketed by **signed SURPRISE × signed REACTION**, and we report **signed** per-bucket stats + a directional hit-rate.
+
+**Surprise proxy (honest):** ENERGY uses `surprise = actual weekly EIA change − 5-year average change for the same ISO calendar week` — a **PROXY** for street consensus that captures the *seasonal* surprise, **not** the exact desk number. The real consensus-conditioned version comes **forward** via ForexFactory polling. Convention: a storage **build bigger than seasonal = more supply = bearish = expect price DOWN**. "Directional hit-rate" = P(reaction sign matches the fundamentally-implied direction) on **meaningful** surprises (excludes the smallest-|surprise| tercile). **Placebo for direction = the 50% binomial null** (z shown). Reaction = signed NG=F/CL=F move, two lenses: **release-hour** (Yahoo 60m, ~730d, clean window) and **release-day** close-to-close (Yahoo 1d, ~10y, deeper N). EIA actuals via API DEMO_KEY: natgas storage 2010–2026 (521 matched releases), crude stocks 1982–2026 (521 matched to the 2016+ futures window).
+
+### 🔑 Headline: the directional edge is INVERTED from the volatility ranking
+- **Natgas = the biggest mover but the seasonal-surprise sign is a COIN FLIP.** High `|move|`, **no directional edge.**
+- **Crude = a modest mover but carries a REAL ~60% directional edge on the release DAY.**
+
+### Energy per-bucket table (meaningful surprises; hit-rate vs 50% placebo)
+
+| Cell | Lens | N (meaningful) | Directional hit-rate (z) | Confirm : Counter | Sell-the-news bucket | Dose-response (small→large \|surprise\|) | Verdict |
+|---|---|---|---|---|---|---|---|
+| **Crude / KXWTI** | **release-DAY** | 347 | **0.599 (z=3.70)** | **208 : 139** | minority (bull→UP 120 > bull→DOWN 74) | **0.584 → 0.615 (monotone)** | **REAL directional edge** |
+| Crude / KXWTI | release-hour (10:30) | 83 | 0.446 (z=−0.99) | 37 : 46 | — | 0.415 → 0.476 | NONE in the 10:30 hour |
+| **Natgas / KXNATGASD** | release-DAY | 347 | 0.516 (z=0.59) | 179 : 168 | **LARGE: bull→DOWN 91 ≥ bull→UP 86** | 0.474 → 0.557 | **NULL (coin flip)** |
+| Natgas / KXNATGASD | release-hour (10:30) | 83 | 0.518 (z=0.33) | 43 : 40 | large (23 vs 19) | 0.537 → 0.500 | NULL (coin flip) |
+
+### What the buckets say
+- **Crude (KXWTI) — a real, tradeable directional signal on the day.** When the crude build/draw beats its 5-yr seasonal norm, CL=F closes in the fundamentally-implied direction **59.9% of the time** (z=3.70 over 347 meaningful releases, 2016–2026), and the hit-rate **rises with surprise size** (58.4% → 61.5% small→large tercile — a dose-response, i.e. the surprise really drives it, not an artifact). Confirmation buckets outweigh counter-moves **208:139**; the **sell-the-news bucket is the minority** (bullish→DOWN 74 vs bullish→UP 120). **BUT the edge is NOT in the 10:30 release hour** (hit-rate 0.446, coin-flip): it develops over the full session, consistent with the **API report (Tue eve) pre-empting** the instantaneous spike while the EIA confirmation plays out intraday. → Trade the *day-settled* KXWTI direction off the seasonal surprise, not a tight release-window straddle.
+- **Natgas (KXNATGASD) — high volatility, NO directional edge from the seasonal proxy (an important NULL).** Hit-rate **0.516 / 0.518** (coin flip) on both lenses; confirmation vs counter is **179:168** (≈50/50). Crucially, the **sell-the-news bucket (bullish-surprise→price DOWN, N=91) is as large as the confirmation bucket (bullish→UP, N=86)** — exactly the killer bucket a naive directional trader misses. The pooled **1.57× `|move|` was pure repricing volatility, not direction.** Regime split reveals *why*: **injection season corr(bull,reaction)=+0.34 vs withdrawal season −0.23** (opposite signs that cancel in the pool) — the seasonal 5-yr-average is a poor expectation in **weather-driven winter draws**, so the proxy mismeasures the surprise exactly when it matters. → Natgas *needs the real street storage consensus* (ForexFactory forward) before any directional claim; on the seasonal proxy it is untradeable directionally.
+
+### Macro (phase-2, WEAK proxy — do not size off this)
+NFP bucketed with `surprise = payrolls − trailing-12-month trend` (a **trend** stand-in, **not** consensus) vs ES=F/ZN=F 8:30-hour reaction: **hit-rate 0.526 (z=0.23, n=19)** — **inconclusive**, as expected. The trailing trend is a weak consensus proxy and intraday N is tiny (~2.4 yr). This is a placeholder; the legitimate macro-surprise buckets require **ForexFactory forward polling** of the CPI/NFP/FOMC forecast. (FOMC/NFP still carry the largest *unconditional* per-event weight — see the volatility table — but their *directional* buckets are phase-2.)
+
+### Honesty on the proxy
+The 5-yr-seasonal-average surprise is a **PROXY for consensus**: it captures the *seasonal* component of the surprise, not the exact street number the market actually prices against. This is legitimate for **crude** (stocks are seasonally driven and less weather-dependent, and the dose-response + z=3.7 hold up) and demonstrably **weak for natgas in withdrawal season** (weather-driven). The real consensus-conditioned version is unlocked **forward** by polling the ForexFactory JSON (`nfs.faireconomy.media`, verified to carry EIA crude/natgas forecasts) week by week. Placebo discipline kept throughout (directional hit-rate vs the 50% binomial null). Nulls and coin-flip buckets are reported as findings, not hidden.
+
+**Scripts:** `hist/eia_bucket_study.py` (energy, deep history), `hist/macro_bucket_study.py` (NFP phase-2). **Data:** `data/kalshi_hist/eia_ng_storage.json`, `eia_crude_stocks.json` (EIA API, local). **Per-bucket JSON:** `event_weight_study.json → conditional_per_bucket`.
 
 ---
 
