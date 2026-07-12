@@ -46,3 +46,20 @@ Consequential findings from the S84 probe:
 - The per-second NYMEX canary + move-duration baseline is buildable NOW **on WTI** (Pyth historical).
 - NG (Thursday) is data-constrained to Yahoo ~1m historically — below the useful-resolution bar; a real
   NG tick source is a standing need. Live NG going forward also needs a non-Pyth feed.
+
+## RESOLUTION: Databento (Greg, S84) — the primary historical source that fixes both gaps
+
+`databento.com/historical` (CME Globex dataset `GLBX.MDP3`) carries **CL crude AND NG Henry Hub natural
+gas** at the **`trades` schema = every individual print, nanosecond timestamps** (MBO gives the full
+book). This fixes BOTH S84 gaps at once:
+- **Natural gas coverage** — the feed Pyth does not have. Thursday's NG lag becomes real.
+- **True tick, not 1-sec** — no more undersampling / lower-bound caveat; this is the actual tape.
+- Deep CME history + **continuous front-month symbology** (`CL.c.0`/`NG.c.0`) auto-handles the roll.
+
+Cost: usage-based **$/GB, $125 free signup credit**; a release-window `trades` pull is **<$0.01**, and
+**batch jobs** make large multi-year pulls cheap (re-downloadable free within 30d). Every pull is gated
+on `metadata.get_cost` first (see `databento_backfill.py --max-cost`).
+
+**New source hierarchy:** Databento = PRIMARY historical (true tick, incl. NG). Pyth = free LIVE feed
+(WTI) going forward. `pyth_backfill.py` = free WTI-only historical fallback (1-sec, undersamples).
+Brent = ICE (separate Databento dataset) or Yahoo. **Needs the `DATABENTO_API_KEY` secret to run.**
