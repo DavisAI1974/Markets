@@ -20,55 +20,51 @@ recovery would dominate): `aligned_imb_push` = book imbalance x move-direction a
 supports the move); `exhaustion` = aligned_imb_R - aligned_imb_push (>0 = support collapsed); `far_thinning`
 = consumed-side depth eaten. Tested against `sustain_s` (run length) and `retention` (run vs blip).
 
-## The headline: it's PER-CELL, and NG and CL point OPPOSITE ways
+## The headline: per-cell, NG and CL carry opposite-signed correlations (Apr-Jul window only)
 
-| contract | aligned_imb_push vs sustain | exhaustion vs retention | long-run push-book | short-run push-book | reads as |
-|----------|----------------------------|-------------------------|--------------------|---------------------|----------|
-| **NG** (KXNATGASD) | **-0.17** | **-0.40** | balanced (0.02) | one-sided (0.12) | **EXHAUSTION** |
-| **CL** (KXWTI)     | **+0.52** | +0.32 | one-sided (0.12) | anti (-0.09) | **CONTINUATION** |
+| contract | aligned_imb_push vs sustain | exhaustion vs retention | long-run push-book | short-run push-book |
+|----------|----------------------------|-------------------------|--------------------|---------------------|
+| **NG** (KXNATGASD) | **-0.17** | **-0.40** | balanced (0.02) | one-sided (0.12) |
+| **CL** (KXWTI)     | **+0.52** | +0.32 | one-sided (0.12) | anti (-0.09) |
 
-(Spearman rank-sign, n=12 each. `far_thinning` NG -0.43 / CL +0.13 — same split, but it is CONFOUNDED,
-see caveat; lean on `aligned_imb_push`.)
+(Spearman rank-sign, n=12 each. `far_thinning` NG -0.43 / CL +0.13 — same-signed split, but it is
+CONFOUNDED, see caveat; lean on `aligned_imb_push`.)
 
-## Read (per-cell, both KEPT — different book behavior, same as the magnitude split)
+## Read (per-cell, log only — no mechanism claimed)
 
-- **NG = the exhaustion reactor.** A one-sidedly-leaning book at the initial push -> a SHORTER run; NG's
-  healthiest holds have a MORE BALANCED book at the push (long-run aligned_imb_push 0.02 vs short-run 0.12;
-  exhaustion vs retention -0.40). Mechanistically: the natgas release is a fast one-directional burst
-  (S85: 60s captures 66%, 06-11 peaked in 1s) and when the book is most one-sided the burst has already
-  spent itself -> fade. This is the dipole exhaustion frame (`odcore/info_dipole.py`) showing up on the
-  canary: imbalance collapsing toward balance precedes the turn. The tradeable shape for NG is
-  **fade the over-extended one-sided push**, not ride it.
-- **CL = the trend developer (opposite).** A book leaning INTO the move at the push -> a LONGER run
-  (aligned_imb_push vs sustain **+0.52**, the strongest single signal here; long-run push-book 0.12 vs
-  short-run -0.09). Crude's move builds slowly over ~20 min (S85: 60s=27%, 06-17 built $2,640 over 17min),
-  and a supportive book is the tell that it will keep developing. The tradeable shape for CL is
-  **ride the supported trend** (hold longer while the book stays one-sided with the move).
-- **This is the per-cell doctrine, not a contradiction.** NG and CL are different cells; a signal that
-  works one way on one and the other way on the other is KEPT for each, used per-cell. It also
-  independently corroborates the S85 magnitude story (NG front-loaded/fast; CL diffuse/slow) from a
-  completely separate quantity (resting-book dynamics, not price).
-- **Direction (pre-event `imb_R`) is weak.** Book imbalance AT the release leans the eventual move 0.58
-  of the time on NG, 0.33 on CL (i.e. anti on CL) — near/below coin-flip at n=12. The resting book at the
-  release instant is NOT a clean pre-event direction predictor; direction still comes from the catalyst +
-  the futures lead, per the merged architecture.
+- **NG:** in this window, a more one-sided book at the initial push co-occurs with a SHORTER run
+  (aligned_imb_push vs sustain -0.17; exhaustion vs retention -0.40; long-run aligned_imb_push 0.02 vs
+  short-run 0.12). Observed correlation, sign as logged — not a claim about why.
+- **CL:** opposite sign — a more one-sided book at the push co-occurs with a LONGER run (aligned_imb_push
+  vs sustain +0.52, the largest |rho| here; long-run push-book 0.12 vs short-run -0.09).
+- **The two contracts carry opposite-signed correlations.** Logged per-cell and kept per-cell; no single
+  cross-contract rule is asserted. Whether this is a stable per-contract property or an artifact of this
+  window is exactly what more data decides (see caveats).
+- **Pre-event `imb_R`:** book imbalance AT the release leans the eventual move 0.58 (NG) / 0.33 (CL) of
+  the time — near/below coin-flip at n=12. Logged; not used as a direction predictor here.
 
-## Honest caveats (provisional)
+## Honest caveats (provisional — do not generalize)
 
-1. **n=12 per contract, release windows only.** Spearman |0.17-0.52|; none is individually significant at
-   n=12 (CL +0.52 ~ p0.08). The SIGNS are internally consistent (the median-split and the rank-correlation
-   agree within each contract) and the NG/CL split matches the independent magnitude story, but this is a
-   HYPOTHESIS-GENERATING read, not a validated edge. The full-year MBP-10 pull (~52 releases/contract +
-   the daily settle tape) is what confirms/refutes it per contract.
-2. **`far_thinning` is confounded** by the release-instant liquidity vacuum: at 14:30 UTC quotes get pulled,
+1. **Prior conditions / event-stacking (load-bearing, Greg).** Events are not independent — each release
+   lands on a market state carrying prior events' lasting effects, and the book behavior stacks on that
+   running condition. These per-window correlations are UNCONDITIONED; building the running event-state
+   context (see EVENT_SURPRISE_FINDINGS_S86.md Next) is what conditions them.
+2. **Time-of-year confound.** These 24 windows are Apr-Jul 2026 only — one seasonal slice (NG
+   injection/power-burn, CL summer draws). The book-behavior correlations may be season-specific; NONE of
+   this generalizes to other months on this data. A full-year pull spanning all seasons is required before
+   any per-contract property is asserted.
+3. **n=12 per contract, release windows only.** Spearman |0.17-0.52|; none is individually significant at
+   n=12 (CL +0.52 ~ p0.08). The signs are internally consistent (the median-split and the rank-correlation
+   agree within each contract), but this is a LOG of an observed correlation, not a validated edge. The
+   full-year MBP-10 pull (~52 releases/contract + the daily settle tape) is what confirms/refutes it.
+4. **`far_thinning` is confounded** by the release-instant liquidity vacuum: at 14:30 UTC quotes get pulled,
    so the book at R is unusually thin and "thins" negatively (thickens) into the push as depth returns —
    strongest on NG (thin p50 -0.50) which is the thinnest/fastest book. It carries the same NG/CL sign but
    do not lean on its magnitude. `aligned_imb_push` (a normalized ratio at the push) is the clean feature.
-3. **These are descriptive** except `imb_R`. `aligned_imb_push` is measured AT the initial push, so it is
-   not a pre-move predictor of the FULL move — but it IS observable early (seconds in) and predicts the
-   REMAINING run, so it is usable as a **hold-time signal** on the lagged Kalshi echo (how long to hold),
-   which is exactly where the lag join (S86 #3) will consume it.
-4. Futures book != Kalshi book. This is the canary's own microstructure; the Kalshi echo is measured next.
+5. **These are descriptive** except `imb_R`. `aligned_imb_push` is measured AT the initial push (observable
+   seconds in, not a pre-move predictor of the full move); in this window it correlates with the remaining
+   run, so it is a CANDIDATE hold-time signal for the lag join (S86 #3) to test, not an established one.
+6. Futures book != Kalshi book. This is the canary's own microstructure; the Kalshi echo is measured next.
 
 ## Data / repro
 
@@ -80,12 +76,11 @@ see caveat; lean on `aligned_imb_push`.)
 
 ## Next
 
-1. **Full-year MBP-10 pull** (~$130, NG+CL) to take n from 12 -> ~52/contract and settle the NG-exhaust /
-   CL-continue split per cell (gate on `metadata.get_cost`, watch disk). Deferred in Plan A until the lag
-   join proves the Kalshi echo pays.
-2. **Surprise-cell split** (S86 #2): does the NG/CL book behavior differ on beat/miss x big/small? The
-   surprise join resolves surprise=unknown.
-3. **Lag join** (S86 #3): feed `aligned_imb_push` as the hold-time signal into the Kalshi echo net-of-fee
-   measurement — NG fade-the-push vs CL ride-the-trend, realized-EV per contract.
-</content>
+1. **Full-year MBP-10 pull** (~$130, NG+CL, all seasons) to take n from 12 -> ~52/contract and test whether
+   the logged per-contract correlations are stable or a seasonal artifact (gate on `metadata.get_cost`,
+   watch disk). Deferred in Plan A until the lag join proves the Kalshi echo pays.
+2. **Surprise-cell split** (S86 #2, done): does the book correlation differ by beat/miss x big/small?
+   See EVENT_SURPRISE_FINDINGS_S86.md.
+3. **Lag join** (S86 #3): feed `aligned_imb_push` as a candidate hold-time signal into the Kalshi echo
+   net-of-fee measurement, per cell.
 </invoke>

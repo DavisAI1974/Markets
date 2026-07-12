@@ -206,11 +206,13 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
   NG-futures market; KXPOWERKWH = monthly macro stat. Weather per-day fingerprint. Killed respawning
   crypto collectors. Detail: `SESSION_HANDOFF_2026-07-15_S84.md`.
 - **S86** — MBP-10 depth online. `databento_backfill.py --schema mbp-10` (trade+book writer) +
-  `event_move_baseline.py --depth` (imbalance/exhaustion run-length read), leakage PASS 12/12. The 24
-  windows re-pulled at MBP-10 (~$0.42). Provisional per-cell split: **NG = exhaustion** (one-sided book at
-  the push → shorter run), **CL = continuation** (→ longer run) — corroborates the S85 magnitude split
-  from resting-book dynamics; `aligned_imb_push` = the hold-time signal for the lag join. Full-year pull
-  ($130) deferred until the lag join proves the echo pays. Detail: `DEPTH_RUNLENGTH_FINDINGS_S86.md`.
+  `event_move_baseline.py --depth` (book imbalance/run-length read), leakage PASS 12/12; 24 windows
+  re-pulled at MBP-10 (~$0.42). Logged (provisional, n=12, Apr-Jul only, seasonality-confounded — no
+  generalization): push-book one-sidedness vs run length correlates NG −0.17 / CL +0.52 (opposite-signed);
+  EIA seasonal-proxy surprise join (`eia_surprise.py`, 12/12 matched) shows an opposite-signed surprise/move
+  relation NG vs CL. Correlations logged without mechanism. Full-year pull ($130, all seasons) deferred
+  until the lag join proves the echo pays. Detail: `DEPTH_RUNLENGTH_FINDINGS_S86.md`,
+  `EVENT_SURPRISE_FINDINGS_S86.md`.
 - **S85** — Databento LIVE (key set, `pip install databento` 0.81). `event_move_baseline.py` BUILT + run
   on 12 NG + 12 CL real release windows (leakage PASS, `definition`-schema $10/tick): per-contract
   HOLD-TIME map (NG 60s=66% of move front-loaded; CL slower, 60s=27%, longer hold gets the rest — both
