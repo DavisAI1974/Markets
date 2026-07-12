@@ -84,7 +84,70 @@ def _write_df(df, symbol: str) -> int:
     return n
 
 
+def _root(symbol: str) -> str:
+    """CL.c.0/CLQ6 -> CL, NG.c.0/NGDQ6 -> NG (the definitions store is keyed by ROOT)."""
+    s = symbol.upper()
+    if s.startswith("NG"):
+        return "NG"
+    if s.startswith(("CL", "WTI")):
+        return "CL"
+    if s.startswith(("BRENT", "BZ")):
+        return "BRENT"
+    return s.split(".")[0]
+
+
+def _write_defs_df(df, root: str) -> int:
+    """definition-schema DBNStore.to_df() -> {root}_definitions.jsonl, point-in-time tick spec.
+
+    Captures tick_size = min_price_increment and unit_qty = unit_of_measure_qty (tick_value = the
+    product) at each effective ts, deduping runs where the spec is unchanged so the store stays sparse.
+    FIRST-RUN CHECK (do once when the key lands): CL and NG should both land at tick_value == $10
+    (CL 0.01x1000, NG 0.001x10000) — if unit_qty comes back fixed-point-scaled (e.g. ~1e12), divide by
+    1e9 here; event_move_baseline reads tick_value and tags any reference fallback, so a wrong scale
+    shows up immediately against REFERENCE_TICKS. Do NOT hardcode — this store IS the point-in-time truth."""
+    os.makedirs(OUT_DIR, exist_ok=True)
+    path = os.path.join(OUT_DIR, f"{root}_definitions.jsonl")
+    n = 0
+    last = None
+    with open(path, "a", buffering=1) as fh:
+        for ts, row in df.iterrows():
+            sec = ts.timestamp() if hasattr(ts, "timestamp") else float(ts) / 1e9
+            tsz = row.get("min_price_increment")
+            uq = row.get("unit_of_measure_qty")
+            if tsz is None:
+                continue
+            tsz = float(tsz)
+            uq = float(uq) if uq is not None else None
+            key = (round(tsz, 12), None if uq is None else round(uq, 6))
+            if key == last:                          # unchanged spec -> skip (keep store sparse)
+                continue
+            last = key
+            rec = {"ts": sec, "symbol": root, "raw_symbol": row.get("raw_symbol"),
+                   "tick_size": tsz, "unit_qty": uq,
+                   "tick_value": (tsz * uq) if uq is not None else None}
+            fh.write(json.dumps(rec) + "\n")
+            n += 1
+    return n
+
+
+def defs(client, symbol: str, start: str, end: str, max_cost: float):
+    """Pull the definition schema over a date range and write the point-in-time tick store."""
+    sym, stype = _sym(symbol)
+    if estimate_cost(client, sym, stype, start, end, "definition") > max_cost:
+        raise SystemExit(f"[databento] over --max-cost ${max_cost}; aborting")
+    store = client.timeseries.get_range(dataset=DATASET, symbols=[sym], stype_in=stype,
+                                        schema="definition", start=start, end=end)
+    df = store.to_df()
+    got = _write_defs_df(df, _root(symbol)) if len(df) else 0
+    print(f"[databento] defs {symbol} {start}..{end}: {got} definition rows -> "
+          f"{OUT_DIR}/{_root(symbol)}_definitions.jsonl  (verify tick_value==$10 for CL/NG on first pull)")
+
+
 def window(client, symbol: str, release: str, pre: int, post: int, schema: str, max_cost: float):
+    if schema == "definition":
+        rt = datetime.fromisoformat(release.replace("Z", "+00:00"))
+        return defs(client, symbol, (rt - timedelta(seconds=pre)).isoformat(),
+                    (rt + timedelta(seconds=post)).isoformat(), max_cost)
     sym, stype = _sym(symbol)
     rt = datetime.fromisoformat(release.replace("Z", "+00:00"))
     start = (rt - timedelta(seconds=pre)).isoformat()
@@ -111,7 +174,7 @@ def batch(client, symbol: str, start: str, end: str, schema: str, max_cost: floa
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Databento true-tick NYMEX backfill (CL/NG)")
-    ap.add_argument("mode", choices=["cost", "window", "batch"])
+    ap.add_argument("mode", choices=["cost", "window", "batch", "defs"])
     ap.add_argument("--symbol", required=True, help="CL or NG (root -> continuous front) or raw contract")
     ap.add_argument("--release", default=None, help="RFC3339 release time (window/cost mode)")
     ap.add_argument("--pre", type=int, default=120)
@@ -139,6 +202,10 @@ def main() -> None:
         if not (start and end):
             raise SystemExit("[databento] batch needs --start and --end")
         batch(client, args.symbol, start, end, args.schema, args.max_cost)
+    elif args.mode == "defs":
+        if not (start and end):
+            raise SystemExit("[databento] defs needs --start and --end (or --release with --pre/--post)")
+        defs(client, args.symbol, start, end, args.max_cost)
 
 
 if __name__ == "__main__":
