@@ -91,3 +91,6 @@ data/pyth_ticks/
 
 # Level-hit dataset output (S82, local research map)
 data/level_hits_*.json
+
+# event_move baselines (durable copy goes gzipped to data/nymex-ticks branch)
+data/event_move_*.json
