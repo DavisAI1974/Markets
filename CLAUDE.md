@@ -1,10 +1,11 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 82)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 83)
 
 **One-line state:** the futures→Kalshi LAG is the live edge thread; the per-trade LEVEL-HIT dataset
 (200k events, leakage-clean) confirmed the Kalshi-INTERNAL book flow is a weak, fee-bound predictor →
 **the tradeable edge is EXTERNAL (the futures lag), not the book's own flow.** Sub-second Pyth-tick lag
-is priority-1 (feed unstuck end-S82, ticks accruing). Thu natgas staged. Weather = scoreboard only,
-forecaster is Greg's spec.
+is priority-1 — but `data/pyth-ticks` did NOT exist at S83 close; verify the feed FIRST. Thu 7/16
+natgas staged. Weather = scoreboard only, forecaster is Greg's spec. S83 was the meta session: this
+doc went lean (archive = `CLAUDE_ARCHIVE_OD.md`) + the three ritual skills went live.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -189,10 +190,13 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
 - **S82** — per-trade level-hit dataset (200k events): level-hits mean-revert at 1¢, NO cell pays at
   maker fees, internal flow is a weak predictor → **the edge is EXTERNAL (futures lag)**. Pyth feed
   unstuck. Weather scoreboard characterized.
+- **S83** — meta session: CLAUDE.md audit/split (this lean doc + `CLAUDE_ARCHIVE_OD.md`, dipole
+  research + OD toolkit kept live); the three ritual skills (`kalshi-session-start`, `kalshi-backtest`,
+  `kalshi-roll`). No research ran; `data/pyth-ticks` still absent at close.
 
-S83 priorities (see `KICKOFF_2026-07-14_S83.md`): (1) sub-second Pyth lag on accrued ticks; (2) join the
-Pyth futures move onto the level-hit dataset; (3) Thu 7/16 EIA natgas live; (4) weather scoring per
-regime; (5) roll re-point Pyth front-months.
+S84 priorities (see `KICKOFF_2026-07-15_S84.md`): (1) verify the Pyth feed, then sub-second lag on
+accrued ticks; (2) join the Pyth futures move onto the level-hit dataset; (3) Thu 7/16 EIA natgas live;
+(4) weather scoring per regime; (5) roll re-point Pyth front-months.
 
 ---
 
