@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 from datetime import datetime, timedelta, timezone
 
 DATASET = "GLBX.MDP3"                         # CME Globex: NYMEX (CL crude, NG Henry Hub gas), COMEX
@@ -43,6 +44,26 @@ ROOTS = {"CL", "NG"}                          # bare roots we resolve to continu
 # the nearest-expiry contract even after volume has migrated to the next month a week+ before it expires.
 ROLL = "v"
 OUT_DIR = "data/pyth_ticks"
+
+
+def _retry(fn, tries=5, base=2.0):
+    """Call fn(), retrying on TRANSIENT network errors (reset/timeout/aborted) with exp backoff.
+    Non-network errors (bad symbol, over-cost, auth) re-raise immediately. The proxy occasionally
+    resets long streaming pulls (ConnectionResetError 104) — a retry clears it."""
+    transient = ("connection", "reset", "aborted", "timed out", "timeout", "temporarily",
+                 "protocolerror", "remotedisconnected", "broken pipe")
+    for i in range(tries):
+        try:
+            return fn()
+        except SystemExit:
+            raise
+        except Exception as e:                        # noqa: BLE001 - classify by message
+            msg = f"{type(e).__name__} {e}".lower()
+            if i == tries - 1 or not any(k in msg for k in transient):
+                raise
+            wait = base ** i
+            print(f"[databento] transient error ({type(e).__name__}), retry {i + 1}/{tries - 1} in {wait:.0f}s")
+            time.sleep(wait)
 
 
 def _client():
@@ -140,8 +161,8 @@ def defs(client, symbol: str, start: str, end: str, max_cost: float):
     sym, stype = _sym(symbol)
     if estimate_cost(client, sym, stype, start, end, "definition") > max_cost:
         raise SystemExit(f"[databento] over --max-cost ${max_cost}; aborting")
-    store = client.timeseries.get_range(dataset=DATASET, symbols=[sym], stype_in=stype,
-                                        schema="definition", start=start, end=end)
+    store = _retry(lambda: client.timeseries.get_range(dataset=DATASET, symbols=[sym], stype_in=stype,
+                                                       schema="definition", start=start, end=end))
     df = store.to_df()
     got = _write_defs_df(df, _root(symbol)) if len(df) else 0
     print(f"[databento] defs {symbol} {start}..{end}: {got} definition rows -> "
@@ -159,8 +180,8 @@ def window(client, symbol: str, release: str, pre: int, post: int, schema: str, 
     end = (rt + timedelta(seconds=post)).isoformat()
     if estimate_cost(client, sym, stype, start, end, schema) > max_cost:
         raise SystemExit(f"[databento] over --max-cost ${max_cost}; aborting")
-    store = client.timeseries.get_range(dataset=DATASET, symbols=[sym], stype_in=stype,
-                                        schema=schema, start=start, end=end)
+    store = _retry(lambda: client.timeseries.get_range(dataset=DATASET, symbols=[sym], stype_in=stype,
+                                                        schema=schema, start=start, end=end))
     df = store.to_df()                          # price scaled to float, ts_event index
     got = _write_df(df, symbol) if len(df) else 0
     print(f"[databento] window {symbol} {release} [-{pre}s,+{post}s]: {got} trades -> {OUT_DIR}")
