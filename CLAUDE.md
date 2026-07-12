@@ -94,6 +94,8 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   (`release_book_signal.py`, `kalshi_score.py`, `kalshi_weather_forecast.py`), findings `*.md`.
 - **`KALSHI_BUILD_SCOPE.md`** — the build scope / thesis.
 - **`odcore/`** — the OD toolkit (below).
+- **`.claude/skills/`** — session rituals: `kalshi-session-start` (branch/data/accrual checks),
+  `kalshi-backtest` (the mandatory evaluation discipline), `kalshi-roll` (Pyth front-month roll).
 - Shared: `news_ingest_rss.py`, `news_coupling_research.py`, `regime_classifier.py`.
 
 ---

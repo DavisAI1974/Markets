@@ -57,10 +57,18 @@ Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (
 | `regime_classifier.py` | Regime classifier (shared). |
 | `odcore/leadlag.py` · `odcore/info_dipole.py` · `odcore/leakage.py` | The operator tools the lag/signal work is built on (lead-lag, flow-dipole divergence/exhaustion, the mandatory leakage gate). |
 
+### Skills (session rituals — `.claude/skills/`, added S83)
+| skill | what it does |
+|-------|--------------|
+| `kalshi-session-start` | Session-start ritual: stale-tip branch check → read handoff/kickoff/index → materialize `data/kalshi-bins` + `data/pyth-ticks` locally → verify accrual (newest timestamp, not existence). |
+| `kalshi-backtest` | The mandatory backtest discipline: leakage gate → settle-window exclusion → per-cell never pooled → distributions/fingerprints never means → net-of-fee at maker AND taker. |
+| `kalshi-roll` | Re-point Pyth front-month feeds at contract expiry (FEEDS dict + docstring in `pyth_collector.py`, sanity-stream, push to trunk; old-symbol history kept, roll boundary = separate cells). |
+
 ### Current docs
 | file | what it is |
 |------|-----------|
 | `KALSHI_TRADING.md` | This index. |
+| `CLAUDE.md` | The lean live operating doc (S83 split; the pre-split OD/crypto/physics master is archived verbatim in `CLAUDE_ARCHIVE_OD.md`). |
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
 | `research/kalshi/EVENT_WEIGHT_STUDY.md` (+ `event_weight_study.json`, `source_map.json`) | Per-bucket event-weight study (weather→storage strong; storage-surprise→price null). |
 | `SESSION_HANDOFF_2026-07-13_S82.md` (+ S81, S80, S79, S78) | Session handoffs (S82 latest). |
