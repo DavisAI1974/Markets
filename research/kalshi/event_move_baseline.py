@@ -262,9 +262,13 @@ def _anchor_scalar(i, ts, p, bv, sv, pre_s):
 
 
 # ---- forward move metrics (descriptive outcome; post-event) ---------------------------------------
-def move_metrics(rel_idx, ts, p, baseline, tick_size, tick_value, post_s, run_thr, blip_thr):
+def move_metrics(rel_idx, ts, p, baseline, tick_size, tick_value, post_s, run_thr, blip_thr, fast_s=60.0):
     """Magnitude + duration of the forward move in [R, R+post]. All displacements vs the pre-release
-    baseline. Returns None if the window has too few forward ticks."""
+    baseline. Returns None if the window has too few forward ticks.
+
+    Also measures the FAST window [R, R+fast_s] — the sub-minute lag-scalp opportunity (Greg, S85):
+    the peak inside the first fast_s seconds, and what fraction of the full-window peak it already
+    captures. Natgas is front-loaded (most of the move lands in the first minute); crude is slow."""
     R = ts[rel_idx]
     hi = rel_idx
     horizon = R + post_s
@@ -280,6 +284,14 @@ def move_metrics(rel_idx, ts, p, baseline, tick_size, tick_value, post_s, run_th
     sgn = 1.0 if peak >= 0 else -1.0
     net_end = float(disp[-1])                        # signed displacement at R+post
     time_to_peak = float(fts[k_peak] - R)
+    # FAST window: peak within the first fast_s seconds (the 60s lag-scalp ceiling)
+    fast_hi = int(np.searchsorted(fts, R + fast_s, side="right"))
+    fdisp = disp[:max(fast_hi, 1)]
+    kf = int(np.argmax(np.abs(fdisp)))
+    fast_peak = float(fdisp[kf])
+    fast_abs = abs(fast_peak)
+    fast_ticks = fast_abs / tick_size if tick_size else float("nan")
+    fast_capture = (fast_abs / peak_abs) if peak_abs > 0 else 0.0    # frac of full peak already in fast_s
     # sustain: from the peak, time until |disp| first falls below half the peak (the run length in s).
     half = 0.5 * peak_abs
     sustain_s = float(fts[-1] - fts[k_peak])
@@ -303,6 +315,13 @@ def move_metrics(rel_idx, ts, p, baseline, tick_size, tick_value, post_s, run_th
         "retention": round(float(retention), 3),
         "shape": shape,
         "n_fwd": int(hi - rel_idx + 1),
+        # fast (sub-minute) window — the lag-scalp ceiling
+        "fast_s": fast_s,
+        "fast_bps": round(fast_abs / baseline * 1e4, 2) if baseline else None,
+        "fast_ticks": round(fast_ticks, 2),
+        "fast_usd": round(fast_ticks * tick_value, 2) if tick_value else None,
+        "fast_capture": round(float(fast_capture), 3),
+        "peaked_fast": bool(time_to_peak <= fast_s),
     }
 
 
@@ -344,7 +363,7 @@ def build(symbol, series, cfg):
         if tsz is None:
             continue
         mv = move_metrics(idx, ts, p, anc["baseline"], tsz, tval,
-                          cfg["post_s"], cfg["run_thr"], cfg["blip_thr"])
+                          cfg["post_s"], cfg["run_thr"], cfg["blip_thr"], cfg["fast_s"])
         if mv is None:
             continue
         f, a, surp = surprise_for(series, d.isoformat(), consensus)
@@ -409,6 +428,10 @@ def _move_dist(evs):
     ttp = np.array([e["time_to_peak_s"] for e in evs], float)
     sustain = np.array([e["sustain_s"] for e in evs], float)
     retention = np.array([e["retention"] for e in evs], float)
+    fast_bps = np.array([e["fast_bps"] for e in evs], float)
+    fast_usd = np.array([e["fast_usd"] for e in evs if e["fast_usd"] is not None], float)
+    fast_cap = np.array([e["fast_capture"] for e in evs], float)
+    peaked_fast = np.array([e["peaked_fast"] for e in evs], bool)
     shapes = defaultdict(int)
     for e in evs:
         shapes[e["shape"]] += 1
@@ -426,6 +449,12 @@ def _move_dist(evs):
         "retention": _q(retention, [10, 50, 90]),
         "shape_mix": {k: round(v / n, 3) for k, v in shapes.items()},
         "dir_mix": {k: round(v / n, 3) for k, v in dirs.items()},
+        # sub-minute lag-scalp ceiling (Greg, S85): move IN the fast window + how front-loaded it is
+        "fast_bps": {**_q(fast_bps, [10, 50, 90]), "max": round(float(fast_bps.max()), 2)},
+        "fast_usd": ({**_q(fast_usd, [10, 50, 90]), "max": round(float(fast_usd.max()), 2)}
+                     if fast_usd.size else None),
+        "fast_capture_of_peak": _q(fast_cap, [10, 50, 90]),
+        "peaked_fast_frac": round(float(peaked_fast.mean()), 3),
     }
 
 
@@ -472,6 +501,8 @@ def main():
     ap.add_argument("--min-pre-ticks", type=int, default=3, help="min ticks in the pre-window to anchor")
     ap.add_argument("--max-anchor-gap-s", type=float, default=300.0,
                     help="max gap between the release time and the nearest tick (tape must cover it)")
+    ap.add_argument("--fast", type=float, default=60.0, dest="fast_s",
+                    help="fast/lag-scalp window (s) — the sub-minute capture ceiling (default 60)")
     ap.add_argument("--run-thr", type=float, default=0.5, help="retention >= this = a 'run'")
     ap.add_argument("--blip-thr", type=float, default=0.2, help="retention < this = a 'blip'")
     ap.add_argument("--big-surprise", type=float, default=10.0,
@@ -487,7 +518,8 @@ def main():
 
     cfg = {"pre_s": args.pre_s, "post_s": args.post_s, "min_pre_ticks": args.min_pre_ticks,
            "max_anchor_gap_s": args.max_anchor_gap_s, "run_thr": args.run_thr, "blip_thr": args.blip_thr,
-           "big_surprise": args.big_surprise, "min_cell": args.min_cell, "emit_events": args.emit_events}
+           "big_surprise": args.big_surprise, "min_cell": args.min_cell, "emit_events": args.emit_events,
+           "fast_s": args.fast_s}
     res = build(args.symbol, args.series, cfg)
     if args.out:
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
@@ -510,6 +542,9 @@ def main():
               f"peak_usd p50={d['peak_usd']['p50'] if d['peak_usd'] else 'n/a'}")
         print(f"    time_to_peak_s p50={d['time_to_peak_s']['p50']}  sustain_s p50={d['sustain_s']['p50']}  "
               f"retention p50={d['retention']['p50']}")
+        print(f"    FAST(<={int(res['cfg']['fast_s'])}s) bps p50={d['fast_bps']['p50']} p90={d['fast_bps']['p90']} "
+              f"max={d['fast_bps']['max']}  ${d['fast_usd']['p50'] if d['fast_usd'] else 'n/a'}(p50) "
+              f"captures {d['fast_capture_of_peak']['p50']} of peak  peaked_fast={d['peaked_fast_frac']}")
         print(f"    shape_mix={d['shape_mix']}  dir_mix={d['dir_mix']}")
     pf = res["pooled_footnote"]
     print(f"\n  [footnote, pooled — never the headline] n={pf['n']} peak_bps p50={pf['peak_bps']['p50']} "
