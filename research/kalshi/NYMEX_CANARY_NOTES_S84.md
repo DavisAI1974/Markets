@@ -1,5 +1,21 @@
 # NYMEX is the canary — load-bearing principle + data-source reality (S84, Greg)
 
+## Settlement-mechanics correction (S84 — verified off Kalshi rules_primary)
+
+What the energy/electricity Kalshi markets ACTUALLY settle on — corrects earlier framing:
+- **`KXNATGASD` is a DAILY NG PRICE market, not an EIA-storage event.** rules_primary: "the close price
+  of the 1-minute candlestick for natural gas using the **NGDQ6 contract** at 5:00 PM EDT." So it settles
+  on the **Henry Hub NG futures** price (the front NG contract), every day. The NYMEX-canary/lag model
+  applies EVERY DAY (Kalshi follows NGDQ6); the Thursday EIA storage report is the biggest intraday
+  CATALYST, not the settlement basis. Underlying data = NG futures (Databento `NG.c.0`; Pyth lacks NG).
+- **`KXPOWERKWH` is a MONTHLY MACRO-STAT market, not a futures.** rules_primary: "the average price of
+  electricity per kilowatt-hour in the U.S. city average for [month]" = the **BLS/EIA monthly retail
+  electricity average** (~21c/kWh), a CPI-style print. There is NO traded electricity futures behind it,
+  NO per-second tape, NO NYMEX canary — it resolves on a monthly data release. It belongs to the
+  release/consensus thread (like CPI/NFP), NOT the energy-lag/Databento thread. A per-second "electric"
+  backfill does not exist to buy. (A power-futures market on an ISO hub — PJM/ERCOT — would be different
+  and IS on Databento, but Kalshi's KXPOWERKWH is not that.)
+
 ## The principle (Greg, S84 — load-bearing)
 
 **NYMEX/ICE is the LEADER; Kalshi is the delayed FOLLOWER. We map/gather NYMEX data as our CANARY —
