@@ -1,0 +1,88 @@
+{
+  "study": "natgas weather-driver chain (weather -> storage -> price)",
+  "weather_source": "NOAA CPC gas-wtd HDD (UtilityGas.Heating) + pop-wtd CDD (Population.Cooling), 2010-2026; national=equal-wt of 9 census divisions (PROXY)",
+  "n_matched": 547,
+  "convention": "high HDD/CDD anomaly => more demand => bigger draw => tighter (bullish) => expect price UP",
+  "per_season": {
+    "winter-withdrawal (HDD hump)": {
+      "N": 196,
+      "LINK_A_weather_to_storage": {
+        "corr_wanom_storage_change": -0.556,
+        "R2_change": 0.309,
+        "corr_wanom_surprise": -0.924,
+        "R2_surprise": 0.854,
+        "surprise_sign_hitrate": 0.908
+      },
+      "LINK_B_to_price": {
+        "N_day": 186,
+        "corr_wanom_price": -0.031,
+        "corr_surprise_price": -0.031,
+        "weather_implied_price_dir_hitrate": 0.522
+      }
+    },
+    "summer-withdrawal (CDD power-burn hump)": {
+      "N": 157,
+      "LINK_A_weather_to_storage": {
+        "corr_wanom_storage_change": -0.207,
+        "R2_change": 0.043,
+        "corr_wanom_surprise": -0.543,
+        "R2_surprise": 0.295,
+        "surprise_sign_hitrate": 0.631
+      },
+      "LINK_B_to_price": {
+        "N_day": 152,
+        "corr_wanom_price": -0.02,
+        "corr_surprise_price": 0.113,
+        "weather_implied_price_dir_hitrate": 0.48
+      }
+    },
+    "spring-injection (mild shoulder)": {
+      "N": 116,
+      "LINK_A_weather_to_storage": {
+        "corr_wanom_storage_change": 0.186,
+        "R2_change": 0.035,
+        "corr_wanom_surprise": -0.799,
+        "R2_surprise": 0.638,
+        "surprise_sign_hitrate": 0.724
+      },
+      "LINK_B_to_price": {
+        "N_day": 105,
+        "corr_wanom_price": -0.021,
+        "corr_surprise_price": 0.049,
+        "weather_implied_price_dir_hitrate": 0.505
+      }
+    },
+    "fall-injection (mild shoulder)": {
+      "N": 78,
+      "LINK_A_weather_to_storage": {
+        "corr_wanom_storage_change": -0.009,
+        "R2_change": 0.0,
+        "corr_wanom_surprise": -0.529,
+        "R2_surprise": 0.279,
+        "surprise_sign_hitrate": 0.564
+      },
+      "LINK_B_to_price": {
+        "N_day": 78,
+        "corr_wanom_price": -0.028,
+        "corr_surprise_price": 0.11,
+        "weather_implied_price_dir_hitrate": 0.513
+      }
+    },
+    "ALL": {
+      "N": 547,
+      "LINK_A_weather_to_storage": {
+        "corr_wanom_storage_change": -0.288,
+        "R2_change": 0.083,
+        "corr_wanom_surprise": -0.855,
+        "R2_surprise": 0.731,
+        "surprise_sign_hitrate": 0.74
+      },
+      "LINK_B_to_price": {
+        "N_day": 521,
+        "corr_wanom_price": -0.044,
+        "corr_surprise_price": -0.01,
+        "weather_implied_price_dir_hitrate": 0.505
+      }
+    }
+  }
+}

@@ -505,7 +505,8 @@
   "METHODOLOGY_CORRECTION_2026-07-12": {
     "rule": "NEVER pool |move|. Bucket every release by signed SURPRISE x signed REACTION; report per-bucket SIGNED stats + directional hit-rate. Pooled |move| measures VOLATILITY/repricing, NOT directional edge.",
     "surprise_proxy": "ENERGY: actual weekly EIA change - 5yr same-ISO-week avg (SEASONAL proxy for street consensus; captures seasonal surprise, not exact desk number). MACRO: NFP vs trailing-12mo trend (WEAK phase-2 proxy). Real consensus-conditioned version comes FORWARD via ForexFactory polling.",
-    "reframe": "Directional tradeable content is INVERTED from the |move| volatility ranking: natgas=biggest mover but seasonal-surprise sign is a COIN FLIP; crude=modest mover but ~60% directional hit-rate on the release DAY."
+    "reframe": "Directional tradeable content is INVERTED from the |move| volatility ranking: natgas=biggest mover but seasonal-surprise sign is a COIN FLIP; crude=modest mover but ~60% directional hit-rate on the release DAY.",
+    "natgas_regime_correction": "Regimes are DATA-DISCOVERED (not calendar): double-humped demand \u2014 winter-withdrawal(HDD>120), summer-withdrawal(CDD>40, a build-MINIMUM on the national aggregate not a net draw), spring/fall injection. Withdrawal humps are the biggest MOVERS but the seasonal proxy is directionally BLINDEST in winter because weather owns the number (LINK A R2=0.85). Weather chain: weather->storage STRONG, storage->price-at-release ~0."
   },
   "conditional_per_bucket": {
     "energy": {
@@ -890,6 +891,198 @@
           }
         }
       }
+    },
+    "natgas_regime_split": {
+      "event": "EIA Natural Gas Storage - DATA-DISCOVERED 4-REGIME split (double-hump demand)",
+      "contract": "KXNATGASD",
+      "n_matched": 521,
+      "regime_discovery": "per-release weekly degree-days: HDD>120 => winter-withdrawal; CDD>40 => summer-withdrawal(power-burn); else spring/fall injection by ISO week<27. Thresholds from observed humps; reassigns weeks in warm/cold years automatically.",
+      "regime_counts": {
+        "summer-withdrawal (CDD power-burn hump)": 152,
+        "fall-injection (mild shoulder)": 78,
+        "winter-withdrawal (HDD hump)": 186,
+        "spring-injection (mild shoulder)": 105
+      },
+      "daily_release_day": {
+        "winter-withdrawal (HDD hump)": {
+          "N": 186,
+          "n_meaningful": 123,
+          "median_change": -91.0,
+          "mean_abs_reaction": 3.4422,
+          "directional_hitrate": 0.528,
+          "hitrate_z": 0.63,
+          "confirm_vs_counter": "65:58",
+          "sell_the_news_vs_confirm_on_bullish": "37:28",
+          "corr_bull_reaction": -0.031
+        },
+        "summer-withdrawal (CDD power-burn hump)": {
+          "N": 152,
+          "n_meaningful": 101,
+          "median_change": 52.0,
+          "mean_abs_reaction": 2.5196,
+          "directional_hitrate": 0.545,
+          "hitrate_z": 0.9,
+          "confirm_vs_counter": "55:46",
+          "sell_the_news_vs_confirm_on_bullish": "32:37",
+          "corr_bull_reaction": 0.113
+        },
+        "spring-injection (mild shoulder)": {
+          "N": 105,
+          "n_meaningful": 69,
+          "median_change": 79.0,
+          "mean_abs_reaction": 2.6737,
+          "directional_hitrate": 0.507,
+          "hitrate_z": 0.12,
+          "confirm_vs_counter": "35:34",
+          "sell_the_news_vs_confirm_on_bullish": "10:10",
+          "corr_bull_reaction": 0.049
+        },
+        "fall-injection (mild shoulder)": {
+          "N": 78,
+          "n_meaningful": 51,
+          "median_change": 74.0,
+          "mean_abs_reaction": 3.3548,
+          "directional_hitrate": 0.549,
+          "hitrate_z": 0.7,
+          "confirm_vs_counter": "28:23",
+          "sell_the_news_vs_confirm_on_bullish": "9:12",
+          "corr_bull_reaction": 0.11
+        }
+      },
+      "intraday_release_hour": {
+        "winter-withdrawal (HDD hump)": {
+          "N": 39,
+          "n_meaningful": 25,
+          "median_change": -100.0,
+          "mean_abs_reaction": 1.4254,
+          "directional_hitrate": 0.4,
+          "hitrate_z": -1.0,
+          "confirm_vs_counter": "10:15",
+          "sell_the_news_vs_confirm_on_bullish": "9:4",
+          "corr_bull_reaction": -0.217
+        },
+        "summer-withdrawal (CDD power-burn hump)": {
+          "N": 33,
+          "n_meaningful": 21,
+          "median_change": 48.0,
+          "mean_abs_reaction": 1.2938,
+          "directional_hitrate": 0.714,
+          "hitrate_z": 1.96,
+          "confirm_vs_counter": "15:6",
+          "sell_the_news_vs_confirm_on_bullish": "4:11",
+          "corr_bull_reaction": 0.469
+        },
+        "spring-injection (mild shoulder)": {
+          "N": 36,
+          "n_meaningful": 23,
+          "median_change": 85.0,
+          "mean_abs_reaction": 1.2472,
+          "directional_hitrate": 0.783,
+          "hitrate_z": 2.71,
+          "confirm_vs_counter": "18:5",
+          "sell_the_news_vs_confirm_on_bullish": "1:4",
+          "corr_bull_reaction": 0.309
+        },
+        "fall-injection (mild shoulder)": {
+          "N": 18,
+          "n_meaningful": 11,
+          "median_change": 74.0,
+          "mean_abs_reaction": 0.9953,
+          "directional_hitrate": 0.273,
+          "hitrate_z": -1.51,
+          "confirm_vs_counter": "3:8",
+          "sell_the_news_vs_confirm_on_bullish": "3:1",
+          "corr_bull_reaction": -0.199
+        }
+      }
+    },
+    "natgas_weather_chain": {
+      "study": "natgas weather-driver chain (weather -> storage -> price)",
+      "weather_source": "NOAA CPC gas-wtd HDD (UtilityGas.Heating) + pop-wtd CDD (Population.Cooling), 2010-2026; national=equal-wt of 9 census divisions (PROXY)",
+      "n_matched": 547,
+      "convention": "high HDD/CDD anomaly => more demand => bigger draw => tighter (bullish) => expect price UP",
+      "per_season": {
+        "winter-withdrawal (HDD hump)": {
+          "N": 196,
+          "LINK_A_weather_to_storage": {
+            "corr_wanom_storage_change": -0.556,
+            "R2_change": 0.309,
+            "corr_wanom_surprise": -0.924,
+            "R2_surprise": 0.854,
+            "surprise_sign_hitrate": 0.908
+          },
+          "LINK_B_to_price": {
+            "N_day": 186,
+            "corr_wanom_price": -0.031,
+            "corr_surprise_price": -0.031,
+            "weather_implied_price_dir_hitrate": 0.522
+          }
+        },
+        "summer-withdrawal (CDD power-burn hump)": {
+          "N": 157,
+          "LINK_A_weather_to_storage": {
+            "corr_wanom_storage_change": -0.207,
+            "R2_change": 0.043,
+            "corr_wanom_surprise": -0.543,
+            "R2_surprise": 0.295,
+            "surprise_sign_hitrate": 0.631
+          },
+          "LINK_B_to_price": {
+            "N_day": 152,
+            "corr_wanom_price": -0.02,
+            "corr_surprise_price": 0.113,
+            "weather_implied_price_dir_hitrate": 0.48
+          }
+        },
+        "spring-injection (mild shoulder)": {
+          "N": 116,
+          "LINK_A_weather_to_storage": {
+            "corr_wanom_storage_change": 0.186,
+            "R2_change": 0.035,
+            "corr_wanom_surprise": -0.799,
+            "R2_surprise": 0.638,
+            "surprise_sign_hitrate": 0.724
+          },
+          "LINK_B_to_price": {
+            "N_day": 105,
+            "corr_wanom_price": -0.021,
+            "corr_surprise_price": 0.049,
+            "weather_implied_price_dir_hitrate": 0.505
+          }
+        },
+        "fall-injection (mild shoulder)": {
+          "N": 78,
+          "LINK_A_weather_to_storage": {
+            "corr_wanom_storage_change": -0.009,
+            "R2_change": 0.0,
+            "corr_wanom_surprise": -0.529,
+            "R2_surprise": 0.279,
+            "surprise_sign_hitrate": 0.564
+          },
+          "LINK_B_to_price": {
+            "N_day": 78,
+            "corr_wanom_price": -0.028,
+            "corr_surprise_price": 0.11,
+            "weather_implied_price_dir_hitrate": 0.513
+          }
+        },
+        "ALL": {
+          "N": 547,
+          "LINK_A_weather_to_storage": {
+            "corr_wanom_storage_change": -0.288,
+            "R2_change": 0.083,
+            "corr_wanom_surprise": -0.855,
+            "R2_surprise": 0.731,
+            "surprise_sign_hitrate": 0.74
+          },
+          "LINK_B_to_price": {
+            "N_day": 521,
+            "corr_wanom_price": -0.044,
+            "corr_surprise_price": -0.01,
+            "weather_implied_price_dir_hitrate": 0.505
+          }
+        }
+      }
     }
   },
   "directional_edge_summary": [
@@ -937,6 +1130,54 @@
       "z": 0.23,
       "n": 19,
       "note": "trailing-trend != consensus; tiny N (~730d intraday). Await ForexFactory forward consensus."
+    },
+    {
+      "cell": "natgas WEATHER CHAIN / KXNATGASD",
+      "link_A_weather_to_storage": {
+        "winter_R2": 0.854,
+        "winter_sign_hit": 0.908,
+        "ALL_R2": 0.731,
+        "verdict": "STRONG"
+      },
+      "link_B_to_price": {
+        "corr": "~0",
+        "dir_hit": "~0.50",
+        "verdict": "~ZERO (already arbitraged at release)"
+      },
+      "bridge": "OD-weather forecaster IS a storage-NUMBER forecaster (clean outcome edge, esp storage-settled contracts); NOT an automatic release-window price edge \u2014 needs to beat street consensus + trade the price PATH."
     }
-  ]
+  ],
+  "consensus_fetch_recipe": {
+    "best_free_source": "ForexFactory weekly calendar JSON",
+    "url": "https://nfs.faireconomy.media/ff_calendar_thisweek.json",
+    "auth": "none (send browser User-Agent)",
+    "fields": {
+      "title": "event name",
+      "country": "filter=='USD'",
+      "date": "ISO-8601 with ET offset",
+      "impact": "Low|Medium|High",
+      "forecast": "consensus (string, may be '')",
+      "previous": "prior print",
+      "actual": "NOT in forward file; populates in-place AFTER release -> poll twice"
+    },
+    "surprise": "parse_num(actual)-parse_num(forecast); strip B/M/K/% suffixes, keep sign",
+    "coverage_limit": "current week only (lastweek/nextweek/thismonth/nextmonth all 404) -> no deep history; accrue by polling ~hourly, upsert on (title,date)",
+    "event_to_contract": {
+      "Natural Gas Storage": "KXNATGASD",
+      "Crude Oil Inventories": "KXWTI",
+      "CPI m/m + CPI y/y": "KXCPIYOY",
+      "Non-Farm Employment Change": "KXUSNFP",
+      "Federal Funds Rate / FOMC Statement": "KXFEDHIKE"
+    },
+    "backups": [
+      "tradingeconomics.com/calendar (200 freemium, actual/forecast/previous)",
+      "CNBC RSS (200)"
+    ],
+    "paid_for_history": [
+      "Trading Economics API",
+      "Econoday",
+      "Estimize"
+    ],
+    "note": "Energy ACTUALS deep+free via EIA API (free key); only CONSENSUS must be accrued forward via ForexFactory."
+  }
 }
