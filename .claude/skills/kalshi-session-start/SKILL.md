@@ -53,6 +53,15 @@ for gz in $(git ls-tree -r --name-only origin/data/pyth-ticks | grep '\.jsonl\.g
   git show "origin/data/pyth-ticks:$gz" | gunzip > "data/pyth_ticks/$base"
   echo "[restore] $base ($(wc -l < data/pyth_ticks/$base) lines)"
 done
+
+# NYMEX Databento true-tick tape (S85: NG/CL release windows + definitions + baselines) -> data/pyth_ticks/
+git fetch origin data/nymex-ticks
+for gz in $(git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_tape/.*\.gz$'); do
+  base=$(basename "$gz" .gz)
+  dest="data/pyth_ticks/$base"; [[ "$base" == *.json ]] && dest="data/$base"   # baselines live in data/
+  git show "origin/data/nymex-ticks:$gz" | gunzip > "$dest"
+  echo "[restore] $base"
+done
 ```
 
 ## 4. VERIFY accrual before trusting the data

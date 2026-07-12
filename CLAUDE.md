@@ -1,12 +1,14 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-12, Session 84)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-12, Session 85)
 
 **One-line state:** the futures→Kalshi LAG is the live edge thread — **NYMEX is the CANARY, Kalshi the
-delayed follower; the strategy is the DAILY NG-futures lag (KXNATGASD settles on the NGDQ6 close), not
-just the EIA-storage Thursday.** S84 data reckoning: Pyth has WTI historical but NO natural gas (bogus
-`NGDQ6` id) → **Databento (`GLBX.MDP3`, true-tick trades, incl. NG) is the primary historical source**
-(`databento_backfill.py`, needs `DATABENTO_API_KEY`); `pyth_backfill.py` is a free WTI-only 1-sec
-fallback (1-sec UNDERSAMPLES). S84 weather scoreboard done (per-day fingerprint, not cell means:
-edge = interior-bucket warm-spike days, seasonal). Weather = scoreboard only, forecaster is Greg's spec.
+delayed follower; the strategy is the DAILY NG-futures lag.** S85: **Databento is LIVE** (key set, pipeline
+proven end-to-end) and **`event_move_baseline.py` ran on real true-tick NG/CL** — the result is a per-
+contract HOLD-TIME map: **NG is front-loaded (a ~60s hold captures ~66% of the release move), CL is slower
+(60s = ~27%, a longer hold gets the rest) — BOTH kept, different hold windows, EV-net-of-fee is the gate
+not frequency** (`EVENT_MOVE_FINDINGS_S85.md`). These are FUTURES (canary) moves = the ceiling; the Kalshi
+echo net-of-fee (the lag join) is next. Schema going forward = **MBP-10** (trades + top-of-book + 10-level
+depth; ~$130/yr NG+CL, ~$5 over the $125 credit); MBO stays off. Tape persisted on `data/nymex-ticks`.
+Weather = scoreboard only, forecaster is Greg's spec.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -199,17 +201,22 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
 - **S83** — meta session: CLAUDE.md audit/split (this lean doc + `CLAUDE_ARCHIVE_OD.md`, dipole
   research + OD toolkit kept live); the three ritual skills (`kalshi-session-start`, `kalshi-backtest`,
   `kalshi-roll`). No research ran; `data/pyth-ticks` still absent at close.
-- **S84** — Data reckoning + weather. NYMEX-canary principle set (gather NYMEX, fire on Kalshi; 1-min
-  useless, 1-sec undersamples). Found Pyth has NO natgas (bogus `NGDQ6` id) → Databento = primary
-  historical (true-tick CL+NG, `databento_backfill.py`, needs key); `pyth_backfill.py` free WTI
-  fallback. KXNATGASD = daily NG-futures market (trade every day); KXPOWERKWH = monthly macro stat.
-  Weather per-day fingerprint (edge = interior warm-spike days, seasonal; `WEATHER_REGIME_FINDINGS_S84`).
-  Killed the respawning crypto collectors (stale `new-session-o3vnm` scheduler). Detail:
-  `SESSION_HANDOFF_2026-07-15_S84.md`.
+- **S84** — Data reckoning + weather. NYMEX-canary principle set. Found Pyth has NO natgas (bogus `NGDQ6`
+  id) → Databento = primary historical (true-tick CL+NG, `databento_backfill.py`). KXNATGASD = daily
+  NG-futures market; KXPOWERKWH = monthly macro stat. Weather per-day fingerprint. Killed respawning
+  crypto collectors. Detail: `SESSION_HANDOFF_2026-07-15_S84.md`.
+- **S85** — Databento LIVE (key set, `pip install databento` 0.81). `event_move_baseline.py` BUILT + run
+  on 12 NG + 12 CL real release windows (leakage PASS, `definition`-schema $10/tick): per-contract
+  HOLD-TIME map (NG 60s=66% of move front-loaded; CL slower, 60s=27%, longer hold gets the rest — both
+  kept, EV-net-of-fee is the gate). Futures move = the ceiling; lag join next. `databento_backfill.py`
+  hardened (defs mode + point-in-time tick store, volume roll `.v.0`, retry/backoff). Schema decision =
+  MBP-10 (depth, ~$130/yr both, ~$5 over credit; MBO off). Tape persisted on `data/nymex-ticks`
+  (session-start restores it). Detail: `SESSION_HANDOFF_2026-07-12_S85.md`, `EVENT_MOVE_FINDINGS_S85.md`.
 
-S84 priorities (see `KICKOFF_2026-07-15_S84.md`): (1) verify the Pyth feed, then sub-second lag on
-accrued ticks; (2) join the Pyth futures move onto the level-hit dataset; (3) Thu 7/16 EIA natgas live;
-(4) weather scoring per regime; (5) roll re-point Pyth front-months.
+S86 priorities (see `KICKOFF_2026-07-12_S86.md`): (1) extend writer+baseline to consume MBP-10 DEPTH
+(run-length/exhaustion read), then batch the full-year MBP-10 (watch disk); (2) historical surprise join
+(EIA actuals + consensus) for the surprise-cell split; (3) the lag join = Kalshi echo net-of-fee vs the
+futures move (realized-EV); (4) standing: NGDQ6 fix, weather forecaster scoring, Pyth live lag.
 
 ---
 

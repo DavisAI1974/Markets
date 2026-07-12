@@ -5,8 +5,9 @@ pipeline or an OLD/completed piece. Keep this current — add new files to the t
 superseded ones down. (Started S81, 2026-07-12.)
 
 Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (historical trades),
-`data/pyth_ticks/` (Pyth ticks), `data/kalshi/` (live bins + consensus). Durable data accrues on the
-`data/kalshi-bins` and `data/pyth-ticks` branches.
+`data/pyth_ticks/` (Pyth + Databento NYMEX ticks), `data/kalshi/` (live bins + consensus). Durable data
+accrues gzipped on branches: `data/kalshi-bins`, `data/pyth-ticks`, and **`data/nymex-ticks`** (S85:
+Databento NG/CL true-tick release windows + definitions + baselines). `kalshi-session-start` restores all.
 
 ---
 
@@ -24,10 +25,11 @@ Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (
 | `.github/workflows/kalshi_collectors_durable.yml` | 6h durable cron: restore→collect bins + poll consensus→gzip+push to `data/kalshi-bins`. |
 | `.github/workflows/pyth_collector_durable.yml` | **[S81]** 6h durable cron: restore→stream Pyth ticks→gzip+push to `data/pyth-ticks`. |
 
-### Event-move baseline (S85) — the canary-move expectation-setter
+### Event-move baseline (S85) — the canary-move expectation-setter [RAN ON REAL TICKS]
 | file | what it does |
 |------|--------------|
-| `research/kalshi/event_move_baseline.py` | **[S85]** Per-EVENT move MAGNITUDE + DURATION on the true-tick futures tape (the NYMEX canary), per surprise-cell. Anchors a strictly-pre-release baseline, measures the forward peak in TICKS/$/bps (tick size POINT-IN-TIME from the `definition` store, reference-fallback tagged) + duration (time_to_peak, sustain_s, retention → run/blip/fade). Distributions not means, per-cell (series×surprise-sign×magnitude), leakage-gated on the pre-release anchor. Expectation-setting, NOT a trade-fire signal — sizes the lag-scalp hold time. `--selftest` (math + leakage) PASS. Consumes the Databento/Pyth tape identically. |
+| `research/kalshi/event_move_baseline.py` | **[S85]** Per-EVENT move MAGNITUDE + DURATION on the true-tick futures tape (the NYMEX canary), per surprise-cell. Anchors a strictly-pre-release baseline, measures the forward peak in TICKS/$/bps (tick size POINT-IN-TIME from the `definition` store, source aggregated per-event) + duration (time_to_peak, sustain_s, retention → run/blip/fade) + the **FAST (60s) window** (`--fast`): the sub-minute lag-scalp ceiling (fast_bps/$/capture, peaked_fast). Distributions not means, per-cell, leakage-gated. Expectation-setting, sizes the hold time. `--selftest` PASS. RAN on 12 NG + 12 CL real release windows (S85). |
+| `research/kalshi/EVENT_MOVE_FINDINGS_S85.md` | **[S85]** First real result: per-contract HOLD-TIME map. NG front-loaded (60s captures 66% of the move, ~$310/contract); CL slower (60s=27%, a longer hold gets the rest — e.g. $2,640 built over 17min). Both KEPT, different hold windows; EV-net-of-fee is the gate not frequency. Futures move = the CEILING, not Kalshi P&L (lag join next). Cost map + MBP-10 schema decision. |
 | file | what it does |
 |------|--------------|
 | `research/kalshi/futures_kalshi_lag.py` | Per-contract futures→Kalshi lead-lag (S19 operator + time-slide null). Result: futures lead, Kalshi never leads; ~half of contracts reprice a full minute late. |
@@ -79,8 +81,8 @@ Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (
 | `CLAUDE.md` | The lean live operating doc (S83 split; the pre-split OD/crypto/physics master is archived verbatim in `CLAUDE_ARCHIVE_OD.md`). |
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
 | `research/kalshi/EVENT_WEIGHT_STUDY.md` (+ `event_weight_study.json`, `source_map.json`) | Per-bucket event-weight study (weather→storage strong; storage-surprise→price null). |
-| `SESSION_HANDOFF_2026-07-15_S84.md` (+ S83, S82, S81, S80, S79, S78) | Session handoffs (S84 latest: weather scoreboard, NYMEX-canary/Databento data thread, crypto-collector kill, settlement corrections). |
-| `KICKOFF_2026-07-15_S84.md` (+ S83, S82, S81, S80, S79, `KICKOFF_S78/S79_KALSHI.md`) | Session kickoffs (S84 next). |
+| `SESSION_HANDOFF_2026-07-12_S85.md` (+ S84, S83, S82, S81, S80, S79, S78) | Session handoffs (S85 latest: Databento LIVE, event_move_baseline first real result = per-contract hold-time map, MBP-10 schema decision, data persisted on `data/nymex-ticks`). |
+| `KICKOFF_2026-07-12_S86.md` (+ S84, S83, S82, S81, S80, S79) | Session kickoffs (S86 next: MBP-10 depth + full-year pull, surprise join, lag join). |
 
 ---
 
