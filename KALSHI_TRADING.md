@@ -47,7 +47,9 @@ Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (
 | `research/kalshi/kalshi_coupling_adapter.py` | Feeds Kalshi mid-probability into the signed-edge-vs-placebo coupling engine (asset=series, venue=market). |
 | `research/kalshi/kalshi_score.py` | Settlement + forecast SCORING harness. Realized settlement vs market-implied ladder; Brier/log-loss/edge; lead-time market baseline. The scoreboard the OD-weather thread plugs into. |
 | `research/kalshi/kalshi_weather_forecast.py` | EIA storage-number baselines (climatology/persistence, walk-forward) + a (value,sigma)→kalshi_score bridge. NOTE: the weather forecaster itself is Greg's own spec — this is just the bridge/scoreboard. |
+| `research/kalshi/weather_regime_score.py` (+ `weather_regime.json`) | **[S84]** Per-REGIME weather scoreboard runner: walk-forward persistence + climatology `(value,sigma)`, scored PER CELL (city × regime × swing) as DISTRIBUTIONS not means, leakage-gated (PASS 66/66). Drop-in for the OD operator's `(value,sigma)`. Forecaster HANDS OFF. |
 | `research/kalshi/WEATHER_BASELINE_S82.md` | **[S82]** Daily-high temp (`KXHIGH*`) scoreboard reference: the naive baseline bar the OD operator must beat (persistence/climatology Brier ~1.1–1.3; the edge is on frontal/transition days), the market structure (6×~2°F re-centered ladder), + a worked trade example (real KXHIGHNY-26JUN29, realized 88°F) with fees/payout. |
+| `research/kalshi/WEATHER_REGIME_FINDINGS_S84.md` | **[S84]** Distributions-not-means sharpening of S82: the naive bar is REGIME-CONDITIONAL (persistence wins calm, climatology wins transition); climatology's transition edge is COOLING mean-reversion into wide tail buckets, NOT a front forecast; WARMING-spike cells are where both baselines (and the market) go blind = the operator's real room. NY transition-rich, DEN ridge-thin. |
 
 ### Shared engines (not Kalshi-only, but the pipeline runs on them)
 | file | what it does |

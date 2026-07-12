@@ -1,11 +1,12 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 83)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-12, Session 84)
 
 **One-line state:** the futures→Kalshi LAG is the live edge thread; the per-trade LEVEL-HIT dataset
 (200k events, leakage-clean) confirmed the Kalshi-INTERNAL book flow is a weak, fee-bound predictor →
 **the tradeable edge is EXTERNAL (the futures lag), not the book's own flow.** Sub-second Pyth-tick lag
-is priority-1 — but `data/pyth-ticks` did NOT exist at S83 close; verify the feed FIRST. Thu 7/16
-natgas staged. Weather = scoreboard only, forecaster is Greg's spec. S83 was the meta session: this
-doc went lean (archive = `CLAUDE_ARCHIVE_OD.md`) + the three ritual skills went live.
+is priority-1; the Pyth feed self-recovered (scheduled cron streaming WTI/NG/Brent — the S81 push-run
+failed, leaving one stale tick; the scheduled run pushes a real tape at end of its ~6h cycle). S84
+weather scoreboard done (per-regime, distributions-not-means): the naive bar is REGIME-CONDITIONAL and
+the operator's room is on warming-spike cells. Weather = scoreboard only, forecaster is Greg's spec.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -181,7 +182,6 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
-- **S78** — pivot crypto → Kalshi; full news + collector + coupling + settlement-scoring pipeline built.
 - **S79** — pipeline turnkey; consensus accrual; event-weight study; the merged signal architecture.
 - **S80** — cron live; historical Kalshi trades (real signed flow); futures→Kalshi lag CONFIRMED
   (futures lead, Kalshi never leads); level-hit reframe.
@@ -193,6 +193,11 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
 - **S83** — meta session: CLAUDE.md audit/split (this lean doc + `CLAUDE_ARCHIVE_OD.md`, dipole
   research + OD toolkit kept live); the three ritual skills (`kalshi-session-start`, `kalshi-backtest`,
   `kalshi-roll`). No research ran; `data/pyth-ticks` still absent at close.
+- **S84** — Pyth feed verified self-recovered (scheduled cron streaming WTI/NG/Brent; sub-second lag
+  test pending the end-of-cycle tape push). Weather per-regime scoreboard built
+  (`weather_regime_score.py`, leakage PASS): the naive bar is REGIME-CONDITIONAL (persistence=calm,
+  climatology=transition), climatology's transition edge is cooling mean-reversion into tail buckets,
+  and the operator's real room is warming-spike cells — `WEATHER_REGIME_FINDINGS_S84.md`.
 
 S84 priorities (see `KICKOFF_2026-07-15_S84.md`): (1) verify the Pyth feed, then sub-second lag on
 accrued ticks; (2) join the Pyth futures move onto the level-hit dataset; (3) Thu 7/16 EIA natgas live;
