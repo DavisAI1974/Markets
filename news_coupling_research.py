@@ -412,7 +412,12 @@ def main() -> None:
     p.add_argument("--data-dir", default=".")
     p.add_argument("--events", default="news_events.jsonl")
     p.add_argument("--output-dir", default="pass23_news_coupling_out")
-    p.add_argument("--assets", nargs="*", default=["BTC", "ETH"])
+    p.add_argument("--assets", nargs="*", default=[])
+    p.add_argument("--source", choices=["crypto", "kalshi"], default="crypto",
+                   help="crypto = phase1_5 bars per (asset,venue); kalshi = mid-probability "
+                        "per (series,market) from data/kalshi JSONL bins (S78 adapter)")
+    p.add_argument("--min-snaps", type=int, default=20,
+                   help="kalshi: min snapshots for a market to be included")
     p.add_argument("--horizons-min", nargs="*", type=int, default=[5, 15, 60, 240])
     p.add_argument("--pre-window-min", type=int, default=60)
     p.add_argument("--placebo-per-event", type=int, default=20)
@@ -424,7 +429,19 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     events = load_events(data_dir / args.events)
-    market = load_market(data_dir, [a.upper() for a in args.assets])
+    if args.source == "kalshi":
+        from research.kalshi.kalshi_coupling_adapter import (
+            DEFAULT_MACRO_SERIES, available_series, load_kalshi_market,
+        )
+        series = [a.upper() for a in args.assets] or (
+            [s for s in DEFAULT_MACRO_SERIES if s in set(available_series(data_dir))]
+            or available_series(data_dir))
+        market = load_kalshi_market(data_dir, series, min_snaps=args.min_snaps)
+        print(f"[news-coupling] kalshi: {len(series)} series -> {len(market)} markets with "
+              f">= {args.min_snaps} snaps")
+    else:
+        assets = [a.upper() for a in args.assets] or ["BTC", "ETH"]
+        market = load_market(data_dir, assets)
     observations: list[dict[str, Any]] = []
     for event in events:
         observations.extend(analyze_event(event, market, args.horizons_min, args.pre_window_min))
