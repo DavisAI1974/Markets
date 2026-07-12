@@ -82,6 +82,18 @@ KEPT and used on those cells. Partial coverage is NOT failure; never discard a t
 Report "works on {X}, not {Y}", never "X failed." (Greg, S33; `deploy-signal-per-cell-not-universal`; the
 `AdaptiveSelector` already picks the winner per source.)
 
+## PLATFORM RULE (standing — Greg, S80, load-bearing) — EACH TRADE INDIVIDUALLY, NEVER AVERAGE
+**You cannot average things. Look at EACH TRADE individually.** This is the per-cell / never-pool /
+`bucket-distinctiveness-is-the-goal` rule taken all the way down to the SINGLE TRADE. A pooled hit-rate,
+a mean signed-bps, an averaged coefficient — every aggregate is itself an averaging that BLURS AWAY the
+per-trade signature that is the actual predictive content. The signal is evaluated PER TRADE, conditioned
+on that trade's own context (cell = asset×venue×side, moneyness/strike-distance, regime, book/flow state
+at that instant); any summary must PRESERVE the per-trade distinctiveness, never collapse it into a
+population average. Averaging across trades is the same mistake as pooling across cells (S24 collapse) —
+it manufactures a null out of real structure. Characterize the DISTRIBUTION and the per-trade fingerprint,
+never lead with the mean. (Greg, S80; `each-trade-individually-never-average`; the trade-level form of
+`never-pool`, `tools-are-complementary-not-competing`, `bucket-distinctiveness-is-the-goal`.)
+
 ## S32 — BUILD_PLAN crypto signal-core: Phase 0 + Phase 1(a) DONE (read `SESSION_HANDOFF_2026-06-21_S32.md`)
 **SCOPE (Greg, S32, hard):** work ONLY on the crypto trading platform per `BUILD_PLAN.md`. The quote service
 (`QUOTE_SERVICE_PLAN.md`) is OUT of scope. Zero-synthetic = no synthetic *trading* data; tool-validation
