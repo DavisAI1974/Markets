@@ -44,6 +44,13 @@ STORE = "data/kalshi_hist_trades"
 _MONTHS = {m: i for i, m in enumerate(
     ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"], 1)}
 
+# Daily SETTLE time (UTC HH:MM) per series — the contract converges to 0/100 into this, a MECHANICAL
+# move that flow can't predict, so every decision whose forward horizon reaches the settle window is
+# excluded ("daily settle numbers won't help us with individual trade" — Greg). EDT assumed (May-Jul).
+#   WTI   = ICE daily settlement ~2:30 PM ET.
+#   natgas/Brent = 1-min candle close 5:00 PM EDT (per rules_primary).
+SETTLE_UTC = {"KXWTI": (18, 30), "KXNATGASD": (21, 0), "KXBRENTD": (21, 0)}
+
 
 # ---- parse + bin ---------------------------------------------------------------------------
 def event_date(event_ticker: str) -> datetime | None:
@@ -155,6 +162,10 @@ def eval_event(series, event, cfg) -> dict | None:
     is_release = ed.weekday() == cfg["release_weekday"]      # Wed for EIA crude
     hh, mm = cfg["release_hh"], cfg["release_mm"]
     release_ts = ed.replace(hour=hh, minute=mm).timestamp()
+    shh, smm = cfg["settle_hh"], cfg["settle_mm"]
+    settle_ts = ed.replace(hour=shh, minute=smm).timestamp()
+    # the LAST tradeable instant whose forward horizon still completes before the settle guard
+    cutoff_ts = settle_ts - cfg["settle_guard_s"] - cfg["horizon_bins"] * cfg["bin_s"]
     by_tk = load_event_trades(series, event)
     if not by_tk:
         return None
@@ -170,12 +181,14 @@ def eval_event(series, event, cfg) -> dict | None:
         ts, p, bv, sv = binned
         if is_release and span0 <= release_ts <= span1:
             di = int(np.searchsorted(ts, release_ts + cfg["spike_pause_s"], side="left"))
-            r = read(ts, p, bv, sv, di, W, hz, cfg["move_thresh"])
-            if r:
-                r["ticker"] = tk; ev_recs.append(r)
-        # placebo: sample non-release decision points on this contract (>=1h from the release)
+            if di < len(ts) and ts[di] <= cutoff_ts:         # release read must clear the settle window
+                r = read(ts, p, bv, sv, di, W, hz, cfg["move_thresh"])
+                if r:
+                    r["ticker"] = tk; ev_recs.append(r)
+        # placebo: non-release, >=1h from the release, AND clear of the settlement convergence window
         rng = np.random.default_rng(abs(hash(tk)) % (2 ** 32))
-        cand = [j for j in range(W, len(p) - hz) if abs(ts[j] - release_ts) > 3600]
+        cand = [j for j in range(W, len(p) - hz)
+                if abs(ts[j] - release_ts) > 3600 and ts[j] <= cutoff_ts]
         rng.shuffle(cand)
         for j in cand[:cfg["placebo_per_contract"]]:
             r = read(ts, p, bv, sv, j, W, hz, cfg["move_thresh"])
@@ -258,13 +271,21 @@ def main() -> None:
     ap.add_argument("--min-trades", type=int, default=100)
     ap.add_argument("--placebo-per-contract", type=int, default=6)
     ap.add_argument("--move-thresh", type=float, default=1.0, help="min |fwd move| (cents) to score a call")
+    ap.add_argument("--settle-utc", default=None, help="daily settle HH:MM UTC (default: per-series SETTLE_UTC)")
+    ap.add_argument("--settle-guard-s", type=float, default=1800.0,
+                    help="exclude decisions whose forward horizon lands within this of the daily settle")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     hh, mm = (int(x) for x in args.release_utc.split(":"))
+    if args.settle_utc:
+        shh, smm = (int(x) for x in args.settle_utc.split(":"))
+    else:
+        shh, smm = SETTLE_UTC.get(args.series, (21, 0))
     cfg = {"bin_s": args.bin_s, "window": args.window, "horizon_bins": args.horizon_bins,
            "spike_pause_s": args.spike_pause_s, "release_hh": hh, "release_mm": mm,
            "release_weekday": args.release_weekday, "min_trades": args.min_trades,
-           "placebo_per_contract": args.placebo_per_contract, "move_thresh": args.move_thresh}
+           "placebo_per_contract": args.placebo_per_contract, "move_thresh": args.move_thresh,
+           "settle_hh": shh, "settle_mm": smm, "settle_guard_s": args.settle_guard_s}
     res = run(args.series, cfg)
     if args.out:
         json.dump(res, open(args.out, "w"), indent=2)
