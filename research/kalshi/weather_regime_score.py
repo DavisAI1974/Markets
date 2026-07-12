@@ -142,6 +142,39 @@ def summarize(briers: list[float], hits: list[int]) -> dict:
 
 
 # --- driver ----------------------------------------------------------------------------------
+def fingerprint(per_event: list[dict]) -> dict:
+    """Rule 2 done right: DO NOT lead with a cell mean. Break the cell to the individual day, split
+    by best-naive Brier into edge/mid/whiff, and report the WINNER FINGERPRINT of each cluster —
+    tail-vs-interior bucket + swing. The mechanical structural signal the cell median blurs away."""
+    days = []
+    for r in per_event:
+        briers = [b for b in (r.get("pers_brier"), r.get("clim_brier")) if b is not None]
+        if not briers:
+            continue
+        best = min(briers)
+        who = "clim" if r.get("clim_brier") == best else "pers"
+        w = r["winner"]
+        days.append({"date": r["date"], "best": best, "who": who, "swing": r["swing"],
+                     "regime": r["regime"], "tail": w.startswith("<=") or w.startswith(">="),
+                     "winner": w, "realized": r["realized"]})
+
+    def fp(grp: list[dict]) -> dict:
+        n = len(grp)
+        if not n:
+            return {"n": 0}
+        return {"n": n,
+                "tail_win_frac": round(sum(g["tail"] for g in grp) / n, 3),
+                "warm_frac": round(sum(g["swing"] == "warm" for g in grp) / n, 3),
+                "clim_best_frac": round(sum(g["who"] == "clim" for g in grp) / n, 3),
+                "days": [f"{g['date'][5:]}:{g['swing'][0]}->{g['winner']}(b{g['best']:.2f})"
+                         for g in sorted(grp, key=lambda z: z["best"])]}
+
+    edge = [d for d in days if d["best"] < 0.5]
+    mid = [d for d in days if 0.5 <= d["best"] <= 1.5]
+    whiff = [d for d in days if d["best"] > 1.5]
+    return {"n": len(days), "edge": fp(edge), "mid": fp(mid), "whiff": fp(whiff)}
+
+
 def score_city(rows: list[dict], clim_window: int, thr: float) -> dict:
     """Per-day walk-forward baseline scoring, bucketed into cells. Returns per-cell distributions
     for persistence and climatology, plus the post-hoc market placeholder."""
@@ -187,6 +220,8 @@ def score_city(rows: list[dict], clim_window: int, thr: float) -> dict:
         cells[(regime,)]["mkt_b"].append(mkt_b)
         per_event.append(row)
 
+    fp = fingerprint(per_event)
+
     out_cells = {}
     for key, d in cells.items():
         cell_name = " x ".join(key)
@@ -200,7 +235,7 @@ def score_city(rows: list[dict], clim_window: int, thr: float) -> dict:
             entry["market_posthoc"] = {"n": len(mb),
                                        "brier_median": round(mb[len(mb) // 2], 3)}
         out_cells[cell_name] = entry
-    return {"cells": out_cells, "per_event": per_event}
+    return {"fingerprint": fp, "cells": out_cells, "per_event": per_event}
 
 
 def main() -> None:
@@ -232,24 +267,31 @@ def main() -> None:
         scored = score_city(rows, args.clim_window, args.transition_threshold)
         result["cities"][series] = scored
         print(f"\n[{series}]  {len(rows)} settled days ({rows[0]['date']} -> {rows[-1]['date']})")
-        print(f"  {'cell':<22} {'n':>3}  {'pers med(IQR)max':<22} {'hit':>4}  "
-              f"{'clim med(IQR)max':<22} {'hit':>4}  {'mkt*':>5}")
+
+        # LEAD with the per-day fingerprint (never the cell mean) — Rule 2.
+        fp = scored["fingerprint"]
+        print("  PER-DAY FINGERPRINT (best-naive Brier; the edge the cell-average hides):")
+        for tag, label in (("edge", "EDGE  <0.5"), ("whiff", "WHIFF >1.5")):
+            g = fp[tag]
+            if g["n"]:
+                print(f"    {label}: n={g['n']:<3} ({g['n']/fp['n']:.0%})  "
+                      f"tail-bucket-win={g['tail_win_frac']:.0%}  warm={g['warm_frac']:.0%}  "
+                      f"clim-best={g['clim_best_frac']:.0%}")
+        print("    -> naive is FREE on wide open-tail wins (nobody's edge), BLIND on interior "
+              "warm-spike wins (the operator's room).")
+
+        # cell medians kept only as the DEMOTED footnote they are (the average that misleads)
+        print("  cell medians (FOOTNOTE — the averages Greg's rule says never to lead with):")
         order = ["calm", "transition", "transition x warm", "transition x cool"]
         for cell in order:
             e = scored["cells"].get(cell)
             if not e:
                 continue
-            ps = e.get("persistence", {})
-            cs = e.get("climatology", {})
-            mb = e.get("market_posthoc", {}).get("brier_median", "-")
-            pstr = (f"{ps.get('brier_median','-')}({ps.get('brier_p25','-')}-{ps.get('brier_p75','-')}){ps.get('brier_max','-')}"
-                    if ps else "-")
-            cstr = (f"{cs.get('brier_median','-')}({cs.get('brier_p25','-')}-{cs.get('brier_p75','-')}){cs.get('brier_max','-')}"
-                    if cs else "-")
-            print(f"  {cell:<22} {ps.get('n','-'):>3}  {pstr:<22} {ps.get('hit_rate','-'):>4}  "
-                  f"{cstr:<22} {cs.get('hit_rate','-'):>4}  {mb:>5}")
-        print("  * market_posthoc = settled last-price (near-certain placeholder, NOT the real "
-              "lead-time bar); real market baseline activates as KXHIGH bins accrue.")
+            ps = e.get("persistence", {}); cs = e.get("climatology", {})
+            print(f"    {cell:<20} n={ps.get('n','-'):<3} pers_med={ps.get('brier_median','-')} "
+                  f"clim_med={cs.get('brier_median','-')}  (mkt* {e.get('market_posthoc',{}).get('brier_median','-')})")
+        print("  * market_posthoc = settled last-price placeholder, NOT the real lead-time bar "
+              "(activates as KXHIGH bins accrue).")
 
     if args.out:
         json.dump(result, open(args.out, "w"), indent=2)

@@ -6,68 +6,73 @@ days per city (2026-05-06 -> 07-12), Kalshi settlement API, zero synthetic. Leak
 (66/66 days each city — every walk-forward `(value,sigma)` proven byte-invariant to future days).
 
 This SHARPENS `WEATHER_BASELINE_S82.md`, which reported per-regime **means** of persistence only.
-Reporting the **distribution** per cell (median / IQR / max + right-bucket hit-rate) and adding
-**climatology per regime + swing direction** flips the headline.
+Per Greg's rule (never lead with an average — even a per-cell median is an average), the headline is
+the **per-DAY fingerprint**, and the cell medians are demoted to the footnote they should be. The
+cell median blends two clusters that behave nothing alike and describes neither.
 
-## The per-cell table (persistence vs climatology; Brier median(IQR)max, lower better; mkt* = post-hoc placeholder)
+## THE HEADLINE — the per-day fingerprint (best-naive Brier, broken to the individual day)
 
-| city | cell | n | persistence med(IQR)max | pers hit | climatology med(IQR)max | clim hit |
-|------|------|---|-------------------------|----------|--------------------------|----------|
-| DEN | calm | 22 | **1.17**(1.08-1.24)1.51 | 0.18 | 1.35(1.15-1.63)1.85 | 0.14 |
-| DEN | transition | 44 | 1.42(1.32-1.70)2.00 | 0.14 | **1.42**(1.05-1.65)1.92 | 0.19 |
-| DEN | transition x warm | 26 | **1.46**(1.36-1.74)2.00 | 0.12 | 1.52(1.12-1.70)1.92 | 0.12 |
-| DEN | transition x cool | 18 | 1.40(1.27-1.57)1.93 | 0.17 | **1.31**(0.53-1.50)1.73 | 0.28 |
-| NY | calm | 29 | **1.02**(0.25-1.13)1.31 | 0.35 | 1.21(1.10-1.63)1.98 | 0.17 |
-| NY | transition | 37 | 1.52(1.31-1.80)2.00 | 0.08 | **1.27**(0.98-1.50)2.00 | 0.19 |
-| NY | transition x warm | 20 | 1.71(1.43-1.81)2.00 | 0.00 | **1.37**(1.21-1.90)2.00 | 0.05 |
-| NY | transition x cool | 17 | 1.33(1.08-1.64)2.00 | 0.18 | **1.16**(0.19-1.27)1.83 | 0.38 |
-| CHI | calm | 24 | **1.07**(1.01-1.21)1.43 | 0.17 | 1.43(1.22-1.67)1.98 | 0.17 |
-| CHI | transition | 42 | 1.58(1.37-1.86)2.00 | 0.00 | **1.56**(1.21-1.78)2.00 | 0.10 |
-| CHI | transition x warm | 24 | 1.61(1.43-1.87)2.00 | 0.00 | **1.61**(1.26-1.90)2.00 | 0.00 |
-| CHI | transition x cool | 18 | 1.53(1.18-1.86)2.00 | 0.00 | **1.29**(0.75-1.60)1.82 | 0.22 |
+The per-day Brier distribution is BIMODAL, and the split is a single mechanical structural signal:
+**did the realized high land in a wide open-ended TAIL bucket (`<=X` / `>=Y`) or a narrow 2°F INTERIOR
+bucket?**
+
+| city | EDGE days (best Brier <0.5) | tail-bucket win | warm | WHIFF days (best >1.5) | tail-bucket win | warm |
+|------|-----------------------------|-----------------|------|------------------------|-----------------|------|
+| **NY**  | 17/66 (26%) | **100%** | 29% | 8/66 (12%)  | **0%**  | 75% |
+| **DEN** | 12/66 (18%) | **100%** | 25% | 11/66 (17%) | 18%     | 82% |
+| **CHI** | 8/66 (12%)  | **100%** | 12% | 15/66 (23%) | **0%**  | 73% |
+
+- **Every near-perfect day (Brier ~0) is a wide open-TAIL win.** A diffuse forecast collects its mass
+  in an unbounded bucket for free (NY 07-05 `<=98` 0.00, 06-08 `<=87` 0.02). **These are NOBODY's edge
+  — the crowd prices a wide tail just as easily. No room.**
+- **Every blind day (Brier ~2) is a narrow INTERIOR-bucket win, and 73-82% are WARMING.** A warm spike
+  into a 2°F interior bucket the re-centered ladder under-weighted (NY 07-03 `99-100` +7°F Brier 1.82;
+  05-17 `80-81` +14°F; 06-12 `90-91` +9°F). **THIS is the operator's room — and it is exactly the
+  ">3°F over the upper bound" call the forecaster is built to make.**
+
+The signal is pre-observable from the forecast's OWN predicted bucket: if it predicts a wide tail,
+the market is already there (skip); if it predicts a warm spike into an interior/near-top bucket the
+ladder centered too cool, that is the trade. Tail-vs-interior + swing is a LIVE gate, not a post-hoc
+label.
+
+## Why the cell averages hid it (the demoted footnote)
 
 `mkt*` (post-hoc settled last-price) is ~0.003 in every cell — a near-certain placeholder, NOT the
-real lead-time bar. The real market baseline activates once `data/kalshi-bins` accrues across many
-settled `KXHIGH*` events (right now the branch holds only a ~13h rolling window, 3 events/city).
+real lead-time bar (activates once `data/kalshi-bins` accrues across settled `KXHIGH*` events; the
+branch currently holds only a ~13h rolling window, 3 events/city).
 
-## The two load-bearing findings (distributions revealed them; the S82 means hid them)
+| city | cell | n | persistence med | climatology med |
+|------|------|---|-----------------|-----------------|
+| NY | calm | 29 | 1.02 | 1.21 |
+| NY | transition | 37 | 1.52 | 1.27 |
+| DEN | calm | 22 | 1.17 | 1.35 |
+| DEN | transition | 44 | 1.42 | 1.42 |
+| CHI | calm | 24 | 1.07 | 1.43 |
+| CHI | transition | 42 | 1.58 | 1.56 |
 
-1. **The naive bar is REGIME-CONDITIONAL — it switches baseline.** Persistence wins **calm**
-   (NY 1.02 vs clim 1.21; today ~ yesterday). Climatology wins **transition** (NY 1.27 vs pers 1.52;
-   CHI/DEN similar). So the benchmark the operator must beat is a regime-switched
-   `max(persistence, climatology)`, never either alone. S82's single "best naive bar per city" (NY
-   1.12) is the average of two different worlds and describes neither.
-
-2. **Climatology's transition edge is COOLING mean-reversion into the wide tail buckets — NOT a front
-   forecast, and it does nothing for warming spikes.** The per-event tape shows climatology's
-   transition wins concentrate on big cooling days where the realized drops into an open-ended tail
-   (`<=X`) and the seasonal-mean anchor sits in that same tail (NY 05-29 clim 0.13, 06-08 0.02,
-   06-16 0.43, 07-05 0.00, 07-06 0.21 — all cooling, all tail-bucket winners). It wins there for two
-   reasons, honest about both: (a) it hedges WIDER (trailing std of realized values ~ 2x persistence's
-   std of day-over-day deltas) so it avoids the confident-wrong 2.0, and (b) genuine central-tendency
-   capture — a cooling front reverts toward the seasonal mean, which IS climatology's estimate.
-
-3. **WARMING transitions are where BOTH naive baselines (and, per the S82 example, the market) go
-   blind — that is the operator's real room.** Persistence hit-rate is **0.00** on warming
-   transitions in NY and CHI; climatology only 0.00-0.05. A warm spike prints a NEW high above the
-   re-centered ladder (NY 07-03: realized 100, +7; pers Brier 1.82, clim 1.997 — the `99-100` bucket
-   neither reached). This is exactly the `KXHIGHNY-26JUN29` worked example in S82 (hot spike -> `>=86`
-   top bucket underpriced). Persistence CANNOT hit a transition bucket almost by construction (it bets
-   yesterday; the day moved away).
+Read as an average, "climatology wins NY transition 1.27 vs persistence 1.52" is TRUE but useless — it
+is the mean of a 26% free-win cluster (Brier ~0) and a 12% blind cluster (Brier ~2). The switch of
+baseline by regime (persistence=calm, climatology=transition) is real but SECONDARY: climatology only
+"wins transition" because it hedges wider and its seasonal anchor happens to sit in the cooling-tail
+buckets — it is not forecasting the front, and it does nothing on the warming-spike interior days that
+ARE the room. Never size off these medians.
 
 ## What this means for the operator's bar (when Greg's forecaster emits (value,sigma))
 
-- Score it PER CELL through this runner (drop-in: same `gaussian_over_buckets` path). Beating the
-  **pooled** persistence bar is trivial and meaningless.
-- The bar to clear on **transition** is CLIMATOLOGY (~1.27 NY / ~1.56 CHI / ~1.42 DEN), not
-  persistence. On **calm** it is PERSISTENCE (~1.0 NY) and there is little room — the market is
-  already sharp there.
-- The biggest room is **warming-transition / hot-spike** cells (both baselines ~2.0, hit ~0): call
-  the magnitude of a warm spike and the top/tail bucket is cheap. Secondary room: call cooling-front
-  magnitude better than the seasonal anchor.
-- Denver is a stable July ridge (small swings, edge thin); NY is the transition-rich book (biggest
-  swings, biggest naive-baseline failure -> biggest room). Report "room on {NY x transition x warm},
-  thin on {DEN x calm}", never a pooled Brier.
+- Score it PER DAY through this runner (drop-in: same `gaussian_over_buckets` path), and judge it on
+  the **WHIFF cluster** — the interior-bucket warming-spike days where the naive is blind. Beating the
+  naive on the EDGE (open-tail) days is worthless: the crowd is already there, no room.
+- The operator's tradeable cell is **interior-bucket, warming-spike days** (the ">3°F over the upper
+  bound" call). When the forecast predicts a warm spike into a bucket the ladder centered too cool,
+  the YES is cheap and pays big (S82 `KXHIGHNY-26JUN29`: realized 88, `>=86` YES, +$87). This is
+  low-frequency (NY 8/66, DEN 11/66, CHI 15/66 in this spring window) and high-payoff — rising into
+  peak-summer heat.
+- NY is the transition-rich book (biggest naive failure = biggest room); Denver is a stable July
+  ridge (thin). Report "room on {interior-bucket x warming-spike}, none on {open-tail}", never a
+  pooled or per-cell mean.
+- Next scoreboard build (needs the forecaster's per-day output): score the ">3°F over upper bound ->
+  buy top/interior YES" rule per-day, NET-OF-KALSHI-FEE, so we see the dollar capture on the days it
+  fires, not just Brier. Blocked only on a sample of the forecaster's predicted highs.
 
 ## Caveats (Result Discipline)
 - Regime label (|realized - yesterday| > 3 degF) is POST-HOC — it characterizes the baseline's
