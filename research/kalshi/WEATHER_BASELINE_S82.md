@@ -15,6 +15,8 @@ operator firms up. All numbers from `kalshi_score.py` on real settled Kalshi eve
   return; capacity is BREADTH (12 cities × daily × 6 buckets), not depth (books are thin).
 
 ## The baseline bar (walk-forward persistence + climatology; 52 events each; Brier 0-2, lower better)
+POOLED numbers — kept only to show the range; **the pooled mean is the WRONG lens** (see the per-regime
+split below, which is the number that actually matters). NEVER size off these.
 | City | Persistence | Climatology | best naive bar |
 |------|------------|-------------|----------------|
 | NY (`KXHIGHNY`)  | 1.12 | 1.14 | **1.12** |
@@ -35,6 +37,42 @@ still the post-hoc `settled_last_price` placeholder — beating persistence/clim
 SUFFICIENT. The real "beat the market" test activates once `data/kalshi-bins` accrues across live `KXHIGH*`
 settled events (the collector watches all 12; a genuine lead-time market distribution then replaces the
 placeholder in `kalshi_score.py`).
+
+## PER-BUCKET, NEVER POOLED — the platform rule applied to weather (load-bearing, Greg S82)
+`each-trade-individually-never-average` / `deploy-signal-per-cell-not-universal` applies here in full. **Do
+NOT measure a yearly or monthly Brier and call it the edge.** A pooled average across a season blends
+regimes that behave nothing alike and describes NONE of them — it manufactures a null out of real
+structure. Split the history into REGIME CELLS, find the edge PER CELL, and deploy only on the cells that
+clear. The pooled baseline table above (NY 1.12, CHI 1.31, DEN 1.11) is exactly the wrong lens; here is the
+same persistence baseline split by regime — the number that matters:
+
+| City | calm (\|Δ\|≤3°F) | transition (\|Δ\|>3°F) | pooled (misleading) |
+|------|-----------------|------------------------|---------------------|
+| NY (`KXHIGHNY`)  | **0.73**  (n=24) | **1.45**  (n=28) | 1.12 |
+| Chicago          | **0.91**  (n=21) | **1.58**  (n=31) | 1.31 |
+| Denver           | **0.92**  (n=19) | **1.38**  (n=33) | 1.21 |
+
+The pooled 1.12 describes neither the 0.73 calm regime nor the 1.45 transition regime — it is an average of
+two different worlds. Persistence's right-bucket hit-rate collapses from ~0.23–0.34 (calm) to ~0.05–0.16
+(transition). **The tradeable edge lives in the transition cell**, where the naive baseline (and the market
+that leans on it) is weakest — never in the pooled mean.
+
+**The weather cells (analogous to moneyness × side × velocity × release on the level-hit dataset):**
+- **Regime: calm vs transition (frontal passage)** — the primary split. TRADEABLE only if classified
+  PRE-hoc: recent variance of highs, NWP/ensemble spread, a front in the forecast, or the operator's own
+  predicted swing. (The table above splits post-hoc on |realized − yesterday| only to PROVE the pooled mean
+  is misleading; a live signal must call the transition before the day resolves.)
+- **City** — never pool across cities. LAX (marine-clamped, \|Δ\|~1°F, efficient) and Denver (continental,
+  \|Δ\|~5°F, volatile) are different markets; a blended Brier is meaningless.
+- **Synoptic season** — spring/fall frontal season vs a stable summer ridge (the same per-regime logic the
+  natgas degree-day study used; do NOT pool across the calendar).
+- **Bucket moneyness** — center-of-ladder (near-ATM) vs open-ended tail bucket (`>=86`): different edge,
+  different fee, different fill.
+- **Swing direction** — warming vs cooling transition may score differently; keep them separate until the
+  data says they don't.
+
+Rule: report "edge on {transition × Denver × spring}, not on {calm × LAX}", never a single yearly Brier.
+Partial coverage is not failure — a cell that clears is kept and deployed on that cell.
 
 ## How a trade pays (worked example — REAL event `KXHIGHNY-26JUN29`, realized high = 88°F)
 Real ladder that day (6 buckets): `[<=79] [79-80] [81-82] [83-84] [85-86] [>=86]`. Realized 88°F →
