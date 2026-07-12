@@ -37,6 +37,8 @@ from typing import Any
 DEFAULT_MACRO_SERIES = [
     "KXUSNFP", "KXCPIYOY", "KXCPICOREA", "PCECORE",
     "KXFEDHIKE", "RATECUTS", "KXEFFR", "KXTROPSTORM",
+    # energy price contracts (react to scheduled EIA releases) — prime coupling targets
+    "KXWTI", "KXBRENTD", "KXNATGASD", "KXAAAGASD",
 ]
 
 

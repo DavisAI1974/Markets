@@ -77,7 +77,16 @@ ECON = [
     "RATECUTS",    # Number of rate cuts
     "KXEFFR",      # Fed funds (EFFR) over/under
 ]
-DEFAULT_WATCHLIST = WEATHER_HIGH + ECON
+# Energy price contracts — Greg's domain edge; daily-resolving, two-sided, react to the
+# scheduled EIA releases (Wed Weekly Petroleum Status, Thu Weekly Natural Gas Storage).
+# Depth-verified live (deep two-sided ladders); weekly/hourly variants were thin -> excluded.
+ENERGY = [
+    "KXWTI",       # WTI crude, daily
+    "KXBRENTD",    # Brent crude, daily
+    "KXNATGASD",   # Henry Hub natural gas, daily (the EIA storage reactant)
+    "KXAAAGASD",   # US retail gasoline (AAA), daily
+]
+DEFAULT_WATCHLIST = WEATHER_HIGH + ECON + ENERGY
 
 
 # --- HTTP -----------------------------------------------------------------------------------

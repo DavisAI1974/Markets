@@ -49,6 +49,11 @@ CONTRACT_KEYWORDS: dict[str, "re.Pattern[str]"] = {
     "KXFEDHIKE":  re.compile(r"\b(fomc|federal reserve|fed\b|powell|rate (hike|decision|increase))\b", re.I),
     "RATECUTS":   re.compile(r"\b(rate cut|fed cut|easing|dovish)\b", re.I),
     "KXEFFR":     re.compile(r"\b(fed funds|effr|federal funds rate)\b", re.I),
+    # --- energy price contracts (EIA feed; Greg's domain edge) ---
+    "KXWTI":      re.compile(r"\b(wti|west texas|crude|oil price|petroleum|opec|barrel|rig count)\b", re.I),
+    "KXBRENTD":   re.compile(r"\b(brent|crude|oil price|opec|barrel)\b", re.I),
+    "KXNATGASD":  re.compile(r"\b(natural gas|nat gas|natgas|henry hub|gas storage|lng)\b", re.I),
+    "KXAAAGASD":  re.compile(r"\b(gasoline|gas price|pump price|retail gas)\b", re.I),
     # --- hurricanes / tropical (NHC feed) ---
     "KXTROPSTORM": re.compile(r"\b(tropical storm|tropical depression|named storm|hurricane|cyclone)\b", re.I),
     # --- weather daily-high cities: mostly OD-driven, tagged only on heat-wave macro news ---
