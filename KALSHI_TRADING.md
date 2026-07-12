@@ -62,8 +62,8 @@ Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (
 | `KALSHI_TRADING.md` | This index. |
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
 | `research/kalshi/EVENT_WEIGHT_STUDY.md` (+ `event_weight_study.json`, `source_map.json`) | Per-bucket event-weight study (weather→storage strong; storage-surprise→price null). |
-| `SESSION_HANDOFF_2026-07-12_S80.md` (+ S79, S78) | Session handoffs (S80 latest committed; S81 pending). |
-| `KICKOFF_2026-07-12_S81.md` (+ S80, S79, `KICKOFF_S78/S79_KALSHI.md`) | Session kickoffs. |
+| `SESSION_HANDOFF_2026-07-13_S82.md` (+ S81, S80, S79, S78) | Session handoffs (S82 latest). |
+| `KICKOFF_2026-07-14_S83.md` (+ S82, S81, S80, S79, `KICKOFF_S78/S79_KALSHI.md`) | Session kickoffs (S83 next). |
 
 ---
 

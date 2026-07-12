@@ -58,6 +58,17 @@ New: `research/kalshi/level_hit_dataset.py`, `research/kalshi/LEVEL_HIT_FINDINGS
 `KALSHI_TRADING.md` (index), `CLAUDE.md` (header + S82 delta), `.gitignore` (level_hits_*.json, pyth_ticks/).
 Local-only: `data/kalshi_hist_trades/KXWTI/` (496k tape), `data/level_hits_KXWTI.json`, `data/kalshi/*_bins.jsonl`.
 
+## END OF SESSION — Pyth feed UNSTUCK + Actions cleanup (commit `a9d590e`)
+The Pyth durable run had sat `queued` and never executed because **11 legacy crypto collector workflows
+were hogging the GitHub Actions runners** — worst offender `bybit_perp_history_durable` (every 15 min),
+plus 8 coin/book collectors on 6h crons + `paper_trade` + 2 backfills. Greg manually dispatched the Pyth
+run (now `in_progress`); then we **DELETED all 11 crypto workflows** on the default branch (recoverable via
+git history), keeping only `kalshi_collectors_durable.yml` + `pyth_collector_durable.yml`. Their crons now
+stop firing → runners freed. **Real Pyth ticks accrue once energy futures reopen (~Sun 22:00 UTC); the 6h
+cron spans the reopen so `data/pyth-ticks` should fill tonight, well before Thu natgas.** No queued/stuck
+runs remain. (If the Pyth run goes `queued` again after this, it's an account-level Actions issue — check
+billing/minutes or runner cap in the repo's Actions settings, not the workflow.)
+
 ## NEXT (S83)
 1. **Join Pyth futures move onto the level-hit dataset** — the external-driver hypothesis: do big-run
    continuations concentrate on level-hits trailing a fresh futures move? (needs `data/pyth-ticks`.)
