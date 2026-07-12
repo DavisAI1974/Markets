@@ -380,10 +380,13 @@ def build(symbol, series, cfg):
         if len(evs) < cfg["min_cell"]:
             continue
         cells[k] = _move_dist(evs)
+    src_counts = defaultdict(int)               # tick-source is PER EVENT (roll/definition-window), aggregate it
+    for e in events:
+        src_counts[e["tick_source"]] += 1
     return {
         "symbol": symbol, "series": series, "status": "OK",
         "n_events": len(events), "tape_days": len(tape_days(ts)), "ticks": int(ts.size),
-        "tick_source": events[0]["tick_source"],
+        "tick_source": dict(src_counts),
         "leakage_pass": leak_pass, "leakage_fails": leak_fails,
         "n_cells_reported": len(cells),
         "cells": cells,
@@ -495,10 +498,10 @@ def main():
     print(f"[{res['symbol']}/{res['series']}] events={res['n_events']} over {res['tape_days']} tape-days "
           f"({res['ticks']} ticks)  tick_source={res['tick_source']}  "
           f"leakage_pass={res['leakage_pass']} (fails={res['leakage_fails']})")
-    if res["tick_source"] == "reference_unverified":
-        print("  WARNING tick size is the UNVERIFIED reference — populate "
-              f"{TAPE_DIR}/{sym_root(res['symbol'])}_definitions.jsonl via "
-              "databento_backfill.py --schema definition to make ticks/$ authoritative.")
+    if res["tick_source"].get("reference_unverified"):
+        print(f"  WARNING {res['tick_source']['reference_unverified']} event(s) fell back to the UNVERIFIED "
+              f"reference tick — extend {TAPE_DIR}/{sym_root(res['symbol'])}_definitions.jsonl earlier "
+              "(databento_backfill.py defs) so every event has a preceding definition.")
     print(f"  cells reported (>= {args.min_cell}): {res['n_cells_reported']}")
     for k, d in res["cells"].items():
         print(f"\n  CELL {k}  n={d['n']}")
