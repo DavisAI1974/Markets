@@ -35,6 +35,28 @@ the market is already there (skip); if it predicts a warm spike into an interior
 ladder centered too cool, that is the trade. Tail-vs-interior + swing is a LIVE gate, not a post-hoc
 label.
 
+## THE ROOM IS SEASONAL (time-bucketed — the pooled 68-day number flattened this too)
+
+The whole-window fingerprint above STILL flattens across spring-frontal season -> summer ridge, two
+different synoptic worlds. The operator's room (whiff = interior-bucket warm-spike miss) by half-month:
+
+| city | 05a | 05b | 06a | 06b | 07a |
+|------|-----|-----|-----|-----|-----|
+| DEN | 3 | 1 | 3 | 2 | **0** |
+| NY  | 0 | 3 | 1 | 0 | **2** |
+| CHI | 3 | 4 | 2 | 2 | **0** |
+
+**The room lives in the SPRING FRONTAL season (May-June) and largely DISAPPEARS in the early-July
+ridge** — DEN and CHI both drop to ZERO whiffs in 07a (the persistent summer ridge means persistence
+nails it: no misses, no room), only NY keeps some. This CORRECTS an earlier draft claim that the room
+"rises into peak-summer heat" — measured, it is the opposite for 2/3 cities (Result Discipline: I
+asserted a seasonal direction without measuring; the data reversed it). CAVEATS: (1) small-n —
+buckets are 8-16 days, whiff counts 0-5, so the pattern is suggestive not settled; the summer fills it
+in as bins/settlements accrue. (2) A July HEAT-DOME is a DIFFERENT overshoot mode than a spring
+frontal swing (sustained record highs stacking above the ladder vs a one-day swing) and would be its
+own cell — if the forecaster is lighting up mid-July, check whether it is catching a heat-dome
+overshoot, not the May-June frontal whiff characterized here.
+
 ## Why the cell averages hid it (the demoted footnote)
 
 `mkt*` (post-hoc settled last-price) is ~0.003 in every cell — a near-certain placeholder, NOT the
@@ -65,8 +87,9 @@ ARE the room. Never size off these medians.
 - The operator's tradeable cell is **interior-bucket, warming-spike days** (the ">3°F over the upper
   bound" call). When the forecast predicts a warm spike into a bucket the ladder centered too cool,
   the YES is cheap and pays big (S82 `KXHIGHNY-26JUN29`: realized 88, `>=86` YES, +$87). This is
-  low-frequency (NY 8/66, DEN 11/66, CHI 15/66 in this spring window) and high-payoff — rising into
-  peak-summer heat.
+  low-frequency (NY 8/66, DEN 11/66, CHI 15/66) and high-payoff, and SEASONAL — concentrated in the
+  May-June frontal season, near-zero in the early-July ridge for DEN/CHI (see the seasonal split). A
+  July heat-dome overshoot is a separate cell to watch, not this frontal whiff.
 - NY is the transition-rich book (biggest naive failure = biggest room); Denver is a stable July
   ridge (thin). Report "room on {interior-bucket x warming-spike}, none on {open-tail}", never a
   pooled or per-cell mean.

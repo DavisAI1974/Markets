@@ -96,6 +96,38 @@
             "05-12:w->85-86(b1.89)",
             "05-08:w->>=68(b2.00)"
           ]
+        },
+        "by_time_halfmonth": {
+          "2026-05a": {
+            "n": 8,
+            "edge_n": 0,
+            "whiff_n": 3,
+            "whiff_warm_n": 3
+          },
+          "2026-05b": {
+            "n": 16,
+            "edge_n": 2,
+            "whiff_n": 2,
+            "whiff_warm_n": 1
+          },
+          "2026-06a": {
+            "n": 15,
+            "edge_n": 6,
+            "whiff_n": 3,
+            "whiff_warm_n": 3
+          },
+          "2026-06b": {
+            "n": 15,
+            "edge_n": 2,
+            "whiff_n": 3,
+            "whiff_warm_n": 2
+          },
+          "2026-07a": {
+            "n": 12,
+            "edge_n": 2,
+            "whiff_n": 0,
+            "whiff_warm_n": 0
+          }
         }
       },
       "cells": {
@@ -1401,6 +1433,38 @@
             "07-03:w->99-100(b1.81)",
             "05-17:w->80-81(b1.90)"
           ]
+        },
+        "by_time_halfmonth": {
+          "2026-05a": {
+            "n": 8,
+            "edge_n": 1,
+            "whiff_n": 0,
+            "whiff_warm_n": 0
+          },
+          "2026-05b": {
+            "n": 16,
+            "edge_n": 4,
+            "whiff_n": 4,
+            "whiff_warm_n": 3
+          },
+          "2026-06a": {
+            "n": 15,
+            "edge_n": 2,
+            "whiff_n": 1,
+            "whiff_warm_n": 1
+          },
+          "2026-06b": {
+            "n": 15,
+            "edge_n": 4,
+            "whiff_n": 1,
+            "whiff_warm_n": 0
+          },
+          "2026-07a": {
+            "n": 12,
+            "edge_n": 6,
+            "whiff_n": 2,
+            "whiff_warm_n": 2
+          }
         }
       },
       "cells": {
@@ -2706,6 +2770,38 @@
             "06-30:w->92-93(b1.97)",
             "05-10:w->76-77(b2.00)"
           ]
+        },
+        "by_time_halfmonth": {
+          "2026-05a": {
+            "n": 8,
+            "edge_n": 0,
+            "whiff_n": 4,
+            "whiff_warm_n": 3
+          },
+          "2026-05b": {
+            "n": 16,
+            "edge_n": 1,
+            "whiff_n": 5,
+            "whiff_warm_n": 4
+          },
+          "2026-06a": {
+            "n": 15,
+            "edge_n": 3,
+            "whiff_n": 3,
+            "whiff_warm_n": 2
+          },
+          "2026-06b": {
+            "n": 15,
+            "edge_n": 2,
+            "whiff_n": 3,
+            "whiff_warm_n": 2
+          },
+          "2026-07a": {
+            "n": 12,
+            "edge_n": 2,
+            "whiff_n": 0,
+            "whiff_warm_n": 0
+          }
         }
       },
       "cells": {

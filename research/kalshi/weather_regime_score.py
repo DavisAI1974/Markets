@@ -172,7 +172,26 @@ def fingerprint(per_event: list[dict]) -> dict:
     edge = [d for d in days if d["best"] < 0.5]
     mid = [d for d in days if 0.5 <= d["best"] <= 1.5]
     whiff = [d for d in days if d["best"] > 1.5]
-    return {"n": len(days), "edge": fp(edge), "mid": fp(mid), "whiff": fp(whiff)}
+
+    # TIME-BUCKET the fingerprint — the pooled 68-day number flattens spring-frontal -> summer-ridge
+    # (different synoptic worlds). Half-month buckets show how the warm-spike room evolves. Small-n
+    # by construction (the room is rare); counts reported raw, no averaging.
+    def half(dstr: str) -> str:
+        return dstr[:7] + ("a" if int(dstr[8:10]) <= 15 else "b")
+    by_time: dict[str, dict] = {}
+    for d in sorted(days, key=lambda z: z["date"]):
+        b = by_time.setdefault(half(d["date"]),
+                                {"n": 0, "edge_n": 0, "whiff_n": 0, "whiff_warm_n": 0})
+        b["n"] += 1
+        if d["best"] < 0.5:
+            b["edge_n"] += 1
+        if d["best"] > 1.5:
+            b["whiff_n"] += 1
+            if d["swing"] == "warm":
+                b["whiff_warm_n"] += 1
+
+    return {"n": len(days), "edge": fp(edge), "mid": fp(mid), "whiff": fp(whiff),
+            "by_time_halfmonth": by_time}
 
 
 def score_city(rows: list[dict], clim_window: int, thr: float) -> dict:
@@ -279,6 +298,11 @@ def main() -> None:
                       f"clim-best={g['clim_best_frac']:.0%}")
         print("    -> naive is FREE on wide open-tail wins (nobody's edge), BLIND on interior "
               "warm-spike wins (the operator's room).")
+        print("  BY HALF-MONTH (the pooled number flattens spring-frontal -> summer-ridge; "
+              "warm-spike room = whiff_warm):")
+        for period, b in sorted(fp["by_time_halfmonth"].items()):
+            print(f"    {period}  n={b['n']:<3} edge={b['edge_n']:<2} whiff={b['whiff_n']:<2} "
+                  f"whiff_warm(room)={b['whiff_warm_n']}")
 
         # cell medians kept only as the DEMOTED footnote they are (the average that misleads)
         print("  cell medians (FOOTNOTE — the averages Greg's rule says never to lead with):")
