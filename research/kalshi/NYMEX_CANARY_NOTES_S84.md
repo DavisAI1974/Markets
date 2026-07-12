@@ -1,0 +1,48 @@
+# NYMEX is the canary — load-bearing principle + data-source reality (S84, Greg)
+
+## The principle (Greg, S84 — load-bearing)
+
+**NYMEX/ICE is the LEADER; Kalshi is the delayed FOLLOWER. We map/gather NYMEX data as our CANARY —
+the leading signal — and trade the lagged Kalshi echo.** Kalshi's energy binaries are re-quoted off the
+underlying futures by a handful of market-makers; the move happens on NYMEX first and reprices onto
+Kalshi seconds-to-a-minute later (the S80-S81 lead-lag thread: futures lead, Kalshi NEVER leads). It is
+an odd setup — we trade Kalshi numbers, not NYMEX — but it is pure follow-the-leader, just delayed. So:
+- The **signal** (what's about to happen) lives in the NYMEX tape.
+- The **trade** (what we actually fill) lives on Kalshi, after the lag.
+- Gather NYMEX continuously as the canary; measure the lag; fire on Kalshi.
+
+## Resolution reality (Greg, S84 — do not pretend otherwise)
+
+- **1-minute is USELESS.** NYMEX moves fast; a 1-min bar smears the whole release move into one candle
+  and hides the blip-vs-run character and the lag entirely.
+- **1-second is the practical floor we can get historically, and it STILL UNDERSAMPLES.** NYMEX prints
+  faster than 1/sec around a release; 1-sec historic sampling (the Pyth timestamp endpoint) WILL miss
+  ticks/trades. We accept this KNOWINGLY: we are not trading on NYMEX, so missing sub-second NYMEX
+  ticks does not cost us a fill — but every readout built on 1-sec NYMEX data must be reported as a
+  LOWER BOUND on move speed/count, never as the complete tape. Do not claim 1-sec captures everything.
+- Going forward, the live Pyth SSE stream is finer than 1-sec (real push ticks); the 1-sec floor is a
+  limitation of HISTORICAL backfill, not the live feed.
+
+## Data-source inventory (what NYMEX data we can actually get — S84 probe)
+
+| underlying | Kalshi series | Pyth feed | Pyth historical (per-sec) | source we use |
+|-----------|---------------|-----------|---------------------------|---------------|
+| **WTI crude** | KXWTI | full monthly curve (WTIF6..WTIZ6) | **WORKS** (timestamp endpoint, back to at least early July) | **Pyth 1-sec backfill** |
+| **Brent** | (ICE) | full monthly curve, `BRENTU6` valid | **404s** (Hermes historical-retention gap) | TODO: Pyth Benchmarks API, else Yahoo `BZ=F` |
+| **Natural gas** | KXNATGASD | **NONE — Pyth has no Henry Hub feed at all** | n/a | **Yahoo `NG=F`** (coarser: 1m/7d, 5-15m/60d) |
+
+Consequential findings from the S84 probe:
+- **Pyth carries NO natural gas.** Catalog queries for "natural gas"/"gas"/"henry" return 0 feeds. The
+  collector's `NGDQ6` feed id (`3ea3adf4...`) is **BOGUS — it resolves to nothing**, so the live NG
+  stream was never real (part of why the tape was empty). **Thursday's planned "NGDQ6 lag on live Pyth
+  ticks" cannot run on Pyth** — NG must come from Yahoo `NG=F` or a paid tick source. FIX NEEDED: drop
+  or replace the bogus NG id in `pyth_collector.py` FEEDS.
+- **Brent** feed ids are valid/current but the Hermes historical timestamp endpoint 404s for them —
+  live-only until we find the historical route (Benchmarks API).
+- **Rate limit:** the public Hermes endpoint returns **429 after ~8 rapid calls** — any per-second
+  backfill must throttle (~2-3 req/sec) with exponential backoff on 429; a naive walk gets blocked.
+
+## Implication for the plan
+- The per-second NYMEX canary + move-duration baseline is buildable NOW **on WTI** (Pyth historical).
+- NG (Thursday) is data-constrained to Yahoo ~1m historically — below the useful-resolution bar; a real
+  NG tick source is a standing need. Live NG going forward also needs a non-Pyth feed.

@@ -40,6 +40,12 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   {X}, not {Y}", never "X failed."
 - **The merged signal architecture:** catalyst (release/news) = trigger + coarse size; book imbalance +
   flow + exhaustion = direction + magnitude; herd breadth = continuation, whale = scalp-only.
+- **NYMEX is the CANARY; Kalshi is the delayed follower (Greg, S84).** The move happens on NYMEX/ICE
+  first and reprices onto Kalshi seconds-to-a-minute later (futures lead, Kalshi never leads). Gather
+  NYMEX as the leading signal, measure the lag, fire on Kalshi. Resolution: 1-min is USELESS (NYMEX
+  moves fast); 1-sec is the historical floor and STILL undersamples — every 1-sec NYMEX readout is a
+  LOWER BOUND, never the full tape. Data reality: Pyth has WTI (historical works) but NO natural gas
+  and Brent-historical 404s; NG/Brent need Yahoo/other. See `research/kalshi/NYMEX_CANARY_NOTES_S84.md`.
 - **Exclude the settle window** (the daily-settle exclusion / `SETTLE_UTC` guard) from every backtest.
 - **Leakage gate before ANY backtest** (`odcore/leakage.py`) — pre-entry context must be invariant to
   future trades. This is mandatory and non-negotiable.
