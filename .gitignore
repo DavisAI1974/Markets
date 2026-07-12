@@ -84,3 +84,6 @@ news_raw_ingest.jsonl
 news_events.jsonl
 news_events.*.jsonl
 !news_events.example.jsonl
+
+# Historical Kalshi trades+candles puller output (market data lives local)
+data/kalshi_hist_trades/
