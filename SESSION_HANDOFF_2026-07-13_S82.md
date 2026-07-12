@@ -58,6 +58,29 @@ New: `research/kalshi/level_hit_dataset.py`, `research/kalshi/LEVEL_HIT_FINDINGS
 `KALSHI_TRADING.md` (index), `CLAUDE.md` (header + S82 delta), `.gitignore` (level_hits_*.json, pyth_ticks/).
 Local-only: `data/kalshi_hist_trades/KXWTI/` (496k tape), `data/level_hits_KXWTI.json`, `data/kalshi/*_bins.jsonl`.
 
+## WEATHER scoreboard characterized (`research/kalshi/WEATHER_BASELINE_S82.md`) — forecaster stays Greg's spec, HANDS OFF
+Explained the Kalshi weather market + built the scoreboard baseline (the FORECASTER is Greg's; this is
+scoreboard-only). Findings:
+- **Product:** daily-high `KXHIGH*` = 6-bucket ~2°F **partition ladder, re-centered daily** around the
+  expected high, same-day settle. Also a seasonal tier exists (`KXTROPSTORM`/hurricane, months out) — a
+  different S2S problem the local-station operator does NOT cover. No live medium-range (3–15 day) temp ladder.
+- **Baseline bar (walk-forward persistence/climatology via `kalshi_score.py`, 52 events):** pooled Brier
+  NY 1.12 / CHI 1.31 / DEN 1.11 — **but pooled is the WRONG lens.**
+- **Per-regime split (Greg's steer):** persistence calm vs transition = NY 0.73/1.45, CHI 0.91/1.58,
+  DEN 0.92/1.38; right-bucket hit collapses 0.23–0.34 (calm) → 0.05–0.16 (transition). **The tradeable edge
+  lives in the TRANSITION (frontal) cell** where the naive baseline + the market leaning on it are weakest.
+  LAX is marine-clamped (|Δ|~1°F) → efficient, skip.
+- **PER-BUCKET-NEVER-POOLED applies to weather** (cells = regime × city × synoptic season × bucket-moneyness
+  × swing-dir). **2 regimes is the MINIMUM** — refine toward synoptic cells (ridge/cold-frontal/warm-front/
+  marine/post-frontal/convective) as a PRE-hoc regime classifier allows (the table splits post-hoc only to
+  prove the pooled mean is misleading; a live signal must call the transition BEFORE the day resolves).
+- **Market baseline is still the post-hoc `settled_last_price` placeholder** — real "beat the market" test
+  activates once `KXHIGH*` bins accrue over a settled event (collector watches all 12 cities; accruing forward).
+- Doc also carries a worked trade example (real `KXHIGHNY-26JUN29`, realized 88°F → `>=86` bucket won,
+  +$87.26 on the win / +$0.27/contract EV) + the Kalshi fee (`round_up(0.07·C·P·(1−P))`) / exchange economics.
+- **NEXT for weather:** when the OD operator emits `(value,sigma)`, score it through `kalshi_score.py`
+  PER REGIME (Denver/NY/Chicago transition cell first) vs the baselines in `WEATHER_BASELINE_S82.md`.
+
 ## END OF SESSION — Pyth feed UNSTUCK + Actions cleanup (commit `a9d590e`)
 The Pyth durable run had sat `queued` and never executed because **11 legacy crypto collector workflows
 were hogging the GitHub Actions runners** — worst offender `bybit_perp_history_durable` (every 15 min),
