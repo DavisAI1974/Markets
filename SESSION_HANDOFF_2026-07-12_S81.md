@@ -36,9 +36,13 @@ Greg's steer: "it might be just as simple as taking advantage of the lag." Built
   (`benchmarks.pyth.network/v1/updates/price/{ts}?ids={id}`), but it's **aggressively rate-limited** (~2 req/s,
   ~50% success) so a dense window is slow to pull.
 - **Direct event-study (10s NYMEX + ms Kalshi tape, Jul 8):** on a +17¢ NYMEX jump (14:27), the liquid
-  strike T74.99 repriced 49→53→55 within **~7–20 seconds** — NOT a full minute. **The "half lag a full
-  minute" from the 1-min study was substantially coarse-bar aliasing.** The exploitable lag lives in the
-  LESS-liquid strikes; pinning it per-contract in seconds, with a distribution, needs the live feed.
+  strike T74.99's FIRST reprice tick came ~7s later (14:27:06.958) and it kept climbing 49→53→55 over ~20s.
+  The 1-min "half lag a full minute" was largely **coarse-bar aliasing** — but **7–20s is a HUGE exploitable
+  window** (Greg), not "near-synchronous": with a sub-second NYMEX feed you see the move instantly and have
+  seconds to hit the stale Kalshi quote before it catches up. This is a **persistent latency edge on every
+  meaningful move**, and the LESS-liquid strikes lag EVEN LONGER — this was the fastest/most-liquid strike.
+  Time-to-act is NOT the constraint; the remaining question is the reprice SIZE vs the toll on a given move.
+  One event so far — the live feed gives the per-contract distribution of the window.
 
 ### Pyth feed — BUILT + LIVE (the real instrument)
 - `research/kalshi/pyth_collector.py` — stdlib SSE stream of the front-month feeds **WTIQ6 / NGDQ6 / BRENTU6**
