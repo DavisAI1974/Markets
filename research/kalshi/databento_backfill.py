@@ -13,7 +13,8 @@ Cost: usage-based $/GB, $125 free signup credit; a release-window trades pull is
 Every pull is preceded by metadata.get_cost and gated on --max-cost so we never overspend by surprise.
 
 Auth: needs DATABENTO_API_KEY in the env (a SECRET — env var / GH Actions secret, never hardcode/commit).
-Symbology: continuous front-month via stype_in="continuous", symbol "CL.c.0"/"NG.c.0" (auto-roll).
+Symbology: continuous front-month via stype_in="continuous". Default roll = VOLUME ("CL.v.0"/"NG.v.0")
+so we track the liquid front Kalshi reprices off, not the nearest-expiry calendar contract (--roll c/n/v).
 
 Output: data/pyth_ticks/{symbol}_{YYYYMMDD}.jsonl, records {"ts","price","size","symbol","src"} — the
 same shape the live collector + pyth_backfill write, so the lag/baseline code consumes all three feeds
@@ -36,7 +37,11 @@ import os
 from datetime import datetime, timedelta, timezone
 
 DATASET = "GLBX.MDP3"                         # CME Globex: NYMEX (CL crude, NG Henry Hub gas), COMEX
-CONT = {"CL": "CL.c.0", "NG": "NG.c.0"}       # continuous front-month (auto-roll). Brent = ICE dataset.
+ROOTS = {"CL", "NG"}                          # bare roots we resolve to continuous front-month. Brent = ICE.
+# Continuous roll rule for the front-month (index .0): v=volume, n=open-interest, c=calendar/nearest-expiry.
+# DEFAULT v (volume) — the canary must be the LIQUID front Kalshi reprices off; calendar (.c) keeps reading
+# the nearest-expiry contract even after volume has migrated to the next month a week+ before it expires.
+ROLL = "v"
 OUT_DIR = "data/pyth_ticks"
 
 
@@ -49,9 +54,9 @@ def _client():
 
 
 def _sym(symbol: str) -> tuple[str, str]:
-    """(databento symbol, stype_in). Continuous front-month if a bare root, else raw contract."""
-    if symbol in CONT:
-        return CONT[symbol], "continuous"
+    """(databento symbol, stype_in). Continuous front-month (roll rule ROLL) if a bare root, else raw."""
+    if symbol.upper() in ROOTS:
+        return f"{symbol.upper()}.{ROLL}.0", "continuous"
     return symbol, "raw_symbol"
 
 
@@ -173,6 +178,7 @@ def batch(client, symbol: str, start: str, end: str, schema: str, max_cost: floa
 
 
 def main() -> None:
+    global ROLL
     ap = argparse.ArgumentParser(description="Databento true-tick NYMEX backfill (CL/NG)")
     ap.add_argument("mode", choices=["cost", "window", "batch", "defs"])
     ap.add_argument("--symbol", required=True, help="CL or NG (root -> continuous front) or raw contract")
@@ -181,10 +187,13 @@ def main() -> None:
     ap.add_argument("--post", type=int, default=1800)
     ap.add_argument("--start", default=None, help="batch/cost start (date or RFC3339)")
     ap.add_argument("--end", default=None, help="batch/cost end")
-    ap.add_argument("--schema", default="trades", help="trades (every print) | mbp-1 | tbbo | ohlcv-1s")
+    ap.add_argument("--schema", default="trades", help="trades (every print) | mbp-1 | tbbo | ohlcv-1s | definition")
+    ap.add_argument("--roll", choices=["v", "n", "c"], default=ROLL,
+                    help="continuous roll rule for a bare root: v=volume (default), n=open-interest, c=calendar")
     ap.add_argument("--max-cost", type=float, default=1.0, help="abort if est. cost exceeds this ($)")
     args = ap.parse_args()
 
+    ROLL = args.roll
     client = _client()
     if args.mode in ("window", "cost") and args.release:
         rt = datetime.fromisoformat(args.release.replace("Z", "+00:00"))
