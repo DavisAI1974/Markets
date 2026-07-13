@@ -17,6 +17,14 @@ What the "daily end price number" each market settles on ACTUALLY is (Greg S87 a
   clock time vs crude official settle) -> the forecaster's late-session/endgame read must know which clock.
 - **INGEST L48 dry-gas PRODUCTION (EIA)** — Greg S87: the NYMEX/HH flat-price lines track the L48 production
   curve closely; it is the supply backdrop feed (measure the real correlation; the event-state capacity pillar).
+- **SETTLEMENT-ORACLE DIVERGENCE = a SECOND edge (Greg S87, gas).** Kalshi settles NG on PYTH's NGDQ6, not
+  CME. So track **Pyth RT alongside CME/Databento** and measure the **CME−Pyth divergence in the 5PM-EDT
+  settle window**: if they DIVERGE at settle it is HUGE — Kalshi pays off Pyth's number regardless of CME,
+  so if CME moves but Pyth's 1-min candle reads otherwise we already know where Kalshi lands (Pyth) and trade
+  toward it (a settlement-oracle edge, distinct from the lag echo). If they CONVERGE at settle -> no
+  divergence edge (but Pyth is still the exact number to MATCH for endgame execution). GAS-SPECIFIC (crude
+  settles on ICE's official settle -> the analogous check is ICE-vs-CME, generally tight). REQUIRES the Pyth
+  NG feed working -> the "bogus NGDQ6 id" fix is now doubly justified (match the settle AND measure the edge).
 
 
 ## Settlement-mechanics correction (S84 — verified off Kalshi rules_primary)
