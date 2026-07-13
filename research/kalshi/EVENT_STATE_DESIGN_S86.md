@@ -57,6 +57,14 @@ biggest storage surprises made the smallest moves).
    PLUS less storage than anticipated (physical confirmation) = nervous traders. This is the deeper reason
    storage-alone ran backwards in the S86 CL check: a miss into a CALM market is a shrug; the same miss into
    a PRIMED market is a spark. Storage is the trigger; the latent state sets whether the trigger matters.
+   - **Forward weather MODULATES the storage print (Greg, NG — weather's "second effect").** Weather sits on
+     BOTH sides of the number: it CAUSED it (backward: last week's cold -> this week's low storage) AND the
+     FORWARD forecast gates how much the print matters. A bullish low-storage miss into a MILD 7-day
+     forecast (60-degree days, "not much need coming up") is MUTED — no forward demand to stress the buffer.
+     The SAME miss into an unreasonably-COLD forecast is AMPLIFIED — low storage + demand incoming = truly
+     tight. So the storage surprise is read CONDITIONAL on the forward demand outlook (forward degree-days),
+     another confluence. And it is PROMPT-relevant (a 7-day forecast is near-term = our Kalshi tenor) =
+     high-weight for us, not noise.
 3. **MARKET CAPACITY** — the system's slack / ability to ABSORB a shock; low slack = primed = small shock
    -> big move. Candidate measures (TO CONFIRM the framing):
    - storage as **% of working capacity** (how full/empty vs the max — distinct from vs-normal),
@@ -95,7 +103,7 @@ The clearest split is inside WEATHER — same driver, opposite mechanism per mar
 
 | driver | NG (KXNATGASD) — weight / period / feed | CL (KXWTI) — weight / period / feed |
 |--------|------------------------------------------|--------------------------------------|
-| Weather | temperature / degree-days; heavy in winter+summer; NOAA/degree-days | adverse weather / hurricanes -> Gulf shut-in; heavy in summer; NHC + shut-in reports |
+| Weather | temperature / degree-days; TWO-DIRECTIONAL — backward (past temps caused the storage number) + FORWARD (7-day degree-day forecast modulates how much the print matters); NOAA/degree-days | adverse weather / hurricanes -> Gulf shut-in; heavy in summer; NHC + shut-in reports |
 | Storage | level vs normal + surprise; heaviest driver, withdrawal season; EIA | level vs normal + surprise; weak on the big moves here; EIA |
 | Market capacity | storage %-full, pipeline; winter tightness | backwardation, refinery util, spare capacity; summer squeezes; Databento deferreds |
 | News/anticipation (discrete) | cold-snap outlooks; pre-print; RSS/NHC | forecasted hurricanes; pre-event; RSS/NHC |
