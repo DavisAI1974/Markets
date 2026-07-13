@@ -75,14 +75,17 @@ A 60F day cannot be the forecast for a 30F day. The analog/bucket pool is gated 
 - **Calendar proximity: +/- 2 WEEKS** of the target day's calendar position (electricity-load / seasonal
   demand). Widen by a week or two ONLY if the agent DEMONSTRATES the wider pool improves out-of-sample
   skill; NEVER more than that (Greg: "he might prove me wrong and add a week or two but that's it").
-- **Weekday-type** — `Mon | Tue-Thu (ex-storage) | Storage-day | Fri | Sat | Sun`:
+- **Weekday-type** — `Mon | Tue-Thu (ex-storage) | Storage-day | Fri`:
   - **Storage-day** (normally Thu 10:30 ET EIA natgas storage) is its OWN cell — the announcement-day
     catalyst (>50% of annual NG return is earned on storage-announcement days; research doc).
   - **Tue-Thu grouped** EXCEPT the storage day (Greg S88).
-  - **Mon, Fri, Sat, Sun each separate** — Sat and Sun may have distinct shapes (Greg S88). CAVEAT for the
-    agent: NYMEX NG has little-to-no weekend trading (Sat closed; Sun electronic session opens ~18:00 ET),
-    so Sat/Sun most likely function as demand/weather CONDITIONING into Monday's open rather than as their
-    own intraday trade curves — the agent CONFIRMS this empirically, does not assume it.
+  - **Mon and Fri separate.**
+  - **Sat/Sun are NOT their own trade-curve cells (Greg S88: "if we can't trade weekends it probably
+    doesn't matter").** NYMEX NG has no Saturday session (Sun electronic reopen ~18:00 ET), so we do not
+    forecast weekend intraday curves. Weekend weather/demand enters ONLY as CONDITIONING carried into
+    Monday's open (weekend HDD/CDD + precip on the Mon cell).
+- **Summer rain / precipitation (Greg S88)** — in the cooling season, rain feeds NG demand (cooling load).
+  Add precipitation as a conditioning axis on the summer/CDD cells (see sec 6-C).
 - **Plus** the standing state axes: surprise-sign (beat/miss), pre-release/coiled volume regime,
   book-imbalance sign, geopolitical/vol regime.
 
@@ -131,13 +134,16 @@ Build a gas-demand temperature feed as a piece AND the NG conditioning axis. Two
   for-30F-days guard) and the curves cannot be scored.
 - **(B) DECISION-TIME temp forecast — the conditioning input at forecast time.** When forecasting a
   held-out day, the temp feature must be what was knowable that morning.
+- **(C) PRECIPITATION / rain (Greg S88) — a SUMMER conditioning axis.** In the cooling season rain feeds
+  NG demand (cooling load / mild-vs-hot). Pull hourly precip from the SAME historical record; add it as a
+  piece and a summer/CDD-cell conditioning driver for NG. The agent DISCOVERS its weight like every piece
+  (heaviest in the cooling season; likely negligible in winter).
 - **Aggregate: population/gas-weighted HDD/CDD** across the key US consuming regions — the demand-relevant
   number, NOT a single city high. Build the weighting once (a fixed set of demand-region stations x gas-
-  consumption weights); apply to both (A) and (B).
-- **Source:** for (A) historical hourly, use a free HISTORICAL hourly source with full back-coverage —
-  NOAA ISD / NCEI-LCD station observations, or Open-Meteo / ERA5 historical hourly reanalysis (free,
-  hourly, arbitrary lat/lon, decades back) aggregated to the demand stations. For (B), NOAA/NWS forecast
-  API (or archived forecast issuances where available).
+  consumption weights); apply to both (A) and (B). Carry precip on the same station set.
+- **Source: NWS HISTORICAL DATA (Greg S88).** Use the NWS/NOAA historical hourly observation record for
+  (A) the realized historical hourly temps + precip covering every corpus day, and the NWS forecast API
+  for (B) the decision-time forecast. One source, one station set, one weighting.
 - **Leakage rule (the (A)/(B) split IS the leakage boundary):**
   - **Labeling / bucketing a past day (A)** => realized historical hourly temp is fine and correct — it
     characterizes history.
