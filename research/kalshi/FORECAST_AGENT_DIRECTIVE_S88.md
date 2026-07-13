@@ -119,6 +119,13 @@ imbalance, flow exhaustion, depth run-length, pre-release/coiled volume, herd br
 - **A correlation is "found" ONLY if it survives OUT-OF-SAMPLE on held-out days.** Many pieces x cells x 4
   outcome-types => false positives guaranteed. Use PBO/CSCV + a DEFLATED Sharpe and REPORT the number of
   specifications tried (Bailey/Lopez de Prado). An in-sample correlation is a hypothesis, not a finding.
+- **WHAT WORKED FOR ONE MONTH MAY NOT WORK FOR ANOTHER — do NOT lock onto one pattern (Greg S88,
+  load-bearing).** The winning pieces/weights differ MONTH TO MONTH because the regime differs (season,
+  geopolitics, vol, curve depth, demand-temp). Characterize each month/regime on its OWN; a pattern found
+  in one month is a per-regime cell, NOT a global rule, until it RECURS across months of the same regime.
+  The synthesis must flag "stable across months {X}" vs "month-specific {Y}" and keep month-specific
+  patterns as their own cells (never pool a June pattern onto a January day). This is the temporal form of
+  the per-cell rule and the no-tent-widening rule: the corpus is a sequence of regimes, not one population.
 
 ---
 
@@ -214,10 +221,19 @@ Each fancier method must beat the bucket table OOS per cell or it is not kept.
 
 ## 11. Agent shape + deliverables (DECIDED — Greg S88)
 
-- **Build via direct edits in-session with Greg in the loop + a canary** (precision live-path work; the box
-  has wedged multi-agent workflows before). Use a BOUNDED analysis subagent only for the exploratory
-  "graph a diverse day-sample and report the structure" step (sec 1.2) — not one long autonomous agent
-  owning the whole build. (Approved Greg S88.)
+- **Build via direct edits in-session with Greg in the loop + a canary** (precision live-path work). Use a
+  BOUNDED analysis subagent for the exploratory "graph a diverse day-sample" step (sec 1.2). The wiring
+  into `lag_join.py` stays in-session. (Approved Greg S88.)
+- **CORPUS CHARACTERIZATION = a per-MONTH WORKFLOW (Greg S88, "like the coins").** Once the continuous-year
+  library is on the branch, fan out one agent per (commodity x month) to characterize THAT month's
+  continuous tape independently (all-session move detection, event-time path shapes, the pieces, per-cell
+  distributions) — blind to the other months. Then a SYNTHESIS stage accumulates into the cross-season
+  bucket table and, per the anti-lock-in rule (sec 5), explicitly separates "stable across months" from
+  "month-specific" patterns; then an adversarial cross-month CONSISTENCY-VERIFY stage kills patterns that
+  only appear in one month. This is the coin-era per-cell fan-out + stacking + validation shape, applied to
+  months-as-regimes. Bounded concurrency (the engine caps it); the box has wedged big fan-outs before, so
+  keep per-agent work self-contained and let synthesis be a single accumulation stage. Runs in WAVES as the
+  corpus fills (do not wait for all 12 if seasonal span is already useful), re-run/extended as months land.
 - **Artifacts to produce:** (a) the per-cell bucket continuation table; (b) a blind-vs-actual SCORECARD
   with the number of specifications tried; (c) a per-commodity piece-correlation matrix (piece x 4
   outcome-types); (d) a `FORECAST_V1_FINDINGS_S88.md` write-up; (e) the tracking overlay wired into
