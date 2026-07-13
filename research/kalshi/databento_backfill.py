@@ -116,50 +116,55 @@ def _write_df(df, symbol: str) -> int:
     return n
 
 
-def _write_mbp10_df(df, symbol: str, out_dir: str = None) -> int:
-    """MBP-10 DBNStore.to_df() -> per-day depth JSONL. We keep only TRADE events (action=='T') carrying
-    their CONCURRENT 10-level book snapshot — same lean density as the `trades` tape (so the S85 price
-    path reproduces byte-for-byte off the T prints), plus the book at each trade for the imbalance /
-    thinning (exhaustion) read. Book updates between trades (A/C/M) are dropped to keep the tape lean and
-    branch-storable; the raw MBP-10 is re-downloadable free within 30d if the full book is ever needed.
+def _json_safe(v):
+    """Make a DBN cell JSON-serializable without losing info: Timestamp -> epoch seconds, numpy scalar ->
+    python scalar, NaN/NaT -> None. No rounding, no dropping."""
+    if v is None:
+        return None
+    if hasattr(v, "timestamp"):                       # pandas/py Timestamp
+        try:
+            return v.timestamp()
+        except Exception:
+            return str(v)
+    if hasattr(v, "item"):                            # numpy scalar -> python scalar
+        try:
+            v = v.item()
+        except Exception:
+            return str(v)
+    if isinstance(v, float) and v != v:               # NaN
+        return None
+    return v
 
-    Record: {ts (ts_event), price, size, symbol, src, bid_px, ask_px, bid_sz, ask_sz, bid_dep, ask_dep}
-      bid_px/ask_px/bid_sz/ask_sz = top of book (level 00); bid_dep/ask_dep = sum of the 10 resting sizes
-      per side (the depth whose thinning = liquidity being consumed = the leader exhausting resistance).
-    Written to MBP10_DIR (NOT OUT_DIR) so load_tape() never mixes it with the trades tape; out_dir
-    overrides it (the continuous intraday tape is kept SEPARATE from the release-window slices)."""
+
+def _write_mbp10_df(df, symbol: str, out_dir: str = None) -> int:
+    """RAW MBP-10 ingestion — keep EVERYTHING the dataset carries (Greg S88: we paid for the full dataset,
+    we keep all the info; the agent sifts it for correlations; gates live ONLY on the trade-signal side,
+    never on the historical data). EVERY message (trades AND book updates A/C/M/etc.) and EVERY column
+    Databento provides (all 10 price levels + sizes + counts per side, action, side, depth, flags,
+    sequence, ts_event, ts_recv, ...). Zero filtering, zero reduction, zero derived fields. Split per UTC
+    day -> {symbol}_{day}.jsonl. Written to MBP10_DIR unless out_dir overrides (the continuous tape)."""
     out = out_dir or MBP10_DIR
     os.makedirs(out, exist_ok=True)
-    bid_sz_cols = [f"bid_sz_0{i}" for i in range(10) if f"bid_sz_0{i}" in df.columns]
-    ask_sz_cols = [f"ask_sz_0{i}" for i in range(10) if f"ask_sz_0{i}" in df.columns]
+    if df is None or len(df) == 0:
+        return 0
+    recs = df.reset_index().to_dict(orient="records")   # index (ts_recv) + all columns, every row
     handles: dict[str, object] = {}
     n = 0
-    has_te = "ts_event" in df.columns
-    for idx, row in df.iterrows():
-        if str(row.get("action")) != "T":            # trades only (the price path + book-at-trade)
+    for r in recs:
+        te = r.get("ts_event", r.get("ts_recv"))
+        try:
+            sec = te.timestamp() if hasattr(te, "timestamp") else float(te) / 1e9
+        except Exception:
             continue
-        te = row["ts_event"] if has_te else idx        # exchange event time (fall back to index=ts_recv)
-        sec = te.timestamp() if hasattr(te, "timestamp") else float(te) / 1e9
-        px = row.get("price")
-        if px is None or (isinstance(px, float) and px != px):   # skip NaN-priced (shouldn't happen for T)
-            continue
-        def _f(col):
-            v = row.get(col)
-            return float(v) if v is not None and v == v else 0.0
-        bid_dep = sum(_f(c) for c in bid_sz_cols)
-        ask_dep = sum(_f(c) for c in ask_sz_cols)
         day = datetime.fromtimestamp(sec, timezone.utc).strftime("%Y%m%d")
+        rec = {"ts": sec, "symbol": symbol, "src": "databento_mbp10"}
+        for k, v in r.items():                          # keep ALL original columns verbatim
+            rec[str(k)] = _json_safe(v)
         fh = handles.get(day)
         if fh is None:
             fh = open(os.path.join(out, f"{symbol}_{day}.jsonl"), "a", buffering=1)
             handles[day] = fh
-        fh.write(json.dumps({
-            "ts": sec, "price": float(px), "size": int(row.get("size", 0) or 0),
-            "symbol": symbol, "src": "databento_mbp10",
-            "bid_px": _f("bid_px_00"), "ask_px": _f("ask_px_00"),
-            "bid_sz": _f("bid_sz_00"), "ask_sz": _f("ask_sz_00"),
-            "bid_dep": round(bid_dep, 1), "ask_dep": round(ask_dep, 1),
-        }) + "\n")
+        fh.write(json.dumps(rec) + "\n")
         n += 1
     for fh in handles.values():
         fh.close()
