@@ -41,6 +41,15 @@ the continuous corpus streams on demand via `event_move_baseline.load_cont_day(.
 durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non-bento). See
 `research/kalshi/AWS_INGEST_SETUP_S89.md`. AWS + Databento keys are session-pasted SECRETS.
 
+**S91 code changes (detail in `SESSION_HANDOFF_2026-07-14_S91.md`):**
+- `pull_year_mbp10.py` — **`--weekly`** (week-at-a-time S3 pull: 53 fresh per-week Databento batch jobs, per-week
+  publish, marker-based resume `nymex_cont/_done/{root}_{ws}.done`) + **stub-aware resume-skip** (`_s3_month_present`
+  treats a month with any sub-5KB stub or <15 days as ABSENT -> re-pulled). Runs on the durable box.
+- `kalshi_collector.py` — added METALS (`KXGOLDD`, `KXSILVERD`) to the watchlist.
+- `pyth_collector.py` — added Pyth `XAU`/`XAG` spot feeds (gold/silver settle number + fast underlying).
+- `research/kalshi/GOLD_SILVER_LAG_FINDINGS_S91.md` — gold/silver depth-add: LAG confirmed (free Pyth), cross-strike NG-only.
+- `research/kalshi/NYMEX_PRODUCTS_SURVEY_S91.md` + `KALSHI_PRODUCT_RANKING_S91.md` — the two S91 agent surveys (KXGOLDD #1).
+
 **S90 code changes (detail in `SESSION_HANDOFF_2026-07-13_S90.md`):**
 - `databento_backfill.py` — FIXED the flush bug (80% loss; hold-days-until-complete); `_download_decode_flush`
   + `redecode_job(jid)` re-decode an already-paid done job FREE.

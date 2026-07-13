@@ -1,22 +1,19 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 90)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 91)
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
-follower.** **HISTORICAL DATA IS RAW (Greg S88, load-bearing): keep ALL the info — every message, every
-column, every HOUR — aggregate ONLY on the trade-signal side, never at ingest.** **S90: everything moved to
-AWS.** (1) Found + fixed a CRITICAL flush bug in `batch_pull` that truncated non-Friday days to 1-row stubs
-= 80% loss (hold-days-until-complete fix; validated 32.8M/32.8M CL-July rows recovered); (2) `pull_year
---reuse-done-jobs` rebuilds corrupt months from already-paid Databento jobs FREE; (3) an
-**EC2 box** was launched to run the recovery but its headless/keyless boot FAILED (un-debuggable -> terminated);
-the S3 year is STILL corrupt at S90 close, so S91 JOB 1 = actually run `pull_year --reuse-done-jobs` somewhere
-observable (in-container or an EC2 box WITH key+SSM); (4) **ALL bento data now on S3, none in git** — bucket
-`bento-568968024170-us-east-2-an`, prefix `nymex/` (`nymex_cont/` year corpus + `nymex_tape/` + `nymex_mbp10/`);
-(5) built the **S3 tape reader** `event_move_baseline.load_cont_day(..., source="s3")` + raw-row normalizer
-(JOB 2 core — trade-filter + ladder-aggregate at read time); (6) built **RAW HOURLY weather ingestion**
-(`nws_temp_feed --ingest-hourly` → `s3://.../weather/nws_hourly/`, every field every ob, NO roll-up) — the
-daily degree-day rollup was the same reduction mistake. AWS + Databento keys are session-pasted SECRETS.
-**NEXT (S91) = verify the box finished the year on S3; finish JOB 2 (rework `bucket_continuation` /
-`month_characterize` release-window loaders to read raw S3); rotate the IAM+DB keys; fold in the weather
-rerun doc + the product-ranking agent.** Detail: `SESSION_HANDOFF_2026-07-13_S90.md`, `KICKOFF_2026-07-14_S91.md`.
+follower.** **HISTORICAL DATA IS RAW (Greg S88): keep ALL the info; aggregate ONLY on the trade-signal side.**
+**git = CODE, S3 = ALL DATA (Greg S91).** **S91:** (1) the S90 box had FAILED (S3 year = corrupt July stubs);
+root-caused (blind box: 30GB disk + no observability) and REBUILT — `pull_year_mbp10.py --weekly` (NEW: 53
+per-week Databento jobs, per-week S3 publish, **marker-based resume**; committed) + a **stub-aware resume-skip**
+(corrupt-stub months now re-pulled, never skipped) running on a **durable OBSERVABLE box** `i-08cee7171c0a76a04`
+(t3.xlarge, 200GB) that streams `pull.log`+`heartbeat` to `s3://.../deploy/box-logs/` every 30s + auto-stops on
+done (v1 box failed on an awscli dependency; v2 is boto3-only). (2) **GOLD+SILVER depth-add VALIDATED** — the
+futures→Kalshi LAG is CONFIRMED on KXGOLDD (37/60 sig) + KXSILVERD (26/54 sig) using FREE Pyth XAU/XAG, same as
+WTI/NG (cross-strike is NG-only; see `GOLD_SILVER_LAG_FINDINGS_S91.md`); collectors + Pyth XAU/XAG feeds wired;
+HH NGDQ6 Pyth feed confirmed NOT bogus. (3) two agents delivered (NYMEX-products + Kalshi-ranking, gold-daily #1).
+**NEXT (S92) = VERIFY the box finished the clean year on S3 (watch deploy/box-logs/ -> DONE + 53 week markers);
+rotate keys; MIGRATE live data git→S3 (collectors); validate the lag NET-OF-FEE AT SIZE sub-minute (the wall).**
+Detail: `SESSION_HANDOFF_2026-07-14_S91.md`, `KICKOFF_2026-07-14_S92.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -198,6 +195,14 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S91** — YEAR-PULL REBUILT on a durable observable box + GOLD/SILVER depth-add VALIDATED. (1) The S90 box had
+  failed (S3 year = corrupt July stubs, blind box); rebuilt: `pull_year --weekly` (per-week Databento jobs +
+  marker-resume) + stub-aware resume-skip, on box `i-08cee7171c0a76a04` (200GB) streaming its log to S3 (v1 died
+  on an awscli dependency; v2 boto3-only booted clean). (2) Gold/silver LAG confirmed on free Pyth XAU/XAG
+  (gold 37/60, silver 26/54 sig, futures-lead, same as WTI/NG; cross-strike is NG-only) — collectors + XAU/XAG
+  Pyth feeds wired, HH NGDQ6 feed confirmed correct. (3) Agents: NYMEX-products + Kalshi-ranking (KXGOLDD #1).
+  Execution deferred to last (paper-trade Kalshi demo first). Open S92: verify the year landed clean, rotate
+  keys, migrate data git→S3, validate the lag net-of-fee at size. Detail: `SESSION_HANDOFF_2026-07-14_S91.md`.
 - **S90** — EVERYTHING TO AWS + a critical data-integrity fix. (1) Verifying the first S3 month exposed an
   80% loss: `batch_pull`'s flush gzipped each day BEFORE it was complete, so a later file's boundary rows
   overwrote it (only Fridays/last-day survived) — FIXED (hold latest-2 days unflushed; validated 32.8M/32.8M
