@@ -1,18 +1,18 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 87)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 88)
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
-follower.** S87 BUILT P3 = **`research/kalshi/lag_join.py`**, the lag-join trade engine (release + `--intraday`
-modes): entry taker the moment NYMEX makes a SUSTAINED $-move, HOLD via a NYMEX dollar trailing stop (Greg's
-trend-hold — ride the trend, don't churn each sub-move), exit maker-best-number vs taker-floor, net-of-fee,
-per-cell, all $/c never bps, tuned per contract. PROVISIONAL but PAYS: release CL taker +1c/maker +8c, NG
-taker +17c/maker +21c; intraday 06-17 (49 moves) the trend-hold flipped −115c→+202c maker (leans on the
-optimistic maker fill; tiny-n; Apr-Jul). Then designed the next phase with Greg: an intraday NYMEX PATH
-FORECASTER as a stacked HOLD-LENGTH signal (`FORECAST_AGENT_DESIGN_S87.md` = Greg's spec; `PATH_FORECAST_
-RESEARCH_S87.md` = cited methods — honest verdict: continuation/shape CONDITIONAL ON EVENTS has measured
-skill, strongest around releases + high-vol = our setup). Databento pull infra built (`batch_pull` +
-`pull_year_mbp10.py`); **NEXT = launch the 1-year continuous MBP-10 pull** (~$130, pay-once to
-`data/nymex-ticks:nymex_cont/`) = the forecaster's analog library, then build the forward-curve reader +
-forecaster v1. Detail: `SESSION_HANDOFF_2026-07-13_S87.md`.
+follower.** **HISTORICAL DATA IS RAW (Greg S88, load-bearing): we keep ALL the info the dataset carries —
+every message, every column — we paid for the full dataset, we store the full dataset; the agent sifts the
+RAW data for driver→price correlations (events / weather / storage / curve → price). GATES LIVE ONLY ON OUR
+SIDE, FOR TRADE SIGNALS — never on the historical data.** S88 rewrote the MBP-10 writer to keep everything
+raw (`databento_backfill._write_mbp10_df` — every message + all 10 book levels + all fields, zero reduction)
+and built the data feeds `nws_temp_feed.py` (gas-weighted HDD/CDD+precip) + `forward_curve.py`
+(backwardation/contango). Forecaster/scoring scaffolding also built (`month_characterize.py`,
+`bucket_continuation.py`, `forecaster_month_pass.workflow.js`) but it pre-processed on the ingest side and
+must be reworked to read the RAW tape. **NEXT (S89) = build the DURABLE RAW-INGESTION WORKFLOW** (reuse a
+coin durable-collector cron, point at Databento MBP-10, longer duration, gzip per month/day to
+`data/nymex-ticks:nymex_cont/`, re-pull May in full-raw). Detail: `SESSION_HANDOFF_2026-07-13_S88.md`,
+`KICKOFF_2026-07-14_S89.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -220,6 +220,13 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
   hardened (defs mode + point-in-time tick store, volume roll `.v.0`, retry/backoff). Schema decision =
   MBP-10 (depth, ~$130/yr both, ~$5 over credit; MBO off). Tape persisted on `data/nymex-ticks`
   (session-start restores it). Detail: `SESSION_HANDOFF_2026-07-12_S85.md`, `EVENT_MOVE_FINDINGS_S85.md`.
+- **S88** — RAW-INGESTION correction (Greg, load-bearing): historical data is RAW, keep ALL the info; gates
+  ONLY on the trade side. Rewrote the MBP-10 writer to keep everything (every message + all 10 levels, zero
+  reduction). Built the data feeds `nws_temp_feed.py` (NWS gas-weighted HDD/CDD+precip) + `forward_curve.py`
+  (backwardation/contango). Forecaster scoring scaffolding built (`month_characterize`, `bucket_continuation`,
+  coin-style `forecaster_month_pass.workflow.js` — ran end-to-end, fixed a date-format leakage bug) but it
+  pre-processes on the ingest side → must be reworked to read the RAW tape. NEXT = the durable raw-ingestion
+  workflow. Detail: `SESSION_HANDOFF_2026-07-13_S88.md`, `KICKOFF_2026-07-14_S89.md`.
 - **S87** — BUILT P3: `lag_join.py` lag-join engine (release + `--intraday`), NYMEX-driven entry/hold/exit,
   trend-hold dollar trailing stop, maker vs taker net-of-fee. PROVISIONAL but pays (CL/NG both positive
   gated; intraday 06-17 trend-hold −115c→+202c maker; leans on maker fill, tiny-n). Designed the intraday
