@@ -33,6 +33,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import lag_join as lj                                             # noqa: E402
+import event_move_baseline as emb                                # noqa: E402  (shared raw-tape reader)
 
 CONT_DIR = "data/nymex_cont"
 MULT = {"CL": 1000.0, "NG": 10000.0}          # contract size: CL 1000 bbl, NG 10000 MMBtu ($/pt -> $/contract)
@@ -48,14 +49,43 @@ PRE_S = 120.0                                 # pre-move volume / imbalance wind
 RUN_THR = 0.5                                 # retention >= this = continuation
 
 
-def load_cont_full(root: str, day: str):
-    """Continuous day with DEPTH -> dict of numpy arrays (ts, price, size, bid_dep, ask_dep), ts-sorted."""
-    path = os.path.join(CONT_DIR, f"{root}_{day}.jsonl")
-    rows = [json.loads(l) for l in open(path) if l.strip()]
-    rows.sort(key=lambda r: r["ts"])
-    g = lambda k, d=0.0: np.array([float(r.get(k, d) or d) for r in rows], float)
-    return {"ts": g("ts"), "price": g("price"), "size": g("size"),
-            "bid_dep": g("bid_dep"), "ask_dep": g("ask_dep")}
+def load_cont_full(root: str, day: str, source: str = "local"):
+    """Continuous day with DEPTH -> dict of numpy arrays (ts, price, size, bid_dep, ask_dep), ts-sorted.
+    Delegates to the shared raw-tape reader (event_move_baseline.load_cont_day): the RAW S89 S3 corpus keeps
+    every message + every column, so trade-selection + ladder-aggregation happen at READ time here (Greg S88:
+    pre-processing on the trade side), not at ingest. source='local' reads data/nymex_cont/{root}_{day}.jsonl
+    (or .jsonl.gz cache); source='s3' streams+caches the day's gz from the bucket. Old reduced tapes still
+    load unchanged (normalize_mbp10_row passes them through)."""
+    emb.CONT_DIR = CONT_DIR                                       # honor --cont-dir override for the cache
+    d = emb.load_cont_day(root, day, source=source, trades_only=True)
+    return {"ts": d["ts"], "price": d["price"], "size": d["size"],
+            "bid_dep": d["bid_dep"], "ask_dep": d["ask_dep"]}
+
+
+def _list_cont_days(root: str, ym: str, source: str = "local") -> list[str]:
+    """Days 'YYYYMMDD' available for (root, month 'YYYYMM'), from the local cache or the S3 bucket."""
+    if source == "s3":
+        import boto3
+        region = os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("AWS_REGION")
+        s3 = boto3.client("s3", region_name=region) if region else boto3.client("s3")
+        pfx = f"{emb.S3_PREFIX + '/' if emb.S3_PREFIX else ''}nymex_cont/{root}_{ym}"
+        days = set()
+        tok = None
+        while True:
+            kw = {"Bucket": emb.S3_BUCKET, "Prefix": pfx}
+            if tok:
+                kw["ContinuationToken"] = tok
+            resp = s3.list_objects_v2(**kw)
+            for o in resp.get("Contents", []):
+                name = o["Key"].split("/")[-1]                   # {root}_{YYYYMMDD}.jsonl.gz
+                days.add(name.split("_")[1][:8])
+            if not resp.get("IsTruncated"):
+                break
+            tok = resp.get("NextContinuationToken")
+        return sorted(days)
+    return sorted(os.path.basename(p).split("_")[1].split(".")[0]
+                  for p in glob.glob(os.path.join(CONT_DIR, f"{root}_{ym}*.jsonl"))
+                  + glob.glob(os.path.join(CONT_DIR, f"{root}_{ym}*.jsonl.gz")))
 
 
 def _tod_bucket(ts: float) -> str:
@@ -138,9 +168,9 @@ def _regime_tags(root: str, day: str) -> dict:
     return {"curve_regime": curve, "temp_regime": temp}
 
 
-def characterize_day(root: str, day: str) -> list[dict]:
+def characterize_day(root: str, day: str, source: str = "local") -> list[dict]:
     """All sustained moves in one continuous day -> per-move rows (pieces + path + regime tags)."""
-    a = load_cont_full(root, day)
+    a = load_cont_full(root, day, source=source)
     if a["ts"].size < 10:
         return []
     moves = lj.scan_moves(a["ts"], a["price"], TRIG[root], CONFIRM_S, COOLDOWN_S)
@@ -190,14 +220,13 @@ def tabulate(rows: list[dict]) -> dict:
             "by_coiled": _coiled_split(rows)}
 
 
-def characterize_month(root: str, month: str) -> dict:
+def characterize_month(root: str, month: str, source: str = "local") -> dict:
     """month = 'YYYY-MM'. Characterize every sustained move across the month's continuous days, per cell."""
     ym = month.replace("-", "")
-    days = sorted(os.path.basename(p).split("_")[1].split(".")[0]
-                  for p in glob.glob(os.path.join(CONT_DIR, f"{root}_{ym}*.jsonl")))
+    days = _list_cont_days(root, ym, source=source)
     all_rows: list[dict] = []
     for day in days:
-        all_rows.extend(characterize_day(root, day))
+        all_rows.extend(characterize_day(root, day, source=source))
     # coiled tag: per-month median pre_vol split (stored)
     coiled_thr = float(np.median([r["pre_vol"] for r in all_rows])) if all_rows else 0.0
     for r in all_rows:
@@ -266,6 +295,9 @@ def main() -> int:
                     help="continuous-tape dir to READ (default data/nymex_cont; use a SEPARATE dir while the "
                          "year pull owns data/nymex_cont as its live scratch)")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--source", choices=["local", "s3"], default="local",
+                    help="where to read the continuous tape: 'local' (data/nymex_cont cache) or 's3' "
+                         "(stream+cache from the bucket; needs AWS env creds). S89: the corpus lives on S3.")
     ap.add_argument("--trig-cl", type=float, default=None, help="override CL characterizer move trigger ($)")
     ap.add_argument("--trig-ng", type=float, default=None, help="override NG characterizer move trigger ($)")
     ap.add_argument("--selftest", action="store_true")
@@ -281,7 +313,7 @@ def main() -> int:
         TRIG["NG"] = args.trig_ng
     if not (args.root and args.month):
         ap.error("need --root and --month (or --selftest)")
-    res = characterize_month(args.root, args.month)
+    res = characterize_month(args.root, args.month, source=args.source)
     if args.out:
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
         json.dump(res, open(args.out, "w"), indent=2)

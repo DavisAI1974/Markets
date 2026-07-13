@@ -68,7 +68,35 @@ pushed to this trunk - a watcher is armed for it).
   non-route-away cells; ~8-20 lines/day x ~5-8 cities; the edge shows in the AGGREGATE of ~50-100 lines/week,
   never a single line. Per-cell never pooled; report the edge DISTRIBUTION across lines.
 
-## OPEN QUESTIONS (do not forget)
+## RESOLUTIONS (Q1-Q4 worked in order this session; Greg took Q5 = IAM rotation)
+- **Q1 pre-processing scope - RESOLVED.** The ingest-side pre-processing to move to the trade side is
+  concretely (a) TRADE SELECTION (raw tape is every message; `price` is present on book-update rows too, so
+  filter `action=='T'` to rebuild the S85 trade-print price path) + (b) LADDER AGGREGATION
+  (`bid_dep=sum(bid_sz_00..09)`, `ask_dep=sum(ask_sz_00..09)`, top-of-book = level 00). Both are leakage-
+  neutral per-row derivations. Old reduced tapes already had these baked in at ingest.
+- **Q2 weather interface - DONE.** `research/kalshi/WEATHER_FORECAST_INTERFACE_S90.md` (the emit-contract:
+  per-`(city x regime x lead)` residual distribution `(value,sigma[,quantiles])` + pre-hoc regime + routing,
+  on the real KXHIGH cities not KGJT/KDDC). Indexed.
+- **Q3 sizing/EV harness - DEFERRED (Greg's call).** Build only once the rerun gives real per-cell
+  distributions; the EV/variance math is captured (daily std ~$296 fixed at 200x12; edge sets EV/day).
+- **Q4 S3 reader - BUILT + self-tested.** `event_move_baseline.py`: `normalize_mbp10_row` (auto-detect
+  raw-vs-reduced), `load_cont_day(root, day, source='local'|'s3', trades_only=True)` (S3 stream + local gz
+  CACHE per Q4), `_list_cont_days`. `month_characterize.py` routes `load_cont_full` through it + `--source
+  s3|local`. Normalizer/reader fixture self-tests PASS (trade-filter, ladder-agg, dedup, gz); both modules'
+  `--selftest` still PASS (zero regression). NOT yet validated against a real S3 day (bucket still filling) -
+  validate a sample day end-to-end when the first month lands. REMAINING JOB 2 piece: rework
+  `bucket_continuation.py`/`event_move_baseline` RELEASE-WINDOW loaders to slice windows from the raw S3
+  continuous tape (bigger; the continuous reader is the delivered core the kickoff asked for).
+- **Weather scoring = SCRIPT first, workflow only for the verify pass later (Greg Q this session).** Do NOT
+  build a workflow to CONSUME the interface - scoring a distribution over a ladder is deterministic numpy
+  (extend `weather_regime_score.py` + the `(value,sigma)->bucket-prob` bridge). A fan-out WORKFLOW fits only
+  the adversarial anti-lock-in verify pass (per cell: survives OOS? one-season-only? regime pre-hoc? flat-
+  control leaking?) - and when built, EXTEND `forecaster_month_pass.workflow.js`, do not fork. Deferred until
+  the rerun + confirmed depth. The forecaster's own run (`run_complete.py`) is already Greg's workflow.
+- **2nd trading platform (Greg this session):** we will likely need a 2nd prediction-market venue for
+  capacity, but NOT until we are live here - deferred, not a today job.
+
+## OPEN QUESTIONS (superseded by RESOLUTIONS above; kept for the audit trail)
 1. **JOB 2 pre-processing:** what SPECIFICALLY is the "pre-processing on the ingest side" to move to the
    trade side? The scaffolding already reads raw rows + derives at scoring time - is JOB 2 mainly (a) swap
    the data SOURCE to S3, or (b) is there a concrete derivation/reduction to relocate? Need one concrete

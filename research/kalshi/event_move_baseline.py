@@ -71,6 +71,12 @@ TAPE_DIR = "data/pyth_ticks"
 MBP10_DIR = "data/nymex_mbp10"                 # depth tape (databento_backfill.py --schema mbp-10)
 CONSENSUS = "data/kalshi/consensus.jsonl"
 
+# The continuous full-raw MBP-10 YEAR corpus (S89): lives on AWS S3, NOT git. Per-day gz objects at
+# s3://{S3_BUCKET}/{S3_PREFIX}/nymex_cont/{ROOT}_{YYYYMMDD}.jsonl.gz. Local cache mirror (gitignored).
+CONT_DIR = "data/nymex_cont"                   # local cache for streamed/decoded continuous days
+S3_BUCKET = os.environ.get("NYMEX_S3_BUCKET", "bento-568968024170-us-east-2-an")
+S3_PREFIX = os.environ.get("NYMEX_S3_PREFIX", "nymex")   # objects at {prefix}/nymex_cont/...
+
 # symbol -> underlying ROOT (for the definition store, reference spec, and release calendar).
 def sym_root(symbol: str) -> str:
     s = symbol.upper()
@@ -105,6 +111,131 @@ def _parse_ts(v) -> float:
     if isinstance(v, (int, float)):
         return float(v)
     return datetime.fromisoformat(str(v).replace("Z", "+00:00")).timestamp()
+
+
+# ---- RAW MBP-10 continuous tape: read-time normalization (S90, JOB 2) ----------------------------
+# The full-raw S3 corpus keeps EVERY message + EVERY column (S88); the DERIVED fields the scoring code
+# needs (trade-print selection, aggregated bid_dep/ask_dep, top-of-book) used to be baked in at INGEST in
+# the old reduced writer. Per Greg S88 that pre-processing moves to the TRADE side: we derive it here, at
+# read time, from the raw ladder. This is leakage-NEUTRAL (a per-row transform, no forward info) and keeps
+# the S3 tape untouched-raw. Auto-detects: a row with bid_px_00 is RAW MBP-10 -> derive; otherwise it is an
+# already-reduced tape (old nymex_tape/nymex_mbp10 or the live collector) -> pass through unchanged.
+
+def _is_raw_mbp10(r: dict) -> bool:
+    return "bid_px_00" in r or "bid_sz_00" in r
+
+
+def normalize_mbp10_row(r: dict):
+    """Raw-or-reduced row -> (is_trade, norm) or None if unusable. norm has the reduced shape the loaders
+    expect: {ts, price, size, bid_px, ask_px, bid_sz, ask_sz, bid_dep, ask_dep}. For a RAW row: is_trade =
+    (action == 'T'); bid_dep/ask_dep = sum of the 10 level sizes; top-of-book = level 00. For a reduced row:
+    is_trade = True (those tapes are trade-prints), fields passed through (missing depth -> 0)."""
+    ts = r.get("ts")
+    if ts is None:
+        return None
+    if _is_raw_mbp10(r):
+        def _f(k):
+            v = r.get(k)
+            return float(v) if v is not None else 0.0
+        bid_dep = sum(_f(f"bid_sz_{i:02d}") for i in range(10))
+        ask_dep = sum(_f(f"ask_sz_{i:02d}") for i in range(10))
+        action = r.get("action")
+        is_trade = action in ("T", "Trade", "t")
+        price = r.get("price")
+        norm = {"ts": _parse_ts(ts),
+                "price": float(price) if price is not None else None,
+                "size": _f("size"),
+                "bid_px": _f("bid_px_00"), "ask_px": _f("ask_px_00"),
+                "bid_sz": _f("bid_sz_00"), "ask_sz": _f("ask_sz_00"),
+                "bid_dep": bid_dep, "ask_dep": ask_dep}
+        return is_trade, norm
+    # reduced tape: already trade-prints with (optionally) pre-aggregated depth
+    price = r.get("price")
+    norm = {"ts": _parse_ts(ts),
+            "price": float(price) if price is not None else None,
+            "size": float(r.get("size") or 0.0),
+            "bid_px": float(r.get("bid_px") or 0.0), "ask_px": float(r.get("ask_px") or 0.0),
+            "bid_sz": float(r.get("bid_sz") or 0.0), "ask_sz": float(r.get("ask_sz") or 0.0),
+            "bid_dep": float(r.get("bid_dep") or 0.0), "ask_dep": float(r.get("ask_dep") or 0.0)}
+    return True, norm
+
+
+def _cont_local_path(root: str, day: str) -> str:
+    """Local (cached) path for a continuous day, either raw .jsonl or gz."""
+    base = os.path.join(CONT_DIR, f"{root}_{day}.jsonl")
+    return base if os.path.exists(base) else base + ".gz"
+
+
+def _s3_fetch_cont_gz(root: str, day: str, cache_dir: str = CONT_DIR) -> str:
+    """Download s3://{bucket}/{prefix}/nymex_cont/{root}_{day}.jsonl.gz to the local cache (Q4: cache so
+    repeat scoring passes never re-pull). Returns the local gz path. Needs boto3 + AWS env creds."""
+    import boto3
+    os.makedirs(cache_dir, exist_ok=True)
+    local = os.path.join(cache_dir, f"{root}_{day}.jsonl.gz")
+    if os.path.exists(local) and os.path.getsize(local) > 0:
+        return local                                    # cached
+    key = f"{S3_PREFIX + '/' if S3_PREFIX else ''}nymex_cont/{root}_{day}.jsonl.gz"
+    region = os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("AWS_REGION")
+    s3 = boto3.client("s3", region_name=region) if region else boto3.client("s3")
+    tmp = local + ".part"
+    s3.download_file(S3_BUCKET, key, tmp)
+    os.replace(tmp, local)
+    return local
+
+
+def _iter_cont_lines(root: str, day: str, source: str):
+    """Yield raw JSON text lines for a continuous day from source in {'local','s3'}. 's3' downloads (and
+    caches) the day's gz first, then reads it locally -> identical decode path either way, bounded memory."""
+    import gzip
+    if source == "s3":
+        path = _s3_fetch_cont_gz(root, day)
+    else:
+        path = _cont_local_path(root, day)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"continuous day not found locally: {path} "
+                                    f"(use --source s3 to stream from the bucket)")
+    op = gzip.open if path.endswith(".gz") else open
+    with op(path, "rt") as fh:
+        for line in fh:
+            line = line.strip()
+            if line:
+                yield line
+
+
+def load_cont_day(root: str, day: str, source: str = "local", trades_only: bool = True) -> dict:
+    """Read ONE continuous full-raw MBP-10 day (root in {CL,NG}, day 'YYYYMMDD') from local cache or S3 and
+    return time-sorted numpy arrays in the reduced shape the scoring code expects:
+      {ts, price, size, bid_px, ask_px, bid_sz, ask_sz, bid_dep, ask_dep, is_trade}.
+    Derivation happens HERE (trade side), not at ingest: RAW rows are normalized (trade-filter + ladder
+    aggregation) per normalize_mbp10_row. trades_only=True keeps the S85/S86 trade-print price path (the
+    default; book snapshot rides along on each trade row); trades_only=False keeps every message (book
+    updates too) for book-evolution studies. Dedup on strictly-advancing ts (keeps the leakage permutation
+    well-defined). Raw data on S3 is never mutated - this is a read-time view."""
+    recs = []
+    for line in _iter_cont_lines(root, day, source):
+        try:
+            r = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        nz = normalize_mbp10_row(r)
+        if nz is None:
+            continue
+        is_trade, norm = nz
+        if trades_only and not is_trade:
+            continue
+        if norm["price"] is None:
+            continue
+        recs.append((norm["ts"], norm["price"], norm["size"], norm["bid_px"], norm["ask_px"],
+                     norm["bid_sz"], norm["ask_sz"], norm["bid_dep"], norm["ask_dep"], 1.0 if is_trade else 0.0))
+    if not recs:
+        return {k: np.array([]) for k in ("ts", "price", "size", "bid_px", "ask_px",
+                                          "bid_sz", "ask_sz", "bid_dep", "ask_dep", "is_trade")}
+    recs.sort(key=lambda x: x[0])
+    arr = np.array(recs, float)
+    keep = np.concatenate([np.diff(arr[:, 0]) > 0, [True]])   # dedup exact-dup ts (keep last)
+    arr = arr[keep]
+    cols = ("ts", "price", "size", "bid_px", "ask_px", "bid_sz", "ask_sz", "bid_dep", "ask_dep", "is_trade")
+    return {c: arr[:, i] for i, c in enumerate(cols)}
 
 
 def load_tape(symbol: str):
