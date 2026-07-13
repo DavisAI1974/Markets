@@ -5,9 +5,10 @@ follower.** **HISTORICAL DATA IS RAW (Greg S88, load-bearing): keep ALL the info
 column, every HOUR — aggregate ONLY on the trade-signal side, never at ingest.** **S90: everything moved to
 AWS.** (1) Found + fixed a CRITICAL flush bug in `batch_pull` that truncated non-Friday days to 1-row stubs
 = 80% loss (hold-days-until-complete fix; validated 32.8M/32.8M CL-July rows recovered); (2) `pull_year
---reuse-done-jobs` rebuilds corrupt months from already-paid Databento jobs FREE; (3) stood up a durable
-**EC2 box** (`i-0017dc36072eaa6c8`, us-east-2) that self-configures from S3 and runs the recovery+resume of
-the full-raw year to the bucket; (4) **ALL bento data now on S3, none in git** — bucket
+--reuse-done-jobs` rebuilds corrupt months from already-paid Databento jobs FREE; (3) an
+**EC2 box** was launched to run the recovery but its headless/keyless boot FAILED (un-debuggable -> terminated);
+the S3 year is STILL corrupt at S90 close, so S91 JOB 1 = actually run `pull_year --reuse-done-jobs` somewhere
+observable (in-container or an EC2 box WITH key+SSM); (4) **ALL bento data now on S3, none in git** — bucket
 `bento-568968024170-us-east-2-an`, prefix `nymex/` (`nymex_cont/` year corpus + `nymex_tape/` + `nymex_mbp10/`);
 (5) built the **S3 tape reader** `event_move_baseline.load_cont_day(..., source="s3")` + raw-row normalizer
 (JOB 2 core — trade-filter + ladder-aggregate at read time); (6) built **RAW HOURLY weather ingestion**

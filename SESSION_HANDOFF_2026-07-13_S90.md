@@ -166,6 +166,13 @@ pushed to this trunk - a watcher is armed for it).
   free + submit the rest, all with the flush fix. Secrets are in the box's boot config/env -> ROTATE the
   Databento + AWS keys after the pull completes (Q5). Box can be stopped after the year lands, or repurposed
   for the daily lifecycle. EC2 launcher steps (AMI/SG/run_instances) were ad-hoc via boto3 from the session.
+  **UPDATE (S90 close): the box BOOT FAILED - zero S3 output after 55+ min, July never overwritten. Launched
+  headless/keyless with NO SSH key + NO SSM role -> UN-DEBUGGABLE (console doesn't capture user-data stdout;
+  can't get in). TERMINATED `i-0017dc36072eaa6c8` (dead weight, billing). LESSON: relaunch WITH a key pair
+  AND an SSM instance-role (needs IAM perms) so the box is observable/debuggable, OR run the recovery
+  in-container. The recovery code (`pull_year --reuse-done-jobs`) is validated locally (32.8M/32.8M) - the
+  failure was the box's boot/config, not the recovery logic. So at S90 close the S3 year is STILL corrupt
+  (54 July objects, 44 stubs); JOB 1 next session = actually run the recovery.**
 - **Daily cadence = a DURABLE TRIGGER, not memory (Greg S90: "how do we remember to do this daily?").**
   The weather-distribution trade is same-day (score tomorrow's KXHIGH ladder ~5PM, recalc AM, re-check
   intraday) - the same daily lifecycle as the NYMEX path forecast (the FORECAST WORKFLOW TODO in
