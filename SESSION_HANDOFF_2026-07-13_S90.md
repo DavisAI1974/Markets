@@ -95,6 +95,14 @@ pushed to this trunk - a watcher is armed for it).
   the rerun + confirmed depth. The forecaster's own run (`run_complete.py`) is already Greg's workflow.
 - **2nd trading platform (Greg this session):** we will likely need a 2nd prediction-market venue for
   capacity, but NOT until we are live here - deferred, not a today job.
+- **AWS deploy kit BUILT (Greg S90: "get things set up on aws correctly for our code to live there").**
+  `deploy/aws/` — the "prep the deploy kit" path (Greg's choice): `setup.sh` (idempotent box setup: deps,
+  `/etc/markets/markets.env` from `env.template`, install systemd units, enable daily trunk-update),
+  `nymex-pull.service` (resumable year pull to S3), `markets-update.{service,timer,sh}` (keep checkout on
+  trunk), `markets-daily.{service,timer}` + `daily_lifecycle.sh` (the daily forecast/trade lifecycle,
+  timer DISABLED until the scorer exists), `README.md` (runbook). Recommends an IAM instance ROLE so the
+  only on-disk secret is the Databento key. Syntax-checked, no secrets committed (placeholders only). Greg
+  spins up an instance + runs `setup.sh`; I cannot provision compute (S3-only creds).
 - **Daily cadence = a DURABLE TRIGGER, not memory (Greg S90: "how do we remember to do this daily?").**
   The weather-distribution trade is same-day (score tomorrow's KXHIGH ladder ~5PM, recalc AM, re-check
   intraday) - the same daily lifecycle as the NYMEX path forecast (the FORECAST WORKFLOW TODO in

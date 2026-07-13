@@ -1,0 +1,26 @@
+# deploy/aws/nymex-pull.service — the durable full-raw MBP-10 YEAR pull to S3 (resumable).
+# Installed to /etc/systemd/system/nymex-pull.service by setup.sh (placeholders substituted).
+# Start:  sudo systemctl start nymex-pull.service   |   Watch: journalctl -u nymex-pull -f
+# It runs until the whole year is in the bucket, then exits 0. On failure it restarts and RESUMES
+# (skips months already present in s3://.../nymex_cont/), so a reboot or transient error never re-pulls.
+[Unit]
+Description=NYMEX full-raw MBP-10 year pull to S3 (CL+NG, resumable)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@
+EnvironmentFile=/etc/markets/markets.env
+ExecStart=/usr/bin/python3 research/kalshi/pull_year_mbp10.py \
+  --start 2025-07 --end 2026-07 \
+  --dest s3://bento-568968024170-us-east-2-an/nymex \
+  --scratch /tmp/nymex_scratch
+Restart=on-failure
+RestartSec=30
+# the pull is long; do not let systemd kill it as a runaway
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=multi-user.target

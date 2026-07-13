@@ -1,0 +1,11 @@
+# deploy/aws/markets-update.service — pull the latest trunk onto the box (paired with markets-update.timer).
+[Unit]
+Description=Update Markets checkout to latest trunk
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@
+ExecStart=/usr/bin/env bash deploy/aws/markets-update.sh

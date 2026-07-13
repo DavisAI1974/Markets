@@ -1,0 +1,10 @@
+# deploy/aws/markets-update.timer — pull the latest trunk daily (05:30 UTC, before the US session).
+[Unit]
+Description=Daily Markets trunk update
+
+[Timer]
+OnCalendar=*-*-* 05:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

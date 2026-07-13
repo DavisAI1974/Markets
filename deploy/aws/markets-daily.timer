@@ -1,0 +1,12 @@
+# deploy/aws/markets-daily.timer — fire the daily lifecycle. DISABLED by default (setup.sh does NOT enable
+# it — a timer into an empty pipeline is premature). Enable once the daily scorer exists. The 21:00 UTC
+# (~5PM ET) time is the "score tomorrow's ladder" slot; add a second AM run when the recalc step is built.
+[Unit]
+Description=Daily Markets forecast/trade lifecycle
+
+[Timer]
+OnCalendar=*-*-* 21:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

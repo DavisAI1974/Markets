@@ -1,0 +1,14 @@
+# deploy/aws/markets-daily.service — the daily forecast/trade lifecycle (paired with markets-daily.timer).
+# DISABLED by default (setup.sh does not enable the timer). Enable ONLY once the daily scorer exists:
+#   sudo systemctl enable --now markets-daily.timer
+[Unit]
+Description=Markets daily forecast/trade lifecycle
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@
+EnvironmentFile=/etc/markets/markets.env
+ExecStart=/usr/bin/env bash deploy/aws/daily_lifecycle.sh
