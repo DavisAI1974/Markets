@@ -67,6 +67,19 @@ IEM_URL = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py"
 NWS_API = "https://api.weather.gov"
 CACHE_DIR = "data/nws_temp"
 CACHE_FILE = os.path.join(CACHE_DIR, "gw_degree_days.json")   # {date: {...}} merged store
+# S90: the store lives on AWS S3 (out of git). Bucket/prefix from env (defaults to the bento bucket); the
+# feed syncs local <-> S3 so the container and the durable box share ONE store. Local-only if boto3/creds
+# absent (graceful fallback).
+S3_BUCKET = os.environ.get("NYMEX_S3_BUCKET", "bento-568968024170-us-east-2-an")
+S3_KEY = os.environ.get("WEATHER_S3_KEY", "weather/nws_temp/gw_degree_days.json")
+
+
+def _s3():
+    try:
+        import boto3
+        return boto3.client("s3", region_name=os.environ.get("AWS_DEFAULT_REGION", "us-east-2"))
+    except Exception:
+        return None
 
 
 def station_weights() -> dict[str, float]:
@@ -225,6 +238,112 @@ def fetch_asos(station: str, start: str, end: str, retries: int = 4) -> list[tup
     return rows
 
 
+# ------------------------------------------------------------------------------------------------------
+# RAW HOURLY ingestion (S90, Greg: "we want hourly ... don't roll temps up into one number - that doesn't
+# help us trade daily settle for HH"). Same principle as the raw MBP-10 tape: keep EVERY hourly ob + EVERY
+# quantitative field, store raw on S3, aggregate (daily HIGH for KXHIGH, gas-weighted HDD/CDD for HH) ONLY
+# on the trade/scoring side. The daily gw_degree_days rollup is a DERIVED convenience, not the store.
+# ------------------------------------------------------------------------------------------------------
+# Every quantitative ASOS field IEM serves (excludes only the free-text METAR, which breaks CSV and is
+# redundant with these parsed fields). Values kept VERBATIM (M=missing, T=trace) - zero reduction.
+RAW_ASOS_FIELDS = [
+    "tmpf", "dwpf", "relh", "drct", "sknt", "p01i", "alti", "mslp", "vsby", "gust",
+    "skyc1", "skyc2", "skyc3", "skyc4", "skyl1", "skyl2", "skyl3", "skyl4", "feel",
+    "ice_accretion_1hr", "ice_accretion_3hr", "ice_accretion_6hr",
+    "peak_wind_gust", "peak_wind_drct", "peak_wind_time", "snowdepth",
+]
+# Stations to ingest: the 16 gas-demand metros (HH/NG) UNION the KXHIGH temp-market cities that aren't
+# already covered (Austin, San Antonio). NOTE: confirm the exact KXHIGH settlement station per city with
+# Greg before trading (e.g. KXHIGHNY settles on Central Park = NYC; KXHIGHCHI may be Midway = MDW).
+KXHIGH_EXTRA = ["AUS", "SAT"]
+RAW_STATIONS = list(STATION_WEIGHTS_RAW.keys()) + KXHIGH_EXTRA
+
+
+def fetch_asos_raw(station: str, start: str, end: str, retries: int = 4) -> list[dict]:
+    """RAW hourly obs for one station over [start, end) (YYYY-MM-DD, UTC): EVERY quantitative field, EVERY
+    row, values verbatim. Returns [{column: value, ...}] with the station id + `valid` UTC timestamp. Zero
+    reduction - the trade side parses/aggregates."""
+    sy, sm, sd = start.split("-")
+    ey, em, ed = end.split("-")
+    params = {
+        "station": station, "data": RAW_ASOS_FIELDS,
+        "year1": sy, "month1": sm, "day1": sd, "year2": ey, "month2": em, "day2": ed,
+        "tz": "Etc/UTC", "format": "onlycomma", "missing": "M", "trace": "T",
+    }
+    last = None
+    for i in range(retries):
+        try:
+            r = requests.get(IEM_URL, params=params, timeout=120)
+            if r.status_code == 200 and r.text.strip():
+                break
+            last = f"status {r.status_code}"
+        except requests.RequestException as e:
+            last = str(e)
+        time.sleep(2 ** i)
+    else:
+        raise RuntimeError(f"[nws] raw {station} {start}..{end} failed: {last}")
+    reader = io.StringIO(r.text)
+    header = reader.readline().rstrip("\n").split(",")          # station,valid,<fields...>
+    rows = []
+    for line in reader:
+        parts = line.rstrip("\n").split(",")
+        if len(parts) < len(header):
+            continue
+        rows.append(dict(zip(header, parts)))                  # keep ALL columns, raw strings
+    return rows
+
+
+def _months_iter(start: str, end: str):
+    sy, sm = int(start[:4]), int(start[5:7])
+    ey, em = int(end[:4]), int(end[5:7])
+    y, m = sy, sm
+    while (y, m) < (ey, em):
+        nm = f"{y+1}-01" if m == 12 else f"{y}-{m+1:02d}"
+        yield f"{y}-{m:02d}", f"{y}-{m:02d}-01", (f"{y+1}-01-01" if m == 12 else f"{y}-{m+1:02d}-01")
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+
+
+def ingest_hourly_raw(stations: list[str], start: str, end: str, dest: str,
+                      scratch: str = "data/nws_hourly") -> int:
+    """Pull RAW hourly obs per (station, month) and store gzipped jsonl to dest, resumable. dest is
+    's3://BUCKET/PREFIX' (-> PREFIX/nws_hourly/{station}_{YYYYMM}.jsonl.gz) or a local dir. One line per
+    hourly ob, ALL fields verbatim. Skips a (station, month) already present. Returns rows written."""
+    import gzip as _gz
+    is_s3 = dest.startswith("s3://")
+    if is_s3:
+        bkt, _, pfx = dest[len("s3://"):].partition("/")
+        pfx = pfx.strip("/")
+        s3 = _s3()
+    os.makedirs(scratch, exist_ok=True)
+    total = 0
+    for ym, ms, me in _months_iter(start, end):
+        yyyymm = ym.replace("-", "")
+        for st in stations:
+            name = f"{st}_{yyyymm}.jsonl.gz"
+            key = (f"{pfx}/" if is_s3 and pfx else "") + f"nws_hourly/{name}"
+            if is_s3:
+                if s3.list_objects_v2(Bucket=bkt, Prefix=key, MaxKeys=1).get("KeyCount", 0):
+                    print(f"[nws-raw] skip {st} {ym} (in S3)", flush=True); continue
+            else:
+                if os.path.exists(os.path.join(scratch, name)):
+                    print(f"[nws-raw] skip {st} {ym} (local)", flush=True); continue
+            try:
+                rows = fetch_asos_raw(st, ms, me)
+            except Exception as e:
+                print(f"[nws-raw] ERROR {st} {ym}: {e}", flush=True); continue
+            local = os.path.join(scratch, name)
+            with _gz.open(local, "wt") as f:
+                for r in rows:
+                    f.write(json.dumps(r) + "\n")
+            total += len(rows)
+            if is_s3:
+                s3.upload_file(local, bkt, key); os.remove(local)
+            print(f"[nws-raw] {st} {ym}: {len(rows)} hourly obs -> {'s3://'+bkt+'/'+key if is_s3 else local}",
+                  flush=True)
+            time.sleep(0.5)                                    # politeness to IEM
+    return total
+
+
 def realized_index(start: str, end: str, use_cache: bool = True, verbose: bool = True) -> dict[str, dict]:
     """
     The (A) path: realized gas-weighted daily degree-day index over [start, end). Merges into the local
@@ -247,6 +366,16 @@ def realized_index(start: str, end: str, use_cache: bool = True, verbose: bool =
 
 
 def _load_cache() -> dict[str, dict]:
+    # local cache first; if absent, pull the store from S3 (out-of-git home) into the local cache.
+    if not os.path.exists(CACHE_FILE):
+        s3 = _s3()
+        if s3 is not None:
+            try:
+                os.makedirs(CACHE_DIR, exist_ok=True)
+                s3.download_file(S3_BUCKET, S3_KEY, CACHE_FILE)
+                print(f"[nws] loaded store from s3://{S3_BUCKET}/{S3_KEY}")
+            except Exception:
+                pass                                    # not in S3 yet -> start empty
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE) as f:
             return json.load(f)
@@ -257,6 +386,12 @@ def _save_cache(cache: dict[str, dict]) -> None:
     os.makedirs(CACHE_DIR, exist_ok=True)
     with open(CACHE_FILE, "w") as f:
         json.dump(cache, f, sort_keys=True, indent=0)
+    s3 = _s3()                                          # mirror to S3 (the durable store)
+    if s3 is not None:
+        try:
+            s3.upload_file(CACHE_FILE, S3_BUCKET, S3_KEY)
+        except Exception as e:
+            print(f"[nws] warning: S3 upload failed ({e}); local cache still written")
 
 
 # ------------------------------------------------------------------------------------------------------
@@ -356,12 +491,29 @@ def main() -> int:
     ap.add_argument("--no-cache", action="store_true", help="do not read/write the local cache")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--forecast", action="store_true", help="live/forward decision-time forecast demo (B)")
+    ap.add_argument("--ingest-hourly", action="store_true",
+                    help="RAW hourly ingestion: pull every quantitative ASOS field per (station,month) and "
+                         "store gzipped jsonl (zero reduction) to --dest, resumable. Aggregate on the trade "
+                         "side, NOT here.")
+    ap.add_argument("--dest", default="s3://bento-568968024170-us-east-2-an/weather",
+                    help="ingest-hourly destination: 's3://BUCKET/PREFIX' (-> PREFIX/nws_hourly/) or a local dir")
+    ap.add_argument("--stations", default=None,
+                    help="comma-separated station ids to ingest (default = the gas-demand metros + KXHIGH "
+                         "cities: %s)" % ",".join(RAW_STATIONS))
     args = ap.parse_args()
 
     if args.selftest:
         return selftest()
     if args.forecast:
         print(json.dumps(forecast_index_today(), indent=2))
+        return 0
+    if args.ingest_hourly:
+        if not (args.start and args.end):
+            ap.error("--ingest-hourly needs --start and --end (YYYY-MM-DD)")
+        stations = args.stations.split(",") if args.stations else RAW_STATIONS
+        n = ingest_hourly_raw(stations, args.start, args.end, args.dest)
+        print(f"[nws-raw] DONE {args.start}..{args.end}: {n} hourly obs across {len(stations)} stations "
+              f"-> {args.dest}/nws_hourly/", flush=True)
         return 0
     if not (args.start and args.end):
         ap.error("need --start and --end (or --selftest / --forecast)")
