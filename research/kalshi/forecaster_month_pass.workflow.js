@@ -66,7 +66,8 @@ ONE month is a per-regime observation, NOT a global rule. Do not modify any repo
 function charPrompt(it) {
   return `You characterize the ${it.root} continuous NYMEX tape for the single month ${it.month}, BLIND to every
 other month (anti-lock-in: this month is its own regime). Run the validated per-month tool and interpret it:
-  python research/kalshi/month_characterize.py --root ${it.root} --month ${it.month} --out ${SCRATCH}/char_${it.root}_${it.month}.json
+  python research/kalshi/month_characterize.py --root ${it.root} --month ${it.month} --cont-dir data/nymex_analog --out ${SCRATCH}/char_${it.root}_${it.month}.json
+(--cont-dir data/nymex_analog is the RESTORE dir, separate from the live year-pull scratch data/nymex_cont.)
 Read that JSON. It gives all sustained intraday moves this month, per intraday cell (tod x dir x book),
 with peak_usd distribution, fast_capture (front-loaded fraction), sustain_s, continuation rate, and the
 curve/temp regime mix. Interpret THIS month per ${it.root}: the curve-shape distribution (front-loaded vs

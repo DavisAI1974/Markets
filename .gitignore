@@ -100,3 +100,4 @@ data/eia_surprise.json
 data/nws_temp/
 data/nymex_curve/
 data/forecast/
+data/nymex_analog/

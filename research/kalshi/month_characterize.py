@@ -238,11 +238,17 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Per-(commodity,month) continuous-tape characterizer")
     ap.add_argument("--root", help="CL or NG")
     ap.add_argument("--month", help="YYYY-MM")
+    ap.add_argument("--cont-dir", default=None,
+                    help="continuous-tape dir to READ (default data/nymex_cont; use a SEPARATE dir while the "
+                         "year pull owns data/nymex_cont as its live scratch)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
     if args.selftest:
         return selftest()
+    if args.cont_dir:
+        global CONT_DIR
+        CONT_DIR = args.cont_dir
     if not (args.root and args.month):
         ap.error("need --root and --month (or --selftest)")
     res = characterize_month(args.root, args.month)
