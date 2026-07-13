@@ -121,16 +121,32 @@ imbalance, flow exhaustion, depth run-length, pre-release/coiled volume, herd br
 
 ## 6. Temperature data — a v1 BUILD (Greg S88: "temp is extremely important in nat gas")
 
-Build a gas-demand temperature feed as a piece AND the NG conditioning axis:
+Build a gas-demand temperature feed as a piece AND the NG conditioning axis. Two data needs, both required:
 
+- **(A) HISTORICAL hourly temps for EVERY corpus day (Greg S88, load-bearing) — the SCORING input.** To
+  build and score the historical forecast curves, the agent needs the realized hourly temperature record
+  for each past day in the corpus (the 24 weeks now, the year later). This is what characterizes each
+  historical day's demand regime, assigns it to a temp cell, and populates the analog buckets the blind
+  forecast scores against. Without it, NG analog matching cannot respect the temp regime (no 60F-forecasts-
+  for-30F-days guard) and the curves cannot be scored.
+- **(B) DECISION-TIME temp forecast — the conditioning input at forecast time.** When forecasting a
+  held-out day, the temp feature must be what was knowable that morning.
 - **Aggregate: population/gas-weighted HDD/CDD** across the key US consuming regions — the demand-relevant
-  number, NOT a single city high.
-- **Source: NOAA/NWS free API** for hourly observations + forecasts at the demand stations.
-- **Leakage rule (two distinct uses):**
-  - **Conditioning a forecast at decision time** => use the temperature FORECAST available that morning
-    (the expected degree-days the market is pricing — this is also what the Kalshi `KXHIGH*` markets price).
-    Realized same-day temp as a feature is LOOK-AHEAD; forbidden.
-  - **Labeling a past day for the analog pool** => realized temp is fine (characterizing history).
+  number, NOT a single city high. Build the weighting once (a fixed set of demand-region stations x gas-
+  consumption weights); apply to both (A) and (B).
+- **Source:** for (A) historical hourly, use a free HISTORICAL hourly source with full back-coverage —
+  NOAA ISD / NCEI-LCD station observations, or Open-Meteo / ERA5 historical hourly reanalysis (free,
+  hourly, arbitrary lat/lon, decades back) aggregated to the demand stations. For (B), NOAA/NWS forecast
+  API (or archived forecast issuances where available).
+- **Leakage rule (the (A)/(B) split IS the leakage boundary):**
+  - **Labeling / bucketing a past day (A)** => realized historical hourly temp is fine and correct — it
+    characterizes history.
+  - **Conditioning a forecast at decision time (B)** => use the FORECAST available that morning (the
+    expected degree-days the market is pricing — also what the Kalshi `KXHIGH*` markets price). Realized
+    same-day temp as a decision-time feature is LOOK-AHEAD; forbidden. Where archived hourly forecasts are
+    unavailable, the broad HDD regime is highly forecastable a day ahead — a realized-as-proxy-for-forecast
+    is permissible ONLY if the small leak is flagged and the feature is coarsened to the forecastable
+    regime bucket (not the exact realized value); run it through `odcore/leakage.py`.
 - Build it NOW so it is ready the moment winter days enter the corpus (see sec 9 — the 24-week corpus is
   warm-season, so temp differentiation bites hardest once the year lands).
 
