@@ -333,31 +333,68 @@ def batch_pull(client, symbol: str, start: str, end: str, schema: str, max_cost:
         time.sleep(poll_s); waited += poll_s
     if st != "done":
         raise SystemExit(f"[databento] batch job {jid} not done after {int(timeout_s)}s (state {st})")
+    total = _download_decode_flush(client, jid, symbol, schema, out_dir, flush_dir)
+    print(f"[databento] batch {symbol} {start}..{end}: {total} rows -> {flush_dir or out_dir or MBP10_DIR}",
+          flush=True)
+    return total
+
+
+def _download_decode_flush(client, jid: str, symbol: str, schema: str,
+                           out_dir: str = None, flush_dir: str = None) -> int:
+    """Download an ALREADY-DONE batch job's .dbn.zst files, decode each streaming (one day in memory ->
+    bounded), append per-UTC-day JSONL to out_dir, and (if flush_dir) gzip each COMPLETE day + drop raw.
+
+    S90 FIX (load-bearing): a day's JSONL is only complete after the NEXT day-file is processed, because a
+    later DBN file writes a few boundary rows (CME trade-date session spans two UTC days; and the ts_event
+    vs ts_recv midnight skew puts a straggler into the prior day). The old code gzipped 'wb' each day right
+    after the file that first touched it, so the later boundary write truncated the day to a stub -> 80%
+    loss (only Fridays / the last day survived). Fix: HOLD the latest 2 UTC-day files unflushed, flush only
+    the older now-complete ones; final-flush the rest at the end. Disk stays bounded to ~2-3 days of raw.
+    Reused for both fresh pulls (batch_pull) and free RE-DECODE of a done job id (redecode_job)."""
+    import tempfile, shutil, glob, gzip as _gz
+    import databento as db
+    odir = out_dir or MBP10_DIR
+    os.makedirs(odir, exist_ok=True)
+    if flush_dir:
+        os.makedirs(flush_dir, exist_ok=True)
+
+    def _flush(paths):
+        for j in paths:
+            with open(j, "rb") as src, _gz.open(os.path.join(flush_dir, os.path.basename(j) + ".gz"),
+                                                "wb", compresslevel=6) as dst:
+                shutil.copyfileobj(src, dst)
+            os.remove(j)
+
     tmp = tempfile.mkdtemp(prefix="dbn_")
     try:
         _retry(lambda: client.batch.download(jid, output_dir=tmp))
         total = 0
-        odir = out_dir or MBP10_DIR
-        if flush_dir:
-            os.makedirs(flush_dir, exist_ok=True)
         for p in sorted(glob.glob(os.path.join(tmp, "**", "*.dbn.zst"), recursive=True)):
-            df = db.DBNStore.from_file(p).to_df()                   # ONE day in memory -> bounded
+            df = db.DBNStore.from_file(p).to_df()
             if len(df):
                 total += (_write_mbp10_df(df, symbol, out_dir) if schema.startswith("mbp-10")
                           else _write_df(df, symbol))
             os.remove(p)
-            if flush_dir:                                           # gzip this day + drop raw -> bound disk
-                for j in sorted(glob.glob(os.path.join(odir, "*.jsonl"))):
-                    with open(j, "rb") as src, _gz.open(
-                            os.path.join(flush_dir, os.path.basename(j) + ".gz"), "wb",
-                            compresslevel=6) as dst:
-                        shutil.copyfileobj(src, dst)
-                    os.remove(j)
-        print(f"[databento] batch {symbol} {start}..{end}: {total} rows -> "
-              f"{flush_dir or odir}", flush=True)
+            if flush_dir:
+                jsonls = sorted(glob.glob(os.path.join(odir, f"{symbol}_*.jsonl")))
+                if len(jsonls) > 2:                                # hold the latest 2 (still open to boundary)
+                    _flush(jsonls[:-2])
+        if flush_dir:
+            _flush(sorted(glob.glob(os.path.join(odir, f"{symbol}_*.jsonl"))))
         return total
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+
+
+def redecode_job(client, jid: str, symbol: str, schema: str = "mbp-10",
+                 out_dir: str = None, flush_dir: str = None) -> int:
+    """Re-decode an ALREADY-DONE, ALREADY-PAID batch job by id (free re-serve, ~30d) with the S90 flush fix.
+    Recovers a corrupt month without re-charging Databento. symbol = the ROOT used in filenames (CL/NG)."""
+    det = _retry(lambda: client.batch.get_job_details(jid))
+    if det.get("state") != "done":
+        raise SystemExit(f"[databento] job {jid} not done (state {det.get('state')})")
+    print(f"[databento] re-decode job {jid} ({symbol} {schema}) with the S90 flush fix", flush=True)
+    return _download_decode_flush(client, jid, symbol, schema, out_dir, flush_dir)
 
 
 def main() -> None:
