@@ -30,9 +30,12 @@ storage reaction — exactly why storage-alone ran backwards. (Eyeball, one case
 
 1. **NEWS / ANTICIPATION** — forward-looking shocks priced ahead: forecasted hurricanes (NHC cone/outlook),
    weather outlooks, geopolitics. STRICTLY point-in-time / pre-event (leakage: only what was public before
-   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine -- but a PROXY: the NYMEX traders whose flow is our canary read BLOOMBERG / ICE institutional
-   feeds (faster, deeper), not free RSS, so RSS approximates the real news signal (known fidelity gap, not a
-   blocker; institutional Bloomberg/ICE is the ideal). News works in THREE TENSES
+   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine. NYMEX traders read BLOOMBERG / ICE, but (Greg) this is NOT critical for us: what matters is
+   TIMING PARITY — as long as our industry news lands about the same time as ICE/Bloomberg, we are fine, and
+   we are NOT trading NYMEX, we fire on KALSHI (the delayed follower), so we are already inside the lag and a
+   small news delay is absorbed. The only real exposure is the RARE case where ICE/Bloomberg has an exclusive
+   / scoop and a story breaks there first -> we see it later -> caught wrong-side. Rare, not a blocker.
+   News works in THREE TENSES
    (Greg), carrying the ROLLING recent news flow into each window tagged by tense (not a yes/no flag):
    - **Ex-ante (anticipation)** — a forecast/outlook priced BEFORE it happens (NHC cone, cold-snap outlook,
      an EIA/Fed print due). A point spike ahead of the event.

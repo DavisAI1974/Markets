@@ -433,6 +433,59 @@ def depth_features(rel_idx, push_idx, move_sign, D):
     }
 
 
+# ---- pre/post-release VOLUME (the primed / coiled read; Greg S86) ---------------------------------
+def pre_release_volume(rel_idx, ts, sz, pre_s):
+    """Traded volume in [R-pre_s, R] + the 'coiled' read, STRICTLY pre-event (leakage-safe: reads only
+    ticks at/<= R). A primed/on-edge market goes DEAD before the print (nobody wants to get run over), so
+    a LOW pre-release volume / a drying-up rate is the coiled-spring detector.
+      pre_vol   = sum trade size in the pre-window
+      pre_rate  = pre_vol / window seconds (per-second, for the surge ratio)
+      coiled_ratio = late-half rate / early-half rate of the pre-window (<1 = drying up into the release)"""
+    R = ts[rel_idx]
+    t0 = R - pre_s
+    lo = rel_idx
+    while lo > 0 and ts[lo - 1] >= t0:
+        lo -= 1
+    seg_ts = ts[lo:rel_idx + 1]
+    seg_sz = sz[lo:rel_idx + 1]
+    pre_vol = float(seg_sz.sum())
+    span = max(R - ts[lo], 1e-6)
+    pre_rate = pre_vol / span
+    mid = R - pre_s / 2.0
+    early_m = seg_ts < mid
+    early = float(seg_sz[early_m].sum())
+    late = float(seg_sz[~early_m].sum())
+    half = pre_s / 2.0
+    early_rate = early / half
+    late_rate = late / half
+    coiled_ratio = (late_rate / early_rate) if early_rate > 0 else (1.0 if late_rate == 0 else 3.0)
+    return {"pre_vol": round(pre_vol, 1), "pre_rate": round(pre_rate, 4), "coiled_ratio": round(coiled_ratio, 3)}
+
+
+def post_release_volume(rel_idx, ts, sz, fast_s, pre_rate):
+    """Post-release surge: traded size in (R, R+fast_s] and the surge ratio vs the pre-release RATE
+    (explosion vs relief). DESCRIPTIVE (post-event) — the coiled spring releasing one way or the other."""
+    R = ts[rel_idx]
+    horizon = R + fast_s
+    hi = rel_idx
+    while hi + 1 < len(ts) and ts[hi + 1] <= horizon:
+        hi += 1
+    post_sz = sz[rel_idx + 1:hi + 1]
+    post_vol = float(post_sz.sum())
+    post_rate = post_vol / max(fast_s, 1e-6)
+    surge_ratio = (post_rate / pre_rate) if pre_rate > 0 else float("nan")
+    return {"post_vol": round(post_vol, 1), "post_rate": round(post_rate, 4),
+            "surge_ratio": round(surge_ratio, 2) if surge_ratio == surge_ratio else None}
+
+
+def _prevol_scalar(i, ts, p, bv, sv, pre_s):
+    """Leakage-safe scalar: pre-release volume 'as of i' (sums sizes bv[lo:i+1], all <= R) — invariant to
+    every tick after i by construction. bv carries the trade sizes."""
+    if i < 1:
+        return None
+    return round(pre_release_volume(i, ts, bv, pre_s)["pre_vol"], 3)
+
+
 # ---- event enumeration --------------------------------------------------------------------------
 def tape_days(ts):
     return sorted({datetime.fromtimestamp(t, timezone.utc).date() for t in ts})
@@ -498,13 +551,16 @@ def build(symbol, series, cfg):
             push_idx = idx + int(mv["_k_fast"])
             move_sign = 1.0 if (mv["peak_signed_bps"] or 0) >= 0 else -1.0
             depth = depth_features(idx, push_idx, move_sign, D)
+        # pre/post-release VOLUME (the primed/coiled read) — always, leakage-safe pre-window
+        pv = pre_release_volume(idx, ts, sz, cfg["pre_s"])
+        postv = post_release_volume(idx, ts, sz, cfg["fast_s"], pv["pre_rate"])
         mv = {k: v for k, v in mv.items() if k not in ("_k_peak", "_k_fast")}
         events.append({"day": d.isoformat(), "release_idx": idx,
                        "baseline": round(anc["baseline"], 5), "pre_vol": round(anc["pre_vol"], 6),
                        "n_pre": anc["n_pre"], "tick_size": tsz, "tick_value": tval,
                        "tick_source": tsrc, "forecast": f, "actual": a, "surprise": surp,
                        "surprise_source": surp_src,
-                       "cell": surprise_cell(series, surp, cfg["big_surprise"]), **mv, **depth})
+                       "cell": surprise_cell(series, surp, cfg["big_surprise"]), **mv, **depth, **pv, **postv})
 
     if not events:
         return {"symbol": symbol, "status": "NO_EVENTS",
@@ -525,6 +581,12 @@ def build(symbol, series, cfg):
                                               idxs, reps=3, seed=0)
             leak_pass = leak_pass and bool(dpass)
             leak_fails += len(dfails)
+        # gate the pre-release VOLUME feature (bv=sz carries trade sizes; pre_vol sums sizes <= i)
+        vpass, vfails = assert_no_leakage(
+            lambda i, ts_, p_, bv_, sv_: _prevol_scalar(i, ts_, p_, bv_, sv_, cfg["pre_s"]),
+            ts, p, sz, np.zeros_like(sz), idxs, reps=3, seed=0)
+        leak_pass = leak_pass and bool(vpass)
+        leak_fails += len(vfails)
     else:
         leak_pass, leak_fails = True, 0
 
@@ -552,6 +614,7 @@ def build(symbol, series, cfg):
         "cells": cells,
         "depth": ({k: _depth_summary(evs) for k, evs in by_cell.items() if len(evs) >= cfg["min_cell"]}
                   if D is not None else None),
+        "volume": {k: _volume_summary(evs) for k, evs in by_cell.items() if len(evs) >= cfg["min_cell"]},
         "pooled_footnote": _move_dist(events),          # footnote only, never the headline
         "events": events if cfg["emit_events"] else None,
         "cfg": {k: v for k, v in cfg.items()},
@@ -598,6 +661,41 @@ def _move_dist(evs):
                      if fast_usd.size else None),
         "fast_capture_of_peak": _q(fast_cap, [10, 50, 90]),
         "peaked_fast_frac": round(float(peaked_fast.mean()), 3),
+    }
+
+
+def _volume_summary(evs):
+    """The pre/post-release VOLUME read (the primed/coiled detector; Greg S86). Per cell, distributions +
+    the coiled->move test. n small -> provisional. Normalization is PER CELL (same scaffold, per-market
+    values — never pool NG's normal onto CL). Questions:
+      COILED (pre-event, leakage-safe): is the pre-release unusually QUIET (low pre_vol vs the cell median,
+        or coiled_ratio<1 = drying up into the print)? A dead pre-release = a primed/on-edge market.
+      RELEASE (descriptive): does a coiled pre-release precede a BIGGER move (explosion) — i.e. is pre_vol
+        NEGATIVELY related to peak_bps, and the post-release surge_ratio larger? Split at the cell-median
+        pre_vol (quiet vs active) and contrast; Spearman signs of pre_vol / coiled_ratio vs peak_bps."""
+    n = len(evs)
+    pre_vol = np.array([e["pre_vol"] for e in evs], float)
+    coiled = np.array([e["coiled_ratio"] for e in evs], float)
+    surge = np.array([e["surge_ratio"] for e in evs if e.get("surge_ratio") is not None], float)
+    peak_bps = np.array([e["peak_bps"] for e in evs], float)
+    med = float(np.median(pre_vol))
+    quiet_m = pre_vol <= med                       # per-cell median split (per-market normal)
+    def _mq(a, m):
+        return round(float(np.median(a[m])), 2) if m.any() else None
+    return {
+        "n": n,
+        "pre_vol": {**_q(pre_vol, [10, 50, 90]), "max": round(float(pre_vol.max()), 1)},
+        "coiled_ratio": _q(coiled, [10, 50, 90]),
+        "surge_ratio": (_q(surge, [10, 50, 90]) if surge.size else None),
+        "coiled_split": {                          # quiet (coiled) vs active pre-release, per-cell median
+            "median_pre_vol": round(med, 1),
+            "quiet": {"n": int(quiet_m.sum()), "peak_bps": _mq(peak_bps, quiet_m)},
+            "active": {"n": int((~quiet_m).sum()), "peak_bps": _mq(peak_bps, ~quiet_m)},
+        },
+        "spearman_vs_peak_bps": {                   # coiled hypothesis: quieter pre -> bigger move = NEGATIVE
+            "pre_vol": _spear_sign(pre_vol, peak_bps),
+            "coiled_ratio": _spear_sign(coiled, peak_bps),
+        },
     }
 
 
@@ -717,6 +815,22 @@ def selftest():
         print("  ok  depth imb_R invariant to post-index book (leakage-safe)")
     else:
         print(f"  FAIL depth leakage: {dfails}"); ok = False
+    # 4. pre/post-release volume: a coiled pre-window (volume drying up) then a post surge.
+    vts = np.array([0, 10, 20, 30, 40, 50, 60, 61, 62, 63, 64], float)   # R at idx 6 (t=60)
+    vsz = np.array([10, 10, 10, 1, 1, 1, 0, 50, 50, 50, 50], float)      # early pre busy, late pre quiet
+    pv = pre_release_volume(6, vts, vsz, pre_s=60.0)
+    postv = post_release_volume(6, vts, vsz, fast_s=5.0, pre_rate=pv["pre_rate"])
+    if pv["coiled_ratio"] < 1.0 and postv["surge_ratio"] > 1.0:
+        print(f"  ok  volume: coiled_ratio={pv['coiled_ratio']} (<1 drying up) surge_ratio={postv['surge_ratio']} (>1 explosion)")
+    else:
+        print(f"  FAIL volume: {pv} {postv}"); ok = False
+    vpass, vfails = assert_no_leakage(
+        lambda i, ts_, p_, bv_, sv_: _prevol_scalar(i, ts_, p_, bv_, sv_, 60.0),
+        vts, np.zeros_like(vts), vsz, np.zeros_like(vsz), idxs=[5, 6], reps=3, seed=0)
+    if vpass:
+        print("  ok  pre_vol invariant to post-index sizes (leakage-safe)")
+    else:
+        print(f"  FAIL volume leakage: {vfails}"); ok = False
     print("SELFTEST", "PASS" if ok else "FAIL")
     return ok
 
@@ -799,6 +913,18 @@ def main():
             print(f"    Spearman vs sustain: exhaustion={dd['spearman_vs_sustain']['exhaustion']} "
                   f"aligned_imb_push={dd['spearman_vs_sustain']['aligned_imb_push']} "
                   f"far_thinning={dd['spearman_vs_sustain']['far_thinning']}")
+    if res.get("volume"):
+        print("\n  === PRE/POST-RELEASE VOLUME (the primed/coiled read — provisional, small-n, per-cell normal) ===")
+        for k, vd in res["volume"].items():
+            cs = vd["coiled_split"]
+            print(f"\n  VOLUME {k}  n={vd['n']}")
+            print(f"    pre_vol p50={vd['pre_vol']['p50']} (coiled_ratio p50={vd['coiled_ratio']['p50']}, <1=drying up)  "
+                  f"surge_ratio p50={vd['surge_ratio']['p50'] if vd['surge_ratio'] else 'n/a'}")
+            print(f"    COILED split @ pre_vol median={cs['median_pre_vol']}: "
+                  f"quiet(n={cs['quiet']['n']}) peak_bps={cs['quiet']['peak_bps']}  |  "
+                  f"active(n={cs['active']['n']}) peak_bps={cs['active']['peak_bps']}")
+            print(f"    Spearman vs peak_bps (coiled=>NEGATIVE): pre_vol={vd['spearman_vs_peak_bps']['pre_vol']} "
+                  f"coiled_ratio={vd['spearman_vs_peak_bps']['coiled_ratio']}")
     pf = res["pooled_footnote"]
     print(f"\n  [footnote, pooled — never the headline] n={pf['n']} peak_bps p50={pf['peak_bps']['p50']} "
           f"shape_mix={pf['shape_mix']}")
