@@ -57,6 +57,22 @@ def _first_of_next(y, m):
     return f"{y+1}-01-01" if m == 12 else f"{y}-{m+1:02d}-01"
 
 
+def _week_spans(start, end):
+    """[start,end) 'YYYY-MM' month range -> list of (ws,we) 7-day [ws,we) date strings covering it.
+    Week-at-a-time: smaller Databento batch jobs -> faster to reach 'done' + finer resume + per-week
+    S3 publish (Greg S91: 'do a week at a time')."""
+    import datetime as _dt
+    sy, sm = map(int, start.split("-")); ey, em = map(int, end.split("-"))
+    d = _dt.date(sy, sm, 1)
+    last = _dt.date(ey, em, 1)
+    out = []
+    while d < last:
+        we = min(d + _dt.timedelta(days=7), last)
+        out.append((d.isoformat(), we.isoformat()))
+        d = we
+    return out
+
+
 def _git(*args):
     return subprocess.run(["git", "-C", WT, *args], capture_output=True, text=True)
 
@@ -85,11 +101,62 @@ def _s3_key(prefix, name):
     return (f"{prefix}/" if prefix else "") + f"nymex_cont/{name}"
 
 
+STUB_BYTES = 5000            # a real trading day of MBP-10 gz is tens of MB; <5KB = the S90 flush-bug stub
+MIN_DAYS = 15                # a full trading month has ~20-23 UTC days; fewer = incomplete, re-pull
+
+
+def _s3_days_present(s3, bucket, prefix, day_pfx):
+    """Return the list of (key, size) objects under nymex_cont/{day_pfx}* (a day/week/month prefix)."""
+    pfx = _s3_key(prefix, day_pfx)
+    objs, tok = [], None
+    while True:
+        kw = dict(Bucket=bucket, Prefix=pfx)
+        if tok:
+            kw["ContinuationToken"] = tok
+        r = s3.list_objects_v2(**kw)
+        objs += [(o["Key"], o["Size"]) for o in r.get("Contents", [])]
+        if not r.get("IsTruncated"):
+            return objs
+        tok = r["NextContinuationToken"]
+
+
 def _s3_month_present(s3, bucket, prefix, root, y, m):
-    """True if ANY {root}_{yyyymm}*.jsonl.gz already exists under the bucket prefix (resume-skip)."""
-    pfx = _s3_key(prefix, f"{root}_{y}{m:02d}")
-    resp = s3.list_objects_v2(Bucket=bucket, Prefix=pfx, MaxKeys=1)
-    return resp.get("KeyCount", 0) > 0
+    """CLEAN-present only: has files, NO sub-5KB stubs, and a plausible day count. A month that is empty,
+    stub-corrupt (the S90 flush bug), or thin is treated as ABSENT so it is RE-PULLED, never silently skipped."""
+    objs = _s3_days_present(s3, bucket, prefix, f"{root}_{y}{m:02d}")
+    if not objs:
+        return False
+    if any(sz < STUB_BYTES for _, sz in objs):    # any stub -> corrupt month, re-pull
+        return False
+    return len(objs) >= MIN_DAYS
+
+
+def _week_marker_key(prefix, root, ws):
+    return (f"{prefix}/" if prefix else "") + f"nymex_cont/_done/{root}_{ws}.done"
+
+
+def _week_done(s3, bucket, prefix, root, ws):
+    """A week is DONE iff its marker exists (written only after a clean per-week upload). Bulletproof
+    resume: a partial/failed week has no marker -> re-pulled."""
+    r = s3.list_objects_v2(Bucket=bucket, Prefix=_week_marker_key(prefix, root, ws), MaxKeys=1)
+    return r.get("KeyCount", 0) > 0
+
+
+def _publish_all_s3(s3, bucket, prefix):
+    """Upload every gz currently in BRANCH_DIR to nymex_cont/, delete local. Returns (n, stub_count)."""
+    gz = sorted(glob.glob(os.path.join(BRANCH_DIR, "*.jsonl.gz")))
+    stubs = 0
+    for g in gz:
+        if os.path.getsize(g) < STUB_BYTES:
+            stubs += 1
+        key = _s3_key(prefix, os.path.basename(g))
+        for attempt in range(4):
+            try:
+                s3.upload_file(g, bucket, key); break
+            except Exception as e:
+                print(f"[pull_year] s3 upload retry {attempt} {key}: {e}", flush=True)
+        os.remove(g)
+    return len(gz), stubs
 
 
 # ---- main ------------------------------------------------------------------------------------------
@@ -115,6 +182,10 @@ def main():
                          "store, instead of submitting a new (paid) job or skipping. Months without a done "
                          "job are submitted normally. Use to rebuild months corrupted by the pre-S90 flush "
                          "bug without re-charging.")
+    ap.add_argument("--weekly", action="store_true",
+                    help="WEEK-AT-A-TIME (S3 only): submit each week as its own Databento batch job and "
+                         "publish + mark it done as it lands (smaller jobs -> faster to 'done', finer resume, "
+                         "per-week S3 progress). Fresh clean pull (no reuse); marker-based resume.")
     args = ap.parse_args()
 
     OUT = args.scratch
@@ -156,6 +227,45 @@ def main():
               flush=True)
 
     total_rows = 0
+
+    # ---- WEEK-AT-A-TIME (S3 only): fresh per-week batch jobs, marker-based resume, per-week publish ----
+    if args.weekly:
+        if not is_s3:
+            sys.exit("[pull_year] --weekly requires an s3:// dest")
+        spans = _week_spans(args.start, args.end)
+        print(f"[pull_year] WEEKLY: {len(spans)} weeks x 2 roots ({args.start}..{args.end})", flush=True)
+        for (ws, we) in spans:
+            for root in ("CL", "NG"):
+                if _week_done(s3, bucket, prefix, root, ws):
+                    print(f"[pull_year] skip {root} week {ws} (marker present)", flush=True)
+                    continue
+                try:
+                    print(f"[pull_year] PULL {root} week {ws}..{we}", flush=True)
+                    n = dbf.batch_pull(client, root, ws, we, "mbp-10", args.max_cost_per,
+                                       out_dir=OUT, flush_dir=BRANCH_DIR)
+                    total_rows += n
+                except SystemExit as e:
+                    print(f"[pull_year] SKIP {root} week {ws}: {e}", flush=True); continue
+                except Exception as e:
+                    print(f"[pull_year] ERROR {root} week {ws}: {e}", flush=True); continue
+                # belt: gzip any straggler raw
+                for f in sorted(glob.glob(os.path.join(OUT, "*.jsonl"))):
+                    with open(f, "rb") as srcf, gzip.open(os.path.join(BRANCH_DIR,
+                              os.path.basename(f) + ".gz"), "wb", compresslevel=6) as dst:
+                        shutil.copyfileobj(srcf, dst)
+                    os.remove(f)
+                ngz, stubs = _publish_all_s3(s3, bucket, prefix)
+                if ngz and not stubs:
+                    s3.put_object(Bucket=bucket, Key=_week_marker_key(prefix, root, ws),
+                                  Body=b"ok")                    # mark done ONLY when clean
+                    print(f"[pull_year] {root} week {ws} uploaded {ngz} gz, marked done "
+                          f"(cum rows {total_rows})", flush=True)
+                else:
+                    print(f"[pull_year] {root} week {ws}: {ngz} gz, {stubs} stubs -> NOT marked "
+                          f"(will re-pull)", flush=True)
+        print(f"[pull_year] DONE WEEKLY {args.start}..{args.end}: {total_rows} rows total", flush=True)
+        return
+
     for (y, m) in _months(args.start, args.end):
         start, end = f"{y}-{m:02d}-01", _first_of_next(y, m)
         for root in ("CL", "NG"):
