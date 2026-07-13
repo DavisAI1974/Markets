@@ -68,6 +68,17 @@ pushed to this trunk - a watcher is armed for it).
   non-route-away cells; ~8-20 lines/day x ~5-8 cities; the edge shows in the AGGREGATE of ~50-100 lines/week,
   never a single line. Per-cell never pooled; report the edge DISTRIBUTION across lines.
 
+## NEXT-SESSION RESEARCH IDEA (Greg S90)
+- **Test the BTC ~1-second look-ahead on HH NG NYMEX FUTURES directly (NOT Kalshi).** The crypto-era edge
+  (S36/S37): fine-resolution PRICE-REVERSAL timing enters ~5-6 bps off the true turn at 1-sec vs ~9-11 at
+  1-min, stacked with the DIPOLE divergence/exhaustion FILTER (`odcore/info_dipole.py`, the gated-swing
+  stack `_info_dipole_gated_swing.py`). Greg: see if that sub-second reversal edge also works on **Henry Hub
+  natural gas futures** traded on NYMEX -- on the ACTUAL NYMEX futures tape, not the lagged Kalshi market.
+  We now HAVE the raw MBP-10 NG (+CL) tick corpus on S3 to test it directly (every message, 10-level book,
+  sub-second). Per-cell, leakage-gated, net-of-fee maker AND taker; this is trading the futures itself, a
+  different surface from the futures->Kalshi lag. Reach into the OD toolkit (leadlag, info_dipole, the
+  fee-floor/gated-swing pieces).
+
 ## RESOLUTIONS (Q1-Q4 worked in order this session; Greg took Q5 = IAM rotation)
 - **Q1 pre-processing scope - RESOLVED.** The ingest-side pre-processing to move to the trade side is
   concretely (a) TRADE SELECTION (raw tape is every message; `price` is present on book-update rows too, so
