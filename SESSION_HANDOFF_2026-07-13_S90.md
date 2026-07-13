@@ -103,6 +103,18 @@ pushed to this trunk - a watcher is armed for it).
   timer DISABLED until the scorer exists), `README.md` (runbook). Recommends an IAM instance ROLE so the
   only on-disk secret is the Databento key. Syntax-checked, no secrets committed (placeholders only). Greg
   spins up an instance + runs `setup.sh`; I cannot provision compute (S3-only creds).
+- **RAW HOURLY weather ingestion BUILT + running to S3 (Greg S90: "we want hourly ... don't roll temps up
+  into one number - that doesn't help us trade daily settle for HH").** The daily gw_degree_days rollup was
+  the SAME reduction mistake as the reduced MBP-10 tape. Added to `nws_temp_feed.py`: `fetch_asos_raw`
+  (EVERY quantitative ASOS field - tmpf/dwpf/relh/drct/sknt/gust/p01i/mslp/vsby/sky/feel/ice/snow... - EVERY
+  ob, verbatim M/T) + `ingest_hourly_raw` (gzipped jsonl per station-month -> `s3://.../weather/nws_hourly/`,
+  resumable, zero reduction) + `--ingest-hourly` CLI. Stations = 16 gas-demand metros + KXHIGH cities
+  (AUS,SAT added). Canary NYC verified (36 obs x 28 fields). Full-history pull 2024-07..2026-08 launched to
+  S3. AGGREGATE (daily HIGH for KXHIGH, gas-weighted HDD/CDD for HH) on the TRADE side, not ingest.
+  FOLLOW-ONS: (1) refactor `realized_index` to aggregate FROM the raw S3 hourly instead of re-fetching IEM;
+  (2) CONFIRM the exact KXHIGH settlement station per market city (e.g. KXHIGHNY=Central Park NYC, KXHIGHCHI
+  maybe Midway MDW) before trading. The daily gw_degree_days.json is now an S3-synced DERIVED convenience
+  (uploaded to `weather/nws_temp/`), NOT the store.
 - **ALL bento data moved git -> S3 (Greg S90: "move all the bento data from git to aws").** Copied the S85
   trades tape (`nymex_tape/`, 28) + S86 depth tape (`nymex_mbp10/`, 27) from the `data/nymex-ticks` branch to
   `s3://bento-568968024170-us-east-2-an/nymex/nymex_tape/` + `nymex/nymex_mbp10/` (55 files, 3.75 MB;
