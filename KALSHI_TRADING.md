@@ -104,6 +104,9 @@ S86 MBP-10 depth tape under `nymex_mbp10/` + depth baselines). `kalshi-session-s
 | `KALSHI_TRADING.md` | This index. |
 | `CLAUDE.md` | The lean live operating doc (S83 split; the pre-split OD/crypto/physics master is archived verbatim in `CLAUDE_ARCHIVE_OD.md`). |
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
+| `research/kalshi/FORECAST_AGENT_DESIGN_S87.md` | **[S87]** Greg's spec for the path-forecasting agent (the job, structure, self-improving method). |
+| `research/kalshi/PATH_FORECAST_RESEARCH_S87.md` | **[S87]** Cited methods survey for the NYMEX hold-length signal (bucket-continuation baseline first, then event-time anchor + tracking, GBT, FPCA, HMM gate). |
+| `research/kalshi/FORECAST_AGENT_DIRECTIVE_S88.md` | **[S88]** OPERATIONAL directive for the forecaster-building agent — operationalizes the S87 design + research into scoped marching orders: v1 = CL+NG level only (hubs deferred); target = event-time continuation curve (magnitude+shape+continuation, never level-RMSE); blind = chronological date-cut; NG cells temp/±2wk/weekday-type (`Mon | Tue-Thu ex-storage | Storage-day | Fri | Sat | Sun`); gas-weighted HDD/CDD temp feed as a v1 build (forecast-issue for conditioning, realized for labeling); 24-weeks-then-year sequence; hold-length EV-delta output. |
 | `research/kalshi/EVENT_WEIGHT_STUDY.md` (+ `event_weight_study.json`, `source_map.json`) | Per-bucket event-weight study (weather→storage strong; storage-surprise→price null). |
 | `SESSION_HANDOFF_2026-07-13_S86.md` (+ S85, S84, S83, S82, S81, S80, S79, S78) | Session handoffs (S86 latest: the EVENT-STATE MODEL + three MBP-10 builds — depth run-length, surprise split, pre-release volume primed-detector; P3 lag join scoped/next). |
 | `KICKOFF_2026-07-13_S87.md` (+ S86, S84, S83, S82, S81, S80, S79) | Session kickoffs (S87 next: P3 lag join = Kalshi echo net-of-fee, backwardation pull, wire event-state axes). |
