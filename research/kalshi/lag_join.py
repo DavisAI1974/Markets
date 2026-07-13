@@ -155,20 +155,20 @@ def simulate_event(series, day, event, fut, cfg):
         return None
     base = float(fp[ri])
     # ---- NYMEX-DRIVEN ENTRY (Greg S87): watch the canary in real time and enter the MOMENT it has
-    # clearly moved (|dN| >= trigger_bps) after R -- adaptive timing, not a fixed clock. NYMEX moving IS
-    # the trade; if the canary never moves that much within max_wait, we DON'T trade (no signal). This is
-    # the whole purpose of the RT NYMEX tape -- the leader triggers us.
-    trig, max_wait = cfg["trigger_bps"], cfg["max_wait"]
+    # clearly moved by trigger_usd DOLLARS after R -- adaptive timing, not a fixed clock. All movements
+    # in $ / c, never bps (Greg), and the trigger is tuned PER CONTRACT (same scaffold, different values:
+    # WTI ~$0.10-0.20 of a ~$77 barrel, NG ~$0.02-0.03 of ~$3 gas). NYMEX moving IS the trade; if the
+    # canary never moves that much within max_wait, we DON'T trade. This is the purpose of the RT tape.
+    trig_usd, max_wait = cfg["trigger_usd"][root], cfg["max_wait"]
     scan = np.where((fts > R) & (fts <= R + max_wait))[0]
     ei = None
     for idx in scan:
-        if abs((float(fp[idx]) - base) / base * 1e4) >= trig:
+        if abs(float(fp[idx]) - base) >= trig_usd:                  # the canary moved trig_usd dollars
             ei = int(idx); break
     if ei is None:
         return None
     t_entry = float(fts[ei])
-    fmove = float(fp[ei]) - base                                    # the canary move that TRIGGERED entry
-    fmove_bps = fmove / base * 1e4 if base else 0.0
+    fmove = float(fp[ei]) - base                                    # the canary move ($) that TRIGGERED entry
     s = 1.0 if fmove > 0 else -1.0                                  # +1 long yes, -1 short yes
     trigger_lag = round(t_entry - R, 1)                            # how fast the canary moved (front-loaded?)
 
@@ -243,8 +243,7 @@ def simulate_event(series, day, event, fut, cfg):
 
     return {
         "series": series, "root": root, "day": day, "event": event, "atm": atm_tk,
-        "fmove": round(fmove, 4), "fmove_bps": round(fmove_bps, 1), "dir": "up" if s > 0 else "dn",
-        "trigger_lag": trigger_lag,
+        "fmove": round(fmove, 4), "dir": "up" if s > 0 else "dn", "trigger_lag": trigger_lag,
         "entry_px": round(entry_px, 2), "taker_exit_px": round(taker_exit_px, 2),
         "ext": round(ext, 2), "wave": round(float(wave), 2), "maker_filled": maker_filled,
         "pnl_taker": round(float(pnl_taker), 3), "pnl_maker": round(float(pnl_maker), 3),
@@ -362,8 +361,8 @@ def selftest():
 def main():
     ap = argparse.ArgumentParser(description="P3 futures->Kalshi lag join (realized-EV of the echo)")
     ap.add_argument("--selftest", action="store_true")
-    ap.add_argument("--trigger-bps", type=float, default=10.0, help="NYMEX-driven entry: fire the moment "
-                    "the canary has moved this many bps after R (the RT trigger)")
+    ap.add_argument("--trigger-cl", type=float, default=0.15, help="WTI entry trigger: NYMEX $ move to fire")
+    ap.add_argument("--trigger-ng", type=float, default=0.02, help="NatGas entry trigger: NYMEX $ move to fire")
     ap.add_argument("--max-wait", type=float, default=300.0, help="give up if NYMEX hasn't moved by then (s)")
     ap.add_argument("--retain-frac", type=float, default=0.5, help="NYMEX-driven exit: exit when the canary "
                     "gives back to this fraction of its favorable run (hold through Kalshi whipsaw)")
@@ -379,13 +378,13 @@ def main():
     if args.selftest:
         sys.exit(0 if selftest() else 1)
 
-    cfg = {"trigger_bps": args.trigger_bps, "max_wait": args.max_wait, "retain_frac": args.retain_frac,
-           "stale_cap": args.stale_cap, "slip": args.slip, "maker_off": args.maker_off,
-           "min_wave": args.min_wave, "settle_buffer": args.settle_buffer}
+    cfg = {"trigger_usd": {"CL": args.trigger_cl, "NG": args.trigger_ng}, "max_wait": args.max_wait,
+           "retain_frac": args.retain_frac, "stale_cap": args.stale_cap, "slip": args.slip,
+           "maker_off": args.maker_off, "min_wave": args.min_wave, "settle_buffer": args.settle_buffer}
     rows = run(cfg)
     print(f"\nP3 LAG JOIN — {len(rows)} echo trades "
-          f"(trigger={args.trigger_bps:.0f}bps retain={args.retain_frac:.2f} stale_cap={args.stale_cap:.0f}c "
-          f"slip={args.slip:.0f}c; ENTRY+HOLD+EXIT all NYMEX-driven)")
+          f"(trigger CL=${args.trigger_cl:.2f} NG=${args.trigger_ng:.3f} retain={args.retain_frac:.2f} "
+          f"stale_cap={args.stale_cap:.0f}c slip={args.slip:.0f}c; ENTRY+HOLD+EXIT all NYMEX-driven, $/c)")
     print("net-of-fee CENTS per contract; ENTRY taker; EXIT maker-best-number-w-taker-fallback vs pure-taker base")
     report(rows, ["root"], "per contract")
     report(rows, ["root", "scell"], "per contract x surprise cell")
@@ -398,16 +397,18 @@ def main():
           f"fill {100*np.mean([r['maker_filled'] for r in rows]):.0f}%")
 
     if args.trig_sweep:
-        print("\n[trigger sweep — the #2 EV-vs-threshold curve; per contract, n / taker med / maker med]")
+        print("\n[trigger sweep — the #2 EV-vs-threshold curve, tuned PER CONTRACT in $ (Greg S87)]")
+        grids = {"CL": (0.05, 0.10, 0.15, 0.20, 0.30, 0.50), "NG": (0.005, 0.01, 0.02, 0.03, 0.05, 0.08)}
         for root in ("CL", "NG"):
-            print(f"  {root}:")
-            for trig in (5, 10, 15, 20, 30, 50):
-                rr = [r for r in run(dict(cfg, trigger_bps=trig)) if r["root"] == root]
+            print(f"  {root} (trigger in $ of {'crude' if root=='CL' else 'gas'}):")
+            for trig in grids[root]:
+                rr = [r for r in run(dict(cfg, trigger_usd={**cfg["trigger_usd"], root: trig}))
+                      if r["root"] == root]
                 if rr:
                     tk = np.array([r["pnl_taker"] for r in rr], float)
                     mk = np.array([r["pnl_maker"] for r in rr], float)
                     lag = np.median([r["trigger_lag"] for r in rr])
-                    print(f"    trig>={trig:>2}bps  n={len(rr):>2}  lag~{lag:>4.0f}s  "
+                    print(f"    trig>=${trig:>5.3f}  n={len(rr):>2}  lag~{lag:>4.0f}s  "
                           f"taker {np.median(tk):+5.1f}c/{100*np.mean(tk>0):>3.0f}%  "
                           f"maker {np.median(mk):+5.1f}c/{100*np.mean(mk>0):>3.0f}%  fill {100*np.mean([r['maker_filled'] for r in rr]):>3.0f}%")
 
