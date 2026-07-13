@@ -1,24 +1,24 @@
-name: NYMEX MBP-10 Ingest (durable)
+name: NYMEX MBP-10 Ingest (durable, S3)
 
-# Durable RAW-INGESTION workflow for the continuous MBP-10 YEAR tape (CL + NG, 2025-07..2026-07).
-# Modeled on the coin durable collectors (btc/eth/alt_collectors_durable.yml, S20-S37) but adapted for a
-# finite historical BATCH backfill instead of a live stream:
+# Durable RAW-INGESTION workflow for the continuous MBP-10 tape (CL + NG) -> AWS S3.
+# S92: rerouted git -> S3 ("git = CODE, S3 = ALL DATA", Greg S91) and switched to the --weekly driver whose
+# marker-resume + trading-calendar stub check were fixed in S92 (weekend Saturdays no longer block a week).
 #
-#   * pulls ONE MONTH AT A TIME from Databento as a batch job (research/kalshi/pull_year_mbp10.py),
-#   * keeps ALL RAW DATA -- every message (trades AND book updates) + every column (all 10 book levels +
-#     sizes + counts per side + action/side/depth/flags/ts_event/ts_recv/...), ZERO filtering/reduction
-#     (databento_backfill._write_mbp10_df; no row is ever dropped),
-#   * gzips each day AS IT LANDS and deletes the raw local, so local never holds more than one day,
-#   * pushes ADDITIVELY to the data/nymex-ticks branch under nymex_cont/ (NOT an orphan force-push -- the
-#     corpus accrues month by month and must never be wiped),
-#   * is RESUMABLE: a month already on the branch is skipped, so the pull survives across 6h runs with no
-#     live session babysitting it.
+#   * pulls WEEK-AT-A-TIME from Databento as batch jobs (research/kalshi/pull_year_mbp10.py --weekly),
+#   * keeps ALL RAW DATA (every message + every column; zero filtering; databento_backfill._write_mbp10_df),
+#   * names each day {ROOT}_{YYYYMMDD}_{dow}.jsonl.gz (date + day-of-week) and uploads to
+#     s3://$BUCKET/nymex/nymex_cont/, writing a _done/ marker per CLEAN week,
+#   * is RESUMABLE across 6h runs: a week whose marker exists is skipped (marker-resume), so re-runs are
+#     cheap no-ops once a range is complete, and it rolls forward as new weeks close.
 #
-# Schedule: every 6h; each run works until GitHub's ~6h cap, then the next run resumes where it left off.
-# Once all 12 months are on the branch every run just skips them (cheap no-op) until disabled.
+# REQUIRES repo secrets (Settings > Secrets and variables > Actions): DATABENTO_API_KEY, AWS_ACCESS_KEY_ID,
+# AWS_SECRET_ACCESS_KEY. Claude's token cannot create secrets or dispatch runs -- Greg adds them + clicks
+# "Run workflow" the first time; the cron self-fires after.
 #
-# REQUIRES the DATABENTO_API_KEY repo secret. Greg must add it (Settings > Secrets > Actions) and click
-# "Run workflow" the first time -- Claude's token cannot dispatch Actions runs; the cron self-fires after.
+# SEQUENCING NOTE (S92): while the manual EC2 box is still running the initial backfill, keep this workflow
+# DISABLED (or it will submit Databento jobs for the same weeks = double pay). Enable it AFTER the box
+# finishes + `pull_year_mbp10.py --reconcile-names` has written the week markers; then it becomes the durable
+# forward collector (marker-resume skips the done year, pulls only newly-closed weeks).
 
 on:
   schedule:
@@ -30,27 +30,20 @@ on:
         default: '2025-07'
         type: string
       end:
-        description: 'last month, YYYY-MM EXCLUSIVE'
-        default: '2026-07'
+        description: 'last month, YYYY-MM EXCLUSIVE (blank = current month + 1, i.e. roll forward)'
+        default: ''
         type: string
-  push:
-    branches:
-      - claude/kalshi-s79-kickoff-ij8t9o
-    paths:
-      - '.github/workflows/nymex_mbp10_ingest_durable.yml'
-      - 'research/kalshi/pull_year_mbp10.py'
-      - 'research/kalshi/databento_backfill.py'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: nymex-mbp10-ingest
   cancel-in-progress: false
 
 env:
-  CODE_REF: claude/kalshi-s79-kickoff-ij8t9o
-  DATA_BRANCH: data/nymex-ticks
+  S3_DEST: s3://bento-568968024170-us-east-2-an/nymex
+  AWS_DEFAULT_REGION: us-east-2
 
 jobs:
   ingest:
@@ -61,7 +54,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: claude/kalshi-s79-kickoff-ij8t9o
-          fetch-depth: 0   # full history to add the data-branch worktree
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -69,47 +61,49 @@ jobs:
           python-version: '3.11'
 
       - name: Install deps
-        run: pip install --quiet databento pandas
-
-      - name: Set up data-branch worktree
-        run: |
-          git config user.email noreply@anthropic.com
-          git config user.name Claude
-          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" > /dev/null 2>&1; then
-            git fetch origin "$DATA_BRANCH"
-            git worktree add --force /tmp/nymexdata "origin/$DATA_BRANCH"
-            git -C /tmp/nymexdata checkout -B "$DATA_BRANCH" "origin/$DATA_BRANCH"
-          else
-            echo "[worktree] $DATA_BRANCH does not exist yet -> creating orphan"
-            git worktree add --force --orphan -b "$DATA_BRANCH" /tmp/nymexdata
-          fi
-          git -C /tmp/nymexdata config user.email noreply@anthropic.com
-          git -C /tmp/nymexdata config user.name Claude
-          echo "[worktree] ready:"; ls /tmp/nymexdata | head
+        run: pip install --quiet databento pandas boto3
 
       - name: Connectivity check
         run: |
           curl -sS --max-time 8 -o /dev/null -w "Databento hist: %{http_code}\n" \
             "https://hist.databento.com/v0/metadata.list_datasets" || true
 
-      - name: Pull MBP-10 year (month at a time, resumable)
+      - name: Pull MBP-10 weeks to S3 (marker-resume)
         timeout-minutes: 345
         env:
           DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          if [ -z "$DATABENTO_API_KEY" ]; then
-            echo "::error::DATABENTO_API_KEY secret is not set -- add it in Settings > Secrets > Actions"
-            exit 1
-          fi
+          missing=0
+          for v in DATABENTO_API_KEY AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::$v secret is not set -- add it in Settings > Secrets > Actions"; missing=1; fi
+          done
+          [ "$missing" = 1 ] && exit 1
           START="${{ github.event.inputs.start || '2025-07' }}"
-          END="${{ github.event.inputs.end || '2026-07' }}"
-          echo "[run] pull_year_mbp10 $START..$END on $(date -u)"
-          python research/kalshi/pull_year_mbp10.py --start "$START" --end "$END"
+          END="${{ github.event.inputs.end }}"
+          if [ -z "$END" ]; then END="$(date -u -d "$(date -u +%Y-%m-01) +1 month" +%Y-%m)"; fi
+          echo "[run] pull_year_mbp10 --weekly $START..$END -> $S3_DEST on $(date -u)"
+          python research/kalshi/pull_year_mbp10.py --start "$START" --end "$END" \
+            --dest "$S3_DEST" --weekly --scratch /tmp/nymex_scratch
 
       - name: Corpus stats
         if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          git -C /tmp/nymexdata fetch origin "$DATA_BRANCH" >/dev/null 2>&1 || true
-          echo "nymex_cont/ files now on branch:"
-          git -C /tmp/nymexdata ls-tree -r --name-only "origin/$DATA_BRANCH" 2>/dev/null \
-            | grep -c '^nymex_cont/' || echo 0
+          python - <<'PY'
+          import boto3
+          b="bento-568968024170-us-east-2-an"; s3=boto3.client("s3","us-east-2")
+          def n(pfx):
+              c=0; tok=None
+              while True:
+                  kw=dict(Bucket=b,Prefix=pfx,MaxKeys=1000)
+                  if tok: kw["ContinuationToken"]=tok
+                  r=s3.list_objects_v2(**kw); c+=r.get("KeyCount",0)
+                  if r.get("IsTruncated"): tok=r["NextContinuationToken"]
+                  else: return c
+          print("nymex_cont/ day files:", n("nymex/nymex_cont/CL_")+n("nymex/nymex_cont/NG_"))
+          print("nymex_cont/_done/ week markers:", n("nymex/nymex_cont/_done/"))
+          PY

@@ -304,10 +304,12 @@ def _months_iter(start: str, end: str):
 
 
 def ingest_hourly_raw(stations: list[str], start: str, end: str, dest: str,
-                      scratch: str = "data/nws_hourly") -> int:
+                      scratch: str = "data/nws_hourly", overwrite: bool = False) -> int:
     """Pull RAW hourly obs per (station, month) and store gzipped jsonl to dest, resumable. dest is
     's3://BUCKET/PREFIX' (-> PREFIX/nws_hourly/{station}_{YYYYMM}.jsonl.gz) or a local dir. One line per
-    hourly ob, ALL fields verbatim. Skips a (station, month) already present. Returns rows written."""
+    hourly ob, ALL fields verbatim. Skips a (station, month) already present UNLESS overwrite=True (the
+    forward-collector mode: re-fetch + overwrite the trailing month(s) so newly-arrived hours are appended
+    -- IEM returns the whole month up to now, so overwriting tops it up). Returns rows written."""
     import gzip as _gz
     is_s3 = dest.startswith("s3://")
     if is_s3:
@@ -321,12 +323,13 @@ def ingest_hourly_raw(stations: list[str], start: str, end: str, dest: str,
         for st in stations:
             name = f"{st}_{yyyymm}.jsonl.gz"
             key = (f"{pfx}/" if is_s3 and pfx else "") + f"nws_hourly/{name}"
-            if is_s3:
-                if s3.list_objects_v2(Bucket=bkt, Prefix=key, MaxKeys=1).get("KeyCount", 0):
-                    print(f"[nws-raw] skip {st} {ym} (in S3)", flush=True); continue
-            else:
-                if os.path.exists(os.path.join(scratch, name)):
-                    print(f"[nws-raw] skip {st} {ym} (local)", flush=True); continue
+            if not overwrite:
+                if is_s3:
+                    if s3.list_objects_v2(Bucket=bkt, Prefix=key, MaxKeys=1).get("KeyCount", 0):
+                        print(f"[nws-raw] skip {st} {ym} (in S3)", flush=True); continue
+                else:
+                    if os.path.exists(os.path.join(scratch, name)):
+                        print(f"[nws-raw] skip {st} {ym} (local)", flush=True); continue
             try:
                 rows = fetch_asos_raw(st, ms, me)
             except Exception as e:
@@ -500,6 +503,9 @@ def main() -> int:
     ap.add_argument("--stations", default=None,
                     help="comma-separated station ids to ingest (default = the gas-demand metros + KXHIGH "
                          "cities: %s)" % ",".join(RAW_STATIONS))
+    ap.add_argument("--overwrite", action="store_true",
+                    help="ingest-hourly: re-fetch + overwrite months even if already present (forward-collector "
+                         "mode -- tops up the trailing/current month with newly-arrived hours).")
     args = ap.parse_args()
 
     if args.selftest:
@@ -511,7 +517,7 @@ def main() -> int:
         if not (args.start and args.end):
             ap.error("--ingest-hourly needs --start and --end (YYYY-MM-DD)")
         stations = args.stations.split(",") if args.stations else RAW_STATIONS
-        n = ingest_hourly_raw(stations, args.start, args.end, args.dest)
+        n = ingest_hourly_raw(stations, args.start, args.end, args.dest, overwrite=args.overwrite)
         print(f"[nws-raw] DONE {args.start}..{args.end}: {n} hourly obs across {len(stations)} stations "
               f"-> {args.dest}/nws_hourly/", flush=True)
         return 0

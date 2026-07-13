@@ -1,0 +1,73 @@
+name: NWS Hourly Collector (durable, S3)
+
+# S92: the RT forward collector for raw hourly NWS/ASOS observations (Greg S92 "stand up rt hr by hr
+# collector"). The HISTORICAL year is already complete on S3 (weather/nws_hourly/, 25 months, 18 stations,
+# raw hour-by-hour WITH precip p01i + full ob). This keeps it CURRENT going forward.
+#
+#   * runs research/kalshi/nws_temp_feed.py --ingest-hourly --overwrite for the TRAILING 2 months
+#     (previous + current), so newly-arrived hourly obs are appended (IEM returns the whole month to-date;
+#     --overwrite re-fetches + replaces the trailing files instead of skip-if-present),
+#   * keeps ALL RAW fields verbatim (tmpf, p01i precip, dwpf, relh, wind, snowdepth, ice, cloud, ...; zero
+#     reduction -- the daily HDD/CDD roll-up is derived on the trade side, not here),
+#   * uploads to s3://$BUCKET/weather/nws_hourly/{station}_{YYYYMM}.jsonl.gz.
+#
+# REQUIRES repo secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY (no Databento; IEM ASOS is free/no-key).
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'   # every 6h (offset :17 to avoid the other collectors' :00)
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'first month YYYY-MM-DD (blank = first of previous month)'
+        default: ''
+        type: string
+      end:
+        description: 'end YYYY-MM-DD exclusive (blank = first of next month)'
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nws-hourly-collector
+  cancel-in-progress: false
+
+env:
+  DEST: s3://bento-568968024170-us-east-2-an/weather
+  AWS_DEFAULT_REGION: us-east-2
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/kalshi-s79-kickoff-ij8t9o
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install --quiet boto3
+
+      - name: Ingest trailing-2-months raw hourly (overwrite) to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          for v in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [ -z "${!v}" ]; then echo "::error::$v secret is not set -- add it in Settings > Secrets > Actions"; exit 1; fi
+          done
+          START="${{ github.event.inputs.start }}"
+          END="${{ github.event.inputs.end }}"
+          [ -z "$START" ] && START="$(date -u -d "$(date -u +%Y-%m-01) -1 month" +%Y-%m-01)"
+          [ -z "$END" ]   && END="$(date -u -d "$(date -u +%Y-%m-01) +1 month" +%Y-%m-01)"
+          echo "[nws] ingest --overwrite $START..$END -> $DEST on $(date -u)"
+          python research/kalshi/nws_temp_feed.py --ingest-hourly --overwrite \
+            --start "$START" --end "$END" --dest "$DEST"
