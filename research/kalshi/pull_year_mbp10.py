@@ -109,6 +109,12 @@ def main():
                     help="git dest only: path to a worktree of data/nymex-ticks (default /tmp/nymexdata). "
                          "Create once: git worktree add --force <path> data/nymex-ticks")
     ap.add_argument("--scratch", default=OUT, help="local scratch dir for decoded JSONL before gzip")
+    ap.add_argument("--reuse-done-jobs", action="store_true",
+                    help="RECOVERY mode: for each (month,root) with an ALREADY-DONE Databento batch job, "
+                         "RE-DECODE it (free, ~30d re-serve) with the current writer/flush and OVERWRITE the "
+                         "store, instead of submitting a new (paid) job or skipping. Months without a done "
+                         "job are submitted normally. Use to rebuild months corrupted by the pre-S90 flush "
+                         "bug without re-charging.")
     args = ap.parse_args()
 
     OUT = args.scratch
@@ -133,20 +139,44 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     client = dbf._client()
 
+    # RECOVERY: map every already-DONE whole-month GLBX mbp-10 batch job -> (root, 'YYYYMM') so we can
+    # re-decode it free instead of re-submitting (fixes the pre-S90 flush corruption without re-charging).
+    done_map = {}
+    if args.reuse_done_jobs:
+        for j in client.batch.list_jobs():
+            if j.get("dataset") != "GLBX.MDP3" or j.get("schema") != "mbp-10" or j.get("state") != "done":
+                continue
+            syms = j.get("symbols") or []
+            sym = str(syms[0] if isinstance(syms, (list, tuple)) else syms).upper()
+            r = "NG" if sym.startswith("NG") else ("CL" if sym.startswith("CL") else None)
+            st = str(j.get("start"))[:10]                          # YYYY-MM-DD
+            if r and len(st) == 10 and st[8:10] == "01":           # whole-month jobs only
+                done_map[(r, st[:4] + st[5:7])] = j.get("id")
+        print(f"[pull_year] reuse-done-jobs: {len(done_map)} done monthly jobs available for free re-decode",
+              flush=True)
+
     total_rows = 0
     for (y, m) in _months(args.start, args.end):
         start, end = f"{y}-{m:02d}-01", _first_of_next(y, m)
         for root in ("CL", "NG"):
-            present = (_s3_month_present(s3, bucket, prefix, root, y, m) if is_s3
-                       else bool(glob.glob(os.path.join(BRANCH_DIR, f"{root}_{y}{m:02d}*.jsonl.gz"))))
+            reuse_jid = done_map.get((root, f"{y}{m:02d}")) if args.reuse_done_jobs else None
+            present = (not reuse_jid) and (
+                _s3_month_present(s3, bucket, prefix, root, y, m) if is_s3
+                else bool(glob.glob(os.path.join(BRANCH_DIR, f"{root}_{y}{m:02d}*.jsonl.gz"))))
             if present:
                 print(f"[pull_year] skip {root} {y}-{m:02d} (already in store)", flush=True)
                 continue
             try:
                 # flush_dir -> each per-day JSONL is gzipped into BRANCH_DIR AS IT LANDS and the raw is
                 # deleted, so local never holds more than one day of raw even for a whole-month batch.
-                n = dbf.batch_pull(client, root, start, end, "mbp-10", args.max_cost_per,
-                                   out_dir=OUT, flush_dir=BRANCH_DIR)
+                if reuse_jid:
+                    print(f"[pull_year] RE-DECODE {root} {y}-{m:02d} from done job {reuse_jid} (free)",
+                          flush=True)
+                    n = dbf.redecode_job(client, reuse_jid, root, "mbp-10",
+                                         out_dir=OUT, flush_dir=BRANCH_DIR)
+                else:
+                    n = dbf.batch_pull(client, root, start, end, "mbp-10", args.max_cost_per,
+                                       out_dir=OUT, flush_dir=BRANCH_DIR)
                 total_rows += n
             except SystemExit as e:
                 print(f"[pull_year] SKIP {root} {y}-{m:02d}: {e}", flush=True)
