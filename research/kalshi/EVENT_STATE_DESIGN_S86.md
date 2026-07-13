@@ -19,17 +19,24 @@ biggest storage surprises made the smallest moves).
 
 1. **NEWS / ANTICIPATION** — forward-looking shocks priced ahead: forecasted hurricanes (NHC cone/outlook),
    weather outlooks, geopolitics. STRICTLY point-in-time / pre-event (leakage: only what was public before
-   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine. Two SUB-TYPES,
-   different time-shape:
-   - **Discrete events** — a forecast/headline with a date (hurricane advisory, an EIA/Fed print). Point
-     spike in the state.
-   - **Persistent geopolitical regime (Greg, high weight on CL now)** — the war in Ukraine (Russian
+   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine. News works in THREE TENSES
+   (Greg), carrying the ROLLING recent news flow into each window tagged by tense (not a yes/no flag):
+   - **Ex-ante (anticipation)** — a forecast/outlook priced BEFORE it happens (NHC cone, cold-snap outlook,
+     an EIA/Fed print due). A point spike ahead of the event.
+   - **Concurrent (real-time / ongoing)** — a shock unfolding NOW (a storm at landfall) plus the PERSISTENT
+     geopolitical regime, high weight on CL now: the war in Ukraine (Russian
      supply/sanctions/flows) and the Iran conflict (Middle East supply, Strait of Hormuz) are NOT one-off
      headlines; they are slow-moving BACKGROUND state that sits under crude as a standing risk premium and
      raises its sensitivity to every other trigger. A crude market carrying that premium is a PRIMED market
      -> a small storage surprise becomes a big mover (fits the S86 CL window; hypothesis, not a claim). The
      running memory must carry an evolving geopolitical-risk REGIME axis (level + direction), distinct from
-     the discrete-event spikes.
+     the ex-ante spikes.
+   - **Ex-post (aftermath / LASTING EFFECT, Greg)** — updates on how long a PAST disruption drags: "the
+     hurricane damage from earlier will take longer to fix than expected," a refinery still down weeks
+     later, a restart slipping. The stacking INSIDE the news pillar: a past event does not end when it
+     happens; its aftermath keeps re-pricing supply forward, so a Tuesday "repairs delayed" headline primes
+     the Wednesday release. First-class -- the repair/restart-timeline updates ARE the lasting-effect
+     signal, distinct from the original ex-ante spike.
 2. **STORAGE** — where the buffer sits: level vs 5-yr normal + the weekly SURPRISE (actual vs consensus /
    seasonal proxy). One piece, not the read (`eia_surprise.py` supplies actual/level; `prev_level` is the
    level hook).
