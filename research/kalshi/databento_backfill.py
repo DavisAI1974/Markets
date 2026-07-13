@@ -116,7 +116,7 @@ def _write_df(df, symbol: str) -> int:
     return n
 
 
-def _write_mbp10_df(df, symbol: str) -> int:
+def _write_mbp10_df(df, symbol: str, out_dir: str = None) -> int:
     """MBP-10 DBNStore.to_df() -> per-day depth JSONL. We keep only TRADE events (action=='T') carrying
     their CONCURRENT 10-level book snapshot — same lean density as the `trades` tape (so the S85 price
     path reproduces byte-for-byte off the T prints), plus the book at each trade for the imbalance /
@@ -126,8 +126,10 @@ def _write_mbp10_df(df, symbol: str) -> int:
     Record: {ts (ts_event), price, size, symbol, src, bid_px, ask_px, bid_sz, ask_sz, bid_dep, ask_dep}
       bid_px/ask_px/bid_sz/ask_sz = top of book (level 00); bid_dep/ask_dep = sum of the 10 resting sizes
       per side (the depth whose thinning = liquidity being consumed = the leader exhausting resistance).
-    Written to MBP10_DIR (NOT OUT_DIR) so load_tape() never mixes it with the trades tape."""
-    os.makedirs(MBP10_DIR, exist_ok=True)
+    Written to MBP10_DIR (NOT OUT_DIR) so load_tape() never mixes it with the trades tape; out_dir
+    overrides it (the continuous intraday tape is kept SEPARATE from the release-window slices)."""
+    out = out_dir or MBP10_DIR
+    os.makedirs(out, exist_ok=True)
     bid_sz_cols = [f"bid_sz_0{i}" for i in range(10) if f"bid_sz_0{i}" in df.columns]
     ask_sz_cols = [f"ask_sz_0{i}" for i in range(10) if f"ask_sz_0{i}" in df.columns]
     handles: dict[str, object] = {}
@@ -149,7 +151,7 @@ def _write_mbp10_df(df, symbol: str) -> int:
         day = datetime.fromtimestamp(sec, timezone.utc).strftime("%Y%m%d")
         fh = handles.get(day)
         if fh is None:
-            fh = open(os.path.join(MBP10_DIR, f"{symbol}_{day}.jsonl"), "a", buffering=1)
+            fh = open(os.path.join(out, f"{symbol}_{day}.jsonl"), "a", buffering=1)
             handles[day] = fh
         fh.write(json.dumps({
             "ts": sec, "price": float(px), "size": int(row.get("size", 0) or 0),
@@ -245,6 +247,24 @@ def window(client, symbol: str, release: str, pre: int, post: int, schema: str, 
     print(f"[databento] window {symbol} {release} [-{pre}s,+{post}s]: {got} trades -> {OUT_DIR}")
 
 
+def range_pull(client, symbol: str, start: str, end: str, schema: str, max_cost: float, out_dir: str = None):
+    """SYNCHRONOUS continuous date-range pull -- canary-sized only (a few days; to_df loads to memory).
+    Use `batch` for a month+. Writes the continuous intraday tape to out_dir, kept SEPARATE from the
+    S86 release-window slices in MBP10_DIR so those baselines are never contaminated."""
+    sym, stype = _sym(symbol)
+    if estimate_cost(client, sym, stype, start, end, schema) > max_cost:
+        raise SystemExit(f"[databento] over --max-cost ${max_cost}; aborting")
+    store = _retry(lambda: client.timeseries.get_range(dataset=DATASET, symbols=[sym], stype_in=stype,
+                                                        schema=schema, start=start, end=end))
+    df = store.to_df()
+    if len(df) and schema.startswith("mbp-10"):
+        got = _write_mbp10_df(df, symbol, out_dir)
+        print(f"[databento] range {symbol} {start}..{end}: {got} trade+book rows -> {out_dir or MBP10_DIR}")
+    else:
+        got = _write_df(df, symbol) if len(df) else 0
+        print(f"[databento] range {symbol} {start}..{end}: {got} trades -> {OUT_DIR}")
+
+
 def batch(client, symbol: str, start: str, end: str, schema: str, max_cost: float):
     sym, stype = _sym(symbol)
     if estimate_cost(client, sym, stype, start, end, schema) > max_cost:
@@ -259,7 +279,7 @@ def batch(client, symbol: str, start: str, end: str, schema: str, max_cost: floa
 def main() -> None:
     global ROLL
     ap = argparse.ArgumentParser(description="Databento true-tick NYMEX backfill (CL/NG)")
-    ap.add_argument("mode", choices=["cost", "window", "batch", "defs"])
+    ap.add_argument("mode", choices=["cost", "window", "range", "batch", "defs"])
     ap.add_argument("--symbol", required=True, help="CL or NG (root -> continuous front) or raw contract")
     ap.add_argument("--release", default=None, help="RFC3339 release time (window/cost mode)")
     ap.add_argument("--pre", type=int, default=120)
@@ -270,6 +290,8 @@ def main() -> None:
     ap.add_argument("--roll", choices=["v", "n", "c"], default=ROLL,
                     help="continuous roll rule for a bare root: v=volume (default), n=open-interest, c=calendar")
     ap.add_argument("--max-cost", type=float, default=1.0, help="abort if est. cost exceeds this ($)")
+    ap.add_argument("--out-dir", default=None, help="output dir override (continuous tape kept separate "
+                    "from the release-window slices in MBP10_DIR)")
     args = ap.parse_args()
 
     ROLL = args.roll
@@ -286,6 +308,10 @@ def main() -> None:
         estimate_cost(client, sym, stype, start, end, args.schema)
     elif args.mode == "window":
         window(client, args.symbol, args.release, args.pre, args.post, args.schema, args.max_cost)
+    elif args.mode == "range":
+        if not (start and end):
+            raise SystemExit("[databento] range needs --start and --end")
+        range_pull(client, args.symbol, start, end, args.schema, args.max_cost, args.out_dir)
     elif args.mode == "batch":
         if not (start and end):
             raise SystemExit("[databento] batch needs --start and --end")
