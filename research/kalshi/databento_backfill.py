@@ -276,10 +276,58 @@ def batch(client, symbol: str, start: str, end: str, schema: str, max_cost: floa
           "(free re-download within 30d), then feed the .dbn.zst through _write_df.")
 
 
+def batch_pull(client, symbol: str, start: str, end: str, schema: str, max_cost: float,
+               out_dir: str = None, poll_s: float = 20.0, timeout_s: float = 5400.0) -> int:
+    """FULL batch pipeline for a (canary-to-month) range: cost-gate -> submit (split by DAY) -> poll to
+    done -> download the .dbn.zst files to a temp dir -> decode EACH FILE streaming (one day in memory at
+    a time -> bounded) -> write JSONL to out_dir -> delete the temp files. Returns rows written.
+
+    Batch (vs sync range) is the right tool for large/continuous pulls: files land on disk not memory,
+    decode is per-file, and Databento re-serves the job free for 30 days. Loop this per month for a year,
+    gzip each month to the data branch, delete local -> the year accrues on the branch, disk stays bounded."""
+    import tempfile
+    import shutil
+    import glob
+    import databento as db
+    sym, stype = _sym(symbol)
+    if estimate_cost(client, sym, stype, start, end, schema) > max_cost:
+        raise SystemExit(f"[databento] over --max-cost ${max_cost}; aborting")
+    job = _retry(lambda: client.batch.submit_job(dataset=DATASET, symbols=[sym], stype_in=stype,
+                 schema=schema, start=start, end=end, encoding="dbn", compression="zstd",
+                 split_duration="day"))
+    jid = job.get("id")
+    print(f"[databento] batch {symbol} {start}..{end} job={jid} state={job.get('state')}", flush=True)
+    waited, st = 0.0, job.get("state")
+    while waited < timeout_s:
+        det = _retry(lambda: client.batch.get_job_details(jid))
+        st = det.get("state")
+        if st == "done":
+            break
+        if st in ("expired", "failed"):
+            raise SystemExit(f"[databento] batch job {jid} {st}")
+        time.sleep(poll_s); waited += poll_s
+    if st != "done":
+        raise SystemExit(f"[databento] batch job {jid} not done after {int(timeout_s)}s (state {st})")
+    tmp = tempfile.mkdtemp(prefix="dbn_")
+    try:
+        _retry(lambda: client.batch.download(jid, output_dir=tmp))
+        total = 0
+        for p in sorted(glob.glob(os.path.join(tmp, "**", "*.dbn.zst"), recursive=True)):
+            df = db.DBNStore.from_file(p).to_df()                   # ONE day in memory -> bounded
+            if len(df):
+                total += (_write_mbp10_df(df, symbol, out_dir) if schema.startswith("mbp-10")
+                          else _write_df(df, symbol))
+            os.remove(p)
+        print(f"[databento] batch {symbol} {start}..{end}: {total} rows -> {out_dir or MBP10_DIR}", flush=True)
+        return total
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main() -> None:
     global ROLL
     ap = argparse.ArgumentParser(description="Databento true-tick NYMEX backfill (CL/NG)")
-    ap.add_argument("mode", choices=["cost", "window", "range", "batch", "defs"])
+    ap.add_argument("mode", choices=["cost", "window", "range", "batch", "pull", "defs"])
     ap.add_argument("--symbol", required=True, help="CL or NG (root -> continuous front) or raw contract")
     ap.add_argument("--release", default=None, help="RFC3339 release time (window/cost mode)")
     ap.add_argument("--pre", type=int, default=120)
@@ -316,6 +364,10 @@ def main() -> None:
         if not (start and end):
             raise SystemExit("[databento] batch needs --start and --end")
         batch(client, args.symbol, start, end, args.schema, args.max_cost)
+    elif args.mode == "pull":
+        if not (start and end):
+            raise SystemExit("[databento] pull needs --start and --end")
+        batch_pull(client, args.symbol, start, end, args.schema, args.max_cost, args.out_dir)
     elif args.mode == "defs":
         if not (start and end):
             raise SystemExit("[databento] defs needs --start and --end (or --release with --pre/--post)")
