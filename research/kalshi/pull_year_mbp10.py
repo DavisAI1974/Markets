@@ -1,17 +1,25 @@
 """
 pull_year_mbp10.py — pull a YEAR (or any month range) of continuous MBP-10 for CL+NG, month by month,
-gzip to the data/nymex-ticks branch, delete local. Bounded disk; the year accrues gzipped on the branch
-(pay-once, restored free every session via kalshi-session-start). Greg S87.
+gzip each day AS IT LANDS, publish to a durable store, delete local. Bounded disk (never more than one
+day of raw). RESUMABLE: a month already in the store is skipped.
 
-Per month, per contract: databento_backfill.batch_pull (submit -> poll -> download -> decode, one day in
-memory at a time) -> data/nymex_cont/<ROOT>_YYYYMMDD.jsonl -> gzip into the worktree's nymex_cont/ ->
-delete the raw .jsonl -> commit+push the worktree. RESUMABLE: a month already on the branch is skipped.
+Two destinations (--dest):
+  * git (default): push the gz into a worktree of the data/nymex-ticks branch under nymex_cont/.
+      Setup once:  git worktree add --force /tmp/nymexdata data/nymex-ticks
+  * s3://BUCKET/PREFIX : upload the gz to an S3 / AWS-Lightsail bucket under PREFIX/nymex_cont/.
+      Auth from the standard AWS env: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION
+      (Lightsail bucket keys work). Optional AWS_S3_ENDPOINT for a custom/Lightsail endpoint.
 
-Setup (once, before running): a worktree of the data branch at WT:
-    git worktree add --force /tmp/nymexdata data/nymex-ticks
+Keeps ALL RAW DATA — databento_backfill._write_mbp10_df writes every message + every column, zero
+filtering (no row is ever dropped). This driver only moves/compresses the files; it never touches content.
 
 Usage:
+    # git branch (default)
     DATABENTO_API_KEY=db-... python research/kalshi/pull_year_mbp10.py --start 2025-07 --end 2026-07
+
+    # S3 / Lightsail bucket
+    DATABENTO_API_KEY=db-... AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_DEFAULT_REGION=us-east-1 \
+      python research/kalshi/pull_year_mbp10.py --start 2025-07 --end 2026-07 --dest s3://my-bucket/nymex
 """
 from __future__ import annotations
 
@@ -26,9 +34,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import databento_backfill as dbf                              # noqa: E402
 
-WT = "/tmp/nymexdata"                                          # worktree of data/nymex-ticks
+WT = "/tmp/nymexdata"                                          # worktree of data/nymex-ticks (git dest)
 OUT = "data/nymex_cont"                                        # local scratch for decoded JSONL
-BRANCH_DIR = os.path.join(WT, "nymex_cont")
+BRANCH_DIR = os.path.join(WT, "nymex_cont")                   # where gz land locally before publish
 
 
 def _months(start, end):
@@ -49,51 +57,94 @@ def _first_of_next(y, m):
     return f"{y+1}-01-01" if m == 12 else f"{y}-{m+1:02d}-01"
 
 
-def _on_branch(root, y, m):
-    return bool(glob.glob(os.path.join(BRANCH_DIR, f"{root}_{y}{m:02d}*.jsonl.gz")))
-
-
 def _git(*args):
     return subprocess.run(["git", "-C", WT, *args], capture_output=True, text=True)
 
+
+# ---- S3 / Lightsail-bucket destination -------------------------------------------------------------
+
+def _s3_parse(dest):
+    """s3://bucket/prefix -> (bucket, prefix). prefix may be empty."""
+    bucket, _, prefix = dest[len("s3://"):].partition("/")
+    return bucket, prefix.strip("/")
+
+
+def _s3_client():
+    import boto3
+    kw = {}
+    ep = os.environ.get("AWS_S3_ENDPOINT")                    # optional (Lightsail / custom endpoint)
+    if ep:
+        kw["endpoint_url"] = ep
+    region = os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("AWS_REGION")
+    if region:
+        kw["region_name"] = region
+    return boto3.client("s3", **kw)
+
+
+def _s3_key(prefix, name):
+    return (f"{prefix}/" if prefix else "") + f"nymex_cont/{name}"
+
+
+def _s3_month_present(s3, bucket, prefix, root, y, m):
+    """True if ANY {root}_{yyyymm}*.jsonl.gz already exists under the bucket prefix (resume-skip)."""
+    pfx = _s3_key(prefix, f"{root}_{y}{m:02d}")
+    resp = s3.list_objects_v2(Bucket=bucket, Prefix=pfx, MaxKeys=1)
+    return resp.get("KeyCount", 0) > 0
+
+
+# ---- main ------------------------------------------------------------------------------------------
 
 def main():
     global WT, OUT, BRANCH_DIR
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", required=True, help="YYYY-MM inclusive")
     ap.add_argument("--end", required=True, help="YYYY-MM exclusive")
+    ap.add_argument("--dest", default="git",
+                    help="'git' (worktree of data/nymex-ticks, default) or 's3://BUCKET/PREFIX' "
+                         "(S3 / Lightsail bucket; uses the standard AWS env vars).")
     ap.add_argument("--max-cost-per", type=float, default=1000.0,
                     help="per (month,contract) cost gate ($). Price is pre-agreed -> high by default; the "
                          "estimate is still printed so spend is logged.")
     ap.add_argument("--worktree", default=WT,
-                    help="path to a git worktree of the data/nymex-ticks branch (default /tmp/nymexdata). "
-                         "Set this to run on any machine; create it once with: "
-                         "git worktree add --force <path> data/nymex-ticks")
+                    help="git dest only: path to a worktree of data/nymex-ticks (default /tmp/nymexdata). "
+                         "Create once: git worktree add --force <path> data/nymex-ticks")
     ap.add_argument("--scratch", default=OUT, help="local scratch dir for decoded JSONL before gzip")
     args = ap.parse_args()
 
-    WT = args.worktree
     OUT = args.scratch
-    BRANCH_DIR = os.path.join(WT, "nymex_cont")
+    is_s3 = args.dest.startswith("s3://")
 
-    if not os.path.isdir(os.path.join(WT, ".git")) and not os.path.exists(os.path.join(WT, ".git")):
-        sys.exit(f"[pull_year] worktree missing at {WT}; run: git worktree add --force {WT} data/nymex-ticks")
-    os.makedirs(BRANCH_DIR, exist_ok=True)
+    if is_s3:
+        bucket, prefix = _s3_parse(args.dest)
+        s3 = _s3_client()
+        BRANCH_DIR = os.path.join(OUT, "_gz")                 # gz land here locally, uploaded then deleted
+        os.makedirs(BRANCH_DIR, exist_ok=True)
+        print(f"[pull_year] dest = s3://{bucket}/{prefix or ''} (nymex_cont/)", flush=True)
+    else:
+        WT = args.worktree
+        BRANCH_DIR = os.path.join(WT, "nymex_cont")
+        if not os.path.exists(os.path.join(WT, ".git")):
+            sys.exit(f"[pull_year] worktree missing at {WT}; run: "
+                     f"git worktree add --force {WT} data/nymex-ticks")
+        os.makedirs(BRANCH_DIR, exist_ok=True)
+        _git("config", "user.email", "noreply@anthropic.com")
+        _git("config", "user.name", "Claude")
+
     os.makedirs(OUT, exist_ok=True)
     client = dbf._client()
-    _git("config", "user.email", "noreply@anthropic.com")
-    _git("config", "user.name", "Claude")
 
     total_rows = 0
     for (y, m) in _months(args.start, args.end):
         start, end = f"{y}-{m:02d}-01", _first_of_next(y, m)
         for root in ("CL", "NG"):
-            if _on_branch(root, y, m):
-                print(f"[pull_year] skip {root} {y}-{m:02d} (already on branch)", flush=True)
+            present = (_s3_month_present(s3, bucket, prefix, root, y, m) if is_s3
+                       else bool(glob.glob(os.path.join(BRANCH_DIR, f"{root}_{y}{m:02d}*.jsonl.gz"))))
+            if present:
+                print(f"[pull_year] skip {root} {y}-{m:02d} (already in store)", flush=True)
                 continue
             try:
-                # flush_dir -> each per-day JSONL is gzipped into the worktree AS IT LANDS and the raw
-                # is deleted, so local never holds more than one day of raw even for a whole-month batch.
+                # flush_dir -> each per-day JSONL is gzipped into BRANCH_DIR AS IT LANDS and the raw is
+                # deleted, so local never holds more than one day of raw even for a whole-month batch.
                 n = dbf.batch_pull(client, root, start, end, "mbp-10", args.max_cost_per,
                                    out_dir=OUT, flush_dir=BRANCH_DIR)
                 total_rows += n
@@ -107,20 +158,35 @@ def main():
                                                  "wb", compresslevel=6) as dst:
                 shutil.copyfileobj(src, dst)
             os.remove(f)
-        # commit the month if anything new landed in the worktree
-        _git("add", "nymex_cont/")
-        staged = _git("diff", "--cached", "--quiet").returncode != 0
-        if staged:
-            _git("commit", "-q", "-m", f"data: continuous MBP-10 nymex_cont/ {y}-{m:02d} (CL+NG), full-raw\n\n"
-                 f"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>")
-            for _ in range(4):
-                _git("pull", "--rebase", "origin", "data/nymex-ticks")
-                r = _git("push", "origin", "HEAD:data/nymex-ticks")
-                if r.returncode == 0:
-                    break
-            print(f"[pull_year] {y}-{m:02d} pushed (cum rows {total_rows})", flush=True)
+
+        # publish the month
+        gz_files = sorted(glob.glob(os.path.join(BRANCH_DIR, f"*_{y}{m:02d}*.jsonl.gz")))
+        if not gz_files:
+            print(f"[pull_year] {y}-{m:02d} nothing new to publish", flush=True)
+            continue
+        if is_s3:
+            for g in gz_files:
+                key = _s3_key(prefix, os.path.basename(g))
+                for attempt in range(4):
+                    try:
+                        s3.upload_file(g, bucket, key)
+                        break
+                    except Exception as e:
+                        print(f"[pull_year] s3 upload retry {attempt} {key}: {e}", flush=True)
+                os.remove(g)                                  # local gz not needed after upload
+            print(f"[pull_year] {y}-{m:02d} uploaded {len(gz_files)} gz to s3://{bucket}/"
+                  f"{(prefix + '/') if prefix else ''}nymex_cont/ (cum rows {total_rows})", flush=True)
         else:
-            print(f"[pull_year] {y}-{m:02d} nothing new to commit", flush=True)
+            _git("add", "nymex_cont/")
+            if _git("diff", "--cached", "--quiet").returncode != 0:
+                _git("commit", "-q", "-m",
+                     f"data: continuous MBP-10 nymex_cont/ {y}-{m:02d} (CL+NG), full-raw\n\n"
+                     f"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>")
+                for _ in range(4):
+                    _git("pull", "--rebase", "origin", "data/nymex-ticks")
+                    if _git("push", "origin", "HEAD:data/nymex-ticks").returncode == 0:
+                        break
+                print(f"[pull_year] {y}-{m:02d} pushed (cum rows {total_rows})", flush=True)
     print(f"[pull_year] DONE {args.start}..{args.end}: {total_rows} rows total", flush=True)
 
 
