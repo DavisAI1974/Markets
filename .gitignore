@@ -89,6 +89,7 @@ news_events.*.jsonl
 data/kalshi_hist_trades/
 data/pyth_ticks/
 data/nymex_mbp10/
+data/nymex_cont/
 
 # Level-hit dataset output (S82, local research map)
 data/level_hits_*.json
