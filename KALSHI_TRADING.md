@@ -89,7 +89,7 @@ S86 MBP-10 depth tape under `nymex_mbp10/` + depth baselines). `kalshi-session-s
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
 | `research/kalshi/EVENT_WEIGHT_STUDY.md` (+ `event_weight_study.json`, `source_map.json`) | Per-bucket event-weight study (weather→storage strong; storage-surprise→price null). |
 | `SESSION_HANDOFF_2026-07-13_S86.md` (+ S85, S84, S83, S82, S81, S80, S79, S78) | Session handoffs (S86 latest: the EVENT-STATE MODEL + three MBP-10 builds — depth run-length, surprise split, pre-release volume primed-detector; P3 lag join scoped/next). |
-| `KICKOFF_2026-07-12_S86.md` (+ S84, S83, S82, S81, S80, S79) | Session kickoffs (S86 next: MBP-10 depth + full-year pull, surprise join, lag join). |
+| `KICKOFF_2026-07-13_S87.md` (+ S86, S84, S83, S82, S81, S80, S79) | Session kickoffs (S87 next: P3 lag join = Kalshi echo net-of-fee, backwardation pull, wire event-state axes). |
 
 ---
 
