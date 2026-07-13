@@ -147,10 +147,15 @@ def _write_mbp10_df(df, symbol: str, out_dir: str = None) -> int:
     os.makedirs(out, exist_ok=True)
     if df is None or len(df) == 0:
         return 0
-    recs = df.reset_index().to_dict(orient="records")   # index (ts_recv) + all columns, every row
+    # STREAM row-by-row via itertuples -- do NOT materialize the whole day as a list of dicts
+    # (to_dict(orient="records") on a 2M-message day builds gigabytes on top of the frame and gets
+    # the process OOM-killed). itertuples yields one lightweight tuple at a time -> bounded memory.
+    df2 = df.reset_index()                              # ts_recv index + all columns become columns
+    cols = list(df2.columns)
     handles: dict[str, object] = {}
     n = 0
-    for r in recs:
+    for row in df2.itertuples(index=False, name=None):
+        r = dict(zip(cols, row))
         # ZERO FILTERING (Greg): every decoded record is written, no row is ever dropped. The timestamp
         # is used only to bucket into a per-UTC-day file; if it cannot be parsed the row still goes to
         # an _undated file so nothing is lost. All original columns are kept verbatim regardless.
