@@ -12,7 +12,8 @@ futures→Kalshi LAG is CONFIRMED on KXGOLDD (37/60 sig) + KXSILVERD (26/54 sig)
 WTI/NG (cross-strike is NG-only; see `GOLD_SILVER_LAG_FINDINGS_S91.md`); collectors + Pyth XAU/XAG feeds wired;
 HH NGDQ6 Pyth feed confirmed NOT bogus. (3) two agents delivered (NYMEX-products + Kalshi-ranking, gold-daily #1).
 **NEXT (S92) = VERIFY the box finished the clean year on S3 (watch deploy/box-logs/ -> DONE + 53 week markers);
-rotate keys; MIGRATE live data git→S3 (collectors); validate the lag NET-OF-FEE AT SIZE sub-minute (the wall).**
+rotate keys; MIGRATE live data git→S3 (collectors); gold/silver net-of-fee-at-SIZE + deepen the lag sub-minute
+(NG/WTI lag ALREADY tested S81/S87 — do not re-test).**
 Detail: `SESSION_HANDOFF_2026-07-14_S91.md`, `KICKOFF_2026-07-14_S92.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
