@@ -73,6 +73,87 @@ def _week_spans(start, end):
     return out
 
 
+# ---- day-of-week labeling + trading-calendar-aware stub detection (Greg S92) -----------------------
+# Files are named {ROOT}_{YYYYMMDD}_{Ddd}.jsonl.gz so the day of week is IN the name. A <5KB gz is a
+# flush-bug STUB only on a day that SHOULD carry a full session; weekends (Sat closed / Sun evening-only)
+# and full-closure CME energy holidays are legitimately tiny and must NOT block a week/month from being
+# marked done. (The S91 bug: every 7-day span contains a Saturday, so `any stub` meant NO week ever got a
+# marker -> resume defeated + JOB-1's "53 markers" unreachable.)
+import datetime as _dt
+import re as _re
+
+_DOW = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+# CME Globex ENERGY (NYMEX CL/NG) FULL-closure dates (no session at all) for the 2025-07..2026-07 window.
+# Half-days (Thanksgiving-eve/-after, Christmas-eve, etc.) still produce full-size files, so only complete
+# closures are listed. MLK/Presidents/Columbus/Veterans are shortened, not closed -> not listed.
+CME_FULL_CLOSED = {
+    "20250704", "20250901", "20251127", "20251225",                          # 2025 H2
+    "20260101", "20260403", "20260525", "20260619", "20260703",              # 2026 H1 (Jul4 obs Fri Jul3)
+}
+
+
+def _dow(day: str) -> str:
+    """YYYYMMDD -> lowercase 3-letter day of week, e.g. 20260112 -> 'mon'."""
+    d = _dt.date(int(day[:4]), int(day[4:6]), int(day[6:8]))
+    return _DOW[d.weekday()].lower()
+
+
+def _day_from_name(fname: str):
+    """{ROOT}_{YYYYMMDD}[_dow].jsonl.gz -> 'YYYYMMDD' (or None). Accepts both the S92 dow-labeled name and
+    the legacy date-only name, so the reader/skip logic works across the transition."""
+    m = _re.match(r"^[A-Za-z0-9]+_(\d{8})(?:_[a-z]{3})?\.jsonl\.gz$", os.path.basename(fname), _re.IGNORECASE)
+    return m.group(1) if m else None
+
+
+def _dow_name(fname: str) -> str:
+    """{ROOT}_{YYYYMMDD}.jsonl.gz -> {ROOT}_{YYYYMMDD}_{dow}.jsonl.gz (date + day-of-week, both present;
+    sortable; idempotent; dow derived from the date). e.g. CL_20260112.jsonl.gz -> CL_20260112_mon.jsonl.gz."""
+    base = os.path.basename(fname)
+    day = _day_from_name(base)
+    if not day:
+        return base
+    root = base.split("_", 1)[0]
+    return f"{root}_{day}_{_dow(day)}.jsonl.gz"
+
+
+def _expected_full(day: str) -> bool:
+    """True iff this UTC day should carry a full trading session (a <5KB file on it => a flush stub).
+    Sat = closed; Sun = evening-only (not required-full); weekday full-closure holiday = legitimately ~empty."""
+    d = _dt.date(int(day[:4]), int(day[4:6]), int(day[6:8]))
+    if d.weekday() >= 5:            # Sat(5) / Sun(6)
+        return False
+    return day not in CME_FULL_CLOSED
+
+
+def _days_in_span(ws: str, we: str):
+    """UTC 'YYYYMMDD' day strings in [ws, we) (ws/we are ISO 'YYYY-MM-DD')."""
+    a = _dt.date.fromisoformat(ws); b = _dt.date.fromisoformat(we)
+    out = []
+    while a < b:
+        out.append(a.strftime("%Y%m%d")); a += _dt.timedelta(days=1)
+    return out
+
+
+def _selftest():
+    # naming carries BOTH the date and the day of week; idempotent; parseable back to YYYYMMDD
+    assert _dow_name("CL_20260112.jsonl.gz") == "CL_20260112_mon.jsonl.gz", _dow_name("CL_20260112.jsonl.gz")
+    assert _dow_name("NG_20250705.jsonl.gz") == "NG_20250705_sat.jsonl.gz"
+    assert _dow_name("CL_20260112_mon.jsonl.gz") == "CL_20260112_mon.jsonl.gz"   # idempotent
+    assert _day_from_name("CL_20260112_mon.jsonl.gz") == "20260112"
+    assert _day_from_name("CL_20260112.jsonl.gz") == "20260112"                  # legacy still parses
+    # trading calendar: weekdays required-full; weekends + full-closure holidays not
+    assert _expected_full("20250707") and _expected_full("20250711")            # Mon, Fri
+    assert not _expected_full("20250705") and not _expected_full("20250706")    # Sat, Sun
+    assert not _expected_full("20250704") and not _expected_full("20251225")    # Jul4, Christmas (closed)
+    # the S91-bug week: 07-01..07-08 contained Sat 07-05 -> old code saw '1 stub' and NEVER marked it.
+    exp = [d for d in _days_in_span("2025-07-01", "2025-07-08") if _expected_full(d)]
+    assert exp == ["20250701", "20250702", "20250703", "20250707"], exp        # Jul4 Fri + weekend excluded
+    print("[selftest] PASS  date+dow naming + trading-calendar stub/marker logic")
+    print("  example names:", _dow_name("CL_20260112.jsonl.gz"), "|", _dow_name("NG_20250705.jsonl.gz"))
+    print("  week 2025-07-01..08 required-full weekdays (weekend/Jul4 excluded):", exp)
+
+
 def _git(*args):
     return subprocess.run(["git", "-C", WT, *args], capture_output=True, text=True)
 
@@ -121,14 +202,24 @@ def _s3_days_present(s3, bucket, prefix, day_pfx):
 
 
 def _s3_month_present(s3, bucket, prefix, root, y, m):
-    """CLEAN-present only: has files, NO sub-5KB stubs, and a plausible day count. A month that is empty,
-    stub-corrupt (the S90 flush bug), or thin is treated as ABSENT so it is RE-PULLED, never silently skipped."""
-    objs = _s3_days_present(s3, bucket, prefix, f"{root}_{y}{m:02d}")
+    """CLEAN-present only: every EXPECTED-FULL trading day of the month is present and >= STUB_BYTES.
+    Weekends + full-closure holidays are not required (they are legitimately tiny). A month that is empty,
+    missing a weekday, or stub-corrupt on a weekday (the S90 flush bug) is treated as ABSENT so it is
+    RE-PULLED, never silently skipped. Names may be DOW-labeled or legacy date-only."""
+    import calendar
+    objs = _s3_days_present(s3, bucket, prefix, f"{root}_{y}{m:02d}")   # YYYYMMDD intact -> month-prefix works
     if not objs:
         return False
-    if any(sz < STUB_BYTES for _, sz in objs):    # any stub -> corrupt month, re-pull
+    have = {}
+    for key, sz in objs:
+        d = _day_from_name(key)
+        if d:
+            have[d] = sz
+    exp = [f"{y}{m:02d}{dd:02d}" for dd in range(1, calendar.monthrange(y, m)[1] + 1)]
+    exp = [d for d in exp if _expected_full(d)]
+    if not exp:
         return False
-    return len(objs) >= MIN_DAYS
+    return all(d in have and have[d] >= STUB_BYTES for d in exp)
 
 
 def _week_marker_key(prefix, root, ws):
@@ -143,20 +234,56 @@ def _week_done(s3, bucket, prefix, root, ws):
 
 
 def _publish_all_s3(s3, bucket, prefix):
-    """Upload every gz currently in BRANCH_DIR to nymex_cont/, delete local. Returns (n, stub_count)."""
+    """Upload every gz in BRANCH_DIR to nymex_cont/ under a DOW-LABELED key ({ROOT}_{YYYYMMDD}_{Ddd}.jsonl.gz),
+    delete local. Returns {day: size} of what was uploaded (caller decides cleanliness by trading calendar)."""
     gz = sorted(glob.glob(os.path.join(BRANCH_DIR, "*.jsonl.gz")))
-    stubs = 0
+    uploaded = {}
     for g in gz:
-        if os.path.getsize(g) < STUB_BYTES:
-            stubs += 1
-        key = _s3_key(prefix, os.path.basename(g))
+        day = _day_from_name(g)
+        key = _s3_key(prefix, _dow_name(g))
+        sz = os.path.getsize(g)
         for attempt in range(4):
             try:
                 s3.upload_file(g, bucket, key); break
             except Exception as e:
                 print(f"[pull_year] s3 upload retry {attempt} {key}: {e}", flush=True)
+        if day:
+            uploaded[day] = sz
         os.remove(g)
-    return len(gz), stubs
+    return uploaded
+
+
+def _reconcile_names(s3, bucket, prefix, start, end):
+    """One-time repair for a corpus written by pre-S92 code (date-only names, no/partial markers): rename
+    every nymex_cont/{ROOT}_{YYYYMMDD}.jsonl.gz object to its DOW-labeled name, then write a week marker for
+    every CLEAN week (all expected-full weekdays present & full). Idempotent + safe to re-run. No re-pull,
+    no Databento cost. Run AFTER the box's pull has finished (avoid renaming files it is still writing)."""
+    have, curkey = {}, {}
+    for root in ("CL", "NG"):
+        for key, sz in _s3_days_present(s3, bucket, prefix, f"{root}_"):
+            day = _day_from_name(key)
+            if not day:
+                continue
+            have[(root, day)] = sz
+            curkey[(root, day)] = key
+    renamed = 0
+    for (root, day), key in list(curkey.items()):
+        want = _s3_key(prefix, _dow_name(os.path.basename(key)))
+        if key.endswith(os.path.basename(want)):
+            continue                                          # already DOW-labeled
+        s3.copy_object(Bucket=bucket, CopySource={"Bucket": bucket, "Key": key}, Key=want)
+        s3.delete_object(Bucket=bucket, Key=key)
+        renamed += 1
+    marked = 0
+    for (ws, we) in _week_spans(start, end):
+        for root in ("CL", "NG"):
+            exp = [d for d in _days_in_span(ws, we) if _expected_full(d)]
+            clean = bool(exp) and all((root, d) in have and have[(root, d)] >= STUB_BYTES for d in exp)
+            if clean and not _week_done(s3, bucket, prefix, root, ws):
+                s3.put_object(Bucket=bucket, Key=_week_marker_key(prefix, root, ws), Body=b"ok")
+                marked += 1
+    print(f"[reconcile] renamed {renamed} objects to DOW names, wrote {marked} new week markers", flush=True)
+    return renamed, marked
 
 
 # ---- main ------------------------------------------------------------------------------------------
@@ -186,7 +313,16 @@ def main():
                     help="WEEK-AT-A-TIME (S3 only): submit each week as its own Databento batch job and "
                          "publish + mark it done as it lands (smaller jobs -> faster to 'done', finer resume, "
                          "per-week S3 progress). Fresh clean pull (no reuse); marker-based resume.")
+    ap.add_argument("--reconcile-names", action="store_true",
+                    help="One-time repair (S3 only, no re-pull / no Databento cost): rename existing date-only "
+                         "nymex_cont/ objects to DOW-labeled names {ROOT}_{YYYYMMDD}_{Ddd}.jsonl.gz and write "
+                         "week markers for every clean week. Run AFTER a pre-S92 box has finished its pull.")
+    ap.add_argument("--selftest", action="store_true",
+                    help="Validate the DOW-naming + trading-calendar stub logic (no network); print + exit.")
     args = ap.parse_args()
+
+    if args.selftest:
+        _selftest(); return
 
     OUT = args.scratch
     is_s3 = args.dest.startswith("s3://")
@@ -206,6 +342,12 @@ def main():
         os.makedirs(BRANCH_DIR, exist_ok=True)
         _git("config", "user.email", "noreply@anthropic.com")
         _git("config", "user.name", "Claude")
+
+    if args.reconcile_names:
+        if not is_s3:
+            sys.exit("[pull_year] --reconcile-names requires an s3:// dest")
+        _reconcile_names(s3, bucket, prefix, args.start, args.end)
+        return
 
     os.makedirs(OUT, exist_ok=True)
     client = dbf._client()
@@ -254,15 +396,21 @@ def main():
                               os.path.basename(f) + ".gz"), "wb", compresslevel=6) as dst:
                         shutil.copyfileobj(srcf, dst)
                     os.remove(f)
-                ngz, stubs = _publish_all_s3(s3, bucket, prefix)
-                if ngz and not stubs:
-                    s3.put_object(Bucket=bucket, Key=_week_marker_key(prefix, root, ws),
-                                  Body=b"ok")                    # mark done ONLY when clean
-                    print(f"[pull_year] {root} week {ws} uploaded {ngz} gz, marked done "
+                uploaded = _publish_all_s3(s3, bucket, prefix)
+                # CLEAN iff every expected-full weekday in [ws,we) is present and >= STUB_BYTES.
+                # Weekends / full-closure holidays are not required (legitimately tiny), so they no longer
+                # block the marker (the S91 bug). Mark done ONLY when clean.
+                exp = [d for d in _days_in_span(ws, we) if _expected_full(d)]
+                missing = [d for d in exp if d not in uploaded]
+                stubs = [d for d in exp if d in uploaded and uploaded[d] < STUB_BYTES]
+                if uploaded and not missing and not stubs:
+                    s3.put_object(Bucket=bucket, Key=_week_marker_key(prefix, root, ws), Body=b"ok")
+                    print(f"[pull_year] {root} week {ws} uploaded {len(uploaded)} gz, marked done "
                           f"(cum rows {total_rows})", flush=True)
                 else:
-                    print(f"[pull_year] {root} week {ws}: {ngz} gz, {stubs} stubs -> NOT marked "
-                          f"(will re-pull)", flush=True)
+                    print(f"[pull_year] {root} week {ws}: {len(uploaded)} gz, "
+                          f"{len(stubs)} weekday-stubs {len(missing)} missing -> NOT marked (will re-pull)",
+                          flush=True)
         print(f"[pull_year] DONE WEEKLY {args.start}..{args.end}: {total_rows} rows total", flush=True)
         return
 
@@ -306,7 +454,7 @@ def main():
             continue
         if is_s3:
             for g in gz_files:
-                key = _s3_key(prefix, os.path.basename(g))
+                key = _s3_key(prefix, _dow_name(g))           # DOW-labeled name (Greg S92)
                 for attempt in range(4):
                     try:
                         s3.upload_file(g, bucket, key)

@@ -169,18 +169,28 @@ def _cont_local_path(root: str, day: str) -> str:
 def _s3_fetch_cont_gz(root: str, day: str, cache_dir: str = CONT_DIR) -> str:
     """Download s3://{bucket}/{prefix}/nymex_cont/{root}_{day}.jsonl.gz to the local cache (Q4: cache so
     repeat scoring passes never re-pull). Returns the local gz path. Needs boto3 + AWS env creds."""
-    import boto3
+    import boto3, datetime as _dt
+    from botocore.exceptions import ClientError
     os.makedirs(cache_dir, exist_ok=True)
     local = os.path.join(cache_dir, f"{root}_{day}.jsonl.gz")
     if os.path.exists(local) and os.path.getsize(local) > 0:
         return local                                    # cached
-    key = f"{S3_PREFIX + '/' if S3_PREFIX else ''}nymex_cont/{root}_{day}.jsonl.gz"
     region = os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("AWS_REGION")
     s3 = boto3.client("s3", region_name=region) if region else boto3.client("s3")
+    pfx = f"{S3_PREFIX + '/' if S3_PREFIX else ''}nymex_cont/"
+    d = _dt.date(int(day[:4]), int(day[4:6]), int(day[6:8]))
+    dow = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")[d.weekday()]
     tmp = local + ".part"
-    s3.download_file(S3_BUCKET, key, tmp)
-    os.replace(tmp, local)
-    return local
+    for name in (f"{root}_{day}_{dow}.jsonl.gz", f"{root}_{day}.jsonl.gz"):   # S92 date+dow name, then legacy
+        try:
+            s3.download_file(S3_BUCKET, pfx + name, tmp)
+            os.replace(tmp, local)
+            return local
+        except ClientError as e:
+            if e.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "403"):
+                continue
+            raise
+    raise FileNotFoundError(f"nymex_cont day not on S3: {root}_{day} (tried date+dow and legacy names)")
 
 
 def _iter_cont_lines(root: str, day: str, source: str):
