@@ -54,30 +54,31 @@ for gz in $(git ls-tree -r --name-only origin/data/pyth-ticks | grep '\.jsonl\.g
   echo "[restore] $base ($(wc -l < data/pyth_ticks/$base) lines)"
 done
 
-# NYMEX Databento true-tick tape (S85: NG/CL release windows + definitions + baselines) -> data/pyth_ticks/
-git fetch origin data/nymex-ticks
-for gz in $(git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_tape/.*\.gz$'); do
-  base=$(basename "$gz" .gz)
-  dest="data/pyth_ticks/$base"; [[ "$base" == *.json ]] && dest="data/$base"   # baselines live in data/
-  git show "origin/data/nymex-ticks:$gz" | gunzip > "$dest"
-  echo "[restore] $base"
-done
-
-# NYMEX MBP-10 depth tape (S86: trade+book rows) -> data/nymex_mbp10/ ; depth baselines -> data/
-mkdir -p data/nymex_mbp10
-for gz in $(git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_mbp10/.*\.gz$'); do
-  base=$(basename "$gz" .gz)
-  dest="data/nymex_mbp10/$base"; [[ "$base" == *.json ]] && dest="data/$base"   # depth baselines live in data/
-  git show "origin/data/nymex-ticks:$gz" | gunzip > "$dest"
-  echo "[restore] $base"
-done
+# NYMEX Databento tapes now live on AWS S3, NOT git (S90 move). Bucket bento-568968024170-us-east-2-an,
+# prefix nymex/. Restore from S3 (needs AWS_* env creds + boto3). *.json baselines -> data/ ; tapes gunzip.
+python3 - <<'PY'
+import boto3, gzip, os
+B="bento-568968024170-us-east-2-an"; s3=boto3.client("s3", region_name=os.environ.get("AWS_DEFAULT_REGION","us-east-2"))
+plan=[("nymex/nymex_tape/","data/pyth_ticks"), ("nymex/nymex_mbp10/","data/nymex_mbp10")]  # S85 trades ; S86 depth
+for pfx,dst in plan:
+    os.makedirs(dst, exist_ok=True)
+    for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix=pfx):
+        for o in pg.get("Contents",[]):
+            name=o["Key"].split("/")[-1]; raw=s3.get_object(Bucket=B,Key=o["Key"])["Body"].read()
+            if name.endswith(".gz"):
+                base=name[:-3]; out=("data/"+base) if base.endswith(".json") else f"{dst}/{base}"  # baselines->data/
+                open(out,"wb").write(gzip.decompress(raw))
+            else:
+                out=("data/"+name) if name.endswith(".json") else f"{dst}/{name}"
+                open(out,"wb").write(raw)
+            print("[restore]", name)
+PY
 ```
 
-The **continuous MBP-10 YEAR tape** (S87, the forecaster's analog library) accrues gzipped under
-`nymex_cont/` on the same `data/nymex-ticks` branch (~13x compression, ~400MB gz / ~5GB raw for a year).
-It is LARGE — do NOT blanket-restore it at session start. Restore the days you need on demand:
-`git show origin/data/nymex-ticks:nymex_cont/CL_20260617.jsonl.gz | gunzip > data/nymex_cont/CL_20260617.jsonl`
-(`git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_cont/'` to see what accrued).
+The **continuous MBP-10 YEAR corpus** (S89, the full-raw analog library) lives on S3 at
+`nymex/nymex_cont/{CL,NG}_YYYYMMDD.jsonl.gz` — LARGE, do NOT blanket-restore. The scoring code streams days
+on demand via `event_move_baseline.load_cont_day(root, day, source="s3")` (local gz cache). To pull one day
+by hand: `aws s3 cp s3://bento-568968024170-us-east-2-an/nymex/nymex_cont/CL_20260617.jsonl.gz - | zcat`.
 
 ## 4. VERIFY accrual before trusting the data
 

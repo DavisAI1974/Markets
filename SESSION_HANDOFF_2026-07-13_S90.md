@@ -103,6 +103,20 @@ pushed to this trunk - a watcher is armed for it).
   timer DISABLED until the scorer exists), `README.md` (runbook). Recommends an IAM instance ROLE so the
   only on-disk secret is the Databento key. Syntax-checked, no secrets committed (placeholders only). Greg
   spins up an instance + runs `setup.sh`; I cannot provision compute (S3-only creds).
+- **ALL bento data moved git -> S3 (Greg S90: "move all the bento data from git to aws").** Copied the S85
+  trades tape (`nymex_tape/`, 28) + S86 depth tape (`nymex_mbp10/`, 27) from the `data/nymex-ticks` branch to
+  `s3://bento-568968024170-us-east-2-an/nymex/nymex_tape/` + `nymex/nymex_mbp10/` (55 files, 3.75 MB;
+  verified), then removed them from the branch tip (pushed `ee9f393..1634d1f`; 0 bento files remain on tip;
+  history still holds old copies, not purged). Updated `kalshi-session-start` to restore these from S3 (boto3)
+  instead of git, and KALSHI_TRADING.md's data-store note. The continuous year corpus was already S3-only.
+  Net: git holds NO bento data now; the bucket is the single store for all Databento tapes.
+- **Durable AWS box LIVE (Greg S90: "you do it end to end", EC2FullAccess granted).** After Lightsail had no
+  managed full-access policy, used EC2: launched `i-0017dc36072eaa6c8` (t3.large, 30GB, us-east-2,
+  3.144.199.236) via a self-configuring boot script (pulls code from `s3://.../deploy/markets_code.tar.gz`,
+  writes env, runs the recovery service). Running `pull_year --reuse-done-jobs` = re-decode paid Jul/Aug/Jan
+  free + submit the rest, all with the flush fix. Secrets are in the box's boot config/env -> ROTATE the
+  Databento + AWS keys after the pull completes (Q5). Box can be stopped after the year lands, or repurposed
+  for the daily lifecycle. EC2 launcher steps (AMI/SG/run_instances) were ad-hoc via boto3 from the session.
 - **Daily cadence = a DURABLE TRIGGER, not memory (Greg S90: "how do we remember to do this daily?").**
   The weather-distribution trade is same-day (score tomorrow's KXHIGH ladder ~5PM, recalc AM, re-check
   intraday) - the same daily lifecycle as the NYMEX path forecast (the FORECAST WORKFLOW TODO in

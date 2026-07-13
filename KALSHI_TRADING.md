@@ -32,12 +32,13 @@ superseded ones down. (Started S81, 2026-07-12.)
 
 Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (historical trades),
 `data/pyth_ticks/` (Pyth + Databento NYMEX trades ticks), `data/nymex_mbp10/` (S86: MBP-10 trade+book
-depth tape), `data/kalshi/` (live bins + consensus). Durable data accrues gzipped on branches:
-`data/kalshi-bins`, `data/pyth-ticks`, and **`data/nymex-ticks`** (S85 trades tape under `nymex_tape/`;
-S86 MBP-10 depth tape under `nymex_mbp10/` + depth baselines). `kalshi-session-start` restores all.
-**S89: the continuous full-raw MBP-10 YEAR corpus lives on AWS S3, NOT git** — bucket
-`bento-568968024170-us-east-2-an` (us-east-2), prefix `nymex/nymex_cont/{CL,NG}_YYYYMMDD.jsonl.gz`.
-`data/nymex-ticks:nymex_cont/` is retired (the old incomplete pull was wiped). See
+depth tape), `data/kalshi/` (live bins + consensus). **S90: ALL Databento (bento) tapes now live on AWS S3,
+NOT git** — bucket `bento-568968024170-us-east-2-an` (us-east-2), prefix `nymex/`: the continuous full-raw
+YEAR corpus at `nymex/nymex_cont/{CL,NG}_YYYYMMDD.jsonl.gz`, the S85 trades tape at `nymex/nymex_tape/`, the
+S86 depth tape at `nymex/nymex_mbp10/`. `kalshi-session-start` restores the tapes from S3 (needs AWS creds);
+the continuous corpus streams on demand via `event_move_baseline.load_cont_day(..., source="s3")`. The
+`data/nymex-ticks` git branch is retired for bento data (tapes removed S90; `nymex_cont/` wiped S89). Other
+durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non-bento). See
 `research/kalshi/AWS_INGEST_SETUP_S89.md`. AWS + Databento keys are session-pasted SECRETS.
 
 ---
