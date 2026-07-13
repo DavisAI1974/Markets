@@ -43,8 +43,12 @@ raw tape. Rework AFTER the ingestion workflow is landing the raw corpus.
   at Databento MBP-10, longer duration) -- see `KICKOFF_2026-07-14_S89.md`.
 - Size plan: raw is large but gzips hard; gzip per month (or per DAY if a month's local decode exceeds the
   ~24GB container disk) and delete local each chunk. Branch holds the gzipped corpus, restored free.
-- Corpus on branch now: `nymex_cont/` = 2026-05 ONLY, and in the OLD reduced format -> re-pull in full-raw
-  for a uniform corpus.
+- CORRECTION (Greg, S89): there is NO "reduced" data tier -- that framing was a mistake. All historical
+  data is RAW and we keep ALL of it. The `nymex_cont/` that was on the branch was simply an earlier,
+  INCOMPLETE pull (written before the S88 raw writer, so it did not carry every column). It has been
+  WIPED and is being re-pulled full-raw for all 12 months (2025-07..2026-07) via the S89 durable workflow.
+  Wherever this handoff says "reduced," read "earlier incomplete pull" -- the only data we store is the
+  full raw tape.
 
 ## RULES (unchanged + S88): historical data RAW, keep ALL info, zero gates on the data side; gates ONLY on
 trade signals; the agent sifts raw data for driver->price correlations; leakage gate before any scoring;
