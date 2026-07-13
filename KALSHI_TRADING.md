@@ -125,6 +125,7 @@ S86 MBP-10 depth tape under `nymex_mbp10/` + depth baselines). `kalshi-session-s
 | `SESSION_HANDOFF_2026-07-13_S89.md` (+ S88, S87, S86, S85, S84, S83, S82, S81, S80, S79, S78) | Session handoffs (S89 latest: durable RAW ingestion BUILT + tick corpus moved to AWS S3 — zero-filter MBP-10 writer verified, `pull_year_mbp10.py --dest s3://…`, full-raw year pulling to bucket `bento-568968024170-us-east-2-an`, split container/Greg-box, resumable). |
 | `KICKOFF_2026-07-14_S90.md` (+ S89, S88, S87, S86, S84, S83, S82, S81, S80, S79) | Session kickoffs (S90 next: finish/verify the full-raw year on S3, then rework the scoring scaffolding to read the raw S3 tape — pre-processing moves to the trade-signal side). |
 | `research/kalshi/AWS_INGEST_SETUP_S89.md` | **[S89]** AWS ingest runbook (bucket/IAM, `--dest s3://…` commands, split, resume, verify). |
+| `research/kalshi/WEATHER_FORECAST_INTERFACE_S90.md` | **[S90]** The forecast->trade INTERFACE spec: what Greg's OD temp forecaster should EMIT (per `city x regime x lead` residual DISTRIBUTION `(value,sigma[,quantiles])` + pre-hoc regime + routing, on the real KXHIGH cities not KGJT/KDDC) so it plugs into the `(value,sigma)->bucket-prob` bridge (weather-prob markets) + `nws_temp_feed` forward HDD/CDD (NG driver). Forecaster HANDS OFF; this is the scoreboard/bridge contract. |
 
 ---
 
