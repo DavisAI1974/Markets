@@ -112,16 +112,23 @@ def pre_move_pieces(a: dict, ei: int, sign: int) -> dict:
             "pre_vol": pre_vol}
 
 
+def _iso_day(day: str) -> str:
+    """Tape filenames use YYYYMMDD; the temp/curve caches key on YYYY-MM-DD. Convert (leakage-critical:
+    curve_asof does string date comparison, so a mismatched format silently returns the wrong/latest curve)."""
+    return f"{day[:4]}-{day[4:6]}-{day[6:8]}" if len(day) == 8 and "-" not in day else day
+
+
 def _regime_tags(root: str, day: str) -> dict:
+    iso = _iso_day(day)
     try:
         import forward_curve as fc
-        cr = fc.curve_asof(fc.load(root), day)
+        cr = fc.curve_asof(fc.load(root), iso)          # leakage-safe D-1 curve (ISO date)
         curve = cr[1]["regime"] if cr else "unknown"
     except Exception:
         curve = "unknown"
     try:
         import nws_temp_feed as nt
-        temp = nt._load_cache().get(day, {}).get("regime", "unknown")
+        temp = nt._load_cache().get(iso, {}).get("regime", "unknown")
     except Exception:
         temp = "unknown"
     return {"curve_regime": curve, "temp_regime": temp}
@@ -153,6 +160,18 @@ def _q(arr):
             "p75": round(float(np.percentile(a, 75)), 2), "max": round(float(a.max()), 2), "n": int(a.size)}
 
 
+def _coiled_split(rows: list[dict]) -> dict:
+    """Surface the coiled-volume piece: quiet vs active sub-distribution within a cell (S86/graph-learn:
+    coiled -> magnitude, per-cell). Absent 'coiled' tag -> {} (e.g. selftest rows)."""
+    out = {}
+    for lvl in ("quiet", "active"):
+        sub = [r for r in rows if r.get("coiled") == lvl]
+        if sub:
+            out[lvl] = {"n": len(sub), "peak_usd_p50": _q([r["peak_usd"] for r in sub])["p50"],
+                        "continuation_rate": round(float(np.mean([r["continuation"] for r in sub])), 3)}
+    return out
+
+
 def tabulate(rows: list[dict]) -> dict:
     n = len(rows)
     if not n:
@@ -163,7 +182,8 @@ def tabulate(rows: list[dict]) -> dict:
             "peaked_fast_frac": round(float(np.mean([r["peaked_fast"] for r in rows])), 3),
             "retention_p50": round(float(np.median([r["retention"] for r in rows])), 3),
             "sustain_s_p50": round(float(np.median([r["sustain_s"] for r in rows])), 1),
-            "continuation_rate": round(float(np.mean([r["continuation"] for r in rows])), 3)}
+            "continuation_rate": round(float(np.mean([r["continuation"] for r in rows])), 3),
+            "by_coiled": _coiled_split(rows)}
 
 
 def characterize_month(root: str, month: str) -> dict:
