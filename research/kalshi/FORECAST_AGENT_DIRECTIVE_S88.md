@@ -212,12 +212,12 @@ Each fancier method must beat the bucket table OOS per cell or it is not kept.
 
 ---
 
-## 11. Agent shape + deliverables (recommended)
+## 11. Agent shape + deliverables (DECIDED — Greg S88)
 
 - **Build via direct edits in-session with Greg in the loop + a canary** (precision live-path work; the box
   has wedged multi-agent workflows before). Use a BOUNDED analysis subagent only for the exploratory
   "graph a diverse day-sample and report the structure" step (sec 1.2) — not one long autonomous agent
-  owning the whole build.
+  owning the whole build. (Approved Greg S88.)
 - **Artifacts to produce:** (a) the per-cell bucket continuation table; (b) a blind-vs-actual SCORECARD
   with the number of specifications tried; (c) a per-commodity piece-correlation matrix (piece x 4
   outcome-types); (d) a `FORECAST_V1_FINDINGS_S88.md` write-up; (e) the tracking overlay wired into
