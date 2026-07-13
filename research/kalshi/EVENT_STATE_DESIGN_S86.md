@@ -13,13 +13,26 @@ FORWARD-looking, not only accumulated-past. A lone actual-vs-consensus surprise 
 why storage-alone ran backwards on the S86 CL check (06-17: $2,640 move on a -3.1 Mbbl small surprise; the
 biggest storage surprises made the smallest moves).
 
+## Eyeball validation (S86 — the 06-17 CL big-move day)
+
+Quick news cross-check of the biggest summer CL swing (2026-06-17, $2,640 / 341 bps on a trivial -3.1 Mbbl
+storage surprise). That two-week window was the **2026 Strait of Hormuz crisis**: US/Israel-Iran war, Hormuz
+(~20% of world oil, ~14M bbl/day) reduced to a trickle, WTI whipsawing $88-107; on 06-17 itself the tape was
+moving on Hormuz peace/reopening hopes (risk-premium UNWIND). So the biggest move landed on the smallest
+storage surprise because the market was MAXIMALLY PRIMED by a geopolitical supply shock — storage was noise,
+the latent state carried it. Confirms the thesis on the tape's biggest day. CAVEAT (which itself supports
+it): on such a day the release-window move is really the geopolitical move overlapping 14:30, not a clean
+storage reaction — exactly why storage-alone ran backwards. (Eyeball, one case; not a quantified result.)
+
 ## The read: three pillars paint the picture (Greg)
 
 **News (anticipation) + Storage (buffer) + Market capacity (slack)** together = the conditioned read.
 
 1. **NEWS / ANTICIPATION** — forward-looking shocks priced ahead: forecasted hurricanes (NHC cone/outlook),
    weather outlooks, geopolitics. STRICTLY point-in-time / pre-event (leakage: only what was public before
-   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine. News works in THREE TENSES
+   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine -- but a PROXY: the NYMEX traders whose flow is our canary read BLOOMBERG / ICE institutional
+   feeds (faster, deeper), not free RSS, so RSS approximates the real news signal (known fidelity gap, not a
+   blocker; institutional Bloomberg/ICE is the ideal). News works in THREE TENSES
    (Greg), carrying the ROLLING recent news flow into each window tagged by tense (not a yes/no flag):
    - **Ex-ante (anticipation)** — a forecast/outlook priced BEFORE it happens (NHC cone, cold-snap outlook,
      an EIA/Fed print due). A point spike ahead of the event.
@@ -67,7 +80,9 @@ biggest storage surprises made the smallest moves).
      high-weight for us, not noise.
 3. **MARKET CAPACITY** — the system's slack / ability to ABSORB a shock; low slack = primed = small shock
    -> big move. Candidate measures (TO CONFIRM the framing):
-   - storage as **% of working capacity** (how full/empty vs the max — distinct from vs-normal),
+   - storage as **% of working capacity** (how full/empty vs the max — distinct from vs-normal). Greg: low
+     storage that unexpectedly goes LOWER with little ROOM LEFT to refill is the tightness read — level vs
+     capacity, not just level vs normal,
    - **refinery / production utilization + spare capacity** (how much room to respond),
    - **backwardation** (front-vs-deferred calendar spread) = the market's own PRICE-based tightness read
      (the cheap first proxy; Databento deferred contracts). DOUBLE DUTY (Greg): the curve is also a MAP of
