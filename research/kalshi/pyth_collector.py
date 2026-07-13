@@ -39,6 +39,10 @@ FEEDS = {
     "WTIQ6":   "05e7c9b556df67e455c52ea2d31658744e3f4ade60db7dab887008844f2ae472",
     "NGDQ6":   "3ea3adf4dfa7eed79e357c9bdf8a15c6d4dc8fb5454cf71110c73390fb230436",
     "BRENTU6": "93fdb7c6f23c6ba97baf2f086891e6749461a5f6cd620338102845acf210e96b",
+    # S91 depth-add: gold/silver SPOT (Pyth Metal.XAU|XAG/USD) — the exact "1-min candle @5PM EDT
+    # USD/t.oz" that KXGOLDD / KXSILVERD settle on (verified vs Kalshi rules_primary). Spot, no roll.
+    "XAU":     "765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2",   # gold  (KXGOLDD)
+    "XAG":     "f2fb02c32b055c805e7238d628e5e9dadef274376114eb1f012337cabe93871e",   # silver(KXSILVERD)
 }
 _ID2SYM = {v: k for k, v in FEEDS.items()}
 
