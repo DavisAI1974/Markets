@@ -98,7 +98,10 @@ multiple months with real n. ${DISCIPLINE} Return the verdict.`
 }
 
 // -------------------------------------------------------------------------------------------------------
-const ITEMS = (args && args.items) || []
+// args may arrive as an object OR a JSON string depending on the caller — handle both.
+let ARGS = args
+if (typeof ARGS === 'string') { try { ARGS = JSON.parse(ARGS) } catch (e) { ARGS = {} } }
+const ITEMS = (ARGS && ARGS.items) || []
 if (!ITEMS.length) {
   log('No items passed. Pass args.items = [{root,month},...] for months restored under data/nymex_cont/.')
   return { status: 'NO_ITEMS', note: 'staged workflow; pass (root,month) pairs whose tape is restored.' }
