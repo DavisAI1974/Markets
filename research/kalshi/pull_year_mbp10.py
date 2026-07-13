@@ -64,7 +64,17 @@ def main():
     ap.add_argument("--max-cost-per", type=float, default=1000.0,
                     help="per (month,contract) cost gate ($). Price is pre-agreed -> high by default; the "
                          "estimate is still printed so spend is logged.")
+    ap.add_argument("--worktree", default=WT,
+                    help="path to a git worktree of the data/nymex-ticks branch (default /tmp/nymexdata). "
+                         "Set this to run on any machine; create it once with: "
+                         "git worktree add --force <path> data/nymex-ticks")
+    ap.add_argument("--scratch", default=OUT, help="local scratch dir for decoded JSONL before gzip")
     args = ap.parse_args()
+
+    global WT, OUT, BRANCH_DIR
+    WT = args.worktree
+    OUT = args.scratch
+    BRANCH_DIR = os.path.join(WT, "nymex_cont")
 
     if not os.path.isdir(os.path.join(WT, ".git")) and not os.path.exists(os.path.join(WT, ".git")):
         sys.exit(f"[pull_year] worktree missing at {WT}; run: git worktree add --force {WT} data/nymex-ticks")
