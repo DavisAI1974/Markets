@@ -1,5 +1,16 @@
 # KALSHI TRADING — file index
 
+> **TODO — FORECAST WORKFLOW (Greg S87, not built).** Build a workflow that runs the daily NYMEX
+> path-forecast lifecycle automatically:
+> 1. **By 5PM the day before** — score and LOAD tomorrow's forecast (pick the analog/expected-path
+>    curve for the next session, ready to trade against at open).
+> 2. **In the morning** — RECALC it (refresh with overnight state: updated curve shape, news,
+>    weather, storage, regime) before the session.
+> 3. **Through the day** — if RT NYMEX ISN'T TRACKING the loaded forecast, FIND A NEW ONE
+>    (re-match analogs / roll the forecast mid-session — the adaptive re-forecast). Distinguish
+>    "analog was wrong -> re-forecast" from "move reversing -> exit."
+> See `research/kalshi/PATH_FORECAST_RESEARCH_S87.md` for the methods.
+
 The map of every Kalshi file: what it is, where it lives, and whether it's part of the CURRENT
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move
 superseded ones down. (Started S81, 2026-07-12.)
