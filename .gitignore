@@ -97,3 +97,4 @@ data/level_hits_*.json
 # event_move baselines + EIA surprise join (durable copy goes gzipped to data/nymex-ticks branch)
 data/event_move_*.json
 data/eia_surprise.json
+data/nws_temp/
