@@ -55,6 +55,22 @@ flow exhaustion, depth run-length, pre-release/coiled volume, herd breadth.
   as a net-of-fee EV DELTA vs a fixed-hold baseline, per cell — not claimed as standalone alpha.
 - Weather forecaster stays Greg's spec (HANDS OFF); weather enters here only as a conditioning driver.
 
+## Reference / cross-check data (Greg S87 — coarser than our tick data, but tracks the pieces well)
+Bring in external daily reference sources as a CROSS-CHECK / validation anchor and (for gas) the
+per-LOCATION structure — NOT as the primary tick forecast (they are daily/midday, far coarser than our
+MBP-10 tape). Greg: "not as rich as our data but there's pretty good tracking with these pieces."
+- **NGI (Natural Gas Intelligence, naturalgasintel.com)** — daily/weekly/monthly gas price INDEXES at
+  200+ hubs/locations back to 1988: Henry Hub + regional avgs (Northeast, SoCal Border, S/N LA, Southeast,
+  S TX) + named hubs (Chicago Citygate, Houston Ship Channel, PG&E Citygate, Malin). FERC-approved,
+  ICE-powered. Historical Download Tool + a **Daily Datafeed API** (paid; sales@naturalgasintel.com).
+  This is the reference for the **per-location gas forecasting** (each hub scored separately) AND a coarse
+  daily anchor to validate the forecast against.
+- **Free coarse refs:** EIA Henry Hub daily (`eia.gov/dnav/ng`), FRED `DHHNGSP`; EIA WTI/Brent for crude.
+- DISCIPLINE: reference data is coarser and point-in-time-sensitive — use it for cross-check / validation /
+  conditioning and the locational map, never as the tick-level forecast; a published-after-the-fact index
+  leaks if used as a same-day feature (leakage-gate it like everything else). The agent should survey for
+  the crude-side locational/reference equivalents the same way.
+
 ## What it builds on / where it plugs in
 - **Analog library / training corpus** = the continuous NYMEX MBP-10 pull (year now, 2-year on AWS later).
   Both the path curves AND the microstructure pieces come off that one feed.
