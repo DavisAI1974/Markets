@@ -151,12 +151,20 @@ def _write_mbp10_df(df, symbol: str, out_dir: str = None) -> int:
     handles: dict[str, object] = {}
     n = 0
     for r in recs:
-        te = r.get("ts_event", r.get("ts_recv"))
-        try:
-            sec = te.timestamp() if hasattr(te, "timestamp") else float(te) / 1e9
-        except Exception:
-            continue
-        day = datetime.fromtimestamp(sec, timezone.utc).strftime("%Y%m%d")
+        # ZERO FILTERING (Greg): every decoded record is written, no row is ever dropped. The timestamp
+        # is used only to bucket into a per-UTC-day file; if it cannot be parsed the row still goes to
+        # an _undated file so nothing is lost. All original columns are kept verbatim regardless.
+        sec = None
+        for cand in (r.get("ts_event"), r.get("ts_recv")):
+            if cand is None:
+                continue
+            try:
+                sec = cand.timestamp() if hasattr(cand, "timestamp") else float(cand) / 1e9
+                break
+            except Exception:
+                continue
+        day = (datetime.fromtimestamp(sec, timezone.utc).strftime("%Y%m%d")
+               if sec is not None else "undated")
         rec = {"ts": sec, "symbol": symbol, "src": "databento_mbp10"}
         for k, v in r.items():                          # keep ALL original columns verbatim
             rec[str(k)] = _json_safe(v)
@@ -282,17 +290,24 @@ def batch(client, symbol: str, start: str, end: str, schema: str, max_cost: floa
 
 
 def batch_pull(client, symbol: str, start: str, end: str, schema: str, max_cost: float,
-               out_dir: str = None, poll_s: float = 20.0, timeout_s: float = 5400.0) -> int:
+               out_dir: str = None, poll_s: float = 20.0, timeout_s: float = 5400.0,
+               flush_dir: str = None) -> int:
     """FULL batch pipeline for a (canary-to-month) range: cost-gate -> submit (split by DAY) -> poll to
     done -> download the .dbn.zst files to a temp dir -> decode EACH FILE streaming (one day in memory at
     a time -> bounded) -> write JSONL to out_dir -> delete the temp files. Returns rows written.
 
     Batch (vs sync range) is the right tool for large/continuous pulls: files land on disk not memory,
     decode is per-file, and Databento re-serves the job free for 30 days. Loop this per month for a year,
-    gzip each month to the data branch, delete local -> the year accrues on the branch, disk stays bounded."""
+    gzip each month to the data branch, delete local -> the year accrues on the branch, disk stays bounded.
+
+    flush_dir: if set, immediately gzip each freshly-decoded per-day JSONL into flush_dir/{name}.gz and
+    delete the raw JSONL, so local never holds more than ONE day of raw at a time even while pulling a
+    whole month's batch job (raw MBP-10 keeps every message -> a month of raw JSONL would overrun the
+    runner disk; this bounds it to a day without reducing any data)."""
     import tempfile
     import shutil
     import glob
+    import gzip as _gz
     import databento as db
     sym, stype = _sym(symbol)
     if estimate_cost(client, sym, stype, start, end, schema) > max_cost:
@@ -317,13 +332,24 @@ def batch_pull(client, symbol: str, start: str, end: str, schema: str, max_cost:
     try:
         _retry(lambda: client.batch.download(jid, output_dir=tmp))
         total = 0
+        odir = out_dir or MBP10_DIR
+        if flush_dir:
+            os.makedirs(flush_dir, exist_ok=True)
         for p in sorted(glob.glob(os.path.join(tmp, "**", "*.dbn.zst"), recursive=True)):
             df = db.DBNStore.from_file(p).to_df()                   # ONE day in memory -> bounded
             if len(df):
                 total += (_write_mbp10_df(df, symbol, out_dir) if schema.startswith("mbp-10")
                           else _write_df(df, symbol))
             os.remove(p)
-        print(f"[databento] batch {symbol} {start}..{end}: {total} rows -> {out_dir or MBP10_DIR}", flush=True)
+            if flush_dir:                                           # gzip this day + drop raw -> bound disk
+                for j in sorted(glob.glob(os.path.join(odir, "*.jsonl"))):
+                    with open(j, "rb") as src, _gz.open(
+                            os.path.join(flush_dir, os.path.basename(j) + ".gz"), "wb",
+                            compresslevel=6) as dst:
+                        shutil.copyfileobj(src, dst)
+                    os.remove(j)
+        print(f"[databento] batch {symbol} {start}..{end}: {total} rows -> "
+              f"{flush_dir or odir}", flush=True)
         return total
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

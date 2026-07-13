@@ -61,7 +61,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", required=True, help="YYYY-MM inclusive")
     ap.add_argument("--end", required=True, help="YYYY-MM exclusive")
-    ap.add_argument("--max-cost-per", type=float, default=12.0, help="per (month,contract) cost gate ($)")
+    ap.add_argument("--max-cost-per", type=float, default=1000.0,
+                    help="per (month,contract) cost gate ($). Price is pre-agreed -> high by default; the "
+                         "estimate is still printed so spend is logged.")
     args = ap.parse_args()
 
     if not os.path.isdir(os.path.join(WT, ".git")) and not os.path.exists(os.path.join(WT, ".git")):
@@ -80,30 +82,35 @@ def main():
                 print(f"[pull_year] skip {root} {y}-{m:02d} (already on branch)", flush=True)
                 continue
             try:
-                n = dbf.batch_pull(client, root, start, end, "mbp-10", args.max_cost_per, out_dir=OUT)
+                # flush_dir -> each per-day JSONL is gzipped into the worktree AS IT LANDS and the raw
+                # is deleted, so local never holds more than one day of raw even for a whole-month batch.
+                n = dbf.batch_pull(client, root, start, end, "mbp-10", args.max_cost_per,
+                                   out_dir=OUT, flush_dir=BRANCH_DIR)
                 total_rows += n
             except SystemExit as e:
                 print(f"[pull_year] SKIP {root} {y}-{m:02d}: {e}", flush=True)
             except Exception as e:
                 print(f"[pull_year] ERROR {root} {y}-{m:02d}: {e}", flush=True)
-        # gzip the month's freshly-decoded files into the worktree, delete the raw JSONL
-        n_gz = 0
+        # fallback: gzip any straggler raw JSONL not already flushed (belt-and-suspenders)
         for f in sorted(glob.glob(os.path.join(OUT, "*.jsonl"))):
             with open(f, "rb") as src, gzip.open(os.path.join(BRANCH_DIR, os.path.basename(f) + ".gz"),
                                                  "wb", compresslevel=6) as dst:
                 shutil.copyfileobj(src, dst)
             os.remove(f)
-            n_gz += 1
-        if n_gz:
-            _git("pull", "--rebase", "origin", "data/nymex-ticks")
-            _git("add", "nymex_cont/")
-            _git("commit", "-q", "-m", f"S87 data: continuous MBP-10 nymex_cont/ {y}-{m:02d} (CL+NG)\n\n"
+        # commit the month if anything new landed in the worktree
+        _git("add", "nymex_cont/")
+        staged = _git("diff", "--cached", "--quiet").returncode != 0
+        if staged:
+            _git("commit", "-q", "-m", f"data: continuous MBP-10 nymex_cont/ {y}-{m:02d} (CL+NG), full-raw\n\n"
                  f"Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>")
             for _ in range(4):
+                _git("pull", "--rebase", "origin", "data/nymex-ticks")
                 r = _git("push", "origin", "HEAD:data/nymex-ticks")
                 if r.returncode == 0:
                     break
-            print(f"[pull_year] {y}-{m:02d} pushed {n_gz} gz files (cum rows {total_rows})", flush=True)
+            print(f"[pull_year] {y}-{m:02d} pushed (cum rows {total_rows})", flush=True)
+        else:
+            print(f"[pull_year] {y}-{m:02d} nothing new to commit", flush=True)
     print(f"[pull_year] DONE {args.start}..{args.end}: {total_rows} rows total", flush=True)
 
 

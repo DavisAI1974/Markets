@@ -1,0 +1,115 @@
+name: NYMEX MBP-10 Ingest (durable)
+
+# Durable RAW-INGESTION workflow for the continuous MBP-10 YEAR tape (CL + NG, 2025-07..2026-07).
+# Modeled on the coin durable collectors (btc/eth/alt_collectors_durable.yml, S20-S37) but adapted for a
+# finite historical BATCH backfill instead of a live stream:
+#
+#   * pulls ONE MONTH AT A TIME from Databento as a batch job (research/kalshi/pull_year_mbp10.py),
+#   * keeps ALL RAW DATA -- every message (trades AND book updates) + every column (all 10 book levels +
+#     sizes + counts per side + action/side/depth/flags/ts_event/ts_recv/...), ZERO filtering/reduction
+#     (databento_backfill._write_mbp10_df; no row is ever dropped),
+#   * gzips each day AS IT LANDS and deletes the raw local, so local never holds more than one day,
+#   * pushes ADDITIVELY to the data/nymex-ticks branch under nymex_cont/ (NOT an orphan force-push -- the
+#     corpus accrues month by month and must never be wiped),
+#   * is RESUMABLE: a month already on the branch is skipped, so the pull survives across 6h runs with no
+#     live session babysitting it.
+#
+# Schedule: every 6h; each run works until GitHub's ~6h cap, then the next run resumes where it left off.
+# Once all 12 months are on the branch every run just skips them (cheap no-op) until disabled.
+#
+# REQUIRES the DATABENTO_API_KEY repo secret. Greg must add it (Settings > Secrets > Actions) and click
+# "Run workflow" the first time -- Claude's token cannot dispatch Actions runs; the cron self-fires after.
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # 00:00, 06:00, 12:00, 18:00 UTC
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'first month, YYYY-MM inclusive'
+        default: '2025-07'
+        type: string
+      end:
+        description: 'last month, YYYY-MM EXCLUSIVE'
+        default: '2026-07'
+        type: string
+  push:
+    branches:
+      - claude/kalshi-s79-kickoff-ij8t9o
+    paths:
+      - '.github/workflows/nymex_mbp10_ingest_durable.yml'
+      - 'research/kalshi/pull_year_mbp10.py'
+      - 'research/kalshi/databento_backfill.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nymex-mbp10-ingest
+  cancel-in-progress: false
+
+env:
+  CODE_REF: claude/kalshi-s79-kickoff-ij8t9o
+  DATA_BRANCH: data/nymex-ticks
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355   # 5h55m, just under GitHub's 6hr hard limit
+    steps:
+      - name: Checkout code branch
+        uses: actions/checkout@v4
+        with:
+          ref: claude/kalshi-s79-kickoff-ij8t9o
+          fetch-depth: 0   # full history to add the data-branch worktree
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install --quiet databento pandas
+
+      - name: Set up data-branch worktree
+        run: |
+          git config user.email noreply@anthropic.com
+          git config user.name Claude
+          if git ls-remote --exit-code --heads origin "$DATA_BRANCH" > /dev/null 2>&1; then
+            git fetch origin "$DATA_BRANCH"
+            git worktree add --force /tmp/nymexdata "origin/$DATA_BRANCH"
+            git -C /tmp/nymexdata checkout -B "$DATA_BRANCH" "origin/$DATA_BRANCH"
+          else
+            echo "[worktree] $DATA_BRANCH does not exist yet -> creating orphan"
+            git worktree add --force --orphan -b "$DATA_BRANCH" /tmp/nymexdata
+          fi
+          git -C /tmp/nymexdata config user.email noreply@anthropic.com
+          git -C /tmp/nymexdata config user.name Claude
+          echo "[worktree] ready:"; ls /tmp/nymexdata | head
+
+      - name: Connectivity check
+        run: |
+          curl -sS --max-time 8 -o /dev/null -w "Databento hist: %{http_code}\n" \
+            "https://hist.databento.com/v0/metadata.list_datasets" || true
+
+      - name: Pull MBP-10 year (month at a time, resumable)
+        timeout-minutes: 345
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+        run: |
+          if [ -z "$DATABENTO_API_KEY" ]; then
+            echo "::error::DATABENTO_API_KEY secret is not set -- add it in Settings > Secrets > Actions"
+            exit 1
+          fi
+          START="${{ github.event.inputs.start || '2025-07' }}"
+          END="${{ github.event.inputs.end || '2026-07' }}"
+          echo "[run] pull_year_mbp10 $START..$END on $(date -u)"
+          python research/kalshi/pull_year_mbp10.py --start "$START" --end "$END"
+
+      - name: Corpus stats
+        if: always()
+        run: |
+          git -C /tmp/nymexdata fetch origin "$DATA_BRANCH" >/dev/null 2>&1 || true
+          echo "nymex_cont/ files now on branch:"
+          git -C /tmp/nymexdata ls-tree -r --name-only "origin/$DATA_BRANCH" 2>/dev/null \
+            | grep -c '^nymex_cont/' || echo 0
