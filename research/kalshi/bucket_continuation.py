@@ -68,22 +68,35 @@ def _curve_regime(root: str, day: str) -> str:
         return "unknown"
 
 
-def _temp_regime(day: str) -> str:
-    """Best-effort from the LOCAL nws cache only (no network in the table build)."""
+def _temp_features(day: str) -> dict:
+    """Weather conditioning from the LOCAL nws cache only (no network in the table build): the 5-bucket
+    regime PLUS the continuous gas-weighted demand (gw_hdd/gw_cdd/gw_precip). The bucket is a coarse split;
+    the continuous demand lets the weather->NG influence study measure move-per-degree-day (how much weather
+    moves NG), not just per-bucket. These are REALIZED (decision-time labeling) -> descriptive driver
+    strength, NOT a live signal (a tradeable weather signal uses the FORWARD forecast, not realized)."""
     try:
         import nws_temp_feed as nt
-        cache = nt._load_cache()
-        return cache.get(day, {}).get("regime", "unknown")
+        v = nt._load_cache().get(day, {})
+        return {"temp_regime": v.get("regime", "unknown"), "gw_hdd": v.get("gw_hdd"),
+                "gw_cdd": v.get("gw_cdd"), "gw_precip": v.get("gw_precip")}
     except Exception:
-        return "unknown"
+        return {"temp_regime": "unknown", "gw_hdd": None, "gw_cdd": None, "gw_precip": None}
+
+
+def _temp_regime(day: str) -> str:
+    """Back-compat: the 5-bucket regime only (see _temp_features for the continuous demand)."""
+    return _temp_features(day)["temp_regime"]
 
 
 def enrich(events: list[dict], root: str) -> None:
-    """Attach decision-time conditioning tags in-place: curve_regime, temp_regime."""
+    """Attach decision-time conditioning tags in-place: curve_regime, temp_regime, + continuous gas-weighted
+    demand (gw_hdd/gw_cdd/gw_precip) for the weather->NG influence study."""
     for e in events:
         day = e.get("day", "")
         e["curve_regime"] = _curve_regime(root, day)
-        e["temp_regime"] = _temp_regime(day)
+        tf = _temp_features(day)
+        e["temp_regime"] = tf["temp_regime"]
+        e["gw_hdd"], e["gw_cdd"], e["gw_precip"] = tf["gw_hdd"], tf["gw_cdd"], tf["gw_precip"]
 
 
 def coiled_thresholds(events: list[dict]) -> dict[str, float]:

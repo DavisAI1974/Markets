@@ -160,12 +160,15 @@ def _regime_tags(root: str, day: str) -> dict:
         curve = cr[1]["regime"] if cr else "unknown"
     except Exception:
         curve = "unknown"
+    tw = {"temp_regime": "unknown", "gw_hdd": None, "gw_cdd": None, "gw_precip": None}
     try:
         import nws_temp_feed as nt
-        temp = nt._load_cache().get(iso, {}).get("regime", "unknown")
+        v = nt._load_cache().get(iso, {})
+        tw = {"temp_regime": v.get("regime", "unknown"), "gw_hdd": v.get("gw_hdd"),
+              "gw_cdd": v.get("gw_cdd"), "gw_precip": v.get("gw_precip")}
     except Exception:
-        temp = "unknown"
-    return {"curve_regime": curve, "temp_regime": temp}
+        pass
+    return {"curve_regime": curve, **tw}   # continuous gas-weighted demand for the weather->NG influence study
 
 
 def characterize_day(root: str, day: str, source: str = "local") -> list[dict]:
