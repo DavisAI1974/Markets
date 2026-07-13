@@ -58,6 +58,7 @@ def _git(*args):
 
 
 def main():
+    global WT, OUT, BRANCH_DIR
     ap = argparse.ArgumentParser()
     ap.add_argument("--start", required=True, help="YYYY-MM inclusive")
     ap.add_argument("--end", required=True, help="YYYY-MM exclusive")
@@ -71,7 +72,6 @@ def main():
     ap.add_argument("--scratch", default=OUT, help="local scratch dir for decoded JSONL before gzip")
     args = ap.parse_args()
 
-    global WT, OUT, BRANCH_DIR
     WT = args.worktree
     OUT = args.scratch
     BRANCH_DIR = os.path.join(WT, "nymex_cont")
