@@ -19,7 +19,17 @@ biggest storage surprises made the smallest moves).
 
 1. **NEWS / ANTICIPATION** — forward-looking shocks priced ahead: forecasted hurricanes (NHC cone/outlook),
    weather outlooks, geopolitics. STRICTLY point-in-time / pre-event (leakage: only what was public before
-   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine.
+   the event). `news_ingest_rss.py` already tags EIA/Fed/**NHC** feeds — the live spine. Two SUB-TYPES,
+   different time-shape:
+   - **Discrete events** — a forecast/headline with a date (hurricane advisory, an EIA/Fed print). Point
+     spike in the state.
+   - **Persistent geopolitical regime (Greg, high weight on CL now)** — the war in Ukraine (Russian
+     supply/sanctions/flows) and the Iran conflict (Middle East supply, Strait of Hormuz) are NOT one-off
+     headlines; they are slow-moving BACKGROUND state that sits under crude as a standing risk premium and
+     raises its sensitivity to every other trigger. A crude market carrying that premium is a PRIMED market
+     -> a small storage surprise becomes a big mover (fits the S86 CL window; hypothesis, not a claim). The
+     running memory must carry an evolving geopolitical-risk REGIME axis (level + direction), distinct from
+     the discrete-event spikes.
 2. **STORAGE** — where the buffer sits: level vs 5-yr normal + the weekly SURPRISE (actual vs consensus /
    seasonal proxy). One piece, not the read (`eia_surprise.py` supplies actual/level; `prev_level` is the
    level hook).
@@ -45,7 +55,8 @@ The clearest split is inside WEATHER — same driver, opposite mechanism per mar
 | Weather | temperature / degree-days; heavy in winter+summer; NOAA/degree-days | adverse weather / hurricanes -> Gulf shut-in; heavy in summer; NHC + shut-in reports |
 | Storage | level vs normal + surprise; heaviest driver, withdrawal season; EIA | level vs normal + surprise; weak on the big moves here; EIA |
 | Market capacity | storage %-full, pipeline; winter tightness | backwardation, refinery util, spare capacity; summer squeezes; Databento deferreds |
-| News/anticipation | cold-snap outlooks; pre-print; RSS/NHC | forecasted hurricanes, geopolitics; pre-event; RSS/NHC |
+| News/anticipation (discrete) | cold-snap outlooks; pre-print; RSS/NHC | forecasted hurricanes; pre-event; RSS/NHC |
+| Geopolitical regime (persistent) | low weight | HIGH weight now: Ukraine (Russian supply), Iran/Mideast (Hormuz); standing risk premium |
 | Season/demand cycle | double-humped (HDD/CDD discovery) | driving season | 
 | The surprise | big builds move it (S86: beat|big fast down) | weak / anti on big moves (S86) |
 | Running memory | recent-surprise string + lasting effects | recent-surprise string + lasting effects |
@@ -63,6 +74,12 @@ The clearest split is inside WEATHER — same driver, opposite mechanism per mar
     point-in-time for the CL adverse-weather leg. SOURCEABLE.
   - Consensus + general news: RSS is FORWARD-ONLY (same gap as consensus.jsonl) -> accrue forward, or a
     dated news archive for history. GAP to flag.
+  - Geopolitical regime (Ukraine, Iran): hardest to quantify point-in-time. Candidate proxies —
+    **OVX** (CBOE crude-oil implied-vol index) as the MARKET-based read of the risk premium (free, deep,
+    point-in-time, but partly endogenous to price); the published **GPR geopolitical-risk index**
+    (Caldara-Iacoviello, historical); or dated news-volume/sentiment on Ukraine/Iran/oil. Start with OVX
+    as the cheap market proxy; treat the fundamental index as a refinement. FLAG: endogeneity (a vol proxy
+    co-moves with the move we are trying to explain) — keep it as a REGIME/context axis, not a predictor.
   - Degree-days: NOAA history, free. HAVE (weather scoreboard).
 
 ## How it plugs in
