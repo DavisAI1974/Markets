@@ -37,6 +37,16 @@ biggest storage surprises made the smallest moves).
      happens; its aftermath keeps re-pricing supply forward, so a Tuesday "repairs delayed" headline primes
      the Wednesday release. First-class -- the repair/restart-timeline updates ARE the lasting-effect
      signal, distinct from the original ex-ante spike.
+
+   **TIME-TO-IMPACT / tenor-matching (Greg, load-bearing for OUR scope).** News also has a HORIZON, and it
+   hits the part of the CURVE that matches it — not the market uniformly. Capacity offline in 3 months does
+   ~nothing to next-day/PROMPT oil but moves the TERM traders on the deferred curve; the same news, same
+   moment, different market. So a news item's weight depends on the TENOR traded. **Kalshi KXNATGASD/KXWTI
+   settle off the PROMPT/front month** (why we roll `.v.0`), so we weight news by time-to-impact RELATIVE TO
+   PROMPT: near-term (this week's storage, imminent storm, a refinery down now) dominates; 3-months-out is
+   mostly noise TO US even while it moves the term market. Each news item needs a time-to-impact tag; match
+   it to the prompt tenor. TRAP: a deferred-curve move with a quiet front is term traders repricing distant
+   risk that will NOT show up in our prompt Kalshi settle — do not read it as a prompt signal.
 2. **STORAGE — the physical CONFIRMATION node ("brings everything home", Greg).** Level vs 5-yr normal +
    the weekly SURPRISE (actual vs consensus / seasonal proxy); `eia_surprise.py` supplies actual/level,
    `prev_level` is the level hook. But storage is not just one axis among equals: the OTHER drivers
@@ -52,7 +62,10 @@ biggest storage surprises made the smallest moves).
    - storage as **% of working capacity** (how full/empty vs the max — distinct from vs-normal),
    - **refinery / production utilization + spare capacity** (how much room to respond),
    - **backwardation** (front-vs-deferred calendar spread) = the market's own PRICE-based tightness read
-     (the cheap first proxy; Databento deferred contracts).
+     (the cheap first proxy; Databento deferred contracts). DOUBLE DUTY (Greg): the curve is also a MAP of
+     WHERE on the horizon the market is pricing risk — a front-vs-deferred divergence tells you whether a
+     shock is hitting prompt (our Kalshi tenor) or only the term market. It gauges tightness AND locates the
+     news in time.
 
 ## The human / emotion factor (Greg — load-bearing, and the humility note)
 
