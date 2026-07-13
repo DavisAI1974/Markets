@@ -90,6 +90,13 @@ directly. Two consequences:
   says how primed/nervous the market is; the FLOW/BOOK read is emotion showing itself in the order flow.
   The event-state gates WHEN to look; the flow read is the emotion becoming observable. This is why the
   merged architecture pairs catalyst (state) with book/flow/exhaustion (the behavioral read).
+- **The emotional amplification IS the HERD RUN (Greg) — observable and classifiable.** When fear amplifies
+  you see a big herd run: a broad, many-participant stampede one direction. That is the emotion becoming
+  visible on the tape, and the merged architecture already reads it: **herd breadth = CONTINUATION, whale =
+  SCALP-only**. So the flow read does not just detect the emotion, it CLASSIFIES it — a broad herd run (wide
+  breadth) = fear realizing -> continuation (the run has legs, hold); a whale (one big player, narrow) = not
+  a herd -> scalp/fade. Full picture: event-state PRIMED -> storage TRIGGERS -> a HERD RUN in the flow is
+  the fear stampeding AND the signal it continues. Herd breadth is the emotional-amplification detector.
 
 ## Shared drivers, per-market / per-period WEIGHTS (Greg)
 
