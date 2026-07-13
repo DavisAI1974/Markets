@@ -83,9 +83,27 @@ pushed to this trunk - a watcher is armed for it).
   (opposite sign to BTC's +). NOT a refutation: (1) only static imb_level tested, NOT the EXHAUSTION factor
   (dipole collapsing toward 0.5 = the robust half of S36); (2) one trending EIA-Thursday day (reversal base
   rate <0.5 = momentum); (3) crude (1-sec mean imb, no per-cell, no 1-sec reversal-timing entry, no fee).
-  Machinery verified (reads raw NG MBP-10 end-to-end). REAL TEST: stack exhaustion+divergence, per-cell
-  (tod x regime x vol), many days off the S3 year, fine-resolution reversal entry, net-of-fee. Canary
-  script: scratchpad `ng_dipole_canary.py`.
+  Machinery verified (reads raw NG MBP-10 end-to-end). Canary scripts: scratchpad `ng_dipole_canary.py`,
+  `ng_exhaustion_canary.py`.
+  **S90 EXHAUSTION canary (same NG day):** the exhaustion read (dipole COLLAPSING toward balance) shows a
+  FAINT but RIGHT-SIGNED pulse at longer windows (W=60/K=30/F=60: oppose+exhaust 0.410 vs trend+strengthen
+  0.382 = +2.7pp; the BTC direction), unlike the static null. And it's the EXHAUSTION factor doing the work,
+  NOT the oppose/trend side (exhaust ~0.410 > strengthen ~0.38-0.40 regardless of side) - exactly the S36
+  finding that exhaustion is the robust half. Tiny, 1 trend day, no per-cell/fee.
+  **RESOLUTION (Greg S90, load-bearing): the canary binned to 1-SECOND - FAR too coarse. Big/HFT traders
+  aren't fee-constrained; they hunt a MILLISECONDS-to-MICROSECONDS edge (the book's reaction in the ms after
+  an event, queue dynamics). Our raw MBP-10 tape is NANOSECOND (`ts_event`/`ts_recv`, every message, every
+  level) - THAT is the asset, and 1-sec binning threw away exactly the resolution the edge lives at. The
+  1-sec faint pulse says almost nothing about the ms edge.** REAL TEST (next session): work at NATIVE TICK /
+  ms resolution (event-time, not binned) - the reaction in the ms after book-imbalance-collapse / exhaustion
+  events; per-cell (tod x regime x vol) across the full S3 year. Fees are secondary for this audience;
+  the edge is latency/microstructure.
+- **NEXT-CHAT AGENTS to spin up (Greg S90):** (1) a NYMEX-products agent - survey the NYMEX product catalog
+  (CL/NG/HO/RB/BZ futures + options + calendar spreads), find the BEST FIT for our system (the sub-second
+  reversal/dipole-exhaustion read + the raw MBP-10 tape we now own), and TEST THE TOP 5; (2) the Kalshi
+  product-ranking agent already ran this session (its result lands async - fold it in). Small futures edges
+  fit HIGH VOLUME + frequency (deep NG book, ~0.3-tick fee floor) - the opposite capacity constraint from the
+  thin Kalshi weather books.
 
 ## RESOLUTIONS (Q1-Q4 worked in order this session; Greg took Q5 = IAM rotation)
 - **Q1 pre-processing scope - RESOLVED.** The ingest-side pre-processing to move to the trade side is

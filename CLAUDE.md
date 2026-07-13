@@ -1,19 +1,21 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 89)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 90)
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
-follower.** **HISTORICAL DATA IS RAW (Greg S88, load-bearing): we keep ALL the info the dataset carries —
-every message, every column — we paid for the full dataset, we store the full dataset; the agent sifts the
-RAW data for driver→price correlations (events / weather / storage / curve → price). GATES LIVE ONLY ON OUR
-SIDE, FOR TRADE SIGNALS — never on the historical data.** S89 BUILT the durable raw-ingestion (zero-filter
-MBP-10 writer verified = 76 fields/row, all 10 levels; `pull_year_mbp10.py` month-at-a-time batch,
-gzip-per-day-as-it-lands, `--dest s3://…` or git) and is now **pulling the full-raw year (CL+NG,
-2025-07..2026-07) to an AWS S3 bucket** `bento-568968024170-us-east-2-an` (us-east-2), prefix `nymex/`
-(the tick corpus lives on S3 now, NOT git; AWS + Databento keys are session-pasted SECRETS). Split:
-container ran Jan-Jun 2026, Greg's box runs Jul-Dec 2025; resumable via bucket list.
-**NEXT (S90) = finish/verify the year on S3, then rework the scoring scaffolding
-(`month_characterize.py`, `bucket_continuation.py`, `forecaster_month_pass.workflow.js`) to read the RAW
-S3 tape (move pre-processing to the trade-signal side).** Detail: `SESSION_HANDOFF_2026-07-13_S89.md`,
-`research/kalshi/AWS_INGEST_SETUP_S89.md`, `KICKOFF_2026-07-14_S90.md`.
+follower.** **HISTORICAL DATA IS RAW (Greg S88, load-bearing): keep ALL the info — every message, every
+column, every HOUR — aggregate ONLY on the trade-signal side, never at ingest.** **S90: everything moved to
+AWS.** (1) Found + fixed a CRITICAL flush bug in `batch_pull` that truncated non-Friday days to 1-row stubs
+= 80% loss (hold-days-until-complete fix; validated 32.8M/32.8M CL-July rows recovered); (2) `pull_year
+--reuse-done-jobs` rebuilds corrupt months from already-paid Databento jobs FREE; (3) stood up a durable
+**EC2 box** (`i-0017dc36072eaa6c8`, us-east-2) that self-configures from S3 and runs the recovery+resume of
+the full-raw year to the bucket; (4) **ALL bento data now on S3, none in git** — bucket
+`bento-568968024170-us-east-2-an`, prefix `nymex/` (`nymex_cont/` year corpus + `nymex_tape/` + `nymex_mbp10/`);
+(5) built the **S3 tape reader** `event_move_baseline.load_cont_day(..., source="s3")` + raw-row normalizer
+(JOB 2 core — trade-filter + ladder-aggregate at read time); (6) built **RAW HOURLY weather ingestion**
+(`nws_temp_feed --ingest-hourly` → `s3://.../weather/nws_hourly/`, every field every ob, NO roll-up) — the
+daily degree-day rollup was the same reduction mistake. AWS + Databento keys are session-pasted SECRETS.
+**NEXT (S91) = verify the box finished the year on S3; finish JOB 2 (rework `bucket_continuation` /
+`month_characterize` release-window loaders to read raw S3); rotate the IAM+DB keys; fold in the weather
+rerun doc + the product-ranking agent.** Detail: `SESSION_HANDOFF_2026-07-13_S90.md`, `KICKOFF_2026-07-14_S91.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -195,6 +197,19 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S90** — EVERYTHING TO AWS + a critical data-integrity fix. (1) Verifying the first S3 month exposed an
+  80% loss: `batch_pull`'s flush gzipped each day BEFORE it was complete, so a later file's boundary rows
+  overwrote it (only Fridays/last-day survived) — FIXED (hold latest-2 days unflushed; validated 32.8M/32.8M
+  CL-July rows recovered). (2) `pull_year --reuse-done-jobs` + `redecode_job` rebuild corrupt months from
+  already-paid Databento jobs FREE. (3) Durable **EC2 box** `i-0017dc36072eaa6c8` (needed EC2FullAccess on
+  the `Claude` IAM user; no managed Lightsail-full policy exists) self-configures from S3 + runs the
+  recovery+resume. (4) ALL bento data moved git→S3 (`nymex_tape/`+`nymex_mbp10/`); git holds NO bento now.
+  (5) S3 tape reader `event_move_baseline.load_cont_day(source="s3")` + raw normalizer (JOB 2 core, wired
+  into `month_characterize --source s3`). (6) RAW HOURLY weather ingestion `nws_temp_feed --ingest-hourly`
+  → `weather/nws_hourly/` (every field/ob, no roll-up; the daily degree-day store was the same reduction
+  mistake). (7) Weather interface spec + trade-distribution math + AWS deploy kit + the daily-cadence trigger
+  note. NG dipole quick canary = static-divergence NULL (test exhaustion next). Secrets to ROTATE (Q5).
+  Detail: `SESSION_HANDOFF_2026-07-13_S90.md`.
 - **S89** — BUILT the durable RAW ingestion + moved the tick corpus to AWS S3. Zero-filter MBP-10 writer
   (removed the last silent row-drop; verified 76 fields/row, all 10 levels). `pull_year_mbp10.py`:
   month-at-a-time batch, gzip-each-day-as-it-lands (`batch_pull(flush_dir=)` bounds local to 1 day),

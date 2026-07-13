@@ -41,6 +41,19 @@ the continuous corpus streams on demand via `event_move_baseline.load_cont_day(.
 durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non-bento). See
 `research/kalshi/AWS_INGEST_SETUP_S89.md`. AWS + Databento keys are session-pasted SECRETS.
 
+**S90 code changes (detail in `SESSION_HANDOFF_2026-07-13_S90.md`):**
+- `databento_backfill.py` — FIXED the flush bug (80% loss; hold-days-until-complete); `_download_decode_flush`
+  + `redecode_job(jid)` re-decode an already-paid done job FREE.
+- `pull_year_mbp10.py` — `--reuse-done-jobs` recovery mode (rebuild corrupt months from paid jobs, no re-charge).
+- `event_move_baseline.py` — `load_cont_day(root, day, source="s3"|"local")` + `normalize_mbp10_row` (the JOB 2
+  S3 tape reader: trade-filter + ladder-aggregate at READ time; S3 stream + local gz cache).
+- `month_characterize.py` — `load_cont_full` routes through the shared reader + `--source s3|local`.
+- `nws_temp_feed.py` — RAW HOURLY ingestion `--ingest-hourly` (`fetch_asos_raw`/`ingest_hourly_raw` -> every
+  field/ob to `s3://.../weather/nws_hourly/`, NO roll-up); daily rollup now S3-synced (derived, not the store).
+- `deploy/aws/` — the durable-box deploy kit (setup.sh + systemd units + runbook). The S90 EC2 box was launched
+  ad-hoc via boto3 (AMI/SG/run_instances) with a self-configuring boot script pulling code from S3.
+- `research/kalshi/WEATHER_FORECAST_INTERFACE_S90.md` — the forecaster emit-contract (per-cell distributions).
+
 ---
 
 ## CURRENT KALSHI FILES
