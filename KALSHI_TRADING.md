@@ -10,6 +10,15 @@
 >    (re-match analogs / roll the forecast mid-session — the adaptive re-forecast). Distinguish
 >    "analog was wrong -> re-forecast" from "move reversing -> exit."
 > See `research/kalshi/PATH_FORECAST_RESEARCH_S87.md` for the methods.
+>
+> **HOW IT RUNS DAILY (Greg S90, "how do we remember to do this daily?").** The SAME daily lifecycle
+> covers the WEATHER-DISTRIBUTION trade (KXHIGH*: score tomorrow's ladder by ~5PM, recalc in the AM,
+> re-check intraday) AND the NYMEX path forecast. Do NOT rely on memory — the cadence must be a DURABLE
+> DAILY TRIGGER. Mechanism: a GitHub Actions daily `cron` (matches the existing durable collectors;
+> Greg dispatches/holds the secrets) OR a Claude Routine (`create_trigger`, daily cron, fires into a
+> session). Wire the trigger once the forecaster EMIT (per the interface spec) + the per-cell scoring
+> SCRIPT exist; until then this is recorded, not scheduled (a trigger firing into an empty pipeline is
+> premature). See `WEATHER_FORECAST_INTERFACE_S90.md`.
 
 The map of every Kalshi file: what it is, where it lives, and whether it's part of the CURRENT
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move

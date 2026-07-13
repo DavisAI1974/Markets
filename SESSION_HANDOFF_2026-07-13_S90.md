@@ -95,6 +95,13 @@ pushed to this trunk - a watcher is armed for it).
   the rerun + confirmed depth. The forecaster's own run (`run_complete.py`) is already Greg's workflow.
 - **2nd trading platform (Greg this session):** we will likely need a 2nd prediction-market venue for
   capacity, but NOT until we are live here - deferred, not a today job.
+- **Daily cadence = a DURABLE TRIGGER, not memory (Greg S90: "how do we remember to do this daily?").**
+  The weather-distribution trade is same-day (score tomorrow's KXHIGH ladder ~5PM, recalc AM, re-check
+  intraday) - the same daily lifecycle as the NYMEX path forecast (the FORECAST WORKFLOW TODO in
+  KALSHI_TRADING.md). Mechanism = a GitHub Actions daily cron (matches the durable collectors; Greg
+  dispatches) OR a Claude Routine (create_trigger daily cron -> session). Wire it once the forecaster emit
+  + the per-cell scoring script exist; recorded now, scheduled later (a trigger into an empty pipeline is
+  premature). Noted in the KALSHI_TRADING.md FORECAST WORKFLOW block.
 
 ## OPEN QUESTIONS (superseded by RESOLUTIONS above; kept for the audit trail)
 1. **JOB 2 pre-processing:** what SPECIFICALLY is the "pre-processing on the ingest side" to move to the
