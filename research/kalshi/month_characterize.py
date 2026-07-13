@@ -36,7 +36,11 @@ import lag_join as lj                                             # noqa: E402
 
 CONT_DIR = "data/nymex_cont"
 MULT = {"CL": 1000.0, "NG": 10000.0}          # contract size: CL 1000 bbl, NG 10000 MMBtu ($/pt -> $/contract)
-TRIG = {"CL": 0.20, "NG": 0.03}               # lag_join defaults ($ NYMEX sustained-move trigger)
+# CHARACTERIZER move trigger — DECOUPLED from lag_join's TRADE trigger (Greg S88). For sampling the analog
+# library we want richer coverage, so NG is lowered to $0.015 ($150/c): its trade trigger ($0.03) starved
+# the intraday sample 50x vs CL (59 vs 2884 moves/month in the S88 validation). Trading keeps its own
+# fee-justified trigger; characterization samples smaller moves too. Overridable via --trig-cl/--trig-ng.
+TRIG = {"CL": 0.20, "NG": 0.015}
 CONFIRM_S = 5.0
 COOLDOWN_S = 180.0
 POST_S = 1800.0                               # forward path window per move (s)
@@ -262,6 +266,8 @@ def main() -> int:
                     help="continuous-tape dir to READ (default data/nymex_cont; use a SEPARATE dir while the "
                          "year pull owns data/nymex_cont as its live scratch)")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--trig-cl", type=float, default=None, help="override CL characterizer move trigger ($)")
+    ap.add_argument("--trig-ng", type=float, default=None, help="override NG characterizer move trigger ($)")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
     if args.selftest:
@@ -269,6 +275,10 @@ def main() -> int:
     if args.cont_dir:
         global CONT_DIR
         CONT_DIR = args.cont_dir
+    if args.trig_cl is not None:
+        TRIG["CL"] = args.trig_cl
+    if args.trig_ng is not None:
+        TRIG["NG"] = args.trig_ng
     if not (args.root and args.month):
         ap.error("need --root and --month (or --selftest)")
     res = characterize_month(args.root, args.month)
