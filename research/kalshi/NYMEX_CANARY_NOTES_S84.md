@@ -1,5 +1,24 @@
 # NYMEX is the canary — load-bearing principle + data-source reality (S84, Greg)
 
+## S87 SETTLEMENT-SOURCE VERIFICATION (queried off Kalshi /series + rules_primary) — READ
+What the "daily end price number" each market settles on ACTUALLY is (Greg S87 asked; verified, not memory):
+- **KXNATGASD** (Natural Gas Daily): *"the close price of the 1-minute candlestick for natural gas using the
+  **NGDQ6 contract** at 5:00 PM EDT"*, settlement source = **Pyth** (`pythdata.app`). So the UNDERLYING is the
+  NYMEX NG PROMPT futures (NGDQ6 = the prompt contract, rolls) — NOT the Henry Hub cash/spot index (the
+  NGI/EIA number that tracks L48 production) — but Kalshi READS it from **Pyth**, at a **5PM-EDT 1-minute
+  candle close** (not the official CME settle).
+- **KXWTI** (WTI oil on day): *"the daily settlement price for WTI crude oil (August 2026 contract)"*, source
+  = **ICE**. The official ICE futures DAILY SETTLE.
+- **So the canary underlying is exchange futures (our Databento CME NG.v.0 / CL.v.0 = right leading signal),
+  but the SETTLE READER differs: gas = Pyth @ a fixed 5PM-EDT minute; crude = ICE official daily settle.**
+- **TWO leads this opens:** (1) a VALID Pyth NG feed EXISTS (Kalshi settles off Pyth's NGDQ6) -> revives the
+  "NGDQ6 Pyth id is bogus" fix below as a real chance to get the NG canary FREE from Pyth AND match the exact
+  settle source (matters near 5PM EDT). (2) Different settle mechanics per commodity (gas 1-min candle @ a
+  clock time vs crude official settle) -> the forecaster's late-session/endgame read must know which clock.
+- **INGEST L48 dry-gas PRODUCTION (EIA)** — Greg S87: the NYMEX/HH flat-price lines track the L48 production
+  curve closely; it is the supply backdrop feed (measure the real correlation; the event-state capacity pillar).
+
+
 ## Settlement-mechanics correction (S84 — verified off Kalshi rules_primary)
 
 What the energy/electricity Kalshi markets ACTUALLY settle on — corrects earlier framing:
