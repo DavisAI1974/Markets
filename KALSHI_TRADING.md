@@ -88,7 +88,7 @@ S86 MBP-10 depth tape under `nymex_mbp10/` + depth baselines). `kalshi-session-s
 | `CLAUDE.md` | The lean live operating doc (S83 split; the pre-split OD/crypto/physics master is archived verbatim in `CLAUDE_ARCHIVE_OD.md`). |
 | `KALSHI_BUILD_SCOPE.md` | The Kalshi build scope / thesis. |
 | `research/kalshi/EVENT_WEIGHT_STUDY.md` (+ `event_weight_study.json`, `source_map.json`) | Per-bucket event-weight study (weather→storage strong; storage-surprise→price null). |
-| `SESSION_HANDOFF_2026-07-12_S85.md` (+ S84, S83, S82, S81, S80, S79, S78) | Session handoffs (S85 latest: Databento LIVE, event_move_baseline first real result = per-contract hold-time map, MBP-10 schema decision, data persisted on `data/nymex-ticks`). |
+| `SESSION_HANDOFF_2026-07-13_S86.md` (+ S85, S84, S83, S82, S81, S80, S79, S78) | Session handoffs (S86 latest: the EVENT-STATE MODEL + three MBP-10 builds — depth run-length, surprise split, pre-release volume primed-detector; P3 lag join scoped/next). |
 | `KICKOFF_2026-07-12_S86.md` (+ S84, S83, S82, S81, S80, S79) | Session kickoffs (S86 next: MBP-10 depth + full-year pull, surprise join, lag join). |
 
 ---

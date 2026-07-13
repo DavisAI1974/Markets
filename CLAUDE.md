@@ -1,14 +1,17 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-12, Session 86)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 86)
 
 **One-line state:** the futures→Kalshi LAG is the live edge thread — **NYMEX is the CANARY, Kalshi the
-delayed follower; the strategy is the DAILY NG-futures lag.** S85: **Databento is LIVE** (key set, pipeline
-proven end-to-end) and **`event_move_baseline.py` ran on real true-tick NG/CL** — the result is a per-
-contract HOLD-TIME map: **NG is front-loaded (a ~60s hold captures ~66% of the release move), CL is slower
-(60s = ~27%, a longer hold gets the rest) — BOTH kept, different hold windows, EV-net-of-fee is the gate
-not frequency** (`EVENT_MOVE_FINDINGS_S85.md`). These are FUTURES (canary) moves = the ceiling; the Kalshi
-echo net-of-fee (the lag join) is next. Schema going forward = **MBP-10** (trades + top-of-book + 10-level
-depth; ~$130/yr NG+CL, ~$5 over the $125 credit); MBO stays off. Tape persisted on `data/nymex-ticks`.
-Weather = scoreboard only, forecaster is Greg's spec.
+delayed follower.** S86 produced a **MODEL, not just features: `research/kalshi/EVENT_STATE_DESIGN_S86.md`**
+— Greg's driver model that reads each energy release CONDITIONED on prior + anticipated state (events STACK;
+three pillars = news/storage/market-capacity; storage = the physical confirmation node; shared drivers with
+per-market/per-period weights, "same scaffold, different values"; the human/emotion factor shows as the herd
+run = order-flow footprint). S86 also BUILT three leakage-gated reads on the 24 MBP-10 windows (~$0.42):
+depth run-length (NG −0.17 / CL +0.52), the EIA seasonal-proxy surprise split, and the **pre-release VOLUME
+primed/coiled detector** (NG: quieter pre-release → bigger move, consistent across cells; the first build off
+the model, needs no external feeds). All provisional (n=12, Apr-Jul only, logged WITHOUT mechanism). **NEXT =
+P3 lag join** (Kalshi echo net-of-fee vs the futures move = realized-EV; scoped, needs a `kalshi_history.py`
+pull of the 24 settled events; gates the $130 full-year pull). Weather = scoreboard only, forecaster is
+Greg's spec. Detail: `SESSION_HANDOFF_2026-07-13_S86.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -190,9 +193,6 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
-- **S79** — pipeline turnkey; consensus accrual; event-weight study; the merged signal architecture.
-- **S80** — cron live; historical Kalshi trades (real signed flow); futures→Kalshi lag CONFIRMED
-  (futures lead, Kalshi never leads); level-hit reframe.
 - **S81** — lag made tradeable-or-not: direction predictable (sharpens with move size), edge is
   size-vs-fee, real but rare at 1-min → sub-minute pivot to Pyth ticks.
 - **S82** — per-trade level-hit dataset (200k events): level-hits mean-revert at 1¢, NO cell pays at
@@ -205,14 +205,15 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
   id) → Databento = primary historical (true-tick CL+NG, `databento_backfill.py`). KXNATGASD = daily
   NG-futures market; KXPOWERKWH = monthly macro stat. Weather per-day fingerprint. Killed respawning
   crypto collectors. Detail: `SESSION_HANDOFF_2026-07-15_S84.md`.
-- **S86** — MBP-10 depth online. `databento_backfill.py --schema mbp-10` (trade+book writer) +
-  `event_move_baseline.py --depth` (book imbalance/run-length read), leakage PASS 12/12; 24 windows
-  re-pulled at MBP-10 (~$0.42). Logged (provisional, n=12, Apr-Jul only, seasonality-confounded — no
-  generalization): push-book one-sidedness vs run length correlates NG −0.17 / CL +0.52 (opposite-signed);
-  EIA seasonal-proxy surprise join (`eia_surprise.py`, 12/12 matched) shows an opposite-signed surprise/move
-  relation NG vs CL. Correlations logged without mechanism. Full-year pull ($130, all seasons) deferred
-  until the lag join proves the echo pays. Detail: `DEPTH_RUNLENGTH_FINDINGS_S86.md`,
-  `EVENT_SURPRISE_FINDINGS_S86.md`.
+- **S86** — Produced the **event-state MODEL** (`EVENT_STATE_DESIGN_S86.md`, Greg's driver model — see
+  one-line state) + three leakage-gated builds on the 24 MBP-10 windows (~$0.42), all provisional/n=12/
+  Apr-Jul/logged-without-mechanism: (1) MBP-10 depth run-length (push-book one-sidedness vs run length NG
+  −0.17 / CL +0.52); (2) EIA seasonal-proxy surprise split (`eia_surprise.py`, 12/12; opposite-signed
+  surprise/move NG vs CL); (3) pre-release VOLUME primed/coiled detector (`pre_release_volume`; NG quieter
+  pre-release → bigger move, consistent across cells — first build off the model, no external feeds).
+  Eyeball-validated (06-17 CL big move = the 2026 Hormuz crisis). NEXT = P3 lag join (needs a Kalshi
+  historical pull; gates the $130 full-year MBP-10). Detail: `SESSION_HANDOFF_2026-07-13_S86.md`,
+  `DEPTH_RUNLENGTH_FINDINGS_S86.md`, `EVENT_SURPRISE_FINDINGS_S86.md`, `PREVOL_FINDINGS_S86.md`.
 - **S85** — Databento LIVE (key set, `pip install databento` 0.81). `event_move_baseline.py` BUILT + run
   on 12 NG + 12 CL real release windows (leakage PASS, `definition`-schema $10/tick): per-contract
   HOLD-TIME map (NG 60s=66% of move front-loaded; CL slower, 60s=27%, longer hold gets the rest — both
