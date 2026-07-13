@@ -97,7 +97,14 @@ POWER = [
     "KXUTILITYNYC",     # NYC
     "KXUTILITYSOCAL",   # SoCal
 ]
-DEFAULT_WATCHLIST = WEATHER_HIGH + ECON + ENERGY + POWER
+# Metals price contracts — depth-add #1/#2 (S91): daily-resolving, deep two-sided ladders,
+# settle on the SAME "Pyth 1-min candle @5PM EDT" mechanic as KXNATGASD, so the lag-join +
+# settlement-oracle-divergence pipelines reuse verbatim. Underlyings COMEX GC/SI (GLBX tape).
+METALS = [
+    "KXGOLDD",     # COMEX gold, daily (Pyth XAU/USD settle @5PM; deeper book than KXWTI)
+    "KXSILVERD",   # COMEX silver, daily
+]
+DEFAULT_WATCHLIST = WEATHER_HIGH + ECON + ENERGY + POWER + METALS
 
 
 # --- HTTP -----------------------------------------------------------------------------------
