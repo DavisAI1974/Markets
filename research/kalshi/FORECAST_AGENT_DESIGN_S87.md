@@ -17,6 +17,15 @@ is the selector). The agent OWNS figuring out how the pieces combine; it is not 
 2. **Per LOCATION / VARIATION, separately.** If we trade different locations or variants of a commodity
    (WTI vs Brent crude; Henry Hub vs other gas hubs; different delivery points), EACH is scored and
    forecasted on its own — do not assume one variant's weights transfer to another.
+   - **The lines are HIGHLY CORRELATED -> decompose common factor + basis (Greg S87).** On the NGI chart
+     the hub lines track each other tightly: most of the move is a COMMON FACTOR = the Henry Hub / front-
+     month LEVEL every hub shares. So (a) our rich NYMEX Henry Hub forecast CARRIES the correlated hubs —
+     forecast the shared level ONCE from the rich tape, don't refit each hub from scratch; and (b) the
+     tradeable per-location signal is the DIVERGENCE = the BASIS (regional − Henry Hub), which decouples on
+     LOCAL drivers (regional weather, pipeline constraints, congestion — "Henry Hub climbs, Northeast
+     slides"). Model each location as LEVEL (common, from the rich data) + BASIS (per-location, conditioned
+     on local drivers); the correlation is the baseline and the correlation BREAKDOWNS are where the
+     per-location edge lives. (Same idea for crude variants: WTI level + the Brent-WTI / grade spread.)
 
 ## The pieces and their correlations (Greg — the agent must DISCOVER these)
 Our pieces (from the event-state model + microstructure): news (3 tenses), storage level+surprise, forward
