@@ -15,6 +15,12 @@ The map of every Kalshi file: what it is, where it lives, and whether it's part 
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move
 superseded ones down. (Started S81, 2026-07-12.)
 
+> **FILE DISCIPLINE (Greg S87, load-bearing).** EDIT existing live files first; only create a NEW
+> file if one does not already exist for that purpose. Do not spin up a parallel file that
+> re-implements what a live file does — extend the live one with a flag/mode. (S87 lesson: a separate
+> `lag_join_intraday.py` duplicated ~80% of `lag_join.py` and was folded back in.) Check this index
+> before creating any file.
+
 Data stores are LOCAL/gitignored (too big for git): `data/kalshi_hist_trades/` (historical trades),
 `data/pyth_ticks/` (Pyth + Databento NYMEX trades ticks), `data/nymex_mbp10/` (S86: MBP-10 trade+book
 depth tape), `data/kalshi/` (live bins + consensus). Durable data accrues gzipped on branches:

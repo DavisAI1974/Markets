@@ -1,17 +1,18 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 86)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 87)
 
-**One-line state:** the futures→Kalshi LAG is the live edge thread — **NYMEX is the CANARY, Kalshi the
-delayed follower.** S86 produced a **MODEL, not just features: `research/kalshi/EVENT_STATE_DESIGN_S86.md`**
-— Greg's driver model that reads each energy release CONDITIONED on prior + anticipated state (events STACK;
-three pillars = news/storage/market-capacity; storage = the physical confirmation node; shared drivers with
-per-market/per-period weights, "same scaffold, different values"; the human/emotion factor shows as the herd
-run = order-flow footprint). S86 also BUILT three leakage-gated reads on the 24 MBP-10 windows (~$0.42):
-depth run-length (NG −0.17 / CL +0.52), the EIA seasonal-proxy surprise split, and the **pre-release VOLUME
-primed/coiled detector** (NG: quieter pre-release → bigger move, consistent across cells; the first build off
-the model, needs no external feeds). All provisional (n=12, Apr-Jul only, logged WITHOUT mechanism). **NEXT =
-P3 lag join** (Kalshi echo net-of-fee vs the futures move = realized-EV; scoped, needs a `kalshi_history.py`
-pull of the 24 settled events; gates the $130 full-year pull). Weather = scoreboard only, forecaster is
-Greg's spec. Detail: `SESSION_HANDOFF_2026-07-13_S86.md`.
+**One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
+follower.** S87 BUILT P3 = **`research/kalshi/lag_join.py`**, the lag-join trade engine (release + `--intraday`
+modes): entry taker the moment NYMEX makes a SUSTAINED $-move, HOLD via a NYMEX dollar trailing stop (Greg's
+trend-hold — ride the trend, don't churn each sub-move), exit maker-best-number vs taker-floor, net-of-fee,
+per-cell, all $/c never bps, tuned per contract. PROVISIONAL but PAYS: release CL taker +1c/maker +8c, NG
+taker +17c/maker +21c; intraday 06-17 (49 moves) the trend-hold flipped −115c→+202c maker (leans on the
+optimistic maker fill; tiny-n; Apr-Jul). Then designed the next phase with Greg: an intraday NYMEX PATH
+FORECASTER as a stacked HOLD-LENGTH signal (`FORECAST_AGENT_DESIGN_S87.md` = Greg's spec; `PATH_FORECAST_
+RESEARCH_S87.md` = cited methods — honest verdict: continuation/shape CONDITIONAL ON EVENTS has measured
+skill, strongest around releases + high-vol = our setup). Databento pull infra built (`batch_pull` +
+`pull_year_mbp10.py`); **NEXT = launch the 1-year continuous MBP-10 pull** (~$130, pay-once to
+`data/nymex-ticks:nymex_cont/`) = the forecaster's analog library, then build the forward-curve reader +
+forecaster v1. Detail: `SESSION_HANDOFF_2026-07-13_S87.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -193,8 +194,6 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
-- **S81** — lag made tradeable-or-not: direction predictable (sharpens with move size), edge is
-  size-vs-fee, real but rare at 1-min → sub-minute pivot to Pyth ticks.
 - **S82** — per-trade level-hit dataset (200k events): level-hits mean-revert at 1¢, NO cell pays at
   maker fees, internal flow is a weak predictor → **the edge is EXTERNAL (futures lag)**. Pyth feed
   unstuck. Weather scoreboard characterized.
@@ -221,6 +220,13 @@ Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
   hardened (defs mode + point-in-time tick store, volume roll `.v.0`, retry/backoff). Schema decision =
   MBP-10 (depth, ~$130/yr both, ~$5 over credit; MBO off). Tape persisted on `data/nymex-ticks`
   (session-start restores it). Detail: `SESSION_HANDOFF_2026-07-12_S85.md`, `EVENT_MOVE_FINDINGS_S85.md`.
+- **S87** — BUILT P3: `lag_join.py` lag-join engine (release + `--intraday`), NYMEX-driven entry/hold/exit,
+  trend-hold dollar trailing stop, maker vs taker net-of-fee. PROVISIONAL but pays (CL/NG both positive
+  gated; intraday 06-17 trend-hold −115c→+202c maker; leans on maker fill, tiny-n). Designed the intraday
+  PATH FORECASTER as a stacked hold-length signal (`FORECAST_AGENT_DESIGN_S87.md` Greg's spec +
+  `PATH_FORECAST_RESEARCH_S87.md` cited methods). Databento pull infra (`batch_pull`, `pull_year_mbp10.py`);
+  1-yr continuous MBP-10 pull = pay-once to `data/nymex-ticks:nymex_cont/` = the forecaster's analog library
+  (2-yr to S3 at go-live). Detail: `SESSION_HANDOFF_2026-07-13_S87.md`.
 
 S86 priorities (see `KICKOFF_2026-07-12_S86.md`): (1) extend writer+baseline to consume MBP-10 DEPTH
 (run-length/exhaustion read), then batch the full-year MBP-10 (watch disk); (2) historical surprise join

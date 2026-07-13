@@ -73,6 +73,12 @@ for gz in $(git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_mb
 done
 ```
 
+The **continuous MBP-10 YEAR tape** (S87, the forecaster's analog library) accrues gzipped under
+`nymex_cont/` on the same `data/nymex-ticks` branch (~13x compression, ~400MB gz / ~5GB raw for a year).
+It is LARGE — do NOT blanket-restore it at session start. Restore the days you need on demand:
+`git show origin/data/nymex-ticks:nymex_cont/CL_20260617.jsonl.gz | gunzip > data/nymex_cont/CL_20260617.jsonl`
+(`git ls-tree -r --name-only origin/data/nymex-ticks | grep '^nymex_cont/'` to see what accrued).
+
 ## 4. VERIFY accrual before trusting the data
 
 - Check the newest timestamp inside each restored file, not just its existence — a feed can be
