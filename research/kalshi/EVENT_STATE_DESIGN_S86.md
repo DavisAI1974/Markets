@@ -37,15 +37,38 @@ biggest storage surprises made the smallest moves).
      happens; its aftermath keeps re-pricing supply forward, so a Tuesday "repairs delayed" headline primes
      the Wednesday release. First-class -- the repair/restart-timeline updates ARE the lasting-effect
      signal, distinct from the original ex-ante spike.
-2. **STORAGE** — where the buffer sits: level vs 5-yr normal + the weekly SURPRISE (actual vs consensus /
-   seasonal proxy). One piece, not the read (`eia_surprise.py` supplies actual/level; `prev_level` is the
-   level hook).
+2. **STORAGE — the physical CONFIRMATION node ("brings everything home", Greg).** Level vs 5-yr normal +
+   the weekly SURPRISE (actual vs consensus / seasonal proxy); `eia_surprise.py` supplies actual/level,
+   `prev_level` is the level hook. But storage is not just one axis among equals: the OTHER drivers
+   (geopolitics, a distant war, a forecast) are LATENT — abstract, "no physical effect on you yet" — so
+   traders hold them at arm's length. Storage is where the abstraction becomes PHYSICAL: a smaller buffer
+   than expected is proof the fear is real. So storage is the TRIGGER that converts latent risk into
+   realized fear, and it FIRES on confluence: tight global supply + geopolitical stress (latent primer)
+   PLUS less storage than anticipated (physical confirmation) = nervous traders. This is the deeper reason
+   storage-alone ran backwards in the S86 CL check: a miss into a CALM market is a shrug; the same miss into
+   a PRIMED market is a spark. Storage is the trigger; the latent state sets whether the trigger matters.
 3. **MARKET CAPACITY** — the system's slack / ability to ABSORB a shock; low slack = primed = small shock
    -> big move. Candidate measures (TO CONFIRM the framing):
    - storage as **% of working capacity** (how full/empty vs the max — distinct from vs-normal),
    - **refinery / production utilization + spare capacity** (how much room to respond),
    - **backwardation** (front-vs-deferred calendar spread) = the market's own PRICE-based tightness read
      (the cheap first proxy; Databento deferred contracts).
+
+## The human / emotion factor (Greg — load-bearing, and the humility note)
+
+The trigger fires through PEOPLE. Tight supply + a storage miss "gets traders nervous" — the reaction is
+EMOTIONAL (fear), so it is often disproportionate to the raw numbers and CANNOT be cleanly quantified. The
+event-state models how PRIMED the market is (the conditions); it does not, and cannot, model the emotion
+directly. Two consequences:
+- **Expect overreaction / noise.** A primed market can move far more than the fundamentals warrant, and the
+  same setup will not always fire — because the human response is variable. Size and confidence must respect
+  that the amplification is behavioral, not mechanical.
+- **Order flow is the measurable FOOTPRINT of the emotion (the bridge).** You cannot quantify fear directly,
+  but it leaves fingerprints on the tape — the OD dipole (divergence / exhaustion, `odcore/info_dipole.py`)
+  and the S86 MBP-10 depth read ARE that shadow. So the architecture is two layers: the macro EVENT-STATE
+  says how primed/nervous the market is; the FLOW/BOOK read is emotion showing itself in the order flow.
+  The event-state gates WHEN to look; the flow read is the emotion becoming observable. This is why the
+  merged architecture pairs catalyst (state) with book/flow/exhaustion (the behavioral read).
 
 ## Shared drivers, per-market / per-period WEIGHTS (Greg)
 
