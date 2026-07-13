@@ -90,6 +90,19 @@ directly. Two consequences:
   says how primed/nervous the market is; the FLOW/BOOK read is emotion showing itself in the order flow.
   The event-state gates WHEN to look; the flow read is the emotion becoming observable. This is why the
   merged architecture pairs catalyst (state) with book/flow/exhaustion (the behavioral read).
+- **The PRE-RELEASE VOLUME SIGNATURE (Greg) — a leakage-safe, market-based readout of "primed", buildable
+  NOW on our tape.** In a tight, on-edge market the pre-release goes DEAD, not normal: volume COLLAPSES
+  before the print because nobody wants to get run over if the number is bad — a coiled spring, the opposite
+  of normal-volume-then-a-small-bump-after. Then it BIFURCATES on the number: bad/confirming -> an EXPLOSION
+  of trades (the herd run stampeding); benign -> a sigh of relief, very little activity (tension releases
+  calmly). WHY THIS ONE IS KEY: the abnormally-quiet pre-release is the TAPE telling us the market is primed
+  — a direct readout of the whole latent state WITHOUT first assembling backwardation + news + geopolitics.
+  Two clean features, both on the existing MBP-10 tape:
+  - **pre-release volume anomaly** (dead vs the market's normal pre-print volume) = the PRIMED/coiled
+    detector. PRE-EVENT and leakage-safe -> genuinely PREDICTIVE, not descriptive. (The baseline already
+    computes pre-release VOLATILITY in `anchor_at`; adding pre-release VOLUME is a small extension.)
+  - **post-release volume surge ratio** = the explosion-vs-relief classifier (which way the spring released;
+    pairs with the herd-breadth read below).
 - **The emotional amplification IS the HERD RUN (Greg) — observable and classifiable.** When fear amplifies
   you see a big herd run: a broad, many-participant stampede one direction. That is the emotion becoming
   visible on the tape, and the merged architecture already reads it: **herd breadth = CONTINUATION, whale =
@@ -162,3 +175,9 @@ The clearest split is inside WEATHER — same driver, opposite mechanism per mar
 4. Sequence vs P3: build the state axes we already HAVE (storage level+surprise, season, degree-days) into
    the conditioning first, then layer capacity + news as feeds land — so P3 can run stacking-aware on the
    axes in hand without waiting for the full set.
+5. **FIRST buildable piece (no new feeds): the pre-release volume signature.** The pre-release volume
+   anomaly (coiled/dead detector) + post-release surge ratio (explosion-vs-relief) are leakage-safe and
+   computable on the 24 MBP-10 windows we ALREADY have — a market-based proxy for "primed" that needs none
+   of the external feeds. Highest value-per-effort next step: extend `anchor_at` (which already does
+   pre-release vol) to pre-release VOLUME, test the coiled->move relation on the 24 windows, and feed it to
+   P3 as a primed-state gate. Do this before/alongside the macro-feed sourcing.
