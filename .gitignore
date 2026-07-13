@@ -98,3 +98,4 @@ data/level_hits_*.json
 data/event_move_*.json
 data/eia_surprise.json
 data/nws_temp/
+data/nymex_curve/
