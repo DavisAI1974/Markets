@@ -1,18 +1,19 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 88)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-13, Session 89)
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
 follower.** **HISTORICAL DATA IS RAW (Greg S88, load-bearing): we keep ALL the info the dataset carries —
 every message, every column — we paid for the full dataset, we store the full dataset; the agent sifts the
 RAW data for driver→price correlations (events / weather / storage / curve → price). GATES LIVE ONLY ON OUR
-SIDE, FOR TRADE SIGNALS — never on the historical data.** S88 rewrote the MBP-10 writer to keep everything
-raw (`databento_backfill._write_mbp10_df` — every message + all 10 book levels + all fields, zero reduction)
-and built the data feeds `nws_temp_feed.py` (gas-weighted HDD/CDD+precip) + `forward_curve.py`
-(backwardation/contango). Forecaster/scoring scaffolding also built (`month_characterize.py`,
-`bucket_continuation.py`, `forecaster_month_pass.workflow.js`) but it pre-processed on the ingest side and
-must be reworked to read the RAW tape. **NEXT (S89) = build the DURABLE RAW-INGESTION WORKFLOW** (reuse a
-coin durable-collector cron, point at Databento MBP-10, longer duration, gzip per month/day to
-`data/nymex-ticks:nymex_cont/`, re-pull May in full-raw). Detail: `SESSION_HANDOFF_2026-07-13_S88.md`,
-`KICKOFF_2026-07-14_S89.md`.
+SIDE, FOR TRADE SIGNALS — never on the historical data.** S89 BUILT the durable raw-ingestion (zero-filter
+MBP-10 writer verified = 76 fields/row, all 10 levels; `pull_year_mbp10.py` month-at-a-time batch,
+gzip-per-day-as-it-lands, `--dest s3://…` or git) and is now **pulling the full-raw year (CL+NG,
+2025-07..2026-07) to an AWS S3 bucket** `bento-568968024170-us-east-2-an` (us-east-2), prefix `nymex/`
+(the tick corpus lives on S3 now, NOT git; AWS + Databento keys are session-pasted SECRETS). Split:
+container ran Jan-Jun 2026, Greg's box runs Jul-Dec 2025; resumable via bucket list.
+**NEXT (S90) = finish/verify the year on S3, then rework the scoring scaffolding
+(`month_characterize.py`, `bucket_continuation.py`, `forecaster_month_pass.workflow.js`) to read the RAW
+S3 tape (move pre-processing to the trade-signal side).** Detail: `SESSION_HANDOFF_2026-07-13_S89.md`,
+`research/kalshi/AWS_INGEST_SETUP_S89.md`, `KICKOFF_2026-07-14_S90.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -194,9 +195,15 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
-- **S82** — per-trade level-hit dataset (200k events): level-hits mean-revert at 1¢, NO cell pays at
-  maker fees, internal flow is a weak predictor → **the edge is EXTERNAL (futures lag)**. Pyth feed
-  unstuck. Weather scoreboard characterized.
+- **S89** — BUILT the durable RAW ingestion + moved the tick corpus to AWS S3. Zero-filter MBP-10 writer
+  (removed the last silent row-drop; verified 76 fields/row, all 10 levels). `pull_year_mbp10.py`:
+  month-at-a-time batch, gzip-each-day-as-it-lands (`batch_pull(flush_dir=)` bounds local to 1 day),
+  `--worktree`/`--scratch`, and **`--dest s3://…` or git**. One-day proof (CL 2026-05-14 = 975k msgs,
+  1.3 GB→61 MB gz). Now pulling the full-raw year (CL+NG, 2025-07..2026-07) to bucket
+  `bento-568968024170-us-east-2-an` (us-east-2, prefix `nymex/`); split container Jan-Jun 2026 / Greg's
+  box Jul-Dec 2025, resumable via bucket list. AWS+Databento keys are session-pasted SECRETS; corpus is
+  on S3 now, not git. NEXT = finish/verify + rework scoring to read the raw S3 tape. Detail:
+  `SESSION_HANDOFF_2026-07-13_S89.md`, `research/kalshi/AWS_INGEST_SETUP_S89.md`.
 - **S83** — meta session: CLAUDE.md audit/split (this lean doc + `CLAUDE_ARCHIVE_OD.md`, dipole
   research + OD toolkit kept live); the three ritual skills (`kalshi-session-start`, `kalshi-backtest`,
   `kalshi-roll`). No research ran; `data/pyth-ticks` still absent at close.
