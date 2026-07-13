@@ -159,12 +159,22 @@ def simulate_event(series, day, event, fut, cfg):
     # in $ / c, never bps (Greg), and the trigger is tuned PER CONTRACT (same scaffold, different values:
     # WTI ~$0.10-0.20 of a ~$77 barrel, NG ~$0.02-0.03 of ~$3 gas). NYMEX moving IS the trade; if the
     # canary never moves that much within max_wait, we DON'T trade. This is the purpose of the RT tape.
-    trig_usd, max_wait = cfg["trigger_usd"][root], cfg["max_wait"]
+    trig_usd, max_wait, confirm_s = cfg["trigger_usd"][root], cfg["max_wait"], cfg["confirm_s"]
     scan = np.where((fts > R) & (fts <= R + max_wait))[0]
-    ei = None
+    # SUSTAINED-move entry (Greg S87): "NYMEX moved" must mean a move that HELD, not a one-tick poke that
+    # reverts. Require the canary to stay beyond trig_usd (same direction) for confirm_s before firing --
+    # a transient spike that falls back inside resets and does NOT trigger us.
+    ei = None; cross_t0, cross_sgn = None, 0
     for idx in scan:
-        if abs(float(fp[idx]) - base) >= trig_usd:                  # the canary moved trig_usd dollars
-            ei = int(idx); break
+        d = float(fp[idx]) - base
+        if abs(d) >= trig_usd:
+            sgn = 1 if d > 0 else -1
+            if sgn != cross_sgn:                                     # first tick of a breakout this way
+                cross_sgn, cross_t0 = sgn, float(fts[idx])
+            if float(fts[idx]) - cross_t0 >= confirm_s:              # breakout HELD for confirm_s -> confirmed
+                ei = int(idx); break
+        else:
+            cross_sgn, cross_t0 = 0, None                           # fell back inside -> it was a poke, reset
     if ei is None:
         return None
     t_entry = float(fts[ei])
@@ -364,6 +374,8 @@ def main():
     ap.add_argument("--trigger-cl", type=float, default=0.15, help="WTI entry trigger: NYMEX $ move to fire")
     ap.add_argument("--trigger-ng", type=float, default=0.02, help="NatGas entry trigger: NYMEX $ move to fire")
     ap.add_argument("--max-wait", type=float, default=300.0, help="give up if NYMEX hasn't moved by then (s)")
+    ap.add_argument("--confirm-s", type=float, default=5.0, help="canary must HOLD beyond trigger this many s "
+                    "(sustained move, not a transient poke) before we fire")
     ap.add_argument("--retain-frac", type=float, default=0.5, help="NYMEX-driven exit: exit when the canary "
                     "gives back to this fraction of its favorable run (hold through Kalshi whipsaw)")
     ap.add_argument("--stale-cap", type=float, default=12.0, help="stand back if Kalshi already moved this "
@@ -379,8 +391,9 @@ def main():
         sys.exit(0 if selftest() else 1)
 
     cfg = {"trigger_usd": {"CL": args.trigger_cl, "NG": args.trigger_ng}, "max_wait": args.max_wait,
-           "retain_frac": args.retain_frac, "stale_cap": args.stale_cap, "slip": args.slip,
-           "maker_off": args.maker_off, "min_wave": args.min_wave, "settle_buffer": args.settle_buffer}
+           "confirm_s": args.confirm_s, "retain_frac": args.retain_frac, "stale_cap": args.stale_cap,
+           "slip": args.slip, "maker_off": args.maker_off, "min_wave": args.min_wave,
+           "settle_buffer": args.settle_buffer}
     rows = run(cfg)
     print(f"\nP3 LAG JOIN — {len(rows)} echo trades "
           f"(trigger CL=${args.trigger_cl:.2f} NG=${args.trigger_ng:.3f} retain={args.retain_frac:.2f} "
