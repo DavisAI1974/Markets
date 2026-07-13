@@ -78,6 +78,14 @@ pushed to this trunk - a watcher is armed for it).
   sub-second). Per-cell, leakage-gated, net-of-fee maker AND taker; this is trading the futures itself, a
   different surface from the futures->Kalshi lag. Reach into the OD toolkit (leadlag, info_dipole, the
   fee-floor/gated-swing pieces).
+  **S90 QUICK CANARY (1 NG day 2025-07-17, 34.5k trades):** the STATIC divergence read (book opposes move ->
+  reversal) did NOT transfer -- divergence reversal 0.26-0.39, slightly BELOW aligned, lift ~0 to -0.04
+  (opposite sign to BTC's +). NOT a refutation: (1) only static imb_level tested, NOT the EXHAUSTION factor
+  (dipole collapsing toward 0.5 = the robust half of S36); (2) one trending EIA-Thursday day (reversal base
+  rate <0.5 = momentum); (3) crude (1-sec mean imb, no per-cell, no 1-sec reversal-timing entry, no fee).
+  Machinery verified (reads raw NG MBP-10 end-to-end). REAL TEST: stack exhaustion+divergence, per-cell
+  (tod x regime x vol), many days off the S3 year, fine-resolution reversal entry, net-of-fee. Canary
+  script: scratchpad `ng_dipole_canary.py`.
 
 ## RESOLUTIONS (Q1-Q4 worked in order this session; Greg took Q5 = IAM rotation)
 - **Q1 pre-processing scope - RESOLVED.** The ingest-side pre-processing to move to the trade side is
