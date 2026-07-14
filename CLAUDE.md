@@ -1,9 +1,12 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 92)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 93)
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
 follower.** **git = CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an
 extreme rate is a LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92 = the NG intraday FORECASTER
-program + DIRECTION cracked.** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
+program + DIRECTION cracked.** **S93 = the coach agent moved INTO AWS: box `i-08cee...` driveable via SSM,
+Bedrock LIVE (us-east-1; opus-4-1/haiku-4-5 via boto3), Claude Code installed — one Claude-Code model-preflight
+snag left before the LLM invokes; OpenAI written in as an alternative agent backend. Brain unchanged (s92.1); loop
+not yet run on the box. See `SESSION_HANDOFF_2026-07-14_S93.md` + `deploy/aws/COACH_AGENT_SETUP_S93.md`.** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
 the exhaustion suite + dipole + turning-point fingerprint + surprise/curve) and ran per-event learn/blind/hunt
 passes on 12 warm-season NG days: (1) **NG DIRECTION is callable** — `dip_imb_level` (order-flow imbalance)
 sorts a leg's side 7%/93%, monotone, **OOS-validated 100% on strong flow (34/34, 3 unseen days)**; a NOWCAST,
@@ -202,6 +205,16 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S93** — the coach agent moved INTO AWS (Greg: the agent must live in his AWS, on the box, not a Claude
+  Routine). Cleared the whole access chain (the `Claude` IAM user now has S3+EC2+SSM-full+Bedrock-full + inline
+  PassRole; no permissions boundary) and stood the box up as the agent host: instance profile `Ssm` attached ->
+  **box `i-08cee...` Online in SSM** (drive via `scratchpad/ssm_run.py`); **Bedrock LIVE in `us-east-1`** (model
+  access is per-region — us-east-2 404s; boto3 converse OK for opus-4-1/4-5/4-6 + haiku-4-5); **Node 20 + Claude
+  Code 2.1.197 installed on the box**, `/etc/markets/coach.env` wired (Bedrock=us-east-1, S3=us-east-2). ONE SNAG:
+  Claude Code 2.1.197's model preflight rejects the Bedrock Opus IDs (boto3 invokes them fine) -> LLM not yet
+  invoking. Per Greg, **OpenAI is now an accepted alternative agent backend** (loop is provider-agnostic). Brain
+  did NOT advance (s92.1); no group scored/merged. Detail: `SESSION_HANDOFF_2026-07-14_S93.md`,
+  `deploy/aws/COACH_AGENT_SETUP_S93.md`, `KICKOFF_2026-07-15_S94.md`.
 - **S92** — NG intraday FORECASTER + DIRECTION cracked + the coach BRAIN. Built the full-toolbox per-leg
   characterizer (`month_characterize`: exhaustion suite + dipole + turning-point fingerprint + surprise/curve)
   and ran per-event (NO-pooling) learn/blind/hunt passes on 12 warm-season NG days. (1) **NG DIRECTION callable**

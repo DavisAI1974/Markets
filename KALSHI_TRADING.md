@@ -41,6 +41,17 @@ the continuous corpus streams on demand via `event_move_baseline.load_cont_day(.
 durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non-bento). See
 `research/kalshi/AWS_INGEST_SETUP_S89.md`. AWS + Databento keys are session-pasted SECRETS.
 
+**S93 changes (detail in `SESSION_HANDOFF_2026-07-14_S93.md`):** — the coach agent moved INTO AWS.
+- `deploy/aws/COACH_AGENT_SETUP_S93.md` — **NEW**: reproducible box-agent setup (SSM access, Bedrock in us-east-1
+  vs S3 in us-east-2, Node+Claude Code install, `/etc/markets/coach.env`) + the THREE pluggable LLM backends —
+  Claude Code+Bedrock, Anthropic API direct, and **OpenAI** (Greg S93). The open Claude-Code model-preflight snag.
+- `SESSION_HANDOFF_2026-07-14_S93.md` / `KICKOFF_2026-07-15_S94.md` — the S93 record + S94 priorities (JOB 1 =
+  make the agent LLM invoke on the box; JOB 2 = run the loop on the box; brain still s92.1, not advanced).
+- `scratchpad/ssm_run.py` (gitignored) — SSM send+poll helper to drive the box `i-08cee...` from a session.
+- AWS access state: `Claude` IAM user (acct 568968024170) = S3Full + EC2 + SSMFull + BedrockFull + inline
+  `pass-ssm-role`; no permissions boundary. Bedrock model access enabled in **us-east-1 ONLY**. Box instance
+  profile = `Ssm` (SSM-only role); coach uses static `Claude` keys for S3+Bedrock.
+
 **S92 code changes (detail in `SESSION_HANDOFF_2026-07-14_S92.md`):** — the NG intraday FORECASTER program.
 - `research/kalshi/month_characterize.py` — FULL-TOOLBOX per-leg characterizer: added the **exhaustion suite**
   (`depth_pieces` -> aligned_imb_push/exhaustion/far_thinning/spread_ratio, reuses `event_move_baseline.depth_features`),
