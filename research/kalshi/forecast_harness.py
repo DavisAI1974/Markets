@@ -25,15 +25,67 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BRAIN = os.path.join(HERE, "knowledge", "ng_brain.json")
 DOW = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 MULT = 10000.0   # $/MMBtu move = cum_move_usd / MULT (NG contract 10,000 MMBtu)
+_DATA = os.path.join(HERE, "..", "..", "data")
+
+
+def _load_json(rel: str):
+    p = os.path.join(_DATA, rel)
+    return json.load(open(p)) if os.path.exists(p) else (json.load(open(f"data/{rel}")) if os.path.exists(f"data/{rel}") else {})
+
+
+def _storage_series():
+    """RUNNING working-gas storage story from EIA prints (S94, Greg: chronological walk needs a running
+    capacity story). Per report_date: {level Bcf (=prev_level+weekly change), chg, vs5yr (level - 5-yr avg
+    for that ISO week), phase}. Built once, cached. All from historical EIA -> blind-safe."""
+    d = _load_json("eia_surprise.json").get("KXNATGASD", {})
+    rows = []
+    for rep, r in sorted(d.items()):
+        prev, act = r.get("prev_level"), r.get("actual")
+        if prev is None or act is None:
+            continue
+        rows.append((rep, prev + act, act))
+    from collections import defaultdict
+    byweek = defaultdict(list)
+    for rep, lvl, act in rows:
+        wk = datetime.date.fromisoformat(rep).isocalendar()[1]
+        byweek[wk].append((rep, lvl))
+    out = {}
+    for rep, lvl, act in rows:
+        y = datetime.date.fromisoformat(rep).year
+        wk = datetime.date.fromisoformat(rep).isocalendar()[1]
+        hist = [v for rr, v in byweek[wk] if y - 5 <= datetime.date.fromisoformat(rr).year < y]
+        vs5 = round(lvl - sum(hist) / len(hist)) if hist else None
+        out[rep] = {"level": round(lvl), "weekly_chg": round(act), "vs_5yr": vs5,
+                    "phase": "withdraw" if act < 0 else "inject"}
+    return out
+
+
+def _storage_asof(iso: str, series: dict) -> dict | None:
+    """Most recent storage print with report_date <= iso (blind: the weekly print is public by then)."""
+    past = sorted(r for r in series if r <= iso)
+    return series[past[-1]] | {"as_of": past[-1]} if past else None
+
+
+def _weather_asof(iso: str, wx: dict) -> dict | None:
+    """Gas-weighted degree-day REGIME for the day (S88 nws feed). Blind rule (directive sec 6): the coarse
+    HDD/CDD regime is highly forecastable a day ahead, so we carry it as the decision-time proxy (regime +
+    values), NOT a precise same-day realized read. Flagged realized_as_proxy."""
+    r = wx.get(iso)
+    if not r:
+        return None
+    return {"regime": r.get("regime"), "gw_hdd": round(r.get("gw_hdd", 0), 1),
+            "gw_cdd": round(r.get("gw_cdd", 0), 1), "gw_precip": round(r.get("gw_precip", 0), 2),
+            "note": "realized_as_proxy_for_forecastable_regime"}
 
 
 def decision_state(days: list[str]) -> dict:
-    """Blind-safe decision-time state for each day: weekday + that week's EIA storage surprise + curve regime.
+    """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
+    STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk).
     NO tape, NO legs, NO outcome — exactly what a forecaster knows at the open."""
     import forward_curve as fc
-    surp = json.load(open(os.path.join(HERE, "..", "..", "data", "eia_surprise.json"))).get("KXNATGASD", {}) \
-        if os.path.exists(os.path.join(HERE, "..", "..", "data", "eia_surprise.json")) else \
-        (json.load(open("data/eia_surprise.json")).get("KXNATGASD", {}) if os.path.exists("data/eia_surprise.json") else {})
+    surp = _load_json("eia_surprise.json").get("KXNATGASD", {})
+    stor = _storage_series()
+    wx = _load_json("nws_temp/gw_degree_days.json")
     cv = fc.load("NG")
     out = {}
     for d in days:
@@ -44,7 +96,9 @@ def decision_state(days: list[str]) -> dict:
         cr = fc.curve_asof(cv, iso)
         out[d] = {"dow": dow, "stor_surprise": round(sv, 1) if sv is not None else None,
                   "stor_surprise_sign": ("above" if sv > 0 else "below") if sv is not None else None,
-                  "curve_regime": cr[1]["regime"] if cr else "unknown"}
+                  "curve_regime": cr[1]["regime"] if cr else "unknown",
+                  "storage": _storage_asof(iso, stor),
+                  "weather": _weather_asof(iso, wx)}
     return out
 
 
