@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 venv/
 .env
+scratchpad/
 .DS_Store
 
 # Phase 1 run artifacts (large; regenerated per run)
