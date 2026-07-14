@@ -359,9 +359,14 @@ def _download_decode_flush(client, jid: str, symbol: str, schema: str,
         os.makedirs(flush_dir, exist_ok=True)
 
     def _flush(paths):
+        # S92 FIX: APPEND ('ab'), never overwrite ('wb'). A day can be flushed once (complete) and then
+        # re-touched by a later DBN file's out-of-order boundary straggler, which re-creates a 1-row jsonl;
+        # the old 'wb' final-flush CLOBBERED the full .gz with that 1-row residual -> every Monday (the last
+        # day of each Tue->Tue week) truncated to a 455-byte stub. Concatenated gzip members decompress as
+        # one stream and the reader (load_cont_day) sorts by ts, so appending is loss-free and order-safe.
         for j in paths:
             with open(j, "rb") as src, _gz.open(os.path.join(flush_dir, os.path.basename(j) + ".gz"),
-                                                "wb", compresslevel=6) as dst:
+                                                "ab", compresslevel=6) as dst:
                 shutil.copyfileobj(src, dst)
             os.remove(j)
 
