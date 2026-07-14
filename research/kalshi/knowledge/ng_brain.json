@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "market": "NG",
+    "version": "s92.1",
+    "built_pass": 1,
+    "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. Human-readable view lives in ../NG_BEHAVIOR_KNOWLEDGE.md. Each pass MERGES (refine confidence + add plays); nothing is overwritten blindly.",
+    "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year. A coach that curve-fits noise loses money adaptively; a coach matching the live moment to general patterns adapts correctly.",
+    "regime_scope": "12 warm-season days (Jul-Sep 2025), contango-flat. Winter/backwardation + Mondays NOT yet in-sample.",
+    "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders. The coach adapts WITHIN bounded risk caps."
+  },
+
+  "plays": [
+    {
+      "id": "direction.flow_nowcast",
+      "target": "direction",
+      "trigger": "a leg is forming (order-flow window ~300s around the trigger push)",
+      "read": "dip_imb_level (Lee-Ready buy-minus-sell flow imbalance, signed)",
+      "call": "NG's side = sign(dip_imb_level) when strong (|dip_imb_level| >= 0.15); fire on the LAGGING Kalshi mark on that side",
+      "evidence": {"n_strong_oos": 34, "rate_oos": 1.00, "learn_days": "0.94-1.00 on 9/12", "monotone": "0.68(|dip|<.05) -> 0.84 -> 0.94 -> 0.93"},
+      "status": "PROVISIONAL",
+      "confidence": 0.85,
+      "exemplars": ["07-24 idx5126 dip+0.59->up $270", "07-24 idx7216 dip-0.49->down $110", "OOS 07-15/07-30/08-15 strong-flow 34/34"],
+      "caveats": "NOWCAST (flow overlaps the nascent leg), not a from-flat forecast. Direction only - correctly-signed legs still round-trip (size separately). Warm-season."
+    },
+    {
+      "id": "direction.book_contrarian",
+      "target": "direction",
+      "trigger": "at entry, when flow (dip_imb_level) is flat/ambiguous",
+      "read": "imb_R (resting-book imbalance at entry)",
+      "call": "fade the heavy resting side - ask-heavy book -> price runs UP through it (wall = fuel, not floor)",
+      "evidence": {"ask_heavy_up": 0.61, "n_ask": 158, "bid_heavy_up": 0.42, "n_bid": 121, "flow_beats_book_when_disagree": "262/293 = 0.89"},
+      "status": "PROVISIONAL",
+      "confidence": 0.5,
+      "exemplars": [],
+      "caveats": "Weaker than flow; use only as a tie-breaker when flow is flat."
+    },
+    {
+      "id": "ride.magnitude_staircase",
+      "target": "sustain",
+      "trigger": "a leg's favorable peak crosses a $ threshold in real time",
+      "read": "peak_usd reached so far",
+      "call": "RIDE - continuation rises with size: $50->0.43, $150->0.57, $250->0.75, $350->0.92, $500->1.00. The ~$350 crossing is a 92% 'stay in' event; $500 was 11/11.",
+      "evidence": {"n_350": 38, "cont_350": 0.92, "n_500": 11, "cont_500": 1.00},
+      "status": "STABLE",
+      "confidence": 0.9,
+      "exemplars": ["07-03 idx17768 $1060 ret.83", "08-06 idx9611 $840 ret.98", "07-16 idx28757 $560 ret.91"],
+      "caveats": "peak_usd is realized-so-far; the CROSSING is the usable real-time event, not the final peak."
+    },
+    {
+      "id": "exit.recruitment_reversal",
+      "target": "turn",
+      "trigger": "a big leg maturing - watch the far-side book as price runs",
+      "read": "turn_far_thinning (far-ladder change entry->now) + turn_aligned_push (book support at the level)",
+      "call": "STAY while the far side is being RECRUITED (new resting liquidity steps in ahead, turn_far_thinning negative = ladder growing). EXIT when it flips to eaten/stalled (turn_far_thinning >0) AND support collapses (turn_exhaustion deep) - both firing = a genuine reversal top.",
+      "evidence": {"held_far_thin_med": -0.156, "reversed_far_thin_med": 0.000, "n_big": 101, "support_at_top": "cont 0.39 (apush>+.05) vs 0.24 (<-.05)"},
+      "status": "PROVISIONAL",
+      "confidence": 0.6,
+      "exemplars": ["HELD 08-06 idx9611 up$840 tft-0.55", "REVERSED 07-03 idx22125 dn$390 ret.13 tft+0.55", "REVERSED 09-03 idx18622 up$310 ret-.13 tft+0.53"],
+      "caveats": "Reframed from n=3 'fuel spent' to n=101 RECRUITMENT. Measured entry->peak (diagnostic); the LIVE running turn-track (far_thinning crossing neg->pos as the run matures) is the next build - not yet validated as a live exit."
+    },
+    {
+      "id": "shape.grind_vs_spike",
+      "target": "sustain",
+      "trigger": "how the leg is being built",
+      "read": "fast_capture / peaked_fast",
+      "call": "a slow GRIND holds (ride); a front-loaded SPIKE round-trips (scalp/skip). Of legs that held, ~1/111 spiked fast.",
+      "evidence": {"held_that_spiked": "1/111"},
+      "status": "STABLE",
+      "confidence": 0.85,
+      "exemplars": [],
+      "caveats": "Shape is partly realized-as-it-goes; usable once the first ~60s of build is seen."
+    },
+    {
+      "id": "daytype.surprise_magnitude",
+      "target": "daytype",
+      "trigger": "at the open, from the week's EIA storage surprise",
+      "read": "|stor_surprise| (Bcf vs seasonal)",
+      "call": "big |surprise| (>=~20) -> expect a TREND day (bigger legs); near-consensus -> range/chop day. SIGN does NOT sort direction.",
+      "evidence": {"blind_hits": "08-12/13, 08-07, 08-21 were the big days", "distinct_prints": 6},
+      "status": "PROVISIONAL_WEAKENED",
+      "confidence": 0.35,
+      "exemplars": ["08-08 Fri stayed range despite +25.6 (weekday overrides)"],
+      "caveats": "Did NOT reproduce on continuation-rate in the multi-target pass; season-confounded, ~6 prints. A weak day-level prior only."
+    },
+    {
+      "id": "daytype.weekday_archetype",
+      "target": "daytype",
+      "trigger": "at the open, from the weekday",
+      "read": "day of week",
+      "call": "Wed = US-session up-lean; Thu = storage catalyst AT the 10:30 ET print; Fri = range, OVERRIDES surprise; Tue = strongest-trend weekday; Mon = distinct (weekend gap), NOT yet characterized.",
+      "evidence": {},
+      "status": "PROVISIONAL",
+      "confidence": 0.4,
+      "exemplars": ["all 3 learn Wednesdays net up", "08-08 Fri range despite big surprise"],
+      "caveats": "Never pool across DOW. Mon = OPEN (re-downloading). Warm-season only."
+    }
+  ],
+
+  "mechanisms": [
+    {"id": "clock.storage_thursday", "text": "Weekly EIA storage print Thu 10:30 ET is the one scheduled catalyst; busiest Thursday hour."},
+    {"id": "clock.us_session", "text": "US session ~08-16 ET decides the day's range; overnight is thin drift. STABLE."},
+    {"id": "clock.weekend_gap", "text": "Weekend info accumulates -> Monday reprices at the Sun-eve reopen -> distinct shape. OPEN."},
+    {"id": "regime.seasonal", "text": "Summer=cooling/weather-led; winter=heating, bigger swings, withdrawal. Winter UNKNOWN until full year."},
+    {"id": "supply.unmeasured", "text": "LNG feedgas / production / pipeline outages are real drivers, currently NO feed. Data gap."}
+  ],
+
+  "open_frontier": [
+    "DIRECTION from-flat FORECAST (vs today's nowcast) - can we call the leg's side BEFORE it forms?",
+    "LIVE running turn-track - far_thinning crossing neg->pos in real time as the exit trigger.",
+    "WINTER / backwardation regime - the decisive out-of-regime test (all 12 days were contango).",
+    "MONDAY shape - NG Mondays now re-downloaded clean; characterize next.",
+    "DIRECTION data: forward news, real desk consensus, day-ahead/spot pipeline noms, overnight-lean."
+  ],
+
+  "ruled_out_by_target": {
+    "note": "NOISE across all four targets (direction/sustain/turn/peak) in the warm-season multi-target pass - but only warm-season, retest in winter:",
+    "signals": ["aligned_imb", "aligned_imb_R", "exhaustion", "spread_ratio", "pre_vol", "coiled_split", "dip_aligned_flow", "dip_mi_flow", "bid_dep_entry", "ask_dep_entry", "temp_regime", "gw_hdd", "gw_cdd", "gw_precip", "curve_regime(contango-flat)"]
+  }
+}
