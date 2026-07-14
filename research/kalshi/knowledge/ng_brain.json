@@ -1,13 +1,14 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s92.2",
+  "version": "s92.3",
   "built_pass": 1,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. Human-readable view lives in ../NG_BEHAVIOR_KNOWLEDGE.md. Each pass MERGES (refine confidence + add plays); nothing is overwritten blindly.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year. A coach that curve-fits noise loses money adaptively; a coach matching the live moment to general patterns adapts correctly.",
   "regime_scope": "12 warm-season days (Jul-Sep 2025), contango-flat. Winter/backwardation + Mondays NOT yet in-sample.",
   "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders. The coach adapts WITHIN bounded risk caps.",
-  "s92.2_note": "Added timing.subsecond_reversal_exhaustion (the coin/BTC sub-second look-ahead tested on NG, S90) as an execution-layer turn-timing HYPOTHESIS + native-tick frontier. No Group-2 lesson merge yet (pending scorecard)."
+  "s92.2_note": "Added timing.subsecond_reversal_exhaustion (the coin/BTC sub-second look-ahead tested on NG, S90) as an execution-layer turn-timing HYPOTHESIS + native-tick frontier. No Group-2 lesson merge yet (pending scorecard).",
+  "s92.3_note": "Group-2 merge (unseen warm-season days blind-forecast then scored, scratchpad/grp2_score.json). MERGE not rewrite: all 8 prior plays + mechanisms preserved. Lessons stated PER-EVENT, NEVER averaged/pooled/counted (Greg, load-bearing: any mean/median/X-of-N blurs the per-event fingerprint): (1) MONDAY = big mover via weekend-gap reprice, NOT range - promoted clock.weekend_gap OPEN->provisional + new play daytype.monday_weekend_gap, the 3 Mondays named individually: 0707 actual dominant +$1530 (guessed +$180), 0728 -$1240 (guessed +$170), 0818 -$710 (guessed -$650); direction differed per day (up/down/down), bigness is the lesson not side. (2) STORAGE THURSDAY big - new play daytype.storage_thursday_magnitude, named individually: 0710 +$1860 (guessed -$330), 0828 +$1310 (guessed +$420). (3) MAGNITUDE candidate (magnitude.warm_season_scale_candidate, HYPOTHESIS) - the guesses were dwarfed on specific days (0707 +$1530 vs +$180, 0710 +$1860 vs -$330, 0728 -$1240 vs +$170, 0730 -$1460 vs +$400, 0828 +$1310 vs +$420); ANTI-LOCK-IN flag: too-small-prior vs higher-vol-summer-2025-regime UNRESOLVED on one group, did NOT rescale; and NOT uniform - the trend-day bets 0820/0826/0818 OVERSHOT. (4) DIRECTION unchanged: the days that missed were 0710, 0728, 0730, 0820, 0826, 0829; the two big-surprise trend days 0820 (guessed UP $880 -> actual DOWN $370) and 0826 (guessed UP $850 -> actual DOWN $560) went OPPOSITE -> surprise != direction; from-flat direction stays OPEN. Every pattern is a per-regime observation until it recurs; winter untested."
  },
  "plays": [
   {
@@ -118,24 +119,27 @@
    "status": "PROVISIONAL_WEAKENED",
    "confidence": 0.35,
    "exemplars": [
-    "08-08 Fri stayed range despite +25.6 (weekday overrides)"
+    "08-08 Fri stayed range despite +25.6 (weekday overrides)",
+    "Grp2 0820 big-|surprise| trend-bet guessed UP $880 -> actual DOWN $370 (opposite)",
+    "Grp2 0826 big-|surprise| trend-bet guessed UP $850 -> actual DOWN $560 (opposite)"
    ],
-   "caveats": "Did NOT reproduce on continuation-rate in the multi-target pass; season-confounded, ~6 prints. A weak day-level prior only."
+   "caveats": "Did NOT reproduce on continuation-rate in the multi-target pass; season-confounded, ~6 prints. A weak day-level prior only. Group-2 REINFORCES sign!=direction, per event: 0820 guessed UP $880 -> actual DOWN $370; 0826 guessed UP $850 -> actual DOWN $560 - both big-surprise trend bets went OPPOSITE and overshot the guess. Surprise magnitude does not sort direction. From-flat direction stays OPEN."
   },
   {
    "id": "daytype.weekday_archetype",
    "target": "daytype",
    "trigger": "at the open, from the weekday",
    "read": "day of week",
-   "call": "Wed = US-session up-lean; Thu = storage catalyst AT the 10:30 ET print; Fri = range, OVERRIDES surprise; Tue = strongest-trend weekday; Mon = distinct (weekend gap), NOT yet characterized.",
+   "call": "Wed = US-session up-lean; Thu = storage catalyst AT the 10:30 ET print AND now a BIG-magnitude day (Grp2, see daytype.storage_thursday_magnitude); Fri = range, OVERRIDES surprise; Tue = strongest-trend weekday; Mon = weekend-gap BIG mover (Grp2 n=3, see daytype.monday_weekend_gap), NO longer 'range/uncharacterized'.",
    "evidence": {},
    "status": "PROVISIONAL",
    "confidence": 0.4,
    "exemplars": [
     "all 3 learn Wednesdays net up",
-    "08-08 Fri range despite big surprise"
+    "08-08 Fri range despite big surprise",
+    "Grp2 Mondays 0707 +$1530 / 0728 -$1240 / 0818 -$710 all big (not range)"
    ],
-   "caveats": "Never pool across DOW. Mon = OPEN (re-downloading). Warm-season only."
+   "caveats": "Never pool across DOW. Mon = now PROVISIONAL big-mover (weekend-gap, Grp2 n=3), was OPEN; direction still mixed. Thu magnitude up-sized (Grp2 n=2). Warm-season only; per-regime until it recurs."
   },
   {
    "id": "timing.subsecond_reversal_exhaustion",
@@ -153,6 +157,60 @@
    "confidence": 0.25,
    "exemplars": [],
    "caveats": "SMALL BUT REAL and RIGHT-SIGNED - the coins' edge carries a faint pulse onto NG. LOAD-BEARING (Greg S90): the 1-sec canary is FAR too coarse; the real edge lives at NATIVE TICK / ms-us (our MBP-10 tape is nanosecond ts_event/ts_recv). 1-sec binning threw away the resolution the edge lives at. Real test pending at native tick, per-cell (tod x regime x vol), event-time; fees secondary (HFT/latency audience). EXECUTION-layer - do NOT use as a blind open-time curve input."
+  },
+  {
+   "id": "daytype.monday_weekend_gap",
+   "target": "daytype",
+   "trigger": "at the open on a MONDAY (Sunday-evening reopen)",
+   "read": "day of week = Monday + accumulated weekend information",
+   "call": "Monday = a BIG mover, NOT range/chop. The weekend info gap (news/weather/supply over the closed weekend) reprices at the Sun-eve reopen -> a large dominant leg. BIGNESS is the lesson; SIDE was mixed (up and down both seen) -> do NOT infer direction from Monday-ness.",
+   "evidence": {
+    "n": 3,
+    "per_event": "0707 actual dominant +$1530 (guessed range +$180); 0728 -$1240 (guessed +$170); 0818 -$710 (guessed -$650, close only because surprise_magnitude separately flagged it a trend day)",
+    "direction_per_event": "0707 up, 0728 down, 0818 down - side differed each Monday"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.4,
+   "exemplars": [
+    "Mon 0707 +$1530 (guessed range $180)",
+    "Mon 0728 -$1240 (guessed $170)",
+    "Mon 0818 -$710 (guessed -$650)"
+   ],
+   "caveats": "n=3, ONE group (summer-2025). Promotes clock.weekend_gap from OPEN toward a real pattern: Monday = big-mover via the weekend-gap reprice. Bigness not side. Per-regime observation until it recurs (winter/backwardation untested). Never a memorized-day rule - the MECHANISM (weekend info accumulation -> Sun-eve reprice) + n=3 is the claim."
+  },
+  {
+   "id": "daytype.storage_thursday_magnitude",
+   "target": "daytype",
+   "trigger": "at the open on a storage THURSDAY (EIA print 10:30 ET)",
+   "read": "day of week = Thursday storage-print day",
+   "call": "Up-size the storage-Thursday MAGNITUDE prior: both Group-2 Thursdays produced LARGE dominant legs at/after the print. Expect a bigger-than-default move on storage Thursdays. Magnitude only - the print is unknown at the open so SIDE stays a coin flip.",
+   "evidence": {
+    "n": 2,
+    "per_event": "0710 actual dominant +$1860 (guessed -$330); 0828 +$1310 (guessed +$420)"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.35,
+   "exemplars": [
+    "Thu 0710 +$1860 (guessed -$330)",
+    "Thu 0828 +$1310 (guessed +$420)"
+   ],
+   "caveats": "n=2, one group. Complements the clock.storage_thursday mechanism (the catalyst) with a magnitude prior. Side stays a coin flip at the open (print not yet known). Per-regime until it recurs."
+  },
+  {
+   "id": "magnitude.warm_season_scale_candidate",
+   "target": "magnitude",
+   "trigger": "when sizing the expected dominant-move magnitude on a warm-season day",
+   "read": "Group-2 blind-forecast magnitude error, named PER DAY (guessed peak vs actual dominant move)",
+   "call": "CANDIDATE correction ONLY: on specific Group-2 days the actual dominant move DWARFED the guess. Named individually (LEADS, not a rule): 0707 +$1530 vs guess +$180; 0710 +$1860 vs -$330; 0728 -$1240 vs +$170; 0730 -$1460 vs +$400; 0828 +$1310 vs +$420. Nudge the magnitude prior UP modestly and provisionally on this evidence - do NOT globally rescale.",
+   "evidence": {
+    "under_forecast_days": "0707 +$1530 vs +$180; 0710 +$1860 vs -$330; 0728 -$1240 vs +$170; 0730 -$1460 vs +$400; 0828 +$1310 vs +$420; 0702 +$1040 vs +$470; 0715 +$820 vs +$200; 0725 +$460 vs +$210; 0829 -$620 vs +$380",
+    "over_forecast_days": "0818 -$710 vs guess -$650; 0820 -$370 vs +$880; 0826 -$560 vs +$850 (the surprise-magnitude 'trend-day' bets OVERSHOT; 0820/0826 also went the wrong direction)",
+    "nuance": "NOT uniform - the error is under-forecast on the range/chop/storage days and OVER-forecast on the three trend-day bets. Each day stands on its own; no average taken."
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.2,
+   "exemplars": [],
+   "caveats": "ANTI-LOCK-IN (Greg, load-bearing): this is ONE group. TWO live readings, UNRESOLVED: (A) the brain's warm-season magnitude scale is simply too small (fix the prior), OR (B) these specific summer-2025 weeks were a higher-vol regime than the S92 learn set (regime, not scale). Do NOT globally rescale magnitude off one group, and do NOT pool the days into a ratio - each day is its own LEAD pinpointing the WHEN. Revisit when a second independent group lands."
   }
  ],
  "mechanisms": [
@@ -166,7 +224,7 @@
   },
   {
    "id": "clock.weekend_gap",
-   "text": "Weekend info accumulates -> Monday reprices at the Sun-eve reopen -> distinct shape. OPEN."
+   "text": "Weekend info accumulates -> Monday reprices at the Sun-eve reopen -> distinct shape. Group-2 (n=3) promotes this from OPEN toward a PROVISIONAL pattern: Monday = a BIG mover, not range (0707 +$1530, 0728 -$1240, 0818 -$710; direction MIXED, bigness is the lesson). See play daytype.monday_weekend_gap. Per-regime (one group, warm-season) until it recurs."
   },
   {
    "id": "regime.seasonal",
@@ -181,7 +239,8 @@
   "DIRECTION from-flat FORECAST (vs today's nowcast) - can we call the leg's side BEFORE it forms?",
   "LIVE running turn-track - far_thinning crossing neg->pos in real time as the exit trigger.",
   "WINTER / backwardation regime - the decisive out-of-regime test (all 12 days were contango).",
-  "MONDAY shape - NG Mondays now re-downloaded clean; characterize next.",
+  "MONDAY shape - Group-2 characterizes Monday as a weekend-gap BIG mover (n=3, provisional, daytype.monday_weekend_gap); confirm the bigness recurs on more groups + winter, and whether the weekend gap ever sorts SIDE.",
+  "MAGNITUDE SCALE vs REGIME - is the brain's warm-season magnitude prior simply too small, OR was summer-2025 (Group-2) a higher-vol regime than the S92 learn set? Unresolved on one group (magnitude.warm_season_scale_candidate); needs a 2nd independent group before any global rescale.",
   "DIRECTION data: forward news, real desk consensus, day-ahead/spot pipeline noms, overnight-lean.",
   "NATIVE-TICK / ms test of the coin (BTC) sub-second price-reversal + dipole-EXHAUSTION edge on NG futures (S90 faint +2.7pp right-signed at 1-sec; real edge is ms-us, not 1-sec) - per-cell, event-time, net-of-fee."
  ],

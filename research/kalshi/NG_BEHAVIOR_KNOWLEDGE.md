@@ -127,3 +127,34 @@ structure (why), not yet an empirical measure.
   per-cell, event-time. Brain play `timing.subsecond_reversal_exhaustion` (target=turn, conf 0.25). This is a
   TURN-TIMING / EXECUTION edge (like the futures->Kalshi lag) - carried in the brain, NEVER a blind open-time
   curve input. Distinct from the dipole DIRECTION nowcast (dip_imb_level, Sec B) and from the futures->Kalshi lag.
+- **S92.3 — GROUP-2 coach merge (2026-07-14).** Unseen warm-season NG days (Jul-Sep 2025) blind-forecast then
+  scored vs the actual tape (`scratchpad/grp2_score.json`). MERGE not rewrite — all 8 prior plays + 5 mechanisms
+  preserved; 3 plays added, confidences refined. **Every lesson is stated PER EVENT, day by day — NO average, NO
+  median, NO ratio, NO X-of-N count (Greg, load-bearing: any aggregate blurs away the per-event fingerprint and
+  tells us nothing). Each named day is a LEAD that pinpoints the WHEN, not a memorized rule.**
+  - **[PROVISIONAL] MONDAY = a big mover via the weekend-gap reprice, NOT range.** The three Group-2 Mondays,
+    named individually: 0707 actual dominant +$1530 (guessed range +$180); 0728 −$1240 (guessed +$170); 0818
+    −$710 (guessed −$650, close only because surprise_magnitude separately flagged it a trend day). Side differed
+    each Monday — 0707 up, 0728 down, 0818 down — so bigness is the lesson, not side. Promotes `clock.weekend_gap`
+    from [OPEN] toward a provisional pattern; new play `daytype.monday_weekend_gap` (n=3). Mechanism: weekend info
+    accumulates over the closed market → Sun-eve reopen reprices → a big Monday leg. Per-regime until it recurs.
+  - **[PROVISIONAL] STORAGE THURSDAY big, named individually.** 0710 actual dominant +$1860 (guessed −$330);
+    0828 +$1310 (guessed +$420). New play `daytype.storage_thursday_magnitude` (n=2). Complements the
+    `clock.storage_thursday` catalyst mechanism with a magnitude prior; side stays a coin flip at the open (print
+    unknown). Two named events, not "Thursdays average big."
+  - **[HYPOTHESIS / CANDIDATE] MAGNITUDE — the guesses were dwarfed on specific days, named per event.** 0707
+    +$1530 vs guess +$180; 0710 +$1860 vs −$330; 0728 −$1240 vs +$170; 0730 −$1460 vs +$400; 0828 +$1310 vs
+    +$420 (also 0702 +$1040 vs +$470; 0715 +$820 vs +$200; 0725 +$460 vs +$210; 0829 −$620 vs +$380). It is NOT
+    uniform: on the three surprise-magnitude 'trend-day' bets the guess OVERSHOT — 0818 −$710 vs guess −$650,
+    0820 −$370 vs +$880, 0826 −$560 vs +$850. Recorded as a CANDIDATE only (`magnitude.warm_season_scale_candidate`),
+    prior nudged up modestly/provisionally. **Two live, unresolved readings (Greg, load-bearing): (A) the brain's
+    warm-season magnitude scale is simply too small, OR (B) summer-2025 Group-2 was a higher-vol REGIME than the
+    S92 learn set.** Do NOT globally rescale off one group; each day stands on its own.
+  - **[unchanged] DIRECTION stays weak — from-flat direction remains OPEN.** The days that MISSED were 0710,
+    0728, 0730, 0820, 0826, 0829. The two big-surprise 'trend' bets went the OPPOSITE way — 0820 guessed UP $880
+    → actual DOWN $370; 0826 guessed UP $850 → actual DOWN $560 — reinforcing per event that surprise MAGNITUDE
+    does not sort DIRECTION. No claim that direction improved; `direction.flow_nowcast` and the from-flat-direction
+    frontier are untouched. Added as evidence to `daytype.surprise_magnitude`.
+  - **GUARD:** every pattern above is a per-regime observation (one warm-season group) stated as mechanism + the
+    named events + n, never averaged and never a memorized day. Winter/backwardation and a 2nd independent group
+    are the decisive next tests.
