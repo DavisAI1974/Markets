@@ -102,3 +102,7 @@ data/nws_temp/
 data/nymex_curve/
 data/forecast/
 data/nymex_analog/
+
+# S94: local NG/CL tape cache pulled from S3 (raw MBP-10, huge, re-pullable) — never commit
+research/kalshi/data/nymex_cont/
+research/kalshi/data/
