@@ -48,6 +48,24 @@ Branch: came up on the stale S70 tip, reset onto trunk `claude/kalshi-s79-kickof
   Kalshi-demo paper). A hand-coded threshold IS a pooled decision (rigid); the coach reads each instant's
   fingerprint (per-event) — that's the whole point.
 
+## MACHINERY BUILT — the loop is READY-TO-RUN for S93 (built after Greg's "build everything" call)
+- **`research/kalshi/FORECASTER_RUNBOOK_S93.md`** — the VERBOSE operating manual (read this to run S93): the
+  vision, the plays, the machinery, the exact loop commands, JOB 2 (net-of-fee), the guard, the NYMEX-OPTIONS
+  survey, hygiene, frontier.
+- **`research/kalshi/coach_replay.py`** — the ng_brain playbook as EXECUTABLE strategy code (the rigid baseline
+  the adaptive coach must beat): applies direction-nowcast -> $350-ride -> recruitment-exit per leg, net-of-fee,
+  per-event, NO pooling. `--selftest` PASS; dry-run NG 07-15 = 14/14 correct direction. Canary-side + INDICATIVE
+  capture proxy for now -> real fill model + Kalshi/NYMEX-option venue is S93.
+- **`research/kalshi/forecast_harness.py`** — turn-key loop helpers: `decision-state` (blind-safe group state),
+  `overlay` (guess-vs-actual render), `brain-show`. `--selftest` PASS.
+- **`research/kalshi/redownload_mondays.py`** — committed home of the Monday re-download tool (final sweep).
+- **NYMEX OPTIONS (Greg S92: "look at nymex options for actual trading very soon")** — folded in as the real
+  trading vehicle (RUNBOOK sec 6). Our edge is KNOWING NG's move; NG options trade it directly (bigger/more
+  liquid than the Kalshi echo) and the plays already speak option language (direction=which way, $350/$500
+  staircase=strike/expiry, US-session=intraday/0DTE, exhaustion=take-profit/flip). S93 first step = an options
+  survey (products/liquidity/fees/Databento coverage + map each play to a structure), then price our best
+  historical calls as option trades. Needs an FCM/broker to route (go-live cost); paper/analog-validate first.
+
 ## THE YEAR DATA (JOB 1) — box running; Monday corruption FIXED
 - **Box `i-08cee7171c0a76a04`** (t3.xlarge, 200GB) running `pull_year_mbp10 --weekly` to
   `s3://bento-568968024170-us-east-2-an/nymex/nymex_cont/`. At handoff: span **2025-06-30..2025-10-20** (~3.5 of
@@ -99,6 +117,8 @@ the box boot config + the Monday re-download runner.
 - **Monday re-download** (CL still processing).
 
 ## OPEN / S93 PRIORITIES
+0. **READ `research/kalshi/FORECASTER_RUNBOOK_S93.md`** — the machinery is BUILT + tested; it has the exact
+   commands for everything below.
 1. **RUN THE LOOP (Greg's #1).** brain (`knowledge/ng_brain.json`) -> forecast a NEW group BLIND -> overlay
    guess-vs-actual -> distill + MERGE back into the brain (version bump) -> next group -> year -> loop back +
    refine the worst. **Group-2 decision state is staged: `scratchpad/ng_group2_decision_state.json`** (12 fresh
@@ -112,6 +132,9 @@ the box boot config + the Monday re-download runner.
 6. **ROTATE the keys.**
 7. **AWS/Routine autonomous agent** for the loop (needs DURABLE creds first — the GH secrets or box config).
 8. **Winter/full-year tape** = the out-of-regime test for direction + everything ruled out warm-season.
+9. **NYMEX OPTIONS survey (Greg S92, "very soon")** — the real trading vehicle for our NG-move edge: products/
+   liquidity/fees/Databento coverage, map each play to an option structure, price our best historical calls as
+   option trades net-of-premium. (RUNBOOK sec 6.) Needs an FCM/broker to go live.
 
 ## RULES (unchanged, reinforced this session): EACH EVENT INDIVIDUALLY, NEVER pool/average as the final word
 (an extreme rate is a LEAD, individual numbers pinpoint the WHEN); per-cell never pool; distributions/

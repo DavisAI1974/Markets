@@ -15,10 +15,12 @@ forecast blind -> merge -> refine -> converge -> the agent becomes the COACH cal
 **every Monday was corrupt** (Tue->Tue weeks -> Monday=last-day + `_flush` 'wb' clobber) — root-caused, FIXED
 (`_flush` 'ab' append) + DOW-naming + NG Mondays re-downloaded clean; box at ~Oct. (6) NYMEX-forward workflow
 rerouted git->S3, NWS-hourly RT collector built (need Greg's 3 GH secrets).
-**NEXT (S93) = RUN THE LOOP (brain -> forecast new group blind -> overlay -> merge -> refine, walk the year);
-the intraday coach replay net-of-fee; characterize NG Mondays; verify box year + reconcile + final Monday sweep;
-add GH secrets; rotate keys.**
-Detail: `SESSION_HANDOFF_2026-07-14_S92.md`, `KICKOFF_2026-07-15_S93.md`.
+The loop MACHINERY is BUILT + tested (`coach_replay.py` executable playbook, `forecast_harness.py` helpers,
+`FORECASTER_RUNBOOK_S93.md` the operating manual). **NEXT (S93) = RUN THE LOOP (brain -> forecast new group blind
+-> overlay -> merge -> refine, walk the year); prove the plays net-of-fee (coach replay); the NYMEX-OPTIONS survey
+(Greg: the real trading vehicle for our NG-move edge, very soon); characterize NG Mondays; verify box year +
+reconcile + final Monday sweep; add GH secrets; rotate keys.**
+Detail: `SESSION_HANDOFF_2026-07-14_S92.md`, `KICKOFF_2026-07-15_S93.md`, `research/kalshi/FORECASTER_RUNBOOK_S93.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
