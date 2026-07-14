@@ -52,6 +52,20 @@ state — it is NOT a fresh isolated event.
   bigger (heating-demand + storage-drawdown volatility). The scale-vs-regime question
   (`magnitude.warm_season_scale_candidate`) resolves as we walk into winter — expect and size bigger there.
 
+## 4b. REFINE UNBLINDED — the refine step MAY see the rich tape (Greg S94, decided)
+The blind wall protects the FORECAST step (the skill test) — that stays absolutely blind. But REFINEMENT is
+learning FROM what happened, and the coarse scorecard (guess vs actual) cannot teach the MECHANISM. So the
+refine/tuning step MAY go UNBLINDED into PAST groups' tapes (`characterize_day`: per-leg flow/dipole/
+exhaustion/turning-point fingerprints, the actual intraday structure) to learn WHY days moved — especially
+the located INTRADAY-DIRECTION problem (on a missed day, study how the actual flow / turns / far-side
+recruitment lined up with the real legs; that is where the flow-nowcast that calls the side lives).
+**Two guardrails keep the loop honest:**
+1. Unblinding is ONLY the refine step, ONLY on PAST (already-scored) groups' tapes. The forecast step for any
+   future group stays blind (decision-time state only).
+2. Extract GENERAL MECHANISMS + n, NEVER memorized day-specific outcomes ("spikes against the block trend
+   revert when far-side depth is consumed", not "0916 went up then down"). Skill is ALWAYS judged on the
+   NEXT blind group (true holdout) + forward-live — never the refined-on days.
+
 ## 5. Discipline (unchanged, non-negotiable)
 - **NO averaging / pooling EVER** (Greg, hard). No mean, median, "X of N", pooled rate — anywhere, in any
   output or the brain. Per-event only; an extreme rate is a LEAD, individual days pinpoint the WHEN.
