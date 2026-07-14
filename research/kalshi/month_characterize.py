@@ -187,6 +187,25 @@ def dipole_pieces(a: dict, ei: int, sign: int, win_s: float = 300.0, nbins: int 
             "dip_imb_flow": round(float(f["imb_flow"]), 4)}
 
 
+def turn_pieces(a: dict, ei: int, sign: int) -> dict:
+    """The TURNING-POINT fingerprint (Greg S92: why the peaks/valleys). Reuses depth_features but measures
+    from entry to the leg's PEAK (the top/bottom itself), not the 60s push: turn_exhaustion (book support
+    collapse all the way to the top), turn_far_thinning (consumed side eaten out by the top = fuel fully
+    spent - the n=3 big-leg-top lead), turn_spread_ratio, turn_aligned_push (book state AT the reversal).
+    Characterizes what the book looks like AT the turn, so a per-event fingerprint of each peak/valley exists."""
+    ts, p = a["ts"], a["price"]
+    t0, p0 = float(ts[ei]), float(p[ei])
+    win = np.nonzero((ts >= t0) & (ts <= t0 + POST_S))[0]
+    if win.size < 2:
+        return {"turn_exhaustion": None, "turn_far_thinning": None, "turn_spread_ratio": None,
+                "turn_aligned_push": None}
+    fav = sign * (p[win] - p0)
+    pk = int(win[int(np.argmax(fav))])                       # the peak index = the turning point
+    d = emb.depth_features(ei, pk, sign, a)
+    return {"turn_exhaustion": d["exhaustion"], "turn_far_thinning": d["far_thinning"],
+            "turn_spread_ratio": d["spread_ratio"], "turn_aligned_push": d["aligned_imb_push"]}
+
+
 def depth_pieces(a: dict, ei: int, sign: int) -> dict:
     """The dipole-EXHAUSTION + L2-depth read per leg (S92: expose the full toolbox). Reuses the validated
     event_move_baseline.depth_features (no recreated math); push_idx = the 60s fast-window favorable peak
@@ -262,8 +281,9 @@ def characterize_day(root: str, day: str, source: str = "local") -> list[dict]:
         pieces = pre_move_pieces(a, ei, s)
         depth = depth_pieces(a, ei, s)
         dip = dipole_pieces(a, ei, s)
+        turn = turn_pieces(a, ei, s)
         rows.append({"day": day, "root": root, "entry_idx": int(ei), "dir": "up" if s > 0 else "down",
-                     "tod": _tod_bucket(float(a["ts"][ei])), **pieces, **depth, **dip, **path, **tags})
+                     "tod": _tod_bucket(float(a["ts"][ei])), **pieces, **depth, **dip, **turn, **path, **tags})
     return rows
 
 
