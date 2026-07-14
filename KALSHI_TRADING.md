@@ -52,6 +52,16 @@ durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non
   mechanisms + open frontier + ruled-out-by-target. The coach loads + applies it; the loop merges into it.
 - `research/kalshi/NG_BEHAVIOR_KNOWLEDGE.md` — living, status-tagged knowledge base (grows every pass; the human view).
 - `research/kalshi/NG_FORECAST_LOG_S92.md` — the blind-forecaster's reasoning + magnitude-scaling + the data-gap plan.
+- `research/kalshi/FORECASTER_RUNBOOK_S93.md` — **VERBOSE operating manual** for the loop: the vision, the plays,
+  the machinery, the exact loop commands, JOB 2 (net-of-fee coach replay), the guard, and the NYMEX-OPTIONS
+  trading-vehicle survey (Greg S92: "look at nymex options for actual trading very soon"). Read this to run S93.
+- `research/kalshi/coach_replay.py` — **executable playbook backtest** (the rigid baseline the adaptive coach must
+  beat): applies ng_brain.json plays per leg net-of-fee, per-event, no pooling. Canary-side + indicative for now;
+  real fill model + Kalshi/NYMEX-option venue = S93. `--selftest` PASS.
+- `research/kalshi/forecast_harness.py` — turn-key loop helpers: `decision-state` (blind-safe group state),
+  `overlay` (guess-vs-actual render), `brain-show`. `--selftest` PASS.
+- `research/kalshi/redownload_mondays.py` — the Monday re-download tool (2-day [Mon,Wed) batch, upload clean over
+  the stub). Re-run for the FINAL Monday sweep after the box finishes (it minted new corrupt Mondays past Sep).
 - `research/kalshi/renders/ng_learn_s92/` — 12 learn-day curve grid + 12 individual day PNGs + the blind guess-vs-actual
   overlay + the forecasts JSON (for the intraday-curve grapher).
 - `research/kalshi/databento_backfill.py` — **`_flush` fix: 'wb' -> 'ab' (append)** — the every-Monday-corruption
