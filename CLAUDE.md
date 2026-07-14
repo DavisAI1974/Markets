@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 93)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 94)
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
 follower.** **git = CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an
@@ -6,7 +6,16 @@ extreme rate is a LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92
 program + DIRECTION cracked.** **S93 = the coach agent moved INTO AWS: box `i-08cee...` driveable via SSM,
 Bedrock LIVE (us-east-1; opus-4-1/haiku-4-5 via boto3), Claude Code installed — one Claude-Code model-preflight
 snag left before the LLM invokes; OpenAI written in as an alternative agent backend. Brain unchanged (s92.1); loop
-not yet run on the box. See `SESSION_HANDOFF_2026-07-14_S93.md` + `deploy/aws/COACH_AGENT_SETUP_S93.md`.** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
+not yet run on the box. See `SESSION_HANDOFF_2026-07-14_S93.md` + `deploy/aws/COACH_AGENT_SETUP_S93.md`.**
+**S94 = PIVOT: run the loop IN THE CLAUDE ENV (the agent's brain = the session model; drop the AWS box/coach
+agent). Ran it end-to-end: Group-2 scored + MERGED to brain s92.3 (3 new plays, PER-EVENT, NO averaging —
+Greg's hard rule); Group-3 = the first CHRONOLOGICAL group (contiguous Sep 8-24) — the running STORAGE-surplus
+fundamental CALLED THE BLOCK DOWN-TRAJECTORY (3.10->2.80), intraday direction still coin-flip, magnitude still
+under. Built a running storage-capacity + weather story into `decision_state`; fast grep+npz scoring;
+continuous-price-path overlay. Method pivot -> CONTIGUOUS week-aligned 2-week blocks walking into winter,
+agent logic runs ONE DAY INTO THE NEXT (continuation-or-turn of the running path), re-running days OK,
+Mondays being re-pulled (Sep29->Jan26 stubs). READ `research/kalshi/REFINE_DIRECTIVE_S94.md` +
+`SESSION_HANDOFF_2026-07-14_S94.md`. NEXT: verify Mondays landed -> tuning pass -> Group-4 (contiguous Oct).** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
 the exhaustion suite + dipole + turning-point fingerprint + surprise/curve) and ran per-event learn/blind/hunt
 passes on 12 warm-season NG days: (1) **NG DIRECTION is callable** — `dip_imb_level` (order-flow imbalance)
 sorts a leg's side 7%/93%, monotone, **OOS-validated 100% on strong flow (34/34, 3 unseen days)**; a NOWCAST,
