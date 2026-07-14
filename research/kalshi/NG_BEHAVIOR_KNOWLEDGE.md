@@ -118,3 +118,12 @@ structure (why), not yet an empirical measure.
   Method note for the next pass: dip_imb_level and the turn_* markers are entry->peak / overlapping-window
   NOWCASTS — the highest-value next build is the from-flat FORECAST + a real-time running turn track; and
   everything is warm-season contango, so the winter/backwardation tape is the decisive out-of-regime test.
+- **S94 knowledge add — the coin (BTC) sub-second look-ahead, tested on NG (S90).** [HYPOTHESIS, execution-layer]
+  The crypto edge (S36/S37: fine-resolution price-reversal timing ~5-6bps off the turn at 1-sec vs ~9-11 at
+  1-min + dipole EXHAUSTION filter) tested on NG NYMEX futures directly: static divergence did NOT transfer,
+  but the EXHAUSTION factor showed a faint RIGHT-SIGNED pulse (oppose+exhaust 0.410 vs trend+strengthen 0.382
+  = +2.7pp, BTC-direction; n=1 trend day, 1-sec binned). LOAD-BEARING (Greg S90): the 1-sec canary is FAR too
+  coarse - the edge lives at NATIVE TICK / ms-us (MBP-10 is nanosecond); real test pending at native tick,
+  per-cell, event-time. Brain play `timing.subsecond_reversal_exhaustion` (target=turn, conf 0.25). This is a
+  TURN-TIMING / EXECUTION edge (like the futures->Kalshi lag) - carried in the brain, NEVER a blind open-time
+  curve input. Distinct from the dipole DIRECTION nowcast (dip_imb_level, Sec B) and from the futures->Kalshi lag.
