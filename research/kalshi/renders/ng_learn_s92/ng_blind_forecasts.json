@@ -1,0 +1,74 @@
+{
+  "20250708": {
+    "dow": "Tue",
+    "archetype": "range_chop",
+    "driver": "small |surprise|=5.2 -> quiet/range week prior OVERRIDES Tue trend-potential; no big-surprise trend fuel; contango=no signal. Coarse chop, midday US-session bump that round-trips, net ~0. Sign(above) not used for direction (Pass2: sign does not sort direction).",
+    "curve": [[20,0],[22,8],[0,4],[2,-6],[4,2],[6,12],[8,60],[10,150],[12,220],[14,130],[16,70],[18,40],[20,55]]
+  },
+  "20250812": {
+    "dow": "Tue",
+    "archetype": "trend_up_grind",
+    "driver": "big |surprise|=28.2 -> trendy week + Tue=strongest-trend weekday = highest-conviction TREND day. Below-consensus (bullish) + precedent 0903 (below, went up) -> weak up lean. Magnitude prior high (~$900); slow US-session grind that holds (grind-vs-spike law).",
+    "curve": [[20,0],[22,20],[0,35],[2,25],[4,15],[6,45],[8,130],[10,320],[12,520],[14,700],[16,820],[18,880],[20,900]]
+  },
+  "20250909": {
+    "dow": "Tue",
+    "archetype": "range_chop",
+    "driver": "small |surprise|=7.6 -> quiet/range week; Tue trend-potential downgraded. Coarse midday bump that fades toward open, net ~0. Direction not called (small, sign not directional).",
+    "curve": [[20,0],[22,8],[0,5],[2,-8],[4,3],[6,15],[8,70],[10,160],[12,230],[14,140],[16,80],[18,45],[20,60]]
+  },
+  "20250709": {
+    "dow": "Wed",
+    "archetype": "quiet_then_pop_up",
+    "driver": "Wed=up-lean with US-session catalyst (all learned Wed net positive). small |surprise|=5.2 -> mild not strong. Quiet overnight, US-session pop up ~$400 peak, partial hold ~$370. Up is my confident Wed axis; magnitude modest.",
+    "curve": [[20,0],[22,10],[0,15],[2,8],[4,3],[6,18],[8,55],[10,150],[12,340],[14,430],[16,420],[18,390],[20,370]]
+  },
+  "20250813": {
+    "dow": "Wed",
+    "archetype": "trend_up_grind",
+    "driver": "big |surprise|=28.2 -> trendy week + Wed=up-lean = highest-conviction Wed TREND-UP (precedents 0806 +25.6 up, 0903 -20.6 up both trended up). Below-consensus bullish. Big magnitude ~$920, slow grind holds.",
+    "curve": [[20,0],[22,20],[0,35],[2,25],[4,15],[6,50],[8,140],[10,330],[12,540],[14,720],[16,840],[18,900],[20,920]]
+  },
+  "20250910": {
+    "dow": "Wed",
+    "archetype": "quiet_then_pop_up",
+    "driver": "Wed up-lean; small |surprise|=7.6 -> mild. US-session pop up ~$450 peak, partial hold ~$390. Same family as 0709, slightly larger.",
+    "curve": [[20,0],[22,10],[0,15],[2,8],[4,3],[6,18],[8,60],[10,160],[12,360],[14,450],[16,440],[18,410],[20,390]]
+  },
+  "20250717": {
+    "dow": "Thu",
+    "archetype": "spike_fade_down",
+    "driver": "Thu=storage catalyst at 10:30 ET (14:30 UTC); the decisive move is AT the print. moderate |surprise|=10.6 -> moderate magnitude. Above-consensus (bearish) -> weak down lean. Pop-down at print, partial fade (range-ish Thu like 0724). Direction low-confidence.",
+    "curve": [[20,0],[22,-5],[0,-8],[2,-4],[4,0],[6,-15],[8,-55],[10,-200],[12,-400],[14,-360],[16,-300],[18,-270],[20,-250]]
+  },
+  "20250807": {
+    "dow": "Thu",
+    "archetype": "quiet_then_pop_up",
+    "driver": "Thu storage catalyst + big |surprise|=28.2 -> big decisive move AT the 10:30 print, trendy. Below-consensus (bullish) -> up lean. Flat overnight, big pop up 10-14 ET, holds ~$780 (print-concentrated version of a trend day).",
+    "curve": [[20,0],[22,8],[0,12],[2,6],[4,0],[6,20],[8,70],[10,260],[12,650],[14,780],[16,800],[18,790],[20,780]]
+  },
+  "20250821": {
+    "dow": "Thu",
+    "archetype": "quiet_then_pop_up",
+    "driver": "Thu storage catalyst + big |surprise|=24.0 below (bullish) -> big up print-pop, trendy. Flat overnight, big pop at 10:30 ET, holds ~$740. Same family as 0807, slightly smaller magnitude.",
+    "curve": [[20,0],[22,8],[0,12],[2,6],[4,0],[6,20],[8,65],[10,240],[12,600],[14,730],[16,760],[18,750],[20,740]]
+  },
+  "20250718": {
+    "dow": "Fri",
+    "archetype": "range_chop",
+    "driver": "Fri=RANGE/chop (weekday prior dominates, most consistent in learn: 0711/0801/0912 all range even 0801 at +25.6). moderate |surprise|=10.6 does not override Friday. Midday US bump ~$240 that round-trips, small net.",
+    "curve": [[20,0],[22,6],[0,3],[2,-8],[4,2],[6,12],[8,55],[10,150],[12,240],[14,150],[16,90],[18,50],[20,70]]
+  },
+  "20250808": {
+    "dow": "Fri",
+    "archetype": "spike_fade_up",
+    "driver": "Fri=range prior OVERRIDES the big |surprise|=28.2 (0801 Fri stayed range at +25.6). Below-consensus bullish gives a bigger-than-usual US-open pop UP (~$380) but Friday fades it back toward open (~$120 close). Not a trend day despite big surprise.",
+    "curve": [[20,0],[22,8],[0,12],[2,6],[4,0],[6,18],[8,70],[10,200],[12,380],[14,320],[16,230],[18,160],[20,120]]
+  },
+  "20250905": {
+    "dow": "Fri",
+    "archetype": "range_chop",
+    "driver": "Fri=range; small |surprise|=7.6 -> quietest of the Fridays. Small midday bump ~$210 round-tripping to ~$55, net ~0.",
+    "curve": [[20,0],[22,6],[0,3],[2,-6],[4,2],[6,10],[8,50],[10,140],[12,210],[14,130],[16,70],[18,40],[20,55]]
+  }
+}
