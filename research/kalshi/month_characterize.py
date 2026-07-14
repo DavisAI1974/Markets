@@ -148,6 +148,45 @@ def pre_move_pieces(a: dict, ei: int, sign: int) -> dict:
             "pre_vol": pre_vol}
 
 
+try:
+    import odcore.info_dipole as _dip                         # the OD flow dipole (divergence/exhaustion)
+except Exception:
+    _dip = None
+
+
+def dipole_pieces(a: dict, ei: int, sign: int, win_s: float = 300.0, nbins: int = 10) -> dict:
+    """The order-flow DIPOLE per leg (reuses odcore.info_dipole.signed_flow_features; Greg S92 - full
+    toolbox). Trade aggressor SIDE isn't stored, so classify each pre-entry trade buy/sell by price vs the
+    concurrent mid (Lee-Ready off the tape's book), bin the window, feed the dipole. Fields:
+      dip_imb_level   static order-flow dipole (the validated DETECTOR; buy vs sell pressure, signed).
+      dip_aligned_flow imb_level * move_sign = the DIVERGENCE read: <= -0.20 = flow OPPOSES the move
+                       (the ~65% reversal setup); > 0 = flow fuels it.
+      dip_mi_flow / dip_imb_flow  the differential (early-vs-late) sibling forms.
+    Leakage-safe: strictly pre-entry window."""
+    none = {"dip_imb_level": None, "dip_aligned_flow": None, "dip_mi_flow": None, "dip_imb_flow": None}
+    if _dip is None:
+        return none
+    ts, p, bpx, apx, sz = a["ts"], a["price"], a["bid_px"], a["ask_px"], a["size"]
+    t0 = float(ts[ei])
+    idx = np.nonzero((ts >= t0 - win_s) & (ts < t0))[0]
+    if idx.size < nbins:
+        return none
+    mid = (bpx[idx] + apx[idx]) / 2.0
+    pp, ss = p[idx], sz[idx]
+    buy = np.where(pp > mid, ss, 0.0); sell = np.where(pp < mid, ss, 0.0)   # Lee-Ready by price vs mid
+    edges = np.linspace(t0 - win_s, t0, nbins + 1)
+    bi = np.clip(np.digitize(ts[idx], edges) - 1, 0, nbins - 1)
+    bv = np.zeros(nbins); sv = np.zeros(nbins)
+    np.add.at(bv, bi, buy); np.add.at(sv, bi, sell)
+    f = _dip.signed_flow_features(bv, sv)
+    if f is None:
+        return none
+    return {"dip_imb_level": round(float(f["imb_level"]), 4),
+            "dip_aligned_flow": round(float(f["imb_level"]) * sign, 4),
+            "dip_mi_flow": round(float(f["mi_flow"]), 4),
+            "dip_imb_flow": round(float(f["imb_flow"]), 4)}
+
+
 def depth_pieces(a: dict, ei: int, sign: int) -> dict:
     """The dipole-EXHAUSTION + L2-depth read per leg (S92: expose the full toolbox). Reuses the validated
     event_move_baseline.depth_features (no recreated math); push_idx = the 60s fast-window favorable peak
@@ -192,7 +231,20 @@ def _regime_tags(root: str, day: str) -> dict:
               "gw_cdd": v.get("gw_cdd"), "gw_precip": v.get("gw_precip")}
     except Exception:
         pass
-    return {"curve_regime": curve, **tw}   # continuous gas-weighted demand for the weather->NG influence study
+    surp = {"stor_surprise": None, "stor_surprise_sign": None}   # S92: EIA storage-surprise (seasonal proxy)
+    try:
+        import json as _json
+        key = {"NG": "KXNATGASD", "CL": "KXWTI"}.get(root)
+        if key:
+            d = _json.load(open("data/eia_surprise.json")).get(key, {})
+            past = sorted(ri for ri in d if ri <= iso)
+            if past:
+                sv = float(d[past[-1]]["surprise"])          # most-recent release on/before this day
+                surp = {"stor_surprise": round(sv, 1),
+                        "stor_surprise_sign": "above" if sv > 0 else ("below" if sv < 0 else "inline")}
+    except Exception:
+        pass
+    return {"curve_regime": curve, **tw, **surp}   # continuous gas-weighted demand + storage surprise (day-level drivers)
 
 
 def characterize_day(root: str, day: str, source: str = "local") -> list[dict]:
@@ -209,8 +261,9 @@ def characterize_day(root: str, day: str, source: str = "local") -> list[dict]:
             continue
         pieces = pre_move_pieces(a, ei, s)
         depth = depth_pieces(a, ei, s)
+        dip = dipole_pieces(a, ei, s)
         rows.append({"day": day, "root": root, "entry_idx": int(ei), "dir": "up" if s > 0 else "down",
-                     "tod": _tod_bucket(float(a["ts"][ei])), **pieces, **depth, **path, **tags})
+                     "tod": _tod_bucket(float(a["ts"][ei])), **pieces, **depth, **dip, **path, **tags})
     return rows
 
 
