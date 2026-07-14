@@ -59,7 +59,9 @@ def load_cont_full(root: str, day: str, source: str = "local"):
     emb.CONT_DIR = CONT_DIR                                       # honor --cont-dir override for the cache
     d = emb.load_cont_day(root, day, source=source, trades_only=True)
     return {"ts": d["ts"], "price": d["price"], "size": d["size"],
-            "bid_dep": d["bid_dep"], "ask_dep": d["ask_dep"]}
+            "bid_dep": d["bid_dep"], "ask_dep": d["ask_dep"],
+            "bid_px": d["bid_px"], "ask_px": d["ask_px"],          # S92: needed by depth_features (exhaustion/spread)
+            "bid_sz": d["bid_sz"], "ask_sz": d["ask_sz"]}
 
 
 def _list_cont_days(root: str, ym: str, source: str = "local") -> list[str]:
@@ -146,6 +148,28 @@ def pre_move_pieces(a: dict, ei: int, sign: int) -> dict:
             "pre_vol": pre_vol}
 
 
+def depth_pieces(a: dict, ei: int, sign: int) -> dict:
+    """The dipole-EXHAUSTION + L2-depth read per leg (S92: expose the full toolbox). Reuses the validated
+    event_move_baseline.depth_features (no recreated math); push_idx = the 60s fast-window favorable peak
+    (the initial push). Adds: aligned_imb_push (book still SUPPORTING the move >0, or leader EXHAUSTED <=0),
+    exhaustion (aligned_R - aligned_push; +ve = book support COLLAPSED from entry to push = the dipole
+    flattening/reversal signal), far_thinning (consumed-side resting liquidity eaten as fuel), spread_ratio
+    (liquidity stress), imb_R/aligned_imb_R (resting tilt), + raw resting depth at entry (counterparty size
+    on each side). This is the sustain-vs-flatten machinery that was withheld from the first pass."""
+    ts, p = a["ts"], a["price"]
+    t0, p0 = float(ts[ei]), float(p[ei])
+    win = np.nonzero((ts >= t0) & (ts <= t0 + 60.0))[0]
+    if win.size < 2:
+        push = ei
+    else:
+        fav = sign * (p[win] - p0)
+        push = int(win[int(np.argmax(fav))])
+    d = emb.depth_features(ei, push, sign, a)
+    d["bid_dep_entry"] = round(float(a["bid_dep"][ei]), 1)
+    d["ask_dep_entry"] = round(float(a["ask_dep"][ei]), 1)
+    return d
+
+
 def _iso_day(day: str) -> str:
     """Tape filenames use YYYYMMDD; the temp/curve caches key on YYYY-MM-DD. Convert (leakage-critical:
     curve_asof does string date comparison, so a mismatched format silently returns the wrong/latest curve)."""
@@ -184,8 +208,9 @@ def characterize_day(root: str, day: str, source: str = "local") -> list[dict]:
         if not path:
             continue
         pieces = pre_move_pieces(a, ei, s)
+        depth = depth_pieces(a, ei, s)
         rows.append({"day": day, "root": root, "entry_idx": int(ei), "dir": "up" if s > 0 else "down",
-                     "tod": _tod_bucket(float(a["ts"][ei])), **pieces, **path, **tags})
+                     "tod": _tod_bucket(float(a["ts"][ei])), **pieces, **depth, **path, **tags})
     return rows
 
 
