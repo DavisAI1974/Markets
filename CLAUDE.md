@@ -1,20 +1,24 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 91)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 92)
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
-follower.** **HISTORICAL DATA IS RAW (Greg S88): keep ALL the info; aggregate ONLY on the trade-signal side.**
-**git = CODE, S3 = ALL DATA (Greg S91).** **S91:** (1) the S90 box had FAILED (S3 year = corrupt July stubs);
-root-caused (blind box: 30GB disk + no observability) and REBUILT — `pull_year_mbp10.py --weekly` (NEW: 53
-per-week Databento jobs, per-week S3 publish, **marker-based resume**; committed) + a **stub-aware resume-skip**
-(corrupt-stub months now re-pulled, never skipped) running on a **durable OBSERVABLE box** `i-08cee7171c0a76a04`
-(t3.xlarge, 200GB) that streams `pull.log`+`heartbeat` to `s3://.../deploy/box-logs/` every 30s + auto-stops on
-done (v1 box failed on an awscli dependency; v2 is boto3-only). (2) **GOLD+SILVER depth-add VALIDATED** — the
-futures→Kalshi LAG is CONFIRMED on KXGOLDD (37/60 sig) + KXSILVERD (26/54 sig) using FREE Pyth XAU/XAG, same as
-WTI/NG (cross-strike is NG-only; see `GOLD_SILVER_LAG_FINDINGS_S91.md`); collectors + Pyth XAU/XAG feeds wired;
-HH NGDQ6 Pyth feed confirmed NOT bogus. (3) two agents delivered (NYMEX-products + Kalshi-ranking, gold-daily #1).
-**NEXT (S92) = VERIFY the box finished the clean year on S3 (watch deploy/box-logs/ -> DONE + 53 week markers);
-rotate keys; MIGRATE live data git→S3 (collectors); gold/silver net-of-fee-at-SIZE + deepen the lag sub-minute
-(NG/WTI lag ALREADY tested S81/S87 — do not re-test).**
-Detail: `SESSION_HANDOFF_2026-07-14_S91.md`, `KICKOFF_2026-07-14_S92.md`.
+follower.** **git = CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an
+extreme rate is a LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92 = the NG intraday FORECASTER
+program + DIRECTION cracked.** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
+the exhaustion suite + dipole + turning-point fingerprint + surprise/curve) and ran per-event learn/blind/hunt
+passes on 12 warm-season NG days: (1) **NG DIRECTION is callable** — `dip_imb_level` (order-flow imbalance)
+sorts a leg's side 7%/93%, monotone, **OOS-validated 100% on strong flow (34/34, 3 unseen days)**; a NOWCAST,
+ideal for the Kalshi lag. (2) **Magnitude staircase** ($350 crossing = 92% ride, $500 = 100%) + grind-vs-spike;
+book/dipole/exhaustion = noise for SHAPE (magnitude confounds). (3) **Turning point = far-side liquidity
+RECRUITMENT, not consumption** (held legs grow the far ladder; reversed tops eat it). (4) Built the **coach
+"brain"** `research/kalshi/knowledge/ng_brain.json` (versioned plays) + the self-growing loop (load brain ->
+forecast blind -> merge -> refine -> converge -> the agent becomes the COACH calling plays). (5) Year-box:
+**every Monday was corrupt** (Tue->Tue weeks -> Monday=last-day + `_flush` 'wb' clobber) — root-caused, FIXED
+(`_flush` 'ab' append) + DOW-naming + NG Mondays re-downloaded clean; box at ~Oct. (6) NYMEX-forward workflow
+rerouted git->S3, NWS-hourly RT collector built (need Greg's 3 GH secrets).
+**NEXT (S93) = RUN THE LOOP (brain -> forecast new group blind -> overlay -> merge -> refine, walk the year);
+the intraday coach replay net-of-fee; characterize NG Mondays; verify box year + reconcile + final Monday sweep;
+add GH secrets; rotate keys.**
+Detail: `SESSION_HANDOFF_2026-07-14_S92.md`, `KICKOFF_2026-07-15_S93.md`.
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
@@ -196,6 +200,17 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S92** — NG intraday FORECASTER + DIRECTION cracked + the coach BRAIN. Built the full-toolbox per-leg
+  characterizer (`month_characterize`: exhaustion suite + dipole + turning-point fingerprint + surprise/curve)
+  and ran per-event (NO-pooling) learn/blind/hunt passes on 12 warm-season NG days. (1) **NG DIRECTION callable**
+  — `dip_imb_level` order-flow imbalance sorts a leg's side 7%/93%, OOS-validated 100% strong-flow (34/34, 3
+  unseen days); a nowcast for the Kalshi lag. (2) **Magnitude staircase** ($350->0.92, $500->1.00) + grind-vs-
+  spike; book/dipole/exhaustion NOISE for SHAPE (magnitude confounds). (3) **Turning point = far-side liquidity
+  RECRUITMENT, not consumption.** (4) **Coach BRAIN** `knowledge/ng_brain.json` + the self-growing loop (load ->
+  forecast blind -> merge -> refine -> converge -> the agent becomes the COACH calling plays). (5) Year-box
+  every-Monday-corrupt bug (Tue->Tue weeks + `_flush` 'wb' clobber) root-caused + FIXED ('ab') + DOW-naming + NG
+  Mondays re-downloaded clean; box at ~Oct. (6) NYMEX-forward workflow git->S3 + NWS-hourly RT collector (need
+  Greg's 3 GH secrets). Detail: `SESSION_HANDOFF_2026-07-14_S92.md`, `KICKOFF_2026-07-15_S93.md`.
 - **S91** — YEAR-PULL REBUILT on a durable observable box + GOLD/SILVER depth-add VALIDATED. (1) The S90 box had
   failed (S3 year = corrupt July stubs, blind box); rebuilt: `pull_year --weekly` (per-week Databento jobs +
   marker-resume) + stub-aware resume-skip, on box `i-08cee7171c0a76a04` (200GB) streaming its log to S3 (v1 died

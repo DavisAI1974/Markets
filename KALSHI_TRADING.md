@@ -41,6 +41,30 @@ the continuous corpus streams on demand via `event_move_baseline.load_cont_day(.
 durable data still on branches: `data/kalshi-bins`, `data/pyth-ticks` (Pyth, non-bento). See
 `research/kalshi/AWS_INGEST_SETUP_S89.md`. AWS + Databento keys are session-pasted SECRETS.
 
+**S92 code changes (detail in `SESSION_HANDOFF_2026-07-14_S92.md`):** — the NG intraday FORECASTER program.
+- `research/kalshi/month_characterize.py` — FULL-TOOLBOX per-leg characterizer: added the **exhaustion suite**
+  (`depth_pieces` -> aligned_imb_push/exhaustion/far_thinning/spread_ratio, reuses `event_move_baseline.depth_features`),
+  the **dipole** (`dipole_pieces` -> dip_imb_level/dip_aligned_flow/..., reuses `odcore.info_dipole`; Lee-Ready side),
+  the **turning-point fingerprint** (`turn_pieces` -> turn_* measured entry->peak), and the **storage-surprise** +
+  live **curve** joins. This is the per-leg fingerprint the forecaster/coach agents read.
+- `research/kalshi/knowledge/ng_brain.json` (+ `knowledge/README.md`) — the machine BRAIN: versioned PLAYS
+  (direction.flow_nowcast, ride.magnitude_staircase, exit.recruitment_reversal, shape.grind_vs_spike, daytype.*) +
+  mechanisms + open frontier + ruled-out-by-target. The coach loads + applies it; the loop merges into it.
+- `research/kalshi/NG_BEHAVIOR_KNOWLEDGE.md` — living, status-tagged knowledge base (grows every pass; the human view).
+- `research/kalshi/NG_FORECAST_LOG_S92.md` — the blind-forecaster's reasoning + magnitude-scaling + the data-gap plan.
+- `research/kalshi/renders/ng_learn_s92/` — 12 learn-day curve grid + 12 individual day PNGs + the blind guess-vs-actual
+  overlay + the forecasts JSON (for the intraday-curve grapher).
+- `research/kalshi/databento_backfill.py` — **`_flush` fix: 'wb' -> 'ab' (append)** — the every-Monday-corruption
+  root cause (Tue->Tue weeks made Monday the last batch day; a straggler re-created a 1-row file that the 'wb' final
+  flush clobbered). Concatenated gzip members decompress as one; the reader sorts by ts.
+- `research/kalshi/pull_year_mbp10.py` — **DOW naming** ({ROOT}_{YYYYMMDD}_{dow}.jsonl.gz) + **calendar-aware
+  stub/marker** (`_expected_full`: weekends + CME full-closure holidays are legit-tiny, not corruption) + a
+  **`--reconcile-names`** repair mode (rename date-only -> dow + write week markers; run after the box DONE) + `--selftest`.
+- `research/kalshi/event_move_baseline.py` — `_s3_fetch_cont_gz` reads the dow-labeled name (legacy fallback).
+- `research/kalshi/nws_temp_feed.py` — `--overwrite` flag (forward-collector top-up of the trailing months).
+- `.github/workflows/nymex_mbp10_ingest_durable.yml` — rewritten git->S3 + `--weekly` (AWS+Databento GH secrets).
+- `.github/workflows/nws_hourly_collector_durable.yml` — NEW RT NWS-hourly collector (trailing-2-months --overwrite -> S3).
+
 **S91 code changes (detail in `SESSION_HANDOFF_2026-07-14_S91.md`):**
 - `pull_year_mbp10.py` — **`--weekly`** (week-at-a-time S3 pull: 53 fresh per-week Databento batch jobs, per-week
   publish, marker-based resume `nymex_cont/_done/{root}_{ws}.done`) + **stub-aware resume-skip** (`_s3_month_present`
