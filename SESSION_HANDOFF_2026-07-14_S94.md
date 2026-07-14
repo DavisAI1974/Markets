@@ -66,13 +66,15 @@ storage+weather story and day-into-day reasoning.
 - Scratchpad (gitignored): grp2/grp3 `_state`/`_forecasts`/`_score` json, `fast_score2.py`,
   `continuous_overlay.py`, `repull_mondays.py`, `aws.env` (keys).
 
-## NEXT (new chat)
+## NEXT (new chat) — SEQUENCE CHANGED (Greg S94): one more CONSECUTIVE run BEFORE refine
 1. Verify the Monday re-pull finished (all 18 `NG_*_mon.jsonl.gz` >50KB on S3); re-pull stragglers.
-2. **TUNING / refine pass** per `REFINE_DIRECTIVE_S94.md`: fold Group-3's per-event lessons into the brain
-   (storage-block-direction = a real block-direction signal; whipsaw-within-trend; magnitude-under persists),
-   and wire the DAY-INTO-DAY continuous reasoning into the blind-agent directive.
-3. **Group-4 = the first contiguous 2-week block continuing chronologically** (Sep 25 -> Oct, now Mondays
-   land), scored with the continuous overlay, per-event, no averaging.
+2. **Group-4 = one more CHRONOLOGICAL run FIRST** — a consecutive ~14-trading-day block continuing from
+   Group-3's end (e.g. Sep 24 -> Oct 13; Mondays 0929/1006/1013 now clean). Blind-forecast on the s92.3 brain
+   with BOTH S94 updates live (day-into-day continuous reasoning + running storage/weather story) -> continuous
+   overlay -> see if the two updates lift direction/magnitude ON THEIR OWN. Per-event, no averaging.
+3. **THEN the TUNING / refine pass** per `REFINE_DIRECTIVE_S94.md` — REFINE UNBLINDED off the CONSECUTIVE
+   groups (Group-3 + Group-4), **NEVER the scattered Group-2** (its lessons carry the old isolated-event
+   framing). Extract general mechanisms (esp. the intraday-direction problem), fold into the brain.
 4. Walk into **winter** (Nov fill-peak -> Dec drawdown, the storage-surplus collapse) — the real regime test.
 
 ## RULES (unchanged): each event individually NEVER pool/average; per-cell; distributions not means; blind

@@ -74,6 +74,14 @@ recruitment lined up with the real legs; that is where the flow-nowcast that cal
 - Storage/weather conditioning kept; brain MERGES never overwrite (refine confidence + add plays); net-of-fee
   at the money step; provisional-until-live; NG and WTI kept separate; weather forecaster HANDS OFF.
 
+## 5b. SEQUENCE — one more CONSECUTIVE run BEFORE the first refine (Greg S94)
+Do NOT refine yet. Run one more CHRONOLOGICAL group first (Group-4) with the two S94 updates already live
+(the day-into-day continuous reasoning + the running storage/weather story), and see if they lift things on
+their own. THEN refine — and refine OFF CONSECUTIVE groups only (Group-3, Group-4, ...), **NEVER the scattered
+Group-2**: its per-event lessons are contaminated by the isolated-event framing we just replaced, so refining
+off it would bake the old distortion back in. The brain's s92.3 Group-2 plays stay as prior knowledge, but the
+REFINE draws its mechanisms from the consecutive runs.
+
 ## 6. The per-group loop (in the Claude env)
 1. `forecast_harness.py decision-state --days <contiguous 2-week block>` (enriched: surprise + storage +
    weather; blind-safe).
