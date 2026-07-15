@@ -66,6 +66,26 @@ def _storage_asof(iso: str, series: dict) -> dict | None:
     return series[past[-1]] | {"as_of": past[-1]} if past else None
 
 
+# US market / CME-energy weekday HOLIDAYS + half-days for the walk window (Greg S94: a weekday holiday
+# absolutely changes that day's trade curve — closed / early-close / thin — so FLAG it). Effect tags:
+# closed = no/near-no session; early_close = half-day; thin = trades but light (bond/bank holiday). Extend as
+# the walk advances. Dates are the OBSERVED market date.
+_HOLIDAYS = {
+    "2025-10-13": ("Columbus_Day", "thin"),          "2025-11-11": ("Veterans_Day", "thin"),
+    "2025-11-27": ("Thanksgiving", "closed"),        "2025-11-28": ("day_after_Thanksgiving", "early_close"),
+    "2025-12-24": ("Christmas_Eve", "early_close"),  "2025-12-25": ("Christmas", "closed"),
+    "2025-12-31": ("New_Years_Eve", "thin"),         "2026-01-01": ("New_Years_Day", "closed"),
+    "2026-01-19": ("MLK_Day", "thin"),               "2026-02-16": ("Presidents_Day", "thin"),
+    "2026-04-03": ("Good_Friday", "closed"),         "2026-05-25": ("Memorial_Day", "closed"),
+    "2026-06-19": ("Juneteenth", "closed"),          "2026-07-03": ("Independence_Day_obs", "early_close"),
+}
+
+
+def _holiday_asof(iso: str) -> dict | None:
+    h = _HOLIDAYS.get(iso)
+    return {"name": h[0], "effect": h[1]} if h else None
+
+
 def _weather_asof(iso: str, wx: dict) -> dict | None:
     """Gas-weighted degree-day REGIME for the day (S88 nws feed). Blind rule (directive sec 6): the coarse
     HDD/CDD regime is highly forecastable a day ahead, so we carry it as the decision-time proxy (regime +
@@ -98,7 +118,8 @@ def decision_state(days: list[str]) -> dict:
                   "stor_surprise_sign": ("above" if sv > 0 else "below") if sv is not None else None,
                   "curve_regime": cr[1]["regime"] if cr else "unknown",
                   "storage": _storage_asof(iso, stor),
-                  "weather": _weather_asof(iso, wx)}
+                  "weather": _weather_asof(iso, wx),
+                  "holiday": _holiday_asof(iso)}
     return out
 
 
