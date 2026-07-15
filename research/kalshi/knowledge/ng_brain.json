@@ -1,14 +1,15 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s92.3",
+  "version": "s92.6",
   "built_pass": 1,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. Human-readable view lives in ../NG_BEHAVIOR_KNOWLEDGE.md. Each pass MERGES (refine confidence + add plays); nothing is overwritten blindly.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year. A coach that curve-fits noise loses money adaptively; a coach matching the live moment to general patterns adapts correctly.",
   "regime_scope": "12 warm-season days (Jul-Sep 2025), contango-flat. Winter/backwardation + Mondays NOT yet in-sample.",
   "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders. The coach adapts WITHIN bounded risk caps.",
   "s92.2_note": "Added timing.subsecond_reversal_exhaustion (the coin/BTC sub-second look-ahead tested on NG, S90) as an execution-layer turn-timing HYPOTHESIS + native-tick frontier. No Group-2 lesson merge yet (pending scorecard).",
-  "s92.3_note": "Group-2 merge (unseen warm-season days blind-forecast then scored, scratchpad/grp2_score.json). MERGE not rewrite: all 8 prior plays + mechanisms preserved. Lessons stated PER-EVENT, NEVER averaged/pooled/counted (Greg, load-bearing: any mean/median/X-of-N blurs the per-event fingerprint): (1) MONDAY = big mover via weekend-gap reprice, NOT range - promoted clock.weekend_gap OPEN->provisional + new play daytype.monday_weekend_gap, the 3 Mondays named individually: 0707 actual dominant +$1530 (guessed +$180), 0728 -$1240 (guessed +$170), 0818 -$710 (guessed -$650); direction differed per day (up/down/down), bigness is the lesson not side. (2) STORAGE THURSDAY big - new play daytype.storage_thursday_magnitude, named individually: 0710 +$1860 (guessed -$330), 0828 +$1310 (guessed +$420). (3) MAGNITUDE candidate (magnitude.warm_season_scale_candidate, HYPOTHESIS) - the guesses were dwarfed on specific days (0707 +$1530 vs +$180, 0710 +$1860 vs -$330, 0728 -$1240 vs +$170, 0730 -$1460 vs +$400, 0828 +$1310 vs +$420); ANTI-LOCK-IN flag: too-small-prior vs higher-vol-summer-2025-regime UNRESOLVED on one group, did NOT rescale; and NOT uniform - the trend-day bets 0820/0826/0818 OVERSHOT. (4) DIRECTION unchanged: the days that missed were 0710, 0728, 0730, 0820, 0826, 0829; the two big-surprise trend days 0820 (guessed UP $880 -> actual DOWN $370) and 0826 (guessed UP $850 -> actual DOWN $560) went OPPOSITE -> surprise != direction; from-flat direction stays OPEN. Every pattern is a per-regime observation until it recurs; winter untested."
+  "s92.3_note": "Group-2 merge (unseen warm-season days blind-forecast then scored, scratchpad/grp2_score.json). MERGE not rewrite: all 8 prior plays + mechanisms preserved. Lessons stated PER-EVENT, NEVER averaged/pooled/counted (Greg, load-bearing: any mean/median/X-of-N blurs the per-event fingerprint): (1) MONDAY = big mover via weekend-gap reprice, NOT range - promoted clock.weekend_gap OPEN->provisional + new play daytype.monday_weekend_gap, the 3 Mondays named individually: 0707 actual dominant +$1530 (guessed +$180), 0728 -$1240 (guessed +$170), 0818 -$710 (guessed -$650); direction differed per day (up/down/down), bigness is the lesson not side. (2) STORAGE THURSDAY big - new play daytype.storage_thursday_magnitude, named individually: 0710 +$1860 (guessed -$330), 0828 +$1310 (guessed +$420). (3) MAGNITUDE candidate (magnitude.warm_season_scale_candidate, HYPOTHESIS) - the guesses were dwarfed on specific days (0707 +$1530 vs +$180, 0710 +$1860 vs -$330, 0728 -$1240 vs +$170, 0730 -$1460 vs +$400, 0828 +$1310 vs +$420); ANTI-LOCK-IN flag: too-small-prior vs higher-vol-summer-2025-regime UNRESOLVED on one group, did NOT rescale; and NOT uniform - the trend-day bets 0820/0826/0818 OVERSHOT. (4) DIRECTION unchanged: the days that missed were 0710, 0728, 0730, 0820, 0826, 0829; the two big-surprise trend days 0820 (guessed UP $880 -> actual DOWN $370) and 0826 (guessed UP $850 -> actual DOWN $560) went OPPOSITE -> surprise != direction; from-flat direction stays OPEN. Every pattern is a per-regime observation until it recurs; winter untested.",
+  "s92.6_note": "Consecutive-block merge s92.3 -> +G3 -> +G4 -> +G5, folded in CHRONOLOGICAL order (blinded scorecards only, scratchpad/grp{3,4,5}_score.json + _forecasts.json; NO rich-tape / characterize_day - that unblinded dig is a separate later step). MERGE not rewrite: all 11 prior plays preserved, refined confidences + 1 play added. PER-EVENT only, NEVER averaged/pooled/counted (Greg). THE BIGGEST LEAD (new play direction.cross_block_reversion, HYPOTHESIS n=3): CROSS-BLOCK REVERSION - each block tends to REVERSE / give back the prior block's net move, so the agent's block-OPEN directional lean kept landing CONTRA the market. Per-event chronology: G3 (Sep8-24) block fell 3.07->2.86, the +150 Bcf storage SURPLUS correctly called the block DOWN-trajectory; intraday per-day direction was a coin-flip (dir_ok mixed) and magnitude ran under on the big days (0916 act +1330 vs guess -140; 0918 -1560 vs -650). G4 (Sep24-Oct7) block REVERSED UP 2.86->3.51 - agent extended G3's downtrend and was WRONG week 1 (0925 +1160, 0929 Mon +1240 both guessed DOWN), then caught the up-move week 2 (1001/1002/1006/1007 dir_ok true) but under-sized (1007 +1620 vs +460). G5 (Oct8-21) block a V, fell 3.51->2.92 then rallied 3.52 - agent leaned UP and was WRONG week 1 (1008 -1980 guessed up), then caught the 1016 turn-DOWN and the 1020 Monday REVERSAL UP (+2770 guessed +580 = ~5x under); Columbus Day 1013 thin-holiday handled right. Weekend-gap Monday REVERSALS are huge and badly under-sized (1020 +2770; 0929 +1240). Fundamentals (surplus/HDD) are a slow BACKDROP for block-trajectory, NOT a short-term direction/timing signal - caveat added to daytype.surprise_magnitude + daytype.storage_thursday_magnitude."
  },
  "plays": [
   {
@@ -123,7 +124,7 @@
     "Grp2 0820 big-|surprise| trend-bet guessed UP $880 -> actual DOWN $370 (opposite)",
     "Grp2 0826 big-|surprise| trend-bet guessed UP $850 -> actual DOWN $560 (opposite)"
    ],
-   "caveats": "Did NOT reproduce on continuation-rate in the multi-target pass; season-confounded, ~6 prints. A weak day-level prior only. Group-2 REINFORCES sign!=direction, per event: 0820 guessed UP $880 -> actual DOWN $370; 0826 guessed UP $850 -> actual DOWN $560 - both big-surprise trend bets went OPPOSITE and overshot the guess. Surprise magnitude does not sort direction. From-flat direction stays OPEN."
+   "caveats": "Did NOT reproduce on continuation-rate in the multi-target pass; season-confounded, ~6 prints. A weak day-level prior only. Group-2 REINFORCES sign!=direction, per event: 0820 guessed UP $880 -> actual DOWN $370; 0826 guessed UP $850 -> actual DOWN $560 - both big-surprise trend bets went OPPOSITE and overshot the guess. Surprise magnitude does not sort direction. From-flat direction stays OPEN. G3/G4/G5 SHARPEN the level: fundamentals (the +150 Bcf storage SURPLUS in G3) work as a slow BLOCK-TRAJECTORY BACKDROP - the surplus correctly called G3's block DOWN 3.07->2.86 - but they are NOT a short-term intraday direction/timing signal (G3 per-day dir_ok was a coin-flip). Read fundamentals as block-direction backdrop, never as a day-level side/timing call."
   },
   {
    "id": "daytype.weekday_archetype",
@@ -163,20 +164,22 @@
    "target": "daytype",
    "trigger": "at the open on a MONDAY (Sunday-evening reopen)",
    "read": "day of week = Monday + accumulated weekend information",
-   "call": "Monday = a BIG mover, NOT range/chop. The weekend info gap (news/weather/supply over the closed weekend) reprices at the Sun-eve reopen -> a large dominant leg. BIGNESS is the lesson; SIDE was mixed (up and down both seen) -> do NOT infer direction from Monday-ness.",
+   "call": "Monday = a BIG mover, NOT range/chop. The weekend info gap (news/weather/supply over the closed weekend) reprices at the Sun-eve reopen -> a large dominant leg. BIGNESS is the lesson; SIDE was mixed (up and down both seen) -> do NOT infer direction from Monday-ness. NEW ANGLE (G4/G5): the weekend-gap Monday is often a REVERSAL of the prior trajectory AND the single most badly UNDER-SIZED event - the Monday reprice runs several times the default magnitude prior. Size Mondays up hard, especially when they reverse the block's recent direction.",
    "evidence": {
-    "n": 3,
+    "n_summer_2025_group2": 3,
     "per_event": "0707 actual dominant +$1530 (guessed range +$180); 0728 -$1240 (guessed +$170); 0818 -$710 (guessed -$650, close only because surprise_magnitude separately flagged it a trend day)",
-    "direction_per_event": "0707 up, 0728 down, 0818 down - side differed each Monday"
+    "direction_per_event": "0707 up, 0728 down, 0818 down - side differed each Monday",
+    "reversal_undersize_per_event_g3g4g5": "0929 Mon (G4) actual +$1240 (guessed -$640, wrong side AND ~2x under - the G3->G4 up-reversal); 1020 Mon (G5) actual +$2770 (guessed +$580 = ~5x under, the block V-bottom REVERSAL UP); 1006 Mon (G4) +$1150 (guessed +$600); Mondays big across the board - 0908 +$1260 (guessed -$450), 0915 -$1150 (guessed +$450), 0922 -$1410 (guessed -$500). 1013 Mon (Columbus/thin holiday) the lone quiet one, handled right (guessed small, dir_ok)."
    },
    "status": "PROVISIONAL",
-   "confidence": 0.4,
+   "confidence": 0.5,
    "exemplars": [
     "Mon 0707 +$1530 (guessed range $180)",
     "Mon 0728 -$1240 (guessed $170)",
-    "Mon 0818 -$710 (guessed -$650)"
+    "Mon 1020 +$2770 (guessed +$580, ~5x under, block-V reversal up)",
+    "Mon 0929 +$1240 (guessed -$640, wrong side, G3->G4 reversal)"
    ],
-   "caveats": "n=3, ONE group (summer-2025). Promotes clock.weekend_gap from OPEN toward a real pattern: Monday = big-mover via the weekend-gap reprice. Bigness not side. Per-regime observation until it recurs (winter/backwardation untested). Never a memorized-day rule - the MECHANISM (weekend info accumulation -> Sun-eve reprice) + n=3 is the claim."
+   "caveats": "Now seen across Group-2 + G3/G4/G5 (still warm-season). Confidence 0.4->0.5. Promotes clock.weekend_gap: Monday = big-mover via the weekend-gap reprice, frequently a REVERSAL and badly under-sized (1020 +$2770 vs +$580; 0929 +$1240 vs -$640). Bigness (and now: size-up + reversal-lean) is the lesson, not a fixed side. Columbus-Day-type thin holidays (1013) are the exception - quiet, size DOWN. Per-regime until winter/backwardation. Never a memorized-day rule - the MECHANISM (weekend info accumulation -> Sun-eve reprice) + the named events is the claim."
   },
   {
    "id": "daytype.storage_thursday_magnitude",
@@ -185,16 +188,18 @@
    "read": "day of week = Thursday storage-print day",
    "call": "Up-size the storage-Thursday MAGNITUDE prior: both Group-2 Thursdays produced LARGE dominant legs at/after the print. Expect a bigger-than-default move on storage Thursdays. Magnitude only - the print is unknown at the open so SIDE stays a coin flip.",
    "evidence": {
-    "n": 2,
-    "per_event": "0710 actual dominant +$1860 (guessed -$330); 0828 +$1310 (guessed +$420)"
+    "n_group2": 2,
+    "per_event": "0710 actual dominant +$1860 (guessed -$330); 0828 +$1310 (guessed +$420)",
+    "per_event_g3g4g5": "0911 Thu (G3) -$1180 (guessed -$540, side right, ~2x under); 0918 Thu (G3) -$1560 (guessed -$650, side right, under); 0925 Thu (G4) +$1160 (guessed -$330, wrong side); 1002 Thu (G4) +$1360 (guessed +$760, side right, under); 1009 Thu (G5) -$1010 (guessed +$450, wrong side); 1016 Thu (G5) -$1190 (guessed -$300, side right, ~4x under, caught the block-V turn down). Every storage Thursday across G3/G4/G5 was a LARGE dominant leg and consistently UNDER-forecast; SIDE was mixed per event (right on 0911/0918/1002/1016, wrong on 0925/1009)."
    },
    "status": "PROVISIONAL",
-   "confidence": 0.35,
+   "confidence": 0.45,
    "exemplars": [
     "Thu 0710 +$1860 (guessed -$330)",
-    "Thu 0828 +$1310 (guessed +$420)"
+    "Thu 1016 -$1190 (guessed -$300, block-V turn-down)",
+    "Thu 0925 +$1160 (guessed -$330, wrong side)"
    ],
-   "caveats": "n=2, one group. Complements the clock.storage_thursday mechanism (the catalyst) with a magnitude prior. Side stays a coin flip at the open (print not yet known). Per-regime until it recurs."
+   "caveats": "Group-2 (n=2) + all six G3/G4/G5 storage Thursdays reinforce the MAGNITUDE prior (every one a large dominant leg, all under-forecast); confidence 0.35->0.45. SIDE stays a coin flip at the open - the print is unknown and side landed mixed per event (right on 0911/0918/1002/1016, wrong on 0925/1009). FUNDAMENTALS caveat: the storage surprise is a BACKDROP catalyst for magnitude, NOT a pre-print direction/timing signal - do not lean side off it before 10:30 ET. Complements the clock.storage_thursday mechanism (the catalyst) with a magnitude prior. Per-regime until it recurs (warm-season only)."
   },
   {
    "id": "magnitude.warm_season_scale_candidate",
@@ -205,12 +210,35 @@
    "evidence": {
     "under_forecast_days": "0707 +$1530 vs +$180; 0710 +$1860 vs -$330; 0728 -$1240 vs +$170; 0730 -$1460 vs +$400; 0828 +$1310 vs +$420; 0702 +$1040 vs +$470; 0715 +$820 vs +$200; 0725 +$460 vs +$210; 0829 -$620 vs +$380",
     "over_forecast_days": "0818 -$710 vs guess -$650; 0820 -$370 vs +$880; 0826 -$560 vs +$850 (the surprise-magnitude 'trend-day' bets OVERSHOT; 0820/0826 also went the wrong direction)",
-    "nuance": "NOT uniform - the error is under-forecast on the range/chop/storage days and OVER-forecast on the three trend-day bets. Each day stands on its own; no average taken."
+    "under_forecast_days_g3": "0908 +$1260 vs -$450; 0910 -$950 vs +$370; 0911 -$1180 vs -$540; 0915 -$1150 vs +$450; 0916 +$1330 vs -$140; 0918 -$1560 vs -$650; 0922 -$1410 vs -$500; 0923 +$690 vs -$300",
+    "under_forecast_days_g4": "0925 +$1160 vs -$330; 0929 +$1240 vs -$640; 1001 +$1590 vs +$360; 1002 +$1360 vs +$760; 1006 +$1150 vs +$600; 1007 +$1620 vs +$460",
+    "under_forecast_days_g5": "1008 -$1980 vs +$320; 1010 -$1490 vs +$150; 1014 -$910 vs +$360; 1016 -$1190 vs -$300; 1020 +$2770 vs +$580; 1021 +$1100 vs +$440",
+    "nuance": "The Group-2 error was mixed (under on range/storage days, over on the 3 surprise trend-day bets). ACROSS G3/G4/G5 (three consecutive blocks) the actual dominant move dwarfed the guessed peak on nearly EVERY big day - a persistent, one-directional UNDER-forecast (1020 +$2770 vs +$580 the extreme, ~5x). Each day stands on its own; no average, no ratio, no count taken - the list is per-event LEADS."
    },
    "status": "HYPOTHESIS",
-   "confidence": 0.2,
+   "confidence": 0.3,
    "exemplars": [],
-   "caveats": "ANTI-LOCK-IN (Greg, load-bearing): this is ONE group. TWO live readings, UNRESOLVED: (A) the brain's warm-season magnitude scale is simply too small (fix the prior), OR (B) these specific summer-2025 weeks were a higher-vol regime than the S92 learn set (regime, not scale). Do NOT globally rescale magnitude off one group, and do NOT pool the days into a ratio - each day is its own LEAD pinpointing the WHEN. Revisit when a second independent group lands."
+   "caveats": "ANTI-LOCK-IN (Greg, load-bearing): confidence 0.2->0.3 because the UNDER-forecast now RECURS across three more consecutive blocks (G3/G4/G5), strengthening reading (A) the brain's warm-season magnitude scale is simply too small - BUT reading (B) autumn-2025 was a genuinely higher-vol / block-reversal regime is still live and UNRESOLVED. Still do NOT globally rescale off these blocks, and do NOT pool the days into a ratio - each day is its own LEAD pinpointing the WHEN. The under-forecast is worst on weekend-gap Monday reversals (1020, 0929) and storage Thursdays (see those plays). Revisit once a winter/backwardation group lands."
+  },
+  {
+   "id": "direction.cross_block_reversion",
+   "target": "direction",
+   "trigger": "at a BLOCK boundary (the open of a new ~2-week block), when setting the block-level directional lean",
+   "read": "the SIGN of the prior block's net move (block open->close) + where the current block opens relative to it",
+   "call": "LEAN AGAINST the prior block's trajectory, do NOT extend it. The block tends to REVERSE / give back the prior block's net move; trend-continuation across a block boundary repeatedly landed CONTRA the market. A block that just ran DOWN is a candidate to turn UP next block (and vice-versa); expect the turn early in the new block. TURN-lean, not a precise from-flat side call - pair with intraday flow (direction.flow_nowcast) for the actual day-level side.",
+   "evidence": {
+    "n": 3,
+    "per_event_chronology": "G3 (Sep8-24) block fell 3.07->2.86 (down, correctly called by the +150 Bcf storage surplus backdrop). G4 (Sep24-Oct7) REVERSED UP 2.86->3.51 - the agent EXTENDED G3's downtrend and was wrong week 1: 0925 actual +$1160 (guessed DOWN -$330), 0929 Mon +$1240 (guessed DOWN -$640); it only caught the up-move week 2 (1001/1002/1006/1007 dir_ok true). G5 (Oct8-21) was a V that gave back G4's up then re-rallied 3.51->2.92->3.52 - the agent leaned UP and was wrong week 1: 1008 actual -$1980 (guessed UP +$320); it then caught the 1016 turn-DOWN and the 1020 Monday reversal UP.",
+    "pattern": "G3 down -> G4 up -> G5 down-then-up: each block reversed / gave back the prior block's net move; the block-OPEN continuation lean was wrong at every boundary."
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.3,
+   "exemplars": [
+    "G3->G4 boundary: extended G3 down into G4, wrong (0925 +$1160, 0929 +$1240 both guessed down)",
+    "G4->G5 boundary: leaned up into G5, wrong week 1 (1008 -$1980 guessed up)",
+    "G5 recovery caught late (1016 turn-down, 1020 +$2770 reversal up)"
+   ],
+   "caveats": "n=3 consecutive blocks, ONE regime (autumn-2025 warm-season, contango). A BLOCK-LEVEL lead, distinct from the intraday direction.flow_nowcast. The MECHANISM is unproven - could be genuine reversion of ~2-week swings, or could be the agent's specific trend-extending bias; either way, block-open trend-continuation is DANGEROUS here. Do NOT harden into 'always fade the last block' - it is a lean to weight against continuation, confirmed by intraday flow. Fundamentals are a slow backdrop (they got G3's block direction right) but did NOT anticipate the G3->G4 or G4->G5 reversals. Winter/backwardation + a 4th independent block are the decisive tests."
   }
  ],
  "mechanisms": [

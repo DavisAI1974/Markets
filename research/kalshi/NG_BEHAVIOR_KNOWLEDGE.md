@@ -158,3 +158,47 @@ structure (why), not yet an empirical measure.
   - **GUARD:** every pattern above is a per-regime observation (one warm-season group) stated as mechanism + the
     named events + n, never averaged and never a memorized day. Winter/backwardation and a 2nd independent group
     are the decisive next tests.
+- **S92.6 — CONSECUTIVE-BLOCK coach merge G3 -> G4 -> G5 (2026-07-15).** Three CONSECUTIVE chronological blocks
+  (Sep 8 -> Oct 21 2025) that had been forecast + scored but never folded in; brought the brain current by merging
+  each block's BLINDED guess-vs-actual lessons in order (scorecards only — `scratchpad/grp{3,4,5}_score.json` +
+  `_forecasts.json`; the rich-tape / characterize_day unblinded mechanism dig is a SEPARATE later step). MERGE not
+  rewrite — all 11 prior plays preserved, confidences refined, ONE play added (12 total). **Every lesson PER EVENT,
+  day by day — NO average, NO median, NO ratio, NO X-of-N count (Greg, load-bearing). Each named day is a LEAD that
+  pinpoints the WHEN.**
+  - **[HYPOTHESIS] THE BIGGEST LEAD — CROSS-BLOCK REVERSION (new play `direction.cross_block_reversion`, n=3).**
+    Each ~2-week block tended to REVERSE / give back the prior block's net move, so the agent's block-OPEN
+    directional lean kept landing CONTRA the market. Per-event chronology: **G3** (Sep8-24) block fell 3.07 -> 2.86
+    (down — correctly called by the +150 Bcf storage surplus backdrop). **G4** (Sep24-Oct7) REVERSED UP 2.86 -> 3.51
+    — the agent EXTENDED G3's downtrend and was wrong week 1: 0925 actual +$1160 (guessed DOWN -$330), 0929 Mon
+    +$1240 (guessed DOWN -$640); caught the up-move only week 2 (1001/1002/1006/1007 dir_ok). **G5** (Oct8-21) a V
+    that gave back G4's up then re-rallied 3.51 -> 2.92 -> 3.52 — the agent leaned UP and was wrong week 1: 1008
+    actual -$1980 (guessed UP +$320); then caught the 1016 turn-DOWN and the 1020 Monday reversal UP. Pattern
+    G3 down -> G4 up -> G5 down-then-up: block-open trend-CONTINUATION is dangerous; lean AGAINST the prior block.
+    Mechanism unproven (genuine ~2-week reversion vs the agent's trend-extending bias) — a lean to weight, not
+    a hard fade; confirm with intraday flow.
+  - **[PROVISIONAL] Weekend-gap MONDAY = huge and badly UNDER-SIZED, often a REVERSAL** (refines
+    `daytype.monday_weekend_gap`, conf 0.4 -> 0.5). Named per event: 1020 Mon actual +$2770 (guessed +$580 = ~5x
+    under, the block-V bottom reversal UP); 0929 Mon +$1240 (guessed -$640, wrong side AND ~2x under, the G3->G4
+    up-reversal); 1006 Mon +$1150 (guessed +$600); and the G3 Mondays all big — 0908 +$1260 (guessed -$450), 0915
+    -$1150 (guessed +$450), 0922 -$1410 (guessed -$500). Exception: 1013 Columbus Day (thin holiday) was the lone
+    quiet Monday, handled right. Size Mondays up hard and lean toward a reversal of the block's recent direction.
+  - **[PROVISIONAL] Storage THURSDAYS all large and under-forecast** (refines `daytype.storage_thursday_magnitude`,
+    conf 0.35 -> 0.45). Every one across G3/4/5 a large dominant leg: 0911 -$1180 (guessed -$540); 0918 -$1560
+    (guessed -$650); 0925 +$1160 (guessed -$330, wrong side); 1002 +$1360 (guessed +$760); 1009 -$1010 (guessed
+    +$450, wrong side); 1016 -$1190 (guessed -$300, caught the block-V turn down). Magnitude prior up; SIDE mixed
+    per event (right on 0911/0918/1002/1016, wrong on 0925/1009) — the print is unknown at the open.
+  - **[HYPOTHESIS] MAGNITUDE under-forecast RECURS across three consecutive blocks** (refines
+    `magnitude.warm_season_scale_candidate`, conf 0.2 -> 0.3). Across G3/G4/G5 the actual dominant move dwarfed the
+    guessed peak on nearly every big day (1020 +$2770 vs +$580 the extreme; 1008 -$1980 vs +$320; 0918 -$1560 vs
+    -$650; 1007 +$1620 vs +$460; 1001 +$1590 vs +$360). This strengthens reading (A) the warm-season magnitude
+    scale is simply too small — but reading (B) autumn-2025 was a genuinely higher-vol / block-reversal regime is
+    still live and UNRESOLVED. Do NOT globally rescale off these blocks; each day is its own LEAD.
+  - **[level] FUNDAMENTALS are a slow BACKDROP, not a short-term direction/timing signal** (caveat added to
+    `daytype.surprise_magnitude` + `daytype.storage_thursday_magnitude`). The +150 Bcf storage surplus correctly
+    called G3's BLOCK trajectory DOWN (a real block-direction backdrop), but did NOT sort intraday side (G3 per-day
+    dir_ok was a coin-flip) and did NOT anticipate the G3->G4 or G4->G5 REVERSALS. Read surplus/HDD as block-level
+    backdrop, never a day-level or pre-print side/timing call.
+  - **GUARD:** three consecutive blocks, still ONE regime (autumn-2025 warm-season, contango). Refine off the
+    consecutive G3/4/5 only — Group-2's scattered plays were left as prior knowledge, untouched. Every pattern is
+    mechanism + named events + n, never averaged, never a memorized day. Winter/backwardation and a 4th independent
+    block are the decisive next tests.
