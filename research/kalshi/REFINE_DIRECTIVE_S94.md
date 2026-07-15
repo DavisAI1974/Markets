@@ -33,6 +33,20 @@ state — it is NOT a fresh isolated event.
   info gap repricing at the Sun-eve reopen — a continuation-with-a-gap, not a standalone.
 - This is WHY moves stop looking like huge isolated events and WHY direction improves: continuation of the
   running path is the base case; each day is a continuation-or-turn question, not a coin-flip from flat.
+- **HOUR 24 FLOWS INTO HOUR 1 (Greg S94, load-bearing).** The LAST hour of day N connects directly to the
+  FIRST hour of day N+1 — same running level + momentum, plus the overnight/weekend gap. Do NOT reset the
+  trajectory to flat at each open. Day N+1's hr-1 continues day N's hr-24; the block is ONE flowing path, not
+  10 sawtooth resets. (Schema still per-day curves anchored at [20,0] = cumulative-from-that-day's-open, but
+  the agent must choose each day's open LEVEL and opening direction as the continuation of the prior day's
+  close — within the block from its OWN prior-day forecast; at the block START from the actual anchor below.)
+- **BLOCK-START ACTUAL ANCHOR (Greg S94, honest change).** Feed the agent the ACTUAL trade price of the LAST
+  HOUR before the block's first hour + that hour's net direction (ticking up/down into the open). It is a
+  past/known number (decision-time-legit, outside the block = blind-safe). Group-4 proved why: the LEVEL was
+  fine but the stale block-old DOWN direction misled — the live last-hour momentum would have shown the turn.
+  Within-block days flow from the agent's own forecasts (can't reveal a blind day's actual).
+- **TURN-DETECTOR AT THE HANDOFF.** Cross-block trend-continuation is DANGEROUS (Group-4: the market reversed
+  2.86->3.51 between blocks). Do NOT mechanically extend the prior block's trend; weigh whether the last-hour
+  momentum + the fundamental (storage surplus narrowing / a big surprise miss) signal a TURN at the open.
 
 ## 3. Direction — the located problem (Group-3 result)
 - **Block / fundamental direction from storage WORKS.** Group-3 (Sep 8-24): a comfortable +150 Bcf surplus
