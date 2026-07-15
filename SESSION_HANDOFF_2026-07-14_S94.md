@@ -60,39 +60,51 @@ storage+weather story and day-into-day reasoning.
 - Direction is LOCATED: block/fundamental direction (storage) works; INTRADAY direction is the open problem.
 
 ## STATE
-- Brain: `research/kalshi/knowledge/ng_brain.json` **s92.3**, 11 plays (canary: all prior plays preserved).
-- Branch `claude/ng-coach-agent-loop-5ha5bf` pushed (commits: overlay/gitignore, brain s92.2, brain s92.3,
-  storage/weather conditioning, grp3 overlay, refine directive).
-- Scratchpad (gitignored): grp2/grp3 `_state`/`_forecasts`/`_score` json, `fast_score2.py`,
+- Brain: `research/kalshi/knowledge/ng_brain.json` **s92.6**, **12 plays** — CURRENT with the consecutive groups
+  (blinded per-group merges G2 -> G3 -> G4 -> G5). New play `direction.cross_block_reversion` (see below);
+  refined `monday_weekend_gap` / `storage_thursday_magnitude` / `warm_season_scale_candidate` /
+  `surprise_magnitude`. Canary: all prior plays preserved, no averages.
+- The 18 corrupt NG Mondays (Sep 29 2025 -> Jan 26 2026) are ALL re-pulled clean on S3 (`_mon`, >50KB).
+- Branch `claude/ng-coach-agent-loop-5ha5bf` pushed (all S94 commits).
+- Scratchpad (gitignored): grp{2,3,4,5} `_state`/`_forecasts`/`_score` json, `fast_score2.py`,
   `continuous_overlay.py`, `repull_mondays.py`, `aws.env` (keys).
 
-## GROUP-4 RAN this session (Sep 24 -> Oct 7, 14 calendar days = 10 trading days, CONSECUTIVE from G3)
-Blind-forecast on s92.3 with the day-into-day continuous reasoning + storage/weather/holiday conditioning.
-KEY RESULT (per-event): **the block REVERSED UP (2.86 -> 3.51, ~+$6500), flipping Group-3's downtrend.** The
-agent, anchored to G3's DOWN-trajectory, guessed DOWN for week 1 and was WRONG on the turn (0925 guess -$330
-/ actual +$1160; 0929 Mon -$640 / +$1240; 0930 -$470 / +$820); it caught the up-move only in week 2 (1001
-+$1170, 1002 up, 1006 up, 1007 +$1620 — direction OK 0926/1001/1002/1006/1007). Its fundamental up-call at the
--40.8 Oct-2 bullish miss was RIGHT but LATE (the market turned ~0925, front-running the print). Magnitude
-still under on the big days. LESSON (for the refine off G3+G4): **cross-block trend-continuation is DANGEROUS
-— the market turned between blocks**; the agent mechanically extended a dead trend across the boundary and
-needs a TURN-DETECTOR at the handoff + the live last-hour anchor (below), not a continuation assumption.
-Overlay: `research/kalshi/renders/ng_learn_s92/grp4_continuous.png`.
+## GROUPS 3/4/5 RAN + MERGED this session (chronological, CONSECUTIVE, 14-cal-day = 10-trading-day blocks)
+- **G3 (Sep 8-24):** block fell 3.10->2.80; the +150 Bcf storage SURPLUS correctly called the block DOWN
+  trajectory. Intraday direction coin-flip; magnitude under.
+- **G4 (Sep 24-Oct 7):** block REVERSED UP 2.86->3.51 — the agent extended G3's downtrend, WRONG week 1
+  (0925 +$1160, 0929 Mon +$1240 both guessed down), caught the up-move week 2. Magnitude under.
+- **G5 (Oct 8-21):** a V, fell 3.51->2.92 then rallied 3.52 — agent leaned UP, WRONG week 1 (1008 -$1980
+  guessed up), but the improvements HELPED the 2nd half: caught the 1016 turn-DOWN, the 1020 Monday REVERSAL
+  UP (+$2770 but guessed +$580 = ~5x under), and handled the Oct 13 Columbus Day thin-flag right.
+- **THE LEAD (new play `direction.cross_block_reversion`, HYPOTHESIS n=3):** each block tends to REVERSE / give
+  back the prior block's move (G3 down -> G4 up -> G5 down-then-up), so the agent's block-OPEN directional lean
+  kept landing CONTRA the market. LEAN AGAINST the prior block, do NOT extend it. Also: weekend-gap Monday
+  REVERSALS are huge + badly under-sized; fundamentals (surplus/HDD) are a slow BACKDROP, not an intraday-timing
+  signal. Overlays: `renders/ng_learn_s92/grp{3,4,5}_continuous.png`.
+- **PROCESS CORRECTED (Greg):** the brain is merged (BLINDED, from scorecards) after EACH group so the next
+  blinded group uses the updated json; the UNBLINDED refine is a separate deeper pass off the consecutive set.
 
-## HONEST-ANCHOR CHANGE for the NEXT run (Greg S94, decided)
-Feed the agent the ACTUAL trade price of the LAST HOUR before the block's first hour — a past/known number
-(decision-time-legit), so it flows from the freshest real price + momentum, not a stale block-old trend
-narrative. Block-START anchor only (outside the block = blind-safe); within-block days still flow from the
-agent's own forecasts. Group-4 proved why this matters (the down-anchor from the stale prior block misled).
+## BUILDS DONE this session (for the walk): running storage-capacity + weather conditioning in `decision_state`
+(level/vs-5yr/phase + gas-weighted HDD/CDD regime); weekday HOLIDAY flag {name,effect}; block-start ACTUAL
+last-hour anchor (fed in the prompt); hr24->hr1 day-into-day reasoning + handoff turn-detector; fast grep+npz
+scoring; continuous-price-path overlay. All in `REFINE_DIRECTIVE_S94.md`.
 
-## NEXT (new chat)
-1. Verify the Monday re-pull finished (all 18 `NG_*_mon.jsonl.gz` >50KB on S3); re-pull stragglers.
-2. **Implement the last-hour actual anchor** (compute the real last-hour trade price before the block start;
-   feed it to the blind agent as the point to flow from) + add a handoff TURN-DETECTOR to the agent's logic.
-3. **Group-5 = the next consecutive 14-calendar-day block** continuing from Oct 7 (Oct 8 -> ~Oct 21; watch the
-   Oct 13 Columbus_Day thin flag), blind-forecast with the last-hour anchor -> continuous overlay -> score.
-4. **THEN the REFINE pass** per `REFINE_DIRECTIVE_S94.md` — UNBLINDED off the CONSECUTIVE groups (G3, G4, G5),
-   NEVER the scattered Group-2. Extract general mechanisms (the cross-block-turn problem + intraday direction).
-5. Walk into **winter** (Nov fill-peak -> Dec drawdown, surplus collapse) — the real regime test.
+## NEXT (new chat) — BUILD LEFT FOR NEXT SESSION (Greg)
+1. **BUILD the CONTINUOUS-CURVE representation** ("days still aren't flowing" — Greg). The forecast schema is
+   still per-day (each curve resets to [20,0]=cumulative-from-that-day's-open) and the render re-anchors each
+   day at the actual open, so the guess visually/numerically RESETS every morning. FIX: represent the forecast
+   as ONE continuous cumulative-$ curve from the block-START actual anchor, each day flowing from the prior
+   day's GUESSED close (hr24 of day N = hr1 of day N+1, adjacent points); render as one unbroken dashed line
+   (it will DIVERGE from actual as the forecast errs = the honest "if you followed it" path); score vs the
+   continuous actual. Schema + `continuous_overlay.py` + `fast_score2.py` all change together.
+2. **Group-6** = next consecutive 14-cal-day block from **Oct 22** (Oct 22 -> Nov 4; walking toward winter),
+   blind-forecast on s92.6 with the continuous-curve rep + the last-hour anchor -> score -> BLINDED per-group
+   merge into the brain before the next group.
+3. **UNBLINDED REFINE** off the consecutive groups (G3/4/5/6) per `REFINE_DIRECTIVE_S94.md` — the deep
+   mechanism dig via `characterize_day` (flow/turn fingerprints) on the pivotal turn days; test the
+   cross-block-reversion lead + the intraday-direction problem. NEVER off the scattered Group-2.
+4. Walk into **winter** (Nov fill-peak -> Dec drawdown, surplus collapse +201->+15 Bcf) — the real regime test.
 
 ## RULES (unchanged): each event individually NEVER pool/average; per-cell; distributions not means; blind
 wall (decision-time only) + leakage gate; exclude settle window; net-of-fee maker AND taker at the money step;

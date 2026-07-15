@@ -8,14 +8,19 @@ Bedrock LIVE (us-east-1; opus-4-1/haiku-4-5 via boto3), Claude Code installed �
 snag left before the LLM invokes; OpenAI written in as an alternative agent backend. Brain unchanged (s92.1); loop
 not yet run on the box. See `SESSION_HANDOFF_2026-07-14_S93.md` + `deploy/aws/COACH_AGENT_SETUP_S93.md`.**
 **S94 = PIVOT: run the loop IN THE CLAUDE ENV (the agent's brain = the session model; drop the AWS box/coach
-agent). Ran it end-to-end: Group-2 scored + MERGED to brain s92.3 (3 new plays, PER-EVENT, NO averaging —
-Greg's hard rule); Group-3 = the first CHRONOLOGICAL group (contiguous Sep 8-24) — the running STORAGE-surplus
-fundamental CALLED THE BLOCK DOWN-TRAJECTORY (3.10->2.80), intraday direction still coin-flip, magnitude still
-under. Built a running storage-capacity + weather story into `decision_state`; fast grep+npz scoring;
-continuous-price-path overlay. Method pivot -> CONTIGUOUS week-aligned 2-week blocks walking into winter,
-agent logic runs ONE DAY INTO THE NEXT (continuation-or-turn of the running path), re-running days OK,
-Mondays being re-pulled (Sep29->Jan26 stubs). READ `research/kalshi/REFINE_DIRECTIVE_S94.md` +
-`SESSION_HANDOFF_2026-07-14_S94.md`. NEXT: verify Mondays landed -> tuning pass -> Group-4 (contiguous Oct).** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
+agent), and go CHRONOLOGICAL. Ran Groups 2/3/4/5 (14-cal-day = 10-trading-day CONSECUTIVE blocks) + merged
+each BLINDED into the brain -> now **s92.6, 12 plays** (PER-EVENT, NO averaging — Greg's hard rule). The
+walk: G3 down (storage surplus called it) -> G4 reversed UP -> G5 a V — so the agent's block-OPEN direction
+kept landing CONTRA the market -> NEW play `direction.cross_block_reversion` (n=3: LEAN AGAINST the prior
+block, don't extend it). Weekend-gap Monday REVERSALS are huge + under-sized (1020 +$2770 vs guessed $580);
+intraday direction still the open problem; fundamentals = slow backdrop not intraday timing. BUILT: running
+storage-capacity + weather + weekday-HOLIDAY conditioning in `decision_state`; block-start ACTUAL last-hour
+anchor; hr24->hr1 day-into-day reasoning + turn-detector; fast grep+npz scoring; continuous overlay. All 18
+corrupt Mondays (Sep29->Jan26) re-pulled clean on S3. READ `research/kalshi/REFINE_DIRECTIVE_S94.md` +
+`SESSION_HANDOFF_2026-07-14_S94.md`. NEXT (build left for next session): (1) the CONTINUOUS-CURVE forecast
+representation (days still don't flow — schema+render+scorer so the guess is ONE unbroken path from the
+anchor); (2) Group-6 (Oct 22->) on s92.6 + per-group blinded merge; (3) the UNBLINDED refine off the
+consecutive groups; (4) walk into WINTER.** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
 the exhaustion suite + dipole + turning-point fingerprint + surprise/curve) and ran per-event learn/blind/hunt
 passes on 12 warm-season NG days: (1) **NG DIRECTION is callable** — `dip_imb_level` (order-flow imbalance)
 sorts a leg's side 7%/93%, monotone, **OOS-validated 100% on strong flow (34/34, 3 unseen days)**; a NOWCAST,
