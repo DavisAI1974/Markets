@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s95.2",
+  "version": "s95.2_proposal",
   "built_pass": 2,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). This is a PROPOSAL (do NOT overwrite ng_brain.json): a MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout. Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -44,10 +44,7 @@
    },
    "status": "PROVISIONAL",
    "confidence": 0.87,
-   "exemplars": [
-    "07-24 idx5126 dip+0.59->up $270",
-    "OOS 07-15/07-30/08-15 strong-flow 34/34"
-   ],
+   "exemplars": ["07-24 idx5126 dip+0.59->up $270", "OOS 07-15/07-30/08-15 strong-flow 34/34"],
    "caveats": "NOWCAST (flow overlaps the nascent leg), not a from-flat forecast. Direction only. CONFIRMED held-leg side caller; LAGS on an extreme gap MELT-UP (1020 7/12) - lean on continuation-asymmetry there. Unchanged s95.2."
   },
   {
@@ -56,13 +53,7 @@
    "trigger": "at entry, when flow (dip_imb_level) is flat/ambiguous",
    "read": "imb_R (resting-book imbalance at entry)",
    "call": "fade the heavy resting side - ask-heavy book -> price runs UP through it (wall = fuel, not floor)",
-   "evidence": {
-    "ask_heavy_up": 0.61,
-    "n_ask": 158,
-    "bid_heavy_up": 0.42,
-    "n_bid": 121,
-    "flow_beats_book_when_disagree": "262/293 = 0.89"
-   },
+   "evidence": {"ask_heavy_up": 0.61, "n_ask": 158, "bid_heavy_up": 0.42, "n_bid": 121, "flow_beats_book_when_disagree": "262/293 = 0.89"},
    "status": "PROVISIONAL",
    "confidence": 0.5,
    "exemplars": [],
@@ -74,18 +65,10 @@
    "trigger": "a leg's favorable peak crosses a $ threshold in real time",
    "read": "peak_usd reached so far",
    "call": "RIDE - continuation rises with size: $50->0.43, $150->0.57, $250->0.75, $350->0.92, $500->1.00.",
-   "evidence": {
-    "n_350": 38,
-    "cont_350": 0.92,
-    "n_500": 11,
-    "cont_500": 1.0
-   },
+   "evidence": {"n_350": 38, "cont_350": 0.92, "n_500": 11, "cont_500": 1.0},
    "status": "STABLE",
    "confidence": 0.9,
-   "exemplars": [
-    "07-03 idx17768 $1060 ret.83",
-    "08-06 idx9611 $840 ret.98"
-   ],
+   "exemplars": ["07-03 idx17768 $1060 ret.83", "08-06 idx9611 $840 ret.98"],
    "caveats": "peak_usd is realized-so-far; the CROSSING is the usable real-time event. Unchanged s95.2. G6: the staircase is the live tool to avoid clipping the extreme rides (1020) the open-time magnitude prior under-sizes."
   },
   {
@@ -94,15 +77,10 @@
    "trigger": "a big leg maturing - watch the far-side book as price runs",
    "read": "turn_far_thinning (far-ladder change) + turn_aligned_push - REVISED: use old-swing continuation-collapse + turn_exhaustion instead",
    "call": "The running turn is read from old-swing CONTINUATION-COLLAPSE (old-direction legs stop continuing) + negative turn_exhaustion + peaked_fast fade, NOT from turn_far_thinning sign.",
-   "evidence": {
-    "n_big": 101,
-    "s95_fingerprint_nonconfirm": "turn_far_thinning did NOT confirm as the hold-vs-fade discriminator (held legs only ~half negative-tft); DEMOTED to noise."
-   },
+   "evidence": {"n_big": 101, "s95_fingerprint_nonconfirm": "turn_far_thinning did NOT confirm as the hold-vs-fade discriminator (held legs only ~half negative-tft); DEMOTED to noise."},
    "status": "PROVISIONAL",
    "confidence": 0.5,
-   "exemplars": [
-    "1008 old-swing up-legs 0/15 continuation-collapse at the G4->G5 top"
-   ],
+   "exemplars": ["1008 old-swing up-legs 0/15 continuation-collapse at the G4->G5 top"],
    "caveats": "turn_far_thinning is NOISE at leg granularity. The running turn is read from continuation-collapse + turn_exhaustion + peaked_fast. Unchanged s95.2."
   },
   {
@@ -129,14 +107,10 @@
    "trigger": "at the open, from the week's EIA storage surprise",
    "read": "|stor_surprise| (Bcf vs seasonal)",
    "call": "big |surprise| -> expect a bigger-leg day; near-consensus -> range/chop. SIGN does NOT sort direction.",
-   "evidence": {
-    "distinct_prints": 6
-   },
+   "evidence": {"distinct_prints": 6},
    "status": "PROVISIONAL_WEAKENED",
    "confidence": 0.35,
-   "exemplars": [
-    "0820 big-|surprise| trend-bet UP -> actual DOWN (opposite)"
-   ],
+   "exemplars": ["0820 big-|surprise| trend-bet UP -> actual DOWN (opposite)"],
    "caveats": "Season-confounded, ~6 prints. Surprise magnitude does not sort direction. Fundamentals are a slow block-trajectory backdrop only, and (G6) an UNRELIABLE block-direction cue near the winter transition - rising HDD flipped the sign. Confidence 0.35 held."
   },
   {
@@ -148,10 +122,7 @@
    "evidence": {},
    "status": "PROVISIONAL",
    "confidence": 0.4,
-   "exemplars": [
-    "1010 Fri range archetype OVERRIDDEN by the G5 crash regime (-1050)",
-    "0910 Wed up-lean overridden by the down block (-950)"
-   ],
+   "exemplars": ["1010 Fri range archetype OVERRIDDEN by the G5 crash regime (-1050)", "0910 Wed up-lean overridden by the down block (-950)"],
    "caveats": "Never pool across DOW. Weekday archetypes are OVERRIDDEN by the running block trajectory + a high-momentum reversal regime. Warm/autumn-season only. Confidence 0.4 held."
   },
   {
@@ -160,10 +131,7 @@
    "trigger": "at a maturing leg's turn - the BTC fine-resolution price-reversal + dipole-EXHAUSTION edge, tested on NG futures directly",
    "read": "dipole EXHAUSTION stacked with fine-resolution price-reversal timing",
    "call": "EXECUTION-LAYER turn-timing ONLY. Near a turn the exhaustion-collapse marks the reversal and fine price-reversal pins entry ~5-6bps off the turn.",
-   "evidence": {
-    "ng_exhaustion_pulse_pp": 2.7,
-    "n": "1 NG trend day (2025-07-17), 1-sec binned"
-   },
+   "evidence": {"ng_exhaustion_pulse_pp": 2.7, "n": "1 NG trend day (2025-07-17), 1-sec binned"},
    "status": "HYPOTHESIS",
    "confidence": 0.25,
    "exemplars": [],
@@ -182,11 +150,7 @@
    },
    "status": "PROVISIONAL",
    "confidence": 0.5,
-   "exemplars": [
-    "Mon 1020 +$2770 (~5x under, V reversal up)",
-    "Mon 0929 +$1240 (wrong side, G3->G4 reversal)",
-    "Mon 1013 Columbus quiet -300 (size down)"
-   ],
+   "exemplars": ["Mon 1020 +$2770 (~5x under, V reversal up)", "Mon 0929 +$1240 (wrong side, G3->G4 reversal)", "Mon 1013 Columbus quiet -300 (size down)"],
    "caveats": "Bigness (+ size-up + reversal-lean) is the lesson, not a fixed side. Thin-holiday Mondays are the exception. Grind-holds vs spike-fades nuance decides net. Per-regime until winter. Confidence 0.5 held."
   },
   {
@@ -201,10 +165,7 @@
    },
    "status": "PROVISIONAL",
    "confidence": 0.5,
-   "exemplars": [
-    "Thu 1016 -$1190 (V-bottom capitulation, ~4x under)",
-    "Thu 0925 roll-clean +$740 (dominant-move $1160 was roll-inflated)"
-   ],
+   "exemplars": ["Thu 1016 -$1190 (V-bottom capitulation, ~4x under)", "Thu 0925 roll-clean +$740 (dominant-move $1160 was roll-inflated)"],
    "caveats": "SIZE up always; SIDE stays a coin-flip at the open (leans with an established block). ROLL-CORRECTION (s95_2): the 0925 dominant-move figure was inflated by the +2760 Oct->Nov roll; the roll-clean intraday net was +740. A Thursday print-leg into a cum-extreme is a candidate swing turn. Confidence 0.5 held."
   },
   {
@@ -239,11 +200,7 @@
    },
    "status": "HYPOTHESIS",
    "confidence": 0.42,
-   "exemplars": [
-    "G3->G4: 0923 bounce + 0924 hold pre-signaled a reversal delivered through the sessions (the +2760 overnight was the ROLL)",
-    "G4->G5: 1007 last-hour roll-over pre-signaled the 1008 intraday crash",
-    "G6 week-1 give-back DOWN caught (week-2 recovery missed)"
-   ],
+   "exemplars": ["G3->G4: 0923 bounce + 0924 hold pre-signaled a reversal delivered through the sessions (the +2760 overnight was the ROLL)", "G4->G5: 1007 last-hour roll-over pre-signaled the 1008 intraday crash", "G6 week-1 give-back DOWN caught (week-2 recovery missed)"],
    "caveats": "Reframed to SWING-EXHAUSTION reversion (n=5, spanning autumn + the G6 winter-transition holdout). Roll-corrected: the G3->G4 turn came through the sessions, not an overnight gap. G6 confirms the week-1 give-back DIRECTION but the intra-block counter-turn (week-2 recovery) is UNSOLVED - same failure mode as 0916. Two delivery forms (intraday build/crash primary; overnight/weekend gap secondary). Do NOT harden into 'always fade the last block'. Confidence 0.4->0.42 (one true holdout half-confirmed). Winter/backwardation remains the decisive test."
   },
   {
@@ -260,39 +217,17 @@
    },
    "status": "PROVISIONAL",
    "confidence": 0.42,
-   "exemplars": [
-    "1020 +2770 (Mon+reversal+turn stacked)",
-    "1008 -1980 (seam reversal)",
-    "1013 -300 (thin holiday, correctly small)"
-   ],
+   "exemplars": ["1020 +2770 (Mon+reversal+turn stacked)", "1008 -1980 (seam reversal)", "1013 -300 (thin holiday, correctly small)"],
    "caveats": "Complements magnitude.warm_season_scale_candidate: sort by catalyst condition instead of a scalar rescale. PER-EVENT, no averages/ratios. G6 confirms the up-sizers but flags a persistent residual undersize. Confidence 0.4->0.42. Winter/backwardation is the decisive out-of-regime test."
   }
  ],
  "mechanisms": [
-  {
-   "id": "clock.storage_thursday",
-   "text": "Weekly EIA storage print Thu 10:30 ET is the one scheduled catalyst; busiest Thursday hour."
-  },
-  {
-   "id": "clock.us_session",
-   "text": "US session ~08-16 ET decides the day's range; overnight is thin drift. STABLE."
-  },
-  {
-   "id": "clock.weekend_gap",
-   "text": "Weekend info accumulates -> Monday reprices at the Sun-eve reopen -> a big Monday move (often a reversal of recent direction). See daytype.monday_weekend_gap."
-  },
-  {
-   "id": "data.contract_roll",
-   "text": "NEW (s95_2): the continuous NG.v.0 series ROLLS between contracts ~monthly, injecting a fake overnight price jump at the seam (G3-5: Sep24->25 Oct->Nov, +0.276 = $2760). A roll is a DATA ARTIFACT, not a market move - at a known roll forecast the real overnight ~0 and reason on roll-clean intraday nets. The s95.1 '0925 overnight-gap swing reversion' was this roll (VOID)."
-  },
-  {
-   "id": "regime.seasonal",
-   "text": "Summer=cooling/weather-led; autumn=shoulder (rising HDD begins to matter, G4/G5); winter=heating, bigger swings, withdrawal. G6 (winter transition): rising HDD flipped block direction UP against the bearish storage surplus. Winter/backwardation still the decisive test."
-  },
-  {
-   "id": "supply.unmeasured",
-   "text": "LNG feedgas / production / pipeline outages are real drivers, currently NO feed. Data gap."
-  }
+  {"id": "clock.storage_thursday", "text": "Weekly EIA storage print Thu 10:30 ET is the one scheduled catalyst; busiest Thursday hour."},
+  {"id": "clock.us_session", "text": "US session ~08-16 ET decides the day's range; overnight is thin drift. STABLE."},
+  {"id": "clock.weekend_gap", "text": "Weekend info accumulates -> Monday reprices at the Sun-eve reopen -> a big Monday move (often a reversal of recent direction). See daytype.monday_weekend_gap."},
+  {"id": "data.contract_roll", "text": "NEW (s95_2): the continuous NG.v.0 series ROLLS between contracts ~monthly, injecting a fake overnight price jump at the seam (G3-5: Sep24->25 Oct->Nov, +0.276 = $2760). A roll is a DATA ARTIFACT, not a market move - at a known roll forecast the real overnight ~0 and reason on roll-clean intraday nets. The s95.1 '0925 overnight-gap swing reversion' was this roll (VOID)."},
+  {"id": "regime.seasonal", "text": "Summer=cooling/weather-led; autumn=shoulder (rising HDD begins to matter, G4/G5); winter=heating, bigger swings, withdrawal. G6 (winter transition): rising HDD flipped block direction UP against the bearish storage surplus. Winter/backwardation still the decisive test."},
+  {"id": "supply.unmeasured", "text": "LNG feedgas / production / pipeline outages are real drivers, currently NO feed. Data gap."}
  ],
  "open_frontier": [
   "INTRA-BLOCK COUNTER-TREND TURN (the #1 open problem, re-flagged by G6 week-2 + 0916): a counter-trend grind is not callable AT THE OPEN. Can the open-time side be called before the leg forms?",
@@ -306,77 +241,18 @@
  ],
  "ruled_out_by_target": {
   "note": "NOISE across all four targets in the warm-season multi-target pass - warm-season only, retest in winter:",
-  "signals": [
-   "aligned_imb",
-   "aligned_imb_R",
-   "exhaustion",
-   "spread_ratio",
-   "pre_vol",
-   "coiled_split",
-   "dip_aligned_flow",
-   "dip_mi_flow",
-   "bid_dep_entry",
-   "ask_dep_entry",
-   "temp_regime",
-   "gw_hdd",
-   "gw_cdd",
-   "gw_precip",
-   "curve_regime(contango-flat)",
-   "turn_far_thinning(demoted to noise, S95)"
-  ]
+  "signals": ["aligned_imb", "aligned_imb_R", "exhaustion", "spread_ratio", "pre_vol", "coiled_split", "dip_aligned_flow", "dip_mi_flow", "bid_dep_entry", "ask_dep_entry", "temp_regime", "gw_hdd", "gw_cdd", "gw_precip", "curve_regime(contango-flat)", "turn_far_thinning(demoted to noise, S95)"]
  },
  "fingerprints": {
   "note": "The measures the agent PERCEIVES with (per-leg off the tape). Raw values are DATA (renders/*/fingerprints.json); THIS is the vocabulary + what discriminates.",
   "measures": {
-   "dip_imb_level": {
-    "is": "signed Lee-Ready flow imbalance (~300s)",
-    "read": "held-leg SIDE = sign(dip_imb_level) when strong",
-    "carries": "direction (nowcast)",
-    "status": "CONFIRMED side-caller; LAGS extreme gap melt-ups (1020 7/12)",
-    "play": "direction.flow_nowcast"
-   },
-   "continuation_retention": {
-    "is": "does a leg past peak keep going + continuation-ASYMMETRY",
-    "read": "$350 = 92% ride; counter-dir legs die on a directional day",
-    "carries": "hold + counter-trend intraday side",
-    "status": "CONFIRMED (the real intraday-side structure); NOT callable at the open",
-    "play": "ride.magnitude_staircase / shape.grind_vs_spike"
-   },
-   "peaked_fast_fast_capture": {
-    "is": "how front-loaded a leg's build is",
-    "read": "SPIKE round-trips; GRIND holds",
-    "carries": "fade vs hold",
-    "status": "CONFIRMED (faded 23/24)",
-    "play": "shape.grind_vs_spike"
-   },
-   "turn_exhaustion": {
-    "is": "flow imbalance collapsing / continuation-collapse at a swing extreme",
-    "read": "old-swing legs stop continuing (0/15 at 1008) = the reversal",
-    "carries": "the turn (swing exhaustion)",
-    "status": "CONFIRMED as continuation-collapse marker",
-    "play": "exit.recruitment_reversal / direction.cross_block_reversion"
-   },
-   "turn_far_thinning": {
-    "is": "far-side ladder change",
-    "read": "hypothesized NEG=recruited vs POS=eaten",
-    "carries": "NONE",
-    "status": "DEMOTED to NOISE (S95)",
-    "play": "exit.recruitment_reversal (diagnostic only)"
-   },
-   "imb_R": {
-    "is": "resting-book imbalance at entry",
-    "read": "fade the heavy resting side",
-    "carries": "weak contrarian tie-breaker",
-    "status": "weaker than flow",
-    "play": "direction.book_contrarian"
-   },
-   "peak_usd": {
-    "is": "realized favorable $ so far",
-    "read": "the threshold CROSSING is the real-time continuation event",
-    "carries": "magnitude staircase input",
-    "status": "STABLE",
-    "play": "ride.magnitude_staircase"
-   }
+   "dip_imb_level": {"is": "signed Lee-Ready flow imbalance (~300s)", "read": "held-leg SIDE = sign(dip_imb_level) when strong", "carries": "direction (nowcast)", "status": "CONFIRMED side-caller; LAGS extreme gap melt-ups (1020 7/12)", "play": "direction.flow_nowcast"},
+   "continuation_retention": {"is": "does a leg past peak keep going + continuation-ASYMMETRY", "read": "$350 = 92% ride; counter-dir legs die on a directional day", "carries": "hold + counter-trend intraday side", "status": "CONFIRMED (the real intraday-side structure); NOT callable at the open", "play": "ride.magnitude_staircase / shape.grind_vs_spike"},
+   "peaked_fast_fast_capture": {"is": "how front-loaded a leg's build is", "read": "SPIKE round-trips; GRIND holds", "carries": "fade vs hold", "status": "CONFIRMED (faded 23/24)", "play": "shape.grind_vs_spike"},
+   "turn_exhaustion": {"is": "flow imbalance collapsing / continuation-collapse at a swing extreme", "read": "old-swing legs stop continuing (0/15 at 1008) = the reversal", "carries": "the turn (swing exhaustion)", "status": "CONFIRMED as continuation-collapse marker", "play": "exit.recruitment_reversal / direction.cross_block_reversion"},
+   "turn_far_thinning": {"is": "far-side ladder change", "read": "hypothesized NEG=recruited vs POS=eaten", "carries": "NONE", "status": "DEMOTED to NOISE (S95)", "play": "exit.recruitment_reversal (diagnostic only)"},
+   "imb_R": {"is": "resting-book imbalance at entry", "read": "fade the heavy resting side", "carries": "weak contrarian tie-breaker", "status": "weaker than flow", "play": "direction.book_contrarian"},
+   "peak_usd": {"is": "realized favorable $ so far", "read": "the threshold CROSSING is the real-time continuation event", "carries": "magnitude staircase input", "status": "STABLE", "play": "ride.magnitude_staircase"}
   },
   "ruled_out_note": "Full noise set in ruled_out_by_target. Warm/autumn-season only; retest in winter/backwardation."
  }

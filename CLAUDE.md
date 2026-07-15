@@ -1,4 +1,17 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-14, Session 94)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-15, Session 95)
+
+**S95 (read `SESSION_HANDOFF_2026-07-15_S95.md` + `research/kalshi/AGENT_RUNBOOK_S95.md`):** built the
+CONTINUOUS-CURVE representation + the CONTRACT-ROLL adjustment, ran the FULL unblinded G3-5 refinement on
+roll-clean data, and ran **G6 as the first true BLIND holdout**. G6 was a V — the reversion lean CAUGHT the
+week-1 give-back but MISSED the week-2 recovery (the intra-block TURN is still the open problem); magnitude was
+the dominant error; the storage surplus got block direction WRONG (winter heating-demand won). Lesson:
+`cross_block_reversion` is a GIVE-BACK, not a sustained reversal. Brain consolidated to ONE file
+(`ng_brain.json`: meta + reasoning_method + fingerprints catalog + 13 plays), **s95.1** committed (turn_far_thinning
+DEMOTED to noise; dip_imb_level + continuation-asymmetry + peaked_fast carry direction/hold/turn); **s95.2**
+refinement proposal to review-then-merge. THE RENDER FILE is `research/kalshi/continuous_rt.py` (parameterized by
+dates; real-price RT + forecast overlay, rolls marked). Data audit: 13 months NG on S3, ALL 52 weekends present
+(the roll — Sep25 +0.28, Oct27 +0.66 — was the only continuity break, now handled). All S95 machinery + renders
++ brain committed. NEXT = merge s95.2, then Group-7 (Nov 5+, into winter) blind on the merged brain.
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
 follower.** **git = CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an

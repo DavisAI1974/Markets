@@ -24,6 +24,21 @@ The map of every Kalshi file: what it is, where it lives, and whether it's part 
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move
 superseded ones down. (Started S81, 2026-07-12.)
 
+## S95 — continuous-curve + roll-adjustment + refinement machinery (CURRENT)
+- **`research/kalshi/continuous_rt.py`** — THE RENDER FILE (canonical, date-parameterized): real-price RT
+  curve + optional `--guess` forecast overlay, rolls marked, weekend bridges broken. Use for any window.
+- **`research/kalshi/roll_adjust.py`** — contract-roll detection (instrument_id change) + back-adjust offsets.
+- **`research/kalshi/fast_tape.py`** — fast trade-price loader (grep-prefilter + npz cache, ~7x).
+- **`research/kalshi/precache_window.py`** — pre-decode a date window to npz.
+- **`research/kalshi/continuous_score.py`** — per-event scorecard + roll-adjusted skill overlay.
+- **`research/kalshi/characterize_turns.py`** — merge per-leg fingerprints into `fingerprints.json`.
+- **`research/kalshi/extract_guesses.py`** — pull guess-vs-actual scalars from the brain -> `guesses.json`.
+- **`research/kalshi/AGENT_RUNBOOK_S95.md`** — the two agent prompts (blind forecaster + unblinded refine).
+- **`research/kalshi/forecasts/`** — committed per-group forecast records (guess curve + reasoning) grp{3,4,5,6}.
+- **`research/kalshi/renders/ng_refine_s95/`** — committed renders (g3g4g5_continuous.png, g6_continuous.png,
+  *_rt.json, fingerprints.json, guesses.json, *_state.json) so they need no regeneration.
+- **`research/kalshi/knowledge/ng_brain.json`** — the ONE-FILE brain (s95.1; + s95.2 proposal to merge).
+
 > **FILE DISCIPLINE (Greg S87, load-bearing).** EDIT existing live files first; only create a NEW
 > file if one does not already exist for that purpose. Do not spin up a parallel file that
 > re-implements what a live file does — extend the live one with a flag/mode. (S87 lesson: a separate

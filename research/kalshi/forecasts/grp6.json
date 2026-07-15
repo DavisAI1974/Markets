@@ -1,0 +1,89 @@
+{
+  "group": 6,
+  "tag": "g6",
+  "brain_version": "s95.1",
+  "anchor": {"date": "20251021", "price": 3.522, "last_hour_dir": "up"},
+  "block_lean": "MODERATE give-back DOWN. G5 rallied off the 2.925 V-bottom to 3.522 = a stretched UP swing into the seam; block_open_lean + cross_block_reversion + the widening +110->+130 Bcf storage surplus (fundamentals_role bearish backdrop) all lean G6 DOWN to give back part of G5's rally. TEMPERED, not a crash: the anchor was still ticking UP with no clean last-day roll-over cue (per swing_exhaustion_reversion, do NOT blind-fade a still-trending block), and HDD rising 7.2->11.6 across the block (shoulder->early-heating, first walk to winter) is a mild support underlay. Net block target ~ -800 to -1500 incl. gaps (give back a third of G5's +5970), not a full reversal. Two weekend-gap Mondays (1027, 1103) modeled as sized-up dead-cat bounces UP (Monday reversal-of-recent-direction); storage Thursday 1023 is the big down leg that DELIVERS the reversal; 1030 a moderately-large near-consensus print.",
+  "days": [
+    {
+      "date": "20251022", "dow": "Wed", "group": 6,
+      "archetype": "swing-exhaustion topping day (midweek)",
+      "reasoning": "Flows from the 3.522 anchor still ticking UP. Wed carries a weak US-session up-lean, but the running path is at a stretched cum-extreme after G5's 4-day rally off the V, so I weight swing exhaustion: a small early continuation push that FAILS and rolls over. No last-day roll-over cue yet, so I do NOT fire the reversal hard on day 1 - I let the stretched up-swing top out and drift slightly down. Non-catalyst midweek = sized small. Sets up the give-back.",
+      "overnight_gap_usd": 50,
+      "guess_curve": [[20,0],[22,30],[0,60],[2,80],[4,70],[6,100],[8,150],[10,120],[12,-20],[14,-180],[16,-280],[18,-240],[20,-250]],
+      "guessed_net_usd": -250
+    },
+    {
+      "date": "20251023", "dow": "Thu", "group": 6,
+      "archetype": "storage Thursday - large dominant leg (reversal delivery)",
+      "reasoning": "Flows down from 1022's rolled-over close. Storage-Thursday magnitude prior = a large dominant leg at/after the 10:30 ET print (size UP). Side is a coin-flip at the open, but I lean it DOWN to align with the block give-back lean (swing exhaustion + widening surplus) now that 1022 topped - this is the reversal being DELIVERED as an intraday US-session move (contrast an overnight gap). Large down leg from the print; grind shape holds to the close.",
+      "overnight_gap_usd": -50,
+      "guess_curve": [[20,0],[22,-30],[0,-50],[2,-40],[4,-60],[6,-30],[8,-80],[10,-450],[12,-720],[14,-900],[16,-1020],[18,-980],[20,-1000]],
+      "guessed_net_usd": -1000
+    },
+    {
+      "date": "20251024", "dow": "Fri", "group": 6,
+      "archetype": "Friday range with mild down continuation",
+      "reasoning": "Flows from 1023's low. Fri = range prior; the reversal is fresh but not violent enough to fully override Friday (contrast 1010, where a forceful crash carried Friday) - so a damped range that drifts slightly down as the give-back continues. Sized small.",
+      "overnight_gap_usd": 50,
+      "guess_curve": [[20,0],[22,20],[0,40],[2,20],[4,-20],[6,-40],[8,-80],[10,-180],[12,-260],[14,-320],[16,-280],[18,-300],[20,-300]],
+      "guessed_net_usd": -300
+    },
+    {
+      "date": "20251027", "dow": "Mon", "group": 6,
+      "archetype": "weekend-gap Monday - dead-cat reversal-up bounce",
+      "reasoning": "Flows across the weekend from 1024's close. daytype.monday_weekend_gap = a BIG mover, size UP, OFTEN a reversal of the recent direction. Recent direction (last 3 days) is DOWN, so the Monday reprice leans UP as a bounce, reinforced by rising HDD (10.6, winter approaching). Big weekend gap UP then a grind that holds (grind shape rides). Bigness is the call; side leaned up off the reversal-of-recent-direction rule.",
+      "overnight_gap_usd": 400,
+      "guess_curve": [[20,0],[22,80],[0,150],[2,180],[4,200],[6,280],[8,400],[10,560],[12,680],[14,760],[16,820],[18,800],[20,800]],
+      "guessed_net_usd": 800
+    },
+    {
+      "date": "20251028", "dow": "Tue", "group": 6,
+      "archetype": "Tuesday - bounce fades, block-down resumes",
+      "reasoning": "Flows from the 1027 bounce top. Tuesday follows the running trajectory, but the dominant block lean is still DOWN (give-back) and the Monday pop was a dead-cat, so the bounce fades and the block-down resumes. Early tick up then grind down. Sized modest (non-catalyst).",
+      "overnight_gap_usd": -50,
+      "guess_curve": [[20,0],[22,30],[0,20],[2,-10],[4,-40],[6,-30],[8,-80],[10,-180],[12,-280],[14,-340],[16,-360],[18,-350],[20,-350]],
+      "guessed_net_usd": -350
+    },
+    {
+      "date": "20251029", "dow": "Wed", "group": 6,
+      "archetype": "midweek chop, slight up-lean",
+      "reasoning": "Flows from 1028's close. Non-catalyst Wednesday between the two storage prints; weak Wed US-session up-lean over quiet chop as the block bases. Small.",
+      "overnight_gap_usd": 50,
+      "guess_curve": [[20,0],[22,20],[0,40],[2,30],[4,50],[6,40],[8,80],[10,120],[12,150],[14,170],[16,160],[18,150],[20,150]],
+      "guessed_net_usd": 150
+    },
+    {
+      "date": "20251030", "dow": "Thu", "group": 6,
+      "archetype": "storage Thursday - moderately large near-consensus print",
+      "reasoning": "Flows from 1029's chop. Storage-Thursday magnitude prior = large dominant leg (size UP), but the surprise is near-consensus (+2.6) and injections are slowing (74 vs 86) - a seasonally supportive underlay as winter nears - so I size this MODERATELY large, below the 1023 leg. Side coin-flip at open; I keep a mild DOWN lean to hold the block give-back (widening 130 Bcf surplus still bearish backdrop), but humble on side. Print-driven leg, grind down.",
+      "overnight_gap_usd": -50,
+      "guess_curve": [[20,0],[22,-20],[0,-30],[2,-20],[4,-40],[6,-20],[8,-60],[10,-320],[12,-520],[14,-640],[16,-680],[18,-650],[20,-650]],
+      "guessed_net_usd": -650
+    },
+    {
+      "date": "20251031", "dow": "Fri", "group": 6,
+      "archetype": "Friday range",
+      "reasoning": "Flows from 1030's low. Fri = range; HDD peaks here (11.6) providing a floor against further downside, so a shallow range that drifts only slightly down. Small.",
+      "overnight_gap_usd": 0,
+      "guess_curve": [[20,0],[22,20],[0,30],[2,10],[4,-20],[6,-10],[8,-40],[10,-100],[12,-160],[14,-180],[16,-140],[18,-150],[20,-150]],
+      "guessed_net_usd": -150
+    },
+    {
+      "date": "20251103", "dow": "Mon", "group": 6,
+      "archetype": "weekend-gap Monday - sized-up bounce",
+      "reasoning": "Flows across the weekend from 1031's close. daytype.monday_weekend_gap = BIG mover, size UP, reversal-of-recent-direction. Recent drift is down/chop into month-end, so the Monday reprice leans UP as a bounce; the block has already given back a good chunk so a fresh dead-cat up. Weekend gap up then a grind that holds. Sized up (Monday), a touch under 1027 as HDD is now easing (10.2).",
+      "overnight_gap_usd": 200,
+      "guess_curve": [[20,0],[22,80],[0,140],[2,160],[4,180],[6,240],[8,360],[10,500],[12,620],[14,680],[16,720],[18,700],[20,700]],
+      "guessed_net_usd": 700
+    },
+    {
+      "date": "20251104", "dow": "Tue", "group": 6,
+      "archetype": "Tuesday - bounce fades, block-down resumes",
+      "reasoning": "Flows from the 1103 bounce top. Tuesday follows the trajectory; the Monday pop fades and the block give-back resumes, now with HDD easing (9.0) removing the winter-support underlay = a mild down tilt back. Early tick up then grind down. Sized modest; closes the block near a moderate give-back of G5's rally.",
+      "overnight_gap_usd": -50,
+      "guess_curve": [[20,0],[22,30],[0,20],[2,-10],[4,-30],[6,-40],[8,-80],[10,-160],[12,-260],[14,-300],[16,-320],[18,-300],[20,-300]],
+      "guessed_net_usd": -300
+    }
+  ]
+}
