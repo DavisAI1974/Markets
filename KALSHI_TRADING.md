@@ -24,6 +24,20 @@ The map of every Kalshi file: what it is, where it lives, and whether it's part 
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move
 superseded ones down. (Started S81, 2026-07-12.)
 
+## S96 — G7 winter block + per-group refine + the settled protocol (CURRENT)
+- **PROTOCOL (Greg S96):** one-shot block-blind = the CANONICAL skill test; refine after EVERY group
+  (iterate until refined curves track via GENERAL rules only, n>=2 spanning groups; irreducibles declared);
+  renders PRINTED (sent to Greg) before each refine.
+- **`research/kalshi/forecast_harness.py`** — S96 BLIND FIX (storage/surprise joins strictly-prior-day; the
+  old `<=` leaked a storage Thursday's own 10:30 print) + **`reveal` subcommand** (day-sequential rolling-anchor
+  reveal packages: per-day actuals + per-leg fingerprint counts; kept for the LIVE-coach mode).
+- **`research/kalshi/forecasts/grp7.json`** — G7 blind + refined fields per day; `grp7_seq_experiment.json` —
+  the paused 3-day day-sequential experiment (its 1106 +1450g/+1350a hit = the day-boundary-turn evidence).
+- **`research/kalshi/knowledge/ng_brain.json`** — **s96.2, 16 plays** (S96 new: giveback_exhaustion_boundary,
+  mature_swing_alternation, giveback_origin_shelf). Backups + s96.2 proposal alongside.
+- **`research/kalshi/renders/ng_refine_s95/`** — adds g7_{continuous,overlay}.png, g7_refined_*.png,
+  g7_rt/score jsons, grp7_state.json, grp7_reveals.json; fingerprints.json extended with Nov 4-18.
+
 ## S95 — continuous-curve + roll-adjustment + refinement machinery (CURRENT)
 - **`research/kalshi/continuous_rt.py`** — THE RENDER FILE (canonical, date-parameterized): real-price RT
   curve + optional `--guess` forecast overlay, rolls marked, weekend bridges broken. Use for any window.

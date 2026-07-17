@@ -1,17 +1,20 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-15, Session 95)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-17, Session 96)
 
-**S95 (read `SESSION_HANDOFF_2026-07-15_S95.md` + `research/kalshi/AGENT_RUNBOOK_S95.md`):** built the
-CONTINUOUS-CURVE representation + the CONTRACT-ROLL adjustment, ran the FULL unblinded G3-5 refinement on
-roll-clean data, and ran **G6 as the first true BLIND holdout**. G6 was a V — the reversion lean CAUGHT the
-week-1 give-back but MISSED the week-2 recovery (the intra-block TURN is still the open problem); magnitude was
-the dominant error; the storage surplus got block direction WRONG (winter heating-demand won). Lesson:
-`cross_block_reversion` is a GIVE-BACK, not a sustained reversal. Brain consolidated to ONE file
-(`ng_brain.json`: meta + reasoning_method + fingerprints catalog + 13 plays), **s95.1** committed (turn_far_thinning
-DEMOTED to noise; dip_imb_level + continuation-asymmetry + peaked_fast carry direction/hold/turn); **s95.2**
-refinement proposal to review-then-merge. THE RENDER FILE is `research/kalshi/continuous_rt.py` (parameterized by
-dates; real-price RT + forecast overlay, rolls marked). Data audit: 13 months NG on S3, ALL 52 weekends present
-(the roll — Sep25 +0.28, Oct27 +0.66 — was the only continuity break, now handled). All S95 machinery + renders
-+ brain committed. NEXT = merge s95.2, then Group-7 (Nov 5+, into winter) blind on the merged brain.
+**S96 (read `SESSION_HANDOFF_2026-07-17_S96.md` + `KICKOFF_2026-07-17_S97.md`):** G7 (Nov 5-18, the FIRST
+WINTER block) ran as a one-shot blind holdout on s95.2 — direction 3/10 days but the BLOCK lean RIGHT (W above
+the anchor, close-cum +880g vs +490a) with the W TIME-SHIFTED (new located problem: day-level SEQUENCING) —
+then the first PER-GROUP refine (Greg's new cadence) took the refined curves to direction 9/10 / final drift
++$100 via FIVE general rules (n>=2 spanning groups; 1112 declared irreducible, not tuned). Brain = **s96.2, 16
+plays**: NEW `direction.giveback_exhaustion_boundary` (the sequencing answer: a give-back closing well off its
+extreme with last-hours counter-tick + healthy swing legs -> next session resumes), `structure.mature_swing_
+alternation`, `level.giveback_origin_shelf` (hypothesis); storage-Thursday side = the running swing NEVER the
+print sign (10/10); Monday-as-reversal RETIRED (gap-REACTION read instead); thin-holiday size-down conditioned
+(1111 Veterans +1580 in a hard_heat shock). HDD > widening surplus reconfirmed (n=2 blocks). PROTOCOL SETTLED
+(Greg): one-shot block-blind = the canonical skill test; refine after EVERY group (iterate-to-tracking bar);
+renders PRINTED to Greg before each refine; a 3-day day-sequential rolling-anchor EXPERIMENT (paused, recorded)
++ the refine's own R1/R4 caveat both point at day-N-1 actual tape as the LIVE-coach input — parked. BLIND FIX:
+storage joins were leaking a Thursday's own 10:30 print into its open-time state (now strictly-prior). NEXT =
+G8 (Nov 19 -> Dec 2) blind on s96.2 — the Dec->Jan roll lands INSIDE it (~Nov 24) + Thanksgiving closure.
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
 follower.** **git = CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an
@@ -232,6 +235,9 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S95** — continuous-curve rep + contract-roll adjustment (`roll_adjust.py`; the 0925 "+2760 gap" was the
+  Oct->Nov roll, VOID); full G3-5 refine on roll-clean data; G6 first true blind holdout (V; give-back caught,
+  recovery missed); brain ONE file, s95.1/s95.2. Detail: `SESSION_HANDOFF_2026-07-15_S95.md`.
 - **S93** — the coach agent moved INTO AWS (Greg: the agent must live in his AWS, on the box, not a Claude
   Routine). Cleared the whole access chain (the `Claude` IAM user now has S3+EC2+SSM-full+Bedrock-full + inline
   PassRole; no permissions boundary) and stood the box up as the agent host: instance profile `Ssm` attached ->
