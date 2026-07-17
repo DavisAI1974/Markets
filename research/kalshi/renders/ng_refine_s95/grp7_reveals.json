@@ -1,0 +1,153 @@
+{
+ "20251104": {
+  "date": "20251104",
+  "dow": "Tue",
+  "open": 4.231,
+  "close": 4.317,
+  "net_usd": 860,
+  "day_hi_usd": 1650,
+  "day_lo_usd": -480,
+  "last_hour": {
+   "dir": "down",
+   "net_usd": -30
+  },
+  "cum_from_anchor_usd": 0,
+  "overnight_gap_usd": 0,
+  "legs": {
+   "up": {
+    "n": 34,
+    "continued": 14,
+    "big_n": 13,
+    "big_continued": 10,
+    "peaked_fast": 6,
+    "turn_exhaustion_worst": -0.351
+   },
+   "down": {
+    "n": 25,
+    "continued": 7,
+    "big_n": 8,
+    "big_continued": 4,
+    "peaked_fast": 3,
+    "turn_exhaustion_worst": -0.658
+   }
+  },
+  "legs_note": "per-direction leg counts for the day (brain vocabulary: continuation-asymmetry / old-swing continuation-collapse / peaked_fast fades). Read with ng_brain fingerprints; counts are THIS day only, never pooled."
+ },
+ "20251105": {
+  "date": "20251105",
+  "dow": "Wed",
+  "open": 4.316,
+  "close": 4.264,
+  "net_usd": -520,
+  "day_hi_usd": 350,
+  "day_lo_usd": -1100,
+  "last_hour": {
+   "dir": "up",
+   "net_usd": 250
+  },
+  "cum_from_anchor_usd": -530,
+  "overnight_gap_usd": -10,
+  "block_closes_so_far": {
+   "20251104": 4.317
+  },
+  "at_block_extreme": "low",
+  "legs": {
+   "up": {
+    "n": 33,
+    "continued": 7,
+    "big_n": 9,
+    "big_continued": 6,
+    "peaked_fast": 6,
+    "turn_exhaustion_worst": -0.505
+   },
+   "down": {
+    "n": 31,
+    "continued": 6,
+    "big_n": 5,
+    "big_continued": 4,
+    "peaked_fast": 8,
+    "turn_exhaustion_worst": -0.543
+   }
+  },
+  "legs_note": "per-direction leg counts for the day (brain vocabulary: continuation-asymmetry / old-swing continuation-collapse / peaked_fast fades). Read with ng_brain fingerprints; counts are THIS day only, never pooled."
+ },
+ "20251106": {
+  "date": "20251106",
+  "dow": "Thu",
+  "open": 4.262,
+  "close": 4.397,
+  "net_usd": 1350,
+  "day_hi_usd": 1580,
+  "day_lo_usd": -700,
+  "last_hour": {
+   "dir": "down",
+   "net_usd": -160
+  },
+  "cum_from_anchor_usd": 800,
+  "overnight_gap_usd": -20,
+  "block_closes_so_far": {
+   "20251104": 4.317,
+   "20251105": 4.264
+  },
+  "at_block_extreme": "high",
+  "legs": {
+   "up": {
+    "n": 38,
+    "continued": 10,
+    "big_n": 12,
+    "big_continued": 8,
+    "peaked_fast": 8,
+    "turn_exhaustion_worst": -0.277
+   },
+   "down": {
+    "n": 29,
+    "continued": 5,
+    "big_n": 8,
+    "big_continued": 3,
+    "peaked_fast": 9,
+    "turn_exhaustion_worst": -0.267
+   }
+  },
+  "legs_note": "per-direction leg counts for the day (brain vocabulary: continuation-asymmetry / old-swing continuation-collapse / peaked_fast fades). Read with ng_brain fingerprints; counts are THIS day only, never pooled."
+ },
+ "20251107": {
+  "date": "20251107",
+  "dow": "Fri",
+  "open": 4.396,
+  "close": 4.324,
+  "net_usd": -720,
+  "day_hi_usd": 230,
+  "day_lo_usd": -1280,
+  "last_hour": {
+   "dir": "up",
+   "net_usd": 30
+  },
+  "cum_from_anchor_usd": 70,
+  "overnight_gap_usd": -10,
+  "block_closes_so_far": {
+   "20251104": 4.317,
+   "20251105": 4.264,
+   "20251106": 4.397
+  },
+  "at_block_extreme": null,
+  "legs": {
+   "up": {
+    "n": 24,
+    "continued": 7,
+    "big_n": 9,
+    "big_continued": 6,
+    "peaked_fast": 3,
+    "turn_exhaustion_worst": -0.183
+   },
+   "down": {
+    "n": 29,
+    "continued": 10,
+    "big_n": 9,
+    "big_continued": 7,
+    "peaked_fast": 7,
+    "turn_exhaustion_worst": -0.507
+   }
+  },
+  "legs_note": "per-direction leg counts for the day (brain vocabulary: continuation-asymmetry / old-swing continuation-collapse / peaked_fast fades). Read with ng_brain fingerprints; counts are THIS day only, never pooled."
+ }
+}

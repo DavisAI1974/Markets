@@ -3,7 +3,7 @@
   "market": "NG",
   "version": "s95.2",
   "built_pass": 2,
-  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). This is a PROPOSAL (do NOT overwrite ng_brain.json): a MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout. Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved.",
+  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
   "regime_scope": "12 warm-season days (Jul-Sep) + G3/G4/G5 (Sep8-Oct21) autumn contango + G6 (Oct22-Nov4) the first TRUE holdout at the winter transition. Winter/backwardation + Mondays still thin.",
   "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders.",

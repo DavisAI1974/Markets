@@ -61,8 +61,9 @@ def _storage_series():
 
 
 def _storage_asof(iso: str, series: dict) -> dict | None:
-    """Most recent storage print with report_date <= iso (blind: the weekly print is public by then)."""
-    past = sorted(r for r in series if r <= iso)
+    """Most recent storage print with report_date STRICTLY BEFORE iso (S96 blind fix: <= let a storage
+    Thursday's own 10:30 ET print into its open-time state; decision-time = prints from before the day)."""
+    past = sorted(r for r in series if r < iso)
     return series[past[-1]] | {"as_of": past[-1]} if past else None
 
 
@@ -111,7 +112,7 @@ def decision_state(days: list[str]) -> dict:
     for d in days:
         iso = f"{d[:4]}-{d[4:6]}-{d[6:]}"
         dow = DOW[datetime.date(int(d[:4]), int(d[4:6]), int(d[6:])).weekday()]
-        past = sorted(ri for ri in surp if ri <= iso)
+        past = sorted(ri for ri in surp if ri < iso)  # S96: strictly before the day (same-day print leaked)
         sv = surp[past[-1]]["surprise"] if past else None
         cr = fc.curve_asof(cv, iso)
         out[d] = {"dow": dow, "stor_surprise": round(sv, 1) if sv is not None else None,
@@ -160,6 +161,58 @@ def render_overlay(forecasts: dict, out_png: str, source: str = "s3") -> str:
     return out_png
 
 
+def day_reveal(day: str, prior_day: str | None, anchor_day: str, fingerprints_path: str | None,
+               closes_so_far: dict | None = None) -> dict:
+    """The DAY-SEQUENTIAL rolling-anchor reveal (S96, Greg): after day D's blind forecast is LOCKED, this
+    packages day D's ACTUALS for the NEXT day's forecast agent - exactly what a live coach knows the next
+    morning. Decision-time-legit (all data is from a completed past session); the blind wall stays intact
+    per-day. Mechanical extraction only - counts and values in the brain's fingerprint vocabulary
+    (continuation-asymmetry / turn_exhaustion / peaked_fast), no interpretation baked in.
+    closes_so_far = {date: close} of the block's already-revealed days (for the block-extreme flag)."""
+    import numpy as np, pandas as pd
+    import fast_tape
+    ts, px = fast_tape.fast_load_day("NG", day)
+    if len(px) == 0:
+        return {"date": day, "error": "empty day"}
+    et = pd.to_datetime(ts, unit="s", utc=True).tz_convert("America/New_York")
+    o, c = float(px[0]), float(px[-1])
+    a_ts, a_px = fast_tape.fast_load_day("NG", anchor_day)
+    anchor_close = float(a_px[-1])
+    last = px[et >= et[-1] - pd.Timedelta(hours=1)]
+    rev = {"date": day, "dow": DOW[datetime.date(int(day[:4]), int(day[4:6]), int(day[6:])).weekday()],
+           "open": round(o, 3), "close": round(c, 3), "net_usd": round((c - o) * MULT),
+           "day_hi_usd": round((float(px.max()) - o) * MULT), "day_lo_usd": round((float(px.min()) - o) * MULT),
+           "last_hour": {"dir": "up" if len(last) > 1 and last[-1] > last[0] else "down",
+                          "net_usd": round((float(last[-1]) - float(last[0])) * MULT) if len(last) > 1 else 0},
+           "cum_from_anchor_usd": round((c - anchor_close) * MULT)}
+    if prior_day:
+        p_ts, p_px = fast_tape.fast_load_day("NG", prior_day)
+        if len(p_px):
+            rev["overnight_gap_usd"] = round((o - float(p_px[-1])) * MULT)
+    if closes_so_far:
+        hi_d = max(closes_so_far, key=lambda k: closes_so_far[k]); lo_d = min(closes_so_far, key=lambda k: closes_so_far[k])
+        rev["block_closes_so_far"] = {k: closes_so_far[k] for k in sorted(closes_so_far)}
+        rev["at_block_extreme"] = ("high" if c >= closes_so_far[hi_d] else
+                                    "low" if c <= closes_so_far[lo_d] else None)
+    # per-leg turn fingerprint (brain vocabulary) from the day's characterize_day rows, if computed
+    if fingerprints_path and os.path.exists(fingerprints_path):
+        rows = json.load(open(fingerprints_path)).get(day)
+        if isinstance(rows, list) and rows:
+            legs = {}
+            for dr in ("up", "down"):
+                sub = [r for r in rows if r.get("dir") == dr]
+                big = [r for r in sub if (r.get("peak_usd") or 0) >= 250]
+                legs[dr] = {"n": len(sub), "continued": sum(1 for r in sub if r.get("continuation")),
+                            "big_n": len(big), "big_continued": sum(1 for r in big if r.get("continuation")),
+                            "peaked_fast": sum(1 for r in sub if r.get("peaked_fast")),
+                            "turn_exhaustion_worst": round(min((r.get("turn_exhaustion") or 0) for r in sub), 3) if sub else None}
+            rev["legs"] = legs
+            rev["legs_note"] = ("per-direction leg counts for the day (brain vocabulary: continuation-"
+                                "asymmetry / old-swing continuation-collapse / peaked_fast fades). "
+                                "Read with ng_brain fingerprints; counts are THIS day only, never pooled.")
+    return rev
+
+
 def brain_show(path: str = BRAIN) -> None:
     b = json.load(open(path))
     print(f"ng_brain {b['meta']['version']} — {len(b['plays'])} plays:")
@@ -184,6 +237,10 @@ def main() -> int:
     a1 = sub.add_parser("decision-state"); a1.add_argument("--days", required=True); a1.add_argument("--out")
     a2 = sub.add_parser("overlay"); a2.add_argument("--forecasts", required=True); a2.add_argument("--out", required=True); a2.add_argument("--source", default="s3")
     sub.add_parser("brain-show")
+    a3 = sub.add_parser("reveal"); a3.add_argument("--day", required=True); a3.add_argument("--prior")
+    a3.add_argument("--anchor", required=True); a3.add_argument("--fingerprints")
+    a3.add_argument("--closes")   # json string {date: close} of the block's revealed days so far
+    a3.add_argument("--out")      # merge into this json {date: reveal}
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -198,6 +255,15 @@ def main() -> int:
         print("wrote", p); return 0
     if a.cmd == "brain-show":
         brain_show(); return 0
+    if a.cmd == "reveal":
+        rev = day_reveal(a.day, a.prior, a.anchor, a.fingerprints,
+                         json.loads(a.closes) if a.closes else None)
+        print(json.dumps(rev, indent=1))
+        if a.out:
+            allrev = json.load(open(a.out)) if os.path.exists(a.out) else {}
+            allrev[a.day] = rev
+            json.dump(allrev, open(a.out, "w"), indent=1)
+        return 0
     ap.print_help(); return 1
 
 
