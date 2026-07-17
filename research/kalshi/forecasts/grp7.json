@@ -2,20 +2,21 @@
  "group": 7,
  "tag": "g7",
  "brain_version": "s95.2",
- "protocol": "day_sequential_rolling_anchor (S96): each day forecast BLIND before its session, flowing from the prior day's ACTUAL close + reveal fingerprint (grp7_reveals.json); blind wall intact per-day. overnight_gap_usd is guessed vs the prior FORECAST day's actual close (Mondays: vs Friday = the weekend gap).",
+ "protocol": "one_shot_block_blind",
  "anchor": {
   "date": "20251104",
   "price": 4.317,
   "last_hour_dir": "down"
  },
+ "block_lean": "Modest give-back off the 4.317 cum-extreme in the first three sessions (swing 4 sessions old but the counter-move trigger is only half-armed, so a partial fade not a crash), then the hard_heat HDD ramp wins the block per the G6 lesson - a W: early dip, big hard-heat weekend-gap Monday recovery, a mid-block moderation give-back through storage Thursday, and a re-cold recovery into the close, net modestly ABOVE the anchor.",
  "days": [
   {
    "date": "20251105",
    "dow": "Wed",
    "group": 7,
-   "archetype": "stretched-swing pause / mild give-back at the G6->G7 seam, pre-storage-Thursday consolidation",
-   "reasoning": "Flows from 1104 ACTUAL 4.317, the block HIGH after 4 strongly-up sessions (+2580/+530/+1110/+860) \u2014 the running path is at a cum-EXTREME, so direction.cross_block_reversion is armed. But the trigger is only HALF-lit: the 1104 reveal fingerprint shows NO continuation-collapse (big up-legs 10/13 continued = still-healthy old-swing; contrast 1008's 0/15), while the counter-move evidence is partial (day-hi +1650 faded to +860, last hour down -$30 \u2014 rhymes weakly with the 1007 last-hour roll-over, but the down-legs are the MORE exhausted side, turn_exhaustion -0.658). Per the brain: do NOT extend a trend into a stretched seam, do NOT blind-fade with the up-swing fingerprint still healthy. G6 lesson: reversion is a GIVE-BACK not a reversal, and the bearish storage surplus (+130 vs 5yr, last print Oct30 +74) is an UNRELIABLE lean vs rising HDD (7.8 gw_hdd shoulder). Wed = weak up-lean but overridden; non-catalyst day ahead of Thu 10:30 print caps magnitude, winter-transition vol keeps it from tiny. Play: morning continuation ATTEMPT up (block trend + Wed lean) that stalls below the 1104 high, then a US-afternoon give-back fade \u2014 small net down, two-sided chop, the real swing verdict deferred to storage Thursday.",
-   "overnight_gap_usd": -50,
+   "archetype": "post-run consolidation / early give-back probe",
+   "reasoning": "Flows from the 4.317 anchor. The G6 up-swing enters 4 sessions old at the block high (cum-extreme) but swing_exhaustion_reversion is NOT fully armed - the last two sessions were strongly up and the anchor's last hour was only a -$30 tick, not a last-1-2-day counter-move - so no hard fade, just a lean-against probe (do NOT extend a stretched swing either). Wed weak up-lean overridden by the exhaustion lean; shoulder regime (HDD 7.8) gives no heat support yet; storage backdrop (surplus +130, still injecting) is only a weak bearish backdrop. Modest US-session grind down.",
+   "overnight_gap_usd": -20,
    "guess_curve": [
     [
      20,
@@ -23,47 +24,47 @@
     ],
     [
      22,
-     50
+     -30
     ],
     [
      0,
-     80
-    ],
-    [
-     2,
-     50
-    ],
-    [
-     4,
-     0
-    ],
-    [
-     6,
      -50
     ],
     [
+     2,
+     -60
+    ],
+    [
+     4,
+     -80
+    ],
+    [
+     6,
+     -100
+    ],
+    [
      8,
-     150
+     -120
     ],
     [
      10,
-     350
-    ],
-    [
-     12,
-     100
-    ],
-    [
-     14,
      -200
     ],
     [
+     12,
+     -300
+    ],
+    [
+     14,
+     -380
+    ],
+    [
      16,
-     -350
+     -420
     ],
     [
      18,
-     -350
+     -380
     ],
     [
      20,
@@ -76,9 +77,9 @@
    "date": "20251106",
    "dow": "Thu",
    "group": 7,
-   "archetype": "storage-Thursday post-print breakout UP - one-day give-back exhausts, HDD up-swing resumes",
-   "reasoning": "Flows from 1105 ACTUAL 4.264: the give-back day delivered (-520, my day-1 lean was right) but its own tape argues it is DONE, not extending - the day fell to -1100 then recovered more than half the drop and closed with a LAST-HOUR UP tick (+250), the give-back's own last-legs counter-move (the 0923-bounce analog applied to the give-back leg, per swing_exhaustion_reversion: treat each leg of the swing as its own exhaustible move). The 1105 fingerprint is MIXED - no one-sided continuation-collapse, both sides heavy peaked_fast (chop day) - so there is NO 1008-style old-swing collapse evidence against the underlying up-swing, whose 1104 fingerprint was still healthy (big up-legs 10/13). G6's load-bearing lesson fires: cross_block_reversion is a GIVE-BACK and the block can V back - do not marry the reversion past its own exhaustion, and the -530 cum from the 4.317 high plus the bounce off the day low reads as the give-back exhausting after one day. Backdrop: weather has moved shoulder->mod_heat (gw_hdd 11.2) - the same rising-HDD force that beat the bearish surplus through G6 week-2; the stale Oct30 print (+74 inject, +130 surplus) is fundamentally bearish but G6 proved HDD wins at the winter transition, and today's print covers a rising-HDD week. Plays fired: daytype.storage_thursday_magnitude (size UP hard - every scored storage Thursday produced a large dominant leg at/after 10:30 ET; 1030 broke out +2580 in exactly this HDD regime) + magnitude.catalyst_condition_sort (storage Thursday = up-sizer; G6 says do not clip the extreme) + swing_exhaustion_reversion applied to the give-back leg (its last hour turned) + fundamentals_role (HDD > surplus near winter). Side at the open is honestly a coin-flip per the brain, but the lean is UP with the running-path recovery: quiet slightly-firm overnight/pre-print drift following the last-hour up momentum, then the dominant leg at/after the 10:30 print - a grind-hold (ride the staircase, don't fade it), closing near the day's high and re-approaching the 1104 block high. Risk acknowledged: a fat-injection bearish surprise flips the post-print leg down (the 1023 capitulation form), which is why pre-print exposure is kept small and the magnitude, not the side, carries the conviction.",
-   "overnight_gap_usd": 50,
+   "archetype": "storage Thursday - dominant post-print leg, sized up, down side",
+   "reasoning": "Flows from ~4.280 after Wednesday's give-back started the counter-move - the exhaustion trigger is now arming (cum-extreme + a fresh down day). storage_thursday_magnitude fires: size UP, dominant leg at/after 10:30 ET. Side is a coin-flip at the open but I lean the print leg DOWN with the nascent give-back and the widening-surplus injection backdrop (fundamentals only as tie-break, per G6 caveat); mod_heat (HDD 11.2) is not yet strong enough to override. Thin overnight drift, then the print leg decides the day.",
+   "overnight_gap_usd": -20,
    "guess_curve": [
     [
      20,
@@ -86,61 +87,250 @@
     ],
     [
      22,
-     50
+     -20
     ],
     [
      0,
-     100
+     -30
     ],
     [
      2,
-     100
+     -40
     ],
     [
      4,
-     150
+     -50
     ],
     [
      6,
-     150
+     -60
     ],
     [
      8,
-     250
+     -80
     ],
     [
      10,
-     350
+     -100
     ],
     [
      12,
-     1300
+     -550
     ],
     [
      14,
-     1600
+     -700
     ],
     [
      16,
-     1500
+     -750
     ],
     [
      18,
-     1450
+     -720
     ],
     [
      20,
-     1450
+     -700
     ]
    ],
-   "guessed_net_usd": 1450
+   "guessed_net_usd": -700
   },
   {
    "date": "20251107",
    "dow": "Fri",
    "group": 7,
-   "archetype": "post-breakout Friday up-drift consolidation - new-high hold in an HDD-momentum regime, afternoon fade into the weekend gap",
-   "reasoning": "Flows from 1106 ACTUAL 4.397: storage Thursday RALLIED +1350 THROUGH a bearish print (+33 inject, surprise +10.8 above, surplus widened to +141) to a new block high - the market telling us which force is in charge (the G6 load-bearing lesson: rising HDD heating-demand > storage surplus at the winter transition; fundamentals_role says the bearish print is a lean of last resort, dominated by the running trajectory). The 1106 reveal fingerprint is decisive against fading: continuation-asymmetry is UP-dominant (big up-legs 8/12 healthy vs down big 3/8, down-legs dying 5/29) with NO old-swing continuation-collapse (contrast 1008's 0/15) and mild turn_exhaustion (-0.277) - the up-swing is STILL HEALTHY at the extreme. swing_exhaustion_reversion is armed (cum-extreme +800, at_block_extreme high, 5-of-6 up sessions) but only HALF-lit: the counter-move evidence is a single last-hour -160 tick, which rhymes with the 1007 roll-over but WITHOUT 1007's continuation-collapse confirmation - the brain says do NOT blind-fade a still-trending block on half a trigger, and G6 proved the reversion is a give-back the block V's straight back from (1105 -520 was exactly that one-day give-back, already exhausted). Day-into-day precedent: 1031, the Friday after the 1030 +2580 storage-Thursday breakout in this same HDD regime, continued UP modestly (+540) rather than reversing. daytype.weekday_archetype: Fri = range, but the range cap is partially overridden by the high-momentum regime - I read that as an up-drift day, not a big trend day: non-catalyst per magnitude.catalyst_condition_sort, so magnitude sized DOWN vs Thu. Shape: soft overnight carry following the last-hour down tick, US-morning continuation attempt that makes marginal new highs, then afternoon profit-taking/positioning into the weekend info gap trims the close off the high (the real repricing verdict is Monday's weekend-gap mover). Lean UP, modest net; the give-back risk (1105 rhythm off a fresh high) is why the size stays small rather than the side flipping.",
+   "archetype": "Friday range with a late cold-front-run bid",
+   "reasoning": "Flows from ~4.208 after two give-back days (~-1050 cum) - the reversion is a GIVE-BACK, not a sustained reversal (G6), and it is now partially spent. Fri = range archetype, no high-momentum reversal regime to override it. The state's weather trajectory points at a hard_heat ramp into the weekend (HDD 9.8 -> 20.6 by Monday), so the US session dips early then catches a front-running heating bid late - small net up, range day.",
+   "overnight_gap_usd": -10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -10
+    ],
+    [
+     0,
+     -20
+    ],
+    [
+     2,
+     -30
+    ],
+    [
+     4,
+     -30
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     -120
+    ],
+    [
+     12,
+     -80
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     160
+    ],
+    [
+     20,
+     150
+    ]
+   ],
+   "guessed_net_usd": 150
+  },
+  {
+   "date": "20251110",
+   "dow": "Mon",
+   "group": 7,
+   "archetype": "weekend-gap Monday reversal UP + hard_heat shock - compound up-size",
+   "reasoning": "Flows from ~4.222. monday_weekend_gap + catalyst_condition_sort COMPOUND: weekend info gap + reversal of the week's down direction + the regime jump to hard_heat (HDD 20.6, the block's cold shock) - the 1020-style stack, so size UP hard and do not clip (G6: extremes still get under-sized). Gap up at the Sun-eve reopen pre-loads it, then a US-session GRIND (grinds hold, per shape.grind_vs_spike) extends it - Monday bigness as grind, riding the staircase past $350/$500.",
+   "overnight_gap_usd": 400,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     180
+    ],
+    [
+     2,
+     250
+    ],
+    [
+     4,
+     300
+    ],
+    [
+     6,
+     380
+    ],
+    [
+     8,
+     500
+    ],
+    [
+     10,
+     800
+    ],
+    [
+     12,
+     1000
+    ],
+    [
+     14,
+     1150
+    ],
+    [
+     16,
+     1250
+    ],
+    [
+     18,
+     1220
+    ],
+    [
+     20,
+     1200
+    ]
+   ],
+   "guessed_net_usd": 1200
+  },
+  {
+   "date": "20251111",
+   "dow": "Tue",
+   "group": 7,
+   "archetype": "thin-holiday drift (Veterans Day) - size DOWN",
+   "reasoning": "Flows from ~4.382 at a fresh high. Tue is normally the strongest-trend weekday and hard_heat holds (HDD 20.4), so the lean stays with Monday's up-grind - but the Veterans Day thin flag fires the Columbus-1013 lesson: DOWN-size everything. Quiet continuation drift, small net up, no dominant leg.",
+   "overnight_gap_usd": 10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     30
+    ],
+    [
+     4,
+     30
+    ],
+    [
+     6,
+     40
+    ],
+    [
+     8,
+     50
+    ],
+    [
+     10,
+     70
+    ],
+    [
+     12,
+     90
+    ],
+    [
+     14,
+     110
+    ],
+    [
+     16,
+     120
+    ],
+    [
+     18,
+     110
+    ],
+    [
+     20,
+     100
+    ]
+   ],
+   "guessed_net_usd": 100
+  },
+  {
+   "date": "20251112",
+   "dow": "Wed",
+   "group": 7,
+   "archetype": "cold-moderation give-back off the new cum-extreme",
+   "reasoning": "Flows from ~4.393 - a NEW cum-extreme above the anchor, with the up-leg now 2-3 sessions old AND the weather state moderating (hard_heat -> mod_heat, HDD 20.4 -> 13.3): the moderation is the counter-impulse that arms swing_exhaustion_reversion for THIS leg (treat each leg of the swing as its own exhaustible move, per G6). Wed weak up-lean overridden. US-session grind down gives back part of the Monday shock.",
    "overnight_gap_usd": -30,
    "guess_curve": [
     [
@@ -149,31 +339,220 @@
     ],
     [
      22,
-     -30
+     -40
     ],
     [
      0,
-     -50
+     -60
     ],
     [
      2,
-     -30
+     -80
     ],
     [
      4,
-     0
+     -90
     ],
     [
      6,
-     50
+     -100
     ],
     [
      8,
-     150
+     -150
     ],
     [
      10,
-     400
+     -250
+    ],
+    [
+     12,
+     -350
+    ],
+    [
+     14,
+     -450
+    ],
+    [
+     16,
+     -500
+    ],
+    [
+     18,
+     -470
+    ],
+    [
+     20,
+     -450
+    ]
+   ],
+   "guessed_net_usd": -450
+  },
+  {
+   "date": "20251113",
+   "dow": "Thu",
+   "group": 7,
+   "archetype": "storage Thursday - dominant post-print leg down, sized up",
+   "reasoning": "Flows from ~4.345 with a fresh down leg underway. storage_thursday_magnitude fires again: size UP, dominant leg after 10:30 ET; side coin-flip at the open but leans WITH the established short-term direction (moderating HDD + the widening-surplus injection backdrop - last known print ran +10.8 above seasonal). Print leg DOWN, larger than the 1106 one because it aligns with the running give-back (continuation-asymmetry: down legs continue on a directional down day).",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     -60
+    ],
+    [
+     6,
+     -70
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     -150
+    ],
+    [
+     12,
+     -650
+    ],
+    [
+     14,
+     -850
+    ],
+    [
+     16,
+     -950
+    ],
+    [
+     18,
+     -920
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "guessed_net_usd": -900
+  },
+  {
+   "date": "20251114",
+   "dow": "Fri",
+   "group": 7,
+   "archetype": "Friday range / stabilization at the mid-block low",
+   "reasoning": "Flows from ~4.253 after a -1350 two-day give-back - roughly the depth of the week-1 dip, so the give-back is spent territory. Fri = range archetype, no crash regime to override. Heavy precip / mild HDD 10.0 keeps it quiet; early probe lower fails to continue (continuation-collapse of the down legs) and the day closes small up - the candidate V-floor of the mid-block dip.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -10
+    ],
+    [
+     0,
+     -20
+    ],
+    [
+     2,
+     -20
+    ],
+    [
+     4,
+     -10
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     -100
+    ],
+    [
+     12,
+     -50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     100
+    ],
+    [
+     18,
+     110
+    ],
+    [
+     20,
+     100
+    ]
+   ],
+   "guessed_net_usd": 100
+  },
+  {
+   "date": "20251117",
+   "dow": "Mon",
+   "group": 7,
+   "archetype": "weekend-gap Monday reversal UP on re-cooling",
+   "reasoning": "Flows from ~4.263. monday_weekend_gap fires: big mover, reversal of the recent (down) direction, and the state re-cools (HDD back up to 16.0) - Monday + reversal up-sizers stack again, though without a hard_heat shock so sized below 1110. Weekend gap up pre-loads, then a US-session grind extends; ride the staircase, do not clip.",
+   "overnight_gap_usd": 250,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     80
+    ],
+    [
+     0,
+     120
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     180
+    ],
+    [
+     6,
+     220
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     450
     ],
     [
      12,
@@ -181,22 +560,85 @@
     ],
     [
      14,
-     500
+     700
     ],
     [
      16,
-     450
+     750
     ],
     [
      18,
-     400
+     720
     ],
     [
      20,
-     400
+     700
     ]
    ],
-   "guessed_net_usd": 400
+   "guessed_net_usd": 700
+  },
+  {
+   "date": "20251118",
+   "dow": "Tue",
+   "group": 7,
+   "archetype": "Tuesday trend continuation up",
+   "reasoning": "Flows from ~4.358 with Monday's up-reversal one session old and holding (grind shape = ride). Tue = strongest-trend weekday and HDD holds at 15.6, so continuation UP into the block close - but at only ~half Monday's size since the leg is maturing back toward the block highs where the next exhaustion watch begins. Closes the block modestly above the 4.317 anchor: the winter HDD lean beats the surplus, per the G6 lesson.",
+   "overnight_gap_usd": 20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     30
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     60
+    ],
+    [
+     4,
+     80
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     350
+    ],
+    [
+     14,
+     450
+    ],
+    [
+     16,
+     500
+    ],
+    [
+     18,
+     470
+    ],
+    [
+     20,
+     450
+    ]
+   ],
+   "guessed_net_usd": 450
   }
  ]
 }
