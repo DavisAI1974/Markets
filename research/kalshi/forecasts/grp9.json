@@ -71,7 +71,65 @@
      1400
     ]
    ],
-   "guessed_net_usd": 1400
+   "guessed_net_usd": 1400,
+   "refined_archetype": "ramp_resume_frontrun",
+   "refined_reasoning": "UNCHANGED from blind (it hit): R1 ramp-arm - the 1202 crest give-back closed well off its extreme with a last-hour up tick, swing legs intact; catalyst_continuity front-runs the Dec 4 print under the live rising ramp (HDD 26.9->30.3->30.5). Winter resume band +1300..+2000, mid-low for the mature swing: +1400.",
+   "refined_overnight_gap_usd": 50,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     550
+    ],
+    [
+     12,
+     850
+    ],
+    [
+     14,
+     1100
+    ],
+    [
+     16,
+     1300
+    ],
+    [
+     18,
+     1400
+    ],
+    [
+     20,
+     1400
+    ]
+   ],
+   "refined_net_usd": 1400
   },
   {
    "date": "20251204",
@@ -134,7 +192,65 @@
      -800
     ]
    ],
-   "guessed_net_usd": -800
+   "guessed_net_usd": -800,
+   "refined_archetype": "print_day_ramp_rising_through_extends",
+   "refined_reasoning": "THE 1204 CONTRA RESOLVED (general condition, n=2 each side): a post-violent print day gives back ONLY when the ramp has crested at/before the print (1119->1120 ramp crested, 1201->1202 HDD peak behind); when the forward HDD stream is STILL RISING through and beyond the print day (26.9 -> 30.3 -> 30.5 into Dec 5), the alternation give-back lands INTRADAY (morning dip) and the live catalyst wins the close - the front-run runs THROUGH the print (chain-sided up, R2 leg with the swing). Refined: morning give-back to ~-400 into the 10:30 print, afternoon ramp extension to +1000. Actual shape confirms: -390 at 14h grid then +810/+1100 close.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -200
+    ],
+    [
+     6,
+     -300
+    ],
+    [
+     8,
+     -400
+    ],
+    [
+     10,
+     -300
+    ],
+    [
+     12,
+     200
+    ],
+    [
+     14,
+     400
+    ],
+    [
+     16,
+     700
+    ],
+    [
+     18,
+     900
+    ],
+    [
+     20,
+     1000
+    ]
+   ],
+   "refined_net_usd": 1000
   },
   {
    "date": "20251205",
@@ -197,7 +313,65 @@
      900
     ]
    ],
-   "guessed_net_usd": 900
+   "guessed_net_usd": 900,
+   "refined_archetype": "parabolic_blowoff_crest",
+   "refined_reasoning": "Last rising-ramp day (HDD 30.5 = the front ramp's peak; models ease beyond) -> one more chain-side extension (the 1204 rising-ramp form), but the swing is now PARABOLIC: +9700 off the 1118 origin in 12 sessions, >=2x any prior winter swing, no shelf touch. Call the blow-off: extension to a midday spike-peak (+2600) then the LATE-TAPE ROLL-OVER (the 1007/1113 form) closing well off the high: +1800. At this close the FLIP ARM fires: parabolic extension + blow-off day closed >=~30% off its intraday extreme (actual: peak +3560, closed +2440 = 31% off). The +2440/+3560 full size is the standing extreme-day residual (band-high +2000).",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     300
+    ],
+    [
+     8,
+     600
+    ],
+    [
+     10,
+     1400
+    ],
+    [
+     12,
+     2200
+    ],
+    [
+     14,
+     2600
+    ],
+    [
+     16,
+     2200
+    ],
+    [
+     18,
+     1900
+    ],
+    [
+     20,
+     1800
+    ]
+   ],
+   "refined_net_usd": 1800
   },
   {
    "date": "20251208",
@@ -260,7 +434,65 @@
      -900
     ]
    ],
-   "guessed_net_usd": -900
+   "guessed_net_usd": -900,
+   "refined_archetype": "polarity_flip_confirm_crash",
+   "refined_reasoning": "ARMED crest (1205 blow-off) + the weekend REPRICES AGAINST the parabolic swing (R3-mirror: 1109's gap ran WITH its swing and was faded; a gap AGAINST an armed parabolic crest IS the counter delivery - refined Sunday-span gap -1200, actual -2380+390, size irreducible). Monday = the FIRST COUNTER DAY off a parabolic arm -> band-BREAKING, not the -700..-900 shallow class: crash band -2400..-2900. Its close AT the low + up-leg continuation-collapse (up 3/33, big-up 2/6 - the 1008 up-0/15 form) CONFIRMS THE FLIP: chain polarity = DOWN for every polarity-relative rule from here.",
+   "refined_overnight_gap_usd": -1200,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -200
+    ],
+    [
+     0,
+     -300
+    ],
+    [
+     2,
+     -400
+    ],
+    [
+     4,
+     -500
+    ],
+    [
+     6,
+     -700
+    ],
+    [
+     8,
+     -900
+    ],
+    [
+     10,
+     -1300
+    ],
+    [
+     12,
+     -1700
+    ],
+    [
+     14,
+     -1900
+    ],
+    [
+     16,
+     -2200
+    ],
+    [
+     18,
+     -2400
+    ],
+    [
+     20,
+     -2400
+    ]
+   ],
+   "refined_net_usd": -2400
   },
   {
    "date": "20251209",
@@ -323,7 +555,65 @@
      -700
     ]
    ],
-   "guessed_net_usd": -700
+   "guessed_net_usd": -700,
+   "refined_archetype": "flip_chain_crash_continue",
+   "refined_reasoning": "1208 closed AT its extreme (recovery 1%) -> symmetric R1 in the NEW polarity: chain-side continue, Tuesday trend-weekday concurring, flip momentum young (the young-swing chain rule now points DOWN). Chained-crash band -2400..-2900: -2500.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -200
+    ],
+    [
+     2,
+     -350
+    ],
+    [
+     4,
+     -500
+    ],
+    [
+     6,
+     -600
+    ],
+    [
+     8,
+     -800
+    ],
+    [
+     10,
+     -1200
+    ],
+    [
+     12,
+     -1500
+    ],
+    [
+     14,
+     -1800
+    ],
+    [
+     16,
+     -2200
+    ],
+    [
+     18,
+     -2450
+    ],
+    [
+     20,
+     -2500
+    ]
+   ],
+   "refined_net_usd": -2500
   },
   {
    "date": "20251210",
@@ -386,7 +676,65 @@
      1300
     ]
    ],
-   "guessed_net_usd": 1300
+   "guessed_net_usd": 1300,
+   "refined_archetype": "post_double_crash_continue_decelerating",
+   "refined_reasoning": "1209 also closed AT its low (0% recovery) -> the rules say chain-side continue, decelerating below the ordinary band after two chained -2800s: -700. ACTUAL +370 - the block's lone refined SIGN MISS, declared irreducible: no n>=2 rule distinguishes the third-day pause/small-bounce from continuation when the prior close sits at its extreme (1008->1009 continued in the same state). The day's own tape was two-sided (-1190/+1060) and its counter-spike ROUND-TRIPPED (65% off the high) - which is the failed-rally tell that sets up 1211.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -300
+    ],
+    [
+     8,
+     -450
+    ],
+    [
+     10,
+     -550
+    ],
+    [
+     12,
+     -650
+    ],
+    [
+     14,
+     -700
+    ],
+    [
+     16,
+     -700
+    ],
+    [
+     18,
+     -700
+    ],
+    [
+     20,
+     -700
+    ]
+   ],
+   "refined_net_usd": -700
   },
   {
    "date": "20251211",
@@ -449,7 +797,65 @@
      -750
     ]
    ],
-   "guessed_net_usd": -750
+   "guessed_net_usd": -750,
+   "refined_archetype": "print_liquidity_crash_at_flipped_extreme",
+   "refined_reasoning": "THE FUNDAMENTAL-INVERSION DAY, resolved as ONE rule: prints NEVER own the side - the chain does, at its CURRENT polarity (identical to 1106/1113/1128 bearish-bought in an up-chain; 1023/1218 bullish-sold in a down-chain). Chain = DOWN (flipped 1208). The monster draw only CONFIRMS what the +9700 parabolic run already priced -> at 74% retrace, 3 sessions post-flip, the bullish print is the EXIT LIQUIDITY event: print-liquidity crash band -1800..-4000, mid -2600, accelerating after 10:30. Stacked tell: 1210's counter-spike round-tripped (failed rally -> next session runs hard chain-side; 1230->1231 the repeat). The close through the 4.367 origin SHELF BREAK is the R5-void confirmation: post-parabolic this is a REVERSAL, not a give-back.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -300
+    ],
+    [
+     4,
+     -450
+    ],
+    [
+     6,
+     -550
+    ],
+    [
+     8,
+     -700
+    ],
+    [
+     10,
+     -1000
+    ],
+    [
+     12,
+     -1800
+    ],
+    [
+     14,
+     -2300
+    ],
+    [
+     16,
+     -2500
+    ],
+    [
+     18,
+     -2600
+    ],
+    [
+     20,
+     -2600
+    ]
+   ],
+   "refined_net_usd": -2600
   },
   {
    "date": "20251212",
@@ -512,7 +918,65 @@
      1000
     ]
    ],
-   "guessed_net_usd": 1000
+   "guessed_net_usd": 1000,
+   "refined_archetype": "chain_continue_ordinary",
+   "refined_reasoning": "1211 closed AT its low (0% recovery) -> chain-side continue; post -3970 deceleration into the ordinary down-chain continuation band -1000..-1600: -1200.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -150
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -350
+    ],
+    [
+     8,
+     -450
+    ],
+    [
+     10,
+     -650
+    ],
+    [
+     12,
+     -850
+    ],
+    [
+     14,
+     -1000
+    ],
+    [
+     16,
+     -1100
+    ],
+    [
+     18,
+     -1200
+    ],
+    [
+     20,
+     -1200
+    ]
+   ],
+   "refined_net_usd": -1200
   },
   {
    "date": "20251215",
@@ -575,7 +1039,65 @@
      400
     ]
    ],
-   "guessed_net_usd": 400
+   "guessed_net_usd": 400,
+   "refined_archetype": "cold_delivery_fails_in_flipped_chain",
+   "refined_reasoning": "1212 closed near its low (9% recovery) -> continue. The deepest HDD of the block (32.5) delivers TODAY - but in a FLIPPED chain cold-delivery days FAIL (the market sold the cold all month once the collapse was priced; mirror of autumn where delivery days extended). Small weekend counter-gap (+300 refined) then Monday-big chain-side: continuation band high end -1300. The blind's +400 'secondary crest' was the polarity error at its purest.",
+   "refined_overnight_gap_usd": 300,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -250
+    ],
+    [
+     4,
+     -400
+    ],
+    [
+     6,
+     -500
+    ],
+    [
+     8,
+     -650
+    ],
+    [
+     10,
+     -800
+    ],
+    [
+     12,
+     -950
+    ],
+    [
+     14,
+     -1100
+    ],
+    [
+     16,
+     -1250
+    ],
+    [
+     18,
+     -1300
+    ],
+    [
+     20,
+     -1300
+    ]
+   ],
+   "refined_net_usd": -1300
   },
   {
    "date": "20251216",
@@ -638,7 +1160,65 @@
      -1500
     ]
    ],
-   "guessed_net_usd": -1500
+   "guessed_net_usd": -1500,
+   "refined_archetype": "chain_continue_decelerating",
+   "refined_reasoning": "1215 closed near its low (8%) -> continue, but the chain is now 6 sessions old at a deep extension with the weather lull (HDD falling to 18) already priced by the fall: ordinary band low end -1000, with a late-session stabilization tick (the maturing chain's first exhaustion sign).",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -250
+    ],
+    [
+     2,
+     -450
+    ],
+    [
+     4,
+     -600
+    ],
+    [
+     6,
+     -650
+    ],
+    [
+     8,
+     -700
+    ],
+    [
+     10,
+     -800
+    ],
+    [
+     12,
+     -950
+    ],
+    [
+     14,
+     -1000
+    ],
+    [
+     16,
+     -1050
+    ],
+    [
+     18,
+     -1000
+    ],
+    [
+     20,
+     -1000
+    ]
+   ],
+   "refined_net_usd": -1000
   },
   {
    "date": "20251217",
@@ -701,7 +1281,65 @@
      -800
     ]
    ],
-   "guessed_net_usd": -800
+   "guessed_net_usd": -800,
+   "refined_archetype": "exhausted_chain_leg_alternation_bounce",
+   "refined_reasoning": "THE COUNTER-BOUNCE IS R1-READABLE IN REVERSE POLARITY: 1216 closed 38% off its low WITH a last-hours up-tick (-1640 -> -1020, 16h -1480 -> 18h -1010) = the chain-side leg EXHAUSTED (the symmetric close-vs-extreme read: same signature that called 1111 and 1126 up-side) -> one-day alternation bounce. Exhausted-bounce band +800..+1900, lull-bounce mid: +1200 grind (actual +1880, dir right, upper band).",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     500
+    ],
+    [
+     12,
+     650
+    ],
+    [
+     14,
+     800
+    ],
+    [
+     16,
+     1000
+    ],
+    [
+     18,
+     1100
+    ],
+    [
+     20,
+     1200
+    ]
+   ],
+   "refined_net_usd": 1200
   },
   {
    "date": "20251218",
@@ -764,7 +1402,65 @@
      -900
     ]
    ],
-   "guessed_net_usd": -900
+   "guessed_net_usd": -900,
+   "refined_archetype": "print_crushes_young_bounce",
+   "refined_reasoning": "A one-day counter-bounce does NOT reset polarity - and a scheduled print day following a violent counter-bounce delivers OLD-chain-side THROUGH it (n=3: 1023 G6, 1218, 1224; R4-mirror: the bounce is the counter-swing's fresh extreme, never extended consecutively in a mature chain). The bullish -70.8 draw is chain-sided DOWN (the 1211 rule, smaller: the cold is priced). Print band lower half: morning pop fails at 10:30, -1500.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -200
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     100
+    ],
+    [
+     12,
+     -500
+    ],
+    [
+     14,
+     -1000
+    ],
+    [
+     16,
+     -1350
+    ],
+    [
+     18,
+     -1450
+    ],
+    [
+     20,
+     -1500
+    ]
+   ],
+   "refined_net_usd": -1500
   },
   {
    "date": "20251219",
@@ -827,7 +1523,65 @@
      -400
     ]
    ],
-   "guessed_net_usd": -400
+   "guessed_net_usd": -400,
+   "refined_archetype": "exhausted_leg_bounce_stabilization",
+   "refined_reasoning": "1218 closed 22% off its low with a late up-tick (-2340 -> -1790) = exhausted-ish chain leg, and the chain is now 9 sessions / -14000 crest-to-here (the DOWN-chain itself approaching parabolic exhaustion); cold RETURN entering the model window. Alternation bounce, low band: +600.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -200
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     -200
+    ],
+    [
+     12,
+     100
+    ],
+    [
+     14,
+     300
+    ],
+    [
+     16,
+     450
+    ],
+    [
+     18,
+     550
+    ],
+    [
+     20,
+     600
+    ]
+   ],
+   "refined_net_usd": 600
   },
   {
    "date": "20251222",
@@ -890,7 +1644,65 @@
      800
     ]
    ],
-   "guessed_net_usd": 800
+   "guessed_net_usd": 800,
+   "refined_archetype": "chain_side_probe_thin",
+   "refined_reasoning": "Bounce days are never extended in a mature chain (1217->1218 form; the Sunday session already showed the bounce dying, -150) -> chain-side probe, Christmas-week thin damping a non-catalyst day: -500. Weekend gap +300 refined (cold-return info). The actual -630 came with a -2290 intraday capitulation recovered 72% into the close - the shape is unforecastable but its CLOSE is the loudest exhaustion read of the block, arming 1223.",
+   "refined_overnight_gap_usd": 300,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     50
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     -300
+    ],
+    [
+     12,
+     -500
+    ],
+    [
+     14,
+     -550
+    ],
+    [
+     16,
+     -500
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "refined_net_usd": -500
   },
   {
    "date": "20251223",
@@ -953,7 +1765,65 @@
      600
     ]
    ],
-   "guessed_net_usd": 600
+   "guessed_net_usd": 600,
+   "refined_archetype": "capitulation_recovery_thin_meltup_bounce",
+   "refined_reasoning": "1222 closed 72% off its -2290 low = the deepest capitulation-recovery of the walk (the symmetric-R1 exhausted read at its extreme) on a 13-session parabolic DOWN-chain (-14600 crest-to-low: the flip signature now arms on the down-chain itself) + thin holiday week + the hard_heat RETURN front-run (HDD 26-30 for Dec 26-30 in the models) = the melt-up stack at a fresh turn, band +1600..+2400, top: +2000. Actual +5010: direction and band-entry right, the 2.5x tail is the December-thin amplification - declared irreducible beyond band-high (the walk's standing extreme residual, now two-sided).",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     250
+    ],
+    [
+     10,
+     600
+    ],
+    [
+     12,
+     1000
+    ],
+    [
+     14,
+     1300
+    ],
+    [
+     16,
+     1700
+    ],
+    [
+     18,
+     1900
+    ],
+    [
+     20,
+     2000
+    ]
+   ],
+   "refined_net_usd": 2000
   },
   {
    "date": "20251224",
@@ -1016,7 +1886,65 @@
      700
     ]
    ],
-   "guessed_net_usd": 700
+   "guessed_net_usd": 700,
+   "refined_archetype": "holiday_print_crushes_young_bounce",
+   "refined_reasoning": "ATTACK-6 VERDICT: chain polarity WINS over the young turn - but via a GENERAL rule, not a coin flip: the holiday-shifted print day follows a violent counter-bounce, and a print following a violent counter-bounce delivers OLD-chain-side through it (1023, 1218 -> n=3 with this). The new draw print is bullish and chain-sided DOWN (1211 form, the cold priced by 1223's front-run); thin AMPLIFIES delivery days and the early close does not cap (1128 lesson, down-side form): print-liquidity band low end -1800, flat after the ~14h early close. The residual tension is declared: the 1222/1223 flip signature had fired on the down-chain, yet the print still delivered down - year-end basing is two-sided, not a clean new up-chain.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -300
+    ],
+    [
+     4,
+     -400
+    ],
+    [
+     6,
+     -500
+    ],
+    [
+     8,
+     -700
+    ],
+    [
+     10,
+     -1100
+    ],
+    [
+     12,
+     -1500
+    ],
+    [
+     14,
+     -1800
+    ],
+    [
+     16,
+     -1800
+    ],
+    [
+     18,
+     -1800
+    ],
+    [
+     20,
+     -1800
+    ]
+   ],
+   "refined_net_usd": -1800
   },
   {
    "date": "20251226",
@@ -1079,7 +2007,65 @@
      1600
     ]
    ],
-   "guessed_net_usd": 1600
+   "guessed_net_usd": 1600,
+   "refined_archetype": "postcrash_basing_drift_up",
+   "refined_reasoning": "KNOWN Jan->Feb roll at the 1225 reopen (-0.504 = -5040, EXCLUDED - the walk's first NEGATIVE roll, winter backwardation; real overnight ~0; refined gap +200 = the thin Christmas-session drift). Post-print-crash the chain is 15 sessions old with no new low pressure (1224 held above the 1216/1218 lows); the down-chain flip signature (1222/1223) says TERMINATED-to-basing, not resumed: mild bounce-drift with the returning cold, thin: +500.",
+   "refined_overnight_gap_usd": 200,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     250
+    ],
+    [
+     4,
+     350
+    ],
+    [
+     6,
+     350
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     300
+    ],
+    [
+     12,
+     350
+    ],
+    [
+     14,
+     450
+    ],
+    [
+     16,
+     450
+    ],
+    [
+     18,
+     500
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "refined_net_usd": 500
   },
   {
    "date": "20251229",
@@ -1142,7 +2128,65 @@
      -800
     ]
    ],
-   "guessed_net_usd": -800
+   "guessed_net_usd": -800,
+   "refined_archetype": "basing_hold",
+   "refined_reasoning": "Basing regime, no print, cold already delivering and priced (P5 caps the weekend), 1226 closed mid-range (42% off its high - no exhaustion read either way): HOLD day, +-200 band, call 0 (actual -10 - the hold band held even here; the day's -1580/+460 intraday round-trip is the basing violence inside a flat net).",
+   "refined_overnight_gap_usd": 200,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -300
+    ],
+    [
+     4,
+     -350
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -50
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     0
+    ],
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     0
+    ]
+   ],
+   "refined_net_usd": 0
   },
   {
    "date": "20251230",
@@ -1205,7 +2249,65 @@
      1000
     ]
    ],
-   "guessed_net_usd": 1000
+   "guessed_net_usd": 1000,
+   "refined_archetype": "cold_peak_spike_fade",
+   "refined_reasoning": "HDD 30.1 return-peak delivery day - but the regime is flipped/basing, and cold-delivery days FAIL post-flip (1215): expect the up-attempt as a peaked_fast SPIKE that round-trips (grind-vs-spike, 23/24), net small: +100 with a morning spike shape (actual: +1990 spike at 10h faded to +180 - shape and net both confirmed). The full round-trip is the FAILED-RALLY TELL (1210->1211 form): the best remaining bullish catalyst could not hold a rally -> next session runs hard chain-side.",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     250
+    ],
+    [
+     10,
+     700
+    ],
+    [
+     12,
+     400
+    ],
+    [
+     14,
+     200
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     100
+    ],
+    [
+     20,
+     100
+    ]
+   ],
+   "refined_net_usd": 100
   },
   {
    "date": "20251231",
@@ -1268,7 +2370,66 @@
      -200
     ]
    ],
-   "guessed_net_usd": -200
+   "guessed_net_usd": -200,
+   "refined_archetype": "nye_liquidation_flush",
+   "refined_reasoning": "1230's counter-chain spike ROUND-TRIPPED (91% - the failed-rally tell, n=2 in-chain: 1210->1211; mirror 1002->1003 G4) -> the session runs hard chain-side; NYE thin is an AMPLIFIER on a delivery/liquidation day in a crash regime (the 1223/1224 two-sided-violence lesson: year-end squaring is NOT a damper, it is the liquidation's own catalyst). Crash band: -2000 (actual -2630; the blind's -200 'thin-hold' was the last polarity/thin error of the block).",
+   "refined_overnight_gap_usd": 0,
+   "refined_guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -200
+    ],
+    [
+     0,
+     -350
+    ],
+    [
+     2,
+     -600
+    ],
+    [
+     4,
+     -800
+    ],
+    [
+     6,
+     -950
+    ],
+    [
+     8,
+     -1100
+    ],
+    [
+     10,
+     -1400
+    ],
+    [
+     12,
+     -1650
+    ],
+    [
+     14,
+     -1800
+    ],
+    [
+     16,
+     -1950
+    ],
+    [
+     18,
+     -2000
+    ],
+    [
+     20,
+     -2000
+    ]
+   ],
+   "refined_net_usd": -2000
   }
- ]
+ ],
+ "refine_note": "S98.2 UNBLINDED per-group refine (G9). Refined curves derive ONLY from general rules + decision-state + prior-day ACTUAL tape (incl. Sunday sessions); sizes from condition-class bands (December crash-regime bands), never the target day's tape. Rules applied UNIFORMLY and back-checked on G3-G8. Refined direction 19/20 (1210 the lone sign miss, declared; 1229 hold-called, actual -10). Refined close-cum ~-9050 vs actual roll-adjusted -6150 (drift ~-2900, dominated by the declared-irreducible 1223 +5010 tail and the 1205 +2440 crest tail). Blind fields untouched."
 }

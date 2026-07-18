@@ -33,10 +33,14 @@ superseded ones down. (Started S81, 2026-07-12.)
   reveal packages: per-day actuals + per-leg fingerprint counts; kept for the LIVE-coach mode).
 - **`research/kalshi/forecasts/grp7.json`** — G7 blind + refined fields per day; `grp7_seq_experiment.json` —
   the paused 3-day day-sequential experiment (its 1106 +1450g/+1350a hit = the day-boundary-turn evidence).
-- **`research/kalshi/knowledge/ng_brain.json`** — **s96.2, 16 plays** (S96 new: giveback_exhaustion_boundary,
-  mature_swing_alternation, giveback_origin_shelf). Backups + s96.2 proposal alongside.
-- **`research/kalshi/renders/ng_refine_s95/`** — adds g7_{continuous,overlay}.png, g7_refined_*.png,
-  g7_rt/score jsons, grp7_state.json, grp7_reveals.json; fingerprints.json extended with Nov 4-18.
+- **`research/kalshi/knowledge/ng_brain.json`** — **s98.2, 20 plays** (S96 arc added: giveback_exhaustion_
+  boundary, mature_swing_alternation, giveback_origin_shelf, catalyst_continuity_frontrun,
+  chain_polarity_flip, failed_rally_tell, crash_regime_bands). Backups + all proposals alongside.
+- **`research/kalshi/forecasts/grp{7,8,9}.json`** — blind + refined fields per day for the three winter
+  blocks; `grp9` is the 20-day December surplus-collapse block (first block-lean miss -> polarity flip).
+- **`research/kalshi/renders/ng_refine_s95/`** — g{7,8,9}_{continuous,overlay}.png + g{7,8,9}_refined_*.png +
+  rt/score jsons + grp{7,8,9}_state.json + grp7_reveals.json; fingerprints.json extended Nov 4 -> Dec 31
+  (41 characterized days total).
 
 ## S95 — continuous-curve + roll-adjustment + refinement machinery (CURRENT)
 - **`research/kalshi/continuous_rt.py`** — THE RENDER FILE (canonical, date-parameterized): real-price RT

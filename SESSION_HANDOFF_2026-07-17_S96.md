@@ -1,4 +1,30 @@
-# SESSION HANDOFF — S96 (work date 2026-07-17) — G7 the first WINTER block: one-shot blind + the per-group ITERATIVE refine; protocol settled (one-shot canonical); brain s96.2 (16 plays)
+# SESSION HANDOFF — S96 (work date 2026-07-17) — THREE winter blocks walked (G7, G8, G9-December); protocol settled (one-shot canonical + per-group refine); brain s95.2 -> s98.2 (13 -> 20 plays)
+
+## SESSION TOTAL (updated end-of-session — G8 and G9 ran after the G7 sections below)
+- **G8 (Nov 19 - Dec 2)** blind on s96.2: direction 7/10, block lean RIGHT (+3150g/+4640a, drift -1100).
+  Refine -> **s97.2** (17 plays): NEW `timing.catalyst_continuity_frontrun` (live cold-ramp -> the resume
+  front-runs the print; no ramp -> waits; n=2+2 spanning groups); R2 leg-vs-net split (12/12); R1 ramp/depth
+  arms; winter bands; weekend gap = NEW closure info only; thin AMPLIFIES delivery, damps holds. Refined:
+  direction 10/10, drift -250. Dec->Jan roll on the 1121->1123 weekend (+0.039). Thanksgiving = a REAL thin
+  session (harness map corrected closed->thin; 13.6k prints).
+- **G9 (Dec 3-31, the LONG surplus-collapse block, 20 days)** blind on s97.2: **the first BLOCK-LEAN MISS** —
+  direction 13/20 but +3000g vs ~-6150a roll-adjusted; the market crested Dec 5 (5.337) and SOLD THE COLD all
+  month (surplus +201 -> +15; the walk's first NEGATIVE roll, Jan->Feb -0.504 at the Christmas reopen =
+  winter BACKWARDATION). Refine -> **s98.2** (20 plays): NEW `structure.chain_polarity_flip` (parabolic-run
+  ARM [>=1.5-2x the season's prior largest swing, >=9 sessions] + band-breaking counter-day CONFIRM with
+  old-side continuation-collapse; back-checked on the 1007 top AND 1016 bottom; post-flip the R5 shelf is
+  VOID), `structure.failed_rally_tell` (counter-chain spike round-trips -> next session runs hard chain-side),
+  `magnitude.crash_regime_bands`; fundamental-inversion DISSOLVED into ONE rule (prints are chain-sided at
+  current POLARITY, 7/7); symmetric R1 boundary read (the down-chain's bounces were all R1-readable). Refined:
+  direction 18/20 (1210 pause + a -10 flat), cumulative tracks the crash (drift ±1000 until the declared 1223
+  +5010 tail; final -2900 vs the blind's +10k float). Irreducibles: two-sided extreme tails, Sunday-gap size,
+  third-day pause (n=1 each way), post-termination basing.
+- Renders printed to Greg at every step (blind + refined, all three groups). Refine cadence = per group
+  (Greg); refine bar = iterate-to-tracking via GENERAL rules only (Greg). All merged brains + proposals +
+  backups + records committed. NEXT = G10 (January) — see `KICKOFF_2026-07-17_S97.md`.
+
+---
+(The sections below were written at the G7 milestone and stand as the detailed G7 record.)
 
 Branch: `claude/ng-coach-continuous-curve-7pk2gf` (== `claude/ng-coach-agent-loop-5ha5bf` S95 tip + S96 work,
 pushed). Read `KICKOFF_2026-07-17_S97.md` next session. git = CODE + committed renders/records; S3 = the tape;
