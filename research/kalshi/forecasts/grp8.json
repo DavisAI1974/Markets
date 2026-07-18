@@ -1,0 +1,644 @@
+{
+ "group": 8,
+ "tag": "g8",
+ "brain_version": "s96.2",
+ "protocol": "one_shot_block_blind",
+ "anchor": {
+  "date": "20251118",
+  "price": 4.366,
+  "last_hour_dir": "down"
+ },
+ "block_lean": "UP: the G7 terminal give-back stopped ON the origin shelf (R5, ~78% retrace, 1118 +270 stabilization) so the winter up-swing RESUMES off the shelf, powered by the first-withdrawal print (1120) plus the HDD ramp mod_heat->hard_heat (13->27.8) into December - HDD beats the widening surplus (n=2) - with the R4 alternation rhythm (extend / give-back / resume) sequencing the days and the hard_heat Thanksgiving-week stack (first-withdrawal + cold shock + thin liquidity) carrying the block to a new cum-extreme above the 4.598 G7 high, guessed close-cum ~ +3150 (~4.68).",
+ "days": [
+  {
+   "date": "20251119",
+   "dow": "Wed",
+   "group": 8,
+   "archetype": "post_stabilization_hold_drift_up",
+   "reasoning": "Flows from the 4.366 anchor. R5 fired 1118 (+270 bounce on the origin shelf after -2590 give-back) = the turn is armed but only 1 session old and the anchor's LAST HOUR ticked DOWN -80 (soft close, not a roaring resume). Analog 0923 bounce -> 0924 hold: the session after the shelf bounce is a probe/hold day, the real resume waits for the catalyst (tomorrow's first-withdrawal Thursday). Wed weak up-lean archetype agrees. Small negative gap carrying the anchor's soft last hour, then a mild up grind.",
+   "overnight_gap_usd": -30,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     10
+    ],
+    [
+     4,
+     20
+    ],
+    [
+     6,
+     30
+    ],
+    [
+     8,
+     40
+    ],
+    [
+     10,
+     60
+    ],
+    [
+     12,
+     100
+    ],
+    [
+     14,
+     130
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     150
+    ],
+    [
+     20,
+     150
+    ]
+   ],
+   "guessed_net_usd": 150
+  },
+  {
+   "date": "20251120",
+   "dow": "Thu",
+   "group": 8,
+   "archetype": "storage_thursday_turn_resume_up",
+   "reasoning": "Flows from guessed 4.378. THE catalyst day: the 10:30 print is the season's FIRST WITHDRAWAL (psychological turn). R2 (10/10): side = the running swing / just-armed turn, NEVER the print sign - the turn armed 1118 (R5 shelf bounce) + 1119 hold is exactly the 0923-bounce + 0924-hold -> 0925 Thursday-delivers pattern (also 1030 +2580: Thursday delivering an armed turn at a stretched extreme). The widening surplus (+146, print 5.2 above) is IGNORED per R2/G7 (1106 rallied through +10.8-above). Size UP: storage-Thursday magnitude + turn-resume + first-withdrawal stack.",
+   "overnight_gap_usd": 30,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     30
+    ],
+    [
+     4,
+     40
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     80
+    ],
+    [
+     10,
+     150
+    ],
+    [
+     12,
+     650
+    ],
+    [
+     14,
+     850
+    ],
+    [
+     16,
+     900
+    ],
+    [
+     18,
+     920
+    ],
+    [
+     20,
+     900
+    ]
+   ],
+   "guessed_net_usd": 900
+  },
+  {
+   "date": "20251121",
+   "dow": "Fri",
+   "group": 8,
+   "archetype": "post_resumption_hold_range",
+   "reasoning": "Flows from guessed 4.471. R4's post-violent-resumption rule: the session after a big resume day is a HOLD (0924 +50 after 0923; 1112 +100 after 1111) - probes fail, net ~0. Friday range archetype agrees; the young swing (3 sessions) keeps the bid under it so the hold drifts slightly up rather than giving back. Roll to Jan lands on THIS weekend - the Sunday jump is ~+390 artifact, not forecast here (data.contract_roll).",
+   "overnight_gap_usd": 20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     10
+    ],
+    [
+     2,
+     20
+    ],
+    [
+     4,
+     30
+    ],
+    [
+     6,
+     20
+    ],
+    [
+     8,
+     30
+    ],
+    [
+     10,
+     60
+    ],
+    [
+     12,
+     80
+    ],
+    [
+     14,
+     120
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     120
+    ],
+    [
+     20,
+     100
+    ]
+   ],
+   "guessed_net_usd": 100
+  },
+  {
+   "date": "20251124",
+   "dow": "Mon",
+   "group": 8,
+   "archetype": "monday_weekend_gap_extend_cold_arriving",
+   "reasoning": "Flows from guessed 4.483. REAL weekend repricing (roll ~+390 excluded): the weekend weather models show the hard_heat shock landing Thanksgiving week (state: HDD 13 -> 21 -> 27.8 path), so a real up-gap +250 prices the incoming cold. R3 reaction: the turn is 3-4 sessions old - not the mature-swing-at-fresh-extreme fade case (Friday was a HOLD, not a material extreme close), so Monday carries/extends Friday's up side with the live cold catalyst. Monday bigness (size up) + first-withdrawal regime: the US session extends the gap.",
+   "overnight_gap_usd": 250,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0,
+     40
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     60
+    ],
+    [
+     6,
+     80
+    ],
+    [
+     8,
+     120
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     400
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     600
+    ],
+    [
+     18,
+     620
+    ],
+    [
+     20,
+     600
+    ]
+   ],
+   "guessed_net_usd": 600
+  },
+  {
+   "date": "20251125",
+   "dow": "Tue",
+   "group": 8,
+   "archetype": "mature_swing_giveback",
+   "reasoning": "Flows from guessed 4.568 - a material fresh cum-extreme (+850 over two sessions, back near the 4.598 G7 high). R4 fires: the swing is now 4+ sessions from the 1118 turn = MATURE, and a material fresh extreme close is NEVER followed by a consecutive extension (G7 5/5) - even against the Tuesday trend archetype (block rhythm overrides DOW). Forecast the give-back sized from the mature-swing band (-500..-900, moderated: the swing only just matured and the cold catalyst is 2 days out), closing ~+100 off its low with a late counter-tick = the EXHAUSTED R1 signature that sets up the pre-holiday resume.",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -10
+    ],
+    [
+     0,
+     -20
+    ],
+    [
+     2,
+     -30
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     -60
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     -250
+    ],
+    [
+     12,
+     -400
+    ],
+    [
+     14,
+     -500
+    ],
+    [
+     16,
+     -550
+    ],
+    [
+     18,
+     -480
+    ],
+    [
+     20,
+     -450
+    ]
+   ],
+   "guessed_net_usd": -450
+  },
+  {
+   "date": "20251126",
+   "dow": "Wed",
+   "group": 8,
+   "archetype": "giveback_exhausted_resume_pre_holiday_cold",
+   "reasoning": "Flows from guessed 4.521. R1 boundary read on the guessed 1125 tape: give-back closed well off its low with a last-hours counter-tick and the up-swing's legs intact (no continuation-collapse in a strengthening-HDD regime) -> EXHAUSTED -> the swing RESUMES, sized UP because it lands on a catalyst: the hard_heat shock arrives TOMORROW (HDD 15 -> 21) and Wednesday is the last full session to position before the thin holiday - the 1110->1111 resume-into-cold-shock form. Grind shape (holds), new cum-extreme at the close.",
+   "overnight_gap_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     20
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     80
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     120
+    ],
+    [
+     8,
+     180
+    ],
+    [
+     10,
+     300
+    ],
+    [
+     12,
+     450
+    ],
+    [
+     14,
+     550
+    ],
+    [
+     16,
+     650
+    ],
+    [
+     18,
+     700
+    ],
+    [
+     20,
+     700
+    ]
+   ],
+   "guessed_net_usd": 700
+  },
+  {
+   "date": "20251127",
+   "dow": "Thu",
+   "group": 8,
+   "archetype": "thanksgiving_thin_hold_no_giveback",
+   "reasoning": "Flows from guessed 4.596. Thanksgiving = REAL but THIN (~25% volume); the EIA print does NOT land here (holiday shift - the 1128 state carries it), so no storage catalyst intraday. R4 post-violent-resumption: after the 1126 resume the session is a HOLD (0924, 1112 form) - and the S96-corrected holiday lesson cuts BOTH ways: thin calendar is not an automatic size-down when hard_heat is live (HDD 21.1 arrives today), but with the R4 hold rhythm the cold shock KEEPS the bid rather than launching a fresh leg. Thin drift up, gains held into the close.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     30
+    ],
+    [
+     4,
+     40
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     60
+    ],
+    [
+     10,
+     80
+    ],
+    [
+     12,
+     100
+    ],
+    [
+     14,
+     100
+    ],
+    [
+     16,
+     100
+    ],
+    [
+     18,
+     100
+    ],
+    [
+     20,
+     100
+    ]
+   ],
+   "guessed_net_usd": 100
+  },
+  {
+   "date": "20251128",
+   "dow": "Fri",
+   "group": 8,
+   "archetype": "storage_print_early_close_swing_up",
+   "reasoning": "Flows from guessed 4.606. This short session carries the holiday-shifted storage print (18 above - the surplus jumps +148 -> +166, BEARISH on its face). R2 (10/10, the block's hardest rule): the print leg sides with the RUNNING SWING, never the print sign - the up-swing resumed 1126 and held 1127, and HDD is ramping 23.7 -> 27+ into the weekend (G7 precedent: 1106 +1350 THROUGH a +10.8-above print). Storage-day magnitude UP but capped by the early close (~13-14 ET): the morning leg delivers, then flat.",
+   "overnight_gap_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     30
+    ],
+    [
+     4,
+     40
+    ],
+    [
+     6,
+     60
+    ],
+    [
+     8,
+     100
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     450
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     500
+    ],
+    [
+     18,
+     500
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "guessed_net_usd": 500
+  },
+  {
+   "date": "20251201",
+   "dow": "Mon",
+   "group": 8,
+   "archetype": "monday_gap_fade_mature_extreme",
+   "reasoning": "Flows from guessed 4.661 - a fresh cum-extreme well above the G7 high. The weekend reprices the HDD peak (27.4, the shock's deepest day) as a real Sunday up-gap. R3 reaction: gap WITH a MATURE swing (9 sessions from the 1118 turn) to a fresh cum-extreme -> Monday FADES it (1109 +1560 -> 1110 -820 form). Monday bigness holds (size the fade up), but the fade closes off its low (the cold regime is still live - give-back, not reversal; R1 exhausted signature into 1202).",
+   "overnight_gap_usd": 300,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     -60
+    ],
+    [
+     6,
+     -80
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -300
+    ],
+    [
+     12,
+     -450
+    ],
+    [
+     14,
+     -550
+    ],
+    [
+     16,
+     -650
+    ],
+    [
+     18,
+     -620
+    ],
+    [
+     20,
+     -600
+    ]
+   ],
+   "guessed_net_usd": -600
+  },
+  {
+   "date": "20251202",
+   "dow": "Tue",
+   "group": 8,
+   "archetype": "giveback_exhausted_resume_tuesday_trend",
+   "reasoning": "Flows from guessed 4.631. R1 boundary read on the guessed 1201 tape: the Monday gap-fade closed ~+50 off its low with a late counter-tick while the up-swing's legs stay intact (HDD 27.8 = the regime's peak demand day, no continuation-collapse) -> give-back EXHAUSTED -> resume the swing. Tuesday = strongest-trend weekday agrees. Sized as a catalyst resume (+500, moderated below the +800..+1400 band because the swing is old and stretched); block closes at a new cum-extreme ~+3150 over the anchor (~4.68).",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     30
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     60
+    ],
+    [
+     6,
+     80
+    ],
+    [
+     8,
+     120
+    ],
+    [
+     10,
+     220
+    ],
+    [
+     12,
+     350
+    ],
+    [
+     14,
+     430
+    ],
+    [
+     16,
+     500
+    ],
+    [
+     18,
+     520
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "guessed_net_usd": 500
+  }
+ ]
+}

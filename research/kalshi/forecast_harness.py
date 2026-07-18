@@ -73,7 +73,9 @@ def _storage_asof(iso: str, series: dict) -> dict | None:
 # the walk advances. Dates are the OBSERVED market date.
 _HOLIDAYS = {
     "2025-10-13": ("Columbus_Day", "thin"),          "2025-11-11": ("Veterans_Day", "thin"),
-    "2025-11-27": ("Thanksgiving", "closed"),        "2025-11-28": ("day_after_Thanksgiving", "early_close"),
+    "2025-11-27": ("Thanksgiving", "thin"),          "2025-11-28": ("day_after_Thanksgiving", "early_close"),
+    # S96 correction: CME Globex energy TRADES a thin shortened Thanksgiving session (2025-11-27 printed
+    # ~13.6k trades, ~25% of normal) - it is NOT closed; only the equity-style full closure days are.
     "2025-12-24": ("Christmas_Eve", "early_close"),  "2025-12-25": ("Christmas", "closed"),
     "2025-12-31": ("New_Years_Eve", "thin"),         "2026-01-01": ("New_Years_Day", "closed"),
     "2026-01-19": ("MLK_Day", "thin"),               "2026-02-16": ("Presidents_Day", "thin"),
