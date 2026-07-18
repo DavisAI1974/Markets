@@ -1,0 +1,1274 @@
+{
+ "group": 9,
+ "tag": "g9",
+ "brain_version": "s97.2",
+ "protocol": "one_shot_block_blind",
+ "anchor": {
+  "date": "20251202",
+  "price": 4.83,
+  "last_hour_dir": "up"
+ },
+ "block_lean": "The block is one continuing alternation chain on a mature but intact demand-led up-swing: the 1202 crest give-back closed with a last-hour UP tick under a live hard_heat ramp (R1 ramp arm), so Dec opens with a resume front-running the Dec 4 print, cresting locally into the Dec 4-5 HDD-30+ delivery (~4.98), then a second higher crest ~Dec 15 (deepest HDD 32.5 + the monster-draw print front-run) that rolls over late (the 1007/1113 form) into the TERMINAL give-back of the whole 1118-origin swing through the Dec 17-24 mod_heat lull (deep chained lull give-backs, stabilizing ~4.67 near a ~70% retrace of the December sub-structure, well above the 4.37 origin shelf - give-back-not-reversal). The post-Christmas hard_heat return (HDD 26-30, NEW info over the closures) plus surplus-collapse prints and winter backwardation drive a thin-amplified year-end resume (1111/1128 melt-up form on 1226), alternated by R4 give-backs and damped into NYE by year-end squaring; the block closes materially above the anchor (~+3000) but off its highs, having V'd hard in the middle.",
+ "days": [
+  {
+   "date": "20251203",
+   "dow": "Wed",
+   "group": 9,
+   "archetype": "ramp_resume_frontrun",
+   "reasoning": "Flows from 4.830: the 1202 crest give-back (-710) closed well off its extreme with a last-hour UP tick, swing legs intact (1201 +890, 1128 healthy) - R1 giveback_exhaustion_boundary EXHAUSTED, and the ramp arm applies (hard_heat live, HDD 26.9 rising to 30+ Dec 4-5). timing.catalyst_continuity_frontrun: live ramp means the resume fires TODAY, front-running the Dec 4 print (the 1118->1119 form). Winter resume band, lower half for the mature swing: +1400.",
+   "overnight_gap_usd": 100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     150
+    ],
+    [
+     6,
+     200
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     500
+    ],
+    [
+     12,
+     800
+    ],
+    [
+     14,
+     1100
+    ],
+    [
+     16,
+     1300
+    ],
+    [
+     18,
+     1400
+    ],
+    [
+     20,
+     1400
+    ]
+   ],
+   "guessed_net_usd": 1400
+  },
+  {
+   "date": "20251204",
+   "dow": "Thu",
+   "group": 9,
+   "archetype": "storage_thu_postviolent_giveback",
+   "reasoning": "From guessed 4.980 after a violent front-run resume: exact 1119->1120 analog (P2 precedence). R2 owns the LEG - the 10:30 print pops WITH the up-swing regardless of the bearish +34.6-above sign - but the day NET is the chain's post-violent-extension alternation give-back (R4, mature swing at a material fresh extreme). Ramp-live shallow band: pop ~+600 round-trips to -800.",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     0
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     50
+    ],
+    [
+     8,
+     100
+    ],
+    [
+     10,
+     150
+    ],
+    [
+     12,
+     600
+    ],
+    [
+     14,
+     -200
+    ],
+    [
+     16,
+     -500
+    ],
+    [
+     18,
+     -700
+    ],
+    [
+     20,
+     -800
+    ]
+   ],
+   "guessed_net_usd": -800
+  },
+  {
+   "date": "20251205",
+   "dow": "Fri",
+   "group": 9,
+   "archetype": "ramp_resume_to_crest",
+   "reasoning": "From guessed 4.895: R1 ramp arm - under the live ramp (HDD 30.5 today, the block's early peak delivering) a one-day give-back resumes regardless of close-recovery fraction (1120->1121 form, +910). Friday range archetype overridden by the momentum regime. Non-catalyst resume band +900 - this prints the first crest ~4.985 as the deepest early-HDD is realized and the models begin showing the Dec 9-10 easing.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     200
+    ],
+    [
+     10,
+     350
+    ],
+    [
+     12,
+     550
+    ],
+    [
+     14,
+     700
+    ],
+    [
+     16,
+     850
+    ],
+    [
+     18,
+     900
+    ],
+    [
+     20,
+     900
+    ]
+   ],
+   "guessed_net_usd": 900
+  },
+  {
+   "date": "20251208",
+   "dow": "Mon",
+   "group": 9,
+   "archetype": "crest_giveback_monday",
+   "reasoning": "From guessed 4.985: the weekend adds little NEW (cold was priced through the week, P5) - small negative gap as the models firm the Dec 10 lull dip. R3 no-material-gap would carry Friday, but R4 outranks: mature swing at a fresh extreme with the delivered HDD peak behind it -> crest give-back, Monday-big. Ramp fading toward the lull: top of shallow band, -900.",
+   "overnight_gap_usd": -100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -200
+    ],
+    [
+     8,
+     -300
+    ],
+    [
+     10,
+     -450
+    ],
+    [
+     12,
+     -650
+    ],
+    [
+     14,
+     -800
+    ],
+    [
+     16,
+     -900
+    ],
+    [
+     18,
+     -850
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "guessed_net_usd": -900
+  },
+  {
+   "date": "20251209",
+   "dow": "Tue",
+   "group": 9,
+   "archetype": "giveback_continue",
+   "reasoning": "From guessed 4.885: 1208 modeled closing at its low (not exhausted, R1 continue arm) and the near-term weather stream is easing (HDD 26.4 falling into the 20.9 Dec 10 dip) - no live ramp to force the resume. Tuesday strongest-trend continuation of the give-back: -700, dipping just below the anchor (~4.815) - the give-back's floor zone before the re-cold arms.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -200
+    ],
+    [
+     10,
+     -350
+    ],
+    [
+     12,
+     -450
+    ],
+    [
+     14,
+     -550
+    ],
+    [
+     16,
+     -650
+    ],
+    [
+     18,
+     -700
+    ],
+    [
+     20,
+     -700
+    ]
+   ],
+   "guessed_net_usd": -700
+  },
+  {
+   "date": "20251210",
+   "dow": "Wed",
+   "group": 9,
+   "archetype": "reramp_resume_frontrun",
+   "reasoning": "From guessed 4.815: the weekend re-cold (the Dec 13-15 spike, HDD 32.5 Monday) enters the model window - the ramp goes LIVE again, R1 ramp arm fires the resume off the 2-day give-back, and catalyst_continuity front-runs tomorrow's print (the 1118->1119 / 1203 form repeated). Winter resume band: +1300.",
+   "overnight_gap_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     400
+    ],
+    [
+     10,
+     600
+    ],
+    [
+     12,
+     850
+    ],
+    [
+     14,
+     1050
+    ],
+    [
+     16,
+     1200
+    ],
+    [
+     18,
+     1300
+    ],
+    [
+     20,
+     1300
+    ]
+   ],
+   "guessed_net_usd": 1300
+  },
+  {
+   "date": "20251211",
+   "dow": "Thu",
+   "group": 9,
+   "archetype": "storage_thu_postviolent_giveback",
+   "reasoning": "From guessed 4.950 after the violent 1210 resume: the monster-draw print (-83.2 below seasonal, the surplus collapse) lands 10:30 - R2 says the leg pops WITH the up-swing and sized up, but the chain owns the net: post-violent-extension print day = alternation give-back with a round-tripping with-swing print leg (1002, 1120; 12/12 at leg level). Front-run already done: pop ~+700 rolls to -750 (ramp-live shallow).",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     50
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     700
+    ],
+    [
+     14,
+     -100
+    ],
+    [
+     16,
+     -450
+    ],
+    [
+     18,
+     -650
+    ],
+    [
+     20,
+     -750
+    ]
+   ],
+   "guessed_net_usd": -750
+  },
+  {
+   "date": "20251212",
+   "dow": "Fri",
+   "group": 9,
+   "archetype": "ramp_resume",
+   "reasoning": "From guessed 4.875: R1 ramp arm again - the weekend cold spike (deepest of the block) is imminent and live in every model run, swing legs intact, so the one-day print give-back resumes regardless of close shape (1120->1121). Friday archetype overridden. +1000 into the weekend, ~4.975.",
+   "overnight_gap_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     150
+    ],
+    [
+     6,
+     200
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     450
+    ],
+    [
+     12,
+     650
+    ],
+    [
+     14,
+     800
+    ],
+    [
+     16,
+     950
+    ],
+    [
+     18,
+     1000
+    ],
+    [
+     20,
+     1000
+    ]
+   ],
+   "guessed_net_usd": 1000
+  },
+  {
+   "date": "20251215",
+   "dow": "Mon",
+   "group": 9,
+   "archetype": "secondary_crest_late_rollover",
+   "reasoning": "From guessed 4.975: real weekend gap +300 (the spike's final intensity partially NEW over the closure, but the ramp was already priced since 1210 - P5 caps it well below the 1109 form). Delivery day of the block's deepest HDD (32.5): Monday-big extension intraday, but by now the forward stream turns BEARISH (the Dec 17-24 mod_heat lull fills the window) and the structure is at a fresh cum-extreme on an old swing - the day CRESTS midday (~+900) and rolls over late (the 1007/1113 late-tape roll-over that ARMS the terminal give-back), closing +400 at the block top ~5.045.",
+   "overnight_gap_usd": 300,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     200
+    ],
+    [
+     2,
+     250
+    ],
+    [
+     4,
+     300
+    ],
+    [
+     6,
+     350
+    ],
+    [
+     8,
+     500
+    ],
+    [
+     10,
+     700
+    ],
+    [
+     12,
+     900
+    ],
+    [
+     14,
+     800
+    ],
+    [
+     16,
+     600
+    ],
+    [
+     18,
+     450
+    ],
+    [
+     20,
+     400
+    ]
+   ],
+   "guessed_net_usd": 400
+  },
+  {
+   "date": "20251216",
+   "dow": "Tue",
+   "group": 9,
+   "archetype": "terminal_giveback_lull_deep",
+   "reasoning": "From guessed 5.045 with the 1215 late roll-over armed (cross_block_reversion FIRE trigger: cum-extreme + last-hours counter-move): the terminal give-back begins as the lull goes live (HDD 25.3 falling to 18s, models flat-warm through Christmas). Lull give-backs are DEEP (-1500..-1800 band; 1116-form) and Tuesday trend-continuation carries it: -1500.",
+   "overnight_gap_usd": -100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -300
+    ],
+    [
+     8,
+     -500
+    ],
+    [
+     10,
+     -800
+    ],
+    [
+     12,
+     -1100
+    ],
+    [
+     14,
+     -1300
+    ],
+    [
+     16,
+     -1450
+    ],
+    [
+     18,
+     -1500
+    ],
+    [
+     20,
+     -1500
+    ]
+   ],
+   "guessed_net_usd": -1500
+  },
+  {
+   "date": "20251217",
+   "dow": "Wed",
+   "group": 9,
+   "archetype": "giveback_chain_continue",
+   "reasoning": "From guessed 4.885: 1216 modeled closing at its extreme with last hours extending (R1 NOT-exhausted -> continue, the 1114->1117 form) and the bearish lull stream is the live catalyst (mod_heat 18.0) - lull give-backs chain (1114+1117 -2410). -800, through the anchor to ~4.805.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -200
+    ],
+    [
+     8,
+     -300
+    ],
+    [
+     10,
+     -450
+    ],
+    [
+     12,
+     -600
+    ],
+    [
+     14,
+     -700
+    ],
+    [
+     16,
+     -750
+    ],
+    [
+     18,
+     -800
+    ],
+    [
+     20,
+     -800
+    ]
+   ],
+   "guessed_net_usd": -800
+  },
+  {
+   "date": "20251218",
+   "dow": "Thu",
+   "group": 9,
+   "archetype": "storage_thu_with_downchain",
+   "reasoning": "From guessed 4.805: the -70.8-below draw print is bullish but R2 sides the print leg with the RUNNING state, and the running state is the terminal give-back (the 1023 form: give-back-swing Thursday delivered DOWN -1640 through the fundamentals) - the chain, not the print sign, owns the day. Brief print pop fails, the down leg dominates, sized up for the Thursday: -900 to ~4.715.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -200
+    ],
+    [
+     10,
+     -250
+    ],
+    [
+     12,
+     -500
+    ],
+    [
+     14,
+     -700
+    ],
+    [
+     16,
+     -850
+    ],
+    [
+     18,
+     -900
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "guessed_net_usd": -900
+  },
+  {
+   "date": "20251219",
+   "dow": "Fri",
+   "group": 9,
+   "archetype": "capitulation_stabilization",
+   "reasoning": "From guessed 4.715: the give-back is now -3300 off the 1215 top, ~70%+ retrace of the December sub-structure and sitting on the late-November consolidation shelf (4.65-4.72) - R5/depth arm: at deep retrace the closes-at-low read INVERTS, a capitulation extreme precedes the bounce (0922, 1016, 1117, 1125). Midday capitulation to ~-900 recovers into the close (-400, ~4.675) - the stabilization day that arms the year-end turn; the post-Christmas hard_heat return is just entering the 7-day window.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -150
+    ],
+    [
+     4,
+     -200
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -400
+    ],
+    [
+     10,
+     -650
+    ],
+    [
+     12,
+     -900
+    ],
+    [
+     14,
+     -800
+    ],
+    [
+     16,
+     -600
+    ],
+    [
+     18,
+     -450
+    ],
+    [
+     20,
+     -400
+    ]
+   ],
+   "guessed_net_usd": -400
+  },
+  {
+   "date": "20251222",
+   "dow": "Mon",
+   "group": 9,
+   "archetype": "fresh_turn_gap_extend",
+   "reasoning": "From guessed 4.675: the weekend model runs pull the Dec 26-31 hard_heat return fully into view - genuinely NEW closure info (the 1109 form, smaller) -> real gap +400. R3: a gap at a FRESH turn (1219 stabilization) is EXTENDED, not faded (1019->1020). Christmas-week thin damps holds but this is a delivery/turn day: +800 to ~4.795.",
+   "overnight_gap_usd": 400,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     500
+    ],
+    [
+     12,
+     600
+    ],
+    [
+     14,
+     700
+    ],
+    [
+     16,
+     800
+    ],
+    [
+     18,
+     800
+    ],
+    [
+     20,
+     800
+    ]
+   ],
+   "guessed_net_usd": 800
+  },
+  {
+   "date": "20251223",
+   "dow": "Tue",
+   "group": 9,
+   "archetype": "young_turn_chain_extension",
+   "reasoning": "From guessed 4.795: young swing (2 sessions from the 1219 turn) - R4 says young swings CHAIN extensions, and Tuesday is the strongest-trend weekday. The rally is model-driven (front-running the return ramp per catalyst_continuity; realized HDD still mild 16.6). +600 to ~4.855, back above the anchor.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     150
+    ],
+    [
+     6,
+     200
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     400
+    ],
+    [
+     12,
+     500
+    ],
+    [
+     14,
+     550
+    ],
+    [
+     16,
+     600
+    ],
+    [
+     18,
+     600
+    ],
+    [
+     20,
+     600
+    ]
+   ],
+   "guessed_net_usd": 600
+  },
+  {
+   "date": "20251224",
+   "dow": "Wed",
+   "group": 9,
+   "archetype": "holiday_shifted_print_early_close",
+   "reasoning": "From guessed 4.855: Christmas Eve early close with the holiday-shifted storage print (the surplus collapsing toward +15) - the 1128 lesson: thin AMPLIFIES a delivery day and a short session does NOT cap it, and R2 sides the print leg with the young up-swing. Partial stack only (regime still mod_heat realized, ramp in the models): +700 to ~4.925, flat after the ~14 ET early close.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     500
+    ],
+    [
+     12,
+     650
+    ],
+    [
+     14,
+     700
+    ],
+    [
+     16,
+     700
+    ],
+    [
+     18,
+     700
+    ],
+    [
+     20,
+     700
+    ]
+   ],
+   "guessed_net_usd": 700
+  },
+  {
+   "date": "20251226",
+   "dow": "Fri",
+   "group": 9,
+   "archetype": "thin_hardheat_delivery_meltup",
+   "reasoning": "From guessed 4.925: the Jan->Feb roll lands at this reopen (-5040 artifact, EXCLUDED; first negative roll - winter backwardation, scarcity paid now); REAL two-day closure gap +300 as the hard_heat return confirms and begins DELIVERING (HDD 20.4 rising to 26-30). Then the full melt-up stack: thin day-after-Christmas + hard_heat + delivery + fresh-young swing (1111/1128 form, band +1600..+2400) - low end since the ramp was front-run since 1222: +1600.",
+   "overnight_gap_usd": 300,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     200
+    ],
+    [
+     2,
+     300
+    ],
+    [
+     4,
+     400
+    ],
+    [
+     6,
+     500
+    ],
+    [
+     8,
+     700
+    ],
+    [
+     10,
+     950
+    ],
+    [
+     12,
+     1200
+    ],
+    [
+     14,
+     1400
+    ],
+    [
+     16,
+     1550
+    ],
+    [
+     18,
+     1600
+    ],
+    [
+     20,
+     1600
+    ]
+   ],
+   "guessed_net_usd": 1600
+  },
+  {
+   "date": "20251229",
+   "dow": "Mon",
+   "group": 9,
+   "archetype": "postmeltup_giveback",
+   "reasoning": "From guessed ~+2900 cum (new block high): small real weekend gap (cold already delivering and priced, P5). R4: the melt-up printed a material fresh extreme on a now-4-session swing - no consecutive extension; Monday reaction fades it, with year-end book-squaring adding supply at the highs. Ramp-live shallow give-back stretched by Monday bigness: -800.",
+   "overnight_gap_usd": 100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -200
+    ],
+    [
+     8,
+     -300
+    ],
+    [
+     10,
+     -450
+    ],
+    [
+     12,
+     -600
+    ],
+    [
+     14,
+     -750
+    ],
+    [
+     16,
+     -800
+    ],
+    [
+     18,
+     -800
+    ],
+    [
+     20,
+     -800
+    ]
+   ],
+   "guessed_net_usd": -800
+  },
+  {
+   "date": "20251230",
+   "dow": "Tue",
+   "group": 9,
+   "archetype": "ramp_resume",
+   "reasoning": "From the 1229 give-back: today is the return-ramp's deepest day (HDD 30.1) - R1 ramp arm resumes the one-day give-back regardless of close-recovery (1120->1121, 1125->1126), Tuesday trend-strength concurring, but year-end squaring caps the band: +1000, closing near the block high.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     400
+    ],
+    [
+     10,
+     550
+    ],
+    [
+     12,
+     750
+    ],
+    [
+     14,
+     900
+    ],
+    [
+     16,
+     1000
+    ],
+    [
+     18,
+     1000
+    ],
+    [
+     20,
+     1000
+    ]
+   ],
+   "guessed_net_usd": 1000
+  },
+  {
+   "date": "20251231",
+   "dow": "Wed",
+   "group": 9,
+   "archetype": "nye_thin_hold_drift",
+   "reasoning": "From the 1230 resume close at a fresh extreme: R4 says no consecutive extension, and NYE thin is a DAMPER on a non-delivery day (HDD easing off the 30.1 peak, no print, book-closing flows dominate) - the 1013/1127 thin-hold form, leaning slightly negative as year-end profit-taking meets no fresh catalyst: -200, closing the block ~+3000 over the anchor.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     -50
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     -150
+    ],
+    [
+     12,
+     -200
+    ],
+    [
+     14,
+     -250
+    ],
+    [
+     16,
+     -200
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "guessed_net_usd": -200
+  }
+ ]
+}
