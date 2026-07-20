@@ -450,6 +450,38 @@ def _mos_cycle_block(iso: str) -> dict | None:
     return out
 
 
+def _freeze_risk_block(iso: str) -> dict | None:
+    """(S100 feed E) producing-basin forecast MIN temps, cycle as-of (feed A discipline). Deep cold
+    CUTS SUPPLY while raising demand - the convexity mechanism the demand-only weather blocks miss.
+    Temps only; thresholds are data (20/15/10F), never tuned; no synthesized Bcf impact."""
+    try:
+        import freeze_risk_feed
+    except Exception:
+        return None
+    rec = freeze_risk_feed.freeze_risk_asof(iso)
+    if rec is None:
+        return None
+
+    def _compact(v):
+        if not v:
+            return None
+        out = {"asof_utc": v["asof_utc"], "asof_et": v["asof_et"], "basins": {}}
+        for st, b in v["basins"].items():
+            out["basins"][st] = {"basin": b["basin"],
+                                 "tmin_d0_f": b["horizons"][0]["tmin_f"],
+                                 "tmin_by_horizon": [h["tmin_f"] for h in b["horizons"]],
+                                 "thresholds_f": b["thresholds_f"],
+                                 "max_cycle_runtime_utc": b["max_cycle_runtime_utc"]}
+        return out
+
+    out = {"weekday_open": _compact(rec.get("weekday_open")),
+           "note": ("feed E: basin freeze-off MIN temps as-of the same cycle wall as "
+                    "weather_forecast_cycle; the agent decides what sub-threshold runs mean")}
+    if rec.get("sunday_reopen"):
+        out["sunday_reopen"] = _compact(rec["sunday_reopen"])
+    return out
+
+
 def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
@@ -499,6 +531,7 @@ def decision_state(days: list[str]) -> dict:
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "weather_forecast_cycle": _mos_cycle_block(iso),
+                  "freeze_risk": _freeze_risk_block(iso),
                   "model_disagreement": _model_disagreement_block(iso),
                   "holiday": _holiday_asof(iso)}
     return out
@@ -618,11 +651,11 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
             "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0,
             "cash_knowable": 0, "steo_release": 0, "nuclear_wall": 0, "grid_wall": 0,
-            "options_session": 0, "mos_cycle_wall": 0}
+            "options_session": 0, "mos_cycle_wall": 0, "freeze_wall": 0}
     absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
               "storage_consensus": [], "vol_regime": [], "cash_basis": [], "steo_vintage": [],
               "nuclear_outages": [], "grid_stack": [], "options_surface": [],
-              "weather_forecast_cycle": []}
+              "weather_forecast_cycle": [], "freeze_risk": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -711,6 +744,22 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
                 if rt + datetime.timedelta(hours=4.5) > asof:
                     viol["mos_cycle_wall"] += 1
                     print(f"  VIOLATION mos-cycle {iso} {vname}: cycle {v['max_cycle_runtime_utc']} vs asof {v['asof_utc']}")
+        fz = st.get("freeze_risk")
+        if fz is None:
+            absent["freeze_risk"].append(iso)
+        else:
+            for vname in ("weekday_open", "sunday_reopen"):
+                v = fz.get(vname)
+                if not v:
+                    continue
+                asof = datetime.datetime.strptime(v["asof_utc"], "%Y-%m-%dT%H:%M:%SZ")
+                for st4, b in v["basins"].items():
+                    if not b.get("max_cycle_runtime_utc"):
+                        continue
+                    rt = datetime.datetime.strptime(b["max_cycle_runtime_utc"], "%Y-%m-%d %H:%M:%S")
+                    if rt + datetime.timedelta(hours=4.5) > asof:
+                        viol["freeze_wall"] += 1
+                        print(f"  VIOLATION freeze {iso} {vname} {st4}: cycle {b['max_cycle_runtime_utc']} vs asof {v['asof_utc']}")
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -881,6 +930,18 @@ def _selftest() -> int:
         print(f"[forecast_harness] mos_cycle wired: 0119 sunday_reopen Jan-24 add "
               f"{j24[0]['d_gw_hdd']:+.3f} gw-HDD, newest cycle {sr['max_cycle_runtime_utc']}Z "
               f"(reopen-available)")
+    # (S100 feed E) freeze risk: additive block; the measured 0119/0122 pins (Appalachia 10F with
+    # 7 sub-20F days from Jan-19; Permian AND Haynesville sub-20F from Jan-24 visible on 0122 -
+    # the supply-convexity signal into the squeeze week).
+    fz19 = d19.get("freeze_risk")
+    if fz19 is not None:
+        b = fz19["weekday_open"]["basins"]
+        assert b["PIT"]["tmin_d0_f"] == 10.0 and b["PIT"]["thresholds_f"]["20.0"]["days_below"] == 7, b["PIT"]
+        fz22 = decision_state(["20260122"])["20260122"]["freeze_risk"]["weekday_open"]["basins"]
+        assert fz22["MAF"]["thresholds_f"]["20.0"]["first_below"] == "2026-01-24", fz22["MAF"]
+        assert fz22["SHV"]["thresholds_f"]["20.0"]["first_below"] == "2026-01-24", fz22["SHV"]
+        print(f"[forecast_harness] freeze_risk wired: 0119 PIT {b['PIT']['tmin_d0_f']}F/7d sub-20; "
+              f"0122 MAF+SHV sub-20F from 2026-01-24")
     brain_show()
     print("[forecast_harness] selftest PASS")
     return 0
