@@ -364,6 +364,18 @@ open (no free source).
 
 ### N. EIA weekly S/D balance - the Natural Gas Weekly Update (family D/supply) - NEW (Greg
 2026-07-20: "this site has weekly production and consumption data also").
+STATUS: **DONE + WIRED 2026-07-20** (`ngwu_feed.py`, store on S3 `ngwu/`, 44/44 issues recovered,
+blind-wall 0/422). THE STRUCTURAL FINDING: **EIA removed the S&P supply/demand section on
+2025-10-02 - the walked winter has NO free weekly balance LEVELS** (last live: production 106.7 /
+feedgas 16.3 Bcf/d, week ending 2025-09-24; served through the winter with honest 123-155d age).
+Era-2 (WNGSR Supplement, Jan 29+) publishes LSEG narrative w/w deltas only (no levels; e.g. the
+squeeze week's "feedgas fell 18%"). THE ONE CONTINUOUS LINE both eras: LNG vessel
+departures/capacity - the squeeze week ending Jan 28 is the winter low (31 vessels / 118 Bcf).
+SCRAPER TRAP CAUGHT: the dead S/D section persists as commented-out template with FROZEN SAMPLE
+VALUES a naive parser extracts as real. GATE CONSEQUENCE: the free-weekly route cannot supply
+winter balance levels - materially strengthens feed J's paid-arm question (vendor daily/weekly
+balances are the only route to walked-winter levels). Two source-revision instances named
+(feed-K-class vintage risk in third-party estimates).
 - WHY: the desk audit's #2 structural gap is the flow/balance side, and the NGWU is the FREE weekly
   version of it: dry production estimates, consumption by sector (power/industrial/rescomm), LNG
   feedgas weekly average, net imports - published every Thursday. Weekly cadence is coarser than

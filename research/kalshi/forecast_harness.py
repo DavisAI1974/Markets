@@ -242,6 +242,23 @@ def _storage_consensus_block(iso: str) -> dict | None:
                         "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
 
 
+def _ngwu_block(iso: str) -> dict | None:
+    """(S98 feed N) The EIA weekly S/D balance (NGWU -> WNGSR-Supplement eras). HONEST STRUCTURAL
+    LIMIT (measured): EIA removed the S&P supply/demand section 2025-10-02, so the walked winter has
+    NO free weekly balance LEVELS - the block carries the last live levels (week ending 2025-09-24)
+    with honest age, era-2 LSEG narrative w/w deltas where published, and the one line continuous
+    through BOTH eras: LNG vessel departures/capacity (the squeeze week ending Jan 28 is the winter
+    low, 31 vessels / 118 Bcf). Missing levels are None + attribution named; module self-audits 0
+    violations on knowable_from = release+1."""
+    import ngwu_feed
+    n = ngwu_feed.ngwu_asof(iso)
+    if not n:
+        return None
+    return n | {"note": "free weekly balance; LEVELS dead after 2025-09-24 (named gap - strengthens "
+                        "the feed J paid-arm question); vessel line continuous; deltas as stated, "
+                        "never derived"}
+
+
 def _storage_vintage_block(iso: str) -> dict | None:
     """(S98 feed K) The AS-PRINTED storage vintage overlay - what the market actually saw at each print
     vs the current revised series the stores carry. The walk's whole vintage look-ahead resolved to ONE
@@ -353,6 +370,7 @@ def decision_state(days: list[str]) -> dict:
                   "storage_regional": _storage_regional_block(iso),
                   "storage_consensus": _storage_consensus_block(iso),
                   "storage_vintage": _storage_vintage_block(iso),
+                  "ngwu_balance": _ngwu_block(iso),
                   "cot": _cot_asof_block(iso),
                   "contract_structure": cs,
                   "squeeze_watch": _squeeze_watch(cs),
@@ -624,6 +642,13 @@ def _selftest() -> int:
     sv20 = decision_state(["20260120"])["20260120"]["storage_vintage"]
     assert sv20 is not None and sv20["national_level_as_printed"] == 3185 and sv20["national_level_current"] == 3174.0, sv20
     assert sv20["as_of"] < "2026-01-20", ("vintage blind wall", sv20)
+    # (S98 feed N) the balance block: winter levels honestly DEAD (last live week 2025-09-24, large
+    # age exposed) - never a fabricated fresh number; the vessel line carries through.
+    nb = decision_state(["20260130"])["20260130"]["ngwu_balance"]
+    assert nb is not None and nb["latest_sd_levels"]["week_ending"] == "2025-09-24", nb.get("latest_sd_levels")
+    assert nb["latest_sd_levels"]["age_days"] > 100, "staleness must be exposed, not hidden"
+    assert nb.get("dry_production_bcfd") is None, "winter issues must NOT carry fabricated levels"
+    assert nb.get("lng_vessel_capacity_bcf") == 118.0, ("the squeeze-week vessel low", nb.get("lng_vessel_capacity_bcf"))
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
