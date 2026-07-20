@@ -65,3 +65,36 @@ Prompt skeleton:
 
 Then RENDER: `python continuous_rt.py --anchor <anchor> --start <first> --end <last> --seams <g4,g5> --tag g3g4g5 --guess forecasts/<combined-or-per-group>.json`
 and REVIEW the proposal before merging into `ng_brain.json`.
+
+═══════════════════════════════════════════════════════════════════════════════════════════
+## STEP C - the DATA-FEED build agent (added S97; how the gate feeds were built)
+Purpose: add a new INPUT to decision_state. Spawned via the Agent tool, general-purpose,
+run_in_background. Several run in parallel, so they must not collide.
+
+Shared discipline injected into EVERY data-feed prompt (Greg, load-bearing):
+- **We are NOT testing a thesis.** We put what we believe is relevant in front of the agent and IT
+  decides how to use it. The prompt must say so explicitly. Never ask the builder to gate, score, or
+  recommend for/against the input; never let it remove or quarantine a feed that looks inert.
+- **MISSING IS EXPLICIT, NEVER ZERO.** A missing value is `null` plus a coverage note. A zeroed HDD in
+  January reads as "no heating demand"; a zeroed storage level as "empty inventory"; a zeroed front/next
+  spread as "front and next at parity" during the one squeeze the feed exists to expose. Each is a
+  catastrophic false signal, worse than absence.
+- **BLIND WALL, stated per feed with its exact publication mechanics.** Not "use prior data" but the
+  specific trap: COT reports TUESDAY but publishes FRIDAY 15:30 ET (key on publication, or three days of
+  future positioning leak into every Wed/Thu); EIA storage publishes Thursday 10:30 ET (a Thursday's own
+  print must never reach its own open-time state - the S96 leak); MOS joins as-of D-1 evening. Require an
+  assertion in code AND an audit of the built data reporting the violation count.
+- **Standalone module + `*_asof(date) -> dict | None`.** The builder must NOT edit
+  `forecast_harness.py` - parallel builds collide there. decision_state is wired in ONE serial pass by
+  the orchestrator afterwards. Require the function signature in the report.
+- **ADDITIVE only** - never replace, rename, or remove existing fields.
+- **Investigate the real endpoint/format first** (WebFetch) - never code against an assumed URL or
+  column layout. If the archive does not cover the period or the format changed, SAY SO and STOP rather
+  than substituting a source or interpolating. Zero synthetic data.
+- **Report coverage PER DATE / PER REGION, naming gaps individually - never as a percentage.**
+- Include a `--selftest`. Do not commit. No emojis.
+
+State WHY the feed exists in the prompt, concretely - it determines which fields matter. Example that
+worked (contract structure): "In G11 the expiring February contract went parabolic into delivery
+3.0 -> 5.4 while March, which the forecaster was reading, traded 2.7 -> 4.4; the Feb/Mar spread widened
+-0.41 to -1.54 and the agent had no state variable that could show it."

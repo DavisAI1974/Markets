@@ -1,4 +1,29 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-17, Session 96)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-19, Session 97)
+
+**S97 — THE WALK IS PAUSED AT A HARD DATA GATE (read `SESSION_HANDOFF_2026-07-19_S97.md` [GATE section
+FIRST] + `KICKOFF_2026-07-19_S98.md`):** G11 (Sun Jan 18 - Fri Jan 30) ran blind on s99.2 -> **6/12, drift
+-13,190, the THIRD consecutive block-lean miss** (anchor 2.702 -> 4.416; the bleed reversed into a 63%
+rally and the blind held the down-chain). Refine -> **s100.2, 23 plays: 10/12, drift -3,890.** **THE FLIP
+RULE IS KEPT** — per-instance: **C1 (band-break) fires 1008/1020/1208/1223/0120 and correctly declines
+0107 — five fires, one correct decline, ZERO false positives**; the blind missed because **it never
+evaluated 0120, the actual flip day**. **C2 fails on HIGH-ACTIVITY tapes for a SCALE reason** (calibration
+15-98 legs on 15-25k trades vs G11's 160-550 on 75-125k, so an absolute <=15%-of-legs bar is mechanically
+unreachable) — the ratio reformulation is a FLAGGED BUILD GAP and **blocks G12** (needs G11 fingerprints
+on .n.0 first). NEW plays `weekend_gap_delivery` + `mos_first_appearance_vs_revision`. **Brain
+architecture (Greg): every play carries `requires`/`scope`/`forward_evidence`; refined rules NEVER
+override blind-applicable ones (hindsight-fitted, zero forward evidence — and the blind-vs-refined GAP is
+itself the measurement); promotion gated on forward evidence.** MOS forecast temps BUILT + in first use
+(91/91 days, blind wall 0/11,648 violations). Net-of-fee replay: **fees are NOT the constraint, DIRECTION
+is** (0/51 events had the taker fee flip a sign); G9's +14.4k is SIX named events, the other fourteen sum
+-3,220; the block lean and the day-book are TWO DIFFERENT EDGES. Series-construction finding: NG.v.0
+whipsawed 1000<->1021 through the G11 expiry week (Feb squeezed 3.0->5.4); G3-G10 are clean; G11 re-pulled
+on **NG.n.0**; pass-2 deferred by Greg. **GREG STOPPED THE WALK: no new group runs until EVERY data input
+in the handoff's GATE is built and wired** (COT positioning, EIA regional+SALT storage, contract structure
+/expiry/front-next spread/OI, forward curve, MOS cycle timing, vol regime, G11 fingerprints, model
+disagreement, LNG feedgas, options, cross-market). **How to build them (Greg): we are NOT testing theses —
+we put relevant info in front of the agent and IT decides how to use it. Never gate an input on whether it
+"worked".** NEXT = wire decision_state serially, finish the gate, then G12 (Feb 1-13), then **G13 (Feb
+15-27) = the SQUEEZE TEST** (carries the Feb 25 expiry).
 
 **S96 (read `SESSION_HANDOFF_2026-07-17_S96.md` [session-total block at top] + `KICKOFF_2026-07-17_S97.md`):**
 FOUR winter blocks walked, brain s95.2 -> **s99.2 (21 plays)**. PROTOCOL SETTLED (Greg): one-shot block-blind
@@ -241,6 +266,20 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S97** — G11 blind (6/12, drift -13,190, third straight block-lean miss) -> refine -> **brain s100.2,
+  23 plays** (10/12, drift -3,890). The flip rule KEPT with a per-instance read: C1 clean (five fires, one
+  correct decline, zero false positives), C2 broken on high-activity tapes by a SCALE artifact — the ratio
+  reformulation is a build gap that BLOCKS G12. Plays now carry `requires`/`scope`/`forward_evidence`;
+  refined NEVER overrides blind. MOS forecast temps built + first use. Net-of-fee replay: fees are not the
+  constraint, DIRECTION is; the block lean and the day-book are two different edges. NG.v.0 whipsaws
+  through expiry weeks (G3-G10 clean; G11 re-pulled on NG.n.0; pass-2 deferred). **Greg STOPPED the walk
+  at a hard DATA GATE** — no group runs until every input in the S97 handoff is built and wired. Detail:
+  `SESSION_HANDOFF_2026-07-19_S97.md`, `KICKOFF_2026-07-19_S98.md`,
+  `research/kalshi/PASS2_CONTINUOUS_SERIES_NOTES.md`, `research/kalshi/COACH_REPLAY_S97.md`.
+- **S96** — four winter blocks walked (G7-G10), protocol settled (one-shot canonical, refine per group,
+  renders printed, Sunday-start blocks), brain s95.2 -> s99.2 (21 plays); two block-lean misses, both
+  chain-polarity, which is why the flip confirm was hardened to four conditions.
+  Detail: `SESSION_HANDOFF_2026-07-17_S96.md`.
 - **S95** — continuous-curve rep + contract-roll adjustment (`roll_adjust.py`; the 0925 "+2760 gap" was the
   Oct->Nov roll, VOID); full G3-5 refine on roll-clean data; G6 first true blind holdout (V; give-back caught,
   recovery missed); brain ONE file, s95.1/s95.2. Detail: `SESSION_HANDOFF_2026-07-15_S95.md`.
