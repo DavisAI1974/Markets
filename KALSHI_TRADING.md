@@ -1,5 +1,23 @@
 # KALSHI TRADING — file index
 
+## NEW IN S100 (2026-07-20, current)
+
+- `research/kalshi/mos_cycle_feed.py` — feed A ph1: cycle-level MOS as-of (00z/06z/12z/18z,
+  weekend cycles; availability wall runtime+4.5h). Store S3 `weather/mos_cycle/`.
+- `research/kalshi/freeze_risk_feed.py` — feed E: basin freeze-off MIN temps (MAF/OKC/PIT/SHV),
+  thresholds-as-data. Store S3 `weather/mos_freeze/`.
+- `research/kalshi/lag_execution_map.py` + `kalshi_fill_model.py` — feed M: the lag execution
+  map on the KXNATGASD life + verified fee/spread model. Store S3 `kalshi_echo/`. Findings:
+  `research/kalshi/KALSHI_ECHO_MAP_S100.md` (maker-first verdict).
+- `research/kalshi/TWO_COACH_SPEC_S100.md` — Tier 3 item 6, printed (approval pending).
+- `research/kalshi/pull_july_2026.py` — the July 1-18 NG tape pull (done, idempotent).
+- `research/kalshi/LIVE_TELEMETRY_S100.md` — the live loop's first datum (7.7ms median).
+- `research/kalshi/vendor/` — verbatim vendor references: Databento raw-API example, the
+  IV/Black-76 tutorial (feed I ph ii pattern), `DATABENTO_LIVE_OPS_NOTES_S100.md` (M5 collector
+  design constraints: replay/snapshot/limits/reconnect).
+- `DASHBOARD_HANDOFF_S100.md` (repo root) — the parallel dashboard session's landing pad.
+- Brain: `knowledge/ng_brain.json` = **s101.2** (Tier 3 doctrine merged; s100.3 backup kept).
+
 > **TODO — FORECAST WORKFLOW (Greg S87, not built).** Build a workflow that runs the daily NYMEX
 > path-forecast lifecycle automatically:
 > 1. **By 5PM the day before** — score and LOAD tomorrow's forecast (pick the analog/expected-path

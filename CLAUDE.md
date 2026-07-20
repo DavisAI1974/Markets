@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-20, Session 99)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-20, Session 100)
 
 ## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
 
@@ -15,6 +15,22 @@
 - Session ritual: obtain pair -> `~/.aws/credentials` -> STS get-caller-identity via `bash -lc`
   (print pass/fail + account tail ONLY, never the secret) -> proceed. If STS fails on a
   known-good key, suspect the env-var override FIRST, not the key.
+
+**S100 — THE GATE CLOSED + THE LIVE LOOP'S FIRST BREATH (read
+`SESSION_HANDOFF_2026-07-20_S100.md` + `KICKOFF_2026-07-21_S101.md` [G12 = S101's opener, FRESH
+session per blind-run hygiene]):** live smoke PASSED (GLBX NG **median 7.7ms** via the box;
+container can't reach live gateways); Mondays verified 22/22; July 1-18 pulled ($0, in-sub);
+**feeds A-ph1 + E BUILT+WIRED** (cycle-level MOS: the 0118 Jan-24 +8.511 add was PRE-REOPEN
+available - the weekend-gap blindness closed; basin freeze-offs: Permian+Haynesville sub-20F
+from Jan-24 visible 0122); decision_state 23 blocks / 14 audit classes / 0 violations; ICE HH
+positioning wired free (LD1 4.72nd pctile echoes NYMEX 2.83rd); **Tier 3 MERGED -> brain s101.2**
+(usage doctrine, flip checklist, evidence registry, day-book PRIMARY scoring split, squeeze
+doctrine, Greg's SUPERSESSION single-ownership + blind-run hygiene); **feed M DELIVERED**
+(76,594-row lag map: ATM response 42%, delays 110-215s median, spreads 15c->4c - **taker does
+NOT clear this regime; MAKER-FIRST**; `TWO_COACH_SPEC_S100.md` printed, approval pending);
+determinations: FREE-FIRST standing, CL Mondays = free redecode (~Aug 12-14 window), pyth
+sunset by Jul 31 (open). Dashboard session live (`DASHBOARD_HANDOFF_S100.md`). AWS key episode
+solved permanently (see AWS KEY section above). **G12 IS GO - from a fresh S101.**
 
 **S99 — FOUR MORE GATE FEEDS IN ONE SESSION + THE MONDAY REPAIR (read
 `SESSION_HANDOFF_2026-07-20_S99.md` [SECURITY block FIRST] + `KICKOFF_2026-07-20_S100.md`):**
