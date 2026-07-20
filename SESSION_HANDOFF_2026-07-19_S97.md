@@ -169,6 +169,74 @@ over the historical data is complete. Greg: do not re-base the walk before then.
 
 ---
 
+## CONCERNS / OPEN RISKS CARRIED INTO S98
+
+Ordered by how much damage they do if ignored. None of these are blockers on their own; several are
+things that would quietly corrupt results rather than fail loudly, which is why they are written down.
+
+**1. REVISION VINTAGE - a residual look-ahead the blind wall does NOT catch.** The new regional storage
+feed carries EIA's LATEST REVISED estimates. The blind wall governs WHEN a report becomes visible, not
+WHICH VINTAGE - so an old week's level may differ from what actually printed that Thursday, and the agent
+sees a number nobody had at the time. **This very likely also affects the EXISTING national `storage`
+field and `eia_surprise.py`**, which would mean the whole walk has carried a small revision-vintage
+look-ahead. Gas storage revisions are typically a few Bcf so the effect is probably small - but "probably
+small" is not measured, and this is exactly the class of thing the leakage gate exists to catch. ASSESS
+before leaning on storage for magnitude work. Point-in-time vintages need EIA's separate revision archive.
+
+**2. STORAGE SOURCE UNVERIFIED.** DEMO_KEY hit its shared global quota mid-build, so the store came from
+EIA's `ir.eia.gov/ngs/ngshistory.xls` workbook, not the API. Row counts and date ranges match for the two
+series fetched before the quota died; VALUES were never cross-checked. **Re-run `--source api` with a
+REAL EIA key.** DEMO_KEY is shared globally and will keep doing this - get a real key.
+
+**3. THE C2 RATIO REFORMULATION BLOCKS G12.** Until G11 fingerprints exist on `.n.0` (gate item 6) and C2
+is rebuilt as a ratio (item 11), the four-condition flip confirm CANNOT COMPLETE on modern high-activity
+tapes. A G12 blind run before that fix inherits G11's exact failure mode for the same mechanical reason.
+Do not run G12 first and hope.
+
+**4. THE BLOCK LEAN IS THE WEAKEST PART OF THE SYSTEM - three consecutive misses (G9, G10, G11).** All
+three were chain-polarity calls, and the rule has now failed in BOTH directions: fired falsely (G10),
+then failed to fire (G11). The per-instance refine shows C1 is clean and C2 is mechanically broken, which
+explains G11 - but that is one block's explanation, not a demonstration that the lean is fixed.
+
+**5. THE BLOCK LEAN AND THE DAY-BOOK ARE TWO DIFFERENT EDGES, and we have not decided which we trade.**
+The net-of-fee replay found G9 was logged as a block-lean MISS yet produced the best blind day-book
+(+14,400 taker). The daily trade never carries the lean. This is unresolved and it matters for what the
+coach is actually FOR.
+
+**6. G11 IS NOT A PRISTINE HOLDOUT.** The orchestrator saw the block's price path before the blind agent
+was spawned (the roll check requires loading tape). The subagent was genuinely blind; the price-basis
+choice was not. Protocol fix is recorded for G12 - a subagent runs the roll check and returns only date
+and spread.
+
+**7. `NG.n.0` IS NOT MONOTONIC EITHER.** Thin ~350-trade Sunday sessions can re-decide the front month
+(20251109 flipped, 20251110 flipped back). G11's window happens to be clean, but the general problem is
+NOT solved - see `PASS2_CONTINUOUS_SERIES_NOTES.md`. Also: the PRICE BASIS differs between G11 (`.n.0`)
+and G3-G10 (`.v.0`), so absolute levels are not comparable across that boundary. Dollar magnitudes and
+structure are.
+
+**8. MOS CYCLE TIMING is a real defect, not a nice-to-have** (gate item 4). The Sunday reopen is priced
+by a LATER model cycle than our D-1 evening feed - the refine found the Jan-24 +8.511 add first appears
+in our data about an hour AFTER the gap that priced it. Sunday reopens are precisely where the
+weekend-gap magnitude keeps getting missed (+2,100 and +2,480 in G11, +2,770 at G7's 1020).
+
+**9. COT LIMITS worth carrying:** futures-only, not futures-and-options-combined (options positioning is
+a separate picture); NYMEX contract 023651 only, so it does NOT capture ICE Henry Hub positioning, which
+is large; publication times are date-plus-15:30-ET, not observed timestamps; 12 dates in Jan-Mar 2019
+flagged `derived_unreliable` (outside the coverage window, affects percentile history only).
+
+**10. TAPE IS ON LOCAL DISK ONLY.** `data/nymex_cont_n0/` and `data/nymex_cont_n1/` (Nov 2025 - Feb 2026)
+are gitignored and NOT on S3. The standing rule is git = CODE, S3 = DATA - right now this data exists in
+exactly one place. Push it to S3.
+
+**11. KEYS WERE EXPOSED IN-CHAT THIS SESSION** (AWS pair via screenshot, Databento key as text). ROTATE
+both before the next session, same as the S96 pair.
+
+**12. VERIFY WHAT THE LAST BUILD LANDED.** The contract-structure + forward-curve agent was still running
+at session close. Check `research/kalshi/contract_structure.py`, `data/contract_structure/`, and the
+modified `forward_curve.py` before wiring, and confirm `curve_regime` actually stops reading `'unknown'`.
+
+---
+
 ## PROTOCOL
 
 Unchanged and settled: one-shot block-blind is the canonical skill test; refine after EVERY group
