@@ -421,7 +421,18 @@ tracking maintenance schedules in the spring and fall").
      depth per-pipe unknown - the J depth-check answers it).
   3. LNG turnarounds: observable via feedgas (feeds N weekly / J's paid options daily) - a derived
      watch, not a separate pull.
-- `nuclear_outages_asof(date) -> dict | None` first; store `data/nuclear_outages/`. QUEUED FOR S99.
+  4. COAL + GAS PLANT maintenance (Greg 2026-07-20): per-unit schedules are mostly confidential;
+     the free quantified source is the ISOs' AGGREGATE outage reports (planned + forced MW; ERCOT
+     publishes a 7-day outage-capacity forecast, PJM/MISO publish planned aggregates; per-fuel
+     splits where offered). Builder investigates each ISO's actual public product per-instance -
+     coverage will differ by ISO and is named, never assumed uniform. EIA-860M monthly status =
+     the slow layer. Trade relevance both ways: coal unit down pushes burn TOWARD gas, gas unit
+     down pulls it away.
+- SOURCE NOTE (Greg suggested FERC): FERC MANDATES the pipeline informational postings (18 CFR
+  284) but hosts no central maintenance database - the pipeline arm's source remains the per-pipe
+  EBBs (the feed J machinery); power-plant outage data lives at the ISOs, not FERC.
+- `nuclear_outages_asof(date) -> dict | None` first; store `data/nuclear_outages/`; ISO outage
+  aggregates as `iso_outages_asof(date)` second. QUEUED FOR S99.
 
 ### O. Structural-demand news watch (family D/structural) - NEW (Greg 2026-07-20: "keep one eye on
 data centers coming online or any major manufacturing coming online... checking the news feeds").
