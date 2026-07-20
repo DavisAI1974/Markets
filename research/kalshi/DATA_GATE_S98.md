@@ -330,6 +330,16 @@ Feed IDs A-K for tracking.
   its constraint IS size-vs-fee (S81/S82) - the exact inversion of the futures leg, where
   COACH_REPLAY_S97 proved fees immaterial and direction binding. Nothing about the Kalshi leg is
   provisional-until-live except via this build.
+- RESCOPED 2026-07-20 BY FEED L'S HEADLINE: **Kalshi had NO daily NG market in the walked winter -
+  KXNATGASD launched 2026-03-27 (first settle 03-30), and Jan 1 - Feb 27 2026 had ZERO NG-linked
+  Kalshi markets of any kind** (`KALSHI_NG_COVERAGE_S98.md`; a market-existence gap, not a
+  data-recovery gap - no credential or vendor can produce data that was never generated). The
+  G7-G11 winter echo replay is STRUCTURALLY IMPOSSIBLE and is struck as a named honest gap. M's
+  substrate is the KXNATGASD LIFE (2026-03-30 -> present): the NYMEX side for that window exists on
+  S3 (the year MBP-10 pull runs through Jul 2026), and the walk itself reaches that era at G14+ -
+  the echo replay of walk calls happens THERE, chronologically, when the walk arrives.
+  Product-structure fact for the spec: KXNATGASD skips FRIDAYS (the weekly market owns Friday).
+  Items (1)/(2) below run on the life window; item (3) is re-pointed at G14+ calls.
 - SCOPE GUARD (Greg 2026-07-20): the lag's EXISTENCE is established - see THE STANDING LOOK-AHEAD
   in 0c. M never re-litigates it. What follows is execution economics only.
 - The build, on feed L's store, reusing the existing lag thread (`futures_kalshi_lag.py`,
@@ -472,9 +482,11 @@ G12 (Sun Feb 1 - Fri Feb 13 2026) may run when ALL of:
 
 G13 (Sun Feb 15 - Fri Feb 27 2026, the SQUEEZE TEST) additionally requires:
 6. Feed I phase i (options OI/pin map) built and wired.
-7. Feed M delivered (lag measurement + fill/fee model + the G7-G11 echo replay) and Tier 3 item 6
-   (the two-coach spec) written off M's measured numbers - the Kalshi coach's first scorecard
-   exists before the walk resumes past G12.
+7. Feed M delivered ON ITS RESCOPED SUBSTRATE (lag characterization + fill/fee model on the
+   KXNATGASD life 2026-03-30 -> present; the walked-winter echo replay is STRUCK - feed L proved
+   the market did not exist, a named honest gap closing that sub-item) and Tier 3 item 6 (the
+   two-coach spec) written off M's measured numbers - the Kalshi coach's first scorecard exists
+   before the walk resumes past G12.
 
 Anything in this file found unobtainable is reported per-instance in the closing session handoff -
 a named honest gap closes its item; a silent skip does not.

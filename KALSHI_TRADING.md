@@ -25,6 +25,18 @@ pipeline or an OLD/completed piece. Keep this current — add new files to the t
 superseded ones down. (Started S81, 2026-07-12.)
 
 ## S98 — the rewritten DATA GATE (CURRENT — the build list before any new group runs)
+- **`research/kalshi/kalshi_ng_backfill.py`** + **`data/kalshi_ng/`** (local, gitignored; S3 push
+  pending) — FEED L: Kalshi NG family backfill off the public API's live+historical endpoint split
+  (`/historical/cutoff` = the moving boundary, 2026-05-21 at build). Full raw definitions + trades +
+  1-min candles for KXNATGASD/KXNATGASW/KXNATGASMON life and the winter annual NG markets.
+  `--selftest`, `--coverage`. HEADLINE FINDING: KXNATGASD did not exist before 2026-03-27 — the
+  walked winter has NO Kalshi NG daily market (Jan-Feb 2026: zero NG-linked Kalshi markets at all);
+  feed M's winter echo replay is structurally impossible, its lag/fill work runs on the Mar 30+
+  life instead. Dailies skip FRIDAYS (the weekly market owns Friday).
+- **`research/kalshi/KALSHI_NG_COVERAGE_S98.md`** — feed L's deliverable: branch-bins inventory
+  (collector born 2026-07-12; one named 12h outage Jul 16-17), the two-worlds API map + S80 code
+  drift, the 119-date winter coverage table (every date a named gap for the family), what
+  live-forward capture provides that history cannot (books, sub-minute).
 - **`research/kalshi/DATA_GATE_S98.md`** — THE AUTHORITATIVE DATA PLAN (Greg 2026-07-20: "this is what
   we're doing before we do any more runs"). Supersedes the GATE section of
   `SESSION_HANDOFF_2026-07-19_S97.md`. Organized by regime family (DEMAND / POSITIONING / DELIVERY):
