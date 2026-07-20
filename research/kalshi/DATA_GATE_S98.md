@@ -468,6 +468,14 @@ platform_sync pull. Runs alongside the gate; no G12 dependency.
 3. DECIDED 2026-07-20 (recorded, no longer open): a MODEST paid tier is on the table - feed J prices
    the options, Greg subscribes or declines; the vehicle is KALSHI FIRST then NYMEX dailies, both
    coaches built now (section 0c, feeds L/M, Tier 3 item 6).
+4. EIA KEY SCOPE NOTE (Greg 2026-07-20): the ONE registered key covers ALL EIA Open Data v2 routes -
+   including PETROLEUM (crude stocks/prices/refining = the WPSR data; the Wednesday 10:30 ET print
+   is the CL-side analog of the NG storage Thursday). Relevant the moment a CL/WTI leg enters - and
+   feed L found KXWTI existed through the walked winter with archive to 2022, so a WTI Kalshi leg
+   HAS the history the NG leg lacks. Also checked (Greg's pointer): eia.gov/consumption - RECS/
+   CBECS/MECS are PERIODIC MULTI-YEAR STRUCTURAL surveys, not timely feeds: no next-day event use;
+   their honest use is slow-layer demand-share weights (e.g. validating the gas-weighted metro
+   weighting), recorded as a reference, not a gate item.
 
 ## SEQUENCING AND THE CRITICAL PATH
 
