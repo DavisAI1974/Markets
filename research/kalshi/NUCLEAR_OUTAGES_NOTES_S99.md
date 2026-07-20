@@ -48,3 +48,16 @@ Databento Standard ($179/mo, page-verified) or a broker CME L1 sub at NG go-live
 TENSION for feed M: feed L recorded KXNATGASD's settlement source as "Pyth" - with Pyth NG feeds
 never-published, the actual settlement source must be verified from the contract spec (already a
 gate requirement), never assumed.
+
+ADDENDUM (measured later same day): (4) the explorer's NATGAS row Greg found is
+**Commodities.Index.NATGAS/USD - real, live, stable, 24/7 - but PYTH PRO** (numeric Lazer-style
+id 3265, price panel sign-in-walled; absent from both free Hermes registries). Pro pricing per
+search reporting: Starter $500/mo crypto-only; commodities bundles ~$2,500-$10,000/mo - out of
+scope vs Databento's exchange-true $179. (5) **THE PYTH FREE ERA ENDS 2026-07-31** (pyth.network
+blog "The Pyth Core Upgrade"): ALL Pyth Price Feeds API access - including the Hermes REST our
+collectors poll - requires a paid data plan (from $500/mo) after July 31; hermes.pyth.network
+redirects to the new gated infrastructure at cutover. CONSEQUENCES: pyth_collector's free
+WTIQ6/XAU/XAG accrual DIES ~2026-07-31 (plan the sunset or a replacement); the "test the live
+loop free on WTI/gold/silver" recommendation has an 11-day runway; after July 31 the cheapest
+legitimate real-time futures line is broker CME L1 (single-digit $/mo) then Databento Standard
+($179/mo) - Pyth is no longer in the free conversation at all.
