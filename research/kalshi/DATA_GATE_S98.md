@@ -6,6 +6,12 @@ in-chat 2026-07-20) and reorganizes everything by regime family, tier, and criti
 handoff's gate section remains the historical record; THIS file is the build list. NO NEW GROUP RUNS
 until the gate-closure condition at the bottom of this file is met.
 
+UPDATED same day with Greg's two decisions: (1) a MODEST PAID data tier is on the table - any actual
+subscription is Greg's action, the gate's job is to PRICE the options (feed J expanded); (2) the
+VEHICLE decision: KALSHI IS THE INITIAL PRIMARY, NYMEX dailies follow quickly, and BOTH are built
+NOW as TWO COACHES over one shared signal core (section 0c). The Kalshi leg is therefore UN-PARKED:
+feeds L and M added, Tier 3 item 6 added, gate closure amended.
+
 ---
 
 ## 0. DOCTRINE (Greg, load-bearing - governs every build below, verbatim from S97)
@@ -39,9 +45,33 @@ which family the forecaster could not see:
 | POSITIONING | crowding sets convexity; squeezes overshoot every band | G11: MM net short at the 2.83rd 1-yr percentile on Jan 16, then a 63 percent rally |
 | DELIVERY | contracts-vs-deliverable-supply near expiry; cash leads, gamma amplifies | G11 0130 +5020 (17x under band); NGG26 settled 7.460 |
 
-Every feed below is tagged D / P / DEL (or CAL for calendar / META for integrity). The point of the
-gate is that the agent must be able to SEE all three families before G12; G13 is the designed forward
-test of the DELIVERY family.
+Every feed below is tagged D / P / DEL (or CAL for calendar / META for integrity / KAL for the
+Kalshi leg). The point of the gate is that the agent must be able to SEE all three families before
+G12; G13 is the designed forward test of the DELIVERY family.
+
+## 0c. THE TWO-COACH ARCHITECTURE (Greg, 2026-07-20 - the vehicle decision)
+
+Two coaches, one shared signal core, built NOW in the same gate period. The NYMEX->Kalshi LAG works
+BOTH ways for us: it is the standing edge on the Kalshi side (NYMEX moves first, Kalshi reprices
+seconds-to-minutes later) and it means the NYMEX read is already the leading input for both games.
+
+- **THE SHARED SIGNAL CORE** - everything this gate builds: decision_state (all feeds), the brain,
+  the walk, the day-net calls. One signal engine; both coaches consume it. G12/G13 remain the signal
+  engine's skill tests.
+- **THE NYMEX COACH** (second vehicle chronologically, full depth) - trades NYMEX NG dailies off the
+  full input stack: day-book primary (session cell, settle-excluded), magnitude bands, sizing,
+  net-of-fee at futures fee scale ($5 maker / $25 taker - immaterial per COACH_REPLAY_S97; DIRECTION
+  is the constraint on this leg).
+- **THE KALSHI COACH** (INITIAL PRIMARY, deliberately shallow) - a DIFFERENT GAME on the SAME
+  signals: it does NOT need the deep fundamental stack; it needs (a) the NYMEX coach's read, (b) the
+  LAG mechanics (when NYMEX moves, how long until the Kalshi bracket reprices, and how far), (c) the
+  Kalshi microstructure: strike ladder, spread, fees, fill reality - where the S81/S82 SIZE-VS-FEE
+  problem returns and is load-bearing (the exact opposite of the futures leg). Its skill test is not
+  the walk; it is the echo replay (feed M) and then paper-trade on Kalshi demo
+  (provisional-until-live, unchanged).
+- Same signals, two games, scored separately, never conflated. The walk's per-day calls are
+  vehicle-agnostic SIGNAL; each coach owns its own execution translation and its own net-of-fee
+  ledger.
 
 ---
 
@@ -225,17 +255,64 @@ Feed IDs A-K for tracking.
 - Blind wall: CME settlement/OI publication is next-morning - same rule as the futures OI join.
 - `options_surface_asof(date, root="NG") -> dict | None`. The largest new build in the gate.
 
-### J. LNG feedgas - S97 gate item 8, converted from "report the gap" to a BOUNDED SIZING SPIKE.
+### J. LNG feedgas + paid-data survey - S97 gate item 8, converted to a BOUNDED SIZING SPIKE,
+  EXPANDED per Greg 2026-07-20 ("modest is on the table").
 - WHY: structurally the biggest modern NG demand driver (a Freeport-class outage reprices the curve
   for months). Vendor nomination data is paid; EIA monthly is too slow. BUT the terminal-serving
   interstate pipes post scheduled quantities on FERC-mandated public EBBs.
-- The spike (investigation, NOT a feed build): enumerate the EBB posting locations for the 5-6 big
-  terminal laterals; determine per-source whether HISTORICAL postings are retrievable (the honest
-  risk: EBBs often show current + shallow history only - useless for the walk, still valuable
-  live-forward); report obtainability per terminal, effort estimate, and STOP. Explicitly authorized
-  conclusion: "not obtainable historically; live-only feed possible at cost X" - that is a
-  successful spike, not a failure.
-- Deliverable: `LNG_FEEDGAS_SIZING_S98.md`. No synthetic proxy under any circumstances.
+- The spike (investigation, NOT a feed build), two arms:
+  - FREE arm: enumerate the EBB posting locations for the 5-6 big terminal laterals; determine
+    per-source whether HISTORICAL postings are retrievable (the honest risk: EBBs often show current
+    + shallow history only - useless for the walk, still valuable live-forward); report
+    obtainability per terminal + effort estimate.
+  - PAID arm (NEW): survey the vendor landscape for daily feedgas/production nowcasts at a MODEST
+    price point - name each candidate source, what it carries (feedgas by terminal, dry-gas
+    production, power burn), its history depth, delivery mechanics (API/file), and monthly cost.
+    Include the cheaper aggregator tier, not just the Platts/WoodMac flagship tier. NO
+    subscription is taken by the builder or the orchestrator - the deliverable is a costed
+    recommendation; subscribing is GREG'S action.
+- Deliverable: `LNG_FEEDGAS_SIZING_S98.md` (both arms). Explicitly authorized conclusion on the free
+  arm: "not obtainable historically; live-only feed possible" - a successful spike, not a failure.
+  No synthetic proxy under any circumstances.
+
+### L. Kalshi-side NG market data - inventory, restore, backfill (family KAL) - NEW (two-coach).
+- WHY: the Kalshi coach's echo replay (feed M) needs the Kalshi side of the walked winter -
+  KXNATGASD (daily NG settle brackets) quotes/trades/books. We currently hold NONE of it locally
+  (data/ has no kalshi dirs); the durable collectors push to `data/kalshi-bins` on the trunk branch
+  `claude/kalshi-s79-kickoff-ij8t9o`, and their accrual through Nov 2025 - Feb 2026 is UNVERIFIED
+  (S83 recorded runs sitting queued on account-level Actions issues).
+- The task: (1) inventory what actually accrued - fetch the data branch, list KXNATGASD coverage PER
+  DATE across the walked winter; (2) backfill gaps from the Kalshi public history API
+  (`kalshi_history.py` exists - verify it still matches the current API before leaning on it);
+  (3) land the store locally + push to S3 under `kalshi/` (git = CODE, S3 = DATA); (4) report
+  per-date coverage, gaps named individually. If whole blocks of the winter are unrecoverable at
+  quote/book depth, say so - trades-only coverage changes what feed M can honestly claim.
+- Blind wall: n/a for collection; feed M owns the join discipline.
+- Deliverable: the store + `KALSHI_NG_COVERAGE_S98.md`. Medium build.
+
+### M. The lag echo replay + Kalshi fill/fee model (family KAL) - NEW (two-coach). UN-PARKS the
+  Kalshi-side fill modeling that S97 deferred.
+- WHY: the Kalshi coach's game IS the lag (NYMEX leads, Kalshi follows seconds-to-minutes later) and
+  its constraint IS size-vs-fee (S81/S82) - the exact inversion of the futures leg, where
+  COACH_REPLAY_S97 proved fees immaterial and direction binding. Nothing about the Kalshi leg is
+  provisional-until-live except via this build.
+- The build, on feed L's store, reusing the existing lag thread (`futures_kalshi_lag.py`,
+  `lag_exploit_backtest.py`, `odcore/leadlag.py`):
+  - (1) MEASURE the lag on KXNATGASD across the walked winter: per-event (never pooled) NYMEX move
+    -> Kalshi bracket reprice delay + pass-through fraction, per moneyness band and time-of-day.
+    1-sec NYMEX readouts are LOWER BOUNDS (standing rule).
+  - (2) FILL/FEE MODEL: Kalshi spread-as-cost per bracket + per-contract fee schedule + a
+    conservative fill assumption (cross-the-spread taker baseline; resting-order fill claims
+    require book evidence, else not claimed).
+  - (3) ECHO REPLAY: re-price the walk's blind day-book calls (G7-G11) through the Kalshi leg -
+    which calls survive net-of-fee at Kalshi scale, per-cell (moneyness x day-class), maker AND
+    taker framing. This is the Kalshi coach's first honest scorecard, the direct sequel to the
+    S81/S82 size-vs-fee finding.
+- Leakage gate (`odcore/leakage.py`) mandatory before the replay; settle-window exclusion applies on
+  the NYMEX side; Kalshi settle mechanics (bracket settlement time/source) verified from the
+  contract spec, never assumed.
+- Deliverable: `KALSHI_ECHO_REPLAY_S98.md` + the fill/fee module (`kalshi_fill_model.py`,
+  `echo_replay.py`). The largest KAL build; runs parallel off the critical path until L lands.
 
 ### K. Revision-vintage assessment (family META) - S97 concern #1, promoted into the gate.
 - WHY: the blind wall governs WHEN a report becomes visible, not WHICH VINTAGE - the store carries
@@ -275,11 +352,20 @@ to Greg before any brain merge, per standing protocol)
    a conditioner of day plays - not as a standalone pass/fail deliverable. Both continue to be
    recorded per-event. Rationale on record: two-week directional calls on NG are near-coin-flip at
    the best desks; the replay shows the day-book is where the edge lives (resume 9/10; fees
-   immaterial; turn-calls 0/3) and G9 proved a wrong lean does not cost the day-book money.
+   immaterial; turn-calls 0/3) and G9 proved a wrong lean does not cost the day-book money. Under
+   the two-coach architecture (0c) the day-book is the NYMEX coach's product; the Kalshi coach's
+   product is the echo book (feed M) and is scored on its own ledger.
 5. **Squeeze-regime doctrine** (desk review B5): brain guidance that inside the delivery window
    (squeeze_watch active) demand-regime bands and alternation rules are OUT OF SCOPE - bands void,
    no mean-reversion assumption, never short the squeeze leg on band logic; G11 is n=1, G13 the
    forward test. Scope-tagged like every play; the agent decides application.
+6. **The two-coach spec** (Greg 2026-07-20, section 0c): a short design doc
+   (`TWO_COACH_SPEC_S98.md`) fixing the boundary - what the shared signal core emits (per-day call:
+   side, magnitude band, conviction, regime state, timing notes), what the NYMEX coach adds
+   (sizing, session cell, futures fees), what the Kalshi coach adds (bracket selection off the
+   strike ladder, lag-triggered entry, spread/fee/fill model from feed M, exit before settle), and
+   the rule that the two ledgers are never pooled. Written after feed M's first numbers exist so the
+   spec is grounded in measured lag/fee reality, not assumption.
 
 ## EXPLICITLY NOT IN THE GATE (named deferrals, unchanged reasons)
 
@@ -292,26 +378,26 @@ to Greg before any brain merge, per standing protocol)
 - **ECMWF historical cycles** - not freely archived; named gap, no proxy.
 - **Pass-2 series construction** - JOB 4, after the first pass completes (Greg: do not re-base the
   walk before then). `PASS2_CONTINUOUS_SERIES_NOTES.md` unchanged.
-- **Kalshi-side fill modeling** - parked pending the vehicle decision (open question to Greg; does
-  not block data work).
 
 ## PREREQUISITES (Greg, before/while the builds run)
 
 1. ROTATE the AWS pair + DATABENTO key (both exposed in-chat S97).
 2. GET A REAL EIA KEY (DEMO_KEY is globally shared and already broke a build). Blocks K and the
    `--source api` re-verification of the regional store (S97 concern #2).
-3. Open questions that do NOT block data work: data-budget appetite for paid flow data (shapes J's
-   follow-up); the target execution vehicle (NYMEX futures/options vs Kalshi echo - shapes post-gate
-   scoring and sizing work).
+3. DECIDED 2026-07-20 (recorded, no longer open): a MODEST paid tier is on the table - feed J prices
+   the options, Greg subscribes or declines; the vehicle is KALSHI FIRST then NYMEX dailies, both
+   coaches built now (section 0c, feeds L/M, Tier 3 item 6).
 
 ## SEQUENCING AND THE CRITICAL PATH
 
 - SERIAL (orchestrator, one hand): Tier 0 wiring -> Tier 1 (fingerprints -> C2 ratio). This is the
   G12 critical path.
-- PARALLEL (STEP C subagents, run while Tier 0/1 proceeds): B, C, D, F, G, H, J; A phase 1; E with/after
-  A; I phase i started early (largest).
+- PARALLEL (STEP C subagents, run while Tier 0/1 proceeds): B, C, D, F, G, H, J, L; A phase 1;
+  E with/after A; I phase i started early (largest GLBX build); M as soon as L lands data.
 - SECOND SERIAL WIRING PASS (orchestrator): wire A, B, C, D, E, F, G, H (+I if landed) into
-  decision_state; re-audit the blind wall across ALL joins; selftest.
+  decision_state; re-audit the blind wall across ALL joins; selftest. (L/M do not enter
+  decision_state - they are the Kalshi coach's substrate, not walk inputs; the walk stays blind to
+  the echo leg.)
 - TIER 3 brain proposals assembled after the wiring passes; PRINTED to Greg; merged on approval.
 - K runs parallel as an audit; its as-printed overlays land in the second wiring pass.
 
@@ -322,12 +408,16 @@ G12 (Sun Feb 1 - Fri Feb 13 2026) may run when ALL of:
 2. Tier 1 complete (G11 fingerprints on .n.0 + C2 ratio reformulation derived and recorded in a
    brain proposal).
 3. Tier 2 feeds A(ph1), B, C, D, E, F, G, H built AND wired; K's audit delivered (with as-printed
-   overlays where differences were found); J's sizing report delivered.
+   overlays where differences were found); J's sizing report delivered; L's coverage report
+   delivered (the store restored/backfilled to whatever honest coverage exists).
 4. Tier 3 items 1-5 proposed, printed to Greg, and merged on his approval.
 5. Roll check for G12 run by a SUBAGENT returning ONLY roll date + spread (the S97 protocol fix).
 
 G13 (Sun Feb 15 - Fri Feb 27 2026, the SQUEEZE TEST) additionally requires:
 6. Feed I phase i (options OI/pin map) built and wired.
+7. Feed M delivered (lag measurement + fill/fee model + the G7-G11 echo replay) and Tier 3 item 6
+   (the two-coach spec) written off M's measured numbers - the Kalshi coach's first scorecard
+   exists before the walk resumes past G12.
 
 Anything in this file found unobtainable is reported per-instance in the closing session handoff -
 a named honest gap closes its item; a silent skip does not.

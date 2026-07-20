@@ -29,12 +29,15 @@ superseded ones down. (Started S81, 2026-07-12.)
   we're doing before we do any more runs"). Supersedes the GATE section of
   `SESSION_HANDOFF_2026-07-19_S97.md`. Organized by regime family (DEMAND / POSITIONING / DELIVERY):
   Tier 0 = wire the three landed S97 feeds + `squeeze_watch` + the information clock; Tier 1 = G11
-  fingerprints on `.n.0` -> the C2 ratio reformulation (the G12 critical path); Tier 2 = feeds A-K
+  fingerprints on `.n.0` -> the C2 ratio reformulation (the G12 critical path); Tier 2 = feeds A-M
   (model-cycle timing, vol regime, model disagreement, storage CONSENSUS, freeze-off risk, flow
-  calendar, cash basis, COT combined, options surface [required for G13], LNG feedgas sizing spike,
-  revision-vintage audit); Tier 3 = brain doctrine (usage guidance, flip driver checklist,
-  evidence-day registry, two-books scoring split, squeeze-regime doctrine). Gate-closure condition at
-  the bottom defines when G12/G13 may run.
+  calendar, cash basis, COT combined, options surface [required for G13], LNG feedgas sizing spike +
+  paid-data survey, revision-vintage audit, Kalshi NG data restore [L], lag echo replay + Kalshi
+  fill/fee model [M]); Tier 3 = brain doctrine (usage guidance, flip driver checklist, evidence-day
+  registry, two-books scoring split, squeeze-regime doctrine, the TWO-COACH spec). Section 0c = the
+  TWO-COACH ARCHITECTURE (Greg 2026-07-20): Kalshi = initial primary vehicle, NYMEX dailies quickly
+  after, one shared signal core, two separately-scored coaches; the lag is the Kalshi edge.
+  Gate-closure condition at the bottom defines when G12/G13 may run.
 - **S97 feed modules (landed S97, indexed here):** `research/kalshi/cot_feed.py` +
   `data/cot/` (CFTC COT, publication-time blind wall); `research/kalshi/storage_regional.py` +
   `data/storage_regional/` (EIA five-region + salt/non-salt); `research/kalshi/contract_structure.py`
