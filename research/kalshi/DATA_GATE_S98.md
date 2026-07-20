@@ -171,11 +171,15 @@ Feed IDs A-K for tracking.
   a re-pull. Re-pull from the IEM archive only what is missing. Deliver: the LATEST cycle available
   before (a) the Sunday 18:00 ET reopen and (b) each weekday open, plus run-to-run deltas between
   consecutive cycles (not just evening batches).
-- COVERAGE EXTENSION (found by the S98 Tier 0 join audit, 2026-07-20): the S97 MOS store ENDS
-  2026-01-31 - `weather_forecast` is None for ALL of February 2026, i.e. G12 and G13 would run with
-  NO forecast-temperature input and the blind agent would not know it was missing. Phase 1 MUST
-  extend the store through 2026-02-27 (fresh IEM pull for February). A hard G12 requirement,
-  independent of the cycle-timing upgrade.
+- COVERAGE EXTENSION - **DONE 2026-07-20** (orchestrator, the existing builder re-run full-range):
+  index now 119 days 2025-11-01..2026-02-27, ALL complete, `weather_forecast` present on all 101
+  walk days (audit-joins). TWO TRAPS FOUND AND HANDLED: (1) `build_mos_asof` OVERWRITES the index
+  with only the built range - a February-only run would have destroyed the walked winter's 91 days
+  (full-range rebuild used instead; pre-existing days verified bit-identical except Jan 25-30
+  forward horizons whose FEBRUARY-target normals went None -> populated); (2) `load_normals`
+  returns the cached file wholesale regardless of window - the S97 cache ended in January, leaving
+  Feb `vs_normal` None until a full-year normals refresh. Store + normals + raw pushed to S3
+  `weather/mos_asof/` (101 objects). The cycle-level as-of (phase 1 proper) remains the S99 build.
 - Phase 2 (post-gate, recorded not required): full-field GFS/GEFS from the NOAA AWS Open Data
   archives (free; verify bucket coverage for Nov 2025+) for ensemble spread and a true gas-weighted
   national HDD. ECMWF historical is NOT freely archived - named gap, do not fake it.
