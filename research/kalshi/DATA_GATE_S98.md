@@ -486,6 +486,17 @@ data centers coming online or any major manufacturing coming online... checking 
   item 6). Recorded here so it is not lost; built with M5 (the live box).
 
 ### L. Kalshi-side NG market data - inventory, restore, backfill (family KAL) - NEW (two-coach).
+STATUS: **DONE 2026-07-20, store on S3 `kalshi/` (178 objects, 48.8MB), selftest PASS 11/11.**
+Full raw settled life of the family: KXNATGASD 61 event-days (153,803 trades / 3.69M 1m candles,
+Mar 30 -> present, FRIDAYS SKIPPED - weekly owns Friday; 21 no-listing weekdays named), KXNATGASW
+16, KXNATGASMON 3, the three winter annual thresholds (793 trades). THE HEADLINE stands as folded:
+no NG daily market existed in the walked winter; Jan 1 - Feb 27 2026 zero NG markets of any kind.
+API map delivered: live-vs-historical split at a MOVING cutoff (/historical/cutoff, ~3-month live
+window), all endpoints public; **NO historical orderbook endpoint - book depth history is
+structurally unobtainable; candle yes_bid/yes_ask OHLC is the ceiling**, making the live
+collector's 10-level books (accruing since 2026-07-12, one named 12h outage) the only book source
+forward. S80 kalshi_history.py drift named (silently sees only the live window). Feed M consumes
+this store.
 - WHY: the Kalshi coach's echo replay (feed M) needs the Kalshi side of the walked winter -
   KXNATGASD (daily NG settle brackets) quotes/trades/books. We currently hold NONE of it locally
   (data/ has no kalshi dirs); the durable collectors push to `data/kalshi-bins` on the trunk branch
