@@ -173,8 +173,17 @@ def _cot_asof_block(iso: str) -> dict | None:
     c = cot_feed.cot_asof(iso)
     if not c:
         return None
-    return c | {"note": "positioning as-of PUBLICATION time; futures-only, NYMEX 023651 only (no ICE HH); "
-                        "percentiles vs trailing 1y/3y of weekly nets"}
+    # (S98 feed H) the futures-AND-OPTIONS-COMBINED variant + the derived OPTIONS-IMPLIED delta
+    # (combined minus futures-only, per field) - additive, suffixed, same publication wall. The two
+    # books can sit at OPPOSITE extremes: at the G11 open futures-only MM net was at the 2.83rd 1-yr
+    # percentile while the options-implied read was at the 97.17th.
+    import cot_combined_feed
+    comb = cot_combined_feed.cot_combined_asof(iso)
+    if comb:
+        c = c | comb
+    return c | {"note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived "
+                        "_options_implied delta; NYMEX 023651 only (no ICE HH); percentiles vs "
+                        "trailing 1y/3y of weekly nets"}
 
 
 def _storage_regional_block(iso: str) -> dict | None:
@@ -525,6 +534,10 @@ def _selftest() -> int:
     c = d22["cot"]
     assert c is not None and c["publication_ts"][:10] < "2026-01-22", ("COT blind wall", c)
     assert c["managed_money_net"] is not None and c["managed_money_net_pctile_1y"] is not None, c
+    # (S98 feed H) combined + options-implied: additive, consistent (combined = futures + implied),
+    # and the G11-open two-books divergence on record (futures 2.83rd pctile vs implied 97.17th).
+    assert c.get("managed_money_net_combined") == c["managed_money_net"] + c["managed_money_net_options_implied"], c
+    assert c["managed_money_net_options_implied"] == 1085 and c["managed_money_net_options_implied_pctile_1y"] == 97.17, c
     r = d22["storage_regional"]
     assert r is not None and r["as_of"] < "2026-01-22", ("regional blind wall", r)
     assert r["regions"]["south_central_salt"]["level"] is not None, ("salt missing", r)

@@ -305,6 +305,16 @@ settle caveat recorded (ohlcv close vs official settle: NGG26 7.200 vs 7.460 fin
 - `cash_basis_asof(date) -> dict | None`. Small build.
 
 ### H. COT futures-and-options combined (family P) - NEW, small. Closes half of COT limit #9.
+STATUS: **DONE + WIRED 2026-07-20** (`cot_combined_feed.py`, store on S3 `cot_combined/`; publication
+machinery imported from cot_feed incl. the shutdown overrides, never re-derived). 393 reports
+2019-2026, date set identical to the futures store; blind-wall 0 (exhaustive 6-decision-times/day
+probe walk); OI cross-check 393/393. THE FINDING: the walked winter's two largest options-implied
+MM-net divergences (+1,210 and +1,085 futures-equivalent) are the two crowded-short weeks entering
+G11 - at the G11 open, futures-only MM net sat at the 2.83rd 1-yr percentile while the
+OPTIONS-IMPLIED read sat at the 97.17th. The two books at opposite extremes is now a wired state
+variable. ENV NOTE: cftc.gov now 403s python's default UA (this module sends a browser UA;
+cot_feed's downloader will need the same if ever re-run --force). ICE HH half of limit #9 stays
+open (no free source).
 - WHY: the S97 COT build is futures-only; options positioning is a separate picture and expiry-week
   mechanics (G13) are exactly where it diverges.
 - Source: same CFTC disaggregated publication, the futures-AND-options-combined variant. Same store
