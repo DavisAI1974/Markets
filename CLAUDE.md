@@ -1,6 +1,37 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-19, Session 97)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-20, Session 98)
 
-**S97 — THE WALK IS PAUSED AT A HARD DATA GATE (read `SESSION_HANDOFF_2026-07-19_S97.md` [GATE section
+**S98 — THE DATA GATE LARGELY CLOSED IN ONE SESSION (read `SESSION_HANDOFF_2026-07-20_S98.md` +
+`KICKOFF_2026-07-20_S99.md` + `research/kalshi/DATA_GATE_S98.md` [THE build list, feeds A-T]):**
+Desk review (20-yr NYMEX/ICE lens) -> Greg: "rewrite our data plan to your specs" -> the gate
+reorganized by regime family (DEMAND/POSITIONING/DELIVERY). **TWELVE feeds built/wired;
+decision_state 8 -> 17 blocks; audit-joins 0 violations x 8 classes x 101 days all session.**
+DECISIONS: **TWO-COACH architecture** (Kalshi initial primary, NYMEX dailies next; one signal core,
+ledgers never pooled; build deep, subset down); **the futures->Kalshi LAG = THE STANDING LOOK-AHEAD,
+established (S80 15-sig, S81 7-20s, S91 gold/silver), NEVER retest, live telemetry only**;
+procurement policy = free-first, verify coverage, pay only MEASURED gaps. **Brain s100.3 MERGED**
+(Greg approved): the C2 ratio reformulation REFUTED on comparable data (0120 true 0.714 vs 0107
+false 0.718 - identical on every arm); C2 kept + scoped; **the flip confirm completes as C1+C3+C4
+on the modern tape class** - forward test rides G12. Tier 1 done (G11 fingerprints on .n.0,
+pre-G11 counts reproduced exactly). THREE S97 CONCERNS CLOSED AS MEASURED: vintage look-ahead =
+ONE EIA revision event dated AFTER the winter (Mountain reclass ~10 Bcf/wk levels; one mislabeled
+print Sep 4); regional store xls-vs-api diff 0/863; C2 resolved. STRUCTURAL DISCOVERIES:
+**Kalshi had NO NG daily market in the walked winter** (KXNATGASD born 2026-03-27; Jan-Feb 2026
+zero NG markets - the G7-G11 echo replay is impossible, feed M runs on the Mar 30+ life; dailies
+skip Fridays; no historical book endpoint exists); the free weekly balance DIED 2025-10-02 (S&P
+section removed; vessel line survives); **THE EIA SWEEP FIND: STEO monthly VINTAGES** = the
+complete NG balance as-of each release, free, 1-34d stale (the API is current-vintage-only, the
+archived workbooks are the source; join on RELEASE dates); the cash HH spot publishes in WEEKLY
+BATCHES (naive T+1 would have leaked the Jan blowout a week early; decision-time-legit the +10.77
+basis lands ON the 0130 17x day); the two positioning books sat at OPPOSITE extremes entering G11
+(futures MM 2.83rd pctile vs options-implied 97.17th - now a wired variable). AWS: all three keys
+ROTATED; `platform_sync.py` = the one door; ~15 S3 prefixes manifested; live-loop design =
+us-east-1, sub-second suffices, LLM never in the hot path. MOS extended through Feb 27 (the
+G12/G13 weather blindness closed; two builder traps documented). **S99 = ITEM ZERO the PAID-DATA
+DISCUSSION (packet delivered), then feeds T/A/I/M/Q/R, Tier 3 doctrine proposals, THEN G12
+(Feb 1-13) and G13 (Feb 15-27, the SQUEEZE TEST - opex 0224/expiry 0225 inside; requires feed I).**
+START A FRESH SESSION with the S99 drop-in box.
+
+**S97 — the walk paused at the hard data gate (read `SESSION_HANDOFF_2026-07-19_S97.md` [GATE section
 FIRST] + `KICKOFF_2026-07-19_S98.md`):** G11 (Sun Jan 18 - Fri Jan 30) ran blind on s99.2 -> **6/12, drift
 -13,190, the THIRD consecutive block-lean miss** (anchor 2.702 -> 4.416; the bleed reversed into a 63%
 rally and the blind held the down-chain). Refine -> **s100.2, 23 plays: 10/12, drift -3,890.** **THE FLIP
@@ -275,6 +306,15 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S98** — the gate largely CLOSED in one session: desk review -> DATA_GATE_S98 (feeds A-T by regime
+  family); 12 feeds built/wired, decision_state 17 blocks, audit 0 violations throughout; brain
+  s100.3 (C2 refuted on comparable data, confirm = C1+C3+C4 modern-class, forward test rides G12);
+  two-coach architecture + the established look-ahead recorded; keys rotated, platform_sync + ~15
+  manifested S3 prefixes; three S97 concerns closed as measured; structural finds (no winter Kalshi
+  NG market; free weekly balance died 2025-10-02; STEO vintages = the free as-of balance; weekly-batch
+  cash publication; futures-vs-options positioning at opposite extremes into G11). S99 = paid-data
+  discussion FIRST, then T/A/I/M/Q/R + doctrine, then G12/G13.
+  Detail: `SESSION_HANDOFF_2026-07-20_S98.md`, `research/kalshi/DATA_GATE_S98.md`.
 - **S97** — G11 blind (6/12, drift -13,190, third straight block-lean miss) -> refine -> **brain s100.2,
   23 plays** (10/12, drift -3,890). The flip rule KEPT with a per-instance read: C1 clean (five fires, one
   correct decline, zero false positives), C2 broken on high-activity tapes by a SCALE artifact — the ratio
