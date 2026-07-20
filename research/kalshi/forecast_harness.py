@@ -101,6 +101,45 @@ def _weather_asof(iso: str, wx: dict) -> dict | None:
             "note": "realized_as_proxy_for_forecastable_regime"}
 
 
+MOS_ASOF = os.path.join(HERE, "..", "..", "weather", "mos_asof", "mos_asof_index.json")
+
+
+def _forecast_weather_asof(iso: str, mos: dict) -> dict | None:
+    """(S97 JOB 2.2, Greg S96) What the NWS MOS FORECAST SAID as of the EVENING OF D-1 - the thing the gas
+    market actually reprices on, as opposed to the realized temperature it turned out to be.
+
+    ADDITIVE: this sits ALONGSIDE _weather_asof (the realized-as-proxy read), it does NOT replace it. Both
+    are carried so the refine can compare forecast-conditioned rules against realized-proxy-conditioned
+    ones and settle which the market is really trading.
+
+    The key field is `run_delta` - the run-to-run CHANGE in the forecast (D-1 evening batch minus D-2
+    evening batch, same target days). A forecast that is cold but UNCHANGED is already in the price; a
+    forecast that just got colder is the repricing event.
+
+    Blind wall: every underlying model run is initialized at or before D-1 T23:59Z (17:59 CT on D-1);
+    built and asserted in nws_temp_feed._runset_asof. Missing coverage is None, NEVER 0."""
+    r = mos.get(iso)
+    if not r:
+        return None
+    return {
+        "forecast_gw_hdd": r.get("forecast_gw_hdd"),
+        "forecast_gw_cdd": r.get("forecast_gw_cdd"),
+        "forecast_regime": r.get("forecast_regime"),
+        "forecast_vs_normal": r.get("forecast_vs_normal"),
+        "forecast_run_delta": r.get("forecast_run_delta"),
+        "forecast_run_delta_cdd": r.get("forecast_run_delta_cdd"),
+        "fwd7_gw_hdd_span": r.get("fwd7_gw_hdd_span"),
+        "horizons": [{k: h[k] for k in ("horizon", "target_date", "forecast_gw_hdd", "forecast_vs_normal",
+                                        "partial", "coverage")} for h in r.get("horizons", [])],
+        "run_delta": [{k: h[k] for k in ("horizon", "target_date", "d_gw_hdd", "partial", "coverage")}
+                      for h in r.get("run_delta", [])],
+        "complete": r.get("complete"),
+        "asof_utc": r.get("asof_utc"),
+        "coverage_note": r.get("coverage_note"),
+        "note": "mos_asof_D-1_evening_forecast (NOT realized); additive to `weather`, does not replace it",
+    }
+
+
 def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk).
@@ -109,6 +148,7 @@ def decision_state(days: list[str]) -> dict:
     surp = _load_json("eia_surprise.json").get("KXNATGASD", {})
     stor = _storage_series()
     wx = _load_json("nws_temp/gw_degree_days.json")
+    mos = json.load(open(MOS_ASOF)) if os.path.exists(MOS_ASOF) else {}   # additive; absent -> None, never 0
     cv = fc.load("NG")
     out = {}
     for d in days:
@@ -122,6 +162,7 @@ def decision_state(days: list[str]) -> dict:
                   "curve_regime": cr[1]["regime"] if cr else "unknown",
                   "storage": _storage_asof(iso, stor),
                   "weather": _weather_asof(iso, wx),
+                  "weather_forecast": _forecast_weather_asof(iso, mos),
                   "holiday": _holiday_asof(iso)}
     return out
 
@@ -228,6 +269,18 @@ def brain_show(path: str = BRAIN) -> None:
 def _selftest() -> int:
     ds = decision_state(["20250902"])
     assert ds["20250902"]["dow"] == "Tue" and ds["20250902"]["stor_surprise"] is not None, ds
+    # (S97 JOB 2.2) the MOS as-of forecast block is ADDITIVE: the realized-proxy `weather` key must survive
+    # untouched, and `weather_forecast` must be present-or-None but NEVER a silently-zeroed HDD.
+    assert "weather" in ds["20250902"], "regression: realized-proxy weather key was removed"
+    wf = decision_state(["20260120"])["20260120"]
+    assert "weather" in wf and "weather_forecast" in wf, wf
+    f = wf["weather_forecast"]
+    if f is not None:
+        assert f["forecast_gw_hdd"] is None or f["forecast_gw_hdd"] > 0, "zeroed winter HDD - false signal"
+        assert f["forecast_run_delta"] is not None, f
+        assert f["asof_utc"].startswith("2026-01-19"), ("blind wall: asof must be D-1", f["asof_utc"])
+        print(f"[forecast_harness] mos_asof wired: 20260120 fHDD={f['forecast_gw_hdd']} "
+              f"vsNorm={f['forecast_vs_normal']} runDelta={f['forecast_run_delta']} asof={f['asof_utc']}")
     brain_show()
     print("[forecast_harness] selftest PASS")
     return 0

@@ -106,3 +106,6 @@ data/nymex_analog/
 # S94: local NG/CL tape cache pulled from S3 (raw MBP-10, huge, re-pullable) — never commit
 research/kalshi/data/nymex_cont/
 research/kalshi/data/
+weather/mos_asof/raw/
+data/nymex_cont_n0/
+data/nymex_cont_n1/

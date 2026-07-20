@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s100.2",
+  "version": "s100.1",
   "built_pass": 3,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -24,17 +24,7 @@
   "g10_holdout_note": "G10 (Jan 2-16 2026, ends Friday close per Greg; roll-clean; first blind test of the s98.2 polarity suite) = the SECOND block-lean miss: direction 6/11, close-cum +4250g vs -6020a (3.643->3.109). The blind run called a chain-birth FLIP out of basing on 0108 (capitulation-retest -> band-breaking counter day, front-running the 0112/0115 cold ramp) and a young up-chain to ~4.20; the DOWN-CHAIN NEVER ENDED. PER-EVENT: 0102 -20a vs -1100g (dir OK only by sign of the move; the chain paused, not continued); 0105 +260a (guessed -600 retest); 0106 -650a (guessed +900 bounce - the alternation bounce came 0107 instead: +1510a vs -500g, the one-day phase residual AGAIN); 0108 -1580a vs +2000g (the false flip day); 0109 -2760a vs +1300g (the bullish -23.6-below draw SOLD - the polarity-sided print rule was RIGHT, the polarity verdict feeding it was WRONG; also the exit-liquidity form fired inside the STILL-down chain); 0112 +920a/+1400g and 0113 +320a/+500g OK (a real two-day bounce, but inside the down-chain); 0114 -2710a vs -700g (dir OK, crash band not ramp-shallow band); 0115 +460a/+1500g dir OK; 0116 -440a/-700g OK. LEADS: (1) the FLIP RULE FIRED FALSE - the arm/confirm signature matched (parabolic down-chain + capitulation + counter day) but no up-chain was born; candidate discriminators for the refine: the 'confirm' day 0107 +1510 did NOT break the counter-day band (bounce band top is +1900), no old-side continuation-collapse was verifiable blind (one-shot has no tape), and the fundamental backdrop (surplus REBUILDING, +62.2-above New-Year print known 0102, +107.4-above known 0116) said supply was winning - a flip against a re-widening surplus may need a higher bar; (2) in a POST-PARABOLIC down-chain, bounces ran two days (0107+0112/0113) but never chained a third - the basing class again; (3) magnitude: the crash days (-2760, -2710) hit crash bands, the guessed ramp-shallow band on 0114 was the wrong class (the ramp was live but the chain was DOWN - ramp-shallow give-backs belong to UP-chains; polarity-relative bands, same lesson as G9's ramp-arm misuse).",
   "s99_2_refine_note": "S99.2 UNBLINDED per-group refine of G10 (Jan 2-16, the second block-lean miss = the FALSE POLARITY FLIP) - refined curves in forecasts/grp10.json (refined_* fields), derived ONLY from general rules + decision-state + prior-day ACTUAL tape; sizes from condition-class bands. THE TOP DELIVERABLE - THE HARDENED FLIP CONFIRM BAR (structure.chain_polarity_flip rewritten): a flip CONFIRM now requires ALL of (C1) BAND-BREAK - the counter day's net >=~1.5x its condition-class counter band (true confirms: 1208 -2730 = 3x the -700..-900 band; 1223 +5010 = 2.6x; 1020 +2660; 1008 -1800 = 2x; FALSE 0107 +1510 was IN-band vs the +800..+1900 bounce band); (C2) OLD-SIDE CONTINUATION-COLLAPSE VERIFIED IN THE ACTUAL TAPE - old-chain-direction legs continuing <=~15% overall AND old-side big legs (>=$300) not majority-alive (true: 1208 up 3/33 = 9% big 2/6; 1008 up 0/15; 1020 dn 1/10 big 0/2; 1223 dn 3/38 = 8% big 2/6; FALSE 0107 dn 10/36 = 28% with big down-legs 6/7 STILL CONTINUING - the single sharpest discriminator: the old side was fully alive under the bounce); (C3) NEVER FRONT-RUN - the confirm must have PRINTED (closed) before any polarity-relative rule flips; catalyst_continuity_frontrun is for WITH-chain resumes only (the blind fired the flip ON 0108 itself, before any confirm existed); (C4) the CATALYST-ARBITER - in the no-band-break/waited form, the first scheduled print after the armed turn decides it: counter-side delivery confirms (0925 +740, 1030 +2580), chain-side delivery REFUTES (0109 -2760 sold the bullish -23.6-below draw = the down-chain reasserting). PLUS the TERMINATION-vs-BIRTH split: a full signature ENDS a chain (technical, positioning exhaustion - no fundamental needed: 1208 flipped against a bullish surplus-collapse), but BIRTH of a sustained counter-chain needs a forward fundamental driver; when the weekly fundamental stream is actively RE-CONFIRMING the old chain (surplus re-widening under a down-chain: +15 -> +62.2 -> +107.4 across G10), a fired signature yields TERMINATION-TO-BASING/BLEED at most (1222/1223), and a mere bounce yields nothing (0107) - vs 1019/1020 where rising winter HDD fed the newborn up-chain. Back-check: the hardened bar still fires 1007/1008, 1205+1207/1208, 1016->1019/1020, and 0922-0925 (arbiter form); rejects 0107/0108 on all four conditions and re-classes 1222/1223 as termination-to-basing. THE SECOND DELIVERABLE - THE THIRD CHAIN CLASS (new play structure.post_parabolic_bleed): after termination-to-basing the market enters a stepped BLEED at the old polarity: crash days (-2400..-2900) arrive SINGLE - they do not chain except INTO a print day (0108->0109) - each followed by a 1-2 day pause/bounce (1224->1226 +670, 1209->1210 +370, 0114->0115 +460); bounces run 1-2 days NEVER 3 (0107; 0112/0113; 1223); more small days than a young crash chain (0102 -20, 0113 +320, 0115 +460, 0116 -440); net drift = marginal new lows. G10 = the class's first full block (G9 week-3+ its birth). OTHER RESOLUTIONS: (1) the 0106/0107 phase residual - R1's bounce arm reads CHAIN-SIDE days' closes ONLY: 0105 (+260) was an R3 gap-fade COUNTER day, its recovered close carries no bounce signal; the chain-side day 0106 closed 55% recovered off -1430 with a late counter-tick and pinned the 0107 bounce exactly; the real sequence was weekend-gap capitulation (0104 -1710 warm-lull repricing) -> Monday gap-FADE (+260, R3's first down-polarity fade, n=2 with 1109->1110) -> post-fade chain resume (0106, n=2: 1110->1111 mirror) -> R1 bounce (0107). (2) 0109 folded as the 8th consecutive disagreeing print trading chain-sided (8/8) AND the arbiter refuting the false flip; 0116 the 9th (agreeing, small - bleed sizes in-chain confirmations down a class). (3) 0114 - bands are POLARITY-RELATIVE, formalized: ramp-shallow (-700..-900) is an UP-chain give-back band; a live cold ramp is the COUNTER catalyst in a down-chain (it feeds bounces, and its failure is the failed_rally_tell: 0113's +1190 spike round-tripped 73% -> 0114 -2710 from the crash band; tell n=4 with 1210->1211, 1230->1231, 1002->1003). (4) January bleed bands: crash -2400..-2900 single-day; bounce day-1 +800..+1500; bounce day-2 +200..+500; post-crash pause +300..+700; in-chain print confirmation -400..-700; pause/hold -200..+300. REFINED-vs-ACTUAL (per-event): 0102 -100/-20, 0105 +300/+260 (gap -1500/-1780), 0106 -700/-650, 0107 +1200/+1510, 0108 -1400/-1580, 0109 -2600/-2760, 0112 +800/+920 (gap +1100/+1140), 0113 +300/+320, 0114 -2500/-2710, 0115 +400/+460, 0116 -600/-440. Direction 11/11; final drift +320 (blind +10270). IRREDUCIBLE: (a) the 0102 year-boundary normalization form (n=1 - mechanism stated: the year-end flush's flow source expires with the calendar; the bleed pause class carried the call); (b) weekend-gap SIZE (0104 -1780, 0111 +1140 - direction callable off the model stream, magnitude not; standing); (c) crash tails beyond band-high (standing dominant residual, though G10's crashes landed in-band); (d) the bounce CARRIER day in one-shot mode (0106-vs-0107 needs 0106's actual close - the standing protocol residual); (e) the bleed-vs-young-chain boundary (when do crashes stop chaining?) rests on the print-day exception, n thin. GUARD: every rule applied uniformly across all 11 days and back-checked G3-G9; the confirm-bar thresholds are ratios to condition bands and leg-share fractions spanning 4 true + 2 false/partial events across G4/G5/G9/G10, never day-tuned; sizes from bands, never the target day's tape.",
   "g11_holdout_note": "G11 (Sun 2026-01-18 through Fri 2026-01-30, twelve sessions; blind one-shot on s99.2) = the THIRD consecutive block-lean miss (G9, G10, G11): direction 6/12, close-cum (intraday nets only) +12690 actual vs -500 guessed, drift -13190. Anchor 20260116 close 2.702 -> 0130 close 4.416 = +17140 per contract INCLUDING gaps. The blind held the G10 post-parabolic DOWN-chain intact and called the block flat-to-marginally-negative (block_summary: flip_called false, bleed_end_called false); the market rallied hard. PRICE BASIS: NG.n.0 OI-continuous instrument 1021, NO intra-block roll - G3-G10 all ran on the volume-based NG.v.0 series, so cross-block price-level comparisons must account for the basis change; per-day intraday nets remain roll-clean either way. PER-EVENT: 0118 Sun gap +2100a vs +100g (net -10a/+150g, dir miss - the 'weekend with no new shock reprices ~nothing' read gave a small gap and the gap was the block's second largest); 0119 Mon +550a/+1600g (dir HIT, ~3x oversized on the MLK thin-amplifier stack); 0120 Tue +1930a/+700g (dir HIT, ~2.8x under); 0121 Wed +3820a vs -800g (dir MISS, the block's second largest day - the 'bounces run 1-2 days, never 3' B2 rule plus mature_swing_alternation both called the give-back and the bounce ran a THIRD day and accelerated); 0122 Thu -170a/-900g (dir HIT, oversized; the print was +76.4 above with the surplus WIDENING 187->263 and the chain-sided read earned the side); 0123 Fri +1170a/+800g (dir HIT - a MOS-forecast-driven sign flip that WORKED, run-delta +2.885/+4.500 took the up side against what the down-chain would have called); 0125 Sun gap +2480a vs -250g and net +180a/-350g (dir MISS - the MOS back-end CUT, run-delta -2.315 for Jan 30, drove an explicit negative-gap call and the gap was the block's largest; the blind recorded that it was rejecting the realized-cold read, which was the side that paid); 0126 Mon -620a vs +500g (dir MISS - the MOS re-add, run-delta +3.197, flipped the day off a carry-DOWN call that would have been right); 0127 Tue -260a/+300g (dir MISS); 0128 Wed -400a/-1000g (dir HIT); 0129 Thu +1480a vs -1800g (dir MISS, the highest-conviction call of the block - a genuinely bullish print, -15.2 BELOW with the surplus NARROWING 263->248 for the first time all winter, was called chain-sided-sold on the 8/8 precedent and instead traded WITH the print); 0130 Fri +5020a vs +300g (dir HIT, the block's largest day, ~17x under - B1's post-crash pause got the side and no band in the brain covers the size). REPORTED, NOT ADJUDICATED: the blind's stated reason for not firing structure.chain_polarity_flip is the hardened G10 confirm bar plus the fundamental backdrop - it checked the flip on 0119, 0122 and 0129 and declined each time because no counter day broke the counter-day band, C3 forbids front-running a flip, and the 0122 print re-confirmed the widening surplus (the G10 false-positive lesson). It also logged the 0129 narrowing surplus as the walk's first genuine bleed-EXIT candidate driver and explicitly recorded it as a WATCH, not traded, because the MOS stream contradicted it the same day. CAVEAT ON HOLDOUT STATUS: the orchestrator had seen this block's price path before the blind agent was spawned; the blind agent itself received only the brain plus decision_state, but this block is a weaker holdout than G6-G10 and should be weighted accordingly. FIRST USE OF MOS forecast-temperature data (weather_forecast in decision_state) anywhere in the walk: it drove three sign flips - 0123 (right), 0125 (wrong), 0126 (wrong).",
-  "g11_price_basis_note": "G11 is scored on NG.n.0 OI-continuous, instrument 1021, with no intra-block roll - the whole block including both Sunday sessions sits on ONE instrument, so the 0118 +2100 and 0125 +2480 weekend gaps are genuine repricing and not calendar-spread or roll artifacts (contrast the s95_2_roll_correction, where the 0925 +2760 'gap' was exactly the roll). G3-G10 ran on the volume-based NG.v.0 series. Per-day intraday nets are comparable across the basis change; absolute price levels across blocks are not.",
-  "s100_2_refine_note": "S100.2 UNBLINDED per-group refine of G11 (Jan 18-30, the THIRD consecutive block-lean miss) - refined curves in forecasts/grp11.json (refined_* fields), derived ONLY from general rules + decision_state + prior-day ACTUAL tape; sizes from condition-class bands, never the target day's tape. THE HEADLINE: the block was ONE error, POLARITY, and it is locatable to a single measurable event. C1 (band-break) FIRED at the 0120 close - +1930 against the carried down-chain's bleed day-2 bounce band of +200..+500, i.e. 3.9x its band top - so the flip was confirmable at the 0121 open. The blind run declined the flip on 0119, 0122 and 0129 but never evaluated 0120, and evaluated 0119 against the day-1 rather than the day-2 band. Every rule the blind run applied thereafter was correct in FORM and inverted in SIGN; the sharpest demonstration is 0129, where the identical storage-Thursday print rule yields -1800 at down polarity and +1400 at up polarity against an actual +1480. REFINED-vs-ACTUAL (per-event): 0118 -50/-10 (gap +600/+2100), 0119 +600/+550, 0120 +1600/+1930, 0121 +2500/+3820, 0122 -300/-170, 0123 +1100/+1170, 0125 +150/+180 (gap +1200/+2480), 0126 -700/-620, 0127 +100/-260, 0128 +200/-400, 0129 +1400/+1480, 0130 +2200/+5020. Direction 10/12; refined close-cum +8800 vs actual +12690, drift -3890 against the blind's -13190, and the ENTIRE remaining drift is two days (0121, 0130) - the residual is concentrated on a named condition, not diffuse.",
-  "s100_2_flip_characterization": "THE CENTRAL DELIVERABLE - structure.chain_polarity_flip per instance, across every termination and near-termination in the walk. THE RULE IS KEPT AND IS USED ON THE INSTANCES ITS CONDITIONS DISCRIMINATE ON. C1 (band-break) WORKS EVERYWHERE TESTED: fires 1008 (-1800, 2x), 1020 (+2660), 1208 (-2730, 3x), 1223 (+5010, 2.6x), 0120 (+1930, 3.9x the day-2 bounce band); correctly declines 0107 (+1510, inside the +800..+1900 bounce band). Five fires, one correct decline, zero false positives spanning G4, G5, G9, G10 and G11 - C1 is the load-bearing condition and is sufficient on its own on every instance in the walk. C2 (old-side continuation-collapse) WORKS ON LOW-ACTIVITY TAPES and DOES NOT DISCRIMINATE ON HIGH-ACTIVITY TAPES: it fires correctly on 1008 (up 0/15), 1020 (dn 1/10, big 0/2), 1208 (up 3/33, big 2/6) and 1223 (dn 3/38, big 2/6), and it produces the sharpest correct rejection in the walk on 0107 (dn 10/36 with big down-legs 6/7 STILL ALIVE - the old side more alive than the new); but on 0120 it returns a FALSE NEGATIVE, with down legs still continuing ~64%. THE DISCRIMINATING CONDITION IS TAPE ACTIVITY, and the mechanism is that C2 is an absolute share-of-legs threshold applied to a leg count that varies tenfold across regimes: every instance C2 was calibrated on carries 15-98 legs on 15-25k trades per session, while G11's sessions carry 160-550 legs on 75-125k trades. On a high-activity tape both sides always retain a live share and a <=15% absolute threshold is mechanically unreachable. THE FIX IS A REFORMULATION, NOT A REMOVAL: express C2 as the RATIO of old-side to new-side continuation, which is scale-invariant and separates cleanly on fingerprint-comparable data (1020 0.00, 1208 0.40, 1223 0.42 vs the false 0107 at 1.23). G11 cannot yet be placed on that scale - month_characterize has not been run on the G11 tape - and that is a DECLARED BUILD GAP, not a result. C3 (never front-run) is forward-confirmed as a discipline: it correctly blocked the 0108 front-run and correctly withheld a flip at G11's 0119 and 0120 opens, and it does NOT block the flip at the 0121 open because the confirm had printed. C4 (catalyst arbiter) is forward-confirmed twice: 0109's chain-side delivery refuted the false flip, and G11's 0130 print - the surplus NARROWING 263->248, the first weekly print all winter to stop re-confirming the down-chain - supplied exactly the forward fundamental driver whose ABSENCE on 0107 correctly denied a birth. THE TERMINATION-vs-BIRTH SPLIT SURVIVES G11 INTACT and is strengthened: 0107 had no driver and yielded nothing; 0120 had an accelerating cold ramp adding at new horizons and later a confirming storage turn, and it yielded a chain. NOTE ON INFORMATION REQUIREMENTS: C1, C2 and C4 are ALL measurable at the confirm day's CLOSE, so the flip is open-time callable at the FOLLOWING session's open. The G11 miss is therefore as much a PROTOCOL residual as a rule residual - the one-shot blind protocol withholds the 0120 close that carries the confirm. Fourth independent appearance of the live-coach argument.",
-  "s100_2_weekend_gap_note": "THE WEEKEND-GAP MAGNITUDE RESIDUAL, three instances now (1020's +2770 day, 0118 +2100, 0125 +2480) plus the small cases (1124 ~+250, 0111 +1140). CONDITIONABLE, on whether the weekend's model cycle DELIVERS A CHANGE at D+2..D+6 rather than on the calendar: fresh or accelerating shot -> +1500..+2500 with the gap carrying the bulk of the repricing; already-priced shot -> +200..+400. New play magnitude.weekend_gap_delivery. THE LIMITATION IS A DATA LIMITATION, NOT A REASONING ONE: decision_state carries the D-1-EVENING MOS run, and the weekend repricing is priced off the Saturday and Sunday 00Z/12Z cycles. The Jan-24 shot first appears in our feed in the 0118-EVENING run, about an hour AFTER the Sunday reopen that had already priced it - the market was one model cycle ahead of the state variable, and no reasoning over the 0117-evening run could have produced +2100. CLOSING THIS IS A BUILD (ingest the weekend 00Z/12Z runs into decision_state), not a rule refinement. A COROLLARY WORTH KEEPING: 0119's US session netted only +550 after the +2100 gap, and the reason is NOT the MLK thin flag - the catalyst had already been consumed by the gap. R3's 'Monday is the reaction' framing is thereby strengthened, and the thin-holiday AMPLIFIER (1111, 1128) is confirmed to apply to DELIVERY days only, never to a session whose catalyst arrived in the preceding gap.",
-  "s100_2_mos_characterization": "FIRST-USE CHARACTERIZATION of the MOS weather_forecast block (three sign flips: 0123 helped, 0125 and 0126 hurt). PER-EVENT, AND EXPLICITLY NOT A VERDICT - weather_forecast stays in decision_state in full and permanently; the agent decides how to use it. No gating, down-weighting or quarantine is proposed or implied. WHAT THE RUN-DELTA DISCRIMINATES ON: FIRST-APPEARANCE adds - a shot entering at horizons that previously carried nothing. 0123 is the clean instance: +2.885 at Jan 27 and +4.500 at Jan 28, horizons empty the run before; the blind run took the up side against what its own chain read would have called, and HIT (+800 guessed, +1170 actual). 0119 is the same form one step earlier: +8.511 at Jan 24, the block's information event. WHAT IT DOES NOT DISCRIMINATE ON: REVISIONS to a shot already in the models and already priced. 0125 is the sharpest case - the -2.315 cut at Jan 30 drove an explicit negative-gap call and the actual gap was +2480, the block's largest; the shot being wobbled had been priced since 0119. 0126 is its mirror - the +3.197 re-add at the SAME horizon one run later flipped a carry-DOWN call that would have been right (actual -620). The two revisions cancel to approximately nothing within two runs, which is both the evidence and the mechanism: a market prices a shot once, and subsequent few-gw-HDD wobble at a horizon it already occupies is inside the noise the option/vol market has already absorbed. New play signal.mos_first_appearance_vs_revision, n=2 first-appearance and n=2 revision, all within G11 - ZERO forward evidence, must survive G12+ before it is treated as blind-applicable. A SEPARATE AND INDEPENDENT LIMITATION, not a property of the signal: the stream is D-1-EVENING and is therefore one model cycle BEHIND the weekend repricing (see s100_2_weekend_gap_note).",
-  "s100_2_evidence_fields_note": "S100.2 adds THREE FIELDS TO EVERY PLAY - `requires`, `scope`, `forward_evidence`. RATIONALE, load-bearing: most blind-versus-refined disagreements are not disagreements about the market at all, they are differences in what was KNOWABLE at decision time, and treating them as a precedence problem hides that. `requires` (open_time_only / needs_day_N-1_tape / needs_intraday_reveal) names the information a play consumes and dissolves those apparent conflicts. `scope` (leg side / day net / block lean / magnitude / gap / timing) names what a play OWNS, which is the correct precedence axis and the one S97.2 already settled when it gave R2 the post-print leg side and magnitude while the chain kept the day net. `forward_evidence` records whether a play has been confirmed on a block it was NOT derived from, and it is the field that GATES PROMOTION: refined rules are hindsight-fitted and carry zero forward evidence, so they must NEVER silently overwrite blind-applicable ones. Doing so would promote in-sample fits into the operating playbook untested, and it would destroy the blind-versus-refined GAP, which is itself the measurement of how much of the edge is sequential rather than open-time (G7 was 3/10 blind against 9/10 refined; R2 was 4/10 blind against 10/10 refined; G11 is 6/12 blind against 10/12 refined). A refined rule earns open-time status only by surviving a forward block. WHERE TWO PLAYS OVERLAP IN SCOPE WITHOUT A SETTLED BOUNDARY, THE OVERLAP IS FLAGGED RATHER THAN RESOLVED - see s100_2_scope_overlaps_flagged.",
-  "s100_2_scope_overlaps_flagged": "FLAGGED, NOT RESOLVED - scope overlaps with no settled boundary, listed so they are not silently arbitrated. (1) structure.mature_swing_alternation and direction.giveback_exhaustion_boundary both claim the DAY NET of the session after an extreme, both require day-N-1 tape, and on G11's 0122 they agree only by accident (R4 called the give-back, R1's close read on 0121 said continue). No boundary is proposed. (2) structure.failed_rally_tell and direction.giveback_exhaustion_boundary both read a round-tripped session's close and reach OPPOSITE conclusions - the tell says the round-trip exhausts the counter side and the next session runs chain-side, R1 says a deep recovery means the give-back exhausted and the swing resumes. The unmodelled separator appears to be which POLARITY the round-tripping day belongs to, but the tell has never been tested at up-polarity, so this is a research finding, not a rule. (3) daytype.weekday_archetype and structure.post_parabolic_bleed both offer a day-net class band; the brain already says the archetype is overridden by the chain, which is a precedence statement rather than a scope split, and it is left as is.",
-  "s100_2_same_information_conflicts": "GENUINE CONFLICTS - plays that are BOTH open_time_only and make OPPOSITE calls on the SAME information. These are NOT resolved by precedence; one is wrong or an unmodelled condition separates them, and they are recorded as research findings. (1) THE G11 BLOCK-OPEN CONFLICT: structure.post_parabolic_bleed (open_time_only) said the carried down-polarity holds until a confirm prints, and timing.catalyst_continuity_frontrun (open_time_only) said a live accelerating ramp fires the next session. On 0119-0121 they pointed opposite ways on identical open-time information. The blind run took the bleed and lost the block. The candidate separator is whether the ramp is adding at FIRST-APPEARANCE horizons or merely being revised - which is the new mos play - but that is derived on this same block and therefore cannot also adjudicate it. UNRESOLVED. (2) THE 0125 GAP-SIGN CONFLICT: daytype.monday_weekend_gap's priced-shock arm and the raw realized-cold read in decision_state.weather pointed opposite ways on the same Sunday, and the blind run explicitly recorded that it was rejecting the realized-cold read, which was the side that paid. Neither play owns the gap sign cleanly. UNRESOLVED, and it is the specific reason magnitude.weekend_gap_delivery is written to give the gap SIGN to the running chain rather than to either weather read.",
-  "s100_2_irreducibles": "DECLARED IRREDUCIBLE for G11, each with its mechanism. (a) THE WEEKEND-GAP MAGNITUDE on a fresh-shot weekend (0118 +2100, 0125 +2480): the repricing is priced off the Sat/Sun 00Z/12Z model cycle and decision_state carries only the D-1-evening run - the market is one model cycle ahead of the state variable. A DATA BUILD closes it, no reasoning does. (b) THE CRESTING-RAMP PAUSE PAIR (0127 -260, 0128 -400): under a cresting ramp R1's two arms disagree - the depth arm reads exhaustion and resume, the last-hour arm reads continuation - and the day nets sit inside +-500 where the boundary read carries no edge. Two consecutive sign misses inside that band is the honest result; no rule is added to capture them, because any rule that did would be fitted to two days. (c) THE EXTREME-DAY MAGNITUDE (0121 +3820 against a band top of 3000; 0130 +5020 against 2200) - the standing dominant residual of the entire walk, now two-sided and confirmed on every block since G6. (d) 0130 SPECIFICALLY carries an unmodelled driver: the expiring February contract ran 3.0 -> 5.4 into delivery and a delivery squeeze was pulling the strip, while the forecaster carries NO state variable exposing front-month expiry, open-interest concentration or the Feb/Mar calendar spread. That is a MISSING STATE VARIABLE with a named fix, not an unforecastable event - and it is the highest-value addition to decision_state this pass identified. (e) THE FLIP-CONFIRM PHASE in one-shot mode: C1 was measurable only at the 0120 close, which the one-shot protocol withholds - the standing protocol residual, fourth appearance.",
-  "s100_2_provenance": "GUARD: every rule was applied uniformly across all twelve days and back-checked on G3-G10. Thresholds are ratios to condition-class bands and leg-share fractions spanning 5 true and 1 false flip instance across G4/G5/G9/G10/G11, never day-tuned. Sizes come from condition-class bands, never from the target day's tape. PER-EVENT throughout; no pooled rate is used as a conclusion anywhere in this pass. The tape reads for G11 were made on the local NG.n.0 OI-continuous files (instrument 1021 throughout, no intra-block roll); the leg statistics for pre-G11 instances come from the committed fingerprints.json, and the G11 leg statistics come from a zigzag proxy whose ABSOLUTE level is NOT comparable to fingerprints.json - only its asymmetry sign is used, and the non-comparability is why the C2 ratio arm is left as a declared build gap rather than a fitted threshold. PROVISIONAL UNTIL LIVE. Nothing in this proposal was merged into ng_brain.json; this is a review-then-merge artifact.",
-  "merged_note": "s100.2 merged from the G11 unblinded refine (S97). Adds requires/scope/forward_evidence tags to all plays; refined-never-overrides-blind, promotion gated on forward evidence. Two new plays: magnitude.weekend_gap_delivery, signal.mos_first_appearance_vs_revision. Backup of the prior state in ng_brain_s100.1_backup.json."
+  "g11_price_basis_note": "G11 is scored on NG.n.0 OI-continuous, instrument 1021, with no intra-block roll - the whole block including both Sunday sessions sits on ONE instrument, so the 0118 +2100 and 0125 +2480 weekend gaps are genuine repricing and not calendar-spread or roll artifacts (contrast the s95_2_roll_correction, where the 0925 +2760 'gap' was exactly the roll). G3-G10 ran on the volume-based NG.v.0 series. Per-day intraday nets are comparable across the basis change; absolute price levels across blocks are not."
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -75,10 +65,7 @@
     "07-24 idx5126 dip+0.59->up $270",
     "OOS 07-15/07-30/08-15 strong-flow 34/34"
    ],
-   "caveats": "NOWCAST (flow overlaps the nascent leg), not a from-flat forecast. Direction only. CONFIRMED held-leg side caller; LAGS on an extreme gap MELT-UP (1020 7/12) - lean on continuation-asymmetry there. Unchanged s95.2.",
-   "requires": "needs_intraday_reveal",
-   "scope": "leg side",
-   "forward_evidence": "FORWARD-CONFIRMED. Derived on 12 warm-season days (Jul-Sep); OOS-validated 34/34 on 3 unseen days; held-leg side re-confirmed on the S95 fingerprint pass over G3-G5 days it was not derived from. Not re-measured on G6-G11 (no per-leg flow run on those blocks)."
+   "caveats": "NOWCAST (flow overlaps the nascent leg), not a from-flat forecast. Direction only. CONFIRMED held-leg side caller; LAGS on an extreme gap MELT-UP (1020 7/12) - lean on continuation-asymmetry there. Unchanged s95.2."
   },
   {
    "id": "direction.book_contrarian",
@@ -96,10 +83,7 @@
    "status": "PROVISIONAL",
    "confidence": 0.5,
    "exemplars": [],
-   "caveats": "Weaker than flow; use only as a tie-breaker when flow is flat. Unchanged s95.2.",
-   "requires": "needs_intraday_reveal",
-   "scope": "leg side (tie-breaker only, when flow is flat)",
-   "forward_evidence": "NONE. Derived on the warm-season set; never re-tested on any later block. Zero forward evidence."
+   "caveats": "Weaker than flow; use only as a tie-breaker when flow is flat. Unchanged s95.2."
   },
   {
    "id": "ride.magnitude_staircase",
@@ -119,10 +103,7 @@
     "07-03 idx17768 $1060 ret.83",
     "08-06 idx9611 $840 ret.98"
    ],
-   "caveats": "peak_usd is realized-so-far; the CROSSING is the usable real-time event. Unchanged s95.2. G6: the staircase is the live tool to avoid clipping the extreme rides (1020) the open-time magnitude prior under-sizes.",
-   "requires": "needs_intraday_reveal",
-   "scope": "magnitude (in-flight sustain/exit)",
-   "forward_evidence": "NONE beyond derivation. It is a real-time ride rule and the walk has been scored on day NETS, so it has never actually been exercised forward. Its high confidence reflects derivation strength, not forward evidence."
+   "caveats": "peak_usd is realized-so-far; the CROSSING is the usable real-time event. Unchanged s95.2. G6: the staircase is the live tool to avoid clipping the extreme rides (1020) the open-time magnitude prior under-sizes."
   },
   {
    "id": "exit.recruitment_reversal",
@@ -135,14 +116,11 @@
     "s95_fingerprint_nonconfirm": "turn_far_thinning did NOT confirm as the hold-vs-fade discriminator (held legs only ~half negative-tft); DEMOTED to noise."
    },
    "status": "PROVISIONAL",
-   "confidence": 0.45,
+   "confidence": 0.5,
    "exemplars": [
     "1008 old-swing up-legs 0/15 continuation-collapse at the G4->G5 top"
    ],
-   "caveats": "turn_far_thinning is NOISE at leg granularity. The running turn is read from continuation-collapse + turn_exhaustion + peaked_fast. Unchanged s95.2.",
-   "requires": "needs_intraday_reveal",
-   "scope": "turn (intraday)",
-   "forward_evidence": "PARTIAL/NEGATIVE. The turn_far_thinning arm was tested forward on the S95 fingerprint pass and DEMOTED to noise. The surviving continuation-collapse arm is now the same measurement as chain_polarity_flip C2 and inherits C2's G11 false negative."
+   "caveats": "turn_far_thinning is NOISE at leg granularity. The running turn is read from continuation-collapse + turn_exhaustion + peaked_fast. Unchanged s95.2."
   },
   {
    "id": "shape.grind_vs_spike",
@@ -161,10 +139,7 @@
    "status": "STABLE",
    "confidence": 0.9,
    "exemplars": [],
-   "caveats": "Usable once the first ~60s-2h of build is seen - NOT at the open. G6 week-2 + 0916 re-flag the OPEN PROBLEM: a counter-trend grind is not callable at the open, so the refined open-time curve honestly MISSES the intra-block counter-trend turns. Confidence 0.9 held.",
-   "requires": "needs_intraday_reveal",
-   "scope": "leg side + hold-vs-fade (intraday); NOT the day net",
-   "forward_evidence": "FORWARD-CONFIRMED on G3-G5 (spike-fade 23/24) and again on G11 (2 fires, both grind calls, both sides hit: 0119, 0123) - neither block was used to derive it."
+   "caveats": "Usable once the first ~60s-2h of build is seen - NOT at the open. G6 week-2 + 0916 re-flag the OPEN PROBLEM: a counter-trend grind is not callable at the open, so the refined open-time curve honestly MISSES the intra-block counter-trend turns. Confidence 0.9 held."
   },
   {
    "id": "daytype.surprise_magnitude",
@@ -176,14 +151,11 @@
     "distinct_prints": 6
    },
    "status": "PROVISIONAL_WEAKENED",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exemplars": [
     "0820 big-|surprise| trend-bet UP -> actual DOWN (opposite)"
    ],
-   "caveats": "Season-confounded, ~6 prints. Surprise magnitude does not sort direction. Fundamentals are a slow block-trajectory backdrop only, and (G6) an UNRELIABLE block-direction cue near the winter transition - rising HDD flipped the sign. Confidence 0.35 held.",
-   "requires": "open_time_only",
-   "scope": "magnitude (day-level size only; explicitly NOT side)",
-   "forward_evidence": "NEGATIVE-TO-INERT forward. Across G6-G11 the surprise SIGN has been wrong on side wherever it was consulted, which is the play's own stated caveat, and its magnitude arm is subsumed by daytype.storage_thursday_magnitude. Kept as the record that surprise sign does not sort direction."
+   "caveats": "Season-confounded, ~6 prints. Surprise magnitude does not sort direction. Fundamentals are a slow block-trajectory backdrop only, and (G6) an UNRELIABLE block-direction cue near the winter transition - rising HDD flipped the sign. Confidence 0.35 held."
   },
   {
    "id": "daytype.weekday_archetype",
@@ -200,10 +172,7 @@
     "1010 Fri range archetype OVERRIDDEN by the G5 crash regime (-1050)",
     "0910 Wed up-lean overridden by the down block (-950)"
    ],
-   "caveats": "Never pool across DOW. Weekday archetypes are OVERRIDDEN by the running block trajectory + a high-momentum reversal regime. Warm/autumn-season only. Confidence 0.4 held.",
-   "requires": "open_time_only",
-   "scope": "day net (secondary frame only, overridden by the chain read)",
-   "forward_evidence": "WEAK forward. G11: 5 fires, 3/5 on side, always as a secondary frame. The Monday-as-reversal arm was already retired forward by G7. It has never been the primary caller on any forward block."
+   "caveats": "Never pool across DOW. Weekday archetypes are OVERRIDDEN by the running block trajectory + a high-momentum reversal regime. Warm/autumn-season only. Confidence 0.4 held."
   },
   {
    "id": "timing.subsecond_reversal_exhaustion",
@@ -218,10 +187,7 @@
    "status": "HYPOTHESIS",
    "confidence": 0.25,
    "exemplars": [],
-   "caveats": "SMALL BUT REAL and RIGHT-SIGNED. The real edge lives at NATIVE TICK / ms-us. EXECUTION-layer - not a blind open-time curve input. Unchanged s95.2.",
-   "requires": "needs_intraday_reveal",
-   "scope": "timing (sub-minute entry)",
-   "forward_evidence": "NONE. Hypothesis, never exercised on any block in the walk."
+   "caveats": "SMALL BUT REAL and RIGHT-SIGNED. The real edge lives at NATIVE TICK / ms-us. EXECUTION-layer - not a blind open-time curve input. Unchanged s95.2."
   },
   {
    "id": "daytype.monday_weekend_gap",
@@ -247,10 +213,7 @@
     "Mon 0929 +$1240 (wrong side, G3->G4 reversal)",
     "Mon 1013 Columbus quiet -300 (size down)"
    ],
-   "caveats": "Bigness + size-up is the lesson; the side comes from the SWING STATE (R1/R3/R4), not from a reversal prior. Thin-holiday down-size is regime-conditioned (no active catalyst). Confidence 0.45->0.5 (the reaction read resolves the G7 side misses). S97.2: check whether the weekend's catalyst was already in the pre-weekend tape before sizing the gap; Sunday sessions are chain sessions in their own right. S99.2: gap DIRECTION is callable off the weekend model stream; gap SIZE stays irreducible (0104 -1780, 0111 +1140). G11: the pre-weekend 'was the catalyst already in the tape' check did NOT bound either Sunday's magnitude (0118 +2100, 0125 +2480). Sunday gap sizing remains the standing residual.",
-   "requires": "open_time_only for the Monday REACTION arm (R3); the GAP-SIZE arm requires weekend-cycle model data that is NOT in decision_state",
-   "scope": "gap (sign) + the Monday session's day net (reaction)",
-   "forward_evidence": "FORWARD-CONFIRMED on the REACTION arm: G8 (1124), G10 (0105 fade, the first down-polarity fade), G11 (0126 fade) - all blocks it was not derived from. FORWARD-FAILED on the GAP-SIZE arm: 1020, 0118, 0125 all under-forecast, and the mechanism is now identified (see meta s100_2_weekend_gap_note)."
+   "caveats": "Bigness + size-up is the lesson; the side comes from the SWING STATE (R1/R3/R4), not from a reversal prior. Thin-holiday down-size is regime-conditioned (no active catalyst). Confidence 0.45->0.5 (the reaction read resolves the G7 side misses). S97.2: check whether the weekend's catalyst was already in the pre-weekend tape before sizing the gap; Sunday sessions are chain sessions in their own right. S99.2: gap DIRECTION is callable off the weekend model stream; gap SIZE stays irreducible (0104 -1780, 0111 +1140). G11: the pre-weekend 'was the catalyst already in the tape' check did NOT bound either Sunday's magnitude (0118 +2100, 0125 +2480). Sunday gap sizing remains the standing residual."
   },
   {
    "id": "daytype.storage_thursday_magnitude",
@@ -271,15 +234,12 @@
     "g11_note": "G11 per-event, 2 Thursdays: 0122 -170a vs -900g - SIDE right, the chain-sided rule earned it on a print (+76.4 above, surplus widening 187->263) that AGREED with the chain, oversized ~5x. 0129 +1480a vs -1800g - SIDE wrong: a genuinely bullish print (-241 Bcf, -15.2 BELOW, surplus NARROWING 263->248, the first narrowing of the winter) was called chain-sided-sold on the 8/8 disagreeing-print precedent and instead traded WITH the print. This is the first disagreeing print in the walk that did not trade chain-sided; the distinguishing condition (narrowing-vs-widening surplus, or chain polarity actually being stale) is the REFINE's question. Confidence 0.7 -> 0.65."
    },
    "status": "PROVISIONAL",
-   "confidence": 0.7,
+   "confidence": 0.65,
    "exemplars": [
     "Thu 1016 -$1190 (V-bottom capitulation, ~4x under)",
     "Thu 0925 roll-clean +$740 (dominant-move $1160 was roll-inflated)"
    ],
-   "caveats": "SIZE up always. SIDE = swing/turn state (R2); a 1-day exhausted give-back does NOT flip the swing (1105 before 1106 - read it via R1); at a stretched extreme the Thursday itself can BE the turn day (1030, 1016) - use R5 depth + the prior day's stall/roll-over to arm it. Never lean the print leg on the storage fundamental (killed 3 blind Thursday calls across G6/G7). ROLL-CORRECTION note on 0925 unchanged. Confidence 0.55->0.6 (S97.2: precedence resolved - R2 = leg side + magnitude; chain owns the day net; 12/12 at leg level). S99.2: 17-18 storage events G3-G10 consistent at leg/chain level; disagreeing prints 8/8 chain-sided. In bleed, size an AGREEING print DOWN a class (0116). G11 0129: the 'print NEVER owns the side, the chain does' rule met its first counterexample - and it fired on the day the fundamental backdrop inverted. Condition the rule on backdrop direction before relying on the 8/8 record.",
-   "requires": "open_time_only for the up-size and the leg side; the day NET requires day-N-1 tape (the chain state)",
-   "scope": "post-print LEG side + magnitude up-size. Does NOT own the day net - the chain (R1/R4) does (settled S97.2 P2).",
-   "forward_evidence": "FORWARD-CONFIRMED on the leg-side arm across G6-G11: 14 storage Thursdays, every one leg-sided with the running chain, INCLUDING G11's 0122 (bearish +76.4 print, up leg to +1730 with the up-swing) and 0129 (agreeing print, up with the up-chain). The 0129 case is the first AGREEING print in a chain the print agrees with, and it delivered with the chain - consistent, and it removes the 'prints get sold' reading that the 8/8 disagreeing-print streak invited."
+   "caveats": "SIZE up always. SIDE = swing/turn state (R2); a 1-day exhausted give-back does NOT flip the swing (1105 before 1106 - read it via R1); at a stretched extreme the Thursday itself can BE the turn day (1030, 1016) - use R5 depth + the prior day's stall/roll-over to arm it. Never lean the print leg on the storage fundamental (killed 3 blind Thursday calls across G6/G7). ROLL-CORRECTION note on 0925 unchanged. Confidence 0.55->0.6 (S97.2: precedence resolved - R2 = leg side + magnitude; chain owns the day net; 12/12 at leg level). S99.2: 17-18 storage events G3-G10 consistent at leg/chain level; disagreeing prints 8/8 chain-sided. In bleed, size an AGREEING print DOWN a class (0116). G11 0129: the 'print NEVER owns the side, the chain does' rule met its first counterexample - and it fired on the day the fundamental backdrop inverted. Condition the rule on backdrop direction before relying on the 8/8 record."
   },
   {
    "id": "magnitude.warm_season_scale_candidate",
@@ -293,12 +253,9 @@
     "roll_note": "The G3->G4 'reversal magnitude' was ROLL-INFLATED by +0.276; the real amplitude is ~0.28 smaller. Cross-seam magnitude reads must be roll-clean."
    },
    "status": "HYPOTHESIS",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exemplars": [],
-   "caveats": "ANTI-LOCK-IN: the under-forecast recurs across G3/G4/G5 + G6 (reading A: warm/autumn scale too small) BUT reading B (higher-vol autumn regime) is still live. Do NOT globally rescale or pool into a ratio. The under-forecast SORTS BY CONDITION. Confidence 0.35 held.",
-   "requires": "open_time_only",
-   "scope": "magnitude (block-level scale)",
-   "forward_evidence": "SUPERSEDED, no forward evidence. Winter bands (crash_regime_bands, the winter magnitude bands in s97.2) replaced it from G7 onward."
+   "caveats": "ANTI-LOCK-IN: the under-forecast recurs across G3/G4/G5 + G6 (reading A: warm/autumn scale too small) BUT reading B (higher-vol autumn regime) is still live. Do NOT globally rescale or pool into a ratio. The under-forecast SORTS BY CONDITION. Confidence 0.35 held."
   },
   {
    "id": "direction.cross_block_reversion",
@@ -318,16 +275,13 @@
     "g8_note": "G8 block-open thesis (resume UP off the G7 origin-shelf stabilization) was RIGHT blind and the refine confirms the arming sequence (1117 shelf hold -> 1118 stabilization -> 1119 violent resume)."
    },
    "status": "HYPOTHESIS",
-   "confidence": 0.35,
+   "confidence": 0.45,
    "exemplars": [
     "G3->G4: 0923 bounce + 0924 hold pre-signaled a reversal delivered through the sessions (the +2760 overnight was the ROLL)",
     "G4->G5: 1007 last-hour roll-over pre-signaled the 1008 intraday crash",
     "G6 week-1 give-back DOWN caught (week-2 recovery missed)"
    ],
-   "caveats": "Reframed to SWING-EXHAUSTION reversion (n=5, spanning autumn + the G6 winter-transition holdout). Roll-corrected: the G3->G4 turn came through the sessions, not an overnight gap. G6 confirms the week-1 give-back DIRECTION but the intra-block counter-turn (week-2 recovery) is UNSOLVED - same failure mode as 0916. Two delivery forms (intraday build/crash primary; overnight/weekend gap secondary). Do NOT harden into 'always fade the last block'. Confidence 0.4->0.42 (one true holdout half-confirmed). Winter/backwardation remains the decisive test. S96.2: the trigger's two arms are now operational - R4 (mature-swing extreme) arms the WATCH, the last-hours roll-over (1007, 1113) arms the FIRE; R5 (origin shelf / >=75% retrace) bounds the give-back and calls the stabilization day. Confidence 0.42->0.45 (G7 armed-trigger fired correctly on 1114/1117/1118). S98.2: the terminal-crest question this play circled is now owned by structure.chain_polarity_flip - this play remains the block-boundary GIVE-BACK lean; the flip play decides when a give-back is instead a reversal.",
-   "requires": "open_time_only",
-   "scope": "block lean",
-   "forward_evidence": "FORWARD-TESTED AND REFRAMED: G6 showed it is a GIVE-BACK not a sustained reversal; G7 showed the give-back can be one day deep. It has been superseded as a block-lean caller by structure.chain_polarity_flip + post_parabolic_bleed and is retained as the historical record of the seam lean."
+   "caveats": "Reframed to SWING-EXHAUSTION reversion (n=5, spanning autumn + the G6 winter-transition holdout). Roll-corrected: the G3->G4 turn came through the sessions, not an overnight gap. G6 confirms the week-1 give-back DIRECTION but the intra-block counter-turn (week-2 recovery) is UNSOLVED - same failure mode as 0916. Two delivery forms (intraday build/crash primary; overnight/weekend gap secondary). Do NOT harden into 'always fade the last block'. Confidence 0.4->0.42 (one true holdout half-confirmed). Winter/backwardation remains the decisive test. S96.2: the trigger's two arms are now operational - R4 (mature-swing extreme) arms the WATCH, the last-hours roll-over (1007, 1113) arms the FIRE; R5 (origin shelf / >=75% retrace) bounds the give-back and calls the stabilization day. Confidence 0.42->0.45 (G7 armed-trigger fired correctly on 1114/1117/1118). S98.2: the terminal-crest question this play circled is now owned by structure.chain_polarity_flip - this play remains the block-boundary GIVE-BACK lean; the flip play decides when a give-back is instead a reversal."
   },
   {
    "id": "magnitude.catalyst_condition_sort",
@@ -353,10 +307,7 @@
     "1008 -1980 (seam reversal)",
     "1013 -300 (thin holiday, correctly small)"
    ],
-   "caveats": "Complements magnitude.warm_season_scale_candidate: sort by catalyst condition instead of a scalar rescale. PER-EVENT, no averages/ratios. G6 confirms the up-sizers but flags a persistent residual undersize. Confidence 0.4->0.42. Winter/backwardation is the decisive out-of-regime test. G7: thin-holiday down-size overridden by an active cold-shock regime (1111 +1580) - flag alone is not a size-down. S97.2: winter bands are REGIME bands (live cold ramp), not a rescale; the extreme-day tail above band-high (1119, 1128) remains the dominant residual.",
-   "requires": "open_time_only",
-   "scope": "magnitude",
-   "forward_evidence": "FORWARD-CONFIRMED in direction (the named catalyst conditions do run to multiples) on G6-G11, and FORWARD-FAILED in calibration on every block: the extremes exceed the band top on G7 (1111), G8 (1119, 1128), G9 (1205, 1223), G11 (0121, 0130). The condition sort is right; the band tops are low."
+   "caveats": "Complements magnitude.warm_season_scale_candidate: sort by catalyst condition instead of a scalar rescale. PER-EVENT, no averages/ratios. G6 confirms the up-sizers but flags a persistent residual undersize. Confidence 0.4->0.42. Winter/backwardation is the decisive out-of-regime test. G7: thin-holiday down-size overridden by an active cold-shock regime (1111 +1580) - flag alone is not a size-down. S97.2: winter bands are REGIME bands (live cold ramp), not a rescale; the extreme-day tail above band-high (1119, 1128) remains the dominant residual."
   },
   {
    "id": "direction.giveback_exhaustion_boundary",
@@ -378,15 +329,12 @@
     "g11_note": "G11: fired twice, both directions missed - 0126 -620a vs +500g and 0129 +1480a vs -1800g. Both fires ran in one-shot mode WITHOUT day-N-1 actual tape (the play's own standing precondition), and on 0126 the blind recorded that the thin Sunday close made the R1 read unreliable in principle. Recorded as two fires under a known-degraded input, not as a test of the read with tape. Confidence 0.7 -> 0.65."
    },
    "status": "PROVISIONAL",
-   "confidence": 0.7,
+   "confidence": 0.65,
    "exemplars": [
     "1110 closed -820 recovering 690 off the low -> 1111 +1580 resume (the G7 sequencing answer)",
     "1114 closed AT its low -> 1117 -1500 continuation"
    ],
-   "caveats": "Requires day-N-1 ACTUAL tape - a LIVE-coach / sequential input, honestly unavailable to the one-shot block-blind protocol (this is WHY one-shot direction scored 3/10 while the block lean was right). Thresholds (~40-50% recovery) are descriptive bands, not fitted constants. At >=~75% swing retrace the continue-arm INVERTS - R5 origin-shelf floor takes over (1117->1118). Winter up-swing + G4 evidence; the mirror side (up give-backs inside a down-swing) rests on the collapse filter (0915/0916) - retest. S97.2: n grows to ~13 boundary events; the recovery-fraction thresholds are subordinate to the ramp and depth arms in winter. G9 CAVEAT (load-bearing): the boundary read is POLARITY-RELATIVE - after a chain flip (first violent counter day off a parabolic crest, 1208 -2730) 'resume' means resume the NEW swing's direction. The blind run misapplied it up-side 3x (1212/1215/1222). S98.2: symmetric close-vs-extreme read confirmed on the G9 down-chain (7/8 boundaries); the bounce-day override (never extend, print crushes) is the down-chain asymmetry vs autumn up-chain give-backs that DID continue (1002->1003, 1114->1117) - polarity + print-schedule context decides, retest. S99.2: the symmetric read is CHAIN-SIDE-days-only (0105), and in bleed the post-crash continue arm is overridden by B1 (pause) unless a print day follows.",
-   "requires": "needs_day_N-1_tape",
-   "scope": "day net (side) of the session AFTER a give-back",
-   "forward_evidence": "FORWARD-CONFIRMED on G8, G9, G10 and now G11, none of which derived it: G11's 0123 (0122 closed 86% off its low, +440 last hour -> resume, actual +1170) and 0129 (0128 closed 83% off its low, +280 last hour -> resume, actual +1480) are two clean forward hits. FORWARD-AMBIGUOUS where the two arms disagree under a CRESTING ramp: 0127 (depth arm says resume, last-hour arm says continue) - the new named failure condition."
+   "caveats": "Requires day-N-1 ACTUAL tape - a LIVE-coach / sequential input, honestly unavailable to the one-shot block-blind protocol (this is WHY one-shot direction scored 3/10 while the block lean was right). Thresholds (~40-50% recovery) are descriptive bands, not fitted constants. At >=~75% swing retrace the continue-arm INVERTS - R5 origin-shelf floor takes over (1117->1118). Winter up-swing + G4 evidence; the mirror side (up give-backs inside a down-swing) rests on the collapse filter (0915/0916) - retest. S97.2: n grows to ~13 boundary events; the recovery-fraction thresholds are subordinate to the ramp and depth arms in winter. G9 CAVEAT (load-bearing): the boundary read is POLARITY-RELATIVE - after a chain flip (first violent counter day off a parabolic crest, 1208 -2730) 'resume' means resume the NEW swing's direction. The blind run misapplied it up-side 3x (1212/1215/1222). S98.2: symmetric close-vs-extreme read confirmed on the G9 down-chain (7/8 boundaries); the bounce-day override (never extend, print crushes) is the down-chain asymmetry vs autumn up-chain give-backs that DID continue (1002->1003, 1114->1117) - polarity + print-schedule context decides, retest. S99.2: the symmetric read is CHAIN-SIDE-days-only (0105), and in bleed the post-crash continue arm is overridden by B1 (pause) unless a print day follows."
   },
   {
    "id": "structure.mature_swing_alternation",
@@ -406,15 +354,12 @@
     "g11_note": "G11 per-event, 4 fires, dir 2/4: 0120 +1930a/+700g (HIT) and 0128 -400a/-1000g (HIT); 0121 -800g vs +3820a (MISS - the strongest structural call of week 1 per the blind, 'a counter-bounce is never extended consecutively in a mature chain', and the counter-bounce extended AND accelerated) and 0127 +300g vs -260a (MISS). The alternation rhythm held on the two days it was applied inside the chain's own side and did not hold across the counter-rally. Confidence 0.6 -> 0.55."
    },
    "status": "PROVISIONAL",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exemplars": [
     "1106 +1350 extreme -> 1107 give-back (the blind extended and missed)",
     "1030-1104 young chain -> do not fade week-2-style runs"
    ],
-   "caveats": "This is the SEQUENCING rhythm of a demand-led swing (G4 up, G6 recovery, G7 winter up) - G3's supply-led decline trended with weaker alternation (its give-backs were the up days: 0916); apply per swing-side. The 4-session age boundary is descriptive (G4 had a session-2 give-back 0926). Magnitude of the give-back comes from catalyst_condition_sort + R5, not from this play. S97.2: scheduled catalysts do NOT re-anchor the chain; hold days stay +-150 even in winter (1124, 1127).",
-   "requires": "needs_day_N-1_tape",
-   "scope": "day net (alternation) - NOT the leg side",
-   "forward_evidence": "FORWARD-CONFIRMED on G8, G10 and G11 (0122 after the violent 0121 extension; 0126 after the mature-swing gap extreme). FORWARD-FAILED on G11's 0121 when applied at the WRONG POLARITY: the blind run used it to call a give-back inside a down-chain reading, and the swing it should have been measuring had already flipped up. The play is sound; the polarity it is measured against is the input that broke."
+   "caveats": "This is the SEQUENCING rhythm of a demand-led swing (G4 up, G6 recovery, G7 winter up) - G3's supply-led decline trended with weaker alternation (its give-backs were the up days: 0916); apply per swing-side. The 4-session age boundary is descriptive (G4 had a session-2 give-back 0926). Magnitude of the give-back comes from catalyst_condition_sort + R5, not from this play. S97.2: scheduled catalysts do NOT re-anchor the chain; hold days stay +-150 even in winter (1124, 1127)."
   },
   {
    "id": "level.giveback_origin_shelf",
@@ -434,10 +379,7 @@
    "exemplars": [
     "1118 +270 on the origin shelf after -2590 of give-back"
    ],
-   "caveats": "The >=75% threshold is soft (n=4); the shelf is a zone, not a tick. Distinguish mid-swing give-backs (R1 governs) from move-terminal stretches (this play governs). A shelf BREAK would falsify the give-back-not-reversal frame for that swing - treat as a live stop condition. S97.2: threshold softened to >=~70% (1125 at 72% fired); still a zone, not a tick. S98.2 VOID-CONDITION: after a confirmed parabolic polarity flip the shelf BREAKS (1211 through the 4.367 origin) - the break confirms reversal-not-give-back; only NON-parabolic give-backs respect the shelf (G7). n=1 break vs n=5 holds, condition = the parabolic arm.",
-   "requires": "needs_day_N-1_tape",
-   "scope": "magnitude (give-back floor) + the stabilization/turn day",
-   "forward_evidence": "FORWARD-CONFIRMED on G7/G8; FORWARD-VOIDED after a confirmed parabolic flip (G9, 1211 broke the shelf). Not exercised in G11 - no terminal give-back reached a shelf in the block."
+   "caveats": "The >=75% threshold is soft (n=4); the shelf is a zone, not a tick. Distinguish mid-swing give-backs (R1 governs) from move-terminal stretches (this play governs). A shelf BREAK would falsify the give-back-not-reversal frame for that swing - treat as a live stop condition. S97.2: threshold softened to >=~70% (1125 at 72% fired); still a zone, not a tick. S98.2 VOID-CONDITION: after a confirmed parabolic polarity flip the shelf BREAKS (1211 through the 4.367 origin) - the break confirms reversal-not-give-back; only NON-parabolic give-backs respect the shelf (G7). n=1 break vs n=5 holds, condition = the parabolic arm."
   },
   {
    "id": "timing.catalyst_continuity_frontrun",
@@ -455,22 +397,19 @@
     "g11_note": "G11 0123: the rising-ramp arm (1204 form) fired on MOS run-delta +2.885/+4.500 - the models EXTENDING the cold as it arrived - and took the UP side against the down-chain's cold-delivery-days-FAIL read (1215, 1230). +1170a vs +800g, side HIT and magnitude close. First fire driven by forecast-stream data rather than by a realized-weather proxy. n=3 fired (G7, G8, G11) vs n=2 waited. Confidence 0.55 -> 0.6."
    },
    "status": "HYPOTHESIS",
-   "confidence": 0.65,
+   "confidence": 0.6,
    "exemplars": [
     "1119 +1930 the day BEFORE the first-withdrawal print",
     "0925 Thursday delivering the waited turn"
    ],
-   "caveats": "Mechanism: weather models are a continuous information stream (2x daily updates) - when live they dominate timing and the discrete event only adds magnitude/liquidity; in a discrete-only regime the print IS the information event. n=2 fired (G7, G8) vs n=2 waited (G3/4, G6) - spanning but thin; the decisive test is the next winter armed-turn near a print. In one-shot mode this rule sets the PRIOR (front-run under a ramp); only day-N-1 tape confirms the chain phase. G10 CAVEAT: NEVER front-run a POLARITY FLIP (0108). Front-running is for resumes WITH the chain; a flip needs its band-breaking confirm to PRINT first.",
-   "requires": "open_time_only",
-   "scope": "timing (which session an armed turn/resume fires on)",
-   "forward_evidence": "FORWARD-CONFIRMED on G8 (1118->1119) and G11 (0123: first-appearance far-horizon adds, resume delivered that session, actual +1170). FORWARD-FAILED on G9's 1204 in its original form and was re-armed to the rising-ramp condition. NEW G11 CONDITION: the arm works on FIRST-APPEARANCE adds and is inert on REVISIONS to an already-priced shot (0125, 0126) - see the new mos_run_delta play."
+   "caveats": "Mechanism: weather models are a continuous information stream (2x daily updates) - when live they dominate timing and the discrete event only adds magnitude/liquidity; in a discrete-only regime the print IS the information event. n=2 fired (G7, G8) vs n=2 waited (G3/4, G6) - spanning but thin; the decisive test is the next winter armed-turn near a print. In one-shot mode this rule sets the PRIOR (front-run under a ramp); only day-N-1 tape confirms the chain phase. G10 CAVEAT: NEVER front-run a POLARITY FLIP (0108). Front-running is for resumes WITH the chain; a flip needs its band-breaking confirm to PRINT first."
   },
   {
    "id": "structure.chain_polarity_flip",
    "target": "direction",
    "trigger": "at the close of a swing-side day on an extended run (ARM), then at the close of the first counter day (CONFIRM)",
    "read": "run length + amplitude vs the season's prior largest swing + the extension day's close-vs-extreme; then the counter day's net vs its condition-class band + old-direction continuation-collapse; a weekend gap AGAINST the crest counts as the counter",
-   "call": "ARM when the swing is PARABOLIC (>=~1.5-2x the season's prior largest swing amplitude, >=~9 sessions, no origin-shelf touch) AND the extension day closes >=~30% off its intraday extreme (blow-off / late-tape roll-over). CONFIRM (S99.2 HARDENED - ALL conditions): (C1) BAND-BREAK: the first counter day's net breaks its condition-class counter band by >=~1.5x (an in-band bounce, however strong-looking, is NOT a confirm); (C2) OLD-SIDE CONTINUATION-COLLAPSE verified in that day's ACTUAL tape: old-direction legs continuing <=~15% overall AND old-side big legs (>=$300) not majority-alive (<=~1/3 or absent); (C3) PRINTED, NEVER FRONT-RUN: polarity flips only AFTER the confirm day closes - catalyst_continuity_frontrun applies to WITH-chain resumes only, never to a flip; (C4) in the waited/no-band-break form the next scheduled print is the ARBITER: counter-side delivery confirms the turn (0925, 1030), chain-side delivery refutes it (0109). A weekend gap AGAINST the crest still counts as the counter delivery (1207). TERMINATION vs BIRTH: a passing signature always ENDS the old chain (no fundamental agreement needed - 1208 flipped against a bullish backdrop), but a sustained counter-CHAIN births only with a forward fundamental driver; if the weekly fundamental stream is actively RE-CONFIRMING the old chain (surplus re-widening under a down-chain), the outcome is TERMINATION-TO-BASING/BLEED (structure.post_parabolic_bleed), not a new chain. After a true CONFIRM: every polarity-relative rule reads in the NEW direction and R5's origin shelf is VOID. Without the parabolic arm, an armed crest is only a GIVE-BACK (G7) - do not flip. || S100.2 PER-INSTANCE REFINEMENT: C1 (band-break) is the load-bearing condition and is sufficient on its own across every instance tested. C2 (old-side continuation-collapse) is RE-EXPRESSED AS A RATIO - old-side continuation divided by new-side continuation - because the absolute share-of-legs form is not scale-invariant: it was calibrated on sessions carrying 15-98 legs and is mechanically unreachable on sessions carrying 160-550 legs, where both sides always retain a live share. On fingerprint-comparable data the ratio separates cleanly (true confirms 0.00-0.42, false confirm 0107 = 1.23, where the OLD side was more alive than the new). WHERE C2 APPLIES: low-activity tapes. WHERE IT DOES NOT: high-activity tapes, where it returns a false negative and C1 must carry the confirm alone.",
+   "call": "ARM when the swing is PARABOLIC (>=~1.5-2x the season's prior largest swing amplitude, >=~9 sessions, no origin-shelf touch) AND the extension day closes >=~30% off its intraday extreme (blow-off / late-tape roll-over). CONFIRM (S99.2 HARDENED - ALL conditions): (C1) BAND-BREAK: the first counter day's net breaks its condition-class counter band by >=~1.5x (an in-band bounce, however strong-looking, is NOT a confirm); (C2) OLD-SIDE CONTINUATION-COLLAPSE verified in that day's ACTUAL tape: old-direction legs continuing <=~15% overall AND old-side big legs (>=$300) not majority-alive (<=~1/3 or absent); (C3) PRINTED, NEVER FRONT-RUN: polarity flips only AFTER the confirm day closes - catalyst_continuity_frontrun applies to WITH-chain resumes only, never to a flip; (C4) in the waited/no-band-break form the next scheduled print is the ARBITER: counter-side delivery confirms the turn (0925, 1030), chain-side delivery refutes it (0109). A weekend gap AGAINST the crest still counts as the counter delivery (1207). TERMINATION vs BIRTH: a passing signature always ENDS the old chain (no fundamental agreement needed - 1208 flipped against a bullish backdrop), but a sustained counter-CHAIN births only with a forward fundamental driver; if the weekly fundamental stream is actively RE-CONFIRMING the old chain (surplus re-widening under a down-chain), the outcome is TERMINATION-TO-BASING/BLEED (structure.post_parabolic_bleed), not a new chain. After a true CONFIRM: every polarity-relative rule reads in the NEW direction and R5's origin shelf is VOID. Without the parabolic arm, an armed crest is only a GIVE-BACK (G7) - do not flip.",
    "evidence": {
     "n": "4 chain terminations spanning autumn+winter, tops+bottoms",
     "tops": "G4 1007 (+3690 = 1.6x G3, last-hour roll-over) -> 1008 -1800 band-breaking, up-legs 0/15 = FLIP; G9 1205 (+9700/12 sessions >=2x prior winter swings, closed 31% off +3560) -> 1207 Sun gap -2380 against + 1208 -2730 (3x the -700..-900 band), up-legs 3/33 = FLIP",
@@ -479,51 +418,15 @@
     "shelf_break": "1211 closed through the 4.367 origin = the R5-void confirmation of the G9 flip.",
     "g10_false_positive": "0108: the blind run fired the flip (parabolic arm + capitulation retest + counter-day) and it was FALSE - the down-chain ran the whole block. The 0107 'confirm' (+1510) never broke the bounce band (+1900 top), vs the true confirms 1208 (-2730 = 3x band) and 1019/1020. CONFIRM must BREAK the counter-day band, not merely be a strong bounce; and a flip called AGAINST a re-widening surplus backdrop (fundamental re-inversion) needs the full signature, never front-run. Confidence 0.55 -> 0.45. S99.2: resolved into the hardened four-condition confirm bar - see s99_2_hardened_backcheck.",
     "s99_2_hardened_backcheck": "The four-condition bar back-checked on all six candidate events: TRUE 1007->1008 (C1 -1800 = 2x; C2 up 0/15, big up none; printed) FIRES; TRUE 1205->1207/1208 (C1 -2730 = 3x + gap-against; C2 up 3/33 = 9%, big up 2/6; printed) FIRES; TRUE 1016->1019/1020 (C1 +2660 + gap; C2 dn 1/10, big dn 0/2; printed) FIRES with the winter-HDD birth driver; TRUE 0922->0923-0925 (arbiter form: 0923 counter +610 + 0924 hold, 0925 print delivered counter-side +740; C2 at the turn: dn big legs absent) FIRES; PARTIAL 1222/1223 (C1 +5010 = 2.6x; C2 dn 3/38 = 8% - signature PASSES but the backdrop was about to re-confirm supply -> TERMINATION-TO-BASING, correctly no up-chain: new lows resumed but never a down-band-break re-confirm either, = bleed); FALSE 0107/0108 REJECTED ON ALL FOUR: C1 +1510 in-band (vs +1900 top); C2 down-legs 10/36 = 28% with BIG down-legs 6/7 still continuing (the old side fully alive under the bounce - the sharpest single discriminator); C3 the blind fired the flip ON 0108 before any confirm printed; C4 the 0109 arbiter print delivered CHAIN-side (-2760, bullish draw sold).",
-    "g11_false_negative": "G11: the blind checked the flip on 0119, 0122 and 0129 and DECLINED all three under the G10-hardened bar; the block then reversed (+17140 anchor-to-final incl gaps, intraday nets +12690). Reported reasons as given by the blind: (a) no counter day broke the counter-day band; (b) C3 forbids front-running a flip (the 0108 lesson); (c) the 0122 print re-confirmed a WIDENING surplus (187->263), the same fundamental-backdrop veto that was added after G10. Note the backdrop inverted mid-block - the 0129 print narrowed the surplus 263->248 for the first time all winter - and the blind recorded that as a watch rather than a flip input. So the play now has one false POSITIVE (G10 0108) and one false NEGATIVE (G11) on opposite sides of the same hardened bar. Which G11 days, if any, actually carried a confirm signature is the REFINE's question, not this merge's. Confidence 0.5 -> 0.4.",
-    "s100_2_per_instance": {
-     "C1_band_break": {
-      "1008": "-1800 = 2x band FIRE",
-      "1020": "+2660 FIRE",
-      "1208": "-2730 = 3x FIRE",
-      "1223": "+5010 = 2.6x FIRE",
-      "0107": "+1510 IN-BAND (+800..+1900) CORRECT DECLINE",
-      "0120": "+1930 vs the bleed day-2 bounce band +200..+500 = 3.9x FIRE - MISSED BY THE BLIND RUN, which evaluated it against the day-1 band and checked the flip only on 0119, 0122 and 0129",
-      "verdict": "5 fires, 1 correct decline, 0 false positives across G4/G5/G9/G10/G11"
-     },
-     "C2_absolute_arm": {
-      "1008": "up 0/15 FIRE",
-      "1020": "dn 1/10 big 0/2 FIRE",
-      "1208": "up 3/33 big 2/6 FIRE",
-      "1223": "dn 3/38 big 2/6 FIRE",
-      "0107": "dn 10/36 big 6/7 CORRECT DECLINE",
-      "0120": "dn legs still continuing ~64% on 162 legs - NO FIRE = FALSE NEGATIVE",
-      "verdict": "works on low-activity tapes (n<=~100 legs, <=~40k trades/session); does not discriminate on high-activity tapes (>=~160 legs, >=75k trades/session)"
-     },
-     "C2_ratio_arm": {
-      "1020": 0.0,
-      "1208": 0.4,
-      "1223": 0.42,
-      "0107": 1.23,
-      "note": "scale-invariant reformulation, separates true from false on fingerprint-comparable data. G11 CANNOT yet be placed on this scale - month_characterize has not been run on the G11 tape, so the 0120 ratio is only available from a zigzag proxy (0.71) that is not comparable to the fingerprint numbers. RUNNING month_characterize ON 0118-0130 IS A DECLARED BUILD GAP, not a result."
-     },
-     "C3_no_front_run": "forward-confirmed: correctly blocked the 0108 front-run; correctly withheld a flip on G11's 0119 and 0120 OPENS. It does NOT block the flip at the 0121 open, because by then the 0120 confirm had printed.",
-     "C4_catalyst_arbiter": {
-      "0109": "chain-side delivery REFUTED the false flip - forward-confirmed",
-      "0930_form": "0925 +740 counter-side delivery confirmed",
-      "0130": "the surplus narrowing 263->248 is the first weekly print all winter to stop re-confirming the old down-chain - the forward driver whose ABSENCE on 0107 correctly denied a birth and whose PRESENCE here converted the 0120 termination into a birth"
-     }
-    }
+    "g11_false_negative": "G11: the blind checked the flip on 0119, 0122 and 0129 and DECLINED all three under the G10-hardened bar; the block then reversed (+17140 anchor-to-final incl gaps, intraday nets +12690). Reported reasons as given by the blind: (a) no counter day broke the counter-day band; (b) C3 forbids front-running a flip (the 0108 lesson); (c) the 0122 print re-confirmed a WIDENING surplus (187->263), the same fundamental-backdrop veto that was added after G10. Note the backdrop inverted mid-block - the 0129 print narrowed the surplus 263->248 for the first time all winter - and the blind recorded that as a watch rather than a flip input. So the play now has one false POSITIVE (G10 0108) and one false NEGATIVE (G11) on opposite sides of the same hardened bar. Which G11 days, if any, actually carried a confirm signature is the REFINE's question, not this merge's. Confidence 0.5 -> 0.4."
    },
    "status": "PROVISIONAL",
-   "confidence": 0.6,
+   "confidence": 0.4,
    "exemplars": [
     "1205 blow-off -> 1207/-2380 gap against -> 1208 -2730 = 3x band + up 3/33 = flip-confirm",
     "0107 +1510 IN-band + big down-legs 6/7 alive + front-run + arbiter 0109 chain-side = REJECTED (the G10 false flip)"
    ],
-   "caveats": "PER-INSTANCE, never pooled. The rule is KEPT and is used on the instances its conditions discriminate on. C1 carries it everywhere tested. C2's absolute arm is used on low-activity tapes only. The G11 miss is a PROTOCOL residual as much as a rule residual: C1 was measurable at the 0120 close and the one-shot blind protocol withholds that close - the same live-coach argument the walk has now raised four times.",
-   "requires": "needs_day_N-1_tape - C1 and C4 are both measurable at the confirm day's CLOSE, so the flip IS callable at the next session's open. C2's tape read is also a day-N-1 measurement. NOTHING in the rule requires an intraday reveal; the rule is open-time applicable to the session AFTER the confirm.",
-   "scope": "block lean / polarity - the input every other polarity-relative play consumes. It owns no day net directly.",
-   "forward_evidence": "FORWARD-TESTED FOUR TIMES with a per-instance split, and the split is the S100.2 headline (see meta s100_2_flip_characterization). C1 is forward-clean: it fired on 1008, 1020, 1208, 1223 and 0120, and correctly declined 0107 - five true, one true-negative, zero false positives. C2's ABSOLUTE arm is forward-clean on low-activity tapes (1008, 1020, 1208, 1223, and the 0107 rejection) and produced a FALSE NEGATIVE on G11's high-activity tape (0120). C3 is forward-confirmed as a discipline (it correctly blocked the 0108 front-run). C4 is forward-confirmed on 0109 (refuted the false flip) and on 0130 (the narrowing surplus confirmed the true one)."
+   "caveats": "The parabolic threshold is a RATIO to the season's own prior swings, never an absolute $ constant; the collapse thresholds (<=~15% overall, big legs <=~1/3) are leg-share fractions spanning 4 true + 2 false/partial events, not fitted constants. TERMINATION does not equal BIRTH - check the forward fundamental stream before leaning a new chain (birth drivers: winter HDD rising 1020; absent: surplus re-widening 1223, 0107). C2 requires the confirm day's ACTUAL tape - in one-shot mode the flip can only be a WATCH, never a lean, until the tape is seen (the 0108 lesson: the blind leaned the flip with no tape at all). The blind-run failure mode this play kills both ways: 3 weeks of up-rules in a down-chain (G9) and a phantom up-chain out of basing (G10)."
   },
   {
    "id": "magnitude.crash_regime_bands",
@@ -543,10 +446,7 @@
     "1211 -3970 print-liquidity",
     "1223 +5010 the two-sided tail"
    ],
-   "caveats": "n=2 winter regimes (young crash chain, bleed) - the decisive test is the next confirmed flip/termination. PER-EVENT, never averaged. The beyond-band tail is two-sided in the YOUNG crash chain (1223/1211) but did not appear in the bleed block - condition the tail risk on chain youth.",
-   "requires": "open_time_only",
-   "scope": "magnitude",
-   "forward_evidence": "FORWARD-CONFIRMED on G10 (both January crashes landed in band). FORWARD-INCOMPLETE on G11: the block had no crash days, and the block's two extreme UP days (0121 +3820, 0130 +5020) sit above every up-side band in the brain - the up-side of this play is unbuilt."
+   "caveats": "n=2 winter regimes (young crash chain, bleed) - the decisive test is the next confirmed flip/termination. PER-EVENT, never averaged. The beyond-band tail is two-sided in the YOUNG crash chain (1223/1211) but did not appear in the bleed block - condition the tail risk on chain youth."
   },
   {
    "id": "structure.failed_rally_tell",
@@ -560,14 +460,11 @@
     "g11_note": "G11: 4 fires, dir 2/4 (0120 HIT, 0121 MISS, 0127 MISS, 0128 HIT). All four ran without day-N-1 actual tape, so the spike-fade percentage that arms the tell was assumed from the guessed curve rather than observed - the arming input was not available in one-shot mode. Confidence 0.5 -> 0.45."
    },
    "status": "HYPOTHESIS",
-   "confidence": 0.5,
+   "confidence": 0.45,
    "exemplars": [
     "1230 +1990->+180 on the cold peak -> 1231 -2630"
    ],
-   "caveats": "Overlaps shape.grind_vs_spike at day granularity - this is its DAY-SEQUENCING consequence. Distinguish from the exhausted-leg bounce read (that reads the CHAIN-side day's close; this reads the COUNTER spike's failure). Thin n. S99.2: n=4; in the bleed class the tell doubles as the bounce-death marker (B2/B3) - the day-2 counter-spike round-trip is the arming read.",
-   "requires": "needs_day_N-1_tape",
-   "scope": "day net (side) of the session after a round-tripped counter spike",
-   "forward_evidence": "FORWARD-CONFIRMED on G9 (1210->1211, 1230->1231) and G10 (0113->0114). NOT EXERCISED correctly in G11: the blind run fired it on 0127/0128 against a counter-spike that was not a counter-spike (the round-tripping days were give-backs inside an UP chain, not failed rallies inside a down chain) - a polarity-input error again, not a rule failure. The tell has never been tested at up-polarity."
+   "caveats": "Overlaps shape.grind_vs_spike at day granularity - this is its DAY-SEQUENCING consequence. Distinguish from the exhausted-leg bounce read (that reads the CHAIN-side day's close; this reads the COUNTER spike's failure). Thin n. S99.2: n=4; in the bleed class the tell doubles as the bounce-death marker (B2/B3) - the day-2 counter-spike round-trip is the arming read."
   },
   {
    "id": "structure.post_parabolic_bleed",
@@ -586,65 +483,13 @@
     "g11_note": "G11 blind: fired on all 12 days as the block frame; direction 6/12 and the BLOCK LEAN was wrong (block reversed +17140 incl gaps). WHERE IT EARNED: 0122 -170 and 0128 -400 chain-side days; 0130 +5020 side via B1's post-crash pause (0129 was not a crash but the pause arm still took the up side); 0119 +550 and 0120 +1930 as bounce days 1-2. WHERE IT DID NOT: B2's 'bounces run 1-2 days, NEVER 3' called 0121 down and 0121 was +3820, the bounce's third and biggest day; B5's small-day prevalence sized the whole back half far too small (0129 +1480, 0130 +5020); the bleed frame carried a down polarity through a block whose intraday nets summed +12690. First block in which the bleed class was applied to a market that was leaving the bleed."
    },
    "status": "HYPOTHESIS",
-   "confidence": 0.45,
+   "confidence": 0.4,
    "exemplars": [
     "0114 -2710: bounce-death crash from the crash band, not ramp-shallow",
     "0115 +460: post-crash pause - crashes don't chain in bleed",
     "0116 -440: monster bearish print sized DOWN a class (in-chain confirmation)"
    ],
-   "caveats": "n=2 blocks, same winter - the decisive test is the next post-parabolic termination. The bleed-vs-young-chain boundary (when crashes stop chaining) rests on the print-day exception (0108->0109), n thin. Distinguish from two-sided BASING (1222-1231: no marginal new lows) - bleed makes marginal new lows at the old polarity. The class's day-sequencing needs day-N-1 actual tape (bounce carrier, tell) - in one-shot mode only the class-level lean + bands carry. G11 CAVEAT: the class has no exit condition - it was carried intact through a block that reversed, and B2's 1-2-day bounce cap broke on 0121 (third day, +3820, the largest bounce day). The bleed-END question is now an EVENT, not a hypothetical.",
-   "requires": "open_time_only for the regime call; the day-to-day sequencing inside it requires day-N-1 tape",
-   "scope": "block lean + day-net class bands, while the regime holds",
-   "forward_evidence": "FORWARD-CONFIRMED on G10 (its first full block, and every sequencing arm held). FORWARD-FAILED on G11: B2 ('bounces run 1-2 days, never 3') broke on 0119/0120/0121, which ran three days and ACCELERATED. The failure is now attributed - B2 is a rule about bounces INSIDE a live bleed, and by 0121 the bleed had already ended at the 0120 C1 band-break; a bounce that breaks the counter band is by definition no longer a bounce. B2 is retained WITH that boundary condition: it applies only while no C1 band-break has printed."
-  },
-  {
-   "id": "signal.mos_first_appearance_vs_revision",
-   "target": "direction",
-   "trigger": "a non-zero forecast_run_delta appears in decision_state.weather_forecast",
-   "read": "whether the run-delta is a FIRST APPEARANCE at a horizon that previously carried no signal, or a REVISION to a shot already in the models and already priced",
-   "call": "FIRST APPEARANCE (a new shot entering at D+2..D+6 where the prior run had nothing) -> tradeable, side = the sign of the add. REVISION (the same shot being wobbled +-1..3 gw-HDD at horizons it has already occupied for several runs) -> inert; do not let it move the side. The market prices a shot ONCE.",
-   "evidence": {
-    "first_appearance": {
-     "0119": "+4.020 Jan 23 / +8.511 Jan 24, horizons previously empty -> the block's information event; price moved (gap +2100 then +550)",
-     "0123": "+2.885 Jan 27 / +4.500 Jan 28, first appearance at D+4/D+5 -> the blind run traded it against its own chain read and HIT (+800 guessed, +1170 actual)"
-    },
-    "revision": {
-     "0125": "-2.315 Jan 30, a cut to the Jan-24 shot priced since 0119 -> the blind run traded it and called a negative gap; the actual gap was +2480, the block's largest",
-     "0126": "+3.197 Jan 30, the mirror re-add of the same revision one run later -> the blind run traded it and flipped a carry-DOWN call that would have been right; actual -620",
-     "note": "the 0125 cut and the 0126 re-add cancel to approximately nothing within two runs - which is the definition of noise on a priced event, and is the mechanism"
-    }
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.55,
-   "requires": "open_time_only",
-   "scope": "day net (side), as a modifier on the chain read - it does not own the block lean",
-   "forward_evidence": "NONE - derived on G11. Must survive G12+ before it is treated as blind-applicable.",
-   "caveats": "This is a CHARACTERIZATION of where the run-delta discriminates, NOT a gate. weather_forecast stays in decision_state in full and permanently; the agent decides how to use it. Works on: first-appearance adds. Does not discriminate on: revisions to a priced shot. A separate limitation, not a property of the signal: the D-1-evening stream is BEHIND the weekend model cycle - the Jan-24 shot first appears in our feed in the 0118-EVENING run, about an hour AFTER the Sunday reopen that already priced it."
-  },
-  {
-   "id": "magnitude.weekend_gap_delivery",
-   "target": "magnitude",
-   "trigger": "a Friday close going into a Sunday reopen",
-   "read": "whether the weekend's model cycle delivers a CHANGE at D+2..D+6 (a fresh or accelerating shot) or only carries an already-priced shot",
-   "call": "Fresh/accelerating shot over the weekend -> gap band +1500..+2500 and the gap carries the bulk of the repricing, leaving Monday's session as a modest reaction. Already-priced shot -> gap band +200..+400. The gap, not the Monday session, is where the weekend information lands.",
-   "evidence": {
-    "fresh": {
-     "1019": 1570,
-     "0118": 2100,
-     "0125": 2480
-    },
-    "priced": {
-     "1124": "~250 after roll-adjust",
-     "0111": 1140
-    },
-    "reaction_corollary": "0119's US session netted only +550 after a +2100 gap - the MLK thin flag is NOT what capped it; the catalyst had already been consumed by the gap it followed."
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.5,
-   "requires": "the SIGN is open_time_only from the running chain; the MAGNITUDE requires weekend-cycle model data that decision_state does not currently carry",
-   "scope": "gap",
-   "forward_evidence": "n=3 fresh spanning G5 (1019), and G11 (0118, 0125); n=2 priced spanning G8 (1124) and G10 (0111). Not yet forward-tested as a stated rule.",
-   "caveats": "The three under-forecast instances (1020's +2770 day, 0118, 0125) are now attributed to ONE condition rather than three separate misses. The magnitude is conditionable IN PRINCIPLE but not from the current feed - closing it is a DATA BUILD (ingest the Sat/Sun 00Z and 12Z runs), not a rule refinement. Until then the gap magnitude on a fresh-shot weekend stays a declared irreducible."
+   "caveats": "n=2 blocks, same winter - the decisive test is the next post-parabolic termination. The bleed-vs-young-chain boundary (when crashes stop chaining) rests on the print-day exception (0108->0109), n thin. Distinguish from two-sided BASING (1222-1231: no marginal new lows) - bleed makes marginal new lows at the old polarity. The class's day-sequencing needs day-N-1 actual tape (bounce carrier, tell) - in one-shot mode only the class-level lean + bands carry. G11 CAVEAT: the class has no exit condition - it was carried intact through a block that reversed, and B2's 1-2-day bounce cap broke on 0121 (third day, +3820, the largest bounce day). The bleed-END question is now an EVENT, not a hypothetical."
   }
  ],
  "mechanisms": [
@@ -700,19 +545,7 @@
   "MAGNITUDE - the dominant residual (G6): condition-sort under-sizes the extremes; resolve reading A (scale too small) vs B (higher-vol regime) with a winter group.",
   "WINTER / backwardation regime - the decisive out-of-regime test.",
   "Why does flow_nowcast LAG the extreme gap melt-up (1020)?",
-  "NATIVE-TICK / ms test of the BTC sub-second price-reversal + dipole-EXHAUSTION edge on NG futures.",
-  {
-   "id": "front_month_expiry_state",
-   "note": "MISSING STATE VARIABLE, identified S100.2 and the highest-value addition this pass found. G11's 0130 (+5020, 2.3x the band top) coincided with the expiring February contract running 3.0 -> 5.4 into delivery while March, the series being forecast, rallied 2.702 -> 4.416. A delivery squeeze was underway and decision_state exposes NOTHING about it: no days-to-expiry, no front-month open-interest concentration, no front/second calendar spread. BUILD: add days_to_front_expiry, front_month_oi_share and the front/second spread with its recent change to decision_state, and re-examine the walk's other extreme-magnitude residuals for the same signature."
-  },
-  {
-   "id": "c2_ratio_reformulation",
-   "note": "BUILD: run month_characterize over 20260118-20260130 so the G11 tape carries fingerprint-comparable per-leg continuation, then place 0120 on the C2 RATIO scale (true confirms 0.00-0.42, false 0107 1.23). Until that runs, the ratio reformulation is a reasoned mechanism with n=4 on prior blocks and NO measurement on the instance that motivated it."
-  },
-  {
-   "id": "weekend_model_cycle_ingest",
-   "note": "BUILD: ingest the Saturday and Sunday 00Z/12Z MOS runs into decision_state. Three weekend gaps in the walk (1019, 0118, 0125) were priced off information the D-1-evening stream does not carry, and the gap magnitude stays a declared irreducible until it does."
-  }
+  "NATIVE-TICK / ms test of the BTC sub-second price-reversal + dipole-EXHAUSTION edge on NG futures."
  ],
  "ruled_out_by_target": {
   "note": "NOISE across all four targets in the warm-season multi-target pass - warm-season only, retest in winter:",
