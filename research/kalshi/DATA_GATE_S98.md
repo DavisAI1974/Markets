@@ -275,6 +275,14 @@ accrues live since 2026-07-12; the hole matters only if the walk extends there b
 - `flow_calendar_asof(date) -> dict`. Small build (one afternoon class).
 
 ### G. Cash basis (family DEL) - NEW (desk review). The free sliver of the physical market.
+STATUS: **DONE + WIRED 2026-07-20** (`cash_basis.py`, store on S3 `cash_basis/`). THE LOAD-BEARING
+MEASUREMENT: EIA's "daily" HH spot publishes in WEEKLY BATCHES (NGWU era -> WNGSR-Supplement era
+from Jan 2026) with holiday blackouts up to 22 days - a naive T+1 join would have leaked the whole
+Jan 2026 cash blowout (Jan 23 cash $30.72, basis +25.37) a WEEK early. Wall = knowable_from
+release+1; blind-wall 0/317; selftest pins BOTH sides of the wall (0123 sees -0.12, 0130 sees
++10.765 with chg_3d +7.287 - the delivery squeeze visible decision-time-legit on the walk's 17x
+residual day). 212 rows Sep 2025 - Jul 2026; 14 holiday gaps named; vintage measured ($0.01-0.07);
+settle caveat recorded (ohlcv close vs official settle: NGG26 7.200 vs 7.460 final day).
 - WHY: cash leads futures in delivery stress; we have zero physical-market visibility. In a squeeze
   the cash-futures basis is the ground truth the paper market converges to.
 - Source: EIA daily Henry Hub spot (Refinitiv-sourced, published free with a short lag). Builder

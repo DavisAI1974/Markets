@@ -228,6 +228,22 @@ def _storage_consensus_block(iso: str) -> dict | None:
                         "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
 
 
+def _cash_basis_block(iso: str) -> dict | None:
+    """(S98 feed G) Henry Hub CASH vs front-settle basis - the free sliver of the physical market, the
+    ground truth paper converges to in delivery stress. LOAD-BEARING PUBLICATION FACT (measured): the
+    'daily' spot publishes in WEEKLY batches (NGWU era -> WNGSR-Supplement era from Jan 2026) with
+    holiday blackouts up to 22 days - joins key on knowable_from = release+1, so this is a WEEKLY-REFRESH
+    regime-state variable at 2-9d staleness (age_days ships with every read). A naive T+1 join would have
+    leaked the Jan 2026 cash blowout a week early. Module self-audits 0 violations."""
+    import cash_basis as cb
+    c = cb.cash_basis_asof(iso)
+    if not c:
+        return None
+    return c | {"note": "physical delivery-stress gauge at weekly staleness; basis changes are None "
+                        "across gaps and rolls, never bridged; on 2026-01-30 the knowable basis was "
+                        "+10.77 with chg_3d +7.29 - the squeeze visible decision-time-legit"}
+
+
 def _vol_regime_block(iso: str) -> dict | None:
     """(S98 feed B) The VOL / RANGE REGIME conditioner - trailing realized vol of session nets, range
     means/percentile, activity trend, computed strictly from prior sessions on BOTH tape bases (n0_/v0_
@@ -280,6 +296,7 @@ def decision_state(days: list[str]) -> dict:
                   "contract_structure": cs,
                   "squeeze_watch": _squeeze_watch(cs),
                   "vol_regime": _vol_regime_block(iso),
+                  "cash_basis": _cash_basis_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "holiday": _holiday_asof(iso)}
@@ -398,9 +415,10 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
             days.append(d.isoformat())
         d += datetime.timedelta(days=1)
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
-            "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0}
+            "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0,
+            "cash_knowable": 0}
     absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
-              "storage_consensus": [], "vol_regime": []}
+              "storage_consensus": [], "vol_regime": [], "cash_basis": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -449,6 +467,11 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
                     viol["consensus_join"] += 1; print(f"  VIOLATION consensus {iso}: next_print carries an actual")
         if st.get("vol_regime") is None:
             absent["vol_regime"].append(iso)
+        cbx = st.get("cash_basis")
+        if cbx is None:
+            absent["cash_basis"].append(iso)
+        elif cbx.get("hh_spot_gas_day") and not cbx["hh_spot_gas_day"] < iso:
+            viol["cash_knowable"] += 1; print(f"  VIOLATION cash {iso}: gas_day {cbx['hh_spot_gas_day']}")
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -506,6 +529,16 @@ def _selftest() -> int:
     vb = d16["vol_regime"]
     assert vb is not None and vb["n0_net_sigma_20"] == 798, ("G11-open vol minimum", vb.get("n0_net_sigma_20"))
     assert vb.get("v0_net_sigma_20") is None, "v0 stub must be None, never a fabricated calm"
+    # (S98 feed G) cash basis: weekly-batch publication respected - on 0123 the blowout is NOT knowable
+    # (basis still -0.12 from the Jan 21 gas day); on 0130 it IS (+10.765, chg_3d +7.287).
+    d23 = decision_state(["20260123"])["20260123"]
+    cbb = d23["cash_basis"]
+    assert cbb is not None and abs(cbb["hh_cash_minus_front_settle"] - (-0.12)) < 1e-9, \
+        ("0123 must NOT see the cash blowout early", cbb)
+    d30 = decision_state(["20260130"])["20260130"]
+    cb30 = d30["cash_basis"]
+    assert cb30 is not None and abs(cb30["hh_cash_minus_front_settle"] - 10.765) < 1e-9, cb30
+    assert cb30["basis_chg_3d"] is not None and cb30["age_days"] >= 2, cb30
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
