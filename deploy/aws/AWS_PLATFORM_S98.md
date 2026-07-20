@@ -104,10 +104,12 @@ Real execution risks (where attention actually belongs, per S81's own cells):
   STATUS 2026-07-20: AWS pair ROTATED - new key live in `scratchpad/aws.env`, verified via STS
   (user/Claude) + S3 list. The Claude IAM user has no iam:* permissions (correct least-privilege),
   so DEACTIVATING THE OLD KEY IS GREG'S CONSOLE ACTION: IAM -> Users -> Claude -> Security
-  credentials -> deactivate the non-AKIAYI6 key; delete after a settling period. STILL PENDING:
-  Databento key rotation (their portal) + the real EIA key. NOTE: the new pair also transited chat
-  via screenshot (same exposure class as S97) - for the NEXT rotation, edit scratchpad/aws.env
-  directly and just say it is there; zero chat exposure.
+  credentials -> deactivate the non-AKIAYI6 key; delete after a settling period. DATABENTO key
+  ROTATED same day (new key in aws.env, verified: 29 datasets visible, GLBX.MDP3 present) - if the
+  OLD Databento key is still active in their portal, deactivate it there (Greg). STILL PENDING: the
+  real EIA key. NOTE: both new secrets also transited chat (screenshot / paste - same exposure
+  class as S97); for the NEXT rotation, edit scratchpad/aws.env directly and just say it is there;
+  zero chat exposure.
 - M2: DONE 2026-07-20 - `research/kalshi/platform_sync.py` (list / pull / push with per-prefix
   manifest.json, push is dry-run unless --execute, post-push size verify; selftest PASS).
 - M3: DONE 2026-07-20 for the pre-existing local-only stores - pushed + verified with manifests:
