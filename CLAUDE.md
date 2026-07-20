@@ -216,6 +216,15 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 
 ## Branch & data discipline (READ — recurring trap)
 
+- **THE DROP-IN BOX'S BRANCH IS ALWAYS THE STARTING POINT (Greg, standing, 2026-07-20 S100).** The
+  harness assigns each session its own auto-named branch — that branch is NEVER the work. First
+  commands of every session: `git fetch origin <drop-in branch> && git checkout -B <drop-in branch>
+  origin/<drop-in branch>`, then confirm the tip message matches the drop-in's stated tip. All
+  development and pushes go to the drop-in branch.
+- **The empty-checkout trap (observed S100):** when the harness-assigned branch does not exist on the
+  remote, the container comes up on an orphan `master` with ZERO commits and an empty tree — every
+  file read fails and the session looks broken. The fix is the same fetch + checkout above; nothing
+  is lost.
 - **The stale-tip trap:** the harness often cuts a fresh session branch from a stale old tip (the known
   bad one is **S70 `3c70ff5`**). ALWAYS run `git log --oneline -1` first. If the tip is old, you are NOT
   on the real work.
