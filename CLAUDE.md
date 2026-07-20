@@ -36,7 +36,15 @@ solved permanently (see AWS KEY section above). **G12 IS GO - from a fresh S101.
 prototype wired with REAL/AWAITING/SIMULATED truth badges; 21/22 blocks verified on walk days;
 executor lane deliberately last). Cruise-able snapshot artifacts (v0.1.1) + build/refresh notes:
 the S100.1 addendum at the top of `DASHBOARD_HANDOFF_S100.md`; generator
-`dashboard/make_snapshot.py`.
+`dashboard/make_snapshot.py`. **Same session, Greg green-lit THE OPTIONS LANE (third coach):**
+research `OPTIONS_COACH_RESEARCH_S100.1.md`; feed I phase ii BUILT (`options_iv_surface.py`,
+294k settle IVs, LNE backbone, LNE strike x10 scale trap measured - phase i's COMBINED pin
+view merges mismatched ladders, unfixed, signal core owns it); phase MD measured
+(`options_md_measures.py`: Samuelson sized, call skew confirmed per-cell, VRP + fat left tail,
+ON-LNE gap inside noise = Black-76 justified); **G7-G11 settle-IV replay RUN**
+(`options_replay.py`, blind calls translated to verticals, 51 events, squeeze-short declines
+exercised; settle-marked, execution unmeasured). G12/G13 join after S101 walks them; Feb-window
+stores (md_measures/replay inputs) must NOT feed the S101 blind agent.
 
 **S99 — FOUR MORE GATE FEEDS IN ONE SESSION + THE MONDAY REPAIR (read
 `SESSION_HANDOFF_2026-07-20_S99.md` [SECURITY block FIRST] + `KICKOFF_2026-07-20_S100.md`):**
