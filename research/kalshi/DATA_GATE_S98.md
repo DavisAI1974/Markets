@@ -430,7 +430,9 @@ tracking maintenance schedules in the spring and fall").
      down pulls it away.
 - SOURCE NOTE (Greg suggested FERC): FERC MANDATES the pipeline informational postings (18 CFR
   284) but hosts no central maintenance database - the pipeline arm's source remains the per-pipe
-  EBBs (the feed J machinery); power-plant outage data lives at the ISOs, not FERC.
+  EBBs (the feed J machinery); power-plant outage data lives at the ISOs, not FERC. NUCLEAR is
+  NRC, not NERC: the NRC daily Power Reactor Status Report is the free per-unit feed; NERC's GADS
+  outage data is confidential reliability reporting - do not chase it.
 - `nuclear_outages_asof(date) -> dict | None` first; store `data/nuclear_outages/`; ISO outage
   aggregates as `iso_outages_asof(date)` second. QUEUED FOR S99.
 
