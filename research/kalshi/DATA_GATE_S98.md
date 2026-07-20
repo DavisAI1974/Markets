@@ -448,6 +448,21 @@ tracking maintenance schedules in the spring and fall").
 - `nuclear_outages_asof(date) -> dict | None` first; store `data/nuclear_outages/`; ISO outage
   aggregates as `iso_outages_asof(date)` second. QUEUED FOR S99.
 
+### S. L48 daily production AS-QUOTED (family D/supply) - CANDIDATE (Greg 2026-07-20: "there's
+lower 48 production #s out there").
+- WHAT IT IS: the daily Lower-48 dry production figure is VENDOR-MODELED from pipeline flows (LSEG
+  primarily in wire copy; also Platts/Wood Mac) - but its daily VALUE is quoted verbatim in free
+  news copy (Reuters' daily gas report cites LSEG's L48 output by name; NGI daily stats), and those
+  articles archive. The recovery pattern is exactly feed D's: per-date archive capture, value
+  carried AS-STATED with attribution named per row, never derived or interpolated; walked-winter
+  coverage report with gaps named.
+- HONEST CAVEATS up front: quotation days may be patchy (no-article days = None); the quoted figure
+  is an estimate whose vendor revises silently (feed-K-class vintage risk, same as N's two named
+  instances); attribution/redistribution posture recorded honestly.
+- FEEDS THE S99 PAID-DATA DISCUSSION alongside the EIA sweep: if the quoted route recovers the
+  winter cleanly, the vendor-subscription need shrinks to the per-terminal/regional detail the
+  quotes do not carry. QUEUED - build only after the S99 discussion.
+
 ### O. Structural-demand news watch (family D/structural) - NEW (Greg 2026-07-20: "keep one eye on
 data centers coming online or any major manufacturing coming online... checking the news feeds").
 - WHAT IT IS: a LIVE-FORWARD watch, not a walk input. Keyword families: datacenter campuses /
