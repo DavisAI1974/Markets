@@ -18,12 +18,21 @@ is** (0/51 events had the taker fee flip a sign); G9's +14.4k is SIX named event
 -3,220; the block lean and the day-book are TWO DIFFERENT EDGES. Series-construction finding: NG.v.0
 whipsawed 1000<->1021 through the G11 expiry week (Feb squeezed 3.0->5.4); G3-G10 are clean; G11 re-pulled
 on **NG.n.0**; pass-2 deferred by Greg. **GREG STOPPED THE WALK: no new group runs until EVERY data input
-in the handoff's GATE is built and wired** (COT positioning, EIA regional+SALT storage, contract structure
-/expiry/front-next spread/OI, forward curve, MOS cycle timing, vol regime, G11 fingerprints, model
-disagreement, LNG feedgas, options, cross-market). **How to build them (Greg): we are NOT testing theses —
-we put relevant info in front of the agent and IT decides how to use it. Never gate an input on whether it
-"worked".** NEXT = wire decision_state serially, finish the gate, then G12 (Feb 1-13), then **G13 (Feb
-15-27) = the SQUEEZE TEST** (carries the Feb 25 expiry).
+in the handoff's GATE is built and wired.** THREE LANDED in S97 (committed + pushed, none wired yet):
+**COT positioning** (`cot_feed.py`; caught a 47-day blind-wall leak — the 2025 shutdown suspended COT
+publication Oct 1-Nov 12, so the naive Friday rule would have leaked across G6/G7; 0 violations after
+overrides), **EIA regional + SALT/NON-SALT storage** (`storage_regional.py`; salt+nonsalt reconciles on
+all 863 records; 0 violations over 6034 days), **contract structure + forward curve**
+(`contract_structure.py`, 49 fields, expiries authoritative from definitions). **The last one caught a
+flaw in its own spec: the OI-continuous front HIDES the squeeze** (0122 `front_next_spread` 0.093 because
+n0 had already rolled) — a CALENDAR-FRONT block keeps the nearest-expiry pair visible, where the real
+1.539 sits. **When wiring, expose the calendar-front fields or the feed cannot see what it exists for.**
+STILL TO BUILD: MOS cycle timing (Sunday reopen priced by a later cycle than our D-1 feed), vol regime,
+G11 fingerprints, C2 ratio reformulation, model disagreement, LNG feedgas, options, cross-market. **How
+to build them (Greg): we are NOT testing theses — we put relevant info in front of the agent and IT
+decides how to use it. Never gate an input on whether it "worked".** ALL SESSION DATA ON S3 (272 objects
+/148MB verified; restore, do not re-pull). NEXT = wire decision_state SERIALLY, finish the gate, then G12
+(Feb 1-13), then **G13 (Feb 15-27) = the SQUEEZE TEST** (carries the Feb 25 expiry).
 
 **S96 (read `SESSION_HANDOFF_2026-07-17_S96.md` [session-total block at top] + `KICKOFF_2026-07-17_S97.md`):**
 FOUR winter blocks walked, brain s95.2 -> **s99.2 (21 plays)**. PROTOCOL SETTLED (Greg): one-shot block-blind

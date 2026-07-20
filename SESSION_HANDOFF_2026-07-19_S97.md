@@ -83,7 +83,29 @@ Greg: do all of these before the next run. Cost is not a concern for data we nee
 authorized. Each lands as a STANDALONE module exposing `*_asof(date) -> dict | None`, because
 `decision_state` must be wired in ONE serial pass (see JOB 0).
 
-### Launched in S97 - verify these landed, finish any that did not
+### Launched in S97 - ALL THREE LANDED, COMMITTED AND PUSHED. Details below; wire them in JOB 0.
+
+STATUS: (1) COT **DONE** `cot_feed.py` + `data/cot/`, `cot_asof(date, contract_code, data_dir)`.
+(2) Regional/SALT storage **DONE** `storage_regional.py` + `data/storage_regional/`,
+`storage_regional_asof(date)`. (3) Contract structure + forward curve **DONE**
+`contract_structure.py` + `data/contract_structure/`, `contract_structure_asof(date, root)` (49
+fields), `forward_curve.py` extended with `mar_apr_spread`. None are wired into decision_state - that
+is JOB 0 and it is SERIAL, one hand.
+
+**KEY FINDING FROM BUILD 3 - the OI-continuous front HIDES the squeeze.** On 2026-01-22
+`front_next_spread` reads 0.093 because NG.n.0 had already rolled to Mar/Apr, so the contract going
+parabolic was not in the n0/n1 view at all. A **calendar-front** block (curve rank 0/1) keeps the
+nearest-expiry pair observable to its last trade date - that is where `calendar_front_next_spread =
+1.539` appears. **When wiring, expose the CALENDAR-front fields, not just the n0/n1 ones**, or the
+feed misses the exact thing it exists for. Also: spread changes ACROSS a roll are undefined, not
+moves - they are `None` with a `*_pair_changed_*d` flag (same artifact class as the weekend gaps).
+
+The Feb/Mar spread as the agent would have seen it at each open, strictly-prior (factual record, no
+interpretation): 01-16 0.464 (7 bus.days to expiry) / 01-18 0.407 / 01-19 0.556 / 01-20 0.618 /
+01-21 0.726 / **01-22 1.539 (chg1d +0.813)** / 01-25 1.710 / 01-26 2.342 / 01-27 2.851 /
+01-29 3.430. NGG26 final settle 7.460 at its 2026-01-28 expiry.
+
+### The three as originally specified (kept for the record)
 1. **CFTC COT positioning** -> `research/kalshi/cot_feed.py`, `data/cot/`.
    Disaggregated report, NYMEX Henry Hub. managed_money long/short/net, producer_merchant_net,
    swap_dealer_net, other_reportable_net, total OI, w/w change in managed_money_net, and the net as a
@@ -224,16 +246,17 @@ a separate picture); NYMEX contract 023651 only, so it does NOT capture ICE Henr
 is large; publication times are date-plus-15:30-ET, not observed timestamps; 12 dates in Jan-Mar 2019
 flagged `derived_unreliable` (outside the coverage window, affects percentile history only).
 
-**10. TAPE IS ON LOCAL DISK ONLY.** `data/nymex_cont_n0/` and `data/nymex_cont_n1/` (Nov 2025 - Feb 2026)
-are gitignored and NOT on S3. The standing rule is git = CODE, S3 = DATA - right now this data exists in
-exactly one place. Push it to S3.
+**10. RESOLVED at session close - all session data is on S3.** 272 objects / 148.4 MB pushed and
+verified (local vs S3 counts match on all six prefixes). See the S3 restore table in STATE. Restore from
+S3; do not re-pull.
 
 **11. KEYS WERE EXPOSED IN-CHAT THIS SESSION** (AWS pair via screenshot, Databento key as text). ROTATE
-both before the next session, same as the S96 pair.
+both before the next session, same as the S96 pair. Also GET A REAL EIA KEY - DEMO_KEY is shared
+globally and already broke one build mid-run.
 
-**12. VERIFY WHAT THE LAST BUILD LANDED.** The contract-structure + forward-curve agent was still running
-at session close. Check `research/kalshi/contract_structure.py`, `data/contract_structure/`, and the
-modified `forward_curve.py` before wiring, and confirm `curve_regime` actually stops reading `'unknown'`.
+**12. RESOLVED - all three S97 builds landed, are committed and pushed.** But CONFIRM `curve_regime`
+actually stops reading `'unknown'` once wired, and see the calendar-front warning in the gate section -
+wiring only the n0/n1 spread fields ships a feed that structurally cannot see a squeeze.
 
 ---
 
@@ -266,9 +289,25 @@ holdout.
 - `COACH_REPLAY_S97.md` (net-of-fee), `PASS2_CONTINUOUS_SERIES_NOTES.md`.
 - MOS: `weather/mos_asof/` (index + normals committed; `raw/` ~50 MB gitignored),
   `SCHEMA_MOS_ASOF.md`.
-- Tape on disk (gitignored, NOT in git): `data/nymex_cont_n0/` (front, Nov 2025 - Feb 2026),
-  `data/nymex_cont_n1/` (next, same range). Consider pushing both to S3 - git = CODE, S3 = DATA.
-- Databento spend this session: ~$1.22 plus the contract-structure agent's pulls.
+- Databento spend this session: ~$1.22 (tape re-pulls) + $0.346 (contract structure) = ~$1.57.
+
+### S3 - RESTORE FROM HERE, DO NOT RE-PULL (git = CODE, S3 = DATA)
+
+Bucket `bento-568968024170-us-east-2-an`, us-east-2. Pushed at S97 close:
+
+| S3 prefix | what |
+|---|---|
+| `nymex/nymex_cont_n0/` | OI-continuous FRONT month tape, Nov 2025 - Feb 2026 (the G11 basis) |
+| `nymex/nymex_cont_n1/` | OI-continuous NEXT month tape, same range |
+| `nymex/contract_structure/` | sessions, structure, instrument map, statistics raw (37MB gz) |
+| `weather/mos_asof/` | the MOS forecast-temperature build incl. the ~50MB `raw/` archive |
+| `cot/` | CFTC COT store + raw zips |
+| `storage_regional/` | EIA regional + salt/non-salt store |
+| `weather/nws_hourly/` | (pre-existing, S90) raw hourly weather, 450 objects, current |
+| `nymex/nymex_cont/` | (pre-existing) the OLDER volume-based `.v.0` series |
+
+Re-pulling the MOS archive or the tape is slow and unnecessary - restore from S3. The `.v.0` series is
+still there and is what G3-G10 ran on; do not confuse the two bases.
 
 ## RULES (unchanged)
 
