@@ -45,20 +45,28 @@ def main() -> int:
     print(f"[live-smoke] subscribed {a.symbols} trades on GLBX.MDP3 for {a.seconds}s "
           f"(utc {datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')})")
     n = 0
+    lats = []
     deadline = time.time() + a.seconds
     try:
         for rec in client:
             now_ns = time.time_ns()
-            if hasattr(rec, "ts_event"):
+            # ONLY TradeMsg counts - the gateway sends SymbolMappingMsg for every child of the
+            # parent on subscribe (dozens of records, ts_event set, price/size None); counting
+            # those reports a working feed without ever seeing a trade (S100 lesson).
+            if isinstance(rec, db.TradeMsg):
                 lat_ms = (now_ns - rec.ts_event) / 1e6
-                px = getattr(rec, "price", None)
-                print(f"  trade px={px / 1e9 if px else None} size={getattr(rec, 'size', None)} "
-                      f"latency={lat_ms:.1f}ms instrument={getattr(rec, 'instrument_id', None)}")
+                lats.append(lat_ms)
+                print(f"  trade px={rec.price / 1e9:.3f} size={rec.size} "
+                      f"latency={lat_ms:.1f}ms instrument={rec.instrument_id}")
                 n += 1
             if time.time() > deadline or n >= 40:
                 break
     finally:
         client.stop()
+    if lats:
+        lats.sort()
+        print(f"[live-smoke] latency ms: min={lats[0]:.1f} med={lats[len(lats) // 2]:.1f} "
+              f"p90={lats[int(len(lats) * 0.9)]:.1f} max={lats[-1]:.1f} over n={n}")
     print(f"[live-smoke] done: {n} trades seen. "
           f"{'LIVE PLAN WORKING' if n else 'no prints (market closed or thin) - subscribe succeeded'}")
     return 0
