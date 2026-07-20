@@ -329,6 +329,40 @@ accrues live since 2026-07-12; the hole matters only if the walk extends there b
   arm: "not obtainable historically; live-only feed possible" - a successful spike, not a failure.
   No synthetic proxy under any circumstances.
 
+### N. EIA weekly S/D balance - the Natural Gas Weekly Update (family D/supply) - NEW (Greg
+2026-07-20: "this site has weekly production and consumption data also").
+- WHY: the desk audit's #2 structural gap is the flow/balance side, and the NGWU is the FREE weekly
+  version of it: dry production estimates, consumption by sector (power/industrial/rescomm), LNG
+  feedgas weekly average, net imports - published every Thursday. Weekly cadence is coarser than
+  vendor daily noms, but it is the same balance object desks anchor on, it is historical, and it
+  costs nothing. It also absorbs feed J's "wire the EIA weekly/monthly anchors now" recommendation.
+- Builder investigates first: where the NGWU's weekly supply/demand table actually lives (page
+  archive vs API), its EXACT publication timing (the blind wall - NGWU posts Thursday, pin the
+  hour), the week-definition (avg Wed-Wed?), and the attribution (production/consumption estimates
+  in the NGWU are third-party-sourced - S&P Global Commodity Insights; carry the attribution and
+  any redistribution limits honestly; if the numbers are only chart-embedded and not extractable,
+  SAY SO).
+- Fields per report week: dry_production_bcfd, total_consumption_bcfd + by-sector split, lng
+  feedgas_bcfd, net_imports_bcfd, each with w/w change; publication_datetime; join strictly on
+  publication. Coverage target: the walked winter minimum, back to Sep 2025.
+- `ngwu_asof(date) -> dict | None`, store `data/ngwu/`, selftest + blind-wall audit, notes doc.
+  QUEUED - launch when an agent slot frees.
+
+### O. Structural-demand news watch (family D/structural) - NEW (Greg 2026-07-20: "keep one eye on
+data centers coming online or any major manufacturing coming online... checking the news feeds").
+- WHAT IT IS: a LIVE-FORWARD watch, not a walk input. Keyword families: datacenter campuses /
+  hyperscaler-utility interconnections, major industrial/manufacturing plant startups, LNG train
+  startups AND outages (Freeport-class events), major pipeline maintenance/outages. Sources: free
+  feeds (EIA Today in Energy, company/utility releases, ISO announcements) via the existing
+  news_ingest_rss.py machinery; quantified slow-layer companions: ISO interconnection queues and
+  utility IRPs (datacenter load), and feed N's weekly power-burn/industrial consumption as the
+  MEASURED confirmation of what the news claims qualitatively.
+- HONEST SCOPING: retrofitting a news feed into the WALK is out of scope for now - historical news
+  joins are hindsight-prone (publication-dated archives are patchy) and the walk's blind wall is
+  the project's most protected asset. The watch enters at the LIVE coach layer: a standing item in
+  the daily lifecycle (the S87 5PM/AM/intraday cycle) and a section in the two-coach spec (Tier 3
+  item 6). Recorded here so it is not lost; built with M5 (the live box).
+
 ### L. Kalshi-side NG market data - inventory, restore, backfill (family KAL) - NEW (two-coach).
 - WHY: the Kalshi coach's echo replay (feed M) needs the Kalshi side of the walked winter -
   KXNATGASD (daily NG settle brackets) quotes/trades/books. We currently hold NONE of it locally
