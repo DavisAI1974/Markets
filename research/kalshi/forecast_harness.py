@@ -223,23 +223,59 @@ def _contract_structure_block(iso: str) -> dict | None:
     return contract_structure.contract_structure_asof(iso)
 
 
-def _squeeze_watch(cs: dict | None) -> dict | None:
+def _squeeze_watch(cs: dict | None, iso: str | None = None) -> dict | None:
     """(S98 Tier 0, DATA_GATE_S98 0b family DEL) Derived convenience read - transparently from the wired
     structure fields, components exposed alongside so the agent reads both. None = components unknown
-    (never False-when-unknown): a cross-roll day zeroes nothing, it says 'unknown'."""
+    (never False-when-unknown): a cross-roll day zeroes nothing, it says 'unknown'.
+    S101.5 ADDITIVE (brain s101.3 item 9, from G12's 0201): PROMPT-EXPIRY fields + the dead-sponsor
+    UNWIND arm. squeeze_watch keyed only on the LIVE calendar front and was structurally blind to a
+    just-expired prompt's premium unwinding (Feb expired Jan 28 at 7.460; the -7080 0201 gap was the
+    unwind). last_prompt_* names the most recent expiry; unwind_watch flags <=3 sessions since it -
+    a READ, not a gate; magnitude.block_gap_ownership owns what it means."""
     if not cs:
         return None
     d2e = cs.get("days_to_calendar_front_expiry")
     chg3 = cs.get("calendar_front_next_spread_chg_3d")
     active = None if (d2e is None or chg3 is None) else bool(d2e <= 7 and chg3 > 0)
-    return {"active": active,
-            "days_to_calendar_front_expiry": d2e,
-            "calendar_front_next_spread": cs.get("calendar_front_next_spread"),
-            "calendar_front_next_spread_chg_3d": chg3,
-            "calendar_front_symbol": cs.get("calendar_front_symbol"),
-            "note": "derived: days_to_calendar_front_expiry<=7 AND calendar_front_next_spread_chg_3d>0. "
-                    "Inside this window delivery mechanics own the tape (DATA_GATE_S98 0b: demand-regime "
-                    "bands are out of scope); G11's 0122-0130 is the n=1, G13 the forward test"}
+    out = {"active": active,
+           "days_to_calendar_front_expiry": d2e,
+           "calendar_front_next_spread": cs.get("calendar_front_next_spread"),
+           "calendar_front_next_spread_chg_3d": chg3,
+           "calendar_front_symbol": cs.get("calendar_front_symbol"),
+           "note": "derived: days_to_calendar_front_expiry<=7 AND calendar_front_next_spread_chg_3d>0. "
+                   "Inside this window delivery mechanics own the tape (DATA_GATE_S98 0b: demand-regime "
+                   "bands are out of scope); G11's 0122-0130 is the n=1, G13 the forward test"}
+    if iso:
+        try:
+            import datetime as _dt
+            import flow_calendar as _fcal
+            day = _dt.date.fromisoformat(iso)
+            prev_sym = prev_exp = None
+            y, m = day.year, day.month + 2           # delivery month M expires in M-1: start ahead, walk back
+            if m > 12:
+                m, y = m - 12, y + 1
+            for _ in range(5):                       # walk back until the most recent expiry strictly before iso
+                exp = _fcal.ng_expiry(y, m)
+                if exp < day:
+                    prev_sym, prev_exp = _fcal.ng_symbol(y, m), exp
+                    break
+                m -= 1
+                if m == 0:
+                    m, y = 12, y - 1
+            if prev_exp is not None:
+                sessions_since = _fcal.bd_between(prev_exp, day)
+                out |= {"last_prompt_symbol": prev_sym,
+                        "last_prompt_expiry": prev_exp.isoformat(),
+                        "sessions_since_prompt_expiry": sessions_since,
+                        "unwind_watch": bool(sessions_since <= 3),
+                        "unwind_note": "dead-sponsor arm (s101.3 item 9): a prompt expiry within ~3 sessions "
+                                       "with premium stranded in the front is the block_gap_ownership "
+                                       "structural condition; the flag is a read, the agent decides"}
+        except Exception:
+            out |= {"last_prompt_symbol": None, "last_prompt_expiry": None,
+                    "sessions_since_prompt_expiry": None, "unwind_watch": None,
+                    "unwind_note": "prompt-expiry lookup failed - unknown, never False"}
+    return out
 
 
 def _storage_consensus_block(iso: str) -> dict | None:
@@ -498,13 +534,25 @@ def _freeze_risk_block(iso: str) -> dict | None:
     return out
 
 
-def decision_state(days: list[str]) -> dict:
+_PRICE_DERIVED_BLOCKS = ("contract_structure", "squeeze_watch", "vol_regime", "cash_basis", "options_surface")
+
+
+def decision_state(days: list[str], mask_after: str | None = None) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
     + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
     squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime + (S99 feed T) the STEO vintage balance + (S99 feed R) nuclear outages + (S99 feed Q) the EIA-930 grid stack + (S99 feed I) the options OI pin map. NO tape
     from the forecast day or later, NO legs, NO outcome — exactly what a forecaster knows at the open.
-    Output carries a leading '_information_clock' meta key (static doctrine, not a day)."""
+    Output carries a leading '_information_clock' meta key (static doctrine, not a day).
+
+    mask_after (S101.5, brain s101.3 item 10 - the ONE-SHOT MASKING FIX, from the G12 disclosure): in
+    one-shot blind mode the in-block days' price-derived blocks (contract_structure settles, vol_regime
+    prior-session nets, cash_basis, options settle/OI, squeeze_watch's spread arms) carry the block's own
+    path - a leak. With mask_after=YYYYMMDD (the block anchor), every day AFTER that date gets those
+    blocks FROZEN at the anchor vintage, wrapped with masked_one_shot + vintage flags; curve_regime
+    freezes with them. Exogenous feeds (weather/storage/COT/calendar/nuclear/grid/solar/STEO) stay live -
+    published information a forecaster legitimately learns mid-block. Deterministic calendar clocks stay
+    live in flow_calendar. Default None = unchanged behavior (refine/audit use)."""
     import forward_curve as fc
     surp = _load_json("eia_surprise.json").get("KXNATGASD", {})
     stor = _storage_series()
@@ -512,6 +560,23 @@ def decision_state(days: list[str]) -> dict:
     mos = json.load(open(MOS_ASOF)) if os.path.exists(MOS_ASOF) else {}   # additive; absent -> None, never 0
     cv = fc.load("NG")
     out = {"_information_clock": INFORMATION_CLOCK}
+    frozen = None
+    if mask_after:
+        # anchor-CLOSE vintage: the state as-of the day AFTER the anchor (asof_session = the anchor itself),
+        # because the anchor day's own settle is legitimately knowable at the block's first reopen
+        m_next = datetime.date(int(mask_after[:4]), int(mask_after[4:6]), int(mask_after[6:])) + datetime.timedelta(days=1)
+        m_iso = m_next.isoformat()
+        m_cs = _contract_structure_block(m_iso)
+        m_cr = fc.curve_asof(cv, m_iso)
+        m_regime = m_cr[1]["regime"] if m_cr else "unknown"
+        if m_regime == "unknown" and m_cs and m_cs.get("curve_regime"):
+            m_regime = m_cs["curve_regime"]
+        frozen = {"contract_structure": m_cs,
+                  "squeeze_watch": _squeeze_watch(m_cs, m_iso),
+                  "vol_regime": _vol_regime_block(m_iso),
+                  "cash_basis": _cash_basis_block(m_iso),
+                  "options_surface": _options_surface_block(m_iso),
+                  "curve_regime": m_regime}
     for d in days:
         iso = f"{d[:4]}-{d[4:6]}-{d[6:]}"
         dow = DOW[datetime.date(int(d[:4]), int(d[4:6]), int(d[6:])).weekday()]
@@ -536,7 +601,7 @@ def decision_state(days: list[str]) -> dict:
                   "steo_vintage": _steo_vintage_block(iso),
                   "cot": _cot_asof_block(iso),
                   "contract_structure": cs,
-                  "squeeze_watch": _squeeze_watch(cs),
+                  "squeeze_watch": _squeeze_watch(cs, iso),
                   "vol_regime": _vol_regime_block(iso),
                   "cash_basis": _cash_basis_block(iso),
                   "flow_calendar": _flow_calendar_block(iso),
@@ -550,6 +615,15 @@ def decision_state(days: list[str]) -> dict:
                   "freeze_risk": _freeze_risk_block(iso),
                   "model_disagreement": _model_disagreement_block(iso),
                   "holiday": _holiday_asof(iso)}
+        if frozen is not None and d > mask_after:
+            for blk in _PRICE_DERIVED_BLOCKS:
+                fv = frozen[blk]
+                out[d][blk] = ({"masked_one_shot": True, "vintage_asof": mask_after} | fv) if fv else \
+                              {"masked_one_shot": True, "vintage_asof": mask_after, "value": None}
+            out[d]["curve_regime"] = frozen["curve_regime"]
+            out[d]["_mask_note"] = ("price-derived blocks FROZEN at the block-anchor vintage (one-shot "
+                                    "masking fix, brain s101.3 item 10) - the deterministic expiry/print "
+                                    "clock stays live in flow_calendar; exogenous feeds stay live")
     return out
 
 
@@ -793,6 +867,18 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
 def _selftest() -> int:
     ds = decision_state(["20250902"])
     assert ds["20250902"]["dow"] == "Tue" and ds["20250902"]["stor_surprise"] is not None, ds
+    # (S101.5, brain s101.3 item 9) squeeze_watch PROMPT-EXPIRY fields - measured 2026-07-21 then pinned:
+    # 0202 sits 3 sessions after the NGG26 Jan-28 expiry (the G12 dead-sponsor case), unwind_watch True.
+    sw = decision_state(["20260202"])["20260202"]["squeeze_watch"]
+    assert sw["last_prompt_symbol"] == "NGG26" and sw["last_prompt_expiry"] == "2026-01-28", sw
+    assert sw["sessions_since_prompt_expiry"] == 3 and sw["unwind_watch"] is True, sw
+    # (S101.5, brain s101.3 item 10) ONE-SHOT MASKING: in-block price-derived blocks freeze at the
+    # anchor-CLOSE vintage (asof_session = the anchor itself); exogenous feeds stay live.
+    md = decision_state(["20260205"], mask_after="20260130")["20260205"]
+    assert md["contract_structure"]["masked_one_shot"] is True, md["contract_structure"]
+    assert md["contract_structure"]["asof_session"] == "2026-01-30", md["contract_structure"]
+    assert (md["vol_regime"] or {}).get("masked_one_shot") is True, md["vol_regime"]
+    assert md.get("storage_consensus") is not None, "masking must not touch exogenous feeds"
     # (S97 JOB 2.2) the MOS as-of forecast block is ADDITIVE: the realized-proxy `weather` key must survive
     # untouched, and `weather_forecast` must be present-or-None but NEVER a silently-zeroed HDD.
     assert "weather" in ds["20250902"], "regression: realized-proxy weather key was removed"
@@ -978,6 +1064,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd")
     a1 = sub.add_parser("decision-state"); a1.add_argument("--days", required=True); a1.add_argument("--out")
+    a1.add_argument("--mask-after", default=None,
+                    help="YYYYMMDD block anchor: freeze price-derived blocks at this vintage for later days (one-shot masking fix)")
     a2 = sub.add_parser("overlay"); a2.add_argument("--forecasts", required=True); a2.add_argument("--out", required=True); a2.add_argument("--source", default="s3")
     sub.add_parser("brain-show")
     a3 = sub.add_parser("reveal"); a3.add_argument("--day", required=True); a3.add_argument("--prior")
@@ -993,7 +1081,7 @@ def main() -> int:
     if a.cmd == "audit-joins":
         return 1 if audit_joins(a.start, a.end) else 0
     if a.cmd == "decision-state":
-        ds = decision_state(a.days.split(","))
+        ds = decision_state(a.days.split(","), mask_after=a.mask_after)
         print(json.dumps(ds, indent=1))
         if a.out: json.dump(ds, open(a.out, "w"))
         return 0
