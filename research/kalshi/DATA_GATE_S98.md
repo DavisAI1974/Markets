@@ -612,6 +612,17 @@ platform_sync pull. Runs alongside the gate; no G12 dependency.
   findings, and re-reading old extremes against the new positioning/structure/vol state. Do not
   touch the old runs before then.
 
+## S99 OPENS WITH A DISCUSSION - BEFORE ANY BUILD (Greg, 2026-07-20)
+
+Greg's standing instruction: the FIRST item of the next session is a discussion, not a build. The
+subject: THE PAID-DATA DECISION. Inputs on the table: feed J's costed survey
+(`LNG_FEEDGAS_SIZING_S98.md` - only PipeRiv publishes prices, $50/user/mo premium / $500/user/mo
+API; Criterion / East Daley / NGI are quote-required) and feed N's structural finding that the FREE
+weekly balance levels died 2025-10-02 - vendor data is now the ONLY route to walked-winter balance
+levels, which pass-2's re-reads may want. Decide subscribe / request quotes / decline / defer, and
+which S99 builds that decision gates (the J follow-up; any balance-dependent work). Nothing
+balance-related builds before this conversation happens.
+
 ## PREREQUISITES (Greg, before/while the builds run)
 
 1. ROTATE the AWS pair + DATABENTO key (both exposed in-chat S97).
