@@ -138,17 +138,20 @@ Wiring requirements (all from S97, unchanged and non-negotiable):
 
 ## TIER 1 - THE G12 BLOCKERS (critical path; orchestrator, serial)
 
-1. **G11 fingerprints on `.n.0`** - run `characterize_turns.py` / `month_characterize` over the G11
-   window on the NG.n.0 tape (local `data/nymex_cont_n0/`, restore from S3 only if missing).
-   Output: `fingerprints.json`-compatible per-leg rows for G11. This is the prerequisite for:
-2. **The C2 ratio reformulation** (family: tape; the flip-rule fix). Re-express the old-side
-   continuation-collapse confirm as the RATIO of old-side to new-side continuation (scale-invariant)
-   instead of an absolute share-of-legs bar that is mechanically unreachable on 75-125k-trade tapes.
-   The refine's 0.00-0.42 true vs 1.23 false figures are a FLAGGED BUILD GAP, not a threshold -
-   derive properly on the fingerprint-comparable base, per-instance, spanning the walk's 5 true and
-   1 false flip instances. Without this, the four-condition flip confirm cannot complete on modern
-   high-activity tapes and G12 inherits G11's exact failure mode. **G12 does not run until this is
-   done.**
+1. **G11 fingerprints on `.n.0`** - DONE 2026-07-20 (`run_g11_fingerprints_s98.py`): all 12 G11
+   sessions through `month_characterize` on the walked NG.n.0 basis, rows tagged `series_basis`,
+   merged into `renders/ng_refine_s95/fingerprints.json`. Comparability PROVEN by exact reproduction
+   of all five recorded pre-G11 instance counts (1208 up 3/33 big 2/6; 1008 up 0/15; 1020 dn 1/10;
+   1223 dn 3/38; 0107 dn 10/36 big 6/7).
+2. **The C2 ratio reformulation** - DONE 2026-07-20, and the measurement REFUTES the reformulation:
+   on the comparable base 0120 (true) reads 0.714 vs 0107 (false) 0.718 - near-identical on every
+   C2 arm (absolute share 28.6% vs 27.8%; big legs 3/3 vs 6/7 alive); the proxy's 0.00-0.42-vs-1.23
+   separation was a non-comparable-base artifact (the derive-don't-adopt flag did its job). Also
+   corrects the s100_2 mechanism: 1208 collapsed to 9.1% on an 85-leg tape, so leg-count scale is
+   not the condition. C2 is KEPT and SCOPED per-instance (discriminates on its four 2025 instances,
+   abstains on the 0107/0120 class); the confirm completes as C1+C3+C4 on the modern tape class,
+   which RESOLVES the G12 blocker. Full record: `C2_RATIO_FINDINGS_S98.md`. Brain proposal
+   `knowledge/ng_brain_s100.3_proposal.json` - awaiting Greg's review before merge (protocol).
 
 ## TIER 2 - NEW FEEDS (parallel STEP C subagent builds per AGENT_RUNBOOK_S95 STEP C; then ONE second
 serial wiring pass by the orchestrator)
