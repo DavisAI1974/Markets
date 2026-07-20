@@ -1,0 +1,817 @@
+{
+ "meta": {
+  "proposal": "ng_brain s101.0 - TIER 3 DOCTRINE (DATA_GATE_S98 items 1-5)",
+  "status": "PROPOSAL - printed to Greg 2026-07-20 (S100); NOTHING merged into ng_brain.json until his approval (standing protocol)",
+  "scope_note": "ALL items are GUIDANCE/METHOD/BOOKKEEPING the agent reads - never gates, never play changes; C1-C4 and every existing play stay byte-identical."
+ },
+ "usage_doctrine": {
+  "note": "Per-source-family READING guidance (gate item 1). How to read each family - the agent decides application.",
+  "weather_mos": "FIRST-APPEARANCE adds at previously-empty horizons are the driver class; REVISIONS to already-priced horizons are the noise class (s100_2_mos_characterization, n thin - forward evidence rides G12+). D+4-8 = the battleground horizons where repricing concentrates. The weekend 00z/12z cycles price the SUNDAY REOPEN - weather_forecast_cycle (feed A ph1) carries them decision-time; the D-1-evening block alone is one cycle behind every reopen. freeze_risk (feed E) is the SUPPLY side of cold: sub-20F producing-basin runs cut supply while demand spikes - the convexity mechanism behind band overshoots.",
+  "storage": "The weekly print RE-ANCHORS the fundamental backdrop; it never owns the day side (prints trade chain-sided at current polarity, 9/9 through G11). SALT is the fast-cycling front-month scarcity read; composition (regional vs headline) is the second wave. Survey consensus and seasonal proxy are BOTH carried - surprise is vs consensus where consensus exists.",
+  "cot": "Positioning is a CONVEXITY CONDITIONER, never timing or direction. Percentile extremes flag band-overshoot regimes (squeezes overshoot every band). NEVER fade the crowded side during its squeeze. Limits: weekly cadence, Tuesday-positions-Friday-publication, and the futures book and options-implied book can sit at OPPOSITE extremes (G11 open: 2.83rd vs 97.17th pctile) - read BOTH.",
+  "structure": "Curve LEVEL is state; the widening RATE is signal. The expiry clock switches the regime (squeeze_watch active = delivery physics) - and only the CALENDAR-FRONT fields see it (the OI-front hides the squeeze; 0122: 0.093 vs 1.539). squeeze_watch is a read, not a gate.",
+  "vol": "vol_regime scales BANDS only, never calls direction. n0/v0 bases never mixed.",
+  "options": "OI walls = the pin map near opex (pin/unpin boundary = opex day, the business day before expiry). Wall concentrations near settle act as magnets/friction zones. IV (phase ii, pending) = uncertainty scaler, never direction.",
+  "power_solar_nuclear_grid": "Slow demand-share backdrop + the daily burn nowcast (grid_stack); nuclear GW offline adds burn ~GW-for-GW; the sunset ramp (solar_calendar) is an intraday clock feature, not a daily driver.",
+  "cash": "Cash basis is delivery-stress GROUND TRUTH the paper market converges to - but it publishes in WEEKLY BATCHES; never assume daily availability (the 0130 +10.77 lands decision-time-legit ON the 17x day, not before)."
+ },
+ "flip_driver_checklist": {
+  "note": "Gate item 2 (desk review B2). METHOD, joins C1-C4 which stay unchanged: at EVERY chain_polarity_flip ARM or CONFIRM evaluation the agent must READ (not obey) all four families before deciding.",
+  "checklist": [
+   "FORECAST STREAM: any first-appearance adds? which side do they feed? (weather_forecast run_delta + weather_forecast_cycle deltas + freeze_risk threshold crossings)",
+   "POSITIONING: COT percentile + WHICH book (futures vs options-implied) is at an extreme; is the flip direction the crowded side's squeeze?",
+   "STRUCTURE: calendar-front spread level AND its widening rate; days to calendar-front expiry; squeeze_watch state",
+   "TAPE: C1 band-break state vs the correct condition-class band; C2 arms where in scope (per s100_3 scoping)"
+  ],
+  "rule": "The checklist forces the LOOK; the confirm bar (C1+C3+C4, C2 in scope) still DECIDES. No checklist item is itself a confirm condition."
+ },
+ "evidence_day_registry": {
+  "note": "Gate item 3 (desk review B7). Day -> plays citing it, AUTO-BUILT from the brain's own text (MMDD token scan). CAVEAT: token collisions with dollar figures are possible - the registry is a VISIBILITY tool for overlapping calibration evidence, curated on merge, never itself evidence. Purpose: per-play n counts are not silently double-counted - 1008/1020/1211 each anchor 9 plays.",
+  "top_overlaps": {
+   "1008": [
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "exit.recruitment_reversal",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "magnitude.warm_season_scale_candidate",
+    "shape.grind_vs_spike",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation"
+   ],
+   "1020": [
+    "daytype.monday_weekend_gap",
+    "direction.flow_nowcast",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "magnitude.warm_season_scale_candidate",
+    "magnitude.weekend_gap_delivery",
+    "ride.magnitude_staircase",
+    "shape.grind_vs_spike",
+    "structure.chain_polarity_flip"
+   ],
+   "1211": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1016": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.warm_season_scale_candidate",
+    "structure.chain_polarity_flip"
+   ],
+   "0119": [
+    "daytype.monday_weekend_gap",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.weekend_gap_delivery",
+    "shape.grind_vs_spike",
+    "signal.mos_first_appearance_vs_revision",
+    "structure.chain_polarity_flip",
+    "structure.post_parabolic_bleed"
+   ],
+   "1110": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1119": [
+    "daytype.monday_weekend_gap",
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1224": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0925": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0107": [
+    "direction.giveback_exhaustion_boundary",
+    "exit.recruitment_reversal",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0120": [
+    "daytype.weekday_archetype",
+    "exit.recruitment_reversal",
+    "structure.chain_polarity_flip",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0929": [
+    "daytype.monday_weekend_gap",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "shape.grind_vs_spike",
+    "structure.mature_swing_alternation"
+   ]
+  },
+  "registry": {
+   "0102": [
+    "magnitude.crash_regime_bands",
+    "structure.post_parabolic_bleed"
+   ],
+   "0103": [
+    "daytype.monday_weekend_gap"
+   ],
+   "0104": [
+    "daytype.monday_weekend_gap",
+    "structure.post_parabolic_bleed"
+   ],
+   "0105": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "structure.post_parabolic_bleed"
+   ],
+   "0106": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary"
+   ],
+   "0107": [
+    "direction.giveback_exhaustion_boundary",
+    "exit.recruitment_reversal",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0108": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0109": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.post_parabolic_bleed",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0111": [
+    "daytype.monday_weekend_gap",
+    "magnitude.weekend_gap_delivery",
+    "structure.post_parabolic_bleed"
+   ],
+   "0112": [
+    "daytype.monday_weekend_gap",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0113": [
+    "magnitude.crash_regime_bands",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0114": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.failed_rally_tell",
+    "structure.post_parabolic_bleed"
+   ],
+   "0115": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.post_parabolic_bleed"
+   ],
+   "0116": [
+    "daytype.storage_thursday_magnitude",
+    "magnitude.crash_regime_bands",
+    "structure.post_parabolic_bleed"
+   ],
+   "0118": [
+    "daytype.monday_weekend_gap",
+    "daytype.weekday_archetype",
+    "magnitude.weekend_gap_delivery",
+    "signal.mos_first_appearance_vs_revision",
+    "structure.chain_polarity_flip"
+   ],
+   "0119": [
+    "daytype.monday_weekend_gap",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.weekend_gap_delivery",
+    "shape.grind_vs_spike",
+    "signal.mos_first_appearance_vs_revision",
+    "structure.chain_polarity_flip",
+    "structure.post_parabolic_bleed"
+   ],
+   "0120": [
+    "daytype.weekday_archetype",
+    "exit.recruitment_reversal",
+    "structure.chain_polarity_flip",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0121": [
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0122": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0123": [
+    "daytype.weekday_archetype",
+    "direction.giveback_exhaustion_boundary",
+    "shape.grind_vs_spike",
+    "signal.mos_first_appearance_vs_revision",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0125": [
+    "daytype.monday_weekend_gap",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.weekend_gap_delivery",
+    "signal.mos_first_appearance_vs_revision",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0126": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "signal.mos_first_appearance_vs_revision",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0127": [
+    "daytype.weekday_archetype",
+    "direction.giveback_exhaustion_boundary",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation"
+   ],
+   "0128": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "0129": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.post_parabolic_bleed"
+   ],
+   "0130": [
+    "daytype.weekday_archetype",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.post_parabolic_bleed"
+   ],
+   "0820": [
+    "daytype.surprise_magnitude"
+   ],
+   "0908": [
+    "daytype.monday_weekend_gap",
+    "direction.flow_nowcast",
+    "magnitude.catalyst_condition_sort",
+    "shape.grind_vs_spike"
+   ],
+   "0910": [
+    "daytype.weekday_archetype",
+    "structure.mature_swing_alternation"
+   ],
+   "0911": [
+    "daytype.storage_thursday_magnitude",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation"
+   ],
+   "0915": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary"
+   ],
+   "0916": [
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "direction.giveback_exhaustion_boundary",
+    "shape.grind_vs_spike",
+    "structure.mature_swing_alternation"
+   ],
+   "0918": [
+    "daytype.storage_thursday_magnitude",
+    "magnitude.catalyst_condition_sort"
+   ],
+   "0919": [
+    "daytype.monday_weekend_gap"
+   ],
+   "0922": [
+    "daytype.monday_weekend_gap",
+    "direction.cross_block_reversion",
+    "level.giveback_origin_shelf",
+    "structure.chain_polarity_flip"
+   ],
+   "0923": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "level.giveback_origin_shelf",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0924": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0925": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "0926": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "structure.mature_swing_alternation"
+   ],
+   "0929": [
+    "daytype.monday_weekend_gap",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "shape.grind_vs_spike",
+    "structure.mature_swing_alternation"
+   ],
+   "0930": [
+    "structure.mature_swing_alternation"
+   ],
+   "1000": [
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands"
+   ],
+   "1001": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "magnitude.warm_season_scale_candidate",
+    "structure.mature_swing_alternation"
+   ],
+   "1002": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "shape.grind_vs_spike",
+    "structure.failed_rally_tell",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1003": [
+    "direction.giveback_exhaustion_boundary",
+    "structure.failed_rally_tell"
+   ],
+   "1005": [
+    "direction.giveback_exhaustion_boundary"
+   ],
+   "1006": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "shape.grind_vs_spike"
+   ],
+   "1007": [
+    "direction.cross_block_reversion",
+    "magnitude.warm_season_scale_candidate",
+    "shape.grind_vs_spike",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation"
+   ],
+   "1008": [
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "exit.recruitment_reversal",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "magnitude.warm_season_scale_candidate",
+    "shape.grind_vs_spike",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation"
+   ],
+   "1009": [
+    "daytype.storage_thursday_magnitude",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands"
+   ],
+   "1010": [
+    "daytype.storage_thursday_magnitude",
+    "daytype.weekday_archetype",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "magnitude.warm_season_scale_candidate"
+   ],
+   "1013": [
+    "daytype.monday_weekend_gap",
+    "magnitude.catalyst_condition_sort"
+   ],
+   "1015": [
+    "magnitude.catalyst_condition_sort"
+   ],
+   "1016": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.flow_nowcast",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.warm_season_scale_candidate",
+    "structure.chain_polarity_flip"
+   ],
+   "1017": [
+    "daytype.monday_weekend_gap",
+    "level.giveback_origin_shelf"
+   ],
+   "1019": [
+    "daytype.monday_weekend_gap",
+    "direction.cross_block_reversion",
+    "magnitude.weekend_gap_delivery",
+    "structure.chain_polarity_flip"
+   ],
+   "1020": [
+    "daytype.monday_weekend_gap",
+    "direction.flow_nowcast",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "magnitude.warm_season_scale_candidate",
+    "magnitude.weekend_gap_delivery",
+    "ride.magnitude_staircase",
+    "shape.grind_vs_spike",
+    "structure.chain_polarity_flip"
+   ],
+   "1021": [
+    "daytype.monday_weekend_gap",
+    "direction.cross_block_reversion",
+    "magnitude.warm_season_scale_candidate"
+   ],
+   "1023": [
+    "daytype.storage_thursday_magnitude",
+    "structure.mature_swing_alternation"
+   ],
+   "1029": [
+    "daytype.storage_thursday_magnitude",
+    "level.giveback_origin_shelf",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1030": [
+    "daytype.storage_thursday_magnitude",
+    "level.giveback_origin_shelf",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1031": [
+    "structure.mature_swing_alternation"
+   ],
+   "1100": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.warm_season_scale_candidate",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1103": [
+    "structure.mature_swing_alternation"
+   ],
+   "1104": [
+    "structure.mature_swing_alternation"
+   ],
+   "1105": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "structure.mature_swing_alternation"
+   ],
+   "1106": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "structure.mature_swing_alternation"
+   ],
+   "1107": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "structure.mature_swing_alternation"
+   ],
+   "1109": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "structure.mature_swing_alternation"
+   ],
+   "1110": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1111": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1112": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation"
+   ],
+   "1113": [
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1114": [
+    "daytype.monday_weekend_gap",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation"
+   ],
+   "1117": [
+    "daytype.monday_weekend_gap",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip"
+   ],
+   "1118": [
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1119": [
+    "daytype.monday_weekend_gap",
+    "daytype.storage_thursday_magnitude",
+    "direction.cross_block_reversion",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1120": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1121": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation"
+   ],
+   "1123": [
+    "daytype.monday_weekend_gap"
+   ],
+   "1124": [
+    "daytype.monday_weekend_gap",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.weekend_gap_delivery",
+    "structure.mature_swing_alternation"
+   ],
+   "1125": [
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation"
+   ],
+   "1126": [
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation"
+   ],
+   "1127": [
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation"
+   ],
+   "1128": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation"
+   ],
+   "1130": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "structure.mature_swing_alternation"
+   ],
+   "1200": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands"
+   ],
+   "1201": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1202": [
+    "magnitude.catalyst_condition_sort",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1203": [
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1204": [
+    "daytype.storage_thursday_magnitude",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1205": [
+    "daytype.monday_weekend_gap",
+    "magnitude.catalyst_condition_sort",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1207": [
+    "daytype.monday_weekend_gap",
+    "structure.chain_polarity_flip"
+   ],
+   "1208": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation"
+   ],
+   "1209": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "1210": [
+    "daytype.monday_weekend_gap",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "1211": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "level.giveback_origin_shelf",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1212": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation"
+   ],
+   "1215": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1216": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation"
+   ],
+   "1217": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation"
+   ],
+   "1218": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation"
+   ],
+   "1219": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation"
+   ],
+   "1221": [
+    "direction.giveback_exhaustion_boundary"
+   ],
+   "1222": [
+    "direction.giveback_exhaustion_boundary",
+    "structure.chain_polarity_flip",
+    "structure.post_parabolic_bleed"
+   ],
+   "1223": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "1224": [
+    "daytype.storage_thursday_magnitude",
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "1226": [
+    "direction.giveback_exhaustion_boundary",
+    "magnitude.crash_regime_bands",
+    "structure.post_parabolic_bleed"
+   ],
+   "1229": [
+    "magnitude.crash_regime_bands",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed"
+   ],
+   "1230": [
+    "magnitude.crash_regime_bands",
+    "structure.failed_rally_tell",
+    "structure.mature_swing_alternation",
+    "structure.post_parabolic_bleed",
+    "timing.catalyst_continuity_frontrun"
+   ],
+   "1231": [
+    "magnitude.catalyst_condition_sort",
+    "magnitude.crash_regime_bands",
+    "structure.chain_polarity_flip",
+    "structure.failed_rally_tell",
+    "structure.post_parabolic_bleed"
+   ]
+  }
+ },
+ "scoring_split": {
+  "note": "Gate item 4 (desk review B1; resolves S97 concern 5). EFFECTIVE G12.",
+  "rule": "The DAY-BOOK (per-day nets, net-of-fee maker AND taker) is the PRIMARY scored product. The BLOCK LEAN is DEMOTED to a regime-state call (polarity + conviction), recorded and graded as a DESCRIPTOR and as a conditioner of day plays - never a standalone pass/fail deliverable.",
+  "rationale": "Two-week directional NG calls are near-coin-flip at the best desks; COACH_REPLAY_S97: the day-book is where the edge lives (resume 9/10, fees immaterial, turn-calls 0/3); G9 proved a wrong lean does not cost the day-book money.",
+  "two_coach": "Under 0c: the day-book is the NYMEX coach's product; the Kalshi coach's product is the echo book (feed M) on its OWN ledger; the two are never pooled."
+ },
+ "squeeze_regime_doctrine": {
+  "note": "Gate item 5 (desk review B5). Scope-tagged guidance; the agent decides application; G11 is n=1 and G13 is the designed forward test.",
+  "rule": "While squeeze_watch is ACTIVE (days_to_calendar_front_expiry <= 7 AND calendar-front spread positive-and-widening): demand-regime magnitude bands are OUT OF SCOPE (void, not rescaled); NO mean-reversion assumption; NEVER short the squeeze leg on band logic; alternation/day-type sequencing rules are out of scope on the squeeze leg. The unwind boundary (expiry passes / spread collapses) re-admits normal doctrine.",
+  "inputs": "squeeze_watch + calendar-front fields + options walls (feed I) + cash basis + freeze_risk (supply cut during cold = the physical trigger class)."
+ }
+}
