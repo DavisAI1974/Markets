@@ -114,9 +114,15 @@ def nymex_available_days(root: str = "NG") -> list[str]:
     return sorted(set(days))
 
 
+_BARS_CACHE: dict[tuple, dict] = {}
+
+
 def nymex_minute_bars(day8: str, root: str = "NG") -> dict:
     """1-minute last-trade bars from the canonical continuous-day reader (local cache only;
-    the dashboard does not pull tape from S3 on-request - that is a deliberate cost gate)."""
+    the dashboard does not pull tape from S3 on-request - that is a deliberate cost gate).
+    Parsed once per (root, day) per process - the raw day is ~100k+ ticks."""
+    if (root, day8) in _BARS_CACHE:
+        return _BARS_CACHE[(root, day8)]
     if day8 not in nymex_available_days(root):
         return {"available": False, "day": day8,
                 "reason": f"data/nymex_cont/{root}_{day8}*.jsonl.gz absent locally "
@@ -135,5 +141,7 @@ def nymex_minute_bars(day8: str, root: str = "NG") -> dict:
     for t, p in zip(ts, px):
         bars[int(t // 60 * 60)] = float(p)   # last print in the minute wins
     series = [[k, round(v, 4)] for k, v in sorted(bars.items())]
-    return {"available": True, "day": day8, "root": root,
-            "n_ticks": int(len(ts)), "n_minutes": len(series), "bars": series}
+    out = {"available": True, "day": day8, "root": root,
+           "n_ticks": int(len(ts)), "n_minutes": len(series), "bars": series}
+    _BARS_CACHE[(root, day8)] = out
+    return out
