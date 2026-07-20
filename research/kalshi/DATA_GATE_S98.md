@@ -475,7 +475,10 @@ platform_sync pull. Runs alongside the gate; no G12 dependency.
    HAS the history the NG leg lacks. Also checked (Greg's pointer): eia.gov/consumption - RECS/
    CBECS/MECS are PERIODIC MULTI-YEAR STRUCTURAL surveys, not timely feeds: no next-day event use;
    their honest use is slow-layer demand-share weights (e.g. validating the gas-weighted metro
-   weighting), recorded as a reference, not a gate item.
+   weighting), recorded as a reference, not a gate item. Also eia.gov/consumption/reports.php
+   (Greg's second pointer): the derived analyses off those surveys - same verdict, structural
+   reference (useful facts: gas share of households by region, heating's dominance of commercial
+   fuel use) for the demand-weight layer, no event-time use.
 
 ## SEQUENCING AND THE CRITICAL PATH
 
