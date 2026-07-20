@@ -1,4 +1,42 @@
-# DASHBOARD HANDOFF (S100) - read this before wiring any UI into the platform
+# DASHBOARD HANDOFF (S100.1) - read this before wiring any UI into the platform
+
+## S100.1 ADDENDUM (dashboard wiring session, 2026-07-20) - what is BUILT and how the snapshots were made
+
+State: the READ PLANE EXISTS. Branch `claude/dashboard-wiring-rgvahe` (cut from the signal-core
+tip), everything under `dashboard/` (see its README.md): FastAPI server + read-only adapters
+(brain / decision_state with blockwise awaiting-data fallback / lag map / fees / kalshi candles
+both schema vintages / nymex minute bars / data-plane health) + the v0.1 prototype frontend wired
+via `adapter.js` with per-panel truth badges (REAL DATA / AWAITING DATA / SIMULATED). Verified
+end-to-end 2026-07-20: 21/22 decision blocks fed on walk-window days (holiday=None is correct
+absence), lag map 76,594 rows / ATM 42% serving the edge clock per cell, real NYMEX tape charted
+for 20260122. Executor lane deliberately NOT built (Greg: last). Store->local path conventions
+that cost time: cot_combined/ -> data/cot_combined, steo_vintage/ -> data/steo_vintage,
+nuclear_outages/ -> data/nuclear_outages, weather/mos_asof/ -> REPO/weather/mos_asof (tracked in
+git - the S3 refresh is skip-worktree'd locally, NEVER commit it), options_ng: pull ONLY
+surface.json.gz (the raw/ dbn archives are 859MB and feed-I-phase-ii only).
+
+SNAPSHOT ARTIFACTS (v0.1.1, published 2026-07-20, private to Greg, for cruising + notes):
+- Desktop (also auto-fits a phone turned sideways):
+  https://claude.ai/code/artifact/89eadfbc-ab1c-4241-a113-8a0c1a426bb7
+- Portrait phone (bottom-tab nav, single column):
+  https://claude.ai/code/artifact/1c257290-ee89-451b-a03a-95a5542718b6
+HOW: `dashboard/make_snapshot.py` (run the server, stores pulled, then one command) captures
+/desk/snapshot for a set of as-of days + the ATM lag window + kalshi day list + minute bars for
+tape days (~0.6MB total), and assembles ONE self-contained HTML per form factor: inlined CSS +
+frontend body + a shim that overrides window.fetch for /api/v1 paths to serve the embedded JSON.
+TRAPS (each cost an iteration, all encoded in the script): base css sets body min-width
+1180/1120 - the phone build zeroes it with !important; do NOT use CSS zoom to fit (mobile
+layout-viewport expansion fights it); the desktop build fits rotated phones via
+`<meta name="viewport" content="width=1130">` (classic desktop-site scaling, no JS). Embedded
+days 2025-12-23 / 01-07 / 01-20 / 01-22 (default, tape) / 01-30 / 07-17; Feb 2026 EXCLUDED
+(blind-run hygiene, G12/G13 un-walked - the script has a guard; lift it only after the walk).
+REFRESH: rebuild the files, then republish - the SAME conversation republishing the same file
+path keeps the URL; a NEW session must pass the artifact URL to the Artifact tool or it mints a
+new link. Greg's future asks recorded: a properly scaled-down responsive version later;
+historical options data on the dash (parked, Greg thinking on scope).
+
+---
+Original S100 handoff below, unchanged.
 
 For the dashboard-building session. The signal platform this UI sits on is live and disciplined;
 this page is the map of what to read, where it lives, and the four rules that protect it.

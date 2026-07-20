@@ -31,6 +31,12 @@ NOT clear this regime; MAKER-FIRST**; `TWO_COACH_SPEC_S100.md` printed, approval
 determinations: FREE-FIRST standing, CL Mondays = free redecode (~Aug 12-14 window), pyth
 sunset by Jul 31 (open). Dashboard session live (`DASHBOARD_HANDOFF_S100.md`). AWS key episode
 solved permanently (see AWS KEY section above). **G12 IS GO - from a fresh S101.**
+**S100.1 (dashboard session, same day): the READ PLANE is BUILT** - branch
+`claude/dashboard-wiring-rgvahe`, `dashboard/` (FastAPI + read-only adapters + the v0.1
+prototype wired with REAL/AWAITING/SIMULATED truth badges; 21/22 blocks verified on walk days;
+executor lane deliberately last). Cruise-able snapshot artifacts (v0.1.1) + build/refresh notes:
+the S100.1 addendum at the top of `DASHBOARD_HANDOFF_S100.md`; generator
+`dashboard/make_snapshot.py`.
 
 **S99 — FOUR MORE GATE FEEDS IN ONE SESSION + THE MONDAY REPAIR (read
 `SESSION_HANDOFF_2026-07-20_S99.md` [SECURITY block FIRST] + `KICKOFF_2026-07-20_S100.md`):**
