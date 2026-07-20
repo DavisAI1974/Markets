@@ -38,11 +38,18 @@ superseded ones down. (Started S81, 2026-07-12.)
   TWO-COACH ARCHITECTURE (Greg 2026-07-20): Kalshi = initial primary vehicle, NYMEX dailies quickly
   after, one shared signal core, two separately-scored coaches; the lag is the Kalshi edge.
   Gate-closure condition at the bottom defines when G12/G13 may run.
+- **`deploy/aws/AWS_PLATFORM_S98.md`** — the platform consolidation + AWS migration plan (Greg
+  2026-07-20: end the data sprawl; platform lives in AWS, hybrid with git). git = CODE, S3 = ALL
+  DATA one bucket + manifests, local = cache, live loop us-east-1 co-region with Kalshi.
+  Execution-speed verdict: the established 7-20s+ futures->Kalshi lag needs SUB-SECOND not sub-ms;
+  LLM never in the hot path; lag telemetry per fire (decay watch, never a retest). M1-M6 steps;
+  M1 = key rotation (Greg) blocks all pushes.
 - **S97 feed modules (landed S97, indexed here):** `research/kalshi/cot_feed.py` +
   `data/cot/` (CFTC COT, publication-time blind wall); `research/kalshi/storage_regional.py` +
   `data/storage_regional/` (EIA five-region + salt/non-salt); `research/kalshi/contract_structure.py`
   + `data/contract_structure/` (49 fields incl. the CALENDAR-FRONT block that sees what the
-  OI-continuous front hides). None wired until DATA_GATE_S98 Tier 0.
+  OI-continuous front hides). WIRED into decision_state in S98 Tier 0 (audit-joins: 0 violations,
+  101 days).
 
 ## S96 — G7 winter block + per-group refine + the settled protocol (CURRENT)
 - **PROTOCOL (Greg S96):** one-shot block-blind = the CANONICAL skill test; refine after EVERY group

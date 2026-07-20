@@ -78,6 +78,27 @@ seconds-to-minutes later) and it means the NYMEX read is already the leading inp
   M's echo replay identifies which signals survive Kalshi's fee wall, so "use less" is an empirical
   selection.
 
+### THE STANDING LOOK-AHEAD (Greg, 2026-07-20: ESTABLISHED - DO NOT RETEST)
+
+The futures -> Kalshi LAG is the Kalshi coach's entry trigger and it is settled evidence, confirmed
+repeatedly without ever being the target again ("we've done it 15 times, not intentionally"):
+- S80: WTI Jul 6-10, 41 contracts, **15 significant at z>=3** (peak lags 0/+1m/+5m), Brent 4/10 on a
+  second hub (`SESSION_HANDOFF_2026-07-12_S80.md`, `futures_kalshi_lag.py`, odcore.leadlag +
+  time-slide null).
+- S81: tick-level resolution - **7-20 SECONDS on the fastest/most-liquid strike, LONGER on
+  less-liquid strikes**; the 1-min "full minute" was coarse-bar aliasing; net-of-fee cleared on the
+  lagging x >=$0.40-move cell (+91c over fee) (`SESSION_HANDOFF_2026-07-12_S81.md`,
+  `lag_exploit_backtest.py`).
+- S91: gold 37/60, silver 26/54 significant, futures-lead, same one-directional structure.
+- S84 standing principle: NYMEX is the CANARY, Kalshi the delayed follower; futures lead, Kalshi
+  never leads.
+CONSEQUENCES: (1) feed M does NOT re-measure whether the lag exists - it measures the EXECUTION
+ECONOMICS of trading it on KXNATGASD (which brackets, spread/fee/fill, echo replay of the walk's
+calls); (2) the live executor logs observed lag per fire as TELEMETRY (decay watch), which is
+flight instrumentation, not a retest (`deploy/aws/AWS_PLATFORM_S98.md` section 4); (3) the small
+edge on the NYMEX dailies and the big edge on Kalshi are the same signal at two vehicles - the
+two-coach split exists precisely to harvest both without conflating their ledgers.
+
 ---
 
 ## TIER 0 - WIRE WHAT IS ALREADY LANDED (JOB 0; serial, one hand, orchestrator only)
@@ -306,11 +327,14 @@ Feed IDs A-K for tracking.
   its constraint IS size-vs-fee (S81/S82) - the exact inversion of the futures leg, where
   COACH_REPLAY_S97 proved fees immaterial and direction binding. Nothing about the Kalshi leg is
   provisional-until-live except via this build.
+- SCOPE GUARD (Greg 2026-07-20): the lag's EXISTENCE is established - see THE STANDING LOOK-AHEAD
+  in 0c. M never re-litigates it. What follows is execution economics only.
 - The build, on feed L's store, reusing the existing lag thread (`futures_kalshi_lag.py`,
   `lag_exploit_backtest.py`, `odcore/leadlag.py`):
-  - (1) MEASURE the lag on KXNATGASD across the walked winter: per-event (never pooled) NYMEX move
-    -> Kalshi bracket reprice delay + pass-through fraction, per moneyness band and time-of-day.
-    1-sec NYMEX readouts are LOWER BOUNDS (standing rule).
+  - (1) CHARACTERIZE the lag's NG-specific execution shape on KXNATGASD across the walked winter:
+    per-event (never pooled) NYMEX move -> Kalshi bracket reprice delay + pass-through fraction,
+    per moneyness band and time-of-day - the fill-tradeoff map (deepest-lag strikes fill worst),
+    not a significance test. 1-sec NYMEX readouts are LOWER BOUNDS (standing rule).
   - (2) FILL/FEE MODEL: Kalshi spread-as-cost per bracket + per-contract fee schedule + a
     conservative fill assumption (cross-the-spread taker baseline; resting-order fill claims
     require book evidence, else not claimed).
@@ -377,6 +401,21 @@ to Greg before any brain merge, per standing protocol)
    the rule that the two ledgers are never pooled. Written after feed M's first numbers exist so the
    spec is grounded in measured lag/fee reality, not assumption.
 
+## TIER 4 - PLATFORM CONSOLIDATION + AWS MIGRATION (Greg 2026-07-20; parallel, does NOT block G12)
+
+Greg: "we don't want data spread everywhere. i want to start the migration to aws where the
+platform will live. or a hybrid of that and git. i want you to look at that too for trade execution
+speed." The full plan is `deploy/aws/AWS_PLATFORM_S98.md`. The decision: HYBRID FORMALIZED -
+git = CODE + docs + records; S3 = ALL DATA in ONE bucket with per-prefix manifests; local = cache
+rebuildable in one command; the LIVE loop in us-east-1 co-region with Kalshi. Execution-speed
+verdict: the established 7-20s+ lag means the platform needs SUB-SECOND, not sub-millisecond - a
+plain co-region box beats the edge's clock 100x, the LLM never sits in the hot path (playbook
+pre-set, deterministic executor fires), and live lag TELEMETRY per fire watches decay without
+retesting. M-steps: M1 key rotation (Greg, blocks pushes) -> M2 taxonomy + platform_sync.py ->
+M3 push local-only stores -> M4 repoint collectors off the git data branches (freeze as archive) ->
+M5 us-east-1 live box (post-gate, with the two-coach spec) -> M6 session ritual becomes
+platform_sync pull. Runs alongside the gate; no G12 dependency.
+
 ## EXPLICITLY NOT IN THE GATE (named deferrals, unchanged reasons)
 
 - **Cross-market (TTF/JKM, power stack, coal switch)** - S97 item 10; real drivers, slower-moving,
@@ -386,8 +425,13 @@ to Greg before any brain merge, per standing protocol)
 - **Full production/flow network (all-pipeline EBB scrape)** - the desk's biggest remaining edge, out
   of scope until the J spike sizes the terminal-lateral subset.
 - **ECMWF historical cycles** - not freely archived; named gap, no proxy.
-- **Pass-2 series construction** - JOB 4, after the first pass completes (Greg: do not re-base the
-  walk before then). `PASS2_CONTINUOUS_SERIES_NOTES.md` unchanged.
+- **Pass-2 series construction AND the second refinement round** - JOB 4, after the first pass
+  completes. CONFIRMED by Greg 2026-07-20: a full second refinement round runs over the
+  already-walked groups once pass 1 is done - so ALL retroactive old-run work lands THERE, not now:
+  the series-construction re-base (`PASS2_CONTINUOUS_SERIES_NOTES.md`), re-characterizing old print
+  days against feed D's true consensus, propagating feed K's as-printed vintages through old
+  findings, and re-reading old extremes against the new positioning/structure/vol state. Do not
+  touch the old runs before then.
 
 ## PREREQUISITES (Greg, before/while the builds run)
 
