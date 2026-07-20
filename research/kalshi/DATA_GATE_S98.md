@@ -392,6 +392,37 @@ sunset, gas peakers pick up - the duck-curve neck, strongest ERCOT/CAISO and gro
 demand-shape descriptor. Selftest anchors: NYC solstice day lengths 9.25h/15.11h, DST discontinuity,
 span bounds.
 
+### Q. Grid generation stack - EIA-930 (family D/power) - NEW (Greg 2026-07-20: "if we weren't
+tracking the sun we would have no idea how much less gas is being used because of solar").
+- WHY: feed P gives the solar ramp's CLOCK; this gives its QUANTITY. EIA-930 publishes hourly
+  ACTUAL generation BY FUEL BY BALANCING AUTHORITY (solar, wind, gas, nuclear, ...) plus demand -
+  free, ~1-day lag, historical. Gas-displaced-by-solar becomes a measured state variable (the AEP
+  morning cliff as a data series); the gas share of the stack by BA is the power-burn nowcast the
+  weekly NGWU only averages. Scope the pull to the gas-relevant BAs first (ERCOT, CAISO, MISO,
+  PJM, SPP, SOCO) with per-BA fields, never a national pool.
+- Blind wall: EIA-930 posts with a stated lag and revises early hours - builder measures the actual
+  publication/revision mechanics before trusting a join (the feed G lesson).
+- Companions: MOS sky-cover fields (already in our raw MOS pulls - the FORECAST side of cloudiness)
+  and installed-capacity trend (slow layer). Builder investigates whether sky cover is extractable
+  from the existing raw archive before pulling anything new.
+- `grid_stack_asof(date) -> dict | None`, store `data/grid_stack/`. QUEUED FOR S99.
+
+### R. Maintenance / outage season (family D+S) - NEW (Greg 2026-07-20: "we also need to be
+tracking maintenance schedules in the spring and fall").
+- WHY: shoulder seasons are maintenance seasons, and each schedule moves the balance a different
+  way: NUCLEAR refueling outages (spring/fall clustered) ADD gas burn GW-for-GW; PIPELINE
+  maintenance (Critical Notices) moves regional supply; LNG terminal turnarounds cut feedgas
+  demand. None are visible to the agent today.
+- Three arms, cleanest first:
+  1. NRC DAILY REACTOR STATUS (free, historical, per-unit percent power, published each morning):
+     aggregate GW offline + spring/fall outage-season state + day-over-day changes. The quantified
+     arm - build first.
+  2. Pipeline Critical Notices: folds into the feed J EBB machinery; largely live-forward (history
+     depth per-pipe unknown - the J depth-check answers it).
+  3. LNG turnarounds: observable via feedgas (feeds N weekly / J's paid options daily) - a derived
+     watch, not a separate pull.
+- `nuclear_outages_asof(date) -> dict | None` first; store `data/nuclear_outages/`. QUEUED FOR S99.
+
 ### O. Structural-demand news watch (family D/structural) - NEW (Greg 2026-07-20: "keep one eye on
 data centers coming online or any major manufacturing coming online... checking the news feeds").
 - WHAT IT IS: a LIVE-FORWARD watch, not a walk input. Keyword families: datacenter campuses /
