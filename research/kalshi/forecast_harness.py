@@ -336,6 +336,20 @@ def _nuclear_outages_block(iso: str) -> dict | None:
     return n
 
 
+def _grid_stack_block(iso: str) -> dict | None:
+    """(S99 feed Q) EIA-930 daily grid stack per BA - demand (loads), the BA's own DAY-AHEAD demand
+    forecast (leading, free), and generation by fuel: gas share, solar displacement measured. The
+    freeze's power-burn ramp (est 28.3 -> 41.1 Bcf/d across G11's build-up) was visible daily at
+    this wall while every other demand read was weekly-or-slower. US48 carries the labeled
+    power-burn ESTIMATE (stated method); per-BA always, never pooled. Wall: knowable_from =
+    period + 2 (measured worst case)."""
+    import grid_stack as gs
+    g = gs.grid_stack_asof(iso)
+    if not g:
+        return None
+    return g
+
+
 def _flow_calendar_block(iso: str) -> dict | None:
     """(S98 feed F) The FLOW CALENDAR - deterministic scheduled-flow state: futures/options expiry
     clocks, bidweek, GSCI/BCOM index-roll windows, the EIA release datetime for the week (holiday
@@ -386,7 +400,7 @@ def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
     + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
-    squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime + (S99 feed T) the STEO vintage balance + (S99 feed R) nuclear outages. NO tape
+    squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime + (S99 feed T) the STEO vintage balance + (S99 feed R) nuclear outages + (S99 feed Q) the EIA-930 grid stack. NO tape
     from the forecast day or later, NO legs, NO outcome — exactly what a forecaster knows at the open.
     Output carries a leading '_information_clock' meta key (static doctrine, not a day)."""
     import forward_curve as fc
@@ -426,6 +440,7 @@ def decision_state(days: list[str]) -> dict:
                   "flow_calendar": _flow_calendar_block(iso),
                   "solar": _solar_block(iso),
                   "nuclear_outages": _nuclear_outages_block(iso),
+                  "grid_stack": _grid_stack_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "model_disagreement": _model_disagreement_block(iso),
@@ -546,10 +561,10 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
         d += datetime.timedelta(days=1)
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
             "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0,
-            "cash_knowable": 0, "steo_release": 0, "nuclear_wall": 0}
+            "cash_knowable": 0, "steo_release": 0, "nuclear_wall": 0, "grid_wall": 0}
     absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
               "storage_consensus": [], "vol_regime": [], "cash_basis": [], "steo_vintage": [],
-              "nuclear_outages": []}
+              "nuclear_outages": [], "grid_stack": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -613,6 +628,11 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
             absent["nuclear_outages"].append(iso)
         elif not nu["period"] < iso:
             viol["nuclear_wall"] += 1; print(f"  VIOLATION nuclear {iso}: period {nu['period']}")
+        gsb = st.get("grid_stack")
+        if gsb is None:
+            absent["grid_stack"].append(iso)
+        elif not gsb["period"] <= (datetime.date.fromisoformat(iso) - datetime.timedelta(days=2)).isoformat():
+            viol["grid_wall"] += 1; print(f"  VIOLATION grid {iso}: period {gsb['period']}")
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -738,6 +758,15 @@ def _selftest() -> int:
     assert n16 is not None and n16["period"] == "2026-01-15" and abs(n16["capacity_out_gw"] - 1.839) < 0.01, n16
     n20 = decision_state(["20260120"])["20260120"]["nuclear_outages"]
     assert n20 is not None and n20["period"] == "2026-01-19", ("own-day row must be walled", n20)
+    # (S99 feed Q) EIA-930 grid stack: loads + the BA's own day-ahead forecast + fuel mix, per BA;
+    # the freeze power-burn ramp (est 28.3 -> 41.1 Bcf/d) visible decision-time at the +2 wall.
+    g22 = decision_state(["20260122"])["20260122"]["grid_stack"]
+    assert g22 is not None and g22["period"] == "2026-01-20" and g22["age_days"] == 2, g22 and g22.get("period")
+    assert abs(g22["bas"]["US48"]["est_gas_burn_bcfd"] - 41.1) < 0.7, g22["bas"]["US48"]
+    assert g22["bas"]["ERCO"]["demand_forecast_mwh"] is not None, "ERCO day-ahead forecast missing"
+    g12a = decision_state(["20260112"])["20260112"]["grid_stack"]
+    assert g12a["period"] == "2026-01-10" and abs(g12a["bas"]["US48"]["est_gas_burn_bcfd"] - 28.3) < 0.7, \
+        g12a["bas"]["US48"]
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
