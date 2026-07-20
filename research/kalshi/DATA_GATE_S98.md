@@ -261,6 +261,17 @@ accrues live since 2026-07-12; the hole matters only if the walk extends there b
   AFTER or WITH A).
 
 ### F. Flow calendar (family CAL) - NEW (desk review). Deterministic, zero external dependencies.
+STATUS: **DONE + WIRED 2026-07-20** (`flow_calendar.py`, store on S3 `flow_calendar/`, 365 rows +
+52 EIA releases). Anchors verified: NGG26 expiry 2026-01-28; NGH26 expiry **2026-02-25 CONFIRMED**
+(derived + Databento definition + structure store agree - the S97 handoff's date stands); opex =
+business day before expiry (NGG26 Jan 27, NGH26 Feb 24); expiry rule reproduces 12/12 in-coverage
+definitions. SCHEDULE SURPRISES ENCODED: Veterans week EIA slips to FRIDAY Nov 14; Christmas week
+slips LATE to Mon Dec 29 (no release week of Dec 22, TWO the week of Dec 29 - independently matches
+feed D). G13's gauntlet on record: GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb
+24, expiry Feb 25. CORRECTION APPLIED to the harness holiday dict: 2026-07-03 is a FULL CME holiday
+(was mistagged early_close); counting authority = this feed. Disagreement log in
+`FLOW_CALENDAR_NOTES_S98.md` (12 beyond-span definition boundary cases, 4 structure-store
+convention offsets, the refuted GSCI-annual-roll web claim - all named).
 - WHY: mechanical, scheduled flows desks trade around; none are visible to the agent. G13 carries an
   expiry; bidweek and index-roll windows sit inside every block.
 - Fields per date: `days_to_futures_expiry` (front), `options_expiry_date` + `days_to_opex` (NG

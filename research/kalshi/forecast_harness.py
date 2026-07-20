@@ -80,7 +80,12 @@ _HOLIDAYS = {
     "2025-12-31": ("New_Years_Eve", "thin"),         "2026-01-01": ("New_Years_Day", "closed"),
     "2026-01-19": ("MLK_Day", "thin"),               "2026-02-16": ("Presidents_Day", "thin"),
     "2026-04-03": ("Good_Friday", "closed"),         "2026-05-25": ("Memorial_Day", "closed"),
-    "2026-06-19": ("Juneteenth", "closed"),          "2026-07-03": ("Independence_Day_obs", "early_close"),
+    "2026-06-19": ("Juneteenth", "closed"),          "2026-07-03": ("Independence_Day_obs", "closed"),
+    # S98 correction (feed F, verified vs the CME calendar + contract_structure's holiday set):
+    # 2026-07-03 is a FULL CME holiday/non-business-day, not an early close. Note also that
+    # "closed" days like Memorial/Juneteenth can carry a partial no-settlement Globex session
+    # (the S96 Thanksgiving correction generalizes) - business-day COUNTING authority is the
+    # flow_calendar feed, not this day-type tag dict.
 }
 
 
@@ -228,6 +233,21 @@ def _storage_consensus_block(iso: str) -> dict | None:
                         "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
 
 
+def _flow_calendar_block(iso: str) -> dict | None:
+    """(S98 feed F) The FLOW CALENDAR - deterministic scheduled-flow state: futures/options expiry
+    clocks, bidweek, GSCI/BCOM index-roll windows, the EIA release datetime for the week (holiday
+    shifts encoded from the PUBLISHED schedule - Veterans week slips to FRIDAY, Christmas week slips
+    LATE to Mon Dec 29), CME holiday classes. Fully forward-known; no blind wall needed. Counting
+    authority for business days is this feed (see FLOW_CALENDAR_NOTES_S98.md disagreement log)."""
+    import flow_calendar as fcal
+    f = fcal.flow_calendar_asof(iso)
+    if not f:
+        return None
+    return f | {"note": "mechanical scheduled flows - desks trade around these; G13 carries the full "
+                        "gauntlet (GSCI roll Feb 6-12, BCOM Feb 9-13, bidweek Feb 23-27, opex Feb 24, "
+                        "expiry Feb 25)"}
+
+
 def _cash_basis_block(iso: str) -> dict | None:
     """(S98 feed G) Henry Hub CASH vs front-settle basis - the free sliver of the physical market, the
     ground truth paper converges to in delivery stress. LOAD-BEARING PUBLICATION FACT (measured): the
@@ -297,6 +317,7 @@ def decision_state(days: list[str]) -> dict:
                   "squeeze_watch": _squeeze_watch(cs),
                   "vol_regime": _vol_regime_block(iso),
                   "cash_basis": _cash_basis_block(iso),
+                  "flow_calendar": _flow_calendar_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "holiday": _holiday_asof(iso)}
@@ -539,6 +560,15 @@ def _selftest() -> int:
     cb30 = d30["cash_basis"]
     assert cb30 is not None and abs(cb30["hh_cash_minus_front_settle"] - 10.765) < 1e-9, cb30
     assert cb30["basis_chg_3d"] is not None and cb30["age_days"] >= 2, cb30
+    # (S98 feed F) flow calendar: the G13 gauntlet anchors + the Thanksgiving EIA shift.
+    d25 = decision_state(["20260225"])["20260225"]
+    fc25 = d25["flow_calendar"]
+    assert fc25 is not None and fc25["is_expiry_day"] is True, fc25
+    fc24 = decision_state(["20260224"])["20260224"]["flow_calendar"]
+    assert fc24["is_opex_day"] is True, fc24
+    fc26 = decision_state(["20251126"])["20251126"]["flow_calendar"]
+    assert fc26["is_eia_print_day"] is True and "12:00" in fc26["eia_storage_release_datetime_et"], \
+        ("Thanksgiving-week EIA shift (Wed 12:00) must be encoded", fc26)
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
