@@ -100,13 +100,22 @@ Real execution risks (where attention actually belongs, per S81's own cells):
 
 ## 5. MIGRATION STEPS (M-steps; parallel to the data gate, does NOT block G12)
 
-- M1 (GREG, BLOCKS ALL PUSHES): rotate the AWS pair + Databento key (exposed S97). No S3 writes
-  with the compromised pair beyond what already happened.
-- M2: commit the bucket taxonomy (section 2) + write `platform_sync.py` (pull/push per prefix,
-  manifest read/write, dry-run default).
-- M3: push the local-only stores to S3 under the taxonomy: `eia_surprise`, `nymex_curve`,
-  `nws_temp`, then feed L's `kalshi_ng/` and feed D's `consensus/` as they land. Verify counts,
-  then the local copies are officially cache.
+- M1 (GREG, BLOCKS ALL PUSHES): rotate the AWS pair + Databento key (exposed S97).
+  STATUS 2026-07-20: AWS pair ROTATED - new key live in `scratchpad/aws.env`, verified via STS
+  (user/Claude) + S3 list. The Claude IAM user has no iam:* permissions (correct least-privilege),
+  so DEACTIVATING THE OLD KEY IS GREG'S CONSOLE ACTION: IAM -> Users -> Claude -> Security
+  credentials -> deactivate the non-AKIAYI6 key; delete after a settling period. STILL PENDING:
+  Databento key rotation (their portal) + the real EIA key. NOTE: the new pair also transited chat
+  via screenshot (same exposure class as S97) - for the NEXT rotation, edit scratchpad/aws.env
+  directly and just say it is there; zero chat exposure.
+- M2: DONE 2026-07-20 - `research/kalshi/platform_sync.py` (list / pull / push with per-prefix
+  manifest.json, push is dry-run unless --execute, post-push size verify; selftest PASS).
+- M3: DONE 2026-07-20 for the pre-existing local-only stores - pushed + verified with manifests:
+  `eia/eia_surprise.json` (0.54 MB), `nymex/nymex_curve/NG_curve.json`, `weather/nws_temp/
+  gw_degree_days.json`. Local copies are now officially CACHE. Feed L's `kalshi/` and feed D's
+  `consensus/` land via the same door when their builds finish. Bucket at M3 close: cot/ 9 obj
+  16.5MB, eia/ 2, nymex/ 892 obj 27.6GB (the MBP-10 year), storage_regional/ 2, weather/ 505 obj
+  62MB, deploy/ 6.
 - M4: repoint the two live collector workflows (kalshi, pyth) to write S3 (Greg adds the GH
   secrets); freeze the git data branches as archive with a final README commit naming the S3
   successor prefix.
