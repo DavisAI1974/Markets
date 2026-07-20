@@ -181,9 +181,25 @@ def _cot_asof_block(iso: str) -> dict | None:
     comb = cot_combined_feed.cot_combined_asof(iso)
     if comb:
         c = c | comb
-    return c | {"note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived "
-                        "_options_implied delta; NYMEX 023651 only (no ICE HH); percentiles vs "
-                        "trailing 1y/3y of weekly nets"}
+    # (S100, Greg: "as long as the ice data is free do it") the FOUR ICE Futures Energy Div HH
+    # books from the SAME CFTC files - free, additive, each book carried SEPARATELY (never pooled;
+    # LD1/PEN echo the NYMEX crowd on twin contracts; BASIS/INDEX are the physical legs - the
+    # squeeze-regime context read). Weekly cadence: positioning context, never intraday.
+    ice = {}
+    for key, code in (("ld1", "023391"), ("pen", "023392"),
+                      ("hh_basis", "0233AG"), ("hh_index", "0233AH")):
+        r = cot_feed.cot_asof(iso, contract_code=code)
+        ice[key] = (None if not r else {
+            "report_date": r["report_date"], "publication_ts": r["publication_ts"],
+            "open_interest": r["open_interest"], "managed_money_net": r["managed_money_net"],
+            "managed_money_net_chg_wow": r["managed_money_net_chg_wow"],
+            "managed_money_net_pctile_1y": r["managed_money_net_pctile_1y"],
+            "managed_money_net_pctile_3y": r["managed_money_net_pctile_3y"]})
+    return c | {"ice": ice,
+                "note": "positioning as-of PUBLICATION time; futures-only + _combined + the derived "
+                        "_options_implied delta + the four ICE HH books under `ice` (separate reads, "
+                        "never pooled; basis/index = the physical legs, squeeze-regime context); "
+                        "percentiles vs trailing 1y/3y of weekly nets"}
 
 
 def _storage_regional_block(iso: str) -> dict | None:
@@ -663,8 +679,12 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
         c = st.get("cot")
         if c is None:
             absent["cot"].append(iso)
-        elif not (c["publication_ts"][:10] < iso and c["report_date"] < iso):
-            viol["cot_publication"] += 1; print(f"  VIOLATION cot {iso}: pub {c['publication_ts']}")
+        else:
+            if not (c["publication_ts"][:10] < iso and c["report_date"] < iso):
+                viol["cot_publication"] += 1; print(f"  VIOLATION cot {iso}: pub {c['publication_ts']}")
+            for bk, r in (c.get("ice") or {}).items():
+                if r is not None and not (r["publication_ts"][:10] < iso and r["report_date"] < iso):
+                    viol["cot_publication"] += 1; print(f"  VIOLATION cot-ice {iso} {bk}: pub {r['publication_ts']}")
         r = st.get("storage_regional")
         if r is None:
             absent["storage_regional"].append(iso)
@@ -796,6 +816,13 @@ def _selftest() -> int:
     # and the G11-open two-books divergence on record (futures 2.83rd pctile vs implied 97.17th).
     assert c.get("managed_money_net_combined") == c["managed_money_net"] + c["managed_money_net_options_implied"], c
     assert c["managed_money_net_options_implied"] == 1085 and c["managed_money_net_options_implied_pctile_1y"] == 97.17, c
+    # (S100, ICE extension - free per Greg) the four ICE HH books ride under `ice`, separate reads.
+    # Pins measured 2026-07-20: on 2026-01-22 the ICE LD1 book echoes the NYMEX futures extreme
+    # (4.72nd 1y pctile vs NYMEX 2.83rd) - independent corroboration of the crowded short.
+    ice = c.get("ice")
+    assert ice is not None and set(ice) == {"ld1", "pen", "hh_basis", "hh_index"}, ice
+    assert ice["ld1"]["managed_money_net"] == 798940 and ice["ld1"]["managed_money_net_pctile_1y"] == 4.72, ice["ld1"]
+    assert all(r["publication_ts"][:10] < "2026-01-22" for r in ice.values() if r), ice
     r = d22["storage_regional"]
     assert r is not None and r["as_of"] < "2026-01-22", ("regional blind wall", r)
     assert r["regions"]["south_central_salt"]["level"] is not None, ("salt missing", r)
