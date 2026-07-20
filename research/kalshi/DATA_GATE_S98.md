@@ -377,6 +377,17 @@ open (no free source).
 - `ngwu_asof(date) -> dict | None`, store `data/ngwu/`, selftest + blind-wall audit, notes doc.
   QUEUED - launch when an agent slot frees.
 
+### P. Solar / daylight calendar (family CAL) - NEW (Greg 2026-07-20: "do we have sun up/sun down
+time in our feed somewhere" - answer was NO; built same day).
+STATUS: **DONE + WIRED 2026-07-20** (`solar_calendar.py`, store on S3 `solar_calendar/`, 365 rows
+2025-09-01..2026-08-31). Pure NOAA astronomy - deterministic, forward-known, no blind wall, no
+external source. Per-metro sunrise/sunset (local + ET) with grid tags + gas-weighted day length and
+its 7d change. Channels recorded (agent decides): the SUNSET POWER-BURN RAMP (solar collapses at
+sunset, gas peakers pick up - the duck-curve neck, strongest ERCOT/CAISO and growing yearly; on
+2026-01-20 the ramp sweeps 16:57 ET (NYC) -> 20:11 ET (LAX)) and DAY LENGTH as the seasonal
+demand-shape descriptor. Selftest anchors: NYC solstice day lengths 9.25h/15.11h, DST discontinuity,
+span bounds.
+
 ### O. Structural-demand news watch (family D/structural) - NEW (Greg 2026-07-20: "keep one eye on
 data centers coming online or any major manufacturing coming online... checking the news feeds").
 - WHAT IT IS: a LIVE-FORWARD watch, not a walk input. Keyword families: datacenter campuses /

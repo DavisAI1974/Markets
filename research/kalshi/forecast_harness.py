@@ -242,6 +242,20 @@ def _storage_consensus_block(iso: str) -> dict | None:
                         "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
 
 
+def _solar_block(iso: str) -> dict | None:
+    """(S98 feed P, Greg: "do we have sun up/sun down") Sunrise/sunset/day-length per demand metro +
+    gas-weighted day length and its 7d change. Pure astronomy, forward-known, no blind wall. Channels
+    (recorded, agent decides): the sunset power-burn ramp (solar collapses at sunset, gas peakers pick
+    up - the duck-curve neck, strongest ERCOT/CAISO) and day length as the seasonal demand-shape
+    descriptor."""
+    import solar_calendar
+    p = solar_calendar.solar_asof(iso)
+    if not p:
+        return None
+    return p | {"note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on "
+                        "the session clock; gw_day_length_chg_7d is the seasonal march"}
+
+
 def _flow_calendar_block(iso: str) -> dict | None:
     """(S98 feed F) The FLOW CALENDAR - deterministic scheduled-flow state: futures/options expiry
     clocks, bidweek, GSCI/BCOM index-roll windows, the EIA release datetime for the week (holiday
@@ -327,6 +341,7 @@ def decision_state(days: list[str]) -> dict:
                   "vol_regime": _vol_regime_block(iso),
                   "cash_basis": _cash_basis_block(iso),
                   "flow_calendar": _flow_calendar_block(iso),
+                  "solar": _solar_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "holiday": _holiday_asof(iso)}
@@ -582,6 +597,10 @@ def _selftest() -> int:
     fc26 = decision_state(["20251126"])["20251126"]["flow_calendar"]
     assert fc26["is_eia_print_day"] is True and "12:00" in fc26["eia_storage_release_datetime_et"], \
         ("Thanksgiving-week EIA shift (Wed 12:00) must be encoded", fc26)
+    # (S98 feed P) solar: deterministic, present, sane on the G11 window.
+    sol = decision_state(["20260120"])["20260120"]["solar"]
+    assert sol is not None and sol["metros"]["NYC"]["sunset_et"] == "16:57", sol["metros"]["NYC"]
+    assert sol["gw_day_length_chg_7d"] is not None and sol["gw_day_length_chg_7d"] > 0, sol
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
