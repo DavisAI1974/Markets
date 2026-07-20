@@ -630,13 +630,30 @@ platform_sync pull. Runs alongside the gate; no G12 dependency.
 ## S99 OPENS WITH A DISCUSSION - BEFORE ANY BUILD (Greg, 2026-07-20)
 
 Greg's standing instruction: the FIRST item of the next session is a discussion, not a build. The
-subject: THE PAID-DATA DECISION. Inputs on the table: feed J's costed survey
-(`LNG_FEEDGAS_SIZING_S98.md` - only PipeRiv publishes prices, $50/user/mo premium / $500/user/mo
-API; Criterion / East Daley / NGI are quote-required) and feed N's structural finding that the FREE
-weekly balance levels died 2025-10-02 - vendor data is now the ONLY route to walked-winter balance
-levels, which pass-2's re-reads may want. Decide subscribe / request quotes / decline / defer, and
-which S99 builds that decision gates (the J follow-up; any balance-dependent work). Nothing
-balance-related builds before this conversation happens.
+subject: THE PAID-DATA DECISION. Inputs on the table (all delivered):
+1. Feed J's costed survey (`LNG_FEEDGAS_SIZING_S98.md` - only PipeRiv publishes prices, $50/user/mo
+   premium / $500/user/mo API; Criterion / East Daley / NGI quote-required).
+2. Feed N's structural finding: the FREE weekly balance levels died 2025-10-02.
+3. **THE EIA SWEEP (`EIA_BALANCE_OPTIONS_S98.md`, 2026-07-20) - the free composite is STRONGER than
+   feared.** THE FIND: STEO monthly VINTAGES (frozen archive workbooks; the API is current-vintage-
+   only - measured both ways). Table 5a = the complete NG balance as-of each monthly release: dry
+   production, PER-BASIN marketed production (the DPR successor), consumption by sector, LNG +
+   pipeline trade, region inventory. All 7 walked-winter vintages parsed; release dates measured
+   (Sep 9 / Oct 7 / Nov 12 / Dec 9 / Jan 13 / Feb 10 / Mar 10 - published through the shutdown);
+   staleness at decision days 1-34d; Jan-13/Feb-10 brackets the freeze re-mark (+5.95 Bcf/d
+   consumption). BLIND-WALL TRAP NAMED: workbook Last-Modified predates public release by 3-6 days
+   on four vintages - join on RELEASE dates only. Confirmed negatives: no weekly EIA NG series but
+   storage; NGM 2-3mo lag + a skipped Jan-30 issue; DOE LNG Monthly dead since Nov 2023.
+   THE HONEST COMPOSITE: STEO vintages (monthly as-of) + daily 930 power burn (~29% Jan - 55% Jul
+   of consumption, T+2) + weekly storage + weekly vessels + NGM as the slow measured anchor.
+   STAYS VENDOR-ONLY: weekly/daily balance LEVELS Oct 2025 - Feb 2026 (never published free
+   anywhere), daily flow-derived production/feedgas nowcasts, sub-monthly res/com.
+4. Feed S candidate: L48 daily production AS-QUOTED in wire copy (the feed-D recovery pattern).
+Decide subscribe / request quotes / decline / defer, and which S99 builds that decision gates.
+Queued builds shaped by the sweep regardless of the paid call: **feed T - STEO vintage balance**
+(the workbooks are downloaded and parsed; the build is store+asof+selftest on release-date joins)
+and feed R arm 1 now uses the **EIA `nuclear-outages` DAILY API route (2007->present)** - no NRC
+scraping needed. Nothing balance-related builds before this conversation happens.
 
 ## PREREQUISITES (Greg, before/while the builds run)
 
