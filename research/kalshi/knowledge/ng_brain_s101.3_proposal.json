@@ -37,7 +37,8 @@
   "requires": "open_time_only (anchor-vintage structure/cash/COT/vol for the structural branch; weekend-cycle feed for the weather branch)",
   "scope": "gap (sign + band class); never the session net",
   "forward_evidence": "NONE - the structural branch's third instance (0201) is this pass's material. G13's 0215 reopen is the designed forward test.",
-  "caveats": "Superseded caveat (iteration 2): the structural magnitude is no longer a declared tail - item 11 derives it from anchor state. The dead-sponsor derivation is n=1 and rides probation with the rest."
+  "caveats": "Superseded caveat (iteration 2): the structural magnitude is no longer a declared tail - item 11 derives it from anchor state. The dead-sponsor derivation is n=1 and rides probation with the rest.",
+  "day_class_note": "Item 12: this play is the first tool of the WEEKEND TOOLBAG; its ownership decision is a weekend-bag read, valid across the closure by construction."
  },
  "item_3_flip_gap_as_counter_addendum": {
   "action": "CHANGE structure.chain_polarity_flip - ADDENDUM to the ARM and C1, no condition removed",
@@ -80,7 +81,8 @@
   "action": "ADD to doctrine_tier3.scoring_split - GAP OWNERSHIP SCORING (Greg's order, part c)",
   "rule": "Gap and net remain separately scored events; what changes is that OWNERSHIP is explicit and the reporting cannot hide one behind the other. (1) DECLARE: every forecast of a block-opening or Sunday reopen gap must carry gap_owner in {anchor_structural, weekend_cycle_weather, chain_drift} declared AT THE ANCHOR/prior close, plus the band class used. (2) SCORE: the scorecard's day row carries gap_dir_ok AND gap_class_ok (realized gap inside the declared band, tail declared = miss with named tail) at EQUAL RANK with net_dir_ok; reopen days additionally carry day_move_dir_ok (sign of gap+net) - the headline hit/miss for a reopen day is the day_move composite, so 0201 reads MISS (+150g vs -7590a day move) with the net sub-score a hit, never the reverse. (3) ATTRIBUTE: when the realized gap's driver class differs from the declared owner, the OWNERSHIP call is scored as the miss (a new ownership_ok flag) - that is the exact error 0201 exposes (blind declared weather-priced; the driver was structural). (4) DRIFT attribution names gap residual separately from net residual per day, as g12_score already does numerically - the change is the headline convention.",
   "g13_0215_procedure": "At the 0213 anchor (close 3.084 on instrument 996/April): FIRST declare the 0215 gap owner. Structural check: March (NGH26) expiry Feb 25 falls INSIDE G13 and squeeze_watch's day-count is <=7 from 0213 - read the March-April spread's level and 3d change at the anchor (0212 vintage: +0.137): positive-AND-widening -> anchor_structural owner, squeeze doctrine (bands void on the squeeze leg; the walk instrument is April, once-removed - the G12 handoff note stands); flat/narrowing (the G12-observed state: collapsed from +0.336 to ~+0.09-0.16 post-unwind) -> no structural owner. THEN the weekend cycle: fresh/accelerating shot at D+2..D+6 -> weather owner with the fresh band at the shot's sign; nothing fresh -> chain_drift owner: 0213 closed -160 mid-range (NOT at a chain extreme), so the drift band is the priced stub +-200..400 at chain sign, NOT the -600..-1600 continuation class (that class requires a prior close AT its extreme). Score 0215 per (2)-(3): gap_dir, gap_class, ownership, then the Sunday session net as its own event, then day_move composite as the headline.",
-  "note": "Presidents Day 0216 follows the 0215 Sunday - the Monday-reaction arm and thin-holiday flags apply downstream; they are unchanged by this item."
+  "note": "Presidents Day 0216 follows the 0215 Sunday - the Monday-reaction arm and thin-holiday flags apply downstream; they are unchanged by this item.",
+  "day_class_note": "Item 12(g13): 0216 is a HOLIDAY Monday - the catch-up window defers to 0217; score 0216 as hold-class and place the R3 reaction verdict on 0217 (two-session read)."
  },
  "item_9_squeeze_watch_definition_fix": {
   "action": "STATE/BUILD item - squeeze_watch keys on the wrong contract",
@@ -124,6 +126,78 @@
    "0211_basing_sign": "+610 against a -300 call: two-sided basing inside +-600 where the boundary read has no edge (0210 closed +240, 45% off its high - below every tell threshold). Mechanism: at the shelf with the premium gone and the warm strip fully priced, the day-net sign is set by flow noise the state does not carry. G10 0127/0128 precedent. The walk's standing hold/basing-sign residual, not new.",
    "within_band_positions": "WHERE inside its band a derived magnitude lands (0201 realized 1.09E vs 1.0E point; 0208 gap -1550 vs -1100 mid) - the band, not the point, is the deliverable; residuals +-100..600/day, sum +690 over 12 days.",
    "retired_as_irreducible": "the v1 'structural-unwind magnitude tail' is NO LONGER declared irreducible - it is derived by this item. The s100_2 weekend-gap magnitude irreducible narrows to the WEATHER-owned fresh-shot class only (0118-type, the one-cycle-behind feed limitation)."
-  }
+  },
+  "day_class_note": "Item 12: the sizing rule consumes only weekend-valid STATE quantities (expiry calendar, E, P, shelf) - consistent with the toolbag principle that rhythm reads are void across the closure."
+ },
+ "item_12_day_class_scoping_layer": {
+  "title": "DAY-CLASS SCOPING LAYER (Greg desk-experience doctrine, 2026-07-20, coordinator relay) - ADDITIVE: no rule deleted; each play gains a day-class validity tag; supersession-clean (incumbents own their nodes; this layer SCOPES where they read)",
+  "provenance": "Greg, direct desk experience, paraphrased faithfully: (1) the weekend is a completely different animal - a separate weekend toolbag; hr-to-hr explanations that work during the day have zero bearing over a two-day gap; (2) Mondays and Fridays are their own day-classes; TUE-THU were interchangeable - the rest had to be forecast off other same historic days of the week; (3) Monday ~7-10 ET is the catch-up window - desks reopening with people reprice weekend conditions.",
+  "coverage_note": "Back-checks use curve_2h from renders/ng_refine_s95/{g3g4g5,g6,g7,g8,g9,g10,g12}_rt.json (21 Mondays, 21 Fridays, 20 Sundays, 62 Tue-Thu). NO g11_rt.json exists in this render set, so G11's 0119/0126 Mondays and 0123/0130 Fridays lack window decomposition - named coverage limit. Windows on the ET grid: overnight 20-06, morning 06-10 (Greg's 7-10 sits inside), 10-12, afternoon 12-20.",
+  "a_weekend_toolbag": {
+   "principle": "Across a 2-day gap only STATE reads survive; RHYTHM reads (hr-to-hr, session-boundary, alternation cadence) are VOID. The gap-ownership rule (items 2/11) is the bag's first tool.",
+   "valid_across_the_gap": {
+    "magnitude.block_gap_ownership + item 11 sizing": "THE tool: owner (structural/weather/chain-drift) + derived magnitude. Evidence: the full per-gap back-check table, item 11 (12 gaps, zero outside class band).",
+    "magnitude.weekend_gap_delivery (weather arms)": "valid - consumes the weekend 00Z/12Z cycle, which is state (1019, 1109, 0104, 0111, 0118 per-event).",
+    "structure.chain_polarity_flip": "valid - the ARM is Friday-close state and the gap itself can be the counter delivery (1207, 0201).",
+    "positioning/COT": "valid - published Friday 15:30 ET, anchor-vintage by construction (0201: the +55.2k covering read).",
+    "contract_structure / cash_basis / vol_regime anchor state": "valid - the 0201 knowability walk is the exemplar.",
+    "signal.mos_first_appearance_vs_revision (weekend-cycle form)": "valid as a weather-owner input (0201, 0208 reads were correct AS weather reads).",
+    "level.giveback_origin_shelf / squeeze_unwind targets": "valid - levels are time-invariant (the 3.159 shelf).",
+    "chain POLARITY": "valid - the chain's sign persists through weekends (0206 down -> 0208 down; 1130; 0104)."
+   },
+   "void_across_the_gap": {
+    "direction.giveback_exhaustion_boundary (R1) close-vs-extreme reads": "VOID for pricing the weekend. Per-event: 0130 closed AT its extreme, last hour UP (R1-continue) -> weekend -7590 AGAINST; 0102 closed flat -20 -> -1710 gap; 0116 closed -440 -> +2100 gap; 1205 closed 31% off -> -2380 with the arm, not the boundary read. The one apparent survivor (0206 at-low -> 0208 chain-side) is carried by POLARITY (state), not the boundary rhythm - the boundary read never sizes or signs a weekend.",
+    "structure.mature_swing_alternation (R4) cadence": "sign may coincide (0130->0201 give-back class), SIZING is void - the give-back delivered as a -7590 structural gap vs a thin-Sunday band; alternation cadence does not span the closure (1128->1130 worked as a SESSION read, which survives as the Sunday-session set below).",
+    "structure.failed_rally_tell": "void/untested across a weekend - 'next session runs chain-side' has no weekend instance; do not read Friday round-trips into Sunday gaps.",
+    "timing.catalyst_continuity_frontrun": "void - the weekend CYCLE replaces it; the gap front-runs every session read.",
+    "shape.grind_vs_spike, flow_nowcast, all intraday/leg plays": "void by construction.",
+    "day-net magnitude bands (all)": "NEVER size a gap: +150-from-band vs -7080 (0201), -300 vs -1550 (0208), +100 vs +2100 (0118) - the walk's three sharpest scoring failures were day-band tools applied to gaps."
+   },
+   "sunday_session_read_set": "The Sunday SESSION (18:00-close, ~5-leg tapes) is its own thin class: all 20 walk Sundays |net| <= 690 (largest 1005 +690; G12: -510, -390). VALID: thin chain-drift/give-back sized -600..+700; C2 DIRECTIONAL-only reads (0201: up 0/2, big up 0/1 - flagged thin, corroborate next session). VOID: magnitude bands, alternation day-typing, failed-rally tell, any leg-statistics threshold (denominators are empty)."
+  },
+  "b_monday_toolbag": {
+   "phase_structure": "Four named phases: (1) SUNDAY REOPEN GAP - electronic, prices the weekend per the gap owner; (2) overnight/Asia-Europe drift - thin; (3) THE CATCH-UP WINDOW ~06-10 ET (Greg: 7-10) - human desks reprice/judge the weekend move; (4) post-10 ET - the day's chain behavior proper owns the close.",
+   "ownership": "The OPEN belongs to the weekend toolbag (gap owner). The CATCH-UP WINDOW belongs to R3's reaction verdict - this is the COMPOSITION Greg asked for: R3's 'Monday is the reaction' is not spread over the day, it is CONCENTRATED 06-10 ET, where the desk either FADES/repositions the electronic overnight or RATIFIES it into delivery. The CLOSE belongs to the chain state (ordinary day-net rules).",
+   "catch_up_backcheck_per_event": {
+    "reposition/fade events (overnight and 06-10 window materially opposite-signed)": "1006 ovn +840 / m -790 (gap round-tripped, day +70); 1027 -970/+550; 1103 +1420/-860; 1110 +550/-1640 (the canonical R3 gap-FADE of the +1560 Sunday gap - the fade delivered INSIDE the window); 1124 +330/-540; 1201 -440/+730; 1222 +260/-1290; 1229 -1310/+1090; 0105 +250/-720 (the down-polarity gap-fade Monday, fade completed by the close +260). Nine per-event instances.",
+    "ratify/delivery events (window extends the weekend direction into the chain)": "1020 m +980 after the +1570 fresh-turn gap (extend arm, day +2660); 1208 m -770 into the flip-confirm crash (-2730); 0202 m -1220 opening the unwind continuation (-4260, afternoon largest phase -2140). Three per-event instances - precisely the flip-confirm/unwind Mondays.",
+    "window_scale": "the 06-10 move is >= ~450 USD on 14 of 21 curve-covered Mondays and is the day's largest or sign-setting phase on 1013, 1110, 1201, 1222, 1229 - per-event list, no pooled rate as conclusion.",
+    "close_ownership_evidence": "on the big chain Mondays the AFTERNOON is the largest phase (0202 -2140, 1117 -1450, 1222 +1660 recovery, 1020 +1150) - the chain, not the catch-up, owns the close.",
+    "honesty": "This back-check shows WHAT the Monday morning window does (judge the weekend move), which is Monday-specific by construction; it does NOT yet show Tue-Thu mornings behave differently - the contrast computation is not run. Greg's desk experience is the prior; the walk neither contradicts it nor fully establishes it. n listed per-event above; G11's two Mondays uncovered (no g11_rt).",
+    "agreement_with_greg": "AGREES: the reaction is real and concentrated in his stated window (9 reposition + 3 ratify events). THIN: whether the window's early direction predicts the close (it does on ratify days, inverts on round-trip days 1006/1229/0105 - no open-time discriminator proposed; recorded as a research finding, not a rule)."
+   },
+   "thin_holiday_monday": "Holiday Mondays have NO catch-up desks: the window is DEFERRED to Tuesday. Per-event: 1013 Columbus quiet -300 (no catalyst, hold); 0119 MLK +550 after the +2100 gap consumed the catalyst (no curve data - G11 gap); 1124-adjacent and 1127 Thanksgiving support thin=damper on hold days, amplifier only on DELIVERY days (1111, 1128). Rule form: on a holiday Monday the weekend REACTION spreads across Mon-Tue; forecast the reaction as a two-session read."
+  },
+  "c_friday_toolbag": {
+   "reads": "(1) MECHANICAL FLOW CALENDAR is Friday-heavy in the walk: 0130 squeeze-tail Friday (+5020, prompt-expiry echo), 0206 GSCI roll day-1 Friday (-1140), 0213 BCOM-final + walk roll seam (-160 clean), 1121 pre-roll Friday - read the flow calendar FIRST on Fridays. (2) THE FRIDAY CLOSE IS THE WEEKEND ANCHOR: its close-vs-extreme position and state vintage feed the entire weekend toolbag (0130 at-extreme -> dead-sponsor gap; 0206 at-low -> chain-drift gap) - Friday's last hours are the anchor-quality input, which is a REASON Friday reads matter beyond Friday. (3) Chain rules still APPLY intraday Friday - no Friday damper exists in the walk: 1205 +2440 crest, 1128 +2340 melt-up, 0109 -2760 print crash, 0130 +5020 all printed ON Fridays.",
+   "squaring_backcheck_per_event": "Greg's pre-weekend risk-off: the walk shows it ONLY as a late-session counter-phase on stretched days - 1205 aft -1050 after the +3560 peak (the blow-off close that armed the flip), 0206 aft -1420 after a +1270 morning cold-rally failure; but 1128 aft +1140 and 0130 ran to the close AT the high (no squaring against a live catalyst). Per-event: squaring appears when the day is STRETCHED COUNTER TO the running chain or terminal (1205), never against a live delivery. n=2 vs n=2 - THIN, recorded as a lean, not a band.",
+   "agreement_with_greg": "AGREES on Friday being its own class via (1) and (2) - the walk's Friday-specific content is flow-mechanical and anchor-positional. THIN on a universal squaring damper - the walk refutes it as a blanket rule (s98.2 already recorded 'squaring is not a damper in a crash regime')."
+  },
+  "d_tue_thu_core": {
+   "rule": "TUE-THU are the INTERCHANGEABLE CORE: chain rules (R1/R4/alternation, bands, boundary reads, tells) apply uniformly with NO day-of-week conditioning. The walk agrees: no Tue- or Wed-specific play exists; daytype.weekday_archetype's Tuesday-strongest-trend prior was already recorded as chain-overridden (G12 0203 noted it and the chain read won). STORAGE THURSDAY is NOT a day-of-week exception - it is a SCHEDULED-CATALYST overlay (the print, not the Thursday) on an interchangeable core day; its plays (R2 leg / chain net / spent-chain scoping, item 4) ride on top.",
+   "evidence": "every Tue-Thu instance list in the brain (alternation chains, boundary reads, bounce bands) spans all three weekdays with no residual clustering by weekday in any refine G7-G12; per-event lists live in the plays' own evidence fields - no re-litigation here."
+  },
+  "per_play_day_class_validity_table": {
+   "note": "columns: weekend-gap / Sunday-session / Monday(catch-up:post) / Friday / Tue-Thu core. VOID = do not read; OK = reads; S = state-side only.",
+   "direction.giveback_exhaustion_boundary_R1": "gap VOID (0130, 0102, 0116 per-event) / Sun-session S (directional) / Mon OK post-10 / Fri OK / core OK",
+   "structure.mature_swing_alternation_R4": "gap sign-only-never-size / Sun-session OK thin-sized (1130, 0201) / Mon OK post-10 / Fri OK / core OK",
+   "structure.chain_polarity_flip": "gap OK (gap-as-counter: 1207, 0201) / Sun C2-directional / Mon confirm-delivery class (1208, 0202) / Fri arm reads OK (1205, 0130-E1) / core OK",
+   "magnitude.block_gap_ownership+item11": "gap OWNER (the tool) / n-a elsewhere",
+   "magnitude.weekend_gap_delivery": "gap OK weather-arms / n-a elsewhere",
+   "daytype.monday_weekend_gap_R3": "reaction verdict = the 06-10 catch-up window's content (composition above); holiday Mondays defer to Tue",
+   "daytype.storage_thursday_magnitude": "catalyst overlay on the core (any print day); not a weekend/Monday tool",
+   "timing.catalyst_continuity_frontrun": "gap VOID / core OK (with-chain resumes)",
+   "structure.failed_rally_tell": "gap VOID-untested / core OK (1210, 1230, 0113, 1002)",
+   "structure.post_parabolic_bleed + crash_regime_bands": "day-net classes: core + Mon post-10 + Fri; NEVER gaps (0201's +150-from-band lesson)",
+   "signal.mos_first_appearance_vs_revision": "weekend-cycle form feeds the gap's weather owner; weekday form = regime/trajectory input (item 7 narrowed scope)",
+   "shape/flow/leg plays (grind_vs_spike, flow_nowcast, dip_imb, peaked_fast)": "core sessions only; Sun-session VOID (empty denominators)",
+   "level.giveback_origin_shelf / squeeze_unwind": "all day-classes (levels are time-invariant)"
+  },
+  "g13_consequences": {
+   "0215_sunday": "Weekend toolbag verbatim (item 8 procedure): declare gap owner at the 0213 anchor - structural check FIRST (March/NGH26 expiry Feb 25 inside G13; squeeze_watch day-count active; spread +0.137 at 0212 vintage, post-unwind collapsed state -> if not re-widening, NO structural owner); then weekend cycle fresh-vs-priced; else chain-drift - and 0213 closed -160 MID-RANGE, not at a chain extreme, so chain-drift takes the PRICED STUB band +-200..400, not the -600..-1600 continuation class. Sunday session: thin set only.",
+   "0216_presidents_day_monday": "HOLIDAY MONDAY: the catch-up window is EMPTY - no desks. Per the thin-holiday rule: the weekend reaction DEFERS to Tuesday 0217's 06-10 window; forecast the R3 reaction as a TWO-SESSION read (0216 quiet-hold 1013-form unless a live delivery catalyst exists, in which case thin AMPLIFIES delivery, 1111/1128 form); score 0216 as a hold-class day and put the reaction verdict on 0217.",
+   "scoring_interaction": "The toolbag layer is the day-class face of the item-8 convention: gap_owner/gap_class/ownership_ok score the WEEKEND bag; the Monday catch-up verdict (fade/ratify) is recorded as a DESCRIPTOR on material-gap Mondays (not yet separately scored - n thin, no false precision); Friday scoring unchanged (core rules + flow calendar)."
+  },
+  "guard": "ADDITIVE layer: no play deleted or re-owned; validity tags scope WHERE incumbents read, which is Greg's stated intent. All back-checks per-event with named dates; pooled counts appear only as list lengths, never as conclusions. The Monday-vs-core contrast and the Friday squaring lean are DECLARED THIN with their n. forward_evidence: none for every tag; G13 is the forward test of the 0215/0216 procedures."
  }
 }
