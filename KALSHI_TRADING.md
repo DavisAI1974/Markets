@@ -1,5 +1,14 @@
 # KALSHI TRADING — file index
 
+## NEW IN THE DASHBOARD SESSION (2026-07-20, current)
+
+- `dashboard/` — the Mission Control READ PLANE (dashboard wiring session, branch
+  `claude/dashboard-wiring-rgvahe`): FastAPI server (`dashboard/server.py`) + read-only
+  adapters over the signal core (brain / decision_state / lag map / fees / kalshi candles /
+  nymex minute bars / data-plane health) + the S100 prototype frontend wired with
+  REAL DATA / AWAITING DATA / SIMULATED truth badges. Executor lane deliberately NOT built
+  (last, per Greg). See `dashboard/README.md`; landing pad `DASHBOARD_HANDOFF_S100.md`.
+
 ## NEW IN S100 (2026-07-20, current)
 
 - `research/kalshi/mos_cycle_feed.py` — feed A ph1: cycle-level MOS as-of (00z/06z/12z/18z,
