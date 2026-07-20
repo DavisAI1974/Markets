@@ -456,6 +456,18 @@ data centers coming online or any major manufacturing coming online... checking 
   `echo_replay.py`). The largest KAL build; runs parallel off the critical path until L lands.
 
 ### K. Revision-vintage assessment (family META) - S97 concern #1, promoted into the gate.
+STATUS: **DONE + WIRED 2026-07-20 - S97 CONCERN #1 CLOSED AS MEASURED** (`storage_vintage.py`,
+store on S3 `storage_vintage/`). 36/36 report weeks recovered from in-window Wayback captures of
+EIA's own report page, zero unrecoverable. THE ANSWER: the walk's entire vintage look-ahead is ONE
+EIA revision event, published 2026-04-23 - AFTER the walked winter - a Mountain base-gas
+reclassification revising LEVELS down ~10 Bcf/week across 33 weeks (the agent's stored levels ran
+9-12 Bcf BELOW market-known values all winter); net CHANGES match within +-1 except the ONE named
+mislabeled print: Sep 4 2025, +55 as-printed (traded ~neutral vs consensus) vs +45 current (would
+falsely re-read as a bullish surprise). In-era stability CLEAN (zero next-print revisions/R flags).
+Feed D reconciled 29/29 (D's prose said 17 diff weeks; both stores carry 18 - prose undercount).
+DOCTRINE FIND: EIA has NO vintage archive and discloses only >=4 Bcf revisions - sub-4 corrections
+reach the current series silently; the Wayback route is the only vintage source. Pass-2 propagation
+through old findings stays JOB 4.
 - WHY: the blind wall governs WHEN a report becomes visible, not WHICH VINTAGE - the store carries
   EIA's latest revisions, so the agent may see numbers nobody had at the time. Likely affects the
   existing national `storage` field and `eia_surprise.py` too, i.e. the whole walk carries an

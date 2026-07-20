@@ -242,6 +242,23 @@ def _storage_consensus_block(iso: str) -> dict | None:
                         "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
 
 
+def _storage_vintage_block(iso: str) -> dict | None:
+    """(S98 feed K) The AS-PRINTED storage vintage overlay - what the market actually saw at each print
+    vs the current revised series the stores carry. The walk's whole vintage look-ahead resolved to ONE
+    EIA revision event (published 2026-04-23, AFTER the walked winter): a Mountain base-gas
+    reclassification of ~10 Bcf/week across 33 weeks. as_printed is what was knowable; current is what
+    the modern series says; deltas named. Recovered from in-window Wayback captures of EIA's own report
+    page; module self-audits 0 violations."""
+    import storage_vintage as sv
+    v = sv.storage_vintage_asof(iso)
+    if not v:
+        return None
+    return v | {"note": "as_printed = decision-time truth; the current-vintage `storage`/`storage_regional` "
+                        "blocks run 9-12 Bcf BELOW market-known LEVELS across the walked winter (Mountain "
+                        "reclass); net CHANGES match within +-1 except the named Sep 4 print (+55 printed "
+                        "vs +45 current)"}
+
+
 def _solar_block(iso: str) -> dict | None:
     """(S98 feed P, Greg: "do we have sun up/sun down") Sunrise/sunset/day-length per demand metro +
     gas-weighted day length and its 7d change. Pure astronomy, forward-known, no blind wall. Channels
@@ -335,6 +352,7 @@ def decision_state(days: list[str]) -> dict:
                   "storage": _storage_asof(iso, stor),
                   "storage_regional": _storage_regional_block(iso),
                   "storage_consensus": _storage_consensus_block(iso),
+                  "storage_vintage": _storage_vintage_block(iso),
                   "cot": _cot_asof_block(iso),
                   "contract_structure": cs,
                   "squeeze_watch": _squeeze_watch(cs),
@@ -601,6 +619,11 @@ def _selftest() -> int:
     sol = decision_state(["20260120"])["20260120"]["solar"]
     assert sol is not None and sol["metros"]["NYC"]["sunset_et"] == "16:57", sol["metros"]["NYC"]
     assert sol["gw_day_length_chg_7d"] is not None and sol["gw_day_length_chg_7d"] > 0, sol
+    # (S98 feed K) the as-printed vintage overlay: mid-winter the market-known level ran ~10-11 Bcf
+    # ABOVE the current revised series (the Mountain reclass), and both vintages are exposed.
+    sv20 = decision_state(["20260120"])["20260120"]["storage_vintage"]
+    assert sv20 is not None and sv20["national_level_as_printed"] == 3185 and sv20["national_level_current"] == 3174.0, sv20
+    assert sv20["as_of"] < "2026-01-20", ("vintage blind wall", sv20)
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
