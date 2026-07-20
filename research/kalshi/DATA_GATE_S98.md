@@ -655,6 +655,16 @@ Queued builds shaped by the sweep regardless of the paid call: **feed T - STEO v
 and feed R arm 1 now uses the **EIA `nuclear-outages` DAILY API route (2007->present)** - no NRC
 scraping needed. Nothing balance-related builds before this conversation happens.
 
+**DATABENTO SCOPE NOTE (checked against the live catalog 2026-07-20):** Databento is exchange tape,
+NOT fundamentals - it fills none of the balance gaps. What it DOES fill: feed I's substrate
+(GLBX.MDP3, planned); and the catalog now carries **IFUS.IMPACT (ICE Futures US - ICE Henry Hub),
+NDEX.IMPACT (ICE Endex - TTF), IFEU.IMPACT (Brent/JKM family)** - so the standing ICE-HH blind
+spot is closable on the MARKET side, and the deferred cross-market family has a confirmed venue
+source when its turn comes. Cost caveat: ICE dataset licensing is typically heavier than CME -
+price per-dataset before pulling. S99 cheap check: the CFTC disaggregated files already pulled may
+carry ICE Futures US gas contracts under other codes - the POSITIONING half of the ICE blind spot
+may be in files we already download (builder verifies, never assumes).
+
 **THE PROCUREMENT POLICY (Greg, 2026-07-20, standing):** paying for data is fine when it is
 ESSENTIAL - but ALL reliable public data gets checked FIRST, so money only ever fills PROVEN gaps.
 And the free layer has to EARN its slots: build it, then VERIFY its coverage on what it claims
