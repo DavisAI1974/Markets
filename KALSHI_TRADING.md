@@ -25,6 +25,20 @@ pipeline or an OLD/completed piece. Keep this current — add new files to the t
 superseded ones down. (Started S81, 2026-07-12.)
 
 ## S98 — the rewritten DATA GATE (CURRENT — the build list before any new group runs)
+- **`research/kalshi/knowledge/ng_brain.json`** — **s100.3, 23 plays** (MERGED 2026-07-20, Greg
+  approved: the C2 measurement - ratio reformulation REFUTED on comparable data, 0120 0.714 vs 0107
+  0.718; C2 kept + scoped per-instance, flip confirm completes as C1+C3+C4 on the modern tape
+  class; forward test rides G12). Backup `ng_brain_s100.2_backup.json`; record
+  `C2_RATIO_FINDINGS_S98.md` + `run_g11_fingerprints_s98.py` (all 12 G11 sessions fingerprinted on
+  NG.n.0, series_basis-tagged, pre-G11 counts reproduced exactly).
+- **`research/kalshi/storage_consensus.py`** + S3 `consensus/` — FEED D (WIRED): the EIA weekly
+  storage SURVEY CONSENSUS (the number the market is positioned against, vs the seasonal proxy),
+  29/29 weeks Sep 2025-Mar 5 2026, per-house rows + disagreement exposed, holiday-shifted prints
+  verified (incl. the Dec 29+31 double-print week), 0 blind-wall violations, named forward hole
+  Mar-Jul 2026. `STORAGE_CONSENSUS_NOTES_S98.md` = sources/caveats; 17 weeks of as-printed vs
+  current-vintage diffs handed to feed K.
+- **`research/kalshi/platform_sync.py`** — the ONE door between local cache and the S3 data plane
+  (M2): list / pull / push with per-prefix manifests, dry-run default, post-push verify.
 - **`research/kalshi/kalshi_ng_backfill.py`** + **`data/kalshi_ng/`** (local, gitignored; S3 push
   pending) — FEED L: Kalshi NG family backfill off the public API's live+historical endpoint split
   (`/historical/cutoff` = the moving boundary, 2026-05-21 at build). Full raw definitions + trades +

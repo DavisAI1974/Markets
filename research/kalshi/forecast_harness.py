@@ -212,12 +212,29 @@ def _squeeze_watch(cs: dict | None) -> dict | None:
                     "bands are out of scope); G11's 0122-0130 is the n=1, G13 the forward test"}
 
 
+def _storage_consensus_block(iso: str) -> dict | None:
+    """(S98 feed D) The ANALYST SURVEY CONSENSUS for the EIA weekly storage print - the number the market
+    is actually positioned against, vs the seasonal proxy in `stor_surprise`. `next_print` = the upcoming
+    print's consensus (public pre-print - a print-day morning legitimately sees its OWN print's consensus,
+    never its actual); `last_print` = the most recent completed print joined with its realized actual and
+    `surprise_vs_consensus_bcf`. Per-house rows carried; disagreement exposed, never averaged. Holiday
+    join trap handled inside the module (nominal vs actual release date - four shifted weeks incl. the
+    double-print Christmas week). Module self-audits 0 blind-wall violations."""
+    import storage_consensus as sc
+    d = sc.storage_consensus_asof(iso)
+    if not d:
+        return None
+    return d | {"note": "survey consensus ADDITIVE to stor_surprise (seasonal proxy) - both carried; "
+                        "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
+
+
 def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
     + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
-    squeeze view. NO tape, NO legs, NO outcome — exactly what a forecaster knows at the open.
-    Output carries a leading '_information_clock' meta key (static doctrine, not a day)."""
+    squeeze view + (S98 feed D) the storage survey CONSENSUS. NO tape, NO legs, NO outcome — exactly what a
+    forecaster knows at the open. Output carries a leading '_information_clock' meta key (static doctrine,
+    not a day)."""
     import forward_curve as fc
     surp = _load_json("eia_surprise.json").get("KXNATGASD", {})
     stor = _storage_series()
@@ -243,6 +260,7 @@ def decision_state(days: list[str]) -> dict:
                   "curve_regime": regime,
                   "storage": _storage_asof(iso, stor),
                   "storage_regional": _storage_regional_block(iso),
+                  "storage_consensus": _storage_consensus_block(iso),
                   "cot": _cot_asof_block(iso),
                   "contract_structure": cs,
                   "squeeze_watch": _squeeze_watch(cs),
@@ -364,8 +382,9 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
             days.append(d.isoformat())
         d += datetime.timedelta(days=1)
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
-            "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0}
-    absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": []}
+            "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0}
+    absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
+              "storage_consensus": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -397,6 +416,21 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
             absent["weather_forecast"].append(iso)
         elif f.get("asof_utc") and not f["asof_utc"][:10] < iso:
             viol["mos_asof"] += 1; print(f"  VIOLATION mos {iso}: asof {f['asof_utc']}")
+        sc = st.get("storage_consensus")
+        if sc is None:
+            absent["storage_consensus"].append(iso)
+        else:
+            lp, np_ = sc.get("last_print"), sc.get("next_print")
+            # last_print's ACTUAL is knowable only after its print moment - its print_date must be < iso
+            # (a print-day 10:30 print never reaches its own open); next_print must be >= iso and carry
+            # NO actual (consensus only - the module strips page actuals from post-print captures).
+            if lp is not None and not lp["print_date"] < iso:
+                viol["consensus_join"] += 1; print(f"  VIOLATION consensus {iso}: last_print {lp['print_date']}")
+            if np_ is not None:
+                if np_["print_date"] < iso:
+                    viol["consensus_join"] += 1; print(f"  VIOLATION consensus {iso}: next_print {np_['print_date']} in past")
+                if np_.get("actual_bcf") is not None or np_.get("actual_as_printed_bcf") is not None:
+                    viol["consensus_join"] += 1; print(f"  VIOLATION consensus {iso}: next_print carries an actual")
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -440,6 +474,15 @@ def _selftest() -> int:
     sw = d22["squeeze_watch"]
     assert sw["active"] is True and sw["days_to_calendar_front_expiry"] == 4, sw
     assert d22["curve_regime"] != "unknown", "S97 gate item 12: curve_regime still 'unknown'"
+    # (S98 feed D) the survey consensus on the 0129 motivating case: the print-day morning sees its OWN
+    # print's consensus (public pre-print), never an actual; the prior print arrives realized.
+    d29 = decision_state(["20260129"])["20260129"]
+    scb = d29["storage_consensus"]
+    assert scb is not None and scb["next_print"]["print_date"] == "2026-01-29", scb
+    assert scb["next_print"]["consensus_chg_bcf"] is not None, scb
+    assert scb["next_print"].get("actual_bcf") is None and scb["next_print"].get("actual_as_printed_bcf") is None, \
+        "consensus block leaked an actual into its own print morning"
+    assert scb["last_print"]["print_date"] == "2026-01-22" and scb["last_print"].get("surprise_vs_consensus_bcf") is not None, scb
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old

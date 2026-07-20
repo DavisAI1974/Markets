@@ -205,6 +205,17 @@ Feed IDs A-K for tracking.
 - `model_disagreement_asof(date) -> dict | None`. Free, small build.
 
 ### D. Storage consensus series (family D) - NEW (desk review B4). UPGRADES eia_surprise.
+STATUS: **DONE + WIRED 2026-07-20.** 29/29 report weeks covered Sep 2025 - Mar 5 2026 (15/29
+strictly-pre-print-stamped; the 14 evidence-post-print weeks named individually); per-house rows
+(TE/investing/FF/NGI/Platts-secondary), disagreement exposed never averaged (largest: Jan 22, TE
+-106 vs FF -90); four holiday-shifted prints verified incl. the double-print Christmas week; module
+self-audit + the harness join audit both 0 violations; store on S3 `consensus/`. THE MOTIVATING
+CASE RE-MEASURED: 0129's print was only -10/-5/-4 Bcf below the surveyed consensus (per house) vs
+-15.2 on the seasonal proxy - the re-characterization of print days lands in pass 2. BONUS: 17
+weeks show as-printed vs current-vintage differences (usually 1-3 Bcf, Sep 4 by +10) - direct
+corroborating evidence handed to feed K. NAMED FORWARD HOLE: Mar-Jul 2026 (consensus_poll.py
+accrues live since 2026-07-12; the hole matters only if the walk extends there before K-era work).
+`STORAGE_CONSENSUS_NOTES_S98.md` has the full source/caveat record.
 - WHY: the market prices actual-minus-SURVEY-CONSENSUS, not actual-minus-5yr-proxy. A -80 draw is a
   bearish miss if consensus was -95; our proxy can mislabel it bullish. This contaminates
   per-instance characterization of every print day in the walk, INCLUDING the 14/14
