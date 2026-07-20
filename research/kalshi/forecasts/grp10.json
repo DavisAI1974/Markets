@@ -1,0 +1,707 @@
+{
+ "group": 10,
+ "tag": "g10",
+ "brain_version": "s98.2",
+ "protocol": "one_shot_block_blind",
+ "anchor": {
+  "date": "20251231",
+  "price": 3.711,
+  "last_hour_dir": "up"
+ },
+ "block_lean": "POLARITY VERDICT: the chain opens DOWN \u00e2\u0080\u0094 the 1222/1223 termination yielded only two-sided BASING, the 1230 failed_rally_tell fired into the 1231 band-breaking basing-zone breakdown (at-extreme close, last-hour +90 = ~3% recovery, under the 10% continue threshold), so the down-chain is REASSERTED but terminal-phase: the season's most parabolic move (~-16,000 off the 5.337 crest, >1.5x the +9700 up-chain it retraced >100%) with its flip signature already fired once. ARC: week 1 = the exhaustion answer \u00e2\u0080\u0094 chain-side continuation into a capitulation RETEST of the December low (~3.50-3.55 zone, marginal undershoot, recovered closes) under the midweek warm lull; the PIVOT 0108/0109 = the chain-birth-from-basing answer: the flip signature applied to the basing range \u00e2\u0080\u0094 capitulation undershoot + a band-breaking counter day with old-side collapse, front-run under the incoming 0112/0115 hard-cold ramp (catalyst_continuity_frontrun) and sealed by the bullish -120 draw print trading chain-sided at the NEW up polarity; weeks 2-3 = a young up-chain extending on the gap-extend Monday and the hard-heat delivery days to ~4.20, closing with the post-violent-extension print give-back on the 0116 monster bearish +107.4 print (ramp crested at the print, 1120/1202 form). Block net ~+4200 above the anchor with the low made in week 1.",
+ "days": [
+  {
+   "date": "20260102",
+   "dow": "Fri",
+   "group": 10,
+   "archetype": "chain_continue_down",
+   "reasoning": "Flows from the 3.711 anchor. Symmetric R1: 1231 closed AT its extreme (last-hour +90 = ~3% recovery, <10%) -> chain continues; failed_rally_tell (1230 91% round-trip) already paid 1231 but the chain-side state persists. The New-Year print (+62.2 ABOVE seasonal, bearishly small draw) is known at the open and prints are chain-sided at current polarity (7/7) -> in a down-chain the bearish print SELLS, aligned. Year-end thin amplifier is gone (first liquid session), so ordinary crash-chain continuation band -1000..-1600, low end-ish: US session sells from 8h toward the December low shelf, modest late recovery (~20%, under the 35% bounce arm). Holiday gap small down with the bearish print known.",
+   "overnight_gap_usd": -150,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -150
+    ],
+    [
+     4,
+     -200
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -400
+    ],
+    [
+     10,
+     -700
+    ],
+    [
+     12,
+     -1000
+    ],
+    [
+     14,
+     -1400
+    ],
+    [
+     16,
+     -1300
+    ],
+    [
+     18,
+     -1150
+    ],
+    [
+     20,
+     -1100
+    ]
+   ],
+   "guessed_net_usd": -1100
+  },
+  {
+   "date": "20260105",
+   "dow": "Mon",
+   "group": 10,
+   "archetype": "capitulation_retest",
+   "reasoning": "From guessed 3.586. 0102 closed only ~21% recovered -> continue (R1 symmetric). Weekend models confirm the midweek WARM LULL (HDD 21.3 -> 15-18) = chain-side info, modest Sunday gap down (R3: gap with the mature chain). Monday bigness: the US session probes THROUGH the December chain-low shelf (~3.55 close-low, lower intraday) \u00e2\u0080\u0094 intraday -1300 to ~3.43 = the terminal undershoot. At this depth the R5/depth arm governs: post-parabolic capitulation at the chain's terminal shelf closes RECOVERED (>=40% off the low, late counter-tick) \u00e2\u0080\u0094 the bounce arms. Net -600, marginal new low close 3.501 = basing part two at the lower shelf.",
+   "overnight_gap_usd": -250,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -300
+    ],
+    [
+     6,
+     -400
+    ],
+    [
+     8,
+     -700
+    ],
+    [
+     10,
+     -1100
+    ],
+    [
+     12,
+     -1300
+    ],
+    [
+     14,
+     -1000
+    ],
+    [
+     16,
+     -800
+    ],
+    [
+     18,
+     -650
+    ],
+    [
+     20,
+     -600
+    ]
+   ],
+   "guessed_net_usd": -600
+  },
+  {
+   "date": "20260106",
+   "dow": "Tue",
+   "group": 10,
+   "archetype": "alternation_bounce",
+   "reasoning": "From guessed 3.501. R1 symmetric: 0105 closed >=40% off its intraday extreme with a late counter-tick -> one-day alternation bounce (exhausted-leg band +800..+1900, G9 forms 1216->1217, 1218->1219). Tuesday trend-weekday supports the grind shape (holds, no round-trip). Sized +900 low-in-band: the warm lull is still live so no catalyst stack, and bounces in a mature chain are NEVER extended \u00e2\u0080\u0094 this is a one-day event, not the flip (no band-break, no confirmed collapse yet).",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     250
+    ],
+    [
+     8,
+     400
+    ],
+    [
+     10,
+     600
+    ],
+    [
+     12,
+     750
+    ],
+    [
+     14,
+     850
+    ],
+    [
+     16,
+     950
+    ],
+    [
+     18,
+     900
+    ],
+    [
+     20,
+     900
+    ]
+   ],
+   "guessed_net_usd": 900
+  },
+  {
+   "date": "20260107",
+   "dow": "Wed",
+   "group": 10,
+   "archetype": "basing_giveback",
+   "reasoning": "From guessed 3.591. Bounce-day override: never extend a bounce in a mature chain (1217->1218, 1223->1224, n=3) -> chain-side day. But the warm-lull bottom (HDD 16.5, mildest of the block) has no print and no liquidation chain left after the 0105 flush \u00e2\u0080\u0094 shallow chain-side give-back -500 that FAILS to make a material new low (holds above 3.501) = the seller-exhaustion tell inside the basing range; down-legs' continuation quietly collapsing. Close 3.536 keeps the two-sided floor intact and arms the turn watch.",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -250
+    ],
+    [
+     10,
+     -450
+    ],
+    [
+     12,
+     -600
+    ],
+    [
+     14,
+     -700
+    ],
+    [
+     16,
+     -550
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "guessed_net_usd": -500
+  },
+  {
+   "date": "20260108",
+   "dow": "Thu",
+   "group": 10,
+   "archetype": "flip_confirm_frontrun",
+   "reasoning": "From guessed 3.536. THE PIVOT. By tonight the models carry next week's HARD-COLD ramp (0112 HDD 22.2, 0115 27.4) = a LIVE continuous catalyst, and tomorrow's print is expected bullish (the -120 draw week already realized in weather). timing.catalyst_continuity_frontrun: with a ramp live, an armed turn fires the session BEFORE the discrete print (1110->1111, 1118->1119). The turn IS armed: 0105 capitulation undershoot at the terminal shelf + 0107's failed new-low probe (old-side continuation-collapse) on the season's most parabolic down-chain whose termination signature already fired once (1222/1223). This is the chain-birth-from-basing call: a band-breaking counter day OUT of the basing floor with down-side collapse = the up-flip CONFIRM. Resume band top +2000, grind shape (holds). No print today (holiday-shifted week).",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     200
+    ],
+    [
+     6,
+     300
+    ],
+    [
+     8,
+     600
+    ],
+    [
+     10,
+     1000
+    ],
+    [
+     12,
+     1400
+    ],
+    [
+     14,
+     1700
+    ],
+    [
+     16,
+     1900
+    ],
+    [
+     18,
+     2000
+    ],
+    [
+     20,
+     2000
+    ]
+   ],
+   "guessed_net_usd": 2000
+  },
+  {
+   "date": "20260109",
+   "dow": "Fri",
+   "group": 10,
+   "archetype": "print_delivery_up",
+   "reasoning": "From guessed 3.736. Print day (holiday-shifted, known at the open): -23.6 BELOW seasonal, weekly -120, vs-5yr collapsing 120->79 = bullish. Polarity-sided print rule (7/7): the chain flipped UP yesterday, so the bullish print BUYS \u00e2\u0080\u0094 and the exit-liquidity inversion does NOT apply (that needs a priced parabolic extreme 1-3 sessions post-flip in the OLD direction; here the print confirms a 2-session-YOUNG chain off a capitulation low, the 0925/1030/1106 resume-delivery form). R2 sides the post-print leg with the young swing; young chains chain extensions (no R4 veto at age 2). Fri range archetype overridden by the high-momentum turn regime. Resume band +1300, print leg lands after 10:30 ET. Close 3.871 re-enters the old basing zone.",
+   "overnight_gap_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     400
+    ],
+    [
+     12,
+     1100
+    ],
+    [
+     14,
+     1400
+    ],
+    [
+     16,
+     1500
+    ],
+    [
+     18,
+     1400
+    ],
+    [
+     20,
+     1300
+    ]
+   ],
+   "guessed_net_usd": 1300
+  },
+  {
+   "date": "20260112",
+   "dow": "Mon",
+   "group": 10,
+   "archetype": "gap_extend_monday",
+   "reasoning": "From guessed 3.871. Weekend model runs harden the cold (Monday itself hard_heat HDD 22.2) = NEW closure info -> material Sunday gap UP +600. R3: a gap at a FRESH turn (flip 2-3 sessions old) is EXTENDED, the 1019->1020 form \u00e2\u0080\u0094 the compound up-sizer stack (Monday + fresh turn + gap + live ramp). Young chain still chains. Sized +1400 in the winter resume band, grind shape; honestly expect the tail risk to the UPSIDE here (the 1020 +2660 analog) but bands, not tails, set the guess.",
+   "overnight_gap_usd": 600,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     200
+    ],
+    [
+     2,
+     300
+    ],
+    [
+     4,
+     400
+    ],
+    [
+     6,
+     500
+    ],
+    [
+     8,
+     700
+    ],
+    [
+     10,
+     900
+    ],
+    [
+     12,
+     1100
+    ],
+    [
+     14,
+     1300
+    ],
+    [
+     16,
+     1400
+    ],
+    [
+     18,
+     1450
+    ],
+    [
+     20,
+     1400
+    ]
+   ],
+   "guessed_net_usd": 1400
+  },
+  {
+   "date": "20260113",
+   "dow": "Tue",
+   "group": 10,
+   "archetype": "young_chain_extension",
+   "reasoning": "From guessed 4.071. Chain age 4 sessions \u00e2\u0080\u0094 the young-chain window (0929-1001, 1030-1104 chained 3-4 days) closes today. Tuesday = strongest-trend weekday supports one more extension, but HDD eases to 18 (mod, midweek lull between the two cold shots) so no delivery catalyst: modest extension +500, fading momentum into the afternoon. This is deliberately the smallest up day of the new chain \u00e2\u0080\u0094 the alternation rhythm (R4) takes over from here.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     150
+    ],
+    [
+     6,
+     200
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     500
+    ],
+    [
+     12,
+     600
+    ],
+    [
+     14,
+     700
+    ],
+    [
+     16,
+     650
+    ],
+    [
+     18,
+     550
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "guessed_net_usd": 500
+  },
+  {
+   "date": "20260114",
+   "dow": "Wed",
+   "group": 10,
+   "archetype": "mature_giveback",
+   "reasoning": "From guessed 4.121. R4 mature_swing_alternation: 5 sessions from the turn with yesterday a fresh cum-extreme close -> no consecutive extension, a give-back day. The ramp is LIVE (the 0115 HDD-27.4 shot is dead ahead in the models) -> ramp-live give-backs are SHALLOW -700..-900 (1110, 1120, 1202), never the deep lull band. Closes near its low but the ramp arm (S97.2) means that does NOT forecast continuation \u00e2\u0080\u0094 under a live ramp a one-day give-back resumes next session regardless of recovery fraction.",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -200
+    ],
+    [
+     8,
+     -350
+    ],
+    [
+     10,
+     -550
+    ],
+    [
+     12,
+     -800
+    ],
+    [
+     14,
+     -900
+    ],
+    [
+     16,
+     -750
+    ],
+    [
+     18,
+     -700
+    ],
+    [
+     20,
+     -700
+    ]
+   ],
+   "guessed_net_usd": -700
+  },
+  {
+   "date": "20260115",
+   "dow": "Thu",
+   "group": 10,
+   "archetype": "ramp_resume_delivery",
+   "reasoning": "From guessed 4.046. R1 ramp arm: the 0114 give-back under a live ramp with intact up-legs resumes next session regardless of close-recovery (1120->1121, 1125->1126). Today IS the delivery day \u00e2\u0080\u0094 HDD 27.4, the block's hardest cold \u00e2\u0080\u0094 and the chain is UP, so cold delivery WORKS (the post-flip cold-failure rule belonged to the down-chain). No print today (shifted to 0116). Resume + hard_heat delivery: +1500 mid-band, grind holds. Close 4.196 = the block's high-water extension; this violent extension sets up tomorrow's print-day alternation.",
+   "overnight_gap_usd": 100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     250
+    ],
+    [
+     6,
+     350
+    ],
+    [
+     8,
+     600
+    ],
+    [
+     10,
+     900
+    ],
+    [
+     12,
+     1200
+    ],
+    [
+     14,
+     1400
+    ],
+    [
+     16,
+     1550
+    ],
+    [
+     18,
+     1500
+    ],
+    [
+     20,
+     1500
+    ]
+   ],
+   "guessed_net_usd": 1500
+  },
+  {
+   "date": "20260116",
+   "dow": "Fri",
+   "group": 10,
+   "archetype": "post_extension_print_giveback",
+   "reasoning": "From guessed 4.196. Print day (known at the open): +107.4 ABOVE seasonal, vs-5yr re-widening to +187 = a monster bearish surprise. Polarity rule says an up-chain BUYS bearish prints at LEG level (1106/1113/1128) \u00e2\u0080\u0094 but S97.2 precedence: a print day after a VIOLENT prior-day extension (+1500) is an alternation give-back day whose with-swing print leg ROUND-TRIPS (1002 +900/-440, 1119->1120), and the ramp CRESTED at the print (HDD 27.4 -> 26.5 easing) = the give-back form, not the run-through form (1204 needed a still-rising stream). So: morning pop up through the print, round-trip, ramp-crest shallow give-back close -700. The chain is only 7 sessions old and non-parabolic (+7000 vs the season's 16k), so this is a give-back, NOT a flip \u00e2\u0080\u0094 the block ends holding the new up-chain at 4.126.",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     150
+    ],
+    [
+     6,
+     200
+    ],
+    [
+     8,
+     300
+    ],
+    [
+     10,
+     400
+    ],
+    [
+     12,
+     800
+    ],
+    [
+     14,
+     -200
+    ],
+    [
+     16,
+     -600
+    ],
+    [
+     18,
+     -750
+    ],
+    [
+     20,
+     -700
+    ]
+   ],
+   "guessed_net_usd": -700
+  }
+ ]
+}
