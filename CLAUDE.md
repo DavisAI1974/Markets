@@ -1,5 +1,21 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-20, Session 99)
 
+## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
+
+- THE CURRENT KEY (verified live S100): access key ID `AKIAYI6JDCBVLKYQGLMH`, secret begins
+  `txRGHd` (40 chars), account `...4170`, bucket `bento-568968024170-us-east-2-*`. The FULL
+  secret is NEVER written in this repo (it is/was PUBLIC; AWS kills keys it finds on public
+  GitHub). Full pair lives in: `scratchpad/aws.env` on Greg's box (untracked), and in cloud
+  sessions `~/.aws/credentials` + `~/.claude/settings.json` env (both outside the repo).
+- THE TRAP THAT BURNED S100's OPENER: Claude Code cloud containers inject PLACEHOLDER env vars
+  (`AWS_ACCESS_KEY_ID=proxy-injected...`) which OVERRIDE `~/.aws/credentials` in boto3's
+  precedence. Symptom: `InvalidClientTokenId` on a known-good key. Fix: run AWS-touching
+  commands via `bash -lc` (login shell sources the profile exports of the real pair), or pass
+  credentials explicitly; `~/.claude/settings.json` env carries them for future sessions.
+- Session ritual: obtain pair -> `~/.aws/credentials` -> STS get-caller-identity via `bash -lc`
+  (print pass/fail + account tail ONLY, never the secret) -> proceed. If STS fails on a
+  known-good key, suspect the env-var override FIRST, not the key.
+
 **S99 — FOUR MORE GATE FEEDS IN ONE SESSION + THE MONDAY REPAIR (read
 `SESSION_HANDOFF_2026-07-20_S99.md` [SECURITY block FIRST] + `KICKOFF_2026-07-20_S100.md`):**
 Item zero HELD (packet presented, recommendation = defer-and-measure + optional quotes; Greg
