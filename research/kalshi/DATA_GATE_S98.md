@@ -460,8 +460,11 @@ platform_sync pull. Runs alongside the gate; no G12 dependency.
 ## PREREQUISITES (Greg, before/while the builds run)
 
 1. ROTATE the AWS pair + DATABENTO key (both exposed in-chat S97).
-2. GET A REAL EIA KEY (DEMO_KEY is globally shared and already broke a build). Blocks K and the
-   `--source api` re-verification of the regional store (S97 concern #2).
+2. GET A REAL EIA KEY - DONE 2026-07-20 (key live in aws.env, verified against the weekly
+   salt/nonsalt series). S97 CONCERN #2 CLOSED same day: the regional store rebuilt `--source api`
+   and diffed against the xls-fallback build - ZERO value differences across all 863 periods and
+   every region; blind-wall audit 0/791 days, 0 thursday-own-print; refreshed store pushed to S3.
+   (Both sources carry CURRENT vintages - the as-printed vintage question remains feed K's.)
 3. DECIDED 2026-07-20 (recorded, no longer open): a MODEST paid tier is on the table - feed J prices
    the options, Greg subscribes or declines; the vehicle is KALSHI FIRST then NYMEX dailies, both
    coaches built now (section 0c, feeds L/M, Tier 3 item 6).
