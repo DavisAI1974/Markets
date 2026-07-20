@@ -333,6 +333,12 @@ open (no free source).
   `*_combined`).
 - Extend `cot_asof` output additively. Small build. The ICE Henry Hub gap REMAINS OPEN and stays
   named (no free source).
+- S99 UPDATE (2026-07-20): the POSITIONING half of the ICE-HH gap is CLOSED-AS-AVAILABLE - the
+  CFTC disaggregated files we already download carry ICE Futures Energy Div gas markets; codes
+  measured from our own 2026 files: 023391 NAT GAS ICE LD1, 023392 NAT GAS ICE PEN, 0233AG HENRY
+  HUB BASIS, 0233AH HENRY HUB INDEX (+ regional basis markets). Extension = additive cot_feed
+  pass over these codes, QUEUED. The market-data half (ICE tape) stays a Databento IFUS pricing
+  question, deferred with cross-market.
 
 ### I. Options surface (family DEL/P) - S97 gate item 9, NOW SCOPED. Required before G13, best-effort
   before G12.

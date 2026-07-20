@@ -336,6 +336,20 @@ def _nuclear_outages_block(iso: str) -> dict | None:
     return n
 
 
+def _options_surface_block(iso: str) -> dict | None:
+    """(S99 feed I phase i - REQUIRED FOR G13) NG options OI pin map: the two nearest live option
+    months (ON+LNE combined per strike, per-asset splits kept), top-5 OI walls with concentrations,
+    P/C totals, OI-weighted strike, and the opex clock. Options expire the business day BEFORE
+    futures expiry - the pin/unpin boundary G13 carries (opex Feb 24 / expiry Feb 25). Distance
+    from settle is the agent's read against contract_structure's calendar-front settle. Wall: CME
+    next-morning publication, session strictly prior."""
+    import options_surface as osf
+    o = osf.options_surface_asof(iso)
+    if not o:
+        return None
+    return o
+
+
 def _grid_stack_block(iso: str) -> dict | None:
     """(S99 feed Q) EIA-930 daily grid stack per BA - demand (loads), the BA's own DAY-AHEAD demand
     forecast (leading, free), and generation by fuel: gas share, solar displacement measured. The
@@ -400,7 +414,7 @@ def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
     + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
-    squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime + (S99 feed T) the STEO vintage balance + (S99 feed R) nuclear outages + (S99 feed Q) the EIA-930 grid stack. NO tape
+    squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime + (S99 feed T) the STEO vintage balance + (S99 feed R) nuclear outages + (S99 feed Q) the EIA-930 grid stack + (S99 feed I) the options OI pin map. NO tape
     from the forecast day or later, NO legs, NO outcome — exactly what a forecaster knows at the open.
     Output carries a leading '_information_clock' meta key (static doctrine, not a day)."""
     import forward_curve as fc
@@ -441,6 +455,7 @@ def decision_state(days: list[str]) -> dict:
                   "solar": _solar_block(iso),
                   "nuclear_outages": _nuclear_outages_block(iso),
                   "grid_stack": _grid_stack_block(iso),
+                  "options_surface": _options_surface_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "model_disagreement": _model_disagreement_block(iso),
@@ -561,10 +576,11 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
         d += datetime.timedelta(days=1)
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
             "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0,
-            "cash_knowable": 0, "steo_release": 0, "nuclear_wall": 0, "grid_wall": 0}
+            "cash_knowable": 0, "steo_release": 0, "nuclear_wall": 0, "grid_wall": 0,
+            "options_session": 0}
     absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
               "storage_consensus": [], "vol_regime": [], "cash_basis": [], "steo_vintage": [],
-              "nuclear_outages": [], "grid_stack": []}
+              "nuclear_outages": [], "grid_stack": [], "options_surface": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -633,6 +649,11 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
             absent["grid_stack"].append(iso)
         elif not gsb["period"] <= (datetime.date.fromisoformat(iso) - datetime.timedelta(days=2)).isoformat():
             viol["grid_wall"] += 1; print(f"  VIOLATION grid {iso}: period {gsb['period']}")
+        osb = st.get("options_surface")
+        if osb is None:
+            absent["options_surface"].append(iso)
+        elif not osb["asof_session"] < iso:
+            viol["options_session"] += 1; print(f"  VIOLATION options {iso}: session {osb['asof_session']}")
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -767,6 +788,16 @@ def _selftest() -> int:
     g12a = decision_state(["20260112"])["20260112"]["grid_stack"]
     assert g12a["period"] == "2026-01-10" and abs(g12a["bas"]["US48"]["est_gas_burn_bcfd"] - 28.3) < 0.7, \
         g12a["bas"]["US48"]
+    # (S99 feed I phase i - G13 blocker) the options pin map: squeeze-eve Jan 27 shows the NGG26
+    # walls at days_to_opex 0 off the Jan 26 session; G13's opex day (Feb 24) shows NGH26 at 0.
+    o27 = decision_state(["20260127"])["20260127"]["options_surface"]
+    assert o27 is not None and o27["asof_session"] == "2026-01-26", o27 and o27.get("asof_session")
+    assert o27["months"][0]["month"] == "NGG26" and o27["months"][0]["days_to_opex"] == 0, o27["months"][0]
+    assert len(o27["months"][0]["top5_oi_strikes"]) == 5 and o27["months"][0]["total_call_oi"] > 0, \
+        "pin map must be populated on squeeze eve"
+    o24 = decision_state(["20260224"])["20260224"]["options_surface"]
+    assert o24 is not None and o24["months"][0]["month"] == "NGH26" and o24["months"][0]["days_to_opex"] == 0, \
+        ("G13 opex-day view", o24 and o24["months"][0])
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
