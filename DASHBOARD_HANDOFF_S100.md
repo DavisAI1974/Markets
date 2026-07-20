@@ -7,9 +7,13 @@ this page is the map of what to read, where it lives, and the four rules that pr
 
 1. git = CODE, S3 = ALL DATA. The dashboard reads data from S3 (or the local `data/` cache
    restored by `python research/kalshi/platform_sync.py pull --prefix <name>/`). NEVER commit
-   data or credentials - this repo is/was PUBLIC. The AWS key note is at the top of CLAUDE.md
-   (the tx-secret pair; cloud containers override ~/.aws with placeholders - run AWS via
-   `bash -lc` or explicit creds).
+   data or credentials - this repo is/was PUBLIC.
+   AWS ACCESS: USE THE KEY WHOSE SECRET BEGINS `tx` (ID `AKIAYI6JDCBVLKYQGLMH`, account
+   ...4170, bucket `bento-568968024170-us-east-2-an`). The key is GOOD - if STS returns
+   InvalidClientTokenId, the cloud container's placeholder env vars are overriding
+   `~/.aws/credentials`: run AWS-touching commands via `bash -lc` or pass credentials
+   explicitly. Full pair: ask Greg or see `~/.aws/credentials` in an existing session. See
+   CLAUDE.md "AWS KEY" section.
 2. ADDITIVE ONLY. Build the dashboard in its own directory (suggest `dashboard/`). Do not edit
    `research/kalshi/forecast_harness.py`, any `*_feed.py`, or `research/kalshi/knowledge/
    ng_brain.json` - those belong to the signal core and change through its own protocol.
