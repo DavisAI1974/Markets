@@ -65,6 +65,19 @@ PHASE1_STORE = os.path.join(_ROOT, "data", "options_ng", "surface.json.gz")
 FUT_STATS = os.path.join(_ROOT, "data", "contract_structure", "NG_statistics_raw.json.gz")
 STORE_PATH = os.path.join(_ROOT, "data", "options_ng", "iv_surface.json.gz")
 
+# LIVE-ERA BRIDGE (E2 item 5, pulled 2026-07-20, measured cost $0.00 in-subscription):
+# raw dbn.zst under data/options_ng/raw/, Mar 1 - Jul 19 2026 sessions, decoded here with
+# the SAME measured record rules as phase i (stat 3/9, ts_ref session, 1e9 fixed point,
+# null sentinels, dedupe by instrument_id) and merged IN MEMORY - the phase-i store file
+# is never touched (it stays the signal core's artifact, 81 winter sessions).
+RAW_DIR = os.path.join(_ROOT, "data", "options_ng", "raw")
+BRIDGE_OPT_DEFS = os.path.join(RAW_DIR, "glbx_ng_opt_definition_20260301_20260720.dbn.zst")
+BRIDGE_OPT_STATS = os.path.join(RAW_DIR, "glbx_ng_opt_statistics_20260301_20260720.dbn.zst")
+BRIDGE_FUT_STATS = os.path.join(RAW_DIR, "glbx_ng_fut_statistics_20260301_20260720.dbn.zst")
+I64_NULL = 9223372036854775807
+U64_NULL = 18446744073709551615
+STAT_OPEN_INTEREST = 9
+
 RATE = 0.045                 # fixed, disclosed, never tuned (research C1.2)
 LNE_STRIKE_SCALE = 10.0      # measured (docstring); verified per build by matched-pair pricing
 IV_LO, IV_HI = 0.01, 4.0     # inversion bracket, annualized
@@ -157,6 +170,68 @@ def _futures_settles() -> dict[str, dict[str, float]]:
 def _strike_real(root: str, k_store: str) -> float:
     k = float(k_store)
     return k * LNE_STRIKE_SCALE if root == "LNE" else k
+
+
+def _ns_to_date(ns: int) -> str:
+    return datetime.datetime.fromtimestamp(ns / 1e9, tz=datetime.timezone.utc).date().isoformat()
+
+
+def _decode_bridge() -> tuple[dict, dict]:
+    """Bridge raws -> (sessions phase-1-shaped, opex updates). Empty when raws absent."""
+    if not (os.path.exists(BRIDGE_OPT_DEFS) and os.path.exists(BRIDGE_OPT_STATS)):
+        return {}, {}
+    import databento as db
+    defs: dict[int, dict] = {}
+    for rec in db.DBNStore.from_file(BRIDGE_OPT_DEFS):
+        cls = str(getattr(rec, "instrument_class", ""))
+        if cls not in ("InstrumentClass.CALL", "InstrumentClass.PUT", "C", "P"):
+            continue
+        defs[rec.instrument_id] = {
+            "underlying": (rec.underlying or "").strip(),
+            "asset": (rec.asset or "").strip(),
+            "strike": rec.strike_price / 1e9,
+            "cp": "C" if cls.endswith("CALL") or cls == "C" else "P",
+            "opex": _ns_to_date(rec.expiration),
+        }
+    sessions: dict = {}
+    for rec in db.DBNStore.from_file(BRIDGE_OPT_STATS):
+        st = int(rec.stat_type)
+        if st not in (STAT_SETTLEMENT, STAT_OPEN_INTEREST):
+            continue
+        d = defs.get(rec.instrument_id)
+        if d is None or rec.ts_ref == U64_NULL:
+            continue
+        sess = _ns_to_date(rec.ts_ref)
+        cell = (sessions.setdefault(sess, {}).setdefault(d["asset"], {})
+                .setdefault(d["underlying"], {}).setdefault(f"{d['strike']:.4f}",
+                                                            [None, None, None, None]))
+        idx = 0 if d["cp"] == "C" else 1
+        if st == STAT_OPEN_INTEREST and rec.quantity != I64_NULL and rec.quantity >= 0:
+            cell[idx] = int(rec.quantity)
+        elif st == STAT_SETTLEMENT and rec.price != I64_NULL:
+            cell[2 + idx] = rec.price / 1e9
+    opex: dict = {}
+    for d in defs.values():
+        opex.setdefault(d["asset"], {}).setdefault(d["underlying"], d["opex"])
+    print(f"[options_iv] bridge decoded: {len(sessions)} sessions, {len(defs)} option defs")
+    return sessions, opex
+
+
+def _fut_settles_dbn() -> dict[str, dict[str, float]]:
+    """Bridge futures settles (single months only) from the Mar-Jul statistics dbn.
+    to_df(map_symbols=True) carries the symbol map from DBN metadata; prices pre-scaled."""
+    if not os.path.exists(BRIDGE_FUT_STATS):
+        return {}
+    import databento as db
+    df = db.DBNStore.from_file(BRIDGE_FUT_STATS).to_df(map_symbols=True)
+    df = df[(df["stat_type"] == STAT_SETTLEMENT) & df["symbol"].notna()]
+    df = df[~df["symbol"].str.contains("-")]
+    out: dict[str, dict[str, float]] = {}
+    for ts_ref, sym, price in zip(df["ts_ref"], df["symbol"], df["price"]):
+        if price is None or price != price:
+            continue
+        out.setdefault(str(ts_ref.date()), {})[sym.strip()] = float(price)
+    return out
 
 
 # ------------------------------------------------------------------------------------------
@@ -253,6 +328,19 @@ def _parity_F(lne_ladder: dict, T: float) -> tuple[float | None, int]:
 def build() -> dict:
     p1 = _load_phase1()
     fut = _futures_settles()
+    # live-era bridge: merged IN MEMORY; phase-i store file and winter sessions untouched
+    bridge_sessions, bridge_opex = _decode_bridge()
+    n_bridge = 0
+    for sess, day in bridge_sessions.items():
+        if sess in p1["sessions"]:
+            continue                              # phase-i wins on any overlap (none expected)
+        p1["sessions"][sess] = day
+        n_bridge += 1
+    for asset, months in bridge_opex.items():
+        for month, ox in months.items():
+            p1["opex"].setdefault(asset, {}).setdefault(month, ox)
+    for iso, settles in _fut_settles_dbn().items():
+        fut.setdefault(iso, {}).update(settles)
     scale_check = measure_lne_scale(p1)
     opex = p1["opex"]
     sessions_out: dict = {}
@@ -328,7 +416,9 @@ def build() -> dict:
     store = {
         "meta": {
             "built_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-            "phase1_range": p1["meta"]["range"], "n_sessions": len(sessions_out),
+            "phase1_range": p1["meta"]["range"], "n_bridge_sessions": n_bridge,
+            "bridge_range": "2026-03-01..2026-07-19 (cost $0.00 in-sub)" if n_bridge else None,
+            "n_sessions": len(sessions_out),
             "n_iv_points": n_iv, "n_month_sessions_no_F": n_no_f,
             "rate": RATE, "lne_strike_scale": LNE_STRIKE_SCALE,
             "lne_scale_check": scale_check,
