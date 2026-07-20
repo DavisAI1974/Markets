@@ -273,6 +273,24 @@ def _ngwu_block(iso: str) -> dict | None:
                         "never derived"}
 
 
+def _steo_vintage_block(iso: str) -> dict | None:
+    """(S99 feed T) STEO monthly VINTAGES - the complete NG balance as-of each monthly release
+    (frozen archive workbooks; the live API is current-vintage-only). Dry production, consumption
+    by sector, LNG/pipeline trade, net withdrawals, working gas - at honest 1-34d staleness, joined
+    on MEASURED release dates (knowable_from = release+1; workbook Last-Modified leads release by
+    3-6d and is NEVER used). Vintage-to-vintage revision deltas ride with the read - the
+    Jan-13 -> Feb-10 pair brackets the freeze re-mark (+5.95 Bcf/d Jan consumption, -137 Bcf
+    end-Jan inventory), landing mid-G12 as a readable revision."""
+    import steo_vintage as stv
+    s = stv.steo_vintage_asof(iso)
+    if not s:
+        return None
+    return s | {"note": "monthly as-of balance consensus (STIFS estimates, as-printed, frozen per "
+                        "issue - zero vintage risk by construction); revisions_vs_prev_vintage is "
+                        "the first-appearance-vs-revision signal; scope sep25..mar26 vintages, "
+                        "apr26+ joins only after its release dates are measured"}
+
+
 def _storage_vintage_block(iso: str) -> dict | None:
     """(S98 feed K) The AS-PRINTED storage vintage overlay - what the market actually saw at each print
     vs the current revised series the stores carry. The walk's whole vintage look-ahead resolved to ONE
@@ -302,6 +320,20 @@ def _solar_block(iso: str) -> dict | None:
         return None
     return p | {"note": "deterministic solar state; sunset_et positions the evening gas-burn ramp on "
                         "the session clock; gw_day_length_chg_7d is the seasonal march"}
+
+
+def _nuclear_outages_block(iso: str) -> dict | None:
+    """(S99 feed R arm 1) U.S. nuclear capacity offline, daily (EIA nuclear-outages API,
+    2007->present). Nuclear GW offline adds gas burn roughly GW-for-GW at the margin; shoulder
+    seasons are refueling seasons; and the walked winter's freeze window carried a measured
+    1.8 -> 3.2 GW outage jump across Jan 17-18 - extra implied gas demand arriving DURING the
+    squeeze build-up, invisible to the agent until now. Wall: knowable_from = period+1,
+    strictly-prior join; changes across real series gaps are None, never bridged."""
+    import nuclear_outages as no
+    n = no.nuclear_outages_asof(iso)
+    if not n:
+        return None
+    return n
 
 
 def _flow_calendar_block(iso: str) -> dict | None:
@@ -354,7 +386,7 @@ def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
     + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
-    squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime. NO tape
+    squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime + (S99 feed T) the STEO vintage balance + (S99 feed R) nuclear outages. NO tape
     from the forecast day or later, NO legs, NO outcome — exactly what a forecaster knows at the open.
     Output carries a leading '_information_clock' meta key (static doctrine, not a day)."""
     import forward_curve as fc
@@ -385,6 +417,7 @@ def decision_state(days: list[str]) -> dict:
                   "storage_consensus": _storage_consensus_block(iso),
                   "storage_vintage": _storage_vintage_block(iso),
                   "ngwu_balance": _ngwu_block(iso),
+                  "steo_vintage": _steo_vintage_block(iso),
                   "cot": _cot_asof_block(iso),
                   "contract_structure": cs,
                   "squeeze_watch": _squeeze_watch(cs),
@@ -392,6 +425,7 @@ def decision_state(days: list[str]) -> dict:
                   "cash_basis": _cash_basis_block(iso),
                   "flow_calendar": _flow_calendar_block(iso),
                   "solar": _solar_block(iso),
+                  "nuclear_outages": _nuclear_outages_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "model_disagreement": _model_disagreement_block(iso),
@@ -512,9 +546,10 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
         d += datetime.timedelta(days=1)
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
             "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0,
-            "cash_knowable": 0}
+            "cash_knowable": 0, "steo_release": 0, "nuclear_wall": 0}
     absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
-              "storage_consensus": [], "vol_regime": [], "cash_basis": []}
+              "storage_consensus": [], "vol_regime": [], "cash_basis": [], "steo_vintage": [],
+              "nuclear_outages": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -568,6 +603,16 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
             absent["cash_basis"].append(iso)
         elif cbx.get("hh_spot_gas_day") and not cbx["hh_spot_gas_day"] < iso:
             viol["cash_knowable"] += 1; print(f"  VIOLATION cash {iso}: gas_day {cbx['hh_spot_gas_day']}")
+        stv = st.get("steo_vintage")
+        if stv is None:
+            absent["steo_vintage"].append(iso)
+        elif not (stv["release_date"] < iso and stv["knowable_from"] <= iso):
+            viol["steo_release"] += 1; print(f"  VIOLATION steo {iso}: release {stv['release_date']}")
+        nu = st.get("nuclear_outages")
+        if nu is None:
+            absent["nuclear_outages"].append(iso)
+        elif not nu["period"] < iso:
+            viol["nuclear_wall"] += 1; print(f"  VIOLATION nuclear {iso}: period {nu['period']}")
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -671,9 +716,32 @@ def _selftest() -> int:
     assert abs(mdb["summary"]["max_abs_spread_gw_hdd"] - 1.733) < 1e-9, mdb["summary"]
     assert mdb["asof_utc"][:10] < "2026-01-25", ("model-disagreement blind wall", mdb["asof_utc"])
     assert decision_state(["20260225"])["20260225"]["model_disagreement"] is not None, "Feb coverage"
+    # (S99 feed T) STEO vintage balance: G12 opens on the pre-freeze jan26 consensus at age 19d; the
+    # Feb-10 vintage lands MID-BLOCK as a readable revision (the freeze re-mark); a release day never
+    # sees its own vintage.
+    st1 = decision_state(["20260201"])["20260201"]["steo_vintage"]
+    assert st1 is not None and st1["vintage_id"] == "jan26" and st1["age_days"] == 19, st1
+    assert abs(st1["fields"]["total_consumption_bcfd"]["prev"] - 115.95) < 0.01, \
+        ("G12 open must see the PRE-freeze Jan consumption", st1["fields"]["total_consumption_bcfd"])
+    st2 = decision_state(["20260211"])["20260211"]["steo_vintage"]
+    assert st2 is not None and st2["vintage_id"] == "feb26", st2
+    assert abs(st2["revisions_vs_prev_vintage"]["total_consumption_bcfd"]["prev"] - 5.95) < 0.02, \
+        ("the freeze re-mark must ride as a revision delta", st2.get("revisions_vs_prev_vintage"))
+    st3 = decision_state(["20260113"])["20260113"]["steo_vintage"]
+    assert st3 is not None and st3["vintage_id"] == "dec25", ("jan26 release day must NOT be knowable", st3)
+    # (S99 feed R arm 1) nuclear outages: the freeze-window 1.8 -> 3.2 GW jump readable at honest
+    # D+1 staleness; a day never sees its own morning row.
+    n21 = decision_state(["20260121"])["20260121"]["nuclear_outages"]
+    assert n21 is not None and n21["period"] == "2026-01-20" and n21["age_days"] == 1, n21
+    assert abs(n21["capacity_out_gw"] - 3.184) < 0.01, ("freeze-window outage peak", n21["capacity_out_gw"])
+    n16 = decision_state(["20260116"])["20260116"]["nuclear_outages"]
+    assert n16 is not None and n16["period"] == "2026-01-15" and abs(n16["capacity_out_gw"] - 1.839) < 0.01, n16
+    n20 = decision_state(["20260120"])["20260120"]["nuclear_outages"]
+    assert n20 is not None and n20["period"] == "2026-01-19", ("own-day row must be walled", n20)
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
+    assert d_old["steo_vintage"] is None, "pre-coverage steo_vintage must be None, never zeros"
     # the information clock rides ONCE as a leading meta key, and day keys still index cleanly.
     full = decision_state(["20260122"])
     assert "_information_clock" in full and "20260122" in full, list(full)
