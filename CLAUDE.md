@@ -1,4 +1,26 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-20, Session 98)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-20, Session 99)
+
+**S99 — FOUR MORE GATE FEEDS IN ONE SESSION + THE MONDAY REPAIR (read
+`SESSION_HANDOFF_2026-07-20_S99.md` [SECURITY block FIRST] + `KICKOFF_2026-07-20_S100.md`):**
+Item zero HELD (packet presented, recommendation = defer-and-measure + optional quotes; Greg
+decides after rest — feed S gated on it). **Feeds T (STEO vintages) / R arm 1 (nuclear outages) /
+Q (EIA-930 loads + day-ahead demand forecast + fuel mix) / I phase i (NG options OI pin map —
+G13 GATE ITEM CLOSED; ON/LNE roots, "NG.OPT" resolves to nothing) built + WIRED same session:
+decision_state 17 -> 21 blocks, audit-joins 12 classes x 101 days, 0 violations throughout.**
+Costs measured: gate data ~$5 total (feed I actual $4.67); **Bento LIVE Standard $179/mo
+SUBSCRIBED at close (smoke test = S100 opener)**; Pyth Pro declined ($500-10k/mo class).
+STRUCTURAL: **the Pyth FREE era ends 2026-07-31** (all API keyed from $500/mo — pyth_collector
+WTI/XAU/XAG sunset decision S100; Pyth NGD feeds NEVER published — 3 evidence lines);
+**KXNATGASD settlement VERIFIED from spec** (Pyth per-contract NGD 1-min close 17:00 EDT,
+underlying rolls forward 5bd before LTD — feed M spec consequence; Kalshi's `expiration_value`
+IS the settle print, free); **settle-delta sweep: matched days median 0.1c — exchange-faithful;
+all big deltas = roll-window calendar spread**; **THE MONDAY STUB FIND: NG 22 stubs Feb 2-Jun 29
+(ALL G12/G13 Mondays — a silent walk blocker) REPAIRED (~$14, S92 script); CL 51 stubs (whole
+year) HELD for Greg — free-redecode window closes ~Aug 12-14; July 1-18 NG never pulled.**
+ICE HH positioning codes measured in our own CFTC files (023391/023392/0233AG/0233AH — cot
+extension queued). SECURITY: the AWS key was photographed into chat — ROTATION = S100 item zero.
+G12 still needs feeds A ph1 + E + Tier 3 merges; G13 additionally feed M. START S100 with the
+drop-in box.
 
 **S98 — THE DATA GATE LARGELY CLOSED IN ONE SESSION (read `SESSION_HANDOFF_2026-07-20_S98.md` +
 `KICKOFF_2026-07-20_S99.md` + `research/kalshi/DATA_GATE_S98.md` [THE build list, feeds A-T]):**
@@ -306,6 +328,14 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
 Detail is in the latest handoff + kickoff — this is the pointer, not the record.
 
 Recent arc (compressed; full detail in each `SESSION_HANDOFF_*.md`):
+- **S99** — item zero held (determination after rest); feeds T/R/Q/I built+wired (21 blocks, 12
+  audit classes, 0 violations); Bento live subscribed; Pyth free era ends Jul 31 (NGD feeds never
+  published; NATGAS 24/7 = Pro, declined); KXNATGASD settlement verified from spec (per-contract
+  NGD 17:00 close, 5bd-forward roll, expiration_value = the settle print); settle-delta sweep
+  exchange-faithful (median 0.1c matched; big deltas = roll-window spread); the Monday stub find
+  (NG 22 repaired ~$14; CL 51 held, free-redecode window closes ~Aug 12; Jul 1-18 never pulled);
+  ICE HH codes measured; AWS key photographed in chat -> rotation = S100 item zero.
+  Detail: `SESSION_HANDOFF_2026-07-20_S99.md`, `KICKOFF_2026-07-20_S100.md`.
 - **S98** — the gate largely CLOSED in one session: desk review -> DATA_GATE_S98 (feeds A-T by regime
   family); 12 feeds built/wired, decision_state 17 blocks, audit 0 violations throughout; brain
   s100.3 (C2 refuted on comparable data, confirm = C1+C3+C4 modern-class, forward test rides G12);

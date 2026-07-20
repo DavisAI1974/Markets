@@ -24,7 +24,37 @@ The map of every Kalshi file: what it is, where it lives, and whether it's part 
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move
 superseded ones down. (Started S81, 2026-07-12.)
 
-## S98 — the rewritten DATA GATE (CURRENT — the build list before any new group runs)
+## S99 — four gate feeds + the Monday repair (CURRENT)
+- **`research/kalshi/steo_vintage.py`** + S3 `steo_vintage/` — FEED T (WIRED): the 7 frozen STEO
+  vintage workbooks (sep25..mar26), all 37 Table-5a series, MEASURED release-date joins
+  (knowable_from = release+1; Last-Modified never used), per-workbook column-origin detection,
+  revision deltas vs prior vintage (the freeze re-mark readable from 2026-02-11). Selftest 22/22.
+  `STEO_VINTAGE_NOTES_S99.md`.
+- **`research/kalshi/nuclear_outages.py`** + S3 `nuclear_outages/` — FEED R arm 1 (WIRED): EIA
+  daily US nuclear capacity-out 2007->present, wall period+1 strictly-prior, gaps stay gaps; the
+  freeze's 1.8->3.2 GW jump at D+1. `NUCLEAR_OUTAGES_NOTES_S99.md` — ALSO carries the Pyth
+  reckoning (NGD feeds never published; NATGAS 24/7 = Pyth Pro; FREE HERMES DIES 2026-07-31 ->
+  pyth_collector sunset decision) and the KXNATGASD settlement verification (Pyth per-contract
+  NGD 1-min close 17:00 EDT; 5bd-forward underlying roll; expiration_value = the settle print).
+- **`research/kalshi/grid_stack.py`** + S3 `grid_stack/` — FEED Q (WIRED): EIA-930 daily per-BA
+  demand + DAY-AHEAD demand forecast (DF) + gen by fuel + shares + labeled US48 burn estimate;
+  wall period+2; Eastern framing; freeze ramp 28.3->41.1 Bcf/d decision-time-visible.
+  `GRID_STACK_NOTES_S99.md`.
+- **`research/kalshi/options_surface.py`** + S3 `options_ng/` — FEED I phase i (WIRED; G13 gate
+  item CLOSED): NG options OI pin map off GLBX definition+statistics, BOTH roots (ON+LNE — the
+  "NG.OPT resolves to nothing" symbology trap), 81 sessions, top-5 OI walls / P/C / OI-weighted
+  strike / opex clock; opex anchors cross-check flow_calendar exactly. $4.67 substrate; monthly
+  chunking beats the 4-month 504. `OPTIONS_SURFACE_NOTES_S99.md`.
+- **`research/kalshi/databento_live_smoke.py`** — one-shot validation of the Bento LIVE plan
+  (Standard $179/mo, SUBSCRIBED S99 close; smoke test = S100 opener).
+- **`research/kalshi/renders/settle_delta_sweep_s99.json`** — Kalshi settle vs NYMEX 17:00 tape,
+  full KXNATGASD life: matched days median 0.1c; all big deltas = 5bd roll-window contract
+  mismatch (calendar spread, not oracle error).
+- **`research/kalshi/redownload_mondays.py`** (pre-existing S92 script, re-run S99) — repaired
+  the 22 NG stub Mondays Feb 2 - Jun 29 2026 found by the sweep (incl. ALL G12/G13 Mondays). CL's
+  51 stubs HELD for Greg (paid ~$130-165 vs free redecode before job expiry ~Aug 12-14).
+
+## S98 — the rewritten DATA GATE (the build list before any new group runs)
 - **`research/kalshi/knowledge/ng_brain.json`** — **s100.3, 23 plays** (MERGED 2026-07-20, Greg
   approved: the C2 measurement - ratio reformulation REFUTED on comparable data, 0120 0.714 vs 0107
   0.718; C2 kept + scoped per-instance, flip confirm completes as C1+C3+C4 on the modern tape
