@@ -110,3 +110,4 @@ weather/mos_asof/raw/
 data/nymex_cont_n0/
 data/nymex_cont_n1/
 data/cot/raw/
+data/contract_structure/NG_statistics_raw.json.gz

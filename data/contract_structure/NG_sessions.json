@@ -1,0 +1,1610 @@
+{
+"2025-11-02": {
+"date": "2025-11-02",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.372,
+"n_trades": 661,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 863,
+"last_price": 4.119,
+"n_trades": 2224,
+"symbol": "NGZ25"
+}
+},
+"2025-11-03": {
+"date": "2025-11-03",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.477,
+"n_trades": 19771,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.84,
+"n_trades": 7583,
+"symbol": "NGH26"
+}
+},
+"2025-11-04": {
+"date": "2025-11-04",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.548,
+"n_trades": 23389,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.894,
+"n_trades": 9244,
+"symbol": "NGH26"
+}
+},
+"2025-11-05": {
+"date": "2025-11-05",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.489,
+"n_trades": 16350,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.826,
+"n_trades": 6816,
+"symbol": "NGH26"
+}
+},
+"2025-11-06": {
+"date": "2025-11-06",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.609,
+"n_trades": 20696,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.869,
+"n_trades": 7615,
+"symbol": "NGH26"
+}
+},
+"2025-11-07": {
+"date": "2025-11-07",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.554,
+"n_trades": 14490,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.84,
+"n_trades": 6086,
+"symbol": "NGH26"
+}
+},
+"2025-11-09": {
+"date": "2025-11-09",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.93,
+"n_trades": 368,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1018,
+"last_price": 4.666,
+"n_trades": 504,
+"symbol": "NGF26"
+}
+},
+"2025-11-10": {
+"date": "2025-11-10",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.592,
+"n_trades": 16799,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.849,
+"n_trades": 7245,
+"symbol": "NGH26"
+}
+},
+"2025-11-11": {
+"date": "2025-11-11",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.736,
+"n_trades": 23441,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.945,
+"n_trades": 7003,
+"symbol": "NGH26"
+}
+},
+"2025-11-12": {
+"date": "2025-11-12",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.748,
+"n_trades": 21042,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.964,
+"n_trades": 7221,
+"symbol": "NGH26"
+}
+},
+"2025-11-13": {
+"date": "2025-11-13",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.806,
+"n_trades": 25266,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.97,
+"n_trades": 7704,
+"symbol": "NGH26"
+}
+},
+"2025-11-14": {
+"date": "2025-11-14",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.724,
+"n_trades": 26669,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.896,
+"n_trades": 10410,
+"symbol": "NGH26"
+}
+},
+"2025-11-16": {
+"date": "2025-11-16",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.707,
+"n_trades": 413,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.893,
+"n_trades": 87,
+"symbol": "NGH26"
+}
+},
+"2025-11-17": {
+"date": "2025-11-17",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.57,
+"n_trades": 25967,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.822,
+"n_trades": 9949,
+"symbol": "NGH26"
+}
+},
+"2025-11-18": {
+"date": "2025-11-18",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.589,
+"n_trades": 29975,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.805,
+"n_trades": 7952,
+"symbol": "NGH26"
+}
+},
+"2025-11-19": {
+"date": "2025-11-19",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.759,
+"n_trades": 32191,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.892,
+"n_trades": 6575,
+"symbol": "NGH26"
+}
+},
+"2025-11-20": {
+"date": "2025-11-20",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.673,
+"n_trades": 45098,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.84,
+"n_trades": 8380,
+"symbol": "NGH26"
+}
+},
+"2025-11-21": {
+"date": "2025-11-21",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.731,
+"n_trades": 57555,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.881,
+"n_trades": 7069,
+"symbol": "NGH26"
+}
+},
+"2025-11-23": {
+"date": "2025-11-23",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.641,
+"n_trades": 1816,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.813,
+"n_trades": 147,
+"symbol": "NGH26"
+}
+},
+"2025-11-24": {
+"date": "2025-11-24",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.65,
+"n_trades": 57015,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.78,
+"n_trades": 7056,
+"symbol": "NGH26"
+}
+},
+"2025-11-25": {
+"date": "2025-11-25",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.474,
+"n_trades": 78984,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.673,
+"n_trades": 11379,
+"symbol": "NGH26"
+}
+},
+"2025-11-26": {
+"date": "2025-11-26",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.611,
+"n_trades": 54743,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.717,
+"n_trades": 7286,
+"symbol": "NGH26"
+}
+},
+"2025-11-27": {
+"date": "2025-11-27",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.628,
+"n_trades": 14423,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.723,
+"n_trades": 768,
+"symbol": "NGH26"
+}
+},
+"2025-11-28": {
+"date": "2025-11-28",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.862,
+"n_trades": 33566,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.841,
+"n_trades": 5032,
+"symbol": "NGH26"
+}
+},
+"2025-11-30": {
+"date": "2025-11-30",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.811,
+"n_trades": 2064,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.809,
+"n_trades": 289,
+"symbol": "NGH26"
+}
+},
+"2025-12-01": {
+"date": "2025-12-01",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.902,
+"n_trades": 73365,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.845,
+"n_trades": 14144,
+"symbol": "NGH26"
+}
+},
+"2025-12-02": {
+"date": "2025-12-02",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.83,
+"n_trades": 59555,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 3.856,
+"n_trades": 9778,
+"symbol": "NGH26"
+}
+},
+"2025-12-03": {
+"date": "2025-12-03",
+"n0": {
+"instrument_id": 1018,
+"last_price": 4.984,
+"n_trades": 64421,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 4.038,
+"n_trades": 14399,
+"symbol": "NGH26"
+}
+},
+"2025-12-04": {
+"date": "2025-12-04",
+"n0": {
+"instrument_id": 1018,
+"last_price": 5.094,
+"n_trades": 66603,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 4.138,
+"n_trades": 12286,
+"symbol": "NGH26"
+}
+},
+"2025-12-05": {
+"date": "2025-12-05",
+"n0": {
+"instrument_id": 1018,
+"last_price": 5.337,
+"n_trades": 117408,
+"symbol": "NGF26"
+},
+"n1": {
+"instrument_id": 1021,
+"last_price": 4.235,
+"n_trades": 19295,
+"symbol": "NGH26"
+}
+},
+"2025-12-07": {
+"date": "2025-12-07",
+"n0": {
+"instrument_id": 1021,
+"last_price": 4.128,
+"n_trades": 354,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1018,
+"last_price": 5.138,
+"n_trades": 2831,
+"symbol": "NGF26"
+}
+},
+"2025-12-08": {
+"date": "2025-12-08",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.84,
+"n_trades": 20642,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1018,
+"last_price": 4.864,
+"n_trades": 96172,
+"symbol": "NGF26"
+}
+},
+"2025-12-09": {
+"date": "2025-12-09",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.707,
+"n_trades": 17155,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1018,
+"last_price": 4.579,
+"n_trades": 79522,
+"symbol": "NGF26"
+}
+},
+"2025-12-10": {
+"date": "2025-12-10",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.71,
+"n_trades": 15094,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1018,
+"last_price": 4.616,
+"n_trades": 81101,
+"symbol": "NGF26"
+}
+},
+"2025-12-11": {
+"date": "2025-12-11",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.566,
+"n_trades": 15955,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.538,
+"n_trades": 14459,
+"symbol": "NGJ26"
+}
+},
+"2025-12-12": {
+"date": "2025-12-12",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.399,
+"n_trades": 17287,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.38,
+"n_trades": 10996,
+"symbol": "NGJ26"
+}
+},
+"2025-12-14": {
+"date": "2025-12-14",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.462,
+"n_trades": 210,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.428,
+"n_trades": 50,
+"symbol": "NGJ26"
+}
+},
+"2025-12-15": {
+"date": "2025-12-15",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.355,
+"n_trades": 13916,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.322,
+"n_trades": 9146,
+"symbol": "NGJ26"
+}
+},
+"2025-12-16": {
+"date": "2025-12-16",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.299,
+"n_trades": 14444,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.284,
+"n_trades": 8285,
+"symbol": "NGJ26"
+}
+},
+"2025-12-17": {
+"date": "2025-12-17",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.394,
+"n_trades": 12634,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.371,
+"n_trades": 7964,
+"symbol": "NGJ26"
+}
+},
+"2025-12-18": {
+"date": "2025-12-18",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.22,
+"n_trades": 15228,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.206,
+"n_trades": 9843,
+"symbol": "NGJ26"
+}
+},
+"2025-12-19": {
+"date": "2025-12-19",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.216,
+"n_trades": 11252,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.697,
+"n_trades": 26289,
+"symbol": "NGG26"
+}
+},
+"2025-12-21": {
+"date": "2025-12-21",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.238,
+"n_trades": 345,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.728,
+"n_trades": 611,
+"symbol": "NGG26"
+}
+},
+"2025-12-22": {
+"date": "2025-12-22",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.077,
+"n_trades": 21090,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.604,
+"n_trades": 42389,
+"symbol": "NGG26"
+}
+},
+"2025-12-23": {
+"date": "2025-12-23",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.296,
+"n_trades": 20769,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.933,
+"n_trades": 58599,
+"symbol": "NGG26"
+}
+},
+"2025-12-24": {
+"date": "2025-12-24",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.222,
+"n_trades": 13625,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.766,
+"n_trades": 46025,
+"symbol": "NGG26"
+}
+},
+"2025-12-25": {
+"date": "2025-12-25",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.246,
+"n_trades": 174,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.813,
+"n_trades": 914,
+"symbol": "NGG26"
+}
+},
+"2025-12-26": {
+"date": "2025-12-26",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.308,
+"n_trades": 13874,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.879,
+"n_trades": 46323,
+"symbol": "NGG26"
+}
+},
+"2025-12-28": {
+"date": "2025-12-28",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.377,
+"n_trades": 559,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.956,
+"n_trades": 1247,
+"symbol": "NGG26"
+}
+},
+"2025-12-29": {
+"date": "2025-12-29",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.352,
+"n_trades": 20764,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.956,
+"n_trades": 62292,
+"symbol": "NGG26"
+}
+},
+"2025-12-30": {
+"date": "2025-12-30",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.356,
+"n_trades": 18933,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.974,
+"n_trades": 53876,
+"symbol": "NGG26"
+}
+},
+"2025-12-31": {
+"date": "2025-12-31",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.159,
+"n_trades": 22096,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.711,
+"n_trades": 47798,
+"symbol": "NGG26"
+}
+},
+"2026-01-01": {
+"date": "2026-01-01",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.109,
+"n_trades": 411,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.643,
+"n_trades": 946,
+"symbol": "NGG26"
+}
+},
+"2026-01-02": {
+"date": "2026-01-02",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.061,
+"n_trades": 18421,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.641,
+"n_trades": 48250,
+"symbol": "NGG26"
+}
+},
+"2026-01-04": {
+"date": "2026-01-04",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.931,
+"n_trades": 852,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.462,
+"n_trades": 2217,
+"symbol": "NGG26"
+}
+},
+"2026-01-05": {
+"date": "2026-01-05",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.886,
+"n_trades": 37160,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.489,
+"n_trades": 75985,
+"symbol": "NGG26"
+}
+},
+"2026-01-06": {
+"date": "2026-01-06",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.873,
+"n_trades": 20585,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.424,
+"n_trades": 53171,
+"symbol": "NGG26"
+}
+},
+"2026-01-07": {
+"date": "2026-01-07",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.946,
+"n_trades": 21879,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.574,
+"n_trades": 53359,
+"symbol": "NGG26"
+}
+},
+"2026-01-08": {
+"date": "2026-01-08",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.827,
+"n_trades": 27140,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.415,
+"n_trades": 65290,
+"symbol": "NGG26"
+}
+},
+"2026-01-09": {
+"date": "2026-01-09",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.626,
+"n_trades": 51347,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.141,
+"n_trades": 94661,
+"symbol": "NGG26"
+}
+},
+"2026-01-11": {
+"date": "2026-01-11",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.716,
+"n_trades": 704,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 996,
+"last_price": 2.831,
+"n_trades": 78,
+"symbol": "NGK26"
+}
+},
+"2026-01-12": {
+"date": "2026-01-12",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.809,
+"n_trades": 36833,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.347,
+"n_trades": 68392,
+"symbol": "NGG26"
+}
+},
+"2026-01-13": {
+"date": "2026-01-13",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.85,
+"n_trades": 27182,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1000,
+"last_price": 3.379,
+"n_trades": 58244,
+"symbol": "NGG26"
+}
+},
+"2026-01-14": {
+"date": "2026-01-14",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.712,
+"n_trades": 37378,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.729,
+"n_trades": 14555,
+"symbol": "NGJ26"
+}
+},
+"2026-01-15": {
+"date": "2026-01-15",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.688,
+"n_trades": 29452,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.72,
+"n_trades": 10879,
+"symbol": "NGJ26"
+}
+},
+"2026-01-16": {
+"date": "2026-01-16",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.702,
+"n_trades": 24792,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.733,
+"n_trades": 8801,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1000,
+"last_price": 3.119,
+"n_trades": 971302,
+"symbol": "NGG26"
+}
+},
+"2026-01-18": {
+"date": "2026-01-18",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.911,
+"n_trades": 2600,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.92,
+"n_trades": 1088,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1000,
+"last_price": 3.435,
+"n_trades": 43490,
+"symbol": "NGG26"
+}
+},
+"2026-01-19": {
+"date": "2026-01-19",
+"n0": {
+"instrument_id": 1021,
+"last_price": 2.967,
+"n_trades": 23146,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.967,
+"n_trades": 7657,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1000,
+"last_price": 3.585,
+"n_trades": 996281,
+"symbol": "NGG26"
+}
+},
+"2026-01-20": {
+"date": "2026-01-20",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.16,
+"n_trades": 75295,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.149,
+"n_trades": 25779,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1000,
+"last_price": 3.882,
+"n_trades": 2026908,
+"symbol": "NGG26"
+}
+},
+"2026-01-21": {
+"date": "2026-01-21",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.541,
+"n_trades": 112059,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.44,
+"n_trades": 39682,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1000,
+"last_price": 5.087,
+"n_trades": 2778000,
+"symbol": "NGG26"
+}
+},
+"2026-01-22": {
+"date": "2026-01-22",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.522,
+"n_trades": 125635,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.43,
+"n_trades": 35118,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1021,
+"last_price": 3.523,
+"n_trades": 1901624,
+"symbol": "NGH26"
+}
+},
+"2026-01-23": {
+"date": "2026-01-23",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.643,
+"n_trades": 86842,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.511,
+"n_trades": 31567,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1000,
+"last_price": 5.356,
+"n_trades": 626431,
+"symbol": "NGG26"
+}
+},
+"2026-01-25": {
+"date": "2026-01-25",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.909,
+"n_trades": 4874,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.729,
+"n_trades": 1773,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1021,
+"last_price": 3.898,
+"n_trades": 62957,
+"symbol": "NGH26"
+}
+},
+"2026-01-26": {
+"date": "2026-01-26",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.839,
+"n_trades": 125316,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.601,
+"n_trades": 45242,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1021,
+"last_price": 3.845,
+"n_trades": 1907957,
+"symbol": "NGH26"
+}
+},
+"2026-01-27": {
+"date": "2026-01-27",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.812,
+"n_trades": 98189,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.648,
+"n_trades": 36094,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1021,
+"last_price": 3.81,
+"n_trades": 1668512,
+"symbol": "NGH26"
+}
+},
+"2026-01-28": {
+"date": "2026-01-28",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.77,
+"n_trades": 85345,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.613,
+"n_trades": 26562,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1021,
+"last_price": 3.773,
+"n_trades": 1524884,
+"symbol": "NGH26"
+}
+},
+"2026-01-29": {
+"date": "2026-01-29",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.917,
+"n_trades": 84778,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.69,
+"n_trades": 25906,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1021,
+"last_price": 3.914,
+"n_trades": 1391813,
+"symbol": "NGH26"
+}
+},
+"2026-01-30": {
+"date": "2026-01-30",
+"n0": {
+"instrument_id": 1021,
+"last_price": 4.416,
+"n_trades": 122210,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 4.08,
+"n_trades": 48785,
+"symbol": "NGJ26"
+},
+"v0": {
+"instrument_id": 1021,
+"last_price": 4.419,
+"n_trades": 1914785,
+"symbol": "NGH26"
+}
+},
+"2026-02-01": {
+"date": "2026-02-01",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.657,
+"n_trades": 5354,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.569,
+"n_trades": 2987,
+"symbol": "NGJ26"
+}
+},
+"2026-02-02": {
+"date": "2026-02-02",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.231,
+"n_trades": 158809,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.153,
+"n_trades": 68473,
+"symbol": "NGJ26"
+}
+},
+"2026-02-03": {
+"date": "2026-02-03",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.344,
+"n_trades": 77352,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.229,
+"n_trades": 26734,
+"symbol": "NGJ26"
+}
+},
+"2026-02-04": {
+"date": "2026-02-04",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.47,
+"n_trades": 67309,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.311,
+"n_trades": 23647,
+"symbol": "NGJ26"
+}
+},
+"2026-02-05": {
+"date": "2026-02-05",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.521,
+"n_trades": 72214,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.34,
+"n_trades": 28470,
+"symbol": "NGJ26"
+}
+},
+"2026-02-06": {
+"date": "2026-02-06",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.405,
+"n_trades": 66954,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.213,
+"n_trades": 24337,
+"symbol": "NGJ26"
+}
+},
+"2026-02-08": {
+"date": "2026-02-08",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.211,
+"n_trades": 1941,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.086,
+"n_trades": 733,
+"symbol": "NGJ26"
+}
+},
+"2026-02-09": {
+"date": "2026-02-09",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.128,
+"n_trades": 58214,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.04,
+"n_trades": 23300,
+"symbol": "NGJ26"
+}
+},
+"2026-02-10": {
+"date": "2026-02-10",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.152,
+"n_trades": 46680,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.058,
+"n_trades": 21140,
+"symbol": "NGJ26"
+}
+},
+"2026-02-11": {
+"date": "2026-02-11",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.213,
+"n_trades": 45648,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.107,
+"n_trades": 19500,
+"symbol": "NGJ26"
+}
+},
+"2026-02-12": {
+"date": "2026-02-12",
+"n0": {
+"instrument_id": 1021,
+"last_price": 3.224,
+"n_trades": 57008,
+"symbol": "NGH26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.087,
+"n_trades": 23160,
+"symbol": "NGJ26"
+}
+},
+"2026-02-13": {
+"date": "2026-02-13",
+"n0": {
+"instrument_id": 996,
+"last_price": 3.084,
+"n_trades": 6608,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.067,
+"n_trades": 18539,
+"symbol": "NGJ26"
+}
+},
+"2026-02-15": {
+"date": "2026-02-15",
+"n0": {
+"instrument_id": 996,
+"last_price": 2.965,
+"n_trades": 492,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.944,
+"n_trades": 768,
+"symbol": "NGJ26"
+}
+},
+"2026-02-16": {
+"date": "2026-02-16",
+"n0": {
+"instrument_id": 996,
+"last_price": 3.005,
+"n_trades": 2719,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.986,
+"n_trades": 7659,
+"symbol": "NGJ26"
+}
+},
+"2026-02-17": {
+"date": "2026-02-17",
+"n0": {
+"instrument_id": 996,
+"last_price": 2.977,
+"n_trades": 10137,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.954,
+"n_trades": 23154,
+"symbol": "NGJ26"
+}
+},
+"2026-02-18": {
+"date": "2026-02-18",
+"n0": {
+"instrument_id": 996,
+"last_price": 2.962,
+"n_trades": 9743,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.943,
+"n_trades": 29559,
+"symbol": "NGJ26"
+}
+},
+"2026-02-19": {
+"date": "2026-02-19",
+"n0": {
+"instrument_id": 996,
+"last_price": 2.95,
+"n_trades": 9212,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.926,
+"n_trades": 32234,
+"symbol": "NGJ26"
+}
+},
+"2026-02-20": {
+"date": "2026-02-20",
+"n0": {
+"instrument_id": 996,
+"last_price": 3.01,
+"n_trades": 13663,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.994,
+"n_trades": 40311,
+"symbol": "NGJ26"
+}
+},
+"2026-02-22": {
+"date": "2026-02-22",
+"n0": {
+"instrument_id": 996,
+"last_price": 3.125,
+"n_trades": 328,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 3.113,
+"n_trades": 1825,
+"symbol": "NGJ26"
+}
+},
+"2026-02-23": {
+"date": "2026-02-23",
+"n0": {
+"instrument_id": 996,
+"last_price": 2.946,
+"n_trades": 13958,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.922,
+"n_trades": 36976,
+"symbol": "NGJ26"
+}
+},
+"2026-02-24": {
+"date": "2026-02-24",
+"n0": {
+"instrument_id": 996,
+"last_price": 2.866,
+"n_trades": 12835,
+"symbol": "NGK26"
+},
+"n1": {
+"instrument_id": 1008,
+"last_price": 2.843,
+"n_trades": 40718,
+"symbol": "NGJ26"
+}
+},
+"2026-02-25": {
+"date": "2026-02-25",
+"n0": {
+"instrument_id": 1008,
+"last_price": 2.886,
+"n_trades": 38566,
+"symbol": "NGJ26"
+},
+"n1": {
+"instrument_id": 996,
+"last_price": 2.905,
+"n_trades": 10944,
+"symbol": "NGK26"
+}
+},
+"2026-02-26": {
+"date": "2026-02-26",
+"n0": {
+"instrument_id": 1008,
+"last_price": 2.822,
+"n_trades": 42142,
+"symbol": "NGJ26"
+},
+"n1": {
+"instrument_id": 996,
+"last_price": 2.853,
+"n_trades": 11867,
+"symbol": "NGK26"
+}
+},
+"2026-02-27": {
+"date": "2026-02-27",
+"n0": {
+"instrument_id": 1008,
+"last_price": 2.857,
+"n_trades": 32164,
+"symbol": "NGJ26"
+},
+"n1": {
+"instrument_id": 996,
+"last_price": 2.88,
+"n_trades": 9227,
+"symbol": "NGK26"
+}
+}
+}
