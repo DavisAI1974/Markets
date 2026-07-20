@@ -186,6 +186,15 @@ Feed IDs A-K for tracking.
   spec, untouched.
 
 ### B. Vol / range regime (family: tape conditioner) - S97 gate item 5, unchanged plus one addition.
+STATUS: **DONE + WIRED 2026-07-20** (`vol_regime.py`, store on S3 `vol_regime/`). n0 coverage
+102/102 sessions Nov 2 - Feb 27, zero gaps; blind-wall 0 violations (6,480 field recomputes);
+bases never mixed and the necessity demonstrated numerically (same window: v0 sigma_5 $4,734 vs
+n0 $1,586 - v0's 0121 is the Feb contract's +11,940 squeeze day where n0 prints +3,820). KEY STATE
+FACTS FOR THE WALK: G11 opened at the winter's vol MINIMUM (sigma_20 $798, the lowest in the
+store); the arc peaks $1,825 on 02-09 then collapses to $680 by 02-27 with activity_trend 0.26 -
+G12 and G13 open in a regime January does not resemble. NAMED STUB: v0-basis fields are None
+outside 2026-01-16..01-30 (the G3-G10 v0 corpus is S3-only; local restore + rebuild deferred to
+pass-2-adjacent work - not needed for G12/G13, which run on the n0 basis).
 - WHY: the brain's magnitude bands keep getting overshot (1119, 1128, 1211, 1223, 0121, 0130); bands
   calibrated in one vol regime are applied in another.
 - From tape already on disk (`.v.0` for G3-G10 continuity, `.n.0` where that is the walked basis).

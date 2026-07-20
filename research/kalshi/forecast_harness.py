@@ -228,13 +228,28 @@ def _storage_consensus_block(iso: str) -> dict | None:
                         "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
 
 
+def _vol_regime_block(iso: str) -> dict | None:
+    """(S98 feed B) The VOL / RANGE REGIME conditioner - trailing realized vol of session nets, range
+    means/percentile, activity trend, computed strictly from prior sessions on BOTH tape bases (n0_/v0_
+    fields, never mixed; a basis with no tape is None per field with win_n exposing partial windows).
+    CONDITIONS magnitude expectations (the walk's dominant residual - bands calibrated in one vol regime
+    applied in another); never calls direction. Module self-audits 0 blind-wall violations."""
+    import vol_regime as vr
+    v = vr.vol_regime_asof(iso)
+    if not v:
+        return None
+    return v | {"note": "magnitude conditioner only; n0/v0 bases never mixed (same-window v0 sigma can "
+                        "read 3x n0 across the G11 expiry week - the basis IS the difference); "
+                        "None = insufficient prior sessions on that basis, never calm"}
+
+
 def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
     + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
-    squeeze view + (S98 feed D) the storage survey CONSENSUS. NO tape, NO legs, NO outcome — exactly what a
-    forecaster knows at the open. Output carries a leading '_information_clock' meta key (static doctrine,
-    not a day)."""
+    squeeze view + (S98 feed D) the storage survey CONSENSUS + (S98 feed B) the vol/range regime. NO tape
+    from the forecast day or later, NO legs, NO outcome — exactly what a forecaster knows at the open.
+    Output carries a leading '_information_clock' meta key (static doctrine, not a day)."""
     import forward_curve as fc
     surp = _load_json("eia_surprise.json").get("KXNATGASD", {})
     stor = _storage_series()
@@ -264,6 +279,7 @@ def decision_state(days: list[str]) -> dict:
                   "cot": _cot_asof_block(iso),
                   "contract_structure": cs,
                   "squeeze_watch": _squeeze_watch(cs),
+                  "vol_regime": _vol_regime_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "holiday": _holiday_asof(iso)}
@@ -384,7 +400,7 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
             "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0}
     absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
-              "storage_consensus": []}
+              "storage_consensus": [], "vol_regime": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -431,6 +447,8 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
                     viol["consensus_join"] += 1; print(f"  VIOLATION consensus {iso}: next_print {np_['print_date']} in past")
                 if np_.get("actual_bcf") is not None or np_.get("actual_as_printed_bcf") is not None:
                     viol["consensus_join"] += 1; print(f"  VIOLATION consensus {iso}: next_print carries an actual")
+        if st.get("vol_regime") is None:
+            absent["vol_regime"].append(iso)
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -483,6 +501,11 @@ def _selftest() -> int:
     assert scb["next_print"].get("actual_bcf") is None and scb["next_print"].get("actual_as_printed_bcf") is None, \
         "consensus block leaked an actual into its own print morning"
     assert scb["last_print"]["print_date"] == "2026-01-22" and scb["last_print"].get("surprise_vs_consensus_bcf") is not None, scb
+    # (S98 feed B) vol regime: the G11-open minimum reads through, bases never mixed, None never zero.
+    d16 = decision_state(["20260116"])["20260116"]
+    vb = d16["vol_regime"]
+    assert vb is not None and vb["n0_net_sigma_20"] == 798, ("G11-open vol minimum", vb.get("n0_net_sigma_20"))
+    assert vb.get("v0_net_sigma_20") is None, "v0 stub must be None, never a fabricated calm"
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
