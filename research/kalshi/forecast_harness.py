@@ -242,6 +242,20 @@ def _storage_consensus_block(iso: str) -> dict | None:
                         "store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)"}
 
 
+def _model_disagreement_block(iso: str) -> dict | None:
+    """(S98 feed C) MODEL DISAGREEMENT as the forecast-uncertainty proxy - GFS-MAV vs NAM-MET
+    gas-weighted HDD spread per MATCHED horizon (the overlap is short-range, h0-h1), plus the
+    per-model run-to-run stability split (WHICH model moved). The market prices uncertainty, not
+    just the central case: G11's 0125/0126 whipsaw ran on a wobbling forecast. Same D-1-evening
+    as-of discipline as the MOS block; module self-audits."""
+    import model_disagreement as md
+    m = md.model_disagreement_asof(iso)
+    if not m:
+        return None
+    return m | {"note": "uncertainty conditioner; per-horizon rows canonical, the summary is a "
+                        "shape descriptor never a pooled conclusion; no-overlap horizons are None"}
+
+
 def _ngwu_block(iso: str) -> dict | None:
     """(S98 feed N) The EIA weekly S/D balance (NGWU -> WNGSR-Supplement eras). HONEST STRUCTURAL
     LIMIT (measured): EIA removed the S&P supply/demand section 2025-10-02, so the walked winter has
@@ -380,6 +394,7 @@ def decision_state(days: list[str]) -> dict:
                   "solar": _solar_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
+                  "model_disagreement": _model_disagreement_block(iso),
                   "holiday": _holiday_asof(iso)}
     return out
 
@@ -649,6 +664,13 @@ def _selftest() -> int:
     assert nb["latest_sd_levels"]["age_days"] > 100, "staleness must be exposed, not hidden"
     assert nb.get("dry_production_bcfd") is None, "winter issues must NOT carry fabricated levels"
     assert nb.get("lng_vessel_capacity_bcf") == 118.0, ("the squeeze-week vessel low", nb.get("lng_vessel_capacity_bcf"))
+    # (S98 feed C) model disagreement: present through February, D-1 as-of, the 0125 whipsaw-eve
+    # spread on record (max_abs 1.733 gw-HDD at h1 over the 2-horizon MET overlap).
+    mdb = decision_state(["20260125"])["20260125"]["model_disagreement"]
+    assert mdb is not None and mdb["summary"]["n_overlap_horizons"] == 2, mdb.get("summary")
+    assert abs(mdb["summary"]["max_abs_spread_gw_hdd"] - 1.733) < 1e-9, mdb["summary"]
+    assert mdb["asof_utc"][:10] < "2026-01-25", ("model-disagreement blind wall", mdb["asof_utc"])
+    assert decision_state(["20260225"])["20260225"]["model_disagreement"] is not None, "Feb coverage"
     # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
     d_old = decision_state(["20250902"])["20250902"]
     assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
