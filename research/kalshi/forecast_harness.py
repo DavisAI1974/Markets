@@ -140,27 +140,112 @@ def _forecast_weather_asof(iso: str, mos: dict) -> dict | None:
     }
 
 
+# S98 Tier 0 (DATA_GATE_S98.md): the INFORMATION CLOCK - a STATIC doctrine constant, not per-day data.
+# The ET hours at which information arrives, so the agent can reason about WHICH session (or gap) a
+# catalyst prices into ("a run posting 19:00 ET prices the overnight gap, not that day's close" - the
+# generalization of the S97.2 finding that 0119's catalyst was consumed by the 0118 gap).
+INFORMATION_CLOCK = {
+    "note": "static ET reference of scheduled information arrival; all times approximate post/settle "
+            "conventions, not data. A catalyst prices into the NEXT tradeable window after its arrival.",
+    "model_cycles_et": {"00z_gfs_mos": "~03:30-04:30", "06z_gfs_mos": "~09:30-10:30",
+                         "12z_gfs_mos": "~15:30-16:30", "18z_gfs_mos": "~21:30-22:30",
+                         "cycles_run_weekends_too": True,
+                         "weekend_note": "Sat/Sun 00z/12z cycles price the SUNDAY 18:00 ET reopen gap - "
+                                          "the D-1-evening feed is one cycle behind it (s100_2_weekend_gap_note)"},
+    "eia_storage_print_et": "Thu 10:30 (holiday weeks may shift - see the flow calendar feed when wired)",
+    "cot_publication_et": "Fri 15:30 for Tuesday positions",
+    "settle_window_et": "14:00-14:30 daily settle flows (excluded from every backtest cell)",
+    "globex_reopen_et": "Sun 18:00 (the weekend gap prints here)",
+    "session_close_et": "17:00, next session opens 18:00 (the daily maintenance hour)",
+}
+
+
+def _cot_asof_block(iso: str) -> dict | None:
+    """(S98 Tier 0) CFTC COT positioning as-of - publication-keyed inside cot_feed (Friday 15:30 ET for
+    Tuesday positions; a Friday's OWN publication never reaches its own open - verified 2026-01-16).
+    Full passthrough: every field the feed exposes, nothing filtered. Missing -> None, never 0."""
+    import cot_feed
+    c = cot_feed.cot_asof(iso)
+    if not c:
+        return None
+    return c | {"note": "positioning as-of PUBLICATION time; futures-only, NYMEX 023651 only (no ICE HH); "
+                        "percentiles vs trailing 1y/3y of weekly nets"}
+
+
+def _storage_regional_block(iso: str) -> dict | None:
+    """(S98 Tier 0) EIA regional + SALT/NON-SALT storage as-of - strictly-prior Thursday print (a print
+    Thursday's own 10:30 ET report never reaches its own open - verified 2026-01-15). Full passthrough."""
+    import storage_regional
+    s = storage_regional.storage_regional_asof(iso)
+    if not s:
+        return None
+    return s | {"note": "five regions + salt split; salt = the fast-cycling swing capacity. ADDITIVE to the "
+                        "national `storage` block, which is untouched"}
+
+
+def _contract_structure_block(iso: str) -> dict | None:
+    """(S98 Tier 0) Contract structure + forward curve as-of (49 fields, all passed through). THE CALENDAR-
+    FRONT BLOCK IS THE POINT: the OI-continuous front rolls out of the dying contract early, so on
+    2026-01-22 front_next_spread reads 0.093 while calendar_front_next_spread reads 1.539 - the squeeze
+    lives ONLY in the calendar-front fields. Cross-roll spread changes arrive as None with
+    *_pair_changed_*d flags set (artifact class, not moves)."""
+    import contract_structure
+    return contract_structure.contract_structure_asof(iso)
+
+
+def _squeeze_watch(cs: dict | None) -> dict | None:
+    """(S98 Tier 0, DATA_GATE_S98 0b family DEL) Derived convenience read - transparently from the wired
+    structure fields, components exposed alongside so the agent reads both. None = components unknown
+    (never False-when-unknown): a cross-roll day zeroes nothing, it says 'unknown'."""
+    if not cs:
+        return None
+    d2e = cs.get("days_to_calendar_front_expiry")
+    chg3 = cs.get("calendar_front_next_spread_chg_3d")
+    active = None if (d2e is None or chg3 is None) else bool(d2e <= 7 and chg3 > 0)
+    return {"active": active,
+            "days_to_calendar_front_expiry": d2e,
+            "calendar_front_next_spread": cs.get("calendar_front_next_spread"),
+            "calendar_front_next_spread_chg_3d": chg3,
+            "calendar_front_symbol": cs.get("calendar_front_symbol"),
+            "note": "derived: days_to_calendar_front_expiry<=7 AND calendar_front_next_spread_chg_3d>0. "
+                    "Inside this window delivery mechanics own the tape (DATA_GATE_S98 0b: demand-regime "
+                    "bands are out of scope); G11's 0122-0130 is the n=1, G13 the forward test"}
+
+
 def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
-    STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk).
-    NO tape, NO legs, NO outcome — exactly what a forecaster knows at the open."""
+    STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
+    + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
+    squeeze view. NO tape, NO legs, NO outcome — exactly what a forecaster knows at the open.
+    Output carries a leading '_information_clock' meta key (static doctrine, not a day)."""
     import forward_curve as fc
     surp = _load_json("eia_surprise.json").get("KXNATGASD", {})
     stor = _storage_series()
     wx = _load_json("nws_temp/gw_degree_days.json")
     mos = json.load(open(MOS_ASOF)) if os.path.exists(MOS_ASOF) else {}   # additive; absent -> None, never 0
     cv = fc.load("NG")
-    out = {}
+    out = {"_information_clock": INFORMATION_CLOCK}
     for d in days:
         iso = f"{d[:4]}-{d[4:6]}-{d[6:]}"
         dow = DOW[datetime.date(int(d[:4]), int(d[4:6]), int(d[6:])).weekday()]
         past = sorted(ri for ri in surp if ri < iso)  # S96: strictly before the day (same-day print leaked)
         sv = surp[past[-1]]["surprise"] if past else None
         cr = fc.curve_asof(cv, iso)
+        cs = _contract_structure_block(iso)
+        # curve_regime: the legacy fc path first; where it reads 'unknown' the structure feed's regime
+        # (settle-curve derived, strictly-prior) POPULATES it (S97 gate item 12: "confirm curve_regime
+        # stops reading 'unknown'"). Populating an unknown is not replacing a field.
+        regime = cr[1]["regime"] if cr else "unknown"
+        if regime == "unknown" and cs and cs.get("curve_regime"):
+            regime = cs["curve_regime"]
         out[d] = {"dow": dow, "stor_surprise": round(sv, 1) if sv is not None else None,
                   "stor_surprise_sign": ("above" if sv > 0 else "below") if sv is not None else None,
-                  "curve_regime": cr[1]["regime"] if cr else "unknown",
+                  "curve_regime": regime,
                   "storage": _storage_asof(iso, stor),
+                  "storage_regional": _storage_regional_block(iso),
+                  "cot": _cot_asof_block(iso),
+                  "contract_structure": cs,
+                  "squeeze_watch": _squeeze_watch(cs),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "holiday": _holiday_asof(iso)}
@@ -266,6 +351,62 @@ def brain_show(path: str = BRAIN) -> None:
         print("  -", o)
 
 
+def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> int:
+    """(S98 Tier 0, DATA_GATE_S98) BLIND-WALL RE-AUDIT ACROSS ALL decision_state JOINS. Each feed has its
+    own publication mechanics; this audits the JOINED view a forecast agent actually receives, per date
+    over the walked window. Prints violation counts (must be 0) and per-feed None-coverage with every
+    absent date NAMED (gaps individually, never a percentage). Returns the total violation count."""
+    d0, d1 = datetime.date.fromisoformat(start_iso), datetime.date.fromisoformat(end_iso)
+    days = []
+    d = d0
+    while d <= d1:
+        if d.weekday() < 5 or d.weekday() == 6:   # trade days: Mon-Fri + Sunday sessions
+            days.append(d.isoformat())
+        d += datetime.timedelta(days=1)
+    viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
+            "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0}
+    absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": []}
+    ds = decision_state([x.replace("-", "") for x in days])
+    for iso in days:
+        k = iso.replace("-", "")
+        st = ds[k]
+        c = st.get("cot")
+        if c is None:
+            absent["cot"].append(iso)
+        elif not (c["publication_ts"][:10] < iso and c["report_date"] < iso):
+            viol["cot_publication"] += 1; print(f"  VIOLATION cot {iso}: pub {c['publication_ts']}")
+        r = st.get("storage_regional")
+        if r is None:
+            absent["storage_regional"].append(iso)
+        elif not (r["as_of"] < iso):
+            viol["storage_regional_asof"] += 1; print(f"  VIOLATION regional {iso}: as_of {r['as_of']}")
+        cs = st.get("contract_structure")
+        if cs is None:
+            absent["contract_structure"].append(iso)
+        else:
+            if not (cs.get("asof_session") and cs["asof_session"] < iso):
+                viol["structure_session"] += 1; print(f"  VIOLATION structure {iso}: asof {cs.get('asof_session')}")
+            for oik in ("open_interest_front_session", "open_interest_next_session"):
+                if cs.get(oik) is not None and not cs[oik] < iso:
+                    viol["structure_oi_session"] += 1; print(f"  VIOLATION structure-OI {iso}: {oik}={cs[oik]}")
+        s = st.get("storage")
+        if s is not None and not s["as_of"] < iso:
+            viol["storage_national"] += 1; print(f"  VIOLATION storage {iso}: as_of {s['as_of']}")
+        f = st.get("weather_forecast")
+        if f is None:
+            absent["weather_forecast"].append(iso)
+        elif f.get("asof_utc") and not f["asof_utc"][:10] < iso:
+            viol["mos_asof"] += 1; print(f"  VIOLATION mos {iso}: asof {f['asof_utc']}")
+    total = sum(viol.values())
+    print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
+    for feed, lst in absent.items():
+        if lst:
+            print(f"[audit-joins] {feed} absent on {len(lst)} dates (missing==None, named): {','.join(lst)}")
+        else:
+            print(f"[audit-joins] {feed} present on all {len(days)} dates")
+    return total
+
+
 def _selftest() -> int:
     ds = decision_state(["20250902"])
     assert ds["20250902"]["dow"] == "Tue" and ds["20250902"]["stor_surprise"] is not None, ds
@@ -281,6 +422,34 @@ def _selftest() -> int:
         assert f["asof_utc"].startswith("2026-01-19"), ("blind wall: asof must be D-1", f["asof_utc"])
         print(f"[forecast_harness] mos_asof wired: 20260120 fHDD={f['forecast_gw_hdd']} "
               f"vsNorm={f['forecast_vs_normal']} runDelta={f['forecast_run_delta']} asof={f['asof_utc']}")
+    # (S98 Tier 0) the three S97 feeds + squeeze_watch, on the canonical 2026-01-22 divergence day.
+    d22 = decision_state(["20260122"])["20260122"]
+    for key in ("cot", "storage_regional", "contract_structure", "squeeze_watch"):
+        assert key in d22, f"S98 regression: {key} missing from decision_state"
+    c = d22["cot"]
+    assert c is not None and c["publication_ts"][:10] < "2026-01-22", ("COT blind wall", c)
+    assert c["managed_money_net"] is not None and c["managed_money_net_pctile_1y"] is not None, c
+    r = d22["storage_regional"]
+    assert r is not None and r["as_of"] < "2026-01-22", ("regional blind wall", r)
+    assert r["regions"]["south_central_salt"]["level"] is not None, ("salt missing", r)
+    cs = d22["contract_structure"]
+    assert cs is not None and cs["asof_session"] == "2026-01-21", cs
+    # THE REASON THE FEED EXISTS: the OI front hides the squeeze the calendar front shows (S97 finding).
+    assert abs(cs["front_next_spread"] - 0.093) < 1e-9, cs["front_next_spread"]
+    assert abs(cs["calendar_front_next_spread"] - 1.539) < 1e-9, cs["calendar_front_next_spread"]
+    sw = d22["squeeze_watch"]
+    assert sw["active"] is True and sw["days_to_calendar_front_expiry"] == 4, sw
+    assert d22["curve_regime"] != "unknown", "S97 gate item 12: curve_regime still 'unknown'"
+    # missing-is-explicit: a pre-coverage date carries None blocks, never zeros.
+    d_old = decision_state(["20250902"])["20250902"]
+    assert d_old["contract_structure"] is None or d_old["contract_structure"].get("front_next_spread") != 0, d_old
+    # the information clock rides ONCE as a leading meta key, and day keys still index cleanly.
+    full = decision_state(["20260122"])
+    assert "_information_clock" in full and "20260122" in full, list(full)
+    print(f"[forecast_harness] S98 wired: 20260122 cot MM net={c['managed_money_net']} "
+          f"pctile1y={c['managed_money_net_pctile_1y']} | salt={r['regions']['south_central_salt']['level']} "
+          f"| cal_spread={cs['calendar_front_next_spread']} (oi-front {cs['front_next_spread']}) "
+          f"| squeeze_watch={sw['active']} | curve_regime={d22['curve_regime']}")
     brain_show()
     print("[forecast_harness] selftest PASS")
     return 0
@@ -296,10 +465,14 @@ def main() -> int:
     a3.add_argument("--anchor", required=True); a3.add_argument("--fingerprints")
     a3.add_argument("--closes")   # json string {date: close} of the block's revealed days so far
     a3.add_argument("--out")      # merge into this json {date: reveal}
+    a4 = sub.add_parser("audit-joins")   # S98 Tier 0: blind-wall re-audit across ALL joins
+    a4.add_argument("--start", default="2025-11-03"); a4.add_argument("--end", default="2026-02-27")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
         return _selftest()
+    if a.cmd == "audit-joins":
+        return 1 if audit_joins(a.start, a.end) else 0
     if a.cmd == "decision-state":
         ds = decision_state(a.days.split(","))
         print(json.dumps(ds, indent=1))

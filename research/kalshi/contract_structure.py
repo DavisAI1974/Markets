@@ -77,11 +77,15 @@ import os
 import sys
 from datetime import date as _date, datetime, timedelta, timezone
 
-DATA_DIR = "data/contract_structure"
-N0_DIR = "data/nymex_cont_n0"        # OI-continuous FRONT
-N1_DIR = "data/nymex_cont_n1"        # OI-continuous NEXT
-V0_DIR = "data/nymex_cont"           # VOLUME-continuous front (partial coverage)
-CURVE_DIR = "data/nymex_curve"
+# S98 Tier 0 fix: anchor to the repo root (module-relative), not the CWD - the S97 paths only worked
+# when invoked from the repo root, so `contract_structure_asof` silently returned None from any other
+# CWD (observed wiring decision_state). Matches cot_feed.py's _REPO pattern.
+_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_DIR = os.path.join(_REPO, "data", "contract_structure")
+N0_DIR = os.path.join(_REPO, "data", "nymex_cont_n0")     # OI-continuous FRONT
+N1_DIR = os.path.join(_REPO, "data", "nymex_cont_n1")     # OI-continuous NEXT
+V0_DIR = os.path.join(_REPO, "data", "nymex_cont")        # VOLUME-continuous front (partial coverage)
+CURVE_DIR = os.path.join(_REPO, "data", "nymex_curve")
 
 SESSIONS_PATH = os.path.join(DATA_DIR, "NG_sessions.json")
 STRUCTURE_PATH = os.path.join(DATA_DIR, "NG_structure.json")

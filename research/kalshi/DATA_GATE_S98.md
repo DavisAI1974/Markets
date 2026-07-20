@@ -72,6 +72,11 @@ seconds-to-minutes later) and it means the NYMEX read is already the leading inp
 - Same signals, two games, scored separately, never conflated. The walk's per-day calls are
   vehicle-agnostic SIGNAL; each coach owns its own execution translation and its own net-of-fee
   ledger.
+- BUILD-ORDER RATIONALE (Greg, 2026-07-20): build for the BIGGEST thing (full NYMEX depth) and use
+  LESS of it for Kalshi - never build shallow-for-Kalshi and retrofit depth later. Subsetting a deep
+  stack is trivial; deepening a shallow one is a rebuild. The subset is MEASURED, not guessed: feed
+  M's echo replay identifies which signals survive Kalshi's fee wall, so "use less" is an empirical
+  selection.
 
 ---
 
@@ -142,6 +147,11 @@ Feed IDs A-K for tracking.
   a re-pull. Re-pull from the IEM archive only what is missing. Deliver: the LATEST cycle available
   before (a) the Sunday 18:00 ET reopen and (b) each weekday open, plus run-to-run deltas between
   consecutive cycles (not just evening batches).
+- COVERAGE EXTENSION (found by the S98 Tier 0 join audit, 2026-07-20): the S97 MOS store ENDS
+  2026-01-31 - `weather_forecast` is None for ALL of February 2026, i.e. G12 and G13 would run with
+  NO forecast-temperature input and the blind agent would not know it was missing. Phase 1 MUST
+  extend the store through 2026-02-27 (fresh IEM pull for February). A hard G12 requirement,
+  independent of the cycle-timing upgrade.
 - Phase 2 (post-gate, recorded not required): full-field GFS/GEFS from the NOAA AWS Open Data
   archives (free; verify bucket coverage for Nov 2025+) for ensemble spread and a true gas-weighted
   national HDD. ECMWF historical is NOT freely archived - named gap, do not fake it.
