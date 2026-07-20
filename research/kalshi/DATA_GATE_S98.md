@@ -655,6 +655,14 @@ Queued builds shaped by the sweep regardless of the paid call: **feed T - STEO v
 and feed R arm 1 now uses the **EIA `nuclear-outages` DAILY API route (2007->present)** - no NRC
 scraping needed. Nothing balance-related builds before this conversation happens.
 
+**THE PROCUREMENT POLICY (Greg, 2026-07-20, standing):** paying for data is fine when it is
+ESSENTIAL - but ALL reliable public data gets checked FIRST, so money only ever fills PROVEN gaps.
+And the free layer has to EARN its slots: build it, then VERIFY its coverage on what it claims
+(per-date, gaps named - the standing discipline) before the paid decision finalizes. Sequence:
+S99 discussion sets the plan -> build the free composite (T, S, Q's substrate) -> measure its
+actual coverage -> only then subscribe to fill what is measured missing. No subscription on an
+assumed gap.
+
 ## PREREQUISITES (Greg, before/while the builds run)
 
 1. ROTATE the AWS pair + DATABENTO key (both exposed in-chat S97).
