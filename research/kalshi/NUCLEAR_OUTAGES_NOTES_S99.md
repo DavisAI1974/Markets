@@ -61,3 +61,18 @@ WTIQ6/XAU/XAG accrual DIES ~2026-07-31 (plan the sunset or a replacement); the "
 loop free on WTI/gold/silver" recommendation has an 11-day runway; after July 31 the cheapest
 legitimate real-time futures line is broker CME L1 (single-digit $/mo) then Databento Standard
 ($179/mo) - Pyth is no longer in the free conversation at all.
+
+## KXNATGASD SETTLEMENT MECHANICS - VERIFIED FROM THE CONTRACT SPEC (2026-07-20, closes the feed-M verify item)
+
+Read from feed L's stored definitions (5,342 markets), not assumed:
+1. Settlement = the 1-minute candlestick CLOSE at 5:00 PM EDT of the PYTH per-contract Henry Hub
+   feed (rules_primary names the contract explicitly, e.g. NGDQ6; rules_secondary says "the pyth
+   feed"). NOT the Commodities.Index.NATGAS/USD 24/7 index (different Pyth product).
+2. The underlying ROLLS FORWARD 5 BUSINESS DAYS before the current contract's last trading day
+   (rules_secondary verbatim, with month-code symbology per delivery month). Life pattern observed:
+   NGDM6 (first named KXNATGASD-26APR29) -> NGDN6 (26MAY19) -> NGDQ6 (26JUN18).
+   SPEC CONSEQUENCE (feed M / two-coach): near expiry the daily bracket references MONTH 2 while a
+   squeeze lives in the expiring front - the calendar-front-vs-OI-front lesson on the Kalshi leg.
+3. The NGD contract feeds are DEAD on free Hermes yet settle Kalshi daily -> Kalshi consumes them
+   on Pyth's PAID side. Settlement verification for us = Kalshi's own candles + settled values
+   (feed L store) - no Pyth subscription required for outcomes.
