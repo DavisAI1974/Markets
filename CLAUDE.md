@@ -1,23 +1,26 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-17, Session 96)
 
 **S96 (read `SESSION_HANDOFF_2026-07-17_S96.md` [session-total block at top] + `KICKOFF_2026-07-17_S97.md`):**
-THREE winter blocks walked, brain s95.2 -> **s98.2 (20 plays)**. PROTOCOL SETTLED (Greg): one-shot block-blind
+FOUR winter blocks walked, brain s95.2 -> **s99.2 (21 plays)**. PROTOCOL SETTLED (Greg): one-shot block-blind
 = the canonical skill test; refine after EVERY group to the ITERATE-TO-TRACKING bar (general rules only, n>=2
-spanning groups, irreducibles declared, never day-tuning); renders PRINTED to Greg before each refine merge;
-lessons merged BEFORE the next group. The arc: **G7** (Nov 5-18) blind 3/10 days but block lean right ->
-refine 9/10/drift +100 -> s96.2 (giveback_exhaustion_boundary = the day-SEQUENCING answer; storage-Thursday
-side = running swing never print sign; Monday-as-reversal retired). **G8** (Nov 19 - Dec 2) blind 7/10, lean
-right -> refine 10/10/drift -250 -> s97.2 (catalyst_continuity_frontrun: live ramp front-runs the print;
-R2 leg-vs-net; winter bands; thin AMPLIFIES delivery). **G9** (Dec 3-31, 20 days, the surplus-collapse
-December) = **the first BLOCK-LEAN MISS**: blind 13/20 days but +3000g vs ~-6150a — the market crested Dec 5
-and SOLD THE COLD all month (backwardation; first NEGATIVE roll, Jan->Feb -0.504 at the Christmas reopen) ->
-refine 18/20, cumulative tracks the crash -> s98.2 (**chain_polarity_flip**: parabolic ARM + band-breaking
-counter-day CONFIRM, back-checked on the 1007 top + 1016 bottom; prints are chain-sided at current POLARITY
-7/7 — the fundamental-inversion dissolver; failed_rally_tell; crash bands). Every strong rule consumes day-N-1
-actual tape -> the LIVE coach runs day-sequential (S96 3-day experiment, paused+recorded, called 1106 near-
-exact); one-shot stays the test. BLIND FIX: storage joins strictly-prior (Thursday's own print was leaking).
-Thanksgiving = REAL thin session (map corrected). NEXT = G10 (Jan 2-16) blind on s98.2 — first blind test of
-the polarity-flip suite; then the net-of-fee coach replay on the walked winter (the money question).
+spanning groups, never day-tuning); renders PRINTED to Greg before each refine merge; lessons merged BEFORE
+the next group; blocks now START SUNDAY (reopen) / END FRIDAY (close). The arc: **G7** (Nov 5-18) blind 3/10
+-> refine 9/10 -> s96.2 (giveback_exhaustion_boundary; Thursday side = running swing never print sign).
+**G8** (Nov 19 - Dec 2) blind 7/10, lean right -> refine 10/10 -> s97.2 (catalyst_continuity_frontrun; R2
+leg-vs-net; winter bands; thin AMPLIFIES delivery). **G9** (Dec 3-31, surplus-collapse December) = block-lean
+MISS 1: 13/20 days but the market crested Dec 5 + SOLD THE COLD to -6150 (backwardation; first NEGATIVE roll
+-0.504) -> refine 18/20 -> s98.2 (chain_polarity_flip; prints chain-sided at POLARITY 7/7; failed_rally_tell;
+crash bands). **G10** (Jan 2-16) = block-lean MISS 2, a FALSE FLIP: 6/11, called a chain-birth off basing but
+the down-chain never ended (0109 bullish draw SOLD -2760) -> refine **11/11 / drift +320** -> **s99.2**: the
+flip CONFIRM hardened to FOUR mandatory conditions (band-break >=1.5x; old-side continuation-collapse <=15%;
+printed-never-front-run; first-print arbiter), TERMINATION != BIRTH (chain birth needs a forward driver), NEW
+third chain class **post_parabolic_bleed** (crashes single except into prints, bounces 1-2 days never 3).
+Both lean-misses were POLARITY calls — the flip is now the hardest-guarded rule. LIVE-coach cadence (Greg):
+rolling week-ahead arc + DAILY re-anchor pass that may OVERRIDE it (every strong rule consumes day-N-1 tape).
+DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' all S96) + **historical
+FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
+winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
+first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
 **One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
 follower.** **git = CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an

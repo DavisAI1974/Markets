@@ -33,14 +33,16 @@ superseded ones down. (Started S81, 2026-07-12.)
   reveal packages: per-day actuals + per-leg fingerprint counts; kept for the LIVE-coach mode).
 - **`research/kalshi/forecasts/grp7.json`** — G7 blind + refined fields per day; `grp7_seq_experiment.json` —
   the paused 3-day day-sequential experiment (its 1106 +1450g/+1350a hit = the day-boundary-turn evidence).
-- **`research/kalshi/knowledge/ng_brain.json`** — **s98.2, 20 plays** (S96 arc added: giveback_exhaustion_
+- **`research/kalshi/knowledge/ng_brain.json`** — **s99.2, 21 plays** (S96 arc added: giveback_exhaustion_
   boundary, mature_swing_alternation, giveback_origin_shelf, catalyst_continuity_frontrun,
-  chain_polarity_flip, failed_rally_tell, crash_regime_bands). Backups + all proposals alongside.
-- **`research/kalshi/forecasts/grp{7,8,9}.json`** — blind + refined fields per day for the three winter
-  blocks; `grp9` is the 20-day December surplus-collapse block (first block-lean miss -> polarity flip).
-- **`research/kalshi/renders/ng_refine_s95/`** — g{7,8,9}_{continuous,overlay}.png + g{7,8,9}_refined_*.png +
-  rt/score jsons + grp{7,8,9}_state.json + grp7_reveals.json; fingerprints.json extended Nov 4 -> Dec 31
-  (41 characterized days total).
+  chain_polarity_flip [four-condition confirm], failed_rally_tell, crash_regime_bands,
+  post_parabolic_bleed). Backups + all proposals alongside.
+- **`research/kalshi/forecasts/grp{7,8,9,10}.json`** — blind + refined fields per day for the four winter
+  blocks; `grp9` = the December surplus-collapse crash (lean-miss 1 -> polarity flip); `grp10` = the January
+  bleed (lean-miss 2, the false flip -> the hardened confirm + the bleed class).
+- **`research/kalshi/renders/ng_refine_s95/`** — g{7,8,9,10}_{continuous,overlay}.png + *_refined_*.png +
+  rt/score jsons + grp*_state.json + grp7_reveals.json; fingerprints.json spans Nov 4 -> Jan 16
+  (52 characterized days).
 
 ## S95 — continuous-curve + roll-adjustment + refinement machinery (CURRENT)
 - **`research/kalshi/continuous_rt.py`** — THE RENDER FILE (canonical, date-parameterized): real-price RT

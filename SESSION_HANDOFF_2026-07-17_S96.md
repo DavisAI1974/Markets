@@ -19,9 +19,31 @@
   direction 18/20 (1210 pause + a -10 flat), cumulative tracks the crash (drift ±1000 until the declared 1223
   +5010 tail; final -2900 vs the blind's +10k float). Irreducibles: two-sided extreme tails, Sunday-gap size,
   third-day pause (n=1 each way), post-termination basing.
-- Renders printed to Greg at every step (blind + refined, all three groups). Refine cadence = per group
+- **G10 (Jan 2-16 2026, ends Friday close per Greg; roll-clean)** blind on s98.2: **the SECOND block-lean
+  miss — a FALSE polarity flip**: direction 6/11, +4250g vs -6020a (3.64 -> 3.11; the down-chain never
+  ended; the 0109 bullish draw SOLD -2760 = the polarity-sided print rule's 8th confirm, fed by a wrong
+  polarity verdict). Refine -> **s99.2 (21 plays)**: the flip CONFIRM hardened to FOUR mandatory conditions
+  (C1 band-break >=1.5x; C2 old-side continuation-collapse <=~15% in the ACTUAL tape — 0107's big down-legs
+  were 6/7 still continuing; C3 printed-never-front-run — front-running is for with-chain resumes ONLY;
+  C4 first-print arbiter), TERMINATION != BIRTH (chain birth needs a forward driver; against a re-widening
+  surplus a fired signature yields basing at most), NEW third chain class `structure.post_parabolic_bleed`
+  (crashes single except into prints; bounces 1-2 days never 3; pauses +300..+700; the G9 third-day-pause
+  dissolves), R1 scope fix (bounce arm reads chain-side days only), polarity-relative bands formalized.
+  Refined: **direction 11/11, final drift +320** (blind +10,270). Back-check: fires all true flips
+  (1008, 1208, 1019/1020, 0922->0925), rejects 0107/0108 AND re-classes 1222/1223 as termination-to-basing.
+- Renders printed to Greg at every step (blind + refined, all four groups). Refine cadence = per group
   (Greg); refine bar = iterate-to-tracking via GENERAL rules only (Greg). All merged brains + proposals +
-  backups + records committed. NEXT = G10 (January) — see `KICKOFF_2026-07-17_S97.md`.
+  backups + records committed. Blind day-direction across the walk: G7 3/10 -> G8 7/10 -> G9 13/20 -> G10
+  6/11 (both lean-misses were CHAIN-POLARITY calls — the flip is now the hardest-guarded rule in the brain).
+- LIVE-coach cadence decided (Greg): rolling WEEK-AHEAD arc + a DAILY re-anchor pass the evening/morning
+  before that may OVERRIDE the arc (the sequential mode; every strong rule consumes day-N-1 tape).
+- DATA next session (Greg): (1) regenerate the forward-curve cache (Databento, ~$0.07 — curve_regime has
+  been 'unknown' all session; backwardation was passed via roll spreads); (2) BUILD the historical FORECAST-
+  temperature feed — IEM archives NWS MOS point forecasts back to ~2000 (mesonet.agron.iastate.edu/mos/,
+  download API): reconstruct forecast-asof-D-1 for the 16 demand metros -> forecast-vs-realized DELTAS +
+  run-to-run changes into decision_state (the market moves on the delta, not the realized — Greg S96).
+  NEXT = G11 (SUNDAY Jan 18 reopen -> Fri Jan 30; new Sunday-start convention; MLK Jan 19 thin; the
+  Feb->Mar roll likely lands INSIDE ~Jan 26-27 — roll_offsets FIRST) — see `KICKOFF_2026-07-17_S97.md`.
 
 ---
 (The sections below were written at the G7 milestone and stand as the detailed G7 record.)
