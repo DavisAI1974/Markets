@@ -100,6 +100,11 @@ Real execution risks (where attention actually belongs, per S81's own cells):
 
 ## 5. MIGRATION STEPS (M-steps; parallel to the data gate, does NOT block G12)
 
+- **S100 STANDING NOTE — WHICH AWS KEY: the pair whose SECRET begins `txRGHd` (ID
+  `AKIAYI6JDCBVLKYQGLMH`, account ...4170) is THE live key. Verified working 2026-07-20. If STS
+  rejects it with InvalidClientTokenId, the key is NOT the problem — cloud containers inject
+  placeholder AWS env vars that override `~/.aws/credentials`; run AWS commands via `bash -lc`
+  or pass creds explicitly. Full secret never in repo/chat. See CLAUDE.md "AWS KEY" section.**
 - M1 (GREG, BLOCKS ALL PUSHES): rotate the AWS pair + Databento key (exposed S97).
   STATUS 2026-07-20: AWS pair ROTATED - new key live in `scratchpad/aws.env`, verified via STS
   (user/Claude) + S3 list. The Claude IAM user has no iam:* permissions (correct least-privilege),

@@ -7,6 +7,13 @@ script), 75bfd9b9 (settle-delta sweep), + this close-out.
 
 ## SECURITY - THE FIRST ITEM OF S100 (pending, Greg deferred in-session: "good for the moment")
 
+**S100 SUPERSEDING NOTE (2026-07-20): rotation DEFERRED TO GO-LIVE per Greg — do not re-open
+this block as a work item. THE LIVE KEY = the pair whose SECRET begins `txRGHd` (ID
+`AKIAYI6JDCBVLKYQGLMH`, account ...4170), verified working S100. InvalidClientTokenId on it
+means the cloud container's placeholder AWS env vars are overriding the real pair — use
+`bash -lc` or explicit creds. The key is good; never spend session time re-diagnosing it.
+See CLAUDE.md "AWS KEY" section.**
+
 The LIVE AWS key pair was photographed into chat this session (the IAM "Retrieve access keys"
 screen, secret fully legible; ID verified == aws.env). Policy: treat as COMPROMISED. S100 opens
 with Greg's console actions: create a new key -> type it DIRECTLY into `scratchpad/aws.env` (never
