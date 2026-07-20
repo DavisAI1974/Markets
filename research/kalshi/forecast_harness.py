@@ -410,6 +410,46 @@ def _vol_regime_block(iso: str) -> dict | None:
                         "None = insufficient prior sessions on that basis, never calm"}
 
 
+def _mos_cycle_block(iso: str) -> dict | None:
+    """(S100 feed A phase 1) hour-resolution CYCLE-LEVEL MOS as-of, additive beside weather_forecast.
+    weekday_open = what was available at 08:00 ET on D, with per-horizon deltas vs the D-1-evening
+    state (the overnight cycles' add). sunday_reopen (Mondays only) = what was available BEFORE the
+    Sun 18:00 ET reopen, deltas vs Saturday evening = the weekend cycles' add - the information the
+    0118 +2100 / 0125 +2480 gaps priced (measured: the Jan-24 +8.511 add was reopen-available).
+    Availability wall: cycle usable from runtime + 4.5h (conservative; posting stamps unrecoverable
+    from the IEM archive - named limitation). None = store absent for the day, never zeros."""
+    try:
+        import mos_cycle_feed
+    except Exception:
+        return None
+    rec = mos_cycle_feed.mos_cycle_asof(iso)
+    if rec is None:
+        return None
+
+    def _compact(view):
+        if not view:
+            return None
+        hs = view["horizons"]
+        d0 = hs[0]
+        stamps = [rt.split("@")[-1] for h in hs for rt in (h.get("cycle_by_metro") or {}).values()]
+        return {"asof_utc": view["asof_utc"], "asof_et": view["asof_et"],
+                "gw_hdd_d0": d0["gw_hdd"], "vs_normal_d0": d0["forecast_vs_normal"],
+                "regime_d0": d0.get("regime"),
+                "max_cycle_runtime_utc": (max(stamps) if stamps else None),
+                "delta_vs_prior_by_horizon": [
+                    {"target": h["target_date"],
+                     "d_gw_hdd": (h.get("delta_vs_prior") or {}).get("d_gw_hdd")} for h in hs],
+                "availability_rule": view["availability_rule"]}
+
+    out = {"weekday_open": _compact(rec.get("weekday_open")),
+           "note": ("cycle-level as-of (feed A ph1): weekday_open deltas = the overnight cycles vs the "
+                    "D-1-evening state; sunday_reopen (Mondays) = the weekend cycles' add available "
+                    "BEFORE the Sun 18:00 ET reopen, decision-time-legit")}
+    if rec.get("sunday_reopen"):
+        out["sunday_reopen"] = _compact(rec["sunday_reopen"])
+    return out
+
+
 def decision_state(days: list[str]) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
@@ -458,6 +498,7 @@ def decision_state(days: list[str]) -> dict:
                   "options_surface": _options_surface_block(iso),
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
+                  "weather_forecast_cycle": _mos_cycle_block(iso),
                   "model_disagreement": _model_disagreement_block(iso),
                   "holiday": _holiday_asof(iso)}
     return out
@@ -577,10 +618,11 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
     viol = {"cot_publication": 0, "storage_regional_asof": 0, "structure_session": 0,
             "structure_oi_session": 0, "storage_national": 0, "mos_asof": 0, "consensus_join": 0,
             "cash_knowable": 0, "steo_release": 0, "nuclear_wall": 0, "grid_wall": 0,
-            "options_session": 0}
+            "options_session": 0, "mos_cycle_wall": 0}
     absent = {"cot": [], "storage_regional": [], "contract_structure": [], "weather_forecast": [],
               "storage_consensus": [], "vol_regime": [], "cash_basis": [], "steo_vintage": [],
-              "nuclear_outages": [], "grid_stack": [], "options_surface": []}
+              "nuclear_outages": [], "grid_stack": [], "options_surface": [],
+              "weather_forecast_cycle": []}
     ds = decision_state([x.replace("-", "") for x in days])
     for iso in days:
         k = iso.replace("-", "")
@@ -654,6 +696,21 @@ def audit_joins(start_iso: str = "2025-11-03", end_iso: str = "2026-02-27") -> i
             absent["options_surface"].append(iso)
         elif not osb["asof_session"] < iso:
             viol["options_session"] += 1; print(f"  VIOLATION options {iso}: session {osb['asof_session']}")
+        wfc = st.get("weather_forecast_cycle")
+        if wfc is None:
+            absent["weather_forecast_cycle"].append(iso)
+        else:
+            # the cycle wall: in EVERY view, the newest contributing cycle + 4.5h dissemination lag
+            # must not pass the view's own asof moment (runtimes/asof both UTC, lexical-comparable)
+            for vname in ("weekday_open", "sunday_reopen"):
+                v = wfc.get(vname)
+                if not v or not v.get("max_cycle_runtime_utc"):
+                    continue
+                rt = datetime.datetime.strptime(v["max_cycle_runtime_utc"], "%Y-%m-%d %H:%M:%S")
+                asof = datetime.datetime.strptime(v["asof_utc"], "%Y-%m-%dT%H:%M:%SZ")
+                if rt + datetime.timedelta(hours=4.5) > asof:
+                    viol["mos_cycle_wall"] += 1
+                    print(f"  VIOLATION mos-cycle {iso} {vname}: cycle {v['max_cycle_runtime_utc']} vs asof {v['asof_utc']}")
     total = sum(viol.values())
     print(f"[audit-joins] {start_iso}..{end_iso} ({len(days)} trade days) violations: {viol} TOTAL={total}")
     for feed, lst in absent.items():
@@ -809,6 +866,21 @@ def _selftest() -> int:
           f"pctile1y={c['managed_money_net_pctile_1y']} | salt={r['regions']['south_central_salt']['level']} "
           f"| cal_spread={cs['calendar_front_next_spread']} (oi-front {cs['front_next_spread']}) "
           f"| squeeze_watch={sw['active']} | curve_regime={d22['curve_regime']}")
+    # (S100 feed A phase 1) cycle-level MOS as-of: additive block present; the 0119-Monday pin -
+    # the sunday_reopen view carries the Jan-24 +8.511 gw-HDD add (measured 2026-07-20, equals the
+    # run-delta s100_2 recorded arriving an hour AFTER the reopen in the D-1-evening frame).
+    d19 = decision_state(["20260119"])["20260119"]
+    wfc = d19.get("weather_forecast_cycle")
+    if wfc is not None:
+        assert wfc.get("weekday_open") is not None, wfc
+        sr = wfc.get("sunday_reopen")
+        assert sr is not None, "0119 is a Monday - the sunday_reopen view must ride"
+        j24 = [x for x in sr["delta_vs_prior_by_horizon"] if x["target"] == "2026-01-24"]
+        assert j24 and abs(j24[0]["d_gw_hdd"] - 8.511) < 1e-9, ("the 0118 reopen pin", j24)
+        assert sr["max_cycle_runtime_utc"] is not None and sr["max_cycle_runtime_utc"] <= "2026-01-18 18:00:00", sr
+        print(f"[forecast_harness] mos_cycle wired: 0119 sunday_reopen Jan-24 add "
+              f"{j24[0]['d_gw_hdd']:+.3f} gw-HDD, newest cycle {sr['max_cycle_runtime_utc']}Z "
+              f"(reopen-available)")
     brain_show()
     print("[forecast_harness] selftest PASS")
     return 0
