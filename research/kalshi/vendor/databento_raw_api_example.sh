@@ -35,3 +35,12 @@ echo "schema=trades|stype_in=parent|symbols=ES.FUT" >&3
 echo "start_session=1" >&3
 
 timeout 20s cat <&3
+
+# VARIANT (same tutorial, step 3 continued): only the subscribe line changes - any schema
+# and symbol list can be requested the same way, e.g. 1-second OHLCV bars for two parents:
+#   echo "schema=ohlcv-1s|stype_in=parent|symbols=ES.FUT,NQ.FUT" >&3
+#   echo "start_session=1" >&3
+#   timeout 10s cat <&3
+# Live schemas therefore include ohlcv-1s server-side aggregation. Our NG canary stays on
+# schema=trades (1s bars undersample the lag - standing rule); ohlcv-1s is noted as a
+# bandwidth-saving option for slower-cadence live consumers.
