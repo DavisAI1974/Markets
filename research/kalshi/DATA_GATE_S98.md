@@ -210,6 +210,13 @@ pass-2-adjacent work - not needed for G12/G13, which run on the n0 basis).
 - `vol_regime_asof(date) -> dict | None`. Free, local, medium build.
 
 ### C. Model disagreement (family D) - S97 gate item 7, unchanged.
+STATUS: **DONE + WIRED 2026-07-20** (`model_disagreement.py`, store on S3 `model_disagreement/`,
+119 days through Feb 27). Per-matched-horizon MAV-vs-MET gw-HDD spread (overlap = short-range
+h0-h1 - MET's reach), per-model run-to-run stability split (WHICH model moved), D-1-evening as-of.
+The 0125 whipsaw-eve carries max spread 1.733 gw-HDD; the 0125/0126 cut-then-re-add is visible in
+the per-model split. Module selftest ALL PASS; harness selftest pins the case + Feb coverage.
+BUILD NOTE: the agent's completion monitors fizzled twice - orchestrator verified directly and
+superseded; a recurring subagent-wake failure mode worth carrying to S99 ops.
 - WHY: the market prices uncertainty, not just the central case. G11's 0125/0126 whipsaw happened on
   a wobbling forecast.
 - GFS-MAV vs NAM-MET, both already pulled. Horizon-MATCHED disagreement only (MET is short-range; the
