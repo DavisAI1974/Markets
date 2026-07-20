@@ -1,0 +1,746 @@
+{
+ "group": 13,
+ "tag": "grp13_refined_view",
+ "brain_version": "s101.6-proposal (refined view)",
+ "anchor": {
+  "date": "2026-02-13",
+  "close": 3.084,
+  "last_hour_dir": "down",
+  "day_net_usd": -160
+ },
+ "note": "VIEW ONLY: refined_* fields of forecasts/grp13.json mapped to standard guess fields for continuous_score.py; the blind record lives in grp13.json untouched",
+ "days": [
+  {
+   "date": "20260215",
+   "dow": "Sun",
+   "archetype": "weekend weather-moderate warm-cut gap + thin Sunday drift down",
+   "overnight_gap_usd": -900,
+   "guess_curve": [
+    [
+     20,
+     -100
+    ],
+    [
+     22,
+     -250
+    ],
+    [
+     0,
+     -250
+    ],
+    [
+     2,
+     -250
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -250
+    ],
+    [
+     10,
+     -250
+    ],
+    [
+     12,
+     -250
+    ],
+    [
+     14,
+     -250
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -250
+    ],
+    [
+     20,
+     -250
+    ]
+   ],
+   "guessed_net_usd": -250
+  },
+  {
+   "date": "20260216",
+   "dow": "Mon",
+   "archetype": "Presidents Day thin session: overnight prices the residual warm cuts, the building far cold add prices UP intraday (thin-amplifier with a live catalyst)",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     -50
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -250
+    ],
+    [
+     4,
+     -300
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     0
+    ],
+    [
+     12,
+     100
+    ],
+    [
+     14,
+     250
+    ],
+    [
+     16,
+     350
+    ],
+    [
+     18,
+     350
+    ],
+    [
+     20,
+     350
+    ]
+   ],
+   "guessed_net_usd": 350
+  },
+  {
+   "date": "20260217",
+   "dow": "Tue",
+   "archetype": "deferred catch-up verdict: FADE - the desks sell the far add against the block-warmest near-term",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     250
+    ],
+    [
+     10,
+     -100
+    ],
+    [
+     12,
+     -200
+    ],
+    [
+     14,
+     -250
+    ],
+    [
+     16,
+     -300
+    ],
+    [
+     18,
+     -300
+    ],
+    [
+     20,
+     -300
+    ]
+   ],
+   "guessed_net_usd": -300
+  },
+  {
+   "date": "20260218",
+   "dow": "Wed",
+   "archetype": "core drift-down continuation: near-term warmth still owns the tape, cycles cut the shot tail",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -200
+    ],
+    [
+     4,
+     -250
+    ],
+    [
+     6,
+     -300
+    ],
+    [
+     8,
+     -300
+    ],
+    [
+     10,
+     -350
+    ],
+    [
+     12,
+     -350
+    ],
+    [
+     14,
+     -400
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "guessed_net_usd": -200
+  },
+  {
+   "date": "20260219",
+   "dow": "Thu",
+   "archetype": "storage Thursday in a BASING state: post-print leg follows the bearish surprise, small net",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     -50
+    ],
+    [
+     8,
+     100
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     -100
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -250
+    ],
+    [
+     18,
+     -250
+    ],
+    [
+     20,
+     -250
+    ]
+   ],
+   "guessed_net_usd": -250
+  },
+  {
+   "date": "20260220",
+   "dow": "Fri",
+   "archetype": "Friday up-repricing: the moderate add ENTERS THE NEAR WINDOW (D+2) and prices - grind into the cold weekend",
+   "overnight_gap_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     80
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     120
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     350
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     450
+    ],
+    [
+     18,
+     500
+    ],
+    [
+     20,
+     500
+    ]
+   ],
+   "guessed_net_usd": 500
+  },
+  {
+   "date": "20260222",
+   "dow": "Sun",
+   "archetype": "weekend weather-moderate + delivery-window pull gap UP, thin Sunday give-back",
+   "overnight_gap_usd": 1150,
+   "guess_curve": [
+    [
+     20,
+     -50
+    ],
+    [
+     22,
+     -150
+    ],
+    [
+     0,
+     -150
+    ],
+    [
+     2,
+     -150
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -150
+    ],
+    [
+     12,
+     -150
+    ],
+    [
+     14,
+     -150
+    ],
+    [
+     16,
+     -150
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "guessed_net_usd": -150
+  },
+  {
+   "date": "20260223",
+   "dow": "Mon",
+   "archetype": "bidweek Monday CREST-FADE: sell-the-realization - the lull give-back class opens the arch down-slope",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     -100
+    ],
+    [
+     22,
+     -250
+    ],
+    [
+     0,
+     -300
+    ],
+    [
+     2,
+     -450
+    ],
+    [
+     4,
+     -500
+    ],
+    [
+     6,
+     -600
+    ],
+    [
+     8,
+     -450
+    ],
+    [
+     10,
+     -800
+    ],
+    [
+     12,
+     -1000
+    ],
+    [
+     14,
+     -1400
+    ],
+    [
+     16,
+     -1600
+    ],
+    [
+     18,
+     -1650
+    ],
+    [
+     20,
+     -1600
+    ]
+   ],
+   "guessed_net_usd": -1600
+  },
+  {
+   "date": "20260224",
+   "dow": "Tue",
+   "archetype": "young down-chain day-2 extension through opex: shallow give-back band",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -100
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -400
+    ],
+    [
+     10,
+     -550
+    ],
+    [
+     12,
+     -450
+    ],
+    [
+     14,
+     -550
+    ],
+    [
+     16,
+     -750
+    ],
+    [
+     18,
+     -850
+    ],
+    [
+     20,
+     -800
+    ]
+   ],
+   "guessed_net_usd": -800
+  },
+  {
+   "date": "20260225",
+   "dow": "Wed",
+   "archetype": "expiry-day alternation bounce: R4 after a -2590 two-session chain + front going off the board",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -100
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     300
+    ],
+    [
+     12,
+     550
+    ],
+    [
+     14,
+     500
+    ],
+    [
+     16,
+     400
+    ],
+    [
+     18,
+     450
+    ],
+    [
+     20,
+     450
+    ]
+   ],
+   "guessed_net_usd": 450
+  },
+  {
+   "date": "20260226",
+   "dow": "Thu",
+   "archetype": "storage Thursday chain-sided DOWN: the young down-chain resumes through a bearish print",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -100
+    ],
+    [
+     0,
+     -200
+    ],
+    [
+     2,
+     -400
+    ],
+    [
+     4,
+     -550
+    ],
+    [
+     6,
+     -600
+    ],
+    [
+     8,
+     -750
+    ],
+    [
+     10,
+     -700
+    ],
+    [
+     12,
+     -550
+    ],
+    [
+     14,
+     -650
+    ],
+    [
+     16,
+     -600
+    ],
+    [
+     18,
+     -550
+    ],
+    [
+     20,
+     -650
+    ]
+   ],
+   "guessed_net_usd": -650
+  },
+  {
+   "date": "20260227",
+   "dow": "Fri",
+   "archetype": "Friday terminal squaring counter-bounce at a mature down-swing",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     100
+    ],
+    [
+     0,
+     50
+    ],
+    [
+     2,
+     100
+    ],
+    [
+     4,
+     100
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     200
+    ],
+    [
+     10,
+     350
+    ],
+    [
+     12,
+     200
+    ],
+    [
+     14,
+     350
+    ],
+    [
+     16,
+     250
+    ],
+    [
+     18,
+     300
+    ],
+    [
+     20,
+     300
+    ]
+   ],
+   "guessed_net_usd": 300
+  }
+ ]
+}
