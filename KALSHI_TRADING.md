@@ -24,6 +24,23 @@ The map of every Kalshi file: what it is, where it lives, and whether it's part 
 pipeline or an OLD/completed piece. Keep this current — add new files to the top section, move
 superseded ones down. (Started S81, 2026-07-12.)
 
+## S98 — the rewritten DATA GATE (CURRENT — the build list before any new group runs)
+- **`research/kalshi/DATA_GATE_S98.md`** — THE AUTHORITATIVE DATA PLAN (Greg 2026-07-20: "this is what
+  we're doing before we do any more runs"). Supersedes the GATE section of
+  `SESSION_HANDOFF_2026-07-19_S97.md`. Organized by regime family (DEMAND / POSITIONING / DELIVERY):
+  Tier 0 = wire the three landed S97 feeds + `squeeze_watch` + the information clock; Tier 1 = G11
+  fingerprints on `.n.0` -> the C2 ratio reformulation (the G12 critical path); Tier 2 = feeds A-K
+  (model-cycle timing, vol regime, model disagreement, storage CONSENSUS, freeze-off risk, flow
+  calendar, cash basis, COT combined, options surface [required for G13], LNG feedgas sizing spike,
+  revision-vintage audit); Tier 3 = brain doctrine (usage guidance, flip driver checklist,
+  evidence-day registry, two-books scoring split, squeeze-regime doctrine). Gate-closure condition at
+  the bottom defines when G12/G13 may run.
+- **S97 feed modules (landed S97, indexed here):** `research/kalshi/cot_feed.py` +
+  `data/cot/` (CFTC COT, publication-time blind wall); `research/kalshi/storage_regional.py` +
+  `data/storage_regional/` (EIA five-region + salt/non-salt); `research/kalshi/contract_structure.py`
+  + `data/contract_structure/` (49 fields incl. the CALENDAR-FRONT block that sees what the
+  OI-continuous front hides). None wired until DATA_GATE_S98 Tier 0.
+
 ## S96 — G7 winter block + per-group refine + the settled protocol (CURRENT)
 - **PROTOCOL (Greg S96):** one-shot block-blind = the CANONICAL skill test; refine after EVERY group
   (iterate until refined curves track via GENERAL rules only, n>=2 spanning groups; irreducibles declared);

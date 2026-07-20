@@ -1,0 +1,333 @@
+# DATA GATE S98 - THE REWRITTEN DATA PLAN (supersedes the GATE section of SESSION_HANDOFF_2026-07-19_S97.md)
+
+Status: AUTHORITATIVE as of 2026-07-20 (Greg: "this is what we're doing before we do any more runs").
+This document extends the S97 gate with the desk-review additions (S98 desk gap analysis, delivered
+in-chat 2026-07-20) and reorganizes everything by regime family, tier, and critical path. The S97
+handoff's gate section remains the historical record; THIS file is the build list. NO NEW GROUP RUNS
+until the gate-closure condition at the bottom of this file is met.
+
+---
+
+## 0. DOCTRINE (Greg, load-bearing - governs every build below, verbatim from S97)
+
+- **We are NOT testing theses.** We put what we believe is relevant information in front of the agent
+  and IT decides how to use it. Never gate an input on whether it "worked", never score keep/drop,
+  never quarantine an input that looks inert. Characterize per-instance where conditions discriminate
+  ("works on {X}, not on {Y}") and leave the data in place.
+- **MISSING IS EXPLICIT, NEVER ZERO.** `None` = unknown. A zeroed HDD in January, a zeroed storage
+  level, or a zeroed front/next spread during a squeeze are each catastrophic false signals.
+- **ADDITIVE only.** Never replace, rename, or remove existing fields.
+- **BLIND WALL per feed, stated with its exact publication mechanics** (each feed's trap named in its
+  spec below). Assertion in code AND an audit of the built store reporting the violation count.
+- **Standalone module + `*_asof(date) -> dict | None`.** Feed builders NEVER edit
+  `forecast_harness.py`; decision_state is wired in ONE serial pass by the orchestrator.
+- **Investigate the real endpoint/format FIRST** (WebFetch). If the archive does not cover the period
+  or the format changed, SAY SO and STOP. Zero synthetic data. No interpolation.
+- **Coverage reported PER DATE / PER REGION, gaps named individually, never as a percentage.**
+- Every feed ships a `--selftest`. Builders do not commit. No emojis.
+- **Sources: free + Databento** (Databento spend authorized, Greg S97). Any other paid source is a
+  question for Greg, never an assumption.
+
+## 0b. THE ORGANIZING PRINCIPLE (from the S98 desk review)
+
+The market has three regime families with different physics, and the walk's misses sort cleanly by
+which family the forecaster could not see:
+
+| family | physics | the walk's evidence |
+|---|---|---|
+| DEMAND | weather-driven; HDD deltas reprice the strip | most of the brain's plays live here and work |
+| POSITIONING | crowding sets convexity; squeezes overshoot every band | G11: MM net short at the 2.83rd 1-yr percentile on Jan 16, then a 63 percent rally |
+| DELIVERY | contracts-vs-deliverable-supply near expiry; cash leads, gamma amplifies | G11 0130 +5020 (17x under band); NGG26 settled 7.460 |
+
+Every feed below is tagged D / P / DEL (or CAL for calendar / META for integrity). The point of the
+gate is that the agent must be able to SEE all three families before G12; G13 is the designed forward
+test of the DELIVERY family.
+
+---
+
+## TIER 0 - WIRE WHAT IS ALREADY LANDED (JOB 0; serial, one hand, orchestrator only)
+
+The three S97 feeds are committed, pushed, and on local disk. None are wired. This tier is ONE
+collision-free serial pass over `forecast_harness.py::decision_state`.
+
+| feed | module | function | family |
+|---|---|---|---|
+| COT positioning | `cot_feed.py` | `cot_asof(date, contract_code="023651", data_dir=None)` | P |
+| Regional/salt storage | `storage_regional.py` | `storage_regional_asof(date)` | D |
+| Contract structure | `contract_structure.py` | `contract_structure_asof(date, root="NG")` (49 fields) | DEL |
+
+Wiring requirements (all from S97, unchanged and non-negotiable):
+1. **Expose the CALENDAR-FRONT fields, not just n0/n1** - `calendar_front_next_spread`, its 1/3/5d
+   changes, `days_to_calendar_front_expiry`, `mar_apr_spread`. On 2026-01-22 `front_next_spread` reads
+   0.093 while the real squeeze sat at `calendar_front_next_spread` 1.539 - wiring only the obvious
+   fields ships a feed that structurally cannot see the event it exists for.
+2. Respect `*_pair_changed_*d` - cross-roll spread changes are `None`, not moves.
+3. Blind wall re-audited on every join: COT keys on PUBLICATION (Friday 15:30 ET for Tuesday
+   positions - the naive rule leaks 3 days of future positioning into every Wed/Thu); EIA storage
+   Thursday 10:30 ET strictly-prior (the S96 fix pattern); OI respects CME next-morning publication.
+4. Confirm `curve_regime` stops reading `'unknown'`.
+5. All additive; missing explicit; `forecast_harness.py --selftest` extended with per-feed assertions
+   (present-or-None, never zeroed) and must PASS.
+
+**NEW in the wiring pass (S98 desk review) - two derived, additive state reads:**
+6. **`squeeze_watch`** (family DEL) - a convenience read derived transparently from already-wired
+   structure fields: `days_to_calendar_front_expiry <= 7` AND `calendar_front_next_spread_chg_3d`
+   positive-and-widening. Exposed as a named flag PLUS its components so the agent sees both the
+   read and the raw. It is information, not a gate; its definition lives in the field's `note`.
+7. **Clock doctrine constant** - a static `information_clock` block (not per-day data): the ET hours
+   at which information arrives (model cycle post times, EIA 10:30 Thu, settle window 14:00-14:30,
+   Globex reopen 18:00). Static reference so the agent can reason "this catalyst lands at 19:00 ET,
+   so it prices the gap, not the session." (The S97.2 finding that 0119's catalyst was consumed by
+   the gap generalizes to this.)
+
+## TIER 1 - THE G12 BLOCKERS (critical path; orchestrator, serial)
+
+1. **G11 fingerprints on `.n.0`** - run `characterize_turns.py` / `month_characterize` over the G11
+   window on the NG.n.0 tape (local `data/nymex_cont_n0/`, restore from S3 only if missing).
+   Output: `fingerprints.json`-compatible per-leg rows for G11. This is the prerequisite for:
+2. **The C2 ratio reformulation** (family: tape; the flip-rule fix). Re-express the old-side
+   continuation-collapse confirm as the RATIO of old-side to new-side continuation (scale-invariant)
+   instead of an absolute share-of-legs bar that is mechanically unreachable on 75-125k-trade tapes.
+   The refine's 0.00-0.42 true vs 1.23 false figures are a FLAGGED BUILD GAP, not a threshold -
+   derive properly on the fingerprint-comparable base, per-instance, spanning the walk's 5 true and
+   1 false flip instances. Without this, the four-condition flip confirm cannot complete on modern
+   high-activity tapes and G12 inherits G11's exact failure mode. **G12 does not run until this is
+   done.**
+
+## TIER 2 - NEW FEEDS (parallel STEP C subagent builds per AGENT_RUNBOOK_S95 STEP C; then ONE second
+serial wiring pass by the orchestrator)
+
+Each entry: WHY (concrete, names the instance that motivates it), source, fields, blind wall, size.
+Feed IDs A-K for tracking.
+
+### A. Model-cycle timing (family D) - S97 gate item 4, EXPANDED. THE HIGHEST-VALUE DATA ITEM.
+- WHY: the Sunday reopen is priced by a LATER model cycle than our D-1-evening feed. The Jan-24
+  +8.511 add first appears in our data about an hour AFTER the +2100 gap that priced it. Weekend-gap
+  magnitude (0118 +2100, 0125 +2480, 1020 +2770) is the walk's most reproduced residual, and the
+  refine proved it is a DATA limitation, not a reasoning one.
+- Phase 1 (required for the gate): cycle-level as-of. CHECK THE RAW ARCHIVE FIRST - the S97 MOS build
+  audited 11,648 run stamps and its ~50MB `weather/mos_asof/raw/` archive (S3) very likely already
+  holds the 00z/06z/12z/18z cycles including Sat/Sun; if so this is an EXPOSURE rework of
+  `nws_temp_feed.py --mos-asof` (asof at hour resolution: `mos_cycle_asof(date, asof_hour_et)`), not
+  a re-pull. Re-pull from the IEM archive only what is missing. Deliver: the LATEST cycle available
+  before (a) the Sunday 18:00 ET reopen and (b) each weekday open, plus run-to-run deltas between
+  consecutive cycles (not just evening batches).
+- Phase 2 (post-gate, recorded not required): full-field GFS/GEFS from the NOAA AWS Open Data
+  archives (free; verify bucket coverage for Nov 2025+) for ensemble spread and a true gas-weighted
+  national HDD. ECMWF historical is NOT freely archived - named gap, do not fake it.
+- Blind wall: a cycle is usable only after its full dissemination time (MOS posts ~3-4h after
+  initialization; the builder verifies IEM's actual posting stamps rather than assuming). Assert +
+  audit as-of correctness across all 91 walked days.
+- HANDS OFF note: this ingests existing model output as input; the weather FORECASTER remains Greg's
+  spec, untouched.
+
+### B. Vol / range regime (family: tape conditioner) - S97 gate item 5, unchanged plus one addition.
+- WHY: the brain's magnitude bands keep getting overshot (1119, 1128, 1211, 1223, 0121, 0130); bands
+  calibrated in one vol regime are applied in another.
+- From tape already on disk (`.v.0` for G3-G10 continuity, `.n.0` where that is the walked basis).
+  Fields per date, strictly from prior sessions: realized vol (session net and intraday), ATR-class
+  range measures, range percentile vs trailing window, volume trend, **trades-per-session and
+  legs-per-session** (the activity metric - ALSO the conditioning variable the C2 scale artifact
+  named, so Tier 1 consumes it).
+- Blind wall: trailing windows end at the prior session's close. No same-day tape.
+- `vol_regime_asof(date) -> dict | None`. Free, local, medium build.
+
+### C. Model disagreement (family D) - S97 gate item 7, unchanged.
+- WHY: the market prices uncertainty, not just the central case. G11's 0125/0126 whipsaw happened on
+  a wobbling forecast.
+- GFS-MAV vs NAM-MET, both already pulled. Horizon-MATCHED disagreement only (MET is short-range; the
+  overlap is the comparable set) - per-horizon spread of gas-weighted HDD, plus a same-model
+  run-to-run stability read at each horizon. Report which horizons have no overlap per date.
+- `model_disagreement_asof(date) -> dict | None`. Free, small build.
+
+### D. Storage consensus series (family D) - NEW (desk review B4). UPGRADES eia_surprise.
+- WHY: the market prices actual-minus-SURVEY-CONSENSUS, not actual-minus-5yr-proxy. A -80 draw is a
+  bearish miss if consensus was -95; our proxy can mislabel it bullish. This contaminates
+  per-instance characterization of every print day in the walk, INCLUDING the 14/14
+  chain-sided-print streak - some "disagreeing prints the chain overrode" may not have been
+  surprises at all. The FIX is a re-measurement, and the finding may survive - that is the point of
+  measuring.
+- Source: investigate (WebFetch first) the archived weekly analyst-survey numbers - candidate free
+  routes: econ-calendar archives that carry the pre-print "forecast" figure for the EIA weekly
+  change; news-archive survey mentions. Compile per report week: consensus draw/build (Bcf), source
+  named per row. If a week's consensus is unobtainable, that week is `None` and NAMED - never
+  interpolated, never proxied.
+- Coverage target: the walked winter (Nov 2025 - Feb 2026) minimum; back to the start of the walk
+  ideal.
+- Blind wall: consensus is public BEFORE the print (survey publishes Tue/Wed); join as-of the print
+  morning; the print's own value stays strictly-prior for the following days (existing rule).
+- `storage_consensus_asof(date) -> dict | None` (fields: `consensus_chg_bcf`, `n_estimates`,
+  `range_low/high` if available, `source`, `for_report_date`, plus post-join `surprise_vs_consensus`
+  computed only where both sides exist). Medium build, scrape-and-verify heavy.
+
+### E. Freeze-off risk (family D-supply) - NEW (desk review B3). The missing convexity mechanism.
+- WHY: deep cold CUTS SUPPLY (wellhead/gathering freeze-offs in producing basins) at the same time it
+  raises demand - extreme-cold days are convex, which is a mechanism-level explanation for the
+  walk's dominant residual (extreme days overshooting bands 2-17x). The brain's weather logic is
+  demand-only and cannot see this.
+- Source: the same IEM MOS archive, PRODUCING-BASIN stations: Permian (MAF Midland), Anadarko (OKC),
+  Appalachia (PIT), Haynesville (SHV). Builder verifies station availability in the archive and
+  substitutes nearest-basin stations only with the substitution NAMED per station.
+- Fields per date (forecast, as-of the same cycle discipline as feed A): per-basin forecast min temp
+  by horizon, consecutive-days-below thresholds (e.g. 20F/15F/10F - thresholds exposed as data, not
+  tuned), first/last sub-threshold day in the horizon. NO synthesized production impact, NO Bcf
+  estimate - temperatures only; the agent decides what they mean.
+- Blind wall: identical to feed A (cycle as-of).
+- `freeze_risk_asof(date) -> dict | None`. Small-medium build once A's cycle plumbing exists (build
+  AFTER or WITH A).
+
+### F. Flow calendar (family CAL) - NEW (desk review). Deterministic, zero external dependencies.
+- WHY: mechanical, scheduled flows desks trade around; none are visible to the agent. G13 carries an
+  expiry; bidweek and index-roll windows sit inside every block.
+- Fields per date: `days_to_futures_expiry` (front), `options_expiry_date` + `days_to_opex` (NG
+  options expire the business day BEFORE futures expiry - the pin/unpin boundary), `in_bidweek`
+  (final 5 business days of the month) + `bidweek_day_n`, `in_gsci_roll` (business days 5-9) /
+  `in_bcom_roll` (business days 6-10) - builder VERIFIES both roll windows against the current index
+  methodology docs rather than trusting this line - `eia_print_date` for the week incl.
+  holiday-shifted releases (from EIA's actual release schedule archive, never assumed),
+  `cme_early_close` flags.
+- Blind wall: none (fully deterministic/forward-known), except EIA holiday shifts which must come
+  from the published schedule.
+- `flow_calendar_asof(date) -> dict`. Small build (one afternoon class).
+
+### G. Cash basis (family DEL) - NEW (desk review). The free sliver of the physical market.
+- WHY: cash leads futures in delivery stress; we have zero physical-market visibility. In a squeeze
+  the cash-futures basis is the ground truth the paper market converges to.
+- Source: EIA daily Henry Hub spot (Refinitiv-sourced, published free with a short lag). Builder
+  investigates the ACTUAL publication lag and vintage mechanics first - if the series revises or the
+  lag is longer than assumed, report it honestly; the feed may be D-1 or D-2. Field:
+  `hh_cash_minus_front_settle` as-of the latest jointly-published day, plus its 1/3/5d trend, plus
+  `age_days`.
+- Blind wall: join on publication availability, not price date; audit.
+- `cash_basis_asof(date) -> dict | None`. Small build.
+
+### H. COT futures-and-options combined (family P) - NEW, small. Closes half of COT limit #9.
+- WHY: the S97 COT build is futures-only; options positioning is a separate picture and expiry-week
+  mechanics (G13) are exactly where it diverges.
+- Source: same CFTC disaggregated publication, the futures-AND-options-combined variant. Same store
+  layout, same publication-time blind wall as `cot_feed.py` (reuse its machinery; additive fields
+  `*_combined`).
+- Extend `cot_asof` output additively. Small build. The ICE Henry Hub gap REMAINS OPEN and stays
+  named (no free source).
+
+### I. Options surface (family DEL/P) - S97 gate item 9, NOW SCOPED. Required before G13, best-effort
+  before G12.
+- WHY: options expire the day before futures expiry and drive pinning/squeeze mechanics - plausibly
+  part of G11's February (NGG26 settled 7.460). G13 is the squeeze test; running it without the
+  options view repeats the G11 pattern of testing a family the agent cannot see.
+- Source: Databento GLBX NG options (authorized spend). Phased:
+  - Phase i (REQUIRED for G13): `definition` + `statistics` - per-strike OI for the front two
+    months, settlement prices, opex dates. Fields: top-5 OI strikes + concentrations (the pin/wall
+    map), total P/C OI, `days_to_opex`, front-month OI-weighted strike distance from settle.
+  - Phase ii (post-gate ok): settle-implied ATM IV + a 25-delta risk-reversal skew proxy computed
+    from settlement prices (standard Black on futures settles - computation, not synthesis; every
+    input is a real settle).
+- Blind wall: CME settlement/OI publication is next-morning - same rule as the futures OI join.
+- `options_surface_asof(date, root="NG") -> dict | None`. The largest new build in the gate.
+
+### J. LNG feedgas - S97 gate item 8, converted from "report the gap" to a BOUNDED SIZING SPIKE.
+- WHY: structurally the biggest modern NG demand driver (a Freeport-class outage reprices the curve
+  for months). Vendor nomination data is paid; EIA monthly is too slow. BUT the terminal-serving
+  interstate pipes post scheduled quantities on FERC-mandated public EBBs.
+- The spike (investigation, NOT a feed build): enumerate the EBB posting locations for the 5-6 big
+  terminal laterals; determine per-source whether HISTORICAL postings are retrievable (the honest
+  risk: EBBs often show current + shallow history only - useless for the walk, still valuable
+  live-forward); report obtainability per terminal, effort estimate, and STOP. Explicitly authorized
+  conclusion: "not obtainable historically; live-only feed possible at cost X" - that is a
+  successful spike, not a failure.
+- Deliverable: `LNG_FEEDGAS_SIZING_S98.md`. No synthetic proxy under any circumstances.
+
+### K. Revision-vintage assessment (family META) - S97 concern #1, promoted into the gate.
+- WHY: the blind wall governs WHEN a report becomes visible, not WHICH VINTAGE - the store carries
+  EIA's latest revisions, so the agent may see numbers nobody had at the time. Likely affects the
+  existing national `storage` field and `eia_surprise.py` too, i.e. the whole walk carries an
+  unmeasured look-ahead. "Probably small" is not measured.
+- The task: pull EIA's revision/vintage archive (REAL EIA key required - see prerequisites), diff
+  as-first-printed vs currently-stored for every weekly report in the walked window (national + the
+  new regional store), and NAME each week where the vintage differs, with the delta in Bcf. If the
+  vintage archive does not cover the window, say so and report what is checkable.
+- Deliverable: `REVISION_VINTAGE_AUDIT_S98.md` + where differences exist, an as-printed override
+  layer in the affected stores (additive: `*_as_printed` fields; the revised values STAY, labeled).
+- This is the leakage-gate discipline applied to our own storage feeds. Medium task.
+
+## TIER 3 - DOCTRINE AND STRUCTURAL WORK (brain + protocol; orchestrator; renders/proposals PRINTED
+to Greg before any brain merge, per standing protocol)
+
+1. **Usage-doctrine block in the brain** (from the S98 desk review Part 2): per-source-family reading
+   guidance - weather deltas (first-appearance vs revision; D+4-8 battleground; clock), storage
+   (weekly re-anchor; salt = front-month scarcity; composition second wave), COT (convexity
+   conditioner, never timing/direction; band-overshoot flag at percentile extremes; never fade the
+   squeeze side; its three limits carried), structure (level is state, widening RATE is signal;
+   expiry clock switches regime), vol (band scaler, never direction), options (pin/unpin, walls,
+   IV as uncertainty). Written as GUIDANCE the agent reads, never as gates - merged as a brain
+   proposal for review.
+2. **Driver checklist at flip evaluations** (desk review B2): at every chain_polarity_flip arm/confirm
+   evaluation the agent must READ (not obey) the four families' state: forecast stream
+   (first-appearance adds and their side), positioning (COT percentile + side), structure
+   (spread widening + expiry clock), tape (C1/C2-ratio). Recorded in the brain as method, joining
+   the existing C1-C4 which stay unchanged.
+3. **Evidence-day registry** (desk review B7): a brain section mapping day -> plays citing it, so
+   overlapping calibration evidence (1208, 1223, 1020, 0107 anchor multiple plays) is visible and
+   per-play n counts are not silently double-counted.
+4. **Two-books scoring split, effective G12** (desk review B1, resolves S97 concern #5): the DAY-BOOK
+   (per-day nets, net-of-fee maker AND taker) is the PRIMARY scored product; the BLOCK LEAN is
+   demoted to a REGIME-STATE call (polarity + conviction) recorded and graded as a descriptor and as
+   a conditioner of day plays - not as a standalone pass/fail deliverable. Both continue to be
+   recorded per-event. Rationale on record: two-week directional calls on NG are near-coin-flip at
+   the best desks; the replay shows the day-book is where the edge lives (resume 9/10; fees
+   immaterial; turn-calls 0/3) and G9 proved a wrong lean does not cost the day-book money.
+5. **Squeeze-regime doctrine** (desk review B5): brain guidance that inside the delivery window
+   (squeeze_watch active) demand-regime bands and alternation rules are OUT OF SCOPE - bands void,
+   no mean-reversion assumption, never short the squeeze leg on band logic; G11 is n=1, G13 the
+   forward test. Scope-tagged like every play; the agent decides application.
+
+## EXPLICITLY NOT IN THE GATE (named deferrals, unchanged reasons)
+
+- **Cross-market (TTF/JKM, power stack, coal switch)** - S97 item 10; real drivers, slower-moving,
+  lowest priority. Post-gate.
+- **CTA-replication daily positioning proxy** - free to build later; COT + the combined variant
+  cover the gate's positioning need.
+- **Full production/flow network (all-pipeline EBB scrape)** - the desk's biggest remaining edge, out
+  of scope until the J spike sizes the terminal-lateral subset.
+- **ECMWF historical cycles** - not freely archived; named gap, no proxy.
+- **Pass-2 series construction** - JOB 4, after the first pass completes (Greg: do not re-base the
+  walk before then). `PASS2_CONTINUOUS_SERIES_NOTES.md` unchanged.
+- **Kalshi-side fill modeling** - parked pending the vehicle decision (open question to Greg; does
+  not block data work).
+
+## PREREQUISITES (Greg, before/while the builds run)
+
+1. ROTATE the AWS pair + DATABENTO key (both exposed in-chat S97).
+2. GET A REAL EIA KEY (DEMO_KEY is globally shared and already broke a build). Blocks K and the
+   `--source api` re-verification of the regional store (S97 concern #2).
+3. Open questions that do NOT block data work: data-budget appetite for paid flow data (shapes J's
+   follow-up); the target execution vehicle (NYMEX futures/options vs Kalshi echo - shapes post-gate
+   scoring and sizing work).
+
+## SEQUENCING AND THE CRITICAL PATH
+
+- SERIAL (orchestrator, one hand): Tier 0 wiring -> Tier 1 (fingerprints -> C2 ratio). This is the
+  G12 critical path.
+- PARALLEL (STEP C subagents, run while Tier 0/1 proceeds): B, C, D, F, G, H, J; A phase 1; E with/after
+  A; I phase i started early (largest).
+- SECOND SERIAL WIRING PASS (orchestrator): wire A, B, C, D, E, F, G, H (+I if landed) into
+  decision_state; re-audit the blind wall across ALL joins; selftest.
+- TIER 3 brain proposals assembled after the wiring passes; PRINTED to Greg; merged on approval.
+- K runs parallel as an audit; its as-printed overlays land in the second wiring pass.
+
+## GATE-CLOSURE CONDITION (what "done" means; no new group runs before this)
+
+G12 (Sun Feb 1 - Fri Feb 13 2026) may run when ALL of:
+1. Tier 0 wired; selftest PASS; blind-wall audits clean; curve_regime no longer 'unknown'.
+2. Tier 1 complete (G11 fingerprints on .n.0 + C2 ratio reformulation derived and recorded in a
+   brain proposal).
+3. Tier 2 feeds A(ph1), B, C, D, E, F, G, H built AND wired; K's audit delivered (with as-printed
+   overlays where differences were found); J's sizing report delivered.
+4. Tier 3 items 1-5 proposed, printed to Greg, and merged on his approval.
+5. Roll check for G12 run by a SUBAGENT returning ONLY roll date + spread (the S97 protocol fix).
+
+G13 (Sun Feb 15 - Fri Feb 27 2026, the SQUEEZE TEST) additionally requires:
+6. Feed I phase i (options OI/pin map) built and wired.
+
+Anything in this file found unobtainable is reported per-instance in the closing session handoff -
+a named honest gap closes its item; a silent skip does not.
