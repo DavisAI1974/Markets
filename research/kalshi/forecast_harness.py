@@ -8,7 +8,8 @@ harness holds the state it forecasts from and the render it's scored by.
 
 Commands:
   decision-state --days D1,D2,...            -> print + write the decision-time state JSON for a group (blind-safe:
-                                                weekday + storage surprise + curve regime ONLY; no tape/leg data)
+                                                weekday + storage + curve + deterministic daylight/load shape;
+                                                no tape/leg/outcome data)
   overlay --forecasts F.json --out P.png     -> render guess (dashed) vs actual (solid) per day, 1 panel/day, ET
   brain-show                                 -> summarize the current ng_brain.json (plays + status)
   --selftest
@@ -28,9 +29,15 @@ MULT = 10000.0   # $/MMBtu move = cum_move_usd / MULT (NG contract 10,000 MMBtu)
 
 
 def decision_state(days: list[str]) -> dict:
-    """Blind-safe decision-time state for each day: weekday + that week's EIA storage surprise + curve regime.
-    NO tape, NO legs, NO outcome — exactly what a forecaster knows at the open."""
+    """Blind-safe state at the open.
+
+    Enriches the existing projection state rather than creating a second signal.
+    Daylight geometry is calendar-known and leakage-safe: it adds the expected
+    summer/winter curve, sunrise solar ramp, civil-twilight lighting release,
+    evening solar fade, and lighting pickup windows to the same state object.
+    """
     import forward_curve as fc
+    import daylight_load_shape as dls
     surp = json.load(open(os.path.join(HERE, "..", "..", "data", "eia_surprise.json"))).get("KXNATGASD", {}) \
         if os.path.exists(os.path.join(HERE, "..", "..", "data", "eia_surprise.json")) else \
         (json.load(open("data/eia_surprise.json")).get("KXNATGASD", {}) if os.path.exists("data/eia_surprise.json") else {})
@@ -42,9 +49,14 @@ def decision_state(days: list[str]) -> dict:
         past = sorted(ri for ri in surp if ri <= iso)
         sv = surp[past[-1]]["surprise"] if past else None
         cr = fc.curve_asof(cv, iso)
-        out[d] = {"dow": dow, "stor_surprise": round(sv, 1) if sv is not None else None,
-                  "stor_surprise_sign": ("above" if sv > 0 else "below") if sv is not None else None,
-                  "curve_regime": cr[1]["regime"] if cr else "unknown"}
+        load_shape = dls.weighted_day_profile(iso, include_curves=True)
+        out[d] = {
+            "dow": dow,
+            "stor_surprise": round(sv, 1) if sv is not None else None,
+            "stor_surprise_sign": ("above" if sv > 0 else "below") if sv is not None else None,
+            "curve_regime": cr[1]["regime"] if cr else "unknown",
+            "load_shape": load_shape,
+        }
     return out
 
 
@@ -97,7 +109,12 @@ def brain_show(path: str = BRAIN) -> None:
 
 def _selftest() -> int:
     ds = decision_state(["20250902"])
-    assert ds["20250902"]["dow"] == "Tue" and ds["20250902"]["stor_surprise"] is not None, ds
+    state = ds["20250902"]
+    assert state["dow"] == "Tue" and state["stor_surprise"] is not None, ds
+    shape = state["load_shape"]
+    assert shape["calendar_curve_regime"] in {"summer_long_day", "winter_long_dark", "shoulder_transition"}
+    assert len(shape["clear_sky_solar_geometry"]) == 24
+    assert len(shape["artificial_lighting_geometry"]) == 24
     brain_show()
     print("[forecast_harness] selftest PASS")
     return 0
