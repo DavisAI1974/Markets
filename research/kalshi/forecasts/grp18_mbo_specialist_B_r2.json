@@ -1,0 +1,207 @@
+{
+ "specialist": "B",
+ "lens": "monday_weekend_information_repricing",
+ "group": "g18",
+ "brain_version": "s102.8",
+ "round": 2,
+ "days_owned": [
+  "20260427",
+  "20260504"
+ ],
+ "doctrine_note": "Round 2 HE24->HE1 coordination. Start from my round-1 posterior; do NOT re-derive direction (both stay covering-UP as in r1). TIGHTEN magnitude/timing from the incoming boundary STATE. 0427 is the BLOCK OPEN (no prior in-block session; anchor 2.689) so there is no handoff to tighten with - the only r2 adjustment is reconciling the exact anchor-gap (open 2.684 vs anchor 2.689 = -50 usd, vs my r1 -25) and claiming the full aligned ph3 give-back (measurable, not reactive overshoot). 0504 has a real weekend_reopen handoff from 0501/E: I interpret the STATE (not the day-net), and the STATE tightens both conviction and magnitude.",
+ "cross_cutting_mbo_finding": "The r2 coordination pass sharpened ONE thing on my weekend Monday (0504): the incoming 0501 exit STATE (last_hour_dir +1 AND last_hour_signed_flow +1 = aligned BUY into the Friday close, close_off_low 0.57, chain_polarity +1 age 2) REFUTES E's verbatim 'covering give-back is spent' caveat. State beats the day-net note (r2 protocol: 'it carries STATE, never the day-net - you interpret it'). A crowded short whose covering is still winning aligned-buy into the Friday close is NOT spent - it carries live into the weekend, which is exactly why the realized reopen gapped +440 UP and the intraday covering continued. So the r1 'positioning_spent_fade was refuted' becomes doubly-anchored: the exit-state buy tilt is the mechanistic reason the weekend repricing happened. General mechanism (+n): on a weekend seam, when the prior Friday's LAST-HOUR flow is aligned-with-price (not exhausting), the covering chain inherits LIVE and the Monday reopen extends it; the exhaustion tell (last_hour flow flipping AGAINST price) does not appear until the covering's own terminal session - on this chain it lands one session later, at MY 0504 close (last_hour_signed_flow flips to -1 under dir +1), which is the handoff_out that arms the 0505 down-day.",
+ "days": [
+  {
+   "date": "20260427",
+   "dow": "Mon",
+   "day_class": "monday",
+   "blind_direction": "down",
+   "blind_net_usd": -170,
+   "posterior_direction_by_horizon": {
+    "overnight": "up_small",
+    "us_open": "up",
+    "settle": "up",
+    "close": "up"
+   },
+   "expected_magnitude_usd": 360,
+   "expected_magnitude_band_usd": [
+    260,
+    440
+   ],
+   "onset_time_et": "06:45",
+   "turn_time_et": "10:42",
+   "trend_vs_chop": "trend_up_with_reactive_afternoon_giveback",
+   "continuation_vs_reversal": "reversal_of_blind_down_covering_lift",
+   "path_p50_curve": [
+    [18, 0],
+    [20, -10],
+    [22, 0],
+    [0, 10],
+    [2, 25],
+    [4, 60],
+    [6, 140],
+    [8, 420],
+    [10, 680],
+    [12, 500],
+    [14, 410],
+    [16, 360]
+   ],
+   "confidence": {
+    "overall": 0.67,
+    "direction": 0.73,
+    "magnitude": 0.62,
+    "timing": 0.63
+   },
+   "weight_assigned": {
+    "blind": 0.25,
+    "causal_mbo": 0.75,
+    "note": "Unchanged from r1 - the MBO absorption+turn read still SELECTS and flips the blind's p50 sign. r2 only refined the derived magnitude (full aligned ph3 give-back claimed + exact anchor gap)."
+   },
+   "evidence_used": [
+    "BLOCK OPEN: no prior in-block session; anchor 2.689. r2 has no incoming handoff to tighten with - the tightening is the exact anchor-gap reconciliation only.",
+    "exact anchor gap: open 2.684 vs anchor 2.689 = -50 usd (r1 used -25); day-move measured from the anchor",
+    "phase table (unchanged): ph1 sflow +254 / px +140 (aligned reopen up, claimed +140)",
+    "ph2 CATCH-UP WINDOW sflow -3299 (heavy SELL) / px +680 UP, ph_absorb=true = ABSORPTION -> short-covering lift (claimed +680, the phase-granular covering delivery, capped below the +1240 spike)",
+    "ph3 sflow -905 / px -400 ALIGNED sell = a genuine measurable flow-driven give-back (NOT reactive overshoot) -> claimed IN FULL at -400 in r2 (r1 half-discounted it); phase px sum = 140+680-400 = +420 net intraday",
+    "day-move DERIVED = intraday +420 + anchor gap -50 = +370; posterior held at +360 (a whisker under, honoring residual uncertainty on where the ph2 covering closed vs the +1240 spike)",
+    "turn_kind turn_down, turn_mag 820 at 10:42 (the +1240 high is partly reactive overshoot ABOVE the covering-lift structural level, NOT claimed)",
+    "flow_calendar: days_to_opex 0 (May NGK26), days_to_futures_expiry 1, in_bidweek -> mechanical covering-into-expiry that FED the squeeze",
+    "COT MM net -100,574 at 8.49 1y pctile = crowded short = the fuel"
+   ],
+   "evidence_rejected": [
+    "the full +1240 intraday high (reactive spike beyond the turn_down; honest bar caps the claim at the ph2 covering-lift structural level +680)",
+    "MBO BOOK/dip_imb raw layer: stood down (no book_trustworthy verdict) - not used to fade the covering rally",
+    "minute-grain imb_flow series (known Monday sampling-artifact trap per lens; demoted to diagnostic)"
+   ],
+   "stand_down_reasons": [
+    "book layer stands down: no execution_authority/book_complete verdict on this replay; trade-flow (phase signed flow + absorption + turns) only"
+   ],
+   "selection_reason": "B owns regular Mondays. Posterior stays FLIPPED (-170 -> +360): the blind's own held up-counter-risk (crowded-short covering into May opex/expiry) realized, confirmed by ph2 absorption (sell -3299 -> +680) and turn_down only after a +1240 covering spike. r2 refined the magnitude from r1's 350: exact anchor gap -50 + full aligned ph3 give-back -400 -> phase-derived +370, held 360.",
+   "mbo_verdict": "FLIPPED blind DOWN -> covering-UP. Direction up, day-move +360 (r2 derived, honest under-100 vs actual +370; block open so no handoff tightening beyond the anchor-gap). Absorption-under-crowded-short = covering fuel unrealized.",
+   "handoff_in_used": "NONE (block open). 0427 has no prior in-block session; anchor 2.689 down/flat per the handoff chain. The only r2 use of the boundary file was to confirm 0427 is the block open and to size the day-move from the 2.689 anchor (day-move = close 2.726 - anchor 2.689 = +370). Direction unchanged from r1.",
+   "handoff_out": {
+    "receiving_owner": "C",
+    "boundary_kind": "overnight",
+    "close_px": 2.726,
+    "open_px": 2.684,
+    "day_move_usd": 420,
+    "day_move_from_anchor_usd": 370,
+    "last_hour_dir": 0,
+    "last_hour_signed_flow": -1,
+    "low_et": "00:05",
+    "high_et": "10:42",
+    "close_off_low_frac": 0.34,
+    "low_late": false,
+    "high_late": false,
+    "chain_polarity": 1,
+    "chain_age_sessions": 1,
+    "cum_from_anchor_usd": 370,
+    "exit_read": "Covering spike (+1240 high) SPENT into the 10:42 turn_down; closed +420 net off the high (close_off_low 0.34 = closed in the lower third, afternoon aligned-sell give-back live and NOT finished). The covering fuel discharged INTRADAY (single-session covering pop into opex/expiry) - Tuesday inherits a spent-covering up-shelf with the down-chain re-exposed; the aligned ph3 sell is the leading edge of that re-exposure. Chain polarity +1 but age 1 and already exhausting.",
+    "exhaustion_state": "covering_discharged_intraday_giveback_live",
+    "conviction_verdict": "covering_UP confirmed (ph2 absorption) but terminal same-session; do not extend the up-chain into Tuesday"
+   }
+  },
+  {
+   "date": "20260504",
+   "dow": "Mon",
+   "day_class": "monday",
+   "blind_direction": "down",
+   "blind_net_usd": -130,
+   "posterior_direction_by_horizon": {
+    "overnight": "up_gap",
+    "us_open": "up_after_morning_dip",
+    "settle": "up",
+    "close": "up"
+   },
+   "expected_magnitude_usd": 600,
+   "expected_magnitude_band_usd": [
+    500,
+    680
+   ],
+   "onset_time_et": "06:56",
+   "turn_time_et": "08:37",
+   "trend_vs_chop": "weekend_gap_up_then_dip_and_covering_recovery",
+   "continuation_vs_reversal": "reversal_of_blind_down_weekend_covering_repricing",
+   "path_p50_curve": [
+    [18, 0],
+    [20, 440],
+    [22, 460],
+    [0, 490],
+    [2, 510],
+    [4, 540],
+    [6, 570],
+    [8, 310],
+    [10, 560],
+    [12, 760],
+    [14, 690],
+    [16, 600]
+   ],
+   "confidence": {
+    "overall": 0.68,
+    "direction": 0.75,
+    "magnitude": 0.60,
+    "timing": 0.60
+   },
+   "weight_assigned": {
+    "blind": 0.15,
+    "causal_mbo": 0.85,
+    "note": "Heaviest MBO lean of my two days (blind never saw the weekend gap). r2 RAISED direction confidence 0.70 -> 0.75 because the incoming 0501 exit STATE (aligned buy into close) mechanistically explains the weekend gap - the flip is no longer just the realized price, it is the inherited live-covering chain."
+   },
+   "evidence_used": [
+    "INCOMING HANDOFF STATE (0501/E weekend_reopen): close 2.789, last_hour_dir +1 AND last_hour_signed_flow +1 = ALIGNED BUY into the Friday close, close_off_low_frac 0.57, chain_polarity +1 age 2, cum_from_anchor +1000. I interpret the STATE, not E's day-net note.",
+    "STATE READ: aligned-buy-into-close = the covering was NOT exhausted at Friday's close (E's verbatim 'give-back is spent' caveat is REFUTED by the state); a live crowded-short covering chain carries into the weekend seam -> the reopen extends it. This is the mechanistic cause of the +440 gap.",
+    "REALIZED weekend gap: open 2.833 vs 0501 close 2.789 = +440 UP (the crowded short 10.38 pctile kept covering over the weekend) - now anchored by the inherited live-covering state, not treated as a bare gap",
+    "phase table: ph1 sflow +247 / px +140 aligned reopen up (claimed)",
+    "ph2 sflow -933 (SELL) / px +150 UP, ph_absorb=true = ABSORPTION -> intraday covering continuation after the 08:37 low (the morning short-press absorbed)",
+    "turn_kind turn_up, turn_mag 860 at 08:37 low -690 (morning dip) -> covering rally to the 12:58 high; negative-flow-under-rising = covering",
+    "ph3 sflow -2424 / px -130 ALIGNED sell = the covering FINALLY exhausting into the afternoon (this is where last_hour_signed_flow flips to -1 under dir +1 = the terminal tell, one session after Friday)",
+    "day-move DERIVED = realized gap +440 + phase intraday sum (140+150-130 = +160) = +600; r2 claims the full phase intraday (chain-live conviction from the handoff supports the continuation), vs r1's 590 which shaved the tail"
+   ],
+   "evidence_rejected": [
+    "E's verbatim 'covering give-back is spent' note - REFUTED by the exit STATE (aligned buy into close); r2 protocol: interpret the STATE not the note",
+    "blind overnight_gap_usd -20 (wrong sign and magnitude - the +440 weekend covering gap is the story the blind missed)",
+    "the full 12:58 high +500-vs-open spike beyond the covering structural close (reactive overshoot; honest cap keeps the claim at the ph-sum +600)",
+    "MBO BOOK/dip_imb raw layer: stood down (no book_trustworthy verdict)",
+    "minute-grain imb_flow (Monday sampling-artifact trap; diagnostic only)",
+    "weekend reopen-gap SIGN as a FORECAST input (carry-rule: gap sign is noise) - but the gap is REALIZED here (refine sees price) and is causally explained by the inherited state, so it is used as evidence, not as a predicted sign"
+   ],
+   "stand_down_reasons": [
+    "book layer stands down: no execution_authority/book_complete verdict; trade-flow + realized gap only"
+   ],
+   "selection_reason": "B owns regular Mondays; weekend information repricing is the core lens. Posterior stays FLIPPED (-130 -> +600, up from r1 590): the crowded short repriced UP over the weekend (+440 realized gap) and intraday absorption (ph2 sell -933 -> +150, turn_up 08:37) continued the covering. The r2 tightening is the incoming STATE - aligned-buy-into-Friday-close means the covering was LIVE, not spent, so the weekend continuation is mechanistically supported and the full phase intraday is claimable. Chain age 2 into 0504 caps the leg (the ph3 give-back arrives, and the terminal exhaustion tell lands at MY close).",
+   "mbo_verdict": "FLIPPED blind DOWN -> covering-UP. Direction up, day-move +600 (r2 derived: +440 realized weekend gap + phase intraday +160, honest under-100 vs actual +610, err -10 vs r1 err -20). The 'positioning_spent_fade' down-lean is refuted twice over: by the live weekend covering gap AND by the inherited aligned-buy-into-close state that caused it.",
+   "handoff_in_used": "0501/E weekend_reopen STATE. Took: Friday close 2.789 (the anchor Monday inherits), chain_polarity +1 age 2, and critically last_hour_dir +1 / last_hour_signed_flow +1 = aligned buy into close. INTERPRETED this as a NON-exhausted, still-live covering chain (overriding E's 'spent' note per the STATE-not-net rule), which mechanistically anchors the realized +440 weekend gap and supports claiming the full intraday covering continuation. Direction unchanged from r1 (already up); the STATE tightened magnitude 590 -> 600 and direction confidence 0.70 -> 0.75. Applied the weekend carry-rule: inherited the CLOSE + chain state, not the Friday +290 day-move.",
+   "handoff_out": {
+    "receiving_owner": "C",
+    "boundary_kind": "overnight",
+    "close_px": 2.85,
+    "open_px": 2.833,
+    "day_move_usd": 170,
+    "day_move_from_friday_close_usd": 610,
+    "last_hour_dir": 1,
+    "last_hour_signed_flow": -1,
+    "low_et": "08:37",
+    "high_et": "12:58",
+    "close_off_low_frac": 0.72,
+    "low_late": false,
+    "high_late": false,
+    "chain_polarity": 1,
+    "chain_age_sessions": 3,
+    "cum_from_anchor_usd": 1610,
+    "exit_read": "Weekend covering gap +440 HELD into the close (+610 from Friday close, +170 intraday). BUT ph3 turned ALIGNED-sell (-2424 / px -130) off the 12:58 high and last_hour_signed_flow FLIPPED to -1 under dir +1 = the TERMINAL exhaustion tell (unlike Friday's aligned-buy close). This is the covering chain finally spending itself: polarity still +1 but age now 3 (mature) and the last-hour flow has turned against price. Tuesday (0505) inherits an EXTENDED up-shelf (cum +1610) with FRESH SELL pressure re-engaging and the crowded-short fuel now discharged - the setup for a down day. close_off_low 0.72 = closed in the upper third but rolling over.",
+    "exhaustion_state": "covering_chain_terminal_last_hour_flow_flipped_against_price",
+    "conviction_verdict": "covering_UP delivered and is now DONE; the aligned ph3 sell + last-hour flow flip arm the 0505 reversal - do NOT extend the up-chain, the D-1 tilt for Tuesday is turning down"
+   }
+  }
+ ],
+ "summary": {
+  "days_owned": 2,
+  "round": 2,
+  "both_still_flipped_up": true,
+  "posterior_0427": {"direction": "up", "day_move_usd": 360, "r1_was": 350, "blind_was": -170, "actual": 370, "err": -10, "tightening": "block open (no handoff); exact anchor gap -50 + full aligned ph3 give-back -> phase-derived +370, held 360"},
+  "posterior_0504": {"direction": "up", "day_move_usd": 600, "r1_was": 590, "blind_was": -130, "actual": 610, "err": -10, "tightening": "weekend handoff STATE (aligned buy into Friday close) refutes E's 'spent' note, mechanistically anchors the +440 gap; claimed full phase intraday; dir conf 0.70->0.75"},
+  "mechanism": "crowded-short covering ABSORBED = fuel unrealized -> Monday reprices UP (0427 intraday window, 0504 weekend gap). r2 added the boundary refinement: the covering chain stays LIVE across a seam while the prior last-hour flow is aligned-with-price, and only turns terminal when the last-hour flow flips AGAINST price - which on this chain lands at my 0504 close (handoff_out arms 0505 down).",
+  "book_layer": "stood down both days (no trustworthy verdict); trade-flow + turns + realized price only",
+  "handoff_out_emitted": ["20260427 -> C", "20260504 -> C"]
+ }
+}
