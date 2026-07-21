@@ -2,7 +2,9 @@ name: Free NG Drivers (EIA + NOAA)
 
 on:
   push:
-    branches: [chatgpt/rt-ng-mbp10-collector]
+    branches:
+      - chatgpt/rt-ng-mbp10-collector
+      - claude/kalshi-s79-kickoff-ij8t9o
     paths:
       - research/kalshi/free_ng_data_collector.py
       - .github/workflows/free_ng_collectors.yml
@@ -57,4 +59,4 @@ jobs:
         with:
           name: free-ng-drivers-${{ github.run_id }}
           path: /tmp/free_ng/latest.json
-          retention-days: 14
+          retention-days: 90
