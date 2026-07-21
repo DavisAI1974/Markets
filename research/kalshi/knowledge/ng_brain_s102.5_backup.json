@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s102.6",
+  "version": "s102.5",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -49,8 +49,7 @@
   "s102_2_refine_note": "S103 (2026-07-21): G15 UNBLINDED REFINE (Sun Mar 15 - Fri Mar 27), the first shoulder MAGNITUDE-calibration refine and the first refine of an open-conditions walk. Basis Kalshi underlying (April/NGJ26 through 0319, May/NGK26 from 0320; seam -0.037 never traded, scorer roll-adjusts +370 to the actual). Blind 8/12 drift -3260 (guessed cum -3490 vs actual -600 raw / -230 adj). BLOCK FINDING (the too-deep vs turn-detection resolution, PER-EVENT derived from tape+state): 'magnitude grossly too deep' is REFUTED. The down-chain day-moves were WELL-CALIBRATED - per-day day-move residuals mixed and small (0315 -20, 0316 -130, 0317 +170, 0319 +280 UNDER, 0320 -170, 0322 +40, 0323 +260 UNDER, 0324 -70); net of the eight down/quiet days = +360 i.e. slightly UNDER-deep, not over. The -3490 was DOMINATED by TURN-DETECTION: (a) 0318 (day-move error -2300) missed a give-back-exhaustion TURN UP and the wrong LEVEL then propagated - the blind kept walking the chain down from a base the market had already reset up, so every downstream day sat ~2000 too low even though its day-move was right (a one-verdict-into-the-next LEVEL offset, the audit's category (b) rule gap, not category (a) self-correcting propagation); (b) 0327 (day-move error -1510) mis-called an April-expiry covering rally as crest-trim; (c) 0326 (day-move error +960) over-sized a counter print - a directional miss in the OPPOSITE sense that partially MASKED the accumulated over-depth. TARGET = turn-detection + counter/expiry-day FORM, NOT global band-shrinking. REFINED WALK: raw cum path ends -650 vs actual raw -600 (drift -50 seam-free; every step <= ~160); the -370 to the adj series is the never-traded seam. Refined view: forecasts/grp15_refined_view.json. TOUCHED: giveback_exhaustion_boundary (+flow-absorption turn arm, 0.7->0.72), storage_thursday_magnitude (+S1-void counter-print damping resolution of 0326, forward field), weekend_crest_friday (0327 RESOLVED - trigger not met, mis-fired not failed; 0.5->0.55), shoulder_weather_band_void (+0318 current-live-cold caveat), mature_swing_alternation (0326 bounce-never-extended hit + 0327 expiry-covering n=2). NEW PLAY: magnitude.shoulder_counter_print_damping (n=1). SUPERSESSION: all 33 incumbents preserved byte-for-byte except the additive fields/confidence bumps named here; the G15 blind holdout stays the record. LEG-GRAIN: G15 per-leg fingerprints unavailable (S3 tape creds-gated) - the turn/absorption reads used D-1 SESSION-level flow (tape_conditions big_print_b_share); one item FLAGGED for a creds-gated leg-grain follow-up (below).",
   "s102_2_creds_gated_followup": "FLAG for creds-gated leg-grain (characterize_turns on the S3 G15 tape): confirm the 0318 and 0325 turns at LEG grain - the session-level big_print_b_share tail (0317 0.643 buy-absorption; 0324 0.174 sell-climax) is the open-conditions proxy; per-leg fingerprints (absorbing large prints into a selling book, the reversal leg's signature) would confirm the flow-absorption turn arm's mechanism and its no-false-fire boundary. Session-level flow was SUFFICIENT to call both turns here; leg grain is confirmation, not a dependency.",
   "s102_3_refine_note": "S102.3 = G16 (Sun 2026-03-29 -> Fri 2026-04-10) UNBLINDED refine. Blind panel 8/11 direction, block cum -1455 vs actual -3820 (drift +2365 = UNDER-sized, opposite of G15's over-size). TWO findings, both Greg-mandated. (1) SELECTOR/DIVERGENCE-RESOLUTION is the primary defect (new play selector.divergence_resolution): the synthesis FLAGGED exactly the days it mis-picked (0405/0406/0407) and, on a panel split, defaulted to a DAMPED MIDDLE instead of the correct angle. On all three split days (0401 far-cold-build-UP, 0406 cold-add-Monday-UP, 0407 cold-peak-UP) the weather-UP angle lacked BOTH near-window band authority (HDD < ~16.4) AND never-masked D-1 buy-flow confirmation (session_b_share >= 0.50), so the S3/flow-DOWN angle wins; 0405 is the positive control (cold cleared 16.9 gw at the reopen -> correctly owned the GAP, not a multi-day lean). (2) BLOCK-MAGNITUDE un-damping (new play magnitude.s1void_injection_chain_bleed): the never-masked session_b_share was SUB-0.50 on every D-1 session (0.396-0.495) = a persistent uninterrupted sell-tape; the blind wrongly applied the G15 'do-not-over-size-the-shoulder' lesson as a UNIFORM damp, capping trend days at ~-150..-350 that actually delivered -450..-790. A CHAIN-SIDED down day in a confirmed S1-void injection bleed delivers its full shoulder TREND band; only COUNTER prints damp to flat (shoulder_counter_print_damping, unchanged). The lone over-size (0402 -450 vs -130) was the mirror error: a pre-priced/front-run chain-sided print round-trips (catalyst_continuity_frontrun). Refined view forecasts/grp16_refined_view.json: 11/11 direction, drift +40, max daily residual 30 (all band-position). SUPERSESSION: refined never overrides the blind-applicable rules until forward evidence; the two new plays and all g16 notes carry forward_evidence NONE - G17 is the forward test. Incumbents byte-identical except three additive g16_forward_evidence fields (catalyst_continuity_frontrun, shoulder_counter_print_damping, squeeze_unwind). LEG-GRAIN: G16 per-leg fingerprints are creds-gated/unavailable; within-band day magnitudes are placed at the session-grain band and the residual is a declared leg-grain band-position irreducible.",
-  "s102_5_note": "S104 cleanup merge: +10 plays (friday/midweek/monday cascade proposals) + friday_monday_cascade_s104 doctrine. Incumbents byte-identical. +boundary.prior_close_flow_direction_disagreement (Greg carry-forward, S104.1).",
-  "s102_6_note": "S105 MERGE: +6 plays (midblock under-action fixes - Friday turn/exhaustion gate + crest-trim discriminator, EIA pre-print over-extension gate, accumulation arm, midblock right-the-ship, covering-giveback self-limiting) + doctrine_tier3.midblock_underaction_s105. All PROVISIONAL, test-drive-validated (unscored) not forward-scored. 47 incumbents byte-identical."
+  "s102_5_note": "S104 cleanup merge: +10 plays (friday/midweek/monday cascade proposals) + friday_monday_cascade_s104 doctrine. Incumbents byte-identical. +boundary.prior_close_flow_direction_disagreement (Greg carry-forward, S104.1)."
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -1310,98 +1309,6 @@
    "confidence": 0.5,
    "caveats": "flow measured only where tape/MBO grain exists (G15 MBO-proven; elsewhere tape_conditions last-hour approximations, labeled). A generalization of the flow_conviction discriminator to the day boundary.",
    "merged": "s104_greg_carry_forward"
-  },
-  {
-   "id": "daytype.friday_turn_exhaustion_gate",
-   "target": "friday_direction",
-   "trigger": "any Friday (or weekend-feeding / pre-holiday day) BEFORE a direction sign is emitted",
-   "read": "run an explicit turn/exhaustion check on state ALREADY in decision_state, never a day-class default or chain-extrapolation: chain_age>=4; cum-from-anchor at a session/block extreme; positioning percentile at an extreme (COT/options-implied); a D-1 give-back or D-1 flow tilt opposing the chain; based-vs-stretched chain state; the crest-realization window",
-   "call": "if the exhaustion/turn signals fire, the Friday sign is the TURN direction (reversal/give-back/dead-cat), NOT the chain continuation. The prior-over-state default is FORBIDDEN as the direction source. A continuation sign is emitted ONLY when the turn check is clean (young chain, cum not extreme, D-1 flow aligned).",
-   "evidence": "E self-analysis (CASCADE_S104_friday_self_analysis.md): 13/18 Friday misses (72%) = prior-over-state; every wrong sign decidable blind. G17 test-drive: gate flipped 0417 to covering-UP correctly.",
-   "status": "PROVISIONAL",
-   "confidence": "direction-fix is FREE/reasoning; residual magnitude tail (fresh-shot blow-off, carry far-tail) stays honest-under (weekend model-run build, separate)",
-   "requires": "chain age/cum/positioning/D-1 flow are open_time decision_state fields; no MBO or realized target-day data",
-   "scope": "the Friday DIRECTION sign only; magnitude governed by existing bands; does not fire on a clean young-chain continuation",
-   "forward_evidence": "TEST-DRIVE VALIDATED (S105): fired cleanly and DISCRIMINATED on the G17 masked inputs (unscored A/B - acted on the buried turn, spared the correct calls, no over-fire). forward_evidence still NONE - the G17 refine + G18+ blind are the scored forward tests.",
-   "provenance": "Job 0 S105 (was ng_brain_friday_gate_proposal.json #1); E self-analysis prescription #1",
-   "caveats": "a mechanical settle-spent covering close (0327 class) is wrong-signed but self-limiting (does not cascade) - the gate must not force a continuation there; hands to friday_crest_trim_discriminator + positioning_spent_fade",
-   "merged": "s102.6 S105"
-  },
-  {
-   "id": "daytype.friday_crest_trim_discriminator",
-   "target": "friday_direction",
-   "trigger": "a Friday where the crest-trim / weekend_crest_friday play is a candidate",
-   "read": "add the two discriminators the crest-trim trigger lacked (it fired BOTH ways - 0327 false-pos, 0313 false-neg): (1) based-vs-stretched: crest-trim fires ONLY on a STRETCHED chain near a cum-extreme, never a BASED chain; (2) covering-vs-squaring: price UP into settle AGAINST sell flow = COVERING = positioning_spent (do NOT fade as crest-trim) vs genuine same-side squaring at a stretched extreme = the trim",
-   "call": "fire crest_trim_fadeable only when STRETCHED + squaring; route a based-chain or covering-close OUT to friday_turn_exhaustion_gate / positioning_spent_fade",
-   "evidence": "0327 crest-trim fired DOWN on a based chain that was expiry COVERING up (+1150) = false pos; 0313 MISSED a real position-squaring trim (called up-grind, tape broke -1010) = false neg",
-   "status": "PROVISIONAL",
-   "confidence": "reasoning discriminators, decision-time present; the flow tell is MBO-proven G15, inferred elsewhere",
-   "requires": "chain state (open_time); last-hour dir-vs-flow (MBO-measured for G15; inferred otherwise)",
-   "scope": "conditions the crest-trim / weekend_crest_friday trigger; does not change its magnitude band",
-   "forward_evidence": "TEST-DRIVE VALIDATED (S105): fired cleanly and DISCRIMINATED on the G17 masked inputs (unscored A/B - acted on the buried turn, spared the correct calls, no over-fire). forward_evidence still NONE - the G17 refine + G18+ blind are the scored forward tests.",
-   "provenance": "Job 0 S105 (was ng_brain_friday_gate_proposal.json #2); E self-analysis prescription #2",
-   "merged": "s102.6 S105"
-  },
-  {
-   "id": "daytype.eia_preprint_overextension_gate",
-   "target": "thursday_eia_direction",
-   "trigger": "an EIA-print day BEFORE committing a chain-sided sign",
-   "read": "the chain-sided full band is EARNED, not the default (dominant D flaw = chain-through-the-print, 79% of Thu misses). Check three PRE-PRINT tells (all open-time): (a) OVER-EXTENDED chain into the print - same-side multi-day run >= ~$900 cum; (b) INCOHERENT D-1 flow - session_b_share vs big_print_b_share disagree, OR prior-close price dir vs signed flow disagree; (c) SURPRISE ALREADY PRICED >= 1 week",
-   "call": "if >= 2 fire: do NOT emit full-band chain-sided; go TWO-SIDED / counter-tilt (raise counter-delivery weight, widen toward the turn, p50 off the chain sign). Full band ONLY when D-1 flow is COHERENT with the chain. Surprise SIGN still does not sort direction - the gate keys on OVER-EXTENSION + FLOW COHERENCE. POST-PRINT (refine/live): counter-delivery on absorbing flow RE-ANCHORS the block lean (flip, not just re-size) - see selector.midblock_right_the_ship",
-   "evidence": "D self-analysis (SELF_EVAL_S105_D_thursday.md): 9/14 misses = default DOWN into bearish bleed, print RALLIES (1030 +2590, 1106 +1330, 0416 +720, 0430 +1230). Cascade root: 0416 flipped block cum -540->+180, 0430 -510->+720. G17 test-drive: gate FIRED on 0416 (incoherent D-1 0.472/0.522 + over-ext -> two-sided) and correctly SPARED 0423 (coherent sell 0.415/0.40 -> stayed DOWN).",
-   "status": "PROVISIONAL",
-   "confidence": "the pre-print tells are open-time (FREE); delivery-vs-absorption post-print is a tape read (proxy = D-1 flow coherence); a fresh consensus surprise is the coherent case",
-   "requires": "D-1 tape_conditions (session_b/big_print), chain cum run, consensus vintage - all open_time",
-   "scope": "EIA-print-day direction; the full-band down is spared when D-1 flow is coherent (0423)",
-   "forward_evidence": "TEST-DRIVE VALIDATED (S105): fired cleanly and DISCRIMINATED on the G17 masked inputs (unscored A/B - acted on the buried turn, spared the correct calls, no over-fire). forward_evidence still NONE - the G17 refine + G18+ blind are the scored forward tests.",
-   "provenance": "S105 D tweak (blind_class_D.md + mbo_specialist_D.md)",
-   "merged": "s102.6 S105"
-  },
-  {
-   "id": "structure.accumulation_arm_turn",
-   "target": "core_direction",
-   "trigger": "a core (Tue/Wed) day under a persistent sub-0.50 sell session tape",
-   "read": "recurring big-print BUY-absorption (big_print_b_share >= 0.55 on >= 2 of the last ~5 sessions, NON-CONSECUTIVE - spaced/every-other counts) under a sub-0.50 sell tape, against an extreme-AND-worsening COT short, is ACCUMULATION, not down-continuation",
-   "call": "act on it: move the sign toward flat/turn or emit a genuine bimodal split; do NOT ride the S3-down default. The S3-down default is not sign-certain merely because selector.divergence_resolution's HDD>=16.4 catalyst-override is gated out (that excludes the up-angle BY CONSTRUCTION in a shoulder, it is not evidence of down). The turn does not need the >=0.62 single-day extreme to ACT.",
-   "evidence": "C self-analysis (SELF_EVAL_S105_C_wednesday.md): chain-default over turn-state, 75% of misses, Wednesday drift. G17 test-drive: window fix 2-of-3 -> >=2-of-~5 non-consecutive; the LITERAL arm then fired on 0422 (04-16 0.692 + 04-21 0.609, spaced) on its own while sparing 0414 (0 fires) and 0415 (1 fire) - no over-fire.",
-   "status": "PROVISIONAL",
-   "confidence": "the window fix (~5 non-consecutive) is what makes the arm catch spaced accumulation; the strict 2-of-3 missed G17 entirely",
-   "requires": "big_print_b_share + session_b_share (D-1 tape_conditions), COT percentile + trajectory - all open_time",
-   "scope": "core-day direction; 'honest under-claim' is a MAGNITUDE lever only, never a sign justification",
-   "forward_evidence": "TEST-DRIVE VALIDATED (S105): fired cleanly and DISCRIMINATED on the G17 masked inputs (unscored A/B - acted on the buried turn, spared the correct calls, no over-fire). forward_evidence still NONE - the G17 refine + G18+ blind are the scored forward tests.",
-   "provenance": "S105 C tweak + test-drive #2 window fix (blind_class_C.md + mbo_specialist_C.md)",
-   "merged": "s102.6 S105"
-  },
-  {
-   "id": "selector.midblock_right_the_ship",
-   "target": "block_thesis",
-   "trigger": "any point mid-block after the t0 thesis was locked, when NEW turn/exhaustion evidence arrives across sessions",
-   "read": "the general RIGHT-THE-SHIP re-derivation the whole panel lacked: specialists lock the block thesis at t0 (usually S3 injection-bearish DOWN) and ride it, doing NO mid-block re-check - so ~70% of misses across C/D/E were signals SEEN and not acted on. Re-derive the block lean when the turn stack BUILDS: COT extreme AND trending more extreme; recurring buy-absorption (>=2 of ~5, non-consecutive) under a sell tape; a based chain with no new cum-extreme >=2 sessions; an EIA print delivering COUNTER on absorbing flow",
-   "call": "UNLOCK the selector default from chain-down to TURN-PENDING and take the next owned day's SIGN to the turn side. Instances: C = the accumulation/COT turn-stack; D = the post-print counter-delivery re-anchor (flip the block lean, not re-size); E = the covering-spent re-check (a covering give-back is one-shot - do not re-fire it on the next weekend-feeding day unless a FRESH crowding stack rebuilt). A building multi-session stack ACTS; it does not need the single-day extreme.",
-   "evidence": "All three self-analyses (C/D/E S105) independently prescribed a mid-block re-derivation. G17 test-drive: C 0422 (RTS COT unlock + literal arm), E 0424 (covering spent -> revert DOWN), D 0416 (over-extension -> two-sided) all fired via this mechanism.",
-   "status": "PROVISIONAL",
-   "confidence": "the missing sanity-check Greg named ('right the ship after they lean into something'); FREE - triggers are computable from data already ingested",
-   "requires": "cross-session COT trajectory, D-1 flow coherence, chain age/cum, prior handoff_out exit_type - all open_time",
-   "scope": "the block-lean SIGN when a turn stack builds; does not override a clean coherent continuation",
-   "forward_evidence": "TEST-DRIVE VALIDATED (S105): fired cleanly and DISCRIMINATED on the G17 masked inputs (unscored A/B - acted on the buried turn, spared the correct calls, no over-fire). forward_evidence still NONE - the G17 refine + G18+ blind are the scored forward tests.",
-   "provenance": "S105 - Greg's mid-block-sanity-check insight + C/D/E convergent self-analyses",
-   "caveats": "the escalation reserve is the coordinator HALL-MONITOR (a logged-a-turn-then-emitted-the-chain-sign compliance audit) if specialists keep repeating the flaw after this play",
-   "merged": "s102.6 S105"
-  },
-  {
-   "id": "daytype.covering_giveback_self_limiting",
-   "target": "friday_direction",
-   "trigger": "a weekend-feeding Friday following a prior weekend-feeding day that emitted positioning_spent_fade",
-   "read": "a covering / exhaustion give-back is a ONE-SHOT (1-2 session) event, NOT a standing weekly UP bias. The turn/exhaustion gate flips the SIGN of the TURN day; it does not license re-firing the covering-UP on the next weekend-feeding Friday",
-   "call": "once positioning_spent_fade is emitted (covering realized, monday_bias down), the FOLLOWING weekend-feeding day reverts to the chain/state default UNLESS a FRESH crowding stack rebuilt since (new COT extreme AND worsening, new one-sided run into it). A still-extreme-but-NOT-worsening COT is spent fuel, not new fuel. An expiry the week ahead = squeeze TAIL risk (fat upper tail), not a p50 covering trigger",
-   "evidence": "G17: 0417 gate fired covering-UP correctly (+40 actual); the blind then RE-FIRED covering-UP on 0424 (+250 guess, -380 actual) = the miss. Test-drive: rule FIRED - COT byte-identical 0421->0424 (spent fuel) + big_print only 0.536 -> reverted 0424 to DOWN, while leaving 0417 intact.",
-   "status": "PROVISIONAL",
-   "confidence": "the spent-vs-fresh COT read across the specialist's own handoff seam is the discriminator; FREE",
-   "requires": "prior handoff_out exit_type + monday_bias, COT trajectory (worsening vs flat), D-1 big_print - all open_time",
-   "scope": "the SECOND weekend-feeding day after a covering give-back; leaves the first (correct) covering flip intact",
-   "forward_evidence": "TEST-DRIVE VALIDATED (S105): fired cleanly and DISCRIMINATED on the G17 masked inputs (unscored A/B - acted on the buried turn, spared the correct calls, no over-fire). forward_evidence still NONE - the G17 refine + G18+ blind are the scored forward tests.",
-   "provenance": "S105 E tweak (blind_class_E.md + mbo_specialist_E.md); the G17 0424 lesson",
-   "merged": "s102.6 S105"
   }
  ],
  "mechanisms": [
@@ -2817,17 +2724,6 @@
    },
    "status": "plays PROVISIONAL, forward_evidence NONE; forward test = G17 blind (5-specialist) + G16/G17 MBO.",
    "sunday_convention_DECIDED": "Greg S104.1: FOLD the ~2h Sunday reopen (18:00-20:00 ET) into MONDAY, matching the CME trade-date convention (Sun 18:00 open = Monday's session). Rationale (Greg): an unanchored orphan window has potential to really throw things off. Consequences: Monday = Fri close -> Mon close (the reopen hours are Monday's overnight phase); ONE Friday->Monday seam, E's handoff_out has a single consumer (B); A's weekend lens narrows to holiday/extended-weekend reopens; walked-block scores that treated Sunday standalone keep their historical convention - comparisons carry a footnote. Effective G17 onward."
-  },
-  "midblock_underaction_s105": {
-   "premise": "Greg S105: 'it isn't that we're missing signals, this is the story of almost all groups, it's that we don't ACT on them.' Confirmed by three independent specialist self-analyses.",
-   "the_flaw": "one recurring family across C/D/E (and E's Friday prior-over-state): default to the incumbent chain trajectory LOCKED at block-open t0, under-act on turn signals already in decision_state (often written into the specialist's own reasoning, then buried).",
-   "seen_but_not_acted": "E 72%, C 70%, D 71% of misses were signals SEEN and not acted on. Blind dir: C core 57%, D Thu 42% (14/24 wrong), E Fri ~50%. The refine flips ~80% off the SAME data = the signal was actionable.",
-   "why_histogram": "C = GATE 6 / DOCTRINE 6 / DATA 2 (the selector.divergence_resolution HDD>=16.4 AND b_share>=0.50 both-gate excludes the shoulder up-angle by construction + no accumulation arm). D = DOCTRINE 9 / DATA 5 / pure GATE 0 (chain owns the side, surprise doesn't flip, no post-print re-derivation). Not a threshold - doctrine + no mid-block re-check.",
-   "cascade_roots": "Wednesday (C: 71% of C error USD, 7/8 largest misses = the t0 lock dying against an accumulating turn) and Thursday-EIA (D: the wrong post-print close anchors the next 2 weeks: 0416, 0430).",
-   "fixes_merged_s105": "daytype.friday_turn_exhaustion_gate + friday_crest_trim_discriminator (Job 0, E), daytype.eia_preprint_overextension_gate (D), structure.accumulation_arm_turn + selector.midblock_right_the_ship (C + general), daytype.covering_giveback_self_limiting (E).",
-   "test_drive_validation": "the tweaked C/D/E re-ran their G17 owned days blind (unscored A/B). All fired on exactly the buried-turn day and SPARED the correct calls, no over-fire: D fires 0416 / spares 0423; E fires 0424 / spares 0417,0421; C fires 0422 / spares 0414,0415 (after the arm-window fix 2-of-3 -> >=2-of-~5 non-consecutive). No specialist repeated its flaw after the tweak.",
-   "escalation_reserve": "Greg S105: if the same specialists keep repeating the flaw after the tweak, go up a level to the COORDINATOR HALL-MONITOR - a doctrine-compliance audit that flags 'logged a turn tell then emitted the incumbent-chain sign' contradictions and requires an explicit invalidation or an RTS re-derivation before assembly. NOT built yet; held in reserve.",
-   "status": "PROVISIONAL - lens edits applied (blind + refine); plays merged s102.6; forward_evidence NONE (G17 refine + G18+ blind are the scored tests). git = CODE, S3 = DATA."
   }
  }
 }
