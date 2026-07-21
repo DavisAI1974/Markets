@@ -1,0 +1,27 @@
+# Durable real-time Henry Hub NG collector. Separate from every historical pull.
+[Unit]
+Description=Markets live NG MBO MBP-10 and trades collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@
+EnvironmentFile=/etc/markets/markets.env
+ExecStartPre=/usr/bin/python3 research/kalshi/ng_live_recover.py
+ExecStart=/usr/bin/python3 research/kalshi/ng_live_collector.py
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+KillSignal=SIGTERM
+StateDirectory=markets/ng_live
+StateDirectoryMode=0750
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/markets/ng_live
+
+[Install]
+WantedBy=multi-user.target
