@@ -1,0 +1,56 @@
+name: NG Live Collector CI
+
+on:
+  push:
+    branches:
+      - chatgpt/rt-ng-mbp10-collector
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_live_*.py'
+      - 'desk/**'
+      - 'deploy/aws/markets-ng-live*'
+      - 'deploy/aws/markets-desk.service'
+      - 'deploy/aws/install-ng-live.sh'
+      - 'deploy/aws/setup.sh'
+      - '.github/workflows/ng_live_build_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime dependencies
+        run: pip install --quiet databento boto3 numpy fastapi 'uvicorn[standard]'
+      - name: Compile Python
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_live_collector.py \
+            research/kalshi/ng_live_recover.py \
+            research/kalshi/ng_live_watchdog.py \
+            desk/app.py
+      - name: Import desk application
+        run: python -c "from desk.app import app; assert app.title == 'DavisAI Markets Desk'"
+      - name: Validate shell scripts
+        run: bash -n deploy/aws/setup.sh deploy/aws/install-ng-live.sh deploy/aws/markets-update.sh
+      - name: Validate systemd units
+        run: |
+          mkdir -p /tmp/markets-ci
+          for unit in \
+            markets-ng-live.service \
+            markets-ng-live-watchdog.service \
+            markets-ng-live-watchdog.timer \
+            markets-desk.service; do
+            sed -e 's#@MARKETS_DIR@#/tmp/markets-ci#g' -e 's#@RUN_USER@#runner#g' \
+              "deploy/aws/$unit" > "/tmp/$unit"
+          done
+          sudo systemd-analyze verify \
+            /tmp/markets-ng-live.service \
+            /tmp/markets-ng-live-watchdog.service \
+            /tmp/markets-ng-live-watchdog.timer \
+            /tmp/markets-desk.service
