@@ -25,7 +25,7 @@ from ng_rt_feature_state import build_feature_state, validate_chronological
 SCHEMA = "ng_historical_replay.v1"
 NORMALIZED_SCHEMA = "ng_normalized_event.v1"
 EVENT_TYPES = {"trade", "mbo", "definition"}
-SOURCE_ORDER = {"definition": 0, "mbo": 1, "trade": 2}
+SOURCE_ORDER = {"definition": 0, "trade": 1, "mbo": 2}
 
 
 class ReplayError(ValueError):
@@ -56,8 +56,8 @@ def _event_key(event: dict[str, Any]) -> tuple[float, int, int, int]:
         raise ReplayError("event missing finite ts_event_s")
     return (
         ts,
-        int(event.get("source_sequence") or 0),
         SOURCE_ORDER.get(str(event.get("event_type")), 99),
+        int(event.get("source_sequence") or 0),
         int(event.get("ingest_sequence") or 0),
     )
 
@@ -166,14 +166,7 @@ class SourceContinuity:
                 )
         if sequence > 0:
             self.last_sequence[source] = sequence
-        unique = (
-            event_type,
-            identity,
-            event["ts_event_s"],
-            sequence,
-            event.get("order_id"),
-            event.get("action"),
-        )
+        unique = (event_type, identity, event["ts_event_s"], sequence, event.get("order_id"), event.get("action"))
         if unique in self.seen:
             self.duplicates.append(
                 {"event_type": event_type, "raw_symbol": identity[3], "ts_event_s": event["ts_event_s"]}
@@ -255,22 +248,12 @@ def replay_events(
         operator = operators.setdefault(identity, NGLiveOperator())
         stream_states.setdefault(identity, [])
         if event_type == "trade":
-            operator.on_trade(
-                float(event["ts_event_s"]),
-                float(event["price"]),
-                float(event["size"]),
-                event["side"],
-            )
+            operator.on_trade(float(event["ts_event_s"]), float(event["price"]), float(event["size"]), event["side"])
             continue
 
         operator.on_mbo(
-            float(event["ts_event_s"]),
-            event["action"],
-            event["side"],
-            float(event["size"]),
-            int(event["order_id"]),
-            None if event.get("price") is None else float(event["price"]),
-            int(event["flags"]),
+            float(event["ts_event_s"]), event["action"], event["side"], float(event["size"]),
+            int(event["order_id"]), None if event.get("price") is None else float(event["price"]), int(event["flags"]),
         )
         if not (int(event["flags"]) & int(F_LAST)):
             continue
@@ -283,12 +266,8 @@ def replay_events(
             blind_prior=prior_before,
             operator_snapshot=operator.snapshot(float(event["ts_event_s"])),
             instrument_identity={
-                "dataset": identity[0],
-                "publisher_id": identity[1],
-                "instrument_id": identity[2],
-                "raw_symbol": identity[3],
-                "definition_date": identity[4],
-                "continuous_symbol": "NG.v.0",
+                "dataset": identity[0], "publisher_id": identity[1], "instrument_id": identity[2],
+                "raw_symbol": identity[3], "definition_date": identity[4], "continuous_symbol": "NG.v.0",
                 "roll_rule": "kalshi_settlement_proximity",
             },
             decision_cutoff_s=float(event["ts_event_s"]),
@@ -311,11 +290,8 @@ def replay_events(
     streams = [
         {
             "instrument": {
-                "dataset": identity[0],
-                "publisher_id": identity[1],
-                "instrument_id": identity[2],
-                "raw_symbol": identity[3],
-                "definition_date": identity[4],
+                "dataset": identity[0], "publisher_id": identity[1], "instrument_id": identity[2],
+                "raw_symbol": identity[3], "definition_date": identity[4],
             },
             "n_states": len(stream_states[identity]),
             "states": stream_states[identity],
@@ -345,57 +321,26 @@ def selftest() -> int:
     manifest = expected_g15_manifest(publisher_id=1)
     for entry in manifest["entries"]:
         entry.update(
-            status="PRESENT",
-            location=f"file:///{entry['source_kind']}/{entry['day']}",
-            publisher_id=1,
+            status="PRESENT", location=f"file:///{entry['source_kind']}/{entry['day']}", publisher_id=1,
             definition_date="2026-03-01" if entry["raw_symbol"] == "NGJ26" else "2026-03-20",
-            definition_start_s=0.0,
-            definition_end_s=1000.0,
-            event_start_s=1.0,
-            event_end_s=20.0,
-            record_count=10,
-            size_bytes=100,
-            inventory_observed_at="2026-07-21T00:00:00Z",
+            definition_start_s=0.0, definition_end_s=1000.0, event_start_s=1.0, event_end_s=20.0,
+            record_count=10, size_bytes=100, inventory_observed_at="2026-07-21T00:00:00Z",
         )
     identity = {
-        "dataset": "GLBX.MDP3",
-        "publisher_id": 1,
-        "instrument_id": 1008,
-        "raw_symbol": "NGJ26",
-        "definition_date": "2026-03-01",
-        "session_day": "20260316",
+        "dataset": "GLBX.MDP3", "publisher_id": 1, "instrument_id": 1008, "raw_symbol": "NGJ26",
+        "definition_date": "2026-03-01", "session_day": "20260316",
     }
-    events = [
-        {**identity, "schema": NORMALIZED_SCHEMA, "event_type": "definition", "ts_event_s": 1.0, "source_sequence": 1}
-    ]
+    events = [{**identity, "schema": NORMALIZED_SCHEMA, "event_type": "definition", "ts_event_s": 1.0, "source_sequence": 1}]
     for sequence in range(1, 7):
-        events.append(
-            {
-                **identity,
-                "schema": NORMALIZED_SCHEMA,
-                "event_type": "trade",
-                "ts_event_s": sequence + 1,
-                "source_sequence": sequence,
-                "price": 3.0 + sequence / 1000,
-                "size": 4,
-                "side": "B",
-            }
-        )
-    events.append(
-        {
-            **identity,
-            "schema": NORMALIZED_SCHEMA,
-            "event_type": "mbo",
-            "ts_event_s": 8.0,
-            "source_sequence": 1,
-            "action": "A",
-            "side": "B",
-            "size": 10,
-            "order_id": 1,
-            "price": 3.004,
-            "flags": F_LAST,
-        }
-    )
+        events.append({
+            **identity, "schema": NORMALIZED_SCHEMA, "event_type": "trade", "ts_event_s": sequence + 1,
+            "source_sequence": sequence, "price": 3.0 + sequence / 1000, "size": 4, "side": "B",
+        })
+    events.append({
+        **identity, "schema": NORMALIZED_SCHEMA, "event_type": "mbo", "ts_event_s": 8.0,
+        "source_sequence": 1, "action": "A", "side": "B", "size": 10, "order_id": 1,
+        "price": 3.004, "flags": F_LAST,
+    })
     prior = {"up": 0.4, "flat": 0.2, "down": 0.4}
     result = replay_events(events, manifest=manifest, blind_prior=prior)
     assert result["completed_mbo_event_boundaries"] == 1
@@ -426,15 +371,7 @@ def main() -> int:
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(
-        json.dumps(
-            {
-                "processed": result["processed_records"],
-                "boundaries": result["completed_mbo_event_boundaries"],
-            },
-            indent=2,
-        )
-    )
+    print(json.dumps({"processed": result["processed_records"], "boundaries": result["completed_mbo_event_boundaries"]}, indent=2))
     return 0
 
 
