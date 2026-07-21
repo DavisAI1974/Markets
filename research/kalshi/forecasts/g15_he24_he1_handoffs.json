@@ -1,0 +1,393 @@
+{
+ "spec": "he24->he1 boundary handoff (STATE not day-net); brain s102.4",
+ "days": {
+  "20260315": {
+   "note": "block open - no prior in-block session; anchor to the Friday anchor 3.132 (NGJ26) down."
+  },
+  "20260316": {
+   "prior_date": "20260315",
+   "prior_dow": "Sun",
+   "prior_owner": "A",
+   "receiving_owner": "B",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 3.089,
+    "open_px": 3.18,
+    "day_move_usd": -910,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": 1,
+    "low_et": "18:49",
+    "high_et": "18:00",
+    "close_off_low_frac": 0.04,
+    "low_late": true,
+    "high_late": true
+   },
+   "chain_polarity": -1,
+   "chain_age_sessions": 1,
+   "cum_from_anchor_usd": -430,
+   "prior_owner_read": {
+    "owner": "A",
+    "continuation_vs_reversal": "continuation (priced-stub chain-drift extends down; the up-gap is NOT a reversal, it is rejected)",
+    "turn_time_et": "18:05 (reopen up-spike rejected within ~5-10 min, then monotone down; no counter-turn thereafter)",
+    "trend_vs_chop": "trend (down) after a brief reopen up-spike that round-tripped",
+    "mbo_verdict": "NEUTRAL-to-marginally-helpful, correctly SUBORDINATED. The MBO layer stood itself down (thin Sunday, no execution authority) exactly as the weekend lens predicts. As shadow, it did carry a real and coherent sequence - reopen buy-imbalance (the up-gap) then exhaustion into sell/consumed-BID (the reje",
+    "confidence": 0.68
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260317": {
+   "prior_date": "20260316",
+   "prior_dow": "Mon",
+   "prior_owner": "B",
+   "receiving_owner": "C",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 3.035,
+    "open_px": 3.09,
+    "day_move_usd": -550,
+    "last_hour_dir": 1,
+    "last_hour_signed_flow": 1,
+    "low_et": "13:11",
+    "high_et": "02:21",
+    "close_off_low_frac": 0.29,
+    "low_late": false,
+    "high_late": false
+   },
+   "chain_polarity": -1,
+   "chain_age_sessions": 2,
+   "cum_from_anchor_usd": -970,
+   "prior_owner_read": {
+    "owner": "B",
+    "continuation_vs_reversal": "continuation (R3 carry-down) with a genuine late PARTIAL reversal - not a day-level reversal",
+    "turn_time_et": "2026-03-16 02:21 ET shakeout-top turn_down (mag 1040); secondary low-turn 13:11 ET into the late bounce",
+    "trend_vs_chop": "trend down, bracketed by an overnight up head-fake and a modest late bounce (mild chop at the edges, trending core)",
+    "mbo_verdict": "HELP (modest). Direction unchanged (down, blind correct). MAGNITUDE: trims the close from blind -650 toward -570 (actual -550) by crediting the ph2 buy accommodation - the blind drew the close near its low, MBO says off the low. TURN/PATH: materially better - MBO resolves the blind's deferred deep-b",
+    "confidence": 0.62
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260318": {
+   "prior_date": "20260317",
+   "prior_dow": "Tue",
+   "prior_owner": "C",
+   "receiving_owner": "C",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 3.033,
+    "open_px": 3.034,
+    "day_move_usd": -10,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": -1,
+    "low_et": "05:34",
+    "high_et": "08:30",
+    "close_off_low_frac": 0.3,
+    "low_late": false,
+    "high_late": false
+   },
+   "chain_polarity": -1,
+   "chain_age_sessions": 3,
+   "cum_from_anchor_usd": -990,
+   "prior_owner_read": {
+    "owner": "C",
+    "continuation_vs_reversal": "neither - a mature-swing HOLD (R4 no-consecutive-extension after 0316's fresh cum-low)",
+    "turn_time_et": "2026-03-17 08:30 (turn_down - the morning pop to +630 exc gives back)",
+    "trend_vs_chop": "chop (whipsaw hold day)",
+    "mbo_verdict": "HELP (mild). The phase-2 absorption + the 08:30 give-back of the morning pop CONFIRM the blind's hold-day thesis and argue the +150 is a touch high -> nudge toward pure hold (~+50). No new direction; MBO used only as confirmation. Tick flow would have HURT.",
+    "confidence": "moderate"
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260319": {
+   "prior_date": "20260318",
+   "prior_dow": "Wed",
+   "prior_owner": "C",
+   "receiving_owner": "D",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 3.223,
+    "open_px": 3.033,
+    "day_move_usd": 1900,
+    "last_hour_dir": 1,
+    "last_hour_signed_flow": 1,
+    "low_et": "02:24",
+    "high_et": "19:56",
+    "close_off_low_frac": 0.97,
+    "low_late": false,
+    "high_late": true
+   },
+   "chain_polarity": 1,
+   "chain_age_sessions": 1,
+   "cum_from_anchor_usd": 910,
+   "prior_owner_read": {
+    "owner": "C",
+    "continuation_vs_reversal": "REVERSAL up (this is THE turn the blind missed)",
+    "turn_time_et": "2026-03-18 02:24 (turn_up, turn_mag 3000 - the overnight low, a stop-run-and-reverse below the 0310 shelf)",
+    "trend_vs_chop": "trend (post-turn, sustained up all session)",
+    "mbo_verdict": "MIXED, net HELP at the coarse grain. HELPS: phase-2 absorption + overnight bid-LEVEL recruitment + the stop-run-and-reverse structure confirm the give-back-exhaustion reversal; combined with the D-1 buy-absorption they justify flipping the blind from -400 to UP. HURTS: the 30-min imb_flow is pure no",
+    "confidence": "moderate (direction high, magnitude-tail reactive)"
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260320": {
+   "prior_date": "20260319",
+   "prior_dow": "Thu",
+   "prior_owner": "D",
+   "receiving_owner": "E",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 3.115,
+    "open_px": 3.223,
+    "day_move_usd": -1080,
+    "last_hour_dir": 1,
+    "last_hour_signed_flow": 1,
+    "low_et": "18:33",
+    "high_et": "09:31",
+    "close_off_low_frac": 0.1,
+    "low_late": true,
+    "high_late": false
+   },
+   "chain_polarity": 1,
+   "chain_age_sessions": 0,
+   "cum_from_anchor_usd": -170,
+   "prior_owner_read": {
+    "owner": "D",
+    "continuation_vs_reversal": "continuation (down-chain continues; the print is chain-SIDED and delivers its band, deeper than the blind sized)",
+    "turn_time_et": "09:31 (turn_down; pre-print, at the +470 morning high - the counter-probe fails and the chain reasserts into the print)",
+    "trend_vs_chop": "trend down with one pre-print counter-probe up; net directional",
+    "mbo_verdict": "HELP. Confirms the blind's DIRECTION (down) and the chain-SIDED nature of the print, and materially corrects TWO things: (1) MAGNITUDE - actual -1080 vs blind -800, the chain-sided injection print delivered ~35% deeper than the blind's S1-void-damped band, so the posterior resizes to ~-1050; (2) TIM",
+    "confidence": 0.72
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260322": {
+   "prior_date": "20260320",
+   "prior_dow": "Fri",
+   "prior_owner": "E",
+   "receiving_owner": "A",
+   "boundary_kind": "weekend_reopen",
+   "prior_exit_state": {
+    "close_px": 3.07,
+    "open_px": 3.078,
+    "day_move_usd": -80,
+    "last_hour_dir": 1,
+    "last_hour_signed_flow": 1,
+    "low_et": "09:26",
+    "high_et": "06:04",
+    "close_off_low_frac": 0.47,
+    "low_late": false,
+    "high_late": false
+   },
+   "chain_polarity": 1,
+   "chain_age_sessions": 0,
+   "cum_from_anchor_usd": -250,
+   "prior_owner_read": {
+    "owner": "E",
+    "continuation_vs_reversal": "intraday reversal-within-day absorbed; net a shallow down continuation of the stretched chain",
+    "turn_time_et": "09:26 (the -660 low; afternoon recovers off it)",
+    "trend_vs_chop": "CHOP (whipsaw: up probe -> sell-off -> recovery; no sustained trend)",
+    "mbo_verdict": "HELP (mild). HOW: the positive session signed-flow (+3519) + ph2 absorption confirm the down-drift is being absorbed, supporting a SHALLOW near-flat outcome and refining the blind's -250 toward -120 (actual raw -80). WHY only mild: quiet day, seam dominates, and the MBO BOOK layer is pure noise here",
+    "confidence": "LOW-MODERATE (quiet settle-digestion Friday; low materiality; the seam dominates and is never-traded)"
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Sunday inherits the Friday CLOSE + chain state, not the Friday day-move; reopen gap SIGN is noise - forecast the day-move from the anchor."
+   ]
+  },
+  "20260323": {
+   "prior_date": "20260322",
+   "prior_dow": "Sun",
+   "prior_owner": "A",
+   "receiving_owner": "B",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 3.006,
+    "open_px": 3.099,
+    "day_move_usd": -930,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": 1,
+    "low_et": "18:10",
+    "high_et": "18:00",
+    "close_off_low_frac": 0.13,
+    "low_late": true,
+    "high_late": true
+   },
+   "chain_polarity": -1,
+   "chain_age_sessions": 3,
+   "cum_from_anchor_usd": -890,
+   "prior_owner_read": {
+    "owner": "A",
+    "continuation_vs_reversal": "continuation (live down-chain, budget-form day-move); the up-gap is rejected, not a reversal",
+    "turn_time_et": "none (front-loaded flush 18:00-18:10 to the low, then flat; no counter-turn)",
+    "trend_vs_chop": "front-loaded trend down then chop-flat (all the move is in the first ~40 min; phases 2-3 near-zero)",
+    "mbo_verdict": "MBO HURT-POTENTIAL, correctly DISABLED = net neutral. This session is the clean case for the stand-down rule: the reconstructed book never completed and was flagged bad all session, so any book-based feature (the 18:56 consumed-ASK / far-side-recruitment 0.615 print) would have been FALSE PRECISION.",
+    "confidence": 0.62
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260324": {
+   "prior_date": "20260323",
+   "prior_dow": "Mon",
+   "prior_owner": "B",
+   "receiving_owner": "C",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 2.898,
+    "open_px": 3.007,
+    "day_move_usd": -1090,
+    "last_hour_dir": 1,
+    "last_hour_signed_flow": 1,
+    "low_et": "14:35",
+    "high_et": "03:52",
+    "close_off_low_frac": 0.14,
+    "low_late": false,
+    "high_late": false
+   },
+   "chain_polarity": -1,
+   "chain_age_sessions": 4,
+   "cum_from_anchor_usd": -1970,
+   "prior_owner_read": {
+    "owner": "B",
+    "continuation_vs_reversal": "continuation (R3 carry-down), close NEAR the low - late buy flow absorbed, no reversal",
+    "turn_time_et": "2026-03-23 03:52 ET shakeout-top turn_down (mag 2360); session low 14:35 ET (no late bounce - absorbed)",
+    "trend_vs_chop": "strong trend down (absorb_session True), preceded only by the overnight up head-fake",
+    "mbo_verdict": "HELP (substantial, on MAGNITUDE). Direction unchanged (down, blind correct; the blind also correctly declined the far-window cold-add up-temptation). The blind UNDER-sized at -800; the ph1 violent delivery (-1920 on 58k vol) says the carry-down was far larger, and the ph2 ABSORPTION (buy +2409 but p",
+    "confidence": 0.66
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260325": {
+   "prior_date": "20260324",
+   "prior_dow": "Tue",
+   "prior_owner": "C",
+   "receiving_owner": "C",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 2.86,
+    "open_px": 2.895,
+    "day_move_usd": -350,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": -1,
+    "low_et": "16:26",
+    "high_et": "21:49",
+    "close_off_low_frac": 0.16,
+    "low_late": false,
+    "high_late": false
+   },
+   "chain_polarity": -1,
+   "chain_age_sessions": 5,
+   "cum_from_anchor_usd": -2350,
+   "prior_owner_read": {
+    "owner": "C",
+    "continuation_vs_reversal": "continuation down (extension day 2, size-capped by the 2-extension alternation ceiling)",
+    "turn_time_et": "2026-03-23 21:49 (turn_down, turn_mag 830 - the overnight buy-pop is absorbed and rejected)",
+    "trend_vs_chop": "trend-down with an overnight false pop (absorb_session=true)",
+    "mbo_verdict": "HELP on SHAPE, HURT on FLOW-direction. The turn_down + absorb_session confirm the overnight pop is absorbed and the day resumes down (blind's young-extension shape). But the day-level POSITIVE signed flow, if trusted, points the wrong way - a live demonstration that the new build hurts when used dir",
+    "confidence": "moderate-high"
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260326": {
+   "prior_date": "20260325",
+   "prior_dow": "Wed",
+   "prior_owner": "C",
+   "receiving_owner": "D",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 2.926,
+    "open_px": 2.861,
+    "day_move_usd": 650,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": -1,
+    "low_et": "20:38",
+    "high_et": "18:00",
+    "close_off_low_frac": 0.83,
+    "low_late": false,
+    "high_late": true
+   },
+   "chain_polarity": -1,
+   "chain_age_sessions": 0,
+   "cum_from_anchor_usd": -1690,
+   "prior_owner_read": {
+    "owner": "C",
+    "continuation_vs_reversal": "REVERSAL up - week-2 give-back-exhaustion turn-bounce off the cum-low",
+    "turn_time_et": "2026-03-24 20:38 (turn_up, turn_mag 1010 - the bounce starts right at the session open off the cum-low)",
+    "trend_vs_chop": "trend-up (aligned buy push)",
+    "mbo_verdict": "HELP (cleanest of my four). turn_up at the session open + phase-2 aligned buy push + day-level signed flow aligned with price all confirm a real buy-driven basing bounce; combined with the D-1 sell-climax they justify sizing UP from the blind's +250 to ~+560 (actual +660). This is the day MBO flow A",
+    "confidence": "moderate-good (my cleanest MBO-helps day)"
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  },
+  "20260327": {
+   "prior_date": "20260326",
+   "prior_dow": "Thu",
+   "prior_owner": "D",
+   "receiving_owner": "E",
+   "boundary_kind": "overnight",
+   "prior_exit_state": {
+    "close_px": 2.92,
+    "open_px": 2.926,
+    "day_move_usd": -60,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": 1,
+    "low_et": "16:12",
+    "high_et": "13:04",
+    "close_off_low_frac": 0.39,
+    "low_late": false,
+    "high_late": false
+   },
+   "chain_polarity": 1,
+   "chain_age_sessions": 0,
+   "cum_from_anchor_usd": -1750,
+   "prior_owner_read": {
+    "owner": "D",
+    "continuation_vs_reversal": "REVERSAL - the counter-print up-leg delivers intraday then round-trips; NO continuation to the close",
+    "turn_time_et": "13:04 (turn_down at the +600 high - the up-leg exhausts and round-trips)",
+    "trend_vs_chop": "round-trip / mean-revert: up-leg then full give-back to flat (chop-around-flat on the day net, though a clean up-then-down arc intraday)",
+    "mbo_verdict": "HELP (strong - this is the block's over-size correction). The blind called +900 UP to the close; the MBO shows the up-leg DID deliver intraday (peak +600 at 13:04, blind's leg-direction right) but ROUND-TRIPPED to flat (close -60). The MECHANICAL CAUSE is visible in the flow: the entire up-leg ran o",
+    "confidence": 0.68
+   },
+   "carry_rules": [
+    "Start from your blind + your prior posterior; use this state to size/time, not to override direction.",
+    "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR day exhaustion read, not front-run.",
+    "Read your open RELATIVE to the prior close's exit condition (close_off_low, low_late, last_hour_dir/flow)."
+   ]
+  }
+ }
+}
