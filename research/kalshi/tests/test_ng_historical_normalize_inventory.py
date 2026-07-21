@@ -187,6 +187,46 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual(entry["status"], "CORRUPT")
             self.assertIn("definition period", entry["observation_error"])
 
+    def test_l1_inventory_filters_nontrade_rows(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            source = Path(tempdir) / "mixed.jsonl"
+            ident = identity("20260316")
+            rows = [
+                {
+                    **ident,
+                    "ts_event_s": 1,
+                    "action": "A",
+                    "price": 3.0,
+                    "size": 10,
+                    "side": "B",
+                    "order_id": 1,
+                    "flags": 0,
+                    "sequence": 1,
+                },
+                {
+                    **ident,
+                    "ts_event_s": 2,
+                    "action": "T",
+                    "price": 3.001,
+                    "size": 2,
+                    "side": "B",
+                    "order_id": 0,
+                    "flags": 128,
+                    "sequence": 2,
+                },
+            ]
+            source.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+            entry = inspect_uri(
+                str(source),
+                source_kind="l1_trades",
+                day="20260316",
+                definition=definitions()["NGJ26"],
+            )
+            self.assertEqual(entry["status"], "PRESENT")
+            self.assertEqual(entry["input_record_count"], 2)
+            self.assertEqual(entry["record_count"], 1)
+            self.assertEqual(entry["skipped_nonmatching"], 1)
+
     def test_complete_fixture_manifest_becomes_ready(self):
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
