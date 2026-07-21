@@ -11,7 +11,7 @@ disk). Write scratchpad/aws.env + ~/.aws/credentials; STS verify; ALWAYS
 
 ## READ, in order
 `SESSION_HANDOFF_2026-07-21_S104.md` -> this drop-in -> `research/kalshi/agents/README.md` ->
-`knowledge/ng_brain.json` (**s102.5, 46 plays** - the S104 adds: friday_exit_decomposition,
+`knowledge/ng_brain.json` (**s102.5, 47 plays** - the S104 adds: friday_exit_decomposition, boundary.prior_close_flow_direction_disagreement,
 carry_realization_flip, friday_exhausted_extreme_giveback, 4x midweek.*, 3x monday.*, +
 doctrine_tier3.friday_monday_cascade_s104) -> `research/kalshi/GROUP_PRECHECK_S103.md` ->
 `CASCADE_S104_friday_cleanup_summary.md` + `CASCADE_S104_monday_fix_summary.md`.
