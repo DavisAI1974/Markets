@@ -1,0 +1,54 @@
+[
+ {
+  "date": "20260313",
+  "contract": "NGJ26",
+  "mbo_present": true,
+  "l1_present": true,
+  "mbo_bytes": 11919656,
+  "l1_bytes": 2253578,
+  "dataset": "GLBX.MDP3",
+  "publisher_id": 1,
+  "instrument_id": 996,
+  "raw_symbol": "NGJ26",
+  "n_mbo": 566037,
+  "first_event_utc": "2026-03-08 15:11:12.741197348+00:00",
+  "last_event_utc": "2026-03-13 21:00:00.078038454+00:00",
+  "action_counts": {
+   "R": 1,
+   "A": 218949,
+   "C": 218775,
+   "M": 82914,
+   "T": 19797,
+   "F": 25601
+  },
+  "chronological_ok": true,
+  "flow_usable": true,
+  "queue_usable": true
+ },
+ {
+  "date": "20260315",
+  "contract": "NGJ26",
+  "mbo_present": true,
+  "l1_present": true,
+  "mbo_bytes": 746069,
+  "l1_bytes": 109224,
+  "dataset": "GLBX.MDP3",
+  "publisher_id": 1,
+  "instrument_id": 996,
+  "raw_symbol": "NGJ26",
+  "n_mbo": 35485,
+  "first_event_utc": "2026-03-15 13:25:59.992000103+00:00",
+  "last_event_utc": "2026-03-15 23:59:55.097825289+00:00",
+  "action_counts": {
+   "R": 1,
+   "A": 16694,
+   "C": 16307,
+   "M": 1204,
+   "T": 621,
+   "F": 658
+  },
+  "chronological_ok": true,
+  "flow_usable": true,
+  "queue_usable": true
+ }
+]
