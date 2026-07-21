@@ -18,7 +18,7 @@ corrected Friday inheritance ALONE; sum |err| 35,030 -> 10,880 -> 8,000 (18 non-
 mean ~107). **MERGED s102.5 (46 plays, incumbents 36/36 byte-identical)** + doctrine friday_monday_
 cascade_s104. **STANDING ORDERS (Greg)**: FOCUS = FRIDAY AND MONDAY; group windows Sunday->2nd Friday
 always; FIVE specialists for BOTH blind and refine, coordinator guarded; honest under-100 every day.
-**OPEN**: E's Friday self-analysis (running at close); the SUNDAY CONVENTION DECIDED: FOLD the ~2h
+**OPEN**: E's Friday self-analysis DONE (one dominant flaw: PRIOR-OVER-STATE, 72%; cascade free to fix); the SUNDAY CONVENTION DECIDED: FOLD the ~2h
 reopen into Monday, effective G17 (Greg S104.1); G17 5-specialist blind = S105's opener.
 NG MBO year pull DONE on S3 (312 files; per-contract legs required for roll-straddling groups -
 NG.n.0 is the wrong pre-roll leg).
