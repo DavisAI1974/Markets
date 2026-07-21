@@ -1,0 +1,57 @@
+name: Free NG Drivers (EIA + NOAA)
+
+on:
+  push:
+    branches: [chatgpt/rt-ng-mbp10-collector]
+    paths:
+      - research/kalshi/free_ng_data_collector.py
+      - .github/workflows/free_ng_collectors.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '7 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: free-ng-drivers
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependency
+        run: pip install --quiet requests
+      - name: Collect free public NG drivers
+        env:
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+          NWS_USER_AGENT: DavisAI-Markets/1.0 (public-data research)
+        run: |
+          mkdir -p /tmp/free_ng
+          python research/kalshi/free_ng_data_collector.py --out /tmp/free_ng/latest.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/free_ng/latest.json'))
+          print('status:',p.get('status'))
+          print('sources:',sorted(p.get('sources',{})))
+          print('errors:',p.get('errors'))
+          eia=p.get('sources',{}).get('eia',{})
+          nws=p.get('sources',{}).get('nws',{})
+          print('storage:',eia.get('storage',{}).get('latest'))
+          print('weather:',nws.get('gas_weighted_next_24h'))
+          print('alerts:',len(nws.get('alerts',[])))
+          PY
+      - name: Upload snapshot artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: free-ng-drivers-${{ github.run_id }}
+          path: /tmp/free_ng/latest.json
+          retention-days: 14
