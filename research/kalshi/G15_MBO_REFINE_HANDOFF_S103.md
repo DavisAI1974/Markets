@@ -73,17 +73,32 @@ Spent-vs-unrealized-ahead is the gap-ownership key: crest-trim -> Sunday can gap
 -> Sunday reopen likely continues the bid. A weekend carrying a contract roll passes the leg change as
 never-traded.
 
-## NEXT ITERATION (what to build before the numbers can improve further)
+## RENDER (S103 end - form-fit + the squiggle fix)
 
-1. Wire the HE24->HE1 handoff object above so the 5 specialists coordinate at the boundary (Greg's
-   explicit ask). Today each specialist re-derives incoming state from scratch.
-2. Implement the engine change requests (book_trustworthy bit, phase-first emission, print-anchored EIA
-   windows, leg_map/seam_event, absorption_flag). These are speed + safety wins that remove the manual
-   triage the specialists did this run.
-3. Re-run G15 MBO with the handoff + engine changes and confirm 12/12 holds with a tighter, honest
-   under-100 magnitude on every day, THEN carry the layer forward to G16/G17 MBO as the forward test.
-4. "Refine the refinement": the specialists go back and refine until the numbers are better before the
-   layer is trusted on unseen blocks.
+The render now FORM-FITS the intraday p50 path (shape from the forecast's own guess_curve /
+path_p50_curve, close scaled to the scored day-move) instead of straight open->close segments, and adds a
+dashed "re-anchored to actual open" line that isolates direction/shape skill from the compounding level
+drift (Greg's "if blind started off on the price" point - on the blind figure the compound line drifts
+low while the re-anchored line hugs the actual all block). SQUIGGLE FIX: the 2-hourly path grid runs
+20->22->00->..->16->18->20 and wraps past midnight; the (hour-18)%24 x-mapping sent the post-midnight
+tail back to the left edge so the line doubled back across each day. `_curve_pts` now UNWRAPS the clock.
+DEFERRED (Greg, next session): print only the ACTUAL curve + the specialists' ACTUAL p50 path - drop the
+"angular things" (the re-anchored dashed lines / any scaled reconstruction).
+
+## NEXT ITERATION (state at S103 close)
+
+1. HE24->HE1 handoff: the BUILDER IS BUILT + validated (`he24_he1_handoff.py` ->
+   `forecasts/g15_he24_he1_handoffs.json`, the full G15 boundary chain carrying prior-day realized exit
+   STATE, not the day-net). The round-2 specialist re-run WITH the handoff injected was launched but
+   STOPPED before writing (committed round-1 12/12 state intact) - DEFERRED to next session: re-run the
+   5 specialists round 2, re-coordinate, re-score, re-render; target honest under-100 every day.
+2. WATCH THE COORDINATOR: `coordinate_g15_mbo.py` today only SELECTS the owner per day (the OWNER map)
+   and assembles - no forecast/average logic. Next session add an explicit GUARD asserting it never
+   emits a day-move no specialist owns (enforce, do not assume).
+3. Engine change requests (book_trustworthy bit, phase-first emission, print-anchored EIA windows,
+   leg_map/seam_event, absorption_flag) - speed + safety wins that remove the manual triage this run.
+4. Then carry the layer forward to G16/G17 MBO as the forward test. "Refine the refinement" until the
+   numbers are better before the layer is trusted on unseen blocks.
 
 ## BRAIN
 

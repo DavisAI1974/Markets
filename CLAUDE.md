@@ -241,7 +241,10 @@ May->June seam ~0421) = the walk's opener**. PARALLEL **MBO CAUSAL-REFINEMENT TR
 predictor, MBO is a POSTERIOR UPDATE). Honest verdict: MBO TRADE-FLOW helps, MBO BOOK layer hurts if
 trusted raw (stood down all 12 days); the working discriminator is signed-flow-vs-price CONVICTION per
 phase, DIRECTION stays with the D-1 trade tilt. Brain merged to **s102.4 (36 plays, doctrine +
-findings)**; next = wire the HE24->HE1 handoff + engine changes, re-run, then G16/G17 MBO. Read
+findings)**. Renders now FORM-FIT the intraday p50 path (squiggle fixed = unwrapped the 2-hourly clock).
+The **HE24->HE1 handoff BUILDER is built** (`he24_he1_handoff.py` -> `g15_he24_he1_handoffs.json`); the
+round-2 specialist re-run with it injected is DEFERRED to next session (committed round-1 12/12 intact),
+along with a coordinator-only GUARD + an actual-curve-only render. Then G16/G17 MBO. Read
 `research/kalshi/G15_MBO_REFINE_HANDOFF_S103.md` + `DROP_IN_S104_MBO_REFINE.md`. **CANONICAL DROP-IN
 AGENT FILES are live in `research/kalshi/agents/` (blind panel + refine) + continuous_rt.py for renders -
 USE THEM, do not re-author per group; only the brain + group data change.** **OPEN RECURRING PROBLEM handed to ChatGPT: `NG_FORECASTER_PROBLEM_MEMO_S103.md`** (blind
