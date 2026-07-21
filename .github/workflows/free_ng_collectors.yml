@@ -1,17 +1,19 @@
-name: Free NG Drivers (EIA + NOAA)
+name: Free NG Drivers (EIA + NOAA + NRC)
 
 on:
   push:
     branches:
-      - chatgpt/rt-ng-mbp10-collector
       - claude/kalshi-s79-kickoff-ij8t9o
+      - chatgpt/nrc-nuclear-collector
     paths:
       - research/kalshi/free_ng_data_collector.py
+      - research/kalshi/nrc_reactor_collector.py
       - .github/workflows/free_ng_collectors.yml
   pull_request:
     branches: [claude/kalshi-s79-kickoff-ij8t9o]
     paths:
       - research/kalshi/free_ng_data_collector.py
+      - research/kalshi/nrc_reactor_collector.py
       - .github/workflows/free_ng_collectors.yml
   workflow_dispatch:
   schedule:
@@ -39,12 +41,15 @@ jobs:
         env:
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
           NWS_USER_AGENT: DavisAI-Markets/1.0 (public-data research)
+          NRC_USER_AGENT: DavisAI-Markets/1.0 (public-data research)
         run: |
           mkdir -p /tmp/free_ng
           python research/kalshi/free_ng_data_collector.py --out /tmp/free_ng/latest.json
+          python research/kalshi/nrc_reactor_collector.py --out /tmp/free_ng/nrc_latest.json
           python - <<'PY'
           import json
           p=json.load(open('/tmp/free_ng/latest.json'))
+          n=json.load(open('/tmp/free_ng/nrc_latest.json'))
           print('status:',p.get('status'))
           print('sources:',sorted(p.get('sources',{})))
           print('errors:',p.get('errors'))
@@ -53,10 +58,13 @@ jobs:
           print('storage:',eia.get('storage',{}).get('latest'))
           print('weather:',nws.get('gas_weighted_next_24h'))
           print('alerts:',len(nws.get('alerts',[])))
+          print('nrc_report_date:',n.get('latest_report_date'))
+          print('nrc_fleet:',n.get('latest'))
+          print('nrc_changes:',n.get('day_over_day'))
           PY
       - name: Upload snapshot artifact
         uses: actions/upload-artifact@v4
         with:
           name: free-ng-drivers-${{ github.run_id }}
-          path: /tmp/free_ng/latest.json
+          path: /tmp/free_ng/
           retention-days: 90
