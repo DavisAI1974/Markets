@@ -1,8 +1,17 @@
-"""coordinate_g15_mbo.py - COORDINATOR for the G15 MBO 5-specialist refine (S103).
+"""coordinate_g15_mbo.py - COORDINATOR for the G15 MBO 5-specialist refine (S103; guard + render S104).
 Assembles the 5 specialist posteriors into grp15_mbo_refined.json (each day OWNED by its day-class
 specialist - SELECT, never average). Builds the two-leg actual curve from the MBO trades (NGJ26 0313-0319,
 NGK26 0320-0327, 0320 seam never-traded), renders blind + refined vs actual, scores blind vs refined.
-Does NOT edit the immutable blind (forecasts/grp15.json)."""
+Does NOT edit the immutable blind (forecasts/grp15.json).
+
+COORDINATOR-ONLY GUARD (S104, Greg): this file may SELECT the owner and ASSEMBLE its numbers - it must
+never forecast, average, scale, or substitute. guard_coordinator() enforces that every emitted day-move
+is verbatim the owner specialist's own number; a missing/non-numeric owner posterior is a hard failure,
+never a silent fallback to the blind.
+
+DATA NOTE: data/ng_mbo must hold the PER-CONTRACT legs (NGJ26 files for 0313-0319 from
+s3 nymex/ng_mbo_ngj26/, NGK26 for 0320-0327 = the year-pull files). The year-pull NG.n.0 files are the
+WRONG leg pre-roll (already NGK26 by mid-March)."""
 import os, json, glob
 import numpy as np, pandas as pd
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -63,6 +72,28 @@ def specialist_posteriors():
     return out
 
 
+SPECIALISTS = {"A", "B", "C", "D", "E"}
+
+
+def guard_coordinator(posts):
+    """Assert the coordinator only selects/assembles - it never emits a day-move no specialist owns.
+    Hard failure on any violation; no fallback."""
+    errs = []
+    for d in DAYS:
+        own = OWNER.get(d)
+        if own not in SPECIALISTS:
+            errs.append(f"{d}: owner {own!r} is not a specialist"); continue
+        p = posts.get(d)
+        if p is None:
+            errs.append(f"{d}: owner {own} emitted no posterior for this day (no fallback allowed)"); continue
+        if p.get("owner") != own:
+            errs.append(f"{d}: assembled posterior came from specialist {p.get('owner')!r}, owner is {own}")
+        if not isinstance(p.get("net"), (int, float)):
+            errs.append(f"{d}: owner {own} net is {p.get('net')!r} - non-numeric; the coordinator must not invent or substitute a number")
+    if errs:
+        raise SystemExit("COORDINATOR GUARD FAILED (would emit a number no specialist owns):\n  " + "\n  ".join(errs))
+
+
 def build_actual():
     """Per-day actual from MBO trades; continuous cum-$ from anchor, 0320 seam removed (never-traded)."""
     recs, cont_t, cont_p, cum_seam = [], [], [], 0.0
@@ -104,6 +135,7 @@ def guess_line(days_by_date, cont_anchor=ANCHOR):
 
 def main():
     posts = specialist_posteriors()
+    guard_coordinator(posts)                    # enforce, do not assume: SELECT/ASSEMBLE only
     actual, cont_t, cont_p, seam = build_actual()
     act_by = {r["date"]: r for r in actual}
     # blind day-moves from grp15.json
@@ -126,12 +158,16 @@ def main():
                "price_basis": "two-leg Kalshi underlying NGJ26(1008)->NGK26(996), 0320 seam never-traded",
                "method": "5 day-class specialists (A weekend/B Monday/C core/D Thu-EIA/E Fri-expiry) -> coordinator SELECTS owner per day, NO averaging; posterior update of the immutable blind",
                "seam_offset": round(seam, 4), "days": refined_days}
+    for rd in refined_days:                     # emission check: every number verbatim the owner's own
+        if rd["refined_net_usd"] != posts[rd["date"]]["net"]:
+            raise SystemExit(f"COORDINATOR GUARD FAILED at emission: {rd['date']} refined_net_usd "
+                             f"{rd['refined_net_usd']!r} != owner {OWNER[rd['date']]}'s {posts[rd['date']]['net']!r}")
     json.dump(refined, open(os.path.join(HERE, "forecasts", "grp15_mbo_refined.json"), "w"), indent=1)
 
     # DAY-MOVES (from prior close). blind = its own gap+net; refined = specialist day-move (already gap+net);
     # actual = its own gap+net. NEVER mix the actual gap into the refined (that double-counts on Sundays).
     def blind_dm(d): return (bl_by[d].get("overnight_gap_usd", 0) or 0) + (bl_by[d].get("guessed_net_usd", 0) or 0)
-    def refined_dm(d): return posts[d]["net"] if posts.get(d, {}).get("net") is not None else blind_dm(d)
+    def refined_dm(d): return posts[d]["net"]   # guarded: the owner's own number, never a fallback
     def actual_dm(d): return act_by[d]["net_usd"] + act_by[d]["gap_usd"]
 
     # SCORE blind vs refined (day-move vs actual)
@@ -151,8 +187,19 @@ def main():
                "refined_mean_abs_err": round(np.mean([abs(s["refined_err"]) for s in score]))},
               open(os.path.join(OUT, "g15_mbo_comparison.json"), "w"), indent=1)
 
-    # RENDER blind + refined - FORM-FITTING the intraday p50 path (not straight open->close segments).
-    adt = pd.to_datetime(np.asarray(cont_t), unit="s", utc=True).tz_convert(ET)
+    # RENDER blind + refined - the forecast's own intraday p50 path vs the actual.
+    def _gap_break(ts_arr, y_arr):
+        """insert NaN across >3h quiet spans so closed-market gaps are not drawn as straight bridges."""
+        ts_o, y_o = [], []
+        for i in range(len(ts_arr)):
+            ts_o.append(float(ts_arr[i])); y_o.append(float(y_arr[i]))
+            if i < len(ts_arr) - 1 and float(ts_arr[i + 1]) - float(ts_arr[i]) > 3 * 3600:
+                ts_o.append(float(ts_arr[i]) + 1.0); y_o.append(np.nan)
+        return np.asarray(ts_o), np.asarray(y_o, float)
+
+    a_ts, a_p = _gap_break(np.asarray(cont_t), np.asarray(cont_p))
+    adt = pd.to_datetime(a_ts, unit="s", utc=True).tz_convert(ET)
+    cont_p = a_p
     spans = {d: load_trades(d) for d in DAYS if d in act_by}
 
     def _span_et(d):
@@ -179,52 +226,44 @@ def main():
             return None
         return np.asarray(hh), np.asarray(cc)
 
-    def path_xy(d, curve, open_y, net_target=None):
-        """map a day's p50 path onto its actual trade-time span; optionally SCALE the shape so its
-        close lands exactly on net_target (magnitude from the scored day-move, shape from the forecast).
-        net_target=None draws the forecast's OWN magnitude (used for the re-anchored-to-actual line)."""
+    def path_xy(d, curve, open_y, net_fallback=0):
+        """map a day's p50 path onto its actual trade-time span, at the forecast's OWN magnitude -
+        never scaled/reconstructed (S104 render rule: plot the real forecast path, nothing synthesized).
+        A day with no emitted curve draws a straight line to the owner's own net (net_fallback)."""
         pts = _curve_pts(curve)
         et = _span_et(d)
         t0, t1 = et[0], et[-1]
         if pts is None:
-            return [t0, t1], [open_y, open_y + ((net_target or 0) / MULT)]
+            return [t0, t1], [open_y, open_y + (net_fallback / MULT)]
         hpos, cum = pts
         rng = hpos.max() - hpos.min()
         frac = (hpos - hpos.min()) / rng if rng > 1e-6 else np.linspace(0, 1, len(hpos))
-        factor = 1.0
-        if net_target is not None and abs(cum[-1]) > 1e-6:
-            factor = net_target / cum[-1]
         xs = [t0 + f * (t1 - t0) for f in frac]
-        ys = [open_y + (c * factor) / MULT for c in cum]
+        ys = [open_y + c / MULT for c in cum]
         return xs, ys
 
+    # S104 RENDER RULE (Greg): ONLY the actual curve + the forecast's own ACTUAL p50 path. No
+    # re-anchored dashed lines, no scaled/angular reconstruction - the real forecast path, nothing else.
     for tag, dmfn, curvefn, gapfn, netfn, color, label in [
         ("blind", blind_dm, lambda d: bl_by[d].get("guess_curve"),
          lambda d: bl_by[d].get("overnight_gap_usd", 0) or 0,
          lambda d: bl_by[d].get("guessed_net_usd", 0) or 0, "#e8710a", "blind (grp15)"),
-        ("refined", refined_dm, lambda d: posts.get(d, {}).get("curve") or bl_by[d].get("guess_curve"),
+        ("refined", refined_dm, lambda d: posts[d].get("curve"),
          lambda d: 0, lambda d: refined_dm(d), "#2ea043", "refined (5-specialist MBO)")]:
         fig, ax = plt.subplots(figsize=(16, 5.5))
         ax.plot(adt, cont_p, color="#1f6feb", lw=0.7, label="actual (two-leg NGJ26->NGK26, MBO trades)")
-        # (1) continuous FORM-FIT guess: compound from the running anchor cum, shape from the p50 path,
-        #     close scaled to the scored day-move.
         gx, gy = [], []
         run = 0.0
         for d in DAYS:
             if d not in act_by: continue
             gap = gapfn(d); net = netfn(d)
             open_y = ANCHOR + (run + gap) / MULT
-            xs, ys = path_xy(d, curvefn(d), open_y, net_target=net)
+            xs, ys = path_xy(d, curvefn(d), open_y, net_fallback=net)
+            if gx and (xs[0] - gx[-1]).total_seconds() > 3 * 3600:   # no bridge across closed market
+                gx.append(gx[-1] + pd.Timedelta(seconds=1)); gy.append(np.nan)
             gx.extend(xs); gy.extend(ys)
             run += dmfn(d)
-        ax.plot(gx, gy, color=color, lw=1.5, label=f"{label} - form-fit p50 path (compound)")
-        # (2) SAME guess RE-ANCHORED to the actual open each day (Greg: "if it started off on the price").
-        #     Direction/shape skill without the compounding level drift; own magnitude, unscaled.
-        for d in DAYS:
-            if d not in act_by: continue
-            xs, ys = path_xy(d, curvefn(d), act_by[d]["open"], net_target=None)
-            ax.plot(xs, ys, color=color, lw=1.1, ls=(0, (2, 2)), alpha=0.55,
-                    label="re-anchored to actual open (shape only)" if d == DAYS[0] else None)
+        ax.plot(gx, gy, color=color, lw=1.5, label=f"{label} - own p50 path (compound)")
         sd = pd.Timestamp(f"{SEAM[:4]}-{SEAM[4:6]}-{SEAM[6:]}", tz=ET)
         ax.axvline(sd, color="#999", lw=0.8, ls=":"); ax.text(sd, ax.get_ylim()[0], f" roll seam {seam:+.3f} (never traded)", fontsize=7, color="#666", va="bottom")
         ax.axhline(ANCHOR, color="#999", lw=0.6, ls=":"); ax.text(adt[0], ANCHOR, " anchor 3.132 (NGJ26)", fontsize=8, color="#666", va="bottom")
