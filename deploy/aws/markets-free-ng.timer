@@ -1,0 +1,12 @@
+[Unit]
+Description=Run free EIA and NOAA/NWS NG driver collector every 30 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=30min
+AccuracySec=1min
+Persistent=true
+Unit=markets-free-ng.service
+
+[Install]
+WantedBy=timers.target
