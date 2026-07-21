@@ -65,11 +65,11 @@ def stage(gid):
     # 2. prior-session tape (n0/n1) for state's tape_conditions - the mask day + block days minus last
     import datetime
     tape_days = [anchor_day] + days[:-1]
-    for storet in ("nymex_cont_n0", "nymex_cont_n1"):
+    for storet in ("nymex_cont_n0", "nymex_cont_n1", "ng_l1"):   # ng_l1 = the L1 book flow (data doctrine)
         dd = os.path.join(REPO, "data", storet); os.makedirs(dd, exist_ok=True)
         for d in tape_days:
             _dl(f"nymex/{storet}/NG_{d}.jsonl.gz", os.path.join(dd, f"NG_{d}.jsonl.gz"))
-    log(f"{gid} prior tape pulled")
+    log(f"{gid} prior tape + L1 book pulled")
     # 3. masked decision-state
     out_state = os.path.join(RENDER_DIR, f"grp{gid[1:]}_state.json")
     subprocess.run([sys.executable, os.path.join(HERE, "forecast_harness.py"), "decision-state",

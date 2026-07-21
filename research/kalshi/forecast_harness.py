@@ -612,13 +612,27 @@ def _tape_day_stats(ymd: str) -> dict | None:
 
 
 def _tape_conditions_block(iso: str) -> dict | None:
-    """Prior TRADE session's non-price tape conditions, decision-time legit at iso's open."""
+    """Prior TRADE session's non-price flow read, decision-time legit at iso's open. S105 data doctrine:
+    the FULL kitchen-sink flow read (signed-flow imbalance + UNBALANCED SIDES by phase, big-print imbalance,
+    L1 book quote imbalance + spread) - all NON-PRICE. The blind gets every market FORCE, masked only on
+    price. Enriched from flow_read.py; the reduced fields (b_share, big_prints, leg_count) are kept."""
     d = datetime.date(int(iso[:4]), int(iso[5:7]), int(iso[8:10]))
     for back in range(1, 6):
         prev = d - datetime.timedelta(days=back)
-        st = _tape_day_stats(prev.strftime("%Y%m%d"))
+        ymd = prev.strftime("%Y%m%d")
+        st = _tape_day_stats(ymd)
         if st is not None:
-            return {"asof_prior_session": prev.isoformat(), "never_masked": True} | st
+            out = {"asof_prior_session": prev.isoformat(), "never_masked": True} | st
+            try:
+                import flow_read
+                ff = flow_read.session_flow(ymd)
+                if ff:
+                    for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share", "l1_book"):
+                        if k in ff:
+                            out[k] = ff[k]
+            except Exception as e:
+                out["flow_read_error"] = str(e)
+            return out
     return None
 
 
