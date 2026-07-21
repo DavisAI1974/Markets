@@ -26,16 +26,24 @@ def put_log():
     s3.put_object(Bucket=B, Key="logs/ng_mbo_pull.log", Body="\n".join(log).encode())
 
 
-day = dt.date(2025, 7, 22)
-END = dt.date(2026, 7, 20)
-while day <= END:
+# PRIORITY ORDER (Greg S103): pull the months for the groups we STILL HAVE TO WALK first, so the MBO is
+# ready when we get there. Phase 1 = Mar 2026 -> Jul 2026 (G15/G16 leg-grain follow-ups + every remaining
+# group G17+). Phase 2 = backfill the rest of the year. skip-if-exists makes both phases resume-safe.
+RANGES = [
+    (dt.date(2026, 3, 1),  dt.date(2026, 7, 20)),   # active frontier first
+    (dt.date(2025, 7, 22), dt.date(2026, 2, 28)),   # backfill
+]
+
+
+def process_day(day):
+    global spent
     if day.weekday() == 5:  # Saturday - no session
-        day += dt.timedelta(days=1); continue
+        return True
     d = day.strftime("%Y%m%d")
     out_key = f"{PFX}/NG_{d}.dbn.zst"
     try:
         s3.head_object(Bucket=B, Key=out_key)  # skip-if-exists = clean resume
-        day += dt.timedelta(days=1); continue
+        return True
     except Exception:
         pass
     nxt = (day + dt.timedelta(days=1)).isoformat()
@@ -43,12 +51,13 @@ while day <= END:
         cost = cli.metadata.get_cost(dataset="GLBX.MDP3", symbols=["NG.n.0"], stype_in="continuous",
                                      schema="mbo", start=day.isoformat(), end=nxt)
         if spent + cost > GUARD:
-            log.append(f"{d}: cost {cost:.2f} would breach guard ({spent:.2f} spent) - STOP"); put_log(); break
+            log.append(f"{d}: cost {cost:.2f} would breach guard ({spent:.2f} spent) - STOP"); put_log()
+            return False
         data = cli.timeseries.get_range(dataset="GLBX.MDP3", schema="mbo", symbols=["NG.n.0"],
                                         stype_in="continuous", start=day.isoformat(), end=nxt)
         spent += cost
     except Exception as e:
-        log.append(f"{d} ERR {e}"); put_log(); day += dt.timedelta(days=1); continue
+        log.append(f"{d} ERR {e}"); put_log(); return True
     tmp = f"/tmp/ng_mbo_{d}.dbn.zst"
     try:
         data.to_file(tmp)                      # RAW DBN, lossless
@@ -65,7 +74,19 @@ while day <= END:
         except Exception: pass
     if len(log) % 10 == 0:
         put_log()
-    day += dt.timedelta(days=1)
+    return True
+
+
+stop = False
+for rstart, rend in RANGES:
+    if stop:
+        break
+    day = rstart
+    while day <= rend:
+        if not process_day(day):
+            stop = True; break
+        day += dt.timedelta(days=1)
 log.append(f"DONE spent {spent:.2f}")
 put_log()
-s3.put_object(Bucket=B, Key=f"{PFX}/_DONE", Body=b"done")
+if not stop:
+    s3.put_object(Bucket=B, Key=f"{PFX}/_DONE", Body=b"done")
