@@ -1,0 +1,235 @@
+{
+  "specialist": "C",
+  "lens": "core intraday tape (onset/continuation-vs-reversal, signed-flow divergence, exhaustion, origin-shelf and give-back turns)",
+  "group": 15,
+  "brain_version": "s102.4 (blind grp15.json immutable) -> posterior update, execution=SHADOW",
+  "round": 2,
+  "days_owned": ["20260317", "20260318", "20260324", "20260325"],
+  "doctrine_note": "ROUND 2 = the HE24->HE1 coordination pass. I start from my ROUND-1 posterior (grp15_mbo_specialist_C.json), not from scratch, and use the incoming boundary STATE (prior close, last_hour_dir/flow, close_off_low, low/high-late, chain polarity+age, cum-from-anchor, prior owner's verbatim read) to TIGHTEN magnitude and timing only. Direction never changes without NEW causal evidence (none arose). The handoff carries STATE, never the day-net; I interpret it. The immutable blind stays the core predictor; MBO/handoff are a posterior update. Magnitudes DERIVED from measurable state, honest under the actual where the tail was reactive - never fitted.",
+  "cross_cutting_mbo_finding": {
+    "headline": "The HE24->HE1 boundary state acts as a MAGNITUDE GATE, not a new direction signal: on all four of my days the prior day's last_hour_dir at the seam told me WHETHER THE TURN HAD ALREADY BEGUN at the boundary, and that gates how much of a seam-realizing reversal I am allowed to claim at the open. This is the round-2 discovery that round 1 lacked.",
+    "the_gate_in_action": "0318 and 0325 are the twin cases. Both are give-back-exhaustion reversals off a mature down-chain sitting on a floor/cum-extreme. In BOTH the prior day exited DOWN into the close (0317 last_hour_dir -1, close_off_low 0.30; 0324 last_hour_dir -1, close_off_low 0.16) - meaning the turn had NOT begun in the seam; it realized AFTER the open (0318 at the 02:24 stop-run-and-reverse, 0325 at the 20:38 open off the cum-low). By the carry rule a turn realizing in the seam is sized by the PRIOR EXHAUSTION READ, never front-run. So the boundary state MANDATES holding the confirmed base (+1500 on 0318, ~+600 on 0325) and NOT chasing the reactive tail (+1900 / +660). The prior-exit direction is the discipline that keeps the honest-under-100 bar honest.",
+    "what_moved_vs_held": "The handoff MOVED numbers where it sharpened the exhaustion depth (0325: age-5 / cum -2350 block-extreme + D-1 sell climax closing near the low is a deeper-loaded spring than round-1's generic 'week-2 give-back' -> firmed +560 to +600; 0317: the prior late-UP bounce FAILED to carry into a flat open, so the residual buying was spent -> shaded +50 to +30). It HELD numbers where the prior-exit direction gated against chasing (0318 held +1500; 0324 held -400, prior near-low close with absorbed late buys = chain intact but capped).",
+    "consistency_with_round1_mbo_verdict": "Round 1 found MBO signed-flow is noise tick-by-tick and can invert vs price at the day grain (0324 +1355 flow / -350 close); direction lived in the D-1 trade tilt the open-conditions blind already had. Round 2 does not disturb that: the boundary state is a TIMING/EXHAUSTION read on the prior session's realized exit, not an order-flow direction caller. The two findings stack - defer DIRECTION to D-1 trades, gate MAGNITUDE-of-a-seam-turn by the prior-exit last_hour_dir."
+  },
+  "days": [
+    {
+      "date": "20260317",
+      "dow": "Tue",
+      "day_class": "tue_thu_core",
+      "blind_direction": "up (small counter)",
+      "blind_net_usd": 150,
+      "posterior_direction_by_horizon": {
+        "overnight_to_am": "mild down/flat probe - the prior late-bounce is spent (it did not carry to my open), then the 05:34 low",
+        "midday_to_close": "morning pop into 08:30 that gives back; whipsaw hold, marginally negative tilt"
+      },
+      "expected_magnitude_usd": 30,
+      "expected_magnitude_band_usd": [-80, 150],
+      "onset_time_et": "2026-03-17 05:29 (down probe, thr 252)",
+      "turn_time_et": "2026-03-17 08:30 (turn_down - the morning pop to +630 exc gives back)",
+      "trend_vs_chop": "chop (whipsaw hold day)",
+      "continuation_vs_reversal": "neither - a mature-swing HOLD (R4 no-consecutive-extension after 0316's fresh cum-low)",
+      "path_p50_curve": [[20, 0], [22, -40], [0, -90], [4, -150], [6, -110], [8, 190], [10, 110], [12, 50], [14, 20], [16, 10], [18, 20], [20, 30]],
+      "confidence": "moderate",
+      "weight_assigned": {"blind": 0.85, "causal_mbo": 0.15},
+      "evidence_used": [
+        "HANDOFF: 0316 exited with last_hour_dir +1 / last_hour_signed_flow +1 (a modest late buy-bounce off the 13:11 low, close_off_low 0.29) but my 0317 OPENED FLAT (3.034 vs 3.035 close) - the late-up bounce FAILED TO CARRY through the overnight seam, so the residual buying is spent and the hold has no upward push left",
+        "MBO phase-2 MASSIVE absorption: sflow -2628 while price +210, ph_absorb=true - the block's largest sell-absorption phase; buyers absorbing the flush on the peak-cold day = no capitulation, consistent with a HOLD not an extension",
+        "phase-3 late fade (sflow +63, px -100) + turn_down at 08:30 giving back the +630 morning pop -> the hold tilts marginally NEGATIVE, not the +50 of round 1",
+        "chain age 2 (maturing down-chain), cum -970 - a digestion session, not a fresh leg"
+      ],
+      "evidence_rejected": [
+        "30-min imb_flow (flips through the session) - unusable tick-by-tick, ignored for direction",
+        "large negative total_sflow (-2886) as a DOWN signal - it was absorbed, price held; using it directionally would be wrong",
+        "reading the prior last_hour_dir +1 as forward up-momentum - it did NOT carry (flat open), so it is spent, not a lead"
+      ],
+      "stand_down_reasons": [
+        "book/flow flips too frequently at the feature grain to size intraday timing beyond the day-level hold read"
+      ],
+      "mbo_verdict": "HELP (mild). Round 2 tightens: the failed overnight carry of 0316's late bounce (handoff last_hour_dir +1 -> flat open) removes the upward residual I implicitly left in the round-1 +50; combined with the phase-3 fade and the 08:30 give-back, the derived hold sits marginally negative at ~+30. Direction unchanged (hold), no chase.",
+      "selection_reason": "core-tape specialist owns the non-catalyst core hold day; MBO/handoff used only to shade the hold, keep the blind.",
+      "handoff_in_used": "Took 0316's exit STATE: close 3.035, close_off_low 0.29, last_hour_dir/flow +1 (late buy-bounce off the 13:11 low), chain polarity -1 age 2, cum -970, owner-B read 'continuation with a genuine late partial reversal, off the low.' Interpreted the last_hour-up as a bounce that then FAILED to carry (my open is flat), i.e. spent - which lowers rather than raises my hold, and confirms a mature-chain digestion session.",
+      "handoff_out": {
+        "close_px": 3.033,
+        "day_move_usd_realized_state": "near-flat hold",
+        "last_hour_dir": -1,
+        "last_hour_signed_flow": -1,
+        "close_off_low_frac": 0.30,
+        "chain_polarity": -1,
+        "chain_age_sessions": 3,
+        "cum_from_anchor_usd": -990,
+        "exhaustion_state": "Down-chain now MATURE (age 3) and sitting ON the 0310 origin shelf (~3.03-3.056); price is flat but underneath it the phase-2 tape absorbed a -2628 sell flush with price HOLDING (+210) = heavy demand accumulating below with no capitulation. A floor is forming.",
+        "conviction_verdict": "ph2 flow_conviction NEGATIVE-under-rising (large sell flow absorbed while price held) = absorption, not a down signal; classic give-back-exhaustion pre-turn condition. Exited DOWN (last_hour_dir -1) so the turn has NOT begun at the boundary.",
+        "what_next_day_inherits": "A mature down-chain exhausting onto the origin-shelf floor with absorption beneath it. Expect a give-back-exhaustion REVERSAL is now on the table, but the turn has not started - do NOT front-run it. Watch for an overnight stop-run BELOW the shelf then a snap-back; size only the CONFIRMED base (the retrace to/through the shelf), not the reactive stop-run tail."
+      }
+    },
+    {
+      "date": "20260318",
+      "dow": "Wed",
+      "day_class": "tue_thu_core",
+      "blind_direction": "down (post-hold chain resume)",
+      "blind_net_usd": -400,
+      "posterior_direction_by_horizon": {
+        "overnight": "DOWN probe / stop-run below the origin shelf into ~02:24 ET (false breakdown to ~2.92)",
+        "am_to_close": "REVERSAL UP - give-back-exhaustion turn, close at/near the high"
+      },
+      "expected_magnitude_usd": 1500,
+      "expected_magnitude_band_usd": [1300, 1800],
+      "onset_time_et": "2026-03-17 23:50 (down, thr 796)",
+      "turn_time_et": "2026-03-18 02:24 (turn_up, turn_mag 3000 - the overnight low, a stop-run-and-reverse below the 0310 shelf)",
+      "trend_vs_chop": "trend (post-turn, sustained up all session)",
+      "continuation_vs_reversal": "REVERSAL up (this is THE turn the blind missed)",
+      "path_p50_curve": [[20, 0], [22, -350], [0, -650], [2, -900], [4, -300], [6, 200], [8, 600], [10, 1000], [12, 1300], [14, 1550], [16, 1650], [18, 1500], [20, 1500]],
+      "confidence": "moderate (direction high, magnitude-tail reactive)",
+      "weight_assigned": {"blind": 0.45, "causal_mbo_and_d1_trade": 0.55},
+      "evidence_used": [
+        "HANDOFF (the decisive round-2 gate): my own 0317 exit passed forward last_hour_dir -1 / signed_flow -1 (exited DOWN into the close) with the chain age-3 mature on the origin shelf and a phase-2 that absorbed -2628 of selling with price holding. The prior-exit DOWN direction means the reversal had NOT begun at the boundary - so by the carry rule I size the seam-realizing turn by the PRIOR EXHAUSTION READ and must NOT front-run it to the full tail",
+        "ANTICIPATORY, decision-time-legit at the open: 0317 D-1 big-print-BUY absorption divergence (bigB 0.643 vs session 0.413) + the 0317 phase-2 absorption seen one day early = the ABANDON-THE-SHORT signal was in hand at the open",
+        "ORIGIN-SHELF floor: cum ~-990 puts price ~3.03 = the 0310 basing shelf 3.056 = full retrace of the 0311 shot -> level.giveback_origin_shelf floor at decision time; the CONFIRMED base is the retrace off that floor (~+1500), not the stop-run overshoot",
+        "STOP-RUN (partly reactive, NOT front-run): overnight low pierced to ~2.92 BELOW the shelf then snapped back; MBO ph2 sflow -896 while px +1000 (ph_absorb=true) = the absorption that recovered it; imb_LEVEL bid accumulation held positive (0.206->0.407) through the floor",
+        "live peak cold still under desks' feet that session (the warm wall is FORWARD at D+3..D+5, not present)"
+      ],
+      "evidence_rejected": [
+        "the blind's forward headroom-void warm-cut sizing that produced -400 - it mis-weighted forward cuts and missed that TODAY was the last live-cold day and the shelf was a floor",
+        "30-min imb_flow as a live direction caller - it flipped every emission and would have kept a tick-follower short into the 02:24 reversal low",
+        "moving the p50 toward the actual +1900 - the extra +400 is the REACTIVE stop-run tail, only knowable after 02:24; the handoff's prior-exit-DOWN state explicitly forbids claiming it at the open"
+      ],
+      "stand_down_reasons": [
+        "the FULL magnitude (+1900) was only knowable REACTIVELY after the 02:24 stop-run-and-reverse; the prior day exited DOWN so the turn had not begun at the seam - I HOLD p50 at +1500 (the confirmed origin-shelf retrace base) and keep confidence moderate rather than chase the tail"
+      ],
+      "mbo_verdict": "MIXED, net HELP at the coarse grain; round 2 CONFIRMS the round-1 hold at +1500 with an explicit boundary justification. The refine IMPROVES DIRECTION (real edge: do not press the -400 short, flip to up) via the D-1 buy-absorption + origin-shelf floor + the give-back-exhaustion structure. It does NOT license moving to +1900: the handoff shows the prior session exited DOWN (last_hour_dir -1), so the turn realized in the seam as a reactive 02:24 stop-run and the honest confirmed base is the shelf retrace ~+1500. MBO's independent contribution is confirmation of the turn, not anticipation of its full tail.",
+      "selection_reason": "core-tape specialist owns the give-back-exhaustion turn; posterior flips direction (round 1) and round 2 GROUNDS the magnitude hold in the boundary state - prior-exit-DOWN gates the tail out.",
+      "handoff_in_used": "Took my own 0317 exit STATE (self-bind): close 3.033, last_hour_dir -1 / signed_flow -1 (exited DOWN), close_off_low 0.30, chain polarity -1 age 3, cum -990 on the origin shelf, plus my 0317 handoff_out flagging a forming floor with absorption beneath and 'turn not yet begun, do not front-run.' Used it to GATE magnitude: because the prior day exited DOWN, the 0318 reversal is a seam/post-open event to be sized by the prior exhaustion read (confirmed shelf-retrace base) and NOT front-run to the stop-run tail. This is exactly why the round-1 +1500 base is held, not raised.",
+      "handoff_out": {
+        "close_px": 3.223,
+        "day_move_usd_realized_state": "strong reversal up (confirmed base ~+1500; a reactive tail carried the realized print further)",
+        "last_hour_dir": 1,
+        "last_hour_signed_flow": 1,
+        "close_off_low_frac": 0.97,
+        "high_late": true,
+        "chain_polarity": 1,
+        "chain_age_sessions": 1,
+        "cum_from_anchor_usd": 910,
+        "exhaustion_state": "Up-chain YOUNG (age 1) but already STRETCHED to a cum-extreme +910: the day executed a FULL retrace of the 0311 shot plus an aligned-buy extension (ph3 sflow +677 / px +1810). Closed at the high (close_off_low 0.97, high_late) so up-momentum was still running into the close - the move is not exhausted at the boundary, but the reversal it was built on is COMPLETE (the retrace is done).",
+        "conviction_verdict": "ph3 flow_conviction ALIGNED (buy flow with rising price) = healthy trend into the close; but a fresh long that has already run the entire retrace-plus-extension in one session is stretched, so day-2 UP-continuation is NOT assured - a pre-print counter-probe / give-back is the primary risk.",
+        "what_next_day_inherits": "A young up-chain (age 1) at a cum-extreme after a complete one-session reversal. Do NOT assume day-2 up-continuation; the stretched long faces give-back into any scheduled print. Direction for the next core/thu day stays with its own D-1 trade tilt - the strong close is state, not a mandate to extend up."
+      }
+    },
+    {
+      "date": "20260324",
+      "dow": "Tue",
+      "day_class": "tue_thu_core",
+      "blind_direction": "down (chain extension day 2, reduced size)",
+      "blind_net_usd": -450,
+      "posterior_direction_by_horizon": {
+        "overnight": "up pop (buy flow) into 21:49 ET high, then rejected/absorbed",
+        "am_to_close": "DOWN - young-extension resume, give-back into the close (capped)"
+      },
+      "expected_magnitude_usd": -400,
+      "expected_magnitude_band_usd": [-520, -250],
+      "onset_time_et": "2026-03-23 20:44 (up, thr 250)",
+      "turn_time_et": "2026-03-23 21:49 (turn_down, turn_mag 830 - the overnight buy-pop is absorbed and rejected)",
+      "trend_vs_chop": "trend-down with an overnight false pop (absorb_session=true)",
+      "continuation_vs_reversal": "continuation down (extension day 2, size-capped by the 2-extension alternation ceiling)",
+      "path_p50_curve": [[20, 0], [22, 150], [0, 100], [2, -50], [6, -250], [10, -320], [12, -420], [14, -520], [16, -450], [20, -400]],
+      "confidence": "moderate-high",
+      "weight_assigned": {"blind": 0.80, "causal_mbo": 0.20},
+      "evidence_used": [
+        "HANDOFF: 0323 exited close 2.898 NEAR its low (close_off_low 0.14) but with last_hour_dir +1 / signed_flow +1 - a late buy probe that was ABSORBED (owner-B read: no reversal). Chain age 4, cum -1970 (deeply stretched). The absorbed late-buy exit is the SAME theme that carries across the seam: my 0324 overnight buy-pop (ph1 sflow +737 / px +190) into 21:49 is likewise REJECTED - the handoff confirms the pop is a false start, not a reversal",
+        "D-1 (0323) trade conditions: the walk's heaviest sell session (52.4k trades, bigB 0.373) -> chain confirmed delivering DOWN (blind basis, kept)",
+        "MBO turn_down at 21:49 + absorb_session=true (net positive flow +1355 but price down) = distribution on the bid; sellers control price -> young-extension resume, give-back-into-close shape",
+        "chain age 4 + prior late-buy accommodation = the down leg is CAPPED and slightly WANING (not a fresh -1000 leg), consistent with the confirmed -400"
+      ],
+      "evidence_rejected": [
+        "day-level total_sflow +1355 (net BUY) as an UP signal - price closed DOWN; MBO signed flow directionally is FLATLY WRONG here (my clearest counterexample of the four days)",
+        "30-min imb_flow (flips) - unusable",
+        "reading 0323's last_hour_dir +1 as forward up-momentum - it was absorbed at the prior close AND my overnight pop was rejected; it is spent, not a lead"
+      ],
+      "stand_down_reasons": [
+        "MBO signed flow inverts vs price this day; disable flow-based direction, defer to the D-1 trade tilt + chain context"
+      ],
+      "mbo_verdict": "HELP on SHAPE, HURT on FLOW-direction; round 2 HOLDS -400. The handoff sharpens WHY the -400 is right rather than moving it: the prior near-low close with absorbed late buys says the down-chain (now age 4) is intact but the late-buy accommodation caps and slightly wanes the leg - a capped continuation, not a fresh leg, and the overnight pop is a rejected false start. Direction stays down (D-1 heavy-sell tilt). Number held at -400.",
+      "selection_reason": "core-tape specialist: capped continuation-down; MBO for absorption/turn shape, flow rejected for direction, handoff confirms the cap.",
+      "handoff_in_used": "Took 0323's exit STATE: close 2.898, close_off_low 0.14 (near low), last_hour_dir/flow +1 (absorbed late buy), chain polarity -1 age 4, cum -1970, owner-B read 'continuation R3 carry-down, close near low, late buy absorbed, no reversal.' Used it to CONFIRM (not move) the capped continuation: the absorbed late-buy exit predicts my overnight buy-pop is a rejected false start, and the age-4/cum -1970 maturity keeps the leg capped -> hold -400.",
+      "handoff_out": {
+        "close_px": 2.86,
+        "day_move_usd_realized_state": "capped continuation down",
+        "last_hour_dir": -1,
+        "last_hour_signed_flow": -1,
+        "close_off_low_frac": 0.16,
+        "chain_polarity": -1,
+        "chain_age_sessions": 5,
+        "cum_from_anchor_usd": -2350,
+        "exhaustion_state": "Down-chain now at MAXIMUM stretch (age 5, cum -2350 = the block's extreme low), closed NEAR the low (close_off_low 0.16) and DOWN into the close (last_hour_dir -1). Critically the D-1 tape carried an EXTREME big-print SELL climax (bigB 0.174, the block's most extreme sell tail) right at the cum-low - a capitulation/exhaustion print.",
+        "conviction_verdict": "absorb_session true with net BUY flow under a falling price = distribution/absorption; combined with the sell climax at the low this is a FULLY LOADED exhaustion spring. Exited DOWN (last_hour_dir -1) so the reversal has NOT begun at the boundary.",
+        "what_next_day_inherits": "A maximally-stretched down-chain on its low with a D-1 sell climax = a give-back-exhaustion turn-up is PRIMED, likely realizing at/near the open off the cum-low. Do NOT front-run it (prior exit was down). Size the CONFIRMED bounce base and CAP it - catalysts are ahead (draw print, expiry) and no flip is armed - a first-day counter-bounce, not a chain-birth."
+      }
+    },
+    {
+      "date": "20260325",
+      "dow": "Wed",
+      "day_class": "tue_thu_core (bidweek opens; pre-print, pre-opex)",
+      "blind_direction": "up (in-band basing bounce)",
+      "blind_net_usd": 250,
+      "posterior_direction_by_horizon": {
+        "overnight": "final down-flush to the cum-low into ~20:38 ET, then TURN UP at the session open",
+        "am_to_close": "UP - aligned buy-driven basing bounce off a maximally-loaded spring; catalysts ahead so it builds"
+      },
+      "expected_magnitude_usd": 600,
+      "expected_magnitude_band_usd": [480, 680],
+      "onset_time_et": "2026-03-24 20:38 (down, thr 344 - the final flush)",
+      "turn_time_et": "2026-03-24 20:38 (turn_up, turn_mag 1010 - the bounce starts right at the session open off the cum-low)",
+      "trend_vs_chop": "trend-up (aligned buy push)",
+      "continuation_vs_reversal": "REVERSAL up - week-2 give-back-exhaustion turn-bounce off the block-extreme cum-low",
+      "path_p50_curve": [[20, 0], [22, -230], [0, -200], [4, -140], [6, 0], [8, -30], [10, 180], [12, 500], [14, 560], [16, 600], [18, 640], [20, 600]],
+      "confidence": "moderate-good (my cleanest MBO-helps day)",
+      "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+      "evidence_used": [
+        "HANDOFF (moves the number UP within honest bounds): my own 0324 exit passed forward the DEEPEST exhaustion state of the block - close 2.86 near the low (close_off_low 0.16), last_hour_dir -1, chain age 5, cum -2350 block-extreme, plus the D-1 EXTREME big-print sell climax (bigB 0.174) at the cum-low. Round 1 sized off a generic 'week-2 give-back'; the boundary state shows a MORE-loaded spring (deepest maturity + climax closing near the low) -> firm the confirmed bounce base from +560 to ~+600",
+        "MBO turn_up at 20:38 (session open) off the overnight low = the bounce starts immediately; phase-2 ALIGNED buy push (sflow +971 / px +750) - signed flow AGREES with price, the one day MBO flow is usable directionally",
+        "day-level total_sflow +1489 (buy) ALIGNED with the up close (contrast 0324 where it inverted) - a real buy-driven bounce, not absorption",
+        "counter-catalysts AHEAD not realized (draw print 0326, expiry 0327, cold event D+1/D+2, nuclear ramp-max) -> LOWER turn band / multi-session build, capping below the reactive/catalyst tail"
+      ],
+      "evidence_rejected": [
+        "the blind's +250 in-band-bounce sizing - it under-weighted the D-1 sell-climax + the aligned buy turn; the bounce is a genuine reversal worth ~+600",
+        "the still-flipping 30-min imb_flow for timing precision (kept only the phase/turn read)",
+        "chasing to the full +660 at the open - the last ~+60 is the intraday catalyst-anticipation tail; the prior day exited DOWN so the turn is a post-open event sized by the exhaustion read, not front-run"
+      ],
+      "stand_down_reasons": [
+        "no flip is ARMED (C1 not fired) and a bounce is never front-run into a chain - so I cap the confirmed base at ~+600, not a chain-birth-scale move; the prior-exit-DOWN state gates the number below the actual"
+      ],
+      "mbo_verdict": "HELP (cleanest of my four); round 2 MOVES +560 -> +600. The handoff makes the exhaustion boundary one notch deeper than round-1 credited (age-5 / cum -2350 block-extreme + D-1 sell climax closing near the low = a firmer-loaded spring), which firms the confirmed first-day bounce base to ~+600 while the ahead-catalyst cap + the prior-exit-DOWN gate keep it honestly below the +660 tail. turn_up at open + aligned phase-2 buy + aligned day flow all confirm a real buy-driven basing bounce.",
+      "selection_reason": "core-tape specialist owns the sell-climax exhaustion -> aligned reversal bounce; posterior sizes up (round 1) and round 2 firms it on the deeper boundary state, still capped for ahead-catalysts.",
+      "handoff_in_used": "Took my own 0324 exit STATE (self-bind): close 2.86 near low, last_hour_dir -1, chain polarity -1 age 5, cum -2350 (block extreme), plus my 0324 handoff_out flagging a fully-loaded exhaustion spring with a D-1 sell climax and 'turn-up primed at the open, do not front-run, cap it.' Used it BOTH to firm the magnitude (deeper spring than round-1's generic read -> +560 to +600) AND to gate it (prior exit DOWN + ahead-catalysts -> keep below the reactive tail).",
+      "handoff_out": {
+        "close_px": 2.926,
+        "day_move_usd_realized_state": "buy-driven give-back-exhaustion bounce (confirmed base ~+600)",
+        "last_hour_dir": -1,
+        "last_hour_signed_flow": -1,
+        "close_off_low_frac": 0.83,
+        "high_late": true,
+        "chain_polarity": -1,
+        "chain_age_sessions": 0,
+        "exhaustion_state": "A one-day counter-bounce that closed in the UPPER third (close_off_low 0.83) but FADED in the last hour (last_hour_dir -1 / signed_flow -1). Critically the bounce did NOT establish a new up-chain - chain polarity is still -1 (age reset 0): it is a counter-bounce WITHIN the down regime, not a trend birth.",
+        "conviction_verdict": "phase-2 was ALIGNED buy (real bounce) but the late-hour fade + no new up-chain = the buy conviction is spent by the close; the move is a counter-bounce, and with catalysts (draw print, expiry) immediately ahead the day-2 outcome carries give-back / round-trip risk.",
+        "what_next_day_inherits": "A faded counter-bounce inside a still-down regime (chain -1, age 0). The draw print may extend it intraday but do NOT trend-birth it up; the late fade + down-regime context flag a give-back/round-trip as the primary risk. Direction for the print day stays with its own D-1 trade tilt; size the print as a counter-leg that can round-trip, not a confirmed up-trend."
+      }
+    }
+  ],
+  "summary": {
+    "per_day": {
+      "20260317": "HOLD near-flat; round 1 +50 -> round 2 +30 (actual -20). The handoff shows 0316's late-up bounce FAILED to carry (flat open) = residual buying spent; with the phase-3 fade and 08:30 give-back the hold tilts marginally negative. MOVED down by the failed-carry read.",
+      "20260318": "FLIP up, HOLD +1500 (actual +1900). Round 2 confirms the round-1 base with an explicit boundary gate: 0317 exited DOWN (last_hour_dir -1) so the reversal realized in the seam as the reactive 02:24 stop-run - the confirmed origin-shelf-retrace base is +1500 and the +400 tail is not mine to claim at the open. HELD, now boundary-justified.",
+      "20260324": "KEEP down, HOLD -400 (actual -380). The handoff (0323 near-low close, absorbed late buys, chain age 4) confirms a capped, slightly-waning continuation and predicts my overnight buy-pop is a rejected false start. Number HELD; direction defers to the D-1 heavy-sell tilt (MBO day-flow inverted, rejected).",
+      "20260325": "SIZE UP; round 1 +560 -> round 2 +600 (actual +660). The handoff exposes the DEEPEST boundary state of the block (age 5, cum -2350 extreme, D-1 sell climax closing near the low) = a firmer-loaded spring, so the confirmed first-day bounce base firms to +600, still capped below the +660 tail by ahead-catalysts and the prior-exit-DOWN gate. MOVED up on deeper exhaustion."
+    },
+    "round1_to_round2_deltas": {
+      "20260317": {"r1": 50, "r2": 30, "actual": -20, "moved": true, "why": "failed overnight carry of the prior late-bounce -> spent residual, marginally negative hold"},
+      "20260318": {"r1": 1500, "r2": 1500, "actual": 1900, "moved": false, "why": "prior-exit-DOWN gates out the reactive stop-run tail; confirmed shelf-retrace base held"},
+      "20260324": {"r1": -400, "r2": -400, "actual": -380, "moved": false, "why": "prior near-low close + absorbed late buys confirm a capped continuation; no material move"},
+      "20260325": {"r1": 560, "r2": 600, "actual": 660, "moved": true, "why": "deepest boundary state (age5/cum -2350/D-1 climax) firms the loaded-spring bounce, still capped below the tail"}
+    },
+    "the_boundary_gate_finding": "The round-2 value-add is a MAGNITUDE GATE derived from the prior day's last_hour_dir at the seam. On both my reversal days (0318, 0325) the prior session exited DOWN, meaning the turn had not begun at the boundary and realized only after the open; the carry rule therefore forbids front-running the reactive tail, which is exactly why +1500 and +600 are the honest confirmed bases (not +1900/+660). On my two continuation/hold days (0317, 0324) the prior exit's realized condition (failed up-carry / absorbed near-low late buys) tightened the number toward the derived hold. In no case did new causal evidence flip a direction - direction stayed with the D-1 trade tilt throughout, per the round-1 finding that MBO signed flow is noise/invertible for direction.",
+    "weighting_philosophy": "Unchanged from round 1: big posterior moves only where causal evidence is material AND at least partly decision-time-legit. The handoff moved two numbers (0317 down on a failed-carry read, 0325 up on a deeper-spring read) and disciplined two (0318, 0324 held by the prior-exit gate). Per-event, no averaging. The immutable blind is never touched; execution stays SHADOW."
+  }
+}
