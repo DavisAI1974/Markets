@@ -60,11 +60,27 @@ def _ns_to_date(ns: int) -> str:
     return datetime.datetime.fromtimestamp(ns / 1e9, tz=datetime.timezone.utc).date().isoformat()
 
 
+def _def_period(path: str) -> str:
+    """Pull-window START date ('YYYY-MM-DD') from a raw filename like
+    glbx_ng_opt_definition_20251101_20260301.dbn.zst. '' when the name carries no window
+    (then the file simply sorts first and acts as the base period)."""
+    import re
+    m = re.findall(r"(\d{8})", os.path.basename(path))
+    return f"{m[0][:4]}-{m[0][4:6]}-{m[0][6:]}" if m else ""
+
+
 def build() -> dict:
     import databento as db
-    defs: dict[int, dict] = {}
+    # S102 MERGE FIX (measured): CME REUSES instrument_ids across periods - 2 iids in the winter
+    # defs (Nov 1 - Mar 1) are REDEFINED as different contracts in the live-era bridge defs
+    # (Mar 1 - Jul 20). A single global {iid: def} dict silently mis-decodes the earlier period's
+    # statistics under the later definition. Definitions are therefore kept PER PULL PERIOD and a
+    # statistics record resolves against the period covering ITS OWN session date.
+    periods: list[tuple[str, dict[int, dict]]] = []   # (period_start_iso, {iid: def}) sorted
     dpath = sorted(glob.glob(os.path.join(RAW_DIR, "*definition*.dbn.zst")))
     for p in dpath:
+        start = _def_period(p)
+        defs: dict[int, dict] = {}
         for rec in db.DBNStore.from_file(p):
             cls = str(getattr(rec, "instrument_class", ""))
             if cls not in ("InstrumentClass.CALL", "InstrumentClass.PUT", "C", "P"):
@@ -76,7 +92,24 @@ def build() -> dict:
                 "cp": "C" if cls.endswith("CALL") or cls == "C" else "P",
                 "opex": _ns_to_date(rec.expiration),
             }
-    print(f"[options_surface] definitions: {len(defs)} option instruments from {len(dpath)} files")
+        periods.append((start, defs))
+    periods.sort(key=lambda t: t[0])
+    n_defs = len({i for _, d in periods for i in d})
+    print(f"[options_surface] definitions: {n_defs} option instruments from {len(dpath)} files "
+          f"({len(periods)} period(s): {[s or 'base' for s, _ in periods]})")
+
+    def _resolve(iid: int, sess: str) -> dict | None:
+        """The def in force for `sess`: the LAST period starting on/before sess that knows the iid;
+        falls back to any period that knows it (an iid can outlive its defining period's window)."""
+        hit = None
+        for start, defs in periods:
+            if start <= sess and iid in defs:
+                hit = defs[iid]
+        if hit is None:
+            for _, defs in periods:
+                if iid in defs:
+                    return defs[iid]
+        return hit
 
     # sessions[date][asset][month][strike] = [call_oi, put_oi, call_settle, put_settle]
     sessions: dict = {}
@@ -86,10 +119,12 @@ def build() -> dict:
             st = int(rec.stat_type)
             if st not in (STAT_SETTLEMENT, STAT_OPEN_INTEREST):
                 continue
-            d = defs.get(rec.instrument_id)
-            if d is None or rec.ts_ref == U64_NULL:
+            if rec.ts_ref == U64_NULL:
                 continue
             sess = _ns_to_date(rec.ts_ref)
+            d = _resolve(rec.instrument_id, sess)
+            if d is None:
+                continue
             cell = (sessions.setdefault(sess, {}).setdefault(d["asset"], {})
                     .setdefault(d["underlying"], {}).setdefault(f"{d['strike']:.4f}", [None, None, None, None]))
             idx = 0 if d["cp"] == "C" else 1
@@ -98,13 +133,17 @@ def build() -> dict:
             elif st == STAT_SETTLEMENT and rec.price != I64_NULL:
                 cell[2 + idx] = rec.price / 1e9; n_set += 1
     opex_by_asset_month: dict = {}
-    for d in defs.values():
-        opex_by_asset_month.setdefault(d["asset"], {}).setdefault(d["underlying"], d["opex"])
+    for _, defs in periods:                     # earliest period first: first-seen opex wins,
+        for d in defs.values():                 # matching the original single-pull behaviour
+            opex_by_asset_month.setdefault(d["asset"], {}).setdefault(d["underlying"], d["opex"])
     os.makedirs(os.path.dirname(STORE_PATH), exist_ok=True)
     store = {
         "meta": {
             "built_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-            "range": "2025-11-01..2026-03-01", "assets": sorted(opex_by_asset_month),
+            # S102: computed from the decoded sessions (was the hardcoded phase-i pull range;
+            # the raw dir now also carries the live-era bridge, Mar 1 - Jul 20 2026)
+            "range": (f"{min(sessions)}..{max(sessions)}" if sessions else None),
+            "assets": sorted(opex_by_asset_month),
             "n_sessions": len(sessions), "n_oi_points": n_oi, "n_settle_points": n_set,
             "wall": "CME next-morning publication; asof serves latest session STRICTLY before iso",
         },
