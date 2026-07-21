@@ -26,6 +26,13 @@ def atomic_json(path: Path, payload: dict[str, Any]) -> None:
     os.replace(temp, path)
 
 
+def upload_s3(path: Path, bucket: str, key: str) -> None:
+    import boto3
+    boto3.client("s3", region_name=os.getenv("AWS_DEFAULT_REGION", "us-east-2")).upload_file(
+        str(path), bucket, key
+    )
+
+
 def enrich(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     sources = payload.setdefault("sources", {})
@@ -47,11 +54,15 @@ def enrich(path: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", default=os.getenv("FREE_NG_OUT", "/var/lib/markets/free_ng/latest.json"))
+    parser.add_argument("--s3-bucket", default=os.getenv("FREE_NG_S3_BUCKET", ""))
+    parser.add_argument("--s3-key", default=os.getenv("FREE_NG_S3_KEY", "drivers/free_ng/latest.json"))
     args = parser.parse_args()
     path = Path(args.path)
     if not path.exists():
         parser.error(f"snapshot does not exist: {path}")
     payload = enrich(path)
+    if args.s3_bucket:
+        upload_s3(path, args.s3_bucket, args.s3_key)
     shape = payload["sources"]["nws"]["load_shape"]
     print(json.dumps({
         "status": "ok",
@@ -59,6 +70,7 @@ def main() -> int:
         "phase": shape.get("current_phase"),
         "curve_regime": shape.get("calendar_curve_regime"),
         "daylight_hours": shape.get("daylight_hours"),
+        "s3": f"s3://{args.s3_bucket}/{args.s3_key}" if args.s3_bucket else None,
     }, indent=2))
     return 0
 
