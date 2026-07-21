@@ -5,12 +5,16 @@ on:
     branches:
       - chatgpt/ng-forecaster-s103-audit
     paths:
+      - 'research/kalshi/ng_g15_anchor.py'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_rt_refiner.py'
       - 'research/kalshi/ng_historical_manifest.py'
       - 'research/kalshi/ng_historical_normalize.py'
       - 'research/kalshi/ng_historical_inventory.py'
       - 'research/kalshi/ng_historical_prepare.py'
       - 'research/kalshi/ng_historical_replay.py'
       - 'research/kalshi/ng_historical_replay_prepared.py'
+      - 'research/kalshi/tests/test_ng_g15_pipeline.py'
       - 'research/kalshi/tests/test_ng_historical_normalize_inventory.py'
       - 'research/kalshi/tests/test_ng_historical_prepare.py'
       - 'research/kalshi/tests/test_ng_historical_replay.py'
@@ -18,12 +22,16 @@ on:
       - '.github/workflows/ng_historical_inventory_ci.yml'
   pull_request:
     paths:
+      - 'research/kalshi/ng_g15_anchor.py'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_rt_refiner.py'
       - 'research/kalshi/ng_historical_manifest.py'
       - 'research/kalshi/ng_historical_normalize.py'
       - 'research/kalshi/ng_historical_inventory.py'
       - 'research/kalshi/ng_historical_prepare.py'
       - 'research/kalshi/ng_historical_replay.py'
       - 'research/kalshi/ng_historical_replay_prepared.py'
+      - 'research/kalshi/tests/test_ng_g15_pipeline.py'
       - 'research/kalshi/tests/test_ng_historical_normalize_inventory.py'
       - 'research/kalshi/tests/test_ng_historical_prepare.py'
       - 'research/kalshi/tests/test_ng_historical_replay.py'
@@ -46,12 +54,16 @@ jobs:
       - name: Compile historical corpus contracts
         run: |
           python -m py_compile \
+            research/kalshi/ng_g15_anchor.py \
+            research/kalshi/ng_g15_pipeline.py \
+            research/kalshi/ng_rt_refiner.py \
             research/kalshi/ng_historical_manifest.py \
             research/kalshi/ng_historical_normalize.py \
             research/kalshi/ng_historical_inventory.py \
             research/kalshi/ng_historical_prepare.py \
             research/kalshi/ng_historical_replay.py \
             research/kalshi/ng_historical_replay_prepared.py \
+            research/kalshi/tests/test_ng_g15_pipeline.py \
             research/kalshi/tests/test_ng_historical_normalize_inventory.py \
             research/kalshi/tests/test_ng_historical_prepare.py \
             research/kalshi/tests/test_ng_historical_replay.py \
@@ -63,9 +75,11 @@ jobs:
           python research/kalshi/ng_historical_prepare.py --selftest
           python research/kalshi/ng_historical_replay.py --selftest
           python research/kalshi/ng_historical_replay_prepared.py --selftest
+          python research/kalshi/ng_g15_pipeline.py --selftest
       - name: Run historical corpus tests
         run: |
           python -m unittest -v research/kalshi/tests/test_ng_historical_normalize_inventory.py
           python -m unittest -v research/kalshi/tests/test_ng_historical_prepare.py
           python -m unittest -v research/kalshi/tests/test_ng_historical_replay.py
           python -m unittest -v research/kalshi/tests/test_ng_historical_replay_prepared.py
+          python -m unittest -v research/kalshi/tests/test_ng_g15_pipeline.py
