@@ -31,6 +31,23 @@ Each block runs a two-step loop:
 We measure each day two ways: **direction** (did we get the sign right) and **drift** (cumulative
 dollar error of "if you had followed the guess"). $1.00 of NG move = $10,000 in our units ("MULT").
 
+**The actual files (if you have repo access — full index in the companion
+`NG_FORECASTER_PROBLEM_MEMO_S103_ADDENDUM_FILES.md`):**
+- The rulebook / "brain": `research/kalshi/knowledge/ng_brain.json` (version s102.3, ~36 plays).
+- The BLIND instructions (how the blind is told to reason — the panel of 3):
+  `research/kalshi/agents/blind_shared.md` + `agents/blind_angle_storage.md` +
+  `agents/blind_angle_positioning.md` + `agents/blind_angle_weather.md`.
+- The REFINE instructions: `research/kalshi/agents/refine.md`.
+- The per-group loop + design intent: `research/kalshi/agents/README.md`.
+- The renderer: `research/kalshi/continuous_rt.py`; the scorer: `continuous_score.py`.
+- G16 (the block in this memo): decision-state `research/kalshi/renders/ng_refine_s95/grp16_state.json`;
+  the 3 blind forecasts `forecasts/grp16_agent{A,B,C}.json`; the synthesis `forecasts/grp16.json`;
+  the blind scorecard `renders/ng_refine_s95/g16_score.json`; the refined view
+  `forecasts/grp16_refined_view.json`.
+If you only open three: `agents/blind_shared.md` (the reasoning rules), `forecasts/grp16.json` +
+`grp16_agent{A,B,C}.json` (the competing calls and how we combined them), and `grp16_state.json`
+(what was knowable at forecast time).
+
 ---
 
 ## 2. THE PHENOMENON we want explained (the recurring pattern)
