@@ -50,7 +50,11 @@ discriminators) into proposal plays before G17's blind, so E runs G17 with the g
   files agents/blind_class_{A..E}.md off the mbo_specialist lenses, minus any realized/MBO content).
   Ownership under the SUNDAY FOLD (see decision block above): B=0413,0420 C=0414,0415,0422
   D=0416,0423 E=0417,0421(seam),0424; A on call for holiday reopens only.
-  E MUST emit the 9-field weekend handoff_out; B consumes exit_type+monday_bias, never the Friday net.
+  E MUST emit the 9-field weekend handoff_out. **WEEKEND SEAM PAIRING (Greg S104.1): A runs as the
+  weekend-seam specialist hand-in-hand with B — per weekend A delivers the bridge read (E's exit
+  sanity-checked, reopen scenarios, gap ownership, driver-realization check) and B consumes it before
+  finalizing each Monday, recording taken-vs-overridden. A informs, B decides, B owns the number.
+  The week-open chain is E -> A -> B.**
 - Coordinate per-day by ownership (GUARDED), score, render (two-leg hand-roll like
   coordinate_g15_mbo.py's build_actual - continuous_rt.py generic reads n.0 and is WRONG for the
   pre-roll leg), PRINT, **HARD PAUSE for Greg**, then refine = the SAME 5 specialists (unblinded,
