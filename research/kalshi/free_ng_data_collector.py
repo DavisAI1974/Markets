@@ -242,7 +242,7 @@ def upload_s3(path: Path, bucket: str, key: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", default=os.getenv("FREE_NG_OUT", "/var/lib/markets/free_ng/latest.json"))
-    parser.add_argument("--eia-key", default=os.getenv("EIA_API_KEY", "DEMO_KEY"))
+    parser.add_argument("--eia-key", default=(os.getenv("EIA_API_KEY") or "DEMO_KEY"))
     parser.add_argument("--s3-bucket", default=os.getenv("FREE_NG_S3_BUCKET", ""))
     parser.add_argument("--s3-key", default=os.getenv("FREE_NG_S3_KEY", "drivers/free_ng/latest.json"))
     parser.add_argument("--no-eia", action="store_true")
