@@ -64,9 +64,11 @@ tip; all S104 work committed+pushed here). git = CODE, S3 = DATA.
 - **Renders: actual curves + own p50 path only.** Target honest under-100 every day.
 
 ## OPEN AT CLOSE
-- **E's Friday SELF-ANALYSIS was still running at close** (same-issue-or-different verdict, failure-mode
-  histogram, cascade accounting, ranked self-prescription -> scratchpad/friday_self_analysis.md).
-  If not committed, re-run it from agents/mbo_specialist_E.md + CASCADE_S104_friday_cleanup_summary.md.
+- **E's Friday SELF-ANALYSIS: DONE** (`CASCADE_S104_friday_self_analysis.md`). VERDICT: ONE dominant
+  flaw - PRIOR-OVER-STATE on Friday direction (13/18 misses, 72%); zero wrong signs from absent data
+  (the cascade is free to fix); 1.25x cascade ratio (23,130 downstream vs 18,530 direct, 8 of the 10
+  root-caused bad Mondays). Self-prescription #1 = a Friday turn/exhaustion GATE on direction (free
+  rule) - turn into a proposal play before G17.
 - **SUNDAY CONVENTION DECISION (AWAITING GREG)**: our "Sunday" = only the ~2h 18:00-20:00 ET reopen
   (UTC file-boundary artifact); everything after 20:00 Sun already sits in "Monday". CME trade-date
   convention folds Sun 18:00 into Monday. RECOMMENDED: fold (one Friday->Monday seam). Do not change

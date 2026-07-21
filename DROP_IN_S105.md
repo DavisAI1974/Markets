@@ -27,13 +27,17 @@ doctrine_tier3.friday_monday_cascade_s104) -> `research/kalshi/GROUP_PRECHECK_S1
 - **Renders: actual curve + the forecast's OWN p50 path only** (no re-anchored/scaled lines, no
   gap bridges). Target **honest under-100 every day**.
 
-## JOB 1 - finish the loose end
-E's Friday SELF-ANALYSIS (same-issue-or-different verdict, failure-mode histogram, present-vs-absent
-info split, cascade accounting, ranked self-prescription). If scratchpad/friday_self_analysis.md is
-missing, spawn E fresh (agents/mbo_specialist_E.md + the cascade summary). COMMIT the result as
-CASCADE_S104_friday_self_analysis.md and print the verdict to Greg.
+## E'S FRIDAY SELF-ANALYSIS (DONE at S104 close - `CASCADE_S104_friday_self_analysis.md`)
+VERDICT: ONE dominant flaw, same every time - **PRIOR-OVER-STATE on Friday direction** (13/18 misses,
+72%): the sign came from a day-class default / chain extrapolation instead of the exhaustion/turn
+state ALREADY in decision_state. NOT ONE wrong Friday sign was caused by absent data - the whole
+cascade is free to fix. Cascade accounting: 9 downstream days wrecked (8/9 sign-wrong), 23,130 USD
+downstream vs 18,530 direct = 1.25x ratio; these are 8 of the 10 root-caused bad Mondays. Ranked
+self-prescription (#1 = a Friday turn/exhaustion GATE on direction, rule, free; only the magnitude
+tail costs a data build and it never flips a sign). S105: turn prescription #1 + #2 (crest-trim
+discriminators) into proposal plays before G17's blind, so E runs G17 with the gate in hand.
 
-## JOB 2 - G17 BLIND (Sun 04-12 -> Fri 04-24), 5-specialist panel
+## JOB 1 - G17 BLIND (Sun 04-12 -> Fri 04-24), 5-specialist panel
 - Substrate: shared stores via platform_sync (list in GROUP_PRECHECK_S103.md) + G17 tape +
   `forecast_harness.py decision-state --days <sessions> --mask-after 20260410 --out grp17_state.json`.
   Anchor = 04-10 close + last-hour dir. Basis: **May/NGK26(996) through 04-20, June/NGM26 from 04-21**
