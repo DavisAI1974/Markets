@@ -41,6 +41,16 @@ completes.)
    they need the ~$1,500/mo Plus tier. The live collector leads with an `mbo` subscribe and hot-loops on
    ErrorMsg until that entitlement exists - so the live path is historical-only until the tier is bought.
 
+## RENDER STEP (basis, not just replay)
+10. **`continuous_rt.py` reads the S3 NG.n.0 tape** for the actual curve, which is NGK26/May for the
+    whole G15 block - so the brief's "render via continuous_rt.py --anchor 20260313" would draw the
+    actual (and the loaded anchor) on the MAY leg, ~0.037 below the NGJ26 basis, for the 0313-0319
+    pre-roll days. The canonical G15 render needs the TWO-LEG basis (NGJ26 pre-roll + NGK26 post-roll
+    with the 0320 seam marked), i.e. the hand-rolled approach in `run_g15_rt_s102.py`, not
+    `continuous_rt.py` generic. Post-roll days (0320-0327) are fine either way. For a group that does
+    NOT straddle a Kalshi roll, continuous_rt.py generic is correct. The day-1 pilot render was drawn
+    directly from the NGJ26 MBO trades (net -910, matches g15_rt.json) to stay on-basis.
+
 ## WHAT WORKED (no change needed)
 - The causal engine itself: `NGLiveOperator` + `build_feature_state` replay real MBO cleanly and produce
   correct feature states WITH proper data-quality stand-downs (thin Sunday -> flow stands down, queue
