@@ -80,4 +80,23 @@ tip; all S104 work committed+pushed here). git = CODE, S3 = DATA.
   leg_map/seam_event, absorption_flag) still queued; then G16/G17 MBO forward tests.
 - G17 substrate NOT built (stores not pulled this session beyond list; tape not pulled).
 
+## S104.1 ADDENDUM (post-close decisions, same day - all committed+pushed)
+1. **COORDINATOR FRIDAY SIGN-OFF (Greg: "he has to get his ok too")**: guard extended - from round 2
+   on the coordinator REFUSES to assemble a weekend-feeding day whose posterior lacks handoff_out.
+   Existence enforced, content stays the owner's. Negative-tested; committed r2 record passes.
+   Canonical coordinator contract added to agents/mbo_refine_shared.md.
+2. **D's seam tell merged as a play**: boundary.prior_close_flow_direction_disagreement (any-boundary
+   scope, n=2: 0326->0327, 0315->0316). Brain = **s102.5, 47 plays**. B's tell was already in
+   (monday.seam_chainage_accommodation_gate).
+3. **SUNDAY FOLD DECIDED (Greg)**: the ~2h Sunday reopen folds into Monday (CME trade-date
+   convention), effective G17. Monday = Fri close -> Mon close; one Friday->Monday seam; A narrows to
+   holiday reopens; historical blocks keep standalone-Sunday scoring (footnote comparisons).
+   G17 = 10 scored days (0413..0424).
+4. **WEEKEND SEAM PAIRING (Greg: "start the week correct")**: A = weekend-seam specialist hand-in-hand
+   with B. Chain E -> A -> B: A delivers the bridge read (E's exit sanity-check, reopen scenarios, gap
+   ownership, driver-realization check, live reopen watch); B consumes, records taken-vs-overridden,
+   and ALONE owns the Monday number (guard unchanged). Lens files A/B re-cut.
+5. **Agent handbook rewritten** (agents/README.md): the 5-specialist era operating frame + per-group
+   loop; the 3-angle panel marked superseded (kept for the record).
+
 ## RULES (unchanged) - see DROP_IN_S105.md guards block.

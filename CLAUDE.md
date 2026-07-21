@@ -18,8 +18,15 @@ corrected Friday inheritance ALONE; sum |err| 35,030 -> 10,880 -> 8,000 (18 non-
 mean ~107). **MERGED s102.5 (46 plays, incumbents 36/36 byte-identical)** + doctrine friday_monday_
 cascade_s104. **STANDING ORDERS (Greg)**: FOCUS = FRIDAY AND MONDAY; group windows Sunday->2nd Friday
 always; FIVE specialists for BOTH blind and refine, coordinator guarded; honest under-100 every day.
-**OPEN**: E's Friday self-analysis DONE (one dominant flaw: PRIOR-OVER-STATE, 72%; cascade free to fix); the SUNDAY CONVENTION DECIDED: FOLD the ~2h
-reopen into Monday, effective G17 (Greg S104.1); G17 5-specialist blind = S105's opener.
+**S104.1 (post-close, Greg)**: E's SELF-ANALYSIS DONE (ONE dominant flaw = PRIOR-OVER-STATE on Friday
+direction, 13/18 misses; ZERO wrong signs from absent data - the cascade is free to fix; prescription
+#1 = a Friday turn/exhaustion GATE, build before G17). **SUNDAY FOLD DECIDED** (the ~2h reopen belongs
+to Monday, CME trade-date convention, effective G17; Monday = Fri close -> Mon close). **WEEKEND SEAM
+PAIRING**: the week-open chain is E -> A -> B (A = weekend-seam specialist, bridges E's exit to B's
+Monday; A informs, B decides, B owns the number). **COORDINATOR FRIDAY SIGN-OFF** (refuses any
+weekend-feeding day lacking handoff_out; negative-tested). Brain **s102.5 = 47 plays** (+boundary.
+prior_close_flow_direction_disagreement, D's seam tell scoped to every overnight boundary). Agent
+handbook agents/README.md rewritten for the 5-specialist era. G17 5-specialist blind = S105's opener.
 NG MBO year pull DONE on S3 (312 files; per-contract legs required for roll-straddling groups -
 NG.n.0 is the wrong pre-roll leg).
 
@@ -257,7 +264,7 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** brain **s102.5 (46 plays)**; the WALK is at **G16 DONE -> merged; G17 (Apr 12-24,
+**One-line state:** brain **s102.5 (47 plays)**; the WALK is at **G16 DONE -> merged; G17 (Apr 12-24,
 two-leg May->June seam ~0421) = S105's opener, run as the FIVE-specialist blind under the Friday/Monday
 focus doctrine (Greg S104: Friday is the cascade root; Sunday->2nd-Friday windows; coordinator guarded;
 honest under-100)**. PARALLEL **MBO CAUSAL-REFINEMENT TRACK** (branch
