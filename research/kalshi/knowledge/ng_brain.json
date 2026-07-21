@@ -1,9 +1,9 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s102.3",
-  "built_pass": 3,
-  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved.",
+  "version": "s102.4",
+  "built_pass": 4,
+  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
   "regime_scope": "12 warm-season days (Jul-Sep) + G3/G4/G5 (Sep8-Oct21) autumn contango + G6 (Oct22-Nov4) the first TRUE holdout at the winter transition. Winter/backwardation + Mondays still thin.",
   "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders.",
@@ -2401,6 +2401,45 @@
    "g15_watches": "(1) S1-void band-bottom damping (early-G14 same-signed +630 band-position drift; would have flipped 0302 - watch only). (2) unpriced_shot_extension bound (1.35 = 0311's own print). (3) weekend_chain_drift_day_move doubled rung (n=1). (4) shoulder resume-class heterogeneity (+470..+1850). (5) Kalshi underlying rolls to May ~Mar 20 (5bd rule) - echo-lane flag.",
    "g14_walk_record": "blind 4/12 drift -4350 (clean holdout, first fully-clean since the masking fix; one wrong anchor chain-verdict propagated); refined v2 12/12, every step <=200, drift +500 = band-position noise only; all residuals DERIVED (iteration 2 per Greg's lines-near-perfect standard).",
    "s102_2_g15_watch_resolutions": "(1) S1-void band-bottom damping -> CONFIRMED and promoted to magnitude.shoulder_counter_print_damping on the counter-print case (0326 +900g/-60a). (2) unpriced_shot_extension bound 1.35 -> the 0323 negative-control HELD (declined fire on arm iii at NYMEX MM 50.0; 0323 delivered chain-side down, no far-add repricing). (3) weekend_chain_drift_day_move plain rung -> HELD (0322 day-move -600 vs actual -640). (4) shoulder resume-class heterogeneity -> the give-back-exhaustion TURN is now split by catalyst-timing: LIVE/realizing driver = one-day UPPER-band snap (0318 +1900); catalysts AHEAD = lower-band MULTI-session build (0325 +650 / 0326 hold / 0327 +1160). (5) Kalshi roll to May ~Mar 20 -> confirmed, seam -0.037 never traded. NEW WATCH for G16: the flow-absorption turn arm's >=~0.62 buy / <=~0.20 sell EXTREME thresholds (n=1 each) and the expiry-covering vs weekend-crest discriminator (driver AHEAD vs realizing) - both need forward instances."
+  },
+  "refinement_architecture_s103": {
+   "provenance": "GREG, S103 (verbatim intent). Was research/kalshi/knowledge/refinement_architecture_doctrine.md (PENDING); MERGED here after the G15 MBO refine completed, effective G16/G17 MBO.",
+   "load_bearing_principle": "The OLD (blind) prediction framework STAYS the CORE forecasting model. L1+trades+MBO is NOT a replacement predictor - it is a CAUSAL REFINEMENT LAYER that decides whether the immutable blind is still valid as the session unfolds. The refined output is a POSTERIOR UPDATE OF THE IMMUTABLE BLIND, never a new forecast from scratch. Do not replace a working predictor with a reactive order-flow model.",
+   "pieces_in_order": [
+    "1 IMMUTABLE BLIND = the starting map (direction, magnitude, timing, turns, daily path; pre-cutoff info only). Never rewritten.",
+    "2 FRIDAY ANCHOR = the starting market state (final traded hour before the block: price, dir, volume, signed flow, activity, efficiency, contract identity, queue). First Sunday update is read RELATIVE to this.",
+    "3 NORMALIZED L1+TRADES+DEFINITIONS+MBO = ONE chronological stream feeding ONE feature engine. None predict independently.",
+    "4 NGLiveOperator + FEATURE STATES = events -> behavior, emitted ONLY at valid completed-event boundaries. Never chase ticks or react to incomplete books.",
+    "5 SESSION SPECIALISTS = interpret the SAME feature state by session structure (a feature means different things Sunday vs Tue-core vs EIA-Thu vs expiry/roll-Fri).",
+    "6 COORDINATOR = SELECTS the specialist matching the day+state; NEVER averages opposing forecasts; records which, why, dissent, why the alternative was rejected.",
+    "7 POSTERIOR REFINEMENT = starts from the blind and adjusts ONLY when causal evidence is MATERIAL (confirm / reduce confidence / delay / resize / identify a turn / flip continuation-vs-reversal / stand down). Emits SEPARATE outputs, not one vague call.",
+    "8 DATA QUALITY / STAND-DOWN = controls authority. MBO book-based conclusions require a trustworthy reconstructed book. Book unreliable but trades valid -> fall back to trade-flow+L1 and LABEL it. Weak data must never create false precision.",
+    "9 SCORING = score blind vs refined SEPARATELY; direction alone insufficient - measure magnitude, path, onset, turns, MFE, MAE, trend-vs-chop, confidence calibration. Distinguishes genuine improvement from merely REACTING after the move.",
+    "10 LESSON PROPOSALS = propose mechanisms with supporting events, counterexamples, scope, n, confidence, forward validation. Never auto-rewrite the brain."
+   ],
+   "goal": "Preserve what the old framework did well; use the new data to improve TIMING, MAGNITUDE, TURNS, and CONFIDENCE - not to replace it."
+  },
+  "mbo_refinement_g15_findings": {
+   "status": "FINDINGS from the first full MBO causal refine (G15, Mar 15-27, 12 sessions). Forward-validation target: G16/G17 MBO. NOT auto-promoted plays - lesson proposals per doctrine piece 10.",
+   "score": "blind 9/12 dir (mean abs err 526 usd) -> refined 12/12 dir (mean abs err 72 usd), two-leg NGJ26->NGK26 basis, 5-specialist SELECT coordinator. Three big blind misses fixed causally: 0318 give-back-exhaustion turn UP (+1500 vs blind -400), 0326 counter-print absorption round-trip to flat (over-size fix), 0327 expiry covering-into-settle rally (+1050 vs blind -350).",
+   "honest_helped_or_hurt": "MBO TRADE-FLOW layer HELPED (decisive on 0327/0323/0326). MBO BOOK-RECONSTRUCTION layer HURT: div/imb whipsawed at every event boundary, would have faded the 0327 covering rally and sold into the 0318 low; it was correctly STOOD DOWN (execution_authority False on all 12 days, div_conviction <= 0.15). Falsification-first: the book layer works AGAINST the call when trusted tick-by-tick.",
+   "discriminator_that_works": "signed-flow-vs-price CONVICTION on the phase leg: flow_conviction = sign(signed_flow)*sign(price_change) (or corr) per phase. ALIGNED delivers the band; NEGATIVE-under-rising = absorption/covering -> reversal/round-trip. This ONE derived feature does the discrimination that onset_dir / absorb-flag / print-direction CANNOT (those were identical on 0319 and 0326 yet resolved oppositely).",
+   "direction_source_rule": "Direction stays with the D-1 trade tilt (prior-session big_print_b_share / session_b_share) that the blind already consumes. Gate 1-min imb_flow OUT of the direction decision entirely; use MBO only for TURN and ABSORPTION confirmation. imb_flow flips faster than its own autocorrelation at 30-min grain - a sampling artifact, not signal.",
+   "anticipation_vs_confirmation": "The 0318 anticipatory signal (bid-level build near the low) was already in the D-1 trades the open-conditions blind saw. MBO's honest role on 0318 was CONFIRMATION, not anticipation. Scored as improved-vs-reacted: the turn magnitude tail (+1900 actual) was partly reactive; the confirmed base was +1500.",
+   "engine_change_requests": [
+    "Emit ONE session-level data-quality verdict (book_trustworthy bit = execution_authority AND conviction>=floor AND book_complete) + only material transition bars, NOT 150+ repeated stand-down rows.",
+    "Phase-first not tick-first: feed the specialist the phase table + session turns as the PRIMARY object; demote the minute-grain series to a diagnostic.",
+    "Print-anchored windows on EIA-Thu: reset phases at the 10:30 ET print (pre-print / delivery / post-delivery), not volume-based boundaries that straddle the print.",
+    "Roll seam as a first-class engine object: a leg_map (raw_symbol per date, NGJ26 pre-roll / NGK26 post-roll, not NG.n.0) + an explicit seam_event traded=false so overnight_gap is forced to 0 and the offset is scoring-only.",
+    "Surface a named absorption_flag = signed-flow-vs-price-sign per phase, instead of reconstructing covering/absorption by hand."
+   ],
+   "he24_to_he1_handoff_spec": {
+    "principle": "The day-boundary handoff carries STATE, never the day-net number. Each specialist starts from the prior day's MARKET CONDITION so the block is one continuous path, not siloed guesses.",
+    "carried_state": "close price + last-hour direction; running chain polarity + age (sessions since last turn); cum-from-anchor vs nearest origin shelf; exhaustion-state flag (absorption building / climax printed / turn confirmed-or-pending); flow-conviction verdict; data-quality state (was the read trade-flow-only?); any armed C1 flip-watch (never front-run); spent-vs-unrealized-ahead driver tag.",
+    "turn_ownership": "A turn firing in the overnight HE24->HE1 seam belongs to the boundary: whoever owns the day the turn REALIZES into inherits it, but sizes it using the PRIOR day's exhaustion-state flag (so 0318 doesn't compound a possibly-overshot tail).",
+    "weekend_seam": "Sunday inherits the Friday CLOSE + chain state, not the Friday day-move; the overnight gap SIGN is a non-derivable handoff (forecast the day-move from the anchor, treat the reopen gap as noise). Spent-vs-unrealized-ahead is the gap-ownership key: crest-trim -> Sunday can gap-fade; covering/holding -> Sunday reopen likely continues the bid. A weekend that also carries a contract roll passes the leg change as never-traded."
+   },
+   "agent_files": "CANONICAL: research/kalshi/agents/ (blind panel + refine). MBO refine driver research/kalshi/coordinate_g15_mbo.py (coordinator, SELECT-per-day) + replay_g15_mbo.py (feeds MBO through NGLiveOperator + build_feature_state). Renders: renders/ng_refine_s95/g15_mbo_{blind,refined}_continuous.png. Immutable blind: forecasts/grp15.json. Integration gotchas: research/kalshi/G15_MBO_FIXES_FOR_CHATGPT.md."
   }
  }
 }

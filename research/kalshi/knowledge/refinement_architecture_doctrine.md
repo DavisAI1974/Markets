@@ -1,8 +1,9 @@
 # REFINEMENT ARCHITECTURE DOCTRINE (Greg, S103) - MERGE INTO ng_brain.json AFTER the G15 MBO run
 
-STATUS: PENDING BRAIN MERGE. Greg ordered this into the brain "after they are done, for next run"
-(i.e., after the G15 MBO refine completes, add as a doctrine_tier3 block so G16/G17 apply it). Captured
-verbatim-in-substance here so it is not lost.
+STATUS: MERGED (S103, brain s102.4). Now lives in ng_brain.json ->
+doctrine_tier3.refinement_architecture_s103, effective G16/G17 MBO. The G15 MBO refine result and the
+5-specialist lesson proposals landed alongside it at doctrine_tier3.mbo_refinement_g15_findings. This
+file is kept as the human-readable source of the doctrine.
 
 ## THE LOAD-BEARING PRINCIPLE
 The OLD prediction framework STAYS as the CORE forecasting model - it already produces useful

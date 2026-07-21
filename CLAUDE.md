@@ -234,11 +234,17 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** the WALK is at **G16 (Mar 29-Apr 10) DONE - blind PANEL 8/11 (under-sized) -> refined
-11/11 (drift +40) -> merged; G17 (Apr 12-24, two-leg May->June seam ~0421) = S104's opener** on **brain
-s102.3 (36 plays)**. **CANONICAL DROP-IN AGENT FILES are live in `research/kalshi/agents/` (blind panel +
-refine) + continuous_rt.py for renders - USE THEM, do not re-author per group; only the brain + group
-data change.** **OPEN RECURRING PROBLEM handed to ChatGPT: `NG_FORECASTER_PROBLEM_MEMO_S103.md`** (blind
+**One-line state:** the WALK is at **G16 (Mar 29-Apr 10) DONE -> merged; G17 (Apr 12-24, two-leg
+May->June seam ~0421) = the walk's opener**. PARALLEL **MBO CAUSAL-REFINEMENT TRACK** (branch
+`chatgpt/ng-forecaster-s103-audit`): the first full MBO 5-specialist refine ran on **G15** = blind 9/12
+(err 526) -> **refined 12/12 (err 72)** (two-leg NGJ26->NGK26 basis; the old blind stays the CORE
+predictor, MBO is a POSTERIOR UPDATE). Honest verdict: MBO TRADE-FLOW helps, MBO BOOK layer hurts if
+trusted raw (stood down all 12 days); the working discriminator is signed-flow-vs-price CONVICTION per
+phase, DIRECTION stays with the D-1 trade tilt. Brain merged to **s102.4 (36 plays, doctrine +
+findings)**; next = wire the HE24->HE1 handoff + engine changes, re-run, then G16/G17 MBO. Read
+`research/kalshi/G15_MBO_REFINE_HANDOFF_S103.md` + `DROP_IN_S104_MBO_REFINE.md`. **CANONICAL DROP-IN
+AGENT FILES are live in `research/kalshi/agents/` (blind panel + refine) + continuous_rt.py for renders -
+USE THEM, do not re-author per group; only the brain + group data change.** **OPEN RECURRING PROBLEM handed to ChatGPT: `NG_FORECASTER_PROBLEM_MEMO_S103.md`** (blind
 30-70% vs refine 90-100%; magnitude error flips sign block-to-block from mis-scoped lessons; selector
 averages bimodal splits instead of selecting; order-flow direction nowcast under-weighted). the
 futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed follower.**
