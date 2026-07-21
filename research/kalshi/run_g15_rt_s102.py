@@ -1,5 +1,10 @@
 """run_g15_rt_s102.py - G15 ACTUALS + render on the KALSHI-UNDERLYING basis (Greg's rule).
 
+S103: parametrized (backward-compatible; no args = the original blind render byte-for-byte).
+  --guess FILE:label:color[,FILE:label:color]  overlay 1-2 guess lines (default forecasts/grp15.json)
+  --out NAME.png    output filename (default g15_blind.png)
+  --title TAG       title tag (default "BLIND"); the actual + rt.json are guess-independent.
+
 BASIS: the Kalshi underlying. APRIL/NGJ26 (instrument 1008) through Thu 2026-03-19; MAY/NGK26
 (instrument 996) from Fri 2026-03-20 (KXNATGASD underlying rolls 5 business days before the
 Mar 27 LTD). The 0319->0320 seam is a REAL instrument change (April->May), MARKED NEVER TRADED:
@@ -12,7 +17,7 @@ FILE SELECTION (roll-check subagent S102 + box pull):
   0320-0327: data/nymex_cont_n0 (May 996)
 Instrument asserted per leg so a mis-file cannot splice the wrong contract.
 """
-import gzip, json, os
+import argparse, gzip, json, os
 import numpy as np
 import pandas as pd
 
@@ -59,7 +64,38 @@ def load(path, day, want_iid):
     return ts, px
 
 
+def _guess_line(gpath, day_spans, anchor_close):
+    """Replay a guess file into a plotted (gx, gy) line on the real per-day ET spans."""
+    gd_by = {g["date"].replace("-", ""): g for g in json.load(open(gpath))["days"]}
+    gx, gy, grun = [], [], 0.0
+    for d, (ts0, ts1) in day_spans:
+        if d not in gd_by:
+            continue
+        gg = gd_by[d]
+        gopen = grun + gg.get("overnight_gap_usd", 0)
+        gc = gg.get("guess_curve", [[20, 0]])
+        for k, (hr, cg) in enumerate(gc):
+            gt = ts0 + (ts1 - ts0) * (k / max(len(gc) - 1, 1))
+            gx.append(gt); gy.append(anchor_close + (gopen + cg) / MULT)
+        grun = gopen + gg.get("guessed_net_usd", gc[-1][1])
+    return gx, gy
+
+
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--guess", default="forecasts/grp15.json:blind guess (followed):#e8710a",
+                    help="comma-sep FILE:label:color list (1-2 guesses)")
+    ap.add_argument("--out", default="g15_blind.png")
+    ap.add_argument("--title", default="BLIND")
+    a = ap.parse_args()
+    guesses = []
+    for spec in a.guess.split(","):
+        parts = spec.split(":")
+        path = parts[0] if os.path.isabs(parts[0]) else os.path.join(HERE, parts[0])
+        label = parts[1] if len(parts) > 1 else "guess"
+        color = parts[2] if len(parts) > 2 else "#e8710a"
+        guesses.append((path, label, color))
+
     os.makedirs(OUT, exist_ok=True)
     a_ts, a_px = load(ANCHOR_DIR, ANCHOR, APRIL)
     a_et = pd.to_datetime(a_ts, unit="s", utc=True).tz_convert(ET)
@@ -67,11 +103,8 @@ def main():
     last_hr = a_px[a_et >= a_et[-1] - pd.Timedelta(hours=1)]
     a_dir = "up" if len(last_hr) > 1 and last_hr[-1] > last_hr[0] else "down"
 
-    guess = json.load(open(os.path.join(HERE, "forecasts", "grp15.json")))
-    gd_by = {g["date"].replace("-", ""): g for g in guess["days"]}
-
-    rolls, recs, cont_t, cont_p = [], [], [], []
-    gx, gy, grun, cum_roll = [], [], 0.0, 0.0
+    rolls, recs, cont_t, cont_p, day_spans = [], [], [], [], []
+    cum_roll = 0.0
     prev_close = anchor_close
     for d, path, iid in LEGS:
         ts, px = load(path, d, iid)
@@ -98,14 +131,7 @@ def main():
                      "curve_2h": curve})
         idx = np.linspace(0, len(px) - 1, min(len(px), 400)).astype(int)
         cont_t.extend(ts[idx].tolist()); cont_p.extend((px[idx] - cum_roll).tolist())
-        if d in gd_by:
-            gg = gd_by[d]
-            gopen = grun + gg.get("overnight_gap_usd", 0)
-            gc = gg.get("guess_curve", [[20, 0]])
-            for k, (hr, cg) in enumerate(gc):
-                gt = ts[0] + (ts[-1] - ts[0]) * (k / max(len(gc) - 1, 1))
-                gx.append(gt); gy.append(anchor_close + (gopen + cg) / MULT)
-            grun = gopen + gg.get("guessed_net_usd", gc[-1][1])
+        day_spans.append((d, (ts[0], ts[-1])))
         prev_close = c
 
     out = {"market": "NG", "tag": "g15",
@@ -123,23 +149,25 @@ def main():
     fig, ax = plt.subplots(figsize=(16, 5.5))
     adt = pd.to_datetime(np.asarray(cont_t), unit="s", utc=True).tz_convert(ET)
     ax.plot(adt, cont_p, color="#1f6feb", lw=0.9, label="actual (Kalshi underlying, roll-adjusted)")
-    if gx:
-        gdt = pd.to_datetime(np.asarray(gx), unit="s", utc=True).tz_convert(ET)
-        ax.plot(gdt, gy, color="#e8710a", lw=1.5, ls="--", label="blind guess (followed)")
+    for gpath, glabel, gcolor in guesses:
+        gx, gy = _guess_line(gpath, day_spans, anchor_close)
+        if gx:
+            gdt = pd.to_datetime(np.asarray(gx), unit="s", utc=True).tz_convert(ET)
+            ax.plot(gdt, gy, color=gcolor, lw=1.6, ls="--", label=glabel)
     for r in rolls:
         rd = pd.Timestamp(f"{r['date'][:4]}-{r['date'][4:6]}-{r['date'][6:]}", tz=ET)
         ax.axvline(rd, color="#999", lw=0.8, ls=":")
         ax.text(rd, ax.get_ylim()[0], f" seam {r['offset']:+.3f}", fontsize=7, color="#666", va="bottom")
     ax.axhline(anchor_close, color="#999", lw=0.6, ls=":")
-    ax.set_title(f"NG G15 BLIND (one-shot, brain {guess.get('brain_version')}) vs actual - Sun 2026-03-15 .. Fri 2026-03-27  "
+    ax.set_title(f"NG G15 {a.title} vs actual - Sun 2026-03-15 .. Fri 2026-03-27  "
                  f"anchor {anchor_close:.3f} ({a_dir})  Kalshi underlying April->May 0320", fontsize=10, fontweight="bold")
     ax.legend(fontsize=8); ax.grid(True, color="#eee"); ax.set_axisbelow(True)
     for sp in ("top", "right"):
         ax.spines[sp].set_visible(False)
     ax.tick_params(labelsize=7)
     plt.tight_layout()
-    plt.savefig(os.path.join(OUT, "g15_blind.png"), dpi=120, bbox_inches="tight")
-    print("[g15_rt] wrote g15_blind.png")
+    plt.savefig(os.path.join(OUT, a.out), dpi=120, bbox_inches="tight")
+    print(f"[g15_rt] wrote {a.out}")
 
 
 if __name__ == "__main__":

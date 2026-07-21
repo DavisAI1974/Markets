@@ -1,0 +1,807 @@
+{
+ "group": 15,
+ "tag": "g15",
+ "brain_version": "s102.2_proposal",
+ "kind": "REFINED VIEW (unblinded refine, S103) - do NOT confuse with the blind record forecasts/grp15.json",
+ "anchor": {
+  "date": "20260313",
+  "close": 3.132,
+  "last_hour_dir": "down",
+  "instrument": "NGJ26"
+ },
+ "price_basis": "Kalshi underlying: April/NGJ26 through 0319, May/NGK26 from 0320 (5bd-before-LTD roll). 0319->0320 seam -0.037 MARKED NEVER TRADED; guess forecasts overnight ~0 at the seam; scorer roll-adjusts (+370 to the actual). Refined guess RAW cum is the seam-free apples-to-apples series vs actual RAW cum.",
+ "block_finding": "REFUTES 'magnitude grossly too deep.' The down-chain day-moves were well-calibrated (residuals mixed +-280, net slightly UNDER-deep by ~+360). The blind's -3490 cum was DOMINATED by TURN-DETECTION: 0318 (-2300 single-day error from missing the give-back-exhaustion turn UP) propagated as a permanent ~-2000 cum offset (the blind kept walking the chain down from a level that had already reset up), plus 0327 (-1510, expiry-covering rally mis-called as crest-trim). 0326 (+960) was a directional day miss in the OPPOSITE sense that partially MASKED the accumulated over-depth. Target = turn-detection + counter/expiry-day FORM, not global band-shrinking.",
+ "refined_raw_cum_path_usd": {
+  "0315": -450,
+  "0316": -1050,
+  "0317": -1050,
+  "0318": 750,
+  "0319": -250,
+  "0320": -400,
+  "0322": -1000,
+  "0323": -2000,
+  "0324": -2400,
+  "0325": -1800,
+  "0326": -1700,
+  "0327": -650
+ },
+ "actual_raw_cum_path_usd": {
+  "0315": -430,
+  "0316": -970,
+  "0317": -990,
+  "0318": 910,
+  "0319": -170,
+  "0320": -250,
+  "0322": -890,
+  "0323": -1970,
+  "0324": -2350,
+  "0325": -1690,
+  "0326": -1750,
+  "0327": -600
+ },
+ "refined_final_drift_usd": {
+  "vs_raw": -50,
+  "vs_adj": -420,
+  "seam_component": -370,
+  "true_forecast_residual": -50,
+  "note": "every step <= ~160; the -370 to the adj series is the never-traded seam, not a forecast error"
+ },
+ "days": [
+  {
+   "date": "20260315",
+   "dow": "Sun",
+   "archetype": "priced-stub chain-drift weekend DOWN + thin Sunday drift with the drift sign",
+   "overnight_gap_usd": -300,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -40
+    ],
+    [
+     0,
+     -60
+    ],
+    [
+     2,
+     -70
+    ],
+    [
+     4,
+     -80
+    ],
+    [
+     6,
+     -90
+    ],
+    [
+     8,
+     -100
+    ],
+    [
+     10,
+     -110
+    ],
+    [
+     12,
+     -120
+    ],
+    [
+     14,
+     -130
+    ],
+    [
+     16,
+     -140
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "guessed_net_usd": -150,
+   "day_move_usd": -450,
+   "refine_reasoning": "KEEP the blind. Weekend toolbag, priced-stub class -200..-400 at the drift sign; ladder walked (structural/saturation/weather declined per the blind). Day-move -450 (gap -300 + session -150) landed on actual -430 (drift -20). The +480 actual GAP-UP is Sunday reopen noise (not derivable at open); the DERIVED quantity is the day-move and it was right. No refine."
+  },
+  {
+   "date": "20260316",
+   "dow": "Mon",
+   "archetype": "R3 Friday-carry Monday - chain delivery through the catch-up window into the warm wall",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -29
+    ],
+    [
+     0,
+     -46
+    ],
+    [
+     2,
+     -52
+    ],
+    [
+     4,
+     -58
+    ],
+    [
+     6,
+     -41
+    ],
+    [
+     8,
+     -116
+    ],
+    [
+     10,
+     -406
+    ],
+    [
+     12,
+     -522
+    ],
+    [
+     14,
+     -580
+    ],
+    [
+     16,
+     -534
+    ],
+    [
+     18,
+     -551
+    ],
+    [
+     20,
+     -580
+    ]
+   ],
+   "guessed_net_usd": -580,
+   "day_move_usd": -600,
+   "refine_reasoning": "Near-KEEP. R3 Friday-carry (down), Monday big-mover, S1-void damped to the moderate chain-delivery class; 0315 Sunday tape sold (sess 0.393, big prints 0/3 buy) -> held side down. Blind -650; actual -540. Refined -580/-600 (S1-void damping a touch stronger than the blind credited; the moderate class bottom, not a winter band). fade_monday_full_day shape. Residual -80 = band-position."
+  },
+  {
+   "date": "20260317",
+   "dow": "Tue",
+   "archetype": "peak-cold-day R4 hold - mature swing, 0316 closed a fresh extreme -> no consecutive extension",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     0
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     0
+    ],
+    [
+     12,
+     0
+    ],
+    [
+     14,
+     0
+    ],
+    [
+     16,
+     0
+    ],
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     0
+    ]
+   ],
+   "guessed_net_usd": 0,
+   "day_move_usd": 0,
+   "refine_reasoning": "Refine to a pure HOLD (~0) not the blind's +150. Mature swing (>=4 sessions since the 0311 turn), 0316 closed a fresh cum-low -> R4: no consecutive extension = give-back/hold, net ~0 (hold days stay +-150). 0316 tape moderate sell (0.454/bigB 0.409) = drift pausing, not climaxing; peak cold D0 23.9 gw is the counter-side support that caps the downside for one session. Whipsaw around flat. Actual -20 (drift ~-60 on cum)."
+  },
+  {
+   "date": "20260318",
+   "dow": "Wed",
+   "archetype": "GIVE-BACK EXHAUSTION TURN UP - origin-shelf floor + big-print-buy absorption divergence + still-live peak cold (the covering snap the blind missed)",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -360
+    ],
+    [
+     0,
+     -630
+    ],
+    [
+     2,
+     -810
+    ],
+    [
+     4,
+     -720
+    ],
+    [
+     6,
+     -540
+    ],
+    [
+     8,
+     -360
+    ],
+    [
+     10,
+     0
+    ],
+    [
+     12,
+     360
+    ],
+    [
+     14,
+     900
+    ],
+    [
+     16,
+     1440
+    ],
+    [
+     18,
+     1710
+    ],
+    [
+     20,
+     1800
+    ]
+   ],
+   "guessed_net_usd": 1800,
+   "day_move_usd": 1800,
+   "refine_reasoning": "THE CORRECTED MISS (blind -400, actual +1900). Give-back exhaustion TURN via the NEW flow-absorption arm (open-conditions grain): (1) running give-back retraced to the 0311-shot ORIGIN SHELF (my walk cum ~-1050, price ~3.03 = the 0310 basing shelf 3.056 = full retrace = level.giveback_origin_shelf floor); (2) 0317 tape prints a big-print-BUY ABSORPTION divergence big_print_b_share 0.643 vs session_b_share 0.413 (institutions bought the flush the session sold) - the block's most extreme buy tail; (3) the chain-side driver is STILL LIVE that session: D0 HDD 21.0 gw, +4.5 vs normal (the warm wall is FORWARD at D+3..D+5, not present) - the blind mis-sized the day off the FORWARD headroom-void cuts and missed that TODAY was the last live-cold day before the 0319 collapse. All three fire -> reversal UP at the UPPER turn band (S97.2 ramp arm: give-back resumes under a live continuous catalyst regardless of close-recovery). Upper-band (+1600..+1900) chosen from the strongest-absorption + live-cold conjunction, not fitted to +1900. Exhaustion-turn shape: morning flush (~-0.45), absorb, afternoon reversal to close at the high. Residual to actual +160 = band-position (flagged). NO false-fire on 0315/0316: shelf not yet reached, no buy-divergence, cold BUILDING toward the peak not exhausting."
+  },
+  {
+   "date": "20260319",
+   "dow": "Thu",
+   "archetype": "S3 seasonal-flip injection print DOWN - the bounce-crush: bearish print + cold collapse resume the bearish trajectory",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -140
+    ],
+    [
+     0,
+     -110
+    ],
+    [
+     2,
+     -370
+    ],
+    [
+     4,
+     -280
+    ],
+    [
+     6,
+     -180
+    ],
+    [
+     8,
+     -330
+    ],
+    [
+     10,
+     -660
+    ],
+    [
+     12,
+     -690
+    ],
+    [
+     14,
+     -1070
+    ],
+    [
+     16,
+     -940
+    ],
+    [
+     18,
+     -980
+    ],
+    [
+     20,
+     -1000
+    ]
+   ],
+   "guessed_net_usd": -1000,
+   "day_move_usd": -1000,
+   "refine_reasoning": "Near-KEEP side/size, re-derived in the post-turn frame. After the 0318 turn UP (my cum +750), the injection print (consensus +31, ~+59 loose vs 5yr = the S3 bearish trajectory event) CRUSHES the one-day bounce (giveback rule: a bounce is never extended in a mature chain - the next print crushes it) AND the cold collapses D0 23.9->13.9 gw. Over-determined DOWN. print_day_chain_sided shape (delivery 10:30-14:00). Blind -800 (under 280); refined -1000 (agreeing/chain-sided print delivers its damped band). Actual -1080. Residual -80. Last April day; roll seam at the close never traded."
+  },
+  {
+   "date": "20260320",
+   "dow": "Fri",
+   "archetype": "post-print digestion Friday (MAY basis from here) - quiet settle-flow drift, stretched chain",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     60
+    ],
+    [
+     0,
+     105
+    ],
+    [
+     2,
+     60
+    ],
+    [
+     4,
+     30
+    ],
+    [
+     6,
+     -30
+    ],
+    [
+     8,
+     -75
+    ],
+    [
+     10,
+     -105
+    ],
+    [
+     12,
+     -128
+    ],
+    [
+     14,
+     -165
+    ],
+    [
+     16,
+     -150
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "guessed_net_usd": -150,
+   "day_move_usd": -150,
+   "refine_reasoning": "Refine slightly shallower. Friday toolbag, flow calendar empty (no roll/early-close); day after the flip print, drift stretched -> Friday squaring caps extension. 0319 tape active sell (0.403, 82 legs) but no live building catalyst. Blind -250; refined -150 (S1-void, stretched, quiet). Actual raw -80 (net, May). Seam -0.037 marked never traded (scorer roll-adjusts +370; my guess forecasts overnight ~0 at the seam per doctrine). Residual vs raw -150."
+  },
+  {
+   "date": "20260322",
+   "dow": "Sun",
+   "archetype": "chain-drift weekend with a LIVE chain - day-move budget form, plain rung",
+   "overnight_gap_usd": -400,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -50
+    ],
+    [
+     0,
+     -70
+    ],
+    [
+     2,
+     -90
+    ],
+    [
+     4,
+     -100
+    ],
+    [
+     6,
+     -110
+    ],
+    [
+     8,
+     -120
+    ],
+    [
+     10,
+     -140
+    ],
+    [
+     12,
+     -160
+    ],
+    [
+     14,
+     -180
+    ],
+    [
+     16,
+     -200
+    ],
+    [
+     18,
+     -200
+    ],
+    [
+     20,
+     -200
+    ]
+   ],
+   "guessed_net_usd": -200,
+   "day_move_usd": -600,
+   "refine_reasoning": "KEEP the blind. weekend_chain_drift_day_move budget, plain rung, class bottom (S1-void damping): day-move -600 (gap -400 + session -200). Saturation rung cannot fire (NYMEX MM 50.0 fails the conjunction; storage phase flipped to injection = withdraw window dead). 0320 tape mild big-print buy (bigB 0.542) = covering tone, hold the class bottom. Actual day-move -640 (drift -110). No refine."
+  },
+  {
+   "date": "20260323",
+   "dow": "Mon",
+   "archetype": "R3 Friday-carry Monday - full chain delivery; far-window cold add correctly NOT priced",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     29
+    ],
+    [
+     2,
+     49
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     10
+    ],
+    [
+     8,
+     -118
+    ],
+    [
+     10,
+     -784
+    ],
+    [
+     12,
+     -1098
+    ],
+    [
+     14,
+     -1186
+    ],
+    [
+     16,
+     -1156
+    ],
+    [
+     18,
+     -1058
+    ],
+    [
+     20,
+     -980
+    ]
+   ],
+   "guessed_net_usd": -980,
+   "day_move_usd": -1000,
+   "refine_reasoning": "Refine deeper toward the confirmed chain. R3 carry-down, Monday big-mover; unpriced_shot_extension declined (arm iii fails at NYMEX MM 50.0) and near-sum keeps the far cold add unpriced. Sunday sold (0322 tape 0.384, zero big-print buys). Blind -820 (under 260); refined -1000 (Monday chain-delivery in a live confirmed down-chain, S1-void moderate band). fade_monday_full_day shape. Actual day-move -1080. Residual -30."
+  },
+  {
+   "date": "20260324",
+   "dow": "Tue",
+   "archetype": "chain extension day 2 at reduced size - alternation ceiling caps it",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -44
+    ],
+    [
+     2,
+     -88
+    ],
+    [
+     4,
+     -144
+    ],
+    [
+     6,
+     -248
+    ],
+    [
+     8,
+     -268
+    ],
+    [
+     10,
+     -336
+    ],
+    [
+     12,
+     -428
+    ],
+    [
+     14,
+     -552
+    ],
+    [
+     16,
+     -444
+    ],
+    [
+     18,
+     -408
+    ],
+    [
+     20,
+     -400
+    ]
+   ],
+   "guessed_net_usd": -400,
+   "day_move_usd": -400,
+   "refine_reasoning": "Near-KEEP. 0323 tape = the walk's heaviest sell (52.4k trades, bigB 0.373) -> chain confirmed delivering; young leg inside the mature drift can chain but the 2-extension cadence ceiling + the bullish 0326 print two sessions ahead cap it. young_extension shape damped (14:00 overshoot, give-back into the close). Blind -450; refined -400. Actual day-move -380. Residual -50. My cum now at the block low ~-2400 = the week-2 exhaustion setup for 0325."
+  },
+  {
+   "date": "20260325",
+   "dow": "Wed",
+   "archetype": "week-2 give-back-exhaustion turn-bounce - sell-climax absorption at the cum-low, catalysts AHEAD so the lower turn band",
+   "overnight_gap_usd": 10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -236
+    ],
+    [
+     0,
+     -206
+    ],
+    [
+     2,
+     -236
+    ],
+    [
+     4,
+     -148
+    ],
+    [
+     6,
+     12
+    ],
+    [
+     8,
+     -88
+    ],
+    [
+     10,
+     118
+    ],
+    [
+     12,
+     590
+    ],
+    [
+     14,
+     572
+    ],
+    [
+     16,
+     649
+    ],
+    [
+     18,
+     767
+    ],
+    [
+     20,
+     590
+    ]
+   ],
+   "guessed_net_usd": 590,
+   "day_move_usd": 600,
+   "refine_reasoning": "Refine UP from the blind's +250 in-band bounce. Same turn mechanism as 0318, sell-side mirror: 0324 tape prints an EXTREME big-print SELL climax bigB 0.174 (the block's most extreme sell tail) at my cum-low (-2400) = capitulation/absorption at the exhaustion boundary -> counter-bounce next session. BUT the counter catalysts are AHEAD not realized (draw print 0326, expiry 0327, cold event far/D+1..D+2, nuclear ramp-max +5.2GW/7d) -> LOWER turn band (~+500..+650), a multi-session build, NOT the one-day upper-band snap 0318 got from its LIVE cold. R4 also says a hold/bounce after two violent extensions (0323/0324). Basing-to-up shape. Blind +250 (under 410); refined +590. Actual +660. Residual -110."
+  },
+  {
+   "date": "20260326",
+   "dow": "Thu",
+   "archetype": "hold-after-bounce + S1-void counter-print damping - the backdrop-inversion draw print's up-leg round-trips to flat",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     80
+    ],
+    [
+     2,
+     180
+    ],
+    [
+     4,
+     250
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     200
+    ],
+    [
+     10,
+     420
+    ],
+    [
+     12,
+     480
+    ],
+    [
+     14,
+     300
+    ],
+    [
+     16,
+     150
+    ],
+    [
+     18,
+     80
+    ],
+    [
+     20,
+     100
+    ]
+   ],
+   "guessed_net_usd": 100,
+   "day_move_usd": 100,
+   "refine_reasoning": "THE CORRECTED MISS (blind +900, actual -60). TWO incumbent tools the blind under-weighted, plus one new arm: (1) mature_swing_alternation - 0325 was a counter-BOUNCE; a bounce is NEVER extended consecutively -> 0326 is a HOLD (~flat), the day-after-a-bounce; (2) NEW magnitude.shoulder_counter_print_damping - in S1-void (near-window 6.6 gw, deep void) a storage print that trades AGAINST the running chain (the -44 bullish backdrop-inversion draw) has its DAY NET damped toward FLAT: the with-print counter LEG delivers intraday then ROUND-TRIPS (the seasonal amplifier is absent). Contrast 0319 (chain-SIDED print) which DID deliver its band. The blind's spent-chain-with-print +900 ignored both -> oversized ~9x. DIRECTION of the leg (up) was right; the DAY NET is flat. Round-trip shape: up-leg to ~+480 midday, fades to flat. C1-fires-at-close discipline correct (no front-run). Actual net -60. Residual +50."
+  },
+  {
+   "date": "20260327",
+   "dow": "Fri",
+   "archetype": "April-expiry covering-into-settle all-day rally - counter-swing resume after a hold + weekend-cold-hold bid; crest-trim trigger NOT met",
+   "overnight_gap_usd": -10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     53
+    ],
+    [
+     0,
+     127
+    ],
+    [
+     2,
+     318
+    ],
+    [
+     4,
+     477
+    ],
+    [
+     6,
+     763
+    ],
+    [
+     8,
+     954
+    ],
+    [
+     10,
+     869
+    ],
+    [
+     12,
+     827
+    ],
+    [
+     14,
+     1113
+    ],
+    [
+     16,
+     1007
+    ],
+    [
+     18,
+     1060
+    ],
+    [
+     20,
+     1060
+    ]
+   ],
+   "guessed_net_usd": 1060,
+   "day_move_usd": 1050,
+   "refine_reasoning": "THE CORRECTED MISS (blind -350, actual +1160). SEPARATE the two Friday forms: weekend_crest_friday's TRIGGER (chain stretched near its extreme + driver REALIZING/EXPIRING by the close) was NOT MET - the chain is a down-chain TURNING UP (0325 bounce + 0326 hold = 2 basing/counter closes, chain-state-is-tape-state demotes it), and the driver (0328 cold, D+1 13.5 gw) is AHEAD, CROSSING the weekend UNREALIZED. So crest-trim does not apply; it was mis-fired, not failed. What governs: (a) s101_6 EXPIRY-DAY covering-into-settle (April futures expiry today, days_to_expiry 0, NO stranded premium on the walk leg -> shorts cover into the settle, the 0225 form, now n=2); (b) counter-swing RESUME after the 0326 hold; (c) backdrop confirmed inverted bullish (0326 print -54, stor_surprise -52.8 TIGHT, surplus erased); (d) 0328 cold across the weekend = a risk-HOLDING/covering bid (weekend cold ahead makes shorts cover, the OPPOSITE of crest-trim where the driver is spent); (e) 0326 tape big_prints_n 64 (week-2 high) / bigB 0.531 = accumulation into expiry. Three-to-five co-conditions STACK the expiry-covering base band (+300..+700, 0225 form) up to ~+900..+1200 -> +1060, all-day steady bid (no afternoon flip). Actual +1160. Residual -100 = band-position. May receives the prompt-leg covering damped (G12 once-removed)."
+  }
+ ]
+}
