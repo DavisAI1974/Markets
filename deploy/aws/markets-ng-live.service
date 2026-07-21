@@ -9,6 +9,7 @@ Type=simple
 User=@RUN_USER@
 WorkingDirectory=@MARKETS_DIR@
 EnvironmentFile=/etc/markets/markets.env
+ExecStartPre=/usr/bin/python3 research/kalshi/ng_live_recover.py
 ExecStart=/usr/bin/python3 research/kalshi/ng_live_collector.py
 Restart=always
 RestartSec=10
