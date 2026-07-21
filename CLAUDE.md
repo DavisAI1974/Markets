@@ -1,4 +1,27 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 102)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 103)
+
+## S103 — G15 REFINED+MERGED + CANONICAL AGENT FILES + G16 BLIND-PANEL walked+refined+merged (brain s102.1 -> s102.3, 36 plays) + THE RECURRING-FLAW MEMO (read `SESSION_HANDOFF_2026-07-21_S103.md` + `KICKOFF_2026-07-22_S104.md` + `research/kalshi/agents/README.md` + `research/kalshi/NG_FORECASTER_PROBLEM_MEMO_S103.md`)
+
+**G15 REFINE** (S103 opener): blind 8/12 -3260 -> refined 10/12, every day <=160; "too deep" REFUTED =
+TURN-DETECTION (0318 missed give-back-exhaustion turn UP; 0326 over-sized counter; 0327 expiry-covering
+rally). Merged **s102.2** (34 plays: giveback_exhaustion flow-absorption arm, NEW shoulder_counter_print_
+damping, weekend_crest_friday expiry split). **CANONICAL DROP-IN AGENT FILES (Greg-ORDERED, the
+wasted-cycles fix)**: `research/kalshi/agents/` = blind_shared.md + blind_angle_{storage,positioning,
+weather}.md (the 3-agent BLIND PANEL) + refine.md + README.md; RENDERS = continuous_rt.py (change dates).
+Spin the SAME files every group; ONLY the brain (via refine) + group data change. **G16 (Mar 29 - Apr 10,
+11 sessions, Good Friday dark, clean May/996)** = the FIRST 3-agent blind panel (Greg's weekend idea):
+blind **8/11, drift +2365 UNDER-sized** a steady S3 injection-bearish bleed 3.035->2.653; the 3 misses
+were EXACTLY the panel's flagged divergence days. Refined **11/11, drift +40, every day <40** ("honest
+under 100") -> merged **s102.3 (36 plays)**: NEW `selector.divergence_resolution` (stop AVERAGING bimodal
+splits - default to the tape/flow regime; catalyst overrides only above HDD>=16.4 AND b_share>=0.50) +
+NEW `magnitude.s1void_injection_chain_bleed` (the G15 "don't over-size shoulder" lesson is scoped to
+COUNTER prints ONLY - chain-sided bleed days deliver full band). **THE RECURRING FLAW (Greg -> ChatGPT):
+`NG_FORECASTER_PROBLEM_MEMO_S103.md`** - blind 30-70% vs refine 90-100% every block, and the magnitude
+error FLIPS SIGN block-to-block (G15 over, G16 under) from mis-scoped lessons; the selector averages
+instead of selects; the order-flow direction nowcast (session_b_share <0.50 all 11 G16 sessions = 11/11
+if followed) is under-weighted. GROUP_PRECHECK_S103.md: shared substrate ONCE + roll map (May LTD 04-28
+-> roll 04-21; June 05-27 -> 05-20); G17 two-leg May->June seam ~0421, G18 clean June. **G17 = S104's
+opener, TURNKEY via the canonical loop.**
 
 ## S102 — G14 WALKED+MERGED (brain s102.1, 33 plays) + G15 BLIND SCORED (refine = S103's opener) + OPEN-CONDITIONS PROTOCOL (read `SESSION_HANDOFF_2026-07-21_S102.md` + `KICKOFF_2026-07-22_S103.md` + `research/kalshi/S102_MERGE_PROPOSAL.md`)
 
@@ -211,9 +234,15 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** the WALK is at **G15 (Mar 15-27) blind scored 8/12, refine = S103's opener** on
-**brain s102.1 (33 plays)**; the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the
-delayed follower.** **OPEN-CONDITIONS: the blind sees all market data except the price curve.** **git =
+**One-line state:** the WALK is at **G16 (Mar 29-Apr 10) DONE - blind PANEL 8/11 (under-sized) -> refined
+11/11 (drift +40) -> merged; G17 (Apr 12-24, two-leg May->June seam ~0421) = S104's opener** on **brain
+s102.3 (36 plays)**. **CANONICAL DROP-IN AGENT FILES are live in `research/kalshi/agents/` (blind panel +
+refine) + continuous_rt.py for renders - USE THEM, do not re-author per group; only the brain + group
+data change.** **OPEN RECURRING PROBLEM handed to ChatGPT: `NG_FORECASTER_PROBLEM_MEMO_S103.md`** (blind
+30-70% vs refine 90-100%; magnitude error flips sign block-to-block from mis-scoped lessons; selector
+averages bimodal splits instead of selecting; order-flow direction nowcast under-weighted). the
+futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed follower.**
+**OPEN-CONDITIONS: the blind sees all market data except the price curve.** **git =
 CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an extreme rate is a
 LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92 = the NG intraday FORECASTER
 program + DIRECTION cracked.** **S93 = the coach agent moved INTO AWS: box `i-08cee...` driveable via SSM,
