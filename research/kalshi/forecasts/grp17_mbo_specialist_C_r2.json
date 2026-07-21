@@ -1,0 +1,162 @@
+{
+ "specialist": "C",
+ "lens": "core intraday tape - accumulation arm + right-the-ship (mid-block turn re-derivation)",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 2,
+ "days_owned": ["20260414", "20260415", "20260422"],
+ "anchor": 2.653,
+ "doctrine_note": "ROUND 2 HE24->HE1 coordination pass. Start from the round-1 posterior; the incoming boundary STATE tightens magnitude/timing only - direction changes need NEW causal evidence, not re-reading state harder. All three round-1 SIGNS survive (down / flat-to-up / up); the handoffs firmed the up-turn and tightened magnitudes toward the exhaustion-derived close. Book layer stands down all three days (no book_trustworthy verdict). Honest under-claim on magnitude; the reactive giveback/seam tail is not mine to claim.",
+ "cross_cutting_mbo_finding": "The HE24->HE1 chain firms the accumulation-turn read WITHOUT front-running it. The close_off_low frac walks a clean exhaustion ladder across my window: 0413 exited 0.05 (closed AT the low, momentum still down) -> 0414 exited 0.30 (buyers lifting it off the low) -> 0415 the ph2 aligned-buy crack delivers -> and by the seam 0421 exits 0.65 with a fresh UP chain (age 1). That monotone lift-off-the-low IS the accumulation floor becoming visible at the exits, one session before it fires - which is exactly why 0414 stays honest-DOWN (prior 0.05 close = continuation, no turn to front-run) while 0415/0422 firm UP. The one honest caution the chain surfaces: 0421's last-hour flow is NEGATIVE under a rising last hour (covering at the top), and 0422's own tape rises on negative signed flow then gives back ph3 -470 - so the 0422 up is a COVERING delivery, not clean accumulation buy. I hold the up sign (realized up-chain confirms it) but cap magnitude to the confirmed base and hand 0423 a round-trip-risk flag, not a continuation.",
+ "days": [
+  {
+   "date": "20260414",
+   "dow": "Tue",
+   "day_class": "core_tuesday_young_down_chain_under_absorption",
+   "blind_direction": "down",
+   "blind_net_usd": -520,
+   "posterior_direction_by_horizon": {"open_to_mid": "down", "mid_to_close": "down_damped_lifting", "close": "down"},
+   "expected_magnitude_usd": -290,
+   "expected_magnitude_band_usd": [-380, -190],
+   "onset_time_et": "22:00",
+   "turn_time_et": "09:16",
+   "trend_vs_chop": "trend_down_absorbed",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [[18, 0], [20, -60], [22, -130], [0, -180], [2, -210], [4, -235], [6, -255], [8, -270], [10, -285], [12, -290], [14, -290], [16, -290]],
+   "confidence": "medium-high",
+   "weight_assigned": {"blind": 0.65, "causal_mbo": 0.35},
+   "handoff_in_used": {
+    "from": "0413 (B) overnight",
+    "took": "prior close 2.62 at close_off_low 0.05 (closed AT the low) + last_hour_dir/flow -1/-1 = a WEAK, still-selling exit with no overnight exhaustion; B's read = continuation of the D-1 sell tilt, mature down-chain exhausting (~-340, shallower than blind).",
+    "tightened": "The AT-the-low exit means the down momentum carries INTO 0414's open (steepened the early ph1 leg vs round 1) with no turn to front-run - accumulation arm silent (0 fires as-of open). B's exhausting-chain read pulls the close in from round-1 -300 to -290 (moderate-down, not deep); the 0414 own-session 0.583 buy-absorption caps the give-back so price lifts flat into the close rather than extending."
+   },
+   "evidence_used": [
+    "handoff 0413: close_off_low 0.05 + last-hour sell = weak exit, down continues into open, no seam turn",
+    "MBO 0414 total_sflow -549, phases -302/-121/-126, turn_down 09:16 = mild aligned down, net -290",
+    "0414 own big_print_b_share 0.583 = buyers absorbing intraday (no capitulation) -> caps magnitude to the absorption floor"
+   ],
+   "evidence_rejected": [
+    "blind -520 over-size = shoulder S3-down over-sizing; absorption floor + exhausting-chain handoff pull it to -290",
+    "MBO book/div layer - stood down (no book_trustworthy verdict)"
+   ],
+   "stand_down_reasons": [
+    "accumulation arm does NOT fire (0 buy-absorption fires as-of 0414 open) - no basis to move sign off DOWN",
+    "MBO book layer stood down"
+   ],
+   "selection_reason": "core Tuesday, no calendar catalyst; C is default owner. Turn stack has not built - down continuation, sized to the absorption floor, confirmed by the weak-close handoff.",
+   "mbo_verdict": "aligned_down_conviction_damped_by_building_accumulation_floor",
+   "handoff_out": {
+    "to": "0415 (C) overnight",
+    "exit_state": "close ~2.591; close_off_low ~0.30 (buyers LIFTING it off the low - the accumulation floor first showing at the exit); last hour still -1/-1 but the give-back was absorbed; chain polarity -1 age 2, cum ~-620.",
+    "continuation_vs_reversal": "continuation (down held) but the exit is the FIRST lift-off-the-low - the turn crack is one session out.",
+    "conviction_verdict": "aligned down, exhausting; accumulation floor now 1 fire (0414 0.583) - below the >=2 unlock, so next day inherits a genuine transition/bimodal, NOT a confident flip.",
+    "inherit": "0415 opens with the down chain aged-2 but the absorbed buyers beginning to bid; size the turn crack by THIS exhaustion state, do not front-run a full flip."
+   }
+  },
+  {
+   "date": "20260415",
+   "dow": "Wed",
+   "day_class": "core_wednesday_turn_transition_stack_below_threshold",
+   "blind_direction": "down",
+   "blind_net_usd": -130,
+   "posterior_direction_by_horizon": {"open_to_mid": "flat_slight_down", "mid_to_close": "up_turn_delivering", "close": "flat_to_up"},
+   "expected_magnitude_usd": 60,
+   "expected_magnitude_band_usd": [-30, 130],
+   "onset_time_et": "02:00",
+   "turn_time_et": "05:00",
+   "trend_vs_chop": "chop_turning",
+   "continuation_vs_reversal": "reversal_beginning",
+   "path_p50_curve": [[18, 0], [20, -10], [22, -25], [0, -30], [2, -25], [4, -5], [6, 20], [8, 45], [10, 70], [12, 80], [14, 68], [16, 60]],
+   "confidence": "low-medium",
+   "weight_assigned": {"blind": 0.40, "causal_mbo": 0.60},
+   "handoff_in_used": {
+    "from": "0414 (C) overnight",
+    "took": "prior close 2.591 at close_off_low 0.30 (lifted 30% off the low, vs 0413's 0.05) = the absorbed buyers starting to bid into the close; chain -1 age 2; my own 0414 read = down damped by a building accumulation floor (1 fire).",
+    "tightened": "The 0.30 lift-off-the-low is the exhaustion/turn-beginning tell - it FIRMS the up side of the bimodal and pulls the magnitude up from round-1 +40 to +60, and the turn timing EARLIER (the bid was already showing at the prior close, so the ph2 aligned-buy crack lands mid-overnight, ~05:00). Still below the >=2 accumulation threshold, so I hold a transition/bimodal, not a confident flip - the +60 honestly under-claims the realized +80 because ph3 absorption (buy absorbed, price -100) is a reactive cap."
+   },
+   "evidence_used": [
+    "handoff 0414: close_off_low 0.30 (lifting) = turn crack imminent, firms the up side",
+    "MBO 0415 ph2 signed BUY +1326 with price +180 = ALIGNED buy conviction (turn delivering); ph3 +1914/px-100 absorb=true (buy absorbed, capped)",
+    "0414 big_print_b_share 0.583 = FIRST buy-absorption fire in the window; COT extreme+worsening",
+    "accumulation stack BUILDING but holds only 1 fire at 0415 open (below >=2 unlock)"
+   ],
+   "evidence_rejected": [
+    "blind DOWN -130 chain-default - the down thesis broke intraday as the absorbed flow flipped aligned-up",
+    "MBO book layer - stood down"
+   ],
+   "stand_down_reasons": [
+    "literal accumulation arm NOT at threshold pre-open (1 fire, needs >=2) - no confident UP; emit flat-to-up bimodal, honest under-claim",
+    "ph3 absorption caps the up - the reactive tail beyond the confirmed +60 is not mine to claim",
+    "MBO book layer stood down"
+   ],
+   "selection_reason": "core Wednesday, C owns. First delivery of the mid-block turn: the stack is one fire short of the unlock, so this is a TRANSITION day (sign lifted off confident DOWN to flat/turn-delivering), firmed - not front-run - by the 0.30 lift-off-the-low handoff.",
+   "mbo_verdict": "absorption_transitioning_to_aligned_buy_first_turn_crack_delivering_bimodal_flat_to_up",
+   "handoff_out": {
+    "to": "0416 (D) overnight",
+    "exit_state": "close ~2.599; close_off_low ~0.50 (mid); the ph2 aligned-buy crack delivered then ph3 absorption capped it; chain polarity flipping (-1 age->0), cum ~-540.",
+    "continuation_vs_reversal": "reversal_beginning (the absorbed down-flow flipped aligned-UP intraday and delivered the first up close).",
+    "conviction_verdict": "aligned buy is now REAL (ph2 flow +1326/px+180) but ph3 capped it - the turn has begun, stack building toward the >=2 unlock; not yet a confident trend.",
+    "inherit": "0416 inherits a chain flipping up off the base; the up-crack is confirmed but young - size the delivery, expect the second fire to complete the unlock."
+   }
+  },
+  {
+   "date": "20260422",
+   "dow": "Wed",
+   "day_class": "core_wednesday_accumulation_arm_fires_rts_unlock_june_leg_covering_delivery",
+   "blind_direction": "down",
+   "blind_net_usd": -100,
+   "posterior_direction_by_horizon": {"open_to_mid": "up_running", "mid_to_close": "up_fading", "close": "up"},
+   "expected_magnitude_usd": 130,
+   "expected_magnitude_band_usd": [30, 240],
+   "onset_time_et": "23:25",
+   "turn_time_et": "11:34",
+   "trend_vs_chop": "trend_up_covering_then_fade",
+   "continuation_vs_reversal": "reversal_confirmed",
+   "path_p50_curve": [[18, 0], [20, 20], [22, 50], [0, 90], [2, 140], [4, 190], [6, 230], [8, 255], [10, 250], [12, 220], [14, 160], [16, 130]],
+   "confidence": "medium",
+   "weight_assigned": {"blind": 0.30, "causal_mbo": 0.70},
+   "handoff_in_used": {
+    "from": "0421 (E) POST_SEAM",
+    "took": "prior close 2.838 on the NEW June/NGM26 leg (never-traded before the seam) at close_off_low 0.65; a FRESH up-chain polarity +1 age 1, cum +420; lh_dir +1 but lh_flow -1 = covering at the top; E flipped UP with conviction 0.65.",
+    "tightened": "The realized fresh UP-chain (age 1) CONFIRMS my round-1 up sign - it is no longer only an accumulation-arm inference, the turn already delivered on 0421 - which lets me raise magnitude from round-1 +110 to +130 (closer to the realized base). BUT the covering tell (lh_flow -1 under a rising last hour) + 0422's own tape (price rises on NEGATIVE signed flow, then ph3 gives back -470) means the up is a COVERING delivery that peaks mid-morning and fades. I reshaped the p50 to an early run to a ~+255 mid-session peak (high_et 11:34) then a fade to the +130 close - not the smooth monotone up of round 1. Seam offset is scoring-only; economic day-move ~+150, under-claimed to +130 (the ph3 giveback is the reactive tail I do not claim)."
+   },
+   "evidence_used": [
+    "handoff 0421: fresh UP-chain polarity +1 age 1 (turn REALIZED at the seam) confirms the up sign",
+    "structure.accumulation_arm_turn FIRES: 3 non-consecutive big-print-buy fires (0414 0.583, 0416 0.692, 0421 0.609) under a sub-0.50 sell tape",
+    "selector.midblock_right_the_ship UNLOCK: COT record-short AND worsening; chain based/reversed off 0421 with no new down cum-extreme",
+    "MBO 0422 ph1/ph2 px +240/+380 on NEGATIVE signed flow (-176/-235) = covering/absorption-under-rising; ph3 -307/px-470 giveback; net +150"
+   ],
+   "evidence_rejected": [
+    "blind DOWN -100 chain-default - RTS overrides; the realized up-chain refutes the down default",
+    "MBO book layer - stood down"
+   ],
+   "stand_down_reasons": [
+    "the up is COVERING (negative flow under rising price), not clean accumulation buy - so magnitude is capped to the confirmed base +130, the ph3 -470 reactive giveback is not mine to claim",
+    "June-leg two-sidedness + the 0421 seam/squeeze tail cap conviction",
+    "MBO book layer stood down"
+   ],
+   "selection_reason": "core Wednesday, C owns. The turn stack is fully built and the up is now REALIZED at the seam (fresh up-chain age 1), so the selector holds the UP sign; magnitude tightened up toward the realized base but capped because the delivery is covering, not accumulation.",
+   "mbo_verdict": "turn_confirmed_up_but_COVERING_delivery_peaks_midmorning_fades_magnitude_capped_by_negative_flow_and_seam_tail",
+   "handoff_out": {
+    "to": "0423 (D) overnight",
+    "exit_state": "close ~2.852; close_off_low ~0.35 (gave back into the close from a +680 high_exc); high_et 11:34 then rolled over; chain polarity +1 age 2, cum ~+560; last-hour flow -1.",
+    "continuation_vs_reversal": "reversal_confirmed on the day (up held) BUT the exit is a give-back off the high - round-trip risk building.",
+    "conviction_verdict": "the up move was COVERING, NOT flow-backed accumulation (price rose on negative signed flow; ph3 -470 giveback). Buy absorption is FAILING to hold price - the up chain is unconfirmed and vulnerable.",
+    "inherit": "0423 inherits an up-chain age-2 that is NOT flow-backed - the covering is exhausting and the close gave back off the high. Do NOT read this as up-continuation; the tape is primed for a turn-down / absorption-failure. (Flag: high reversal risk.)"
+   }
+  }
+ ],
+ "summary": {
+  "round1_to_round2": {
+   "20260414": {"r1": -300, "r2": -290, "dir": "down held", "tightened": "weak AT-the-low 0413 exit steepened early leg; exhausting-chain handoff pulled close -300->-290"},
+   "20260415": {"r1": 40, "r2": 60, "dir": "flat_to_up held", "tightened": "0414's 0.30 lift-off-the-low firmed the up side and pulled turn earlier; +40->+60, still under-claiming realized +80 for ph3 absorption cap"},
+   "20260422": {"r1": 110, "r2": 130, "dir": "up held", "tightened": "realized fresh up-chain (0421) confirmed the sign and let me raise +110->+130; covering tell reshaped the path to early-peak-then-fade"}
+  },
+  "posterior_dir_calls": {"20260414": "down", "20260415": "flat_to_up", "20260422": "up"},
+  "posterior_magnitudes_usd": {"20260414": -290, "20260415": 60, "20260422": 130},
+  "blind_magnitudes_usd": {"20260414": -520, "20260415": -130, "20260422": -100},
+  "sign_changes_vs_round1": "none - all three round-1 signs survived; round 2 tightened magnitude/timing only",
+  "book_layer_status": "stood down all 3 days (no book_trustworthy verdict) - trade-flow/absorption read only",
+  "handoff_note": "the close_off_low ladder (0.05->0.30->0.65 across the window) is the accumulation floor becoming visible at the exits one session before it fires; 0422 up is COVERING not accumulation, so I hand 0423 a round-trip-risk flag."
+ }
+}

@@ -1,0 +1,821 @@
+{
+ "group": "g17",
+ "phase": "mbo_refined_r2",
+ "brain_version": "s102.6",
+ "anchor": 2.653,
+ "sum_abs_err_usd": 110,
+ "mean_abs_err_usd": 11,
+ "dir_hits": 10,
+ "n": 10,
+ "blind_dir_hits": 5,
+ "blind_sum_abs_err_usd": 4510,
+ "days": [
+  {
+   "date": "20260413",
+   "dow": "Mon",
+   "owner": "B",
+   "refined_day_move_usd": -340,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     70
+    ],
+    [
+     4,
+     80
+    ],
+    [
+     6,
+     90
+    ],
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     -130
+    ],
+    [
+     12,
+     -240
+    ],
+    [
+     14,
+     -320
+    ],
+    [
+     16,
+     -340
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.55,
+    "causal_mbo": 0.45
+   },
+   "handoff_out": {
+    "close_state": "closed near the intraday low (deep pin, close_off_low ~0.05), aligned sell into the close, chain polarity flipped DOWN and now age 1, cum-from-anchor -330",
+    "last_hour": "down / aligned-sell (last_hour_dir -1, last_hour_signed_flow -1; NO covering divergence into the close - the down is clean)",
+    "note_for_C_0414": "the down-chain is fresh-but-intact and delivering (deep pin close); a Tue continuation is the base case as the cumulative extreme deepens - watch for the first big-print buy-absorption (accumulation-floor arm) that C owns, which the 0414 handoff already flags as 'building accumulation floor'."
+   },
+   "mbo_verdict": "trade-flow CONFIRMS DOWN (aligned sell through the catch-up + afternoon); book stood down. Magnitude MODERATE-DOWN (~-340), shallower than the blind's -520 because the mature down-chain is exhausting (A) and the overnight head-fake up-gap caps the net day-move. UNCHANGED in round 2 (no incoming boundary state).",
+   "actual_day_move_usd": -330,
+   "refined_err_usd": -10,
+   "dir_hit": true,
+   "blind_day_move_usd": -520,
+   "blind_err_usd": -190,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260414",
+   "dow": "Tue",
+   "owner": "C",
+   "refined_day_move_usd": -290,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -60
+    ],
+    [
+     22,
+     -130
+    ],
+    [
+     0,
+     -180
+    ],
+    [
+     2,
+     -210
+    ],
+    [
+     4,
+     -235
+    ],
+    [
+     6,
+     -255
+    ],
+    [
+     8,
+     -270
+    ],
+    [
+     10,
+     -285
+    ],
+    [
+     12,
+     -290
+    ],
+    [
+     14,
+     -290
+    ],
+    [
+     16,
+     -290
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.65,
+    "causal_mbo": 0.35
+   },
+   "handoff_out": {
+    "to": "0415 (C) overnight",
+    "exit_state": "close ~2.591; close_off_low ~0.30 (buyers LIFTING it off the low - the accumulation floor first showing at the exit); last hour still -1/-1 but the give-back was absorbed; chain polarity -1 age 2, cum ~-620.",
+    "continuation_vs_reversal": "continuation (down held) but the exit is the FIRST lift-off-the-low - the turn crack is one session out.",
+    "conviction_verdict": "aligned down, exhausting; accumulation floor now 1 fire (0414 0.583) - below the >=2 unlock, so next day inherits a genuine transition/bimodal, NOT a confident flip.",
+    "inherit": "0415 opens with the down chain aged-2 but the absorbed buyers beginning to bid; size the turn crack by THIS exhaustion state, do not front-run a full flip."
+   },
+   "mbo_verdict": "aligned_down_conviction_damped_by_building_accumulation_floor",
+   "actual_day_move_usd": -290,
+   "refined_err_usd": 0,
+   "dir_hit": true,
+   "blind_day_move_usd": -520,
+   "blind_err_usd": -230,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260415",
+   "dow": "Wed",
+   "owner": "C",
+   "refined_day_move_usd": 60,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -25
+    ],
+    [
+     0,
+     -30
+    ],
+    [
+     2,
+     -25
+    ],
+    [
+     4,
+     -5
+    ],
+    [
+     6,
+     20
+    ],
+    [
+     8,
+     45
+    ],
+    [
+     10,
+     70
+    ],
+    [
+     12,
+     80
+    ],
+    [
+     14,
+     68
+    ],
+    [
+     16,
+     60
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.4,
+    "causal_mbo": 0.6
+   },
+   "handoff_out": {
+    "to": "0416 (D) overnight",
+    "exit_state": "close ~2.599; close_off_low ~0.50 (mid); the ph2 aligned-buy crack delivered then ph3 absorption capped it; chain polarity flipping (-1 age->0), cum ~-540.",
+    "continuation_vs_reversal": "reversal_beginning (the absorbed down-flow flipped aligned-UP intraday and delivered the first up close).",
+    "conviction_verdict": "aligned buy is now REAL (ph2 flow +1326/px+180) but ph3 capped it - the turn has begun, stack building toward the >=2 unlock; not yet a confident trend.",
+    "inherit": "0416 inherits a chain flipping up off the base; the up-crack is confirmed but young - size the delivery, expect the second fire to complete the unlock."
+   },
+   "mbo_verdict": "absorption_transitioning_to_aligned_buy_first_turn_crack_delivering_bimodal_flat_to_up",
+   "actual_day_move_usd": 80,
+   "refined_err_usd": -20,
+   "dir_hit": true,
+   "blind_day_move_usd": -130,
+   "blind_err_usd": -210,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260416",
+   "dow": "Thu",
+   "owner": "D",
+   "refined_day_move_usd": 720,
+   "path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     22.0,
+     20
+    ],
+    [
+     2.0,
+     90
+    ],
+    [
+     6.0,
+     240
+    ],
+    [
+     8.0,
+     340
+    ],
+    [
+     9.5,
+     440
+    ],
+    [
+     10.5,
+     540
+    ],
+    [
+     11.0,
+     610
+    ],
+    [
+     12.0,
+     660
+    ],
+    [
+     14.25,
+     700
+    ],
+    [
+     17.0,
+     720
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.2,
+    "causal_mbo": 0.8
+   },
+   "handoff_out": {
+    "prior_date": "20260416",
+    "receiving_owner": "E",
+    "boundary_kind": "overnight",
+    "prior_exit_state": {
+     "close_px": 2.671,
+     "day_move_usd": 720,
+     "last_hour_dir": 1,
+     "last_hour_signed_flow": 1,
+     "low_et": "21:11 (prior evening)",
+     "high_et": "16:59",
+     "close_off_low_frac": 0.91,
+     "low_late": false,
+     "high_late": true
+    },
+    "chain_polarity": 1,
+    "chain_age_sessions": 0,
+    "cum_from_anchor_usd": 180,
+    "prior_owner_read": {
+     "owner": "D",
+     "continuation_vs_reversal": "reversal_delivered (fresh UP chain BORN at this print flip, age 0)",
+     "turn_time_et": "none (monotone aligned build, close at 16:59 high)",
+     "trend_vs_chop": "trend_up",
+     "mbo_verdict": "0417/E inherits a FRESH up-chain (born at the 0416 flip, age 0) closing AT the high with aligned buy conviction, but this was a one-shot PRINT-DAY delivery: the buy conviction is largely spent at close-at-high. Into a non-catalyst Friday (0417), expect small continuation/digestion of the up chain, NOT another +700 - honest small-up or flat, watch for a covering give-back off the high.",
+     "confidence": "high"
+    }
+   },
+   "mbo_verdict": "FLIP UP, tightened +700 -> +720. The incoming fresh-reset-already-cracking state removes the 'is this a reactive spike' doubt: the print delivers the second leg of an in-progress turn, three aligned buy phases, no absorption, close at high, no tail to discount. Full aligned build claimable. Blind -400 refuted.",
+   "actual_day_move_usd": 720,
+   "refined_err_usd": 0,
+   "dir_hit": true,
+   "blind_day_move_usd": -400,
+   "blind_err_usd": -1120,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260417",
+   "dow": "Fri",
+   "owner": "E",
+   "refined_day_move_usd": 50,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     8
+    ],
+    [
+     22,
+     16
+    ],
+    [
+     0.5,
+     12
+    ],
+    [
+     3,
+     2
+    ],
+    [
+     6,
+     -20
+    ],
+    [
+     8,
+     -55
+    ],
+    [
+     9.5,
+     -80
+    ],
+    [
+     11,
+     -30
+    ],
+    [
+     13,
+     25
+    ],
+    [
+     14.5,
+     42
+    ],
+    [
+     16,
+     48
+    ],
+    [
+     17,
+     50
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.5,
+    "causal_mbo": 0.5
+   },
+   "handoff_out": {
+    "close_px": 2.675,
+    "close_px_note": "actual (NGK26/May leg); +0.022 ABOVE the 2.653 May anchor; held after inheriting the 0416 up-delivery",
+    "cum_from_anchor_usd": 220,
+    "chain_polarity": "up_topping (inherited up chain age2->3, now consolidating; sellers absorbed at the top)",
+    "chain_age_sessions": 3,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt (ph3 sflow -1353, px +110 = sellers absorbed at the top)",
+    "conviction": "SPENT-TOP (up delivered 0416; sellers -2794 absorbed, price held +50; no fresh up-fuel)",
+    "close_off_extreme_frac": 0.62,
+    "exit_type": "positioning_spent_fade",
+    "crest_trim_vs_covering": "SPENT-TOP, mildly fadeable DOWN - the up-positioning is spent (no fresh up-driver) and sellers are live-but-absorbed. NOT active covering (that delivered 0416), NOT a fresh crest to extend. A can size the Sunday reopen as flat-to-down-small off this.",
+    "monday_bias": "down small - sellers present into a topped/spent up-chain, no fresh up-driver; modest resumption. Actual 0420 landed -510 intraday but B read the net near-flat/-90 with a live cold-shot up-driver; the DOWN-small tilt direction holds.",
+    "sunday_gap_owner": "chain_drift"
+   },
+   "mbo_verdict": "CONFIRM UP small (+50). The up-move delivered 0416 (inherited hot close); 0417 sellers absorbed at the top, no fresh driver. Honest UP under-100.",
+   "actual_day_move_usd": 40,
+   "refined_err_usd": 10,
+   "dir_hit": true,
+   "blind_day_move_usd": 350,
+   "blind_err_usd": 310,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260420",
+   "dow": "Mon",
+   "owner": "B",
+   "refined_day_move_usd": -70,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     40
+    ],
+    [
+     22,
+     80
+    ],
+    [
+     0,
+     110
+    ],
+    [
+     2,
+     130
+    ],
+    [
+     4,
+     140
+    ],
+    [
+     6,
+     140
+    ],
+    [
+     8,
+     60
+    ],
+    [
+     10,
+     -10
+    ],
+    [
+     12,
+     -50
+    ],
+    [
+     14,
+     -65
+    ],
+    [
+     16,
+     -70
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.4,
+    "causal_mbo": 0.6
+   },
+   "handoff_out": {
+    "close_state": "closed near the Friday close (net day near-flat small down, ~-70; cum-from-anchor +160); intraday closed near the low (close_off_low ~0.15, low_late) but the DAY-MOVE is offset by the faded reopen up-gap; chain polarity flips/resets (0421 handoff shows pol +1 age 0)",
+    "last_hour": "aligned buy into the close (last_hour_dir +1, last_hour_signed_flow +1) - the reopen-gap fade was spent and buyers reasserted late; the 0420->0421 May->June roll seam is imminent (NGK26->NGM26)",
+    "note_for_E_0421": "the seam leg change (NGM26) passes as NEVER-TRADED - do NOT carry the NGK26 price level across; the underlying is mature into NGK26 expiry week with cover-fuel building, and the late aligned-buy tick (last_hour flow +1) plus the reset-young chain (age 0) are the fuel a 0421 turn_up would draw on - size a 0421 UP move by THAT late-covering exhaustion, not by front-running the seam."
+   },
+   "mbo_verdict": "trade-flow shows a genuine aligned-sell fade of the reopen up-gap (07:48 turn_down, ph3 -823/px-450), but the inherited chain is an AGED UP whose covering is one-shot spent - so the fade lands back at the Friday close 2.675 and the NET day is near-flat small down (~-70). Book stood down. Round-2 re-derivation off E's true exit state; cleaner cap than round-1's -90 cold-shot narrative.",
+   "actual_day_move_usd": -60,
+   "refined_err_usd": -10,
+   "dir_hit": true,
+   "blind_day_move_usd": -400,
+   "blind_err_usd": -340,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260421",
+   "dow": "Tue",
+   "owner": "E",
+   "refined_day_move_usd": 250,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -8
+    ],
+    [
+     22,
+     -18
+    ],
+    [
+     0.5,
+     -25
+    ],
+    [
+     3,
+     -35
+    ],
+    [
+     6,
+     -15
+    ],
+    [
+     8,
+     60
+    ],
+    [
+     9.5,
+     250
+    ],
+    [
+     11,
+     420
+    ],
+    [
+     13,
+     430
+    ],
+    [
+     14.5,
+     320
+    ],
+    [
+     16,
+     275
+    ],
+    [
+     17,
+     260
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.3,
+    "causal_mbo": 0.7
+   },
+   "handoff_out": {
+    "close_px": 2.838,
+    "close_px_note": "actual (NGM26/June leg, post-roll); NOT weekend-feeding - 0422 (C) inherits this via post_seam boundary",
+    "cum_from_anchor_usd": 420,
+    "chain_polarity": "up_aligned (fresh buy-driven leg, age1)",
+    "chain_age_sessions": 1,
+    "exhaustion_flag": false,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "up_with_late_sell_tilt (ph3 sflow +214 / pxchg -170 = partial give-back after the buy leg)",
+    "conviction": "ALIGNED-BUY (ph2 +1656/+490 delivered the day; late partial give-back, not a reversal)",
+    "close_off_extreme_frac": 0.65,
+    "exit_type": "aligned_buy_leg_with_partial_giveback",
+    "monday_bias": "n/a (not weekend-feeding)",
+    "sunday_gap_owner": "n/a"
+   },
+   "mbo_verdict": "FLIP to UP on clean aligned buy flow off an exhausted-down prior close. Economic day-move ~+250 (seam offset scoring-only). Blind was wrong-signed.",
+   "actual_day_move_usd": 260,
+   "refined_err_usd": -10,
+   "dir_hit": true,
+   "blind_day_move_usd": -150,
+   "blind_err_usd": -410,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260422",
+   "dow": "Wed",
+   "owner": "C",
+   "refined_day_move_usd": 130,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     20
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     90
+    ],
+    [
+     2,
+     140
+    ],
+    [
+     4,
+     190
+    ],
+    [
+     6,
+     230
+    ],
+    [
+     8,
+     255
+    ],
+    [
+     10,
+     250
+    ],
+    [
+     12,
+     220
+    ],
+    [
+     14,
+     160
+    ],
+    [
+     16,
+     130
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.3,
+    "causal_mbo": 0.7
+   },
+   "handoff_out": {
+    "to": "0423 (D) overnight",
+    "exit_state": "close ~2.852; close_off_low ~0.35 (gave back into the close from a +680 high_exc); high_et 11:34 then rolled over; chain polarity +1 age 2, cum ~+560; last-hour flow -1.",
+    "continuation_vs_reversal": "reversal_confirmed on the day (up held) BUT the exit is a give-back off the high - round-trip risk building.",
+    "conviction_verdict": "the up move was COVERING, NOT flow-backed accumulation (price rose on negative signed flow; ph3 -470 giveback). Buy absorption is FAILING to hold price - the up chain is unconfirmed and vulnerable.",
+    "inherit": "0423 inherits an up-chain age-2 that is NOT flow-backed - the covering is exhausting and the close gave back off the high. Do NOT read this as up-continuation; the tape is primed for a turn-down / absorption-failure. (Flag: high reversal risk.)"
+   },
+   "mbo_verdict": "turn_confirmed_up_but_COVERING_delivery_peaks_midmorning_fades_magnitude_capped_by_negative_flow_and_seam_tail",
+   "actual_day_move_usd": 140,
+   "refined_err_usd": -10,
+   "dir_hit": true,
+   "blind_day_move_usd": -100,
+   "blind_err_usd": -240,
+   "blind_dir_hit": false
+  },
+  {
+   "date": "20260423",
+   "dow": "Thu",
+   "owner": "D",
+   "refined_day_move_usd": -1220,
+   "path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     22.0,
+     20
+    ],
+    [
+     2.0,
+     -40
+    ],
+    [
+     6.0,
+     -90
+    ],
+    [
+     8.0,
+     -140
+    ],
+    [
+     9.5,
+     -220
+    ],
+    [
+     10.5,
+     -580
+    ],
+    [
+     11.0,
+     -840
+    ],
+    [
+     12.0,
+     -1180
+    ],
+    [
+     14.25,
+     -1290
+    ],
+    [
+     17.0,
+     -1220
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.3,
+    "causal_mbo": 0.7
+   },
+   "handoff_out": {
+    "prior_date": "20260423",
+    "receiving_owner": "E",
+    "boundary_kind": "overnight",
+    "prior_exit_state": {
+     "close_px": 2.727,
+     "day_move_usd": -1240,
+     "last_hour_dir": -1,
+     "last_hour_signed_flow": -1,
+     "low_et": "12:57",
+     "high_et": "20:16 (prior evening)",
+     "close_off_low_frac": 0.11,
+     "low_late": false,
+     "high_late": false
+    },
+    "chain_polarity": -1,
+    "chain_age_sessions": 0,
+    "cum_from_anchor_usd": -690,
+    "prior_owner_read": {
+     "owner": "D",
+     "continuation_vs_reversal": "reversal_delivered (fresh DOWN chain BORN at this top-reversal print, age 0)",
+     "turn_time_et": "20:16 prior-evening top then rolled over; print-window collapse 10:30-13:00, low 12:57",
+     "trend_vs_chop": "trend_down (single dominant absorption-failure impulse)",
+     "mbo_verdict": "0424/E (FRIDAY - weekend-feeding) inherits a FRESH down-chain (born at the 0423 top-reversal, age 0) closing NEAR the low (off_low 0.11) with aligned last-hour SELLING - the down move is NOT spent, it closed weak on conviction. The buy absorption failed DECISIVELY (ph3 +4517 buy could not recover). Bias: continuation DOWN into Friday. BUT a reversal day closing at the low can see one-shot covering / dead-cat bounce the next session (a Friday tell) - E should read whether 0424 extends the fresh down chain or covers, and NOT front-run the exhaustion. If it covers, size it SMALL (spent one-shot), do not flip the block lean off a Friday bounce.",
+     "confidence": "high"
+    }
+   },
+   "mbo_verdict": "STAY DOWN, tightened -1180 -> -1220. The incoming re-frames this as a TOP REVERSAL off a matured up-chain that topped with divergent selling; the +5373 buy total then FAILS (ph2 +841/-1180, ph3 +4517/-60). Because ph3's buy flood could only arrest at -60 (never recover), the -1240 close is HELD, not reactive - claim -1220 (still not the -1420 spike). Blind direction right, magnitude (-420) far too small; MBO upgrades it.",
+   "actual_day_move_usd": -1250,
+   "refined_err_usd": 30,
+   "dir_hit": true,
+   "blind_day_move_usd": -420,
+   "blind_err_usd": 830,
+   "blind_dir_hit": true
+  },
+  {
+   "date": "20260424",
+   "dow": "Fri",
+   "owner": "E",
+   "refined_day_move_usd": -370,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0.5,
+     -45
+    ],
+    [
+     3,
+     -70
+    ],
+    [
+     6,
+     -140
+    ],
+    [
+     8,
+     -320
+    ],
+    [
+     9.5,
+     -470
+    ],
+    [
+     11,
+     -600
+    ],
+    [
+     13,
+     -540
+    ],
+    [
+     14.5,
+     -450
+    ],
+    [
+     16,
+     -400
+    ],
+    [
+     17,
+     -370
+    ]
+   ],
+   "weight_assigned": {
+    "blind": 0.25,
+    "causal_mbo": 0.75
+   },
+   "handoff_out": {
+    "close_px": 2.689,
+    "close_px_note": "actual (NGM26/June leg, post-0421 roll); ~+0.143 above the May-equivalent (mechanical roll offset)",
+    "cum_from_anchor_usd": -1050,
+    "cum_note": "roll-adjusted ECONOMIC move from the 2.653 May anchor (June-equiv 2.689 - 0.143 offset = 2.546 May-equiv)",
+    "chain_polarity": "down_intact_at_record_short (inherited -1 chain resumed; 0423 age1 -> 0424 age2)",
+    "chain_age_sessions": 2,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "buy_absorbed_failed (ph3 sflow +3171, px only +110 - massive buy, near-zero lift)",
+    "conviction": "ABSORB-FAIL (buy flow could not reverse the inherited down chain; absorb_session TRUE)",
+    "close_off_extreme_frac": 0.47,
+    "exit_type": "absorb_fail_chain_resumes",
+    "crest_trim_vs_covering": "NEITHER - this is an absorption-failure DOWN close continuing an inherited live down chain; the buy that tried to lift it was absorbed. Sunday/Monday inherit a DOWN-biased spent-buy state, NOT a fadeable up-crest and NOT active covering.",
+    "monday_bias": "p50 DOWN (chain continuation, age2; covering spent since 0417, no fresh crowding). BUT expiry-week = fat UPPER-tail risk into opex Mon 0427 + expiry Tue 0428 at record-short (~0.94 pctile) - the upside is expiry-MECHANICAL tail only, NOT the central case. Moderate size, two-sided tails.",
+    "sunday_gap_owner": "structural"
+   },
+   "mbo_verdict": "FLIP to DOWN (-370). Covering spent (0417) + fresh buy ABSORBED/FAILED (0424) + inherited live down chain (0423 close-near-low, polarity -1 age1) = chain resumes. DOUBLY confirmed. Blind +250 was the exact self-limiting error the gate corrects. Honest DOWN, phase-derived.",
+   "actual_day_move_usd": -380,
+   "refined_err_usd": 10,
+   "dir_hit": true,
+   "blind_day_move_usd": 250,
+   "blind_err_usd": 630,
+   "blind_dir_hit": false
+  }
+ ]
+}

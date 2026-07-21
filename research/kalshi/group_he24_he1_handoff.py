@@ -71,13 +71,50 @@ def _date(d):
     return pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}")
 
 
-def main(gid):
+def exit_state_blind(gid, day, blind_days, prev_close):
+    """Forecast exit state from the assembled blind grp<n>.json (walled - no actual tape). Uses the
+    day's forecast day-move + its p50 path for last-hour dir + close_off_low. Signed flow is UNKNOWN
+    in the blind (null) - the blind handoff carries forecast STATE, direction still from the D-1 tilt."""
+    e = blind_days.get(day)
+    if e is None:
+        return None
+    dm = e.get("guess_day_move_usd", 0)
+    seam = gc.GROUPS[gid].get("seam")
+    gap = 0 if day == seam else (e.get("overnight_gap_usd", 0) or 0)
+    net = dm - (0 if day == seam else gap)
+    open_px = round(prev_close + gap / MULT, 3)
+    close_px = round(open_px + net / MULT, 3)
+    path = [(h, v) for h, v in (e.get("path_p50") or []) if h is not None and v is not None]
+    if len(path) >= 2:
+        lhd = int(np.sign(path[-1][1] - path[-2][1])) or int(np.sign(net))
+        vals = [v for _, v in path]
+        rng = max(vals) - min(vals)
+        off_low = round((path[-1][1] - min(vals)) / rng, 2) if rng > 1e-9 else 0.5
+    else:
+        lhd = int(np.sign(net)); off_low = 1.0 if net > 0 else 0.0
+    return {"close_px": close_px, "open_px": open_px, "day_move_usd": dm,
+            "last_hour_dir": lhd, "last_hour_signed_flow": None,   # unknown in the blind
+            "low_et": None, "high_et": None, "close_off_low_frac": off_low,
+            "low_late": None, "high_late": None, "source": "forecast"}
+
+
+def main(gid, source="actual"):
     g = gc.GROUPS[gid]; DAYS = g["days"]; SEAM = g.get("seam"); ANCHOR = g["anchor"]; OWNER = gc.owner_map(gid)
-    moves, cum_by, prev_close, cum = {}, {}, ANCHOR, 0.0
+    blind_days = {}
+    if source == "blind":
+        n = gid[1:]
+        bpath = os.path.join(FC, f"grp{n}.json")
+        blind_days = {str(r["date"]).replace("-", ""): r for r in json.load(open(bpath)).get("days", [])}
+
+    def _exit(day, prev_close):
+        return exit_state_blind(gid, day, blind_days, prev_close) if source == "blind" else exit_state(gid, day)
+
+    moves, cum_by, exits, prev_close, cum = {}, {}, {}, ANCHOR, 0.0
     for d in DAYS:
-        st = exit_state(gid, d)
+        st = _exit(d, prev_close)
         if st is None:
             continue
+        exits[d] = st
         gap = 0 if d == SEAM else round((st["open_px"] - prev_close) * MULT)
         moves[d] = gap + round((st["close_px"] - st["open_px"]) * MULT)
         cum += moves[d]; cum_by[d] = round(cum); prev_close = st["close_px"]
