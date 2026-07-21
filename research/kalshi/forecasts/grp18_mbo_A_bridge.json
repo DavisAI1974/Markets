@@ -1,0 +1,116 @@
+{
+ "specialist": "A",
+ "lens": "weekend_seam_bridge",
+ "group": "g18",
+ "brain_version": "s102.8",
+ "round": 1,
+ "phase": "refine_unblinded",
+ "role_note": "Live E->A->B chain, REFINE round 1 with the ACTUAL reopen visible in the MBO. A informs, B decides, B owns the Monday number. Both G18 Mondays (0427, 0504) delivered UP vs the blind's down - both via covering/buy-absorption. The reopen is directly observed here, so reopen_watch carries the realized gap read, not scenarios.",
+ "bridges": [
+  {
+   "seam": "0424->0427",
+   "monday_owned_by_B": "20260427",
+   "anchor": {
+    "session": "20260424",
+    "dow": "Fri",
+    "close_px": 2.689,
+    "close_px_note": "2.689 anchor, June/NGM26 economic leg (clean June, no roll seam); anchor Friday not in the MBO evidence (pre-block), exit synthesized from the 0424 tape read carried in the blind bridge",
+    "contract_note": "mechanical front NGK26(May) opex 0427 / LTD 0428 = a short-covering-INTO-EXPIRY crosscurrent that DID reprice Monday via covering demand; passed as never-traded on our June leg but the covering catalyst is real and landed on 0427"
+   },
+   "friday_exit_consumed": {
+    "source": "anchor_self (no E handoff for the anchor Friday)",
+    "blind_exit_type": "covering_fail_fade (down lean, elevated up counter-risk)",
+    "corrected_exit_type": "covering_absorption_pending",
+    "why": "0424 big-print buy tilt 0.593 + crowded short (MM net -100,574, 8.49 1y pctile) = covering DEMAND that was ABSORBED into the close, NOT spent. My blind bridge flagged this as the elevated up counter-risk; the actual 0427 confirms it discharged. The down chain was the shallow/spent side; the covering demand was the unrealized-ahead UP fuel.",
+    "monday_bias_from_exit_corrected": "UP (covering pop), small-to-moderate"
+   },
+   "reopen_watch": {
+    "observed_gap_usd": -50,
+    "observed_gap_note": "open 2.684 vs anchor 2.689 = tiny DOWN gap (~-5 ticks)",
+    "gap_persistence_vs_rejection": "REJECTED. The tiny down gap did not hold: phase0 (reopen/overnight) sflow +254, pxchg +140 UP, then phase1 the covering LIFT - net sell -3299 ABSORBED while price ran +680 up (ph_absorb True, vol 73062), high +1240 at 10:42 ET, turn_down there, closed +370.",
+    "thin_tape_conviction": "phase0 thin (vol 4049) but positive and directionally UP (a real up-tick, not noise); the decisive read is phase1 - high-vol (73062) buy-absorption of heavy sell flow = high-conviction covering lift. No flow-floor failure on the covering phase.",
+    "stand_down_verdict": "NO stand-down. The phase1 covering absorption (ph_absorb True on huge vol) is a high-conviction UP tell; the book layer is not needed - the trade-flow absorption read alone carries it.",
+    "reopen_verdict": "gap-rejection UP -> covering discharge. The down gap was rejected and the covering demand popped, exactly the up counter-risk the blind bridge flagged."
+   },
+   "gap_ownership": {
+    "owner_nominal": "chain_drift",
+    "owner_true": "covering_demand",
+    "spent_vs_unrealized": "The down side was SPENT/shallow (covering push had discharged into the 0424 close, so residual bleed only). The UP side (covering demand, big prints 0.593) was UNREALIZED-ahead and REALIZED Monday, catalyzed by May opex 0427 / LTD 0428 short-covering into expiry.",
+    "note": "no opex/expiry on the June economic leg, but the mechanical May-front covering-into-expiry catalyst landed on 0427 and is the datable Monday driver"
+   },
+   "driver_realization_check": {
+    "carry_driver": "crowded-short covering demand + May opex/expiry short-covering",
+    "peaked_over_weekend": false,
+    "detail": "the covering driver did NOT peak/sell-the-news over the weekend - it DISCHARGED INTO Monday. The May opex(0427)/expiry(0428) short-covering catalyst landed on the target day itself; no weekend peak, a Monday buy-the-covering pop."
+   },
+   "monday_bias_confirmed_or_adjusted": {
+    "blind_handed_to_B": "down, SMALL-to-moderate, with an elevated up counter-risk",
+    "refine_handed_to_B": "UP (covering pop), small-to-moderate (~+300 to +400 day, actual +370)",
+    "confirmed": false,
+    "adjustment": "FLIP to UP. The elevated up counter-risk the blind bridge flagged (crowded short 8.49 pctile + live big-print buy 0.593 + May opex/expiry covering) was the ACTUAL outcome. B should own the UP covering pop as PRIMARY, not the down chain. The down chain was the subordinate/spent side.",
+    "why": "covering demand was unrealized-ahead (absorbed, not spent, on 0424) + a datable Monday catalyst (May opex/expiry short-covering); the observed reopen rejected the down gap and phase1 delivered a high-conviction covering lift."
+   },
+   "handoff_out": {
+    "for_next_session": "20260428_Tue (C)",
+    "exit_state": "0427 closed +370 UP off a covering pop that ran to +1240 high (10:42) then turn_down into the close (net +420 from open, -850 off the high). exit_type = covering_pop_gave_back_into_close. The covering demand is now DISCHARGED (spent Monday); the down chain (0428 Tue -440, 0429 Wed -440) resumes from here. Tue inherits: covering fuel spent, no more crowded-short pop, S3 bearish bleed re-asserts.",
+    "monday_bias_delivered": "up realized; covering now spent"
+   }
+  },
+  {
+   "seam": "0501->0504",
+   "monday_owned_by_B": "20260504",
+   "anchor": {
+    "session": "20260501",
+    "dow": "Fri",
+    "close_px": 2.789,
+    "close_px_note": "0501 Fri close 2.789 (E blind guessed 2.629 - the blind under-read the week's UP turn by ~160 ticks); June/NGM26 leg",
+    "contract_note": "NGK26(May) LTD was 0428 = dead 3 sessions back; front is NGM26(June), clean; 0504 pre-index-roll (GSCI/BCOM ~0507), no mechanical support either side"
+   },
+   "friday_exit_consumed": {
+    "source": "E grp18_blind_E.json 0501 handoff_out (blind), CORRECTED by the realized 0501 MBO tape",
+    "e_blind_exit_type": "positioning_spent_fade (down lean, small-to-moderate)",
+    "corrected_exit_type": "covering_absorption_up_continuation",
+    "why": "The 0501 MBO tape REFUTES the spent-fade read: net +290, phase table [+462/+500 open pop, -2092/-400 mid give-back, -1728/+200 CLOSE], with ph_absorb TRUE on the close phase = net sell -1728 ABSORBED by RISING price +200 into the close. Atop the Thu 0430 +1230 rally (turn_up 08:04, absorb True), the week had established a FRESH UP CHAIN and 0501 closed with BUY ABSORPTION, not a spent fade. E's down bias was wrong; the chain going into the weekend was UP.",
+    "monday_bias_from_exit_corrected": "UP continuation, moderate"
+   },
+   "reopen_watch": {
+    "observed_gap_usd": 440,
+    "observed_gap_note": "open 2.833 vs 0501 close 2.789 = BIG UP gap (+44 ticks)",
+    "gap_persistence_vs_rejection": "PERSISTED. The +440 up gap held: phase0 sflow +247, pxchg +140 UP (vol 6303, not thin); a morning dip to -690 (from open) was BOUGHT - turn_up 08:37 ET (turn_mag 860) - and the day closed +170 above open, +610 on the day.",
+    "thin_tape_conviction": "NOT thin - the +440 gap was substantial and phase0 vol (6303) is a real reopen, not a stub. The gap SIGN here was NOT noise; it was a genuine continuation of the live up chain. The intraday dip-and-turn_up confirms buyers defended.",
+    "stand_down_verdict": "NO stand-down. Gap-persistence UP is high-conviction given the live up chain and the phase0 up-tick; the intraday turn_up absorption seals it.",
+    "reopen_verdict": "gap-persistence UP -> live up-chain continuation. The +440 weekend gap was driven by the Thu-Fri up move being live, not a covering bounce against a down chain."
+   },
+   "gap_ownership": {
+    "owner_nominal": "chain_drift (blind read it as spent-side DOWN residual)",
+    "owner_true": "live_up_chain",
+    "spent_vs_unrealized": "The up-driver was LIVE/UNREALIZED into the weekend (Thu 0430 +1230 rally + Fri buy-absorption close), so the +440 gap persisted. My blind bridge's 'spent-side down residual, up-tail lower fuel' read was inverted - the UP side was the live/high-fuel side.",
+    "note": "gap sign was informative this seam (not the usual non-derivable noise): a live up chain + buy-absorption Friday close carried a real, sizeable UP gap"
+   },
+   "driver_realization_check": {
+    "carry_driver": "fresh up chain (Thu 0430 +1230 rally, Fri 0501 buy-absorption close)",
+    "peaked_over_weekend": false,
+    "detail": "My blind bridge claimed the pop peaked Wed 0429 and gave back by Fri - REFUTED. The pop did not die; it re-accelerated Thu 0430 (+1230, the biggest day of the block) and held Fri with buy absorption. The up-driver was LIVE into the weekend and continued Monday (+610). No sell-the-news; a continuation."
+   },
+   "monday_bias_confirmed_or_adjusted": {
+    "blind_handed_to_B": "down, SMALL, with elevated basing/chop weight",
+    "refine_handed_to_B": "UP continuation, moderate (~+550 to +650 day, actual +610)",
+    "confirmed": false,
+    "adjustment": "FLIP to UP. Both the corrected Friday exit (buy-absorption close, not spent fade) and the observed reopen (+440 gap persisted, intraday turn_up) point UP. B should own the UP continuation as PRIMARY. The blind's spent-fade/down-residual read mis-classified a live up chain.",
+    "why": "the up-driver was live into the weekend (Thu +1230, Fri buy-absorption close) and persisted through a substantial +440 weekend gap; there was no spent fade to inherit."
+   },
+   "handoff_out": {
+    "for_next_session": "20260505_Tue (C)",
+    "exit_state": "0504 gapped +440 up, dipped to -690 (from open, bought), turn_up 08:37, high +500 excl at 12:58, closed +170 from open (+610 day). exit_type = up_gap_held_but_faded_from_high (close_off_high). Phase2 sell -2424 with px -130 = late-session selling that clipped the top. The up chain is now EXTENDED/tiring; Tue 0505 (-830) and Wed 0506 (-530) sold off hard - Tue inherits a stretched up chain topping out, sell-pressure building in the 0504 close phase.",
+    "monday_bias_delivered": "up realized, moderate; up chain now stretched/topping"
+   }
+  }
+ ],
+ "cross_cutting_finding": {
+  "headline": "Both G18 Mondays flipped UP against the blind's down; both were COVERING / BUY-ABSORPTION discharges the blind mis-read as spent.",
+  "mechanism": "On BOTH seams the weekend inherited buy-side pressure that the blind (and E) classified as 'absorbed/spent and done' and subordinated to a down chain - but it discharged UP Monday. 0427: covering demand (big prints 0.593, crowded short 8.49 pctile) absorbed on the anchor Friday popped via May opex/expiry short-covering. 0504: a live up chain (Thu +1230, Fri buy-absorption close) that the blind called a spent fade carried a +440 weekend gap that persisted.",
+  "seam_rule_proposal_+n": "When the Friday CLOSE phase shows net-sell ABSORBED by rising/holding price (ph_absorb TRUE on the close phase) AND crowded-short positioning (MM net <~15th pctile) OR a fresh multi-day up move into the weekend, flip the weekend-seam bias to UP (covering / continuation discharge) - do NOT inherit the down chain. Buy-absorption AT THE CLOSE is a directional (covering) tell, not exhaustion. This is the seam-level form of the brain's absorption doctrine.",
+  "reopen_read_note": "The two reopens differed in gap mechanics but agreed in direction: 0427 = tiny down gap REJECTED then covering lift; 0504 = big +440 up gap PERSISTED. In both, the phase0 reopen tick was UP (+254/+140 and +247/+140) - the reopen sign, usually treated as noise, was directionally correct BOTH times and worth weighting when it aligns with a covering/absorption Friday close.",
+  "honest_note": "Per doctrine A informs, B decides. Both flips are causally supported (observed reopen + corrected Friday exit), not fitted; magnitudes handed as bands (~+300-400 for 0427, ~+550-650 for 0504) that bracket the actuals (+370, +610) without claiming the reactive tails."
+ }
+}
