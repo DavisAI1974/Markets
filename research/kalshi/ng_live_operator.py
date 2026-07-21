@@ -211,7 +211,7 @@ class NGLiveOperator:
             "schema": "ng_live_operator.v1",
             "as_of_event_s": now_s,
             "authority": "SHADOW_TELEMETRY",
-            "execution_authority": false,
+            "execution_authority": False,
             "source": "L1/trades + MBO",
             "window_s": WINDOW_S,
             "move_onset_pressure": {
@@ -228,7 +228,7 @@ class NGLiveOperator:
                 "trade_events_15m": baseline_n,
                 "trade_events_60s": recent_n,
                 "mapping_flags": sorted(self.mapping_flags),
-                "missing_is_visible": true
+                "missing_is_visible": True
             },
             "retest_registry": "research/kalshi/knowledge/signal_retest_registry.json"
         }
