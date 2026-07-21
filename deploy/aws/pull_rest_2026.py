@@ -72,7 +72,8 @@ def _guard(desc, **kw):
 
 def job_a_trades():
     end = dt.date.today() - dt.timedelta(days=1)
-    day = dt.date(2026, 3, 14)
+    day = dt.date(2026, 3, 1)      # S101 audit fix: n1 Mar 1-13 was never pulled and the in-session
+                                   # n0 March copies never reached S3 - start at Mar 1, skip-if-exists dedups
     while day <= end:
         if day.weekday() == 5:                     # Saturday: no UTC-day file in the store
             day += dt.timedelta(days=1)
