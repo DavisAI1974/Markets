@@ -101,6 +101,38 @@ GROUPS = {
         "holidays": ["20260525"],
         "basis": "July/NGN26 clean; Memorial Day 05-25 holiday; EIA shifts Thu05-28 -> Fri05-29",
     },
+    # ---- past G20 (stretch; VERIFY holiday/roll specifics when reached) ----
+    "g21": {
+        "window": "Sun 2026-06-07 -> Fri 2026-06-19 (Juneteenth 06-19 + July->Aug roll)",
+        "days": ["20260608","20260609","20260610","20260611","20260612","20260615","20260616","20260617","20260618","20260619"],
+        "anchor": None, "anchor_date": "20260605", "anchor_lasthr_dir": None,   # from G20 actual
+        "mask_after": "20260605",
+        # NGN26 LTD 06-26 -> roll 06-19, BUT 06-19 = Juneteenth (holiday); the Aug/NGQ26 underlying
+        # effectively begins 06-22 (G22). Treat G21 as clean July/NGN26 with 06-19 a holiday day.
+        "seam": None, "legs": {"all": "ngn26"},
+        "eia_thursdays": ["20260611","20260618"],
+        "holidays": ["20260619"],
+        "basis": "July/NGN26; 06-19 Juneteenth holiday; NGN26->NGQ26 roll lands at the 06-19/06-22 boundary (verify)",
+    },
+    "g22": {
+        "window": "Sun 2026-06-21 -> Fri 2026-07-03 (Independence Day observed 07-03)",
+        "days": ["20260622","20260623","20260624","20260625","20260626","20260629","20260630","20260701","20260702","20260703"],
+        "anchor": None, "anchor_date": "20260619", "anchor_lasthr_dir": None,   # from G21 actual (leg change NGN26->NGQ26 at this boundary)
+        "mask_after": "20260619",
+        "seam": None, "legs": {"all": "ngq26"},   # Aug/NGQ26 (Aug roll 07-22 outside)
+        "eia_thursdays": ["20260625","20260702"],
+        "holidays": ["20260703"],   # July 4 is Sat 2026 -> observed Fri 07-03
+        "basis": "Aug/NGQ26; boundary leg change NGN26->NGQ26 at 06-19/06-22 (anchor on the Aug leg); 07-03 Independence Day observed",
+    },
+    "g23": {
+        "window": "Sun 2026-07-05 -> Fri 2026-07-17",
+        "days": ["20260706","20260707","20260708","20260709","20260710","20260713","20260714","20260715","20260716","20260717"],
+        "anchor": None, "anchor_date": "20260703", "anchor_lasthr_dir": None,   # from G22 actual
+        "mask_after": "20260703",
+        "seam": None, "legs": {"all": "ngq26"},   # Aug/NGQ26 clean (Aug roll 07-22 outside; data ends ~07-20)
+        "eia_thursdays": ["20260709","20260716"],
+        "basis": "Aug/NGQ26 clean; data year ends ~07-20 so this is the last fully-staged block",
+    },
 }
 
 
@@ -118,6 +150,32 @@ def leg_for(gid, ymd):
         return f"ng_mbo_{legs['all']}"
     seam = g["seam"]
     return f"ng_mbo_{legs['post'] if ymd >= seam else legs['pre']}"
+
+
+# Resolved chained anchors (each group's anchor = the prior group's actual last close) persist here so a
+# static config entry can leave anchor=None and stage_group fills it. Loaded as an override at import.
+_ANCHOR_OVERRIDE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "renders", "ng_refine_s95", "group_anchors.json")
+try:
+    import json as _json
+    if os.path.exists(_ANCHOR_OVERRIDE):
+        for _gid, _a in _json.load(open(_ANCHOR_OVERRIDE)).items():
+            if _gid in GROUPS and _a is not None:
+                GROUPS[_gid]["anchor"] = _a
+except Exception:
+    pass
+
+
+def set_anchor(gid, anchor):
+    """Persist a resolved anchor to the override file and patch the in-memory config."""
+    import json as _json
+    os.makedirs(os.path.dirname(_ANCHOR_OVERRIDE), exist_ok=True)
+    cur = {}
+    if os.path.exists(_ANCHOR_OVERRIDE):
+        cur = _json.load(open(_ANCHOR_OVERRIDE))
+    cur[gid] = anchor
+    _json.dump(cur, open(_ANCHOR_OVERRIDE, "w"), indent=1)
+    GROUPS[gid]["anchor"] = anchor
 
 
 if __name__ == "__main__":
