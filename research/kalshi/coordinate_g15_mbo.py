@@ -70,16 +70,27 @@ def specialist_posteriors(round_=1):
             out[dt] = {"net": net, "curve": e.get("path_p50_curve"), "owner": x,
                        "conf": e.get("confidence"), "verdict": (e.get("mbo_verdict") or "")[:400],
                        "selection": (e.get("selection_reason") or "")[:300],
-                       "dir": e.get("posterior_direction_by_horizon")}
+                       "dir": e.get("posterior_direction_by_horizon"),
+                       "handoff_out": e.get("handoff_out")}
     return out
 
 
 SPECIALISTS = {"A", "B", "C", "D", "E"}
 
 
-def guard_coordinator(posts):
+def _dow_of(d):
+    return _DOW[pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}").weekday()]
+
+
+def guard_coordinator(posts, round_=1):
     """Assert the coordinator only selects/assembles - it never emits a day-move no specialist owns.
-    Hard failure on any violation; no fallback."""
+    Hard failure on any violation; no fallback.
+
+    FRIDAY SIGN-OFF (Greg S104): a mis-read Friday exit cascades for DAYS - 10/14 bad Mondays root to
+    it, and the first Monday being off moves the curve for the whole week. So the coordinator gives its
+    OWN OK on every weekend-feeding day: from round 2 on, a Friday posterior WITHOUT the outgoing exit
+    read (handoff_out - what Sunday/Monday inherit) is a hard failure. The coordinator does not check
+    the read's content (that is the owner's call); it enforces that the read EXISTS before assembling."""
     errs = []
     for d in DAYS:
         own = OWNER.get(d)
@@ -92,6 +103,9 @@ def guard_coordinator(posts):
             errs.append(f"{d}: assembled posterior came from specialist {p.get('owner')!r}, owner is {own}")
         if not isinstance(p.get("net"), (int, float)):
             errs.append(f"{d}: owner {own} net is {p.get('net')!r} - non-numeric; the coordinator must not invent or substitute a number")
+        if round_ >= 2 and _dow_of(d) == "Fri" and not p.get("handoff_out"):
+            errs.append(f"{d}: FRIDAY SIGN-OFF REFUSED - owner {own} emitted no handoff_out exit read; "
+                        f"a Friday without its weekend handoff cascades into Monday and is not assemblable")
     if errs:
         raise SystemExit("COORDINATOR GUARD FAILED (would emit a number no specialist owns):\n  " + "\n  ".join(errs))
 
@@ -138,7 +152,7 @@ def guess_line(days_by_date, cont_anchor=ANCHOR):
 def main(round_=1):
     sfx = "_r2" if round_ == 2 else ""          # round-2 outputs never overwrite the round-1 record
     posts = specialist_posteriors(round_)
-    guard_coordinator(posts)                    # enforce, do not assume: SELECT/ASSEMBLE only
+    guard_coordinator(posts, round_)            # enforce, do not assume: SELECT/ASSEMBLE only + Friday sign-off
     actual, cont_t, cont_p, seam = build_actual()
     act_by = {r["date"]: r for r in actual}
     # blind day-moves from grp15.json

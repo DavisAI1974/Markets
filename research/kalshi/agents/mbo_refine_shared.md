@@ -63,6 +63,15 @@ stand_down_reasons, selection_reason, mbo_verdict` — plus, in round 2:
 `expected_magnitude_usd` is the DAY-MOVE from prior close (gap+net) — the number the coordinator
 scores. Only days in DAYS_OWNED are consumed; still emit your full owned set.
 
+## Coordinator contract (what happens to your output)
+The coordinator SELECTS the owner per day and assembles verbatim - it never forecasts, averages,
+scales, or substitutes, and a missing/non-numeric/wrong-owner posterior is a hard failure (guard
+pattern: coordinate_g15_mbo.py). FRIDAY SIGN-OFF (Greg S104): a mis-read Friday exit cascades for
+days - 10/14 bad Mondays root to it - so the coordinator additionally REFUSES to assemble any
+weekend-feeding day (Friday, or the last session before a holiday weekend) whose posterior lacks
+`handoff_out` (the exit read Sunday/Monday inherit). The coordinator does not judge the read's
+content - that is the owner's call - but its existence is the coordinator's own OK, enforced.
+
 ## Guardrails
 Per-event only, never pool as a conclusion. Immutable blind never touched. No brain edits (proposal
 files only, and only when the run directive asks for one). Execution stays SHADOW. NG != WTI.

@@ -23,7 +23,9 @@ doctrine_tier3.friday_monday_cascade_s104) -> `research/kalshi/GROUP_PRECHECK_S1
 - **Group windows: Sunday reopen -> the SECOND Friday, always.**
 - **FIVE day-class specialists for BOTH blind and refine** (A weekend/B Monday/C core/D Thu-EIA/
   E Fri-expiry). Coordinator SELECTS the owner per day under the GUARD (never emits a number no
-  specialist owns - guard pattern in coordinate_g15_mbo.py, port it to every coordinator).
+  specialist owns - guard pattern in coordinate_g15_mbo.py, port it to every coordinator) **+ the
+  FRIDAY SIGN-OFF (Greg S104): the coordinator REFUSES to assemble a weekend-feeding day whose
+  posterior lacks handoff_out - the Friday cascade is the coordinator's OK too, not just E's.**
 - **Renders: actual curve + the forecast's OWN p50 path only** (no re-anchored/scaled lines, no
   gap bridges). Target **honest under-100 every day**.
 
