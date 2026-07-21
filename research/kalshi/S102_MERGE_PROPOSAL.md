@@ -110,3 +110,55 @@ NGJ26 top-up pull Mar 16-27 (April fell to n.2 in both stores after 0315 - roll-
 subagent finding); April expiry CORRECTED to Mar 27 (definitions; kickoff said Mar 26 - opex
 Mar 26, expiry Fri Mar 27); Kalshi underlying rolls to May ~Mar 20 (5bd rule) - flag for the
 echo lane. 20260315 degraded-day: present both stores, thin-but-normal Sunday.
+
+## ITERATION 2 (Greg: "refine until the lines are darn close to perfect") - all residuals DERIVED
+
+Rebuilt: 12/12, EVERY step <= 200, final drift +500 = pure band-position noise (each day inside
+its class band; the projection verified exactly by continuous_score g14_refined_v2).
+
+8. `magnitude.shoulder_weather_band_void` (extends item 2 from gaps to intraday bands): weather
+   DELIVERY bands (resume/melt-up) are VOID when near-window max forecast HDD <= 13.5 gw AND no
+   S2 cold add AND no S3 catalyst; the day falls to its residual co-condition class one rung
+   down (0305 -> B4 agreeing-print +400..+700 -> +550 vs actual +470). A STEP, not a ratio -
+   both smooth scalings (vol-scaled, headroom-ratio) measured and REJECTED on evidence
+   (vol-scaling breaks G12 0203 3.3x; ratio leaves 0305 out). Winter back-check: every winter
+   delivery-band day clears the gate (bases >= 16); lull give-backs untouched (different driver).
+9. `magnitude.unpriced_shot_extension` (generalizes the s101_3 accelerating-driver split to
+   appearance day): far window risen >= 2 consecutive cycles incl. fire day + shot UNPRICED
+   since onset + MM pctile <= ~12 fuel -> extended band [1.35..2.55] x band top, slider places
+   (S1-void -> bottom). 0311 -> +2000 vs +2030. No false fires: 0119 (gap pre-priced it), 0120
+   (pricing begun), 0123/0126 (cycle decay resets), 0310 (onset cycle), 0312/0313 (priced).
+   FLAGGED: the 1.35 bottom is 0311's own print - trigger/class/placement derived, bound needs
+   G15+ forward evidence.
+10. `magnitude.weekend_chain_drift_day_move`: chain-drift weekend content is a DAY-MOVE budget
+    (gap + Sunday session together), not a gap quantity; covering regime (first covering print)
+    DOUBLES class mid (the year-end-thin doubling form) -> 0308 budget 2200, session = budget -
+    gap = +1100 vs actual +1030. n=3 (1123, 1130, 0308; one instance at the doubled rung -
+    forward-test G15). k-x-gap form measured and refuted (1130 has no finite k). The "0308
+    envelope break" is EXPLAINED, not declared.
+11. MEASURED CLASS CURVE PROFILES (13-pt fraction-of-net vectors, per-class means from all walk
+    instances; per-CLASS never per-day): counter_gap_monday, young_extension (14:00 peak 1.5x,
+    gives back), one_day_give_back (counter till 06:00, delivers 08-10), print_day (delivery
+    10:30-14:00), resume_friday, fade_monday_full_day (~0 through 06:00 - the old window_then
+    shape was wrong), shock_add (delivery starts at the carrying cycle), weekend_crest (morning
+    runs AGAINST the final side, flips 08-10, afternoon owns the close - consistent 3/3).
+    post_crash_pause + alternation profiles = NOISE (small-net whipsaw; band content only).
+    Now driving the refined render (g14_refined_v2.png).
+12. G15 WATCH (recorded, not applied): early-block same-signed band-position drift (+630 through
+    0304) suggests slider-damping calls to band bottom in S1-void shoulder - but it would have
+    flipped 0302 to an error, so it does NOT clear as a rule; watch only.
+
+## LIVE ARCHITECTURE (Greg, this session) - the INTRADAY REFINE AGENT
+
+Greg's directive, recorded: in live operation the refine agent becomes the INTRADAY REFINE
+AGENT - as live data arrives it scores the tape against the blind's standing forecast, reads
+what the market is actually doing (the day-class curve profiles above are its scoring
+templates), and ADJUSTS the forward curve intraday. A comms channel carries refine's read +
+adjustments back to the COACH (what changed, why, confidence) so the coach calls plays off the
+adjusted curve. Greg named VOXA as the comms layer so the agents can talk - NOT in the repo
+docs; spec wiring PENDING Greg's pointer to what Voxa is/credentials. Design consequences to
+carry into the two-coach spec: (a) the blind/forecast agent + intraday refine agent are the
+same brain at two timescales (open-time forecast; intraday re-score/adjust); (b) the intraday
+tools are exactly the needs_intraday_reveal plays (flow nowcast, staircase, grind-vs-spike,
+F1/F2, D's recruit-violated confirm) - the walk's refine loop IS the rehearsal for this agent;
+(c) every adjustment is logged forecast-vs-adjusted-vs-actual for the same scoring discipline.

@@ -1,6 +1,6 @@
 {
  "group": 14,
- "tag": "g14_refined",
+ "tag": "g14_refined_v2",
  "brain_version": "s101.6+s102-proposals",
  "anchor": {
   "date": "20260227",
@@ -83,19 +83,19 @@
     ],
     [
      22,
-     58
+     -69
     ],
     [
      0,
-     115
+     58
     ],
     [
      2,
-     207
+     34
     ],
     [
      4,
-     288
+     506
     ],
     [
      6,
@@ -103,27 +103,27 @@
     ],
     [
      8,
-     748
+     460
     ],
     [
      10,
-     862
+     494
     ],
     [
      12,
-     943
+     586
     ],
     [
      14,
-     1035
+     966
     ],
     [
      16,
-     1104
+     1162
     ],
     [
      18,
-     1150
+     1173
     ],
     [
      20,
@@ -145,47 +145,47 @@
     ],
     [
      22,
-     40
+     32
     ],
     [
      0,
-     64
+     80
     ],
     [
      2,
-     96
+     176
     ],
     [
      4,
-     144
+     384
     ],
     [
      6,
-     240
+     784
     ],
     [
      8,
-     360
+     752
     ],
     [
      10,
-     464
+     944
     ],
     [
      12,
-     560
+     1016
     ],
     [
      14,
-     656
+     1224
     ],
     [
      16,
-     736
+     856
     ],
     [
      18,
-     800
+     784
     ],
     [
      20,
@@ -207,47 +207,47 @@
     ],
     [
      22,
-     -40
+     -160
     ],
     [
      0,
-     -64
+     -128
     ],
     [
      2,
-     -96
+     56
     ],
     [
      4,
-     -144
+     104
     ],
     [
      6,
-     -240
+     168
     ],
     [
      8,
-     -360
+     -64
     ],
     [
      10,
-     -464
+     -776
     ],
     [
      12,
-     -560
+     -592
     ],
     [
      14,
-     -656
+     -752
     ],
     [
      16,
-     -736
+     -944
     ],
     [
      18,
-     -800
+     -824
     ],
     [
      20,
@@ -269,55 +269,55 @@
     ],
     [
      22,
-     26
+     77
     ],
     [
      0,
-     52
+     60
     ],
     [
      2,
-     78
+     204
     ],
     [
      4,
-     104
+     154
     ],
     [
      6,
-     156
+     99
     ],
     [
      8,
-     260
+     182
     ],
     [
      10,
-     390
+     363
     ],
     [
      12,
-     585
+     379
     ],
     [
      14,
-     845
+     588
     ],
     [
      16,
-     1105
+     517
     ],
     [
      18,
-     1300
+     539
     ],
     [
      20,
-     1300
+     550
     ]
    ],
-   "guessed_net_usd": 1300,
-   "derivation": "0304 exhausted give-back (35% recovery + late up-tick) -> resume, print day sizes up; resume band BOTTOM +1300 (winter band; SHOULDER-AGING residual declared - see block irreducibles). R2 leg up post-print."
+   "guessed_net_usd": 550,
+   "derivation": "0304 exhausted give-back (35% recovery + late up-tick) -> resume, print day sizes up; ITER-2 DERIVED: shoulder_weather_band_void gate - near-window max 13.4 <= 13.5, no S2/S3 -> weather delivery band VOID; residual class = B4 in-chain agreeing-print +400..+700 -> +550. R2 leg up post-print."
   },
   {
    "date": "20260306",
@@ -331,43 +331,43 @@
     ],
     [
      22,
-     82
+     -16
     ],
     [
      0,
-     132
+     16
     ],
     [
      2,
-     198
+     82
     ],
     [
      4,
-     297
+     462
     ],
     [
      6,
-     495
+     544
     ],
     [
      8,
-     742
+     561
     ],
     [
      10,
-     957
+     726
     ],
     [
      12,
-     1155
+     1336
     ],
     [
      14,
-     1353
+     1930
     ],
     [
      16,
-     1518
+     1749
     ],
     [
      18,
@@ -393,55 +393,55 @@
     ],
     [
      22,
-     220
-    ],
-    [
-     0,
-     330
-    ],
-    [
-     2,
-     385
-    ],
-    [
-     4,
-     412
-    ],
-    [
-     6,
      440
     ],
     [
+     0,
+     660
+    ],
+    [
+     2,
+     770
+    ],
+    [
+     4,
+     825
+    ],
+    [
+     6,
+     880
+    ],
+    [
      8,
-     468
+     935
     ],
     [
      10,
-     495
+     990
     ],
     [
      12,
-     522
+     1045
     ],
     [
      14,
-     550
+     1100
     ],
     [
      16,
-     550
+     1100
     ],
     [
      18,
-     550
+     1100
     ],
     [
      20,
-     550
+     1100
     ]
    ],
-   "guessed_net_usd": 550,
-   "derivation": "gap: warm rung void (post-cut days 5.8-9.8 abs gw-HDD, below the 13.5 failure ceiling; A cand-1 gate); saturation still armed + first covering print (LD1 +44k) -> chain-drift band +600..+1600 at chain sign, mid = +1100 (0306 closed at fresh cum-extreme). Session: with-swing thin drift +400..+700 = +550; the +1030 actual = DECLARED envelope-break residual n=1 (first covering-regime + first DST Sunday; all 20 prior Sundays <=690)."
+   "guessed_net_usd": 1100,
+   "derivation": "gap: warm rung void (post-cut days 5.8-9.8 abs gw-HDD, below the 13.5 failure ceiling; A cand-1 gate); saturation still armed + first covering print (LD1 +44k) -> chain-drift band +600..+1600 at chain sign, mid = +1100 (0306 closed at fresh cum-extreme). Session ITER-2 DERIVED: weekend_chain_drift_day_move - chain-drift content is a DAY-MOVE budget; covering regime (LD1 +44k first covering print) doubles class mid -> budget 2200; session = budget - gap = +1100. The envelope was never the binding object."
   },
   {
    "date": "20260309",
@@ -455,47 +455,47 @@
     ],
     [
      22,
-     -152
+     0
     ],
     [
      0,
-     -305
+     92
     ],
     [
      2,
-     -549
+     152
     ],
     [
      4,
-     -762
+     0
     ],
     [
      6,
-     -1372
+     30
     ],
     [
      8,
-     -1982
+     -366
     ],
     [
      10,
-     -2288
+     -2440
     ],
     [
      12,
-     -2501
+     -3416
     ],
     [
      14,
-     -2745
+     -3690
     ],
     [
      16,
-     -2928
+     -3599
     ],
     [
      18,
-     -3050
+     -3294
     ],
     [
      20,
@@ -579,55 +579,55 @@
     ],
     [
      22,
-     288
+     -60
     ],
     [
      0,
-     402
+     100
     ],
     [
      2,
-     518
+     520
     ],
     [
      4,
-     632
+     520
     ],
     [
      6,
-     805
+     740
     ],
     [
      8,
-     978
+     960
     ],
     [
      10,
-     1092
+     1360
     ],
     [
      12,
-     1150
+     1440
     ],
     [
      14,
-     1150
+     1760
     ],
     [
      16,
-     1150
+     1720
     ],
     [
      18,
-     1150
+     1900
     ],
     [
      20,
-     1150
+     2000
     ]
    ],
-   "guessed_net_usd": 1150,
-   "derivation": "3/16 +4.0 AND 3/17 +7.9 vs normal enter (far-hi 16.4->24.6 in 2 days; count the FAR window in shoulder, C S2) + 12th-pctile shorts = fuel; fed-recovery day-1 band +800..+1500 mid = +1150. The +2030 actual = the STANDING fed-recovery tail (2nd instance w/ 0121), declared."
+   "guessed_net_usd": 2000,
+   "derivation": "3/16 +4.0 AND 3/17 +7.9 vs normal enter (far-hi 16.4->24.6 in 2 days; count the FAR window in shoulder, C S2) + 12th-pctile shorts = fuel; ITER-2 DERIVED: unpriced_shot_extension - far window rising 2 consecutive cycles incl fire day (16.4->21.5->24.6), shot unpriced since onset, MM 12.26 pctile fuel -> extended band [1.35..2.55]x band top; S1-void shoulder -> class bottom = +2000."
   },
   {
    "date": "20260312",
@@ -703,43 +703,43 @@
     ],
     [
      22,
-     -45
+     -108
     ],
     [
      0,
-     -90
+     27
     ],
     [
      2,
-     -162
+     -45
     ],
     [
      4,
-     -225
+     144
     ],
     [
      6,
-     -405
+     90
     ],
     [
      8,
-     -585
+     -54
     ],
     [
      10,
-     -675
+     -945
     ],
     [
      12,
-     -738
-    ],
-    [
-     14,
      -810
     ],
     [
+     14,
+     -1053
+    ],
+    [
      16,
-     -864
+     -765
     ],
     [
      18,
