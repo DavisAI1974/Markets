@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s102.9",
+  "version": "s102.8",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -52,8 +52,7 @@
   "s102_5_note": "S104 cleanup merge: +10 plays (friday/midweek/monday cascade proposals) + friday_monday_cascade_s104 doctrine. Incumbents byte-identical. +boundary.prior_close_flow_direction_disagreement (Greg carry-forward, S104.1).",
   "s102_6_note": "S105 MERGE: +6 plays (midblock under-action fixes - Friday turn/exhaustion gate + crest-trim discriminator, EIA pre-print over-extension gate, accumulation arm, midblock right-the-ship, covering-giveback self-limiting) + doctrine_tier3.midblock_underaction_s105. All PROVISIONAL, test-drive-validated (unscored) not forward-scored. 47 incumbents byte-identical.",
   "s102_7_note": "S105 forward-evidence update: the 6 mid-block-underaction plays validated on G17 (blind 5/10 -> refine r1 10/10 err24 -> r2 10/10 err11); forward_evidence updated (G18 blind = the scored forward test, pending). +doctrine orchestration_s105 (two-round coordinated handoffs both runs; blind sequenced spawn) + live_mbo_open_question. Play LOGIC unchanged; 47 pre-S105 incumbents byte-identical.",
-  "s102_8_note": "S105 DATA DOCTRINE written everywhere (CLAUDE.md, agents/README.md, blind_shared.md, mbo_refine_shared.md, here): both agents get the kitchen sink; blind's only mask is the price curve; dip_imb_level repealed on decision-legit windows; one-group-at-a-time process. Plays unchanged (53); this is doctrine only.",
-  "s102_9_note": "S105 G18 merge: +1 play (structure.covering_absorption_directional_tell) + forward_evidence on the 6 S105 plays + doctrine g18_covering_rally_s105 (blind 5/10 but +440 P&L; refine 10/10 err30; blind-flow-read validated; P&L is the scoreboard). Pre-S105 incumbents byte-identical."
+  "s102_8_note": "S105 DATA DOCTRINE written everywhere (CLAUDE.md, agents/README.md, blind_shared.md, mbo_refine_shared.md, here): both agents get the kitchen sink; blind's only mask is the price curve; dip_imb_level repealed on decision-legit windows; one-group-at-a-time process. Plays unchanged (53); this is doctrine only."
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -1325,7 +1324,7 @@
    "confidence": "direction-fix is FREE/reasoning; residual magnitude tail (fresh-shot blow-off, carry far-tail) stays honest-under (weekend model-run build, separate)",
    "requires": "chain age/cum/positioning/D-1 flow are open_time decision_state fields; no MBO or realized target-day data",
    "scope": "the Friday DIRECTION sign only; magnitude governed by existing bands; does not fire on a clean young-chain continuation",
-   "forward_evidence": "G17 refine (unblinded causal): 0417 covering flip correct. Test-drive: fired 0417. G18 blind = scored forward test (pending). | G18 blind: E read both Friday signs from the direct D-1 last-hour distribution (no prior-over-state).",
+   "forward_evidence": "G17 refine (unblinded causal): 0417 covering flip correct. Test-drive: fired 0417. G18 blind = scored forward test (pending).",
    "provenance": "Job 0 S105 (was ng_brain_friday_gate_proposal.json #1); E self-analysis prescription #1",
    "caveats": "a mechanical settle-spent covering close (0327 class) is wrong-signed but self-limiting (does not cascade) - the gate must not force a continuation there; hands to friday_crest_trim_discriminator + positioning_spent_fade",
    "merged": "s102.6 S105"
@@ -1341,7 +1340,7 @@
    "confidence": "reasoning discriminators, decision-time present; the flow tell is MBO-proven G15, inferred elsewhere",
    "requires": "chain state (open_time); last-hour dir-vs-flow (MBO-measured for G15; inferred otherwise)",
    "scope": "conditions the crest-trim / weekend_crest_friday trigger; does not change its magnitude band",
-   "forward_evidence": "G17: no crest-trim candidate mis-fired. G18 blind = scored forward test (pending). | G18: no crest-trim mis-fire.",
+   "forward_evidence": "G17: no crest-trim candidate mis-fired. G18 blind = scored forward test (pending).",
    "provenance": "Job 0 S105 (was ng_brain_friday_gate_proposal.json #2); E self-analysis prescription #2",
    "merged": "s102.6 S105"
   },
@@ -1356,7 +1355,7 @@
    "confidence": "the pre-print tells are open-time (FREE); delivery-vs-absorption post-print is a tape read (proxy = D-1 flow coherence); a fresh consensus surprise is the coherent case",
    "requires": "D-1 tape_conditions (session_b/big_print), chain cum run, consensus vintage - all open_time",
    "scope": "EIA-print-day direction; the full-band down is spared when D-1 flow is coherent (0423)",
-   "forward_evidence": "G17 refine 10/10: 0416 flipped DOWN->+720 (err 0 at r2), 0423 spared+held DOWN. Test-drive: fired 0416, spared 0423. G18 blind = scored forward test (pending). | G18 blind: D spared coherent-buy 0430 (UP, only up-day the blind caught) and split a same-net-flow pair via big_print_b_share; refine 0430 +1200/0507 +710 both UP.",
+   "forward_evidence": "G17 refine 10/10: 0416 flipped DOWN->+720 (err 0 at r2), 0423 spared+held DOWN. Test-drive: fired 0416, spared 0423. G18 blind = scored forward test (pending).",
    "provenance": "S105 D tweak (blind_class_D.md + mbo_specialist_D.md)",
    "merged": "s102.6 S105"
   },
@@ -1371,7 +1370,7 @@
    "confidence": "the window fix (~5 non-consecutive) is what makes the arm catch spaced accumulation; the strict 2-of-3 missed G17 entirely",
    "requires": "big_print_b_share + session_b_share (D-1 tape_conditions), COT percentile + trajectory - all open_time",
    "scope": "core-day direction; 'honest under-claim' is a MAGNITUDE lever only, never a sign justification",
-   "forward_evidence": "G17 refine: 0422 flip UP (+130 vs +140) via the literal arm after the >=2-of-~5 window fix; 0414/0415 correctly held. G18 blind = scored forward test (pending). | G18 blind: C used the direct sides to differentiate 3 same-b_share sessions; the accumulation fired on adjacent D/B days (covering), C's 0506 RTS-up was wrong (buy-absorb-failing DOWN) - the arm needs price-turn confirmation.",
+   "forward_evidence": "G17 refine: 0422 flip UP (+130 vs +140) via the literal arm after the >=2-of-~5 window fix; 0414/0415 correctly held. G18 blind = scored forward test (pending).",
    "provenance": "S105 C tweak + test-drive #2 window fix (blind_class_C.md + mbo_specialist_C.md)",
    "merged": "s102.6 S105"
   },
@@ -1386,7 +1385,7 @@
    "confidence": "the missing sanity-check Greg named ('right the ship after they lean into something'); FREE - triggers are computable from data already ingested",
    "requires": "cross-session COT trajectory, D-1 flow coherence, chain age/cum, prior handoff_out exit_type - all open_time",
    "scope": "the block-lean SIGN when a turn stack builds; does not override a clean coherent continuation",
-   "forward_evidence": "G17 refine r2: the HE24->HE1 coordination halved error 24->11 (10/10) with zero direction changes - the mid-block re-derivation working. G18 blind = scored forward test (pending). | G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built.",
+   "forward_evidence": "G17 refine r2: the HE24->HE1 coordination halved error 24->11 (10/10) with zero direction changes - the mid-block re-derivation working. G18 blind = scored forward test (pending).",
    "provenance": "S105 - Greg's mid-block-sanity-check insight + C/D/E convergent self-analyses",
    "caveats": "the escalation reserve is the coordinator HALL-MONITOR (a logged-a-turn-then-emitted-the-chain-sign compliance audit) if specialists keep repeating the flaw after this play",
    "merged": "s102.6 S105"
@@ -1402,24 +1401,9 @@
    "confidence": "the spent-vs-fresh COT read across the specialist's own handoff seam is the discriminator; FREE",
    "requires": "prior handoff_out exit_type + monday_bias, COT trajectory (worsening vs flat), D-1 big_print - all open_time",
    "scope": "the SECOND weekend-feeding day after a covering give-back; leaves the first (correct) covering flip intact",
-   "forward_evidence": "G17 refine 10/10: 0424 reverted +250->-370 (err +10), 0417 covering flip left intact. Test-drive fired 0424 / spared 0417. G18 blind = scored forward test (pending). | G18: E 0508 covering-self-limiting passed clean (0501 spent_fade, not re-fired); refine confirmed 0508 aligned-delivered DOWN.",
+   "forward_evidence": "G17 refine 10/10: 0424 reverted +250->-370 (err +10), 0417 covering flip left intact. Test-drive fired 0424 / spared 0417. G18 blind = scored forward test (pending).",
    "provenance": "S105 E tweak (blind_class_E.md + mbo_specialist_E.md); the G17 0424 lesson",
    "merged": "s102.6 S105"
-  },
-  {
-   "id": "structure.covering_absorption_directional_tell",
-   "target": "direction",
-   "trigger": "a session (esp. a Friday close, weekend seam, or catch-up window) where signed flow is heavy but OPPOSES the price move",
-   "read": "the discriminator is signed-flow-vs-price CONVICTION (absorption), NOT raw imbalance. Near-identical heavy flow can deliver opposite signs: (a) SELL flow ABSORBED under a rising/holding price = crowded-short COVERING -> price delivers the covered direction UP; (b) BUY flow ABSORBED under a falling price = buy-absorption FAILING -> stays DOWN (not accumulation until price actually turns); (c) flow ALIGNED with price = genuine delivery, the flow direction wins",
-   "call": "read the covered/failing/delivered state from final-phase conviction, not the imbalance sign. A crowded short (MM net < ~12 1y-pctile) whose covering is ABSORBED-not-spent at the Friday close reprices UP on the Monday catch-up (weekend gap and/or 06-10 window) - buy-absorption at the close is a DIRECTIONAL tell, not exhaustion. Its mirror: buy-absorbed-failing stays down until price turns.",
-   "evidence": "G18 (covering rally): 0501 SELL absorbed->UP +280, 0508 SELL aligned->DOWN -370 (near-identical -3300 flow, opposite signs); 0427/0504 crowded-short covering absorbed at Fri close -> Monday repriced UP (+370/+610, 0504 weekend gap +440); C mirror 0429/0505/0506 buy-absorbed-failing -> DOWN. The refine flipped every one; the price-walled blind (which sees flow but not price) called them the raw-imbalance way and missed.",
-   "status": "PROPOSAL",
-   "confidence": "strong cross-specialist convergence (A/B/C/E) on one block; the absorption read needs price (refine/live) - the blind gets the flow and infers against its own forecast",
-   "requires": "signed flow + price by phase (refine/live); the blind has the flow (decision-legit) but must pair it with its own price forecast",
-   "scope": "direction on covering/absorption days; the discriminator is conviction not imbalance",
-   "forward_evidence": "G18 refine 10/10 (first block); G19+ forward test",
-   "provenance": "S105 G18 refine - A/B/C/E convergent covering-absorption finding",
-   "merged": "s102.9 S105"
   }
  ],
  "mechanisms": [
@@ -2858,13 +2842,6 @@
    "worked_example_sun_wk2_g17": "0420 (G17 wk2 Sunday reopen): reopen+overnight buy-share 48.4%, signed-flow -149 with price UP +120 = a divergence/head-fake; catch-up buy-share 47.1% signed-flow -1040 -> price -410. The MBO said sell-imbalanced all day. Had the blind seen this it would NOT have over-sized 0420 to -400 (actual -60). THIS is why the blind needs the flow read.",
    "process_discipline": "Stage ALL groups' DATA turnkey-ready (legs/state/actual/mbo-evidence), but RUN one group (2 weeks) at a time - finish its full cycle before the next. Running ahead is scope creep.",
    "build_note": "To implement: split the MBO read into FLOW fields (blind-legit, masked-only-on-price) and PRICE fields (target-day masked for blind). Wire the flow fields into the blind decision-state. Pending - applies to G18 onward."
-  },
-  "g18_covering_rally_s105": {
-   "result": "G18 (Sun 04-26->Fri 05-08, clean June/NGM26): first block with the UN-HAMSTRUNG blind (kitchen-sink flow read + options + L1) AND the sequenced E->A->B panel. BLIND 5/10 dir, mean err 521 - BUT net-of-fee P&L +440 (trade each day's direction; a naive always-short LOST -610). The block was a covering RALLY the S3-injection-bearish prior leaned against; the blind sized its catches (0430 +1230, 0505 +830) bigger than its misses = profitable despite 5/10. REFINE round-1 10/10 dir, mean err 30 - flipped every covering-up day the price-walled blind called down.",
-   "the_lesson": "(1) P&L IS THE SCOREBOARD, not direction hit-rate - a forecaster that sizes its catches right makes money at 5/10 (Greg). (2) The un-hamstrung read demonstrably sharpened the reasoning (D split a same-net-flow pair via big_print_b_share; C differentiated 3 same-b_share sessions; E read Friday signs from the direct distribution) - necessary but not sufficient: the block-level regime prior (injection-bearish) still missed a covering rally. (3) The refine (with price) is where the covering rally is caught - the flow-vs-price absorption read is the discriminator (covering-absorbed UP vs aligned-delivered DOWN).",
-   "blind_flow_validation": "the S105 data-doctrine build (flow_read.py: full non-price MBO+L1 flow into the blind decision-state) is VALIDATED - specialists used the unbalanced-sides/big-print/phase-flow directly and it changed calls; zero price leak; the blind is no longer hamstrung.",
-   "open": "the blind's block-level bearish lean vs a covering rally is the remaining gap (the recurring-problem-memo's selector-averages / flow-nowcast-under-weighted). Candidate: weight the crowded-short-covering-discharge signal (structure.covering_absorption_directional_tell) into the blind's block lean. G19 forward test.",
-   "status": "PROVISIONAL; round-2 HE24->HE1 tightening pending (round 1 already 10/10)."
   }
  }
 }

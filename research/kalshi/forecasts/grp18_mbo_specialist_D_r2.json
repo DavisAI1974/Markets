@@ -1,0 +1,150 @@
+{
+  "specialist": "D",
+  "lens": "Thursday EIA storage print - pre-print over-extension gate + post-print re-anchor",
+  "group": "g18",
+  "brain_version": "s102.8",
+  "round": 2,
+  "days_owned": ["20260430", "20260507"],
+  "doctrine_note": "Round 2 HE24->HE1 pass. Start from round-1 posterior; use the incoming C-exit STATE to TIGHTEN magnitude/timing, NOT to override direction. Both incoming handoffs describe a fresh DOWN chain into the print (0430: cum -510 age2 off_low 0.30; 0507: cum 250 age2 off_low 0.24) = COUNTER-print reversal setups (the over-extension gate does not fire). Direction stays UP on both (aligned ph1 buy delivery, post-print re-anchor); no new causal evidence to change it. The tightening: the spent-down incoming base earns the FULL aligned ph1 up-delivery, so I remove the conservative round-1 withholding and derive to the exact phase-px-sum CLOSE (still withholding the peak-to-close reactive give-back tail). MBO book layer stays stood down.",
+  "cross_cutting_mbo_finding": "The HE24->HE1 chain CORROBORATES both prints as counter-print reversals off a spent-down base, and that corroboration is the tightening lever. On 0430, C's exit note ('accumulation is BUILDING under the surface, heavy buy every session, fired on the D/B days after me not on 0429') tells me the built-up buy delivered AT MY PRINT - so the aligned ph1 (+670 on +1964 buy) and the covering ph2 (+650 under absorbed -2822 sell) are fully earned, not partly reactive; derived close +1230 (was +1200). On 0507, C's exit note ('buy-absorption-FAILING down') tells me the buy that failed on 0506 delivered at my print; the fresh down into the print closing NEAR ITS LOW (off_low 0.24) is a clean reversal base, earning the full aligned ph1 (+800 on +554 buy); derived close +720 (was +710). The invariant discriminator holds: aligned ph1 earns the band, ph2 negative-flow-under-non-falling-price is a COVERING/held signature to ride not fade, and raw negative total_sflow is NOT a direction signal (it is absorbed under a rising/held price). The incoming state changed the SIZING confidence, not the direction.",
+  "days": [
+    {
+      "date": "20260430",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_direction": "up",
+      "blind_net_usd": 400,
+      "posterior_direction_by_horizon": {"reopen": "flat", "pre_print": "down", "print_1030": "up", "midday": "up", "close": "up"},
+      "expected_magnitude_usd": 1230,
+      "expected_magnitude_band_usd": [1100, 1350],
+      "onset_time_et": "10:30",
+      "turn_time_et": "08:04",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "reversal",
+      "path_p50_curve": [
+        [18.0, 0], [20.0, -20], [22.0, -60], [2.0, -140], [6.0, -280], [8.0, -430], [9.5, -230], [10.5, 350], [11.0, 660], [12.0, 1100], [12.7, 1450], [14.25, 1300], [17.0, 1230]
+      ],
+      "confidence": 0.82,
+      "weight_assigned": {"blind": 0.35, "causal_mbo": 0.65},
+      "evidence_used": [
+        "HANDOFF: C's 0429 exit note - accumulation BUILDING under the surface, heavy buy every session, fired on the D/B days after C - confirms the built-up buy delivered AT MY PRINT (the covering ph2 is earned, not reactive)",
+        "HANDOFF: incoming state is a fresh DOWN chain into the print (close 2.638, cum -510, age 2, off_low 0.30) = COUNTER-print reversal, over-extension gate does not fire",
+        "phase table: ph1 aligned (sflow +1964, px +670) = print delivered UP with buy conviction",
+        "ph2 covering (sflow -2822, px +650) = heavy sell absorbed under a still-rising price = covering squeeze, RIDDEN not faded (absorb_session true corroborates)",
+        "turn_up mag 1690 off the 08:04 pre-print low; onset 10:30 = the print launch",
+        "phase px sum -90+670+650 = +1230 derives the whole-day CLOSE from measurable state (tightened off the conservative round-1 +1200 now the spent-down base earns the full covering ph2)"
+      ],
+      "evidence_rejected": [
+        "total_sflow -801 as a DOWN/sell direction signal - rejected: absorbed under a rising price (covering), the opposite of directional selling",
+        "the peak-to-close give-back (high_exc +1560 at 12:40 -> close +1230) - a reactive tail, NOT claimed; I derive only the +1230 close"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer stood down (no book_trustworthy verdict) - trade-flow read only",
+        "raw div/imb NOT used to fade the covering rally (doctrine: do not let a raw div/imb read fade a covering rally)"
+      ],
+      "selection_reason": "D owns EIA-Thursday print days; 0430 is the block's cascade-root print (post-print re-anchor flips the block lean up; corrected UP close must anchor 0501/0504).",
+      "handoff_in_used": "Took C's 0429 exit STATE (close 2.638, chain -1 age 2, cum_from_anchor -510, close_off_low 0.30, last_hour dir -1/flow -1, high early at 04:06) + C's verbatim note that accumulation was BUILDING under the surface and 'fired on the D/B days after me'. Read: a fresh, non-over-extended DOWN chain into the print = counter-print reversal, and the built-up buy is primed to deliver AT my print. This did NOT change direction (already up); it TIGHTENED magnitude - the spent-down base + confirmed built-up buy earns the full aligned ph1 (+670) AND the covering ph2 (+650), so I remove the round-1 conservative withholding and derive to the exact phase-px-sum close +1230 (from +1200). Timing confirmed by the incoming last-hour-down / off-low-0.30 close: the pre-print dip extends into the 08:04 morning low before the 10:30 print launch.",
+      "handoff_out": {
+        "prior_date": "20260430",
+        "receiving_owner": "E",
+        "boundary_kind": "overnight",
+        "prior_exit_state": {
+          "close_px": 2.761,
+          "open_px": 2.638,
+          "day_move_usd": 1230,
+          "last_hour_dir": 1,
+          "last_hour_signed_flow": -1,
+          "low_et": "08:04",
+          "high_et": "12:40",
+          "close_off_low_frac": 0.84,
+          "low_late": false,
+          "high_late": false
+        },
+        "chain_polarity": 1,
+        "chain_age_sessions": 1,
+        "cum_from_anchor_usd": 720,
+        "prior_owner_read": {
+          "owner": "D",
+          "continuation_vs_reversal": "reversal (post-print re-anchor UP; cascade root corrected)",
+          "turn_time_et": "08:04",
+          "trend_vs_chop": "trend_up_with_covering_ph2_and_reactive_afternoon_giveback",
+          "exit_type": "covering_delivery_up_with_partial_giveback",
+          "monday_bias": "n/a (feeds Friday 0501)",
+          "mbo_verdict": "Print delivered UP; chain flipped DOWN->UP (polarity +1, age 1). ph1 aligned buy (+670) + ph2 covering (+650, sell absorbed under rising price) = day-move +1230 derived from the phase px sum, honest close. The peak was +1560 at 12:40 giving back to the +1230 close = the covering fuel is PARTLY SPENT; the reactive give-back tail is real. 0501 (Fri, E) inherits the UP chain + the 2.761 close, but should NOT extend the full covering move - expect give-back risk into the Friday exit; size the residual overnight up-carry modestly, not a fresh chain leg.",
+          "confidence": {"overall": 0.82, "direction": 0.85, "magnitude": 0.72, "timing": 0.7}
+        }
+      },
+      "mbo_verdict": "Print delivered UP. Over-extension gate DID NOT apply (chain into print was down = counter-print reversal, confirmed by C's incoming state). Post-print re-anchor sets direction UP; magnitude TIGHTENED to +1230 (from round-1 +1200) - the handoff-confirmed spent-down base + built-up buy earns the full aligned ph1 + covering ph2, deriving the exact phase-px-sum close; the peak-to-close give-back tail stays withheld. This is the cascade root - the corrected UP close anchors 0501/0504."
+    },
+    {
+      "date": "20260507",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_direction": "two_sided_down",
+      "blind_net_usd": -120,
+      "posterior_direction_by_horizon": {"reopen": "flat", "pre_print": "down", "print_1030": "up", "midday": "up", "close": "up"},
+      "expected_magnitude_usd": 720,
+      "expected_magnitude_band_usd": [620, 830],
+      "onset_time_et": "10:30",
+      "turn_time_et": "08:44",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "reversal",
+      "path_p50_curve": [
+        [18.0, 0], [20.0, -15], [22.0, -40], [2.0, -110], [6.0, -260], [8.0, -370], [9.5, -240], [10.5, 320], [11.0, 520], [12.0, 780], [12.3, 900], [14.25, 790], [17.0, 720]
+      ],
+      "confidence": 0.78,
+      "weight_assigned": {"blind": 0.12, "causal_mbo": 0.88},
+      "evidence_used": [
+        "HANDOFF: C's 0506 exit note - 'buy-absorption-FAILING down' - the buy that failed on 0506 delivers at my print; the incoming down chain is the reversal base",
+        "HANDOFF: incoming state is a fresh DOWN chain into the print closing NEAR ITS LOW (close 2.714, cum 250, age 2, off_low 0.24, last_hour dir -1/flow -1) = clean, non-over-extended COUNTER-print reversal setup",
+        "phase table: ph1 aligned (sflow +554, px +800) = print delivered UP strongly with buy conviction, earned in full off the spent-down base",
+        "ph2 held (sflow -1105, px 0) = sell absorbed, price held = no give-back in the phase sum, the up move sticks",
+        "turn_up mag 1110 off the 08:44 pre-print low; onset 10:30 = the print launch",
+        "phase px sum -80+800+0 = +720 derives the whole-day CLOSE from measurable state (tightened off the conservative round-1 +710 now the incoming near-low close earns the full ph1)"
+      ],
+      "evidence_rejected": [
+        "blind two_sided_down/-120 - refuted by the aligned ph1 up delivery (direction FLIP)",
+        "total_sflow -544 as a DOWN signal - rejected: ph2 sell absorbed with price flat = covering/held, not directional selling",
+        "the peak-to-close give-back (high_exc +980 at 12:19 -> close +720) - reactive tail, not claimed; I derive only the +720 close"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer stood down (no book_trustworthy verdict) - trade-flow read only",
+        "raw div/imb NOT used to fade the print - the aligned ph1 delivery governs"
+      ],
+      "selection_reason": "D owns EIA-Thursday print days; 0507 required a DIRECTION FLIP from the blind's two-sided-down to up via the post-print re-anchor.",
+      "handoff_in_used": "Took C's 0506 exit STATE (close 2.714, chain -1 age 2, cum_from_anchor 250, close_off_low 0.24, last_hour dir -1/flow -1, high early at 02:42) + C's verbatim note 'buy-absorption-FAILING down'. Read: a fresh DOWN chain into the print, NOT over-extended (cum only 250), closing NEAR its low (off_low 0.24) = a clean counter-print reversal base; the buy that was failing/absorbed on 0506 delivers at my print. This did NOT change direction (already up); it TIGHTENED magnitude - the near-low incoming close means the pre-print dip is fully spent, so the aligned ph1 (+800) is earned in full and I derive to the exact phase-px-sum close +720 (from +710). Timing confirmed by the incoming last-hour-down / off-low-0.24 close: the dip extends into the 08:44 morning low before the 10:30 print launch.",
+      "handoff_out": {
+        "prior_date": "20260507",
+        "receiving_owner": "E",
+        "boundary_kind": "overnight",
+        "prior_exit_state": {
+          "close_px": 2.787,
+          "open_px": 2.715,
+          "day_move_usd": 720,
+          "last_hour_dir": 1,
+          "last_hour_signed_flow": -1,
+          "low_et": "08:44",
+          "high_et": "12:19",
+          "close_off_low_frac": 0.81,
+          "low_late": false,
+          "high_late": false
+        },
+        "chain_polarity": 1,
+        "chain_age_sessions": 1,
+        "cum_from_anchor_usd": 980,
+        "prior_owner_read": {
+          "owner": "D",
+          "continuation_vs_reversal": "reversal (post-print re-anchor UP; blind two-sided-down flipped)",
+          "turn_time_et": "08:44",
+          "trend_vs_chop": "trend_up_with_ph2_held_and_reactive_afternoon_giveback",
+          "exit_type": "aligned_print_delivery_up_at_block_crest",
+          "monday_bias": "n/a (feeds Friday 0508)",
+          "mbo_verdict": "Print delivered UP; chain flipped DOWN->UP (polarity +1, age 1). ph1 aligned buy (+800) + ph2 held flat (sell absorbed, no give-back in the sum) = day-move +720 derived from the phase px sum, honest close. CREST WARNING: cum_from_anchor is now +980 (block high), and the peak was +980 at 12:19 giving back to the +720 close = the up-thrust is cresting and the covering/buy fuel is nearly spent. 0508 (Fri, E) inherits the UP chain + the 2.787 close, but at a crest with a reactive give-back tail: expect a Friday give-back / reversal-down risk into the exit; do NOT extend the up move as a fresh chain leg - the exhaustion state, not the day-net, is what you inherit.",
+          "confidence": {"overall": 0.78, "direction": 0.82, "magnitude": 0.7, "timing": 0.68}
+        }
+      },
+      "mbo_verdict": "Print delivered UP (aligned ph1 +800 on buy flow, ph2 held). Over-extension gate DID NOT apply (chain into print was down = counter-print reversal, confirmed by C's incoming near-low exit state). Post-print re-anchor FLIPS the blind's two-sided-down to UP; magnitude TIGHTENED to +720 (from round-1 +710) - the handoff-confirmed spent-down / near-low base earns the full aligned ph1, deriving the exact phase-px-sum close; the peak-to-close give-back tail stays withheld. Exit is a block CREST (cum +980) - the outgoing handoff flags Friday give-back risk to E."
+    }
+  ],
+  "summary": "Round 2 tightened both owned EIA prints off the incoming C-exit chain, direction unchanged (up on both - no new evidence to flip). 0430: the incoming state (fresh down chain, cum -510, off_low 0.30) plus C's note that built-up accumulation 'fired on the D/B days after me' confirmed the counter-print reversal delivered AT my print; the spent-down base earns the full aligned ph1 + covering ph2, so magnitude tightened +1200 -> +1230 (the exact phase-px-sum close; peak give-back withheld). This stays the cascade root. 0507: the incoming state (fresh down chain, cum 250, off_low 0.24 = near-low close) plus C's 'buy-absorption-FAILING down' note confirmed the reversal base; the near-low incoming close earns the full aligned ph1 (+800), so magnitude tightened +710 -> +720 (exact phase-px-sum close). Timing on both confirmed (not front-run) by the incoming last-hour-down/off-low close extending the pre-print dip into the 08:04 / 08:44 morning low before the 10:30 print launch. Outgoing handoffs emitted for both: 0430 -> E (0501) as a partially-spent covering delivery (give-back risk); 0507 -> E (0508) as a block CREST (cum +980) with an explicit Friday give-back/reversal warning."
+}

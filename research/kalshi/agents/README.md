@@ -137,3 +137,20 @@ S104: the G15 MBO refine ran as 5 day-class specialists (blind 526 -> r1 72 -> r
 Greg ordered the 5-specialist structure for BOTH phases + the Friday/Monday cascade cleanup (brain
 s102.5, 47 plays). S104.1: Sunday fold + E->A->B week-open chain + coordinator Friday sign-off.
 From here we spin these files unchanged; only the brain + group data move.
+
+S105 (brain -> s102.9): the mid-block under-action fixes (turn/exhaustion gate, EIA over-extension gate,
+accumulation arm, right-the-ship, covering-self-limiting) + the DATA DOCTRINE build (the blind now gets
+the full non-price MBO+L1 flow read - flow_read.py - masked only on price) + the sequenced E->A->B panel
++ the two-round HE24->HE1 coordination for both runs. Forward record:
+- **G17**: blind 5/10 -> refine r1 10/10 (err 24) -> r2 10/10 (err 11).
+- **G18** (first UN-HAMSTRUNG blind, covering-rally block): blind 5/10 BUT net P&L +440 (a naive
+  always-short LOST -610) - the blind sized its catches (0430, 0505) bigger than its misses. **P&L is the
+  scoreboard, not direction hit-rate.** Refine r1 10/10 (err 30) - flipped every covering-up day the
+  price-walled blind called down. The un-hamstrung read demonstrably sharpened reasoning (D split a
+  same-net-flow pair via big_print_b_share; C differentiated 3 same-b_share sessions) - NECESSARY but not
+  sufficient: the block-level regime prior still leaned bearish vs a covering rally (the open gap).
+- **The covering-absorption discriminator** (new play, G18 A/B/C/E convergent): signed-flow-vs-price
+  CONVICTION, not raw imbalance, sorts direction - SELL absorbed under rising price = covering -> UP;
+  BUY absorbed under falling price = failing -> DOWN; ALIGNED = delivered. A crowded short covering-
+  absorbed at the Friday close reprices UP on the Monday catch-up (buy-absorption at the close is a
+  directional tell, not exhaustion).
