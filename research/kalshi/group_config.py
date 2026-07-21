@@ -9,6 +9,7 @@ so the ACTUAL curve plots at the right wall time; the mark additionally (a) flag
 (b) tells the 2-hourly reopen grid the day is 23h (spring) or 25h (fall), so the path grid is not
 misaligned across the transition.
 """
+import os
 
 MULT = 10000.0
 
