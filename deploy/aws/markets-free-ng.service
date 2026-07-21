@@ -1,6 +1,6 @@
 # Public/free Henry Hub driver snapshot: EIA + NOAA/NWS + NRC. Independent of Databento jobs.
 [Unit]
-Description=Markets free NG drivers collector (EIA NOAA/NWS and NRC)
+Description=Markets free NG drivers collector (EIA NOAA/NWS NRC and daylight enrichment)
 After=network-online.target
 Wants=network-online.target
 
@@ -10,7 +10,9 @@ User=@RUN_USER@
 WorkingDirectory=@MARKETS_DIR@
 EnvironmentFile=-/etc/markets/markets.env
 ExecStart=/usr/bin/python3 research/kalshi/free_ng_data_collector.py \
-  --out /var/lib/markets/free_ng/latest.json \
+  --out /var/lib/markets/free_ng/latest.json
+ExecStart=/usr/bin/python3 research/kalshi/enrich_free_ng_snapshot.py \
+  --path /var/lib/markets/free_ng/latest.json \
   --s3-bucket bento-568968024170-us-east-2-an \
   --s3-key drivers/free_ng/latest.json
 ExecStart=/usr/bin/python3 research/kalshi/nrc_reactor_collector.py \
