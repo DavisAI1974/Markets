@@ -20,9 +20,20 @@ MULT = gc.MULT
 _DOW = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 
+def _find_report(fname):
+    """Autonomous-safe: find a specialist report wherever the agent wrote it (canonical FC, or a
+    repo-root forecasts/ that a differently-cwd'd agent may have used). Report routing is the
+    coordinator's job - we do not babysit paths."""
+    for d in (FC, os.path.join(HERE, "..", "..", "forecasts")):
+        p = os.path.join(d, fname)
+        if os.path.exists(p):
+            return p
+    return None
+
+
 def load_specialist(gid, tag):
-    p = os.path.join(FC, f"grp{gid[1:]}_blind_{tag}.json")
-    if not os.path.exists(p):
+    p = _find_report(f"grp{gid[1:]}_blind_{tag}.json")
+    if p is None:
         return None
     return {str(x["date"]).replace("-", ""): x for x in json.load(open(p)).get("days", [])}
 
