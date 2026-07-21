@@ -4,9 +4,22 @@ on:
   push:
     branches:
       - chatgpt/rt-ng-mbp10-collector
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_live_*.py'
+      - 'research/kalshi/ng_rt_*.py'
+      - 'research/kalshi/tests/test_ng_rt_*.py'
+      - 'desk/**'
+      - 'deploy/aws/markets-ng-live*'
+      - 'deploy/aws/markets-desk.service'
+      - 'deploy/aws/install-ng-live.sh'
+      - 'deploy/aws/setup.sh'
+      - '.github/workflows/ng_live_build_ci.yml'
   pull_request:
     paths:
       - 'research/kalshi/ng_live_*.py'
+      - 'research/kalshi/ng_rt_*.py'
+      - 'research/kalshi/tests/test_ng_rt_*.py'
       - 'desk/**'
       - 'deploy/aws/markets-ng-live*'
       - 'deploy/aws/markets-desk.service'
@@ -31,9 +44,17 @@ jobs:
         run: |
           python -m py_compile \
             research/kalshi/ng_live_collector.py \
+            research/kalshi/ng_live_operator.py \
             research/kalshi/ng_live_recover.py \
             research/kalshi/ng_live_watchdog.py \
+            research/kalshi/ng_rt_feature_state.py \
+            research/kalshi/tests/test_ng_rt_feature_state.py \
             desk/app.py
+      - name: Test MBO operator and refine feature-state contract
+        run: |
+          python research/kalshi/ng_live_operator.py --selftest
+          python research/kalshi/ng_rt_feature_state.py
+          python -m unittest -v research/kalshi/tests/test_ng_rt_feature_state.py
       - name: Import desk application
         run: python -c "from desk.app import app; assert app.title == 'DavisAI Markets Desk'"
       - name: Validate shell scripts
