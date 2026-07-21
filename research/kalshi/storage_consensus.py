@@ -302,8 +302,9 @@ def selftest() -> bool:
                     print(f"  VIOLATION: pre_print row captured at/after print "
                           f"{rec['print_date']} ({e['source']} {ts})")
 
-    # 3) daily blind-wall sweep across the walked window
-    d0, d1 = dt.date(2025, 8, 15), dt.date(2026, 3, 15)
+    # 3) daily blind-wall sweep across the walked window (extended S101: the store now
+    #    covers the Mar-Jul 2026 forward hole through the 2026-07-09 print)
+    d0, d1 = dt.date(2025, 8, 15), dt.date(2026, 7, 19)
     d = d0
     while d <= d1:
         st = storage_consensus_asof(d)  # internal assertions also run here

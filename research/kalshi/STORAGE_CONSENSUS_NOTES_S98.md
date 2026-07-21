@@ -222,3 +222,104 @@ Highlights, exact values:
   mapping); this store carries both `nominal_release_date` (join key, matching eia_surprise)
   and the true `print_date`/`print_datetime_utc`. Any join by release date must pick the right
   key - the four holiday weeks differ.
+
+---
+
+# S101 EXTENSION - THE FORWARD HOLE CLOSED (Mar 2026 - Jul 2026)
+
+Build date 2026-07-21. Builder: STEP-C data-feed extension agent. The section-7 NAMED HOLE
+(prints after 2026-03-05 with no consensus rows, consensus_poll.py live only since
+2026-07-12) is closed: 18 records appended, prints 2026-03-12 .. 2026-07-09 (report weeks
+2026-03-06 .. 2026-07-03). Store now 47 reports, consensus 47/47. Pre-existing 29 records
+byte-unchanged (asserted against the S3 copy `consensus/storage_consensus.json` at write
+time). Selftest PASS, blind-wall violations 0; the daily sweep was extended to
+2025-08-15..2026-07-19 to cover the new span.
+
+## Schedule
+
+EIA schedule page (re-fetched 2026-07-21) lists NO exceptions Mar-Jul 2026: Memorial Day is
+a Monday (never shifts), Juneteenth 2026 falls Friday, July 4 falls Saturday. All 18 prints
+are normal Thu 10:30 ET (EDT -> 14:30Z). Independently confirmed three ways: (a) zero
+pre-print TE snapshots showing an actual across all 61 snapshots (the S98 leak test,
+re-run); (b) investing.com occurrence_time = T14:30:00Z on every hole print; (c) the TE
+first-post-print snapshot dates.
+
+## Sources
+
+1. **TradingEconomics via Wayback** (primary, same near-daily ~06:22 UTC crawl as S98):
+   61 unique snapshots 2026-03-06 .. 2026-07-10 fetched and extracted
+   (`raw/te_extract_s101_hole.json`). Final frozen consensus recovered for all 18 weeks
+   (frozen verified: single value across every post-print snapshot, 0 instabilities);
+   strictly-pre-print print-morning captures for 9 weeks (Mar 12, Mar 26, Apr 2, Apr 23,
+   May 21, Jun 4, Jun 11, Jun 25, Jul 2 -- see table).
+2. **investing.com via Wayback** (second house, ALL 18 weeks). THE NEW FIND: the 2026 React
+   build embeds a full `occurrences` history array (forecast + actual per past release), not
+   just the latest-release header the S98 build could read. Snapshots 20260604145143
+   (rows through Jun 4), 20260611151155 (through Jun 11), and 20260721002122 (through
+   Jul 16; this build triggered the Wayback save) cover every hole week
+   (`raw/investing_extract_s101_hole.json`). Forecast values frozen across snapshots on
+   every overlap. Cross-validation is embedded in the 0721 snapshot itself: its Jul 16
+   forecast 45B equals our own consensus_poll collector row (the S98 live-route check, now
+   archived).
+3. **ForexFactory: structurally DEAD for this window** -- zero Wayback captures of the event
+   page or usable weekly-calendar pages Mar-Jul 2026 (CDX empty). Named gap, not proxied.
+4. EIA schedule page + `data/eia_surprise.json` (read-only) for current-vintage actuals.
+
+## Per-week table (consensus = TE final frozen; pre = strictly-pre-print TE capture;
+inv = investing.com forecast; printed = as-printed actual, TE and investing identical on
+all 18; cur = current vintage)
+
+| print | report wk | consensus | pre | inv | dis | printed | cur |
+|---|---|---|---|---|---|---|---|
+| 2026-03-12 | 03-06 | -42 | -42 (print-morning) | -42 | 0 | -38 | -38 |
+| 2026-03-19 | 03-13 | 31 | None | 39 | 8 | 35 | 34 |
+| 2026-03-26 | 03-20 | -44 | -49 (print-morning) | -49 | 5 | -54 | -54 |
+| 2026-04-02 | 03-27 | 34 | 38 (print-morning) | 38 | 4 | 36 | 33 |
+| 2026-04-09 | 04-03 | 46 | None | 41 | 5 | 50 | 49 |
+| 2026-04-16 | 04-10 | 51 | None | 55 | 4 | 59 | 60 |
+| 2026-04-23 | 04-17 | 94 | 96 (print-morning) | 96 | 2 | 103 | 103 |
+| 2026-04-30 | 04-24 | 80 | None | 83 | 3 | 79 | 79 |
+| 2026-05-07 | 05-01 | 74 | None | 72 | 2 | 63 | 63 |
+| 2026-05-14 | 05-08 | 85 | None | 86 | 1 | 85 | 85 |
+| 2026-05-21 | 05-15 | 95 | 96 (print-morning) | 96 | 1 | 101 | 101 |
+| 2026-05-28 | 05-22 | 96 | None | 96 | 0 | 92 | 92 |
+| 2026-06-04 | 05-29 | 101 | 99 (print-morning) | 99 | 2 | 95 | 95 |
+| 2026-06-11 | 06-05 | 101 | 101 (print-morning) | 101 | 0 | 108 | 108 |
+| 2026-06-18 | 06-12 | 75 | None | 82 | 7 | 73 | 73 |
+| 2026-06-25 | 06-19 | 74 | 67 (print-morning) | 67 | 7 | 76 | 76 |
+| 2026-07-02 | 06-26 | 81 | 81 (print-morning) | 81 | 0 | 87 | 87 |
+| 2026-07-09 | 07-03 | 49 | None | 60 | 11 | 61 | 61 |
+
+## Gaps, named individually
+
+- NO week in the hole is missing a consensus (18/18 recovered, two houses on every week).
+- Weeks with no strictly-pre-print capture (final known only from the frozen post-print
+  display): 2026-03-19, 2026-04-09, 2026-04-16, 2026-04-30, 2026-05-07, 2026-05-14,
+  2026-05-28, 2026-06-18, 2026-07-09.
+- n_estimates / range_low / range_high: None on every week (unchanged S98 gap; Reuters /
+  The Desk histories remain paywalled and unarchived).
+- ForexFactory third house: unobtainable for the whole window (zero Wayback coverage).
+- The investing.com rows are all POST-print captures (frozen-forecast evidence); the only
+  strictly-pre-print evidence in the window is TE's.
+
+## Cross-check observations (nothing averaged)
+
+- The S98 mechanical observation REPRODUCES: on every week where a TE print-morning
+  pre-print value exists alongside investing's frozen forecast, the two are IDENTICAL
+  (-42, -49, 38, 96, 96, 99, 101, 67, 81 -- 9/9), while TE's final sometimes moves after
+  the morning capture (Mar 26 -49 -> -44; Apr 2 38 -> 34; Jun 25 67 -> 74). Consistent
+  with investing freezing an earlier survey state; the houses are NOT independent draws.
+- Largest house disagreement: 2026-07-09, TE 49 vs investing 60 (11 Bcf); print 61.
+  Also 2026-03-19 (8), Jun 18 / Jun 25 (7 each).
+- As-printed actuals: TE and investing agree exactly on all 18; current vintage differs on
+  4 (Mar 19 +1, Apr 2 +3, Apr 9 +1, Apr 16 -1), zero on the other 14.
+
+## Caveats
+
+1. Same S98 caveat class applies: for the 9 no-pre-capture weeks the consensus evidence is
+   the frozen post-print display (freeze verified programmatically, 0 instabilities).
+2. investing.com occurrences `forecast` is taken as that house's final consensus; on every
+   S98-era overlap it matches the values the S98 build extracted from server-rendered
+   mirrors (e.g. Jan 22 -90 = FF -90; Mar 5 -122; Feb 19 -148), corroborating the field.
+3. The 2026-06-04 record carries TE final 101 vs its own print-morning 99 -- the pre-vs-
+   final movement class documented in S98, carried as-is.
