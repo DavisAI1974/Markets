@@ -58,7 +58,9 @@ adjudicates + merges; Opus workers run blind/refine; ChatGPT/people do off-repo 
    blind(30-70%)-vs-refine(90-100%) gap; the magnitude error FLIPPING SIGN block-to-block from
    mis-scoped lessons; the selector averaging bimodal splits; the under-weighted order-flow direction
    nowcast. 4 candidate root causes + 5 questions. Greg is handing it to ChatGPT for insight to fold in
-   before G17.
+   before G17. Companion `NG_FORECASTER_PROBLEM_MEMO_S103_ADDENDUM_FILES.md` = the file index behind every
+   claim (brain + backups, agents/ directives, G16 panel/synthesis/refine/state/scores, G15 prior block);
+   the memo also names the agent files inline (Section 1).
 
 ## IN FLIGHT AT CLOSE
 - BOX L1 pull UNTETHERED (~105/250 days at S103 open, up to ~2025-11-20, $0.00 in-sub, alive). Check
