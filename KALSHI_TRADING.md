@@ -1,5 +1,24 @@
 # KALSHI TRADING — file index
 
+## NEW IN S101 (2026-07-21, current) — G12+G13 walked, day-class doctrine, rest-of-year data machine
+
+- `research/kalshi/run_g12_rt_s101.py` / `run_g13_rt_s101.py` — G12/G13 actuals (rt.json) +
+  continuous renders on the walked NG.n.0 basis from the local n0 store (the run_g11 precedent).
+- `research/kalshi/pull_july_2026_cl.py` — CL July 2026 raw top-up (CL year store ended 06-30).
+- `deploy/aws/pull_rest_2026.py` — THE REST-OF-YEAR DATA MACHINE (detached box job): NG.n.0/n.1
+  trades Mar->present, NG.FUT + ON/LNE.OPT + CL.FUT + LO.OPT statistics/definitions raw, CL.n.0/n.1
+  full year. Resumable, cost-guarded ($1.10 total measured).
+- `deploy/aws/cl_redecode_runner.py` — the 51 CL stub-Monday FREE redecode from done Databento
+  jobs (box-detached; window closes ~Aug 12-14).
+- `research/kalshi/knowledge/ng_brain.json` — s101.6, 27 plays (backups: s101.2/s101.5;
+  proposals: s101.3/s101.6 kept as review artifacts).
+- forecast_harness.py additions: `--mask-after` one-shot masking fix; squeeze_watch prompt-expiry
+  fields + unwind_watch.
+- Extended stores (S3-pushed): storage_consensus (hole closed, 47 reports), steo_vintage (11
+  vintages), flow_calendar + solar_calendar (-> 2026-12-31), vol_regime (-> Mar 13), n0 tape
+  (-> Mar 13 local; box extends to present on S3).
+- `SESSION_HANDOFF_2026-07-21_S101.md` / `KICKOFF_2026-07-21_S102.md` — the record + the next box.
+
 ## NEW IN THE DASHBOARD SESSION (2026-07-20, current)
 
 - `dashboard/` — the Mission Control READ PLANE (dashboard wiring session, branch

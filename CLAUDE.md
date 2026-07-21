@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-20, Session 100)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 101)
 
 ## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
 
@@ -15,6 +15,29 @@
 - Session ritual: obtain pair -> `~/.aws/credentials` -> STS get-caller-identity via `bash -lc`
   (print pass/fail + account tail ONLY, never the secret) -> proceed. If STS fails on a
   known-good key, suspect the env-var override FIRST, not the key.
+
+**S101 — TWO GROUPS WALKED + THE DAY-CLASS DOCTRINE + THE REST-OF-YEAR DATA MACHINE (read
+`SESSION_HANDOFF_2026-07-21_S101.md` + `KICKOFF_2026-07-21_S102.md` [G14 = S102's opener, FRESH
+session]):** **G12** blind 6/12 (+5480; the -7080 0201 dead-sponsor unwind gap = the walk's
+largest) -> refine v2 **11/12 / -220** (gap OWNERSHIP anchor_structural>weekend_cycle>chain_drift
++ the DEAD-SPONSOR SIZING RULE, gap=-E of the post-expiry echo run, 13-gap back-check clean);
+**G13** (the squeeze test, FIRST MASKED state) blind 4/12 (+2800; NO squeeze fired - thin
+bleed-down broke the 3.159 shelf) -> refine **12/12 / -250** + the SQUEEZE-FINGERPRINT
+retrospective (F1 failed-counter-flush conjunction n=3, F2 thin-regime ratchet confirm; pre-onset
+primary per Greg). Brain **s101.2 -> s101.6, 27 plays**, all merges Greg-approved: DAY-CLASS =
+the OVERARCHING descriptor (classify first, score only within class, "no Mondays scoring
+Fridays"; Monday 06-10 ET catch-up window; holidays same-holiday-only w/ Sunday-like default;
+extended 3-day weekends own sub-class; falsifiable), SEASONAL SALIENCE SLIDER (weather max
+winter/summer, shoulders -> flows/maintenance/storage-trajectory; G14 = first shoulder test),
+pricing-time rule (MOS appearance caller demoted 0/3), chain-state-is-tape-state, masking fix
+(--mask-after, proven G13). DATA: the REST-OF-YEAR MACHINE detached on the box ($1.10 total:
+NG+CL n0/n1 trades, all statistics/definitions raw incl. options); CL 51 stub-Mondays FREE
+redecode running ($0 verified, window ~Aug 12-14); consensus hole CLOSED 18/18; STEO apr-jul
+vintages; calendars -> Dec 31. FLAGS: the March n.0-vs-1008 BASIS DIVERGENCE (G14 setup decides);
+MOS extension possibly still in flight (S102 status-check); **pyth sunset Jul 31 = TEN DAYS,
+ESCALATE**. Venues: POLYMARKET STRUCK (intl geoblocked; US banned in Ohio); Kalshi-Ohio =
+sports-only fight (our commodity leg clear); NEW third-lane candidate = CME NG event contracts
+(on Globex, our data venue). **G14 (Mar 1-13) IS GO - from a fresh S102.**
 
 **S100 — THE GATE CLOSED + THE LIVE LOOP'S FIRST BREATH (read
 `SESSION_HANDOFF_2026-07-20_S100.md` + `KICKOFF_2026-07-21_S101.md` [G12 = S101's opener, FRESH
