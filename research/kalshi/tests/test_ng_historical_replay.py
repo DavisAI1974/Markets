@@ -176,6 +176,34 @@ class HistoricalReplayTests(unittest.TestCase):
         with self.assertRaises(ReplayError):
             replay_events(rows, manifest=self.manifest, blind_prior=self.prior)
 
+    def test_same_timestamp_trade_precedes_completed_mbo_snapshot(self):
+        identity = base_identity()
+        trades = [event(identity, "definition", 1, 1)]
+        for sequence in range(1, 6):
+            trades.append(event(identity, "trade", sequence + 1, sequence, price=3.0, size=1, side="B"))
+        trades.append(event(identity, "trade", 20, 6, price=3.001, size=1, side="B"))
+        mbo = [
+            event(
+                identity,
+                "mbo",
+                20,
+                1,
+                action="A",
+                side="B",
+                size=10,
+                order_id=1,
+                price=3.0,
+                flags=F_LAST,
+            )
+        ]
+        result = replay_events(
+            merge_sorted_sources([trades, mbo]),
+            manifest=self.manifest,
+            blind_prior=self.prior,
+        )
+        state = result["streams"][0]["states"][0]
+        self.assertEqual(state["evidence"]["quality_counts"]["trade_events_60s"], 6)
+
     def test_merge_rejects_backwards_source(self):
         identity = base_identity()
         source = [
