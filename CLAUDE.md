@@ -44,7 +44,11 @@ view merges mismatched ladders, unfixed, signal core owns it); phase MD measured
 ON-LNE gap inside noise = Black-76 justified); **G7-G11 settle-IV replay RUN**
 (`options_replay.py`, blind calls translated to verticals, 51 events, squeeze-short declines
 exercised; settle-marked, execution unmeasured). G12/G13 join after S101 walks them; Feb-window
-stores (md_measures/replay inputs) must NOT feed the S101 blind agent.
+stores (md_measures/replay inputs) must NOT feed the S101 blind agent. **S100.2 close-out: the
+live-era bridge LANDED at $0.00 in-sub (surface now 180 sessions Oct 31 - Jul 17, S3
+options_iv/ + options_ng_bridge/); build record = the S100.2 block atop
+OPTIONS_COACH_RESEARCH_S100.1.md; S101's kickoff carries a .1 revision block (blind hygiene +
+the combined-pin-view defect + per-group replay instruction).**
 
 **S99 — FOUR MORE GATE FEEDS IN ONE SESSION + THE MONDAY REPAIR (read
 `SESSION_HANDOFF_2026-07-20_S99.md` [SECURITY block FIRST] + `KICKOFF_2026-07-20_S100.md`):**

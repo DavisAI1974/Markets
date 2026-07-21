@@ -1,5 +1,45 @@
 # OPTIONS COACH RESEARCH - THE THIRD COACH: NYMEX NG OPTIONS (S100.1, 2026-07-20)
 
+## S100.2 REVISION - BUILD RECORD (same day; Greg green-lit E5 items 1-5, all DELIVERED)
+
+Everything below section 0 was written as proposal; this block records what is now BUILT and
+MEASURED, for review alongside the next blind runs (G12/G13, S101).
+
+- E2 items 1-2 BUILT: `options_iv_surface.py` - 180 sessions Oct 31 - Jul 17 (81 winter +
+  99 live-era bridge), 687,866 settle IVs, LNE backbone, exact per-month futures settles both
+  eras, surface_asof D-1 wall, selftest 10/10. Store S3 `options_iv/`.
+- MEASURED SCALE TRAP (load-bearing for anyone touching options data): LNE strike_price
+  decodes at 1/10 dollars. Proven by matched-pair pricing: 4,804 LNE-ON pairs price within
+  median $0.0004 at scale 10 vs $1.79 at scale 1. CONSEQUENCE: phase i's COMBINED ON+LNE
+  pin view (options_surface.py `_combine`, wired into decision_state block `options_surface`)
+  merges MISMATCHED ladders - combined top-OI walls are suspect until the signal core fixes
+  it; PER-ASSET views are unaffected. Flagged for S101/G13 (the pin map is a G13 input).
+- E3 Phase MD MEASURED (`options_md_measures.py`, per-event rows stored): Samuelson sized
+  (winter med ATM 0.32 at 181d+ -> 0.75 inside 30d, 1-10d p90 1.81); rr25 POSITIVE every
+  winter cell (backwardation|squeeze med 0.228 vs |normal 0.090 vs contango 0.037) but
+  summer rr25 ~ -0.015 (regime split real; contango cells thin, said so); event-vol: winter
+  subset day-after +0.019 vs all-span ~0 (34 events, never pooled); IV-vs-RV: 56/75 IV
+  above, med +0.19, p10 -1.09 (the fat left tail = the defined-risk constraint's evidence);
+  ON-LNE ATM gap med 0.0002 across 177 sessions -> Black-76-everywhere justified BY
+  MEASUREMENT (C3 CLOSED).
+- E4 REPLAY RUN (`options_replay.py`, G7-G11 blind calls only, v1 vertical menu, leakage
+  invariant 59/59, squeeze-short declined 6x): 51 events on the OPTIONS BOOK ledger.
+  Footnotes: G7 -632 / G8 +930 / G9 +3,908 / G10 -12 / G11 +8,842. THE READ: G11 (the
+  futures book's blind lean MISS) was the options translation's best block - defined-risk
+  verticals capped wrong-side days near the debit while squeeze days paid multiples
+  (best event +5,297). G7 chop bled theta (verticals in give-back blocks = known-bad cell).
+  Settle-marked, execution unmeasured, not an edge claim.
+- E2 item 5 DELIVERED at $0.00 (in-subscription, get_cost-gated): bridge raws Mar-Jul 2026
+  (ON/LNE defs+stats + NG.FUT stats) at S3 `options_ng_bridge/`; the options clock now
+  aligns with the KXNATGASD life.
+- E5 dispositions: 4 (intraday quotes) deferred until the replay names paying cells;
+  6 (weeklies) open - NOT captured by the phase-i parent pull, needs a defs-only pull;
+  7 (CSOs) held; 8 (three-coach spec amendment) held until Greg judges the replay earned it.
+- BLIND-RUN HYGIENE (binding on S101): data/options_ng/* and S3 options_iv/ carry UNWALLED
+  Feb-window realized data (IV paths, replay marks). The G12/G13 blind agent must NOT read
+  them; the G12/G13 options replay runs AFTER those blinds complete (extend GROUPS in
+  options_replay.py).
+
 Foundational research for a THIRD coach over the same shared signal core: the NYMEX NG OPTIONS
 coach. Greg's steer, verbatim emphasis: "this is where our forward curves really matter" - the
 forward curve is the UNDERLYING of this entire lane, not context. NG options are options on
