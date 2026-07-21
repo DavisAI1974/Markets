@@ -86,25 +86,66 @@ def build_anchor(anchor_day):
     return anchor
 
 
+# expected Kalshi-underlying instrument per leg (NGJ26/April 1008 pre-roll, NGK26/May 996 post-roll)
+EXPECT_IID = {d: (1008 if d <= "20260319" else 996) for d in CONTRACT}
+
+
+def _l1_probe(day):
+    """Read the L1 jsonl.gz header rows: presence, readability, instrument_id, trade count, basis check."""
+    l1 = os.path.join(L1_DIR, f"NG_{day}.jsonl.gz")
+    out = {"l1_present": os.path.exists(l1),
+           "l1_bytes": os.path.getsize(l1) if os.path.exists(l1) else 0,
+           "l1_readable": False, "l1_instrument_id": None, "l1_n_rows": 0,
+           "l1_n_trades": 0, "l1_basis_correct": None}
+    if not out["l1_present"]:
+        return out
+    try:
+        iids, nrows, ntr = set(), 0, 0
+        with gzip.open(l1, "rt") as fh:
+            for line in fh:
+                nrows += 1
+                if '"action": "T"' in line:
+                    ntr += 1
+                if nrows <= 200000:  # sample instrument ids from a bounded head for speed
+                    try:
+                        r = json.loads(line)
+                        if r.get("instrument_id") is not None:
+                            iids.add(int(r["instrument_id"]))
+                    except json.JSONDecodeError:
+                        pass
+        out["l1_readable"] = True
+        out["l1_n_rows"] = nrows
+        out["l1_n_trades"] = ntr
+        out["l1_instrument_id"] = sorted(iids)
+        out["l1_basis_correct"] = (iids == {EXPECT_IID.get(day)}) if iids else None
+    except Exception as ex:
+        out["l1_error"] = str(ex)[:120]
+    return out
+
+
 def manifest_entry(day):
     mbo = os.path.join(MBO_DIR, f"NG_{day}.dbn.zst")
-    l1 = os.path.join(L1_DIR, f"NG_{day}.jsonl.gz")
-    e = {"date": day, "contract": CONTRACT.get(day),
-         "mbo_present": os.path.exists(mbo), "l1_present": os.path.exists(l1),
-         "mbo_bytes": os.path.getsize(mbo) if os.path.exists(mbo) else 0,
-         "l1_bytes": os.path.getsize(l1) if os.path.exists(l1) else 0}
+    e = {"date": day, "contract": CONTRACT.get(day), "expected_instrument_id": EXPECT_IID.get(day),
+         "mbo_present": os.path.exists(mbo),
+         "mbo_bytes": os.path.getsize(mbo) if os.path.exists(mbo) else 0}
+    e.update(_l1_probe(day))
     if e["mbo_present"]:
         recs, ident, store = _read_mbo(day)
-        acts = {}
-        for (_, a, *_rest) in recs:
-            k = str(a); acts[k] = acts.get(k, 0) + 1
+        acts, n_trades = {}, 0
+        for r in recs:
+            a = r[1]
+            k = getattr(a, "name", str(a)); acts[k] = acts.get(k, 0) + 1
+            if r[7]:
+                n_trades += 1
         ts = [r[0] for r in recs]
         e.update({"dataset": ident["dataset"], "publisher_id": ident["publisher_id"],
                   "instrument_id": ident["instrument_id"], "raw_symbol": ident["raw_symbol"],
-                  "n_mbo": len(recs), "first_event_utc": str(_et(ts[0]).tz_convert("UTC")) if ts else None,
+                  "mbo_basis_correct": ident["instrument_id"] == EXPECT_IID.get(day),
+                  "n_mbo": len(recs), "n_trades": n_trades,
+                  "first_event_utc": str(_et(ts[0]).tz_convert("UTC")) if ts else None,
                   "last_event_utc": str(_et(ts[-1]).tz_convert("UTC")) if ts else None,
                   "action_counts": acts, "chronological_ok": all(ts[i] <= ts[i + 1] for i in range(len(ts) - 1)),
-                  "flow_usable": sum(1 for r in recs if r[7]) > 20,
+                  "flow_usable": n_trades > 20,
                   "queue_usable": len(recs) > 100})
     return e
 
@@ -125,11 +166,40 @@ def replay_day(day, anchor):
     if not recs:
         return []
     t0 = recs[0][0]
-    # material boundaries: open, +60s, +5m, +15m, 2h grid, close
+    # material boundaries: open, +60s, +5m, +15m, then a 30-min cadence through close (surfaces mid-session
+    # divergence/exhaustion turns like the 0318 give-back), plus the 2h grid points and close.
     close_ts = recs[-1][0]
-    marks = sorted(set([t0, t0 + 60, t0 + 300, t0 + 900] +
-                       [t0 + 7200 * k for k in range(1, int((close_ts - t0) / 7200) + 2)] + [close_ts]))
+    grid_30 = [t0 + 1800 * k for k in range(1, int((close_ts - t0) / 1800) + 1)]
+    grid_2h = [t0 + 7200 * k for k in range(1, int((close_ts - t0) / 7200) + 2)]
+    marks = sorted(set([t0, t0 + 60, t0 + 300, t0 + 900] + grid_30 + grid_2h + [close_ts]))
     states, mi, seq = [], 0, 0
+    prev_regime, prev_expect = None, None
+
+    def _compact(fs, mark):
+        """Reduce the full feature state to a compact MATERIAL record (evidence core + transitions)."""
+        ev = fs.get("evidence", {}) or {}
+        sf = ev.get("signed_flow") or {}
+        de = ev.get("divergence_exhaustion") or {}
+        mo = ev.get("move_onset_pressure") or {}
+        q = ev.get("mbo_queue") or {}
+        av = fs.get("availability", {}) or {}
+        return {
+            "date": day, "et": str(_et(mark)), "sequence": fs.get("sequence"),
+            "as_of_s": fs.get("as_of_event_s"),
+            "onset_regime": mo.get("regime"), "onset_pressure": mo.get("value"),
+            "price_efficiency": mo.get("price_efficiency"), "activity_ratio": mo.get("activity_ratio"),
+            "imb_level": sf.get("imb_level"), "imb_flow": sf.get("imb_flow"), "mi_flow": sf.get("mi_flow"),
+            "div_expect": de.get("expect"), "div_aligned_flow": de.get("aligned_flow"),
+            "div_exhausting": de.get("exhausting"), "div_conviction": de.get("reversal_conviction"),
+            "consumed_side": q.get("consumed_side"), "far_side_recruitment": q.get("far_side_recruitment"),
+            "book_complete": q.get("book_complete"),
+            "flow_update_allowed": av.get("flow_update_allowed"),
+            "queue_update_allowed": av.get("queue_update_allowed"),
+            "stand_down_reasons": av.get("stand_down_reasons"),
+            "blind_prior_fingerprint": prior_fp, "anchor_fingerprint": anchor_fp,
+            "execution_authority": False,
+        }
+
     for (ts_s, act, side, size, oid, price, flags, isT) in recs:
         if isT and price is not None:
             op.on_trade(ts_s, price, size, side)
@@ -140,22 +210,49 @@ def replay_day(day, anchor):
                 fs = build_feature_state(blind_prior=prior, operator_snapshot=snap,
                                          instrument_identity=ident, decision_cutoff_s=marks[mi],
                                          horizon="intraday", source_mode="historical_replay", sequence=seq)
-                fs["date"] = day; fs["blind_prior_fingerprint"] = prior_fp; fs["anchor_fingerprint"] = anchor_fp
-                fs["et"] = str(_et(marks[mi]))
-                states.append(fs); seq += 1
+                rec = _compact(fs, marks[mi])
+                # tag material transitions (regime change / divergence-expect change)
+                rec["regime_transition"] = (rec["onset_regime"] != prev_regime)
+                rec["div_transition"] = (rec["div_expect"] is not None and rec["div_expect"] != prev_expect)
+                prev_regime, prev_expect = rec["onset_regime"], rec["div_expect"]
+                states.append(rec); seq += 1
             except Exception as ex:
                 states.append({"date": day, "et": str(_et(marks[mi])), "stand_down": str(ex)[:120], "sequence": seq}); seq += 1
             mi += 1
     return states
 
 
+ALL_DAYS = ["20260315", "20260316", "20260317", "20260318", "20260319", "20260320",
+            "20260322", "20260323", "20260324", "20260325", "20260326", "20260327"]
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--anchor", required=True)
-    ap.add_argument("--day", required=True)
+    ap.add_argument("--day", default=None)
+    ap.add_argument("--all", action="store_true", help="loop all 13 G15 sessions -> full manifest + feature-state stream")
     a = ap.parse_args()
     os.makedirs(OUT, exist_ok=True)
     anchor = build_anchor(a.anchor)
+
+    if a.all:
+        print("ANCHOR:", json.dumps({k: anchor[k] for k in ("date", "contract", "instrument_id", "raw_symbol", "last_price", "direction", "net_usd")}))
+        man = [manifest_entry(a.anchor)] + [manifest_entry(d) for d in ALL_DAYS]
+        json.dump(man, open(os.path.join(OUT, "g15_mbo_l1_manifest.json"), "w"), indent=1)
+        print("MANIFEST rows:", len(man))
+        for m in man:
+            print(f"  {m['date']} {m.get('raw_symbol')} iid={m.get('instrument_id')} mbo_ok={m.get('mbo_basis_correct')} "
+                  f"n_mbo={m.get('n_mbo')} n_tr={m.get('n_trades')} chrono={m.get('chronological_ok')} "
+                  f"flow={m.get('flow_usable')} queue={m.get('queue_usable')} l1_ok={m.get('l1_basis_correct')} l1_iid={m.get('l1_instrument_id')}")
+        allstates = []
+        for d in ALL_DAYS:
+            st = replay_day(d, anchor)
+            allstates.extend(st)
+            print(f"  states {d}: {len(st)}")
+        with open(os.path.join(OUT, "g15_mbo_feature_states.jsonl"), "w") as fh:
+            for s in allstates:
+                fh.write(json.dumps(s) + "\n")
+        print(f"FEATURE STATES total: {len(allstates)} -> g15_mbo_feature_states.jsonl")
+        raise SystemExit(0)
     print("ANCHOR:", json.dumps({k: anchor[k] for k in ("date", "contract", "instrument_id", "raw_symbol", "last_price", "direction", "net_usd", "trade_count")}))
     man = [manifest_entry(a.anchor), manifest_entry(a.day)]
     json.dump(man, open(os.path.join(OUT, "g15_mbo_l1_manifest.json"), "w"), indent=1)
