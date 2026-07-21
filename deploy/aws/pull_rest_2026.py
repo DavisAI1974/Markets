@@ -115,9 +115,9 @@ def job_a_trades():
         day += dt.timedelta(days=1)
 
 
-def _monthly_raw(symbols, schema, out_prefix, tag):
+def _monthly_raw(symbols, schema, out_prefix, tag, first=dt.date(2026, 3, 1)):
     today = dt.date.today()
-    m_start = dt.date(2026, 3, 1)
+    m_start = first
     while m_start < today:
         nxt = (m_start.replace(day=28) + dt.timedelta(days=4)).replace(day=1)
         m_end = min(nxt, today)
@@ -145,6 +145,53 @@ def _monthly_raw(symbols, schema, out_prefix, tag):
         m_start = nxt
 
 
+def job_cl_trades():
+    """S101 (Greg: free as long as we can): the CL walk-basis layer never existed - CL.n.0/n.1
+    continuous trades, full year Jul 2025 -> present ($1.10 measured; pre-March outside the
+    included window). Same store format as NG, new prefixes."""
+    end = dt.date.today() - dt.timedelta(days=1)
+    day = dt.date(2025, 7, 1)
+    while day <= end:
+        if day.weekday() == 5:
+            day += dt.timedelta(days=1)
+            continue
+        for sym, prefix in (("CL.n.0", "nymex/cl_cont_n0"), ("CL.n.1", "nymex/cl_cont_n1")):
+            d8 = day.strftime("%Y%m%d")
+            key = f"{prefix}/CL_{d8}.jsonl.gz"
+            if _exists(key):
+                continue
+            start = f"{day.isoformat()}T00:00:00+00:00"
+            stop = f"{(day + dt.timedelta(days=1)).isoformat()}T00:00:00+00:00"
+            try:
+                _guard(f"trades {sym} {d8}", schema="trades", symbols=[sym],
+                       stype_in="continuous", start=start, end=stop)
+                store = hist.timeseries.get_range(dataset="GLBX.MDP3", schema="trades",
+                                                  symbols=[sym], stype_in="continuous",
+                                                  start=start, end=stop)
+                n = 0
+                local = f"/tmp/CL_{d8}_{sym.replace('.', '_')}.jsonl.gz"
+                with gzip.open(local, "wt") as fh:
+                    for r in store:
+                        fh.write(json.dumps({
+                            "ts": r.ts_event * 1e-9, "symbol": sym, "src": "databento_trades",
+                            "instrument_id": r.instrument_id, "action": "T",
+                            "side": str(r.side), "price": r.price * 1e-9, "size": r.size}) + "\n")
+                        n += 1
+                if n == 0:
+                    os.remove(local)
+                    log(f"CL {sym} {d8}: 0 records (holiday/empty)")
+                    continue
+                s3.upload_file(local, BUCKET, key)
+                os.remove(local)
+                log(f"CL {sym} {d8}: {n} trades -> s3://{BUCKET}/{key}")
+            except SystemExit:
+                raise
+            except Exception as e:
+                log(f"CL {sym} {d8}: ERROR {type(e).__name__}: {str(e)[:150]}")
+                time.sleep(5)
+        day += dt.timedelta(days=1)
+
+
 def main():
     log("pull_rest_2026 START")
     job_a_trades()
@@ -153,6 +200,11 @@ def main():
     for schema in ("statistics", "definition"):
         _monthly_raw(["ON.OPT"], schema, "options_ng/raw/ext_2026", "on")
         _monthly_raw(["LNE.OPT"], schema, "options_ng/raw/ext_2026", "lne")
+    # CL layers (S101, Greg: grab everything free-while-free; $1.10 measured total)
+    job_cl_trades()
+    for schema in ("statistics", "definition"):
+        _monthly_raw(["CL.FUT"], schema, "nymex/contract_structure_cl/raw", "clfut", first=dt.date(2025, 7, 1))
+        _monthly_raw(["LO.OPT"], schema, "options_cl/raw", "lo", first=dt.date(2025, 7, 1))
     log(f"pull_rest_2026 DONE (total est. cost ${_cost_running:.2f})")
     _flush_log()
     s3.put_object(Bucket=BUCKET, Key=DONE_KEY, Body=b"done")
