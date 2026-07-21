@@ -1,0 +1,995 @@
+{
+ "specialist": "C",
+ "lens": "core intraday",
+ "group": "g17",
+ "brain_version": "s102.5",
+ "forecast_schema_version": "ng.v2",
+ "days_owned": [
+  "20260414",
+  "20260415",
+  "20260422"
+ ],
+ "anchor": {
+  "date": "20260410",
+  "close": 2.653,
+  "last_hour": "down/flat",
+  "mult_usd_per_1000": 10000,
+  "basis": "NGK26(May) through 04-20; NGM26(June) from 04-21; 0421 roll seam never-traded"
+ },
+ "block_thesis": "S3 shoulder / injection-bearish bleed continues (G16 3.035->2.653). Weather-max-authority OFF (near-window HDD << 16.4). All prior-session b_share <0.50 (sell-tilt). My core days: 0414 a chain-sided trend-down (full band), 0415 & 0422 pre-print coils with mild-but-sub-threshold buy-absorption (small down, downside capped, latent bounce not yet confirmed).",
+ "days": [
+  {
+   "date": "20260414",
+   "dow": "Tue",
+   "archetype": "core_trend_chain_sided_down (S3 injection bleed, pre-print front-run)",
+   "reasoning": "S3 shoulder, weather-max-authority OFF: near-window HDD 1.84 gw (D0) / max D0-D3 ~2.9 << the 16.4 band-authority threshold, forecast_vs_normal -7.62 (warm/bearish). Contango, injection phase, building surplus (0416 print consensus +51 Bcf build). D-1 (0413 Mon) tape sell-tilt: session_b 0.423, big_print_b 0.472 (NO absorption divergence), active 33.6k trades -> a live sell-tape confirming the down-chain. COT managed-money net -86k at 6.6th pctile (extreme short) - a latent squeeze risk but NO decision-time exhaustion tell on 0413 (no buy-absorption, not at a confirmed origin shelf blind). selector.divergence_resolution: storage-down vs weather-up split resolves DOWN (gate (a) near-window max HDD < 16.4 FAILS, gate (b) session_b < 0.50 - cold-add earns no day-lean). s1void_injection_chain_bleed: chain-sided trend day, sell-tape -> full TREND band ~-450..-780; place p50 -520 (early-week carry + pre-print front-run, not immediately pre-print). Chain not yet at a fresh block cum-extreme (block anchor 04-10), so no give-back-exhaustion. DOWN.",
+   "regime": {
+    "day_class": "Tue_core",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "shoulder_low_load",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "masked_one_shot_null",
+    "dominant_driver": "storage_injection_bearish_bleed",
+    "selector_mode": "select_S3_down_default"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": 2.944,
+      "threshold_gw": 16.4,
+      "d1_session_b_share": 0.423
+     },
+     "thresholds": "weather-up wins only if near-window max HDD>=16.4 AND session_b>=0.50",
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -780,
+      -450
+     ],
+     "note": "both gates fail -> default S3-bearish DOWN; cold-add earns no day-lean (far-horizon only, sub-band)"
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "day_class": "trend",
+      "d1_session_b_share": 0.423,
+      "storage_phase": "injection",
+      "near_window_base_gw": "<=20"
+     },
+     "thresholds": "trend band -450..-780; coil band -100..-250",
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -780,
+      -450
+     ],
+     "note": "live sell-tape chain-sided trend day delivers full band; do not uniform-damp"
+    },
+    {
+     "rule_id": "direction.giveback_exhaustion_boundary",
+     "inputs": {
+      "d1_big_print_b_share": 0.472,
+      "d1_session_b_share": 0.423,
+      "at_origin_shelf": false
+     },
+     "thresholds": "turn needs big_print_b>=0.62 vs session_b<=0.45 at origin shelf w/ live driver",
+     "scope_pass": false,
+     "ownership_rank": 3,
+     "direction_effect": "none",
+     "magnitude_band_usd": [
+      0,
+      0
+     ],
+     "note": "NO absorption divergence on 0413 (bigB 0.472 sell) - no turn; chain continues"
+    },
+    {
+     "rule_id": "structure.mature_swing_alternation",
+     "inputs": {
+      "block_cum_extreme": false,
+      "chain_age": "block-fresh"
+     },
+     "thresholds": "mature (>=4) fresh extreme -> give-back/hold",
+     "scope_pass": false,
+     "ownership_rank": 4,
+     "direction_effect": "none",
+     "magnitude_band_usd": [
+      0,
+      0
+     ],
+     "note": "not at a fresh block cum-extreme yet; no alternation give-back due"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.25,
+     "flat": 0.35,
+     "down": 0.4
+    },
+    "us_open": {
+     "up": 0.22,
+     "flat": 0.28,
+     "down": 0.5
+    },
+    "settle": {
+     "up": 0.2,
+     "flat": 0.25,
+     "down": 0.55
+    },
+    "close": {
+     "up": 0.18,
+     "flat": 0.22,
+     "down": 0.6
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -500,
+    "stdev": 260,
+    "p10": -820,
+    "p25": -650,
+    "p50": -520,
+    "p75": -320,
+    "p90": -80,
+    "bins": [
+     {
+      "lo": -1200,
+      "hi": -780,
+      "probability": 0.15
+     },
+     {
+      "lo": -780,
+      "hi": -450,
+      "probability": 0.4
+     },
+     {
+      "lo": -450,
+      "hi": -150,
+      "probability": 0.28
+     },
+     {
+      "lo": -150,
+      "hi": 150,
+      "probability": 0.12
+     },
+     {
+      "lo": 150,
+      "hi": 600,
+      "probability": 0.05
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "09:00",
+     "probability": 0.45,
+     "expected_direction": "down",
+     "catalyst": "overnight injection carry from 0413 sell-tape"
+    },
+    {
+     "start_et": "09:00",
+     "end_et": "14:00",
+     "probability": 0.55,
+     "expected_direction": "down",
+     "catalyst": "US-open pre-print front-run of the 0416 build"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.6,
+    "chop": 0.4
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.6,
+    "reversal": 0.15,
+    "hold": 0.25
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p10": -20,
+     "p50": 0,
+     "p90": 20
+    },
+    {
+     "et_hr": 20,
+     "p10": -130,
+     "p50": -70,
+     "p90": -10
+    },
+    {
+     "et_hr": 22,
+     "p10": -240,
+     "p50": -140,
+     "p90": -40
+    },
+    {
+     "et_hr": 0,
+     "p10": -350,
+     "p50": -210,
+     "p90": -70
+    },
+    {
+     "et_hr": 2,
+     "p10": -460,
+     "p50": -280,
+     "p90": -100
+    },
+    {
+     "et_hr": 4,
+     "p10": -540,
+     "p50": -330,
+     "p90": -120
+    },
+    {
+     "et_hr": 6,
+     "p10": -620,
+     "p50": -380,
+     "p90": -140
+    },
+    {
+     "et_hr": 8,
+     "p10": -690,
+     "p50": -420,
+     "p90": -150
+    },
+    {
+     "et_hr": 10,
+     "p10": -750,
+     "p50": -460,
+     "p90": -170
+    },
+    {
+     "et_hr": 12,
+     "p10": -790,
+     "p50": -490,
+     "p90": -190
+    },
+    {
+     "et_hr": 14,
+     "p10": -810,
+     "p50": -510,
+     "p90": -210
+    },
+    {
+     "et_hr": 16,
+     "p10": -820,
+     "p50": -520,
+     "p90": -220
+    }
+   ],
+   "guess_curve": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -70
+    ],
+    [
+     22,
+     -140
+    ],
+    [
+     0,
+     -210
+    ],
+    [
+     2,
+     -280
+    ],
+    [
+     4,
+     -330
+    ],
+    [
+     6,
+     -380
+    ],
+    [
+     8,
+     -420
+    ],
+    [
+     10,
+     -460
+    ],
+    [
+     12,
+     -490
+    ],
+    [
+     14,
+     -510
+    ],
+    [
+     16,
+     -520
+    ]
+   ],
+   "overnight_gap_usd": -140,
+   "guessed_net_usd": -520,
+   "fwd_curve_lean": "contango; front NGK26 softening on injection bleed, front/next spread -0.158",
+   "confidence": {
+    "overall": 0.6,
+    "direction": 0.66,
+    "magnitude": 0.5,
+    "timing": 0.45
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state.json frozen 20260410",
+    "missing_inputs": [
+     "vol_regime(masked)",
+     "stor_surprise(next print 0416)"
+    ],
+    "stale_inputs": [
+     "storage_vintage age 40d",
+     "cot age 3.4d"
+    ],
+    "partial_inputs": [],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target-day tape",
+     "price-derived intraday"
+    ],
+    "flags": [
+     "weather_authority_off_shoulder",
+     "extreme_short_positioning_latent_squeeze_risk"
+    ]
+   }
+  },
+  {
+   "date": "20260415",
+   "dow": "Wed",
+   "archetype": "core_coil_pre_print (mild buy-absorption, sub-turn-threshold)",
+   "reasoning": "Pre-print coil: 0416 Thu 10:30 EIA print (consensus +51 Bcf build) sits one day out. D-1 (0414 Tue) tape shows a MILD absorption divergence: session_b 0.446 (sell) but big_print_b 0.583 (buy-tilt) - big prints buying under a selling session. BUT this is sub-threshold for a turn (direction.giveback_exhaustion_boundary flow-absorption arm needs big_print_b>=~0.62 AND session_b<=~0.45; milder divergences did NOT turn, e.g. G15 0318 sess-bigB 0.593 -> down). Weather still deep shoulder (D0 HDD 2.52, vs_normal -6.67, sub-band). No weather authority. Read: pre-print COIL off a sell-but-absorbing D-1 -> s1void coil band ~-100..-250, tilted toward the shallow end by the buy-absorption. Chain-sided DOWN but small; the absorption caps downside and seeds an eventual bounce (not today). p50 -130.",
+   "regime": {
+    "day_class": "Wed_core_pre_print",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "shoulder_low_load",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "masked_one_shot_null",
+    "dominant_driver": "pre_print_coil_under_injection_bleed",
+    "selector_mode": "select_S3_down_coil"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "day_class": "coil_pre_print",
+      "d1_session_b_share": 0.446,
+      "d1_big_print_b_share": 0.583
+     },
+     "thresholds": "coil band -100..-250 (pre-print coil off near-neutral D-1)",
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -250,
+      -100
+     ],
+     "note": "pre-print coil; buy-absorption tilts to the shallow end"
+    },
+    {
+     "rule_id": "direction.giveback_exhaustion_boundary",
+     "inputs": {
+      "d1_big_print_b_share": 0.583,
+      "d1_session_b_share": 0.446,
+      "extreme_threshold": 0.62
+     },
+     "thresholds": "turn needs big_print_b>=~0.62 AND session_b<=~0.45",
+     "scope_pass": false,
+     "ownership_rank": 2,
+     "direction_effect": "none",
+     "magnitude_band_usd": [
+      0,
+      0
+     ],
+     "note": "mild buy-divergence 0.583 < 0.62 extreme -> NO turn today (milder divergences don't turn)"
+    },
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": 2.711,
+      "threshold_gw": 16.4,
+      "d1_session_b_share": 0.446
+     },
+     "thresholds": "weather-up wins only if HDD>=16.4 AND session_b>=0.50",
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -250,
+      -100
+     ],
+     "note": "gates fail -> S3 down default, small (coil)"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.3,
+     "flat": 0.4,
+     "down": 0.3
+    },
+    "us_open": {
+     "up": 0.3,
+     "flat": 0.38,
+     "down": 0.32
+    },
+    "settle": {
+     "up": 0.3,
+     "flat": 0.35,
+     "down": 0.35
+    },
+    "close": {
+     "up": 0.3,
+     "flat": 0.32,
+     "down": 0.38
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -120,
+    "stdev": 230,
+    "p10": -450,
+    "p25": -280,
+    "p50": -130,
+    "p75": 20,
+    "p90": 250,
+    "bins": [
+     {
+      "lo": -700,
+      "hi": -350,
+      "probability": 0.14
+     },
+     {
+      "lo": -350,
+      "hi": -150,
+      "probability": 0.3
+     },
+     {
+      "lo": -150,
+      "hi": 50,
+      "probability": 0.34
+     },
+     {
+      "lo": 50,
+      "hi": 300,
+      "probability": 0.16
+     },
+     {
+      "lo": 300,
+      "hi": 700,
+      "probability": 0.06
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "09:00",
+     "probability": 0.4,
+     "expected_direction": "flat",
+     "catalyst": "overnight coil, absorption balancing sell carry"
+    },
+    {
+     "start_et": "09:00",
+     "end_et": "14:00",
+     "probability": 0.45,
+     "expected_direction": "down",
+     "catalyst": "pre-print positioning, mild injection bleed"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.35,
+    "chop": 0.65
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.38,
+    "reversal": 0.22,
+    "hold": 0.4
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p10": -20,
+     "p50": 0,
+     "p90": 20
+    },
+    {
+     "et_hr": 20,
+     "p10": -75,
+     "p50": -15,
+     "p90": 45
+    },
+    {
+     "et_hr": 22,
+     "p10": -130,
+     "p50": -30,
+     "p90": 70
+    },
+    {
+     "et_hr": 0,
+     "p10": -190,
+     "p50": -50,
+     "p90": 90
+    },
+    {
+     "et_hr": 2,
+     "p10": -240,
+     "p50": -70,
+     "p90": 100
+    },
+    {
+     "et_hr": 4,
+     "p10": -285,
+     "p50": -85,
+     "p90": 115
+    },
+    {
+     "et_hr": 6,
+     "p10": -320,
+     "p50": -100,
+     "p90": 120
+    },
+    {
+     "et_hr": 8,
+     "p10": -350,
+     "p50": -110,
+     "p90": 130
+    },
+    {
+     "et_hr": 10,
+     "p10": -370,
+     "p50": -120,
+     "p90": 130
+    },
+    {
+     "et_hr": 12,
+     "p10": -380,
+     "p50": -125,
+     "p90": 130
+    },
+    {
+     "et_hr": 14,
+     "p10": -386,
+     "p50": -128,
+     "p90": 130
+    },
+    {
+     "et_hr": 16,
+     "p10": -390,
+     "p50": -130,
+     "p90": 130
+    }
+   ],
+   "guess_curve": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -15
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -70
+    ],
+    [
+     4,
+     -85
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     -110
+    ],
+    [
+     10,
+     -120
+    ],
+    [
+     12,
+     -125
+    ],
+    [
+     14,
+     -128
+    ],
+    [
+     16,
+     -130
+    ]
+   ],
+   "overnight_gap_usd": -30,
+   "guessed_net_usd": -130,
+   "fwd_curve_lean": "contango; front/next spread ~-0.158, injection backdrop steady",
+   "confidence": {
+    "overall": 0.55,
+    "direction": 0.52,
+    "magnitude": 0.55,
+    "timing": 0.4
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state.json frozen 20260410",
+    "missing_inputs": [
+     "vol_regime(masked)",
+     "stor_surprise(0416 print)"
+    ],
+    "stale_inputs": [
+     "storage_vintage age 40d",
+     "cot age 3.4d"
+    ],
+    "partial_inputs": [],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target-day tape",
+     "price-derived intraday"
+    ],
+    "flags": [
+     "weather_authority_off_shoulder",
+     "mild_buy_absorption_sub_turn_threshold",
+     "pre_print_coil"
+    ]
+   }
+  },
+  {
+   "date": "20260422",
+   "dow": "Wed",
+   "archetype": "core_coil_pre_print post_seam (thin tape, recurring buy-absorption cap)",
+   "reasoning": "Post-roll-seam (0421 May->June, NGK26->NGM26; the ~+0.158 contango offset is mechanical/never-traded - this forecast is continuous in economic terms, day-move measured in the June contract from the 0421 close). Pre-print coil: 0423 Thu print one day out. D-1 (0421 Tue) tape: session_b 0.452 (sell) but big_print_b 0.609 (buy-tilt) - the recurring big-print BUYING absorption (0415 0.583, 0417 0.692, 0421 0.609) under a persistent selling session tape = accumulation into an extreme-short COT (MM 6.6th pctile). Still SUB the 0.62 extreme single-day turn threshold on the immediate D-1, and thin week-2 tape (15.8k trades, tpm 10.9). Weather 0422 shoulder, vs_normal only -1.15 (near normal, less warm-bearish than wk1), sub-band. Read: pre-print COIL, near-flat with a slight down bias (chain-sided) but the accumulating absorption + extreme short positioning cap the downside and seed a bounce - genuinely mild-bimodal. Primary coil-down ~-150; secondary absorption/short-cover bounce ~+400. p50 -100.",
+   "regime": {
+    "day_class": "Wed_core_pre_print_post_seam",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "shoulder_low_load",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "masked_one_shot_null",
+    "dominant_driver": "pre_print_coil_vs_absorption_saturation",
+    "selector_mode": "select_bimodal_coil_capped"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "day_class": "coil_pre_print",
+      "d1_session_b_share": 0.452,
+      "d1_big_print_b_share": 0.609
+     },
+     "thresholds": "coil band -100..-250",
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -250,
+      -80
+     ],
+     "note": "thin pre-print coil; strong buy-absorption caps downside to the shallow end"
+    },
+    {
+     "rule_id": "direction.giveback_exhaustion_boundary",
+     "inputs": {
+      "d1_big_print_b_share": 0.609,
+      "d1_session_b_share": 0.452,
+      "extreme_threshold": 0.62,
+      "cot_pctile_1y": 6.6
+     },
+     "thresholds": "turn needs big_print_b>=~0.62 AND session_b<=~0.45 at origin shelf",
+     "scope_pass": false,
+     "ownership_rank": 2,
+     "direction_effect": "up_latent",
+     "magnitude_band_usd": [
+      0,
+      700
+     ],
+     "note": "0.609 just under the 0.62 extreme; recurring absorption + extreme short = latent bounce, not a confirmed one-day turn -> up-tail only"
+    },
+    {
+     "rule_id": "structure.mature_swing_alternation",
+     "inputs": {
+      "chain_age": "mature",
+      "block_cum_state": "deep_bleed"
+     },
+     "thresholds": "mature swing gives back/holds, not extend",
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "flat",
+     "magnitude_band_usd": [
+      -250,
+      300
+     ],
+     "note": "mature bleed at week-2; a coil/hold day, do not extend the down-chain hard"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.32,
+     "flat": 0.4,
+     "down": 0.28
+    },
+    "us_open": {
+     "up": 0.32,
+     "flat": 0.36,
+     "down": 0.32
+    },
+    "settle": {
+     "up": 0.31,
+     "flat": 0.34,
+     "down": 0.35
+    },
+    "close": {
+     "up": 0.32,
+     "flat": 0.3,
+     "down": 0.38
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -80,
+    "stdev": 240,
+    "p10": -420,
+    "p25": -250,
+    "p50": -100,
+    "p75": 90,
+    "p90": 340,
+    "bins": [
+     {
+      "lo": -700,
+      "hi": -350,
+      "probability": 0.12
+     },
+     {
+      "lo": -350,
+      "hi": -150,
+      "probability": 0.28
+     },
+     {
+      "lo": -150,
+      "hi": 50,
+      "probability": 0.33
+     },
+     {
+      "lo": 50,
+      "hi": 350,
+      "probability": 0.19
+     },
+     {
+      "lo": 350,
+      "hi": 750,
+      "probability": 0.08
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "09:00",
+     "probability": 0.38,
+     "expected_direction": "flat",
+     "catalyst": "post-seam thin overnight coil"
+    },
+    {
+     "start_et": "09:00",
+     "end_et": "14:00",
+     "probability": 0.42,
+     "expected_direction": "flat",
+     "catalyst": "pre-print positioning; absorption vs bleed standoff"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.33,
+    "chop": 0.67
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.36,
+    "reversal": 0.26,
+    "hold": 0.38
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p10": -25,
+     "p50": 0,
+     "p90": 25
+    },
+    {
+     "et_hr": 20,
+     "p10": -80,
+     "p50": -10,
+     "p90": 60
+    },
+    {
+     "et_hr": 22,
+     "p10": -135,
+     "p50": -25,
+     "p90": 85
+    },
+    {
+     "et_hr": 0,
+     "p10": -190,
+     "p50": -40,
+     "p90": 110
+    },
+    {
+     "et_hr": 2,
+     "p10": -235,
+     "p50": -55,
+     "p90": 125
+    },
+    {
+     "et_hr": 4,
+     "p10": -273,
+     "p50": -68,
+     "p90": 137
+    },
+    {
+     "et_hr": 6,
+     "p10": -303,
+     "p50": -78,
+     "p90": 147
+    },
+    {
+     "et_hr": 8,
+     "p10": -326,
+     "p50": -86,
+     "p90": 154
+    },
+    {
+     "et_hr": 10,
+     "p10": -340,
+     "p50": -92,
+     "p90": 156
+    },
+    {
+     "et_hr": 12,
+     "p10": -348,
+     "p50": -96,
+     "p90": 156
+    },
+    {
+     "et_hr": 14,
+     "p10": -353,
+     "p50": -98,
+     "p90": 157
+    },
+    {
+     "et_hr": 16,
+     "p10": -358,
+     "p50": -100,
+     "p90": 158
+    }
+   ],
+   "guess_curve": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -25
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -55
+    ],
+    [
+     4,
+     -68
+    ],
+    [
+     6,
+     -78
+    ],
+    [
+     8,
+     -86
+    ],
+    [
+     10,
+     -92
+    ],
+    [
+     12,
+     -96
+    ],
+    [
+     14,
+     -98
+    ],
+    [
+     16,
+     -100
+    ]
+   ],
+   "overnight_gap_usd": -25,
+   "guessed_net_usd": -100,
+   "fwd_curve_lean": "contango; post-seam June/NGM26 front, ~+0.158 mechanical roll offset (never-traded)",
+   "confidence": {
+    "overall": 0.5,
+    "direction": 0.45,
+    "magnitude": 0.52,
+    "timing": 0.38
+   },
+   "scenario_components": [
+    {
+     "name": "coil_down_continuation",
+     "probability": 0.62,
+     "direction": "down",
+     "distribution": {
+      "p50": -180,
+      "p10": -420,
+      "p90": 50
+     },
+     "governing_driver": "s1void_injection_chain_bleed coil band",
+     "invalidation_conditions": "session flow flips buy (session_b>=0.50) or a fresh cold-add clears 16.4"
+    },
+    {
+     "name": "absorption_short_cover_bounce",
+     "probability": 0.38,
+     "direction": "up",
+     "distribution": {
+      "p50": 400,
+      "p10": 80,
+      "p90": 800
+     },
+     "governing_driver": "giveback_exhaustion absorption + extreme-short COT (6.6th pctile)",
+     "invalidation_conditions": "big_print_b_share falls below ~0.55 / no origin-shelf hold; needs the >=0.62 extreme to confirm the one-day snap"
+    }
+   ],
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state.json frozen 20260410",
+    "missing_inputs": [
+     "vol_regime(masked)",
+     "stor_surprise(0423 print)"
+    ],
+    "stale_inputs": [
+     "storage_vintage age 40d",
+     "cot age (wk2)"
+    ],
+    "partial_inputs": [
+     "thin_week2_tape"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target-day tape",
+     "price-derived intraday"
+    ],
+    "flags": [
+     "weather_authority_off_shoulder",
+     "recurring_buy_absorption",
+     "extreme_short_positioning_latent_squeeze",
+     "post_roll_seam_continuous_economic",
+     "bimodal_coil_vs_bounce"
+    ]
+   }
+  }
+ ]
+}
