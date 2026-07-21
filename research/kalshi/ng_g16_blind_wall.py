@@ -126,17 +126,17 @@ def _future_provenance(mapping: Mapping[str, Any], cutoff: datetime) -> tuple[st
     for field in PROVENANCE_FIELDS:
         if field not in mapping:
             continue
-        parsed = _parse_datetime(mapping.get(field))
+        parsed = _parse_datetime(mapping.get(field), date_at_end=False)
         if parsed is not None and parsed > cutoff:
             return field, parsed.isoformat()
     as_of = mapping.get("as_of")
     if as_of not in (None, ""):
-        parsed = _parse_datetime(as_of)
+        parsed = _parse_datetime(as_of, date_at_end=False)
         if parsed is not None and parsed > cutoff:
             return "as_of", parsed.isoformat()
     issue_date = mapping.get("issue_date")
     if issue_date not in (None, ""):
-        parsed = _parse_datetime(issue_date)
+        parsed = _parse_datetime(issue_date, date_at_end=False)
         if parsed is not None and parsed > cutoff:
             return "issue_date", parsed.isoformat()
     return None
