@@ -8,15 +8,18 @@ definition date, and session day are carried on every normalized event.
 
 DBN support is optional at import time. JSONL normalization and inventory remain
 usable in credential-free CI environments where the ``databento`` package is not
-installed.
+installed. Large DBN files are streamed when the installed DBNStore supports
+iteration; an ndarray fallback is used only for older clients.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
 import gzip
+import hashlib
 import json
 import math
+import os
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping
 
@@ -130,6 +133,30 @@ def _integer(value: Any, name: str, *, default: int | None = None) -> int:
         raise NormalizeError(f"invalid {name}: {value!r}") from error
 
 
+def _identity_value(
+    record: Any,
+    name: str,
+    explicit: Any,
+    *,
+    aliases: tuple[str, ...] = (),
+    coerce: Any = str,
+) -> Any:
+    """Use explicit manifest identity and reject contradictory decoded metadata.
+
+    Generic transport labels such as ``symbol=NG`` are not allowed to override an
+    explicit raw contract identity such as ``NGJ26``.
+    """
+    decoded = _value(record, name, *aliases, default=None)
+    if explicit not in (None, ""):
+        expected = coerce(explicit)
+        if decoded not in (None, "") and coerce(decoded) != expected:
+            raise NormalizeError(f"{name} mismatch: decoded {decoded!r} != explicit {explicit!r}")
+        return expected
+    if decoded in (None, ""):
+        return None
+    return coerce(decoded)
+
+
 def classify_record(record: Any, forced: str | None = None) -> str:
     if forced:
         event_type = forced.lower()
@@ -151,12 +178,31 @@ def classify_record(record: Any, forced: str | None = None) -> str:
     return event_type
 
 
+def record_matches_kind(record: Any, kind: str) -> bool:
+    """Return whether a mixed decoded row belongs in the requested replay lane.
+
+    Dedicated trades-schema rows often omit ``action`` and therefore match the
+    trade lane. Mixed MBP/MBO rows match the trade lane only for action T.
+    """
+    if kind == "definition":
+        return True
+    action_raw = _value(record, "action", default=None)
+    if kind == "trade":
+        if action_raw in (None, ""):
+            return True
+        return ACTION_MAP.get(_enum_text(action_raw)) == "T"
+    if kind == "mbo":
+        return action_raw not in (None, "") or _value(record, "order_id", default=None) is not None
+    return False
+
+
 def normalize_record(
     record: Any,
     *,
     event_type: str | None = None,
     dataset: str | None = None,
     publisher_id: int | None = None,
+    instrument_id: int | None = None,
     raw_symbol: str | None = None,
     definition_date: str | None = None,
     session_day: str | None = None,
@@ -165,23 +211,32 @@ def normalize_record(
 ) -> dict[str, Any]:
     """Normalize one decoded record without mutating the input."""
     kind = classify_record(record, event_type)
-    timestamp = event_seconds(_value(record, "ts_event_s", "ts_event", "timestamp", "ts_recv"))
+    timestamp = event_seconds(_value(record, "ts_event_s", "ts_event", "timestamp", "ts", "ts_recv"))
+
+    dataset_value = _identity_value(record, "dataset", dataset, coerce=str)
+    publisher_value = _identity_value(record, "publisher_id", publisher_id, coerce=int)
+    instrument_value = _identity_value(record, "instrument_id", instrument_id, coerce=int)
+    # Only raw_symbol is authoritative decoded contract identity. A generic
+    # legacy ``symbol`` field may be used only when no explicit raw symbol exists.
+    raw_aliases = ("symbol",) if raw_symbol in (None, "") else ()
+    raw_symbol_value = _identity_value(record, "raw_symbol", raw_symbol, aliases=raw_aliases, coerce=str)
+    definition_value = _identity_value(record, "definition_date", definition_date, coerce=str)
+    session_value = _identity_value(record, "session_day", session_day, coerce=str)
+
     identity = {
-        "dataset": str(_value(record, "dataset", default=dataset) or dataset or ""),
-        "publisher_id": _value(record, "publisher_id", default=publisher_id),
-        "instrument_id": _integer(_value(record, "instrument_id"), "instrument_id"),
-        "raw_symbol": str(_value(record, "raw_symbol", "symbol", default=raw_symbol) or raw_symbol or ""),
-        "definition_date": str(
-            _value(record, "definition_date", default=definition_date) or definition_date or ""
-        ),
-        "session_day": str(_value(record, "session_day", default=session_day) or session_day or ""),
+        "dataset": dataset_value or "",
+        "publisher_id": publisher_value,
+        "instrument_id": instrument_value,
+        "raw_symbol": raw_symbol_value or "",
+        "definition_date": definition_value or "",
+        "session_day": session_value or "",
     }
-    missing = [key for key in ("dataset", "raw_symbol", "definition_date", "session_day") if not identity[key]]
+    missing = [
+        key for key in ("dataset", "publisher_id", "instrument_id", "raw_symbol", "definition_date", "session_day")
+        if identity[key] in (None, "", 0)
+    ]
     if missing:
         raise NormalizeError("missing identity: " + ", ".join(missing))
-    if identity["publisher_id"] in (None, ""):
-        raise NormalizeError("missing identity: publisher_id")
-    identity["publisher_id"] = _integer(identity["publisher_id"], "publisher_id")
 
     normalized: dict[str, Any] = {
         **identity,
@@ -208,13 +263,13 @@ def normalize_record(
         price = decimal_price(_value(record, "price", "px"))
         if price is None:
             raise NormalizeError("trade price is undefined")
-        normalized.update(
-            price=price,
-            size=float(_value(record, "size", "quantity", "qty")),
-            side=side,
-        )
-        if normalized["size"] <= 0:
+        try:
+            size = float(_value(record, "size", "quantity", "qty"))
+        except (TypeError, ValueError, OverflowError) as error:
+            raise NormalizeError("trade size is invalid") from error
+        if not math.isfinite(size) or size <= 0:
             raise NormalizeError("trade size must be positive")
+        normalized.update(price=price, size=size, side=side)
         return normalized
 
     action_text = _enum_text(_value(record, "action"))
@@ -228,16 +283,20 @@ def normalize_record(
     price = decimal_price(_value(record, "price", "px"))
     if action in {"A", "M"} and price is None:
         raise NormalizeError(f"MBO {action} requires a price")
+    try:
+        size = float(_value(record, "size", "quantity", "qty", default=0) or 0)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise NormalizeError("MBO size is invalid") from error
+    if not math.isfinite(size) or size < 0:
+        raise NormalizeError("MBO size cannot be negative")
     normalized.update(
         action=action,
         side=side,
-        size=float(_value(record, "size", "quantity", "qty", default=0) or 0),
+        size=size,
         order_id=_integer(_value(record, "order_id", default=0), "order_id", default=0),
         price=price,
         flags=_integer(_value(record, "flags", default=0), "flags", default=0),
     )
-    if normalized["size"] < 0:
-        raise NormalizeError("MBO size cannot be negative")
     return normalized
 
 
@@ -255,14 +314,21 @@ def iter_dbn(path: Path) -> Iterator[Any]:
     except ImportError as error:
         raise NormalizeError("DBN input requires the optional databento package") from error
     store = db.DBNStore.from_file(str(path))
+    # Prefer streaming. Materializing a multi-gigabyte MBO store to ndarray can
+    # exceed memory and invalidates the historical-first bounded-memory design.
+    try:
+        iterator = iter(store)
+    except TypeError:
+        iterator = None
+    if iterator is not None:
+        for record in iterator:
+            yield _record_to_mapping(record)
+        return
     if hasattr(store, "to_ndarray"):
         for record in store.to_ndarray():
             yield _record_to_mapping(record)
         return
-    try:
-        yield from store
-    except TypeError as error:
-        raise NormalizeError("installed databento DBNStore has no supported streaming/array interface") from error
+    raise NormalizeError("installed databento DBNStore has no supported streaming/array interface")
 
 
 def iter_jsonl(path: Path) -> Iterator[dict[str, Any]]:
@@ -280,6 +346,14 @@ def iter_jsonl(path: Path) -> Iterator[dict[str, Any]]:
             yield row
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def normalize_file(
     path: Path,
     *,
@@ -291,48 +365,72 @@ def normalize_file(
     definition_date: str,
     session_day: str,
     output: Path,
+    skip_nonmatching: bool = False,
 ) -> dict[str, Any]:
     if not path.exists():
         raise NormalizeError(f"input does not exist: {path}")
     is_dbn = path.suffix.lower() in {".dbn", ".zst"} or path.name.lower().endswith(".dbn.zst")
     rows: Iterable[Any] = iter_dbn(path) if is_dbn else iter_jsonl(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    count = 0
+    temp = output.with_suffix(output.suffix + ".tmp")
+    input_count = 0
+    normalized_count = 0
+    skipped = 0
     first: float | None = None
     last: float | None = None
-    previous: tuple[float, int] | None = None
-    with output.open("w", encoding="utf-8") as handle:
-        for count, raw in enumerate(rows, 1):
-            if isinstance(raw, Mapping) and "instrument_id" not in raw:
-                raw = {**raw, "instrument_id": instrument_id}
-            event = normalize_record(
-                raw,
-                event_type=kind,
-                dataset=dataset,
-                publisher_id=publisher_id,
-                raw_symbol=raw_symbol,
-                definition_date=definition_date,
-                session_day=session_day,
-                source_id=str(path),
-                ingest_sequence=count,
-            )
-            key = (float(event["ts_event_s"]), int(event["source_sequence"]))
-            if previous is not None and key < previous:
-                raise NormalizeError(f"source moved backwards at record {count}")
-            previous = key
-            first = float(event["ts_event_s"]) if first is None else first
-            last = float(event["ts_event_s"])
-            handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
-    if count == 0:
-        raise NormalizeError("input contained zero records")
+    previous: tuple[float, int, int] | None = None
+    try:
+        with temp.open("w", encoding="utf-8") as handle:
+            for input_count, raw in enumerate(rows, 1):
+                if not record_matches_kind(raw, kind):
+                    if skip_nonmatching:
+                        skipped += 1
+                        continue
+                    raise NormalizeError(f"record {input_count} does not match requested kind {kind}")
+                event = normalize_record(
+                    raw,
+                    event_type=kind,
+                    dataset=dataset,
+                    publisher_id=publisher_id,
+                    instrument_id=instrument_id,
+                    raw_symbol=raw_symbol,
+                    definition_date=definition_date,
+                    session_day=session_day,
+                    source_id=str(path),
+                    ingest_sequence=input_count,
+                )
+                key = (
+                    float(event["ts_event_s"]),
+                    int(event["source_sequence"]),
+                    int(event["ingest_sequence"]),
+                )
+                if previous is not None and key < previous:
+                    raise NormalizeError(f"source moved backwards at input record {input_count}")
+                previous = key
+                normalized_count += 1
+                first = float(event["ts_event_s"]) if first is None else first
+                last = float(event["ts_event_s"])
+                handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        if normalized_count == 0:
+            raise NormalizeError("input contained zero matching records")
+        os.replace(temp, output)
+    except Exception:
+        temp.unlink(missing_ok=True)
+        raise
     return {
         "schema": "ng_normalization_report.v1",
         "input": str(path),
         "output": str(output),
         "event_type": kind,
-        "record_count": count,
+        "input_record_count": input_count,
+        "record_count": normalized_count,
+        "skipped_nonmatching": skipped,
         "event_start_s": first,
         "event_end_s": last,
+        "size_bytes": output.stat().st_size,
+        "sha256": _sha256(output),
         "identity": {
             "dataset": dataset,
             "publisher_id": publisher_id,
@@ -341,6 +439,7 @@ def normalize_file(
             "definition_date": definition_date,
             "session_day": session_day,
         },
+        "raw_input_untouched": True,
         "execution_authority": False,
     }
 
@@ -357,12 +456,21 @@ def selftest() -> int:
     )
     assert trade["ts_event_s"] == 1_700_000_000.0
     assert trade["price"] == 3.123 and trade["side"] == "B"
+    legacy = normalize_record(
+        {"symbol": "NG", "ts": 1.0, "price": 3.0, "size": 1, "side": "A",
+         "instrument_id": 1008},
+        event_type="trade", dataset="GLBX.MDP3", publisher_id=1, instrument_id=1008,
+        raw_symbol="NGJ26", definition_date="2026-03-01", session_day="20260316",
+    )
+    assert legacy["raw_symbol"] == "NGJ26"
     mbo = normalize_record(
         {**base, "event_type": "mbo", "ts_event_s": 1.0, "action": "Cancel", "side": "Bid",
          "size": 1, "order_id": 4, "flags": 128, "price": 3.0},
         ingest_sequence=2,
     )
     assert mbo["action"] == "C" and mbo["side"] == "B"
+    assert record_matches_kind({"action": "A"}, "trade") is False
+    assert record_matches_kind({"action": "T"}, "trade") is True
     print("[ng_historical_normalize] selftest PASS")
     return 0
 
@@ -378,6 +486,7 @@ def main() -> int:
     parser.add_argument("--raw-symbol")
     parser.add_argument("--definition-date")
     parser.add_argument("--session-day")
+    parser.add_argument("--skip-nonmatching", action="store_true")
     parser.add_argument("--selftest", action="store_true")
     args = parser.parse_args()
     if args.selftest:
@@ -395,6 +504,7 @@ def main() -> int:
         args.input, kind=args.kind, dataset=args.dataset, publisher_id=args.publisher_id,
         raw_symbol=args.raw_symbol, instrument_id=args.instrument_id,
         definition_date=args.definition_date, session_day=args.session_day, output=args.output,
+        skip_nonmatching=args.skip_nonmatching,
     )
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0
