@@ -62,7 +62,9 @@ STRUCT_PATH = os.path.join(_ROOT, "data", "contract_structure", "NG_structure.js
 VOL_PATH = os.path.join(_ROOT, "data", "vol_regime", "vol_regime.json")
 OUT_PATH = os.path.join(_ROOT, "data", "options_ng", "replay_g7_g11.json")
 
-GROUPS = [7, 8, 9, 10, 11]
+GROUPS = [7, 8, 9, 10, 11, 12, 13]   # 12/13 joined 2026-07-21: their one-shot blinds are
+                                     # COMPLETE on the trunk (grp12/grp13 committed by S101),
+                                     # so the Feb window is no longer blind-restricted
 MULT = 10000.0
 FEE_RT_EST = 6.00
 WING_DELTA = 0.25
