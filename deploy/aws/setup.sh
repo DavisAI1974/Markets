@@ -14,7 +14,7 @@ apt-get install -y git python3 python3-pip
 
 echo "[setup] installing python deps..."
 python3 -m pip install --upgrade pip
-python3 -m pip install --upgrade databento boto3 pandas numpy
+python3 -m pip install --upgrade databento boto3 pandas numpy fastapi 'uvicorn[standard]'
 
 echo "[setup] env dir /etc/markets ..."
 mkdir -p /etc/markets
@@ -32,6 +32,7 @@ units=(
   markets-ng-live.service
   markets-ng-live-watchdog.service
   markets-ng-live-watchdog.timer
+  markets-desk.service
   markets-update.service
   markets-update.timer
   markets-daily.service
@@ -43,13 +44,15 @@ for unit in "${units[@]}"; do
 done
 systemctl daemon-reload
 systemctl enable --now markets-update.timer
-# Enable boot persistence without starting against an unverified/rotating key.
+# Enable boot persistence without starting the data service against an unverified key.
 systemctl enable markets-ng-live.service
 systemctl enable --now markets-ng-live-watchdog.timer
+systemctl enable markets-desk.service
 
 echo "[setup] DONE. Historical services were not changed or restarted."
 echo "[setup] After DATABENTO_API_KEY is present in /etc/markets/markets.env:"
-echo "        sudo systemctl enable --now markets-ng-live.service"
+echo "        sudo systemctl enable --now markets-ng-live.service markets-desk.service"
 echo "        sudo journalctl -u markets-ng-live.service -f"
 echo "[setup] Health: /var/lib/markets/ng_live/health.json"
+echo "[setup] Desk: http://127.0.0.1:8091 (use an SSM port forward)"
 echo "[setup] Raw DBN: s3://bento-568968024170-us-east-2-an/nymex/live/ng/YYYY/MM/DD/"
