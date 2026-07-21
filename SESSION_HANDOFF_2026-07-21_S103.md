@@ -67,6 +67,15 @@ adjudicates + merges; Opus workers run blind/refine; ChatGPT/people do off-repo 
   nymex/ng_l1/_DONE; queue CL L1 when done; stop box only when NG-L1+CL-L1+pull_rest all done (pull_rest
   DONE). ChatGPT may be collecting live MBO on the box + pulling data to S3 - coexist, do not collide.
 
+## MBO DATA (S103 info-gathering, Greg asked "can we pull MBO 1yr + live?")
+Ran Databento's FREE metadata cost/size estimate on the box. **KEY FIND: on the front-continuous
+(c.0), MBO is CHEAPER + ~5x SMALLER than the MBP-10 we already buy** (NG c.0 MBO $23/14GB vs MBP-10
+$35/76GB) - reverses the S85 "MBO off" call, and it's the order-level data that sharpens the under-used
+turn/direction nowcast. NG+CL c.0 MBO 1yr = ~$76 LIST / ~46GB (likely less in-sub; L1 is $0 in-sub).
+Parent/full-book is the pricey path (NG $321/196GB, CL $735/452GB). Full table + how-to-pull:
+`research/kalshi/MBO_COST_NOTES_S103.md`. NOTHING pulled/started - info only. Coordinate with ChatGPT's
+live-MBO effort (same DB key /etc/markets/coach.env) before any feed.
+
 ## OPEN / CARRIED (for S104)
 - **G17 (04-12 - 04-24) is S104's opener** - TURNKEY via the canonical loop (two-leg May->June seam
   ~0421). Then G18 (clean June). FORWARD-TEST selector.divergence_resolution + s1void_injection_chain_
