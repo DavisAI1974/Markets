@@ -12,9 +12,18 @@ calendar, positioning/COT, weather, storage, AND the FULL MBO order-flow read (s
 UNBALANCED SIDES = buy-vs-sell aggressor, absorption/divergence) of every decision-legit window (prior
 sessions in full + the current day's PRE-DECISION reopen/overnight flow for a rolling daily forecast).
 The ONLY thing withheld from the blind is the PRICE CURVE — settles, nets, day-moves, levels, spreads,
-and the target-day price PATH it forecasts. Nothing else. We are NOT hamstringing the blind; it is the
-FORWARD-CURVE BUILDER and must be maximally capable. (Causality still holds: neither sees the FUTURE —
-that is physics, not a mask.) The `dip_imb_level`-forbidden rule is REPEALED for decision-legit windows.
+and the target-day price PATH it forecasts. Nothing else. (Causality still holds: neither sees the
+FUTURE — that is physics, not a mask.) The `dip_imb_level`-forbidden rule is REPEALED for decision-legit
+windows.
+
+**WHY we mask only the price curve — it is not a handicap, it is how he LEARNS (Greg).** We are not
+trying to make it harder or trick him. Denying ONLY the answer (the price) forces him to build the
+forecast from the underlying MARKET FORCES themselves — order-flow imbalance and unbalanced sides,
+positioning/COT extremity, absorption/divergence, fundamentals, weather, storage, structure, the
+futures->Kalshi lead. Read the price and he learns nothing; read the forces and he sharpens his mastery
+of every one of them. That mastery IS the edge — it is what makes him a better FORWARD-CURVE BUILDER,
+which is the whole product. So give him EVERY market force in full; withhold only the price he is there
+to predict.
 
 ## PROCESS DISCIPLINE (Greg, S105): stage ALL groups' DATA ready, but RUN one group at a time
 Have every group "sitting ready with its data fixed" — turnkey, so all we do is turn the key. But NEVER
