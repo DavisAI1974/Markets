@@ -1,8 +1,10 @@
 import json
 import sys
 import tempfile
+import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 KALSHI_DIR = Path(__file__).resolve().parents[1]
 if str(KALSHI_DIR) not in sys.path:
@@ -19,6 +21,7 @@ from ng_historical_normalize import (  # noqa: E402
     NormalizeError,
     decimal_price,
     event_seconds,
+    iter_dbn,
     normalize_file,
     normalize_record,
 )
@@ -111,6 +114,136 @@ class NormalizeTests(unittest.TestCase):
                     "side": "B",
                 }
             )
+
+    def test_explicit_raw_contract_overrides_legacy_root_symbol(self):
+        event = normalize_record(
+            {
+                "symbol": "NG",
+                "instrument_id": 1008,
+                "ts": 1.0,
+                "price": 3.0,
+                "size": 1,
+                "side": "B",
+            },
+            event_type="trade",
+            dataset="GLBX.MDP3",
+            publisher_id=1,
+            instrument_id=1008,
+            raw_symbol="NGJ26",
+            definition_date="2026-03-01",
+            session_day="20260316",
+        )
+        self.assertEqual(event["raw_symbol"], "NGJ26")
+
+    def test_explicit_identity_mismatch_is_rejected(self):
+        with self.assertRaises(NormalizeError):
+            normalize_record(
+                {
+                    **identity("20260316"),
+                    "raw_symbol": "NGK26",
+                    "ts_event_s": 1.0,
+                    "price": 3.0,
+                    "size": 1,
+                    "side": "B",
+                },
+                event_type="trade",
+                dataset="GLBX.MDP3",
+                publisher_id=1,
+                instrument_id=1008,
+                raw_symbol="NGJ26",
+                definition_date="2026-03-01",
+                session_day="20260316",
+            )
+
+    def test_normalize_file_filters_mixed_l1_and_hashes_output(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            source = Path(tempdir) / "mixed.jsonl"
+            output = Path(tempdir) / "normalized.jsonl"
+            ident = identity("20260316")
+            rows = [
+                {
+                    **ident,
+                    "ts_event_s": 1,
+                    "action": "A",
+                    "price": 3.0,
+                    "size": 10,
+                    "side": "B",
+                    "order_id": 1,
+                    "flags": 0,
+                    "sequence": 1,
+                },
+                {
+                    **ident,
+                    "ts_event_s": 2,
+                    "action": "T",
+                    "price": 3.001,
+                    "size": 2,
+                    "side": "B",
+                    "order_id": 0,
+                    "flags": 128,
+                    "sequence": 2,
+                },
+            ]
+            source.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+            report = normalize_file(
+                source,
+                kind="trade",
+                dataset="GLBX.MDP3",
+                publisher_id=1,
+                instrument_id=1008,
+                raw_symbol="NGJ26",
+                definition_date="2026-03-01",
+                session_day="20260316",
+                output=output,
+                skip_nonmatching=True,
+            )
+            self.assertEqual(report["input_record_count"], 2)
+            self.assertEqual(report["record_count"], 1)
+            self.assertEqual(report["skipped_nonmatching"], 1)
+            self.assertEqual(len(report["sha256"]), 64)
+            self.assertTrue(output.exists())
+            normalized = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(normalized["event_type"], "trade")
+
+    def test_normalize_file_failure_preserves_existing_output(self):
+        with tempfile.TemporaryDirectory() as tempdir:
+            source = Path(tempdir) / "trade.jsonl"
+            output = Path(tempdir) / "normalized.jsonl"
+            output.write_text("sentinel\n", encoding="utf-8")
+            rows = [
+                {**identity("20260316"), "ts_event_s": 2, "price": 3.0, "size": 1, "side": "B", "sequence": 2},
+                {**identity("20260316"), "ts_event_s": 1, "price": 3.0, "size": 1, "side": "B", "sequence": 1},
+            ]
+            source.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+            with self.assertRaises(NormalizeError):
+                normalize_file(
+                    source,
+                    kind="trade",
+                    dataset="GLBX.MDP3",
+                    publisher_id=1,
+                    instrument_id=1008,
+                    raw_symbol="NGJ26",
+                    definition_date="2026-03-01",
+                    session_day="20260316",
+                    output=output,
+                )
+            self.assertEqual(output.read_text(encoding="utf-8"), "sentinel\n")
+            self.assertFalse(output.with_suffix(".jsonl.tmp").exists())
+
+    def test_dbn_prefers_streaming_over_ndarray_materialization(self):
+        class Store:
+            def __iter__(self):
+                return iter(({"ts_event_s": 1.0}, {"ts_event_s": 2.0}))
+
+            def to_ndarray(self):
+                raise AssertionError("to_ndarray must not be used when streaming is available")
+
+        fake = types.SimpleNamespace(
+            DBNStore=types.SimpleNamespace(from_file=lambda _path: Store())
+        )
+        with patch.dict(sys.modules, {"databento": fake}):
+            rows = list(iter_dbn(Path("fixture.dbn")))
+        self.assertEqual(len(rows), 2)
 
     def test_normalize_file_rejects_backwards_source(self):
         with tempfile.TemporaryDirectory() as tempdir:
@@ -226,6 +359,16 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual(entry["input_record_count"], 2)
             self.assertEqual(entry["record_count"], 1)
             self.assertEqual(entry["skipped_nonmatching"], 1)
+
+    def test_invalid_s3_uri_remains_unknown(self):
+        entry = inspect_uri(
+            "s3://",
+            source_kind="mbo",
+            day="20260316",
+            definition=definitions()["NGJ26"],
+        )
+        self.assertEqual(entry["status"], "UNKNOWN")
+        self.assertIn("invalid S3 URI", entry["observation_error"])
 
     def test_complete_fixture_manifest_becomes_ready(self):
         with tempfile.TemporaryDirectory() as tempdir:
