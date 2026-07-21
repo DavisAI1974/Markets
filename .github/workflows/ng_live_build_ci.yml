@@ -8,7 +8,9 @@ on:
     paths:
       - 'research/kalshi/ng_live_*.py'
       - 'research/kalshi/ng_rt_*.py'
+      - 'research/kalshi/ng_historical_*.py'
       - 'research/kalshi/tests/test_ng_rt_*.py'
+      - 'research/kalshi/tests/test_ng_historical_*.py'
       - 'desk/**'
       - 'deploy/aws/markets-ng-live*'
       - 'deploy/aws/markets-desk.service'
@@ -19,7 +21,9 @@ on:
     paths:
       - 'research/kalshi/ng_live_*.py'
       - 'research/kalshi/ng_rt_*.py'
+      - 'research/kalshi/ng_historical_*.py'
       - 'research/kalshi/tests/test_ng_rt_*.py'
+      - 'research/kalshi/tests/test_ng_historical_*.py'
       - 'desk/**'
       - 'deploy/aws/markets-ng-live*'
       - 'deploy/aws/markets-desk.service'
@@ -48,13 +52,21 @@ jobs:
             research/kalshi/ng_live_recover.py \
             research/kalshi/ng_live_watchdog.py \
             research/kalshi/ng_rt_feature_state.py \
+            research/kalshi/ng_historical_manifest.py \
+            research/kalshi/ng_historical_replay.py \
             research/kalshi/tests/test_ng_rt_feature_state.py \
+            research/kalshi/tests/test_ng_historical_replay.py \
             desk/app.py
       - name: Test MBO operator and refine feature-state contract
         run: |
           python research/kalshi/ng_live_operator.py --selftest
           python research/kalshi/ng_rt_feature_state.py
           python -m unittest -v research/kalshi/tests/test_ng_rt_feature_state.py
+      - name: Test historical manifest and deterministic replay
+        run: |
+          python research/kalshi/ng_historical_manifest.py --selftest
+          python research/kalshi/ng_historical_replay.py --selftest
+          python -m unittest -v research/kalshi/tests/test_ng_historical_replay.py
       - name: Import desk application
         run: python -c "from desk.app import app; assert app.title == 'DavisAI Markets Desk'"
       - name: Validate shell scripts
