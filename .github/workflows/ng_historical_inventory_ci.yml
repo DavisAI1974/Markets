@@ -1,0 +1,44 @@
+name: NG Historical Inventory CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_historical_manifest.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/tests/test_ng_historical_normalize_inventory.py'
+      - '.github/workflows/ng_historical_inventory_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_historical_manifest.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/tests/test_ng_historical_normalize_inventory.py'
+      - '.github/workflows/ng_historical_inventory_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile normalization and inventory contracts
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_historical_manifest.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/ng_historical_inventory.py \
+            research/kalshi/tests/test_ng_historical_normalize_inventory.py
+      - name: Run self-tests
+        run: |
+          python research/kalshi/ng_historical_normalize.py --selftest
+          python research/kalshi/ng_historical_inventory.py --selftest
+      - name: Run normalization and inventory tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_historical_normalize_inventory.py
