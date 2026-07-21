@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s102.1",
+  "version": "s101.6",
   "built_pass": 3,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -42,8 +42,7 @@
   "s101_3_merge_note": "S101 (2026-07-21): G12 refine MERGED on Greg approval - the full s101.3 proposal (12 items, iteration 2 after Greg's refine-until-it-scores order). Headlines: (1) GREG'S WEEKEND-GAP ORDER resolved - gap OWNERSHIP declared at the prior close (anchor_structural > weekend_cycle_weather > chain_drift), new play magnitude.block_gap_ownership with the dead-sponsor sizing rule (premium P from pre-squeeze shelf, echo run E post-expiry; weekend gap=-E band 0.75-1.25x, 0201 landed 1.09E; next session unwind-to-shelf, shelf HOLDS in the squeeze form vs breaks in the weather-parabola form); refined G12 scores dir 11/12, final drift -220 (blind +5480). (2) DAY-CLASS TOOLBAGS (Greg desk doctrine): weekend = state-reads-only (rhythm tools VOID across a 2-day gap), Monday 06-10 ET catch-up window (9 fade / 3 ratify events, the ratifies are the flip Mondays), Friday = flow-calendar first + the Friday close is the weekend anchor, Tue-Thu interchangeable core; HOLIDAYS scoreable only against the same holiday historically - named gap, default prior = Sunday-like (0216 Presidents Day so read); the layer is a FALSIFIABLE HYPOTHESIS (Greg: same things may explain every day - I do not think it will), G13 is its first forward test. (3) Flip addendum: a block-opening gap can complete the ARM and satisfy C1 as counter-delivery (1207, 0201; the G12 termination was confirmable at the 0201 close). (4) Storage-Thursday chain-sided rule scoped CHAIN-STATE (spent-chain with-print n=3: 0129/0205/0212). (5) B2 scoped to bleed-rhythm bounces; post-capitulation fed recoveries run 2-4 sessions. (6) MOS play G12 forward test: first-appearance 0/2 as day-net side caller, confidence 0.55->0.5, scope narrowed. (7) squeeze_watch prompt-month fix = named BUILD (it keyed on the calendar front and was blind to the Feb prompt squeeze AND its unwind). (8) Protocol: state-file masking fix for G13 (freeze price-derived blocks at anchor vintage); G12 recorded as a WEAKENED holdout per the blind agent's disclosure. Supersession honored: every refined rule carries forward_evidence NONE and displaces no incumbent blind-node ownership through G13. Prior state backed up as ng_brain_s101.2_backup.json.",
   "s101_4_day_class_promotion": "S101 (2026-07-21, Greg): the day-class structure PROMOTED from additive scoping layer to the OVERARCHING top-level descriptor. Every day is classified first; each class is forecast and scored only within its own class history (\"no Mondays scoring Fridays\"); cross-class evidence is context only. Holiday classes score only against the same holiday (named gap until multi-year history accrues; Sunday-like default prior). The falsifiable-hypothesis stance is retained but the operating default inverts to day-class-first. Applied by the orchestrator on Greg's direct instruction immediately after the s101.3 merge; no play content changed.",
   "s101_5_extended_weekend_note": "S101 (2026-07-21, Greg): holiday-extended weekends (3-day closures) flagged as potentially their own weekend sub-class - same-holiday comparability extends to the whole closure; G13 Presidents weekend is the first forward instance. Folded into addendum_holiday_doctrine.extended_weekend_note; no play content changed.",
-  "s101_6_merge_note": "S101 (2026-07-21): G13 refine MERGED on Greg approval (14 items). Headlines: (1) SQUEEZE FINGERPRINTS (Greg-ordered retrospective, pre-onset primary): F1 failed-counter-flush CONJUNCTION rule (n=3 G9/G11, controls named the standalone flush noise), F2 thin-regime ratchet confirm (progress-without-aggression, n=2), F3 down-class stalemate + F4/F5 watches, trade-rate/VWAP named noise; the 0201-inverse stranded-close watch (size selling into a rising close then a marked-up thin finish - visible before the -7080 gap, n=1). (2) G13 refined to dir 12/12 / drift -250 (blind 4/12/+2800): the MODERATE weather gap arm (NEAR-window cycle-delta sum bands, 13-gap back-check clean), the PRICING-TIME rule (shock adds price at appearance, moderate adds at near-window entry; MOS appearance side-caller 0/3 forward, demoted), CHAIN-STATE-IS-TAPE-STATE (blind chain reads demote to basing after 2 consecutive misses - the phantom-chain fix), shelf-holds scoped to the unwind sessions only, 0223 fade-vs-ratify separator (driver ahead=ratify, behind=fade; Monday phase structure 3/3). (3) Presidents Day registry n=1 (+380, catalyst priced on the dead desk); holiday thin-amplifier n=2. (4) Greg doctrine: the SEASONAL SALIENCE SLIDER (weather max in deep winter/summer, shoulders shift weight to flows/maintenance/storage-trajectory/structure; winter-calibrated-by-circumstance named; G14 = first shoulder test). (5) Day-class layer first forward scoring recorded. THE SQUEEZE TEST RESULT: no squeeze fired in G13; the delivery gauntlet passed in a thin bleed-down that broke the 3.159 shelf. Prior state backed up as ng_brain_s101.5_backup.json.",
-  "s102_1_merge_note": "S102 (2026-07-21): G14 refine MERGED on Greg approval ('nice. merge and let's do next group'). G14 = first shoulder block, basis calendar-front 1008/NGJ26 (Greg's Kalshi-settlement-proximity rule; roll-check subagent; 996=NGK26/May CONFIRMED - the G13 basis_caveat resolved; April expiry 2026-03-27 definitions-verified). Blind 4/12/-4350 (clean masked holdout) -> refined v2 12/12/+500 with every residual DERIVED (iteration 2, Greg's standard). SIX new plays (positioning_saturation_turn rung, shoulder_weather_band_void, unpriced_shot_extension, weekend_chain_drift_day_move, weekend_crest_friday, window_deep_book_shakeout) + slider S1/S2/S3 operational form + warm-cut headroom gate + NEAR-SUM settled near-window-only + chain-state hardening (2nd 0120-form instance; C1 6/1/0, conf 0.45->0.5) + measured class curve profiles + fingerprint additions (participation marker, shock-add attack signature, F1/F2 negative instances, shoulder tape-base shift) + OPEN-CONDITIONS protocol (Greg-ordered, effective G15) + live intraday-refine-agent architecture. Full package: S102_MERGE_PROPOSAL.md. Prior state backed up as ng_brain_s101.6_backup.json."
+  "s101_6_merge_note": "S101 (2026-07-21): G13 refine MERGED on Greg approval (14 items). Headlines: (1) SQUEEZE FINGERPRINTS (Greg-ordered retrospective, pre-onset primary): F1 failed-counter-flush CONJUNCTION rule (n=3 G9/G11, controls named the standalone flush noise), F2 thin-regime ratchet confirm (progress-without-aggression, n=2), F3 down-class stalemate + F4/F5 watches, trade-rate/VWAP named noise; the 0201-inverse stranded-close watch (size selling into a rising close then a marked-up thin finish - visible before the -7080 gap, n=1). (2) G13 refined to dir 12/12 / drift -250 (blind 4/12/+2800): the MODERATE weather gap arm (NEAR-window cycle-delta sum bands, 13-gap back-check clean), the PRICING-TIME rule (shock adds price at appearance, moderate adds at near-window entry; MOS appearance side-caller 0/3 forward, demoted), CHAIN-STATE-IS-TAPE-STATE (blind chain reads demote to basing after 2 consecutive misses - the phantom-chain fix), shelf-holds scoped to the unwind sessions only, 0223 fade-vs-ratify separator (driver ahead=ratify, behind=fade; Monday phase structure 3/3). (3) Presidents Day registry n=1 (+380, catalyst priced on the dead desk); holiday thin-amplifier n=2. (4) Greg doctrine: the SEASONAL SALIENCE SLIDER (weather max in deep winter/summer, shoulders shift weight to flows/maintenance/storage-trajectory/structure; winter-calibrated-by-circumstance named; G14 = first shoulder test). (5) Day-class layer first forward scoring recorded. THE SQUEEZE TEST RESULT: no squeeze fired in G13; the delivery gauntlet passed in a thin bleed-down that broke the 3.159 shelf. Prior state backed up as ng_brain_s101.5_backup.json."
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -266,11 +265,6 @@
     "fade_vs_ratify_state": "The ratify Mondays (1020, 1208, 0202) all had their DRIVER AHEAD of them (fresh-turn birth, flip-confirm, structural unwind). 0223's driver was BEHIND: D0=27.6 was the peak ITSELF realizing, the entire forward stream sat below normal from D+2 (-0.7/-1.4/-2.2), the morning cycles cut D+2, and the 0219 print had flipped the storage backdrop (+15.8 above). Gap-at-extreme WITH a 5-session swing + catalyst crest = the FADE configuration (1109->1110 form) compounded by lull onset. SELL THE REALIZATION: a priced shot's peak day is a crest, not a confirmation.",
     "brain_action": "ADD to timing.catalyst_continuity_frontrun a MIRROR ARM (catalyst crest): the frontrun logic runs WITH a building catalyst and INVERTS when D0 carries the catalyst's maximum and the forward stream is same-sign cutting - continuation stops pricing; the day classes as give-back/lull. Evidence: 0223 -1770 (G13); consistent priors: 1120 (gave back 1119 on the crest), 1110 (faded the 1109 gap at the shock's crest), 0224 g12-blind-noted crest logic. n=3 spanning G7/G8/G13 as a read; 0223 is the first where the WHOLE day keyed on it.",
     "band_action": "0223 scores as the third instance of the weather-LULL DEEP give-back band -1500..-1800 (1117 -1500, 1125 -1770, 0223 -1770 - spanning G7/G8/G13); entry condition extended: all-horizon same-sign flip to cutting (lull onset) INCLUDING the peak-realization day."
-   },
-   "s102_1_unowned_premium_full_fade": {
-    "rule": "WATCH n=1: Monday after a saturation/covering-owned gap (no Bcf mass behind the weekend repricing) AND the covering impulse's WoW print has stalled AND the counter-driver's extreme realizes at the open -> the Monday fades the ENTIRE weekend repricing: core = -(gap + Sunday net) EXACT (anchor-measurable) + a give-back stub in the ramp-shallow class -700..-900.",
-    "evidence": "0309: core -2250 + stub = band -2950..-3150, actual -3020 (record fade, 3.7x prior max). DAY-scoped not window-scoped: the crest was OVERNIGHT (3.466 Sun 22:00) and the 06-10 window carried only ~25% (E). Consistency: 1110 faded an OWNED gap only partially (-820 of +1560); 0202 RATIFIED a structural gap - fade depth tracks how much fundamental mass owned the premium.",
-    "forward_evidence": "NONE - next saturation weekend is the test."
    }
   },
   {
@@ -307,8 +301,7 @@
     "evidence_n": "spent-chain with-print n=3 spanning G11/G12 (0129, 0205, 0212); live-chain chain-sided n=12 spanning G3-G10 incl. the three G9 bullish-print sells; the 1120 alternation-precedence break stands separately as before.",
     "backcheck": "No live-chain instance re-classes as spent (every 8/8-9/9 instance had a delivering driver or young chain); no spent-chain instance traded chain-side. Boundary cases: 1023 (give-back swing, driver live) chain-sided - consistent.",
     "forward_evidence": "NONE - 2 of 3 instances are this block. Incumbent owns both G13 Thursdays blind."
-   },
-   "s102_1_chain_state_extension": "CHAIN-STATE-IS-TAPE-STATE, hardened (2nd instance): a 'driver still delivering' model argument can NEVER overrule >=3 consecutive basing closes (+-700) - the G14 blind kept G13's down-chain live on the cut stream and missed the 0302 birth (the 0120 form). The warm strip was priced (-2590 since 0223); same-shot deepening = revision-class regardless of batch size."
+   }
   },
   {
    "id": "magnitude.warm_season_scale_candidate",
@@ -549,7 +542,7 @@
     }
    },
    "status": "PROVISIONAL",
-   "confidence": 0.5,
+   "confidence": 0.45,
    "exemplars": [
     "1205 blow-off -> 1207/-2380 gap against -> 1208 -2730 = 3x band + up 3/33 = flip-confirm",
     "0107 +1510 IN-band + big down-legs 6/7 alive + front-run + arbiter 0109 chain-side = REJECTED (the G10 false flip)"
@@ -569,8 +562,7 @@
     "no_fire_record": "The blind fired NO flip in G13 (checked 0218/0224/0226 opens against its own guessed closes - see item 6's blind-mode limit). AUDITED against the actual tape: 0215-0222 basing (correct no-fire, 0 false positives - the hardened bar stays clean); 0223 close = a C1 EVENT the blind could not see: -1770 breaks the basing counter-class band (+-600..-1200) by ~1.5-3x with C3 satisfied (evaluated at the close, not front-run) and C4 delivered 0226 (the +83-above bearish print sold chain-side, the arbiter confirming the down-chain). C2 unmeasured in the blind (no tape access); refined tape read: 0223 afternoon showed up-legs collapsed (the close_ownership afternoon ran one-way).",
     "brain_action": "APPEND to structure.chain_polarity_flip evidence: G13 = fifth chain birth (down, 0223 C1 + 0226 C4), the first born OUT OF BASING (prior births came off parabolic crests/capitulations) - condition note: out-of-basing births skip the parabolic ARM (there is no crest; C1 alone carried it, consistent with the S100.2 finding that C1 is load-bearing). Confidence 0.4 -> 0.45 (clean no-false-positive block + a birth the bar catches when fed real tape).",
     "requires_note": "the play's 'requires' gains: prior-day ACTUAL nets (tape state) - it cannot run on forecast feedback (item 6)."
-   },
-   "s102_1_g14_sixth_birth": "G14 = sixth C1 fire, out-of-basing UP birth at the 0302 close (1.7-2.6x basing band; C4 delivered by the 0305 bullish print trading UP counter-to-old-chain, 0925/1030 form; forward driver = deficit flip + 12th-pctile shorts + trough-end). 0309 -3020 = C1 TERMINATION (1.7x) correctly NOT birthed down (bear driver behind; 0310 pause + 0311 re-feed confirm basing). C1 record: 6 fires, 1 correct decline, 0 false positives. Confidence 0.45 -> 0.5."
+   }
   },
   {
    "id": "magnitude.crash_regime_bands",
@@ -803,12 +795,6 @@
     "evidence_n": "n=1 moderate (0222 +1310) + the continuum anchor 0125 (+2480, live-squeeze form, G11). NEGATIVE CONTROL: 1123-24 (~+250) sat 0-1 sessions from the Dec expiry with the shock priced and its peak PASSING, not ahead - the peak-ahead condition excludes it (peak-position on 1123 read from the s97_2 record of the 1119-1121 pricing week; flagged as a record-based, not feed-based, back-check).",
     "honesty": "n=1 for the moderate form - placed inside an EXISTING band (no new constant); recorded as a WATCH condition on the ownership decision, not a new owner class. G14+ March/April expiries are the forward test (shoulder season - see item 12: the pull should fade as heating demand does).",
     "forward_evidence": "NONE."
-   },
-   "s102_1_amendments": {
-    "ladder": "Ownership order is now anchor_structural > positioning_saturation_turn (new rung, own play) > weekend_cycle_weather > chain_drift.",
-    "warm_cut_headroom_gate": "Weather rung, WARM-CUT side only: cuts targeting days <=~13.5 ABSOLUTE gw-HDD are VOID (no Bcf content near the baseload floor; every warm-owned walk gap sat >=16.4, both G14 failures <=13.6; boundary 13.6-16.4 unobserved, stated not tuned). COLD ADDS NEVER GATED, and in shoulder counted on the FULL window incl. D+5..D+7 (0311 priced a FAR-window jump the near-window mass never showed). The boundary is ABSOLUTE HDD, not vs_normal (vs_normal fails: 0104 owned at -8.2, 0301 failed at -8.7).",
-    "near_sum_settled": "NEAR-SUM stays NEAR-WINDOW-ONLY - the G14 blind's total-weekend-mass override was the 0301 misfire (verbatim NEAR-SUM said moderate; the -10.5 mass was mid-horizon, same-shot deepening of a strip already bled -2590 = revision-class). Mid-horizon weekend mass does not price at the reopen.",
-    "g14_gaps_scored": "0301 +720 (saturation rung, in-band lower third), 0308 +1220 (chain-drift/saturation degenerate, in-band mid). Structural declines 4/4 forward (G13+G14)."
    }
   },
   {
@@ -931,90 +917,6 @@
    "requires": "needs_intraday_reveal",
    "scope": "sustain (ride confirm)",
    "forward_evidence": "NONE"
-  },
-  {
-   "id": "magnitude.positioning_saturation_turn",
-   "target": "gap",
-   "trigger": "weekend/block-opening gap ownership decision, new rung between anchor_structural and weekend_cycle_weather",
-   "read": "ALL anchor-measurable, conjunction: (a) BOTH futures books at 1y short extremes (NYMEX MM pctile <=~12 AND ICE LD1 <=~3) with latest WoW a climax add (0301: -49k/-48k) or first covering print (0308: LD1 +44k); (b) price at/within a session of the bleed low OR a live young counter-swing off it; (c) bullish storage-trajectory catalyst visible (consensus draw >=~2x prior print erasing the surplus arithmetically - anchor-computable: 0301 cons -121 vs ~-76 5yr wk -> +44 surplus erases - or vs_5yr just flipped deficit); (d) THE TURN WINDOW: curve_regime contango while storage phase withdraw (zero-free-constant discriminator).",
-   "call": "Warm-cut weather is demoted (headroom-bounded); the gap prices at the COUNTER/covering side, moderate class +600..+1500; with-swing form degenerates to chain-drift +600..+1600. Cold-add weekends never demoted (covering and cold point the same way).",
-   "evidence": "n=2 gaps IN band (0301 +720 lower third, 0308 +1220 mid) + the G11 episode precedent (2.83rd/97.17th opposite extremes -> 63% rally against the warm stream). FULL 15-gap back-check ZERO false fires: 1123/1130/1207/0201/0208/0215/0222 fail (a); 0104 fails (a) ICE 31.1; 0111/0118/0125 pass (a) but fail (d) (deep winter backwardation) - their weather/structural owners stand; 1019/1109 COT-suspended (shutdown). 0301/0308 are the only walk anchors where (a) and (d) are simultaneously true.",
-   "status": "PROVISIONAL",
-   "confidence": 0.5,
-   "caveats": "Long-side saturation mirror never observed. Mid-winter extremes excluded by (d) by design. Mechanism: a saturated short book at the lows facing a storage catalyst has no marginal seller; the bounded warm cut cannot refill the book.",
-   "requires": "open_time_only",
-   "scope": "gap ownership (rung) + gap sign/band",
-   "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
-  },
-  {
-   "id": "magnitude.shoulder_weather_band_void",
-   "target": "magnitude",
-   "trigger": "sizing a chain-side day off a WEATHER-DELIVERY band (winter live-cold-ramp set: resume +1300..+2000, melt-up +1600..+2400)",
-   "read": "near-window (D0..D+3) max forecast gw-HDD at the D-1 vintage; S2/S3 ownership flags",
-   "call": "near-window max <=13.5 gw AND no S2 cold add AND no S3 catalyst -> the weather band is VOID; the day is owned by its residual co-condition class one rung down (0305 -> B4 in-chain agreeing-print +400..+700). >=16 -> band owns normally. 13.6-16.4 unobserved. A STEP, not a ratio - both smooth scalings measured and REJECTED (vol-scaling breaks G12 0203 at 3.3x; headroom-ratio leaves 0305 out).",
-   "evidence": "0305: near-window 13.4 max, call +550 vs actual +470. Winter back-check: every winter delivery-band day clears the gate (1111 20.4, 1126 21.1, 1128 23.7, 1201 27.4, G12 min 20.2); 1119 = S2 carve-out; lull give-backs (1117 16.0, 1125 12.7) UNTOUCHED - scoped to delivery bands only, the lull class's driver is the absence of cold. 0306 S3-owned (deficit-flip print) keeps the winter band and landed +1850 in it.",
-   "status": "PROVISIONAL",
-   "confidence": 0.5,
-   "caveats": "Extends the warm-cut headroom gate (block_gap_ownership s102 gate) from gaps to intraday band authority. Mechanism: below the baseload floor there is no near-window Bcf mass for a ramp to deliver.",
-   "requires": "open_time_only",
-   "scope": "magnitude (band authority)",
-   "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
-  },
-  {
-   "id": "magnitude.unpriced_shot_extension",
-   "target": "magnitude",
-   "trigger": "a cold-shot appearance/repricing day where the fed-recovery/shock day-1 band would apply",
-   "read": "(i) far window (D+4..D+6 max fcst HDD) risen >=2 consecutive cycles INCLUDING the fire-day cycle, monotone since onset (any decay cycle resets); (ii) shot UNPRICED since onset (no session closed >=+300 at shot sign, no >=~1000 reopen gap at shot sign); (iii) crowded-counter fuel MM 1y pctile <=~12",
-   "call": "band top -> extended band [1.35..2.55] x band top (n=2 class: 0311 +2030=1.35x, 0121 +3820=2.55x - honestly wide); slider places within it (S1-void shoulder -> class bottom, winter live-ramp -> top).",
-   "evidence": "0311: far-hi 16.4->21.5->24.6, unpriced (0310 -490), MM 12.26 -> +2000 vs +2030. NO false fires: 0119 (weekend gap pre-priced the add - pricing-time), 0120 (pricing begun 0119 +550), 0123/0126 (cycle decay resets), 0310 (onset cycle), 0312/0313 (priced). Rejected alternative recorded: shot-mass x $/gw overshoots (+3330).",
-   "status": "PROVISIONAL",
-   "confidence": 0.45,
-   "caveats": "FLAGGED CIRCULARITY: the 1.35 bottom bound IS 0311's own print - trigger/class/placement derived, the bound needs G15+ forward evidence. Generalizes the s101_3 fed-recovery day-3 accelerating-driver split to appearance day.",
-   "requires": "open_time_only",
-   "scope": "magnitude (extension above band top)",
-   "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
-  },
-  {
-   "id": "magnitude.weekend_chain_drift_day_move",
-   "target": "gap",
-   "trigger": "chain-drift-family content owns a weekend WITH a live chain",
-   "read": "the chain-drift class [600..1600] as a DAY-MOVE budget (gap + Sunday session together), not a gap quantity; covering-regime flag (first covering print in COT)",
-   "call": "plain regime -> budget ~class bottom; covering regime -> 2x class mid (~2200, the year-end-thin both-ways doubling form). Session = budget - gap.",
-   "evidence": "n=3: 1123 (day-move +640 ~ plain bottom), 1130 (-510 ~ plain bottom; k-x-gap form REFUTED here - no finite k), 0308 (+2250 ~ doubled mid; session call +1100 vs +1030). The 0308 'Sunday envelope break' (+1030 vs all 20 prior <=690) is EXPLAINED by the budget form, not declared. No other walk Sunday carries live-chain drift ownership - no false fires.",
-   "status": "HYPOTHESIS",
-   "confidence": 0.4,
-   "caveats": "One instance at the doubled rung - honestly thin; G15 forward test. Sunday-session thin-set (<=690) remains the prior for NON-chain-drift Sundays.",
-   "requires": "open_time_only",
-   "scope": "gap + Sunday session (day-move budget)",
-   "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
-  },
-  {
-   "id": "daytype.weekend_crest_friday",
-   "target": "direction",
-   "trigger": "a Friday with the chain stretched near its extreme, the chain-side driver fully PRICED with its realization window crossing the weekend closure, and the evening run delivering the shot's first same-sign trim",
-   "read": "chain stretch (cum vs block extreme) + driver priced state (pricing-time record) + D-1-evening run delta at the shot's horizons",
-   "call": "the Friday runs COUNTER-CHAIN after the morning (sell-the-realization at weekly-close risk horizon); size from the basing-counter class -600..-1200. Counter-condition intact: NEVER against a live BUILDING catalyst (1128, 0130, 0220).",
-   "evidence": "n=4-5 spanning G9/G13/G14 both polarities: 1205 (aft -1050 off the peak), 0227 (+340 counter to the mature down-chain - the note's first unapplied miss), 0313 (-1030; call -900; E: flow-led break 08-10, 3.1x session rate through thick books = position-driven squaring, not a liquidity event), plus the 0223 crest-mirror and 1215/1230 delivery-day forms. Promotes the Friday-bag terminal-squaring lean (was n=2 lean) to a conditional rule after two consecutive unapplied hits.",
-   "status": "PROVISIONAL",
-   "confidence": 0.5,
-   "caveats": "The Friday close remains the weekend anchor - this rule shapes the close the weekend bag then consumes.",
-   "requires": "open_time_only",
-   "scope": "day net (side + band) on qualifying Fridays",
-   "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
-  },
-  {
-   "id": "monday.window_deep_book_shakeout",
-   "target": "timing",
-   "trigger": "Monday 06:00 ET (non-holiday): snapshot L1-10 resting imb_R from the live book (decision-time legit)",
-   "read": "|imb10| >= ~0.05 arms; the heavy DEEP side = the caught/stacked side (Greg's weekend-carry mechanism, modified: visible at 06:00 and intra-window, NOT at the Sunday reopen - reopen/overnight book measured UNINFORMATIVE, coin-flip 8/14)",
-   "call": "lean the 06-10 window AGAINST the heavy L1-10 side - TIE-BREAKER under R3's verdict, never overriding it (1222: R3 right, book wrong, -2700). Intraday confirm (LIVE-COACH): heavy side recruiting while being hit (rel depth growth >~1.2 on the violated side) = shakeout continuing, do not fade (4/4: 1020, 1110, 1124, 0202 - Monday-morning recruitment is knife-catching, INVERSE of the S92 leg-level recruitment read on this cell).",
-   "evidence": "14 Mondays MBP-10 (refine D): qualifying 6/7 (1006, 1020, 1027, 1201, 0202, 0309; miss 1222 expensive); L1-3 does NOT carry it (8/14); window repricing is desk-marked not aggressor-driven (against own flow 8/14). On the one Monday R3 mis-phased (1201) the book read was correct.",
-   "status": "HYPOTHESIS",
-   "confidence": 0.4,
-   "caveats": "No Tue-Thu control run - Monday-specificity unproven. Holiday Mondays untested. Never sizes, never owns the close (chain does).",
-   "requires": "needs_intraday_reveal",
-   "scope": "Monday 06-10 window lean (tie-breaker) + live-coach confirm",
-   "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
   }
  ],
  "mechanisms": [
@@ -1170,13 +1072,7 @@
     "play": "ride.magnitude_staircase"
    }
   },
-  "ruled_out_note": "Full noise set in ruled_out_by_target. Warm/autumn-season only; retest in winter/backwardation.",
-  "s102_1_additions": {
-   "participation_regime_marker": "Leg-count expansion is a chain-birth accompaniment: G13 thin regime 2-30 legs/day -> 60-206 from the 0302 birth, never reverted (0227 26 legs -> 0302 60 -> 0303 100). Carryable state, now visible to the blind via tape_conditions. WATCH.",
-   "shock_add_attack_signature": "0311: big-print buy share 0.736 day / 0.844 add-window vs base 0.497 - aggressive size ATTACKING through thick offers (progress-per-lot at 0.42x day median), the exact INVERSE of the F2 squeeze ratchet. Distinct third form: squeeze=withdrawal, grind=balanced, shock-add=attack. n=1 WATCH.",
-   "f1_f2_negative_instances": "G14 (no structural pull state all block): F2 never approached 2x on any of 11 weekdays (0.40-1.32x; violent days are the cleanest anti-ratchets - 0306 0.44x, 0309 0.45x, 0311 0.42x, all moves made WITH volume); F1's standalone flush component fired 0311 with NO pull state and the day resolved exogenous - conjunction-only scoping CONFIRMED by absence.",
-   "shoulder_tape_base_shift": "Winter's structural A-side dominance (base B-share 0.37-0.46) is GONE in shoulder (G14 weekdays 0.471-0.527). Winter-ABSOLUTE imbalance thresholds will misfire; relative-to-session-base discipline is load-bearing. Flow-nowcast sign held 8/8 on the block's largest legs at compressed separation (|rel| 0.024-0.098)."
-  }
+  "ruled_out_note": "Full noise set in ruled_out_by_target. Warm/autumn-season only; retest in winter/backwardation."
  },
  "doctrine_tier3": {
   "usage_doctrine": {
@@ -1192,14 +1088,7 @@
    "seasonal_salience_slider": {
     "provenance": "Greg, desk doctrine, paraphrased faithfully: 'the scoring weights slide through the year - weather is a lot more important in winter and summer than fall and spring.'",
     "text": "(a) Input-family importance is SEASONAL, not fixed: WEATHER (MOS stream, cycles, freeze risk, HDD/CDD) carries maximum weight in DEEP WINTER and SUMMER (heating/cooling demand regimes) and fades through FALL and SPRING shoulders; in shoulders the weight shifts toward FLOWS and MAINTENANCE SEASON (nuclear refuel clusters, pipeline work, LNG turnarounds - the nuclear_outages/grid_stack family), storage-TRAJECTORY (the injection/withdrawal season turn), and structure/positioning. (b) HONESTY: the walk's evidence to date is winter-only - the brain's weather-heavy rule set is winter-calibrated BY CIRCUMSTANCE and should be EXPECTED to age as the walk exits winter (G14+ into March/April = the spring shoulder + maintenance season + the injection-season turn). A rule fading in the shoulder is the slider working, not the rule failing - but that judgment requires this slider to be stated. (c) TIE-INS: the G6 lesson (HDD beats surplus at the autumn->winter transition) is the slider's first recorded instance; regime_scope already names warm-season vs winter thinness; the day-class layer is ORTHOGONAL (class first, then seasonal salience inside the class); magnitude bands stay regime/condition-scoped exactly as they are. (d) FORWARD CONSEQUENCE: G14 opens the walk's first shoulder-season blocks - the slider's first forward test; at each block open the agent reads the seasonal position explicitly (calendar + storage phase + HDD/CDD levels) and records which family it weights and why, per-event.",
-    "forward_evidence": "NONE - doctrine input this pass; G14 is the designed first test.",
-    "s102_1_operational_form": {
-     "S1_demand_base_switch": "NEAR-window NORMALS base (climo, zero forecast noise) >=~21 gw-HDD: weather-trajectory authority live BOTH signs, chain-conditioned as the winter brain holds. <=~20: warm-cut trajectory authority VOID for gaps, day-sides and block leans (the inversion ladder: wk1 cut mass vs realized move - g12 base 20-30: -10.4gw -> -10,110; g10: -11.7 -> -2,960; g13: -8.9 -> -740; g7 base 9-15: -13.8 -> +2,100; g14 base 7-20: -16.3 -> +3,250. Monotone in base, zero exceptions, symmetric across both shoulders). Boundary 20.6/21.2 at the walk's resolution, not tuned.",
-     "S2_shock_exception": "Cold ADDS price on both sides of S1 (below-boundary 4/4: 1106, 1109, 0305, 0311). In shoulder count the FULL window incl. D+5..D+7. Warm cuts touching a LIVE cold event <=2 sessions old are event-trims and retain authority (0313 -1010).",
-     "S3_ownership_handoff": "S1-void: block-lean/gap ownership passes to storage-TRAJECTORY (consensus-implied vs-5yr for the NEXT print, anchor-computable - NOT the last print's level, which pointed wrong in G14 wk1), maintenance-FLOWS (nuclear chg-7d sign/size bracketed the entire G14 rally: onset at ramp-max +4.1GW/7d, fade the day it flipped negative), and POSITIONING as amplifier. In S1-void state weather may own gaps ONLY on the S2 add class, never cuts.",
-     "not_covered": "Summer/CDD mirror unmeasured (no CDD>3 in the walk); G6-and-earlier (no MOS store); whether ~21 is seasonally stationary (one winter).",
-     "forward_evidence": "G14 = the first shoulder test: S1-void reads explain 5/5 week-1 days the weather batches got 2/5; the two gap ownership misses are exactly the calls S3's line removes. G15+ per-event forward tests designed (refine C)."
-    }
+    "forward_evidence": "NONE - doctrine input this pass; G14 is the designed first test."
    }
   },
   "flip_driver_checklist": {
@@ -2150,175 +2039,6 @@
    "timing.catalyst_continuity_frontrun": "gains the crest mirror arm (item 4); the with-chain form itself went 1/1 (0220 grind into the close).",
    "magnitude.catalyst_condition_sort": "lull deep band -1500..-1800 gains its third instance (0223, spanning G7/G8/G13) - the band-top residual did NOT recur this block (no day exceeded its class top; the G13 residuals were all sub-band-width).",
    "holiday_registry": "item 8."
-  },
-  "class_curve_profiles": {
-   "note": "s102.1: measured per-CLASS intraday phase profiles (13-pt fraction-of-day-net at ET grid 20,22,0,2,...,20), mean over ALL walk instances of each class - per-CLASS never per-day; the refined render templates and the intraday refine agent's scoring templates.",
-   "counter_gap_extension_monday": {
-    "instances": "1020,0112,0302",
-    "profile": [
-     0,
-     -0.06,
-     0.05,
-     0.03,
-     0.44,
-     0.45,
-     0.4,
-     0.43,
-     0.51,
-     0.84,
-     1.01,
-     1.02,
-     1.0
-    ],
-    "note": "heterogeneous - low confidence"
-   },
-   "young_extension": {
-    "instances": "0120,0204,0303",
-    "profile": [
-     0,
-     0.04,
-     0.1,
-     0.22,
-     0.48,
-     0.98,
-     0.94,
-     1.18,
-     1.27,
-     1.53,
-     1.07,
-     0.98,
-     1.0
-    ],
-    "note": "builds to 14:00 peak ~1.5x, gives back into the close"
-   },
-   "one_day_give_back": {
-    "instances": "1110,1120,1202,0304",
-    "profile": [
-     0,
-     0.2,
-     0.16,
-     -0.07,
-     -0.13,
-     -0.21,
-     0.08,
-     0.97,
-     0.74,
-     0.94,
-     1.18,
-     1.03,
-     1.0
-    ],
-    "note": "flat-to-counter until 06:00, delivered 08-10, 16:00 overshoot"
-   },
-   "print_day_chain_sided": {
-    "instances": "0918,1016,0116,0226,0305",
-    "profile": [
-     0,
-     0.14,
-     0.11,
-     0.37,
-     0.28,
-     0.18,
-     0.33,
-     0.66,
-     0.69,
-     1.07,
-     0.94,
-     0.98,
-     1.0
-    ],
-    "note": "drifty morning, delivery 10:30-14:00"
-   },
-   "resume_friday": {
-    "instances": "1121,1128,0306",
-    "profile": [
-     0,
-     -0.01,
-     0.01,
-     0.05,
-     0.28,
-     0.33,
-     0.34,
-     0.44,
-     0.81,
-     1.17,
-     1.06,
-     1.0,
-     1.0
-    ]
-   },
-   "fade_monday_full_day": {
-    "instances": "1110,0223,0309",
-    "profile": [
-     0,
-     0.0,
-     -0.03,
-     -0.05,
-     0.0,
-     -0.01,
-     0.12,
-     0.8,
-     1.12,
-     1.21,
-     1.18,
-     1.08,
-     1.0
-    ],
-    "note": "~0 through 06:00 - the old window_then assumption was WRONG; 08-12 carries it"
-   },
-   "shock_add": {
-    "instances": "1119,0121,0311",
-    "profile": [
-     0,
-     -0.03,
-     0.05,
-     0.26,
-     0.26,
-     0.37,
-     0.48,
-     0.68,
-     0.72,
-     0.88,
-     0.86,
-     0.95,
-     1.0
-    ],
-    "note": "delivery starts at the CYCLE that carries the add (0121 overnight; 1119/0311 morning)"
-   },
-   "weekend_crest_friday": {
-    "instances": "1205,0227,0313",
-    "profile": [
-     0,
-     0.12,
-     -0.03,
-     0.05,
-     -0.16,
-     -0.1,
-     0.06,
-     1.05,
-     0.9,
-     1.17,
-     0.85,
-     1.0,
-     1.0
-    ],
-    "note": "morning runs AGAINST the final side, flips 08-10, afternoon owns the close - 3/3"
-   },
-   "noise_profiles": "post_crash_pause + alternation_hold measured NOISE (small-net whipsaw) - band content only, no shape claim."
-  },
-  "open_conditions_protocol": {
-   "provenance": "GREG, 2026-07-21 S102, verbatim intent: 'we want blind to forecast price based on market conditions. he can't do that if he doesn't know all of the conditions... open up everything to them except the price curve to blind' + 'tell them both to use all of the market data available'.",
-   "rule": "Both agents see ALL available market data. The BLIND is masked ONLY on price-curve content (settles, nets, levels, spreads, IV - _PRICE_DERIVED_BLOCKS); decision_state.tape_conditions (prior session: trades, volume, trades/min, session B-share, big prints n + B-share, $150-zigzag leg count; source = more-active continuation store) is served LIVE under the one-shot mask (never_masked). REFINE is unrestricted - full tape, book, statistics. Effective G15 (committed 5e7c40d; leg counts verified vs the E pass exactly).",
-   "scoring_note": "G15+ blind calls are conditions-informed (signed flow visible at D-1 grain) - protocol change NAMED for cross-block honesty; pre-G15 scorecards were state-only."
-  },
-  "live_architecture_s102": {
-   "provenance": "GREG, 2026-07-21 S102 (verbatim intent): live blind = look at everything available, build forecasts AND FORWARD CURVES without knowing the next day's trade curve; refine becomes the INTRADAY REFINE AGENT - scores live tape against the blind's standing forecast, reads what the market is doing, adjusts the curve; a comms channel reports what-changed/why to the COACH (Greg named Voxa - wiring pending his pointer). REMINDERS the blind prompt must carry: the dipole/order-flow toolkit is the established DIRECTION caller (dip_imb_level held-leg side; 8/8 in shoulder, compressed separation), and the LOOK-AHEAD capability - the futures->Kalshi LAG is the standing live edge (NYMEX canary, Kalshi delayed follower; established, never retest, live telemetry only).",
-   "walk_consequence": "G15+: the blind adds a FORWARD-CURVE lean per day (front/second spread direction + curve-shape call) to grp15.json - scored as DESCRIPTOR until n accrues. The intraday refine agent's scoring templates = class_curve_profiles; its toolkit = the needs_intraday_reveal plays + monday.window_deep_book_shakeout's confirm. Every live adjustment logged forecast-vs-adjusted-vs-actual."
-  },
-  "s102_1_registries": {
-   "records": "0309 fade -3020 (3.7x prior fade max; first GSCI+BCOM double-roll overlap in walk - candidate stack amplifier n=1). 0308 first Sunday |net|>690 in 21 (EXPLAINED by weekend_chain_drift_day_move budget, not declared). Roll-flow SIGN authority REFUTED (0306 +1850 through GSCI d1 vs 0206 roll-with-chain; scope roll flows to cap/stack only, n=2 split).",
-   "g15_watches": "(1) S1-void band-bottom damping (early-G14 same-signed +630 band-position drift; would have flipped 0302 - watch only). (2) unpriced_shot_extension bound (1.35 = 0311's own print). (3) weekend_chain_drift_day_move doubled rung (n=1). (4) shoulder resume-class heterogeneity (+470..+1850). (5) Kalshi underlying rolls to May ~Mar 20 (5bd rule) - echo-lane flag.",
-   "g14_walk_record": "blind 4/12 drift -4350 (clean holdout, first fully-clean since the masking fix; one wrong anchor chain-verdict propagated); refined v2 12/12, every step <=200, drift +500 = band-position noise only; all residuals DERIVED (iteration 2 per Greg's lines-near-perfect standard)."
   }
  }
 }
