@@ -1,0 +1,128 @@
+{
+  "proposal": "MID-WEEK (Tue/Wed core) CLEANUP - upstream of the Monday/Friday fix",
+  "author": "specialist C (core intraday tape)",
+  "session": "S104 solo mission (Greg: 'missed Monday because missed Friday; Friday inherits from mid-week')",
+  "status": "PROVISIONAL",
+  "forward_evidence": "NONE (retrospective across the walked record; must be forward-tested on G17+)",
+  "scope_note": "Additive ONLY. Incumbents (reasoning_method.giveback_exhaustion_boundary R1, mature_swing_alternation R4, giveback_origin_shelf_floor R5, chain_polarity, class_curve_profiles.young_extension) are NOT edited. These are amendments/sharpenings that make R5 FIRE and SIZE on mid-week Tue/Wed days, plus a new exit-read handoff protocol that feeds Thu/Fri downstream (D and E consume it; the Monday fix builds on it). Per-event, never pooled. Magnitudes DERIVED, honest under the actual where a tail was reactive.",
+  "source_data": "renders/ng_refine_s95/g*_score.json (blind vs actual), g*_rt.json curve_2h (derived exit state: last_hour_dir, close_off_extreme), g15_mbo_evidence.json + g15_he24_he1_handoffs.json (exit states + D-1 trade tells). 44 scored Tue/Wed days across G6-G16 (G11 excluded - committed score file carries archetypes but no numbers).",
+
+  "proposed_plays": {
+
+    "midweek.stretched_extreme_close_giveback": {
+      "one_line": "A mid-week day that CLOSES AT its intraday extreme (close_off_extreme >= ~0.95) after a LARGE one-session directional run (>= ~$1200) passes forward a STRETCHED state; the NEXT session inherits GIVE-BACK / round-trip risk, NOT continuation. This is THE exit-read that breaks the mid-week -> Thu/Fri chain.",
+      "condition": "day_class in {Tue,Wed} (any core day); the day's own move >= ~$1200 in one direction AND it closes within ~5% of its intraday extreme (coff>=0.95 on an up day / <=0.05 on a down day), high_late/low_late true.",
+      "behavior": "The NEXT day's forecast must NOT extend the run. Flip the inherited assumption from continuation to GIVE-BACK: on a stretched-HIGH close expect a next-day fade DOWN; on a stretched-LOW close expect a next-day bounce UP. The counter-move is a give-back, not a new chain - band it modest (-$300..-$1200 class), do NOT claim the full round-trip, and it is CAPPED unless a fresh chain-sided catalyst arrives.",
+      "why_it_fails_now": "The blind reads a big directional close as MOMENTUM and extends it into Thu/Fri. On the six cleanest stretched-HIGH closes it extended UP and eight-figure-missed the give-back.",
+      "evidence_high_close_giveback": [
+        "g8 0119 Wed +1950 coff0.98 -> 0120 Thu ACTUAL -750 (blind extended +930, err +1680)",
+        "g9 0217 Wed +1890 coff1.0 -> 0218 Thu ACTUAL -1850 (blind -900, dir ok but undersized)",
+        "g9 0223 Tue +5010 coff1.0 -> 0224 Wed ACTUAL -2530 (blind extended +700, err +3230)",
+        "g10 0107 Wed +1500 coff1.0 -> 0108 Thu ACTUAL -1590 (blind extended +2000, err +3590)",
+        "g14 0311 Wed +2030 coff1.0 -> 0312 Thu ACTUAL -260 (blind extended +900, err +1160)",
+        "g15 0318 Wed +1900 coff0.97 -> 0319 Thu ACTUAL -1080 (blind -800, dir ok - MBO-refined caught it)"
+      ],
+      "evidence_low_close_bounce": [
+        "g9 0209 Tue -2850 coff0.0 -> 0210 Wed ACTUAL +370 bounce (blind OVER-sized the bounce +1350, err +980)",
+        "g10 0114 Wed -2720 coff0.05 -> 0115 Thu ACTUAL +450 bounce (blind OVER +1600, err +1150)",
+        "g15 0324 Tue -380 coff0.0 -> 0325 Wed ACTUAL +660 bounce (blind UNDER +250, err -410)"
+      ],
+      "n": "6 high-side (g8,g9x2,g10,g14,g15) + 3 low-side (g9,g10,g15) = 9 across 5 groups; high-side is 6/6 clean.",
+      "derived_magnitude": "The robust, decision-time claim is the SIGN of the inherited assumption: STOP EXTENDING the run - the next day counter-moves. The counter-move SIZE is variable (-13% to -106% of the stretched run) so band it, do not point-forecast the round-trip. Practical: set next-day continuation to ~0 and the give-back band to -$300..-$1200 (high side) / +$300..+$700 capped bounce (low side, a give-back not a chain-birth).",
+      "counterexample_and_scope": "coff 0.90-0.94 is NOT clean: g8 0126 Wed +1370 coff0.95 -> Thu +170 (flat, mild), g12 0204 Wed +1260 coff0.93 -> Thu +510 (continued up). The exception is a YOUNG fresh-turn day (chain age 0-1) still building - see midweek.young_chain_extension_full_band; interaction rule: the stretched-close give-back is VOID on the 1st-2nd session of a fresh turn (that leg is still repricing). Threshold coff>=0.95 AND chain age >= 2.",
+      "requires": ["curve_2h or intraday close-off-extreme", "the day's own run size", "chain age"],
+      "day_class_validity": "Tue/Wed core; the inheritance is consumed by the following Thu/Fri (and, across a weekend, by Sunday/Monday via the anchor CLOSE)."
+    },
+
+    "midweek.prior_exit_lasthour_magnitude_gate": {
+      "one_line": "For a mid-week TURN/reversal day, the PRIOR session's last_hour_dir gates the MAGNITUDE: if the prior exited AGAINST the coming turn, the turn realizes POST-OPEN (a seam/stop-run event) -> size the CONFIRMED base, never front-run the reactive tail. If the prior exited WITH the move, momentum carries -> size FULL, do not cap.",
+      "condition": "a mid-week day identified as a turn/reversal (direction already set by R5/giveback_origin_shelf_floor or the reversal-recognition play below); compare prior-day last_hour_dir (sign of the final-2h cum change) to the turn direction.",
+      "behavior": "prior_exit_dir OPPOSES turn -> the reversal is a post-open realization; cap magnitude at the confirmed retrace-to-shelf base and hold confidence moderate (the overshoot is reactive, not yours at the open). prior_exit_dir ALIGNS with the move -> carry the momentum; do NOT apply the mid-week cap (the blind's systematic under-size).",
+      "evidence_against_capped": [
+        "g15 0318 up-reversal, D-1 0317 exited lhd -1 (down) -> confirmed base +1500 (MBO r1/r2), actual +1900 (+400 reactive stop-run tail correctly not claimed)",
+        "g15 0325 up-reversal, D-1 0324 exited lhd -1 -> base +600, actual +660",
+        "g10 0107 up-reversal, D-1 0106 exited lhd -1 -> post-open turn (blind front-ran the wrong way)",
+        "g12 0203/0204 up-reversals, D-1 lhd -1 both -> post-open turns",
+        "g9 0217 up-reversal, D-1 0216 exited lhd -1 -> post-open turn"
+      ],
+      "evidence_aligned_carry": [
+        "g9 0223 Tue young turn, D-1 0222 exited lhd +1 (up) -> aligned, momentum carried +5010 (blind capped at +600, err -4410 - the gate would have said DO NOT CAP)"
+      ],
+      "n": "6 opposing-exit reversal days (all D-1 lhd<=0) across g9,g10,g12,g15 = a strikingly consistent signature: EVERY clean mid-week reversal-up day in the record had a prior session that exited DOWN. 1 aligned-carry case (g9 0223).",
+      "derived_magnitude": "opposing-exit reversal confirmed base = retrace-to-shelf (~+1200..+1600 off a deep down-extreme); reactive overshoot beyond the shelf is not claimed at the open. aligned-exit = full class band, no mid-week cap.",
+      "does_not_explain": "does NOT by itself FLIP direction (that is midweek.giveback_exhaustion_reversal_recognition); it only SIZES a turn already identified. Silent on thin-holiday day-class moves and on post-crash DOUBLE bounces (g12 0203+0204) where it under-predicts the second leg.",
+      "requires": ["prior-day last_hour_dir (curve_2h final-2h sign)", "the turn direction from the direction play"],
+      "provenance": "generalized from the G15 MBO round-2 specialist-C HE24->HE1 boundary finding (forecasts/grp15_mbo_specialist_C_r2.json)."
+    },
+
+    "midweek.giveback_exhaustion_reversal_recognition": {
+      "one_line": "The mis-called down-resume. When a DOWN-chain is MATURE (age>=3) AND price sits at a cum-extreme / origin-consolidation shelf AND the prior 1-2 sessions carry an EXHAUSTION TELL (a large sell flow ABSORBED with price holding, OR an extreme big-print sell-climax closing at the low), the next mid-week day is a GIVE-BACK-EXHAUSTION REVERSAL UP - not the chain-resume/giveback-continue DOWN the blind keeps calling.",
+      "condition": "day_class core; chain_polarity down with chain_age>=3; cum_from_anchor at/near the block extreme OR price at the swing's origin shelf (>=~75% retrace per R5); D-1 tape shows absorption (large signed sell flow, price holds/rises) or an extreme sell-climax big_print_b_share at the low.",
+      "behavior": "FLIP the mid-week call from down-resume to reversal UP. This is R5's inversion (capitulation-at-stretched-extreme precedes the bounce) applied on a Tue/Wed - the blind has been failing to RECOGNIZE it mid-week. Then size via midweek.prior_exit_lasthour_magnitude_gate.",
+      "why_it_fails_now": "The blind's archetype vocabulary ('mature_swing_giveback', 'resume_downchain', 'chain resume DOWN', 'giveback_chain_continue') defaults to CONTINUING the down-chain and treats the mature-extreme as more downside, exactly inverting R5. It is a SELECTOR/recognition failure, not a missing rule.",
+      "evidence": [
+        "g15 0318 Wed: age3 down-chain on the 0310 origin shelf, D-1 0317 big-print-BUY absorption -> blind -400, ACTUAL +1900",
+        "g15 0325 Wed: age5 down-chain at cum extreme -2350, D-1 0324 extreme sell-climax at the low -> blind +250 (dir ok, undersized), ACTUAL +660",
+        "g12 0203 Tue & 0204 Wed: post -7590/-4260 crash, deeply extended -> blind -750/-850, ACTUAL +1130/+1260",
+        "g10 0107 Wed: basing after capitulation retest -> blind -550, ACTUAL +1500",
+        "g9 0217 Wed: after 0216 terminal-giveback-lull -> blind -800, ACTUAL +1890",
+        "g14 0303 Tue: warm-trough chain, post-fade -> blind -650, ACTUAL +640"
+      ],
+      "n": ">=7 across g9,g10,g12,g14,g15 (5 groups).",
+      "derived_magnitude": "confirmed retrace to the prior consolidation shelf (R5 floor becomes the target on the way UP); typical +1200..+1600 off a 3+ session down-extreme; overshoot beyond the shelf is reactive (see the magnitude gate).",
+      "does_not_explain": "does NOT fire when the down-chain is YOUNG (age<3) and still extending (those correctly continue down, e.g. g15 0324 -380); requires the D-1 exhaustion tell - absent it, defer to the chain. Bidweek/catch-up ratify days (g13 0217) and pre-EIA coil days (g16 0401) are a different (catalyst-timing) failure this rule does NOT cover.",
+      "requires": ["chain age + polarity", "cum-from-anchor / shelf level (R5)", "D-1 trade tape: absorption or sell-climax (decision-time-legit, open-conditions)"]
+    },
+
+    "midweek.young_chain_extension_full_band": {
+      "one_line": "A FRESH young (chain age 0-1) CHAIN-SIDED extension with aligned D-1 flow delivers the FULL band; do NOT apply counter-print damping (that is scoped to COUNTER prints only). Corrects the blind's systematic mid-week under-sizing of fresh turns.",
+      "condition": "day_class core; chain age 0-1 (1st-2nd session since a fresh turn/catalyst); the day's move is CHAIN-SIDED (with the new chain) and D-1 flow aligns.",
+      "behavior": "size the FULL class band, no mid-week cap. Interacts with midweek.stretched_extreme_close_giveback: on the 1st-2nd session of a fresh turn a stretched-high close is STILL BUILDING (void the give-back inheritance for one more session).",
+      "evidence": [
+        "g9 0223 Tue young_turn_chain_extension: blind +600, ACTUAL +5010",
+        "g8 0119 Wed post_stabilization_hold_drift_up (fresh turn): blind +120, ACTUAL +1950",
+        "g14 0311 Wed shock-class cold-add (fresh chain-sided driver): blind +800, ACTUAL +2030"
+      ],
+      "n": "3 across g8,g9,g14.",
+      "derived_magnitude": "full class band (young chain-sided ran +1950..+5010 vs capped blinds +120..+800). This is the CHAIN-SIDED complement to the s102.3 rule that damping is for COUNTER prints only.",
+      "does_not_explain": "does NOT license extending a MATURE swing (R4: mature swings give back, not extend); requires chain age 0-1 AND chain-sided AND aligned flow.",
+      "requires": ["chain age", "chain-sided vs counter classification", "D-1 flow alignment"]
+    }
+  },
+
+  "corrected_exit_read_protocol": {
+    "purpose": "The standardized EXIT read a mid-week specialist HANDS FORWARD (D/E and the Monday fix consume it). It is STATE, never the day-net. Emit at every mid-week close.",
+    "fields": {
+      "close_px": "the realized close",
+      "last_hour_dir": "sign of the final-2h cum change (curve_2h[-1]-curve_2h[-2]): did the turn begin AT the boundary? gates next-day magnitude (magnitude_gate)",
+      "close_off_extreme": "coff: closed AT the high (>=0.95) / AT the low (<=0.05) = STRETCHED -> give-back inheritance; 0.3-0.7 = balanced",
+      "run_size_and_stretched_flag": "the day's one-session move; stretched = run>=~1200 AND coff at extreme",
+      "chain_polarity_and_age": "down/up and sessions since the turn - gates young-extends-vs-mature-gives-back (R4) and reversal-recognition (age>=3)",
+      "exhaustion_state": "D-1/own-day absorption (large signed flow, price holds) or big-print climax at the extreme = reversal primed; none = chain intact",
+      "conviction_verdict": "flow_conviction = sign(signed_flow)*sign(price_change): ALIGNED = trend healthy; NEGATIVE-under-rising = absorption/covering = turn risk",
+      "what_next_day_inherits": "the explicit instruction: EXTEND vs EXPECT-GIVE-BACK vs REVERSAL-PRIMED-DO-NOT-FRONT-RUN"
+    },
+    "the_three_inheritance_verdicts": [
+      "STRETCHED-EXTREME CLOSE (coff>=0.95, run>=1200, chain age>=2) -> next day STOP EXTENDING, expect a capped give-back (midweek.stretched_extreme_close_giveback).",
+      "MATURE-DOWN-CHAIN AT SHELF/EXTREME + D-1 EXHAUSTION TELL -> next day REVERSAL UP primed; the turn realizes post-open if this day exited DOWN, so size the confirmed shelf-retrace base and DO NOT front-run the tail (recognition + magnitude_gate).",
+      "YOUNG CHAIN-SIDED EXTENSION (age 0-1, aligned flow) -> next day CARRIES the chain at FULL band; void the give-back inheritance for one more session (young_chain_extension_full_band)."
+    ]
+  },
+
+  "days_the_rules_still_get_wrong": {
+    "note": "Honest - marked, never fitted. These mid-week misses are NOT explained by the four proposed mechanisms:",
+    "catalyst_timing_class": [
+      "g13 0217 Tue (blind +600, actual -280): bidweek catch-up RATIFY day - a catalyst-timing/day-class miss, not a chain/exit-read miss.",
+      "g16 0401 Wed (blind +100, actual -600) and g16 0407 Tue (blind +25, actual -220): pre-EIA coil / cold-peak sell-the-news - a far-driver weighting miss, out of mid-week-tape scope.",
+      "g8 1202 Tue (blind +500, actual -720): post-crest give-back mis-called as resume-up - a give-back-direction miss adjacent to but not cleanly covered by the reversal-recognition (it is a DOWN give-back, not an up-reversal)."
+    ],
+    "thin_holiday_day_class": [
+      "g7 1111 Tue Veterans (blind +110, actual +1580), g9 1224 Wed holiday-shifted print (actual -2530), g9 1231 Wed NYE (actual -2630): day-class (holiday/thin) driven; the mid-week tape mechanisms are silent - these belong to the holiday toolbag."
+    ],
+    "small_chop_noise": [
+      "g6 1029, g7 0112, g13 0218: sub-$600 chop; error is band-position noise, no mechanism claimed."
+    ]
+  },
+
+  "one_line_for_the_chain": "The mid-week EXIT READ (stretched-close -> give-back; mature-shelf+tell -> reversal primed; young-chain -> carry) is what Thu/Fri must inherit instead of naive continuation; the prior-exit last_hour_dir then GATES the magnitude. Fix the mid-week exit read and the Friday inheritance stops handing the Monday a wrong anchor."
+}
