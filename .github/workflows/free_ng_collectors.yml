@@ -6,6 +6,11 @@ on:
     paths:
       - research/kalshi/free_ng_data_collector.py
       - .github/workflows/free_ng_collectors.yml
+  pull_request:
+    branches: [claude/kalshi-s79-kickoff-ij8t9o]
+    paths:
+      - research/kalshi/free_ng_data_collector.py
+      - .github/workflows/free_ng_collectors.yml
   workflow_dispatch:
   schedule:
     - cron: '7 * * * *'
@@ -14,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: free-ng-drivers
+  group: free-ng-drivers-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,8 +28,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
