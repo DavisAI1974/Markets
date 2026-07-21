@@ -120,6 +120,22 @@ folded into this record.
   07-20 at fetch - a re-run trusting the cache will not see 07-21..07-30 runs; (c) one -0.0 -> 0.0
   sign-of-zero cell (2026-01-16 MEX h0), numerically equal.
 
+## POST-CLOSE ADDENDUM (container restart + box check-in #1, ~02:12Z)
+
+- CHECK-IN #1 RESULTS: NG layers COMPLETE on S3 (n0/n1 223 files each through 20260720;
+  ngfut raw 10/10; options raw 19 files); pull_rest on the CL-year leg (~Aug 2025, $1.10 stable);
+  cl_redecode ~30/51 Mondays repaired (80-128MB files), on pace.
+- Greg declined further self-scheduled check-ins - the box finishes unattended; S102's opening
+  status-check (or Greg) stops it. Idle cost ~$0.17/hr after jobs complete.
+- CL JULY TOP-UP: COMPLETE before the container restart - 14 trade days Jul 1-17 on S3 incl. the
+  0712 Sunday. NAMED GAP: the 0705 Sunday stub (848KB/17,949 rows) was held by the >=1MB verify
+  gate and its local copy died with the restart; NG's July pull dropped BOTH its Sundays
+  (0705/0712) at the same gate. NOT walk-blocking (the n0 trades store carries all July Sundays
+  from the box job). S102 small: recover CL_20260705 + NG_20260705/0712 raw from the done batch
+  jobs with a Sunday-stub gate exception - $0 until the jobs expire ~mid-Aug.
+- CL Jul 3: 656k rows on the "full CME holiday" flag day - the Jul-3 holiday-vs-tape discrepancy
+  now reproduced on a second root (standing small).
+
 ## OPEN / CARRIED
 
 - **pyth_collector SUNSET - DEADLINE JUL 31, TEN DAYS OUT** (trunk-branch workflow; needs Greg's
