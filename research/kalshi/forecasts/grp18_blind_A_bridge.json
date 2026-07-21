@@ -1,0 +1,115 @@
+{
+ "specialist": "A",
+ "lens": "weekend_seam_bridge",
+ "group": "g18",
+ "brain_version": "s102.8",
+ "role_note": "Live E->A->B chain. A informs, B decides, B owns the Monday number. BLIND: scenarios with probabilities, never a realized reopen call. Data doctrine: full non-price flow read used (phase_signed_flow, big_print_b_share, l1_book, COT); only the price curve is masked.",
+ "bridges": [
+  {
+   "seam": "0424->0427",
+   "monday_owned_by_B": "20260427",
+   "anchor": {
+    "session": "20260424",
+    "dow": "Fri",
+    "close_px_note": "2.689 anchor, June/NGM26 economic leg (clean June, no roll seam); last-hour DOWN per record",
+    "contract_note": "mechanical front NGK26(May) opex 0427 / expiry 0428 = a two-sided expiry crosscurrent on the EXPIRING front, passed as NEVER-TRADED on our June leg; do not let May opex noise reprice the June anchor"
+   },
+   "friday_exit_consumed": {
+    "source": "anchor_self (no E handoff for the anchor Friday; exit synthesized from the 0424 tape + last-hour direction)",
+    "exit_type": "covering_fail_fade",
+    "why": "0424 aggressor count sell-tilted (session_b_share 0.453) but big prints BUY-tilted (big_print_b_share 0.593) and net signed flow +3189 concentrated in the CLOSE phase (+3171) - a crowded-short (MM net -100,574, 8.49 1y pctile) covering ATTEMPT that was ABSORBED: price still closed last-hour DOWN. Buy flow met supply and failed = bearish. The down-chain is intact, the covering fuel discharged into the close.",
+    "monday_bias_from_exit": "down, small-to-moderate; elevated up counter-risk"
+   },
+   "reopen_scenarios": [
+    {
+     "name": "gap_persistence_down_bleed_continuation",
+     "probability": 0.5,
+     "direction": "down",
+     "rationale": "down chain intact (last-hour down), covering attempt FAILED Fri, no forward bullish driver over the weekend (warm S3 shoulder, HDD ~9-10, no freeze risk), S3 injection bearish default. Chain-lean with no forward driver -> gap here anchors to the Friday CLOSE + chain state, sign non-derivable in the blind."
+    },
+    {
+     "name": "gap_rejection_covering_bounce_up",
+     "probability": 0.33,
+     "direction": "up",
+     "rationale": "ELEVATED counter-risk vs a typical seam: (1) crowded short 8.49 pctile has weekend-headline squeeze motive, (2) big-print buy tilt 0.593 shows covering DEMAND is present and only got absorbed Fri, not spent, (3) May opex Mon 0427 / expiry Tue 0428 can force short-covering into expiry. If Friday's absorbing supply lifts, Monday can pop. Reopen gap SIGN is noise - this is the live up-tail B must carry."
+    },
+    {
+     "name": "flat_chop",
+     "probability": 0.17,
+     "direction": "flat",
+     "rationale": "low-vol shoulder + May opex two-sided desk trade around expiry = consolidation day"
+    }
+   ],
+   "gap_ownership": {
+    "owner": "chain_drift",
+    "spent_vs_unrealized": "MIXED: the down-lean is a SPENT-covering-fail continuation (the covering push already discharged into Fri close), so the down side is partly spent -> shallow continuation; the UNREALIZED risk is the still-present covering demand (big prints 0.593) that got absorbed, which is up-side fuel. Net gap owner = chain_drift, but with a genuine two-sided book.",
+    "note": "no opex/expiry on the June economic leg; the May-front opex/expiry is mechanical and never-traded here"
+   },
+   "driver_realization_check": {
+    "carry_driver": "crowded-short covering attempt into S3 injection bleed",
+    "peaked_over_weekend": false,
+    "detail": "the covering driver did NOT peak over the weekend - it FAILED (was absorbed) ON the anchor Friday. No weekend sell-the-news trigger. The S3 bearish bleed is a continuous backdrop, not a datable Monday peak -> no sharp Monday catalyst either way."
+   },
+   "monday_bias_confirmed_or_adjusted": {
+    "handed_to_B": "down, SMALL-to-moderate",
+    "confirmed": true,
+    "adjustment": "confirm the down lean (last-hour down + covering-fail + S3 default) but FLAG an elevated up counter-risk - crowded-short 8.49 pctile + live big-print buy tilt (0.593) + May opex/expiry covering can pop Monday. B should size the down modestly and hold a real up-tail; this is NOT a high-conviction down continuation.",
+    "why": "the down driver is spent-into-close (shallow residual bleed) while the covering demand that got absorbed is unrealized-ahead up fuel"
+   }
+  },
+  {
+   "seam": "0501->0504",
+   "monday_owned_by_B": "20260504",
+   "anchor": {
+    "session": "20260501",
+    "dow": "Fri",
+    "close_px_note": "E guessed close 2.629, cum_from_anchor -600 (price masked); June/NGM26 leg",
+    "contract_note": "NGK26(May) LTD was 0428 = dead-sponsor 3 sessions back; front is now NGM26(June), clean; 0504 is PRE-index-roll (GSCI/BCOM open ~0507)"
+   },
+   "friday_exit_consumed": {
+    "source": "E grp18_blind_E.json 0501 handoff_out",
+    "exit_type": "positioning_spent_fade",
+    "e_monday_bias": "down lean, small-to-moderate (covering pop spent Fri; bearish bleed resumes into 0504; crowded-short ~8.49 pctile caps hard downside; watch a Monday covering bounce as counter-risk)",
+    "flow_sanity_check": "CONFIRMED and STRENGTHENED by the 0501 tape: session_signed_flow -3358 (NET SELL), phase_signed_flow [+462, -2092, -1728] = open-pop then sell mid+close (pop-then-fade realized intraday), session_b_share 0.443. CRITICAL: big_print_b_share collapsed to 0.487 (vs 0.593 on the 0424 covering-fail) = the covering DEMAND is now SPENT, not just absorbed. l1_book quote_bid_share 0.506 balanced, spread 1 tick. Fresher COT (report 0428) MM net -97,245 at 10.38 pctile, chg_wow +3329 = shorts TRIMMING. E's positioning_spent_fade is exactly right.",
+    "monday_bias_from_exit": "down, small (leaning smaller than 0424's seam because the covering fuel is spent, not merely absorbed)"
+   },
+   "reopen_scenarios": [
+    {
+     "name": "gap_persistence_down_continuation",
+     "probability": 0.52,
+     "direction": "down",
+     "rationale": "down chain intact (last-hour down, chain_age 2, exhaustion_flag true), Friday net-SELL -3358 confirmed, covering demand SPENT (big prints 0.487, sold into close), S3 bearish default, no forward bullish driver. Highest-weight scenario. Gap anchors to Friday close + chain state."
+    },
+    {
+     "name": "gap_rejection_covering_bounce_up",
+     "probability": 0.3,
+     "direction": "up",
+     "rationale": "crowded short 10.38 pctile is still elevated, so a covering bounce is a live counter-risk - BUT the fuel is WEAKER than the 0424 seam: big prints were balanced/sold (0.487) and shorts are already trimming (chg_wow +3329), so the covering demand showed as spent Friday. A Monday pop needs a FRESH catalyst; none is priced (pre-roll, no opex/expiry, warm shoulder)."
+    },
+    {
+     "name": "basing_flat_chop",
+     "probability": 0.18,
+     "direction": "flat",
+     "rationale": "post-flush Monday after a spent covering fade: the down driver is largely realized into Fri close (cum -600) and there is no fresh Monday catalyst -> consolidation/basing is a real outcome (elevated vs 0424's opex-driven chop)."
+    }
+   ],
+   "gap_ownership": {
+    "owner": "chain_drift",
+    "spent_vs_unrealized": "SPENT-side: the covering pop peaked Wed 0429 and gave back by Fri close (cum -600 already realized); big-print buy tilt is gone (0.487). Monday's incremental down is a RESIDUAL bleed, not a fresh large driver. The unrealized-ahead risk (covering bounce, up) is now LOWER fuel than at the 0424 seam.",
+    "note": "E sunday_gap_owner = chain_drift, confirmed; 0504 pre-roll, no mechanical support either side"
+   },
+   "driver_realization_check": {
+    "carry_driver": "counter-trend covering pop exhaustion into S3 injection bleed",
+    "peak_day_et": "2026-04-29",
+    "peaked_over_weekend": false,
+    "detail": "the pop peaked Wed 0429 and already gave back through Fri close (realizes_before_monday TRUE per E) -> no fresh peak lands over the weekend, no sell-the-news trigger for Monday. The bearish bleed is a slow continuous backdrop, so 0504 has NO sharp down catalyst - residual drift, not an event."
+   },
+   "monday_bias_confirmed_or_adjusted": {
+    "handed_to_B": "down, SMALL (nudged toward the small end of E's small-to-moderate) with an elevated basing/chop weight",
+    "confirmed": true,
+    "adjustment": "confirm E's down direction (flow read strongly agrees - net sell, spent covering, exhaustion) but ADJUST magnitude toward the SMALL end: the down driver is largely realized into Fri's close (cum -600) after a Fri net-sell flush, 0504 is pre-roll with no fresh catalyst, and post-flush Mondays after a spent fade tend to base/chop rather than extend hard. Do NOT over-size the down continuation.",
+    "why": "spent-side gap ownership + no Monday catalyst + covering fuel already discharged; the covering-bounce up-tail is real but lower-fuel than 0424"
+   }
+  }
+ ]
+}
