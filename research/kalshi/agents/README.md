@@ -104,6 +104,33 @@ stores pulled once + the roll map. Covers every group. Do not repeat.
    coordinator re-assembles (guarded) -> proposal file(s), NEVER a direct brain edit. Adjudicate
    (incumbents byte-identical), render, PRINT, HARD PAUSE, MERGE on Greg's go. Commit+push.
 
+## HE24 -> HE1 COORDINATION — THE ROUND-2 PASS, FOR BOTH RUNS (Greg, load-bearing)
+A block is ONE continuous path, not 10 siloed days: each day's last hour (HE24 exit) hands off to the
+next day's first hour (HE1 open). BOTH the blind and the refine run this **two-round coordinated
+structure** — round 1 alone is not enough (it leaves the days independent; the curve does not flow):
+
+- **Round 1**: specialists forecast their owned days (blind: sequenced spawn per step 3; refine per step 7).
+- **Build the HE24->HE1 handoff chain**: `group_he24_he1_handoff.py --source {blind|actual} <gid>`.
+  Each day's `handoff_in` = the PRIOR day's exit STATE (close, last-hour dir/flow, close_off_low, low/high
+  timing, chain polarity+age, cum-from-anchor) + the prior owner's round-1 read. It carries STATE, NEVER
+  a day-net number — the receiver interprets it.
+  - **REFINE `--source actual`**: exit state from the ACTUAL prior-day MBO tape (the refine sees price).
+    Precomputed once, injected into a PARALLEL round-2 re-run.
+  - **BLIND `--source blind`**: exit state from each day's ROUND-1 FORECAST (from `grp<N>.json`), because
+    the blind is walled from the actual price. Carries the forecast close + forecast chain state +
+    forecast last-hour dir (signed flow is null in the blind - price masked, per the data doctrine).
+- **Round 2**: each specialist STARTS FROM its round-1 posterior and TIGHTENS magnitude/timing off the
+  incoming handoff — a turn realizing in the overnight seam is sized by the prior-day exhaustion, never
+  front-run; direction changes need NEW causal evidence, not re-reading. Emit the OUTGOING handoff.
+  Coordinate round 2 under the guard.
+- **Evidence it works (magnitude/timing only, zero direction changes)**: G15 refine 72 -> 66; G17 refine
+  24 -> 11 (10/10 held). The day-into-day coordination roughly HALVED the error.
+
+The two mechanisms are complementary: the **live sequenced spawn** (step 3) is the WITHIN-round
+coordination the blind needs because it has no precomputed actual to inject; the **round-2 HE24->HE1
+handoff** is the BETWEEN-round coordination both runs use. Blind gets both; refine gets the round-2 pass
+(its handoffs are precomputed from the actual, so it can run round-2 parallel).
+
 ## WHY (the record)
 S103: G15 refine ran as one agent; G16 blind as the 3-angle panel; those became canonical files.
 S104: the G15 MBO refine ran as 5 day-class specialists (blind 526 -> r1 72 -> r2 66 err, 12/12) and
