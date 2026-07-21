@@ -112,13 +112,13 @@ folded into this record.
   check-in trigger (verifies DONE, stops the box, re-arms if running).
 - CL July top-up (in-session background; verify on next look; resumable re-run if the container
   died first).
-- MOS FAMILY EXTENSION (mos_asof full-range rebuild + mos_cycle + mos_freeze + model_disagreement
-  through 2026-07-20): agent still running at close-out write time. IF IT LANDED: results are in
-  the repo/S3 per its report. IF NOT: S102 runs it FIRST (builders + full instructions exist; the
-  known traps - index-overwrite full-range rebuild, load_normals wholesale cache - are in the
-  agent prompt in this session's record and in the module notes). weather/mos_asof/
-  mos_asof_index.json may sit uncommitted-WIP on the branch tip - S102 verifies bit-identity on
-  walked days before committing ANY of it.
+- MOS FAMILY EXTENSION: **LANDED AND SHIPPED before session end** - all four stores through
+  2026-07-20 (262 days each, zero missing dates; 119 walked days byte-identical; 136k+ wall
+  stamps 0 violations; all selftests PASS), committed and S3-pushed with manifests. NAMED for
+  future sessions: (a) normals gap 07-22..08-31 (21 far-horizon vs_normal nulls on decision days
+  07-15..07-20 only); (b) the raw cache filenames claim ets 2026-07-30 but the archive edge was
+  07-20 at fetch - a re-run trusting the cache will not see 07-21..07-30 runs; (c) one -0.0 -> 0.0
+  sign-of-zero cell (2026-01-16 MEX h0), numerically equal.
 
 ## OPEN / CARRIED
 
