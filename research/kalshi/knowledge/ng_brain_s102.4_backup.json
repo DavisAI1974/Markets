@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s102.5",
+  "version": "s102.4",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -48,8 +48,7 @@
   "s102_1_g15_status": "BLIND SCORED 8/12; REFINED S103 -> this s102.2 PROPOSAL (incumbents preserved, supersession). Awaiting Greg merge approval.",
   "s102_2_refine_note": "S103 (2026-07-21): G15 UNBLINDED REFINE (Sun Mar 15 - Fri Mar 27), the first shoulder MAGNITUDE-calibration refine and the first refine of an open-conditions walk. Basis Kalshi underlying (April/NGJ26 through 0319, May/NGK26 from 0320; seam -0.037 never traded, scorer roll-adjusts +370 to the actual). Blind 8/12 drift -3260 (guessed cum -3490 vs actual -600 raw / -230 adj). BLOCK FINDING (the too-deep vs turn-detection resolution, PER-EVENT derived from tape+state): 'magnitude grossly too deep' is REFUTED. The down-chain day-moves were WELL-CALIBRATED - per-day day-move residuals mixed and small (0315 -20, 0316 -130, 0317 +170, 0319 +280 UNDER, 0320 -170, 0322 +40, 0323 +260 UNDER, 0324 -70); net of the eight down/quiet days = +360 i.e. slightly UNDER-deep, not over. The -3490 was DOMINATED by TURN-DETECTION: (a) 0318 (day-move error -2300) missed a give-back-exhaustion TURN UP and the wrong LEVEL then propagated - the blind kept walking the chain down from a base the market had already reset up, so every downstream day sat ~2000 too low even though its day-move was right (a one-verdict-into-the-next LEVEL offset, the audit's category (b) rule gap, not category (a) self-correcting propagation); (b) 0327 (day-move error -1510) mis-called an April-expiry covering rally as crest-trim; (c) 0326 (day-move error +960) over-sized a counter print - a directional miss in the OPPOSITE sense that partially MASKED the accumulated over-depth. TARGET = turn-detection + counter/expiry-day FORM, NOT global band-shrinking. REFINED WALK: raw cum path ends -650 vs actual raw -600 (drift -50 seam-free; every step <= ~160); the -370 to the adj series is the never-traded seam. Refined view: forecasts/grp15_refined_view.json. TOUCHED: giveback_exhaustion_boundary (+flow-absorption turn arm, 0.7->0.72), storage_thursday_magnitude (+S1-void counter-print damping resolution of 0326, forward field), weekend_crest_friday (0327 RESOLVED - trigger not met, mis-fired not failed; 0.5->0.55), shoulder_weather_band_void (+0318 current-live-cold caveat), mature_swing_alternation (0326 bounce-never-extended hit + 0327 expiry-covering n=2). NEW PLAY: magnitude.shoulder_counter_print_damping (n=1). SUPERSESSION: all 33 incumbents preserved byte-for-byte except the additive fields/confidence bumps named here; the G15 blind holdout stays the record. LEG-GRAIN: G15 per-leg fingerprints unavailable (S3 tape creds-gated) - the turn/absorption reads used D-1 SESSION-level flow (tape_conditions big_print_b_share); one item FLAGGED for a creds-gated leg-grain follow-up (below).",
   "s102_2_creds_gated_followup": "FLAG for creds-gated leg-grain (characterize_turns on the S3 G15 tape): confirm the 0318 and 0325 turns at LEG grain - the session-level big_print_b_share tail (0317 0.643 buy-absorption; 0324 0.174 sell-climax) is the open-conditions proxy; per-leg fingerprints (absorbing large prints into a selling book, the reversal leg's signature) would confirm the flow-absorption turn arm's mechanism and its no-false-fire boundary. Session-level flow was SUFFICIENT to call both turns here; leg grain is confirmation, not a dependency.",
-  "s102_3_refine_note": "S102.3 = G16 (Sun 2026-03-29 -> Fri 2026-04-10) UNBLINDED refine. Blind panel 8/11 direction, block cum -1455 vs actual -3820 (drift +2365 = UNDER-sized, opposite of G15's over-size). TWO findings, both Greg-mandated. (1) SELECTOR/DIVERGENCE-RESOLUTION is the primary defect (new play selector.divergence_resolution): the synthesis FLAGGED exactly the days it mis-picked (0405/0406/0407) and, on a panel split, defaulted to a DAMPED MIDDLE instead of the correct angle. On all three split days (0401 far-cold-build-UP, 0406 cold-add-Monday-UP, 0407 cold-peak-UP) the weather-UP angle lacked BOTH near-window band authority (HDD < ~16.4) AND never-masked D-1 buy-flow confirmation (session_b_share >= 0.50), so the S3/flow-DOWN angle wins; 0405 is the positive control (cold cleared 16.9 gw at the reopen -> correctly owned the GAP, not a multi-day lean). (2) BLOCK-MAGNITUDE un-damping (new play magnitude.s1void_injection_chain_bleed): the never-masked session_b_share was SUB-0.50 on every D-1 session (0.396-0.495) = a persistent uninterrupted sell-tape; the blind wrongly applied the G15 'do-not-over-size-the-shoulder' lesson as a UNIFORM damp, capping trend days at ~-150..-350 that actually delivered -450..-790. A CHAIN-SIDED down day in a confirmed S1-void injection bleed delivers its full shoulder TREND band; only COUNTER prints damp to flat (shoulder_counter_print_damping, unchanged). The lone over-size (0402 -450 vs -130) was the mirror error: a pre-priced/front-run chain-sided print round-trips (catalyst_continuity_frontrun). Refined view forecasts/grp16_refined_view.json: 11/11 direction, drift +40, max daily residual 30 (all band-position). SUPERSESSION: refined never overrides the blind-applicable rules until forward evidence; the two new plays and all g16 notes carry forward_evidence NONE - G17 is the forward test. Incumbents byte-identical except three additive g16_forward_evidence fields (catalyst_continuity_frontrun, shoulder_counter_print_damping, squeeze_unwind). LEG-GRAIN: G16 per-leg fingerprints are creds-gated/unavailable; within-band day magnitudes are placed at the session-grain band and the residual is a declared leg-grain band-position irreducible.",
-  "s102_5_note": "S104 cleanup merge: +10 plays (friday/midweek/monday cascade proposals) + friday_monday_cascade_s104 doctrine. Incumbents byte-identical."
+  "s102_3_refine_note": "S102.3 = G16 (Sun 2026-03-29 -> Fri 2026-04-10) UNBLINDED refine. Blind panel 8/11 direction, block cum -1455 vs actual -3820 (drift +2365 = UNDER-sized, opposite of G15's over-size). TWO findings, both Greg-mandated. (1) SELECTOR/DIVERGENCE-RESOLUTION is the primary defect (new play selector.divergence_resolution): the synthesis FLAGGED exactly the days it mis-picked (0405/0406/0407) and, on a panel split, defaulted to a DAMPED MIDDLE instead of the correct angle. On all three split days (0401 far-cold-build-UP, 0406 cold-add-Monday-UP, 0407 cold-peak-UP) the weather-UP angle lacked BOTH near-window band authority (HDD < ~16.4) AND never-masked D-1 buy-flow confirmation (session_b_share >= 0.50), so the S3/flow-DOWN angle wins; 0405 is the positive control (cold cleared 16.9 gw at the reopen -> correctly owned the GAP, not a multi-day lean). (2) BLOCK-MAGNITUDE un-damping (new play magnitude.s1void_injection_chain_bleed): the never-masked session_b_share was SUB-0.50 on every D-1 session (0.396-0.495) = a persistent uninterrupted sell-tape; the blind wrongly applied the G15 'do-not-over-size-the-shoulder' lesson as a UNIFORM damp, capping trend days at ~-150..-350 that actually delivered -450..-790. A CHAIN-SIDED down day in a confirmed S1-void injection bleed delivers its full shoulder TREND band; only COUNTER prints damp to flat (shoulder_counter_print_damping, unchanged). The lone over-size (0402 -450 vs -130) was the mirror error: a pre-priced/front-run chain-sided print round-trips (catalyst_continuity_frontrun). Refined view forecasts/grp16_refined_view.json: 11/11 direction, drift +40, max daily residual 30 (all band-position). SUPERSESSION: refined never overrides the blind-applicable rules until forward evidence; the two new plays and all g16 notes carry forward_evidence NONE - G17 is the forward test. Incumbents byte-identical except three additive g16_forward_evidence fields (catalyst_continuity_frontrun, shoulder_counter_print_damping, squeeze_unwind). LEG-GRAIN: G16 per-leg fingerprints are creds-gated/unavailable; within-band day magnitudes are placed at the session-grain band and the residual is a declared leg-grain band-position irreducible."
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -1096,205 +1095,6 @@
    "requires": "open_time_only for the class; the sell-tape confirmation is the never-masked tape_conditions session_b_share (open-conditions)",
    "scope": "magnitude (day-net band) of a chain-sided down session in an S1-void injection bleed",
    "forward_evidence": "NONE - proposed s102.3 (G16 refine). G17+ is the forward test; the bands must hold on the next confirmed S1-void injection block with a persistent sub-0.50 sell-tape."
-  },
-  {
-   "id": "daytype.friday_exit_decomposition",
-   "target": "handoff_direction",
-   "trigger": "any Friday close going into a weekend seam (or the Good-Friday-dark Sunday that replaces it)",
-   "read": "decompose the close into POSITIONING vs FUNDAMENTAL-CARRY from: expiry/opex/index-roll calendar; last-hour price-dir vs last-hour signed-flow (aligned=momentum, divergent=covering/exhaustion); chain age + cum-from-anchor extremity; the driver's realization timing",
-   "call": "emit an EXIT-TYPE, and have the weekend consume the TYPE not the day-net: (1) CREST_TRIM_FADEABLE (stretched same-side chain + priced driver expiring by close) -> Mon continues the give-back; (2) POSITIONING_SPENT_FADE (futures expiry / opex pin / weekend squaring / index-roll LAST day; tell = price moves AGAINST last-hour flow) -> Mon fades the positioning half; (3) FUNDAMENTAL_CARRY_CONTINUE (unrealized weather/storage driver still AHEAD of Monday) -> Mon carries the side; (4) MOMENTUM_CARRY (dir AND flow aligned at the close) -> carry the side. Sub-rule: an index roll whose WINDOW is still open Monday is positioning-CARRY, not spent.",
-   "evidence": "POSITIONING_SPENT: 0327 (April expiry, +1150 covering with price-up-against-sell-flow absorb_session, -> Mon 0330 resumed pre-covering DOWN -650); 0213 (roll's last marked day, undersized -1400). ROLL-CARRY sub-rule: 0206 down (window open) -> 0209 carried down -830. FUNDAMENTAL_CARRY: 1128 (Black-Friday cold arriving +2340 -> Mon 1201 carried +910); 1121 (+910 -> 1124 held +90). MOMENTUM_CARRY missed by the default: 1107/1114 down-momentum -> 1110/1117 carried down. CREST_TRIM: 0410 fired clean -190. n>=2 spanning G8/G9/G12/G13/G15/G16.",
-   "status": "PROVISIONAL",
-   "confidence": 0.5,
-   "requires": "expiry/opex/roll calendar + chain state are open_time_only; the last-hour dir-vs-flow tell requires tape flow (MBO-measured only for G15 so far - see data_gap)",
-   "scope": "the OUTGOING weekend handoff verdict (exit_type + monday_bias); does not re-score the Friday itself",
-   "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
-   "caveats": "The blind's Friday 'range / roll-pressure DOWN' default is the single largest cascade source (1024, 1107, 0227, 0306): it fires a directional LABEL the weekend inherits. This play's structural fix is that Monday inherits the MEASURED exit-state, never the Friday label.",
-   "data_gap": "last-hour signed flow (field #3, the covering/exhaustion tell) is MBO-measured only for G15; for the rest of the record exit-type was inferred from archetype+curve-dir+calendar. Extending the flow measurement to all Friday closes is a DATA build.",
-   "merged": "s104_friday_cleanup"
-  },
-  {
-   "id": "weekend.carry_realization_flip",
-   "target": "direction",
-   "trigger": "a FUNDAMENTAL-CARRY Friday (unrealized weather/storage driver at the close) going into the weekend, evaluated at the Monday 07-10 ET catch-up window",
-   "read": "the driver's peak-realization day relative to Monday (from the forecast known at Friday close): AHEAD of Monday vs realizing Sat/Sun/Mon",
-   "call": "driver peak still AHEAD -> Monday CARRIES/continues the side. driver peak lands over the weekend (realizes Sat/Sun/Mon) -> Monday = SELL-THE-NEWS REVERSAL (the catch-up window fades the realized driver, it does not extend it). This is the mechanism that explains the worst Monday reversals that followed a CORRECT Friday direction.",
-   "evidence": "REALIZING->reverse (n=2 both spanning groups): 0220 (Friday extension into the cold weekend +600, correct; cold peak realized Sat-Mon -> Sun 0222 carried +1150 -> Mon 0223 REVERSED -1790); 0405 (cold-add realized over the Good-Friday extended weekend +400 -> Mon 0406 -470). AHEAD->carry (contrast): 1128 cold still arriving -> 1201 carried +910; 0111 cold shot Sunday still bleeding -> 0112 extend bounce.",
-   "status": "PROVISIONAL",
-   "confidence": 0.45,
-   "requires": "open_time_only (the forecast peak day is knowable at Friday close and again at the Monday catch-up)",
-   "scope": "Monday direction after a fundamental-carry Friday",
-   "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
-   "caveats": "Distinct from crest-trim: here the Friday DIRECTION was correct and CARRIED into Sunday; the reversal is the DRIVER realizing, not a Friday-close crest. The discriminator is realization TIMING, not chain stretch.",
-   "merged": "s104_friday_cleanup"
-  },
-  {
-   "id": "structure.friday_exhausted_extreme_giveback",
-   "target": "direction",
-   "trigger": "a Friday closing at an EXTREME cum-from-anchor or on a MATURE chain (age >= 4)",
-   "read": "cum-from-anchor extremity vs block range + chain age at the Friday close",
-   "call": "an extreme/blow-off Friday close is EXHAUSTED, not a continuation: the weekend is give-back-biased and Monday must NOT extend it. Size the weekend from the give-back class, not the ramp class.",
-   "evidence": "n>=3 spanning G9/G10/G12: 0130 blow-off +4990 -> 0201 give-back -7590 (Mon 0202 wrongly EXTENDED +1300, actual -4260); 1212 mature crest rolled over -1190 (Mon 1215 -1570); 0102 over-magnitude down -1250-guess/-700-actual = exhausting -> Mon 0105 mean-reverted up +270.",
-   "status": "PROVISIONAL",
-   "confidence": 0.45,
-   "requires": "open_time_only",
-   "scope": "the weekend + Monday direction/size after an extreme Friday close",
-   "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
-   "caveats": "Overlaps incumbent structure.post_parabolic_bleed and magnitude.crash_regime_bands; this is the FRIDAY-CLOSE-into-weekend instance of the same exhaustion physics, framed for the handoff.",
-   "merged": "s104_friday_cleanup"
-  },
-  {
-   "id": "midweek.stretched_extreme_close_giveback",
-   "one_line": "A mid-week day that CLOSES AT its intraday extreme (close_off_extreme >= ~0.95) after a LARGE one-session directional run (>= ~$1200) passes forward a STRETCHED state; the NEXT session inherits GIVE-BACK / round-trip risk, NOT continuation. This is THE exit-read that breaks the mid-week -> Thu/Fri chain.",
-   "condition": "day_class in {Tue,Wed} (any core day); the day's own move >= ~$1200 in one direction AND it closes within ~5% of its intraday extreme (coff>=0.95 on an up day / <=0.05 on a down day), high_late/low_late true.",
-   "behavior": "The NEXT day's forecast must NOT extend the run. Flip the inherited assumption from continuation to GIVE-BACK: on a stretched-HIGH close expect a next-day fade DOWN; on a stretched-LOW close expect a next-day bounce UP. The counter-move is a give-back, not a new chain - band it modest (-$300..-$1200 class), do NOT claim the full round-trip, and it is CAPPED unless a fresh chain-sided catalyst arrives.",
-   "why_it_fails_now": "The blind reads a big directional close as MOMENTUM and extends it into Thu/Fri. On the six cleanest stretched-HIGH closes it extended UP and eight-figure-missed the give-back.",
-   "evidence_high_close_giveback": [
-    "g8 0119 Wed +1950 coff0.98 -> 0120 Thu ACTUAL -750 (blind extended +930, err +1680)",
-    "g9 0217 Wed +1890 coff1.0 -> 0218 Thu ACTUAL -1850 (blind -900, dir ok but undersized)",
-    "g9 0223 Tue +5010 coff1.0 -> 0224 Wed ACTUAL -2530 (blind extended +700, err +3230)",
-    "g10 0107 Wed +1500 coff1.0 -> 0108 Thu ACTUAL -1590 (blind extended +2000, err +3590)",
-    "g14 0311 Wed +2030 coff1.0 -> 0312 Thu ACTUAL -260 (blind extended +900, err +1160)",
-    "g15 0318 Wed +1900 coff0.97 -> 0319 Thu ACTUAL -1080 (blind -800, dir ok - MBO-refined caught it)"
-   ],
-   "evidence_low_close_bounce": [
-    "g9 0209 Tue -2850 coff0.0 -> 0210 Wed ACTUAL +370 bounce (blind OVER-sized the bounce +1350, err +980)",
-    "g10 0114 Wed -2720 coff0.05 -> 0115 Thu ACTUAL +450 bounce (blind OVER +1600, err +1150)",
-    "g15 0324 Tue -380 coff0.0 -> 0325 Wed ACTUAL +660 bounce (blind UNDER +250, err -410)"
-   ],
-   "n": "6 high-side (g8,g9x2,g10,g14,g15) + 3 low-side (g9,g10,g15) = 9 across 5 groups; high-side is 6/6 clean.",
-   "derived_magnitude": "The robust, decision-time claim is the SIGN of the inherited assumption: STOP EXTENDING the run - the next day counter-moves. The counter-move SIZE is variable (-13% to -106% of the stretched run) so band it, do not point-forecast the round-trip. Practical: set next-day continuation to ~0 and the give-back band to -$300..-$1200 (high side) / +$300..+$700 capped bounce (low side, a give-back not a chain-birth).",
-   "counterexample_and_scope": "coff 0.90-0.94 is NOT clean: g8 0126 Wed +1370 coff0.95 -> Thu +170 (flat, mild), g12 0204 Wed +1260 coff0.93 -> Thu +510 (continued up). The exception is a YOUNG fresh-turn day (chain age 0-1) still building - see midweek.young_chain_extension_full_band; interaction rule: the stretched-close give-back is VOID on the 1st-2nd session of a fresh turn (that leg is still repricing). Threshold coff>=0.95 AND chain age >= 2.",
-   "requires": [
-    "curve_2h or intraday close-off-extreme",
-    "the day's own run size",
-    "chain age"
-   ],
-   "day_class_validity": "Tue/Wed core; the inheritance is consumed by the following Thu/Fri (and, across a weekend, by Sunday/Monday via the anchor CLOSE).",
-   "status": "PROVISIONAL",
-   "forward_evidence": "NONE",
-   "merged": "s104_midweek_cleanup"
-  },
-  {
-   "id": "midweek.prior_exit_lasthour_magnitude_gate",
-   "one_line": "For a mid-week TURN/reversal day, the PRIOR session's last_hour_dir gates the MAGNITUDE: if the prior exited AGAINST the coming turn, the turn realizes POST-OPEN (a seam/stop-run event) -> size the CONFIRMED base, never front-run the reactive tail. If the prior exited WITH the move, momentum carries -> size FULL, do not cap.",
-   "condition": "a mid-week day identified as a turn/reversal (direction already set by R5/giveback_origin_shelf_floor or the reversal-recognition play below); compare prior-day last_hour_dir (sign of the final-2h cum change) to the turn direction.",
-   "behavior": "prior_exit_dir OPPOSES turn -> the reversal is a post-open realization; cap magnitude at the confirmed retrace-to-shelf base and hold confidence moderate (the overshoot is reactive, not yours at the open). prior_exit_dir ALIGNS with the move -> carry the momentum; do NOT apply the mid-week cap (the blind's systematic under-size).",
-   "evidence_against_capped": [
-    "g15 0318 up-reversal, D-1 0317 exited lhd -1 (down) -> confirmed base +1500 (MBO r1/r2), actual +1900 (+400 reactive stop-run tail correctly not claimed)",
-    "g15 0325 up-reversal, D-1 0324 exited lhd -1 -> base +600, actual +660",
-    "g10 0107 up-reversal, D-1 0106 exited lhd -1 -> post-open turn (blind front-ran the wrong way)",
-    "g12 0203/0204 up-reversals, D-1 lhd -1 both -> post-open turns",
-    "g9 0217 up-reversal, D-1 0216 exited lhd -1 -> post-open turn"
-   ],
-   "evidence_aligned_carry": [
-    "g9 0223 Tue young turn, D-1 0222 exited lhd +1 (up) -> aligned, momentum carried +5010 (blind capped at +600, err -4410 - the gate would have said DO NOT CAP)"
-   ],
-   "n": "6 opposing-exit reversal days (all D-1 lhd<=0) across g9,g10,g12,g15 = a strikingly consistent signature: EVERY clean mid-week reversal-up day in the record had a prior session that exited DOWN. 1 aligned-carry case (g9 0223).",
-   "derived_magnitude": "opposing-exit reversal confirmed base = retrace-to-shelf (~+1200..+1600 off a deep down-extreme); reactive overshoot beyond the shelf is not claimed at the open. aligned-exit = full class band, no mid-week cap.",
-   "does_not_explain": "does NOT by itself FLIP direction (that is midweek.giveback_exhaustion_reversal_recognition); it only SIZES a turn already identified. Silent on thin-holiday day-class moves and on post-crash DOUBLE bounces (g12 0203+0204) where it under-predicts the second leg.",
-   "requires": [
-    "prior-day last_hour_dir (curve_2h final-2h sign)",
-    "the turn direction from the direction play"
-   ],
-   "provenance": "generalized from the G15 MBO round-2 specialist-C HE24->HE1 boundary finding (forecasts/grp15_mbo_specialist_C_r2.json).",
-   "status": "PROVISIONAL",
-   "forward_evidence": "NONE",
-   "merged": "s104_midweek_cleanup"
-  },
-  {
-   "id": "midweek.giveback_exhaustion_reversal_recognition",
-   "one_line": "The mis-called down-resume. When a DOWN-chain is MATURE (age>=3) AND price sits at a cum-extreme / origin-consolidation shelf AND the prior 1-2 sessions carry an EXHAUSTION TELL (a large sell flow ABSORBED with price holding, OR an extreme big-print sell-climax closing at the low), the next mid-week day is a GIVE-BACK-EXHAUSTION REVERSAL UP - not the chain-resume/giveback-continue DOWN the blind keeps calling.",
-   "condition": "day_class core; chain_polarity down with chain_age>=3; cum_from_anchor at/near the block extreme OR price at the swing's origin shelf (>=~75% retrace per R5); D-1 tape shows absorption (large signed sell flow, price holds/rises) or an extreme sell-climax big_print_b_share at the low.",
-   "behavior": "FLIP the mid-week call from down-resume to reversal UP. This is R5's inversion (capitulation-at-stretched-extreme precedes the bounce) applied on a Tue/Wed - the blind has been failing to RECOGNIZE it mid-week. Then size via midweek.prior_exit_lasthour_magnitude_gate.",
-   "why_it_fails_now": "The blind's archetype vocabulary ('mature_swing_giveback', 'resume_downchain', 'chain resume DOWN', 'giveback_chain_continue') defaults to CONTINUING the down-chain and treats the mature-extreme as more downside, exactly inverting R5. It is a SELECTOR/recognition failure, not a missing rule.",
-   "evidence": [
-    "g15 0318 Wed: age3 down-chain on the 0310 origin shelf, D-1 0317 big-print-BUY absorption -> blind -400, ACTUAL +1900",
-    "g15 0325 Wed: age5 down-chain at cum extreme -2350, D-1 0324 extreme sell-climax at the low -> blind +250 (dir ok, undersized), ACTUAL +660",
-    "g12 0203 Tue & 0204 Wed: post -7590/-4260 crash, deeply extended -> blind -750/-850, ACTUAL +1130/+1260",
-    "g10 0107 Wed: basing after capitulation retest -> blind -550, ACTUAL +1500",
-    "g9 0217 Wed: after 0216 terminal-giveback-lull -> blind -800, ACTUAL +1890",
-    "g14 0303 Tue: warm-trough chain, post-fade -> blind -650, ACTUAL +640"
-   ],
-   "n": ">=7 across g9,g10,g12,g14,g15 (5 groups).",
-   "derived_magnitude": "confirmed retrace to the prior consolidation shelf (R5 floor becomes the target on the way UP); typical +1200..+1600 off a 3+ session down-extreme; overshoot beyond the shelf is reactive (see the magnitude gate).",
-   "does_not_explain": "does NOT fire when the down-chain is YOUNG (age<3) and still extending (those correctly continue down, e.g. g15 0324 -380); requires the D-1 exhaustion tell - absent it, defer to the chain. Bidweek/catch-up ratify days (g13 0217) and pre-EIA coil days (g16 0401) are a different (catalyst-timing) failure this rule does NOT cover.",
-   "requires": [
-    "chain age + polarity",
-    "cum-from-anchor / shelf level (R5)",
-    "D-1 trade tape: absorption or sell-climax (decision-time-legit, open-conditions)"
-   ],
-   "status": "PROVISIONAL",
-   "forward_evidence": "NONE",
-   "merged": "s104_midweek_cleanup"
-  },
-  {
-   "id": "midweek.young_chain_extension_full_band",
-   "one_line": "A FRESH young (chain age 0-1) CHAIN-SIDED extension with aligned D-1 flow delivers the FULL band; do NOT apply counter-print damping (that is scoped to COUNTER prints only). Corrects the blind's systematic mid-week under-sizing of fresh turns.",
-   "condition": "day_class core; chain age 0-1 (1st-2nd session since a fresh turn/catalyst); the day's move is CHAIN-SIDED (with the new chain) and D-1 flow aligns.",
-   "behavior": "size the FULL class band, no mid-week cap. Interacts with midweek.stretched_extreme_close_giveback: on the 1st-2nd session of a fresh turn a stretched-high close is STILL BUILDING (void the give-back inheritance for one more session).",
-   "evidence": [
-    "g9 0223 Tue young_turn_chain_extension: blind +600, ACTUAL +5010",
-    "g8 0119 Wed post_stabilization_hold_drift_up (fresh turn): blind +120, ACTUAL +1950",
-    "g14 0311 Wed shock-class cold-add (fresh chain-sided driver): blind +800, ACTUAL +2030"
-   ],
-   "n": "3 across g8,g9,g14.",
-   "derived_magnitude": "full class band (young chain-sided ran +1950..+5010 vs capped blinds +120..+800). This is the CHAIN-SIDED complement to the s102.3 rule that damping is for COUNTER prints only.",
-   "does_not_explain": "does NOT license extending a MATURE swing (R4: mature swings give back, not extend); requires chain age 0-1 AND chain-sided AND aligned flow.",
-   "requires": [
-    "chain age",
-    "chain-sided vs counter classification",
-    "D-1 flow alignment"
-   ],
-   "status": "PROVISIONAL",
-   "forward_evidence": "NONE",
-   "merged": "s104_midweek_cleanup"
-  },
-  {
-   "id": "monday.seam_chainage_accommodation_gate",
-   "target": "magnitude",
-   "trigger": "a carry-Monday (R3 carries the D-1 side, no fresh-shot gap) after the 06-10 catch-up carry, sizing the late-session ph2 depth",
-   "read": "the inherited SEAM chain-age carried across the overnight seam (E.handoff_out.chain_age_sessions / C.chain_polarity_and_age): the ph2 late-buy phase is ACCOMMODATED on a YOUNG chain (age<=2 -> price lifts, close OFF the low) or ABSORBED on a MATURE chain (age>=3 -> price still falls, close NEAR the low)",
-   "call": "young inherited chain -> size the day SHALLOW (close off-low, absorb_session False); mature inherited chain -> size the day DEEP (close near-low, absorb_session True). Chain-age is the LEADING indicator of the ph2 outcome and therefore of how deep the day pins - it calls it WITHOUT a book read. Demote the minute-grain imb_flow (a known Monday sampling artifact) to a diagnostic.",
-   "evidence": "MBO-PROVEN n=2 both scales on G15: 0316 age-1 down chain -> ph2 buy +959 ACCOMMODATED (+140 px) -> close off low 0.29 -> shallow -540 (my posterior -570, err -30); 0323 age-3 down chain cum-890 -> ph2 buy +2409 ABSORBED (price still -290) -> close near low 0.14 -> deep -1080 (my posterior -1080, err 0). Generalizes off G15: deepens 1117 (continuing mature down-chain absorbed -> -1510; corr -900 -> rule -1400) and confirms shallow priced carries (1124 +90).",
-   "status": "PROVISIONAL",
-   "confidence": 0.55,
-   "requires": "chain age + polarity carried across the seam (open_time_only from E/C handoff); the ph2 accommodation/absorption fingerprint is MBO-measured for G15 only - all-Monday extension is a DATA build",
-   "scope": "carry-Monday day-move MAGNITUDE / close-off-extreme; does not set direction",
-   "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
-   "provenance": "generalized from the G15 MBO round-2 specialist-B HE24->HE1 seam finding (forecasts/grp15_mbo_specialist_B_r2.json)",
-   "caveats": "Does NOT explain gap-driven Mondays (1027) or crash reactive tails (0202/0309 - the tail is beyond the accommodation/absorption band, reactive, not claimed at open). Overlaps incumbent monday.window_deep_book_shakeout: the seam chain-age is the decision-time-legit LEADING indicator of the SAME ph2 outcome that play's 06:00 L1-10 book read approximates - chain-age calls it in advance, the book confirms intra-window.",
-   "merged": "s104_monday_cleanup"
-  },
-  {
-   "id": "monday.overnight_headfake_into_catchup",
-   "target": "direction",
-   "trigger": "a Monday whose overnight (ph0, ~20:00-06:00 ET) session prints a gap that does NOT confirm the inherited D-1 tilt (price drifts one way on flat-to-opposite signed flow)",
-   "read": "the overnight thin-book move vs its own flow: a gap on NON-CONFIRMING flow (sell-share <0.50 while price is up, or the signed-flow sign opposes the price move) is a HEAD-FAKE, not the day's direction. Gap SIGN is noise (E's do-not-inherit-the-label fix at the overnight scale).",
-   "call": "do NOT inherit the overnight gap sign. The 06-10 ET catch-up window is where the D-1 (Friday+Sunday) trade tilt reasserts; the head-fake REVERSES before/through the window into the ph1 carry. Direction stays with the inherited E.monday_bias, confirmed by the catch-up window's signed-flow-vs-price conviction.",
-   "evidence": "MBO-PROVEN n=2 on G15: 0316 overnight +490 to 02:21 on ph0 sflow -493 -> reversed -930 ph1 carry-down; 0323 overnight +1270 to 03:52 on ph0 sflow -26 -> reversed -1920 ph1 carry-down. Generalizes to the wrong-sign weekend-gap-up Mondays 1110/1117 (up gaps inherited, tape carried DOWN with the D-1 momentum) and 0302 (a warm-cut-DOWN gap that FAILED -> catch-up faded it UP).",
-   "status": "PROVISIONAL",
-   "confidence": 0.5,
-   "requires": "overnight signed flow vs price (needs_intraday_reveal for the flow tell; MBO-measured for G15 only, archetype+curve inference elsewhere)",
-   "scope": "Monday direction gate at the 06-10 catch-up window",
-   "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
-   "caveats": "A DIRECTION gate only - sizes nothing. Does not fix the fresh-shot gap MAGNITUDE (1027) - that is weekend_gap_delivery's data build. On a Monday whose overnight gap DOES confirm the D-1 tilt (fresh-shot cold add), the gap is real and this play does not fire (see the incumbent block_gap_ownership / weekend_gap_delivery).",
-   "merged": "s104_monday_cleanup"
-  },
-  {
-   "id": "monday.catchup_window_tilt_gate",
-   "target": "direction",
-   "trigger": "every non-holiday Monday, at the 06-10 ET catch-up window",
-   "read": "direction = the inherited D-1 (Friday+Sunday) trade tilt = E.monday_bias / C.conviction_verdict, NOT the gap sign or the Friday day-net. The catch-up window's own signed-flow-vs-price conviction CONFIRMS (ALIGNED) or FADES (a driver that realized over the weekend -> sell-the-news) that tilt.",
-   "call": "carry the inherited monday_bias through the window; if E.driver_realization says the driver realized over the weekend, the catch-up is a FADE (sell-the-news), not an extend. This is the Monday operationalization of the flow-is-the-primary-direction-gate finding (NG_FORECASTER_PROBLEM_MEMO_S103 sec 5/7): flow gates SIGN, the fundamental families set magnitude/where-it-can-go.",
-   "evidence": "carry-realization fades n>=2 (from E, spanning groups): 0223 (cold peak realized weekend -> catch-up faded -1790, corr+rule -1500); 0406 (cold-add realized ext-weekend -> faded -470, rule -450); 0309 (3-day up-run realized to warm crest -> catch-up faded -3020). Aligned carries: 0330 (positioning-spent expiry-covering -> resume pre-covering down -650); 0209 (roll-window-open carry down -830).",
-   "status": "PROVISIONAL",
-   "confidence": 0.5,
-   "requires": "E.monday_bias + E.driver_realization (open_time_only) + the catch-up window conviction (needs_intraday_reveal for the live confirm)",
-   "scope": "Monday direction at the catch-up window; consumes the Friday/Sunday handoff, never the gap sign",
-   "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
-   "caveats": "Direction/timing only. The sell-the-news FADE DEPTH on the crash days (0202/0309) is sized by seam_chainage + crash class but the extreme reactive tail is honest-under (not claimed at open). Sub-threshold cold (0406, HDD ~15.8) prices ONCE in the reopen gap then the tape reasserts - do not treat a sub-threshold shoulder cold add like a winter cold add.",
-   "merged": "s104_monday_cleanup"
   }
  ],
  "mechanisms": [
@@ -2640,74 +2440,6 @@
     "weekend_seam": "Sunday inherits the Friday CLOSE + chain state, not the Friday day-move; the overnight gap SIGN is a non-derivable handoff (forecast the day-move from the anchor, treat the reopen gap as noise). Spent-vs-unrealized-ahead is the gap-ownership key: crest-trim -> Sunday can gap-fade; covering/holding -> Sunday reopen likely continues the bid. A weekend that also carries a contract roll passes the leg change as never-traded."
    },
    "agent_files": "CANONICAL: research/kalshi/agents/ (blind panel + refine). MBO refine driver research/kalshi/coordinate_g15_mbo.py (coordinator, SELECT-per-day) + replay_g15_mbo.py (feeds MBO through NGLiveOperator + build_feature_state). Renders: renders/ng_refine_s95/g15_mbo_{blind,refined}_continuous.png. Immutable blind: forecasts/grp15.json. Integration gotchas: research/kalshi/G15_MBO_FIXES_FOR_CHATGPT.md."
-  },
-  "friday_monday_cascade_s104": {
-   "premise": "Greg S104: 'we missed Monday so bad because we missed Friday so bad' - Friday is the cascade root; focus = FRIDAY and MONDAY going forward (the first Monday being off moves the curve for the whole week).",
-   "findings": {
-    "friday": "11/22 scored Fridays wrong-signed blind (worst day-class); 10/14 bad Mondays root to a mis-read Friday exit.",
-    "monday": "11/22 Mondays wrong-signed blind; 10 of 11 flip right-signed on corrected Friday exit_type/monday_bias inheritance alone. Sum |err| 35,030 -> 10,880 (inheritance) -> 8,000 (with Monday-native rules); excluding 3 declared-irreducible days, 18 Mondays sum 1,930 (mean ~107).",
-    "midweek": "44-day Tue/Wed sweep: stretched extreme close (coff>=0.95 after >=$1200 run) gives back next day 6/6; prior-exit last-hour dir is a magnitude gate for seam-realizing turns."
-   },
-   "weekend_handoff_protocol": [
-    {
-     "target_play": "daytype.weekend_crest_friday (id 31)",
-     "amendment": "add a covering-spent vs fundamental-carry SUB-SPLIT the play currently lacks. The play only covers the CREST-TRIM case (stretched same-side chain, driver expiring). A Friday that is NOT a crest can still be POSITIONING-SPENT (expiry/opex covering -> Monday fade) or FUNDAMENTAL-CARRY (driver ahead -> Monday continue). The 0327 note already establishes the trigger-not-met discriminator; this generalizes it into an explicit three-way exit-type classifier (see daytype.friday_exit_decomposition).",
-     "reason": "the incumbent shapes the Friday CLOSE but does not tell the weekend HOW that close decays; the decomposition is the missing handoff verdict."
-    },
-    {
-     "target_play": "daytype.monday_weekend_gap (id 8)",
-     "amendment": "add an EXIT-STATE-INHERITANCE clause: Monday consumes the Friday exit_type + monday_bias (measured last-hour dir/flow, close-off-extreme, positioning-calendar, driver-realization), NOT the Friday day-net or directional label. The 07-10 ET catch-up window reprices driver_realization: a driver that realized over the weekend makes the catch-up a FADE (sell-the-news), not an extend.",
-     "reason": "the current R3 read (fade mature-extreme gap / extend fresh-turn / carry Friday side) is correct but keyed off the GAP; keying it off the Friday EXIT-STATE fixes the cascade cases (0223, 0202, 1201) where the gap sign alone mis-led Monday."
-    },
-    {
-     "target_doctrine": "doctrine_tier3.day_class_toolbags.a_weekend_toolbag",
-     "amendment": "record the handoff_out contract (9 fields: close_px, cum_from_anchor, chain_polarity, chain_age, last_hour_dir, last_hour_signed_flow->conviction, close_off_extreme_frac, positioning_calendar, driver_realization, exit_type, monday_bias, sunday_gap_owner) as the STATE the weekend toolbag consumes. Consistent with the bag's principle that only STATE reads survive the gap - this is the exact state the Friday exit must hand over.",
-     "reason": "the toolbag says only state survives the gap but does not enumerate the Friday-exit state fields; this closes that."
-    }
-   ],
-   "midweek_exit_read_protocol": {
-    "purpose": "The standardized EXIT read a mid-week specialist HANDS FORWARD (D/E and the Monday fix consume it). It is STATE, never the day-net. Emit at every mid-week close.",
-    "fields": {
-     "close_px": "the realized close",
-     "last_hour_dir": "sign of the final-2h cum change (curve_2h[-1]-curve_2h[-2]): did the turn begin AT the boundary? gates next-day magnitude (magnitude_gate)",
-     "close_off_extreme": "coff: closed AT the high (>=0.95) / AT the low (<=0.05) = STRETCHED -> give-back inheritance; 0.3-0.7 = balanced",
-     "run_size_and_stretched_flag": "the day's one-session move; stretched = run>=~1200 AND coff at extreme",
-     "chain_polarity_and_age": "down/up and sessions since the turn - gates young-extends-vs-mature-gives-back (R4) and reversal-recognition (age>=3)",
-     "exhaustion_state": "D-1/own-day absorption (large signed flow, price holds) or big-print climax at the extreme = reversal primed; none = chain intact",
-     "conviction_verdict": "flow_conviction = sign(signed_flow)*sign(price_change): ALIGNED = trend healthy; NEGATIVE-under-rising = absorption/covering = turn risk",
-     "what_next_day_inherits": "the explicit instruction: EXTEND vs EXPECT-GIVE-BACK vs REVERSAL-PRIMED-DO-NOT-FRONT-RUN"
-    },
-    "the_three_inheritance_verdicts": [
-     "STRETCHED-EXTREME CLOSE (coff>=0.95, run>=1200, chain age>=2) -> next day STOP EXTENDING, expect a capped give-back (midweek.stretched_extreme_close_giveback).",
-     "MATURE-DOWN-CHAIN AT SHELF/EXTREME + D-1 EXHAUSTION TELL -> next day REVERSAL UP primed; the turn realizes post-open if this day exited DOWN, so size the confirmed shelf-retrace base and DO NOT front-run the tail (recognition + magnitude_gate).",
-     "YOUNG CHAIN-SIDED EXTENSION (age 0-1, aligned flow) -> next day CARRIES the chain at FULL band; void the give-back inheritance for one more session (young_chain_extension_full_band)."
-    ]
-   },
-   "monday_amendments": [
-    {
-     "target_play": "daytype.monday_weekend_gap (id 8)",
-     "amendment": "ADOPT E's proposed exit-state-inheritance clause AND add the intra-window mechanics R3 currently lacks. R3's read (fade mature-extreme gap / extend fresh-turn / carry Friday side) is keyed off the GAP; re-key it off the inherited E.exit_type + E.monday_bias (never the gap sign / Friday label - the 10 wrong-sign cascade Mondays), then apply INSIDE the 06-10 window: (a) monday.overnight_headfake_into_catchup screens the gap for a non-confirming head-fake; (b) monday.catchup_window_tilt_gate carries/fades the inherited tilt; (c) monday.seam_chainage_accommodation_gate sizes the ph2 depth. The 'often a REVERSAL' lean stays RETIRED - the apparent 'reversals' were the overnight head-fake reversing back to the D-1 tilt, not a day-level reversal.",
-     "reason": "R3 is correct in spirit but keyed off the wrong object (the gap). Keying it off the inherited Friday EXIT-STATE fixes the cascade cases (0202, 0223, 0309, 1110, 1117, 1201, 1215, 1222, 0105, 0406) where the gap sign alone mis-led Monday."
-    },
-    {
-     "target_play": "monday.window_deep_book_shakeout (id: monday.window_deep_book_shakeout)",
-     "amendment": "record that the inherited SEAM chain-age (monday.seam_chainage_accommodation_gate) is a decision-time-legit LEADING indicator of the SAME ph2 accommodation-vs-absorption outcome this play approximates from the 06:00 L1-10 resting book. Chain-age calls the outcome IN ADVANCE (no book needed); the book read is the intra-window CONFIRM. They are complementary (STACK, never head-to-head): chain-age at the open + book at 06:00 + the intraday recruitment confirm this play already carries.",
-     "reason": "the play already found the 06:00 book approximates the caught/stacked side (6/7); the seam chain-age is the cheaper, earlier, open-time-legit version of the same read and closes the play's own 'Monday-specificity unproven / no open-time predictor' gap."
-    },
-    {
-     "target_doctrine": "doctrine_tier3.day_class_toolbags (Monday day-class B)",
-     "amendment": "record the Monday consumption rule: Monday reads E.handoff_out {exit_type, monday_bias, chain_age_sessions, driver_realization, last_hour_signed_flow} - STATE, never the Friday day-net or directional label. The 06-10 ET catch-up window is where Monday decides: screen the overnight gap for a head-fake, carry/fade the inherited tilt (catch-up_window_tilt_gate), size the ph2 depth by the inherited seam chain-age (seam_chainage_accommodation_gate). Direction stays with the D-1 (Friday+Sunday) trade tilt; the minute-grain imb_flow is a diagnostic only (Monday sampling artifact).",
-     "reason": "closes the enumeration of exactly what the Monday day-class consumes from the corrected Friday/mid-week handoff, consistent with the toolbag principle that only STATE survives the seam."
-    }
-   ],
-   "run_protocol_s104": {
-    "group_window": "blocks open the Sunday reopen and ALWAYS close on the second Friday; orphan extra days fold into the run, the boundary never moves (Greg S104).",
-    "panel": "FIVE day-class specialists (A weekend/B Monday/C core/D Thu-EIA/E Fri-expiry) for BOTH blind and refine every run (Greg S104); coordinator SELECTS the owner per day under the guard - it can never emit a number no specialist owns.",
-    "render": "actual curve + the forecast OWN p50 path only; no re-anchored/scaled/angular reconstructions; no bridges across closed market.",
-    "target": "honest under-100 every day."
-   },
-   "open_decision_sunday_convention": "Greg asked: roll Sunday nights into Monday, or keep the ~2h 18:00-20:00 ET reopen as its own day? Current convention: standalone Sunday day (UTC file-boundary artifact); CME trade-date convention folds Sun 18:00 into Monday. Recommendation on the table: fold it (one Friday->Monday seam). AWAITING GREG.",
-   "status": "plays PROVISIONAL, forward_evidence NONE; forward test = G17 blind (5-specialist) + G16/G17 MBO."
   }
  }
 }
