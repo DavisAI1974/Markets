@@ -1,0 +1,21 @@
+[Unit]
+Description=DavisAI Markets HTMX live desk
+After=network-online.target markets-ng-live.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@
+EnvironmentFile=-/etc/markets/markets.env
+ExecStart=/usr/bin/python3 -m uvicorn desk.app:app --host ${MARKETS_DESK_HOST:-127.0.0.1} --port ${MARKETS_DESK_PORT:-8091}
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadOnlyPaths=/var/lib/markets/ng_live
+
+[Install]
+WantedBy=multi-user.target
