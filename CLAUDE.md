@@ -1,4 +1,33 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 101)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 102)
+
+## S102 — G14 WALKED+MERGED (brain s102.1, 33 plays) + G15 BLIND SCORED (refine = S103's opener) + OPEN-CONDITIONS PROTOCOL (read `SESSION_HANDOFF_2026-07-21_S102.md` + `KICKOFF_2026-07-22_S103.md` + `research/kalshi/S102_MERGE_PROPOSAL.md`)
+
+**G14** (Mar 1-13, FIRST SHOULDER BLOCK, basis = calendar-front 1008/NGJ26 per Greg's "the one that
+settles closest to its close" Kalshi rule; 996 CONFIRMED = NGK26/May, resolves the G13 basis_caveat;
+NGJ26 expiry 2026-03-27 per definitions): blind **4/12 / -4350** (clean masked holdout; a V read as a
+down-give-back - market rallied 2.857->3.407 through ~15gw of warm cuts) -> **5-investigation refine
+(A-E) + research sweep + iteration 2 -> refined v2 12/12 / drift +500 = pure band-position noise, ALL
+residuals DERIVED** (Greg's "lines darn close to perfect" standard). **Brain s101.6 -> s102.1, 33
+plays** (Greg-approved, additive-verified): SIX new plays (positioning_saturation_turn rung,
+shoulder_weather_band_void, unpriced_shot_extension, weekend_chain_drift_day_move, weekend_crest_friday,
+monday.window_deep_book_shakeout) + the SEASONAL SALIENCE SLIDER operational form S1/S2/S3 (**warm-cut
+authority INVERTS in the shoulder** - wk1 cut-mass-vs-move monotone: winter -10.4gw->-10,110 vs
+shoulder -16.3gw->+3,250; below ~21gw near-normals base warm cuts lose sign authority) + warm-cut
+headroom gate + NEAR-SUM near-window-only + chain-state hardening (C1 6 fires/1 decline/0 false pos)
++ measured class_curve_profiles + fingerprint additions. **OPEN-CONDITIONS PROTOCOL (Greg-ORDERED):
+both agents see ALL market data; the BLIND masked ONLY on price-curve content; new `tape_conditions`
+decision_state block (prior-session trades/volume/B-share/big-prints/leg-count, never_masked) -
+effective G15.** LIVE ARCHITECTURE recorded: live blind builds forecasts AND FORWARD CURVES; refine
+becomes the INTRADAY REFINE AGENT reporting to the coach via **VOXA** (pending Greg's pointer); THREE
+COACHES (NYMEX daily / Kalshi echo / OPTIONS its own lane). **G15** (Mar 15-27, first open-conditions
+walk, basis = Kalshi underlying April/1008->May/996 roll 0320, seam -0.037 marked): blind **8/12 /
+-3260** - DIRECTION right (give-back, actual -600) but MAGNITUDE too deep (guessed -3490); **REFINE
+DEFERRED TO S103** (token-purchase session boundary) - targets 0318 +1900, 0326 opex/print, 0327
+expiry +1160. DATA: MOS family + structure/options stores EXTENDED to end-of-raw (CME instrument-id-
+reuse trap fixed); NG L1/mbp-1 YEAR pull running on the box **$0.00 in-sub** (Greg's L-data order);
+NGJ26 + CL-year pulls DONE. **G15 REFINE IS GO - from a fresh S103.**
+
+## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
 
 ## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
 
@@ -182,9 +211,11 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed
-follower.** **git = CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an
-extreme rate is a LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92 = the NG intraday FORECASTER
+**One-line state:** the WALK is at **G15 (Mar 15-27) blind scored 8/12, refine = S103's opener** on
+**brain s102.1 (33 plays)**; the futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the
+delayed follower.** **OPEN-CONDITIONS: the blind sees all market data except the price curve.** **git =
+CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an extreme rate is a
+LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92 = the NG intraday FORECASTER
 program + DIRECTION cracked.** **S93 = the coach agent moved INTO AWS: box `i-08cee...` driveable via SSM,
 Bedrock LIVE (us-east-1; opus-4-1/haiku-4-5 via boto3), Claude Code installed — one Claude-Code model-preflight
 snag left before the LLM invokes; OpenAI written in as an alternative agent backend. Brain unchanged (s92.1); loop
