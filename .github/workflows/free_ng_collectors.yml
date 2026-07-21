@@ -4,16 +4,22 @@ on:
   push:
     branches:
       - claude/kalshi-s79-kickoff-ij8t9o
-      - chatgpt/nrc-nuclear-collector
+      - chatgpt/daylight-load-shape
     paths:
       - research/kalshi/free_ng_data_collector.py
       - research/kalshi/nrc_reactor_collector.py
+      - research/kalshi/daylight_load_shape.py
+      - research/kalshi/enrich_free_ng_snapshot.py
+      - research/kalshi/forecast_harness.py
       - .github/workflows/free_ng_collectors.yml
   pull_request:
     branches: [claude/kalshi-s79-kickoff-ij8t9o]
     paths:
       - research/kalshi/free_ng_data_collector.py
       - research/kalshi/nrc_reactor_collector.py
+      - research/kalshi/daylight_load_shape.py
+      - research/kalshi/enrich_free_ng_snapshot.py
+      - research/kalshi/forecast_harness.py
       - .github/workflows/free_ng_collectors.yml
   workflow_dispatch:
   schedule:
@@ -37,6 +43,13 @@ jobs:
           python-version: '3.11'
       - name: Install dependency
         run: pip install --quiet requests
+      - name: Validate daylight/load-shape enrichment
+        run: |
+          python research/kalshi/daylight_load_shape.py --selftest
+          python -m py_compile \
+            research/kalshi/daylight_load_shape.py \
+            research/kalshi/enrich_free_ng_snapshot.py \
+            research/kalshi/forecast_harness.py
       - name: Collect free public NG drivers
         env:
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
@@ -45,6 +58,7 @@ jobs:
         run: |
           mkdir -p /tmp/free_ng
           python research/kalshi/free_ng_data_collector.py --out /tmp/free_ng/latest.json
+          python research/kalshi/enrich_free_ng_snapshot.py --path /tmp/free_ng/latest.json
           python research/kalshi/nrc_reactor_collector.py --out /tmp/free_ng/nrc_latest.json
           python - <<'PY'
           import json
@@ -55,9 +69,14 @@ jobs:
           print('errors:',p.get('errors'))
           eia=p.get('sources',{}).get('eia',{})
           nws=p.get('sources',{}).get('nws',{})
+          shape=nws.get('load_shape',{})
           print('storage:',eia.get('storage',{}).get('latest'))
           print('weather:',nws.get('gas_weighted_next_24h'))
           print('alerts:',len(nws.get('alerts',[])))
+          print('load_shape_phase:',shape.get('current_phase'))
+          print('load_curve_regime:',shape.get('calendar_curve_regime'))
+          print('sunrise_window:',shape.get('sunrise_native_load_window_utc'))
+          print('evening_window:',shape.get('evening_net_load_ramp_window_utc'))
           print('nrc_report_date:',n.get('latest_report_date'))
           print('nrc_fleet:',n.get('latest'))
           print('nrc_changes:',n.get('day_over_day'))
