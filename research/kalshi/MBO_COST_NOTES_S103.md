@@ -41,4 +41,34 @@ year pull runs $0.00 in-sub on the $179/mo Bento Live Standard).
 - COORDINATE with ChatGPT's live-MBO effort (same DB key / box) before standing up a second feed - avoid
   double-write / double-cost.
 
-## STATUS: INFO-GATHERING ONLY - nothing pulled, nothing started (Greg, S103).
+## LIVE ENTITLEMENT WALL (tested directly on the box, S103)
+Live subscribe on GLBX.MDP3 with the current **Bento Live Standard ($179/mo)** plan:
+- **mbo: BLOCKED** ("Not authorized for mbo schema"). **mbp-10: BLOCKED** ("Not authorized").
+- mbp-1: OK. bbo-1s: OK. tbbo: OK. trades: OK. (statistics/definition/status: no data in window.)
+So our live plan is a TOP-OF-BOOK + TRADES tier. Live MBO/MBP-10 (the depth/order schemas) need a plan
+upgrade. Databento tiers (pricing page): Usage-based $0 / **Standard $179** / **Plus $1,500/mo (annual)**
+/ **Unlimited $4,000/mo (annual)**. Plus/Unlimited carry "Enhanced live data" (depth/order schemas) - so
+**live MBO ~= the Plus tier ~$1,500/mo** (confirm Plus-vs-Unlimited for GLBX MBO in the portal/sales; not
+API-itemized). Live DATA usage itself is trivial ($2.16/GB x ~1.16 GB/mo NG c.0 MBO = ~$2.50/mo) - the
+cost IS the plan jump. Rate card ($/GB): live mbo 2.16, mbp-1 2.16, mbp-10 0.60, trades/tbbo 33.6;
+historical mbo 1.80, mbp-10 0.50.
+
+## DECISION (Greg, S103): historical NG MBO NOW; defer CL + the live-tier upgrade
+- **LAUNCHED: NG historical MBO year** via `research/kalshi/pull_ng_mbo_year.py` on the box, UNTETHERED
+  (setsid nohup, survives session), NG.n.0 continuation 2025-07-22..2026-07-20, RAW .dbn.zst (lossless)
+  -> `s3://bento-568968024170-us-east-2-an/nymex/ng_mbo/`, cost-guarded GUARD=$40 (year ~$20, ~$0.07/day),
+  skip-if-exists resume, `_DONE` marker + `logs/ng_mbo_pull.log`. First ~11 days landed 14-21MB each.
+  (NG already has MBP-10 historical; MBO adds the order-level layer. CL deferred.)
+- Live MBO feed DEFERRED: only justified once we execute live off the edge (guardrail keeps it SHADOW).
+  Prove the order-flow/turn edge on this historical MBO first; buy the ~$1,500/mo Plus tier only when it
+  feeds real orders.
+- ChatGPT's live collector is installed at /opt/markets-live but DISABLED (it hot-looped on the
+  unauthorized mbo subscription; stopped+disabled ng-live+watchdog; desk + free/update timers left).
+
+## BOX GOTCHA (recorded): the instance role `Ssm` CANNOT write S3 (AccessDenied on PutObject).
+Historical pulls must run with the tx-pair AWS keys IN THE PROCESS ENV (env vars override the role in
+boto3's chain). The L1 pull worked for this reason; the MBO launcher exports AWS_ACCESS_KEY_ID/SECRET
+from /etc/markets/{coach,pull}.env before `setsid nohup`. Box SSM shell is dash - no bash substring/length
+expansions in inline commands.
+
+## STATUS: NG historical MBO RUNNING (S103). CL + live-tier = deferred, Greg's call.
