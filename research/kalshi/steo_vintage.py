@@ -33,10 +33,27 @@ measured release dates below and never reads Last-Modified.
     jan26     2026-01-08  2026-01-13
     feb26     2026-02-05  2026-02-10    carries the post-freeze re-mark
     mar26     2026-03-09  2026-03-10
+    apr26     2026-04-06  2026-04-07
+    may26     2026-05-07  2026-05-12
+    jun26     2026-06-04  2026-06-09
+    jul26     2026-07-01  2026-07-07    release-vs-completion gap 6 days - the trap, again live
 
-SCOPE: these seven vintages cover every walked-winter decision day (first knowable 2025-09-10) plus
-G12/G13. Later vintages (apr26+) need their OWN measured release dates before joining - a
-live-forward extension, deliberately not assumed here.
+SCOPE: sep25..mar26 (measured S98) cover every walked-winter decision day (first knowable
+2025-09-10) plus G12/G13. apr26..jul26 (measured 2026-07-21, STEP-C extension) carry the walk
+forward. Later vintages (aug26+, scheduled 2026-08-11) need their OWN measured release dates
+before joining.
+
+APR26-JUL26 MEASUREMENT (2026-07-21; Wayback is egress-blocked from this environment - named):
+release dates from EIA's published STEO release-schedule page (eia.gov/outlooks/steo/
+release_schedule.php, fetched live), the page EIA states carries "any unforeseen scheduling
+adjustments"; its retrospective jan/feb/mar-26 entries MATCH the S98 Wayback-measured actuals
+exactly (01/13, 02/10, 03/10) - evidence the table reflects actuals. jul26 confirmed directly on
+the live STEO landing page ("Release Date: July 7, 2026") and the press-room What's New strip
+("Short-Term Energy Outlook Jul 07, 2026"). All four dates also equal the stated scheduling rule
+(first Tuesday following the first Thursday; no adjacent Monday federal holiday, no shutdown in
+the window). Completion dates are the frozen workbooks' own Dates-sheet stamps ("Modeling and
+analysis completion") - which again PREDATE release by 1-6 days, so Last-Modified/completion
+remains non-evidence for availability.
 
 HONEST LABELING (sweep 1d): values for months at/after the NGM measurement anchor are STIFS MODEL
 ESTIMATES (anchored on indicator data), published by EIA as-printed. Each issue is a frozen file,
@@ -89,6 +106,13 @@ VINTAGES = [
     ("jan26", "2026-01-08", "2026-01-13"),
     ("feb26", "2026-02-05", "2026-02-10"),
     ("mar26", "2026-03-09", "2026-03-10"),
+    # apr26..jul26: measured 2026-07-21 (STEP-C) - release_schedule.php (live fetch; jan-mar26
+    # rows match S98 Wayback actuals) + landing page/press-room confirmation for jul26; completed
+    # dates = the frozen workbooks' Dates-sheet stamps. See the docstring measurement block.
+    ("apr26", "2026-04-06", "2026-04-07"),
+    ("may26", "2026-05-07", "2026-05-12"),
+    ("jun26", "2026-06-04", "2026-06-09"),
+    ("jul26", "2026-07-01", "2026-07-07"),
 ]
 
 MONTH_ABBR = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
@@ -258,13 +282,17 @@ def build(force: bool = False) -> dict:
         "meta": {
             "built_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
             "source": ARCHIVE_URL,
-            "release_dates_provenance": "Wayback captures of the STEO landing page, measured "
-                                        "2026-07-20 (EIA_BALANCE_OPTIONS_S98.md section 1b); "
+            "release_dates_provenance": "sep25..mar26: Wayback captures of the STEO landing page, "
+                                        "measured 2026-07-20 (EIA_BALANCE_OPTIONS_S98.md 1b). "
+                                        "apr26..jul26: EIA release_schedule.php fetched live "
+                                        "2026-07-21 (retrospective jan-mar26 rows match the "
+                                        "Wayback actuals) + landing-page/press-room confirmation "
+                                        "for jul26; Wayback egress-blocked at measurement time. "
                                         "Last-Modified is NOT availability evidence and is never used",
             "label": "values at/after the NGM anchor are STIFS model estimates, as-printed, "
                      "frozen per issue (zero vintage risk by construction)",
-            "scope": "seven walked-winter vintages sep25..mar26; apr26+ needs its own measured "
-                     "release dates before joining",
+            "scope": "eleven vintages sep25..jul26 (walked winter + the STEP-C forward "
+                     "extension); aug26+ needs its own measured release dates before joining",
         },
         "vintages": vintages,
     }
@@ -355,7 +383,8 @@ def _selftest() -> int:
     print("=== steo_vintage --selftest ===")
     fails = 0
     store = load_store()
-    fails = _t(store is not None and len(store["vintages"]) == 7, "store holds 7 vintages", fails)
+    fails = _t(store is not None and len(store["vintages"]) == 11,
+               "store holds 11 vintages (sep25..jul26)", fails)
     if store is None:
         return 1
     # value pins from the S98 sweep's extracted vintage tables (EIA_BALANCE_OPTIONS_S98.md 1c)
@@ -369,6 +398,11 @@ def _selftest() -> int:
         ("feb26", "NGPRPUS", "202601", 106.68), ("mar26", "NGPRPUS", "202602", 110.09),
         ("nov25", "NGTCPUS", "202511", 93.09), ("jan26", "NGTCPUS", "202601", 115.95),
         ("feb26", "NGTCPUS", "202601", 121.90), ("jan26", "NGEXPUS_LNG", "202601", 17.08),
+        # STEP-C extension pins (values read from the frozen apr26..jul26 workbooks at build)
+        ("apr26", "NGPRPUS", "202604", 109.30), ("apr26", "NGWGPUS", "202603", 1901.44),
+        ("may26", "NGPRPUS", "202605", 110.21), ("may26", "NGTCPUS", "202605", 74.92),
+        ("jun26", "NGPRPUS", "202606", 111.02), ("jun26", "NGEXPUS_LNG", "202606", 15.75),
+        ("jul26", "NGPRPUS", "202607", 111.41), ("jul26", "NGWGPUS", "202607", 3148.75),
     ]
     for vid, sid, ym, exp in pins:
         got = val(vid, sid, ym)
@@ -389,6 +423,15 @@ def _selftest() -> int:
     fails = _t(a is not None and a["vintage_id"] == "jan26", f"2026-01-14 sees jan26 (got {a and a['vintage_id']})", fails)
     fails = _t(steo_vintage_asof("2025-09-09") is None, "2025-09-09 (sep25 release day) -> None", fails)
     fails = _t(steo_vintage_asof("2025-09-10")["vintage_id"] == "sep25", "2025-09-10 -> sep25", fails)
+    # STEP-C extension blind walls: release day sees the PRIOR vintage, release+1 the new one
+    for prev_v, new_v, rel in (("mar26", "apr26", "2026-04-07"), ("apr26", "may26", "2026-05-12"),
+                               ("may26", "jun26", "2026-06-09"), ("jun26", "jul26", "2026-07-07")):
+        a = steo_vintage_asof(rel)
+        fails = _t(a is not None and a["vintage_id"] == prev_v,
+                   f"{rel} ({new_v} release day) sees {prev_v} (got {a and a['vintage_id']})", fails)
+        b = steo_vintage_asof(_iso_plus_days(rel, 1))
+        fails = _t(b is not None and b["vintage_id"] == new_v,
+                   f"{_iso_plus_days(rel, 1)} sees {new_v} (got {b and b['vintage_id']})", fails)
     # staleness anchors (sweep 1e): G11 open age 5, G12 open age 19
     fails = _t(steo_vintage_asof("2026-01-18")["age_days"] == 5, "G11 open (Jan 18) age 5d", fails)
     g12 = steo_vintage_asof("2026-02-01")

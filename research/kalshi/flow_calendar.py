@@ -9,8 +9,13 @@ per calendar date so the agent can see them. Fully deterministic; ZERO market
 data; no blind wall except EIA holiday shifts, which come from EIA's PUBLISHED
 schedule, never assumed.
 
-Span: 2025-09-01 .. 2026-08-31. `flow_calendar_asof(date)` returns None outside
-the span (missing is explicit, never a default).
+Span: 2025-09-01 .. 2026-12-31. `flow_calendar_asof(date)` returns None outside
+the span (missing is explicit, never a default). Extended from 2026-08-31 to
+year-end 2026 on 2026-07-21 (STEP-C); the extension is additive -- the only
+pre-existing rows that changed are 2026-08-28..2026-08-31, whose EIA
+next-release / this-week fields were None-or-empty as a SPAN ARTIFACT (the
+next release, Thu 2026-09-03, lay past the old span end; Mon 2026-08-31's
+Mon-Sun week contains it) and now carry it.
 
 VERIFIED RULES AND SOURCES (see FLOW_CALENDAR_NOTES_S98.md for the full audit)
 ------------------------------------------------------------------------------
@@ -55,17 +60,26 @@ VERIFIED RULES AND SOURCES (see FLOW_CALENDAR_NOTES_S98.md for the full audit)
    ROLL FLOW months are Feb/Apr/Jun/Aug/Oct/Dec (+ the January rebalance).
 6. EIA WEEKLY NATURAL GAS STORAGE RELEASE -- Thursdays 10:30 ET, EXCEPT as
    published on the schedule page (ir.eia.gov/ngs/schedule.html, fetched
-   2026-07-20). In-span exceptions (all four verified from the page):
+   2026-07-20; re-fetched 2026-07-21 for the H2-2026 extension). In-span
+   exceptions (all six verified from the page):
      Fri 2025-11-14 10:30 ET  (Veterans Day week -- a TUESDAY holiday slips
                                the release a day; the naive Thursday rule
                                would be wrong here)
      Wed 2025-11-26 12:00 ET  (Thanksgiving)
      Mon 2025-12-29 12:00 ET  (Christmas -- slips LATE to Monday, not early)
      Wed 2025-12-31 12:00 ET  (New Year's Day -- pulled a day early)
+     Fri 2026-11-13 10:30 ET  (Veterans Day 2026 is a WEDNESDAY -- slips the
+                               Thursday release to Friday, same as 2025)
+     Wed 2026-11-25 12:00 ET  (Thanksgiving 2026)
    Consequence: the Mon-Sun week of 2025-12-22 has NO release; the week of
    2025-12-29 has TWO. Monday federal holidays do NOT move the release (no
    exception listed for Labor/Columbus/MLK/Presidents/Memorial days; Juneteenth
-   2026 falls on a Friday so Thu 2026-06-18 stands).
+   2026 falls on a Friday so Thu 2026-06-18 stands). MEASURED NON-SHIFTS for
+   the H2-2026 extension: the published page (fetched 2026-07-21) lists NO
+   exception for the Christmas-2026 or New-Year-2027 weeks -- Dec 25 2026 and
+   Jan 1 2027 fall on FRIDAYS, so the nominal Thursday releases 2026-12-24 and
+   2026-12-31 STAND at 10:30 ET (the 2025 shifts happened because those
+   holidays fell ON Thursday). Never assumed: read off the schedule page.
 7. CME HOLIDAYS / EARLY CLOSES (energy) -- three observed classes:
      full_closure       : no Globex session at all (Christmas, New Year's Day,
                           Good Friday)
@@ -127,7 +141,7 @@ INSTMAP_PATH = os.path.join(_ROOT, "data", "contract_structure", "NG_instrument_
 HARNESS_PATH = os.path.join(_HERE, "forecast_harness.py")
 
 SPAN_START = "2025-09-01"
-SPAN_END = "2026-08-31"
+SPAN_END = "2026-12-31"
 
 MONTH_CODE = {1: "F", 2: "G", 3: "H", 4: "J", 5: "K", 6: "M",
               7: "N", 8: "Q", 9: "U", 10: "V", 11: "X", 12: "Z"}
@@ -140,8 +154,15 @@ CODE_MONTH = {v: k for k, v in MONTH_CODE.items()}
 #                      settlements; validated by tape trade-counts + by the
 #                      Databento expiry reproduction for the Thanksgiving class)
 #   early_close     -> IS a business day (settlements happen, shortened hours)
-# 2026-09-07 (outside the span) is carried so business-day counts to NGV26's
-# expiry (2026-09-28, the front for late-Aug dates) are correct.
+# H2-2026 entries (Thanksgiving/Christmas 2026) added for the STEP-C year-end
+# extension: same fixed annual CME-energy holiday classes as the verified 2025
+# instances (CME site still unreachable from this environment -- named; classes
+# carried by the recurring rule the 2025 tape + advisory mirrors verified).
+# 2027-01-01 / 2027-01-18 / 2027-02-15 (outside the span) are carried -- the
+# same precedent as 2026-09-07 -- so business-day counts from December rows to
+# NGG27's expiry (2027-01-27, the front for late-Dec dates) and the expiry
+# derivations checked against Databento definitions through Feb-2027 are
+# holiday-correct.
 # ---------------------------------------------------------------------------
 CME_HOLIDAYS = {
     "2025-09-01": ("Labor_Day", "partial_session"),
@@ -155,24 +176,36 @@ CME_HOLIDAYS = {
     "2026-06-19": ("Juneteenth", "partial_session"),
     "2026-07-03": ("Independence_Day_observed", "partial_session"),
     "2026-09-07": ("Labor_Day", "partial_session"),
+    "2026-11-26": ("Thanksgiving", "partial_session"),
+    "2026-12-25": ("Christmas", "full_closure"),
+    "2027-01-01": ("New_Years_Day", "full_closure"),
+    "2027-01-18": ("MLK_Day", "partial_session"),
+    "2027-02-15": ("Presidents_Day", "partial_session"),
 }
 CME_EARLY_CLOSES = {
     "2025-11-28": "day_after_Thanksgiving",
     "2025-12-24": "Christmas_Eve",
+    "2026-11-27": "day_after_Thanksgiving",
+    "2026-12-24": "Christmas_Eve",
 }
 
 # ---------------------------------------------------------------------------
 # EIA Weekly Natural Gas Storage Report schedule (ir.eia.gov/ngs/schedule.html,
-# fetched 2026-07-20). Standard: Thursday 10:30 ET. Exceptions map the NOMINAL
-# (displaced) Thursday -> (actual release date, time ET, reason). ONLY the
-# published exceptions are encoded; everything else is the standard rule, which
-# the same page states.
+# fetched 2026-07-20; re-fetched 2026-07-21 -- the H2-2026 rows below are the
+# only 2026-dated exceptions the page publishes). Standard: Thursday 10:30 ET.
+# Exceptions map the NOMINAL (displaced) Thursday -> (actual release date,
+# time ET, reason). ONLY the published exceptions are encoded; everything else
+# is the standard rule, which the same page states. The Christmas-2026 /
+# New-Year-2027 weeks have NO published exception (both holidays fall on
+# Fridays): Thu 2026-12-24 and Thu 2026-12-31 stand.
 # ---------------------------------------------------------------------------
 EIA_SCHEDULE_EXCEPTIONS = {
     "2025-11-13": ("2025-11-14", "10:30", "Veterans_Day"),
     "2025-11-27": ("2025-11-26", "12:00", "Thanksgiving_Day"),
     "2025-12-25": ("2025-12-29", "12:00", "Christmas_Day"),
     "2026-01-01": ("2025-12-31", "12:00", "New_Years_Day"),
+    "2026-11-12": ("2026-11-13", "10:30", "Veterans_Day"),
+    "2026-11-26": ("2026-11-25", "12:00", "Thanksgiving_Day"),
 }
 EIA_STANDARD_TIME = "10:30"
 
@@ -407,8 +440,10 @@ def build() -> dict:
                     "business days, 20%/day; NG all 12 contract months",
                 "bcom_roll": "BCOM methodology (assets.bbhub.io): Roll Period 6th-10th business "
                     "days 20%/day; Hedge Roll Period 5th-9th; NG lead months Table 9",
-                "eia_schedule": "ir.eia.gov/ngs/schedule.html (fetched 2026-07-20): Thursday "
-                    "10:30 ET standard + 4 in-span published exceptions",
+                "eia_schedule": "ir.eia.gov/ngs/schedule.html (fetched 2026-07-20, re-fetched "
+                    "2026-07-21): Thursday 10:30 ET standard + 6 in-span published exceptions; "
+                    "Christmas-2026/New-Year-2027 weeks publish NO exception (Friday holidays), "
+                    "nominal Thursdays stand",
                 "cme_calendar": "CME site unreachable (ECONNRESET); classes verified via repo "
                     "tape (NG_sessions.json), Databento expiry reproduction, AMP Futures / "
                     "broker reposts of CME advisories",
@@ -492,9 +527,11 @@ def selftest() -> int:
     eia_rows = store["eia_releases"]
 
     # --- span / shape ---
-    check("span has 365 rows", len(days) == 365)
+    check("span has 487 rows (2025-09-01..2026-12-31)", len(days) == 487)
     check("asof outside span (2025-08-31) is None", flow_calendar_asof("2025-08-31") is None)
-    check("asof outside span (2026-09-01) is None", flow_calendar_asof("2026-09-01") is None)
+    check("asof outside span (2027-01-01) is None", flow_calendar_asof("2027-01-01") is None)
+    check("2026-09-01 now IN span (year-end extension)",
+          flow_calendar_asof("2026-09-01") is not None)
 
     # --- futures expiry anchors ---
     check("NGG26 expiry == 2026-01-28 (session anchor)",
@@ -503,14 +540,23 @@ def selftest() -> int:
     print("  derived NGH26 (Mar-2026) expiry = %s  <- the G13 squeeze-test expiry; "
           "matches the S97 handoff's 'Feb 25 2026 expiry'" % ngh26)
     check("NGH26 expiry == 2026-02-25", ngh26 == "2026-02-25")
+    # year-end extension expiries (holiday-aware; NGZ26 would be 2026-11-26 = Thanksgiving
+    # under a naive 3rd-last-weekday rule -- the holiday table is load-bearing here)
+    check("NGZ26 expiry == 2026-11-25 (Thanksgiving-aware)",
+          ng_expiry(2026, 12).isoformat() == "2026-11-25")
+    check("NGF27 expiry == 2026-12-29", ng_expiry(2027, 1).isoformat() == "2026-12-29")
+    check("NGG27 expiry == 2027-01-27 (front for late-Dec rows)",
+          ng_expiry(2027, 2).isoformat() == "2027-01-27")
+    check("2026-11-25 is NGZ26 expiry day AND an EIA print day (Thanksgiving-eve pile-up)",
+          days["2026-11-25"]["is_expiry_day"] and days["2026-11-25"]["is_eia_print_day"])
 
     # --- cross-check EVERY derived expiry vs Databento definitions ---
-    # The engine's holiday table covers the span + 2026-09-07; contracts whose
-    # TERMINAL WINDOW falls beyond that (expiry after 2026-10-31) cannot be
-    # derived holiday-correctly here -- for those the comparison is REPORTED
+    # The engine's holiday table covers the span + carried dates through
+    # Presidents Day 2027; contracts whose TERMINAL WINDOW falls beyond that
+    # cannot be derived holiday-correctly here -- for those the comparison is REPORTED
     # per instance (definition authoritative), with the mechanical signature
     # check that a missing future holiday always pushes the derived date LATER.
-    COVERAGE_END = "2026-10-31"
+    COVERAGE_END = "2027-02-28"   # holiday table now carried through Presidents Day 2027
     n_agree = n_in = 0
     in_cov_dis, beyond_dis, bad_signature = [], [], []
     if os.path.exists(INSTMAP_PATH):
@@ -534,7 +580,7 @@ def selftest() -> int:
                 if not definition < derived:
                     bad_signature.append(sym)
                 print("  beyond-coverage %s: derived %s vs definition %s -- the engine's "
-                      "holiday table ends 2026-09; the missing future holiday (Thanksgiving/"
+                      "holiday table ends 2027-02; the missing future holiday (Thanksgiving/"
                       "Memorial/Good-Friday class) is the cause; definition is authoritative"
                       % (sym, derived, definition))
         print("  expiry cross-check vs Databento definitions: %d/%d agree overall; "
@@ -603,7 +649,7 @@ def selftest() -> int:
 
     # --- EIA releases ---
     dates_of = {r["release_date"]: r for r in eia_rows}
-    check("52 releases in span", len(eia_rows) == 52)
+    check("70 releases in span", len(eia_rows) == 70)
     tg = dates_of.get("2025-11-26")
     check("Thanksgiving-week release = Wed 2025-11-26 12:00 ET (published schedule)",
           tg is not None and tg["release_time_et"] == "12:00"
@@ -624,6 +670,23 @@ def selftest() -> int:
     check("Juneteenth 2026 is a Friday -> Thu 2026-06-18 release stands",
           "2026-06-18" in dates_of and not dates_of["2026-06-18"]["shifted"])
     check("is_eia_print_day set on 2025-11-26", days["2025-11-26"]["is_eia_print_day"])
+    # H2-2026 extension (published schedule, re-fetched 2026-07-21)
+    check("Veterans-week 2026 release = Fri 2026-11-13 10:30 ET (Wednesday holiday slips it)",
+          "2026-11-13" in dates_of and dates_of["2026-11-13"]["release_time_et"] == "10:30"
+          and dates_of["2026-11-13"]["shift_reason"] == "Veterans_Day"
+          and "2026-11-12" not in dates_of)
+    check("Thanksgiving-week 2026 release = Wed 2026-11-25 12:00 ET",
+          "2026-11-25" in dates_of and dates_of["2026-11-25"]["release_time_et"] == "12:00"
+          and "2026-11-26" not in dates_of)
+    check("Christmas-2026 week: Thu 2026-12-24 release STANDS unshifted at 10:30 "
+          "(Friday holiday; no published exception)",
+          "2026-12-24" in dates_of and not dates_of["2026-12-24"]["shifted"]
+          and dates_of["2026-12-24"]["release_time_et"] == "10:30")
+    check("New-Year-2027 week: Thu 2026-12-31 release STANDS unshifted",
+          "2026-12-31" in dates_of and not dates_of["2026-12-31"]["shifted"])
+    check("2026-08-31 span-artifact corrected: its Mon-Sun week now sees Thu 2026-09-03",
+          days["2026-08-31"]["eia_storage_release_datetime_et"] is not None
+          and days["2026-08-31"]["eia_storage_release_datetime_et"].startswith("2026-09-03"))
 
     # --- bidweek ---
     jan_bw = sorted(k for k, v in days.items() if v["in_bidweek"] and k.startswith("2026-01"))
@@ -637,6 +700,13 @@ def selftest() -> int:
           nov_bw == ["2025-11-21", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-28"])
     check("bidweek delivery month tags the NEXT month",
           days["2026-02-25"]["bidweek_delivery_month"] == "2026-03")
+    nov26_bw = sorted(k for k, v in days.items() if v["in_bidweek"] and k.startswith("2026-11"))
+    check("Nov-2026 bidweek = 23,24,25,27,30 (skips Thanksgiving; 27th is an early-close "
+          "BUSINESS day)",
+          nov26_bw == ["2026-11-23", "2026-11-24", "2026-11-25", "2026-11-27", "2026-11-30"])
+    dec26_bw = sorted(k for k, v in days.items() if v["in_bidweek"] and k.startswith("2026-12"))
+    check("Dec-2026 bidweek = 24,28,29,30,31 (skips the Christmas closure)",
+          dec26_bw == ["2026-12-24", "2026-12-28", "2026-12-29", "2026-12-30", "2026-12-31"])
 
     # --- index roll windows ---
     gsci_feb = sorted(k for k, v in days.items() if v["in_gsci_roll"] and k.startswith("2026-02"))
@@ -653,8 +723,17 @@ def selftest() -> int:
           and not days["2026-03-10"]["bcom_ng_roll_this_month"]
           and days["2025-10-10"]["bcom_ng_roll_this_month"])
     check("January carries the BCOM rebalance flag", days["2026-01-12"]["bcom_january_rebalance"])
+    gsci_dec26 = sorted(k for k, v in days.items() if v["in_gsci_roll"] and k.startswith("2026-12"))
+    check("GSCI Dec-2026 window = Dec 7..11 (BD5-9)",
+          gsci_dec26 == ["2026-12-07", "2026-12-08", "2026-12-09", "2026-12-10", "2026-12-11"])
+    check("Dec-2026 is a BCOM NG roll-flow month", days["2026-12-09"]["bcom_ng_roll_this_month"])
 
     # --- CME calendar ---
+    check("Christmas 2026 closed / Christmas Eve 2026 early close / Thanksgiving 2026 partial",
+          days["2026-12-25"]["cme_session_class"] == "full_closure"
+          and days["2026-12-24"]["cme_early_close"] and days["2026-12-24"]["is_cme_business_day"]
+          and days["2026-11-26"]["cme_session_class"] == "partial_session"
+          and not days["2026-11-26"]["is_cme_business_day"])
     check("Christmas closed / Christmas Eve early close",
           days["2025-12-25"]["cme_holiday"]
           and days["2025-12-25"]["cme_session_class"] == "full_closure"
@@ -698,8 +777,8 @@ def selftest() -> int:
               "not a disagreement).")
 
     # --- store written ---
-    check("store written with 365 rows + 52 releases",
-          os.path.exists(STORE_PATH) and len(days) == 365 and len(eia_rows) == 52)
+    check("store written with 487 rows + 70 releases",
+          os.path.exists(STORE_PATH) and len(days) == 487 and len(eia_rows) == 70)
 
     print("selftest:", "PASS" if ok else "FAIL")
     return 0 if ok else 1

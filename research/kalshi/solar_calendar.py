@@ -33,7 +33,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 STORE_DIR = os.path.join(REPO, "data", "solar_calendar")
 STORE = os.path.join(STORE_DIR, "solar_calendar.json")
-SPAN = ("2025-09-01", "2026-08-31")               # matches the flow-calendar span
+SPAN = ("2025-09-01", "2026-12-31")               # matches the flow-calendar span (both extended
+                                                  # to year-end 2026, STEP-C 2026-07-21; pure
+                                                  # deterministic astronomy, no blind wall)
 ET = ZoneInfo("America/New_York")
 
 # The 16 demand metros of nws_temp_feed.STATION_WEIGHTS_RAW (weights normalized at read) with the
@@ -171,7 +173,18 @@ def _selftest() -> int:
     # DST discontinuity visible in ET clock times (Mar 8 2026 spring-forward)
     check("DST jump in NYC sunset_local across Mar 7->9",
           s["2026-03-09"]["metros"]["NYC"]["sunset_local"] > "18:30" > s["2026-03-07"]["metros"]["NYC"]["sunset_local"])
-    check("span bounds: outside -> None", solar_asof("2025-08-31") is None and solar_asof("2026-09-01") is None)
+    # year-end extension anchors (STEP-C): fall-back DST + the Dec-2026 solstice
+    check("DST fall-back in NYC sunset_local across Oct 31 -> Nov 2 2026",
+          s["2026-10-31"]["metros"]["NYC"]["sunset_local"] > "17:30" > "17:00"
+          > s["2026-11-02"]["metros"]["NYC"]["sunset_local"])
+    dec26 = s["2026-12-21"]["metros"]["NYC"]
+    check("NYC winter-solstice 2026 day length ~9.25h", abs(dec26["day_length_h"] - 9.25) < 0.17,
+          dec26["day_length_h"])
+    check("gw day length falling into the Dec-2026 solstice",
+          s["2026-12-15"]["gw_day_length_h"] < s["2026-11-15"]["gw_day_length_h"]
+          and (s["2026-12-15"]["gw_day_length_chg_7d"] or 0) < 0)
+    check("span bounds: outside -> None", solar_asof("2025-08-31") is None and solar_asof("2027-01-01") is None)
+    check("2026-09-01 now IN span (year-end extension)", solar_asof("2026-09-01") is not None)
     print("SELFTEST", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 
