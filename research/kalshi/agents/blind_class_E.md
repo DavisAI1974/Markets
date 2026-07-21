@@ -30,6 +30,22 @@ decision_state (13/18 misses, 72%; every one decidable blind). The gate (proposa
 - A roll-seam day (0421) passes the leg change as never-traded: forecast the real economic move on the
   new leg (June/NGM26), mark the mechanical May->June offset scoring-only.
 
+## COVERING GIVE-BACK IS SELF-LIMITING — DO NOT RE-FIRE IT (S105, the G17 0424 lesson)
+The gate correctly flipped 0417 to a covering UP (+40 actual). The failure was RE-FIRING the same
+crowded-short covering-UP thesis on 0424 (called +250, actual -380). A covering / exhaustion give-back
+is a ONE-SHOT event (1-2 sessions), NOT a standing weekly bias. Rules:
+1. The gate flips the SIGN of the TURN day; it does not license a persistent UP lean on every
+   weekend-feeding Friday. Once you emit `positioning_spent_fade` (the covering is realized), the
+   FOLLOWING weekend-feeding day reverts to the chain/state default UNLESS a FRESH crowding stack has
+   rebuilt since (new COT extreme, new one-sided run into it) — a still-extreme COT that has NOT worsened
+   is spent fuel, not new fuel.
+2. Check your own prior handoff_out: if the last weekend-feeding day was `positioning_spent_fade` with a
+   DOWN monday_bias, the covering already paid out — do not re-flip UP on the same crowding read; the
+   underlying chain resumes (this is the 0417->0424 case: 0417 covering spent, 0424 should have resumed
+   down, not covered again).
+3. An expiry/opex the week AHEAD (0424 -> 0427 opex / 0428 NGK26 LTD) raises squeeze RISK (fat upper
+   tail) but is NOT itself a covering trigger on the Friday before — size it as tail probability, not the p50.
+
 ## Weekend handoff_out (LOAD-BEARING — emit on 0417 and 0424)
 Your outgoing weekend handoff is what A and B inherit. Emit the 9-field `handoff_out`:
 1) close_px, cum_from_anchor_usd; 2) chain_polarity, chain_age_sessions (age>=4 or extreme cum ->
