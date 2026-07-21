@@ -1,0 +1,8 @@
+{
+  "eia": {"cost": "free", "cadence": "30m", "authority": "research-input", "status": "collector-built"},
+  "noaa_nws": {"cost": "free", "cadence": "30m", "authority": "research-input", "status": "collector-built"},
+  "ecmwf_open": {"cost": "free", "cadence": "6h", "authority": "research-input", "status": "next"},
+  "noaa_gefs": {"cost": "free", "cadence": "6h", "authority": "research-input", "status": "next"},
+  "pipeline_ebb": {"cost": "free-public", "cadence": "hourly", "authority": "research-input", "status": "discovery"},
+  "feedgas_nominations": {"cost": "partial-free", "cadence": "intraday", "authority": "research-input", "status": "gap"}
+}

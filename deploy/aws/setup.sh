@@ -1,16 +1,6 @@
 #!/usr/bin/env bash
-# deploy/aws/setup.sh — one-time (idempotent) setup of a durable box to host the Markets code + the NYMEX
-# raw-ingestion pull (and, later, the daily forecast/trade lifecycle). Ubuntu/Debian assumed.
-#
-# Usage (as a sudo-capable user on the box):
-#   git clone <the Markets repo> ~/Markets && cd ~/Markets
-#   git checkout claude/kalshi-s79-kickoff-ij8t9o && git pull
-#   sudo bash deploy/aws/setup.sh
-#   sudo cp deploy/aws/env.template /etc/markets/markets.env && sudo chmod 600 /etc/markets/markets.env
-#   sudoedit /etc/markets/markets.env      # fill DATABENTO_API_KEY (+ AWS keys only if no instance role)
-#   sudo systemctl start nymex-pull.service && journalctl -u nymex-pull -f   # start + watch the year pull
-#
-# Re-run any time; it only adds/updates, never destroys data or the env file.
+# deploy/aws/setup.sh — idempotent setup for the durable Markets AWS box.
+# Historical jobs, live Databento, and free public-data collectors are separate services.
 set -euo pipefail
 
 MARKETS_DIR="${MARKETS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
@@ -24,27 +14,52 @@ apt-get install -y git python3 python3-pip
 
 echo "[setup] installing python deps..."
 python3 -m pip install --upgrade pip
-python3 -m pip install databento boto3 pandas
+python3 -m pip install --upgrade databento boto3 pandas numpy requests fastapi 'uvicorn[standard]'
 
 echo "[setup] env dir /etc/markets ..."
 mkdir -p /etc/markets
 if [ ! -f /etc/markets/markets.env ]; then
   cp "$MARKETS_DIR/deploy/aws/env.template" /etc/markets/markets.env
   chmod 600 /etc/markets/markets.env
-  echo "[setup] created /etc/markets/markets.env from template — FILL IN THE SECRETS (chmod 600)."
+  echo "[setup] created /etc/markets/markets.env — fill runtime secrets before starting private feeds."
 else
   echo "[setup] /etc/markets/markets.env already exists — left untouched."
 fi
 
-echo "[setup] installing systemd units (templated with MARKETS_DIR + RUN_USER)..."
-for unit in nymex-pull.service markets-update.service markets-update.timer markets-daily.service markets-daily.timer; do
+echo "[setup] installing systemd units..."
+units=(
+  nymex-pull.service
+  markets-ng-live.service
+  markets-ng-live-watchdog.service
+  markets-ng-live-watchdog.timer
+  markets-free-ng.service
+  markets-free-ng.timer
+  markets-desk.service
+  markets-update.service
+  markets-update.timer
+  markets-daily.service
+  markets-daily.timer
+)
+for unit in "${units[@]}"; do
   sed -e "s#@MARKETS_DIR@#$MARKETS_DIR#g" -e "s#@RUN_USER@#$RUN_USER#g" \
-      "$MARKETS_DIR/deploy/aws/$unit" > "/etc/systemd/system/$unit"
+    "$MARKETS_DIR/deploy/aws/$unit" > "/etc/systemd/system/$unit"
 done
 systemctl daemon-reload
-# keep the code fresh daily (pull --rebase the trunk); pull runs on demand; daily lifecycle stays DISABLED
-# until the forecaster emit + scoring script exist (a timer into an empty pipeline is premature).
 systemctl enable --now markets-update.timer
-echo "[setup] DONE. Next: fill /etc/markets/markets.env, then 'systemctl start nymex-pull.service'."
-echo "[setup] The daily lifecycle timer is intentionally DISABLED — enable it later with:"
-echo "        sudo systemctl enable --now markets-daily.timer   # ONLY once the daily scorer exists"
+# Public-data collector has no paid-feed dependency and can begin immediately.
+systemctl enable --now markets-free-ng.timer
+systemctl start markets-free-ng.service || true
+# Enable boot persistence without starting Databento against an unverified key.
+systemctl enable markets-ng-live.service
+systemctl enable --now markets-ng-live-watchdog.timer
+systemctl enable markets-desk.service
+
+echo "[setup] DONE. Historical services were not changed or restarted."
+echo "[setup] Free EIA/NOAA collector: enabled every 30 minutes"
+echo "[setup] Free snapshot: /var/lib/markets/free_ng/latest.json"
+echo "[setup] After DATABENTO_API_KEY is present in /etc/markets/markets.env:"
+echo "        sudo systemctl enable --now markets-ng-live.service markets-desk.service"
+echo "        sudo journalctl -u markets-ng-live.service -f"
+echo "[setup] Live health: /var/lib/markets/ng_live/health.json"
+echo "[setup] Desk: http://127.0.0.1:8091 (use an SSM port forward)"
+echo "[setup] Raw DBN: s3://bento-568968024170-us-east-2-an/nymex/live/ng/YYYY/MM/DD/"
