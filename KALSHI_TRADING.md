@@ -1,6 +1,22 @@
 # KALSHI TRADING — file index
 
-## NEW IN S101 (2026-07-21, current) — G12+G13 walked, day-class doctrine, rest-of-year data machine
+## NEW IN S104 (2026-07-21, current) — Friday->Monday cascade cleanup, G15 MBO round 2, coordinator guard
+
+- `research/kalshi/agents/mbo_refine_shared.md` + `mbo_specialist_{A,B,C,D,E}.md` — CANONICAL MBO
+  5-specialist causal-refinement files (A weekend/B Monday/C core/D Thu-EIA/E Fri-expiry), incl. the
+  round-2 HE24->HE1 handoff protocol + output contract. Registered in agents/README.md.
+- `research/kalshi/coordinate_g15_mbo.py` — now GUARDED (SELECT/ASSEMBLE only; hard-fails on any
+  day-move no specialist owns) + `--r2` round-2 mode + actual-curves-only render (own p50 path,
+  no re-anchored/scaled lines, no gap bridges). The guard + render pattern to port to every coordinator.
+- `research/kalshi/forecasts/grp15_mbo_specialist_{A..E}_r2.json` + `grp15_mbo_refined_r2.json` +
+  `renders/ng_refine_s95/g15_mbo_comparison_r2.json` — G15 MBO round 2: 12/12 dir, mean abs err 66.
+- `research/kalshi/knowledge/ng_brain.json` — **s102.5, 46 plays** (backup ng_brain_s102.4_backup.json;
+  the three cleanup proposals kept as review artifacts: ng_brain_{friday,midweek,monday}_proposal.json).
+- `research/kalshi/CASCADE_S104_friday_cleanup_summary.md` / `CASCADE_S104_monday_fix_summary.md` —
+  the per-day cascade tables (committed copies of the specialists' analyses).
+- `SESSION_HANDOFF_2026-07-21_S104.md` / `DROP_IN_S105.md` — the record + the next box.
+
+## NEW IN S101 (2026-07-21) — G12+G13 walked, day-class doctrine, rest-of-year data machine
 
 - `research/kalshi/run_g12_rt_s101.py` / `run_g13_rt_s101.py` — G12/G13 actuals (rt.json) +
   continuous renders on the walked NG.n.0 basis from the local n0 store (the run_g11 precedent).

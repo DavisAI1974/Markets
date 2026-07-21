@@ -1,4 +1,27 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 103)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 104)
+
+## S104 — THE FRIDAY->MONDAY CASCADE CLEANUP + G15 MBO ROUND 2 (12/12, err 66) + COORDINATOR GUARD + brain s102.5 (read `SESSION_HANDOFF_2026-07-21_S104.md` + `DROP_IN_S105.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`** (carries the S103 MBO track + all S104; the
+forecaster trunk now). **G15 MBO ROUND 2** (HE24->HE1 handoff injected, 5 Opus specialists, coordinator
+--r2): **12/12 dir, mean abs err 66** (r1 72, blind 526); 10/12 days under-100; 0318 held the +1500
+confirmed base (reactive tail not claimed). **COORDINATOR GUARD built** (SELECT/ASSEMBLE only - a
+missing/non-numeric/wrong-owner posterior is a hard failure, never a silent blind fallback;
+negative-tested) + **RENDER RULE** (actual curve + own p50 path ONLY; no re-anchored/scaled lines, no
+gap bridges) + **canonical MBO specialist files** `agents/mbo_refine_shared.md` + `mbo_specialist_
+{A..E}.md`. **THE CASCADE (Greg: "we missed Monday so bad because we missed Friday so bad")**: three
+solo block-spanning cleanups, upstream first - E(Friday): 11/22 Fridays wrong-signed (worst day-class),
+10/14 bad Mondays root to a mis-read Friday exit; 9-field weekend handoff_out spec (exit_type +
+monday_bias). C(midweek): stretched-extreme-close gives back 6/6 (the midweek->Thu link), prior-exit
+last-hour magnitude gate. B(Monday, clean inheritance): 10 of 11 wrong-signed Mondays flip right on
+corrected Friday inheritance ALONE; sum |err| 35,030 -> 10,880 -> 8,000 (18 non-irreducible Mondays
+mean ~107). **MERGED s102.5 (46 plays, incumbents 36/36 byte-identical)** + doctrine friday_monday_
+cascade_s104. **STANDING ORDERS (Greg)**: FOCUS = FRIDAY AND MONDAY; group windows Sunday->2nd Friday
+always; FIVE specialists for BOTH blind and refine, coordinator guarded; honest under-100 every day.
+**OPEN**: E's Friday self-analysis (running at close); the SUNDAY CONVENTION decision (fold the ~2h
+Sunday reopen into Monday? RECOMMENDED fold - AWAITING GREG); G17 5-specialist blind = S105's opener.
+NG MBO year pull DONE on S3 (312 files; per-contract legs required for roll-straddling groups -
+NG.n.0 is the wrong pre-roll leg).
 
 ## S103 — G15 REFINED+MERGED + CANONICAL AGENT FILES + G16 BLIND-PANEL walked+refined+merged (brain s102.1 -> s102.3, 36 plays) + THE RECURRING-FLAW MEMO (read `SESSION_HANDOFF_2026-07-21_S103.md` + `KICKOFF_2026-07-22_S104.md` + `research/kalshi/agents/README.md` + `research/kalshi/NG_FORECASTER_PROBLEM_MEMO_S103.md`)
 
@@ -234,8 +257,10 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** the WALK is at **G16 (Mar 29-Apr 10) DONE -> merged; G17 (Apr 12-24, two-leg
-May->June seam ~0421) = the walk's opener**. PARALLEL **MBO CAUSAL-REFINEMENT TRACK** (branch
+**One-line state:** brain **s102.5 (46 plays)**; the WALK is at **G16 DONE -> merged; G17 (Apr 12-24,
+two-leg May->June seam ~0421) = S105's opener, run as the FIVE-specialist blind under the Friday/Monday
+focus doctrine (Greg S104: Friday is the cascade root; Sunday->2nd-Friday windows; coordinator guarded;
+honest under-100)**. PARALLEL **MBO CAUSAL-REFINEMENT TRACK** (branch
 `chatgpt/ng-forecaster-s103-audit`): the first full MBO 5-specialist refine ran on **G15** = blind 9/12
 (err 526) -> **refined 12/12 (err 72)** (two-leg NGJ26->NGK26 basis; the old blind stays the CORE
 predictor, MBO is a POSTERIOR UPDATE). Honest verdict: MBO TRADE-FLOW helps, MBO BOOK layer hurts if
