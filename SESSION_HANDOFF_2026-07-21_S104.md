@@ -69,10 +69,10 @@ tip; all S104 work committed+pushed here). git = CODE, S3 = DATA.
   (the cascade is free to fix); 1.25x cascade ratio (23,130 downstream vs 18,530 direct, 8 of the 10
   root-caused bad Mondays). Self-prescription #1 = a Friday turn/exhaustion GATE on direction (free
   rule) - turn into a proposal play before G17.
-- **SUNDAY CONVENTION DECISION (AWAITING GREG)**: our "Sunday" = only the ~2h 18:00-20:00 ET reopen
-  (UTC file-boundary artifact); everything after 20:00 Sun already sits in "Monday". CME trade-date
-  convention folds Sun 18:00 into Monday. RECOMMENDED: fold (one Friday->Monday seam). Do not change
-  until Greg rules.
+- **SUNDAY CONVENTION: DECIDED - FOLD (Greg, S104.1)**: the ~2h Sunday reopen folds into Monday (CME
+  trade-date convention; Greg: an unanchored orphan window "has potential to really throw things off").
+  Monday = Fri close -> Mon close; one Friday->Monday seam; A narrows to holiday reopens. Effective
+  G17 onward; historical blocks keep their standalone-Sunday scores (footnote comparisons).
 - **G17 (Sun 04-12 -> Fri 04-24) parked** - Greg: cascade cleanup first. Runs next session via the
   canonical loop with 5-specialist blind (files to write: blind day-class lenses; blind_shared.md wall
   applies) + two-leg May/NGK26 -> June/NGM26 basis, seam 04-21.

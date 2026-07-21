@@ -2715,14 +2715,14 @@
     }
    ],
    "run_protocol_s104": {
-    "group_window": "blocks open the Sunday reopen and ALWAYS close on the second Friday; orphan extra days fold into the run, the boundary never moves (Greg S104).",
+    "group_window": "blocks open the Sunday 18:00 ET reopen and ALWAYS close on the second Friday; the reopen hours belong to Monday's session (fold decided S104.1); orphan extra days fold into the run, the boundary never moves (Greg S104).",
     "panel": "FIVE day-class specialists (A weekend/B Monday/C core/D Thu-EIA/E Fri-expiry) for BOTH blind and refine every run (Greg S104); coordinator SELECTS the owner per day under the guard - it can never emit a number no specialist owns.",
     "render": "actual curve + the forecast OWN p50 path only; no re-anchored/scaled/angular reconstructions; no bridges across closed market.",
     "target": "honest under-100 every day.",
     "coordinator_friday_signoff": "Greg S104: the coordinator itself must OK every weekend-feeding day - it refuses to assemble a Friday (or pre-holiday) posterior that lacks handoff_out, the exit read Sunday/Monday inherit. Existence enforced by the guard; content stays the owner's call. Implemented coordinate_g15_mbo.py guard_coordinator (round>=2), negative-tested."
    },
-   "open_decision_sunday_convention": "Greg asked: roll Sunday nights into Monday, or keep the ~2h 18:00-20:00 ET reopen as its own day? Current convention: standalone Sunday day (UTC file-boundary artifact); CME trade-date convention folds Sun 18:00 into Monday. Recommendation on the table: fold it (one Friday->Monday seam). AWAITING GREG.",
-   "status": "plays PROVISIONAL, forward_evidence NONE; forward test = G17 blind (5-specialist) + G16/G17 MBO."
+   "status": "plays PROVISIONAL, forward_evidence NONE; forward test = G17 blind (5-specialist) + G16/G17 MBO.",
+   "sunday_convention_DECIDED": "Greg S104.1: FOLD the ~2h Sunday reopen (18:00-20:00 ET) into MONDAY, matching the CME trade-date convention (Sun 18:00 open = Monday's session). Rationale (Greg): an unanchored orphan window has potential to really throw things off. Consequences: Monday = Fri close -> Mon close (the reopen hours are Monday's overnight phase); ONE Friday->Monday seam, E's handoff_out has a single consumer (B); A's weekend lens narrows to holiday/extended-weekend reopens; walked-block scores that treated Sunday standalone keep their historical convention - comparisons carry a footnote. Effective G17 onward."
   }
  }
 }

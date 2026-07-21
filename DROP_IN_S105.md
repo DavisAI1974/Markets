@@ -48,7 +48,8 @@ discriminators) into proposal plays before G17's blind, so E runs G17 with the g
   store or pull per-contract).
 - BLIND = 5 day-class specialists (blind-walled per agents/blind_shared.md; write thin day-class lens
   files agents/blind_class_{A..E}.md off the mbo_specialist lenses, minus any realized/MBO content).
-  Ownership: A=0412,0419 B=0413,0420 C=0414,0415,0422 D=0416,0423 E=0417,0421(seam),0424.
+  Ownership under the SUNDAY FOLD (see decision block above): B=0413,0420 C=0414,0415,0422
+  D=0416,0423 E=0417,0421(seam),0424; A on call for holiday reopens only.
   E MUST emit the 9-field weekend handoff_out; B consumes exit_type+monday_bias, never the Friday net.
 - Coordinate per-day by ownership (GUARDED), score, render (two-leg hand-roll like
   coordinate_g15_mbo.py's build_actual - continuous_rt.py generic reads n.0 and is WRONG for the
@@ -59,11 +60,15 @@ discriminators) into proposal plays before G17's blind, so E runs G17 with the g
   (see the S103 handoff's list: book_trustworthy bit, phase-first, print-anchored EIA windows,
   leg_map/seam_event, absorption_flag).
 
-## OPEN DECISION (ask Greg before G17 if unanswered)
-**Sunday convention**: keep the ~2h standalone Sunday day, or fold Sun 18:00-20:00 ET into Monday
-(CME trade-date convention, one Friday->Monday seam)? RECOMMENDED: fold. Recorded in
-doctrine_tier3.friday_monday_cascade_s104.open_decision_sunday_convention. Affects the G17 day list
-(0412/0419 as days vs folded into 0413/0420).
+## SUNDAY CONVENTION - DECIDED (Greg S104.1): FOLD
+The ~2h Sunday reopen (18:00-20:00 ET) folds into MONDAY (CME trade-date convention). Greg: an
+unanchored orphan window "has potential to really throw things off." Monday = Fri close -> Mon close,
+reopen hours are Monday's overnight phase; ONE Friday->Monday seam (E's handoff_out -> B directly);
+A narrows to holiday/extended-weekend reopens. Historical block scores keep their old standalone-
+Sunday convention - footnote any cross-block comparison. **G17 day list under the fold: 0413, 0414,
+0415, 0416, 0417, 0420, 0421(seam), 0422, 0423, 0424 (10 scored days; 0412 reopen inside 0413,
+0419 inside 0420). Ownership: B=0413,0420 C=0414,0415,0422 D=0416,0423 E=0417,0421,0424 (A on call
+for holiday reopens only).** Recorded: doctrine_tier3.friday_monday_cascade_s104.sunday_convention_DECIDED.
 
 ## DATA
 NG MBO year pull DONE (s3 nymex/ng_mbo/_DONE, 312 files, 2025-07..2026-07). NG L1 pull: check
