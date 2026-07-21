@@ -151,23 +151,74 @@ def main():
                "refined_mean_abs_err": round(np.mean([abs(s["refined_err"]) for s in score]))},
               open(os.path.join(OUT, "g15_mbo_comparison.json"), "w"), indent=1)
 
-    # RENDER blind + refined (cum-from-anchor via clean day-moves)
+    # RENDER blind + refined - FORM-FITTING the intraday p50 path (not straight open->close segments).
     adt = pd.to_datetime(np.asarray(cont_t), unit="s", utc=True).tz_convert(ET)
     spans = {d: load_trades(d) for d in DAYS if d in act_by}
-    for tag, dmfn, color, label in [("blind", blind_dm, "#e8710a", "blind (grp15)"),
-                                    ("refined", refined_dm, "#2ea043", "refined (5-specialist MBO)")]:
+
+    def _span_et(d):
+        ts, _ = spans[d]
+        return pd.to_datetime(ts, unit="s", utc=True).tz_convert(ET)
+
+    def _curve_pts(curve):
+        """normalize a [[et_hour, cum_from_open_usd], ...] path curve to (hpos, cum) arrays.
+        hpos = hours since the 18:00 ET reopen (wraps 0..~23), so the shape lands at the right x."""
+        if not isinstance(curve, list) or not curve:
+            return None
+        hh, cc = [], []
+        for pt in curve:
+            if not (isinstance(pt, (list, tuple)) and len(pt) >= 2):
+                continue
+            hh.append((float(pt[0]) - 18.0) % 24.0); cc.append(float(pt[1]))
+        if len(hh) < 2:
+            return None
+        return np.asarray(hh), np.asarray(cc)
+
+    def path_xy(d, curve, open_y, net_target=None):
+        """map a day's p50 path onto its actual trade-time span; optionally SCALE the shape so its
+        close lands exactly on net_target (magnitude from the scored day-move, shape from the forecast).
+        net_target=None draws the forecast's OWN magnitude (used for the re-anchored-to-actual line)."""
+        pts = _curve_pts(curve)
+        et = _span_et(d)
+        t0, t1 = et[0], et[-1]
+        if pts is None:
+            return [t0, t1], [open_y, open_y + ((net_target or 0) / MULT)]
+        hpos, cum = pts
+        rng = hpos.max() - hpos.min()
+        frac = (hpos - hpos.min()) / rng if rng > 1e-6 else np.linspace(0, 1, len(hpos))
+        factor = 1.0
+        if net_target is not None and abs(cum[-1]) > 1e-6:
+            factor = net_target / cum[-1]
+        xs = [t0 + f * (t1 - t0) for f in frac]
+        ys = [open_y + (c * factor) / MULT for c in cum]
+        return xs, ys
+
+    for tag, dmfn, curvefn, gapfn, netfn, color, label in [
+        ("blind", blind_dm, lambda d: bl_by[d].get("guess_curve"),
+         lambda d: bl_by[d].get("overnight_gap_usd", 0) or 0,
+         lambda d: bl_by[d].get("guessed_net_usd", 0) or 0, "#e8710a", "blind (grp15)"),
+        ("refined", refined_dm, lambda d: posts.get(d, {}).get("curve") or bl_by[d].get("guess_curve"),
+         lambda d: 0, lambda d: refined_dm(d), "#2ea043", "refined (5-specialist MBO)")]:
         fig, ax = plt.subplots(figsize=(16, 5.5))
         ax.plot(adt, cont_p, color="#1f6feb", lw=0.7, label="actual (two-leg NGJ26->NGK26, MBO trades)")
+        # (1) continuous FORM-FIT guess: compound from the running anchor cum, shape from the p50 path,
+        #     close scaled to the scored day-move.
         gx, gy = [], []
         run = 0.0
         for d in DAYS:
             if d not in act_by: continue
-            ts, _px = spans[d]
-            et = pd.to_datetime(ts, unit="s", utc=True).tz_convert(ET)
-            gx.append(et[0]); gy.append(ANCHOR + run / MULT)          # open at prior cum
+            gap = gapfn(d); net = netfn(d)
+            open_y = ANCHOR + (run + gap) / MULT
+            xs, ys = path_xy(d, curvefn(d), open_y, net_target=net)
+            gx.extend(xs); gy.extend(ys)
             run += dmfn(d)
-            gx.append(et[-1]); gy.append(ANCHOR + run / MULT)          # close at prior cum + day-move
-        ax.plot(gx, gy, color=color, lw=1.6, ls="--", marker="o", ms=3, label=label)
+        ax.plot(gx, gy, color=color, lw=1.5, label=f"{label} - form-fit p50 path (compound)")
+        # (2) SAME guess RE-ANCHORED to the actual open each day (Greg: "if it started off on the price").
+        #     Direction/shape skill without the compounding level drift; own magnitude, unscaled.
+        for d in DAYS:
+            if d not in act_by: continue
+            xs, ys = path_xy(d, curvefn(d), act_by[d]["open"], net_target=None)
+            ax.plot(xs, ys, color=color, lw=1.1, ls=(0, (2, 2)), alpha=0.55,
+                    label="re-anchored to actual open (shape only)" if d == DAYS[0] else None)
         sd = pd.Timestamp(f"{SEAM[:4]}-{SEAM[4:6]}-{SEAM[6:]}", tz=ET)
         ax.axvline(sd, color="#999", lw=0.8, ls=":"); ax.text(sd, ax.get_ylim()[0], f" roll seam {seam:+.3f} (never traded)", fontsize=7, color="#666", va="bottom")
         ax.axhline(ANCHOR, color="#999", lw=0.6, ls=":"); ax.text(adt[0], ANCHOR, " anchor 3.132 (NGJ26)", fontsize=8, color="#666", va="bottom")
