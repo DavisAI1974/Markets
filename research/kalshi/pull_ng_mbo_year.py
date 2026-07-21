@@ -8,7 +8,7 @@ exists, cost-guarded, UNTETHERED (nohup/detached, survives the SSM command + ses
 (lossless, all MBO fields; matches the live collector's DBN archives + the S88 raw-capture doctrine) to
 s3 nymex/ng_mbo/. Historical MBO list cost ~$23 for the year (~$1.80/GB x ~14GB); GUARD hard-stops runaway.
 """
-import datetime as dt, os
+import datetime as dt, os, time
 import boto3
 import databento as db
 
@@ -47,17 +47,25 @@ def process_day(day):
     except Exception:
         pass
     nxt = (day + dt.timedelta(days=1)).isoformat()
-    try:
-        cost = cli.metadata.get_cost(dataset="GLBX.MDP3", symbols=["NG.n.0"], stype_in="continuous",
-                                     schema="mbo", start=day.isoformat(), end=nxt)
-        if spent + cost > GUARD:
-            log.append(f"{d}: cost {cost:.2f} would breach guard ({spent:.2f} spent) - STOP"); put_log()
-            return False
-        data = cli.timeseries.get_range(dataset="GLBX.MDP3", schema="mbo", symbols=["NG.n.0"],
-                                        stype_in="continuous", start=day.isoformat(), end=nxt)
-        spent += cost
-    except Exception as e:
-        log.append(f"{d} ERR {e}"); put_log(); return True
+    # RETRY on transient Databento 503s (S103: the backfill hit '503 <empty message>' blips)
+    last_err = None
+    for attempt in range(5):
+        try:
+            cost = cli.metadata.get_cost(dataset="GLBX.MDP3", symbols=["NG.n.0"], stype_in="continuous",
+                                         schema="mbo", start=day.isoformat(), end=nxt)
+            if spent + cost > GUARD:
+                log.append(f"{d}: cost {cost:.2f} would breach guard ({spent:.2f} spent) - STOP"); put_log()
+                return False
+            data = cli.timeseries.get_range(dataset="GLBX.MDP3", schema="mbo", symbols=["NG.n.0"],
+                                            stype_in="continuous", start=day.isoformat(), end=nxt)
+            spent += cost
+            last_err = None
+            break
+        except Exception as e:
+            last_err = e
+            time.sleep(3 * (attempt + 1))  # 3,6,9,12s backoff
+    if last_err is not None:
+        log.append(f"{d} ERR (5 tries) {last_err}"); put_log(); return True
     tmp = f"/tmp/ng_mbo_{d}.dbn.zst"
     try:
         data.to_file(tmp)                      # RAW DBN, lossless
