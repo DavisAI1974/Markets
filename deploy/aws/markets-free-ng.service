@@ -1,0 +1,25 @@
+# Public/free Henry Hub driver snapshot: EIA + NOAA/NWS. Independent of Databento jobs.
+[Unit]
+Description=Markets free NG drivers collector (EIA and NOAA/NWS)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=@RUN_USER@
+WorkingDirectory=@MARKETS_DIR@
+EnvironmentFile=-/etc/markets/markets.env
+ExecStart=/usr/bin/python3 research/kalshi/free_ng_data_collector.py \
+  --out /var/lib/markets/free_ng/latest.json \
+  --s3-bucket bento-568968024170-us-east-2-an \
+  --s3-key drivers/free_ng/latest.json
+StateDirectory=markets/free_ng
+StateDirectoryMode=0750
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/markets/free_ng
+
+[Install]
+WantedBy=multi-user.target
