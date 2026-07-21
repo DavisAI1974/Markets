@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Install and start ONLY the unattended live NG collector. Historical L1/MBP jobs are untouched.
+# Install and start ONLY the unattended live NG collector + local desk.
+# Historical L1/MBP jobs are untouched.
 set -euo pipefail
 
 MARKETS_DIR="${MARKETS_DIR:-/opt/markets}"
@@ -45,6 +46,7 @@ sudo chmod 600 "$ENV_FILE"
 sudo systemctl daemon-reload
 sudo systemctl enable --now markets-ng-live.service
 sudo systemctl enable --now markets-ng-live-watchdog.timer
+sudo systemctl enable --now markets-desk.service
 
 for _ in $(seq 1 30); do
   if [ -s /var/lib/markets/ng_live/health.json ]; then
@@ -54,6 +56,7 @@ for _ in $(seq 1 30); do
 done
 
 sudo systemctl --no-pager --full status markets-ng-live.service || true
+sudo systemctl --no-pager --full status markets-desk.service || true
 if [ -s /var/lib/markets/ng_live/health.json ]; then
   sudo python3 - <<'PY'
 import json
@@ -72,4 +75,10 @@ else
   exit 1
 fi
 
-echo "[install-ng-live] unattended collection is enabled across logout and reboot"
+curl -fsS http://127.0.0.1:8091/api/ng/live >/dev/null || {
+  echo "[install-ng-live] desk health failed; inspect markets-desk.service" >&2
+  exit 1
+}
+
+echo "[install-ng-live] unattended collection and desk are enabled across logout and reboot"
+echo "[install-ng-live] desk is bound to 127.0.0.1:8091; use SSM port forwarding"
