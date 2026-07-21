@@ -79,13 +79,43 @@ S100.1/S100.2 docs (options coach, dashboard) stay SEPARATE - never folded.
 
 ## IN FLIGHT AT CLOSE (survive the session)
 
-- **BOX (i-08cee7171c0a76a04)**: L1 YEAR PULL running - NG mbp-1 (top-of-book) 2025-07-22..2026-07-20
-  -> s3 nymex/ng_l1/, **$0.00 in-sub** (L1 is free in the tier), 29 days landed at close, ETA hours
-  (250 trading days). Greg's L-data order (sub gives 1yr L1, 1mo L2/L3). NGJ26 pull DONE (11 files,
-  the G15 April leg). CL YEAR pull DONE (cl_cont_n0/n1 through 2026-07-20). pull_rest_2026 finishing
-  its last CL layer. **S103: verify L1 DONE marker (nymex/ng_l1/_DONE), report total, then queue CL
-  L1 the same way + stop the box when all done.**
+- **BOX (i-08cee7171c0a76a04) - L1 YEAR PULL runs UNTETHERED OF SESSION**: NG mbp-1 (top-of-book)
+  2025-07-22..2026-07-20 -> s3 nymex/ng_l1/, **$0.00 in-sub** (L1 free in the tier). Launched
+  `nohup python3 /tmp/pull_l1_year.py` (PID 4581 at close, detached/reparented off the SSM command -
+  it does NOT die when the Claude session ends). 29+ days landed, ETA hours (~250 trading days).
+  **RESUME IS SAFE + ATOMIC**: each day is built fully in memory then written as ONE S3 put, and the
+  script is skip-if-exists - so there is NEVER a partial-day artifact; a kill just re-pulls that day
+  clean. **IF YOU MUST STOP THE BOX (Greg's rule): let the day it is mid-writing FINISH first**
+  (watch /tmp/l1.log for the next "-> nymex/ng_l1/NG_YYYYMMDD" line), THEN kill; re-launch is a
+  no-op for done days. Script source: scratchpad/pull_l1_year.py (also on box /tmp). NGJ26 pull DONE
+  (11 files, the G15 April leg). CL YEAR pull DONE (cl_cont_n0/n1 through 2026-07-20). **S103: verify
+  nymex/ng_l1/_DONE, report total; queue CL L1 the same untethered way; stop the box only when NG-L1
+  + CL-L1 + pull_rest all done (mid-day-finish rule applies).**
 - Nothing else pending build.
+
+## JOB DELEGATION MAP (Greg-agreed, S102 - full output depth, distributed to control token cost)
+
+- **Fable (this orchestrator) - the load-bearing loop ONLY**: blind spawns, basis/roll decisions,
+  scoring adjudication, brain merges, hard-pause presentations to Greg. Never thinned - just the
+  decisions.
+- **Opus workers (Fable spawns via Agent, model override) - the reasoning investigations**: the
+  refine lenses (weekend-gap / day-sequencing / salience / book / leg-grain), rt work, store
+  extensions, box scripts. FULL depth (5-lens refines stay).
+- **Sonnet/Haiku workers - mechanical passes**: leg counting, book summaries, tape scans, store
+  verifications.
+- **ChatGPT / Greg's people - OFF-REPO docs (no repo/tape access needed), Greg routes**: CME NG
+  event-contracts scoping memo; hub-mapping doc (~25-30 non-HH basis codes -> hub names); research-
+  delta build ranking (from research/kalshi/NG_DAILY_PREDICTORS_SWEEP_S102.md - ECMWF-free is #1);
+  Voxa integration spec (when Greg is ready); repo-private migration checklist.
+- **Greg - deadline/decision items**: pyth sunset GO by ~Jul 29 (trunk branch, ~20 min once
+  greenlit); Voxa pointer; two-coach spec nod; repo-private; research-build ranking.
+
+## RENDER NOTE (Greg, S102)
+
+The CANONICAL renderer/rt-builder is **`research/kalshi/continuous_rt.py`**
+(`--anchor --start --end --seams --tag --guess`) - it handles roll SEAMS generically. STOP writing
+per-group run_gNN_rt scripts; use continuous_rt.py with the group's anchor/dates/seams/guess. (G14/G15
+were hand-rolled before this note; G16+ uses continuous_rt.py.)
 
 ## OPEN / CARRIED (for S103 kickoff)
 
