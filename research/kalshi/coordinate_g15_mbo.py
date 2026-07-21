@@ -48,11 +48,13 @@ def load_trades(day):
     return np.array([x[0] for x in rows]), np.array([x[1] for x in rows])
 
 
-def specialist_posteriors():
-    """date -> {net, curve, dir, conf, owner, verdict, selection}."""
+def specialist_posteriors(round_=1):
+    """date -> {net, curve, dir, conf, owner, verdict, selection}. round_=2 reads the _r2 files."""
     out = {}
-    for f in glob.glob(os.path.join(HERE, "forecasts", "grp15_mbo_specialist_*.json")):
-        x = os.path.basename(f).split("_")[-1].split(".")[0]
+    pat = "grp15_mbo_specialist_[A-E]_r2.json" if round_ == 2 else "grp15_mbo_specialist_[A-E].json"
+    for f in glob.glob(os.path.join(HERE, "forecasts", pat)):
+        parts = os.path.basename(f).split(".")[0].split("_")
+        x = parts[-2] if round_ == 2 else parts[-1]
         d = json.load(open(f))
         entries = d if isinstance(d, list) else (d.get("days") if isinstance(d, dict) and isinstance(d.get("days"), list) else list(d.values()))
         for e in entries:
@@ -133,8 +135,9 @@ def guess_line(days_by_date, cont_anchor=ANCHOR):
     return xs, ys
 
 
-def main():
-    posts = specialist_posteriors()
+def main(round_=1):
+    sfx = "_r2" if round_ == 2 else ""          # round-2 outputs never overwrite the round-1 record
+    posts = specialist_posteriors(round_)
     guard_coordinator(posts)                    # enforce, do not assume: SELECT/ASSEMBLE only
     actual, cont_t, cont_p, seam = build_actual()
     act_by = {r["date"]: r for r in actual}
@@ -153,7 +156,8 @@ def main():
                              "posterior_direction_by_horizon": p.get("dir"), "confidence": p.get("conf"),
                              "selection_reason": p.get("selection"), "mbo_verdict": p.get("verdict"),
                              "execution_authority": False})
-    refined = {"group": 15, "tag": "g15_mbo", "kind": "5_specialist_posterior_refine", "brain_version": "s102.3+mbo",
+    refined = {"group": 15, "tag": f"g15_mbo{sfx}", "round": round_,
+               "kind": "5_specialist_posterior_refine", "brain_version": "s102.3+mbo",
                "anchor": {"date": "20260313", "price": ANCHOR, "contract": "NGJ26", "last_hour_dir": "down"},
                "price_basis": "two-leg Kalshi underlying NGJ26(1008)->NGK26(996), 0320 seam never-traded",
                "method": "5 day-class specialists (A weekend/B Monday/C core/D Thu-EIA/E Fri-expiry) -> coordinator SELECTS owner per day, NO averaging; posterior update of the immutable blind",
@@ -162,7 +166,7 @@ def main():
         if rd["refined_net_usd"] != posts[rd["date"]]["net"]:
             raise SystemExit(f"COORDINATOR GUARD FAILED at emission: {rd['date']} refined_net_usd "
                              f"{rd['refined_net_usd']!r} != owner {OWNER[rd['date']]}'s {posts[rd['date']]['net']!r}")
-    json.dump(refined, open(os.path.join(HERE, "forecasts", "grp15_mbo_refined.json"), "w"), indent=1)
+    json.dump(refined, open(os.path.join(HERE, "forecasts", f"grp15_mbo_refined{sfx}.json"), "w"), indent=1)
 
     # DAY-MOVES (from prior close). blind = its own gap+net; refined = specialist day-move (already gap+net);
     # actual = its own gap+net. NEVER mix the actual gap into the refined (that double-counts on Sundays).
@@ -185,7 +189,7 @@ def main():
                "n": len(score),
                "blind_mean_abs_err": round(np.mean([abs(s["blind_err"]) for s in score])),
                "refined_mean_abs_err": round(np.mean([abs(s["refined_err"]) for s in score]))},
-              open(os.path.join(OUT, "g15_mbo_comparison.json"), "w"), indent=1)
+              open(os.path.join(OUT, f"g15_mbo_comparison{sfx}.json"), "w"), indent=1)
 
     # RENDER blind + refined - the forecast's own intraday p50 path vs the actual.
     def _gap_break(ts_arr, y_arr):
@@ -248,8 +252,9 @@ def main():
         ("blind", blind_dm, lambda d: bl_by[d].get("guess_curve"),
          lambda d: bl_by[d].get("overnight_gap_usd", 0) or 0,
          lambda d: bl_by[d].get("guessed_net_usd", 0) or 0, "#e8710a", "blind (grp15)"),
-        ("refined", refined_dm, lambda d: posts[d].get("curve"),
-         lambda d: 0, lambda d: refined_dm(d), "#2ea043", "refined (5-specialist MBO)")]:
+        (f"refined{sfx}", refined_dm, lambda d: posts[d].get("curve"),
+         lambda d: 0, lambda d: refined_dm(d), "#2ea043",
+         f"refined (5-specialist MBO{' round 2' if round_ == 2 else ''})")]:
         fig, ax = plt.subplots(figsize=(16, 5.5))
         ax.plot(adt, cont_p, color="#1f6feb", lw=0.7, label="actual (two-leg NGJ26->NGK26, MBO trades)")
         gx, gy = [], []
@@ -274,12 +279,15 @@ def main():
         plt.savefig(os.path.join(OUT, f"g15_mbo_{tag}_continuous.png"), dpi=120, bbox_inches="tight")
         print(f"wrote g15_mbo_{tag}_continuous.png")
 
-    cmp = json.load(open(os.path.join(OUT, "g15_mbo_comparison.json")))
-    print(f"\nSCORE: blind dir {cmp['blind_dir']}/{cmp['n']} (mean abs err {cmp['blind_mean_abs_err']}) | refined dir {cmp['refined_dir']}/{cmp['n']} (mean abs err {cmp['refined_mean_abs_err']})")
+    cmp = json.load(open(os.path.join(OUT, f"g15_mbo_comparison{sfx}.json")))
+    print(f"\nSCORE (round {round_}): blind dir {cmp['blind_dir']}/{cmp['n']} (mean abs err {cmp['blind_mean_abs_err']}) | refined dir {cmp['refined_dir']}/{cmp['n']} (mean abs err {cmp['refined_mean_abs_err']})")
     print(f"{'day':9} own {'actual':>7} {'blind':>7} {'b_err':>6} {'refined':>7} {'r_err':>6}")
     for s in score:
         print(f"{s['date']} {s['owner']}   {s['actual_day_move']:+7} {s['blind_day_move']:+7} {s['blind_err']:+6} {s['refined_day_move']:+7} {s['refined_err']:+6}")
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--r2", action="store_true", help="coordinate the round-2 (_r2) specialist posteriors")
+    main(2 if ap.parse_args().r2 else 1)

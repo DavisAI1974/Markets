@@ -11,6 +11,10 @@ shared stores. Stop re-doing setup.**
 - `blind_angle_storage.md` (agent A), `blind_angle_positioning.md` (B), `blind_angle_weather.md` (C)
   — the three diverse-angle blinds (the panel; Greg's weekend-uncertainty idea).
 - `refine.md` — the unblinded refine directive.
+- `mbo_refine_shared.md` + `mbo_specialist_{A,B,C,D,E}.md` — the MBO 5-specialist causal-refinement
+  LAYER (S104; A weekend / B Monday / C core / D Thu-EIA / E Fri-expiry). Runs AFTER a block is
+  scored, on the replayed MBO evidence; the coordinator SELECTS the owner per day (guarded — it can
+  never emit a number no specialist owns). Round 2 injects the HE24->HE1 boundary handoff chain.
 
 ## SHARED SUBSTRATE — done ONCE per session (see GROUP_PRECHECK_S103.md)
 Creds (env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY for platform_sync/boto3) + full-history
