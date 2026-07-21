@@ -283,7 +283,16 @@ USE THEM, do not re-author per group; only the brain + group data change.** **OP
 30-70% vs refine 90-100%; magnitude error flips sign block-to-block from mis-scoped lessons; selector
 averages bimodal splits instead of selecting; order-flow direction nowcast under-weighted). the
 futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed follower.**
-**OPEN-CONDITIONS: the blind sees all market data except the price curve.** **git =
+**THE DATA DOCTRINE (Greg, LOAD-BEARING, stated repeatedly): BOTH AGENTS GET EVERYTHING — THE KITCHEN
+SINK — TO CHOOSE FROM; THE BLIND'S ONE AND ONLY DELIBERATE MASK IS THE PRICE CURVE.** Blind AND refine
+both get all fundamentals/structure/calendar/positioning/weather/storage + the FULL MBO order-flow read
+(signed-flow imbalance, UNBALANCED SIDES = buy-vs-sell aggressor, absorption) of every decision-legit
+window (prior sessions in full + the current day's pre-decision reopen/overnight flow). The blind is
+withheld ONLY the price curve (settles/nets/levels/spreads/target-day price path it forecasts) — nothing
+else; we do NOT hamstring it, it is the FORWARD-CURVE BUILDER. `dip_imb_level` is USABLE on
+decision-legit windows (the old ban is repealed). Causality still applies (no FUTURE data — physics, not
+a mask). PROCESS (Greg S105): stage ALL groups' data turnkey-ready, but RUN one group (2 weeks) at a
+time — running ahead is scope creep. **git =
 CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an extreme rate is a
 LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92 = the NG intraday FORECASTER
 program + DIRECTION cracked.** **S93 = the coach agent moved INTO AWS: box `i-08cee...` driveable via SSM,

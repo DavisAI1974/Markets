@@ -5,6 +5,22 @@ run immediately. The ONLY things that change group-to-group are (1) the BRAIN (`
 which updates via the refine step) and (2) the GROUP DATA (the decision-state file + anchor + basis).
 No re-authoring prompts per group. No per-group selftests. No re-pulling the shared stores.**
 
+## THE DATA DOCTRINE (Greg, LOAD-BEARING, stated repeatedly — read this first)
+**BOTH agents get EVERYTHING — the whole kitchen sink — to choose from. The blind's ONE and ONLY
+deliberate mask is the PRICE CURVE.** The blind AND the refine both receive: all fundamentals, structure,
+calendar, positioning/COT, weather, storage, AND the FULL MBO order-flow read (signed-flow imbalance,
+UNBALANCED SIDES = buy-vs-sell aggressor, absorption/divergence) of every decision-legit window (prior
+sessions in full + the current day's PRE-DECISION reopen/overnight flow for a rolling daily forecast).
+The ONLY thing withheld from the blind is the PRICE CURVE — settles, nets, day-moves, levels, spreads,
+and the target-day price PATH it forecasts. Nothing else. We are NOT hamstringing the blind; it is the
+FORWARD-CURVE BUILDER and must be maximally capable. (Causality still holds: neither sees the FUTURE —
+that is physics, not a mask.) The `dip_imb_level`-forbidden rule is REPEALED for decision-legit windows.
+
+## PROCESS DISCIPLINE (Greg, S105): stage ALL groups' DATA ready, but RUN one group at a time
+Have every group "sitting ready with its data fixed" — turnkey, so all we do is turn the key. But NEVER
+start running (forecasting) multiple groups at once: **one group = two weeks**, finish its full cycle,
+then the next. Running ahead is scope creep waiting to happen.
+
 ## THE OPERATING FRAME (Greg, S104 — supersedes the 3-angle-panel loop below for new groups)
 - **FIVE day-class specialists for BOTH blind and refine, every run**: A weekend-seam / B Monday /
   C core / D Thu-EIA / E Fri-expiry. Day-class lenses = `mbo_specialist_{A..E}.md` (refine);

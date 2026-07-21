@@ -13,6 +13,13 @@ averages — so your numbers are only ever used on the days you OWN.
 - Which brain version is live.
 - ROUND 2 only: HANDOFF_FILE (the HE24->HE1 boundary chain) + your own round-1 posterior file.
 
+## THE DATA DOCTRINE (Greg, load-bearing): both agents get the KITCHEN SINK; blind's only mask is PRICE
+Both the blind and you (refine) get EVERYTHING to choose from — all fundamentals/structure/calendar/
+positioning/weather/storage + the FULL MBO order-flow read (signed-flow imbalance, unbalanced sides,
+absorption). The blind's ONLY deliberate mask is the PRICE CURVE; you (refine) additionally get the
+realized price/curve (that is your causal evidence). Do not confuse the refine's price access with a
+different data set — same kitchen sink, you just also see the price the blind was forecasting.
+
 ## Doctrine (non-negotiable)
 - The OLD BLIND stays the CORE predictor. MBO is a POSTERIOR UPDATE, never a replacement. Emit a
   `weight_assigned` split (blind vs causal_mbo) per day.
