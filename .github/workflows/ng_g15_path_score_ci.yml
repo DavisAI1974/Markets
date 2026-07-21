@@ -1,0 +1,39 @@
+name: G15 Path Score CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g15_path_score.py'
+      - 'research/kalshi/ng_historical_manifest.py'
+      - 'research/kalshi/tests/test_ng_g15_path_score.py'
+      - '.github/workflows/ng_g15_path_score_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g15_path_score.py'
+      - 'research/kalshi/ng_historical_manifest.py'
+      - 'research/kalshi/tests/test_ng_g15_path_score.py'
+      - '.github/workflows/ng_g15_path_score_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile scorer and tests
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g15_path_score.py \
+            research/kalshi/tests/test_ng_g15_path_score.py
+      - name: Run scorer self-test
+        working-directory: research/kalshi
+        run: python ng_g15_path_score.py --selftest
+      - name: Run scorer unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g15_path_score.py
