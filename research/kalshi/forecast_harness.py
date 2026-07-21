@@ -536,6 +536,91 @@ def _freeze_risk_block(iso: str) -> dict | None:
 
 _PRICE_DERIVED_BLOCKS = ("contract_structure", "squeeze_watch", "vol_regime", "cash_basis", "options_surface")
 
+# ---- tape_conditions (S102, Greg's OPEN-CONDITIONS directive): NON-PRICE market conditions of the
+# PRIOR session, served LIVE even under the one-shot mask. The blind forecasts price from market
+# conditions - it sees everything the market generated except the price curve itself (settles, nets,
+# levels, spreads stay behind _PRICE_DERIVED_BLOCKS). Contents: activity (trades/volume/rate),
+# participation (zigzag leg count, $150 trigger - the month_characterize TRIG), aggressor balance
+# (session B-share; big prints >= 25 lots), all UNSIGNED-or-flow quantities, never a price or return.
+# Source file = the more-active of the n0/n1 continuation stores for that day (front proxy, basis-
+# robust). Missing file -> None with the absence named (missing==None doctrine).
+_TAPE_DIRS = (os.path.join(HERE, "..", "..", "data", "nymex_cont_n0"),
+              os.path.join(HERE, "..", "..", "data", "nymex_cont_n1"))
+_tape_cond_cache: dict = {}
+
+
+def _tape_day_stats(ymd: str) -> dict | None:
+    if ymd in _tape_cond_cache:
+        return _tape_cond_cache[ymd]
+    import gzip as _gz
+    best = None
+    for dpath in _TAPE_DIRS:
+        p = os.path.join(dpath, f"NG_{ymd}.jsonl.gz")
+        if not os.path.exists(p):
+            continue
+        ts, px, sz, sd = [], [], [], []
+        with _gz.open(p, "rt") as fh:
+            for line in fh:
+                if '"action": "T"' not in line:
+                    continue
+                try:
+                    r = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if r.get("action") != "T" or r.get("price") is None:
+                    continue
+                ts.append(float(r["ts"])); px.append(float(r["price"]))
+                sz.append(float(r.get("size") or 0)); sd.append(r.get("side"))
+        if not ts:
+            continue
+        if best is None or len(ts) > best[0]:
+            best = (len(ts), dpath, ts, px, sz, sd)
+    if best is None:
+        _tape_cond_cache[ymd] = None
+        return None
+    n, dpath, ts, px, sz, sd = best
+    order = sorted(range(n), key=lambda i: ts[i])
+    ts = [ts[i] for i in order]; px = [px[i] for i in order]
+    sz = [sz[i] for i in order]; sd = [sd[i] for i in order]
+    if ts and ts[0] > 1e15:
+        ts = [t / 1e9 for t in ts]
+    span_min = max((ts[-1] - ts[0]) / 60.0, 1.0)
+    buys = sum(z for z, s in zip(sz, sd) if s == "B")
+    tot = sum(sz) or 1.0
+    bigs = [(z, s) for z, s in zip(sz, sd) if z >= 25]
+    big_b = sum(1 for z, s in bigs if s == "B")
+    # zigzag legs, $0.015 trigger (prices used internally; only the COUNT is served)
+    legs, ext, ext_dir = 0, px[0], 1   # seed dir arbitrary; first flip corrects it (count +-1 at start)
+    for p_ in px[1:]:
+        if ext_dir >= 0 and p_ > ext:
+            ext = p_
+        elif ext_dir <= 0 and p_ < ext:
+            ext = p_
+        if ext_dir >= 0 and ext - p_ >= 0.015:
+            legs += 1; ext_dir = -1; ext = p_
+        elif ext_dir <= 0 and p_ - ext >= 0.015:
+            legs += 1; ext_dir = 1; ext = p_
+    out = {"session": ymd, "source_store": os.path.basename(dpath),
+           "n_trades": n, "volume_lots": int(tot), "trades_per_min": round(n / span_min, 1),
+           "session_b_share": round(buys / tot, 3),
+           "big_prints_n": len(bigs), "big_print_b_share": round(big_b / len(bigs), 3) if bigs else None,
+           "leg_count_150": legs,
+           "note": "NON-PRICE tape conditions of this session; open-conditions protocol (S102) - "
+                   "served live under the one-shot mask; no price/return content"}
+    _tape_cond_cache[ymd] = out
+    return out
+
+
+def _tape_conditions_block(iso: str) -> dict | None:
+    """Prior TRADE session's non-price tape conditions, decision-time legit at iso's open."""
+    d = datetime.date(int(iso[:4]), int(iso[5:7]), int(iso[8:10]))
+    for back in range(1, 6):
+        prev = d - datetime.timedelta(days=back)
+        st = _tape_day_stats(prev.strftime("%Y%m%d"))
+        if st is not None:
+            return {"asof_prior_session": prev.isoformat(), "never_masked": True} | st
+    return None
+
 
 def decision_state(days: list[str], mask_after: str | None = None) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
@@ -614,6 +699,7 @@ def decision_state(days: list[str], mask_after: str | None = None) -> dict:
                   "weather_forecast_cycle": _mos_cycle_block(iso),
                   "freeze_risk": _freeze_risk_block(iso),
                   "model_disagreement": _model_disagreement_block(iso),
+                  "tape_conditions": _tape_conditions_block(iso),
                   "holiday": _holiday_asof(iso)}
         if frozen is not None and d > mask_after:
             for blk in _PRICE_DERIVED_BLOCKS:
