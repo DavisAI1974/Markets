@@ -18,6 +18,7 @@ ANCHOR_DAY = "20260313"
 ANCHOR_RAW_SYMBOL = "NGJ26"
 ANCHOR_INSTRUMENT_ID = 1008
 HOUR_S = 3600.0
+EVENT_ORDER = {"definition": 0, "trade": 1, "mbo": 2}
 
 
 class AnchorError(ValueError):
@@ -106,13 +107,19 @@ def build_anchor(
     if not rows:
         raise AnchorError("anchor input is empty")
 
-    previous: tuple[float, int, int] | None = None
+    previous: tuple[float, int, int, int] | None = None
     identities: set[tuple[Any, ...]] = set()
     for row in rows:
         ts = _finite(row.get("ts_event_s"))
         if ts is None:
             raise AnchorError("anchor record lacks finite event time")
-        key = (float(ts), int(row.get("source_sequence") or 0), int(row.get("ingest_sequence") or 0))
+        event_type = str(row.get("event_type") or "")
+        key = (
+            float(ts),
+            EVENT_ORDER.get(event_type, 99),
+            int(row.get("source_sequence") or 0),
+            int(row.get("ingest_sequence") or 0),
+        )
         if previous is not None and key < previous:
             raise AnchorError("anchor records moved backwards")
         previous = key
@@ -244,7 +251,7 @@ def main() -> int:
     rows.sort(
         key=lambda row: (
             float(row["ts_event_s"]),
-            {"definition": 0, "trade": 1, "mbo": 2}.get(str(row["event_type"]), 99),
+            EVENT_ORDER.get(str(row["event_type"]), 99),
             int(row.get("source_sequence") or 0),
         )
     )
