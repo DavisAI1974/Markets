@@ -1,0 +1,725 @@
+{
+ "group": 16,
+ "tag": "g16",
+ "agent": "A",
+ "angle": "storage-trajectory/S3-first",
+ "brain_version": "s102.2",
+ "anchor": {
+  "date": "20260327",
+  "price": 3.035,
+  "last_hour_dir": "up"
+ },
+ "block_thesis": "S1-VOID shoulder every day (near-window HDD ~4-16 gw, below ~21) -> slider S3: the spring INJECTION-season storage TRAJECTORY owns the block leans, and it is BEARISH. The withdraw->inject phase turn arrives LOOSE at the 0402 print (consensus +34, ~+43 vs 5yr norm), the 0409 print stays loose (+46, ~+10 vs 5yr), and the surplus builds all block (vs_5yr +4->+45->+58). Maintenance-flows corroborate week 1 (nuclear chg_7d flips hard negative = units returning = less burn) and go neutral week 2. Positioning amplifies bearish (MM net -54k, pctile sliding 34.9->17.9) but is NOT at the saturation-turn extreme (positioning_saturation_turn declined: pctile not <=12, curve backwardation, phase flips to inject). The 3.035 anchor's up last-hour is a DEAD-SPONSOR expiry-covering bid (NGJ26 expired 0327; front spread only +0.07 = no real squeeze) -> a give-back, not a structural unwind. Net: a shallow BLEED LOWER (~-1800 over 11 sessions), interrupted by two small counter-bounces - the 0405 extended-weekend cold-add reopen and the 0407 mild cold peak (S2 shock). Magnitudes SHALLOW per the G15 shoulder-calibration lesson (do not over-deepen; catch the small turns).",
+ "days": [
+  {
+   "date": "20260329",
+   "dow": "Sun",
+   "archetype": "sunday_reopen_deadsponsor_giveback",
+   "reasoning": "SLIDER S3 (S1-void: near-window HDD 11.5 falling to 4-6 gw, well below ~21). Day-1 flows from the 3.035 anchor whose last hour was UP = an April-expiry (NGJ26) covering-into-settle bid; that sponsor is now DEAD (0327 expiry). DEAD-SPONSOR/squeeze_unwind check: calendar_front_next_spread only +0.07 (chg_3d +0.039) = a TINY stranded premium, NOT a G12-class squeeze leg -> no structural crash, only a give-back of the artificial covering pop (descriptor-grade, like G13 no-fire). S3 storage-trajectory OWNS the lean and it is BEARISH: the NEXT print (0402) consensus +34 = the withdraw->INJECT phase turn arriving LOOSE (~+43 vs 5yr norm ~-9 draw). Maintenance-flows corroborate (nuclear chg_7d about to flip hard negative = units returning = less burn). Gap owner=chain_drift (weekend_chain_drift_day_move, plain regime -> class bottom; no live chain, so sub-bottom). Thin Sunday tape prior sets <=690. Modest DOWN reopen give-back.",
+   "overnight_gap_usd": -150,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -15
+    ],
+    [
+     0,
+     -30
+    ],
+    [
+     2,
+     -52
+    ],
+    [
+     4,
+     -75
+    ],
+    [
+     6,
+     -90
+    ],
+    [
+     8,
+     -105
+    ],
+    [
+     10,
+     -120
+    ],
+    [
+     12,
+     -132
+    ],
+    [
+     14,
+     -141
+    ],
+    [
+     16,
+     -147
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "guessed_net_usd": -300,
+   "fwd_curve_lean": "front(NGK26) soft vs deferred; injection-season contango-ward drift begins"
+  },
+  {
+   "date": "20260330",
+   "dow": "Mon",
+   "archetype": "monday_carry_side",
+   "reasoning": "SLIDER S3 (S1-void deepens: D0 HDD 5.6, vs_normal -7.8). Day-class Monday = R3 weekend-gap REACTION. No material fresh turn and no big Sunday gap -> R3 'carry the prior side' = continue the soft bleed from 0329. Storage-trajectory backdrop unchanged bearish (0402 loose injection now d-3). monday.window_deep_book_shakeout needs intraday reveal (not an open call). Non-catalyst shoulder chop -> size ~right (small), NOT the winter Monday up-size (S1-void voids weather magnitude). Modest DOWN.",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -15
+    ],
+    [
+     0,
+     -30
+    ],
+    [
+     2,
+     -52
+    ],
+    [
+     4,
+     -75
+    ],
+    [
+     6,
+     -90
+    ],
+    [
+     8,
+     -105
+    ],
+    [
+     10,
+     -120
+    ],
+    [
+     12,
+     -132
+    ],
+    [
+     14,
+     -141
+    ],
+    [
+     16,
+     -147
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -150
+    ]
+   ],
+   "guessed_net_usd": -200,
+   "fwd_curve_lean": "front soft; spread drifting contango-ward on the loose-injection backdrop"
+  },
+  {
+   "date": "20260331",
+   "dow": "Tue",
+   "archetype": "tuesday_absorbed_drift",
+   "reasoning": "SLIDER S3 (S1-void, D0 HDD 4.3 = block low). Tuesday = strongest-trend weekday, running trend soft-down. BUT the prior-session tape (0331 flow served for the next day) shows big_print_b_share 0.635 buy-tilt vs session 0.463 = a MILD buy-absorption divergence into the bleed. Not the flow-absorption TURN arm (needs big_b>=~0.62 AND session_b<=~0.45 AND at origin shelf AND a LIVE driver - none live here in S1-void) - so no turn call, but it DAMPS the downside. Nuclear chg_7d -2111 (units returning) reinforces bearish burn. Net: small down, absorption capping it. Pre-EIA coil.",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -5
+    ],
+    [
+     0,
+     -9
+    ],
+    [
+     2,
+     -15
+    ],
+    [
+     4,
+     -21
+    ],
+    [
+     6,
+     -27
+    ],
+    [
+     8,
+     -33
+    ],
+    [
+     10,
+     -41
+    ],
+    [
+     12,
+     -48
+    ],
+    [
+     14,
+     -54
+    ],
+    [
+     16,
+     -58
+    ],
+    [
+     18,
+     -60
+    ],
+    [
+     20,
+     -60
+    ]
+   ],
+   "guessed_net_usd": -80,
+   "fwd_curve_lean": "front soft; near-flat spread as pre-print positioning coils"
+  },
+  {
+   "date": "20260401",
+   "dow": "Wed",
+   "archetype": "wednesday_preprint_coil",
+   "reasoning": "SLIDER S3 (S1-void; a small far-window cold bump appears at D+5 = 14.5 but near-window still void). Wednesday weak-up-lean is OVERRIDDEN by the soft-down block trend but nearly cancels it -> essentially FLAT with a slight down bias. Day before EIA -> coiling. Storage-trajectory bearish (0402 print tomorrow, +34 loose). Balanced prior tape (b 0.491, big_b 0.478). Small down/flat.",
+   "overnight_gap_usd": -10,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -2
+    ],
+    [
+     0,
+     -4
+    ],
+    [
+     2,
+     -8
+    ],
+    [
+     4,
+     -10
+    ],
+    [
+     6,
+     -14
+    ],
+    [
+     8,
+     -16
+    ],
+    [
+     10,
+     -20
+    ],
+    [
+     12,
+     -24
+    ],
+    [
+     14,
+     -27
+    ],
+    [
+     16,
+     -29
+    ],
+    [
+     18,
+     -30
+    ],
+    [
+     20,
+     -30
+    ]
+   ],
+   "guessed_net_usd": -40,
+   "fwd_curve_lean": "front soft; spread flat into the print"
+  },
+  {
+   "date": "20260402",
+   "dow": "Thu",
+   "archetype": "storage_thursday_chain_sided_injection",
+   "reasoning": "SLIDER S3 - THE key storage-trajectory day. EIA print (10:30 ET): consensus +34 = the FIRST INJECTION, the withdraw->inject phase turn, LOOSE (~+43 vs 5yr). This is BEARISH and CHAIN-SIDED (agrees with the running soft-DOWN chain). storage_thursday_magnitude: SIZE up, leg side = running chain (down), R2. shoulder_counter_print_damping does NOT apply (that governs COUNTER prints; this is a chain-sided/agreeing bearish print, which STILL delivers its damped band in S1-void - the G15 0319 analog, -1080). Tempering: the +34 is largely PRICED (small surprise), so damp toward the shoulder band's middle, not its winter magnitude. Delivery 10:30-14:00 (print_day_chain_sided profile). Moderate DOWN.",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -84
+    ],
+    [
+     0,
+     -66
+    ],
+    [
+     2,
+     -222
+    ],
+    [
+     4,
+     -168
+    ],
+    [
+     6,
+     -108
+    ],
+    [
+     8,
+     -198
+    ],
+    [
+     10,
+     -396
+    ],
+    [
+     12,
+     -414
+    ],
+    [
+     14,
+     -642
+    ],
+    [
+     16,
+     -564
+    ],
+    [
+     18,
+     -588
+    ],
+    [
+     20,
+     -600
+    ]
+   ],
+   "guessed_net_usd": -650,
+   "fwd_curve_lean": "injection loosens the front; NGK26 softens vs NGV26, contango-ward"
+  },
+  {
+   "date": "20260405",
+   "dow": "Sun",
+   "archetype": "extended_weekend_reopen_cold_add",
+   "reasoning": "SLIDER S3 with an S2 carve-out. EXTENDED 3-day weekend (0402 close -> Good Friday 0403 DARK -> 0405 reopen): more cycles priced, HIGHER gap uncertainty (FLAG). Weekend cycles add a MILD fresh cold bump for ~0407 (near6 max 16.9 at D+2; 0407 D0 15.8, +4.5 vs normal). Per S2_shock_exception, cold ADDS price on both signs even in S1-void, and 'weather may own gaps ONLY on the S2 add class' - so this small fresh add can own a modest UP reopen gap, competing with the bearish storage trajectory (0409 next print +46, still loose ~+10 vs 5yr; surplus building vs_5yr +45->+58). Not unpriced_shot_extension (MM pctile 17.9 not <=12; far window not monotone-2-cycles). Small UP, heavily flagged (thin extended-weekend Sunday, 3-day gap).",
+   "overnight_gap_usd": 200,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     15
+    ],
+    [
+     2,
+     20
+    ],
+    [
+     4,
+     28
+    ],
+    [
+     6,
+     32
+    ],
+    [
+     8,
+     38
+    ],
+    [
+     10,
+     42
+    ],
+    [
+     12,
+     46
+    ],
+    [
+     14,
+     50
+    ],
+    [
+     16,
+     50
+    ],
+    [
+     18,
+     50
+    ],
+    [
+     20,
+     50
+    ]
+   ],
+   "guessed_net_usd": 250,
+   "fwd_curve_lean": "mild front firming on the cold add; spread ticks back toward backwardation"
+  },
+  {
+   "date": "20260406",
+   "dow": "Mon",
+   "archetype": "monday_weak_freshturn",
+   "reasoning": "SLIDER S3/S2-edge. Monday R3 reaction to a FRESH (but weak) cold-add turn -> R3 says extend a fresh turn, but the turn is mild and the prior-session tape leaned sell (b 0.448, big_b 0.4). Bearish storage backdrop pulls against the cold pop. Net ~flat/small down - the mild add lacks follow-through and the surplus story dominates. Cold peaks tomorrow (0407) then collapses.",
+   "overnight_gap_usd": -30,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -4
+    ],
+    [
+     0,
+     -8
+    ],
+    [
+     2,
+     -12
+    ],
+    [
+     4,
+     -18
+    ],
+    [
+     6,
+     -22
+    ],
+    [
+     8,
+     -28
+    ],
+    [
+     10,
+     -34
+    ],
+    [
+     12,
+     -40
+    ],
+    [
+     14,
+     -45
+    ],
+    [
+     16,
+     -48
+    ],
+    [
+     18,
+     -50
+    ],
+    [
+     20,
+     -50
+    ]
+   ],
+   "guessed_net_usd": -80,
+   "fwd_curve_lean": "front holds; spread near flat as the cold add and loose-storage pull offset"
+  },
+  {
+   "date": "20260407",
+   "dow": "Tue",
+   "archetype": "tuesday_cold_peak_absorption",
+   "reasoning": "SLIDER S2 (the block's one shock day): D0 HDD 15.8, +4.5 vs normal = the near-window cold PEAK realizing; S2 shock arm gives cold up-support even in the S1-void surround. Tuesday strongest-trend weekday. Prior-session tape big_print_b_share 0.625 buy-tilt = mild buy absorption. -> a modest UP day, the week-2 mini-high. Capped small by S1-void (no near-window Bcf mass to sustain a ramp; shoulder_weather_band_void keeps the winter delivery band OUT of scope). Cold collapses after today.",
+   "overnight_gap_usd": 50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     10
+    ],
+    [
+     0,
+     20
+    ],
+    [
+     2,
+     40
+    ],
+    [
+     4,
+     70
+    ],
+    [
+     6,
+     100
+    ],
+    [
+     8,
+     130
+    ],
+    [
+     10,
+     160
+    ],
+    [
+     12,
+     184
+    ],
+    [
+     14,
+     210
+    ],
+    [
+     16,
+     200
+    ],
+    [
+     18,
+     200
+    ],
+    [
+     20,
+     200
+    ]
+   ],
+   "guessed_net_usd": 250,
+   "fwd_curve_lean": "front firmest of week 2 on the cold peak; brief backwardation tick"
+  },
+  {
+   "date": "20260408",
+   "dow": "Wed",
+   "archetype": "wednesday_coldfade_preprint",
+   "reasoning": "SLIDER back to S3 (cold DONE: D0 12.9 then near6 collapses to 4.3 at D+5, run_delta -0.58 sharp warming). The mild 0407 cold pop gives back (sell-the-realization). Wednesday + pre-EIA + bearish storage trajectory (0409 loose injection tomorrow) -> DOWN. Prior tape mild sell (b 0.45, big_b 0.41). GSCI roll underway (mechanical, minor). Moderate down.",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -25
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -88
+    ],
+    [
+     4,
+     -125
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -175
+    ],
+    [
+     10,
+     -200
+    ],
+    [
+     12,
+     -220
+    ],
+    [
+     14,
+     -235
+    ],
+    [
+     16,
+     -245
+    ],
+    [
+     18,
+     -250
+    ],
+    [
+     20,
+     -250
+    ]
+   ],
+   "guessed_net_usd": -300,
+   "fwd_curve_lean": "front soft again; spread resumes contango-ward drift as warming + loose storage bite"
+  },
+  {
+   "date": "20260409",
+   "dow": "Thu",
+   "archetype": "storage_thursday_chain_sided_injection2",
+   "reasoning": "SLIDER S3. Second EIA print: consensus +46 = LOOSE injection (~+10 vs 5yr), surplus builds vs_5yr +45->+58. CHAIN-SIDED bearish (agrees with the warming/soft-down chain) -> storage_thursday_magnitude SIZE up, leg down, chain-sided delivery (G15 0319 analog). shoulder_counter_print_damping N/A (agreeing print). Slightly MORE muted than 0402 because the surplus is now well-priced (third consecutive loose print) - damp toward the lower-middle band. Delivery 10:30-14:00. Moderate DOWN.",
+   "overnight_gap_usd": -50,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -70
+    ],
+    [
+     0,
+     -55
+    ],
+    [
+     2,
+     -185
+    ],
+    [
+     4,
+     -140
+    ],
+    [
+     6,
+     -90
+    ],
+    [
+     8,
+     -165
+    ],
+    [
+     10,
+     -330
+    ],
+    [
+     12,
+     -345
+    ],
+    [
+     14,
+     -535
+    ],
+    [
+     16,
+     -470
+    ],
+    [
+     18,
+     -490
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "guessed_net_usd": -550,
+   "fwd_curve_lean": "injection widens the contango-ward drift; front soft into the GSCI/BCOM roll"
+  },
+  {
+   "date": "20260410",
+   "dow": "Fri",
+   "archetype": "friday_bleed_range",
+   "reasoning": "SLIDER S3. Friday = range, unless a stretched-chain crest or R4 give-back. weekend_crest_friday TRIGGER NOT MET: the down-chain is a soft bleed (not stretched at an extreme) and there is NO live BUILDING catalyst (cold done, warming; next print 0416 far off d-6) - so no terminal-squaring crest lean (the 0327-discriminator: don't fire crest-trim without a stretched same-side chain + a realizing/expiring driver). Mild continuation of the bleed (bearish storage, warming, GSCI/BCOM roll selling). Small DOWN/flat into a catalyst-light weekend.",
+   "overnight_gap_usd": -20,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -10
+    ],
+    [
+     0,
+     -20
+    ],
+    [
+     2,
+     -35
+    ],
+    [
+     4,
+     -50
+    ],
+    [
+     6,
+     -60
+    ],
+    [
+     8,
+     -70
+    ],
+    [
+     10,
+     -80
+    ],
+    [
+     12,
+     -88
+    ],
+    [
+     14,
+     -94
+    ],
+    [
+     16,
+     -98
+    ],
+    [
+     18,
+     -100
+    ],
+    [
+     20,
+     -100
+    ]
+   ],
+   "guessed_net_usd": -120,
+   "fwd_curve_lean": "front soft; injection-season contango-ward drift persists into the weekend"
+  }
+ ],
+ "block_summary": {
+  "lean": "BEARISH / shallow bleed lower. Day-book cum ~ -1800 (descriptor block lean = down, moderate conviction). Two small counter-bounces (0405 cold-add reopen, 0407 cold peak) inside the down drift.",
+  "key_calls": [
+   "S3 storage-trajectory OWNS the leans (S1-void confirmed all 11 days): NEXT-print consensus-implied vs-5yr is the signal - 0402 +34 loose (~+43) and 0409 +46 loose (~+10); surplus builds vs_5yr +4->+45->+58 = persistent bearish.",
+   "0402 and 0409 EIA prints are CHAIN-SIDED (agreeing) bearish injections -> deliver their damped shoulder band DOWN (not the shoulder_counter_print_damping case, which is COUNTER prints only). SIZE up, leg down; damped because largely priced.",
+   "Dead-sponsor/squeeze_unwind: NO-fire (front spread only +0.07, tiny stranded premium; quiet shoulder, G13-like). The 0327 up last-hour = expiry-covering, gives back at the 0329 reopen.",
+   "positioning_saturation_turn DECLINED (pctile 34.9->17.9 not <=12; backwardation not contango; phase flips to inject) - positioning is a bearish amplifier only.",
+   "Maintenance-flows (nuclear chg_7d) flip hard negative wk1 (units returning = bearish burn), neutral wk2 - reinforces then releases the bearish lean.",
+   "Weather is S1-void (no band authority; shoulder_weather_band_void) EXCEPT the one S2 cold-add class: the mild 0405->0407 cold bump owns a small UP gap/day only (cold adds price up even in void)."
+  ],
+  "weekend_uncertainty_flags": [
+   "0329 Sun reopen: thin (prior Sunday sets <=690); direction (dead-sponsor give-back) confident but magnitude low-info.",
+   "0405 EXTENDED 3-day weekend reopen (Good Friday 0403 dark): HIGHEST gap uncertainty - more weekend cycles priced, thin tape (prior Sunday 1358 trades); the small UP cold-add call could invert if the cold bump decays over the long closure or the loose-storage backdrop dominates.",
+   "0407 cold-peak up-call is S2-shock-thin (D0 15.8 barely above normal); if the add fails to hold, 0407 reverts to the bleed.",
+   "General: S1-void shoulder magnitudes are hard to calibrate (G15 lesson: blind over-deepened); day-moves kept intentionally shallow, block net could be shallower still (closer to -1000) if the bleed stalls into a base."
+  ]
+ }
+}
