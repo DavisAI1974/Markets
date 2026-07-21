@@ -59,10 +59,13 @@ jobs:
             research/kalshi/ng_rt_refiner.py \
             research/kalshi/ng_g15_anchor.py \
             research/kalshi/ng_historical_manifest.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/ng_historical_inventory.py \
             research/kalshi/ng_historical_replay.py \
             research/kalshi/tests/test_ng_rt_feature_state.py \
             research/kalshi/tests/test_ng_g15_anchor_refiner.py \
             research/kalshi/tests/test_ng_historical_replay.py \
+            research/kalshi/tests/test_ng_historical_normalize_inventory.py \
             desk/app.py
       - name: Test MBO operator and refine feature-state contract
         run: |
@@ -74,6 +77,11 @@ jobs:
           python research/kalshi/ng_historical_manifest.py --selftest
           python research/kalshi/ng_historical_replay.py --selftest
           python -m unittest -v research/kalshi/tests/test_ng_historical_replay.py
+      - name: Test historical normalization and truthful inventory
+        run: |
+          python research/kalshi/ng_historical_normalize.py --selftest
+          python research/kalshi/ng_historical_inventory.py --selftest
+          python -m unittest -v research/kalshi/tests/test_ng_historical_normalize_inventory.py
       - name: Test G15 anchor and posterior contract
         run: python -m unittest -v research/kalshi/tests/test_ng_g15_anchor_refiner.py
       - name: Import desk application
