@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Collect live prompt Henry Hub NG market data without touching historical jobs.
+"""Durable live prompt-Henry-Hub collector, isolated from historical jobs.
 
-One Databento GLBX.MDP3 live session records a mixed DBN stream containing MBO,
-MBP-10, trades, TBBO, definitions, statistics, and status. The process exits at
-UTC midnight so systemd can restart it, refresh continuous-symbol mapping, and
-create a bounded daily archive.
-
-Credentials are read only from the runtime environment. Never put keys in code.
+A single Databento GLBX.MDP3 session writes a mixed DBN archive containing MBO,
+MBP-10, trades, TBBO, definitions, statistics, and status. It also maintains an
+atomic health.json used by the Markets API/UI. Credentials come only from the
+runtime environment. The process rotates at UTC midnight so continuous-symbol
+mapping refreshes and archive files stay bounded.
 """
 from __future__ import annotations
 
@@ -37,18 +36,14 @@ def utc_now() -> str:
 
 def decimal_price(value: Any) -> float | None:
     try:
-        value = int(value)
+        fixed = int(value)
     except (TypeError, ValueError, OverflowError):
         return None
-    if abs(value) >= UNDEF_PRICE:
-        return None
-    return value / PRICE_SCALE
+    return None if abs(fixed) >= UNDEF_PRICE else fixed / PRICE_SCALE
 
 
 def enum_text(value: Any) -> str | None:
-    if value is None:
-        return None
-    return str(getattr(value, "name", value))
+    return None if value is None else str(getattr(value, "name", value))
 
 
 def atomic_json(path: Path, payload: dict[str, Any]) -> None:
@@ -78,7 +73,7 @@ def seconds_to_midnight() -> float:
 class State:
     def __init__(self, symbol: str, archive: Path) -> None:
         self.symbol = symbol
-        self.archive = str(archive)
+        self.archive = archive
         self.started_at = utc_now()
         self.connection = "connecting"
         self.last_error: str | None = None
@@ -108,57 +103,55 @@ class State:
     def on_record(self, record: Any) -> None:
         kind = type(record).__name__
         now_ns = time.time_ns()
-        ts_event = getattr(record, "ts_event", None)
-        ts_recv = getattr(record, "ts_recv", None)
-
         with self.lock:
             self.connection = "live"
             self.last_record_wall_ns = now_ns
             self.counts[kind] += 1
             try:
-                self.instrument_id = int(getattr(record, "instrument_id"))
+                self.instrument_id = int(record.instrument_id)
             except (AttributeError, TypeError, ValueError, OverflowError):
                 pass
-            try:
-                ts_event = int(ts_event)
-                if ts_event > 0:
-                    self.last_ts_event_ns = max(self.last_ts_event_ns or 0, ts_event)
-            except (TypeError, ValueError, OverflowError):
-                pass
-            try:
-                ts_recv = int(ts_recv)
-                if ts_recv > 0:
-                    self.last_ts_recv_ns = max(self.last_ts_recv_ns or 0, ts_recv)
-                    latency = (now_ns - ts_recv) / 1e6
+            for field in ("ts_event", "ts_recv"):
+                try:
+                    value = int(getattr(record, field))
+                except (AttributeError, TypeError, ValueError, OverflowError):
+                    continue
+                if value <= 0:
+                    continue
+                if field == "ts_event":
+                    self.last_ts_event_ns = max(self.last_ts_event_ns or 0, value)
+                else:
+                    self.last_ts_recv_ns = max(self.last_ts_recv_ns or 0, value)
+                    latency = (now_ns - value) / 1e6
                     if -1000 <= latency <= 120000:
                         self.latencies_ms.append(latency)
-            except (TypeError, ValueError, OverflowError):
-                pass
 
             raw_symbol = getattr(record, "raw_symbol", None)
             if raw_symbol:
                 self.raw_symbol = str(raw_symbol)
 
-            if kind in {"TradeMsg", "MBP0Msg", "TbboMsg", "MBP1Msg"}:
-                price = decimal_price(getattr(record, "price", None))
+            # All trade-bearing records expose price, size, side. MBO is excluded
+            # because its price/size describe an order event, not necessarily a trade.
+            if kind != "MboMsg" and all(hasattr(record, name) for name in ("price", "size", "side")):
+                price = decimal_price(record.price)
                 if price is not None:
                     self.trade_price = price
                     try:
-                        self.trade_size = int(getattr(record, "size"))
-                    except (AttributeError, TypeError, ValueError, OverflowError):
+                        self.trade_size = int(record.size)
+                    except (TypeError, ValueError, OverflowError):
                         self.trade_size = None
-                    self.trade_side = enum_text(getattr(record, "side", None))
+                    self.trade_side = enum_text(record.side)
 
             levels = getattr(record, "levels", None)
-            if levels:
+            if levels is not None:
                 try:
                     level0 = levels[0]
-                    self.best_bid = decimal_price(getattr(level0, "bid_px", None))
-                    self.best_ask = decimal_price(getattr(level0, "ask_px", None))
-                    self.best_bid_size = int(getattr(level0, "bid_sz", 0))
-                    self.best_ask_size = int(getattr(level0, "ask_sz", 0))
-                    self.bid_depth_10 = sum(int(getattr(level, "bid_sz", 0)) for level in levels[:10])
-                    self.ask_depth_10 = sum(int(getattr(level, "ask_sz", 0)) for level in levels[:10])
+                    self.best_bid = decimal_price(level0.bid_px)
+                    self.best_ask = decimal_price(level0.ask_px)
+                    self.best_bid_size = int(level0.bid_sz)
+                    self.best_ask_size = int(level0.ask_sz)
+                    self.bid_depth_10 = sum(int(level.bid_sz) for level in levels[:10])
+                    self.ask_depth_10 = sum(int(level.ask_sz) for level in levels[:10])
                 except (IndexError, TypeError, ValueError, OverflowError):
                     pass
 
@@ -167,7 +160,7 @@ class State:
                 self.mbo_side = enum_text(getattr(record, "side", None))
                 self.mbo_price = decimal_price(getattr(record, "price", None))
                 try:
-                    self.mbo_size = int(getattr(record, "size"))
+                    self.mbo_size = int(record.size)
                 except (AttributeError, TypeError, ValueError, OverflowError):
                     self.mbo_size = None
 
@@ -181,10 +174,15 @@ class State:
             self.last_error = repr(error)
             self.connection = "error"
 
+    def set_connection(self, value: str) -> None:
+        with self.lock:
+            self.connection = value
+
     def snapshot(self) -> dict[str, Any]:
         with self.lock:
-            now_ns = time.time_ns()
-            age_ms = None if self.last_record_wall_ns is None else (now_ns - self.last_record_wall_ns) / 1e6
+            age_ms = None
+            if self.last_record_wall_ns is not None:
+                age_ms = (time.time_ns() - self.last_record_wall_ns) / 1e6
             latencies = list(self.latencies_ms)
             spread = None
             if self.best_bid is not None and self.best_ask is not None:
@@ -232,13 +230,13 @@ class State:
                 },
                 "record_counts": dict(self.counts),
                 "reconnect_count": self.reconnects,
-                "archive_path": self.archive,
-                "archive_bytes": Path(self.archive).stat().st_size if Path(self.archive).exists() else 0,
+                "archive_path": str(self.archive),
+                "archive_bytes": self.archive.stat().st_size if self.archive.exists() else 0,
                 "last_error": self.last_error,
             }
 
 
-def upload_file(path: Path, bucket: str, key: str) -> None:
+def upload(path: Path, bucket: str, key: str) -> None:
     import boto3
 
     boto3.client("s3").upload_file(str(path), bucket, key)
@@ -257,51 +255,51 @@ def run(args: argparse.Namespace) -> int:
         while not stop_health.wait(args.health_interval):
             atomic_json(health, state.snapshot())
 
-    health_thread = threading.Thread(target=health_loop, name="ng-live-health", daemon=True)
-    health_thread.start()
+    thread = threading.Thread(target=health_loop, name="ng-live-health", daemon=True)
+    thread.start()
 
-    client = db.Live(
-        heartbeat_interval_s=10,
-        reconnect_policy="reconnect",
-        slow_reader_behavior="disconnect",
-    )
+    # MBO is stateful, so never skip records. The callback is deliberately light;
+    # raw DBN writing is handled by Databento's native output stream.
+    client = db.Live(heartbeat_interval_s=10, reconnect_policy="reconnect", slow_reader_behavior="warn")
     client.add_stream(str(archive), exception_callback=state.on_error)
     client.add_callback(state.on_record, exception_callback=state.on_error)
     client.add_reconnect_callback(state.on_reconnect, exception_callback=state.on_error)
-
-    # Snapshot seeds the MBO book; all remaining subscriptions then stream live.
     client.subscribe(dataset=DATASET, schema="mbo", stype_in="continuous", symbols=args.symbol, snapshot=True)
     for schema in ("mbp-10", "trades", "tbbo", "definition", "statistics", "status"):
         client.subscribe(dataset=DATASET, schema=schema, stype_in="continuous", symbols=args.symbol)
 
     def request_stop(*_: Any) -> None:
-        state.connection = "stopping"
+        state.set_connection("stopping")
         client.stop()
 
     signal.signal(signal.SIGTERM, request_stop)
     signal.signal(signal.SIGINT, request_stop)
 
+    exit_code = 0
     try:
         client.start()
         client.block_for_close(timeout=args.session_seconds or seconds_to_midnight())
-        state.connection = "closed"
+        state.set_connection("closed")
     except Exception as error:
         state.on_error(error)
-        raise
+        exit_code = 1
     finally:
         stop_health.set()
-        health_thread.join(timeout=2)
+        thread.join(timeout=2)
         atomic_json(health, state.snapshot())
-
-    if args.upload and archive.exists() and archive.stat().st_size > 0:
-        date_path = datetime.now(timezone.utc).strftime("%Y/%m/%d")
-        archive_key = f"{args.s3_prefix.strip('/')}/{date_path}/{archive.name}"
-        health_key = f"{args.s3_prefix.strip('/')}/health.json"
-        upload_file(archive, args.s3_bucket, archive_key)
-        upload_file(health, args.s3_bucket, health_key)
-        if not args.keep_local:
-            archive.unlink(missing_ok=True)
-    return 0
+        if args.upload and archive.exists() and archive.stat().st_size > 0:
+            day = datetime.now(timezone.utc).strftime("%Y/%m/%d")
+            prefix = args.s3_prefix.strip("/")
+            try:
+                upload(archive, args.s3_bucket, f"{prefix}/{day}/{archive.name}")
+                upload(health, args.s3_bucket, f"{prefix}/health.json")
+                if not args.keep_local:
+                    archive.unlink(missing_ok=True)
+            except Exception as error:
+                state.on_error(error)
+                atomic_json(health, state.snapshot())
+                exit_code = 1
+    return exit_code
 
 
 def main() -> int:
@@ -311,7 +309,7 @@ def main() -> int:
     parser.add_argument("--s3-bucket", default=os.getenv("NG_LIVE_S3_BUCKET", DEFAULT_BUCKET))
     parser.add_argument("--s3-prefix", default=os.getenv("NG_LIVE_S3_PREFIX", DEFAULT_PREFIX))
     parser.add_argument("--health-interval", type=float, default=float(os.getenv("NG_LIVE_HEALTH_INTERVAL", "5")))
-    parser.add_argument("--session-seconds", type=float, default=None, help="Test override; default rotates at UTC midnight")
+    parser.add_argument("--session-seconds", type=float, default=None, help="Test override; default is UTC midnight")
     parser.add_argument("--upload", action=argparse.BooleanOptionalAction, default=os.getenv("NG_LIVE_UPLOAD_ENABLED", "1") == "1")
     parser.add_argument("--keep-local", action=argparse.BooleanOptionalAction, default=os.getenv("NG_LIVE_KEEP_LOCAL", "0") == "1")
     args = parser.parse_args()
