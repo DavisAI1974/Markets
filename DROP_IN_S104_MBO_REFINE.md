@@ -34,6 +34,22 @@ Honest one-liner: the MBO TRADE-FLOW layer helps; the MBO BOOK layer hurts if tr
 gated behind a book_trustworthy floor (it was stood down on all 12 G15 days). The working discriminator
 is signed-flow-vs-price CONVICTION per phase; DIRECTION stays with the D-1 trade tilt.
 
+## DEFERRED TO NEXT SESSION (Greg, end of S103 - stopped the round-2 run to pick up fresh)
+
+The HE24->HE1 handoff BUILDER is committed and validated (`he24_he1_handoff.py` ->
+`forecasts/g15_he24_he1_handoffs.json`, the full G15 boundary chain). The round-2 specialist re-run WITH
+the handoff injected was launched but STOPPED before writing (working tree clean, committed round-1
+12/12 state intact). Next session:
+1. Re-run the 5 specialists round 2 with the handoff injected (A/B/C/D/E) - each starts from its round-1
+   posterior, uses the incoming boundary STATE to tighten magnitude/timing, emits an outgoing handoff,
+   targets honest under-100 every day. Then re-coordinate + re-score + re-render.
+2. WATCH THE COORDINATOR - make sure it ONLY coordinates. Today `coordinate_g15_mbo.py` selects the
+   owner per day (the OWNER map) and assembles; it has no forecast/average logic. Add an explicit GUARD
+   that asserts the coordinator never emits a day-move no specialist owns (enforce, do not assume).
+3. RENDER: print only the ACTUAL curve + the specialists' ACTUAL p50 path - drop the "angular things"
+   (the re-anchored-to-actual dashed lines and any straight/scaled angular reconstruction). Plot the
+   real forecast path, nothing synthesized.
+
 ## NEXT-ITERATION WORK (Greg's asks, in order)
 
 1. Wire the HE24->HE1 handoff object (carry STATE not the day-net number) so the 5 specialists coordinate
