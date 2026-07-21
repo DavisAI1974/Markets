@@ -22,8 +22,12 @@ WEEKEND_FEEDING = {"20260417","20260424"}
 _DOW = ("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
 
 
+ROUND = 1  # set from argv in __main__
+
+
 def load_spec(tag):
-    p = os.path.join(FC, f"grp17_mbo_specialist_{tag}.json")
+    suffix = "_r2" if ROUND == 2 else ""
+    p = os.path.join(FC, f"grp17_mbo_specialist_{tag}{suffix}.json")
     if not os.path.exists(p):
         return None
     d = json.load(open(p))
@@ -103,19 +107,22 @@ def render(rows, actual):
     ax.axvline(sd, color="#999", lw=0.8, ls=":"); ax.text(sd, ax.get_ylim()[0], f" roll seam {actual['seam_offset']:+.3f} (never traded)", fontsize=7, color="#666", va="bottom")
     ax.set_title("NG G17 REFINED (5-specialist MBO posterior, s102.6) vs actual - Sun 2026-04-12 .. Fri 2026-04-24", fontsize=10, fontweight="bold")
     ax.set_ylabel("price ($/MMBtu, seam-adjusted)"); ax.legend(fontsize=8); ax.grid(True, color="#eee"); ax.set_axisbelow(True)
-    out = os.path.join(RENDER_DIR, "g17_refined_vs_actual.png")
+    out = os.path.join(RENDER_DIR, f"g17_refined{'_r2' if ROUND == 2 else ''}_vs_actual.png")
     fig.autofmt_xdate(); fig.tight_layout(); fig.savefig(out, dpi=130); plt.close(fig); return out
 
 
 if __name__ == "__main__":
+    import sys
+    ROUND = 2 if ("--r2" in sys.argv or "2" in sys.argv[1:]) else 1
+    tag = "_r2" if ROUND == 2 else ""
     actual = json.load(open(ACTUAL)); blind = json.load(open(BLIND))
     block = guard_assemble()
     rows, sabs, dh = score(block, actual, blind["days"])
     bl_dh = sum(1 for r in rows if r["blind_dir_hit"]); bl_sabs = sum(abs(r["blind_err_usd"]) for r in rows if r["blind_err_usd"] is not None)
-    json.dump({"group": "g17", "phase": "mbo_refined_r1", "brain_version": "s102.6", "anchor": actual["anchor"],
+    json.dump({"group": "g17", "phase": f"mbo_refined_r{ROUND}", "brain_version": "s102.6", "anchor": actual["anchor"],
                "sum_abs_err_usd": sabs, "mean_abs_err_usd": round(sabs/len(rows)), "dir_hits": dh, "n": len(rows),
                "blind_dir_hits": bl_dh, "blind_sum_abs_err_usd": bl_sabs, "days": rows},
-              open(os.path.join(FC, "grp17_mbo_refined.json"), "w"), indent=1)
+              open(os.path.join(FC, f"grp17_mbo_refined{tag}.json"), "w"), indent=1)
     print(f"{'date':10} {'dow':4} {'own':4} {'blind':>7} {'refined':>8} {'actual':>7} {'r_err':>7} {'dir':>4}")
     for r in rows:
         print(f"{r['date']:10} {r['dow']:4} {r['owner']:4} {str(r['blind_day_move_usd']):>7} "
