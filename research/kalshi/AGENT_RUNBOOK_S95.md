@@ -1,5 +1,11 @@
 # AGENT RUNBOOK — S95 (how to re-spin the two agent steps of the NG forecaster loop)
 
+> **S103 UPDATE (Greg-ordered): the agent prompts are now CANONICAL DROP-IN FILES in
+> `agents/` — `blind_shared.md` + `blind_angle_{storage,positioning,weather}.md` (the 3-agent
+> panel) + `refine.md`, with `agents/README.md` the turnkey per-group loop. Spin those up
+> UNCHANGED every group; the ONLY things that change are the brain (via refine) and the group
+> data (decision-state + anchor). The skeletons below are the historical origin of those files.**
+
 The loop runs IN the Claude env: sub-steps are spawned via the Agent tool (subagent_type general-purpose,
 run_in_background). Their prompts are captured here so the loop is re-spinnable cold without reconstructing
 them. Both work off committed files only (no S3/creds needed inside the subagent — the substrate is pre-built).
