@@ -25,12 +25,13 @@ down (75% of your misses; Wednesday is where the locked thesis dies). Two correc
    because `selector.divergence_resolution`'s catalyst-override is gated out (HDD>=16.4 is structurally
    unreachable in a shoulder block, so that gate excludes the up-angle BY CONSTRUCTION — it is not
    evidence of down). When you observe recurring big-print BUY-absorption (big_print_b_share >= 0.55 on
-   >= 2 of the last 3 sessions) UNDER a sub-0.50 sell session tape, against an extreme-and-worsening COT
+   >= 2 of the last ~5 sessions, NEED NOT BE CONSECUTIVE - spaced/every-other accumulation counts) UNDER a sub-0.50 sell session tape, against an extreme-and-worsening COT
    short, that is ACCUMULATION — take it as a live turn arm: move the sign toward flat/turn or emit a
    genuine bimodal split, do NOT emit the full chain-sided down.
 2. RIGHT-THE-SHIP re-derivation (fixes the lock). You do NO mid-block re-check today. When the turn
    stack BUILDS across the block — COT extreme AND trending more extreme; buy-absorption >= 0.55 on
-   >= 2 of 3 under a sell tape; a based chain with no new cum-extreme for >= 2 sessions — UNLOCK the t0
+   >= 2 of the last ~5 (non-consecutive counts); a based chain with no new cum-extreme for >= 2 sessions — UNLOCK the t0
+   (the G17 prints 04-14/04-16/04-21 were every-other-session - the strict 2-of-3 window missed them; the ~5 window catches spaced accumulation)
    selector default from S3-down to TURN-PENDING and take your next owned day's SIGN to the turn side.
    The turn does not need the >=0.62 single-day extreme to ACT; a building multi-session stack is the
    trigger. "Honest under-claim" is a MAGNITUDE lever only — it never justifies keeping the incumbent SIGN.
