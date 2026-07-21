@@ -161,14 +161,20 @@ def main():
 
     def _curve_pts(curve):
         """normalize a [[et_hour, cum_from_open_usd], ...] path curve to (hpos, cum) arrays.
-        hpos = hours since the 18:00 ET reopen (wraps 0..~23), so the shape lands at the right x."""
+        hpos = hours since the 18:00 ET reopen, UNWRAPPED so time is monotonic across the whole
+        session (the 2-hourly grid runs 20->..->16->18->20, wrapping past midnight; without unwrap the
+        post-midnight tail maps back to the left edge and the line doubles back on itself)."""
         if not isinstance(curve, list) or not curve:
             return None
-        hh, cc = [], []
+        hh, cc, off, prev = [], [], 0.0, None
         for pt in curve:
             if not (isinstance(pt, (list, tuple)) and len(pt) >= 2):
                 continue
-            hh.append((float(pt[0]) - 18.0) % 24.0); cc.append(float(pt[1]))
+            h = float(pt[0])
+            if prev is not None and h < prev:      # clock wrapped past 24h -> keep time increasing
+                off += 24.0
+            prev = h
+            hh.append(h + off); cc.append(float(pt[1]))
         if len(hh) < 2:
             return None
         return np.asarray(hh), np.asarray(cc)
