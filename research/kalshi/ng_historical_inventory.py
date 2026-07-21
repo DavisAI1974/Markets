@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Inventory G15 historical L1/trades and MBO objects without inventing presence.
 
-A source is PRESENT only after it is opened and every record can be normalized.
-Missing local files become MISSING. Remote S3 failures that prevent observation
-(credentials, permissions, transient network) become UNKNOWN rather than false
-success or false absence. Exact instrument definition periods are required as an
-observed input; the inventory never substitutes the event range for a definition.
+A source is PRESENT only after it is opened and every matching record can be
+normalized. Missing local files become MISSING. Remote S3 failures that prevent
+observation (credentials, permissions, transient network) become UNKNOWN rather
+than false success or false absence. Exact instrument definition periods are
+required as observed input; the inventory never substitutes an event range for
+a definition period.
 """
 from __future__ import annotations
 
@@ -20,7 +21,13 @@ from typing import Any, Iterator, Mapping
 from urllib.parse import urlparse
 
 from ng_historical_manifest import G15_CONTRACT_MAP, G15_DATES, expected_g15_manifest, validate_manifest
-from ng_historical_normalize import NormalizeError, iter_dbn, iter_jsonl, normalize_record
+from ng_historical_normalize import (
+    NormalizeError,
+    iter_dbn,
+    iter_jsonl,
+    normalize_record,
+    record_matches_kind,
+)
 
 SCHEMA = "ng_historical_inventory.v1"
 
@@ -39,6 +46,16 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _confirmed_missing_s3(error: Exception) -> bool:
+    response = getattr(error, "response", None)
+    if not isinstance(response, Mapping):
+        return False
+    metadata = response.get("ResponseMetadata") or {}
+    status = metadata.get("HTTPStatusCode")
+    code = str((response.get("Error") or {}).get("Code") or "")
+    return status == 404 or code in {"404", "NoSuchKey", "NotFound"}
 
 
 @contextlib.contextmanager
@@ -63,7 +80,8 @@ def materialize(uri: str) -> Iterator[tuple[Path | None, str, dict[str, Any]]]:
         client = boto3.client("s3")
         head = client.head_object(Bucket=bucket, Key=key)
     except Exception as error:
-        yield None, "UNKNOWN", {"observation_error": repr(error)}
+        status = "MISSING" if _confirmed_missing_s3(error) else "UNKNOWN"
+        yield None, status, {"observation_error": repr(error)}
         return
 
     suffixes = "".join(Path(key).suffixes) or ".bin"
@@ -140,6 +158,8 @@ def inspect_uri(
         "event_start_s": None,
         "event_end_s": None,
         "record_count": None,
+        "input_record_count": None,
+        "skipped_nonmatching": None,
         "size_bytes": None,
         "sha256": None,
         "inventory_observed_at": None,
@@ -158,30 +178,39 @@ def inspect_uri(
         entry["sha256"] = _sha256(path)
         is_dbn = path.suffix.lower() in {".dbn", ".zst"} or path.name.lower().endswith(".dbn.zst")
         rows = iter_dbn(path) if is_dbn else iter_jsonl(path)
-        count = 0
+        input_count = 0
+        normalized_count = 0
+        skipped = 0
         first: float | None = None
         last: float | None = None
-        previous: tuple[float, int] | None = None
+        previous: tuple[float, int, int] | None = None
         identities: set[tuple[Any, ...]] = set()
         try:
-            for count, raw in enumerate(rows, 1):
-                if isinstance(raw, Mapping) and "instrument_id" not in raw:
-                    raw = {**raw, "instrument_id": contract["instrument_id"]}
+            for input_count, raw in enumerate(rows, 1):
+                if not record_matches_kind(raw, forced_kind):
+                    skipped += 1
+                    continue
                 normalized = normalize_record(
                     raw,
                     event_type=forced_kind,
                     dataset=definition["dataset"],
                     publisher_id=int(definition["publisher_id"]),
+                    instrument_id=contract["instrument_id"],
                     raw_symbol=contract["raw_symbol"],
                     definition_date=definition["definition_date"],
                     session_day=day,
                     source_id=uri,
-                    ingest_sequence=count,
+                    ingest_sequence=input_count,
                 )
-                key = (float(normalized["ts_event_s"]), int(normalized["source_sequence"]))
+                key = (
+                    float(normalized["ts_event_s"]),
+                    int(normalized["source_sequence"]),
+                    int(normalized["ingest_sequence"]),
+                )
                 if previous is not None and key < previous:
-                    raise NormalizeError(f"source moved backwards at record {count}")
+                    raise NormalizeError(f"source moved backwards at input record {input_count}")
                 previous = key
+                normalized_count += 1
                 first = key[0] if first is None else first
                 last = key[0]
                 identities.add(
@@ -192,14 +221,18 @@ def inspect_uri(
                 )
         except Exception as error:
             entry["status"] = "CORRUPT"
-            entry["record_count"] = count
+            entry["input_record_count"] = input_count
+            entry["record_count"] = normalized_count
+            entry["skipped_nonmatching"] = skipped
             entry["observation_error"] = repr(error)
             entry["inventory_observed_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
             return entry
-        if count <= 0:
+        entry["input_record_count"] = input_count
+        entry["skipped_nonmatching"] = skipped
+        if normalized_count <= 0:
             entry["status"] = "CORRUPT"
             entry["record_count"] = 0
-            entry["observation_error"] = "source contained zero normalizable records"
+            entry["observation_error"] = "source contained zero matching normalizable records"
             entry["inventory_observed_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
             return entry
         expected_identity = (
@@ -208,7 +241,7 @@ def inspect_uri(
         )
         if identities != {expected_identity}:
             entry["status"] = "CORRUPT"
-            entry["record_count"] = count
+            entry["record_count"] = normalized_count
             entry["event_start_s"] = first
             entry["event_end_s"] = last
             entry["observation_error"] = f"identity mismatch: {sorted(identities)!r}"
@@ -216,7 +249,7 @@ def inspect_uri(
             return entry
         if first is None or last is None or first < entry["definition_start_s"] or last > entry["definition_end_s"]:
             entry["status"] = "CORRUPT"
-            entry["record_count"] = count
+            entry["record_count"] = normalized_count
             entry["event_start_s"] = first
             entry["event_end_s"] = last
             entry["observation_error"] = "event range falls outside observed definition period"
@@ -226,7 +259,7 @@ def inspect_uri(
             status="PRESENT",
             event_start_s=first,
             event_end_s=last,
-            record_count=count,
+            record_count=normalized_count,
             inventory_observed_at=dt.datetime.now(dt.timezone.utc).isoformat(),
         )
         return entry
