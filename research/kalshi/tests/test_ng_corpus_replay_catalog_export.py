@@ -187,7 +187,11 @@ class ReplayCatalogExportTests(unittest.TestCase):
             self.build()
 
     def test_basis_inventory_count_mismatch_is_rejected_downstream(self):
-        self.g15_inventory[0]["l1_n_trades"] += 1
+        row = next(
+            item for item in self.g15_inventory
+            if str(item.get("date") or "").replace("-", "") == coverage.G15_DATES[0]
+        )
+        row["l1_n_trades"] += 1
         with self.assertRaises(Exception):
             self.build()
 
