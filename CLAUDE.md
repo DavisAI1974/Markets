@@ -1,4 +1,29 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-21, Session 104)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-22, Session 105)
+
+## S105 — BLIND RE-ARCHITECTED = REFINE GOLD MINUS ONLY THE PRICE CURVE + THE GOLD VAULT (read `SESSION_HANDOFF_2026-07-22_S105.md` + `DROP_IN_S106.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`**. Brain **s102.9, 54 plays (unchanged — no
+merges)**. The walk STOPPED mid-G19 to fix a structural problem Greg spotted in the blind render. **G19
+blind** (5-spec sequenced, full firehose) = 6/10 err 751 and a reported "+$2,290 P&L" that HID a ~15c
+FORWARD-CURVE under-call (the score was a daily-directional metric; the integrated blind path sat ~15c
+BELOW actual through the covering rally). **Two read-only audits**: (1) firehose plumbing = CLEAN to the
+state file (G19 proof) but 3 silent-degrade defects, one active — `big_print_b_share` size-weighted is
+computed then DROPPED, the old count-based value shadows it under the same name (`forecast_harness.py:630`
+omits it); (2) **THE ROOT CAUSE** — the blind's directives CONTRADICT: `blind_shared.md` says "USE the MBO
+firehose," all five `blind_class_{A..E}.md` say "NO MBO." Half-finished firehose rollout = the "weird."
+**DECISION (Greg, decisive x4): BLIND = the refine GOLD specialist run in BLIND MODE, minus ONLY the
+price curve** — no separate blind lens (that duplication caused the drift). BUILT + committed: FROZEN
+gold `agents/refine_gold_s105/` (chmod 0444 + sha256 manifest); **`verify_gold.py` = the concrete walls**
+(hard-fail any run on a tampered vault; wired into stage_group + both coordinators; tamper-proven);
+`agents/blind_mode.md` (the minus-price wrapper, repeals the NO-MBO amputation); render `break_gaps()`
+fix (no weekend straight-line bridge). **OPEN — Greg decides FIRST next session**: is price the ONLY
+difference (Option A: refine drops its posterior-update/weight-split so both forecast from-scratch — but
+that EVOLVES refine off the frozen gold) OR do we preserve the gold refine's posterior-update (Option B:
+refine also sees the blind's prior, an extra beyond price)? **DO NOT WIRE THE BLIND UNTIL DECIDED.** Then:
+wire blind->mbo_specialist+blind_mode, unify coordinator schema, render-continuity fix (one polyline),
+the **G18 VALIDATION** (blind+price must reproduce refine err8; blind masked vs old blind 5/10), fix the
+3 plumbing defects, re-run the SUSPECT G19 blind, resume G20+. **Scoreboard = forward-curve error, NOT
+daily direction hit-rate.**
 
 ## S104 — THE FRIDAY->MONDAY CASCADE CLEANUP + G15 MBO ROUND 2 (12/12, err 66) + COORDINATOR GUARD + brain s102.5 (read `SESSION_HANDOFF_2026-07-21_S104.md` + `DROP_IN_S105.md`)
 

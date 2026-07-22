@@ -30,11 +30,29 @@ Have every group "sitting ready with its data fixed" — turnkey, so all we do i
 start running (forecasting) multiple groups at once: **one group = two weeks**, finish its full cycle,
 then the next. Running ahead is scope creep waiting to happen.
 
+## S105 RE-ARCHITECTURE (Greg, decisive) — BLIND = REFINE GOLD, MINUS ONLY THE PRICE CURVE
+The separate blind lens set (`blind_shared.md` + `blind_class_{A..E}.md`) is BEING RETIRED. It drifted
+from the refine lenses and produced a fatal contradiction: `blind_shared.md` said "USE the full MBO
+flow," while all five `blind_class_*` said "NO MBO" — the agents got both, undefined behavior, and the
+blind under-performed. THE FIX: there is no separate blind lens. The blind IS the refine gold specialist
+(`mbo_specialist_{A..E}.md` + `mbo_refine_shared.md`) run in BLIND MODE via the thin wrapper
+`blind_mode.md`, which subtracts EXACTLY ONE thing — the PRICE CURVE — and repeals the NO-MBO amputation.
+One reasoning stack, two data modes; they can never drift again.
+- **GOLD VAULT**: `agents/refine_gold_s105/` is a FROZEN, chmod-0444, sha256-checksummed snapshot of the
+  gold refine (G18 err 8). `verify_gold.py` (wired into stage_group + both coordinators) HARD-FAILS any
+  run if the vault is tampered, and announces if the live reasoning has drifted from gold.
+- **OPEN — Greg decides FIRST (S106)**: is the ONLY difference truly the price curve (Option A: refine
+  stops the posterior-update / weight-split so both forecast from-scratch, refine just also sees price —
+  but this EVOLVES refine off the frozen gold), OR do we preserve the gold refine's posterior-update
+  (Option B: refine also sees the blind's prior, an extra beyond price)? Do NOT wire the blind until this
+  is decided. `blind_mode.md` currently encodes the A-compatible first-pass framing.
+
 ## THE OPERATING FRAME (Greg, S104 — supersedes the 3-angle-panel loop below for new groups)
 - **FIVE day-class specialists for BOTH blind and refine, every run**: A weekend-seam / B Monday /
-  C core / D Thu-EIA / E Fri-expiry. Day-class lenses = `mbo_specialist_{A..E}.md` (refine);
-  the blind runs the same five roles behind the `blind_shared.md` wall (thin blind lens files
-  `blind_class_{A..E}.md` — write once from the specialist lenses minus realized/MBO content).
+  C core / D Thu-EIA / E Fri-expiry. Day-class lenses = `mbo_specialist_{A..E}.md`. BOTH the refine and
+  (per the S105 re-architecture above) the blind now run these SAME five lenses — the blind adds
+  `blind_mode.md` (minus price); the old `blind_shared.md` / `blind_class_{A..E}.md` are SUPERSEDED,
+  pending the A/B decision + wiring.
 - **FOCUS = FRIDAY AND MONDAY.** Friday is the cascade root (11/22 Fridays wrong-signed; 10/14 bad
   Mondays root to a mis-read Friday exit). E must emit the 9-field weekend `handoff_out`
   (exit_type + monday_bias); E carries the PRIOR-OVER-STATE fix (a turn/exhaustion GATE checked
@@ -55,13 +73,18 @@ then the next. Running ahead is scope creep waiting to happen.
   Target: **honest under-100 every day**.
 
 ## The files (do NOT rewrite per group)
-- `blind_shared.md` — shared blind directive (the wall + output contract; group-agnostic).
-- `mbo_refine_shared.md` + `mbo_specialist_{A,B,C,D,E}.md` — the 5-specialist day-class files
-  (shared doctrine + per-role lenses, incl. A's weekend-seam role, B's hand-in-hand consumption,
-  the round-2 HE24->HE1 handoff protocol, and the coordinator contract).
+- `mbo_refine_shared.md` + `mbo_specialist_{A,B,C,D,E}.md` — THE canonical 5-specialist day-class files,
+  used by BOTH refine and blind (shared doctrine + per-role lenses, incl. A's weekend-seam role, B's
+  hand-in-hand consumption, the round-2 HE24->HE1 handoff protocol, and the coordinator contract).
+- `blind_mode.md` (S105) — the thin wrapper that turns a refine specialist into its blind twin: subtracts
+  ONLY the price curve, repeals the NO-MBO amputation, first-pass framing, same output schema. READ AFTER
+  the specialist. This IS the blind now.
+- `refine_gold_s105/` — the FROZEN gold refine (chmod 0444) + `CHECKSUMS.sha256`. UNTOUCHABLE; guarded by
+  `../verify_gold.py`. Never edit; iterate on the working copies only.
 - `refine.md` — the single-agent unblinded refine directive (pre-S104 pattern; kept for reference).
-- `blind_angle_{storage,positioning,weather}.md` — the S103 3-angle blind panel (SUPERSEDED for new
-  groups by the 5-specialist blind; kept for the walked record and as evidence-angle references).
+- SUPERSEDED (pending the A/B decision + wiring; kept for the walked record, do not spawn from):
+  `blind_shared.md` (stale 3-agent averaging doc + the NO-MBO contradiction), `blind_class_{A..E}.md`
+  (the amputated blind lenses), `blind_angle_{storage,positioning,weather}.md` (the S103 3-angle panel).
 
 ## SHARED SUBSTRATE — done ONCE per session (see GROUP_PRECHECK_S103.md)
 Creds (env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY for platform_sync/boto3) + full-history
@@ -154,3 +177,10 @@ the full non-price MBO+L1 flow read - flow_read.py - masked only on price) + the
   BUY absorbed under falling price = failing -> DOWN; ALIGNED = delivered. A crowded short covering-
   absorbed at the Friday close reprices UP on the Monday catch-up (buy-absorption at the close is a
   directional tell, not exhaustion).
+- **G19** (covering rally, 2.75 -> 3.136 -> 2.865; seam 0520 June->July): blind 6/10 err 751 and a "+$2,290
+  daily-directional P&L" that HID a ~15c forward-curve under-call (integrated peak 2.969 vs actual 3.136).
+  Greg caught it in the render. Root-caused (see `SESSION_HANDOFF_2026-07-22_S105.md`): the blind was
+  running the CONTRADICTED stack (blind_shared "use MBO" vs blind_class "NO MBO") + an inert
+  big_print_b_share (size-weighted computed then dropped, count-based shadowed under the name). ->
+  triggered the S105 re-architecture (blind = refine gold minus price) + the gold vault. grp19.json is
+  SUSPECT; re-run under the new blind. **Lesson: grade forward-curve error, not daily sign.**
