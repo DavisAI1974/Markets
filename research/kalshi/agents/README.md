@@ -34,13 +34,15 @@ then the next. Running ahead is scope creep waiting to happen.
 There is no separate blind. The old blind stack (`blind_shared.md` + `blind_class_{A..E}.md` +
 `blind_angle_*`) was DELETED in S105 and does not exist — it had drifted into a fatal contradiction
 (shared doc said "USE MBO," the five lenses said "NO MBO") and Greg retired it outright. THE MODEL NOW:
-the blind and the refine are the SAME 5-specialist engine (`mbo_specialist_{A..E}.md` +
-`mbo_refine_shared.md`). "Refine" = that engine WITH the price curve. "Blind" = that engine WITHOUT the
-price curve, via the thin wrapper `blind_mode.md` (subtracts ONLY the price curve, keeps the full MBO
-flow read). They are the same thing; price is the ONLY difference. One reasoning stack, two data modes —
-they cannot drift again because there is only one set of lenses. (Greg: "we are the same thing except one
-cant see the price curve... I'm not going to use old blind anymore... this is the new blind and the old
-blind doesn't exist anymore.")
+the blind and the refine read the EXACT SAME committed rule files (`mbo_refine_shared.md` +
+`mbo_specialist_{A..E}.md`) — byte-for-byte, no blind-specific file of ANY kind. "Refine" = these files
+run on a state that INCLUDES the price curve. "Blind" = these files run on a state where the price curve
+is MASKED. The ONLY difference is the price curve, and it lives in the DATA (the masked state), never in
+a rule file. There is deliberately no `blind_mode.md` or any other blind wrapper — a separate file, even
+a copy, could drift or "sneakily corrupt how he functions" (Greg); a SINGLE shared file cannot diverge
+even in principle. (Greg: "they will be exact twins in every way but one... I don't want some sneaky file
+somewhere corrupt how he functions.") The blind mode is set at SPAWN (runtime): the blind is handed the
+price-masked state and no prior pass; everything it reads is the identical refine doctrine.
 - **GOLD VAULT (three copies)**: `agents/refine_gold_s105/` = FROZEN, chmod-0444, sha256-checksummed
   snapshot of the gold engine (G18 err 8). `verify_gold.py` (wired into stage_group + both coordinators)
   HARD-FAILS any run if the vault is tampered, and announces if the live reasoning drifted from gold.
@@ -51,8 +53,8 @@ blind doesn't exist anymore.")
 ## THE OPERATING FRAME (Greg, S104-S105)
 - **FIVE day-class specialists, ONE engine for both modes, every run**: A weekend-seam / B Monday /
   C core / D Thu-EIA / E Fri-expiry. Lenses = `mbo_specialist_{A..E}.md` + `mbo_refine_shared.md`. REFINE
-  runs them with price; BLIND runs the SAME lenses + `blind_mode.md` (minus price). No separate blind
-  files exist.
+  and BLIND run the IDENTICAL files; the blind's state simply has the price curve masked. No blind-specific
+  file exists (the mode is a spawn-time data fact, not a rule file).
 - **FOCUS = FRIDAY AND MONDAY.** Friday is the cascade root (11/22 Fridays wrong-signed; 10/14 bad
   Mondays root to a mis-read Friday exit). E must emit the 9-field weekend `handoff_out`
   (exit_type + monday_bias); E carries the PRIOR-OVER-STATE fix (a turn/exhaustion GATE checked
@@ -74,17 +76,16 @@ blind doesn't exist anymore.")
 
 ## The files (do NOT rewrite per group)
 - `mbo_refine_shared.md` + `mbo_specialist_{A,B,C,D,E}.md` — THE canonical 5-specialist day-class files,
-  used by BOTH refine and blind (shared doctrine + per-role lenses, incl. A's weekend-seam role, B's
-  hand-in-hand consumption, the round-2 HE24->HE1 handoff protocol, and the coordinator contract).
-- `blind_mode.md` (S105) — the thin wrapper that turns a refine specialist into its blind twin: subtracts
-  ONLY the price curve, repeals the NO-MBO amputation, first-pass framing, same output schema. READ AFTER
-  the specialist. This IS the blind now.
+  the ONE rule set read by BOTH refine and blind, byte-identical (shared doctrine + per-role lenses, incl.
+  A's weekend-seam role, B's hand-in-hand consumption, the round-2 HE24->HE1 handoff protocol, and the
+  coordinator contract). There is NO blind-specific file — the blind is these same files on a price-masked
+  state.
 - `refine_gold_s105/` — the FROZEN gold refine (chmod 0444) + `CHECKSUMS.sha256`. UNTOUCHABLE; guarded by
   `../verify_gold.py`. Never edit; iterate on the working copies only.
 - `refine.md` — the single-agent unblinded refine directive (pre-S104 pattern; kept for reference).
-- DELETED in S105 (the old blind; recoverable from git history if ever needed, but do NOT resurrect):
-  `blind_shared.md`, `blind_class_{A..E}.md`, `blind_angle_{storage,positioning,weather}.md`. The blind
-  is `mbo_specialist_<X>.md` + `blind_mode.md` now — nothing else.
+- DELETED in S105 (do NOT resurrect; recoverable from git history if ever needed): the old blind stack
+  `blind_shared.md` + `blind_class_{A..E}.md` + `blind_angle_*`, AND `blind_mode.md` (the wrapper was
+  itself a separable file that could drift — removed so there is exactly ONE shared rule set).
 
 ## SHARED SUBSTRATE — done ONCE per session (see GROUP_PRECHECK_S103.md)
 Creds (env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY for platform_sync/boto3) + full-history
@@ -106,7 +107,7 @@ stores pulled once + the roll map. Covers every group. Do not repeat.
      the weekend bridge read per Monday.
    - **Wave 3:** B (Monday) — spawn AFTER A finishes; B consumes A's bridge LIVE before committing the
      Monday number (A informs, B decides, B owns it).
-   All run the SAME lenses (`mbo_specialist_<X>.md`) + `blind_mode.md` (minus price), model opus. Sequencing alone recovers ~80% of the 0420
+   All run the SAME shared files (`mbo_specialist_<X>.md` + `mbo_refine_shared.md`) on a price-masked state, model opus. Sequencing alone recovers ~80% of the 0420
    magnitude miss and makes the Monday number decision-legit instead of borrowed.
    **ESCALATION (Greg S105): if a fixed sequence still causes issues (a dependency that a static order
    can't satisfy, ordering conflicts), build a LIVE ORCHESTRATOR** that resolves the dependency graph

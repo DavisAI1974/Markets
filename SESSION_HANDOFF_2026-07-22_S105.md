@@ -82,9 +82,12 @@ be that same reasoning, blindfolded on price and NOTHING else. Stop maintaining 
 Greg settled it before session end: "we are the same thing except one cant see the price curve... I'm not
 going to use old blind anymore... this is the new blind and the old blind doesn't exist anymore." So:
 the A/B question below is CLOSED (they're the same engine, price the only difference); the validation
-TESTS are ELIMINATED (Greg's call); and the old blind stack (`blind_shared.md` + `blind_class_{A..E}.md`
-+ `blind_angle_*`) was DELETED (git-rm'd). `blind_mode.md` was made definitive ("THIS is the blind; the
-old blind does not exist") and its acceptance-test section removed. The record below is kept for the WHY.
+TESTS are ELIMINATED (Greg's call); the old blind stack (`blind_shared.md` + `blind_class_{A..E}.md`
++ `blind_angle_*`) was DELETED (git-rm'd); AND, on Greg's follow-up ("make refine's protocols the blind's;
+I don't want some sneaky file somewhere corrupt how he functions"), the `blind_mode.md` wrapper was ALSO
+DELETED. FINAL STATE: blind and refine read the EXACT SAME committed files (`mbo_refine_shared.md` +
+`mbo_specialist_{A..E}.md`), byte-identical; there is NO blind-specific file. The one difference (price)
+lives in the DATA — the blind is spawned on a price-MASKED state. The record below is kept for the WHY.
 
 ## THE OPEN DECISION [now resolved above] — the A/B fork as it stood mid-session
 The gold refine is NOT purely "blind + price" today — it has a SECOND difference: it runs as a POSTERIOR

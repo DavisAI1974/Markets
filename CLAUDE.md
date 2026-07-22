@@ -15,15 +15,17 @@ firehose," all five `blind_class_{A..E}.md` say "NO MBO." Half-finished firehose
 price curve** — no separate blind lens (that duplication caused the drift). BUILT + committed: FROZEN
 gold `agents/refine_gold_s105/` (chmod 0444 + sha256 manifest); **`verify_gold.py` = the concrete walls**
 (hard-fail any run on a tampered vault; wired into stage_group + both coordinators; tamper-proven);
-`agents/blind_mode.md` (the minus-price wrapper, repeals the NO-MBO amputation); render `break_gaps()`
-fix (no weekend straight-line bridge); THIRD off-site copy in the private repo `DavisAI1974/Agent-Davis`.
-**RESOLVED (Greg, FINAL): blind and refine are ONE agent; the ONLY difference is the price curve. The old
-blind is DELETED and does not exist** (`blind_shared.md` + `blind_class_{A..E}.md` + `blind_angle_*` git-
-rm'd). No A/B question, no validation tests (Greg eliminated them) - the blind IS `mbo_specialist_<X>` +
-`blind_mode.md`. NEXT: wire the blind spawn + unify the coordinator schema (blind emits the refine
+render `break_gaps()` fix (no weekend straight-line bridge); THIRD off-site copy in the private repo
+`DavisAI1974/Agent-Davis`. **RESOLVED (Greg, FINAL): blind and refine read the EXACT SAME committed rule
+files (`mbo_refine_shared.md` + `mbo_specialist_{A..E}.md`), byte-identical; the ONLY difference is the
+price curve, which lives in the DATA (blind = a price-MASKED state), never in a rule file.** No
+blind-specific file exists - the old blind stack AND the `blind_mode.md` wrapper were both DELETED (a
+separate file, even a copy, could drift/"sneakily corrupt how he functions"; one shared file cannot). No
+A/B question, no validation tests (Greg eliminated them). NEXT: wire the blind spawn (same files +
+price-masked state) + unify the coordinator schema (blind emits the refine
 `expected_magnitude_usd`/`path_p50_curve`), render-continuity fix (one polyline), fix the 3 plumbing
-defects, re-run the SUSPECT G19 blind under the new blind, resume G20+. **Scoreboard = forward-curve
-error, NOT daily direction hit-rate.**
+defects, re-run the SUSPECT G19 blind, resume G20+. **Scoreboard = forward-curve error, NOT daily
+direction hit-rate.**
 
 ## S104 — THE FRIDAY->MONDAY CASCADE CLEANUP + G15 MBO ROUND 2 (12/12, err 66) + COORDINATOR GUARD + brain s102.5 (read `SESSION_HANDOFF_2026-07-21_S104.md` + `DROP_IN_S105.md`)
 

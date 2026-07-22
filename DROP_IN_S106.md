@@ -4,7 +4,7 @@
 ```
 git fetch origin claude/kalshi-agents-coordinator-guard-1175nr
 git checkout -B claude/kalshi-agents-coordinator-guard-1175nr origin/claude/kalshi-agents-coordinator-guard-1175nr
-git log --oneline -1     # confirm tip: the S105 gold-vault + blind_mode work (not a stale tip)
+git log --oneline -1     # confirm tip: the S105 gold-vault + one-shared-rule-set work (not a stale tip)
 python3 research/kalshi/verify_gold.py   # confirm the refine gold vault is intact + whether runtime == gold
 ```
 Read in order: `SESSION_HANDOFF_2026-07-22_S105.md` (this session, IN FULL) -> `research/kalshi/agents/README.md`
@@ -12,15 +12,16 @@ Read in order: `SESSION_HANDOFF_2026-07-22_S105.md` (this session, IN FULL) -> `
 
 ## 1. SETTLED (Greg, FINAL, S105) — blind and refine are ONE agent; price is the only difference
 The old blind is DELETED and does not exist. The blind IS the 5-specialist engine
-(`mbo_specialist_{A..E}.md` + `mbo_refine_shared.md`) + `blind_mode.md` (minus price). "Refine" = the
-same engine WITH price. No A/B question (settled: same thing minus price), no validation tests (Greg
-eliminated them). Just build it as fact and run.
+(`mbo_specialist_{A..E}.md` + `mbo_refine_shared.md`) run on a PRICE-MASKED state. "Refine" = the SAME
+files on a state that includes price. Blind and refine read the IDENTICAL committed rule files, byte-for-
+byte - there is NO blind-specific file (the `blind_mode.md` wrapper was deleted too; a separate file could
+drift). The one difference (price) lives in the DATA. No A/B question, no validation tests. Build + run.
 
 ## 2. What's already BUILT and PROTECTED (S105 — do not rebuild)
 - `agents/refine_gold_s105/` = FROZEN gold refine (chmod 0444) + `CHECKSUMS.sha256`. UNTOUCHABLE.
 - `verify_gold.py` = the walls; `assert_gold_intact()` is wired into stage_group + both coordinators
   (a violated vault = SystemExit, nothing forecasts). Runs on every stage/coordinate.
-- `agents/blind_mode.md` = the blind = gold-specialist-minus-price wrapper (repeals the NO-MBO amputation).
+- NO blind-specific file: blind = the refine files (`mbo_refine_shared.md` + `mbo_specialist_{A..E}.md`) on a price-masked state.
 - Render `break_gaps()` fix (no weekend straight-line bridge) in both coordinators.
 - THREE copies of the gold now exist: (1) working `mbo_*`, (2) in-repo frozen `refine_gold_s105/`,
   (3) OFF-SITE PRIVATE VAULT `DavisAI1974/Agent-Davis` (commit 0fd70fc, main). Clone FROM the vault for
@@ -28,7 +29,7 @@ eliminated them). Just build it as fact and run.
   the vault (refine_gold_s106/...), never an overwrite. The vault does not auto-update.
 
 ## 3. Then, in order
-1. Wire the blind spawn -> `mbo_specialist_<X>.md` + `blind_mode.md` (old blind already DELETED). Unify
+1. Wire the blind spawn -> the SAME `mbo_specialist_<X>.md` + `mbo_refine_shared.md` on a price-masked state (no blind-specific file exists). Unify
    the coordinator schema so the blind emits the refine `expected_magnitude_usd` / `path_p50_curve` and
    ONE coordinator scores both.
 2. Render continuity fix (Q2): forecast as ONE polyline, NaN only at >3h gaps, both coordinators.
