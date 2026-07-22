@@ -1,648 +1,116 @@
 {
- "specialist": "D",
- "group": "g19",
- "brain_version": "s102.9",
- "forecast_schema_version": "ng.v2",
- "days_owned": [
-  "20260514",
-  "20260521"
- ],
  "days": [
   {
    "date": "20260514",
    "dow": "Thu",
-   "archetype": "eia_print_covering_absorbed_sell_tape",
-   "reasoning": "Short-covering-RALLY regime. D-1 (0513) flow is COHERENT sell (session_b 0.444, big_print_b 0.458 both agree) yet MM net is a record-crowded short (2.83 1y-pctile) still WORSENING wow (-10244) - the coherent sell is being ABSORBED under a rising covering tape (price-vs-flow disagree = covering_absorption_directional_tell -> covering UP). Bearish +85 injection build is well-priced (last surprise 0). Pre-print over-extension gate: the naive DOWN default is FORBIDDEN in this regime; the coherent-sell drag caps the UP magnitude and leaves a real print-pop-down risk, so TWO-SIDED with a modest UP tilt and a fat upper (squeeze) tail. June/NGM26 leg.",
-   "regime": {
-    "day_class": "eia_thursday",
-    "seasonal_state": "S1_shoulder_injection",
-    "demand_regime": "shoulder_low_load",
-    "curve_regime": "contango",
-    "storage_phase": "injection_build",
-    "vol_regime": "unknown",
-    "dominant_driver": "crowded_short_covering_vs_bearish_injection_print",
-    "selector_mode": "covering_absorption_two_sided_up_tilt"
-   },
-   "rule_trace": [
-    {
-     "rule_id": "daytype.eia_preprint_overextension_gate",
-     "inputs": {
-      "chain_regime": "covering_rally_up",
-      "d1_session_b": 0.444,
-      "d1_big_print_b": 0.458,
-      "mm_net_pctile_1y": 2.83,
-      "mm_net_chg_wow": -10244,
-      "consensus_bcf": 85.0,
-      "last_surprise_bcf": -11.0
-     },
-     "thresholds": {
-      "coherent_sell_below": 0.5,
-      "priced_surprise_weeks": 1
-     },
-     "scope_pass": true,
-     "ownership_rank": 1,
-     "direction_effect": "forbid_bearish_default;two_sided_up_tilt",
-     "magnitude_band_usd": "[-700,+1300]",
-     "note": "tells (b price-vs-flow disagree in covering rally) + (c priced +85 build) fire -> not full-band chain-sided; UP tilt from covering not from print sign"
-    },
-    {
-     "rule_id": "structure.covering_absorption_directional_tell",
-     "inputs": {
-      "signed_flow_d1": -2763,
-      "phase_b_share": [
-       0.469,
-       0.444,
-       0.441
-      ],
-      "quote_bid_share": 0.504,
-      "regime": "rising_covering"
-     },
-     "thresholds": {
-      "mm_short_pctile_below": 12
-     },
-     "scope_pass": true,
-     "ownership_rank": 2,
-     "direction_effect": "up",
-     "magnitude_band_usd": "covering grind",
-     "note": "SELL absorbed under rising price = crowded-short covering -> delivers UP; coherent (non-divergent) sell caps magnitude vs 0521"
-    },
-    {
-     "rule_id": "daytype.storage_thursday_magnitude",
-     "inputs": {
-      "is_print_day": true,
-      "consensus_bcf": 85.0
-     },
-     "thresholds": {},
-     "scope_pass": true,
-     "ownership_rank": 3,
-     "direction_effect": "upsize_magnitude_prior",
-     "magnitude_band_usd": "widen",
-     "note": "print-day magnitude up-size; SIDE not from print sign"
-    }
-   ],
-   "direction_probabilities": {
-    "overnight": {
-     "up": 0.4,
-     "flat": 0.3,
-     "down": 0.3
-    },
-    "us_open": {
-     "up": 0.44,
-     "flat": 0.24,
-     "down": 0.32
-    },
-    "settle": {
-     "up": 0.5,
-     "flat": 0.18,
-     "down": 0.32
-    },
-    "close": {
-     "up": 0.52,
-     "flat": 0.16,
-     "down": 0.32
-    }
-   },
-   "move_size_distribution_usd": {
-    "flat_band": 150.0,
-    "mean": 300.0,
-    "stdev": 650.0,
-    "p10": -700.0,
-    "p25": -100.0,
-    "p50": 350.0,
-    "p75": 750.0,
-    "p90": 1300.0,
-    "bins": [
-     {
-      "lo": -2000,
-      "hi": -500,
-      "probability": 0.16
-     },
-     {
-      "lo": -500,
-      "hi": 150,
-      "probability": 0.28
-     },
-     {
-      "lo": 150,
-      "hi": 700,
-      "probability": 0.3
-     },
-     {
-      "lo": 700,
-      "hi": 1500,
-      "probability": 0.18
-     },
-     {
-      "lo": 1500,
-      "hi": 3500,
-      "probability": 0.08
-     }
-    ]
-   },
-   "timing_windows": [
-    {
-     "start_et": "09:00",
-     "end_et": "10:30",
-     "probability": 0.5,
-     "expected_direction": "down",
-     "catalyst": "pre_print_positioning_sell_pressure"
-    },
-    {
-     "start_et": "10:30",
-     "end_et": "11:30",
-     "probability": 0.6,
-     "expected_direction": "up",
-     "catalyst": "eia_print_impulse_then_covering_absorb"
-    },
-    {
-     "start_et": "12:00",
-     "end_et": "17:00",
-     "probability": 0.55,
-     "expected_direction": "up",
-     "catalyst": "covering_grind_into_close"
-    }
-   ],
-   "shape_probabilities": {
-    "trend": 0.55,
-    "chop": 0.45
-   },
-   "continuation_reversal_probabilities": {
-    "continuation": 0.5,
-    "reversal": 0.28,
-    "hold": 0.22
-   },
+   "owner": "D",
+   "guessed_net_usd": -150,
+   "overnight_gap_usd": -20,
    "path_distribution": [
     {
-     "et_hr": 6.0,
-     "p10": -200,
-     "p50": -30,
-     "p90": 200
+     "et_hr": 20.0,
+     "p50": 0
     },
     {
-     "et_hr": 9.0,
-     "p10": -300,
-     "p50": -20,
-     "p90": 300
+     "et_hr": 22.0,
+     "p50": -30
+    },
+    {
+     "et_hr": 0.0,
+     "p50": -70
+    },
+    {
+     "et_hr": 2.0,
+     "p50": -120
+    },
+    {
+     "et_hr": 4.0,
+     "p50": -170
+    },
+    {
+     "et_hr": 6.0,
+     "p50": -230
+    },
+    {
+     "et_hr": 8.0,
+     "p50": -280
     },
     {
      "et_hr": 10.0,
-     "p10": -400,
-     "p50": 0,
-     "p90": 400
+     "p50": -300
     },
     {
      "et_hr": 10.5,
-     "p10": -650,
-     "p50": 60,
-     "p90": 650
-    },
-    {
-     "et_hr": 11.0,
-     "p10": -600,
-     "p50": 150,
-     "p90": 800
+     "p50": -255
     },
     {
      "et_hr": 12.0,
-     "p10": -550,
-     "p50": 250,
-     "p90": 950
+     "p50": -200
     },
     {
      "et_hr": 14.0,
-     "p10": -650,
-     "p50": 320,
-     "p90": 1150
+     "p50": -170
     },
     {
-     "et_hr": 17.0,
-     "p10": -700,
-     "p50": 350,
-     "p90": 1300
-    }
-   ],
-   "guess_curve": [
-    [
-     6.0,
-     -30
-    ],
-    [
-     9.0,
-     -20
-    ],
-    [
-     10.0,
-     0
-    ],
-    [
-     10.5,
-     60
-    ],
-    [
-     11.0,
-     150
-    ],
-    [
-     12.0,
-     250
-    ],
-    [
-     14.0,
-     320
-    ],
-    [
-     17.0,
-     350
-    ]
-   ],
-   "guessed_net_usd": 350.0,
-   "overnight_gap_usd": -20.0,
-   "fwd_curve_lean": "up",
-   "confidence": {
-    "overall": 0.42,
-    "direction": 0.52,
-    "magnitude": 0.38,
-    "timing": 0.45
-   },
-   "data_quality": {
-    "blind_wall_passed": true,
-    "state_audit_version": "grp19_state",
-    "missing_inputs": [
-     "vol_regime"
-    ],
-    "stale_inputs": [
-     "storage_vintage_age70d"
-    ],
-    "partial_inputs": [
-     "consensus_pre_print_null"
-    ],
-    "prohibited_inputs_removed": [
-     "price_curve"
-    ],
-    "flags": [
-     "covering_rally_regime",
-     "record_short_worsening",
-     "coherent_sell_absorbed"
-    ]
-   },
-   "scenario_components": [
-    {
-     "name": "covering_carries_up",
-     "probability": 0.56,
-     "direction": "up",
-     "distribution": {
-      "p50": 600
-     },
-     "governing_driver": "crowded_short_covering_fresh_fuel",
-     "invalidation_conditions": "print triggers fresh short pressure that is NOT absorbed (price breaks lower)"
-    },
-    {
-     "name": "bearish_print_pop_down",
-     "probability": 0.32,
-     "direction": "down",
-     "distribution": {
-      "p50": -450
-     },
-     "governing_driver": "injection_build_fundamental",
-     "invalidation_conditions": "pop-down fails to hold and covering reasserts"
-    },
-    {
-     "name": "range_chop",
-     "probability": 0.12,
-     "direction": "flat",
-     "distribution": {
-      "p50": 0
-     },
-     "governing_driver": "print_offsets_covering",
-     "invalidation_conditions": "either side takes control post-print"
+     "et_hr": 16.0,
+     "p50": -150
     }
    ]
   },
   {
    "date": "20260521",
    "dow": "Thu",
-   "archetype": "eia_print_covering_bigprint_buy_divergence",
-   "reasoning": "Post-seam July/NGN26 leg. D-1 (0520) flow is INCOHERENT: session_b 0.393 (heavy small-lot sell) vs big_print_b 0.537 (large players BUY) - the 0416-class covering tell (sell session, big-print BUY = smart-money accumulation/covering). MM net now near-RECORD short (0.94 1y-pctile) and STILL worsening wow (-12576) = fresh covering fuel, not spent (covering_giveback_self_limiting passes). Resting book bid-leaning (quote_bid_share 0.53). Bearish +95 injection build is priced (last surprise 0). Pre-print over-extension gate FIRES (b incoherent D-1 + c priced surprise) -> forbid bearish default, TWO-SIDED UP tilt; cleaner/stronger covering signal than 0514 (big-print BUY) -> larger UP p50 and fatter squeeze tail.",
-   "regime": {
-    "day_class": "eia_thursday",
-    "seasonal_state": "S1_shoulder_injection",
-    "demand_regime": "shoulder_low_load",
-    "curve_regime": "contango",
-    "storage_phase": "injection_build",
-    "vol_regime": "unknown",
-    "dominant_driver": "crowded_short_covering_bigprint_buy_vs_bearish_print",
-    "selector_mode": "covering_absorption_two_sided_up_tilt"
-   },
-   "rule_trace": [
-    {
-     "rule_id": "daytype.eia_preprint_overextension_gate",
-     "inputs": {
-      "chain_regime": "covering_rally_up",
-      "d1_session_b": 0.393,
-      "d1_big_print_b": 0.537,
-      "incoherent": true,
-      "mm_net_pctile_1y": 0.94,
-      "mm_net_chg_wow": -12576,
-      "consensus_bcf": 95.0,
-      "last_surprise_bcf": 0.0
-     },
-     "thresholds": {
-      "incoherence": "session_b_vs_big_print_disagree",
-      "priced_surprise_weeks": 1
-     },
-     "scope_pass": true,
-     "ownership_rank": 1,
-     "direction_effect": "forbid_bearish_default;two_sided_up_tilt",
-     "magnitude_band_usd": "[-600,+1550]",
-     "note": "tells (b) session_b 0.393 vs big_print 0.537 disagree + (c) priced +95 fire -> two-sided; UP because big-print BUY is the covering side"
-    },
-    {
-     "rule_id": "structure.covering_absorption_directional_tell",
-     "inputs": {
-      "signed_flow_d1": -531,
-      "big_print_b_share": 0.537,
-      "phase_b_share": [
-       0.425,
-       0.385,
-       0.402
-      ],
-      "quote_bid_share": 0.53
-     },
-     "thresholds": {
-      "mm_short_pctile_below": 12
-     },
-     "scope_pass": true,
-     "ownership_rank": 2,
-     "direction_effect": "up",
-     "magnitude_band_usd": "covering grind, fat upper",
-     "note": "big prints BUY while small-lot sells = large-player covering/accumulation absorbed -> UP; stronger than 0514 coherent-sell case"
-    },
-    {
-     "rule_id": "daytype.covering_giveback_self_limiting",
-     "inputs": {
-      "mm_net_pctile_1y": 0.94,
-      "mm_net_chg_wow": -12576,
-      "worsening": true
-     },
-     "thresholds": {
-      "fresh_requires": "new_extreme_AND_worsening"
-     },
-     "scope_pass": true,
-     "ownership_rank": 3,
-     "direction_effect": "covering_not_spent_up",
-     "magnitude_band_usd": "full",
-     "note": "new extreme (0.94) AND worsening = FRESH fuel, covering-UP not self-limited"
-    },
-    {
-     "rule_id": "daytype.storage_thursday_magnitude",
-     "inputs": {
-      "is_print_day": true,
-      "consensus_bcf": 95.0
-     },
-     "thresholds": {},
-     "scope_pass": true,
-     "ownership_rank": 4,
-     "direction_effect": "upsize_magnitude_prior",
-     "magnitude_band_usd": "widen",
-     "note": "print-day magnitude up-size; SIDE not from print sign"
-    }
-   ],
-   "direction_probabilities": {
-    "overnight": {
-     "up": 0.45,
-     "flat": 0.28,
-     "down": 0.27
-    },
-    "us_open": {
-     "up": 0.48,
-     "flat": 0.22,
-     "down": 0.3
-    },
-    "settle": {
-     "up": 0.55,
-     "flat": 0.16,
-     "down": 0.29
-    },
-    "close": {
-     "up": 0.57,
-     "flat": 0.15,
-     "down": 0.28
-    }
-   },
-   "move_size_distribution_usd": {
-    "flat_band": 150.0,
-    "mean": 450.0,
-    "stdev": 700.0,
-    "p10": -600.0,
-    "p25": 50.0,
-    "p50": 500.0,
-    "p75": 950.0,
-    "p90": 1550.0,
-    "bins": [
-     {
-      "lo": -2000,
-      "hi": -500,
-      "probability": 0.13
-     },
-     {
-      "lo": -500,
-      "hi": 150,
-      "probability": 0.24
-     },
-     {
-      "lo": 150,
-      "hi": 800,
-      "probability": 0.32
-     },
-     {
-      "lo": 800,
-      "hi": 1600,
-      "probability": 0.21
-     },
-     {
-      "lo": 1600,
-      "hi": 3800,
-      "probability": 0.1
-     }
-    ]
-   },
-   "timing_windows": [
-    {
-     "start_et": "09:00",
-     "end_et": "10:30",
-     "probability": 0.5,
-     "expected_direction": "up",
-     "catalyst": "pre_print_bigprint_accumulation"
-    },
-    {
-     "start_et": "10:30",
-     "end_et": "11:30",
-     "probability": 0.6,
-     "expected_direction": "up",
-     "catalyst": "eia_print_impulse_then_covering_squeeze"
-    },
-    {
-     "start_et": "12:00",
-     "end_et": "17:00",
-     "probability": 0.58,
-     "expected_direction": "up",
-     "catalyst": "covering_grind_into_close"
-    }
-   ],
-   "shape_probabilities": {
-    "trend": 0.6,
-    "chop": 0.4
-   },
-   "continuation_reversal_probabilities": {
-    "continuation": 0.55,
-    "reversal": 0.25,
-    "hold": 0.2
-   },
+   "owner": "D",
+   "guessed_net_usd": 280,
+   "overnight_gap_usd": 40,
    "path_distribution": [
     {
-     "et_hr": 6.0,
-     "p10": -200,
-     "p50": 20,
-     "p90": 250
+     "et_hr": 20.0,
+     "p50": 0
     },
     {
-     "et_hr": 9.0,
-     "p10": -300,
-     "p50": 60,
-     "p90": 400
+     "et_hr": 22.0,
+     "p50": 40
+    },
+    {
+     "et_hr": 0.0,
+     "p50": 90
+    },
+    {
+     "et_hr": 2.0,
+     "p50": 140
+    },
+    {
+     "et_hr": 4.0,
+     "p50": 190
+    },
+    {
+     "et_hr": 6.0,
+     "p50": 240
+    },
+    {
+     "et_hr": 8.0,
+     "p50": 290
     },
     {
      "et_hr": 10.0,
-     "p10": -400,
-     "p50": 80,
-     "p90": 500
+     "p50": 340
     },
     {
      "et_hr": 10.5,
-     "p10": -650,
-     "p50": 180,
-     "p90": 800
-    },
-    {
-     "et_hr": 11.0,
-     "p10": -600,
-     "p50": 300,
-     "p90": 1000
+     "p50": 380
     },
     {
      "et_hr": 12.0,
-     "p10": -600,
-     "p50": 400,
-     "p90": 1200
+     "p50": 300
     },
     {
      "et_hr": 14.0,
-     "p10": -600,
-     "p50": 470,
-     "p90": 1400
+     "p50": 290
     },
     {
-     "et_hr": 17.0,
-     "p10": -600,
-     "p50": 500,
-     "p90": 1550
-    }
-   ],
-   "guess_curve": [
-    [
-     6.0,
-     20
-    ],
-    [
-     9.0,
-     60
-    ],
-    [
-     10.0,
-     80
-    ],
-    [
-     10.5,
-     180
-    ],
-    [
-     11.0,
-     300
-    ],
-    [
-     12.0,
-     400
-    ],
-    [
-     14.0,
-     470
-    ],
-    [
-     17.0,
-     500
-    ]
-   ],
-   "guessed_net_usd": 500.0,
-   "overnight_gap_usd": 30.0,
-   "fwd_curve_lean": "up",
-   "confidence": {
-    "overall": 0.46,
-    "direction": 0.56,
-    "magnitude": 0.4,
-    "timing": 0.45
-   },
-   "data_quality": {
-    "blind_wall_passed": true,
-    "state_audit_version": "grp19_state",
-    "missing_inputs": [
-     "vol_regime"
-    ],
-    "stale_inputs": [
-     "storage_vintage_age70d"
-    ],
-    "partial_inputs": [
-     "consensus_pre_print_null"
-    ],
-    "prohibited_inputs_removed": [
-     "price_curve"
-    ],
-    "flags": [
-     "covering_rally_regime",
-     "near_record_short_worsening",
-     "bigprint_buy_divergence",
-     "post_seam_july_leg"
-    ]
-   },
-   "scenario_components": [
-    {
-     "name": "covering_squeeze_up",
-     "probability": 0.6,
-     "direction": "up",
-     "distribution": {
-      "p50": 750
-     },
-     "governing_driver": "near_record_short_bigprint_covering_fresh_fuel",
-     "invalidation_conditions": "big-print buy dries up and small-lot sell overwhelms (price breaks lower)"
-    },
-    {
-     "name": "bearish_print_pop_down",
-     "probability": 0.28,
-     "direction": "down",
-     "distribution": {
-      "p50": -400
-     },
-     "governing_driver": "injection_build_fundamental",
-     "invalidation_conditions": "pop-down absorbed by big-print bids and covering reasserts"
-    },
-    {
-     "name": "range_chop",
-     "probability": 0.12,
-     "direction": "flat",
-     "distribution": {
-      "p50": 0
-     },
-     "governing_driver": "print_offsets_covering",
-     "invalidation_conditions": "either side takes control post-print"
+     "et_hr": 16.0,
+     "p50": 280
     }
    ]
   }
