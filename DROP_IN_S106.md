@@ -36,11 +36,14 @@ drift). The one difference (price) lives in the DATA. No A/B question, no valida
 3. Fix 3 plumbing defects: #3 big_print_b_share (copy the size-weighted value through at
    forecast_harness.py:630, or rename to end the count-vs-size collision); #1 log the ng_l1 miss in
    stage_group + add a per-day `firehose_present` flag; #2 surface `flow_read_error` as a top-level flag.
-4. DATA (Greg S105 decision): he is UPGRADING the sub for LIVE MBO (~$1500, "worth its weight in gold" -
-   MBO is the raw material of the absorption edge; live MBO = the futures->Kalshi lag becomes tradeable).
-   Once the sub is live: stand up live MBO ingest (NG first), confirm decision-legit windows consume it to
-   the last legit second, keep historical MBO current-to-now. Historical "to the last second" is already
-   doctrine (windows push to the decision moment, masked only vs the future).
+4. DATA (Greg S105) - LIVE MBO is the ticket, but the $1,500 Plus bump is NOT how to get it (research
+   flipped this): live CME is ALREADY in the Standard plan (~$179; Databento moved live CME into the
+   subscription Apr 2025, NYMEX/NG covered). The real gate is the CME EXCHANGE LICENSE - complete
+   Databento's CME license questionnaire + pay pass-through CME Globex fees (non-pro = modest;
+   pro/firm = higher). We do NOT need more historical (already on S3). GREG TO CHECK IN-ACCOUNT (saves
+   ~$1,500/mo): (a) live GLBX.MDP3 entitlement active vs historical-only? (b) CME license questionnaire
+   signed? = the live switch. (c) pro vs non-pro. THEN stand up live MBO ingest (NG first) on the
+   existing Standard plan; skip Plus. Refs: databento.com/pricing, /blog/real-time-cme.
 5. Resume walk: re-run G19 blind under the new blind (the on-record grp19.json is SUSPECT — built on the
    deleted contradicted stack + inert big_print_b_share), then G19 refine, then G20+ (staged), one group
    at a time.
