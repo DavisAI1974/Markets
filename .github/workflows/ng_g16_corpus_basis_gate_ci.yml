@@ -1,0 +1,50 @@
+name: NG G16 Corpus Basis Gate CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_corpus_basis_gate.py'
+      - '.github/workflows/ng_g16_corpus_basis_gate_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_corpus_basis_gate.py'
+      - '.github/workflows/ng_g16_corpus_basis_gate_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile exact-basis G16 corpus gate
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_corpus_basis_gate.py \
+            research/kalshi/tests/test_ng_g16_corpus_basis_gate.py
+      - name: Run self-test
+        run: python research/kalshi/ng_g16_corpus_basis_gate.py --selftest
+      - name: Run unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_corpus_basis_gate.py
+      - name: Verify UNKNOWN template is fail-closed
+        run: |
+          tmp="$(mktemp)"
+          python research/kalshi/ng_g16_corpus_basis_gate.py --init --publisher-id 1 --out "$tmp"
+          python - "$tmp" <<'PY'
+          import json
+          import sys
+
+          value = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert value["remote_inventory_verified"] is False
+          assert value["paid_live_data_assumed"] is False
+          assert all(row["status"] == "UNKNOWN" for row in value["rows"])
+          assert value["execution_authority"] is False
+          PY
