@@ -1,0 +1,56 @@
+name: G16 Historical Replay CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_historical_replay.py'
+      - 'research/kalshi/ng_live_operator.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/tests/test_ng_g16_historical_replay.py'
+      - '.github/workflows/ng_g16_historical_replay_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_historical_replay.py'
+      - 'research/kalshi/ng_live_operator.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/tests/test_ng_g16_historical_replay.py'
+      - '.github/workflows/ng_g16_historical_replay_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime dependencies
+        run: pip install --quiet numpy
+      - name: Compile G16 exact historical replay chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_corpus_basis_gate.py \
+            research/kalshi/ng_g16_historical_replay.py \
+            research/kalshi/ng_historical_inventory.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/ng_historical_replay.py \
+            research/kalshi/ng_live_operator.py \
+            research/kalshi/ng_rt_feature_state.py \
+            research/kalshi/tests/test_ng_g16_historical_replay.py
+      - name: Run exact-basis G16 replay selftest
+        run: python research/kalshi/ng_g16_historical_replay.py --selftest
+      - name: Run exact-basis G16 replay tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_historical_replay.py
