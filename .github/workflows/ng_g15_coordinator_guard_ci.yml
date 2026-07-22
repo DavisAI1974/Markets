@@ -1,0 +1,58 @@
+name: G15 Coordinator Ownership Guard
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g15_coordinator_guard.py'
+      - 'research/kalshi/coordinate_g15_mbo.py'
+      - 'research/kalshi/forecasts/grp15_mbo_specialist_*.json'
+      - 'research/kalshi/forecasts/grp15_mbo_refined.json'
+      - 'research/kalshi/tests/test_ng_g15_coordinator_guard.py'
+      - '.github/workflows/ng_g15_coordinator_guard_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g15_coordinator_guard.py'
+      - 'research/kalshi/coordinate_g15_mbo.py'
+      - 'research/kalshi/forecasts/grp15_mbo_specialist_*.json'
+      - 'research/kalshi/forecasts/grp15_mbo_refined.json'
+      - 'research/kalshi/tests/test_ng_g15_coordinator_guard.py'
+      - '.github/workflows/ng_g15_coordinator_guard_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile guard and tests
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g15_coordinator_guard.py \
+            research/kalshi/tests/test_ng_g15_coordinator_guard.py
+      - name: Run self-test
+        run: python research/kalshi/ng_g15_coordinator_guard.py --selftest
+      - name: Run unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g15_coordinator_guard.py
+      - name: Validate committed G15 specialist selection
+        run: |
+          python research/kalshi/ng_g15_coordinator_guard.py \
+            --specialist-dir research/kalshi/forecasts \
+            --refined research/kalshi/forecasts/grp15_mbo_refined.json \
+            --out /tmp/g15_mbo_coordinator_guard.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/g15_mbo_coordinator_guard.json'))
+          assert p['status']=='PASS'
+          assert len(p['checked_days'])==12
+          assert p['may_average_specialists'] is False
+          assert p['may_fallback_to_blind_when_owner_missing'] is False
+          assert p['execution_authority'] is False
+          print('guard fingerprint:',p['fingerprint'])
+          PY
