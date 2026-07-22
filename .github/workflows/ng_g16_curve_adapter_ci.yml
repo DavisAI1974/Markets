@@ -1,0 +1,52 @@
+name: NG G16 Curve Adapter CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_curve_adapter.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/ng_g16_shadow_gate.py'
+      - 'research/kalshi/ng_g16_blind_wall.py'
+      - 'research/kalshi/ng_g15_lesson_adjudication.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/tests/test_ng_g16_curve_adapter.py'
+      - '.github/workflows/ng_g16_curve_adapter_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_curve_adapter.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/ng_g16_shadow_gate.py'
+      - 'research/kalshi/ng_g16_blind_wall.py'
+      - 'research/kalshi/ng_g15_lesson_adjudication.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/tests/test_ng_g16_curve_adapter.py'
+      - '.github/workflows/ng_g16_curve_adapter_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile G16 curve authority chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_blind_wall.py \
+            research/kalshi/ng_g16_shadow_gate.py \
+            research/kalshi/ng_g16_shadow_runner.py \
+            research/kalshi/ng_g16_curve_adapter.py \
+            research/kalshi/ng_g15_lesson_adjudication.py \
+            research/kalshi/ng_rt_feature_state.py \
+            research/kalshi/tests/test_ng_g16_curve_adapter.py
+      - name: Run G16 curve adapter self-test
+        working-directory: research/kalshi
+        run: python ng_g16_curve_adapter.py --selftest
+      - name: Run G16 curve adapter tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_curve_adapter.py
