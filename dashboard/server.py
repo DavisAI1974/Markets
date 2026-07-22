@@ -21,7 +21,16 @@ from fastapi import FastAPI, HTTPException  # noqa: E402
 from fastapi.responses import FileResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from dashboard.adapters import brain, decision, fees, health, lagmap, market, paths  # noqa: E402
+from dashboard.adapters import (  # noqa: E402
+    brain,
+    decision,
+    fees,
+    forecast,
+    health,
+    lagmap,
+    market,
+    paths,
+)
 
 app = FastAPI(title="DavisAI Markets Dashboard", docs_url="/api/docs")
 
@@ -36,6 +45,12 @@ def _validate_day(day: str) -> str:
     except ValueError:
         raise HTTPException(400, f"not a calendar date: {day}")
     return day
+
+
+def _validate_group(group: int) -> int:
+    if group not in (15, 16):
+        raise HTTPException(400, "group must be 15 or 16")
+    return group
 
 
 @app.get("/api/v1/operations/health")
@@ -58,6 +73,39 @@ def api_decision_state(day: str):
     return decision.state_for_day(_validate_day(day))
 
 
+@app.get("/api/v1/ng/forecast")
+def api_ng_forecast_groups():
+    """Read-only G15/G16 blind -> posterior -> refined -> coach authority chains."""
+    return forecast.summary_all()
+
+
+@app.get("/api/v1/ng/forecast/{group}")
+def api_ng_forecast_group(group: int):
+    return forecast.summary(_validate_group(group))
+
+
+@app.get("/api/v1/ng/forecast/{group}/{day}")
+def api_ng_forecast_day(group: int, day: str):
+    group = _validate_group(group)
+    day = _validate_day(day)
+    try:
+        return forecast.day_snapshot(group, day)
+    except forecast.ForecastAdapterError as error:
+        raise HTTPException(400, str(error)) from error
+
+
+@app.get("/api/v1/ng/render/{group}/{kind}")
+def api_ng_render(group: int, kind: str):
+    group = _validate_group(group)
+    try:
+        path = forecast.render_path(group, kind)
+    except forecast.ForecastAdapterError as error:
+        raise HTTPException(400, str(error)) from error
+    if path is None:
+        raise HTTPException(404, f"G{group} {kind} render is unavailable")
+    return FileResponse(str(path), media_type="image/png", filename=path.name)
+
+
 @app.get("/api/v1/lag-map/summary")
 def api_lag_summary():
     return lagmap.summary()
@@ -74,10 +122,14 @@ def api_lag_events(day_iso: str, limit: int = 200):
 
 
 @app.get("/api/v1/fees/round-trip")
-def api_fees(p_entry: float = 0.5, p_exit: float = 0.5,
-             spread_entry: float = 0.04, spread_exit: float = 0.04):
-    for v in (p_entry, p_exit):
-        if not 0.0 <= v <= 1.0:
+def api_fees(
+    p_entry: float = 0.5,
+    p_exit: float = 0.5,
+    spread_entry: float = 0.04,
+    spread_exit: float = 0.04,
+):
+    for value in (p_entry, p_exit):
+        if not 0.0 <= value <= 1.0:
             raise HTTPException(400, "prices must be in [0,1]")
     if not 0.0 <= spread_entry <= 1.0 or not 0.0 <= spread_exit <= 1.0:
         raise HTTPException(400, "spreads must be in [0,1] dollars")
@@ -110,24 +162,30 @@ def api_nymex_bars(day: str):
 def api_desk_snapshot(day: str | None = None):
     """The composite Mission Control snapshot for one as-of day."""
     if day is None:
-        kd = market.list_event_days()
-        if kd.get("available"):
-            iso = market.event_day_iso(kd["event_tickers"][-1])
+        kalshi_days = market.list_event_days()
+        if kalshi_days.get("available"):
+            iso = market.event_day_iso(kalshi_days["event_tickers"][-1])
             day = iso.replace("-", "") if iso else None
     if day is None:
         day = datetime.date.today().strftime("%Y%m%d")
     day = _validate_day(day)
     return {
         "as_of_day": day,
-        "generated_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "generated_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec="seconds"
+        ),
         "health": health.snapshot(),
         "brain": brain.summary(),
         "decision_state": decision.state_for_day(day),
+        "forecast": forecast.snapshot(day),
+        "forecast_groups": forecast.summary_all(),
         "lag_map": lagmap.summary(),
         "doctrine_banner": [
             "per-event rows, never pooled means as headlines",
             "ledgers never pooled (NYMEX / Kalshi / any future lane)",
             "maker-first economics; taker reserved for the >=4c fast tail",
+            "one NG authority chain: immutable blind prior -> authorized causal posterior -> coach presentation",
+            "outcome scores stay outside the live authority-chain endpoint",
             "provenance labels on every probability (blind vs refined, provisional-until-live)",
             "Polymarket lane = context-only until its own feed exists",
         ],
@@ -147,5 +205,6 @@ app.mount("/", StaticFiles(directory=FRONTEND), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
+
     os.chdir(paths.REPO)
     uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("DASH_PORT", "8100")))
