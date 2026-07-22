@@ -1,0 +1,42 @@
+{
+ "specialist": "A",
+ "lens": "weekend_seam_bridge",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "post_mortem": true,
+ "unblinded": true,
+ "verdict": "BOTH weekend bridges DOWN; both Mondays UP. Both weekend reopens gapped an IDENTICAL +580 UP inside a monotonic 2.750->3.28 crowded-short covering rally. I anchored both Mondays to the Friday close and dismissed the +580 gap as non-derivable noise; the gap was the dominant (0511) and essentially the ENTIRE (0518) component of the scored day-move.",
+ "mondays": [
+  {
+   "date": "20260511",
+   "bridge_bias": "DOWN small-to-moderate (B took it, sized -450)",
+   "actual": "+1740 UP (open 2.808 gap +580 off the 2.750 anchor, close 2.924 intraday +1160; turn_up at the 06:20 reopen low, phase-2 signed_flow +2585 / px +830 = aligned BUY all morning)",
+   "miss_usd": 2190,
+   "misread": "I read the 0508 close as aligned-sell DELIVERY (final phase -2692, bigs 0.458 / l1 0.509 at the sell aggressor, no absorption) and concluded the down press was unrealized-ahead and the reopen would CONTINUE it. I logged the maximal crowded short (COT pctile 2.83) as 'fuel for LATER pulses (0514/0520), not yet fired' and put covering-UP at a 15% tail. Reality: an unfired MAXIMAL crowded short at a weekend seam is not a down-continuation cushion, it is a loaded spring; the illiquid Monday reopen was its FIRST and preferred firing window. It gapped +580 UP and then covered hard intraday. My own 15% tail scenario (early_covering_pulse_fires_UP) is exactly what happened.",
+   "blind_visible_signal_missed": "PARTIAL. The exact gap SIGN/magnitude (+580) is genuinely price-dependent / non-derivable from the D-1 tape. But the DISPOSITION was blind-visible: COT pctile 2.83 = the block's most-extreme, UNFIRED crowded short, which I logged myself. The correct blind inference from that positioning was 'weekend seam = base-case UP covering gap', not 'down continues, squeeze is a 15% tail'. I had the object in hand and mis-weighted it. Delivery-vs-absorption on the 0508 close-exit tape was a real read but IRRELEVANT to the sign of the weekend information gap.",
+   "component_breakdown": "gap +580 (wrong sign) + intraday +1160 (wrong sign) = both components against me; the whole day was the covering rally firing."
+  },
+  {
+   "date": "20260518",
+   "bridge_bias": "DOWN small-to-moderate, fat upper tail (B took it, sized -550)",
+   "actual": "+660 UP (open 3.019 gap +580 off the 2.961 close, close 3.027 intraday +80). Intraday was ESSENTIALLY FLAT; the day-move was almost entirely the +580 weekend gap.",
+   "miss_usd": 1210,
+   "misread": "I endorsed E's 0515 exit as positioning_spent_fade and framed the late +703 buy phase as a SPENT one-shot covering nudge realized into the close (exhaustion_flag true, close_off_extreme 0.5), so the reopen UP lean was 'gap-rejection fuel' and the down chain would reassert. Reality: the covering was NOT spent - it was a multi-session rally that gapped +580 UP again over the SECOND weekend exactly as it had the first, and kept climbing (0519 3.111, 0520 open 3.28). The 'one-shot / self-limiting' framing was wrong for a covering that recurred on every session and every seam. Note the intraday was +80: had I merely called the GAP correctly, the day was right - the entire miss was the seam gap I dismissed as noise.",
+   "blind_visible_signal_missed": "PARTIAL, and MORE blind-visible than 0511. The COT was WORSENING week-over-week (0.94, chg_wow -12576 - MORE worsening than the first weekend's -10244) AND the Friday closed UP with a late BUY phase. A short that is still getting more crowded is a short that is still COVERING, not one that has discharged. 'Worsening COT + up-closing Friday' was blind-visible and directly contradicts 'spent one-shot'. I read a worsening-into-the-close covering as exhaustion. Exact gap sign again price-dependent, but the UP prior was on the tape."
+  }
+ ],
+ "doctrine_too_rigid": {
+  "verdict": "YES - and worse than rigid, it was NON-FALSIFIABLE toward DOWN. My weekend-seam / S105 covering_giveback_self_limiting doctrine ('a one-shot square-up does NOT license extending UP') produced DOWN from OPPOSITE exit states: 0511 I called covering 'NOT yet fired -> down continues, fires later'; 0518 I called covering 'SPENT one-shot -> down reasserts'. Unfired => down. Spent => down. There was no COT state in this crowded-short block that my doctrine let resolve UP except a narrow 'fresh stack rebuilt AND not yet discharged', which I never granted despite the COT WORSENING both weeks. A price that ranged monotonically 2.750->3.28 got bridged DOWN on every weekend seam.",
+  "correct_gate": "The self-limiting doctrine must be gated on the COT WEEK-OVER-WEEK DELTA, not on an intraday exhaustion flag. WORSENING WoW = covering is LIVE and RECURRING (seam-gaps UP, multi-session) - both g19 weekends were worsening (2.83 chg -10244; 0.94 chg -12576), i.e. both LIVE, yet I called both DOWN. Only a FLAT / not-worsening COT is genuinely 'spent' and lets the down chain reassert. I inverted which side both weekends were on.",
+  "too_rigid_for": "a WORSENING-crowded-short multi-session covering rally, where the weekend/holiday seam (illiquid, gap-risk) is the covering rally's PREFERRED firing window - the opposite of a one-shot that self-limits within a session."
+ },
+ "dominant_flaw": "I let the covering-self-limiting doctrine become non-falsifiable toward DOWN - reading maximal crowded-short fuel as 'unfired, down continues' one weekend and 'spent, down reasserts' the next - so I anchored both Mondays to the Friday close and dismissed the weekend gap as non-derivable noise, when in a worsening-crowded-short regime the reopen seam IS the covering rally's firing window and gapped +580 UP both times (the dominant component of 0511's day-move and essentially the ENTIRE 0518 day-move).",
+ "refine_must_fix": [
+  "(1) DIRECTIONAL GAP PRIOR: stop treating the weekend/holiday reopen gap SIGN as pure non-derivable noise when COT is crowded-short AND worsening WoW - attach an UP directional prior to the seam gap tied to the crowding/worsening magnitude. With price now visible the refine sees both seams gapped an IDENTICAL +580 UP inside a 2.750->3.28 rally; that is a regime signal, not noise.",
+  "(2) GATE SELF-LIMITING ON THE COT WoW DELTA, not the intraday exhaustion flag: worsening = covering live/recurring (seam-gaps UP, multi-session); only flat/not-worsening = spent (down chain reasserts). Both g19 weekends were worsening = both UP; my doctrine mis-assigned both.",
+  "(3) INVERT THE DEFAULT for unfired maximal fuel: an UNFIRED maximal crowded short at a weekend seam is BASE-CASE UP (the loaded spring fires at the first illiquid reopen), not a down-continuation with a 15% squeeze tail. Delivery-vs-absorption on the D-1 close-exit is orthogonal to the sign of the weekend-information gap and must not be used to justify a down seam-bridge.",
+  "(4) GAP-DOMINATED MAGNITUDE for weekend Mondays in this regime: on 0518 intraday was +80 and the day was the +580 gap - the weekend Monday day-move is gap-first, intraday-second; sizing must lead with the seam gap, not the intraday chain-continuation.",
+  "(5) FALSIFIABILITY CHECK: never let a doctrine reach the same direction from opposite exit states (unfired->down AND spent->down). If both the 'loaded' and the 'discharged' reading point the same way, the read is untestable and the positioning delta (COT WoW) must break the tie."
+ ],
+ "cross_cutting": "The unifying error across both misses is that I bridged the Monday to the Friday CLOSE and treated the weekend GAP as noise, but the scored quantity is day_move = gap + net, and in this worsening-crowded-short covering rally the gap was +580 UP both weekends - dominant on 0511, the whole thing on 0518. My close-exit delivery-vs-absorption tell (the A-lens cross-cutting finding) is a real intraday-continuation discriminator but it is BLIND to the weekend information event, which is where short-covering regimes actually reprice. General mechanism (+n): at a weekend/holiday seam in a crowded-short regime that is still WORSENING WoW, the reopen gap carries a directional UP prior and is the covering rally's firing window; the D-1 close-exit flow read does not override it, and 'one-shot self-limiting' only applies once the COT stops worsening."
+}
