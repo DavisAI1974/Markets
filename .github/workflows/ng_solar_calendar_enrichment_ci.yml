@@ -1,0 +1,55 @@
+name: NG Solar Calendar Enrichment CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/solar_calendar.py'
+      - 'research/kalshi/forecast_harness.py'
+      - 'research/kalshi/tests/test_solar_calendar_enrichment.py'
+      - '.github/workflows/ng_solar_calendar_enrichment_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/solar_calendar.py'
+      - 'research/kalshi/forecast_harness.py'
+      - 'research/kalshi/tests/test_solar_calendar_enrichment.py'
+      - '.github/workflows/ng_solar_calendar_enrichment_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile solar authority
+        run: |
+          python -m py_compile \
+            research/kalshi/solar_calendar.py \
+            research/kalshi/forecast_harness.py \
+            research/kalshi/tests/test_solar_calendar_enrichment.py
+      - name: Run solar authority self-test
+        run: python research/kalshi/solar_calendar.py --selftest
+      - name: Run solar enrichment tests
+        run: python -m unittest -v research/kalshi/tests/test_solar_calendar_enrichment.py
+      - name: Confirm decision-state integration remains singular
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          root = Path('research/kalshi').resolve()
+          sys.path.insert(0, str(root))
+          import forecast_harness
+          solar = forecast_harness._solar_block('2026-03-18')
+          assert solar is not None
+          assert solar['authority'] == 'EXISTING_SOLAR_DECISION_STATE_ENRICHMENT'
+          assert solar['execution_authority'] is False
+          assert len(solar['clear_sky_solar_geometry']) == 24
+          assert 'sunrise_native_load_window_et' in solar
+          assert 'evening_net_load_ramp_window_et' in solar
+          PY
