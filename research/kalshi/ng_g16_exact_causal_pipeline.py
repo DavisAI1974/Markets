@@ -14,13 +14,20 @@ from typing import Any, Mapping
 
 from ng_g16_blind_wall import G16_DATES, validate_blind_safe_state
 from ng_g16_historical_replay import validate_replay_output
-from ng_g16_shadow_gate import authorize_feature_stream, build_shadow_plan, validate_shadow_plan
+from ng_g16_shadow_gate import (
+    STREAM_SCHEMA as AUTH_STREAM_SCHEMA,
+    authorize_feature_stream,
+    build_shadow_plan,
+    validate_authorization_token,
+    validate_shadow_plan,
+)
 from ng_g16_shadow_runner import STREAM_SCHEMA as POSTERIOR_STREAM_SCHEMA, run_stream, validate_output
 from ng_rt_feature_state import validate_feature_state
 
 SCHEMA = "ng_g16_exact_causal_pipeline.v1"
 AUTHORITY = "G16_EXACT_HISTORICAL_SHADOW_REFINEMENT_ONLY"
 POLICY = "ALL_PRE_REGISTERED_CANDIDATES_ON_EVERY_STATE_BEFORE_G16_OUTCOME_ACCESS"
+NEXT_STAGE = "OUTCOME_BLIND_G16_CURVE_ADAPTER"
 
 
 class G16ExactCausalPipelineError(ValueError):
@@ -90,7 +97,35 @@ def _states(replay: Mapping[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+def _validate_authorizations(auth: Mapping[str, Any], plan: Mapping[str, Any], states: list[Mapping[str, Any]]) -> None:
+    if auth.get("schema") != AUTH_STREAM_SCHEMA:
+        raise G16ExactCausalPipelineError("authorization stream schema mismatch")
+    for field in ("execution_authority", "actual_g16_outcomes_used", "may_update_ng_brain", "may_change_g16_blind_prior"):
+        if auth.get(field) is not False:
+            raise G16ExactCausalPipelineError(f"authorization stream must keep {field}=false")
+    if auth.get("plan_fingerprint") != plan.get("plan_fingerprint"):
+        raise G16ExactCausalPipelineError("authorization plan fingerprint mismatch")
+    payload = copy.deepcopy(dict(auth))
+    observed = payload.pop("stream_fingerprint", None)
+    if observed != _fp(payload):
+        raise G16ExactCausalPipelineError("authorization stream fingerprint mismatch")
+    tokens = [dict(row) for row in auth.get("authorizations") or []]
+    if len(tokens) != len(states) or int(auth.get("n_authorizations") or 0) != len(tokens):
+        raise G16ExactCausalPipelineError("authorization/state count mismatch")
+    required = list(plan.get("candidate_ids") or [])
+    for state, token in zip(states, tokens):
+        try:
+            validate_authorization_token(token, plan=plan, feature_state=state)
+        except Exception as error:
+            raise G16ExactCausalPipelineError(f"authorization token invalid: {error}") from error
+        if list(token.get("authorized_candidate_ids") or []) != required:
+            raise G16ExactCausalPipelineError("authorization did not pre-request every registered candidate")
+        if token.get("baseline_microstructure_only") is not False:
+            raise G16ExactCausalPipelineError("registered-candidate authorization became baseline-only")
+
+
 def _validate_posterior(stream: Mapping[str, Any], plan: Mapping[str, Any], auth: Mapping[str, Any], states: list[Mapping[str, Any]]) -> None:
+    _validate_authorizations(auth, plan, states)
     if stream.get("schema") != POSTERIOR_STREAM_SCHEMA:
         raise G16ExactCausalPipelineError("posterior stream schema mismatch")
     for field in ("execution_authority", "actual_g16_outcomes_used", "may_update_ng_brain", "may_change_g16_blind_prior"):
@@ -108,7 +143,10 @@ def _validate_posterior(stream: Mapping[str, Any], plan: Mapping[str, Any], auth
     if len(outputs) != len(states) or int(stream.get("n_outputs") or 0) != len(outputs):
         raise G16ExactCausalPipelineError("posterior/state count mismatch")
     for state, output in zip(states, outputs):
-        validate_output(output)
+        try:
+            validate_output(output)
+        except Exception as error:
+            raise G16ExactCausalPipelineError(f"posterior output invalid: {error}") from error
         provenance = output.get("provenance") or {}
         if provenance.get("feature_fingerprint") != state.get("feature_fingerprint"):
             raise G16ExactCausalPipelineError("posterior references another feature state")
@@ -174,6 +212,7 @@ def build_exact_causal_pipeline(replay: Mapping[str, Any], blind_prior: Mapping[
     if not candidate_ids:
         raise G16ExactCausalPipelineError("no G15-adjudicated candidates are authorized for G16")
     auth = authorize_feature_stream(plan, states, requested_by_day={day: candidate_ids for day in G16_DATES})
+    _validate_authorizations(auth, plan, states)
     posterior = run_stream(plan, blind_forecast, states, auth)
     _validate_posterior(posterior, plan, auth, states)
     outputs = [dict(row) for row in posterior.get("outputs") or []]
@@ -211,7 +250,7 @@ def build_exact_causal_pipeline(replay: Mapping[str, Any], blind_prior: Mapping[
         "n_days": len(days),
         "stand_down_days": stand_down_days,
         "days": days,
-        "next_permitted_stage": "OUTCOME_BLIND_G16_CURVE_ADAPTER",
+        "next_permitted_stage": NEXT_STAGE,
     }
     completion["fingerprint"] = _fp(completion)
     artifacts = {"plan": plan, "authorization_stream": auth, "posterior_stream": posterior, "completion": completion}
@@ -241,20 +280,25 @@ def validate_pipeline_artifacts(artifacts: Mapping[str, Any], *, replay: Mapping
         "blind_prior_fingerprint": replay.get("blind_prior_fingerprint"),
         "blind_forecast_fingerprint": _fp(dict(blind_forecast)),
         "blind_safe_state_fingerprint": blind_safe_state.get("artifact_fingerprint"),
+        "lesson_registry_fingerprint": plan.get("lesson_registry_fingerprint"),
+        "lesson_adjudication_fingerprint": plan.get("lesson_adjudication_fingerprint"),
         "plan_fingerprint": plan.get("plan_fingerprint"),
         "authorization_stream_fingerprint": auth.get("stream_fingerprint"),
         "posterior_stream_fingerprint": posterior.get("stream_fingerprint"),
     }
     if any(completion.get(key) != value for key, value in expected.items()):
         raise G16ExactCausalPipelineError("completion provenance mismatch")
-    days = completion.get("days") or {}
-    if list(days) != list(G16_DATES) or completion.get("candidate_request_policy") != POLICY:
-        raise G16ExactCausalPipelineError("completion day/policy mismatch")
-    for day in G16_DATES:
-        row = copy.deepcopy(dict(days[day]))
-        if row.pop("day_audit_fingerprint", None) != _fp(row):
-            raise G16ExactCausalPipelineError(f"{day}: audit fingerprint mismatch")
-    stand_down_days = [day for day in G16_DATES if int(days[day].get("n_stand_down") or 0)]
+    outputs = [dict(row) for row in posterior.get("outputs") or []]
+    expected_days = _audit(states, outputs)
+    if completion.get("days") != expected_days:
+        raise G16ExactCausalPipelineError("completion causal audit differs from locked state/output stream")
+    if list(completion.get("candidate_ids") or []) != list(plan.get("candidate_ids") or []):
+        raise G16ExactCausalPipelineError("completion candidate set differs from pre-cutoff plan")
+    if completion.get("candidate_request_policy") != POLICY or completion.get("next_permitted_stage") != NEXT_STAGE:
+        raise G16ExactCausalPipelineError("completion policy/next-stage mismatch")
+    if int(completion.get("n_states") or 0) != len(states) or int(completion.get("n_outputs") or 0) != len(outputs) or int(completion.get("n_days") or 0) != len(G16_DATES):
+        raise G16ExactCausalPipelineError("completion counts mismatch")
+    stand_down_days = [day for day in G16_DATES if int(expected_days[day].get("n_stand_down") or 0)]
     if completion.get("stand_down_days") != stand_down_days:
         raise G16ExactCausalPipelineError("completion stand-down mismatch")
     expected_status = "READY_WITH_STAND_DOWNS" if stand_down_days else "READY"
