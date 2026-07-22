@@ -1,0 +1,57 @@
+name: NG Corpus Coverage Audit CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/tests/test_ng_corpus_coverage_audit.py'
+      - '.github/workflows/ng_corpus_coverage_audit_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/tests/test_ng_corpus_coverage_audit.py'
+      - '.github/workflows/ng_corpus_coverage_audit_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile corpus coverage audit
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_corpus_coverage_audit.py \
+            research/kalshi/tests/test_ng_corpus_coverage_audit.py
+      - name: Run corpus coverage selftest
+        working-directory: research/kalshi
+        run: python ng_corpus_coverage_audit.py --selftest
+      - name: Run corpus coverage unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_corpus_coverage_audit.py
+      - name: Verify UNKNOWN template remains fail-closed
+        working-directory: research/kalshi
+        run: |
+          python ng_corpus_coverage_audit.py \
+            --init \
+            --publisher-id 1 \
+            --out /tmp/ng_corpus_catalog.json
+          python ng_corpus_coverage_audit.py \
+            --catalog /tmp/ng_corpus_catalog.json \
+            --out /tmp/ng_corpus_audit.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          value = json.loads(Path('/tmp/ng_corpus_audit.json').read_text())
+          assert value['status'] == 'UNKNOWN', value
+          assert value['exact_intersections']['g15']['status'] == 'UNKNOWN', value
+          assert value['exact_intersections']['g16']['status'] == 'UNKNOWN', value
+          assert value['paid_live_data_assumed'] is False
+          assert value['execution_authority'] is False
+          PY
