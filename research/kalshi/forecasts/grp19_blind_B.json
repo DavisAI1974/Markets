@@ -1,0 +1,398 @@
+{
+ "specialist": "B",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "forecast_schema_version": "ng.v2",
+ "role": "monday_catch_up",
+ "note": "B OWNS and scores 0511 and 0518 (A informed, B decides). Sunday fold: Monday = Fri close -> Mon close, the Sunday 18:00 ET reopen is Monday's overnight phase. Regime = crowded-short covering rally, COT worsening (2.83 -> 0.94 1y-pctile) = ammo present. Basis June/NGM26 both Mondays (PRE-seam, clean single leg, no mechanical offset). MULT $10,000 per 1.000. guessed_net_usd = the ECONOMIC Fri-close->Mon-close net.",
+ "days": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "archetype": "monday_covering_turn_base_two_sided",
+   "reasoning": "TURN / BASE Monday off the block anchor. Inherited chain (0508 close, block anchor) = a FRESH DELIVERED down-leg: session_signed_flow -3214, phase [-27,-495,-2692] = selling ACCELERATING into the close, session_b_share 0.451, big_print_b_share 0.458 (big prints SOLD too), l1 quote_bid_share 0.509. The covering_absorption_directional_tell does NOT fire off this close (big prints sell-tilted, price fell, no absorption). So the UP does NOT come from a fired tell - it comes from the SETUP: MM net -107,489 at 2.83 1y-pctile AND worsening (-10,244 wow) = a stretched crowded short pressing into a SPENT delivered low (the -2692 is a climactic last-hour print, downside fuel largely used). This is the classic covering-reversal load. A's bridge (turn / up-small, low-conviction, up 0.40 / down 0.37 / chop 0.23) is CONSUMED and I concur: the overnight/US-open carries early gap-persistence-DOWN of the fresh delivered momentum (a head-fake by my Monday lens - the gap sign is noise), then the 06-10 ET catch-up window is where the crowded-short covering bases and lifts. Seam chain-age accommodation gate: the inherited chain is YOUNG (age 1) -> reopen ACCOMMODATES the late buy -> a SHALLOW Monday, so I keep the magnitude SMALL and two-sided. Net-close tilt slightly UP but near coin-flip -> p50 +120, wide flat band, explicit both-sided scenario set. Pre-EIA (0514 print, days_to_eia 3), GSCI roll active, no expiry/opex this day (expiry 0527/opex 0526 far ahead). No fresh bearish weekend catalyst.",
+   "regime": {
+    "day_class": "monday_weekend_repricing",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "low_shoulder_warm",
+    "curve_regime": "contango",
+    "storage_phase": "injection_build",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "crowded_short_covering_turn_off_spent_delivered_low",
+    "selector_mode": "monday_catchup_turn_two_sided"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "monday.catchup_window_tilt_gate",
+     "inputs": {
+      "inherited_exit_type": "delivered_sell_down",
+      "inherited_monday_bias": "down(delivered) -> ADJUSTED to turn/up-small by A",
+      "cot_mm_net_pctile_1y": 2.83,
+      "cot_mm_net_chg_wow": -10244,
+      "d1_session_signed_flow": -3214,
+      "d1_big_print_b_share": 0.458,
+      "days_to_next_eia": 3
+     },
+     "thresholds": {
+      "consume_friday_sunday_handoff": true,
+      "never_size_off_gap_sign": true,
+      "crowded_short_extreme<=15pctile": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "turn_up_small_near_coinflip",
+     "magnitude_band_usd": [-100, 400],
+     "note": "consume A/E handoff: inherited delivered-down ADJUSTED to a turn because the down-climax is spent into a 2.83-pctile crowded short; the catch-up window reasserts a slight UP tilt, but the sign is near coin-flip -> small, two-sided."
+    },
+    {
+     "rule_id": "structure.covering_absorption_directional_tell",
+     "inputs": {
+      "d1_session_b_share": 0.451,
+      "d1_signed_flow": -3214,
+      "d1_big_print_b_share": 0.458,
+      "d1_last_phase_flow": -2692,
+      "l1_quote_bid_share": 0.509
+     },
+     "thresholds": {
+      "sell_absorbed_under_rising_price": false
+     },
+     "scope_pass": false,
+     "ownership_rank": 2,
+     "direction_effect": "no_fired_covering_up_signal_from_the_close",
+     "magnitude_band_usd": [0, 0],
+     "note": "the tell FAILS on the 0508 close: big prints SOLD (0.458), sells NOT absorbed, price fell -> delivered selling, not a covering-absorbed close. The UP thesis rests on the crowded-short SETUP, not a fired tell -> lower conviction than 0518."
+    },
+    {
+     "rule_id": "monday.seam_chainage_accommodation_gate",
+     "inputs": {
+      "inherited_chain_polarity": "down",
+      "inherited_chain_age_sessions": 1,
+      "spent_vs_unrealized": "spent_delivered"
+     },
+     "thresholds": {
+      "young_chain_age<=1_accommodates": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "damp_magnitude_shallow_monday",
+     "magnitude_band_usd": [-350, 350],
+     "note": "a YOUNG inherited chain (age 1) reopen ACCOMMODATES the late buy -> SHALLOW Monday; damp the size, keep the flat band wide."
+    },
+    {
+     "rule_id": "monday.overnight_headfake_into_catchup",
+     "inputs": {
+      "overnight_expected_drift": "gap_persistence_delivered_down",
+      "d1_trade_tilt": "down_delivered",
+      "catchup_window": "06-10 ET"
+     },
+     "thresholds": {
+      "gap_sign_is_noise": true,
+      "catchup_reasserts_regime": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "overnight_down_headfake_then_catchup_base_lift",
+     "magnitude_band_usd": [-250, 300],
+     "note": "the early gap-persistence-down is a head-fake; the 06-10 window is where the crowded-short covering bases and lifts. Size off the covering-reversal setup, not the overnight gap sign."
+    },
+    {
+     "rule_id": "direction.cross_block_reversion",
+     "inputs": {
+      "block_open": true,
+      "prior_regime": "delivered_down_into_crowded_short",
+      "cot_worsening": true
+     },
+     "thresholds": {
+      "lean_against_prior_extended_move": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "block_lean_up_off_based_low_small",
+     "magnitude_band_usd": [0, 300],
+     "note": "block-open Monday into a worsening crowded short off a based low -> a small block-lean UP; informs, does not size."
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {"up": 0.30, "flat": 0.33, "down": 0.37},
+    "us_open": {"up": 0.40, "flat": 0.28, "down": 0.32},
+    "settle": {"up": 0.42, "flat": 0.26, "down": 0.32},
+    "close": {"up": 0.42, "flat": 0.24, "down": 0.34}
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": 90,
+    "stdev": 400,
+    "p10": -430,
+    "p25": -110,
+    "p50": 120,
+    "p75": 300,
+    "p90": 520,
+    "bins": [
+     {"bucket_usd": "<= -400", "probability": 0.12},
+     {"bucket_usd": "-400..-100", "probability": 0.20},
+     {"bucket_usd": "-100..+150", "probability": 0.26},
+     {"bucket_usd": "+150..+400", "probability": 0.24},
+     {"bucket_usd": "+400..+700", "probability": 0.13},
+     {"bucket_usd": ">= +700", "probability": 0.05}
+    ]
+   },
+   "timing_windows": [
+    {"start_et": "18:00", "end_et": "22:00", "probability": 0.40, "expected_direction": "down", "catalyst": "Sunday-reopen carry of the 0508 delivered accelerating sell (-2692 last phase); gap-persistence-down, treated as a head-fake ahead of the catch-up"},
+    {"start_et": "06:00", "end_et": "10:00", "probability": 0.44, "expected_direction": "up", "catalyst": "the 06-10 ET Monday catch-up where the crowded-short (2.83 pctile) covering reversal bases and lifts"},
+    {"start_et": "10:00", "end_et": "14:00", "probability": 0.34, "expected_direction": "up", "catalyst": "afternoon covering follow-through; small net-up tilt into the close"}
+   ],
+   "shape_probabilities": {"trend": 0.44, "chop": 0.56},
+   "continuation_reversal_probabilities": {"continuation": 0.34, "reversal": 0.42, "hold": 0.24},
+   "path_distribution": [
+    {"et_hr": 18.0, "p10": 0.0, "p50": 0.0, "p90": 0.0},
+    {"et_hr": 20.0, "p10": -30.0, "p50": -8.0, "p90": 20.0},
+    {"et_hr": 22.0, "p10": -60.0, "p50": -18.0, "p90": 45.0},
+    {"et_hr": 0.5, "p10": -90.0, "p50": -28.0, "p90": 70.0},
+    {"et_hr": 3.0, "p10": -120.0, "p50": -35.0, "p90": 95.0},
+    {"et_hr": 6.0, "p10": -160.0, "p50": -40.0, "p90": 125.0},
+    {"et_hr": 8.0, "p10": -210.0, "p50": -30.0, "p90": 170.0},
+    {"et_hr": 9.5, "p10": -280.0, "p50": 0.0, "p90": 260.0},
+    {"et_hr": 11.0, "p10": -330.0, "p50": 40.0, "p90": 340.0},
+    {"et_hr": 13.0, "p10": -380.0, "p50": 70.0, "p90": 420.0},
+    {"et_hr": 14.5, "p10": -410.0, "p50": 95.0, "p90": 480.0},
+    {"et_hr": 16.0, "p10": -425.0, "p50": 112.0, "p90": 510.0},
+    {"et_hr": 17.0, "p10": -430.0, "p50": 120.0, "p90": 520.0}
+   ],
+   "overnight_gap_usd": -30,
+   "guess_curve": [0.0, -8.0, -18.0, -28.0, -35.0, -40.0, -30.0, 0.0, 40.0, 70.0, 95.0, 112.0, 120.0],
+   "guessed_net_usd": 120,
+   "fwd_curve_lean": "contango_next_higher(NGN26>NGM26; calendar_front_next_spread -0.25)",
+   "confidence": {"overall": 0.44, "direction": 0.42, "magnitude": 0.40, "timing": 0.42},
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp19_state_masked_one_shot",
+    "missing_inputs": ["vol_regime", "target_day_price_state(masked)"],
+    "stale_inputs": ["cot(2.4d)", "cash_basis(weekly)", "options_surface(frozen_0508)"],
+    "partial_inputs": ["intra_block_price_path(unknown,inferred_from_tape_tilt+handoff)"],
+    "prohibited_inputs_removed": ["target_day_tape", "next_day_realized_flow"],
+    "flags": ["weekend_gap_uncertainty", "masked_price_state", "covering_turn_not_a_fired_tell_low_conviction", "young_chain_accommodation_shallow"]
+   },
+   "scenario_components": [
+    {
+     "name": "covering_catch_up_turn_up",
+     "probability": 0.42,
+     "direction": "up",
+     "distribution": {"p50": 400, "p10": -50, "p90": 750},
+     "governing_driver": "crowded short at 2.83 1y-pctile worsening presses into a spent delivered low; the 06-10 catch-up loads the covering reversal",
+     "invalidation_conditions": ["reopen prints net-sell with big-print sell continuing", "fresh bearish weekend weather/storage shock"]
+    },
+    {
+     "name": "gap_persistence_delivered_down",
+     "probability": 0.36,
+     "direction": "down",
+     "distribution": {"p50": -350, "p10": -700, "p90": 80},
+     "governing_driver": "the 0508 last-hour -2692 accelerating sell is fresh and aligned; the delivered momentum carries the overnight/US-open before any covering bid appears",
+     "invalidation_conditions": ["reopen bases immediately / bid absorbs the open sell", "crowded-short covering fires early"]
+    },
+    {
+     "name": "flat_two_sided_chop",
+     "probability": 0.22,
+     "direction": "flat",
+     "distribution": {"p50": 0, "p10": -250, "p90": 280},
+     "governing_driver": "low-vol S3 shoulder, mid-band digestion of the delivered move, pre-EIA (0514) two-sided positioning",
+     "invalidation_conditions": ["a directional catalyst appears"]
+    }
+   ]
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "archetype": "monday_covering_carry_up_small_maturing_counter",
+   "reasoning": "CONFIRMED up-small covering-carry Monday. Inherited chain (0515 close) = a covering-ABSORBED close: session_signed_flow +486, phase [+445,-662,+703] = last phase net BUY (+703), session_b_share 0.464 (SELL aggressor majority) yet net POSITIVE with big_print_b_share 0.506 (buy-tilted) and l1 quote_bid_share 0.526 (resting bid-leaning) = sells ABSORBED under a lift -> covering_absorption_directional_tell FIRES on the close and reprices UP into Monday. This is a FIRED tell (unlike 0511's setup-only read) so conviction is higher. COT is EVEN MORE extreme than the prior week: MM net -120,065 at 0.94 1y-pctile AND still worsening (-12,576 wow) = the covering ammunition is present and growing; driver unrealized-ahead (E: realizes_before_monday false). A's bridge (up-small CONFIRMED, up 0.48 / down 0.30 / flat 0.22) is CONSUMED and I concur. My Monday lens: the overnight covering carry CONFIRMS the D-1 (0515) up tilt -> it is NOT a head-fake (real, up-persistence). Seam chain-age accommodation gate: the inherited chain is MATURE (age 5) -> reopen ABSORBED -> a DEEPER Monday than 0511's young-chain shallow, so I size a firmer up. BUT respect the LIVE counter (A's 0.30 give-back): chain age 5->6 maturing, the 0515 mid-phase sell (-662), and the exhaustion catalysts AHEAD and mid-week - opex 0526 / expiry 0527 / June-roll (GSCI month) + the 0521 EIA (days_to_eia 3). So UP-small and time-boxed: do NOT extend past a fresh give-back. p50 +220 (deeper than 0511 but capped), carry the maturing-leg give-back (0.28) as the live down counter.",
+   "regime": {
+    "day_class": "monday_weekend_repricing",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "low_shoulder_warm",
+    "curve_regime": "contango",
+    "storage_phase": "injection_build",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "crowded_short_covering_carry_unrealized_ahead",
+    "selector_mode": "monday_catchup_covering_up_small"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "monday.catchup_window_tilt_gate",
+     "inputs": {
+      "inherited_exit_type": "momentum_carry",
+      "inherited_monday_bias": "up lean, small (E 0515 handoff_out)",
+      "driver_realizes_before_monday": false,
+      "cot_mm_net_pctile_1y": 0.94,
+      "cot_mm_net_chg_wow": -12576,
+      "days_to_next_eia": 3
+     },
+     "thresholds": {
+      "consume_friday_sunday_handoff": true,
+      "never_size_off_gap_sign": true,
+      "driver_unrealized_ahead": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "up_small_covering_carry",
+     "magnitude_band_usd": [50, 500],
+     "note": "consume E's up-small monday_bias + driver unrealized-ahead (covering continues to reprice into Monday) -> the catch-up window carries UP; higher conviction than 0511 (a fired tell, not just a setup)."
+    },
+    {
+     "rule_id": "structure.covering_absorption_directional_tell",
+     "inputs": {
+      "d1_session_b_share": 0.464,
+      "d1_signed_flow": 486,
+      "d1_big_print_b_share": 0.506,
+      "d1_last_phase_flow": 703,
+      "l1_quote_bid_share": 0.526
+     },
+     "thresholds": {
+      "sell_aggressor_but_net_buy": true,
+      "absorbed_under_lift": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "up",
+     "magnitude_band_usd": [100, 500],
+     "note": "SELL aggressor majority (0.464) absorbed under a net-buy lift with buy-tilted big prints (0.506) + resting bid (0.526) = a crowded-short covering-absorbed close -> reprices UP into Monday. Directional tell, not exhaustion."
+    },
+    {
+     "rule_id": "monday.seam_chainage_accommodation_gate",
+     "inputs": {
+      "inherited_chain_polarity": "up",
+      "inherited_chain_age_sessions": 5,
+      "spent_vs_unrealized": "unrealized_ahead_but_maturing"
+     },
+     "thresholds": {
+      "mature_chain_age>=3_absorbed_deeper": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "deeper_monday_than_young_chain_but_maturing_caps",
+     "magnitude_band_usd": [50, 450],
+     "note": "MATURE inherited chain (age 5) -> reopen ABSORBED -> a DEEPER Monday than 0511's young-chain shallow; but the fuel is diminishing (age 5->6) so the depth is moderate, not maximal."
+    },
+    {
+     "rule_id": "monday.overnight_headfake_into_catchup",
+     "inputs": {
+      "overnight_expected_drift": "gap_persistence_up",
+      "d1_trade_tilt": "up_covering_absorbed",
+      "catchup_window": "06-10 ET"
+     },
+     "thresholds": {
+      "overnight_confirms_d1_tilt": true,
+      "gap_is_real_not_headfake": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "up_persistence_real",
+     "magnitude_band_usd": [0, 350],
+     "note": "the overnight covering carry CONFIRMS the D-1 up tilt (0515 covering-absorbed) -> NOT a head-fake; up-persistence into the catch-up window is real."
+    },
+    {
+     "rule_id": "flow_calendar.opex_roll_eia_counter",
+     "inputs": {
+      "days_to_opex": 5,
+      "days_to_futures_expiry": 6,
+      "gsci_ng_roll_this_month": true,
+      "days_to_next_eia": 3,
+      "d1_mid_phase_flow": -662
+     },
+     "thresholds": {
+      "exhaustion_catalysts_ahead": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "cap_up_size_carry_giveback_counter",
+     "magnitude_band_usd": [-400, 0],
+     "note": "opex 0526 / expiry 0527 / June-roll + the 0521 EIA are the exhaustion catalysts ahead; the 0515 mid-phase sell (-662) is the maturing tell -> cap the up, do NOT extend past a give-back, carry the 0.28 down counter."
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {"up": 0.46, "flat": 0.32, "down": 0.22},
+    "us_open": {"up": 0.50, "flat": 0.26, "down": 0.24},
+    "settle": {"up": 0.50, "flat": 0.24, "down": 0.26},
+    "close": {"up": 0.50, "flat": 0.22, "down": 0.28}
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": 190,
+    "stdev": 400,
+    "p10": -350,
+    "p25": -20,
+    "p50": 220,
+    "p75": 400,
+    "p90": 640,
+    "bins": [
+     {"bucket_usd": "<= -400", "probability": 0.08},
+     {"bucket_usd": "-400..-100", "probability": 0.16},
+     {"bucket_usd": "-100..+150", "probability": 0.22},
+     {"bucket_usd": "+150..+400", "probability": 0.30},
+     {"bucket_usd": "+400..+700", "probability": 0.18},
+     {"bucket_usd": ">= +700", "probability": 0.06}
+    ]
+   },
+   "timing_windows": [
+    {"start_et": "18:00", "end_et": "22:00", "probability": 0.44, "expected_direction": "up", "catalyst": "Sunday-reopen covering carry (gap-persistence up) off the 0515 covering-absorbed close; confirms the D-1 up tilt"},
+    {"start_et": "06:00", "end_et": "10:00", "probability": 0.48, "expected_direction": "up", "catalyst": "Monday 06-10 catch-up: covering continuation, COT 0.94 pctile ammo still on the book"},
+    {"start_et": "13:00", "end_et": "16:00", "probability": 0.32, "expected_direction": "down", "catalyst": "opex/June-roll/pre-0521-EIA de-risk trims the maturing up-leg (down-tail late, not p50)"}
+   ],
+   "shape_probabilities": {"trend": 0.54, "chop": 0.46},
+   "continuation_reversal_probabilities": {"continuation": 0.52, "reversal": 0.28, "hold": 0.20},
+   "path_distribution": [
+    {"et_hr": 18.0, "p10": 0.0, "p50": 0.0, "p90": 0.0},
+    {"et_hr": 20.0, "p10": -25.0, "p50": 12.0, "p90": 25.0},
+    {"et_hr": 22.0, "p10": -55.0, "p50": 28.0, "p90": 55.0},
+    {"et_hr": 0.5, "p10": -90.0, "p50": 42.0, "p90": 90.0},
+    {"et_hr": 3.0, "p10": -120.0, "p50": 58.0, "p90": 125.0},
+    {"et_hr": 6.0, "p10": -160.0, "p50": 80.0, "p90": 175.0},
+    {"et_hr": 8.0, "p10": -200.0, "p50": 100.0, "p90": 240.0},
+    {"et_hr": 9.5, "p10": -250.0, "p50": 140.0, "p90": 360.0},
+    {"et_hr": 11.0, "p10": -290.0, "p50": 170.0, "p90": 470.0},
+    {"et_hr": 13.0, "p10": -320.0, "p50": 195.0, "p90": 560.0},
+    {"et_hr": 14.5, "p10": -340.0, "p50": 210.0, "p90": 610.0},
+    {"et_hr": 16.0, "p10": -348.0, "p50": 218.0, "p90": 635.0},
+    {"et_hr": 17.0, "p10": -350.0, "p50": 220.0, "p90": 640.0}
+   ],
+   "overnight_gap_usd": 40,
+   "guess_curve": [0.0, 12.0, 28.0, 42.0, 58.0, 80.0, 100.0, 140.0, 170.0, 195.0, 210.0, 218.0, 220.0],
+   "guessed_net_usd": 220,
+   "fwd_curve_lean": "contango_next_higher(NGN26>NGM26; calendar_front_next_spread -0.25)",
+   "confidence": {"overall": 0.52, "direction": 0.56, "magnitude": 0.44, "timing": 0.46},
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp19_state_masked_one_shot",
+    "missing_inputs": ["vol_regime", "target_day_price_state(masked)"],
+    "stale_inputs": ["cot(2.4d)", "cash_basis(weekly)", "options_surface(frozen_0508)"],
+    "partial_inputs": ["intra_block_price_path(unknown,inferred_from_tape_tilt+handoff)"],
+    "prohibited_inputs_removed": ["target_day_tape", "next_day_realized_flow"],
+    "flags": ["weekend_gap_uncertainty", "masked_price_state", "fired_covering_absorption_tell", "maturing_leg_giveback_counter", "opex_0526_expiry_0527_june_roll_0521_eia_ahead"]
+   },
+   "scenario_components": [
+    {
+     "name": "covering_catch_up_up",
+     "probability": 0.50,
+     "direction": "up",
+     "distribution": {"p50": 300, "p10": -50, "p90": 700},
+     "governing_driver": "the 0515 covering-absorbed close (fired tell) + COT at 0.94 1y-pctile worsening = unrealized covering fuel repricing up through the reopen and 06-10 catch-up",
+     "invalidation_conditions": ["reopen prints net-sell / big-print sell", "bearish weekend catalyst", "opex/expiry de-risk sells the front early"]
+    },
+    {
+     "name": "maturing_leg_giveback",
+     "probability": 0.28,
+     "direction": "down",
+     "distribution": {"p50": -300, "p10": -600, "p90": 80},
+     "governing_driver": "chain age 5->6 maturing + the 0515 mid-phase sell (-662); opex 0526/expiry 0527/June-roll + the 0521 EIA de-risk trims the maturing up-leg",
+     "invalidation_conditions": ["last-hour reopen flow stays net-buy", "fresh covering surge / short capitulation"]
+    },
+    {
+     "name": "flat_chop_pre_opex",
+     "probability": 0.22,
+     "direction": "flat",
+     "distribution": {"p50": 0, "p10": -280, "p90": 280},
+     "governing_driver": "low-vol S3 shoulder; positioning coil into opex/expiry/June-roll and the 0521 EIA; two-sided pre-event chop",
+     "invalidation_conditions": ["a directional catalyst appears"]
+    }
+   ]
+  }
+ ]
+}
