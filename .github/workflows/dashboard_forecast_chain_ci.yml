@@ -1,0 +1,41 @@
+name: Dashboard NG Forecast Chain CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'dashboard/adapters/forecast.py'
+      - 'dashboard/server.py'
+      - 'research/kalshi/tests/test_dashboard_forecast_adapter.py'
+      - '.github/workflows/dashboard_forecast_chain_ci.yml'
+  pull_request:
+    paths:
+      - 'dashboard/adapters/forecast.py'
+      - 'dashboard/server.py'
+      - 'research/kalshi/tests/test_dashboard_forecast_adapter.py'
+      - '.github/workflows/dashboard_forecast_chain_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dashboard dependencies
+        run: pip install --quiet fastapi uvicorn
+      - name: Compile dashboard forecast chain
+        run: |
+          python -m py_compile \
+            dashboard/adapters/forecast.py \
+            dashboard/server.py \
+            research/kalshi/tests/test_dashboard_forecast_adapter.py
+      - name: Run dashboard forecast adapter tests
+        run: python -m unittest -v research/kalshi/tests/test_dashboard_forecast_adapter.py
+      - name: Import dashboard application
+        run: python -c "from dashboard.server import app; assert app.title == 'DavisAI Markets Dashboard'"
