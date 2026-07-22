@@ -1,0 +1,36 @@
+name: NG Chronological Validation CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_chronological_validation.py'
+      - 'research/kalshi/tests/test_ng_chronological_validation.py'
+      - '.github/workflows/ng_chronological_validation_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_chronological_validation.py'
+      - 'research/kalshi/tests/test_ng_chronological_validation.py'
+      - '.github/workflows/ng_chronological_validation_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile chronological validation contracts
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_chronological_validation.py \
+            research/kalshi/tests/test_ng_chronological_validation.py
+      - name: Run chronological validation self-test
+        run: python research/kalshi/ng_chronological_validation.py --selftest
+      - name: Run chronological validation tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_chronological_validation.py
