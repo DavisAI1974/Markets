@@ -128,7 +128,19 @@ need a small revision.
 - Actual G19 ends +1150 (covering rally: 2.75 -> peak 3.136 by 0519 -> 2.865). Seam 0520 (June NGM26 ->
   July NGN26, offset +0.169, correctly voided).
 
-## GUARDRAILS THAT HELD / REINFORCED
+## DATA DECISION (Greg, S105) — UPGRADE THE SUB FOR LIVE MBO ("worth its weight in gold")
+Greg is upgrading the data subscription (~$1500 class) to get LIVE MBO. Rationale (agreed): MBO order-flow
+is the RAW MATERIAL of the edge — the absorption / signed-flow-vs-price conviction read (the thing that
+makes refine land err 8) is only as sharp as the order-level flow feeding it. Not paying leaves far more
+on the table than paying.
+- **Historical MBO "up to the last second possible"** = ALREADY the doctrine: decision-legit windows use
+  the freshest pre-decision flow right up to the decision moment (prior sessions in full + the current
+  day's pre-decision reopen/overnight), masked only vs the FUTURE (causality, not truncation).
+- **Live MBO is the bigger prize**: the live thesis is the futures->Kalshi LAG (NYMEX canary, Kalshi the
+  delayed follower). You cannot trade that lag without seeing the leader LIVE at order level. Historical
+  MBO trains/validates the blind; LIVE MBO is what lets it actually FIRE. That is what the upgrade buys.
+- NEXT-SESSION ACTION once the sub is live: stand up the live MBO ingest (NG first), confirm the
+  decision-legit windows consume it to the last legit second, keep historical MBO current-to-now.
 - git = code, S3 = data. AWS creds are SECRETS (env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY for
   boto3/platform_sync; scratchpad gitignored). Committer identity noreply@anthropic.com / Claude.
 - ONE thing at a time; do not batch changes; talk before changing the blind/refine reasoning.
