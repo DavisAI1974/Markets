@@ -1,0 +1,46 @@
+name: NG Corpus Replay Catalog Export CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_corpus_replay_catalog_export.py'
+      - 'research/kalshi/tests/test_ng_corpus_replay_catalog_export.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/ng_g15_replay_manifest_bridge.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - '.github/workflows/ng_corpus_replay_catalog_export_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_corpus_replay_catalog_export.py'
+      - 'research/kalshi/tests/test_ng_corpus_replay_catalog_export.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/ng_g15_replay_manifest_bridge.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - '.github/workflows/ng_corpus_replay_catalog_export_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile exporter and replay contracts
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_corpus_replay_catalog_export.py \
+            research/kalshi/tests/test_ng_corpus_replay_catalog_export.py \
+            research/kalshi/ng_corpus_coverage_audit.py \
+            research/kalshi/ng_g15_replay_manifest_bridge.py \
+            research/kalshi/ng_g16_historical_replay.py
+      - name: Run exporter selftest
+        working-directory: research/kalshi
+        run: python ng_corpus_replay_catalog_export.py --selftest
+      - name: Run exporter unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_corpus_replay_catalog_export.py
