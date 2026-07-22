@@ -1,0 +1,63 @@
+name: NG Corpus Inspection CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_corpus_inspection.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/tests/test_ng_corpus_inspection.py'
+      - '.github/workflows/ng_corpus_inspection_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_corpus_inspection.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/tests/test_ng_corpus_inspection.py'
+      - '.github/workflows/ng_corpus_inspection_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile corpus inspection chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_corpus_inspection.py \
+            research/kalshi/ng_corpus_coverage_audit.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/tests/test_ng_corpus_inspection.py
+      - name: Run corpus inspection selftest
+        working-directory: research/kalshi
+        run: python ng_corpus_inspection.py --selftest
+      - name: Run corpus inspection unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_corpus_inspection.py
+      - name: Verify initialized plan remains fail-closed
+        working-directory: research/kalshi
+        run: |
+          python ng_corpus_inspection.py init-plan \
+            --allowed-root /tmp/ng-history \
+            --out /tmp/ng_corpus_inspection_plan.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          value = json.loads(Path('/tmp/ng_corpus_inspection_plan.json').read_text())
+          assert value['remote_presence_inferred'] is False
+          assert value['identity_may_be_inferred_from_filename'] is False
+          assert value['paid_live_data_assumed'] is False
+          assert value['execution_authority'] is False
+          assert value['brokerage_contract'] == 'tastytrade_not_ibkr'
+          assert value['cme_event_contracts_mode'] == 'SHADOW'
+          assert value['options_lane_started'] is False
+          assert all(corpus['sources'] == [] for corpus in value['corpora'])
+          assert all(corpus['inventory_complete_asserted'] is False for corpus in value['corpora'])
+          PY
