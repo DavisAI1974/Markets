@@ -1,0 +1,49 @@
+name: NG G16 SHADOW Posterior Runner CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/ng_g16_shadow_gate.py'
+      - 'research/kalshi/ng_g16_blind_wall.py'
+      - 'research/kalshi/ng_g15_lesson_adjudication.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/tests/test_ng_g16_shadow_runner.py'
+      - '.github/workflows/ng_g16_shadow_runner_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/ng_g16_shadow_gate.py'
+      - 'research/kalshi/ng_g16_blind_wall.py'
+      - 'research/kalshi/ng_g15_lesson_adjudication.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/tests/test_ng_g16_shadow_runner.py'
+      - '.github/workflows/ng_g16_shadow_runner_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile G16 SHADOW posterior contracts
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_blind_wall.py \
+            research/kalshi/ng_g16_shadow_gate.py \
+            research/kalshi/ng_g16_shadow_runner.py \
+            research/kalshi/ng_g15_lesson_adjudication.py \
+            research/kalshi/ng_rt_feature_state.py \
+            research/kalshi/tests/test_ng_g16_shadow_runner.py
+      - name: Run G16 SHADOW posterior self-test
+        working-directory: research/kalshi
+        run: python ng_g16_shadow_runner.py --selftest
+      - name: Run G16 SHADOW posterior tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_shadow_runner.py
