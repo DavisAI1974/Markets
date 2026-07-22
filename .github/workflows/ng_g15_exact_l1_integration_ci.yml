@@ -1,0 +1,51 @@
+name: G15 Exact-Contract L1 Integration
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g15_exact_l1_recovery.py'
+      - 'research/kalshi/ng_g15_exact_l1_integration.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/tests/test_ng_g15_exact_l1_integration.py'
+      - '.github/workflows/ng_g15_exact_l1_integration_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g15_exact_l1_recovery.py'
+      - 'research/kalshi/ng_g15_exact_l1_integration.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/tests/test_ng_g15_exact_l1_integration.py'
+      - '.github/workflows/ng_g15_exact_l1_integration_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install DBN dependency
+        run: pip install --quiet databento
+      - name: Compile exact-L1 integration chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g15_corpus_basis_gate.py \
+            research/kalshi/ng_g15_exact_l1_recovery.py \
+            research/kalshi/ng_g15_exact_l1_integration.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/tests/test_ng_g15_exact_l1_integration.py
+      - name: Run component self-tests
+        run: |
+          python research/kalshi/ng_g15_corpus_basis_gate.py --selftest
+          python research/kalshi/ng_g15_exact_l1_recovery.py selftest
+          python research/kalshi/ng_historical_normalize.py --selftest
+          python research/kalshi/ng_g15_exact_l1_integration.py selftest
+      - name: Run exact-L1 integration tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g15_exact_l1_integration.py
