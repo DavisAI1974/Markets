@@ -12,6 +12,8 @@ import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import group_config as gc
+import verify_gold
+verify_gold.assert_gold_intact()   # the concrete wall - no blind coordinate on a violated gold vault
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FC = os.path.join(HERE, "forecasts")

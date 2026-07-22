@@ -10,6 +10,8 @@ import os, sys, subprocess, json
 import boto3
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import group_config as gc
+import verify_gold
+verify_gold.assert_gold_intact()   # the concrete wall - no staging on a violated refine gold vault
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
