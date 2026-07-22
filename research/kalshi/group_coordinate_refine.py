@@ -41,6 +41,18 @@ def num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
+def break_gaps(ct, cp, max_gap_h=3.0):
+    """S104 RENDER RULE - never bridge a session gap with a straight line. Insert a NaN break
+    wherever consecutive tape points are >max_gap_h apart (weekend, holidays, multi-hour halts)."""
+    ct = np.asarray(ct, float); cp = np.asarray(cp, float)
+    if ct.size < 2:
+        return ct, cp
+    gi = np.where(np.diff(ct) > max_gap_h * 3600.0)[0]
+    if gi.size == 0:
+        return ct, cp
+    return np.insert(ct, gi + 1, ct[gi]), np.insert(cp, gi + 1, np.nan)
+
+
 def guard_assemble(gid, rnd):
     g = gc.GROUPS[gid]; days = g["days"]; owner = gc.owner_map(gid)
     weekend_feeding = {d for d in days if _DOW[pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}").weekday()] == "Fri"}
@@ -69,7 +81,7 @@ def guard_assemble(gid, rnd):
 def render(gid, rows, actual, blind_days):
     seam = gc.GROUPS[gid].get("seam"); anchor = actual["anchor"]
     fig, ax = plt.subplots(figsize=(15, 7))
-    ct = np.array([t for t, _ in actual["continuous"]]); cp = np.array([p for _, p in actual["continuous"]])
+    ct, cp = break_gaps([t for t, _ in actual["continuous"]], [p for _, p in actual["continuous"]])
     adt = pd.to_datetime(ct, unit="s", utc=True).tz_convert("America/New_York")
     ax.plot(adt, cp, color="#1f6feb", lw=1.0, label="actual PRICE CURVE (MBO trades)", zorder=2)
     bmap = {r["date"]: r for r in blind_days}
