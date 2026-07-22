@@ -1,0 +1,45 @@
+name: NG Coach and VOXA Adapter CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_coach_voxa_adapter.py'
+      - 'research/kalshi/ng_product_lag.py'
+      - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/tests/test_ng_coach_voxa_adapter.py'
+      - '.github/workflows/ng_coach_voxa_adapter_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_coach_voxa_adapter.py'
+      - 'research/kalshi/ng_product_lag.py'
+      - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/tests/test_ng_coach_voxa_adapter.py'
+      - '.github/workflows/ng_coach_voxa_adapter_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile coach and authority contracts
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_coach_voxa_adapter.py \
+            research/kalshi/ng_product_lag.py \
+            research/kalshi/ng_rt_refiner.py \
+            research/kalshi/ng_g16_shadow_runner.py \
+            research/kalshi/tests/test_ng_coach_voxa_adapter.py
+      - name: Run coach adapter self-test
+        run: python research/kalshi/ng_coach_voxa_adapter.py --selftest
+      - name: Run coach adapter unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_coach_voxa_adapter.py
