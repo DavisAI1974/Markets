@@ -69,6 +69,14 @@ be that same reasoning, blindfolded on price and NOTHING else. Stop maintaining 
   read like refine), frames the blind as the FIRST PASS (no prior to consume, no weight split), same
   output schema so one coordinator scores both. NO separate blind lens set anymore.
 - **Render gap-break fix** in both coordinators (`break_gaps()`).
+- **THIRD, OFF-SITE COPY (the vault)**: Greg created a dedicated PRIVATE repo **`DavisAI1974/Agent-Davis`**
+  and the frozen gold now lives there too (commit `0fd70fc`, branch `main`): `refine_gold_s105/` (the 6
+  files + FROZEN.md + CHECKSUMS.sha256 + PROVENANCE.md) + a top-level README. Verified byte-exact on copy,
+  chmod 0444. So there are THREE copies in THREE places: (1) working `mbo_*` in Markets, (2) in-repo frozen
+  `refine_gold_s105/` (sha256-guarded, halts runs on tamper), (3) off-site private vault Agent-Davis.
+  DOCTRINE (Greg): clone FROM the vault for every trading venture, never from a working model; a working
+  copy that EARNS promotion becomes a NEW dated snapshot (refine_gold_s106/...), never an overwrite — a
+  versioned genome of him. The vault does NOT auto-update (that is the point).
 
 ## THE OPEN DECISION THAT GATES EVERYTHING NEXT (Greg said "we talk first — DO NOT JUST START CHANGING")
 The gold refine is NOT purely "blind + price" today — it has a SECOND difference: it runs as a POSTERIOR

@@ -26,6 +26,10 @@ A-compatible first-pass framing.)
   (a violated vault = SystemExit, nothing forecasts). Runs on every stage/coordinate.
 - `agents/blind_mode.md` = the blind = gold-specialist-minus-price wrapper (repeals the NO-MBO amputation).
 - Render `break_gaps()` fix (no weekend straight-line bridge) in both coordinators.
+- THREE copies of the gold now exist: (1) working `mbo_*`, (2) in-repo frozen `refine_gold_s105/`,
+  (3) OFF-SITE PRIVATE VAULT `DavisAI1974/Agent-Davis` (commit 0fd70fc, main). Clone FROM the vault for
+  any venture, never from a working model. A working copy that EARNS promotion = a NEW dated snapshot in
+  the vault (refine_gold_s106/...), never an overwrite. The vault does not auto-update.
 
 ## 3. Then, in order (all gated on step 1)
 1. Wire blind spawn -> `mbo_specialist_<X>.md` + `blind_mode.md`; retire (move aside, don't delete)
