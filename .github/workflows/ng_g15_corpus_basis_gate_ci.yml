@@ -1,0 +1,56 @@
+name: G15 Exact-Basis Corpus Gate
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/renders/ng_refine_s95/g15_mbo_l1_manifest.json'
+      - 'research/kalshi/tests/test_ng_g15_corpus_basis_gate.py'
+      - '.github/workflows/ng_g15_corpus_basis_gate_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/renders/ng_refine_s95/g15_mbo_l1_manifest.json'
+      - 'research/kalshi/tests/test_ng_g15_corpus_basis_gate.py'
+      - '.github/workflows/ng_g15_corpus_basis_gate_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile basis gate and tests
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g15_corpus_basis_gate.py \
+            research/kalshi/tests/test_ng_g15_corpus_basis_gate.py
+      - name: Run self-test
+        run: python research/kalshi/ng_g15_corpus_basis_gate.py --selftest
+      - name: Run unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g15_corpus_basis_gate.py
+      - name: Evaluate committed G15 inventory truthfully
+        run: |
+          python research/kalshi/ng_g15_corpus_basis_gate.py \
+            --manifest research/kalshi/renders/ng_refine_s95/g15_mbo_l1_manifest.json \
+            --out /tmp/g15_corpus_basis_gate.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/g15_corpus_basis_gate.json'))
+          assert p['mbo_specific_leg_ready'] is True
+          assert p['matched_l1_mbo_ready'] is False
+          assert p['status']=='MBO_SPECIFIC_LEG_READY_L1_BASIS_BLOCKED'
+          expected=['20260313','20260315','20260316','20260317','20260318','20260319']
+          assert p['l1_wrong_basis_days']==expected, p['l1_wrong_basis_days']
+          assert p['execution_authority'] is False
+          print('truthful current status:',p['status'])
+          print('wrong-basis L1 days:',p['l1_wrong_basis_days'])
+          print('fingerprint:',p['fingerprint'])
+          PY
