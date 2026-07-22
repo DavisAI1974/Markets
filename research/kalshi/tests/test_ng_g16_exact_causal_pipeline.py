@@ -170,6 +170,50 @@ class G16ExactCausalPipelineTests(unittest.TestCase):
         with self.assertRaises(G16ExactCausalPipelineError):
             validate_pipeline_artifacts(result, replay=self.replay, blind_prior=self.prior, blind_forecast=self.forecast, blind_safe_state=self.safe, registry_source=self.registry)
 
+    def test_authorization_candidate_tamper_is_detected(self):
+        result = self.build()
+        token = result["authorization_stream"]["authorizations"][0]
+        token["authorized_candidate_ids"] = []
+        token["baseline_microstructure_only"] = True
+        token.pop("authorization_fingerprint", None)
+        token["authorization_fingerprint"] = _fp(token)
+        auth = result["authorization_stream"]
+        auth.pop("stream_fingerprint", None)
+        auth["stream_fingerprint"] = _fp(auth)
+        posterior = result["posterior_stream"]
+        posterior["authorization_stream_fingerprint"] = auth["stream_fingerprint"]
+        posterior.pop("stream_fingerprint", None)
+        posterior["stream_fingerprint"] = _fp(posterior)
+        completion = result["completion"]
+        completion["authorization_stream_fingerprint"] = auth["stream_fingerprint"]
+        completion["posterior_stream_fingerprint"] = posterior["stream_fingerprint"]
+        completion.pop("fingerprint", None)
+        completion["fingerprint"] = _fp(completion)
+        with self.assertRaises(G16ExactCausalPipelineError):
+            validate_pipeline_artifacts(result, replay=self.replay, blind_prior=self.prior, blind_forecast=self.forecast, blind_safe_state=self.safe, registry_source=self.registry)
+
+    def test_recomputed_audit_tamper_is_detected(self):
+        result = self.build()
+        day = G16_DATES[0]
+        row = result["completion"]["days"][day]
+        row["max_posterior_shift_tv"] += 0.1
+        row.pop("day_audit_fingerprint", None)
+        row["day_audit_fingerprint"] = _fp(row)
+        completion = result["completion"]
+        completion.pop("fingerprint", None)
+        completion["fingerprint"] = _fp(completion)
+        with self.assertRaises(G16ExactCausalPipelineError):
+            validate_pipeline_artifacts(result, replay=self.replay, blind_prior=self.prior, blind_forecast=self.forecast, blind_safe_state=self.safe, registry_source=self.registry)
+
+    def test_registry_provenance_tamper_is_detected(self):
+        result = self.build()
+        completion = result["completion"]
+        completion["lesson_registry_fingerprint"] = "e" * 64
+        completion.pop("fingerprint", None)
+        completion["fingerprint"] = _fp(completion)
+        with self.assertRaises(G16ExactCausalPipelineError):
+            validate_pipeline_artifacts(result, replay=self.replay, blind_prior=self.prior, blind_forecast=self.forecast, blind_safe_state=self.safe, registry_source=self.registry)
+
     def test_permanent_shadow_authority(self):
         completion = self.build()["completion"]
         for field in ("actual_g16_outcomes_used", "g16_scoring_authorized", "paid_live_data_assumed", "may_update_ng_brain", "may_change_g16_blind_prior", "may_change_g16_blind_forecast", "may_select_lessons_from_g16_outcomes", "execution_authority"):
