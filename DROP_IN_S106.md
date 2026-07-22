@@ -40,10 +40,11 @@ drift). The one difference (price) lives in the DATA. No A/B question, no valida
    flipped this): live CME is ALREADY in the Standard plan (~$179; Databento moved live CME into the
    subscription Apr 2025, NYMEX/NG covered). The real gate is the CME EXCHANGE LICENSE - complete
    Databento's CME license questionnaire + pay pass-through CME Globex fees (non-pro = modest;
-   pro/firm = higher). We do NOT need more historical (already on S3). GREG TO CHECK IN-ACCOUNT (saves
-   ~$1,500/mo): (a) live GLBX.MDP3 entitlement active vs historical-only? (b) CME license questionnaire
-   signed? = the live switch. (c) pro vs non-pro. THEN stand up live MBO ingest (NG first) on the
-   existing Standard plan; skip Plus. Refs: databento.com/pricing, /blog/real-time-cme.
+   pro/firm = higher). We do NOT need more historical (already on S3). NON-PRO ALREADY SELECTED (Greg) = the
+   modest CME fee tier + the license flow is engaged, so cost is basically solved. ONLY OPEN CHECK: is
+   the live GLBX.MDP3 entitlement actually ACTIVE/streaming (vs historical-only)? If yes, stand up live
+   MBO ingest (NG first) on the EXISTING Standard plan - skip the $1,500 Plus tier entirely (it only buys
+   historical depth we don't need). Refs: databento.com/pricing, /blog/real-time-cme.
 5. Resume walk: re-run G19 blind under the new blind (the on-record grp19.json is SUSPECT — built on the
    deleted contradicted stack + inert big_print_b_share), then G19 refine, then G20+ (staged), one group
    at a time.

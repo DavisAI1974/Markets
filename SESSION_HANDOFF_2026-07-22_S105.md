@@ -143,10 +143,10 @@ the plan:
   license questionnaire + pay the pass-through CME Globex exchange fees (Databento at cost, no upcharge).
   Non-professional (individual, own money) = modest (tens/mo); professional/firm = higher + possible
   per-user fees. Until that questionnaire is signed, live MBO is NOT flowing.
-- **NEXT-SESSION / GREG TO CHECK IN THE DATABENTO ACCOUNT (could save $1,500/mo)**: (1) is the live CME
-  (GLBX.MDP3) entitlement active or historical-only? (2) is the CME license questionnaire done / agreement
-  signed? that is the live switch. (3) pro vs non-pro status (sets the only real live cost). THEN stand up
-  the live MBO ingest (NG first) on the EXISTING Standard plan; the Plus upgrade is unnecessary.
+- **NON-PRO ALREADY SELECTED (Greg)** = the modest CME fee tier, and the license flow is engaged - so the
+  live COST is basically solved. ONLY OPEN CHECK: is the live CME (GLBX.MDP3) entitlement actually
+  ACTIVE/streaming vs historical-only? If yes -> stand up the live MBO ingest (NG first) on the EXISTING
+  Standard plan. The $1,500 Plus upgrade is unnecessary (it only buys historical depth we don't need).
 - git = code, S3 = data. AWS creds are SECRETS (env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY for
   boto3/platform_sync; scratchpad gitignored). Committer identity noreply@anthropic.com / Claude.
 - ONE thing at a time; do not batch changes; talk before changing the blind/refine reasoning.
