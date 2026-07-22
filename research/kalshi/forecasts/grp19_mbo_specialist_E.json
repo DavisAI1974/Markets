@@ -1,0 +1,158 @@
+{
+  "specialist": "E",
+  "lens": "FRIDAY / EXPIRY / ROLL / WEEKEND POSITIONING",
+  "group": "g19",
+  "brain_version": "s102.9",
+  "round": 1,
+  "days_owned": ["20260515", "20260520", "20260522"],
+  "doctrine_note": "FIRST BLIND PASS - no prior blind forecast exists (forecasts/grp19.json not opened; blind wall). I AM the forecast: weight 100% my causal read off the NON-PRICE kitchen sink + the never-masked MBO tape (session/phase signed flow, b_share, big prints, L1 book lean). Price curve is masked. Direction taken from the D-1 aggressor tilt each owned Friday consumed; MBO tape is the turn/absorption/acceleration read. Book layer (quote_bid_share) is a weak resting-liquidity lean only, never load-bearing for a turn. PRIOR-OVER-STATE GATE applied to every Friday sign before emission (my dominant historical flaw = re-firing crowded-short covering-UP on weekend Fridays). 0520 is the NGM26->NGN26 roll seam = VOIDED, never-traded.",
+  "cross_cutting_mbo_finding": "The whole block is a covering/press oscillation on a crowded-short backdrop (MM net short worsening 1y-pctile 2.83 -> 0.94 across the window): every buy bounce is one-shot and immediately re-sold - 05-14 +1072 buy then 05-18 sold -872; 05-20 +1892 buy then 05-21 sold -2651. The never-masked tape's PHASE-ACCELERATION sign is the clean covering-vs-press discriminator, cleaner than net signed flow: 05-14's D-1 buy DECELERATED into the close ([118,913,41], front-loaded, tapering to +41) = a spent-ish bounce -> modest continuation only into 0515; 05-21's D-1 sell ACCELERATED into the close ([87,-696,-2042], building to the bell) = fresh shorts pressing, high-conviction resume-DOWN into 0522. Building-into-the-close vs tapering-into-the-close beats net-flow sign for sizing a weekend Friday.",
+  "days": [
+    {
+      "date": "20260515",
+      "dow": "Fri",
+      "day_class": "Friday weekend-positioning; NGM26 (June) leg; D-1 = 05-14 Thu EIA covering bounce; crowded-short (COT 1y-pctile 2.83, worsening); shoulder-season contango, no freeze/weather force",
+      "instrument": "NGM26",
+      "blind_direction": null,
+      "blind_net_usd": null,
+      "posterior_direction_by_horizon": {
+        "overnight_20_06": "up (mild covering probe carrying the 05-14 buy tilt into the weekend square-up)",
+        "morning_06_10": "up then a shallow midday consolidation (front-loaded bounce tapering)",
+        "afternoon_10_close": "firm back up into the 14:00-14:30 settle window and hold into close (covering/holding, NOT crest-trim)",
+        "net_day": "MODEST UP (covering-into-weekend continuation, size-gated)"
+      },
+      "expected_magnitude_usd": 60,
+      "expected_magnitude_band_usd": [20, 110],
+      "onset_time_et": "02:00-06:00 (overnight covering probe; strength into the settle window)",
+      "turn_time_et": null,
+      "trend_vs_chop": "MILD TREND-UP with one shallow mid-morning consolidation; no reversal (turn_time null)",
+      "continuation_vs_reversal": "CONTINUATION of the 05-14 covering bounce (short-covering into the weekend square-up), size-capped by the structural down bias - not a reversal, not a full trend change",
+      "path_p50_curve": [[20, 0], [22, 15], [0, 25], [2, 30], [4, 35], [6, 45], [8, 55], [10, 40], [12, 45], [14, 60], [16, 65], [18, 60], [20, 60]],
+      "confidence": "MODERATE - D-1 buy tilt is clean (session_signed_flow +1072, big_print_b_share 0.514 buy-lean, quote_bid_share 0.511 bid-lean, phase all non-negative) but the bounce is front-loaded/decelerating and one buy day is not a regime turn; the crowded-short/contango backdrop caps the up-side",
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 1.0, "note": "first blind pass - no prior forecast; 100% causal read"},
+      "evidence_used": [
+        "D-1 (05-14 Thu EIA) tape never-masked: session_signed_flow +1072 BUY - the first clean buy session after 05-12/05-13 sold heavy (-2586, -2763) = a covering bounce the Friday inherits",
+        "big_print_b_share 0.514 (institutional prints buy-leaning) + l1 quote_bid_share 0.511 (resting book bid-leaning) both corroborate a demand lean into the weekend",
+        "COT: managed-money net -107,489, 1y-pctile 2.83 (near-record short) and worsening - a crowded short into a weekend is covering FUEL; shorts do not want to hold record size over the close (E covering-into-settle mechanism)",
+        "phase_signed_flow [118, 913, 41]: buy concentrated in the middle phase, tapering to +41 by the close = a fading bounce -> continuation is MODEST, not a blowout"
+      ],
+      "evidence_rejected": [
+        "a large covering-UP squeeze call: GATED DOWN - the D-1 buy is decelerating (tapering to +41) and contango+shoulder-season+worsening-short structural bias caps extension; sizing modest, not a 0327-class covering rally (no expiry mechanic here, days_to_calendar_front_expiry 12 = outside the delivery window)",
+        "reading the mild L1 bid-lean as an execution-authority book signal - quote_bid_share is a resting-liquidity lean only, stood down as a turn driver"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: only quote_bid_share available (0.511), no execution_authority / div_conviction feed on the blind pass -> book-based turn calls DISABLED, trade-flow + phase-flow only",
+        "no expiry/roll mechanic on 0515 (June leg, 12 sessions to front expiry) -> Friday square-up is positioning, not delivery-driven; keep the adjustment modest"
+      ],
+      "selection_reason": "Friday weekend-positioning specialist: flow-calendar first (no roll/expiry live on the June leg), D-1 covering-bounce tilt UP off the never-masked tape, gated to MODEST by phase deceleration + structural down bias. This is the FIRST covering event of the block feeding the FIRST weekend, so a small continuation is allowed - but the gate holds the size.",
+      "mbo_verdict": "TRADE-FLOW LEAN, book stood down. The +1072 D-1 buy with buy-lean prints/book supports a modest covering-into-weekend UP; the phase deceleration ([118,913,41] tapering to +41) is why it is +60 and not a large squeeze. Honest-under: I emit the covering continuation the tape supports, not a blowout the crowding might tempt.",
+      "handoff_out": {
+        "receiving_owner": "A (weekend reopen -> 0518 Mon, A bridges to B)",
+        "exit_type": "MILD COVERING / HOLDING (continuation-biased UP but weak and fading) - NOT a crest-trim (no stretched up-chain to trim; this is a single fading bounce off a down-chain), and NOT a large squeeze",
+        "monday_bias": "DOWN / mean-revert. The covering bounce is a one-shot weekend square-up; per S105 self-limiting rule it does NOT license extending UP into Monday. Structural contango + worsening crowded short reassert. A should size 0518 as a give-back/resume-down off the 0515 close, NOT front-run further UP.",
+        "close_px_est": 2.735,
+        "last_hour_dir": 1,
+        "last_hour_signed_flow_sign": 1,
+        "close_off_low_frac": 0.7,
+        "late_extreme_flag": "none (mid-to-upper range close, no late-low/late-high spike)",
+        "chain_polarity": -1,
+        "chain_age_sessions": 0,
+        "cum_from_anchor_usd": -150,
+        "exhaustion_state": "Sellers took a one-session pause (05-14 covering bounce carried into a modest Friday hold), but the down-chain is intact and only shallowly interrupted. The covering fuel is largely SPENT by the close (phase buy tapering to +41). A inherits a fading-bounce close on a live down-chain (cum ~-150 from the 2.750 anchor): weekend reopen should NOT read the gap sign as trend - inherit the CLOSE + the down-chain, expect give-back/resume-down, not continuation-up."
+      }
+    },
+    {
+      "date": "20260520",
+      "dow": "Wed",
+      "day_class": "ROLL SEAM - NGM26 (June) -> NGN26 (July) Kalshi-underlying roll; VOIDED / NEVER-TRADED",
+      "instrument": "NGM26 -> NGN26 (leg change)",
+      "blind_direction": null,
+      "blind_net_usd": null,
+      "posterior_direction_by_horizon": {"net_day": "VOIDED - never-traded seam"},
+      "expected_magnitude_usd": 0,
+      "expected_magnitude_band_usd": [0, 0],
+      "onset_time_et": null,
+      "turn_time_et": null,
+      "trend_vs_chop": "n/a (voided seam)",
+      "continuation_vs_reversal": "n/a (voided seam)",
+      "path_p50_curve": [[20, 0], [22, 0], [0, 0], [2, 0], [4, 0], [6, 0], [8, 0], [10, 0], [12, 0], [14, 0], [16, 0], [18, 0], [20, 0]],
+      "confidence": "n/a (VOIDED)",
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 0.0, "note": "voided seam - no forecast emitted"},
+      "evidence_used": [
+        "Group facts: 05-20 is the NGM26->NGN26 roll seam, NEVER-TRADED; the June->July basis offset is a CONTRACT SWAP measured only at scoring, not a traded day-move",
+        "overnight_gap forecast = 0; the leg change passes as never-traded (shared-doctrine seam handling)"
+      ],
+      "evidence_rejected": [
+        "the 05-20 realized session flow (+1892 buy on the new NGN26 July leg) as a weekend/seam repricing signal - it is a REAL July-leg intraday move, NOT the seam offset; it is not read as a day-move and the seam is voided regardless"
+      ],
+      "stand_down_reasons": [
+        "seam day: emit VOIDED, day_move = 0, offset is scoring-only (anchor to the new NGN26 leg, offset never traded)"
+      ],
+      "selection_reason": "Roll-seam owner (E lens): mark the NGM26->NGN26 seam VOIDED / never-traded, pass the leg change through with no day-move; the June->July offset is scoring-only.",
+      "mbo_verdict": "VOIDED - seam never-traded; no MBO verdict emitted. Note only: the +1892 buy on the 05-20 July leg was itself immediately re-sold on 05-21 (-2651), consistent with the block's one-shot-bounce pattern."
+    },
+    {
+      "date": "20260522",
+      "dow": "Fri",
+      "day_class": "Friday before Memorial Day (Mon 05-25) 3-day weekend; NGN26 (July) leg; D-1 = 05-21 Thu EIA heavy accelerating sell; crowded-short WORSENED (COT 1y-pctile 0.94, near-record); shoulder-season contango",
+      "instrument": "NGN26",
+      "blind_direction": null,
+      "blind_net_usd": null,
+      "posterior_direction_by_horizon": {
+        "overnight_20_02": "small covering probe UP (crowded shorts test a bid into the long weekend) that FAILS",
+        "morning_02_10": "rolls over and sells - the failed probe is absorbed and the D-1 sell momentum resumes",
+        "afternoon_10_close": "DOWN accelerating into the 14:00-14:30 settle and the pre-long-weekend close (fresh shorts pressing / liquidation, not covering)",
+        "net_day": "DOWN, sizable (resume-down; covering was already spent)"
+      },
+      "expected_magnitude_usd": -180,
+      "expected_magnitude_band_usd": [-260, -120],
+      "onset_time_et": "00:00-02:00 (failed covering probe rolls over -> down onset)",
+      "turn_time_et": "~01:00 (the early covering probe tops and is sold; single turn, then sustained down)",
+      "trend_vs_chop": "TREND-DOWN, accelerating into the close after an early failed bounce",
+      "continuation_vs_reversal": "CONTINUATION-DOWN (resume of the crowded-short press) - the 05-14/05-20 covering was already spent (05-18 -872, 05-21 -2651); this is fresh shorts pressing, not a reversal",
+      "path_p50_curve": [[20, 0], [22, 10], [0, 5], [2, -10], [4, -30], [6, -45], [8, -65], [10, -85], [12, -105], [14, -125], [16, -150], [18, -175], [20, -180]],
+      "confidence": "MODERATE-HIGH on direction (D-1 -2651 accelerating sell is decisive + S105 resume-down), MODERATE on magnitude. Fat UPPER-TAIL squeeze risk noted (near-record short into a 3-day weekend) - that is TAIL, not the p50",
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 1.0, "note": "first blind pass - no prior forecast; 100% causal read"},
+      "evidence_used": [
+        "D-1 (05-21 Thu EIA) tape never-masked: session_signed_flow -2651, the heaviest single-session sell of the block, phase_signed_flow [87, -696, -2042] ACCELERATING into the close = fresh shorts pressing, momentum DOWN with no exhaustion tell",
+        "phase_b_share declining [0.474, 0.410, 0.390] and big_print_b_share 0.500 / quote_bid_share 0.499 both neutral = no demand lean, no covering signature - pure aggressive supply",
+        "COT worsened to managed-money net -120,065, 1y-pctile 0.94 (near-record short) with net_chg_wow -12,576 = shorts ADDING, not covering (fresh fuel = downward pressure, per E lens 'still-extreme-and-WORSENING is fresh press, spent-but-not-worsening would be spent fuel')",
+        "block context: the 05-14 and 05-20 buy bounces were both immediately re-sold (05-18 -872, 05-21 -2651) - the covering is demonstrably SPENT, so the 0424-class 're-fire covering-UP' error is off the table"
+      ],
+      "evidence_rejected": [
+        "the Friday-before-long-weekend covering-UP call: GATE FIRES to REFUSE it. This is exactly the S105 0417->0424 trap (covering spent -> should resume DOWN; the model called +250 and lost to -380). Here the D-1 tape is unambiguous accelerating SELL and COT is worsening -> p50 is DOWN, the crowded-short is squeeze TAIL risk (fat upper tail), NOT a p50 covering trigger",
+        "the 05-20 seam +1892 buy as evidence of an up-turn feeding 0522 - it was fully re-sold on 05-21; not carried"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: neutral quote_bid_share (0.499), no execution_authority feed on the blind pass -> no book-based turn call; trade-flow + phase-acceleration only",
+        "no delivery/expiry mechanic on the July leg (fresh NGN26 front, roll just passed) -> the down move is positioning/liquidation, not delivery pin"
+      ],
+      "selection_reason": "Friday-before-holiday specialist: the GATE is the whole call here. Weekend + crowded short tempts covering-UP; the never-masked D-1 tape (-2651 accelerating) + spent-covering block context + worsening COT force a resume-DOWN p50. Emit DOWN with an explicit fat upper-tail squeeze caveat, honest-sized off the sell flow.",
+      "mbo_verdict": "TRADE-FLOW DECISIVE, book stood down. The accelerating D-1 sell ([87,-696,-2042], building to the bell) with neutral prints/book and worsening short crowding flips the tempting Friday-covering-UP prior into a resume-DOWN of ~-180. This is the S105 lesson applied in real time: spent covering does not re-fire; fresh shorts press. Upper-tail squeeze into the long weekend is the risk I hold in the band, not the center.",
+      "handoff_out": {
+        "receiving_owner": "block-closing Friday (post-Memorial-Day continuity; next block inherits)",
+        "exit_type": "PRESS / RESUME-DOWN close (aggressive supply into the long weekend) - NOT covering, NOT crest-trim; this is fresh shorts pressing with momentum",
+        "monday_bias": "DOWN-biased but LONG-WEEKEND-GATED: after Memorial Day the crowded-short/contango down-chain is intact, BUT a near-record short pressed hard into a 3-day close is the one setup where a Tuesday post-holiday covering SNAP-BACK (fat upper tail) can fire. Default continuation is DOWN; flag the squeeze snap-back as the live upside tail to watch, do not assume it.",
+        "close_px_est": 2.19,
+        "last_hour_dir": -1,
+        "last_hour_signed_flow_sign": -1,
+        "close_off_low_frac": 0.1,
+        "late_extreme_flag": "late-LOW (accelerating sell into the settle/close, closing near the session low)",
+        "chain_polarity": -1,
+        "chain_age_sessions": 2,
+        "cum_from_anchor_usd": -560,
+        "exhaustion_state": "NO exhaustion at the boundary - the down-chain is mature-ish (age ~2) but the tape is ACCELERATING into the close (last hour down on sell flow, closing near the low), so the seller has NOT spent itself. The next block inherits a live, pressing down-chain deep below the 2.750 anchor (cum ~-560). The ONLY reversal risk is a post-long-weekend covering snap-back off near-record short crowding (fat upper tail) - size only a CONFIRMED base, never front-run the reactive holiday-reopen tail."
+      }
+    }
+  ],
+  "summary": {
+    "headline": "0515 = MODEST covering-into-weekend UP (+60, gated small); 0520 = VOIDED roll seam; 0522 = resume-DOWN (-180) - the GATE refuses the Friday-before-long-weekend covering-UP trap because the covering was already spent and the D-1 tape is accelerating sell.",
+    "0515": "First covering event of the block (05-14 +1072 buy after two heavy sell days) feeding the first weekend. D-1 buy tilt + buy-lean prints/book -> modest UP, but phase deceleration ([118,913,41]->+41) and worsening-short/contango backdrop GATE the size to +60. Not a squeeze. handoff: mild covering/holding close, monday_bias DOWN (one-shot, gives back).",
+    "0520": "NGM26->NGN26 roll seam VOIDED / never-traded; day_move 0; the June->July offset is scoring-only. The 05-20 +1892 July-leg buy is a real intraday move, not the seam, and was re-sold on 05-21.",
+    "0522": "The gate call of the block. Friday before Memorial Day + near-record short tempts covering-UP; the never-masked D-1 tape (-2651 ACCELERATING sell, neutral prints/book) + demonstrably spent covering (both prior bounces re-sold) + worsening COT force resume-DOWN -180. Fat upper-tail squeeze into the 3-day weekend held in the band, not the p50. Avoids the S105 0417->0424 error explicitly.",
+    "gate_application": "PRIOR-OVER-STATE turn/exhaustion GATE applied to both Fridays: on 0515 it CAPS the size of an allowed first-weekend covering bounce; on 0522 it REFUSES the covering-UP entirely (spent covering + accelerating D-1 sell = resume-down). This directly targets my dominant flaw of re-firing crowded-short covering-UP on weekend Fridays.",
+    "mbo_helped_or_hurt": "The never-masked TRADE-FLOW + PHASE-ACCELERATION tape is load-bearing on both live days and decisive on 0522; the L1 book layer (quote_bid_share only, no execution_authority on the blind pass) is stood down throughout. The phase-acceleration sign (building vs tapering into the close) is the cleanest general covering-vs-press discriminator this block offers.",
+    "execution": "SHADOW",
+    "no_averaging": "Per-event, no pooling. 0515 and 0522 share only the Friday class; their signs are opposite and independently derived (0515 up covering-bounce vs 0522 down resume-press)."
+  }
+}
