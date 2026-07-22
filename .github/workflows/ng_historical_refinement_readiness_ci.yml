@@ -1,0 +1,61 @@
+name: NG historical refinement readiness
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness.py
+      - .github/workflows/ng_historical_refinement_readiness_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness.py
+      - .github/workflows/ng_historical_refinement_readiness_ci.yml
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_historical_refinement_readiness.py \
+            tests/test_ng_historical_refinement_readiness.py
+
+      - name: Selftest
+        working-directory: research/kalshi
+        run: python ng_historical_refinement_readiness.py --selftest
+
+      - name: Unit tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_readiness.py' -v
+
+      - name: Build truthful repository readiness snapshot
+        working-directory: research/kalshi
+        run: |
+          python ng_historical_refinement_readiness.py \
+            --artifact-dir renders/ng_refine_s95 \
+            --out /tmp/ng_historical_refinement_readiness.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from ng_historical_refinement_readiness import validate_readiness_report
+
+          path = Path('/tmp/ng_historical_refinement_readiness.json')
+          report = json.loads(path.read_text(encoding='utf-8'))
+          validate_readiness_report(report)
+          assert report['remote_presence_inferred'] is False
+          assert report['paid_live_data_assumed'] is False
+          assert report['options_lane_started'] is False
+          print(report['status'], report['first_blocking_stage'])
+          PY
