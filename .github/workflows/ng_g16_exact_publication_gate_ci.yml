@@ -1,0 +1,49 @@
+name: NG G16 Exact Publication Gate CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_exact_publication_gate.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_curve_adapter.py'
+      - 'research/kalshi/ng_g16_path_score.py'
+      - 'research/kalshi/ng_chronological_validation.py'
+      - 'research/kalshi/tests/test_ng_g16_exact_publication_gate.py'
+      - '.github/workflows/ng_g16_exact_publication_gate_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_exact_publication_gate.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_curve_adapter.py'
+      - 'research/kalshi/ng_g16_path_score.py'
+      - 'research/kalshi/ng_chronological_validation.py'
+      - 'research/kalshi/tests/test_ng_g16_exact_publication_gate.py'
+      - '.github/workflows/ng_g16_exact_publication_gate_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile exact G16 publication chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_exact_publication_gate.py \
+            research/kalshi/ng_g16_exact_causal_pipeline.py \
+            research/kalshi/ng_g16_curve_adapter.py \
+            research/kalshi/ng_g16_path_score.py \
+            research/kalshi/ng_chronological_validation.py \
+            research/kalshi/tests/test_ng_g16_exact_publication_gate.py
+      - name: Run exact G16 publication selftest
+        working-directory: research/kalshi
+        run: python ng_g16_exact_publication_gate.py --selftest
+      - name: Run exact G16 publication tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_exact_publication_gate.py
