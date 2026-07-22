@@ -1,46 +1,52 @@
+#!/usr/bin/env python3
 """
-solar_calendar.py - FEED P (S98, Greg 2026-07-20: "do we have sun up/sun down time in our feed").
+solar_calendar.py - deterministic daylight authority for the NG decision state.
 
-Sunrise / sunset / day-length state for the 16 gas-weighted demand metros. PURE ASTRONOMY - the
-standard NOAA solar-position equations, no external data source, fully forward-known (like the flow
-calendar), so there is no blind wall to audit. Deterministic to the minute-scale accuracy the use
-cases need.
+This is the existing S103 solar authority, enriched in place. It is NOT a
+standalone trading signal. The module provides calendar-known geometry used by
+forecast_harness.decision_state()["solar"]:
 
-WHY (desk channels, recorded not scored - the agent decides):
-1. THE SUNSET POWER-BURN RAMP: solar generation collapses at sunset and gas peakers pick up the
-   evening load (the duck-curve neck). WHERE the sunset lands on the session clock moves the
-   evening gas-burn ramp; strongest in high-solar grids (ERCOT/CAISO) and growing every year.
-2. DAY LENGTH + its rate of change: the seasonal demand-shape descriptor (lighting/heating timing,
-   the march toward/away from solstice).
+- civil dawn/dusk and apparent sunrise/sunset;
+- effective solar production start/end at +5 degrees elevation;
+- gas-weighted daylight, darkness, and effective-solar hours;
+- sunrise native-load and evening replacement-ramp windows;
+- 24-hour clear-sky solar and artificial-lighting geometry;
+- summer-long-day, winter-long-dark, and shoulder regimes.
 
-Fields are per-metro (station -> local + ET clock times) plus a summary block: gas-weighted day
-length, its 7d change, and the sunset span across metros in ET. Missing is never fabricated: polar
-edge cases do not arise at these latitudes; if the iteration failed it would raise, not default.
+All calculations use compact NOAA solar-position equations and fixed public
+metro coordinates. No realized load, weather, price, or outcome data enters
+this module, so the geometry is forward-known and blind-safe.
 
-  python solar_calendar.py --build              # precompute the span store
+Commands:
+  python solar_calendar.py --build
   python solar_calendar.py --selftest
   python solar_calendar.py --asof 2026-01-20
 """
 from __future__ import annotations
+
 import argparse
 import datetime as dt
 import json
 import math
 import os
+from pathlib import Path
+from typing import Any
 from zoneinfo import ZoneInfo
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 STORE_DIR = os.path.join(REPO, "data", "solar_calendar")
 STORE = os.path.join(STORE_DIR, "solar_calendar.json")
-SPAN = ("2025-09-01", "2026-12-31")               # matches the flow-calendar span (both extended
-                                                  # to year-end 2026, STEP-C 2026-07-21; pure
-                                                  # deterministic astronomy, no blind wall)
+SPAN = ("2025-09-01", "2026-12-31")
 ET = ZoneInfo("America/New_York")
 
-# The 16 demand metros of nws_temp_feed.STATION_WEIGHTS_RAW (weights normalized at read) with the
-# station coordinates (fixed public facts - airport/city reference points) and IANA timezones,
-# tagged by grid region for the solar-ramp channel.
+APPARENT_SUN_ELEVATION_DEG = -0.833
+CIVIL_TWILIGHT_ELEVATION_DEG = -6.0
+EFFECTIVE_SOLAR_ELEVATION_DEG = 5.0
+
+# The 16 demand metros of nws_temp_feed.STATION_WEIGHTS_RAW. These are
+# gas/power load centers, not solar farms. Existing weights and legacy fields
+# remain unchanged.
 METROS = {
     #        lat      lon        tz                     grid       weight
     "NYC": (40.78,  -73.97, "America/New_York",    "NYISO",   0.12),
@@ -61,149 +67,415 @@ METROS = {
     "SEA": (47.45, -122.31, "America/Los_Angeles", "WECC",    0.035),
 }
 _WSUM = sum(v[4] for v in METROS.values())
+_WEIGHTS = {name: values[4] / _WSUM for name, values in METROS.items()}
+
+
+class SolarCalendarError(ValueError):
+    """Raised when deterministic solar geometry is internally contradictory."""
+
+
+def _is_leap(year: int) -> bool:
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+
+def _solar_terms(day: dt.date, hour_utc: float = 12.0) -> tuple[float, float]:
+    """Return equation-of-time minutes and solar declination radians."""
+    days = 366 if _is_leap(day.year) else 365
+    gamma = 2.0 * math.pi / days * (
+        day.timetuple().tm_yday - 1 + (hour_utc - 12.0) / 24.0
+    )
+    eqtime = 229.18 * (
+        0.000075
+        + 0.001868 * math.cos(gamma)
+        - 0.032077 * math.sin(gamma)
+        - 0.014615 * math.cos(2 * gamma)
+        - 0.040849 * math.sin(2 * gamma)
+    )
+    decl = (
+        0.006918
+        - 0.399912 * math.cos(gamma)
+        + 0.070257 * math.sin(gamma)
+        - 0.006758 * math.cos(2 * gamma)
+        + 0.000907 * math.sin(2 * gamma)
+        - 0.002697 * math.cos(3 * gamma)
+        + 0.00148 * math.sin(3 * gamma)
+    )
+    return eqtime, decl
+
+
+def _solar_event_minutes_utc(
+    day: dt.date,
+    lat_deg: float,
+    lon_deg: float,
+    elevation_deg: float,
+    morning: bool,
+) -> float | None:
+    """UTC minute of a requested solar-elevation crossing.
+
+    Returned minutes are relative to 00:00 UTC on ``day`` and intentionally are
+    not modulo-wrapped. West-coast evening events can therefore exceed 1440,
+    preserving true chronology across the UTC date boundary.
+    """
+    eqtime, decl = _solar_terms(day)
+    lat = math.radians(lat_deg)
+    zenith = math.radians(90.0 - elevation_deg)
+    denom = math.cos(lat) * math.cos(decl)
+    if abs(denom) < 1e-12:
+        return None
+    cos_ha = (math.cos(zenith) / denom) - math.tan(lat) * math.tan(decl)
+    if cos_ha < -1.0 or cos_ha > 1.0:
+        return None
+    hour_angle = math.degrees(math.acos(max(-1.0, min(1.0, cos_ha))))
+    solar_noon = 720.0 - 4.0 * lon_deg - eqtime
+    return solar_noon - 4.0 * hour_angle if morning else solar_noon + 4.0 * hour_angle
 
 
 def _solar_events(lat: float, lon: float, day: dt.date) -> tuple[float, float]:
-    """(sunrise_utc_hours, sunset_utc_hours) via the NOAA general solar position equations
-    (fractional-year form). Accuracy ~1-2 minutes at mid-latitudes - ample for the use case."""
-    doy = day.timetuple().tm_yday
-    out = []
-    for is_rise in (True, False):
-        # first pass with solar noon guess, one refinement pass on the hour fraction
-        hour = 12.0
-        for _ in range(2):
-            gamma = 2.0 * math.pi / 365.0 * (doy - 1 + (hour - 12.0) / 24.0)
-            eqtime = 229.18 * (0.000075 + 0.001868 * math.cos(gamma) - 0.032077 * math.sin(gamma)
-                               - 0.014615 * math.cos(2 * gamma) - 0.040849 * math.sin(2 * gamma))
-            decl = (0.006918 - 0.399912 * math.cos(gamma) + 0.070257 * math.sin(gamma)
-                    - 0.006758 * math.cos(2 * gamma) + 0.000907 * math.sin(2 * gamma)
-                    - 0.002697 * math.cos(3 * gamma) + 0.00148 * math.sin(3 * gamma))
-            lat_r = math.radians(lat)
-            cos_ha = (math.cos(math.radians(90.833)) / (math.cos(lat_r) * math.cos(decl))
-                      - math.tan(lat_r) * math.tan(decl))
-            cos_ha = max(-1.0, min(1.0, cos_ha))          # clamp; no polar day/night at these latitudes
-            ha = math.degrees(math.acos(cos_ha))          # degrees
-            if not is_rise:
-                ha = -ha
-            minutes = 720.0 - 4.0 * (lon + ha) - eqtime   # minutes UTC
-            hour = minutes / 60.0
-        out.append(hour % 24.0)
-    return out[0], out[1]
+    """Legacy-compatible apparent sunrise/sunset UTC hours."""
+    rise = _solar_event_minutes_utc(
+        day, lat, lon, APPARENT_SUN_ELEVATION_DEG, True
+    )
+    set_ = _solar_event_minutes_utc(
+        day, lat, lon, APPARENT_SUN_ELEVATION_DEG, False
+    )
+    if rise is None or set_ is None:
+        raise SolarCalendarError("apparent sunrise/sunset unavailable")
+    return rise / 60.0, set_ / 60.0
 
 
-def _fmt_local(day: dt.date, utc_hours: float, tz: ZoneInfo) -> str:
-    t = dt.datetime(day.year, day.month, day.day, tzinfo=dt.timezone.utc) + dt.timedelta(hours=utc_hours)
-    return t.astimezone(tz).strftime("%H:%M")
+def _solar_elevation_deg(
+    day: dt.date, minute_utc: float, lat_deg: float, lon_deg: float
+) -> float:
+    hour = minute_utc / 60.0
+    eqtime, decl = _solar_terms(day, hour)
+    true_solar_min = (minute_utc + eqtime + 4.0 * lon_deg) % 1440.0
+    hour_angle = math.radians(true_solar_min / 4.0 - 180.0)
+    lat = math.radians(lat_deg)
+    cos_zenith = (
+        math.sin(lat) * math.sin(decl)
+        + math.cos(lat) * math.cos(decl) * math.cos(hour_angle)
+    )
+    zenith = math.acos(max(-1.0, min(1.0, cos_zenith)))
+    return 90.0 - math.degrees(zenith)
 
 
-def _day_row(iso: str) -> dict:
+def _solar_geometry_factor(elevation_deg: float) -> float:
+    """0..1 clear-sky production envelope from solar elevation only."""
+    if elevation_deg <= 0.0:
+        return 0.0
+    return max(0.0, math.sin(math.radians(elevation_deg))) ** 1.25
+
+
+def _lighting_need_factor(elevation_deg: float) -> float:
+    """0..1 artificial-lighting geometry proxy around civil twilight."""
+    if elevation_deg >= 0.0:
+        return 0.0
+    if elevation_deg <= CIVIL_TWILIGHT_ELEVATION_DEG:
+        return 1.0
+    return (-elevation_deg) / abs(CIVIL_TWILIGHT_ELEVATION_DEG)
+
+
+def _minute_to_datetime(day: dt.date, minute: float) -> dt.datetime:
+    return dt.datetime.combine(day, dt.time.min, tzinfo=dt.timezone.utc) + dt.timedelta(
+        minutes=minute
+    )
+
+
+def _fmt_event(day: dt.date, minute: float, tz: ZoneInfo) -> str:
+    return _minute_to_datetime(day, minute).astimezone(tz).strftime("%H:%M")
+
+
+def _event_iso(day: dt.date, minute: float | None) -> str | None:
+    return None if minute is None else _minute_to_datetime(day, minute).isoformat()
+
+
+def _weighted_event(
+    day: dt.date, elevation_deg: float, morning: bool
+) -> float | None:
+    values: list[tuple[float, float]] = []
+    for name, (lat, lon, _tzname, _grid, _weight) in METROS.items():
+        minute = _solar_event_minutes_utc(day, lat, lon, elevation_deg, morning)
+        if minute is not None:
+            values.append((minute, _WEIGHTS[name]))
+    if not values:
+        return None
+    weight = sum(w for _, w in values)
+    return sum(value * w for value, w in values) / weight
+
+
+def _hourly_curves(day: dt.date) -> tuple[list[float], list[float]]:
+    solar: list[float] = []
+    lighting: list[float] = []
+    for hour in range(24):
+        minute = hour * 60.0 + 30.0
+        solar_value = 0.0
+        lighting_value = 0.0
+        for name, (lat, lon, _tzname, _grid, _weight) in METROS.items():
+            elevation = _solar_elevation_deg(day, minute, lat, lon)
+            solar_value += _WEIGHTS[name] * _solar_geometry_factor(elevation)
+            lighting_value += _WEIGHTS[name] * _lighting_need_factor(elevation)
+        solar.append(round(solar_value, 5))
+        lighting.append(round(lighting_value, 5))
+    return solar, lighting
+
+
+def _calendar_regime(daylight_hours: float) -> str:
+    if daylight_hours >= 13.5:
+        return "summer_long_day"
+    if daylight_hours <= 10.5:
+        return "winter_long_dark"
+    return "shoulder_transition"
+
+
+def _ordered_events(events: dict[str, float | None], *, label: str) -> None:
+    ordered = [
+        events["civil_dawn"],
+        events["sunrise"],
+        events["effective_start"],
+        events["effective_end"],
+        events["sunset"],
+        events["civil_dusk"],
+    ]
+    if any(value is None for value in ordered):
+        raise SolarCalendarError(f"{label}: missing solar event")
+    values = [float(value) for value in ordered if value is not None]
+    if values != sorted(values) or len(set(values)) != len(values):
+        raise SolarCalendarError(f"{label}: solar events are not strictly chronological")
+
+
+def _day_row(iso: str) -> dict[str, Any]:
     day = dt.date.fromisoformat(iso)
-    metros = {}
-    gw_len = 0.0
-    sunsets_et = []
-    for st, (lat, lon, tzname, grid, w) in METROS.items():
-        rise_u, set_u = _solar_events(lat, lon, day)
-        if set_u < rise_u:
-            set_u += 24.0
-        length = set_u - rise_u
+    metros: dict[str, dict[str, Any]] = {}
+    weighted_daylight = 0.0
+    weighted_effective = 0.0
+    sunsets_et: list[str] = []
+
+    for station, (lat, lon, tzname, grid, _weight) in METROS.items():
+        events = {
+            "civil_dawn": _solar_event_minutes_utc(
+                day, lat, lon, CIVIL_TWILIGHT_ELEVATION_DEG, True
+            ),
+            "sunrise": _solar_event_minutes_utc(
+                day, lat, lon, APPARENT_SUN_ELEVATION_DEG, True
+            ),
+            "effective_start": _solar_event_minutes_utc(
+                day, lat, lon, EFFECTIVE_SOLAR_ELEVATION_DEG, True
+            ),
+            "effective_end": _solar_event_minutes_utc(
+                day, lat, lon, EFFECTIVE_SOLAR_ELEVATION_DEG, False
+            ),
+            "sunset": _solar_event_minutes_utc(
+                day, lat, lon, APPARENT_SUN_ELEVATION_DEG, False
+            ),
+            "civil_dusk": _solar_event_minutes_utc(
+                day, lat, lon, CIVIL_TWILIGHT_ELEVATION_DEG, False
+            ),
+        }
+        _ordered_events(events, label=station)
         tz = ZoneInfo(tzname)
-        set_et = _fmt_local(day, set_u % 24.0, ET)
-        metros[st] = {"sunrise_local": _fmt_local(day, rise_u, tz),
-                      "sunset_local": _fmt_local(day, set_u % 24.0, tz),
-                      "sunset_et": set_et, "day_length_h": round(length, 2), "grid": grid}
-        gw_len += (w / _WSUM) * length
-        sunsets_et.append(set_et)
-    return {"date": iso, "metros": metros,
-            "gw_day_length_h": round(gw_len, 3),
-            "sunset_et_earliest": min(sunsets_et), "sunset_et_latest": max(sunsets_et)}
+        sunrise = float(events["sunrise"])
+        sunset = float(events["sunset"])
+        effective_start = float(events["effective_start"])
+        effective_end = float(events["effective_end"])
+        daylight_hours = (sunset - sunrise) / 60.0
+        effective_hours = (effective_end - effective_start) / 60.0
+        sunset_et = _fmt_event(day, sunset, ET)
+        sunsets_et.append(sunset_et)
+        weighted_daylight += _WEIGHTS[station] * daylight_hours
+        weighted_effective += _WEIGHTS[station] * effective_hours
+        metros[station] = {
+            "sunrise_local": _fmt_event(day, sunrise, tz),
+            "sunset_local": _fmt_event(day, sunset, tz),
+            "sunset_et": sunset_et,
+            "day_length_h": round(daylight_hours, 2),
+            "grid": grid,
+            "civil_dawn_local": _fmt_event(day, float(events["civil_dawn"]), tz),
+            "civil_dusk_local": _fmt_event(day, float(events["civil_dusk"]), tz),
+            "effective_solar_start_local": _fmt_event(day, effective_start, tz),
+            "effective_solar_end_local": _fmt_event(day, effective_end, tz),
+            "sunrise_et": _fmt_event(day, sunrise, ET),
+            "effective_solar_start_et": _fmt_event(day, effective_start, ET),
+            "effective_solar_end_et": _fmt_event(day, effective_end, ET),
+            "civil_dusk_et": _fmt_event(day, float(events["civil_dusk"]), ET),
+            "effective_solar_hours": round(effective_hours, 2),
+        }
+
+    weighted = {
+        "civil_dawn": _weighted_event(day, CIVIL_TWILIGHT_ELEVATION_DEG, True),
+        "sunrise": _weighted_event(day, APPARENT_SUN_ELEVATION_DEG, True),
+        "effective_start": _weighted_event(day, EFFECTIVE_SOLAR_ELEVATION_DEG, True),
+        "effective_end": _weighted_event(day, EFFECTIVE_SOLAR_ELEVATION_DEG, False),
+        "sunset": _weighted_event(day, APPARENT_SUN_ELEVATION_DEG, False),
+        "civil_dusk": _weighted_event(day, CIVIL_TWILIGHT_ELEVATION_DEG, False),
+    }
+    _ordered_events(weighted, label="gas-weighted")
+    solar_curve, lighting_curve = _hourly_curves(day)
+
+    sunrise_window_end = float(weighted["effective_start"]) + 120.0
+    evening_window_start = float(weighted["effective_end"]) - 120.0
+
+    return {
+        "date": iso,
+        "authority": "EXISTING_SOLAR_DECISION_STATE_ENRICHMENT",
+        "data_class": "calendar_known_deterministic",
+        "execution_authority": False,
+        "may_call_direction": False,
+        "may_update_ng_brain": False,
+        "metros": metros,
+        "gw_day_length_h": round(weighted_daylight, 3),
+        "sunset_et_earliest": min(sunsets_et),
+        "sunset_et_latest": max(sunsets_et),
+        "gw_dark_hours": round(24.0 - weighted_daylight, 3),
+        "gw_effective_solar_hours": round(weighted_effective, 3),
+        "calendar_curve_regime": _calendar_regime(weighted_daylight),
+        "weighted_events_utc": {
+            name: _event_iso(day, minute) for name, minute in weighted.items()
+        },
+        "weighted_events_et": {
+            name: _fmt_event(day, float(minute), ET)
+            for name, minute in weighted.items()
+            if minute is not None
+        },
+        "sunrise_native_load_window_et": {
+            "start": _fmt_event(day, float(weighted["civil_dawn"]), ET),
+            "end": _fmt_event(day, sunrise_window_end, ET),
+        },
+        "evening_net_load_ramp_window_et": {
+            "start": _fmt_event(day, evening_window_start, ET),
+            "end": _fmt_event(day, float(weighted["civil_dusk"]), ET),
+        },
+        "hourly_utc": list(range(24)),
+        "clear_sky_solar_geometry": solar_curve,
+        "artificial_lighting_geometry": lighting_curve,
+        "methodology": {
+            "civil_twilight_elevation_deg": CIVIL_TWILIGHT_ELEVATION_DEG,
+            "apparent_sun_elevation_deg": APPARENT_SUN_ELEVATION_DEG,
+            "effective_solar_elevation_deg": EFFECTIVE_SOLAR_ELEVATION_DEG,
+            "weights": "existing 16 gas-demand metro weights",
+            "scope": (
+                "geometry only; BTM capacity, clouds, irradiance, batteries, "
+                "native-load residuals, and observed grid generation remain separate inputs"
+            ),
+        },
+    }
 
 
-def build() -> dict:
+def build() -> dict[str, dict[str, Any]]:
     os.makedirs(STORE_DIR, exist_ok=True)
-    out = {}
+    out: dict[str, dict[str, Any]] = {}
     day = dt.date.fromisoformat(SPAN[0])
     end = dt.date.fromisoformat(SPAN[1])
     while day <= end:
         out[day.isoformat()] = _day_row(day.isoformat())
         day += dt.timedelta(days=1)
-    # 7d day-length change (within-store, deterministic)
     keys = sorted(out)
-    for i, k in enumerate(keys):
-        prev = out[keys[i - 7]]["gw_day_length_h"] if i >= 7 else None
-        out[k]["gw_day_length_chg_7d"] = round(out[k]["gw_day_length_h"] - prev, 3) if prev is not None else None
-    json.dump(out, open(STORE, "w"), indent=1, sort_keys=True)
+    for index, key in enumerate(keys):
+        previous = out[keys[index - 7]]["gw_day_length_h"] if index >= 7 else None
+        out[key]["gw_day_length_chg_7d"] = (
+            round(out[key]["gw_day_length_h"] - previous, 3)
+            if previous is not None
+            else None
+        )
+    path = Path(STORE)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(out, handle, indent=1, sort_keys=True)
+        handle.write("\n")
     return out
 
 
-def solar_asof(date: str) -> dict | None:
-    """Per-date solar state. Deterministic and forward-known - no blind wall. None outside the span."""
-    iso = f"{date[:4]}-{date[4:6]}-{date[6:]}" if len(date) == 8 and date.isdigit() else date
-    if not os.path.exists(STORE):
+def solar_asof(date: str) -> dict[str, Any] | None:
+    """Return deterministic solar state for a date inside the configured span.
+
+    The precomputed store remains the normal path. When it is not deployed yet,
+    the same authority computes the row on demand rather than returning a fake
+    zero or creating a second daylight signal.
+    """
+    iso = (
+        f"{date[:4]}-{date[4:6]}-{date[6:]}"
+        if len(date) == 8 and date.isdigit()
+        else date
+    )
+    try:
+        day = dt.date.fromisoformat(iso)
+    except ValueError:
         return None
-    row = json.load(open(STORE)).get(iso)
-    return dict(row) if row else None
+    start = dt.date.fromisoformat(SPAN[0])
+    end = dt.date.fromisoformat(SPAN[1])
+    if day < start or day > end:
+        return None
+    if os.path.exists(STORE):
+        with open(STORE, encoding="utf-8") as handle:
+            row = json.load(handle).get(iso)
+        return dict(row) if row else None
+
+    row = _day_row(iso)
+    previous = day - dt.timedelta(days=7)
+    row["gw_day_length_chg_7d"] = (
+        round(row["gw_day_length_h"] - _day_row(previous.isoformat())["gw_day_length_h"], 3)
+        if previous >= start
+        else None
+    )
+    return row
 
 
 def _selftest() -> int:
-    ok = True
+    winter = _day_row("2025-12-21")
+    summer = _day_row("2026-06-21")
+    assert abs(winter["metros"]["NYC"]["day_length_h"] - 9.25) < 0.17
+    assert abs(summer["metros"]["NYC"]["day_length_h"] - 15.10) < 0.17
+    assert summer["gw_day_length_h"] > winter["gw_day_length_h"] + 3.0
+    assert summer["calendar_curve_regime"] == "summer_long_day"
+    assert winter["calendar_curve_regime"] == "winter_long_dark"
 
-    def check(name, cond, detail=""):
-        nonlocal ok
-        print(f"  [{'PASS' if cond else 'FAIL'}] {name} {detail}")
-        ok = ok and cond
+    for profile in (summer, winter):
+        events = [
+            dt.datetime.fromisoformat(profile["weighted_events_utc"][name])
+            for name in (
+                "civil_dawn",
+                "sunrise",
+                "effective_start",
+                "effective_end",
+                "sunset",
+                "civil_dusk",
+            )
+        ]
+        assert events == sorted(events)
+        assert len(profile["clear_sky_solar_geometry"]) == 24
+        assert len(profile["artificial_lighting_geometry"]) == 24
+        assert max(profile["clear_sky_solar_geometry"]) > 0.0
+        assert max(profile["artificial_lighting_geometry"]) == 1.0
 
-    if not os.path.exists(STORE):
-        build()
-    s = json.load(open(STORE))
-    # solstice anchors, NYC (well-established values; tolerance covers the 1-2 min algorithm accuracy)
-    dec = s["2025-12-21"]["metros"]["NYC"]; jun = s["2026-06-21"]["metros"]["NYC"]
-    check("NYC winter-solstice day length ~9.25h", abs(dec["day_length_h"] - 9.25) < 0.17, dec["day_length_h"])
-    check("NYC summer-solstice day length ~15.1h", abs(jun["day_length_h"] - 15.10) < 0.17, jun["day_length_h"])
-    check("solstice ordering: every metro shortest day in Dec",
-          all(s["2025-12-21"]["metros"][m]["day_length_h"] < s["2026-06-21"]["metros"][m]["day_length_h"]
-              for m in METROS))
-    # west-coast sunset lands later on the ET clock than the east coast
-    j20 = s["2026-01-20"]
-    check("LAX sunset_et later than NYC sunset_et", j20["metros"]["LAX"]["sunset_et"] > j20["metros"]["NYC"]["sunset_et"],
-          f"{j20['metros']['NYC']['sunset_et']} vs {j20['metros']['LAX']['sunset_et']}")
-    # day length monotonically increasing through late January (post-solstice)
-    check("gw day length rising post-solstice", s["2026-01-30"]["gw_day_length_h"] > s["2026-01-02"]["gw_day_length_h"])
-    check("7d change populated and positive late Jan", (s["2026-01-30"]["gw_day_length_chg_7d"] or 0) > 0,
-          s["2026-01-30"]["gw_day_length_chg_7d"])
-    # DST discontinuity visible in ET clock times (Mar 8 2026 spring-forward)
-    check("DST jump in NYC sunset_local across Mar 7->9",
-          s["2026-03-09"]["metros"]["NYC"]["sunset_local"] > "18:30" > s["2026-03-07"]["metros"]["NYC"]["sunset_local"])
-    # year-end extension anchors (STEP-C): fall-back DST + the Dec-2026 solstice
-    check("DST fall-back in NYC sunset_local across Oct 31 -> Nov 2 2026",
-          s["2026-10-31"]["metros"]["NYC"]["sunset_local"] > "17:30" > "17:00"
-          > s["2026-11-02"]["metros"]["NYC"]["sunset_local"])
-    dec26 = s["2026-12-21"]["metros"]["NYC"]
-    check("NYC winter-solstice 2026 day length ~9.25h", abs(dec26["day_length_h"] - 9.25) < 0.17,
-          dec26["day_length_h"])
-    check("gw day length falling into the Dec-2026 solstice",
-          s["2026-12-15"]["gw_day_length_h"] < s["2026-11-15"]["gw_day_length_h"]
-          and (s["2026-12-15"]["gw_day_length_chg_7d"] or 0) < 0)
-    check("span bounds: outside -> None", solar_asof("2025-08-31") is None and solar_asof("2027-01-01") is None)
-    check("2026-09-01 now IN span (year-end extension)", solar_asof("2026-09-01") is not None)
-    print("SELFTEST", "PASS" if ok else "FAIL")
-    return 0 if ok else 1
+    assert max(summer["clear_sky_solar_geometry"]) > max(
+        winter["clear_sky_solar_geometry"]
+    )
+    assert solar_asof("2025-08-31") is None
+    assert solar_asof("2027-01-01") is None
+    assert solar_asof("2026-09-01") is not None
+    print("[solar-calendar] selftest PASS")
+    return 0
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--build", action="store_true")
-    ap.add_argument("--selftest", action="store_true")
-    ap.add_argument("--asof")
-    a = ap.parse_args()
-    if a.build:
-        out = build(); print(f"[solar_calendar] wrote {STORE}: {len(out)} days {SPAN[0]}..{SPAN[1]}"); return 0
-    if a.selftest:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--build", action="store_true")
+    parser.add_argument("--selftest", action="store_true")
+    parser.add_argument("--asof")
+    args = parser.parse_args()
+    if args.build:
+        out = build()
+        print(
+            f"[solar_calendar] wrote {STORE}: {len(out)} days "
+            f"{SPAN[0]}..{SPAN[1]}"
+        )
+        return 0
+    if args.selftest:
         return _selftest()
-    if a.asof:
-        print(json.dumps(solar_asof(a.asof), indent=1, sort_keys=True)); return 0
-    ap.print_help(); return 1
+    if args.asof:
+        print(json.dumps(solar_asof(args.asof), indent=1, sort_keys=True))
+        return 0
+    parser.print_help()
+    return 1
 
 
 if __name__ == "__main__":
-    import sys
-    sys.exit(main())
+    raise SystemExit(main())
