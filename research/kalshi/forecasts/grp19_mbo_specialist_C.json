@@ -1,0 +1,126 @@
+{
+  "specialist": "C",
+  "lens": "CORE INTRADAY TAPE (onset, continuation-vs-reversal, signed-flow divergence, exhaustion, give-back/absorption turns) - core/midweek owner",
+  "group": "g19",
+  "brain_version": "s102.9",
+  "round": 1,
+  "days_owned": ["20260512", "20260513", "20260519"],
+  "doctrine_note": "BLIND FIRST PASS: no prior blind exists to post-update, so I AM the forecast (100% my causal read; weight_assigned records no prior to weight against). Price curve is masked; my only market-force inputs are the never-masked tape_conditions (open-conditions protocol S102 - each owned day reads the PRIOR completed session's order-flow) plus the frozen non-price kitchen sink. I do NOT peek at a day's own realized-session tape to forecast that day. Magnitudes are derived from measurable flow/structure state, not fitted. HONEST bar: bearish down-default is held at REDUCED conviction, never claimed as sign-certain - the S105 accumulation/turn arm is checked and gated out, not ignored.",
+  "cross_cutting_mbo_finding": {
+    "headline": "The S105 big-print BUY-absorption accumulation arm is GATED OUT across every one of my open-condition tapes: big_print_b_share never reaches the 0.55 threshold anywhere in g19 (block max 0.537 on the 05-19 session; my owned-day opens read 0.458 / 0.446 / 0.395), so despite an extreme-AND-worsening COT short (MM net -107.5k -> -120.1k, 1y pctile 2.83 -> 0.94, the most crowded short in a year) there is NO confirmed turn to flip sign on.",
+    "what_it_means": "The crowded short is a standing UPSIDE-ASYMMETRY / covering-squeeze risk (bimodal tail), not a live turn signal. Per doctrine 'honest under-claim is a magnitude lever, not a sign justification', and 'the S3-down default is not sign-certain just because the HDD override is gated out' - so I hold the bearish read (steep contango, front NGM26 -0.25 to next, L48 storage vs-5yr +99.6 surplus, mild shoulder weather) at reduced conviction with the covering tail flagged, rather than either riding it hard OR flipping to turn.",
+    "usable_mbo_grain": "Only the COARSE grain carries signal: (1) phase-3 late flow FLIPS - 05-12 session ended -2559 phase2 then +409 phase3 with b_share climbing 0.431->0.445->0.475 = downside exhaustion / short-cover into the close, which CAPS Wed 05-13's downside; (2) resting-book bid-lean - qbid climbed to 0.528 on the low-volume 05-18 session (sellers hitting b_share 0.386 into stacked bids without breaking price) = absorption capping the 05-19 drift. Both are turn/absorption CONFIRMATION, not direction anticipation - consistent with the standing dipole discipline.",
+    "net_verdict": "Bearish regime persists but is MATURE and short-crowded; the tape shows selling that increasingly gets ABSORBED (late-session buy flips, bid-lean book) rather than capitulating - so I size DOWN days honestly small and lean chop/give-back on the midweek days rather than extending fresh cum-lows."
+  },
+  "days": [
+    {
+      "date": "20260512",
+      "dow": "Tue",
+      "day_class": "tue_core",
+      "blind_direction": "n.a. (first blind pass - no prior blind visible)",
+      "blind_net_usd": "n.a.",
+      "posterior_direction_by_horizon": {
+        "overnight_to_am": "down continuation - Monday (05-11) sold heavy and LATE-ACCELERATING (session -3214, phase3 -2692, b_share falling to 0.437); momentum carries into the reopen",
+        "midday_to_close": "down extends to a low then stabilizes/holds - Monday made a fresh cum-low with no absorption yet, so continuation early but round-trip risk into the close (mature-swing no-consecutive-extension caution)"
+      },
+      "expected_magnitude_usd": -230,
+      "expected_magnitude_band_usd": [-480, 40],
+      "onset_time_et": "2026-05-12 20:00 (continuation from the reopen; carries Monday's late-accelerating sell)",
+      "turn_time_et": "2026-05-12 12:30 (late stabilization / partial give-back off the low - no confirming buy-absorption, so a hold not a reversal)",
+      "trend_vs_chop": "trend (down) early, chop/hold late",
+      "continuation_vs_reversal": "continuation (down) with late round-trip risk - Monday's fresh cum-low argues against a clean second-day extension",
+      "path_p50_curve": [[20, 0], [22, -30], [0, -60], [2, -95], [4, -135], [6, -170], [8, -205], [10, -245], [12, -260], [14, -240], [16, -230]],
+      "confidence": "moderate",
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 1.0, "note": "first blind pass - no prior blind to weight against; 100% my causal read"},
+      "evidence_used": [
+        "Open-condition tape (session 05-11): session_signed_flow -3214, phase_signed_flow [-27,-495,-2692] = selling ACCELERATING into the close, phase_b_share falling 0.469->0.466->0.437 - live down momentum, no exhaustion signature yet",
+        "big_print_b_share 0.458 (sell-leaning) - no buy-absorption; accumulation arm not armed",
+        "Macro: steep contango (NGM26 front -0.25 to NGN26), L48 storage vs-5yr +99.6 surplus, mild shoulder weather (freeze risk 0, low HDD) - bearish backdrop supports the down default",
+        "qbid 0.509 near-neutral (slight bid) - book does not contradict; provides mild late-day floor"
+      ],
+      "evidence_rejected": [
+        "COT extreme-and-worsening short as a TURN/up signal - gated out: big_print_b_share 0.458 < 0.55, no buy-absorption confirmation, so it stays an upside TAIL risk not a sign flip",
+        "Sizing a large second-down day equal to Monday's flush - continuation days after a fresh cum-low typically undershoot the initiator; honest smaller size"
+      ],
+      "stand_down_reasons": [
+        "No book_trustworthy turn verdict and no buy-absorption - the standing crowded-short tail is acknowledged but NOT acted on as direction",
+        "Price curve masked - magnitude derived from flow intensity + structure, band kept wide"
+      ],
+      "selection_reason": "core-tape Tuesday, non-catalyst (EIA is 05-14): default C owner. Down-continuation off a heavy late-accelerating Monday sell, sized honestly for a mature second-day extension.",
+      "mbo_verdict": "DOWN continuation, moderate. Monday's late-accelerating sell (-2692 phase3) carries momentum; no absorption/buy-flip yet so no turn. Sized ~-230 (under Monday's flush) for a fresh-cum-low second day with late round-trip risk; crowded-short covering is the upside tail."
+    },
+    {
+      "date": "20260513",
+      "dow": "Wed",
+      "day_class": "wed_core",
+      "blind_direction": "n.a. (first blind pass - no prior blind visible)",
+      "blind_net_usd": "n.a.",
+      "posterior_direction_by_horizon": {
+        "overnight_to_am": "early down probe - two heavy sell days (05-11 -3214, 05-12 -2586) leave a bearish tilt into the reopen",
+        "midday_to_close": "give-back UP toward flat - the 05-12 session's phase-3 flow FLIP (+409, b_share climbing to 0.475) = downside exhaustion / short-cover; pre-EIA (print 05-14, T-1) positioning caps the range into a chop/hold"
+      },
+      "expected_magnitude_usd": -60,
+      "expected_magnitude_band_usd": [-280, 160],
+      "onset_time_et": "2026-05-13 04:00 (early down probe of the prior lows)",
+      "turn_time_et": "2026-05-13 08:30 (give-back turn - the late-Tue buy-absorption base holds; probe fails, drift back toward flat)",
+      "trend_vs_chop": "chop (pre-EIA consolidation / give-back day)",
+      "continuation_vs_reversal": "reversal-risk / round-trip - the late-05-12 buy flip caps downside; Wednesday drift is my known flaw, so I do NOT extend the down chain",
+      "path_p50_curve": [[20, 0], [22, -20], [0, -45], [2, -80], [4, -110], [6, -85], [8, -35], [10, -15], [12, -35], [14, -55], [16, -60]],
+      "confidence": "low-moderate",
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 1.0, "note": "first blind pass - no prior blind to weight against; 100% my causal read"},
+      "evidence_used": [
+        "Open-condition tape (session 05-12): session_signed_flow -2586 but phase_signed_flow [-436,-2559,+409] - phase-3 FLIPS POSITIVE with phase_b_share rising 0.431->0.445->0.475 = late buy-absorption / short-cover at the lows, a downside-exhaustion signature",
+        "flow_calendar: days_to_next_eia_release 1 (print 05-14 10:30) - pre-print consolidation compresses the range, favors chop over a directional extension",
+        "S105 self-correction: Wednesday chain-default over turn-state is my dominant miss (75%); the late-Tue absorption is exactly the turn-state to respect - do not ride the S3-down default",
+        "big_print_b_share 0.446 (still sell) - so it is exhaustion/cover, NOT a bullish reversal; hence near-flat, not up"
+      ],
+      "evidence_rejected": [
+        "session_signed_flow -2586 used directionally as a big DOWN Wednesday - the phase-3 buy flip + pre-EIA chop contradict a clean extension; sizing it down-big would repeat the Wednesday-drift flaw",
+        "MID-BLOCK RE-DERIVATION unlock to turn-side: conditions NOT fully met (buy-absorption never >=0.55; 05-12 made a NEW cum-low, failing the 'no new cum-extreme >=2 sessions' gate) - so I stay near-flat, I do not flip to up"
+      ],
+      "stand_down_reasons": [
+        "Formal accumulation/turn unlock not triggered (b-absorption < 0.55) - hold near-flat, do not flip sign to up",
+        "Pre-EIA day: directional conviction stands down into the print; range-compressed chop read only"
+      ],
+      "selection_reason": "core midweek Wednesday, non-catalyst (print is next day). C give-back/exhaustion read: late-Tue absorption + pre-EIA chop = near-flat with an early-down-probe-that-fails shape.",
+      "mbo_verdict": "NEAR-FLAT slight down (chop). The 05-12 phase-3 buy flip caps downside and pre-EIA positioning compresses the range; I resist the Wednesday down-chain default. Early probe to ~-110 fails, gives back to ~-60. Reversal/round-trip, not continuation."
+    },
+    {
+      "date": "20260519",
+      "dow": "Tue",
+      "day_class": "tue_core",
+      "blind_direction": "n.a. (first blind pass - no prior blind visible)",
+      "blind_net_usd": "n.a.",
+      "posterior_direction_by_horizon": {
+        "overnight_to_am": "quiet down drift - 05-18 was a LOW-volume sell (session -872, aggressor b_share 0.386) but with a bid-leaning book absorbing; mild bearish tilt into the reopen",
+        "midday_to_close": "drift-and-hold near a shallow low - resting-bid absorption (qbid 0.528) caps downside; expiry/opex-week short-cover is the upside tail on the extreme COT short"
+      },
+      "expected_magnitude_usd": -90,
+      "expected_magnitude_band_usd": [-330, 150],
+      "onset_time_et": "2026-05-19 02:00 (quiet down drift from the reopen; low-conviction sell)",
+      "turn_time_et": "2026-05-19 10:00 (shallow low then bid-absorption hold - sellers fail to break the stacked bids)",
+      "trend_vs_chop": "chop (low-volume drift; expiry/opex-week consolidation)",
+      "continuation_vs_reversal": "continuation (mild down-drift) with elevated bimodal covering-squeeze UP risk - COT short at 1y pctile 0.94 into NGM26 expiry T-5",
+      "path_p50_curve": [[20, 0], [22, -20], [0, -40], [2, -60], [4, -90], [6, -110], [8, -100], [10, -80], [12, -70], [14, -85], [16, -90]],
+      "confidence": "low-moderate",
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 1.0, "note": "first blind pass - no prior blind to weight against; 100% my causal read"},
+      "evidence_used": [
+        "Open-condition tape (session 05-18): session_signed_flow -872 on LOW volume (n_trades 21671, trades/min 15.1, ~half the week-1 sessions), phase_b_share [0.422,0.385,0.377] - sell-leaning aggressor but small net = low-conviction selling, no follow-through",
+        "l1_book qbid 0.528 (bid-leaning) - resting bids stacked; sellers hitting a low b_share INTO bids without breaking price = absorption, a downside floor",
+        "flow_calendar: days_to_futures_expiry 5 (NGM26 27th), days_to_opex 4 - mechanical expiry/opex-week chop; directional conviction low",
+        "COT (05-12 report) MM net -120065, 1y pctile 0.94 - most-crowded short in a year AND worsening: a standing covering-squeeze tail into expiry, held as risk not as a sign flip"
+      ],
+      "evidence_rejected": [
+        "The low b_share 0.386 read directionally as a big DOWN day - net is only -872 on half-volume and the book absorbs it; magnitude must stay small",
+        "Flipping to UP on the extreme COT short - big_print_b_share 0.395 (sell), no buy-absorption confirmation; the squeeze stays a TAIL, not the p50"
+      ],
+      "stand_down_reasons": [
+        "Low volume + expiry/opex chop = weak directional signal; keep magnitude small and band wide",
+        "Accumulation/turn arm gated out (b-absorption 0.395 << 0.55) - covering tail acknowledged, not acted on as direction"
+      ],
+      "selection_reason": "core-tape Tuesday, non-catalyst (EIA 05-21): default C owner. Low-conviction down-drift with bid-absorption floor, sized small for an expiry/opex-week chop; crowded-short covering flagged as the bimodal up tail.",
+      "mbo_verdict": "SLIGHT DOWN, low conviction (chop). Quiet low-volume sell into a bid-leaning absorbing book; expiry/opex-week consolidation. Sized small ~-90 with a wide band because the 1y-extreme COT short into expiry is a real covering-squeeze up tail (bimodal)."
+    }
+  ],
+  "summary": "g19 is a MATURE bearish shoulder-season block (steep contango, surplus storage, mild weather) with a crowded-AND-worsening managed-money short (1y pctile 2.83 -> 0.94). The S105 accumulation/turn arm is gated out on all three of my days (big_print_b_share never >=0.55; opens 0.458/0.446/0.395), so I hold the down-default at reduced conviction rather than flip to turn - the crowded short is an upside TAIL, not a signal. 05-12 Tue: DOWN continuation (-230) off a heavy late-accelerating Monday sell, sized under the initiator for a fresh-cum-low second day. 05-13 Wed: NEAR-FLAT (-60) - the late-05-12 phase-3 buy flip caps downside and pre-EIA chop compresses the range; I resist the Wednesday down-chain default. 05-19 Tue: SLIGHT DOWN (-90) - low-volume sell absorbed by a bid-leaning book into expiry/opex chop, wide band for the covering-squeeze tail. Usable MBO grain across all: phase-3 flow flips and book bid-lean = absorption/turn confirmation, never tick direction."
+}

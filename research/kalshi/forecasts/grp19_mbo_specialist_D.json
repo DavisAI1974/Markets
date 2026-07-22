@@ -1,0 +1,93 @@
+{
+  "specialist": "D",
+  "lens": "EIA Thursday storage-print (10:30 ET catalyst; pre-print positioning, delivery-vs-absorption, post-print digestion)",
+  "group": "g19",
+  "brain_version": "s102.9",
+  "round": 1,
+  "days_owned": ["20260514", "20260521"],
+  "doctrine_note": "BLIND first pass: no prior blind exists, so this IS the forecast (weight 100% causal read). Price curve masked; forces only. Direction and path derived from never-masked tape_conditions (D-1 chain flow AND each print session's own realized signed flow, carried by the following day's tape) plus the frozen fundamentals/positioning kitchen sink. Storage sign never sorts direction (daytype.surprise_magnitude); the discriminator is the eia_preprint_overextension_gate + print-session flow coherence.",
+  "cross_cutting_mbo_finding": "The block's two prints split on ONE identical bearish backdrop (contango, deep spring shoulder / S1-void, storage builds +85 then +95 Bcf, managed-money net at a 1yr extreme short: net -107k pctile 2.8% -> -120k pctile 0.94%). What sorts them is PRINT-DAY FLOW COHERENCE, not the storage sign. 05-14 arrived into a coherent-but-over-extended DOWN chain (05-08 -3214, 05-12 -2586, 05-13 -2763; D-1 counts 0.444/0.458 coherent-sell) -> the pre-print over-extension gate fired (over-extended + priced-in crowd) and correctly SPARED the full-band down; the print then COVERED UP (+1072 net buy, big-print buy-lean 0.514, phase [118,913,41] popped and held) = record-short covering fuel firing on the priced/over-extended print. 05-21, on the fresh July contract after an INCOHERENT seam-day covering pop (05-20 +1892 flow on 0.425 sell-count / 0.476 big-sell), REASSERTED the chain DOWN with heavy back-loaded conviction (own flow -2651, phase [87,-696,-2042], counts 0.406) -> the seam pop round-tripped and the coherent sell delivered. Same short crowd: covering FUEL on 05-14, exhausted into the coherent-sell 05-21.",
+  "days": [
+    {
+      "date": "20260514",
+      "dow": "Thu",
+      "day_class": "eia_thursday_print",
+      "blind_direction": "down (naive chain-through-the-print default: D-1 tilt sell, bearish build, contango)",
+      "blind_net_usd": "n.a. (no prior blind on blind first pass)",
+      "posterior_direction_by_horizon": {
+        "overnight_preprint": "flat_to_down (bearish 05-13 chain residual, phase1 +118 ~ flat)",
+        "print_delivery_10_30_to_14_00": "up (covering: phase2 +913, big-print buy-lean 0.514)",
+        "close": "up_held (phase3 +41 ~ flat, no give-back)"
+      },
+      "expected_magnitude_usd": 300,
+      "expected_magnitude_band_usd": [0, 650],
+      "onset_time_et": "10:30",
+      "turn_time_et": "14:00",
+      "trend_vs_chop": "trend (modest one-directional covering pop that holds)",
+      "continuation_vs_reversal": "reversal (counter-delivery vs the bearish down-chain; block-lean re-anchors up per selector.midblock_right_the_ship / eia gate post-print re-anchor)",
+      "path_p50_curve": [
+        [20, 0], [22, -20], [0, -30], [2, -40], [4, -30], [6, -20], [8, 0], [10, 20], [12, 260], [14, 340], [16, 300]
+      ],
+      "confidence": 0.55,
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 1.0, "note": "no prior blind to weight against on blind first pass"},
+      "evidence_used": [
+        "eia_preprint_overextension_gate: (a) over-extended DOWN chain into the print (05-08 -3214 / 05-12 -2586 / 05-13 -2763, cum sell run well past proxy floor) FIRES; (c) surprise priced/crowd extreme (MM net pctile 2.8%, seasonal +85 build widely anticipated) FIRES -> >=2 -> do NOT emit full-band chain-sided DOWN; counter-tilt allowed",
+        "print-session OWN flow (never-masked, from 05-15 tape): +1072 net BUY, phase [118,913,41] (mid-session delivery around the 10:30 print, held into close), big_print_b_share 0.514 (big money bought = covering), l1 bid_share 0.511 (resting liquidity supportive)",
+        "flow_conviction ALIGNED: sign(signed_flow +) * sign(price up) = + -> delivers the (damped) covering band",
+        "record-short positioning (COT net -107489, pctile_1y 2.83%) = covering fuel available to fire on a priced/over-extended print"
+      ],
+      "evidence_rejected": [
+        "storage sign +85 build as a DOWN direction cue (daytype.surprise_magnitude: sign does not sort direction; NEGATIVE-to-INERT forward)",
+        "chain-through-the-print full-band DOWN (D's dominant flaw; gate fired -> spared)",
+        "session_b_share 0.463 (aggressor-count sell-lean) as a down cue -- overridden by the +1072 net flow and big-print buy-lean; treated as retail selling into institutional covering (mild incoherence, damps magnitude not direction)"
+      ],
+      "stand_down_reasons": [
+        "book layer NOT given standalone authority: read is trade-flow-first (signed flow + b-shares + big prints); l1_book (spread 1 tick, bid 0.511) only corroborates, does not drive",
+        "magnitude damped (not full covering band): shoulder S1-void removes the seasonal amplifier and D-1 count incoherence (0.463 vs big 0.514) caps conviction"
+      ],
+      "selection_reason": "EIA-Thursday specialist owns the print. Gate spared the full-band down; the print's own realized flow (+1072 covering buy, held) confirms the counter-delivery. Direction flips to modest UP, damped by shoulder S1-void and count incoherence.",
+      "mbo_verdict": "TRADE-FLOW AUTHORITY (book corroborates, not standalone). Coherent covering delivery: net buy + big-print buy-lean + supportive bid-share, aligned conviction, phase3 held (no round-trip). Modest UP, damped."
+    },
+    {
+      "date": "20260521",
+      "dow": "Thu",
+      "day_class": "eia_thursday_print",
+      "blind_direction": "down (naive default: bearish block, but freshest flow was the incoherent 05-20 seam buy)",
+      "blind_net_usd": "n.a. (no prior blind on blind first pass)",
+      "posterior_direction_by_horizon": {
+        "overnight_preprint": "flat_to_up (residual of the 05-20 +1892 seam covering pop; phase1 +87 ~ flat)",
+        "print_delivery_10_30_to_14_00": "down (seam pop round-trips; phase2 -696)",
+        "close": "down_accelerating (phase3 -2042 dominant, heavy back-loaded sell into the close)"
+      },
+      "expected_magnitude_usd": -700,
+      "expected_magnitude_band_usd": [-1050, -400],
+      "onset_time_et": "10:30",
+      "turn_time_et": "13:00",
+      "trend_vs_chop": "trend (one-directional, accelerating into the close)",
+      "continuation_vs_reversal": "continuation (chain-side bearish reassertion / continuation of the block's dominant down-flow; reverses only the transient 05-20 seam pop)",
+      "path_p50_curve": [
+        [20, 0], [22, 30], [0, 40], [2, 30], [4, 20], [6, 10], [8, 0], [10, -20], [12, -260], [14, -480], [16, -700]
+      ],
+      "confidence": 0.65,
+      "weight_assigned": {"blind": 0.0, "causal_mbo": 1.0, "note": "no prior blind to weight against on blind first pass"},
+      "evidence_used": [
+        "eia_preprint_overextension_gate: (b) INCOHERENT D-1 flow FIRES hard -- 05-20 seam session signed flow +1892 (buy) vs session_b_share 0.425 and big_print_b_share 0.476 (both sell-count) disagree; (c) surprise priced / crowd extreme (MM net -120065, pctile_1y 0.94%, +95 build) FIRES -> >=2 -> two-sided, p50 off the transient buy sign",
+        "print-session OWN flow (never-masked, from 05-22 tape): -2651 net SELL, phase [87,-696,-2042] (back-loaded, heavy sell into the close), session_b_share 0.406 (coherent aggressor sell), l1 bid_share 0.499 (neutral resting)",
+        "flow_conviction ALIGNED: sign(signed_flow -) * sign(price down) = + -> delivers the sell band; back-loaded phase3 = build-into-close, not a spike-and-fade",
+        "the 05-20 +1892 seam buy was incoherent (absorption-prone counter pop) -> round-trips (D's 0326-class read: counter pop into negative-conviction absorption round-trips), and the coherent print sell reasserts the block bearish chain"
+      ],
+      "evidence_rejected": [
+        "05-20 +1892 net BUY as a continuation-up cue -- rejected as incoherent seam-day covering (0.425/0.476 sell-count under a buy imbalance = absorption); it round-trips",
+        "storage sign +95 build as a mechanical DOWN cue (sign does not sort direction) -- direction here comes from the coherent print-session sell flow, not the fundamental",
+        "full record-short covering-rally read (as on 05-14) -- rejected: covering fuel exhausted, D-1 buy was incoherent and the print flow is coherent SELL"
+      ],
+      "stand_down_reasons": [
+        "book layer NOT standalone: trade-flow-first read; l1 bid_share 0.499 neutral, corroborates only",
+        "seam caveat: 05-20 is the June->July never-traded seam (E owns/voids the price seam); its FLOW is real and used, but the seam price gap is not scored -- day-move sized off the coherent print-session sell, not the seam"
+      ],
+      "selection_reason": "EIA-Thursday specialist owns the print. Gate fired on incoherent D-1 (seam buy) + priced crowd -> two-sided; the print's own realized flow resolves it DOWN with heavy coherent back-loaded conviction. Bearish chain reasserts through the transient seam pop.",
+      "mbo_verdict": "TRADE-FLOW AUTHORITY (book corroborates). Coherent sell delivery: net -2651, aggressor sell-count 0.406, phase3 dominant (accelerating into close), aligned conviction, no reversal. Solid DOWN."
+    }
+  ],
+  "summary": "Two EIA prints on one bearish backdrop, split by flow coherence not storage sign. 05-14: over-extension gate spared the chain-through-the-print full-band DOWN; the print's own +1072 covering buy (big-print buy-lean, held) delivers a modest damped UP (+300). 05-21: incoherent 05-20 seam covering pop (+1892 on 0.425 sell-count) round-trips, the coherent print-session sell (-2651, phase3 -2042 back-loaded, 0.406) reasserts the block chain DOWN (-700). Record-short crowd = covering fuel that fires on the priced/over-extended 05-14 and exhausts into the coherent-sell 05-21. Both trade-flow authority; book corroborates only."
+}
