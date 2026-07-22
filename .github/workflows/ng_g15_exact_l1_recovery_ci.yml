@@ -1,0 +1,69 @@
+name: G15 Exact-Contract L1 Recovery
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g15_exact_l1_recovery.py'
+      - 'research/kalshi/renders/ng_refine_s95/g15_mbo_l1_manifest.json'
+      - 'research/kalshi/tests/test_ng_g15_exact_l1_recovery.py'
+      - '.github/workflows/ng_g15_exact_l1_recovery_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g15_exact_l1_recovery.py'
+      - 'research/kalshi/renders/ng_refine_s95/g15_mbo_l1_manifest.json'
+      - 'research/kalshi/tests/test_ng_g15_exact_l1_recovery.py'
+      - '.github/workflows/ng_g15_exact_l1_recovery_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile recovery path and tests
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g15_corpus_basis_gate.py \
+            research/kalshi/ng_g15_exact_l1_recovery.py \
+            research/kalshi/tests/test_ng_g15_exact_l1_recovery.py
+      - name: Run recovery self-test
+        run: python research/kalshi/ng_g15_exact_l1_recovery.py selftest
+      - name: Run recovery unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g15_exact_l1_recovery.py
+      - name: Build exact recovery plan from committed inventory
+        run: |
+          python research/kalshi/ng_g15_exact_l1_recovery.py plan \
+            --manifest research/kalshi/renders/ng_refine_s95/g15_mbo_l1_manifest.json \
+            --out /tmp/g15_exact_l1_recovery_plan.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/g15_exact_l1_recovery_plan.json'))
+          assert p['status']=='RECOVERY_PLAN_READY', p['status']
+          assert p['blocked_l1_days']==[
+              '20260313','20260315','20260316','20260317','20260318','20260319'
+          ]
+          assert len(p['requests'])==1
+          r=p['requests'][0]
+          assert r['dataset']=='GLBX.MDP3'
+          assert r['schema']=='mbp-1'
+          assert r['stype_in']=='raw_symbol'
+          assert r['symbol']=='NGJ26'
+          assert r['expected_instrument_id']==1008
+          assert r['start']=='2026-03-13'
+          assert r['end_exclusive']=='2026-03-20'
+          assert '.v.0' not in r['pull_command']
+          assert p['paid_pull_authority'] is False
+          assert p['execution_authority'] is False
+          assert p['may_update_manifest_without_observation'] is False
+          print('exact recovery request:',r['symbol'],r['start'],r['end_exclusive'])
+          print('fingerprint:',p['fingerprint'])
+          PY
