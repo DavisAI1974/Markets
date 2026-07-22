@@ -22,6 +22,7 @@ def inputs(candidate="g15_mbo.signed_flow", requested=True):
     registry = gate._fixture_registry()
     registry["candidates"][0]["proposal_id"] = candidate
     registry["candidates"][0]["mechanism"] = candidate
+    registry.pop("registry_fingerprint", None)
     registry["registry_fingerprint"] = gate._fingerprint(registry)
     plan = gate.build_shadow_plan(forecast, gate._fixture_blind_state(), registry)
     state = gate._fixture_feature()
