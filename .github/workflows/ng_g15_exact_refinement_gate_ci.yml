@@ -1,0 +1,44 @@
+name: G15 Exact Refinement Gate CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g15_exact_refinement_gate.py'
+      - 'research/kalshi/ng_g15_exact_replay_completion.py'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/tests/test_ng_g15_exact_refinement_gate.py'
+      - '.github/workflows/ng_g15_exact_refinement_gate_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g15_exact_refinement_gate.py'
+      - 'research/kalshi/ng_g15_exact_replay_completion.py'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/tests/test_ng_g15_exact_refinement_gate.py'
+      - '.github/workflows/ng_g15_exact_refinement_gate_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile exact replay and refinement contracts
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g15_exact_replay_completion.py \
+            research/kalshi/ng_g15_pipeline.py \
+            research/kalshi/ng_g15_exact_refinement_gate.py \
+            research/kalshi/tests/test_ng_g15_exact_refinement_gate.py
+      - name: Run exact refinement self-test
+        run: python research/kalshi/ng_g15_exact_refinement_gate.py --selftest
+      - name: Run exact refinement unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g15_exact_refinement_gate.py
