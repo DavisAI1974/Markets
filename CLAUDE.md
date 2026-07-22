@@ -16,14 +16,14 @@ price curve** — no separate blind lens (that duplication caused the drift). BU
 gold `agents/refine_gold_s105/` (chmod 0444 + sha256 manifest); **`verify_gold.py` = the concrete walls**
 (hard-fail any run on a tampered vault; wired into stage_group + both coordinators; tamper-proven);
 `agents/blind_mode.md` (the minus-price wrapper, repeals the NO-MBO amputation); render `break_gaps()`
-fix (no weekend straight-line bridge). **OPEN — Greg decides FIRST next session**: is price the ONLY
-difference (Option A: refine drops its posterior-update/weight-split so both forecast from-scratch — but
-that EVOLVES refine off the frozen gold) OR do we preserve the gold refine's posterior-update (Option B:
-refine also sees the blind's prior, an extra beyond price)? **DO NOT WIRE THE BLIND UNTIL DECIDED.** Then:
-wire blind->mbo_specialist+blind_mode, unify coordinator schema, render-continuity fix (one polyline),
-the **G18 VALIDATION** (blind+price must reproduce refine err8; blind masked vs old blind 5/10), fix the
-3 plumbing defects, re-run the SUSPECT G19 blind, resume G20+. **Scoreboard = forward-curve error, NOT
-daily direction hit-rate.**
+fix (no weekend straight-line bridge); THIRD off-site copy in the private repo `DavisAI1974/Agent-Davis`.
+**RESOLVED (Greg, FINAL): blind and refine are ONE agent; the ONLY difference is the price curve. The old
+blind is DELETED and does not exist** (`blind_shared.md` + `blind_class_{A..E}.md` + `blind_angle_*` git-
+rm'd). No A/B question, no validation tests (Greg eliminated them) - the blind IS `mbo_specialist_<X>` +
+`blind_mode.md`. NEXT: wire the blind spawn + unify the coordinator schema (blind emits the refine
+`expected_magnitude_usd`/`path_p50_curve`), render-continuity fix (one polyline), fix the 3 plumbing
+defects, re-run the SUSPECT G19 blind under the new blind, resume G20+. **Scoreboard = forward-curve
+error, NOT daily direction hit-rate.**
 
 ## S104 — THE FRIDAY->MONDAY CASCADE CLEANUP + G15 MBO ROUND 2 (12/12, err 66) + COORDINATOR GUARD + brain s102.5 (read `SESSION_HANDOFF_2026-07-21_S104.md` + `DROP_IN_S105.md`)
 

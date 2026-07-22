@@ -30,29 +30,29 @@ Have every group "sitting ready with its data fixed" — turnkey, so all we do i
 start running (forecasting) multiple groups at once: **one group = two weeks**, finish its full cycle,
 then the next. Running ahead is scope creep waiting to happen.
 
-## S105 RE-ARCHITECTURE (Greg, decisive) — BLIND = REFINE GOLD, MINUS ONLY THE PRICE CURVE
-The separate blind lens set (`blind_shared.md` + `blind_class_{A..E}.md`) is BEING RETIRED. It drifted
-from the refine lenses and produced a fatal contradiction: `blind_shared.md` said "USE the full MBO
-flow," while all five `blind_class_*` said "NO MBO" — the agents got both, undefined behavior, and the
-blind under-performed. THE FIX: there is no separate blind lens. The blind IS the refine gold specialist
-(`mbo_specialist_{A..E}.md` + `mbo_refine_shared.md`) run in BLIND MODE via the thin wrapper
-`blind_mode.md`, which subtracts EXACTLY ONE thing — the PRICE CURVE — and repeals the NO-MBO amputation.
-One reasoning stack, two data modes; they can never drift again.
-- **GOLD VAULT**: `agents/refine_gold_s105/` is a FROZEN, chmod-0444, sha256-checksummed snapshot of the
-  gold refine (G18 err 8). `verify_gold.py` (wired into stage_group + both coordinators) HARD-FAILS any
-  run if the vault is tampered, and announces if the live reasoning has drifted from gold.
-- **OPEN — Greg decides FIRST (S106)**: is the ONLY difference truly the price curve (Option A: refine
-  stops the posterior-update / weight-split so both forecast from-scratch, refine just also sees price —
-  but this EVOLVES refine off the frozen gold), OR do we preserve the gold refine's posterior-update
-  (Option B: refine also sees the blind's prior, an extra beyond price)? Do NOT wire the blind until this
-  is decided. `blind_mode.md` currently encodes the A-compatible first-pass framing.
+## S105 RE-ARCHITECTURE (Greg, FINAL) — BLIND AND REFINE ARE ONE AGENT; THE ONLY DIFFERENCE IS THE PRICE CURVE
+There is no separate blind. The old blind stack (`blind_shared.md` + `blind_class_{A..E}.md` +
+`blind_angle_*`) was DELETED in S105 and does not exist — it had drifted into a fatal contradiction
+(shared doc said "USE MBO," the five lenses said "NO MBO") and Greg retired it outright. THE MODEL NOW:
+the blind and the refine are the SAME 5-specialist engine (`mbo_specialist_{A..E}.md` +
+`mbo_refine_shared.md`). "Refine" = that engine WITH the price curve. "Blind" = that engine WITHOUT the
+price curve, via the thin wrapper `blind_mode.md` (subtracts ONLY the price curve, keeps the full MBO
+flow read). They are the same thing; price is the ONLY difference. One reasoning stack, two data modes —
+they cannot drift again because there is only one set of lenses. (Greg: "we are the same thing except one
+cant see the price curve... I'm not going to use old blind anymore... this is the new blind and the old
+blind doesn't exist anymore.")
+- **GOLD VAULT (three copies)**: `agents/refine_gold_s105/` = FROZEN, chmod-0444, sha256-checksummed
+  snapshot of the gold engine (G18 err 8). `verify_gold.py` (wired into stage_group + both coordinators)
+  HARD-FAILS any run if the vault is tampered, and announces if the live reasoning drifted from gold.
+  Copy 3 = the off-site PRIVATE repo `DavisAI1974/Agent-Davis`. Clone FROM the vault for any venture,
+  never a working model; a working copy that EARNS promotion becomes a NEW dated snapshot, never an
+  overwrite.
 
-## THE OPERATING FRAME (Greg, S104 — supersedes the 3-angle-panel loop below for new groups)
-- **FIVE day-class specialists for BOTH blind and refine, every run**: A weekend-seam / B Monday /
-  C core / D Thu-EIA / E Fri-expiry. Day-class lenses = `mbo_specialist_{A..E}.md`. BOTH the refine and
-  (per the S105 re-architecture above) the blind now run these SAME five lenses — the blind adds
-  `blind_mode.md` (minus price); the old `blind_shared.md` / `blind_class_{A..E}.md` are SUPERSEDED,
-  pending the A/B decision + wiring.
+## THE OPERATING FRAME (Greg, S104-S105)
+- **FIVE day-class specialists, ONE engine for both modes, every run**: A weekend-seam / B Monday /
+  C core / D Thu-EIA / E Fri-expiry. Lenses = `mbo_specialist_{A..E}.md` + `mbo_refine_shared.md`. REFINE
+  runs them with price; BLIND runs the SAME lenses + `blind_mode.md` (minus price). No separate blind
+  files exist.
 - **FOCUS = FRIDAY AND MONDAY.** Friday is the cascade root (11/22 Fridays wrong-signed; 10/14 bad
   Mondays root to a mis-read Friday exit). E must emit the 9-field weekend `handoff_out`
   (exit_type + monday_bias); E carries the PRIOR-OVER-STATE fix (a turn/exhaustion GATE checked
@@ -82,9 +82,9 @@ One reasoning stack, two data modes; they can never drift again.
 - `refine_gold_s105/` — the FROZEN gold refine (chmod 0444) + `CHECKSUMS.sha256`. UNTOUCHABLE; guarded by
   `../verify_gold.py`. Never edit; iterate on the working copies only.
 - `refine.md` — the single-agent unblinded refine directive (pre-S104 pattern; kept for reference).
-- SUPERSEDED (pending the A/B decision + wiring; kept for the walked record, do not spawn from):
-  `blind_shared.md` (stale 3-agent averaging doc + the NO-MBO contradiction), `blind_class_{A..E}.md`
-  (the amputated blind lenses), `blind_angle_{storage,positioning,weather}.md` (the S103 3-angle panel).
+- DELETED in S105 (the old blind; recoverable from git history if ever needed, but do NOT resurrect):
+  `blind_shared.md`, `blind_class_{A..E}.md`, `blind_angle_{storage,positioning,weather}.md`. The blind
+  is `mbo_specialist_<X>.md` + `blind_mode.md` now — nothing else.
 
 ## SHARED SUBSTRATE — done ONCE per session (see GROUP_PRECHECK_S103.md)
 Creds (env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY for platform_sync/boto3) + full-history
@@ -106,7 +106,7 @@ stores pulled once + the roll map. Covers every group. Do not repeat.
      the weekend bridge read per Monday.
    - **Wave 3:** B (Monday) — spawn AFTER A finishes; B consumes A's bridge LIVE before committing the
      Monday number (A informs, B decides, B owns it).
-   All behind the wall (blind_shared.md), model opus. Sequencing alone recovers ~80% of the 0420
+   All run the SAME lenses (`mbo_specialist_<X>.md`) + `blind_mode.md` (minus price), model opus. Sequencing alone recovers ~80% of the 0420
    magnitude miss and makes the Monday number decision-legit instead of borrowed.
    **ESCALATION (Greg S105): if a fixed sequence still causes issues (a dependency that a static order
    can't satisfy, ordering conflicts), build a LIVE ORCHESTRATOR** that resolves the dependency graph

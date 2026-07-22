@@ -10,15 +10,11 @@ python3 research/kalshi/verify_gold.py   # confirm the refine gold vault is inta
 Read in order: `SESSION_HANDOFF_2026-07-22_S105.md` (this session, IN FULL) -> `research/kalshi/agents/README.md`
 (the handbook, updated S105) -> `CLAUDE.md` header.
 
-## 1. THE FIRST THING — Greg decides A vs B (nothing else moves until then)
-The blind is being re-architected to be **the refine gold specialist minus ONLY the price curve**
-(Greg's decisive call, S105). But the gold refine has a SECOND difference: it's a POSTERIOR UPDATE (reads
-the blind's forecast + weights blind-vs-MBO). To make "price is the only difference" true, Greg picks:
-- **A — true symmetry**: both forecast from scratch; refine just also sees price. Clean, but EVOLVES
-  refine off the frozen gold.
-- **B — preserve the gold refine**: keep its posterior-update; accept refine also sees the blind's prior.
-DO NOT ASSUME. DO NOT START CHANGING THINGS. Ask Greg, then proceed. (`blind_mode.md` currently encodes
-A-compatible first-pass framing.)
+## 1. SETTLED (Greg, FINAL, S105) — blind and refine are ONE agent; price is the only difference
+The old blind is DELETED and does not exist. The blind IS the 5-specialist engine
+(`mbo_specialist_{A..E}.md` + `mbo_refine_shared.md`) + `blind_mode.md` (minus price). "Refine" = the
+same engine WITH price. No A/B question (settled: same thing minus price), no validation tests (Greg
+eliminated them). Just build it as fact and run.
 
 ## 2. What's already BUILT and PROTECTED (S105 — do not rebuild)
 - `agents/refine_gold_s105/` = FROZEN gold refine (chmod 0444) + `CHECKSUMS.sha256`. UNTOUCHABLE.
@@ -31,19 +27,17 @@ A-compatible first-pass framing.)
   any venture, never from a working model. A working copy that EARNS promotion = a NEW dated snapshot in
   the vault (refine_gold_s106/...), never an overwrite. The vault does not auto-update.
 
-## 3. Then, in order (all gated on step 1)
-1. Wire blind spawn -> `mbo_specialist_<X>.md` + `blind_mode.md`; retire (move aside, don't delete)
-   `blind_shared.md` + `blind_class_{A..E}.md` + `blind_angle_*`. Unify coordinator schema
-   (`expected_magnitude_usd` / `path_p50_curve` for both).
+## 3. Then, in order
+1. Wire the blind spawn -> `mbo_specialist_<X>.md` + `blind_mode.md` (old blind already DELETED). Unify
+   the coordinator schema so the blind emits the refine `expected_magnitude_usd` / `path_p50_curve` and
+   ONE coordinator scores both.
 2. Render continuity fix (Q2): forecast as ONE polyline, NaN only at >3h gaps, both coordinators.
-3. **VALIDATION on G18** (has old blind 5/10 +$440 AND gold refine err 8 staged): new blind (a) price
-   ADDED BACK -> must reproduce refine err ~8 (faithful clone); (b) price MASKED -> real new blind vs old
-   blind 5/10. PRINT both renders.
-4. Fix 3 plumbing defects: #3 big_print_b_share (copy the size-weighted value through at
+3. Fix 3 plumbing defects: #3 big_print_b_share (copy the size-weighted value through at
    forecast_harness.py:630, or rename to end the count-vs-size collision); #1 log the ng_l1 miss in
    stage_group + add a per-day `firehose_present` flag; #2 surface `flow_read_error` as a top-level flag.
-5. Resume walk: re-run G19 blind under the new blind (the on-record grp19.json is SUSPECT — built on the
-   contradicted stack + inert big_print_b_share), then G19 refine, then G20+ (staged), one group at a time.
+4. Resume walk: re-run G19 blind under the new blind (the on-record grp19.json is SUSPECT — built on the
+   deleted contradicted stack + inert big_print_b_share), then G19 refine, then G20+ (staged), one group
+   at a time.
 
 ## 4. Standing doctrine (load-bearing — do not relearn the hard way)
 - **Data doctrine**: both agents get the KITCHEN SINK; the blind's ONLY mask is the PRICE CURVE. The blind

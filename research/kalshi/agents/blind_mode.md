@@ -1,9 +1,13 @@
 # BLIND MODE — the refine gold specialist, minus the price curve (CANONICAL, S105; Greg)
 
-READ THIS SECOND, after `mbo_refine_shared.md` and your `mbo_specialist_<X>.md`. There is NO separate
-blind lens. The blind IS the refine specialist — the exact same gold reasoning that produced G18 err 8 —
-running in BLIND MODE. "Clone refine and take away the price curve and that's the new blind" (Greg).
-This wrapper exists so the two can NEVER drift apart: one reasoning stack, two data modes.
+READ THIS SECOND, after `mbo_refine_shared.md` and your `mbo_specialist_<X>.md`. THIS IS THE BLIND. There
+is no other. The old separate blind stack (`blind_shared.md` + `blind_class_{A..E}.md` + `blind_angle_*`)
+was DELETED in S105 and DOES NOT EXIST — do not look for it, do not reconstruct it. The blind and the
+refine are ONE agent: the exact same gold 5-specialist reasoning (the engine that produced G18 err 8).
+**They are the same thing; the ONLY difference is that the blind cannot see the price curve** (Greg,
+S105, final). "Refine" = this engine WITH price. "Blind" = this engine WITHOUT price. Nothing else
+separates them. This wrapper is just the switch that turns the price off; one reasoning stack, two data
+modes, so they can never drift apart again.
 
 ## The one and only difference from refine: you do NOT see the PRICE CURVE
 You get EVERYTHING refine gets — the whole kitchen sink — EXCEPT the price curve. Concretely, withheld:
@@ -50,11 +54,6 @@ on the 2-hourly clock from the 20:00 reopen, confidence, evidence_used, evidence
 stand_down_reasons, selection_reason, mbo_verdict, handoff_out). Emit your full owned set; only
 DAYS_OWNED are consumed. This is byte-for-byte the refine schema — the ONLY thing absent from your
 inputs is the price curve, so a blind run and a refine run on the same group differ by exactly that.
-
-## The acceptance test (why the schema must match)
-Blind mode with the price curve ADDED BACK must reproduce the refine posterior — "it should be exactly
-the same if they both can see the curve" (Greg). Same specialists, same schema, same coordinator; the
-price mask is the sole variable. If unmasked-blind != refine, the clone is not faithful and must be fixed.
 
 ## Guardrails
 Per-event only. General mechanisms only. Immutable — no brain edits (proposal files only when asked).

@@ -78,7 +78,15 @@ be that same reasoning, blindfolded on price and NOTHING else. Stop maintaining 
   copy that EARNS promotion becomes a NEW dated snapshot (refine_gold_s106/...), never an overwrite — a
   versioned genome of him. The vault does NOT auto-update (that is the point).
 
-## THE OPEN DECISION THAT GATES EVERYTHING NEXT (Greg said "we talk first — DO NOT JUST START CHANGING")
+## [RESOLVED LATE S105 — Greg, FINAL] BLIND AND REFINE ARE ONE AGENT; PRICE IS THE ONLY DIFFERENCE
+Greg settled it before session end: "we are the same thing except one cant see the price curve... I'm not
+going to use old blind anymore... this is the new blind and the old blind doesn't exist anymore." So:
+the A/B question below is CLOSED (they're the same engine, price the only difference); the validation
+TESTS are ELIMINATED (Greg's call); and the old blind stack (`blind_shared.md` + `blind_class_{A..E}.md`
++ `blind_angle_*`) was DELETED (git-rm'd). `blind_mode.md` was made definitive ("THIS is the blind; the
+old blind does not exist") and its acceptance-test section removed. The record below is kept for the WHY.
+
+## THE OPEN DECISION [now resolved above] — the A/B fork as it stood mid-session
 The gold refine is NOT purely "blind + price" today — it has a SECOND difference: it runs as a POSTERIOR
 UPDATE (reads the blind's forecast `grp<N>.json` + emits a blind-vs-MBO weight split). That is an input
 the blind doesn't have. So to make "the ONLY difference is the price curve" true, ONE of these must be
