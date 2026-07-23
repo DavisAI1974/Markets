@@ -10,6 +10,9 @@ on:
       - 'desk/tests/test_ng_coach_panel.py'
       - 'research/kalshi/ng_coach_voxa_adapter.py'
       - 'research/kalshi/ng_coach_voxa_source_gate.py'
+      - 'deploy/aws/env.template'
+      - 'deploy/aws/setup.sh'
+      - 'deploy/aws/markets-desk.service'
       - '.github/workflows/ng_coach_dashboard_ci.yml'
   pull_request:
     paths:
@@ -18,6 +21,9 @@ on:
       - 'desk/tests/test_ng_coach_panel.py'
       - 'research/kalshi/ng_coach_voxa_adapter.py'
       - 'research/kalshi/ng_coach_voxa_source_gate.py'
+      - 'deploy/aws/env.template'
+      - 'deploy/aws/setup.sh'
+      - 'deploy/aws/markets-desk.service'
       - '.github/workflows/ng_coach_dashboard_ci.yml'
 
 permissions:
@@ -43,6 +49,12 @@ jobs:
             research/kalshi/ng_coach_voxa_source_gate.py
       - name: Run 16 exact-source coach dashboard tests
         run: python -m unittest -v desk/tests/test_ng_coach_panel.py
+      - name: Validate AWS desk configuration
+        run: |
+          bash -n deploy/aws/setup.sh
+          grep -F 'NG_COACH_STREAM_FILE=/var/lib/markets/ng_refine/coach_stream.json' deploy/aws/env.template
+          grep -F 'ReadOnlyPaths=-/var/lib/markets/ng_refine' deploy/aws/markets-desk.service
+          grep -F '/var/lib/markets/ng_refine' deploy/aws/setup.sh
       - name: Verify router and fail-closed presentation controls
         run: |
           python - <<'PY'
