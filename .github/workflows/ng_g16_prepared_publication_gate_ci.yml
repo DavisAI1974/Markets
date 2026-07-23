@@ -1,0 +1,75 @@
+name: NG G16 Prepared Publication Gate CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_prepared_publication_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_publication_gate.py'
+      - 'research/kalshi/ng_g16_prepared_curve_authorization.py'
+      - 'research/kalshi/ng_g16_prepared_causal_authorization.py'
+      - 'research/kalshi/ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/ng_g16_exact_publication_gate.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_curve_adapter.py'
+      - 'research/kalshi/ng_g16_path_score.py'
+      - 'research/kalshi/ng_chronological_validation.py'
+      - '.github/workflows/ng_g16_prepared_publication_gate_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_prepared_publication_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_publication_gate.py'
+      - 'research/kalshi/ng_g16_prepared_curve_authorization.py'
+      - 'research/kalshi/ng_g16_prepared_causal_authorization.py'
+      - 'research/kalshi/ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/ng_g16_exact_publication_gate.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_curve_adapter.py'
+      - 'research/kalshi/ng_g16_path_score.py'
+      - 'research/kalshi/ng_chronological_validation.py'
+      - '.github/workflows/ng_g16_prepared_publication_gate_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime dependencies
+        run: pip install --quiet databento boto3 numpy
+      - name: Compile prepared G16 publication chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_prepared_publication_gate.py \
+            research/kalshi/tests/test_ng_g16_prepared_publication_gate.py \
+            research/kalshi/ng_g16_prepared_curve_authorization.py \
+            research/kalshi/ng_g16_prepared_causal_authorization.py \
+            research/kalshi/ng_g16_prepared_replay_gate.py \
+            research/kalshi/ng_g16_exact_publication_gate.py \
+            research/kalshi/ng_g16_exact_causal_pipeline.py \
+            research/kalshi/ng_g16_curve_adapter.py \
+            research/kalshi/ng_g16_path_score.py \
+            research/kalshi/ng_chronological_validation.py
+      - name: Run prepared G16 publication tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_prepared_publication_gate.py
+      - name: Verify the scoring wall remains ordered
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python - <<'PY'
+          from ng_g16_prepared_publication_gate import (
+              LOCK_STATUS,
+              READY,
+              READY_WITH_STAND_DOWNS,
+          )
+          assert LOCK_STATUS == 'EXACT_G16_PREPARED_CURVE_LOCKED'
+          assert READY == 'EXACT_G16_PREPARED_PUBLICATION_COMPLETE'
+          assert READY_WITH_STAND_DOWNS.endswith('WITH_STAND_DOWNS')
+          print('Prepared curve lock is required before fixed G16 scoring/publication')
+          PY
