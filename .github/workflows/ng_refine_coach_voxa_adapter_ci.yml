@@ -1,0 +1,68 @@
+name: NG Refine Coach VOXA Adapter CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_refine_coach_voxa_adapter.py'
+      - 'research/kalshi/tests/test_ng_refine_coach_voxa_adapter.py'
+      - '.github/workflows/ng_refine_coach_voxa_adapter_ci.yml'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_refine_coach_voxa_adapter.py'
+      - 'research/kalshi/tests/test_ng_refine_coach_voxa_adapter.py'
+      - '.github/workflows/ng_refine_coach_voxa_adapter_ci.yml'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+
+permissions:
+  contents: read
+
+jobs:
+  coach-voxa-adapter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile adapter and authority dependencies
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_refine_coach_voxa_adapter.py \
+            research/kalshi/tests/test_ng_refine_coach_voxa_adapter.py \
+            research/kalshi/ng_g15_pipeline.py \
+            research/kalshi/ng_rt_refiner.py \
+            research/kalshi/ng_g16_exact_causal_pipeline.py \
+            research/kalshi/ng_g16_shadow_runner.py
+      - name: Run adapter self-test
+        run: python research/kalshi/ng_refine_coach_voxa_adapter.py --selftest
+      - name: Run focused unit tests
+        env:
+          PYTHONPATH: research/kalshi
+        run: python -m unittest -v research/kalshi/tests/test_ng_refine_coach_voxa_adapter.py
+      - name: Verify historical lag policy remains non-live
+        run: |
+          tmpdir="$(mktemp -d)"
+          python research/kalshi/ng_refine_coach_voxa_adapter.py policy \
+            --mode HISTORICAL_REPLAY \
+            --out "$tmpdir/ng_historical_lag_policy.json"
+          python - "$tmpdir/ng_historical_lag_policy.json" <<'PY'
+          import json
+          import sys
+          value = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert value["mode"] == "HISTORICAL_REPLAY"
+          assert value["max_event_lag_s"] is None
+          assert value["paid_live_data_assumed"] is False
+          assert value["execution_authority"] is False
+          PY
