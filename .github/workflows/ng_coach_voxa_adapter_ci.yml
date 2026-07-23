@@ -1,5 +1,7 @@
 name: NG Coach and VOXA Adapter CI
 
+# Preserve one presentation adapter. The source gate validates exact G15/G16
+# causal provenance before the existing adapter may emit read-only messages.
 on:
   push:
     branches:
@@ -55,7 +57,7 @@ jobs:
         run: |
           python research/kalshi/ng_coach_voxa_adapter.py --selftest
           PYTHONPATH=research/kalshi python research/kalshi/ng_coach_voxa_source_gate.py --selftest
-      - name: Run coach adapter unit tests
+      - name: Run 24 focused coach and source-gate tests
         env:
           PYTHONPATH: research/kalshi
         run: |
