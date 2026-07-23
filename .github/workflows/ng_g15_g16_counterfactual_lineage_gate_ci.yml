@@ -1,0 +1,93 @@
+name: NG G15-G16 counterfactual lineage gate
+
+on:
+  push:
+    paths:
+      - research/kalshi/ng_g15_g16_counterfactual_lineage_gate.py
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_exact_publication_gate.py
+      - research/kalshi/ng_g16_shadow_gate.py
+      - research/kalshi/tests/test_ng_g15_g16_counterfactual_lineage_gate.py
+      - .github/workflows/ng_g15_g16_counterfactual_lineage_gate_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g15_g16_counterfactual_lineage_gate.py
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_exact_publication_gate.py
+      - research/kalshi/ng_g16_shadow_gate.py
+      - research/kalshi/tests/test_ng_g15_g16_counterfactual_lineage_gate.py
+      - .github/workflows/ng_g15_g16_counterfactual_lineage_gate_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  counterfactual-lineage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile publication-to-plan lineage chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_counterfactual_lesson_gate.py \
+            ng_g15_exact_publication_gate.py \
+            ng_g16_shadow_gate.py \
+            ng_g15_g16_counterfactual_lineage_gate.py \
+            tests/test_ng_g15_g16_counterfactual_lineage_gate.py
+
+      - name: Run module selftest
+        working-directory: research/kalshi
+        run: python ng_g15_g16_counterfactual_lineage_gate.py --selftest
+
+      - name: Run 17 focused tests
+        working-directory: research/kalshi
+        run: >-
+          python -m unittest discover -s tests
+          -p 'test_ng_g15_g16_counterfactual_lineage_gate.py' -v
+
+      - name: Verify exact lineage and permanent controls
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_g15_g16_counterfactual_lineage_gate as subject
+
+          fx = subject._fixture()
+          result = subject.build_lineage(
+              counterfactual_gate=fx["counterfactual_gate"],
+              g15_publication=fx["publication"],
+              g16_plan=fx["g16_plan"],
+              replay=fx["replay"],
+              anchor=fx["anchor"],
+              refine_stream=fx["refine_stream"],
+              attribution=fx["attribution"],
+              audit=fx["audit"],
+              comparison=fx["comparison"],
+              g16_blind_forecast=fx["g16_blind_forecast"],
+              g16_blind_safe_state=fx["g16_blind_safe_state"],
+          )
+
+          assert result["counterfactual_lesson_gate_fingerprint"] == fx["counterfactual_gate"]["fingerprint"]
+          assert result["g15_adjudication_fingerprint"] == fx["counterfactual_gate"]["source"]["adjudication_fingerprint"]
+          assert result["g16_registry_fingerprint"] == fx["counterfactual_gate"]["source"]["registry_fingerprint"]
+          assert result["g16_plan_fingerprint"] == fx["g16_plan"]["plan_fingerprint"]
+          assert result["actual_g15_outcomes_used"] is True
+          assert result["actual_g16_outcomes_used"] is False
+          assert result["g16_scoring_authorized"] is False
+          assert result["random_shuffle_used"] is False
+          assert result["blind_forecasts_immutable"] is True
+          assert result["may_update_ng_brain"] is False
+          assert result["execution_authority"] is False
+          assert result["cme_event_contracts_mode"] == "SHADOW"
+          assert result["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert result["options_lane_started"] is False
+          PY
