@@ -1,0 +1,96 @@
+name: NG G15 counterfactual lesson gate
+
+on:
+  push:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_lesson_adjudication.py
+      - research/kalshi/ng_g15_path_score.py
+      - research/kalshi/ng_historical_manifest.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_lesson_gate.py
+      - .github/workflows/ng_g15_counterfactual_lesson_gate_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_lesson_adjudication.py
+      - research/kalshi/ng_g15_path_score.py
+      - research/kalshi/ng_historical_manifest.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_lesson_gate.py
+      - .github/workflows/ng_g15_counterfactual_lesson_gate_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  counterfactual-lessons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile exact attribution-to-adjudication chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_lesson_adjudication.py \
+            ng_g15_path_score.py \
+            ng_historical_manifest.py \
+            ng_g15_counterfactual_lesson_gate.py \
+            tests/test_ng_g15_counterfactual_lesson_gate.py
+
+      - name: Run module selftest
+        working-directory: research/kalshi
+        run: python ng_g15_counterfactual_lesson_gate.py --selftest
+
+      - name: Run 15 focused tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_g15_counterfactual_lesson_gate.py' -v
+
+      - name: Verify exact proposal derivation and permanent controls
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_g15_counterfactual_attribution as attribution_module
+          import ng_g15_counterfactual_lesson_gate as subject
+          import ng_g15_lesson_adjudication as adjudication_module
+          from ng_historical_manifest import G15_DATES
+          from ng_rt_refiner import refine_feature_state
+
+          anchor = attribution_module._fixture_anchor()
+          states = [attribution_module._fixture_state(day, index + 1) for index, day in enumerate(G15_DATES)]
+          stream = {
+              "schema": "ng_rt_refine_stream.v1",
+              "market": "NG",
+              "group": 15,
+              "authority": "REFINE_POSTERIOR_STREAM_ONLY",
+              "execution_authority": False,
+              "anchor_fingerprint": anchor["anchor_fingerprint"],
+              "n_outputs": len(states),
+              "outputs": [refine_feature_state(state, anchor) for state in states],
+          }
+          replay = {"streams": [{"states": states}], "fingerprint": attribution_module._fingerprint(states)}
+          attribution = attribution_module.build_report(replay, anchor, stream)
+          audit, _, comparison = adjudication_module._fixture()
+          gate = subject.build_gate(replay, anchor, stream, attribution, audit, comparison)
+
+          assert gate["factor_count"] == 6
+          assert gate["proposal_count"] == 6
+          assert gate["adjudicated_count"] == 6
+          assert gate["actual_g15_outcomes_used"] is True
+          assert gate["actual_g16_outcomes_used"] is False
+          assert gate["random_shuffle_used"] is False
+          assert gate["blind_forecasts_immutable"] is True
+          assert gate["may_select_lessons_from_g15_scores"] is False
+          assert gate["may_update_ng_brain"] is False
+          assert gate["execution_authority"] is False
+          assert gate["cme_event_contracts_mode"] == "SHADOW"
+          assert gate["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert gate["options_lane_started"] is False
+          PY
