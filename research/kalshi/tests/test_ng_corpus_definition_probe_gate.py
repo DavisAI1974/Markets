@@ -227,9 +227,13 @@ def test_binding_cannot_substitute_another_catalog_definition(tmp_path):
     row = next(row for row in changed["bindings"] if row["object_id"] == object_id)
     row["definition"] = next(row for row in catalog["definitions"] if row["raw_symbol"] == "NGK26")
     _refingerprint_bindings(changed)
+    changed_gate = copy.deepcopy(gated)
+    changed_gate["proposed_binding_manifest_fingerprint"] = changed["binding_manifest_fingerprint"]
+    changed_gate.pop("gate_fingerprint")
+    changed_gate["gate_fingerprint"] = gate._fp(changed_gate)
     with pytest.raises(gate.CorpusQuarantineError, match="differs from catalog evidence"):
         gate.validate_gate(
-            gated,
+            changed_gate,
             snapshot=snapshot,
             quarantine=quarantine,
             definition_catalog=catalog,
