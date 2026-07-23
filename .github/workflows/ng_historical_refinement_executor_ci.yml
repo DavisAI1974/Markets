@@ -1,0 +1,70 @@
+name: NG historical refinement executor
+
+on:
+  push:
+    paths:
+      - research/kalshi/ng_historical_refinement_executor.py
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/tests/test_ng_historical_refinement_executor.py
+      - .github/workflows/ng_historical_refinement_executor_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_historical_refinement_executor.py
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/tests/test_ng_historical_refinement_executor.py
+      - .github/workflows/ng_historical_refinement_executor_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  executor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile executor and readiness chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_readiness.py \
+            tests/test_ng_historical_refinement_executor.py
+
+      - name: Executor selftest
+        working-directory: research/kalshi
+        run: python ng_historical_refinement_executor.py --selftest
+
+      - name: Run 15 executor tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_executor.py' -v
+
+      - name: Verify fail-closed plan contract
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+
+          from ng_historical_refinement_executor import build_plan, validate_plan
+          from ng_historical_refinement_readiness import STAGES
+
+          with TemporaryDirectory() as tempdir:
+              root = Path(tempdir)
+              plan = build_plan(root / 'artifacts', root)
+              validate_plan(plan)
+              assert [step['key'] for step in plan['stages']] == [stage.key for stage in STAGES]
+              assert all(step['enabled'] is False for step in plan['stages'])
+              assert plan['random_shuffle_used'] is False
+              assert plan['blind_forecasts_immutable'] is True
+              assert plan['may_update_ng_brain'] is False
+              assert plan['execution_authority'] is False
+              assert plan['cme_event_contracts_mode'] == 'SHADOW'
+              assert plan['brokerage_contract'] == 'tastytrade_not_ibkr'
+              assert plan['options_lane_started'] is False
+          PY
