@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy/aws/setup.sh — idempotent setup for the durable Markets AWS box.
+# deploy/aws/setup.sh - idempotent setup for the durable Markets AWS box.
 # Historical jobs, live Databento, and free public-data collectors are separate services.
 set -euo pipefail
 
@@ -21,10 +21,14 @@ mkdir -p /etc/markets
 if [ ! -f /etc/markets/markets.env ]; then
   cp "$MARKETS_DIR/deploy/aws/env.template" /etc/markets/markets.env
   chmod 600 /etc/markets/markets.env
-  echo "[setup] created /etc/markets/markets.env — fill runtime secrets before starting private feeds."
+  echo "[setup] created /etc/markets/markets.env - fill runtime secrets before starting private feeds."
 else
-  echo "[setup] /etc/markets/markets.env already exists — left untouched."
+  echo "[setup] /etc/markets/markets.env already exists - left untouched."
 fi
+
+# The causal source-gate process may atomically publish the coach stream here.
+# The desk service receives a read-only mount of this directory.
+install -d -m 0750 -o "$RUN_USER" -g "$RUN_USER" /var/lib/markets/ng_refine
 
 echo "[setup] installing systemd units..."
 units=(
@@ -61,5 +65,6 @@ echo "[setup] After DATABENTO_API_KEY is present in /etc/markets/markets.env:"
 echo "        sudo systemctl enable --now markets-ng-live.service markets-desk.service"
 echo "        sudo journalctl -u markets-ng-live.service -f"
 echo "[setup] Live health: /var/lib/markets/ng_live/health.json"
+echo "[setup] Coach stream: /var/lib/markets/ng_refine/coach_stream.json"
 echo "[setup] Desk: http://127.0.0.1:8091 (use an SSM port forward)"
 echo "[setup] Raw DBN: s3://bento-568968024170-us-east-2-an/nymex/live/ng/YYYY/MM/DD/"
