@@ -83,7 +83,9 @@ class ReplayCatalogExportTests(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.TemporaryDirectory()
         self.root = Path(self.tempdir.name)
-        self.catalog, self.audit, self.g15_inventory, self.g16_inventory = _inputs(self.root)
+        self.catalog, self.audit, self.g15_inventory, self.g16_inventory = _inputs(
+            self.root
+        )
 
     def tearDown(self):
         self.tempdir.cleanup()
@@ -100,6 +102,14 @@ class ReplayCatalogExportTests(unittest.TestCase):
         _refingerprint(self.catalog, "catalog_fingerprint")
         self.audit = coverage.build_audit(self.catalog)
 
+    def first_entry(self, *, lane: str = "l1_trades") -> dict:
+        return next(
+            row
+            for corpus in self.catalog["corpora"]
+            if corpus["lane"] == lane
+            for row in corpus["entries"]
+        )
+
     def test_exports_canonical_24_and_22_lane_catalogs(self):
         bundle = self.build()
         self.assertEqual(len(bundle["g15_catalog"]["sources"]), 24)
@@ -108,16 +118,72 @@ class ReplayCatalogExportTests(unittest.TestCase):
         self.assertEqual(bundle["selected_source_lane_count"], 46)
         self.assertEqual(len(bundle["g15_bridge_fingerprint"]), 64)
         self.assertEqual(len(bundle["g16_manifest_fingerprint"]), 64)
+        self.assertTrue(bundle["replay_locations_bound_to_hashed_bytes"])
         mod.validate_export_bundle(bundle)
 
     def test_downstream_manifest_builders_accept_exported_catalogs(self):
         bundle = self.build()
-        bridge = g15.build_replay_manifest(self.g15_inventory, bundle["g15_catalog"])
+        bridge = g15.build_replay_manifest(
+            self.g15_inventory, bundle["g15_catalog"]
+        )
         manifest = g16.build_manifest(self.g16_inventory, bundle["g16_catalog"])
         self.assertEqual(bridge["manifest_report"]["status"], "READY")
         self.assertEqual(len(bridge["manifest"]["entries"]), 24)
         self.assertEqual(manifest["status"], "READY")
         self.assertEqual(len(manifest["entries"]), 22)
+
+    def test_inspected_materialized_bytes_become_replay_location(self):
+        observed = self.first_entry()
+        original = observed["location"]
+        sliced = str(self.root / "20260315_l1_trades.jsonl")
+        observed["materialized_path"] = sliced
+        self.rebuild_audit()
+
+        source = next(
+            row
+            for row in self.build()["g15_catalog"]["sources"]
+            if row["coverage_source_id"] == observed["source_id"]
+        )
+        self.assertEqual(source["location"], sliced)
+        self.assertEqual(source["coverage_materialized_path"], sliced)
+        self.assertEqual(source["coverage_origin_location"], original)
+        self.assertEqual(
+            source["replay_location_basis"], "INSPECTED_MATERIALIZED_BYTES"
+        )
+        self.assertTrue(source["replay_bytes_match_coverage_hash"])
+
+    def test_origin_cannot_replace_materialized_replay_bytes_after_refingerprint(self):
+        observed = self.first_entry()
+        observed["materialized_path"] = str(self.root / "20260315_l1_trades.jsonl")
+        self.rebuild_audit()
+        bundle = self.build()
+        source = next(
+            row
+            for row in bundle["g15_catalog"]["sources"]
+            if row["coverage_source_id"] == observed["source_id"]
+        )
+        source["location"] = source["coverage_origin_location"]
+        _refingerprint(bundle["g15_catalog"], "fingerprint")
+        _refingerprint(bundle, "fingerprint")
+        with self.assertRaisesRegex(
+            mod.ReplayCatalogExportError, "materialized replay location mismatch"
+        ):
+            mod.validate_export_bundle(bundle)
+
+    def test_direct_observed_location_remains_valid_when_no_materialized_path_exists(self):
+        observed = self.first_entry()
+        bundle = self.build()
+        source = next(
+            row
+            for row in bundle["g15_catalog"]["sources"]
+            if row["coverage_source_id"] == observed["source_id"]
+        )
+        self.assertEqual(source["location"], observed["location"])
+        self.assertEqual(source["coverage_origin_location"], observed["location"])
+        self.assertIsNone(source["coverage_materialized_path"])
+        self.assertEqual(
+            source["replay_location_basis"], "OBSERVED_SOURCE_LOCATION"
+        )
 
     def test_inputs_remain_immutable(self):
         before = copy.deepcopy(
@@ -133,7 +199,9 @@ class ReplayCatalogExportTests(unittest.TestCase):
         report = self.audit["exact_intersections"]["g15"]["day_reports"][0]
         report["selected_pair"]["l1_source_id"] = "invented-source"
         _refingerprint(self.audit, "fingerprint")
-        with self.assertRaisesRegex(mod.ReplayCatalogExportError, "deterministic rebuild"):
+        with self.assertRaisesRegex(
+            mod.ReplayCatalogExportError, "deterministic rebuild"
+        ):
             self.build()
 
     def test_unknown_source_is_not_promoted(self):
@@ -177,19 +245,27 @@ class ReplayCatalogExportTests(unittest.TestCase):
                 if row["day"] == day:
                     row["definition_date"] = "2026-03-02"
         self.rebuild_audit()
-        with self.assertRaisesRegex(mod.ReplayCatalogExportError, "disagrees across days"):
+        with self.assertRaisesRegex(
+            mod.ReplayCatalogExportError, "disagrees across days"
+        ):
             self.build()
 
-    def test_selected_source_missing_required_metadata_blocks_export(self):
-        self.catalog["corpora"][0]["entries"][0]["location"] = None
+    def test_selected_source_without_any_replay_location_blocks_export(self):
+        row = self.first_entry()
+        row["location"] = None
+        row["materialized_path"] = None
         self.rebuild_audit()
-        with self.assertRaisesRegex(mod.ReplayCatalogExportError, "missing location"):
+        with self.assertRaisesRegex(
+            mod.ReplayCatalogExportError, "lacks a replayable materialized_path or location"
+        ):
             self.build()
 
     def test_basis_inventory_count_mismatch_is_rejected_downstream(self):
         row = next(
-            item for item in self.g15_inventory
-            if str(item.get("date") or "").replace("-", "") == coverage.G15_DATES[0]
+            item
+            for item in self.g15_inventory
+            if str(item.get("date") or "").replace("-", "")
+            == coverage.G15_DATES[0]
         )
         row["l1_n_trades"] += 1
         with self.assertRaises(Exception):
@@ -220,6 +296,8 @@ class ReplayCatalogExportTests(unittest.TestCase):
         self.assertEqual(len(row["coverage_entry_fingerprint"]), 64)
         self.assertEqual(len(row["coverage_pair_fingerprint"]), 64)
         self.assertTrue(row["coverage_source_id"])
+        self.assertTrue(row["replay_bytes_match_coverage_hash"])
+        self.assertIn(row["replay_location_basis"], mod.REPLAY_LOCATION_BASES)
 
     def test_bundle_count_tamper_is_rejected_even_after_refingerprint(self):
         bundle = self.build()
@@ -236,6 +314,13 @@ class ReplayCatalogExportTests(unittest.TestCase):
         with self.assertRaisesRegex(mod.ReplayCatalogExportError, "source-lane count"):
             mod.validate_export_bundle(bundle)
 
+    def test_replay_byte_binding_flag_tamper_is_rejected(self):
+        bundle = self.build()
+        bundle["replay_locations_bound_to_hashed_bytes"] = False
+        _refingerprint(bundle, "fingerprint")
+        with self.assertRaisesRegex(mod.ReplayCatalogExportError, "bound to hashed bytes"):
+            mod.validate_export_bundle(bundle)
+
     def test_authority_and_brokerage_contract_remain_fail_closed(self):
         bundle = self.build()
         self.assertFalse(bundle["unknown_promoted_to_present"])
@@ -246,6 +331,7 @@ class ReplayCatalogExportTests(unittest.TestCase):
         self.assertFalse(bundle["options_lane_started"])
         self.assertTrue(bundle["one_signal_authority_preserved"])
         self.assertTrue(bundle["blind_forecasts_immutable"])
+        self.assertTrue(bundle["replay_locations_bound_to_hashed_bytes"])
         self.assertEqual(bundle["cme_event_contracts_mode"], "SHADOW")
         self.assertEqual(bundle["brokerage_contract"], "tastytrade_not_ibkr")
 
