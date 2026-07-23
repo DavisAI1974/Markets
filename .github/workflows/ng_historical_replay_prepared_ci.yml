@@ -1,0 +1,91 @@
+name: NG Historical Prepared Replay CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_historical_replay_prepared.py'
+      - 'research/kalshi/tests/test_ng_historical_replay_prepared.py'
+      - 'research/kalshi/ng_historical_prepare.py'
+      - 'research/kalshi/ng_historical_replay.py'
+      - 'research/kalshi/ng_historical_manifest.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_live_operator.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/ng_g15_exact_replay_completion.py'
+      - '.github/workflows/ng_historical_replay_prepared_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_historical_replay_prepared.py'
+      - 'research/kalshi/tests/test_ng_historical_replay_prepared.py'
+      - 'research/kalshi/ng_historical_prepare.py'
+      - 'research/kalshi/ng_historical_replay.py'
+      - 'research/kalshi/ng_historical_manifest.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_live_operator.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - 'research/kalshi/ng_g15_exact_replay_completion.py'
+      - '.github/workflows/ng_historical_replay_prepared_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime dependencies
+        run: pip install --quiet databento boto3 numpy
+      - name: Compile prepared replay authority chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_historical_replay_prepared.py \
+            research/kalshi/tests/test_ng_historical_replay_prepared.py \
+            research/kalshi/ng_historical_prepare.py \
+            research/kalshi/ng_historical_replay.py \
+            research/kalshi/ng_historical_manifest.py \
+            research/kalshi/ng_historical_inventory.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/ng_live_operator.py \
+            research/kalshi/ng_rt_feature_state.py \
+            research/kalshi/ng_g15_exact_replay_completion.py
+      - name: Run prepared replay self-test
+        working-directory: research/kalshi
+        run: python ng_historical_replay_prepared.py --selftest
+      - name: Run prepared replay unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_historical_replay_prepared.py
+      - name: Verify exact completion accepts the real prepared adapter output
+        env:
+          PYTHONPATH: research/kalshi:research/kalshi/tests
+        run: |
+          python - <<'PY'
+          import copy
+          import tempfile
+          from pathlib import Path
+
+          from ng_g15_exact_replay_completion import _check_replay
+          from ng_historical_replay_prepared import replay_prepared_index
+          from test_ng_historical_replay_prepared import PRIOR, build_fixture
+
+          with tempfile.TemporaryDirectory() as temporary:
+              manifest, index = build_fixture(Path(temporary))
+              result = replay_prepared_index(
+                  index,
+                  manifest=manifest,
+                  blind_prior=copy.deepcopy(PRIOR),
+              )
+              checked = _check_replay(result)
+              assert checked['prepared_replay_schema'] == 'ng_historical_prepared_replay.v1'
+              assert checked['prepared_source_count'] == 26
+              assert checked['actual_outcomes_used'] is False
+              assert checked['may_update_ng_brain'] is False
+              assert checked['execution_authority'] is False
+          print('exact replay completion accepts the hardened prepared adapter output')
+          PY
