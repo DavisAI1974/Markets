@@ -2,13 +2,13 @@
 """Bind quarantined NG identity probes to an observed-definition catalog.
 
 The lower-level identity probe accepts a collection of individually fingerprinted
-instrument definitions.  This gate is the production path: it requires the complete
+instrument definitions. This gate is the production path: it requires the complete
 ``ng_definition_observation_catalog.v1`` artifact, verifies the original definition
 source bytes, runs the quarantine probe, and binds the resulting review proposal to
-that exact catalog.  A loose definition list, stale catalog, altered source file, or
+that exact catalog. A loose definition list, stale catalog, altered source file, or
 refingerprinted nested artifact fails closed.
 
-The output remains REVIEW_REQUIRED.  It cannot infer identity from object names,
+The output remains REVIEW_REQUIRED. It cannot infer identity from object names,
 approve a session-day assignment, read outcomes, mutate either blind forecast or the
 posterior, update ``knowledge/ng_brain.json``, authorize execution, or start options.
 """
@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import copy
-import hashlib
 import json
 import os
 import tempfile
@@ -59,6 +58,58 @@ def _definition_map(catalog: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
         str(row["definition_fingerprint"]): copy.deepcopy(dict(row))
         for row in catalog["definitions"]
     }
+
+
+def _expected_matching_definitions(
+    evidence: Mapping[str, Any],
+    definitions_by_fp: Mapping[str, Mapping[str, Any]],
+) -> list[str]:
+    datasets = {str(value) for value in evidence.get("datasets") or []}
+    publishers = {int(value) for value in evidence.get("publisher_ids") or []}
+    instruments = {int(value) for value in evidence.get("instrument_ids") or []}
+    raw_symbols = {str(value) for value in evidence.get("decoded_raw_symbols") or []}
+    if len(datasets) != 1 or len(publishers) != 1 or len(instruments) != 1:
+        return []
+    event_start = float(evidence["event_start_s"])
+    event_end = float(evidence["event_end_s"])
+    dataset = next(iter(datasets))
+    publisher = next(iter(publishers))
+    instrument = next(iter(instruments))
+    matches = []
+    for fingerprint, definition in definitions_by_fp.items():
+        if definition["dataset"] != dataset:
+            continue
+        if int(definition["publisher_id"]) != publisher:
+            continue
+        if int(definition["instrument_id"]) != instrument:
+            continue
+        if raw_symbols and raw_symbols != {str(definition["raw_symbol"])}:
+            continue
+        if event_start < float(definition["definition_start_s"]):
+            continue
+        if event_end > float(definition["definition_end_s"]):
+            continue
+        matches.append(fingerprint)
+    return sorted(matches)
+
+
+def _expected_probe_status(evidence: Mapping[str, Any], matching: list[str]) -> str:
+    instruments = list(evidence.get("instrument_ids") or [])
+    publishers = list(evidence.get("publisher_ids") or [])
+    datasets = list(evidence.get("datasets") or [])
+    if len(instruments) != 1:
+        return "MULTI_INSTRUMENT_SOURCE"
+    if not publishers:
+        return "PUBLISHER_UNOBSERVED"
+    if not datasets:
+        return "DATASET_UNOBSERVED"
+    if evidence.get("proposed_lane") is None:
+        return "LANE_UNOBSERVED"
+    if len(matching) == 1:
+        return "UNIQUE_DEFINITION_MATCH"
+    if len(matching) > 1:
+        return "AMBIGUOUS_DEFINITION_MATCH"
+    return "NO_DEFINITION_MATCH"
 
 
 def probe_with_catalog(
@@ -181,6 +232,10 @@ def validate_gate(
         if checked.get(field) != expected:
             raise CorpusQuarantineError(f"definition probe gate {field} mismatch")
 
+    expected_probe_definitions = sorted(catalog["definition_fingerprints"])
+    if probed.get("definition_fingerprints") != expected_probe_definitions:
+        raise CorpusQuarantineError("identity probe definition catalog linkage mismatch")
+
     expected_counts = {
         status: sum(1 for row in probed["objects"] if row["status"] == status)
         for status in sorted(identity_probe.PROBE_STATUSES)
@@ -203,15 +258,20 @@ def validate_gate(
         if binding.get("probe_evidence_fingerprint") != evidence.get("evidence_fingerprint"):
             raise CorpusQuarantineError("definition probe gate evidence provenance mismatch")
 
+        expected_matching = _expected_matching_definitions(evidence, definitions_by_fp)
+        if evidence.get("matching_definition_fingerprints") != expected_matching:
+            raise CorpusQuarantineError("identity probe definition matching was not reproduced")
+        expected_status = _expected_probe_status(evidence, expected_matching)
+        if evidence.get("status") != expected_status:
+            raise CorpusQuarantineError("identity probe status was not reproduced")
+
         unique = evidence.get("unique_definition")
         proposed = binding.get("definition")
-        if evidence.get("status") == "UNIQUE_DEFINITION_MATCH":
+        if len(expected_matching) == 1:
+            expected_definition = definitions_by_fp[expected_matching[0]]
             if not isinstance(unique, Mapping) or not isinstance(proposed, Mapping):
-                raise CorpusQuarantineError("unique definition match is missing its reviewed proposal")
-            fingerprint = str(unique.get("definition_fingerprint") or "")
-            if fingerprint not in definitions_by_fp:
-                raise CorpusQuarantineError("identity probe selected a definition outside the catalog")
-            if proposed != definitions_by_fp[fingerprint] or unique != definitions_by_fp[fingerprint]:
+                raise CorpusQuarantineError("unique definition evidence is missing its reviewed proposal")
+            if unique != expected_definition or proposed != expected_definition:
                 raise CorpusQuarantineError("proposed definition differs from catalog evidence")
         elif proposed is not None or unique is not None:
             raise CorpusQuarantineError("non-unique identity evidence may not propose a definition")
