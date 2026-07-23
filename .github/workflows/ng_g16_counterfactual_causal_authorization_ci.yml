@@ -1,0 +1,89 @@
+name: NG G16 counterfactual causal authorization
+
+on:
+  push:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_g16_counterfactual_lineage_gate.py
+      - research/kalshi/ng_g16_exact_causal_pipeline.py
+      - research/kalshi/ng_g16_prepared_replay_gate.py
+      - research/kalshi/ng_g16_prepared_causal_authorization.py
+      - research/kalshi/ng_g16_counterfactual_causal_authorization.py
+      - research/kalshi/tests/test_ng_g16_counterfactual_causal_authorization.py
+      - .github/workflows/ng_g16_counterfactual_causal_authorization_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_g16_counterfactual_lineage_gate.py
+      - research/kalshi/ng_g16_exact_causal_pipeline.py
+      - research/kalshi/ng_g16_prepared_replay_gate.py
+      - research/kalshi/ng_g16_prepared_causal_authorization.py
+      - research/kalshi/ng_g16_counterfactual_causal_authorization.py
+      - research/kalshi/tests/test_ng_g16_counterfactual_causal_authorization.py
+      - .github/workflows/ng_g16_counterfactual_causal_authorization_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  counterfactual-causal-authorization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile counterfactual-to-causal chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_counterfactual_lesson_gate.py \
+            ng_g15_g16_counterfactual_lineage_gate.py \
+            ng_g16_historical_replay.py \
+            ng_g16_prepared_replay_gate.py \
+            ng_g16_exact_causal_pipeline.py \
+            ng_g16_prepared_causal_authorization.py \
+            ng_g16_counterfactual_causal_authorization.py \
+            tests/test_ng_g16_counterfactual_causal_authorization.py
+
+      - name: Run module selftest
+        working-directory: research/kalshi
+        run: python ng_g16_counterfactual_causal_authorization.py --selftest
+
+      - name: Run 16 focused tests
+        working-directory: research/kalshi
+        run: >-
+          python -m unittest discover -s tests
+          -p 'test_ng_g16_counterfactual_causal_authorization.py' -v
+
+      - name: Verify exact lesson lineage and permanent controls
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_g16_counterfactual_causal_authorization as subject
+
+          fixture = subject._fixture()
+          try:
+              result = subject._build_from_fixture(fixture)
+              assert result["candidate_ids"] == fixture["lineage_gate"]["candidate_ids"]
+              assert result["candidate_evidence_fingerprints"] == fixture["lineage_gate"]["candidate_evidence_fingerprints"]
+              assert result["g16_plan_fingerprint"] == fixture["g16_plan"]["plan_fingerprint"]
+              assert result["actual_g15_outcomes_used"] is True
+              assert result["actual_g16_outcomes_used"] is False
+              assert result["g16_scoring_authorized"] is False
+              assert result["random_shuffle_used"] is False
+              assert result["blind_forecasts_immutable"] is True
+              assert result["may_update_ng_brain"] is False
+              assert result["execution_authority"] is False
+              assert result["cme_event_contracts_mode"] == "SHADOW"
+              assert result["brokerage_contract"] == "tastytrade_not_ibkr"
+              assert result["options_lane_started"] is False
+          finally:
+              fixture["_temporary"].cleanup()
+          PY
