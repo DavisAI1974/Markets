@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Consolidate the historical-first NG refinement chain into one fail-closed report.
+"""Consolidate the hardened historical-first NG refinement chain.
 
-The report is observational only. It does not inspect unconfigured AWS/S3 objects,
-construct forecasts, read outcome paths, update ``ng_brain.json``, or grant execution
-authority. Missing artifacts remain MISSING, invalid artifacts remain INVALID, and a
-ready downstream artifact cannot bypass an unready upstream stage.
+This observational report validates artifact schemas, fingerprints, stage authority,
+chronological stage ordering, and the provenance links that keep G16's exact prepared
+NGK26 replay attached to its pre-cutoff posterior, curve lock, fixed scoring, and
+publication. It never invents remote objects, reads outcomes itself, changes a blind
+forecast, updates ``ng_brain.json``, or grants execution/options authority.
 """
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
-SCHEMA = "ng_historical_refinement_readiness.v1"
+SCHEMA = "ng_historical_refinement_readiness.v2"
 
 
 class HistoricalRefinementReadinessError(ValueError):
@@ -35,102 +36,133 @@ class StageSpec:
     validator_module: str | None
     validator_names: tuple[str, ...]
     next_action: str
+    required_fields: tuple[str, ...] = ()
+    pre_outcome: bool = True
 
 
 STAGES: tuple[StageSpec, ...] = (
     StageSpec(
-        "corpus_coverage",
-        "ng_corpus_coverage_audit.json",
-        "ng_corpus_coverage_audit.v1",
-        "fingerprint",
-        frozenset({
-            "FULL_CORPUS_AND_G15_G16_EXACT_READY",
-            "G15_G16_EXACT_READY_BROAD_COVERAGE_UNVERIFIED",
-        }),
-        "ng_corpus_coverage_audit",
-        ("validate_audit",),
+        "corpus_coverage", "ng_corpus_coverage_audit.json",
+        "ng_corpus_coverage_audit.v1", "fingerprint",
+        frozenset({"FULL_CORPUS_AND_G15_G16_EXACT_READY", "G15_G16_EXACT_READY_BROAD_COVERAGE_UNVERIFIED"}),
+        "ng_corpus_coverage_audit", ("validate_audit",),
         "Inspect and inventory the one-year L1/dense-trades and spring/summer MBO objects; keep uninspected objects UNKNOWN.",
     ),
     StageSpec(
-        "replay_catalog_export",
-        "ng_exact_replay_catalog_export.json",
-        "ng_corpus_replay_catalog_export.v1",
-        "fingerprint",
-        frozenset({"READY"}),
-        "ng_corpus_replay_catalog_export",
-        ("validate_export_bundle",),
-        "Export the deterministic exact G15/G16 source pairs into the canonical replay catalogs.",
+        "basis_inventory_regeneration", "ng_corpus_basis_inventory_regeneration.json",
+        "ng_corpus_basis_inventory_regeneration.v1", "fingerprint",
+        frozenset({"G15_G16_BASIS_INVENTORIES_READY", "G15_G16_BASIS_INVENTORIES_READY_WITH_QUEUE_STAND_DOWNS"}),
+        None, (),
+        "Regenerate exact daily G15/G16 basis inventories from inspected target-day shard bytes; never reuse cumulative counts.",
     ),
     StageSpec(
-        "g15_exact_replay",
-        "g15_exact_replay_completion.json",
-        "ng_g15_exact_replay_completion.v1",
-        "completion_fingerprint",
+        "replay_catalog_export", "ng_exact_replay_catalog_export.json",
+        "ng_corpus_replay_catalog_export.v1", "fingerprint", frozenset({"READY"}),
+        "ng_corpus_replay_catalog_export", ("validate_export_bundle",),
+        "Export deterministic exact G15/G16 pairs into canonical replay catalogs.",
+    ),
+    StageSpec(
+        "g15_exact_replay", "g15_exact_replay_completion.json",
+        "ng_g15_exact_replay_completion.v1", "completion_fingerprint",
         frozenset({"EXACT_CAUSAL_REPLAY_READY", "EXACT_CAUSAL_REPLAY_READY_WITH_STAND_DOWNS"}),
-        "ng_g15_exact_replay_completion",
-        ("validate_completion",),
-        "Prepare and replay all 26 exact G15 sources through NGLiveOperator and completed MBO boundaries.",
+        "ng_g15_exact_replay_completion", ("validate_completion",),
+        "Prepare and replay all 26 exact G15 sources through the live-causal path.",
     ),
     StageSpec(
-        "g15_exact_refinement",
-        "g15_exact_refinement_authorization.json",
-        "ng_g15_exact_refinement_authorization.v1",
-        "authorization_fingerprint",
+        "g15_exact_refinement", "g15_exact_refinement_authorization.json",
+        "ng_g15_exact_refinement_authorization.v1", "authorization_fingerprint",
         frozenset({"EXACT_G15_REFINEMENT_READY", "EXACT_G15_REFINEMENT_READY_WITH_STAND_DOWNS"}),
-        "ng_g15_exact_refinement_gate",
-        ("validate_authorization",),
-        "Run the outcome-blind G15 posterior pipeline and bind it to the exact replay completion.",
+        "ng_g15_exact_refinement_gate", ("validate_authorization",),
+        "Run the outcome-blind G15 posterior pipeline bound to exact replay.",
     ),
     StageSpec(
-        "g15_publication",
-        "g15_exact_publication_completion.json",
-        "ng_g15_exact_publication_completion.v1",
-        "completion_fingerprint",
+        "g15_publication", "g15_exact_publication_completion.json",
+        "ng_g15_exact_publication_completion.v1", "completion_fingerprint",
         frozenset({"EXACT_G15_PUBLICATION_COMPLETE", "EXACT_G15_PUBLICATION_COMPLETE_WITH_STAND_DOWNS"}),
-        "ng_g15_exact_publication_gate",
-        ("validate_completion",),
-        "Lock the refined G15 curve, render blind/refined paths, score them separately, and adjudicate lessons.",
+        "ng_g15_exact_publication_gate", ("validate_completion",),
+        "Lock and render G15, score blind/refined separately, and adjudicate lessons without rewriting ng_brain.json.",
+        pre_outcome=False,
     ),
     StageSpec(
-        "g16_corpus_basis",
-        "g16_corpus_basis_report.json",
-        "ng_g16_corpus_basis_gate.v1",
-        "fingerprint",
-        frozenset({"MATCHED_L1_MBO_READY"}),
-        "ng_g16_corpus_basis_gate",
-        ("validate_report",),
-        "Inspect exact NGK26/996 L1 and MBO objects for every canonical G16 session.",
+        "g16_corpus_basis", "g16_corpus_basis_report.json",
+        "ng_g16_corpus_basis_gate.v1", "fingerprint", frozenset({"MATCHED_L1_MBO_READY"}),
+        "ng_g16_corpus_basis_gate", ("validate_report",),
+        "Verify exact NGK26/996 L1 and MBO basis for every canonical G16 session.",
     ),
     StageSpec(
-        "g16_historical_replay",
-        "g16_historical_replay.json",
-        "ng_g16_historical_replay.v1",
-        "fingerprint",
-        frozenset({"READY", "READY_WITH_STAND_DOWNS"}),
-        "ng_g16_historical_replay",
-        ("validate_replay_output",),
-        "Prepare the 23-source exact NGK26 corpus and replay it chronologically through the live-causal path.",
+        "g16_historical_replay", "g16_historical_replay.json",
+        "ng_g16_historical_replay.v1", "fingerprint", frozenset({"READY", "READY_WITH_STAND_DOWNS"}),
+        "ng_g16_historical_replay", ("validate_replay_output",),
+        "Prepare the 23-source exact NGK26 corpus and replay chronologically through the live-causal path.",
     ),
     StageSpec(
-        "g16_exact_causal",
-        "g16_exact_causal_pipeline.json",
-        "ng_g16_exact_causal_pipeline.v1",
-        "fingerprint",
-        frozenset({"READY", "READY_WITH_STAND_DOWNS"}),
-        None,
-        (),
-        "Run the pre-cutoff G16 authorization and posterior chain using only the locked G15 lesson registry.",
+        "g16_prepared_replay", "g16_prepared_replay_gate.json",
+        "ng_g16_prepared_replay_gate.v1", "fingerprint",
+        frozenset({"EXACT_G16_PREPARED_REPLAY_READY", "EXACT_G16_PREPARED_REPLAY_READY_WITH_STAND_DOWNS"}),
+        None, (),
+        "Validate all 23 prepared-source hashes, raw lineage, completed MBO boundaries, and visible sequence-gap stand-downs.",
+        required_fields=("replay_fingerprint", "manifest_fingerprint", "prepared_corpus_fingerprint", "blind_prior_fingerprint"),
     ),
     StageSpec(
-        "g16_publication",
-        "g16_exact_publication_completion.json",
-        "ng_g16_exact_publication_completion.v1",
-        "completion_fingerprint",
-        frozenset({"EXACT_G16_PUBLICATION_COMPLETE", "EXACT_G16_PUBLICATION_COMPLETE_WITH_STAND_DOWNS"}),
-        "ng_g16_exact_publication_gate",
-        ("validate_completion",),
-        "Lock the G16 refined curve, score the fixed forward holdout, render both paths, and close publication.",
+        "g16_exact_causal", "g16_exact_causal_pipeline.json",
+        "ng_g16_exact_causal_pipeline.v1", "fingerprint", frozenset({"READY", "READY_WITH_STAND_DOWNS"}),
+        None, (),
+        "Run the pre-cutoff G16 posterior chain using only pre-registered G15 lessons.",
     ),
+    StageSpec(
+        "g16_prepared_causal_authorization", "g16_prepared_causal_authorization.json",
+        "ng_g16_prepared_causal_authorization.v1", "fingerprint",
+        frozenset({"EXACT_G16_PREPARED_CAUSAL_AUTHORIZED", "EXACT_G16_PREPARED_CAUSAL_AUTHORIZED_WITH_STAND_DOWNS"}),
+        None, (),
+        "Bind the pre-cutoff posterior to the exact 23-source prepared replay and immutable G16 blind prior.",
+        required_fields=("prepared_replay_gate_fingerprint", "replay_fingerprint", "causal_pipeline_fingerprint"),
+    ),
+    StageSpec(
+        "g16_prepared_curve_authorization", "g16_prepared_curve_authorization.json",
+        "ng_g16_prepared_curve_authorization.v1", "fingerprint",
+        frozenset({"EXACT_G16_PREPARED_CURVE_AUTHORIZED", "EXACT_G16_PREPARED_CURVE_AUTHORIZED_WITH_STAND_DOWNS"}),
+        None, (),
+        "Reproduce the outcome-blind refined curve deterministically from the authorized posterior stream.",
+        required_fields=("prepared_causal_authorization_fingerprint", "prepared_replay_gate_fingerprint", "replay_fingerprint", "refined_curve_fingerprint"),
+    ),
+    StageSpec(
+        "g16_prepared_curve_lock", "g16_prepared_curve_lock.json",
+        "ng_g16_prepared_curve_lock.v1", "lock_fingerprint",
+        frozenset({"EXACT_G16_PREPARED_CURVE_LOCKED"}),
+        "ng_g16_prepared_publication_gate", ("validate_curve_lock",),
+        "Persist the exact prepared refined-curve lock before opening the fixed G16 outcome substrate.",
+        required_fields=("prepared_curve_authorization_fingerprint", "prepared_causal_authorization_fingerprint", "prepared_replay_gate_fingerprint", "replay_fingerprint"),
+    ),
+    StageSpec(
+        "g16_prepared_publication", "g16_prepared_publication_completion.json",
+        "ng_g16_prepared_publication_completion.v1", "completion_fingerprint",
+        frozenset({"EXACT_G16_PREPARED_PUBLICATION_COMPLETE", "EXACT_G16_PREPARED_PUBLICATION_COMPLETE_WITH_STAND_DOWNS"}),
+        "ng_g16_prepared_publication_gate", ("validate_completion",),
+        "Score the fixed G16 holdout, validate chronology, render both paths, and preserve prepared-replay provenance through publication.",
+        required_fields=("curve_lock_fingerprint", "prepared_curve_authorization_fingerprint", "prepared_causal_authorization_fingerprint", "prepared_replay_gate_fingerprint", "exact_causal_pipeline_fingerprint", "replay_fingerprint"),
+        pre_outcome=False,
+    ),
+)
+
+# source stage, source fingerprint field, target stage, target provenance field
+LINK_RULES: tuple[tuple[str, str, str, str], ...] = (
+    ("g16_historical_replay", "fingerprint", "g16_prepared_replay", "replay_fingerprint"),
+    ("g16_prepared_replay", "fingerprint", "g16_prepared_causal_authorization", "prepared_replay_gate_fingerprint"),
+    ("g16_historical_replay", "fingerprint", "g16_prepared_causal_authorization", "replay_fingerprint"),
+    ("g16_exact_causal", "fingerprint", "g16_prepared_causal_authorization", "causal_pipeline_fingerprint"),
+    ("g16_prepared_causal_authorization", "fingerprint", "g16_prepared_curve_authorization", "prepared_causal_authorization_fingerprint"),
+    ("g16_prepared_replay", "fingerprint", "g16_prepared_curve_authorization", "prepared_replay_gate_fingerprint"),
+    ("g16_historical_replay", "fingerprint", "g16_prepared_curve_authorization", "replay_fingerprint"),
+    ("g16_prepared_curve_authorization", "fingerprint", "g16_prepared_curve_lock", "prepared_curve_authorization_fingerprint"),
+    ("g16_prepared_causal_authorization", "fingerprint", "g16_prepared_curve_lock", "prepared_causal_authorization_fingerprint"),
+    ("g16_prepared_replay", "fingerprint", "g16_prepared_curve_lock", "prepared_replay_gate_fingerprint"),
+    ("g16_historical_replay", "fingerprint", "g16_prepared_curve_lock", "replay_fingerprint"),
+    ("g16_prepared_curve_lock", "lock_fingerprint", "g16_prepared_publication", "curve_lock_fingerprint"),
+    ("g16_prepared_curve_authorization", "fingerprint", "g16_prepared_publication", "prepared_curve_authorization_fingerprint"),
+    ("g16_prepared_causal_authorization", "fingerprint", "g16_prepared_publication", "prepared_causal_authorization_fingerprint"),
+    ("g16_prepared_replay", "fingerprint", "g16_prepared_publication", "prepared_replay_gate_fingerprint"),
+    ("g16_exact_causal", "fingerprint", "g16_prepared_publication", "exact_causal_pipeline_fingerprint"),
+    ("g16_historical_replay", "fingerprint", "g16_prepared_publication", "replay_fingerprint"),
 )
 
 
@@ -159,17 +191,37 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
+def _validate_stage_authority(value: Mapping[str, Any], spec: StageSpec) -> None:
+    for field in (
+        "random_shuffle_used", "may_update_ng_brain", "execution_authority",
+        "options_lane_started", "options_implementation_authorized",
+    ):
+        if field in value and value.get(field) is not False:
+            raise HistoricalRefinementReadinessError(f"{spec.key}: {field} must remain false")
+    for field in ("one_signal_authority_preserved", "blind_forecast_immutable"):
+        if field in value and value.get(field) is not True:
+            raise HistoricalRefinementReadinessError(f"{spec.key}: {field} must remain true")
+    if "cme_event_contracts_mode" in value and value.get("cme_event_contracts_mode") != "SHADOW":
+        raise HistoricalRefinementReadinessError(f"{spec.key}: CME event contracts must remain SHADOW")
+    if "brokerage_contract" in value and value.get("brokerage_contract") != "tastytrade_not_ibkr":
+        raise HistoricalRefinementReadinessError(f"{spec.key}: brokerage must remain tastytrade, not IBKR")
+    if spec.pre_outcome:
+        for field in ("actual_outcomes_used", "actual_g16_outcomes_used", "actual_outcome_paths_loaded"):
+            if field in value and value.get(field) is not False:
+                raise HistoricalRefinementReadinessError(f"{spec.key}: pre-outcome stage claims {field}=true")
+
+
 def _generic_validate(value: Mapping[str, Any], spec: StageSpec) -> None:
     candidate = copy.deepcopy(dict(value))
     observed = candidate.pop(spec.fingerprint_field, None)
     if candidate.get("schema") != spec.schema:
-        raise HistoricalRefinementReadinessError(
-            f"{spec.key}: schema {candidate.get('schema')!r} != {spec.schema!r}"
-        )
+        raise HistoricalRefinementReadinessError(f"{spec.key}: schema {candidate.get('schema')!r} != {spec.schema!r}")
     if not isinstance(observed, str) or observed != _fingerprint(candidate):
-        raise HistoricalRefinementReadinessError(
-            f"{spec.key}: {spec.fingerprint_field} mismatch"
-        )
+        raise HistoricalRefinementReadinessError(f"{spec.key}: {spec.fingerprint_field} mismatch")
+    missing = [field for field in spec.required_fields if not candidate.get(field)]
+    if missing:
+        raise HistoricalRefinementReadinessError(f"{spec.key}: required provenance missing: {', '.join(missing)}")
+    _validate_stage_authority(candidate, spec)
 
 
 def _resolve_validator(spec: StageSpec) -> Callable[[Mapping[str, Any]], Any] | None:
@@ -180,18 +232,12 @@ def _resolve_validator(spec: StageSpec) -> Callable[[Mapping[str, Any]], Any] | 
         function = getattr(module, name, None)
         if callable(function):
             return function
-    raise HistoricalRefinementReadinessError(
-        f"{spec.key}: canonical validator not found in {spec.validator_module}"
-    )
+    raise HistoricalRefinementReadinessError(f"{spec.key}: canonical validator not found in {spec.validator_module}")
 
 
 def _extract_blockers(value: Mapping[str, Any]) -> list[str]:
     blockers: list[str] = []
-    explicit_names = {
-        "errors", "blockers", "missing", "missing_days", "unknown_days",
-        "mbo_blocked_days", "l1_blocked_days", "l1_wrong_basis_days",
-        "event_overlap_blocked_days", "definition_blocked_days",
-    }
+    explicit = {"errors", "blockers", "missing", "missing_days", "unknown_days", "mbo_blocked_days", "l1_blocked_days", "l1_wrong_basis_days", "event_overlap_blocked_days", "definition_blocked_days", "flow_stand_down_days"}
 
     def visit(node: Any, prefix: str = "") -> None:
         if len(blockers) >= 64:
@@ -200,15 +246,12 @@ def _extract_blockers(value: Mapping[str, Any]) -> list[str]:
             for key, item in node.items():
                 label = f"{prefix}.{key}" if prefix else str(key)
                 lowered = str(key).lower()
-                if key in explicit_names or lowered.endswith("_blocked_days"):
+                if key in explicit or lowered.endswith("_blocked_days"):
                     if isinstance(item, list):
                         blockers.extend(f"{label}:{entry}" for entry in item if entry not in (None, ""))
                     elif item not in (None, "", False, [], {}):
                         blockers.append(f"{label}:{item}")
-                elif lowered in {"status", "availability"} and str(item).upper() in {
-                    "UNKNOWN", "MISSING", "CORRUPT", "BLOCKED", "INVALID",
-                    "MBO_SPECIFIC_LEG_READY_L1_BASIS_BLOCKED",
-                }:
+                elif lowered in {"status", "availability"} and str(item).upper() in {"UNKNOWN", "MISSING", "CORRUPT", "BLOCKED", "INVALID", "MBO_SPECIFIC_LEG_READY_L1_BASIS_BLOCKED"}:
                     blockers.append(f"{label}:{item}")
                 elif isinstance(item, (Mapping, list)):
                     visit(item, label)
@@ -223,15 +266,10 @@ def _extract_blockers(value: Mapping[str, Any]) -> list[str]:
 
 def _stand_downs(value: Mapping[str, Any]) -> list[str]:
     result: list[str] = []
-    for name in ("stand_down_days", "queue_stand_down_days"):
+    for name in ("stand_down_days", "queue_stand_down_days", "all_stand_down_days", "flow_stand_down_days"):
         result.extend(str(day) for day in value.get(name) or [])
     days = value.get("days")
-    if isinstance(days, Mapping):
-        iterable = days.values()
-    elif isinstance(days, list):
-        iterable = days
-    else:
-        iterable = []
+    iterable = days.values() if isinstance(days, Mapping) else days if isinstance(days, list) else []
     for row in iterable:
         if not isinstance(row, Mapping):
             continue
@@ -250,10 +288,7 @@ def _broad_corpus_verified(coverage: Mapping[str, Any] | None) -> bool:
         return True
     broad = coverage.get("broad_coverage") or coverage.get("corpora") or {}
     if isinstance(broad, Mapping):
-        booleans = [
-            value for key, value in broad.items()
-            if "complete" in str(key).lower() or "verified" in str(key).lower()
-        ]
+        booleans = [value for key, value in broad.items() if "complete" in str(key).lower() or "verified" in str(key).lower()]
         return bool(booleans) and all(value is True for value in booleans)
     return False
 
@@ -265,20 +300,13 @@ def evaluate_stage(
     validator_override: Callable[[Mapping[str, Any]], Any] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
     row: dict[str, Any] = {
-        "key": spec.key,
-        "path": str(path),
-        "artifact_present": path.is_file(),
-        "artifact_status": None,
-        "validation": "NOT_RUN",
-        "effective_status": "MISSING",
-        "stand_down_days": [],
-        "blockers": [],
-        "next_action": spec.next_action,
+        "key": spec.key, "path": str(path), "artifact_present": path.is_file(),
+        "artifact_status": None, "validation": "NOT_RUN", "effective_status": "MISSING",
+        "stand_down_days": [], "blockers": [], "next_action": spec.next_action,
     }
     if not path.is_file():
         row["blockers"] = ["artifact_missing"]
         return row, None
-
     try:
         value = _load_json(path)
         _generic_validate(value, spec)
@@ -291,9 +319,7 @@ def evaluate_stage(
         row["stand_down_days"] = _stand_downs(value)
         row["blockers"] = _extract_blockers(value)
         if row["artifact_status"] in spec.ready_statuses:
-            row["effective_status"] = (
-                "READY_WITH_STAND_DOWNS" if row["stand_down_days"] else "READY"
-            )
+            row["effective_status"] = "READY_WITH_STAND_DOWNS" if row["stand_down_days"] else "READY"
         elif row["artifact_status"].upper() in {"UNKNOWN", "UNVERIFIED"}:
             row["effective_status"] = "UNVERIFIED"
         else:
@@ -306,6 +332,25 @@ def evaluate_stage(
         return row, None
 
 
+def _apply_link_rules(rows: list[dict[str, Any]], values: Mapping[str, Mapping[str, Any]]) -> None:
+    row_by_key = {row["key"]: row for row in rows}
+    for source_key, source_field, target_key, target_field in LINK_RULES:
+        source = values.get(source_key)
+        target = values.get(target_key)
+        if source is None or target is None:
+            continue
+        expected = source.get(source_field)
+        observed = target.get(target_field)
+        if not expected or observed != expected:
+            row = row_by_key[target_key]
+            row["validation"] = "FAIL"
+            row["effective_status"] = "INVALID"
+            row["blockers"] = sorted(
+                set(row.get("blockers") or [])
+                | {f"provenance link mismatch: {target_field} != {source_key}.{source_field}"}
+            )
+
+
 def build_readiness_report(
     artifact_dir: Path,
     *,
@@ -316,23 +361,20 @@ def build_readiness_report(
     validator_overrides = dict(validator_overrides or {})
     rows: list[dict[str, Any]] = []
     values: dict[str, dict[str, Any]] = {}
-    upstream_ready = True
-
     for spec in STAGES:
         path = stage_paths.get(spec.key, artifact_dir / spec.filename)
-        row, value = evaluate_stage(
-            spec,
-            path,
-            validator_override=validator_overrides.get(spec.key),
-        )
+        row, value = evaluate_stage(spec, path, validator_override=validator_overrides.get(spec.key))
+        rows.append(row)
         if value is not None:
             values[spec.key] = value
+    _apply_link_rules(rows, values)
+    upstream_ready = True
+    for row in rows:
         artifact_ready = row["effective_status"] in {"READY", "READY_WITH_STAND_DOWNS"}
         if artifact_ready and not upstream_ready:
             row["effective_status"] = "BLOCKED_BY_UPSTREAM"
             row["blockers"] = sorted(set(row["blockers"] + ["an earlier stage is not ready"]))
         upstream_ready = upstream_ready and artifact_ready
-        rows.append(row)
 
     first_blocking = next(
         (row for row in rows if row["effective_status"] not in {"READY", "READY_WITH_STAND_DOWNS"}),
@@ -340,11 +382,15 @@ def build_readiness_report(
     )
     ready_keys = [row["key"] for row in rows if row["effective_status"] in {"READY", "READY_WITH_STAND_DOWNS"}]
     g15_complete = "g15_publication" in ready_keys
-    g16_complete = "g16_publication" in ready_keys
-    broad_verified = _broad_corpus_verified(values.get("corpus_coverage"))
-
+    g16_complete = "g16_prepared_publication" in ready_keys
     if g16_complete and len(ready_keys) == len(STAGES):
         overall = "G15_G16_EXACT_PUBLICATION_COMPLETE"
+    elif "g16_prepared_curve_lock" in ready_keys:
+        overall = "G15_COMPLETE_G16_CURVE_LOCKED_SCORING_INCOMPLETE"
+    elif "g16_prepared_curve_authorization" in ready_keys:
+        overall = "G15_COMPLETE_G16_CURVE_AUTHORIZED_LOCK_INCOMPLETE"
+    elif "g16_prepared_causal_authorization" in ready_keys:
+        overall = "G15_COMPLETE_G16_CAUSAL_AUTHORIZED_CURVE_INCOMPLETE"
     elif g15_complete:
         overall = "G15_EXACT_PUBLICATION_COMPLETE_G16_INCOMPLETE"
     elif "g15_exact_refinement" in ready_keys:
@@ -354,7 +400,7 @@ def build_readiness_report(
     elif "replay_catalog_export" in ready_keys:
         overall = "EXACT_REPLAY_CATALOG_READY_REPLAY_INCOMPLETE"
     elif "corpus_coverage" in ready_keys:
-        overall = "EXACT_INTERSECTIONS_READY_EXPORT_INCOMPLETE"
+        overall = "EXACT_INTERSECTIONS_READY_INVENTORY_OR_EXPORT_INCOMPLETE"
     else:
         overall = "BLOCKED_OR_UNVERIFIED"
 
@@ -370,10 +416,14 @@ def build_readiness_report(
         "ready_stages": ready_keys,
         "first_blocking_stage": None if first_blocking is None else first_blocking["key"],
         "next_action": "NONE_CHAIN_COMPLETE" if first_blocking is None else first_blocking["next_action"],
-        "broad_corpus_verified": broad_verified,
+        "broad_corpus_verified": _broad_corpus_verified(values.get("corpus_coverage")),
         "exact_replay_intersections_ready": "corpus_coverage" in ready_keys,
+        "daily_basis_inventories_ready": "basis_inventory_regeneration" in ready_keys,
         "g15_exact_publication_complete": g15_complete,
+        "g16_prepared_replay_ready": "g16_prepared_replay" in ready_keys,
+        "g16_prepared_curve_locked_before_scoring": "g16_prepared_curve_lock" in ready_keys,
         "g16_exact_publication_complete": g16_complete,
+        "hardened_g16_chain_complete": g16_complete,
         "stand_down_days": sorted({day for row in rows for day in row.get("stand_down_days") or []}),
         "remote_presence_inferred": False,
         "actual_outcome_paths_loaded": False,
@@ -387,8 +437,9 @@ def build_readiness_report(
         "brokerage_contract": "tastytrade_not_ibkr",
         "options_lane_started": False,
         "note": (
-            "This report consolidates canonical artifact validation and upstream ordering only. "
-            "It does not invent remote objects, read outcome paths, or authorize options/live execution."
+            "Readiness v2 requires the exact prepared G16 replay, causal authorization, "
+            "deterministic curve authorization, pre-scoring curve lock, and prepared "
+            "publication wrapper; old publication artifacts cannot bypass this chain."
         ),
     }
     report["fingerprint"] = _fingerprint(report)
@@ -415,16 +466,16 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
     )
     if value.get("first_blocking_stage") != first:
         raise HistoricalRefinementReadinessError("readiness first-blocking-stage mismatch")
+    if value.get("hardened_g16_chain_complete") != ("g16_prepared_publication" in ready):
+        raise HistoricalRefinementReadinessError("hardened G16 completion summary mismatch")
     for field in (
         "remote_presence_inferred", "actual_outcome_paths_loaded", "paid_live_data_assumed",
         "random_shuffle_used", "may_update_ng_brain", "execution_authority", "options_lane_started",
     ):
         if value.get(field) is not False:
             raise HistoricalRefinementReadinessError(f"readiness must keep {field}=false")
-    if value.get("one_signal_authority_preserved") is not True:
-        raise HistoricalRefinementReadinessError("single signal authority must remain preserved")
-    if value.get("blind_forecasts_immutable") is not True:
-        raise HistoricalRefinementReadinessError("blind forecasts must remain immutable")
+    if value.get("one_signal_authority_preserved") is not True or value.get("blind_forecasts_immutable") is not True:
+        raise HistoricalRefinementReadinessError("single signal authority and blind immutability must remain preserved")
     if value.get("cme_event_contracts_mode") != "SHADOW":
         raise HistoricalRefinementReadinessError("CME event contracts must remain SHADOW")
     if value.get("brokerage_contract") != "tastytrade_not_ibkr":
@@ -437,11 +488,29 @@ def _fixture_artifact(spec: StageSpec, status: str, *, stand_down: bool = False)
         "status": status,
         "execution_authority": False,
         "may_update_ng_brain": False,
+        "random_shuffle_used": False,
+        "options_lane_started": False,
     }
+    for field in spec.required_fields:
+        value[field] = f"fixture:{spec.key}:{field}"
     if stand_down:
         value["stand_down_days"] = ["20260315"]
     value[spec.fingerprint_field] = _fingerprint(value)
     return value
+
+
+def _linked_fixture_chain() -> dict[str, dict[str, Any]]:
+    values = {spec.key: _fixture_artifact(spec, sorted(spec.ready_statuses)[0]) for spec in STAGES}
+    incoming: dict[str, list[tuple[str, str, str]]] = {}
+    for source_key, source_field, target_key, target_field in LINK_RULES:
+        incoming.setdefault(target_key, []).append((source_key, source_field, target_field))
+    for spec in STAGES:
+        value = values[spec.key]
+        for source_key, source_field, target_field in incoming.get(spec.key, []):
+            value[target_field] = values[source_key][source_field]
+        value.pop(spec.fingerprint_field, None)
+        value[spec.fingerprint_field] = _fingerprint(value)
+    return values
 
 
 def selftest() -> int:
@@ -451,14 +520,13 @@ def selftest() -> int:
         root = Path(tempdir)
         overrides = {spec.key: (lambda value: None) for spec in STAGES}
         missing = build_readiness_report(root, validator_overrides=overrides)
-        assert missing["status"] == "BLOCKED_OR_UNVERIFIED"
         assert missing["first_blocking_stage"] == "corpus_coverage"
+        values = _linked_fixture_chain()
         for spec in STAGES:
-            status = sorted(spec.ready_statuses)[0]
-            _atomic_json(root / spec.filename, _fixture_artifact(spec, status))
+            _atomic_json(root / spec.filename, values[spec.key])
         complete = build_readiness_report(root, validator_overrides=overrides)
         assert complete["status"] == "G15_G16_EXACT_PUBLICATION_COMPLETE"
-        assert complete["first_blocking_stage"] is None
+        assert complete["hardened_g16_chain_complete"] is True
     print("[ng_historical_refinement_readiness] selftest PASS")
     return 0
 
