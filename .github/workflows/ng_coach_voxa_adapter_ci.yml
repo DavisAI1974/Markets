@@ -6,18 +6,26 @@ on:
       - chatgpt/ng-forecaster-s103-audit
     paths:
       - 'research/kalshi/ng_coach_voxa_adapter.py'
+      - 'research/kalshi/ng_coach_voxa_source_gate.py'
       - 'research/kalshi/ng_product_lag.py'
       - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
       - 'research/kalshi/ng_g16_shadow_runner.py'
       - 'research/kalshi/tests/test_ng_coach_voxa_adapter.py'
+      - 'research/kalshi/tests/test_ng_coach_voxa_source_gate.py'
       - '.github/workflows/ng_coach_voxa_adapter_ci.yml'
   pull_request:
     paths:
       - 'research/kalshi/ng_coach_voxa_adapter.py'
+      - 'research/kalshi/ng_coach_voxa_source_gate.py'
       - 'research/kalshi/ng_product_lag.py'
       - 'research/kalshi/ng_rt_refiner.py'
+      - 'research/kalshi/ng_g15_pipeline.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
       - 'research/kalshi/ng_g16_shadow_runner.py'
       - 'research/kalshi/tests/test_ng_coach_voxa_adapter.py'
+      - 'research/kalshi/tests/test_ng_coach_voxa_source_gate.py'
       - '.github/workflows/ng_coach_voxa_adapter_ci.yml'
 
 permissions:
@@ -35,11 +43,66 @@ jobs:
         run: |
           python -m py_compile \
             research/kalshi/ng_coach_voxa_adapter.py \
+            research/kalshi/ng_coach_voxa_source_gate.py \
             research/kalshi/ng_product_lag.py \
             research/kalshi/ng_rt_refiner.py \
+            research/kalshi/ng_g15_pipeline.py \
+            research/kalshi/ng_g16_exact_causal_pipeline.py \
             research/kalshi/ng_g16_shadow_runner.py \
-            research/kalshi/tests/test_ng_coach_voxa_adapter.py
-      - name: Run coach adapter self-test
-        run: python research/kalshi/ng_coach_voxa_adapter.py --selftest
+            research/kalshi/tests/test_ng_coach_voxa_adapter.py \
+            research/kalshi/tests/test_ng_coach_voxa_source_gate.py
+      - name: Run coach adapter self-tests
+        run: |
+          python research/kalshi/ng_coach_voxa_adapter.py --selftest
+          PYTHONPATH=research/kalshi python research/kalshi/ng_coach_voxa_source_gate.py --selftest
       - name: Run coach adapter unit tests
-        run: python -m unittest -v research/kalshi/tests/test_ng_coach_voxa_adapter.py
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python -m unittest -v \
+            research/kalshi/tests/test_ng_coach_voxa_adapter.py \
+            research/kalshi/tests/test_ng_coach_voxa_source_gate.py
+      - name: Verify production presentation requires exact source authority
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python - <<'PY'
+          import copy
+          import ng_coach_voxa_adapter as coach
+          import ng_coach_voxa_source_gate as gate
+
+          output = coach._fixture_output(1, {"up": 0.65, "flat": 0.15, "down": 0.20})
+          stream = {
+              "schema": coach.G15_STREAM_SCHEMA,
+              "market": "NG",
+              "group": 15,
+              "authority": "REFINE_POSTERIOR_STREAM_ONLY",
+              "execution_authority": False,
+              "anchor_fingerprint": "anchor",
+              "n_outputs": 1,
+              "outputs": [output],
+          }
+          pipeline = {
+              "schema": gate.G15_SCHEMA,
+              "market": "NG",
+              "group": 15,
+              "authority": gate.G15_AUTHORITY,
+              "execution_authority": False,
+              "refine_stream": copy.deepcopy(stream),
+              "gates": {
+                  "actual_outcome_scoring_complete": False,
+                  "refined_curve_complete": False,
+                  "continuous_rt_renders_complete": False,
+                  "g16_authorized": False,
+              },
+          }
+          pipeline["pipeline_fingerprint"] = gate._fp(pipeline)
+          result = gate.build_authorized_coach_stream(pipeline, stream)
+          assert result["source_authorization_status"] == gate.STATUS
+          assert result["one_signal_authority_preserved"] is True
+          assert result["delivery_authority"] is False
+          assert result["execution_authority"] is False
+          assert result["cme_event_contracts_mode"] == "SHADOW"
+          assert result["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert result["options_lane_started"] is False
+          PY
