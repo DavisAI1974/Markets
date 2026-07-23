@@ -1,0 +1,62 @@
+name: NG Corpus Definition Probe Gate CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_definition_probe_gate.py
+      - research/kalshi/ng_corpus_identity_probe.py
+      - research/kalshi/ng_corpus_quarantine_storage.py
+      - research/kalshi/ng_corpus_materialization.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_definition_observation.py
+      - research/kalshi/ng_definition_observation_support.py
+      - research/kalshi/ng_historical_normalize.py
+      - research/kalshi/tests/test_ng_corpus_definition_probe_gate.py
+      - .github/workflows/ng_corpus_definition_probe_gate_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_corpus_definition_probe_gate.py
+      - research/kalshi/ng_corpus_identity_probe.py
+      - research/kalshi/ng_corpus_quarantine_storage.py
+      - research/kalshi/ng_corpus_materialization.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_definition_observation.py
+      - research/kalshi/ng_definition_observation_support.py
+      - research/kalshi/ng_historical_normalize.py
+      - research/kalshi/tests/test_ng_corpus_definition_probe_gate.py
+      - .github/workflows/ng_corpus_definition_probe_gate_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  definition-probe-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip pytest
+      - name: Compile provenance-locked corpus chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_corpus_coverage_audit.py \
+            research/kalshi/ng_corpus_inspection.py \
+            research/kalshi/ng_corpus_materialization.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/ng_corpus_quarantine_storage.py \
+            research/kalshi/ng_corpus_identity_probe.py \
+            research/kalshi/ng_definition_observation_support.py \
+            research/kalshi/ng_definition_observation.py \
+            research/kalshi/ng_corpus_definition_probe_gate.py \
+            research/kalshi/tests/test_ng_corpus_definition_probe_gate.py
+      - name: Run definition probe gate self-test
+        working-directory: research/kalshi
+        run: python ng_corpus_definition_probe_gate.py --selftest
+      - name: Run definition probe gate tests
+        working-directory: research/kalshi
+        run: PYTHONPATH=. pytest -q tests/test_ng_corpus_definition_probe_gate.py
