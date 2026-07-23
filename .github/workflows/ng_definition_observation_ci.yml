@@ -46,4 +46,4 @@ jobs:
         run: python ng_definition_observation.py --selftest
       - name: Run definition observation tests
         working-directory: research/kalshi
-        run: pytest -q tests/test_ng_definition_observation.py
+        run: PYTHONPATH=. pytest -q tests/test_ng_definition_observation.py
