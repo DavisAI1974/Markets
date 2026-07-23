@@ -1,0 +1,63 @@
+name: NG Coach Dashboard CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'desk/app.py'
+      - 'desk/ng_coach_panel.py'
+      - 'desk/tests/test_ng_coach_panel.py'
+      - 'research/kalshi/ng_coach_voxa_adapter.py'
+      - 'research/kalshi/ng_coach_voxa_source_gate.py'
+      - '.github/workflows/ng_coach_dashboard_ci.yml'
+  pull_request:
+    paths:
+      - 'desk/app.py'
+      - 'desk/ng_coach_panel.py'
+      - 'desk/tests/test_ng_coach_panel.py'
+      - 'research/kalshi/ng_coach_voxa_adapter.py'
+      - 'research/kalshi/ng_coach_voxa_source_gate.py'
+      - '.github/workflows/ng_coach_dashboard_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dashboard dependency
+        run: pip install --quiet fastapi
+      - name: Compile desk and exact-source coach contracts
+        run: |
+          python -m py_compile \
+            desk/app.py \
+            desk/ng_coach_panel.py \
+            desk/tests/test_ng_coach_panel.py \
+            research/kalshi/ng_coach_voxa_adapter.py \
+            research/kalshi/ng_coach_voxa_source_gate.py
+      - name: Run 16 exact-source coach dashboard tests
+        run: python -m unittest -v desk/tests/test_ng_coach_panel.py
+      - name: Verify router and fail-closed presentation controls
+        run: |
+          python - <<'PY'
+          from desk.app import app, index
+          from desk.ng_coach_panel import read_coach_stream
+          from pathlib import Path
+          import tempfile
+
+          paths = {route.path for route in app.routes}
+          assert '/api/ng/coach' in paths
+          assert '/partials/ng-coach' in paths
+          assert 'hx-get="/partials/ng-coach"' in index()
+          with tempfile.TemporaryDirectory() as directory:
+              state = read_coach_stream(Path(directory) / 'missing.json')
+          assert state['panel_status'] == 'OFFLINE'
+          assert state['execution_authority'] is False
+          print('Exact-source coach panel is wired and remains fail-closed')
+          PY
