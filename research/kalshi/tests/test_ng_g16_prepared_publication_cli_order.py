@@ -1,8 +1,13 @@
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
-from research.kalshi.ng_g16_prepared_publication_gate import (
+KALSHI_DIR = Path(__file__).resolve().parents[1]
+if str(KALSHI_DIR) not in sys.path:
+    sys.path.insert(0, str(KALSHI_DIR))
+
+from ng_g16_prepared_publication_gate import (  # noqa: E402
     G16PreparedPublicationError,
     main,
 )
@@ -53,13 +58,13 @@ class G16PreparedPublicationCliOrderTests(unittest.TestCase):
             raise AssertionError(f"unexpected pre-lock file read: {observed}")
 
         with patch.object(sys, "argv", argv), patch(
-            "research.kalshi.ng_g16_prepared_publication_gate.Path.read_bytes",
+            "ng_g16_prepared_publication_gate.Path.read_bytes",
             read_bytes,
         ), patch(
-            "research.kalshi.ng_g16_prepared_publication_gate._load",
+            "ng_g16_prepared_publication_gate._load",
             return_value={},
         ), patch(
-            "research.kalshi.ng_g16_prepared_publication_gate.build_curve_lock",
+            "ng_g16_prepared_publication_gate.build_curve_lock",
             side_effect=G16PreparedPublicationError("curve lock failed"),
         ):
             with self.assertRaises(G16PreparedPublicationError):
