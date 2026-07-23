@@ -16,6 +16,7 @@ PrivateTmp=true
 ProtectSystem=full
 ProtectHome=true
 ReadOnlyPaths=/var/lib/markets/ng_live
+ReadOnlyPaths=-/var/lib/markets/ng_refine
 
 [Install]
 WantedBy=multi-user.target
