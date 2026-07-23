@@ -1,0 +1,80 @@
+name: NG branch alignment gate
+
+on:
+  push:
+    paths:
+      - research/kalshi/ng_branch_alignment_gate.py
+      - research/kalshi/tests/test_ng_branch_alignment_gate.py
+      - .github/workflows/ng_branch_alignment_gate_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_branch_alignment_gate.py
+      - research/kalshi/tests/test_ng_branch_alignment_gate.py
+      - .github/workflows/ng_branch_alignment_gate_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  branch-alignment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile branch-alignment contract
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_branch_alignment_gate.py \
+            tests/test_ng_branch_alignment_gate.py
+
+      - name: Branch-alignment selftest
+        working-directory: research/kalshi
+        run: python ng_branch_alignment_gate.py --selftest
+
+      - name: Run 17 focused tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_branch_alignment_gate.py' -v
+
+      - name: Exercise real Git preflight without network access
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          work="$root/Markets"
+          git init -b chatgpt/ng-forecaster-s103-audit "$work"
+          git -C "$work" config user.name "CI"
+          git -C "$work" config user.email "ci@example.invalid"
+          printf '{}\n' > "$work/seed.json"
+          git -C "$work" add seed.json
+          git -C "$work" commit -m seed
+          git -C "$work" remote add origin git@github.com:DavisAI1974/Markets.git
+          head_sha="$(git -C "$work" rev-parse HEAD)"
+          git -C "$work" update-ref \
+            refs/remotes/origin/chatgpt/ng-forecaster-s103-audit \
+            "$head_sha"
+          python research/kalshi/ng_branch_alignment_gate.py \
+            --repository-path "$work" \
+            --observed-at 2026-07-23T16:49:00Z \
+            --out "$root/alignment.json"
+          python - "$root/alignment.json" <<'PY'
+          import json
+          import sys
+
+          gate = json.load(open(sys.argv[1], encoding="utf-8"))
+          assert gate["status"] == "ALIGNED"
+          assert gate["ahead_by"] == 0
+          assert gate["behind_by"] == 0
+          assert gate["remote_fetch_performed"] is False
+          assert gate["random_shuffle_used"] is False
+          assert gate["blind_forecasts_immutable"] is True
+          assert gate["may_update_ng_brain"] is False
+          assert gate["execution_authority"] is False
+          assert gate["cme_event_contracts_mode"] == "SHADOW"
+          assert gate["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert gate["options_lane_started"] is False
+          PY
