@@ -1,0 +1,75 @@
+name: NG G16 Prepared Causal Authorization CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_prepared_causal_authorization.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_causal_authorization.py'
+      - 'research/kalshi/ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - 'research/kalshi/ng_g16_shadow_gate.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/ng_g16_blind_wall.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - '.github/workflows/ng_g16_prepared_causal_authorization_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_prepared_causal_authorization.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_causal_authorization.py'
+      - 'research/kalshi/ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - 'research/kalshi/ng_g16_shadow_gate.py'
+      - 'research/kalshi/ng_g16_shadow_runner.py'
+      - 'research/kalshi/ng_g16_blind_wall.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - '.github/workflows/ng_g16_prepared_causal_authorization_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime dependencies
+        run: pip install --quiet databento boto3 numpy
+      - name: Compile exact G16 prepared causal chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_prepared_causal_authorization.py \
+            research/kalshi/tests/test_ng_g16_prepared_causal_authorization.py \
+            research/kalshi/ng_g16_prepared_replay_gate.py \
+            research/kalshi/ng_g16_exact_causal_pipeline.py \
+            research/kalshi/ng_g16_historical_replay.py \
+            research/kalshi/ng_g16_shadow_gate.py \
+            research/kalshi/ng_g16_shadow_runner.py \
+            research/kalshi/ng_g16_blind_wall.py \
+            research/kalshi/ng_rt_feature_state.py
+      - name: Run prepared causal authorization self-test
+        working-directory: research/kalshi
+        run: python ng_g16_prepared_causal_authorization.py --selftest
+      - name: Run prepared causal authorization tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_prepared_causal_authorization.py
+      - name: Verify next stage remains outcome blind
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python - <<'PY'
+          from ng_g16_prepared_causal_authorization import (
+              NEXT_STAGE,
+              STATUS_READY,
+              STATUS_STAND_DOWNS,
+          )
+          assert NEXT_STAGE == 'OUTCOME_BLIND_G16_CURVE_ADAPTER'
+          assert 'AUTHORIZED' in STATUS_READY
+          assert STATUS_STAND_DOWNS.endswith('WITH_STAND_DOWNS')
+          print('G16 prepared causal authorization remains outcome blind')
+          PY
