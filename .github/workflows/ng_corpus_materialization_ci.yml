@@ -1,0 +1,69 @@
+name: NG Corpus Materialization CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_corpus_materialization.py'
+      - 'research/kalshi/ng_corpus_inspection.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/tests/test_ng_corpus_materialization.py'
+      - '.github/workflows/ng_corpus_materialization_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_corpus_materialization.py'
+      - 'research/kalshi/ng_corpus_inspection.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/tests/test_ng_corpus_materialization.py'
+      - '.github/workflows/ng_corpus_materialization_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile materialization chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_corpus_materialization.py \
+            research/kalshi/ng_corpus_inspection.py \
+            research/kalshi/ng_corpus_coverage_audit.py \
+            research/kalshi/tests/test_ng_corpus_materialization.py
+      - name: Run materialization selftest
+        working-directory: research/kalshi
+        run: python ng_corpus_materialization.py --selftest
+      - name: Run materialization unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_corpus_materialization.py
+      - name: Verify remote inventory remains identity-blind
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_corpus_materialization as m
+
+          class EmptyS3:
+              def list_objects_v2(self, **kwargs):
+                  return {'IsTruncated': False, 'Contents': []}
+
+          snapshot = m.snapshot_s3(
+              EmptyS3(),
+              bucket='example',
+              prefixes=['nymex/'],
+              observed_at='2026-07-22T00:00:00Z',
+          )
+          bindings = m.binding_template(snapshot)
+          assert snapshot['object_count'] == 0
+          assert snapshot['remote_presence_inferred'] is False
+          assert snapshot['identity_inferred_from_object_name'] is False
+          assert bindings['all_bindings_require_explicit_review'] is True
+          assert bindings['execution_authority'] is False
+          assert bindings['brokerage_contract'] == 'tastytrade_not_ibkr'
+          assert bindings['cme_event_contracts_mode'] == 'SHADOW'
+          assert bindings['options_lane_started'] is False
+          PY
