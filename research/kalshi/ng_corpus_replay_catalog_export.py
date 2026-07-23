@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Export exact audited G15/G16 pairs into deterministic replay catalogs."""
+"""Export exact audited G15/G16 pairs into deterministic replay catalogs.
+
+Replay locations are bound to the same bytes that were inspected and hashed. When a
+catalog entry carries ``materialized_path`` (including target-day shards derived from
+cumulative objects), that local path is the replay source. The original S3/local object
+location is retained only as origin provenance and can never silently replace the
+materialized bytes whose size and SHA-256 were audited.
+"""
 from __future__ import annotations
 
 import argparse
@@ -21,6 +28,10 @@ LANES = ("l1_trades", "mbo")
 GROUPS = {
     15: (coverage.G15_DATES, coverage.G15_CONTRACT_MAP),
     16: (coverage.G16_DATES, coverage.G16_CONTRACT_MAP),
+}
+REPLAY_LOCATION_BASES = {
+    "INSPECTED_MATERIALIZED_BYTES",
+    "OBSERVED_SOURCE_LOCATION",
 }
 
 
@@ -53,7 +64,10 @@ def _pairs(audit: Mapping[str, Any], group: int) -> dict[str, dict[str, Any]]:
     report = (audit.get("exact_intersections") or {}).get(f"g{group}")
     if not isinstance(report, Mapping):
         raise ReplayCatalogExportError(f"audit lacks G{group}")
-    if report.get("status") != "MATCHED_L1_MBO_READY" or report.get("can_run_exact_replay") is not True:
+    if (
+        report.get("status") != "MATCHED_L1_MBO_READY"
+        or report.get("can_run_exact_replay") is not True
+    ):
         raise ReplayCatalogExportError(f"G{group} exact intersection is not replay-ready")
     rows = report.get("day_reports")
     if not isinstance(rows, list) or [row.get("day") for row in rows] != list(dates):
@@ -67,10 +81,18 @@ def _pairs(audit: Mapping[str, Any], group: int) -> dict[str, dict[str, Any]]:
 
 
 def _identity(row: Mapping[str, Any]) -> tuple[Any, ...]:
-    return tuple(row.get(name) for name in (
-        "dataset", "publisher_id", "instrument_id", "raw_symbol",
-        "definition_date", "definition_start_s", "definition_end_s",
-    ))
+    return tuple(
+        row.get(name)
+        for name in (
+            "dataset",
+            "publisher_id",
+            "instrument_id",
+            "raw_symbol",
+            "definition_date",
+            "definition_start_s",
+            "definition_end_s",
+        )
+    )
 
 
 def _definition(group: int, symbol: str, pairs, entries) -> dict[str, Any]:
@@ -82,23 +104,51 @@ def _definition(group: int, symbol: str, pairs, entries) -> dict[str, Any]:
             rows += [entries[pair["l1_source_id"]], entries[pair["mbo_source_id"]]]
     identities = {_identity(row) for row in rows}
     if len(identities) != 1:
-        raise ReplayCatalogExportError(f"G{group} {symbol} definition identity disagrees across days")
-    dataset, publisher, instrument, raw_symbol, definition_date, start, end = next(iter(identities))
+        raise ReplayCatalogExportError(
+            f"G{group} {symbol} definition identity disagrees across days"
+        )
+    dataset, publisher, instrument, raw_symbol, definition_date, start, end = next(
+        iter(identities)
+    )
     observed = sorted({str(row.get("inventory_observed_at") or "") for row in rows})
     if not observed or not observed[0]:
         raise ReplayCatalogExportError(f"G{group} {symbol} lacks observation time")
     return {
-        "dataset": dataset, "publisher_id": publisher, "instrument_id": instrument,
-        "raw_symbol": raw_symbol, "definition_date": definition_date,
-        "definition_start_s": start, "definition_end_s": end,
+        "dataset": dataset,
+        "publisher_id": publisher,
+        "instrument_id": instrument,
+        "raw_symbol": raw_symbol,
+        "definition_date": definition_date,
+        "definition_start_s": start,
+        "definition_end_s": end,
         "observed_at": observed[-1],
         "source": "ng_corpus_catalog.v1 selected exact-pair metadata",
         "source_ids": sorted({str(row["source_id"]) for row in rows}),
-        "source_metadata_fingerprint": _fp(sorted(
-            ({"source_id": row["source_id"], "identity": _identity(row)} for row in rows),
-            key=lambda item: item["source_id"],
-        )),
+        "source_metadata_fingerprint": _fp(
+            sorted(
+                (
+                    {"source_id": row["source_id"], "identity": _identity(row)}
+                    for row in rows
+                ),
+                key=lambda item: item["source_id"],
+            )
+        ),
     }
+
+
+def _replay_location(
+    observed: Mapping[str, Any], *, group: int, day: str, lane: str
+) -> tuple[str, str | None, str | None, str]:
+    """Select the location that contains the bytes described by size/SHA metadata."""
+    materialized = str(observed.get("materialized_path") or "").strip()
+    origin = str(observed.get("location") or "").strip()
+    if materialized:
+        return materialized, origin or None, materialized, "INSPECTED_MATERIALIZED_BYTES"
+    if origin:
+        return origin, origin, None, "OBSERVED_SOURCE_LOCATION"
+    raise ReplayCatalogExportError(
+        f"G{group} {day}:{lane} lacks a replayable materialized_path or location"
+    )
 
 
 def _fill(template: dict[str, Any], group: int, pairs, entries, catalog_fp, audit_fp):
@@ -122,37 +172,66 @@ def _fill(template: dict[str, Any], group: int, pairs, entries, catalog_fp, audi
     for raw in out["sources"]:
         source = copy.deepcopy(raw)
         day, lane = str(source["day"]), str(source["source_kind"])
-        source_id = pairs[day]["l1_source_id" if lane == "l1_trades" else "mbo_source_id"]
+        source_id = pairs[day][
+            "l1_source_id" if lane == "l1_trades" else "mbo_source_id"
+        ]
         observed = entries.get(source_id)
         if not observed or str(observed.get("status") or "").upper() != "PRESENT":
             raise ReplayCatalogExportError(f"G{group} {day}:{lane} source is not PRESENT")
         if (observed.get("day"), observed.get("lane")) != (day, lane):
             raise ReplayCatalogExportError(f"G{group} {day}:{lane} selected lane mismatch")
         target = contract_map[day]
-        if (observed.get("dataset"), observed.get("raw_symbol"), observed.get("instrument_id")) != (
-            DATASET, target["raw_symbol"], target["instrument_id"]
-        ):
+        if (
+            observed.get("dataset"),
+            observed.get("raw_symbol"),
+            observed.get("instrument_id"),
+        ) != (DATASET, target["raw_symbol"], target["instrument_id"]):
             raise ReplayCatalogExportError(f"G{group} {day}:{lane} basis mismatch")
         fields = (
-            "location", "publisher_id", "definition_date", "definition_start_s",
-            "definition_end_s", "event_start_s", "event_end_s", "record_count",
-            "size_bytes", "sha256", "inventory_observed_at",
+            "publisher_id",
+            "definition_date",
+            "definition_start_s",
+            "definition_end_s",
+            "event_start_s",
+            "event_end_s",
+            "record_count",
+            "size_bytes",
+            "sha256",
+            "inventory_observed_at",
         )
         missing = [name for name in fields if observed.get(name) in (None, "")]
         if missing:
-            raise ReplayCatalogExportError(f"G{group} {day}:{lane} missing {', '.join(missing)}")
+            raise ReplayCatalogExportError(
+                f"G{group} {day}:{lane} missing {', '.join(missing)}"
+            )
+        replay_location, origin_location, materialized_path, location_basis = _replay_location(
+            observed, group=group, day=day, lane=lane
+        )
         source.update({name: observed[name] for name in fields})
-        source.update({
-            "status": "PRESENT", "dataset": DATASET,
-            "publisher_id": observed["publisher_id"],
-            "instrument_id": target["instrument_id"], "raw_symbol": target["raw_symbol"],
-            "coverage_source_id": source_id,
-            "coverage_entry_fingerprint": _fp(observed),
-            "coverage_pair_fingerprint": _fp(pairs[day]),
-        })
+        source.update(
+            {
+                "status": "PRESENT",
+                "location": replay_location,
+                "dataset": DATASET,
+                "publisher_id": observed["publisher_id"],
+                "instrument_id": target["instrument_id"],
+                "raw_symbol": target["raw_symbol"],
+                "coverage_source_id": source_id,
+                "coverage_entry_fingerprint": _fp(observed),
+                "coverage_pair_fingerprint": _fp(pairs[day]),
+                "coverage_origin_location": origin_location,
+                "coverage_materialized_path": materialized_path,
+                "replay_location_basis": location_basis,
+                "replay_bytes_match_coverage_hash": True,
+            }
+        )
         filled.append(source)
     out["sources"] = filled
-    out["note"] = "Filled only from deterministic PRESENT exact pairs; UNKNOWN was not promoted."
+    out["note"] = (
+        "Filled only from deterministic PRESENT exact pairs. Replay locations point "
+        "to the inspected bytes whose size and SHA-256 are recorded; original object "
+        "locations remain provenance only. UNKNOWN was not promoted."
+    )
     out["fingerprint"] = _fp(out)
     return out
 
@@ -164,26 +243,49 @@ def build_export_bundle(catalog, audit, g15_inventory, g16_inventory):
         raise ReplayCatalogExportError("audit is not the deterministic rebuild of catalog")
     entries = _entries(catalog)
     p15, p16 = _pairs(audit, 15), _pairs(audit, 16)
-    c15 = _fill(g15.build_catalog_template(g15_inventory), 15, p15, entries,
-                catalog["catalog_fingerprint"], audit["fingerprint"])
-    c16 = _fill(g16.build_catalog_template(g16_inventory), 16, p16, entries,
-                catalog["catalog_fingerprint"], audit["fingerprint"])
+    c15 = _fill(
+        g15.build_catalog_template(g15_inventory),
+        15,
+        p15,
+        entries,
+        catalog["catalog_fingerprint"],
+        audit["fingerprint"],
+    )
+    c16 = _fill(
+        g16.build_catalog_template(g16_inventory),
+        16,
+        p16,
+        entries,
+        catalog["catalog_fingerprint"],
+        audit["fingerprint"],
+    )
     b15 = g15.build_replay_manifest(g15_inventory, c15)
     m16 = g16.build_manifest(g16_inventory, c16)
     bundle = {
-        "schema": SCHEMA, "status": "READY", "market": "NG", "dataset": DATASET,
+        "schema": SCHEMA,
+        "status": "READY",
+        "market": "NG",
+        "dataset": DATASET,
         "coverage_catalog_fingerprint": catalog["catalog_fingerprint"],
         "coverage_audit_fingerprint": audit["fingerprint"],
         "selected_day_pair_count": len(coverage.G15_DATES) + len(coverage.G16_DATES),
-        "selected_source_lane_count": 2 * (len(coverage.G15_DATES) + len(coverage.G16_DATES)),
-        "g15_catalog": c15, "g16_catalog": c16,
+        "selected_source_lane_count": 2
+        * (len(coverage.G15_DATES) + len(coverage.G16_DATES)),
+        "g15_catalog": c15,
+        "g16_catalog": c16,
         "g15_bridge_fingerprint": b15["fingerprint"],
         "g16_manifest_fingerprint": m16["fingerprint"],
-        "unknown_promoted_to_present": False, "actual_outcomes_used": False,
-        "paid_live_data_assumed": False, "one_signal_authority_preserved": True,
-        "blind_forecasts_immutable": True, "may_update_ng_brain": False,
-        "execution_authority": False, "cme_event_contracts_mode": "SHADOW",
-        "brokerage_contract": "tastytrade_not_ibkr", "options_lane_started": False,
+        "unknown_promoted_to_present": False,
+        "actual_outcomes_used": False,
+        "paid_live_data_assumed": False,
+        "one_signal_authority_preserved": True,
+        "blind_forecasts_immutable": True,
+        "replay_locations_bound_to_hashed_bytes": True,
+        "may_update_ng_brain": False,
+        "execution_authority": False,
+        "cme_event_contracts_mode": "SHADOW",
+        "brokerage_contract": "tastytrade_not_ibkr",
+        "options_lane_started": False,
         "next_permitted_stage": "G15_G16_PREPARATION_AND_DETERMINISTIC_REPLAY",
     }
     bundle["fingerprint"] = _fp(bundle)
@@ -196,11 +298,19 @@ def build_export_bundle(catalog, audit, g15_inventory, g16_inventory):
 def validate_export_bundle(bundle):
     checked = copy.deepcopy(bundle)
     observed = checked.pop("fingerprint", None)
-    if observed != _fp(checked) or checked.get("schema") != SCHEMA or checked.get("status") != "READY":
+    if (
+        observed != _fp(checked)
+        or checked.get("schema") != SCHEMA
+        or checked.get("status") != "READY"
+    ):
         raise ReplayCatalogExportError("export fingerprint or schema mismatch")
     for field in (
-        "unknown_promoted_to_present", "actual_outcomes_used", "paid_live_data_assumed",
-        "may_update_ng_brain", "execution_authority", "options_lane_started",
+        "unknown_promoted_to_present",
+        "actual_outcomes_used",
+        "paid_live_data_assumed",
+        "may_update_ng_brain",
+        "execution_authority",
+        "options_lane_started",
     ):
         if checked.get(field) is not False:
             raise ReplayCatalogExportError(f"export must keep {field}=false")
@@ -212,6 +322,8 @@ def validate_export_bundle(bundle):
         raise ReplayCatalogExportError("single signal authority must remain preserved")
     if checked.get("blind_forecasts_immutable") is not True:
         raise ReplayCatalogExportError("blind forecasts must remain immutable")
+    if checked.get("replay_locations_bound_to_hashed_bytes") is not True:
+        raise ReplayCatalogExportError("replay locations must remain bound to hashed bytes")
     expected_days = len(coverage.G15_DATES) + len(coverage.G16_DATES)
     if checked.get("selected_day_pair_count") != expected_days:
         raise ReplayCatalogExportError("selected day-pair count mismatch")
@@ -232,7 +344,10 @@ def validate_export_bundle(bundle):
         sources = nested.get("sources")
         if not isinstance(sources, list) or len(sources) != expected_count:
             raise ReplayCatalogExportError(f"{field} source-lane count mismatch")
-        keys = [(str(row.get("day") or ""), str(row.get("source_kind") or "")) for row in sources]
+        keys = [
+            (str(row.get("day") or ""), str(row.get("source_kind") or ""))
+            for row in sources
+        ]
         if len(keys) != len(set(keys)):
             raise ReplayCatalogExportError(f"{field} contains duplicate source lanes")
         for row in sources:
@@ -241,9 +356,31 @@ def validate_export_bundle(bundle):
             source_id = str(row.get("coverage_source_id") or "")
             if not source_id:
                 raise ReplayCatalogExportError(f"{field} source lacks coverage provenance")
+            basis = str(row.get("replay_location_basis") or "")
+            if basis not in REPLAY_LOCATION_BASES:
+                raise ReplayCatalogExportError(f"{field} source has invalid replay-location basis")
+            location = str(row.get("location") or "")
+            origin = row.get("coverage_origin_location")
+            materialized = row.get("coverage_materialized_path")
+            if not location or row.get("replay_bytes_match_coverage_hash") is not True:
+                raise ReplayCatalogExportError(
+                    f"{field} replay source is not bound to coverage bytes"
+                )
+            if basis == "INSPECTED_MATERIALIZED_BYTES":
+                if not materialized or location != materialized:
+                    raise ReplayCatalogExportError(
+                        f"{field} materialized replay location mismatch"
+                    )
+            else:
+                if materialized not in (None, "") or not origin or location != origin:
+                    raise ReplayCatalogExportError(
+                        f"{field} observed replay location mismatch"
+                    )
             selected_ids.append(source_id)
     if len(selected_ids) != len(set(selected_ids)):
-        raise ReplayCatalogExportError("a coverage source was selected for multiple replay lanes")
+        raise ReplayCatalogExportError(
+            "a coverage source was selected for multiple replay lanes"
+        )
     return checked
 
 
@@ -254,7 +391,9 @@ def _load(path: Path):
 def _write(path: Path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + ".tmp")
-    temp.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temp.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     os.replace(temp, path)
 
 
@@ -275,17 +414,27 @@ def selftest() -> int:
             row = g16._inventory_rows(i16)[day]
             for lane in LANES:
                 start, end = g16._inventory_range(row, lane)
-                item = _fixture_row(day, lane, coverage.G16_CONTRACT_MAP[day], start, end,
-                                    g16._expected_count(row, lane))
-                item.update(definition_date=d16["definition_date"],
-                            definition_start_s=d16["definition_start_s"],
-                            definition_end_s=d16["definition_end_s"])
+                item = _fixture_row(
+                    day,
+                    lane,
+                    coverage.G16_CONTRACT_MAP[day],
+                    start,
+                    end,
+                    g16._expected_count(row, lane),
+                )
+                item.update(
+                    definition_date=d16["definition_date"],
+                    definition_start_s=d16["definition_start_s"],
+                    definition_end_s=d16["definition_end_s"],
+                )
                 entries[lane].append(item)
         catalog = coverage.expected_catalog_template(publisher_id=1)
         for corpus in catalog["corpora"]:
             corpus["entries"] = entries[corpus["lane"]]
             corpus["expected_days"] = list(coverage.G15_DATES + coverage.G16_DATES)
-            corpus["expected_object_count"] = corpus["observed_object_count"] = len(corpus["entries"])
+            corpus["expected_object_count"] = corpus["observed_object_count"] = len(
+                corpus["entries"]
+            )
             corpus["remote_inventory_verified"] = corpus["inventory_complete"] = True
             corpus["inventory_observed_at"] = "2026-07-22T20:00:00Z"
         catalog.pop("catalog_fingerprint")
@@ -293,6 +442,7 @@ def selftest() -> int:
         bundle = build_export_bundle(catalog, coverage.build_audit(catalog), i15, i16)
         assert len(bundle["g15_catalog"]["sources"]) == 24
         assert len(bundle["g16_catalog"]["sources"]) == 22
+        assert bundle["replay_locations_bound_to_hashed_bytes"] is True
     print("[ng_corpus_replay_catalog_export] selftest PASS")
     return 0
 
@@ -300,13 +450,21 @@ def selftest() -> int:
 def _fixture_row(day, lane, target, start, end, count):
     symbol = target["raw_symbol"]
     return {
-        "day": day, "lane": lane, "source_id": f"{lane}:{day}:{symbol}",
-        "status": "PRESENT", "location": f"file:///fixture/{day}-{lane}.dbn",
-        "dataset": DATASET, "publisher_id": 1,
-        "instrument_id": target["instrument_id"], "raw_symbol": symbol,
+        "day": day,
+        "lane": lane,
+        "source_id": f"{lane}:{day}:{symbol}",
+        "status": "PRESENT",
+        "location": f"file:///fixture/{day}-{lane}.dbn",
+        "dataset": DATASET,
+        "publisher_id": 1,
+        "instrument_id": target["instrument_id"],
+        "raw_symbol": symbol,
         "definition_date": "2026-03-01" if symbol == "NGJ26" else "2026-03-20",
-        "definition_start_s": 0.0, "definition_end_s": 2_000_000_000.0,
-        "event_start_s": start, "event_end_s": end, "record_count": count,
+        "definition_start_s": 0.0,
+        "definition_end_s": 2_000_000_000.0,
+        "event_start_s": start,
+        "event_end_s": end,
+        "record_count": count,
         "size_bytes": 1000 + count,
         "sha256": hashlib.sha256(f"{lane}:{day}:{symbol}".encode()).hexdigest(),
         "inventory_observed_at": "2026-07-22T20:00:00Z",
@@ -316,18 +474,36 @@ def _fixture_row(day, lane, target, start, end, count):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--selftest", action="store_true")
-    for name in ("catalog", "audit", "g15-inventory", "g16-inventory",
-                 "g15-out", "g16-out", "bundle-out"):
+    for name in (
+        "catalog",
+        "audit",
+        "g15-inventory",
+        "g16-inventory",
+        "g15-out",
+        "g16-out",
+        "bundle-out",
+    ):
         parser.add_argument(f"--{name}", type=Path)
     args = parser.parse_args()
     if args.selftest:
         return selftest()
-    required = (args.catalog, args.audit, args.g15_inventory, args.g16_inventory,
-                args.g15_out, args.g16_out, args.bundle_out)
+    required = (
+        args.catalog,
+        args.audit,
+        args.g15_inventory,
+        args.g16_inventory,
+        args.g15_out,
+        args.g16_out,
+        args.bundle_out,
+    )
     if any(value is None for value in required):
         parser.error("all catalog, audit, inventory, and output arguments are required")
-    bundle = build_export_bundle(_load(args.catalog), _load(args.audit),
-                                 _load(args.g15_inventory), _load(args.g16_inventory))
+    bundle = build_export_bundle(
+        _load(args.catalog),
+        _load(args.audit),
+        _load(args.g15_inventory),
+        _load(args.g16_inventory),
+    )
     _write(args.g15_out, bundle["g15_catalog"])
     _write(args.g16_out, bundle["g16_catalog"])
     _write(args.bundle_out, bundle)
