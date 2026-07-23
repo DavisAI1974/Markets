@@ -7,6 +7,7 @@ on:
     paths:
       - 'research/kalshi/ng_g16_prepared_publication_gate.py'
       - 'research/kalshi/tests/test_ng_g16_prepared_publication_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_publication_cli_order.py'
       - 'research/kalshi/ng_g16_prepared_curve_authorization.py'
       - 'research/kalshi/ng_g16_prepared_causal_authorization.py'
       - 'research/kalshi/ng_g16_prepared_replay_gate.py'
@@ -20,6 +21,7 @@ on:
     paths:
       - 'research/kalshi/ng_g16_prepared_publication_gate.py'
       - 'research/kalshi/tests/test_ng_g16_prepared_publication_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_publication_cli_order.py'
       - 'research/kalshi/ng_g16_prepared_curve_authorization.py'
       - 'research/kalshi/ng_g16_prepared_causal_authorization.py'
       - 'research/kalshi/ng_g16_prepared_replay_gate.py'
@@ -48,6 +50,7 @@ jobs:
           python -m py_compile \
             research/kalshi/ng_g16_prepared_publication_gate.py \
             research/kalshi/tests/test_ng_g16_prepared_publication_gate.py \
+            research/kalshi/tests/test_ng_g16_prepared_publication_cli_order.py \
             research/kalshi/ng_g16_prepared_curve_authorization.py \
             research/kalshi/ng_g16_prepared_causal_authorization.py \
             research/kalshi/ng_g16_prepared_replay_gate.py \
@@ -57,7 +60,10 @@ jobs:
             research/kalshi/ng_g16_path_score.py \
             research/kalshi/ng_chronological_validation.py
       - name: Run prepared G16 publication tests
-        run: python -m unittest -v research/kalshi/tests/test_ng_g16_prepared_publication_gate.py
+        run: |
+          python -m unittest -v \
+            research/kalshi/tests/test_ng_g16_prepared_publication_gate.py \
+            research/kalshi/tests/test_ng_g16_prepared_publication_cli_order.py
       - name: Verify the scoring wall remains ordered
         env:
           PYTHONPATH: research/kalshi
