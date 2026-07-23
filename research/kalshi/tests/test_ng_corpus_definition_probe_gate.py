@@ -223,12 +223,19 @@ def test_binding_cannot_substitute_another_catalog_definition(tmp_path):
         ),
     ]
     snapshot, quarantine, catalog, gated, probed, bindings, object_id, *_ = _bundle(tmp_path, rows=rows)
-    changed = copy.deepcopy(bindings)
-    row = next(row for row in changed["bindings"] if row["object_id"] == object_id)
+    changed_bindings = copy.deepcopy(bindings)
+    row = next(row for row in changed_bindings["bindings"] if row["object_id"] == object_id)
     row["definition"] = next(row for row in catalog["definitions"] if row["raw_symbol"] == "NGK26")
-    _refingerprint_bindings(changed)
+    _refingerprint_bindings(changed_bindings)
+
+    changed_probe = copy.deepcopy(probed)
+    changed_probe["proposed_binding_manifest_fingerprint"] = changed_bindings["binding_manifest_fingerprint"]
+    changed_probe.pop("probe_fingerprint")
+    changed_probe["probe_fingerprint"] = gate._fp(changed_probe)
+
     changed_gate = copy.deepcopy(gated)
-    changed_gate["proposed_binding_manifest_fingerprint"] = changed["binding_manifest_fingerprint"]
+    changed_gate["probe_fingerprint"] = changed_probe["probe_fingerprint"]
+    changed_gate["proposed_binding_manifest_fingerprint"] = changed_bindings["binding_manifest_fingerprint"]
     changed_gate.pop("gate_fingerprint")
     changed_gate["gate_fingerprint"] = gate._fp(changed_gate)
     with pytest.raises(gate.CorpusQuarantineError, match="differs from catalog evidence"):
@@ -237,8 +244,8 @@ def test_binding_cannot_substitute_another_catalog_definition(tmp_path):
             snapshot=snapshot,
             quarantine=quarantine,
             definition_catalog=catalog,
-            probe=probed,
-            proposed_bindings=changed,
+            probe=changed_probe,
+            proposed_bindings=changed_bindings,
         )
 
 
