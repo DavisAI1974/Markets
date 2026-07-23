@@ -6,6 +6,8 @@ on:
       - chatgpt/ng-forecaster-s103-audit
     paths:
       - research/kalshi/ng_corpus_quarantine_probe.py
+      - research/kalshi/ng_corpus_quarantine_storage.py
+      - research/kalshi/ng_corpus_identity_probe.py
       - research/kalshi/ng_corpus_materialization.py
       - research/kalshi/ng_corpus_inspection.py
       - research/kalshi/ng_historical_normalize.py
@@ -14,11 +16,16 @@ on:
   pull_request:
     paths:
       - research/kalshi/ng_corpus_quarantine_probe.py
+      - research/kalshi/ng_corpus_quarantine_storage.py
+      - research/kalshi/ng_corpus_identity_probe.py
       - research/kalshi/ng_corpus_materialization.py
       - research/kalshi/ng_corpus_inspection.py
       - research/kalshi/ng_historical_normalize.py
       - research/kalshi/tests/test_ng_corpus_quarantine_probe.py
       - .github/workflows/ng_corpus_quarantine_probe_ci.yml
+
+permissions:
+  contents: read
 
 jobs:
   quarantine-probe:
@@ -37,6 +44,8 @@ jobs:
             research/kalshi/ng_corpus_inspection.py \
             research/kalshi/ng_corpus_materialization.py \
             research/kalshi/ng_historical_normalize.py \
+            research/kalshi/ng_corpus_quarantine_storage.py \
+            research/kalshi/ng_corpus_identity_probe.py \
             research/kalshi/ng_corpus_quarantine_probe.py \
             research/kalshi/tests/test_ng_corpus_quarantine_probe.py
       - name: Run quarantine probe self-test
