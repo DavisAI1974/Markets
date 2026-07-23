@@ -7,17 +7,30 @@ on:
     paths:
       - research/kalshi/ng_historical_refinement_readiness.py
       - research/kalshi/tests/test_ng_historical_refinement_readiness.py
+      - research/kalshi/ng_corpus_basis_inventory_regeneration.py
+      - research/kalshi/ng_g16_prepared_replay_gate.py
+      - research/kalshi/ng_g16_prepared_causal_authorization.py
+      - research/kalshi/ng_g16_prepared_curve_authorization.py
+      - research/kalshi/ng_g16_prepared_publication_gate.py
       - .github/workflows/ng_historical_refinement_readiness_ci.yml
   pull_request:
     paths:
       - research/kalshi/ng_historical_refinement_readiness.py
       - research/kalshi/tests/test_ng_historical_refinement_readiness.py
+      - research/kalshi/ng_corpus_basis_inventory_regeneration.py
+      - research/kalshi/ng_g16_prepared_replay_gate.py
+      - research/kalshi/ng_g16_prepared_causal_authorization.py
+      - research/kalshi/ng_g16_prepared_curve_authorization.py
+      - research/kalshi/ng_g16_prepared_publication_gate.py
       - .github/workflows/ng_historical_refinement_readiness_ci.yml
+
+permissions:
+  contents: read
 
 jobs:
   readiness:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
 
@@ -25,20 +38,45 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Compile
+      - name: Compile hardened readiness chain
         working-directory: research/kalshi
         run: |
           python -m py_compile \
             ng_historical_refinement_readiness.py \
+            ng_corpus_basis_inventory_regeneration.py \
+            ng_g16_prepared_replay_gate.py \
+            ng_g16_prepared_causal_authorization.py \
+            ng_g16_prepared_curve_authorization.py \
+            ng_g16_prepared_publication_gate.py \
             tests/test_ng_historical_refinement_readiness.py
 
       - name: Selftest
         working-directory: research/kalshi
         run: python ng_historical_refinement_readiness.py --selftest
 
-      - name: Unit tests
+      - name: Run 21 hardened readiness tests
         working-directory: research/kalshi
         run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_readiness.py' -v
+
+      - name: Verify hardened stage contract
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          from ng_historical_refinement_readiness import LINK_RULES, SCHEMA, STAGES
+
+          keys = [stage.key for stage in STAGES]
+          assert SCHEMA == 'ng_historical_refinement_readiness.v2'
+          assert keys.index('basis_inventory_regeneration') < keys.index('replay_catalog_export')
+          assert keys[-5:] == [
+              'g16_exact_causal',
+              'g16_prepared_causal_authorization',
+              'g16_prepared_curve_authorization',
+              'g16_prepared_curve_lock',
+              'g16_prepared_publication',
+          ]
+          assert any(rule[2] == 'g16_prepared_publication' for rule in LINK_RULES)
+          print(len(STAGES), len(LINK_RULES))
+          PY
 
       - name: Build truthful repository readiness snapshot
         working-directory: research/kalshi
@@ -56,6 +94,8 @@ jobs:
           validate_readiness_report(report)
           assert report['remote_presence_inferred'] is False
           assert report['paid_live_data_assumed'] is False
+          assert report['random_shuffle_used'] is False
           assert report['options_lane_started'] is False
+          assert report['hardened_g16_chain_complete'] is False or report['g16_prepared_curve_locked_before_scoring'] is True
           print(report['status'], report['first_blocking_stage'])
           PY
