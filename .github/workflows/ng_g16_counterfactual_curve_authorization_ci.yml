@@ -1,0 +1,81 @@
+name: NG G16 Counterfactual Curve Authorization CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_g16_counterfactual_curve_authorization.py
+      - research/kalshi/ng_g16_counterfactual_causal_authorization.py
+      - research/kalshi/ng_g16_prepared_curve_authorization.py
+      - research/kalshi/ng_g16_curve_adapter.py
+      - research/kalshi/tests/test_ng_g16_counterfactual_curve_authorization.py
+      - .github/workflows/ng_g16_counterfactual_curve_authorization_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g16_counterfactual_curve_authorization.py
+      - research/kalshi/ng_g16_counterfactual_causal_authorization.py
+      - research/kalshi/ng_g16_prepared_curve_authorization.py
+      - research/kalshi/ng_g16_curve_adapter.py
+      - research/kalshi/tests/test_ng_g16_counterfactual_curve_authorization.py
+      - .github/workflows/ng_g16_counterfactual_curve_authorization_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  counterfactual-curve-authorization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install tests
+        run: python -m pip install --upgrade pip pytest
+      - name: Compile complete authorization chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_counterfactual_lesson_gate.py \
+            ng_g15_g16_counterfactual_lineage_gate.py \
+            ng_g16_counterfactual_causal_authorization.py \
+            ng_g16_prepared_causal_authorization.py \
+            ng_g16_prepared_curve_authorization.py \
+            ng_g16_counterfactual_curve_authorization.py \
+            tests/test_ng_g16_counterfactual_curve_authorization.py
+      - name: Run module self-test
+        working-directory: research/kalshi
+        run: python ng_g16_counterfactual_curve_authorization.py --selftest
+      - name: Run focused tests
+        working-directory: research/kalshi
+        env:
+          PYTHONPATH: .
+        run: pytest -q tests/test_ng_g16_counterfactual_curve_authorization.py
+      - name: Verify permanent authority wall
+        working-directory: research/kalshi
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          import ng_g16_counterfactual_curve_authorization as module
+          fixture = module._fixture()
+          try:
+              result = module.build_authorization(
+                  **{k: v for k, v in fixture.items() if not k.startswith('_')}
+              )
+              assert result['actual_g16_outcomes_used'] is False
+              assert result['g16_scoring_authorized'] is False
+              assert result['random_shuffle_used'] is False
+              assert result['blind_forecasts_immutable'] is True
+              assert result['may_update_ng_brain'] is False
+              assert result['execution_authority'] is False
+              assert result['cme_event_contracts_mode'] == 'SHADOW'
+              assert result['brokerage_contract'] == 'tastytrade_not_ibkr'
+              assert result['options_lane_started'] is False
+              assert result['candidate_ids'] == sorted(result['candidate_evidence_fingerprints'])
+          finally:
+              fixture['_temporary'].cleanup()
+          PY
