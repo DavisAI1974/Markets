@@ -1,0 +1,96 @@
+name: NG G16 Prepared Replay Gate CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_historical_replay.py'
+      - 'research/kalshi/ng_live_operator.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - '.github/workflows/ng_g16_prepared_replay_gate_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/tests/test_ng_g16_prepared_replay_gate.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - 'research/kalshi/ng_g16_exact_causal_pipeline.py'
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/ng_historical_inventory.py'
+      - 'research/kalshi/ng_historical_normalize.py'
+      - 'research/kalshi/ng_historical_replay.py'
+      - 'research/kalshi/ng_live_operator.py'
+      - 'research/kalshi/ng_rt_feature_state.py'
+      - '.github/workflows/ng_g16_prepared_replay_gate_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime dependencies
+        run: pip install --quiet databento boto3 numpy
+      - name: Compile exact G16 prepared replay chain
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_g16_prepared_replay_gate.py \
+            research/kalshi/tests/test_ng_g16_prepared_replay_gate.py \
+            research/kalshi/ng_g16_historical_replay.py \
+            research/kalshi/ng_g16_exact_causal_pipeline.py \
+            research/kalshi/ng_g16_corpus_basis_gate.py \
+            research/kalshi/ng_historical_inventory.py \
+            research/kalshi/ng_historical_normalize.py \
+            research/kalshi/ng_historical_replay.py \
+            research/kalshi/ng_live_operator.py \
+            research/kalshi/ng_rt_feature_state.py
+      - name: Run exact G16 prepared replay self-test
+        working-directory: research/kalshi
+        run: python ng_g16_prepared_replay_gate.py --selftest
+      - name: Run exact G16 prepared replay tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_g16_prepared_replay_gate.py
+      - name: Verify causal pipeline accepts gated replay output
+        env:
+          PYTHONPATH: research/kalshi
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+
+          from ng_g16_exact_causal_pipeline import _states
+          from ng_g16_historical_replay import (
+              _fixture_catalog,
+              _fixture_inventory,
+              build_manifest,
+              prepare_corpus,
+          )
+          from ng_g16_prepared_replay_gate import run_gate
+
+          with tempfile.TemporaryDirectory() as temporary:
+              root = Path(temporary)
+              inventory, definition = _fixture_inventory(root)
+              catalog = _fixture_catalog(inventory, definition)
+              manifest = build_manifest(inventory, catalog)
+              prepared = prepare_corpus(manifest, root / 'prepared')
+              prior = {'up': 0.4, 'flat': 0.2, 'down': 0.4}
+              replay, completion = run_gate(prepared, manifest, prior)
+              states = _states(replay)
+              assert len(states) >= 11
+              assert completion['actual_outcomes_used'] is False
+              assert completion['random_shuffle_used'] is False
+              assert completion['may_update_ng_brain'] is False
+              assert completion['execution_authority'] is False
+          print('G16 causal pipeline accepts the provenance-gated replay output')
+          PY
