@@ -1,0 +1,87 @@
+name: NG Corpus Basis Inventory Regeneration CI
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_corpus_basis_inventory_regeneration.py'
+      - 'research/kalshi/tests/test_ng_corpus_basis_inventory_regeneration.py'
+      - 'research/kalshi/ng_corpus_target_day_slicer.py'
+      - 'research/kalshi/ng_corpus_inspection.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/ng_corpus_replay_catalog_export.py'
+      - 'research/kalshi/ng_g15_replay_manifest_bridge.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - '.github/workflows/ng_corpus_basis_inventory_regeneration_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_corpus_basis_inventory_regeneration.py'
+      - 'research/kalshi/tests/test_ng_corpus_basis_inventory_regeneration.py'
+      - 'research/kalshi/ng_corpus_target_day_slicer.py'
+      - 'research/kalshi/ng_corpus_inspection.py'
+      - 'research/kalshi/ng_corpus_coverage_audit.py'
+      - 'research/kalshi/ng_g15_corpus_basis_gate.py'
+      - 'research/kalshi/ng_g16_corpus_basis_gate.py'
+      - 'research/kalshi/ng_corpus_replay_catalog_export.py'
+      - 'research/kalshi/ng_g15_replay_manifest_bridge.py'
+      - 'research/kalshi/ng_g16_historical_replay.py'
+      - '.github/workflows/ng_corpus_basis_inventory_regeneration_ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile inventory and replay contracts
+        run: |
+          python -m py_compile \
+            research/kalshi/ng_corpus_basis_inventory_regeneration.py \
+            research/kalshi/tests/test_ng_corpus_basis_inventory_regeneration.py \
+            research/kalshi/ng_corpus_target_day_slicer.py \
+            research/kalshi/ng_corpus_inspection.py \
+            research/kalshi/ng_corpus_coverage_audit.py \
+            research/kalshi/ng_g15_corpus_basis_gate.py \
+            research/kalshi/ng_g16_corpus_basis_gate.py \
+            research/kalshi/ng_corpus_replay_catalog_export.py \
+            research/kalshi/ng_g15_replay_manifest_bridge.py \
+            research/kalshi/ng_g16_historical_replay.py
+      - name: Run inventory selftest
+        working-directory: research/kalshi
+        run: python ng_corpus_basis_inventory_regeneration.py --selftest
+      - name: Run inventory unit tests
+        run: python -m unittest -v research/kalshi/tests/test_ng_corpus_basis_inventory_regeneration.py
+      - name: Verify regenerated inventories enter both replay builders
+        env:
+          PYTHONPATH: research/kalshi:research/kalshi/tests
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+
+          import ng_corpus_basis_inventory_regeneration as inventory
+          import ng_corpus_replay_catalog_export as exporter
+          from test_ng_corpus_basis_inventory_regeneration import _inputs
+
+          with tempfile.TemporaryDirectory() as temporary:
+              slices, receipt = _inputs(Path(temporary))
+              g15, g16, completion = inventory.build_basis_inventories(
+                  slices, receipt
+              )
+              assert completion['status'] == 'G15_G16_BASIS_INVENTORIES_READY'
+              bundle = exporter.build_export_bundle(
+                  receipt['catalog'], receipt['audit'], g15, g16
+              )
+              assert bundle['status'] == 'READY'
+              assert len(bundle['g15_catalog']['sources']) == 24
+              assert len(bundle['g16_catalog']['sources']) == 22
+          print('regenerated basis inventories accepted by G15/G16 replay builders')
+          PY
