@@ -1,0 +1,97 @@
+name: NG G15 counterfactual attribution
+
+on:
+  push:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_anchor.py
+      - research/kalshi/ng_historical_manifest.py
+      - research/kalshi/ng_rt_feature_state.py
+      - research/kalshi/ng_rt_refiner.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_attribution.py
+      - .github/workflows/ng_g15_counterfactual_attribution_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_anchor.py
+      - research/kalshi/ng_historical_manifest.py
+      - research/kalshi/ng_rt_feature_state.py
+      - research/kalshi/ng_rt_refiner.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_attribution.py
+      - .github/workflows/ng_g15_counterfactual_attribution_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  attribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile exact causal attribution chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_g15_anchor.py \
+            ng_historical_manifest.py \
+            ng_rt_feature_state.py \
+            ng_rt_refiner.py \
+            ng_g15_counterfactual_attribution.py \
+            tests/test_ng_g15_counterfactual_attribution.py
+
+      - name: Run module selftest
+        working-directory: research/kalshi
+        run: python ng_g15_counterfactual_attribution.py --selftest
+
+      - name: Run 15 focused tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_g15_counterfactual_attribution.py' -v
+
+      - name: Verify requested factors and permanent authority controls
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_g15_counterfactual_attribution as subject
+          from ng_historical_manifest import G15_DATES
+          from ng_rt_refiner import refine_feature_state
+
+          anchor = subject._fixture_anchor()
+          states = [subject._fixture_state(day, index + 1) for index, day in enumerate(G15_DATES)]
+          stream = {
+              "schema": "ng_rt_refine_stream.v1",
+              "market": "NG",
+              "group": 15,
+              "authority": "REFINE_POSTERIOR_STREAM_ONLY",
+              "execution_authority": False,
+              "anchor_fingerprint": anchor["anchor_fingerprint"],
+              "n_outputs": len(states),
+              "outputs": [refine_feature_state(state, anchor) for state in states],
+          }
+          replay = {"streams": [{"states": states}], "fingerprint": subject._fingerprint(states)}
+          report = subject.build_report(replay, anchor, stream)
+
+          assert report["factors"] == [
+              "move_onset",
+              "signed_flow",
+              "divergence_exhaustion",
+              "queue_depletion_replenishment",
+              "price_efficiency",
+              "activity",
+          ]
+          assert all(report["overall"][factor]["changed_states"] > 0 for factor in report["factors"])
+          assert report["actual_outcomes_used"] is False
+          assert report["random_shuffle_used"] is False
+          assert report["blind_forecast_immutable"] is True
+          assert report["may_update_ng_brain"] is False
+          assert report["execution_authority"] is False
+          assert report["cme_event_contracts_mode"] == "SHADOW"
+          assert report["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert report["options_lane_started"] is False
+          assert all(proposal["may_update_ng_brain"] is False for proposal in report["lesson_proposals"])
+          PY
