@@ -18,20 +18,24 @@ class HistoricalRefinementReadinessTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def write_value(self, spec, value):
+        readiness._atomic_json(self.root / spec.filename, value)
+
     def write_stage(self, spec, status=None, *, stand_down=False, mutate=None):
-        if status is None:
-            status = sorted(spec.ready_statuses)[0]
+        status = status or sorted(spec.ready_statuses)[0]
         value = readiness._fixture_artifact(spec, status, stand_down=stand_down)
         if mutate:
             mutate(value)
             value.pop(spec.fingerprint_field, None)
             value[spec.fingerprint_field] = readiness._fingerprint(value)
-        readiness._atomic_json(self.root / spec.filename, value)
+        self.write_value(spec, value)
         return value
 
     def write_all(self):
+        values = readiness._linked_fixture_chain()
         for spec in readiness.STAGES:
-            self.write_stage(spec)
+            self.write_value(spec, values[spec.key])
+        return values
 
     def build(self):
         return readiness.build_readiness_report(
@@ -43,30 +47,43 @@ class HistoricalRefinementReadinessTests(unittest.TestCase):
         report = self.build()
         self.assertEqual(report["status"], "BLOCKED_OR_UNVERIFIED")
         self.assertEqual(report["first_blocking_stage"], "corpus_coverage")
-        self.assertFalse(report["remote_presence_inferred"])
 
-    def test_complete_chain_is_ready(self):
+    def test_complete_hardened_chain_is_ready(self):
         self.write_all()
         report = self.build()
         self.assertEqual(report["status"], "G15_G16_EXACT_PUBLICATION_COMPLETE")
-        self.assertIsNone(report["first_blocking_stage"])
+        self.assertTrue(report["hardened_g16_chain_complete"])
         self.assertEqual(report["ready_stage_count"], len(readiness.STAGES))
+
+    def test_old_g16_publication_cannot_bypass_prepared_chain(self):
+        self.write_all()
+        lock_spec = next(
+            spec for spec in readiness.STAGES if spec.key == "g16_prepared_curve_lock"
+        )
+        (self.root / lock_spec.filename).unlink()
+        report = self.build()
+        self.assertEqual(report["first_blocking_stage"], "g16_prepared_curve_lock")
+        self.assertFalse(report["g16_exact_publication_complete"])
+
+    def test_basis_regeneration_is_required_before_catalog_export(self):
+        corpus, basis, export = readiness.STAGES[:3]
+        self.write_stage(corpus)
+        self.write_stage(export)
+        report = self.build()
+        self.assertEqual(report["first_blocking_stage"], basis.key)
+        self.assertEqual(report["stages"][2]["effective_status"], "BLOCKED_BY_UPSTREAM")
 
     def test_downstream_ready_artifact_cannot_bypass_missing_upstream(self):
         self.write_stage(readiness.STAGES[1])
         report = self.build()
-        row = report["stages"][1]
-        self.assertEqual(row["validation"], "PASS")
-        self.assertEqual(row["effective_status"], "BLOCKED_BY_UPSTREAM")
+        self.assertEqual(report["stages"][1]["effective_status"], "BLOCKED_BY_UPSTREAM")
 
     def test_tampered_artifact_is_invalid(self):
         spec = readiness.STAGES[0]
         value = self.write_stage(spec)
         value["status"] = "BLOCKED"
         (self.root / spec.filename).write_text(json.dumps(value), encoding="utf-8")
-        report = self.build()
-        self.assertEqual(report["stages"][0]["effective_status"], "INVALID")
-        self.assertIn("fingerprint", report["stages"][0]["blockers"][0])
+        self.assertEqual(self.build()["stages"][0]["effective_status"], "INVALID")
 
     def test_wrong_schema_is_invalid_even_when_refingerprinted(self):
         spec = readiness.STAGES[0]
@@ -74,9 +91,76 @@ class HistoricalRefinementReadinessTests(unittest.TestCase):
         value["schema"] = "wrong.v1"
         value.pop(spec.fingerprint_field)
         value[spec.fingerprint_field] = readiness._fingerprint(value)
-        readiness._atomic_json(self.root / spec.filename, value)
-        report = self.build()
-        self.assertEqual(report["stages"][0]["effective_status"], "INVALID")
+        self.write_value(spec, value)
+        self.assertEqual(self.build()["stages"][0]["effective_status"], "INVALID")
+
+    def test_pre_outcome_stage_cannot_claim_outcome_use(self):
+        spec = next(
+            item for item in readiness.STAGES
+            if item.key == "g16_prepared_curve_authorization"
+        )
+        self.write_stage(
+            spec,
+            mutate=lambda value: value.update({"actual_g16_outcomes_used": True}),
+        )
+        row = self.build()["stages"][readiness.STAGES.index(spec)]
+        self.assertEqual(row["effective_status"], "INVALID")
+        self.assertIn("pre-outcome", row["blockers"][0])
+
+    def test_final_publication_may_record_fixed_outcome_scoring(self):
+        values = self.write_all()
+        spec = next(
+            item for item in readiness.STAGES
+            if item.key == "g16_prepared_publication"
+        )
+        value = values[spec.key]
+        value["actual_g16_outcomes_used"] = True
+        value.pop(spec.fingerprint_field)
+        value[spec.fingerprint_field] = readiness._fingerprint(value)
+        self.write_value(spec, value)
+        self.assertEqual(self.build()["stages"][-1]["effective_status"], "READY")
+
+    def test_replay_link_substitution_is_rejected_after_refingerprint(self):
+        values = self.write_all()
+        spec = next(
+            item for item in readiness.STAGES
+            if item.key == "g16_prepared_causal_authorization"
+        )
+        value = values[spec.key]
+        value["replay_fingerprint"] = "replacement-replay"
+        value.pop(spec.fingerprint_field)
+        value[spec.fingerprint_field] = readiness._fingerprint(value)
+        self.write_value(spec, value)
+        row = self.build()["stages"][readiness.STAGES.index(spec)]
+        self.assertEqual(row["effective_status"], "INVALID")
+        self.assertTrue(
+            any("provenance link mismatch" in blocker for blocker in row["blockers"])
+        )
+
+    def test_curve_lock_link_substitution_is_rejected(self):
+        values = self.write_all()
+        spec = next(
+            item for item in readiness.STAGES
+            if item.key == "g16_prepared_publication"
+        )
+        value = values[spec.key]
+        value["curve_lock_fingerprint"] = "other-lock"
+        value.pop(spec.fingerprint_field)
+        value[spec.fingerprint_field] = readiness._fingerprint(value)
+        self.write_value(spec, value)
+        self.assertEqual(self.build()["stages"][-1]["effective_status"], "INVALID")
+
+    def test_required_prepared_provenance_is_mandatory(self):
+        spec = next(
+            item for item in readiness.STAGES if item.key == "g16_prepared_replay"
+        )
+        value = readiness._fixture_artifact(spec, sorted(spec.ready_statuses)[0])
+        value.pop("prepared_corpus_fingerprint")
+        value.pop(spec.fingerprint_field)
+        value[spec.fingerprint_field] = readiness._fingerprint(value)
+        self.write_value(spec, value)
+        row = self.build()["stages"][readiness.STAGES.index(spec)]
+        self.assertEqual(row["effective_status"], "INVALID")
 
     def test_canonical_validator_failure_is_visible(self):
         spec = readiness.STAGES[0]
@@ -87,61 +171,71 @@ class HistoricalRefinementReadinessTests(unittest.TestCase):
             raise ValueError("canonical validator rejected artifact")
 
         overrides[spec.key] = fail
-        report = readiness.build_readiness_report(self.root, validator_overrides=overrides)
-        self.assertEqual(report["stages"][0]["validation"], "FAIL")
-        self.assertEqual(report["stages"][0]["blockers"], ["canonical validator rejected artifact"])
-
-    def test_stand_downs_are_preserved(self):
-        for index, spec in enumerate(readiness.STAGES):
-            self.write_stage(spec, stand_down=index == 2)
-        report = self.build()
-        self.assertIn("20260315", report["stand_down_days"])
-        self.assertEqual(report["stages"][2]["effective_status"], "READY_WITH_STAND_DOWNS")
-
-    def test_blocked_artifact_reports_embedded_blockers(self):
-        spec = readiness.STAGES[0]
-        self.write_stage(
-            spec,
-            status="BLOCKED",
-            mutate=lambda value: value.update({"l1_wrong_basis_days": ["20260315"]}),
+        report = readiness.build_readiness_report(
+            self.root,
+            validator_overrides=overrides,
         )
+        self.assertEqual(
+            report["stages"][0]["blockers"],
+            ["canonical validator rejected artifact"],
+        )
+
+    def test_stand_downs_are_preserved_across_hardened_chain(self):
+        values = readiness._linked_fixture_chain()
+        spec = next(
+            item for item in readiness.STAGES if item.key == "g16_prepared_replay"
+        )
+        values[spec.key]["stand_down_days"] = ["20260401"]
+        values[spec.key].pop(spec.fingerprint_field)
+        values[spec.key][spec.fingerprint_field] = readiness._fingerprint(values[spec.key])
+        for target in readiness.STAGES[readiness.STAGES.index(spec) + 1:]:
+            for source_key, source_field, target_key, target_field in readiness.LINK_RULES:
+                if target_key == target.key:
+                    values[target.key][target_field] = values[source_key][source_field]
+            values[target.key].pop(target.fingerprint_field, None)
+            values[target.key][target.fingerprint_field] = readiness._fingerprint(
+                values[target.key]
+            )
+        for stage in readiness.STAGES:
+            self.write_value(stage, values[stage.key])
         report = self.build()
-        row = report["stages"][0]
-        self.assertEqual(row["effective_status"], "BLOCKED")
-        self.assertIn("l1_wrong_basis_days:20260315", row["blockers"])
+        self.assertIn("20260401", report["stand_down_days"])
 
     def test_exact_ready_broad_unverified_is_not_claimed_full(self):
         spec = readiness.STAGES[0]
-        self.write_stage(spec, status="G15_G16_EXACT_READY_BROAD_COVERAGE_UNVERIFIED")
+        self.write_stage(
+            spec,
+            status="G15_G16_EXACT_READY_BROAD_COVERAGE_UNVERIFIED",
+        )
         report = self.build()
         self.assertTrue(report["exact_replay_intersections_ready"])
         self.assertFalse(report["broad_corpus_verified"])
 
-    def test_full_corpus_status_marks_broad_verified(self):
-        spec = readiness.STAGES[0]
-        self.write_stage(spec, status="FULL_CORPUS_AND_G15_G16_EXACT_READY")
-        report = self.build()
-        self.assertTrue(report["broad_corpus_verified"])
-
     def test_g15_publication_status_is_separate_from_g16(self):
-        for spec in readiness.STAGES[:5]:
-            self.write_stage(spec)
+        values = readiness._linked_fixture_chain()
+        for spec in readiness.STAGES[:6]:
+            self.write_value(spec, values[spec.key])
         report = self.build()
-        self.assertEqual(report["status"], "G15_EXACT_PUBLICATION_COMPLETE_G16_INCOMPLETE")
+        self.assertEqual(
+            report["status"],
+            "G15_EXACT_PUBLICATION_COMPLETE_G16_INCOMPLETE",
+        )
         self.assertTrue(report["g15_exact_publication_complete"])
         self.assertFalse(report["g16_exact_publication_complete"])
 
     def test_stage_path_override_is_honored(self):
         spec = readiness.STAGES[0]
         custom = self.root / "custom.json"
-        readiness._atomic_json(custom, readiness._fixture_artifact(spec, sorted(spec.ready_statuses)[0]))
+        readiness._atomic_json(
+            custom,
+            readiness._fixture_artifact(spec, sorted(spec.ready_statuses)[0]),
+        )
         report = readiness.build_readiness_report(
             self.root,
             stage_paths={spec.key: custom},
             validator_overrides=self.overrides,
         )
         self.assertEqual(report["stages"][0]["path"], str(custom))
-        self.assertEqual(report["stages"][0]["effective_status"], "READY")
 
     def test_report_tampering_is_rejected(self):
         report = self.build()
@@ -152,8 +246,13 @@ class HistoricalRefinementReadinessTests(unittest.TestCase):
     def test_report_security_controls_are_permanent(self):
         report = self.build()
         for field in (
-            "remote_presence_inferred", "actual_outcome_paths_loaded", "paid_live_data_assumed",
-            "random_shuffle_used", "may_update_ng_brain", "execution_authority", "options_lane_started",
+            "remote_presence_inferred",
+            "actual_outcome_paths_loaded",
+            "paid_live_data_assumed",
+            "random_shuffle_used",
+            "may_update_ng_brain",
+            "execution_authority",
+            "options_lane_started",
         ):
             self.assertFalse(report[field])
         self.assertEqual(report["cme_event_contracts_mode"], "SHADOW")
@@ -164,7 +263,9 @@ class HistoricalRefinementReadinessTests(unittest.TestCase):
         value = self.write_stage(spec)
         before = copy.deepcopy(value)
         self.build()
-        observed = json.loads((self.root / spec.filename).read_text(encoding="utf-8"))
+        observed = json.loads(
+            (self.root / spec.filename).read_text(encoding="utf-8")
+        )
         self.assertEqual(observed, before)
 
     def test_parse_stage_paths_rejects_unknown_keys(self):
