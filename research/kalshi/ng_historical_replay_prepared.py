@@ -3,18 +3,19 @@
 
 ``ng_historical_prepare.py`` publishes a fingerprinted index only after every
 observed L1/trades and MBO object has been re-materialized, hash-checked, and
-normalized. This adapter treats that index as the sole source list, validates
-its canonical 12-session/2-contract layout, and sends the merged events through
-``ng_historical_replay.replay_events`` and therefore the same ``NGLiveOperator``
-and ``ng_rt_feature_state`` path intended for live use.
+normalized. This adapter treats that index as the sole source list, revalidates
+all 26 prepared files and their exact manifest lineage, performs a stable
+chronological merge, and sends events through ``ng_historical_replay`` and the
+same ``NGLiveOperator``/``ng_rt_feature_state`` path intended for live use.
 
-The original READY manifest remains required so the prepared-corpus fingerprint
-can be tied back to the exact observed AWS/S3 inventory. Blind priors are copied
-by the replay layer and CME event contracts remain SHADOW.
+No outcomes are read. Blind priors remain immutable, random shuffling is
+forbidden, CME event contracts remain SHADOW, tastytrade remains the brokerage
+contract, and the adapter cannot update ``ng_brain.json`` or start options work.
 """
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -23,13 +24,22 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from ng_historical_inventory import build_manifest
-from ng_historical_manifest import G15_CONTRACT_MAP, G15_DATES, SOURCE_KINDS
+from ng_historical_manifest import (
+    G15_CONTRACT_MAP,
+    G15_DATES,
+    SOURCE_KINDS,
+    validate_manifest,
+)
+import ng_historical_prepare as preparation
 from ng_historical_prepare import PrepareError, prepare_corpus, validate_prepared_index
 from ng_historical_replay import ReplayError, merge_sorted_sources, read_jsonl, replay_events
+from ng_rt_feature_state import validate_chronological, validate_feature_state
 
 SCHEMA = "ng_historical_prepared_replay.v1"
+REPLAY_SCHEMA = "ng_historical_replay.v1"
 EVENT_BY_SOURCE_KIND = {"definition": "definition", "l1_trades": "trade", "mbo": "mbo"}
 SOURCE_SORT = {"definition": 0, "l1_trades": 1, "mbo": 2}
+EXPECTED_SOURCE_COUNT = 26
 
 
 class PreparedReplayError(ReplayError):
@@ -52,20 +62,43 @@ def _inside(path: Path, root: Path) -> bool:
     return True
 
 
-def prepared_source_paths(index: Mapping[str, Any]) -> list[Path]:
-    """Validate canonical source coverage and return the index-owned paths.
-
-    File sizes and hashes are verified by ``validate_prepared_index``. Additional
-    checks here prevent an otherwise fingerprinted index from omitting a G15 day,
-    duplicating one lane, pointing outside its declared output directory, or
-    labelling a source with the wrong event type/contract identity.
-    """
+def _dependency_call(function, *args, **kwargs):
     try:
-        validate_prepared_index(dict(index), verify_files=True)
+        return function(*args, **kwargs)
+    except ValueError as error:
+        raise PreparedReplayError(str(error)) from error
+
+
+def _manifest_entries(manifest: Mapping[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+    entries: dict[tuple[str, str], dict[str, Any]] = {}
+    for raw in manifest.get("entries") or []:
+        entry = copy.deepcopy(dict(raw))
+        key = (str(entry.get("day") or ""), str(entry.get("source_kind") or ""))
+        if key in entries:
+            raise PreparedReplayError(f"duplicate manifest entry: {key[0]}:{key[1]}")
+        entries[key] = entry
+    expected = {(day, source_kind) for day in G15_DATES for source_kind in SOURCE_KINDS}
+    missing = sorted(expected - set(entries))
+    extras = sorted(set(entries) - expected)
+    if missing or extras:
+        raise PreparedReplayError(
+            f"manifest G15 source coverage mismatch; missing={missing}, extras={extras}"
+        )
+    return entries
+
+
+def _prepared_source_rows(
+    index: Mapping[str, Any],
+    *,
+    verify_files: bool = True,
+) -> list[dict[str, Any]]:
+    """Validate canonical source coverage and return normalized index-owned rows."""
+    try:
+        validate_prepared_index(dict(index), verify_files=verify_files)
     except PrepareError as error:
         raise PreparedReplayError(str(error)) from error
 
-    sources = [dict(row) for row in index.get("sources") or []]
+    sources = [copy.deepcopy(dict(row)) for row in index.get("sources") or []]
     if int(index.get("source_count") or 0) != len(sources):
         raise PreparedReplayError("prepared source_count does not match sources")
     root_text = str(index.get("output_dir") or "")
@@ -76,7 +109,7 @@ def prepared_source_paths(index: Mapping[str, Any]) -> list[Path]:
     seen_paths: set[Path] = set()
     seen_pairs: set[tuple[str, str]] = set()
     definition_symbols: set[str] = set()
-    paths: list[tuple[str, str, Path]] = []
+    rows: list[dict[str, Any]] = []
 
     for source in sources:
         day = str(source.get("day") or "")
@@ -88,24 +121,40 @@ def prepared_source_paths(index: Mapping[str, Any]) -> list[Path]:
                 f"{day or '<missing-day>'}:{source_kind or '<missing-kind>'}: "
                 f"event_type {event_type!r} is not canonical"
             )
-        path = Path(str(source.get("path") or "")).resolve()
+        path_text = str(source.get("path") or "")
+        if not path_text:
+            raise PreparedReplayError(f"{day}:{source_kind}: prepared path is required")
+        path = Path(path_text).resolve()
         if not _inside(path, root):
             raise PreparedReplayError(f"prepared source escapes output_dir: {path}")
         if path in seen_paths:
             raise PreparedReplayError(f"duplicate prepared path: {path}")
         seen_paths.add(path)
+        source["path"] = str(path)
 
         if source_kind == "definition":
+            if int(source.get("record_count") or 0) != 1:
+                raise PreparedReplayError("prepared definition source must contain one record")
+            iterator = read_jsonl(path)
             try:
-                definition = next(read_jsonl(path))
+                definition = next(iterator)
             except StopIteration as error:
                 raise PreparedReplayError(f"empty prepared definition source: {path}") from error
+            try:
+                next(iterator)
+            except StopIteration:
+                pass
+            else:
+                raise PreparedReplayError(f"prepared definition source has multiple records: {path}")
             symbol = str(definition.get("raw_symbol") or "")
             if symbol not in {"NGJ26", "NGK26"}:
                 raise PreparedReplayError(f"unexpected prepared definition symbol: {symbol!r}")
             if symbol in definition_symbols:
                 raise PreparedReplayError(f"duplicate prepared definition: {symbol}")
             definition_symbols.add(symbol)
+            expected_day = G15_DATES[0] if symbol == "NGJ26" else "20260320"
+            if day != expected_day:
+                raise PreparedReplayError(f"{symbol}: prepared definition day mismatch")
         else:
             pair = (day, source_kind)
             if pair in seen_pairs:
@@ -113,7 +162,10 @@ def prepared_source_paths(index: Mapping[str, Any]) -> list[Path]:
             seen_pairs.add(pair)
             if day not in G15_CONTRACT_MAP:
                 raise PreparedReplayError(f"prepared source day is outside G15: {day}")
-            identity = dict((source.get("normalization") or {}).get("identity") or {})
+            normalization = source.get("normalization")
+            if not isinstance(normalization, Mapping):
+                raise PreparedReplayError(f"{day}:{source_kind}: normalization provenance is required")
+            identity = dict(normalization.get("identity") or {})
             expected = G15_CONTRACT_MAP[day]
             if str(identity.get("session_day") or "") != day:
                 raise PreparedReplayError(f"{day}:{source_kind}: normalization session mismatch")
@@ -122,7 +174,7 @@ def prepared_source_paths(index: Mapping[str, Any]) -> list[Path]:
                 str(identity.get("raw_symbol") or ""),
             ) != (expected["instrument_id"], expected["raw_symbol"]):
                 raise PreparedReplayError(f"{day}:{source_kind}: normalization contract mismatch")
-        paths.append((day, source_kind, path))
+        rows.append(source)
 
     expected_pairs = {(day, kind) for day in G15_DATES for kind in SOURCE_KINDS}
     missing = sorted(expected_pairs - seen_pairs)
@@ -133,11 +185,81 @@ def prepared_source_paths(index: Mapping[str, Any]) -> list[Path]:
         raise PreparedReplayError(
             f"prepared definitions must contain NGJ26 and NGK26; observed={sorted(definition_symbols)}"
         )
-    if len(paths) != 26:
-        raise PreparedReplayError(f"prepared corpus must contain 26 sources, observed {len(paths)}")
+    if len(rows) != EXPECTED_SOURCE_COUNT:
+        raise PreparedReplayError(
+            f"prepared corpus must contain 26 sources, observed {len(rows)}"
+        )
 
-    paths.sort(key=lambda row: (row[0], SOURCE_SORT[row[1]], str(row[2])))
-    return [row[2] for row in paths]
+    rows.sort(
+        key=lambda row: (
+            str(row.get("day") or ""),
+            SOURCE_SORT[str(row.get("source_kind") or "")],
+            str(row.get("path") or ""),
+        )
+    )
+    return rows
+
+
+def prepared_source_paths(index: Mapping[str, Any]) -> list[Path]:
+    """Return only canonical paths from a fully verified prepared index."""
+    return [Path(row["path"]) for row in _prepared_source_rows(index, verify_files=True)]
+
+
+def _validate_manifest_lineage(
+    index: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+    sources: list[dict[str, Any]],
+) -> str:
+    report = _dependency_call(validate_manifest, dict(manifest))
+    if report.get("status") != "READY" or report.get("can_replay_all_g15") is not True:
+        raise PreparedReplayError("prepared replay requires a READY exact G15 manifest")
+    expected_manifest_fingerprint = str(index.get("manifest_fingerprint") or "")
+    actual_manifest_fingerprint = preparation._fingerprint(manifest)
+    if not expected_manifest_fingerprint:
+        raise PreparedReplayError("prepared index lacks manifest_fingerprint")
+    if expected_manifest_fingerprint != actual_manifest_fingerprint:
+        raise PreparedReplayError("prepared index does not belong to the supplied manifest")
+
+    manifest_entries = _manifest_entries(manifest)
+    for source in sources:
+        source_kind = str(source.get("source_kind") or "")
+        if source_kind == "definition":
+            continue
+        day = str(source.get("day") or "")
+        prefix = f"{day}:{source_kind}"
+        entry = manifest_entries[(day, source_kind)]
+        normalization = dict(source.get("normalization") or {})
+        expected_entry_fingerprint = preparation._fingerprint(entry)
+        if normalization.get("manifest_entry_fingerprint") != expected_entry_fingerprint:
+            raise PreparedReplayError(f"{prefix}: manifest lineage mismatch")
+        if normalization.get("source_uri") != entry.get("location"):
+            raise PreparedReplayError(f"{prefix}: raw source location lineage mismatch")
+        if int(normalization.get("observed_raw_size_bytes") or 0) != int(entry.get("size_bytes") or 0):
+            raise PreparedReplayError(f"{prefix}: raw source size lineage mismatch")
+        if normalization.get("observed_raw_sha256") != entry.get("sha256"):
+            raise PreparedReplayError(f"{prefix}: raw source hash lineage mismatch")
+        if Path(str(normalization.get("output") or "")).resolve() != Path(source["path"]).resolve():
+            raise PreparedReplayError(f"{prefix}: normalization output path mismatch")
+
+        expected_identity = {
+            "dataset": entry.get("dataset"),
+            "publisher_id": entry.get("publisher_id"),
+            "instrument_id": entry.get("instrument_id"),
+            "raw_symbol": entry.get("raw_symbol"),
+            "definition_date": entry.get("definition_date"),
+            "session_day": day,
+        }
+        if dict(normalization.get("identity") or {}) != expected_identity:
+            raise PreparedReplayError(f"{prefix}: normalization identity differs from manifest")
+        for field in ("record_count", "size_bytes", "sha256", "event_start_s", "event_end_s"):
+            if source.get(field) != normalization.get(field):
+                raise PreparedReplayError(f"{prefix}: prepared {field} differs from normalization")
+        if int(source.get("record_count") or 0) != int(entry.get("record_count") or 0):
+            raise PreparedReplayError(f"{prefix}: prepared record_count differs from manifest")
+        for field in ("event_start_s", "event_end_s"):
+            if abs(float(source.get(field)) - float(entry.get(field))) > 1e-9:
+                raise PreparedReplayError(f"{prefix}: prepared {field} differs from manifest")
+    return actual_manifest_fingerprint
 
 
 def replay_prepared_index(
@@ -148,25 +270,24 @@ def replay_prepared_index(
     horizon: str = "close",
 ) -> dict[str, Any]:
     """Replay every normalized source named by a verified prepared index."""
-    expected_manifest_fingerprint = str(index.get("manifest_fingerprint") or "")
-    actual_manifest_fingerprint = _fingerprint(manifest)
-    if not expected_manifest_fingerprint:
-        raise PreparedReplayError("prepared index lacks manifest_fingerprint")
-    if expected_manifest_fingerprint != actual_manifest_fingerprint:
-        raise PreparedReplayError("prepared index does not belong to the supplied manifest")
-
-    paths = prepared_source_paths(index)
+    originals = copy.deepcopy((index, manifest, blind_prior))
+    sources = _prepared_source_rows(index, verify_files=True)
+    manifest_fingerprint = _validate_manifest_lineage(index, manifest, sources)
+    prior_before = copy.deepcopy(blind_prior)
     result = replay_events(
-        merge_sorted_sources([read_jsonl(path) for path in paths]),
+        merge_sorted_sources([read_jsonl(Path(source["path"])) for source in sources]),
         manifest=manifest,
         blind_prior=blind_prior,
         horizon=horizon,
         require_ready_manifest=True,
     )
+    if blind_prior != prior_before:
+        raise PreparedReplayError("blind prior was mutated during prepared replay")
+
     result["prepared_replay_schema"] = SCHEMA
     result["prepared_corpus_fingerprint"] = index["prepared_corpus_fingerprint"]
-    result["prepared_manifest_fingerprint"] = expected_manifest_fingerprint
-    result["prepared_source_count"] = len(paths)
+    result["prepared_manifest_fingerprint"] = manifest_fingerprint
+    result["prepared_source_count"] = len(sources)
     result["prepared_sources"] = [
         {
             "day": row.get("day"),
@@ -174,13 +295,117 @@ def replay_prepared_index(
             "sha256": row.get("sha256"),
             "size_bytes": row.get("size_bytes"),
         }
-        for row in index.get("sources") or []
+        for row in sources
     ]
-    result["note"] = (
-        "Replay source enumeration came only from the verified prepared-corpus index; "
-        "states emit on F_LAST and CME event contracts remain SHADOW."
+    result["prepared_source_fingerprints"] = [
+        _fingerprint(
+            {
+                "day": row.get("day"),
+                "source_kind": row.get("source_kind"),
+                "path": row.get("path"),
+                "record_count": row.get("record_count"),
+                "size_bytes": row.get("size_bytes"),
+                "sha256": row.get("sha256"),
+            }
+        )
+        for row in sources
+    ]
+    result.update(
+        {
+            "actual_outcomes_used": False,
+            "paid_live_data_assumed": False,
+            "random_shuffle_used": False,
+            "one_signal_authority_preserved": True,
+            "blind_prior_immutable": True,
+            "may_change_blind_forecast": False,
+            "may_change_posterior": False,
+            "may_update_ng_brain": False,
+            "cme_event_contracts_mode": "SHADOW",
+            "brokerage_contract": "tastytrade_not_ibkr",
+            "options_lane_started": False,
+            "note": (
+                "Replay source enumeration came only from the verified prepared-corpus index; "
+                "manifest lineage was revalidated, states emit on F_LAST, and CME event "
+                "contracts remain SHADOW."
+            ),
+        }
     )
+    result["prepared_replay_fingerprint"] = _fingerprint(result)
+    validate_replay_output(result)
+    if (index, manifest, blind_prior) != originals:
+        raise PreparedReplayError("prepared replay mutated a source artifact")
     return result
+
+
+def validate_replay_output(output: Mapping[str, Any]) -> None:
+    candidate = copy.deepcopy(dict(output))
+    observed = candidate.pop("prepared_replay_fingerprint", None)
+    if observed != _fingerprint(candidate):
+        raise PreparedReplayError("prepared replay fingerprint mismatch")
+    if candidate.get("schema") != REPLAY_SCHEMA or candidate.get("prepared_replay_schema") != SCHEMA:
+        raise PreparedReplayError("unexpected prepared replay schema")
+    if candidate.get("market") != "NG" or int(candidate.get("group") or 0) != 15:
+        raise PreparedReplayError("prepared replay must describe G15 NG")
+    if candidate.get("authority") != "HISTORICAL_REFINE_REPLAY_ONLY":
+        raise PreparedReplayError("prepared replay authority mismatch")
+    for field in (
+        "execution_authority",
+        "actual_outcomes_used",
+        "paid_live_data_assumed",
+        "random_shuffle_used",
+        "may_change_blind_forecast",
+        "may_change_posterior",
+        "may_update_ng_brain",
+        "options_lane_started",
+    ):
+        if candidate.get(field) is not False:
+            raise PreparedReplayError(f"prepared replay must keep {field}=false")
+    for field in ("one_signal_authority_preserved", "blind_prior_immutable"):
+        if candidate.get(field) is not True:
+            raise PreparedReplayError(f"prepared replay must keep {field}=true")
+    if candidate.get("cme_event_contracts_mode") != "SHADOW":
+        raise PreparedReplayError("CME event contracts must remain SHADOW")
+    if candidate.get("brokerage_contract") != "tastytrade_not_ibkr":
+        raise PreparedReplayError("brokerage must remain tastytrade, not IBKR")
+    if int(candidate.get("prepared_source_count") or 0) != EXPECTED_SOURCE_COUNT:
+        raise PreparedReplayError("prepared replay did not consume all 26 sources")
+    prepared_sources = candidate.get("prepared_sources")
+    source_fingerprints = candidate.get("prepared_source_fingerprints")
+    if not isinstance(prepared_sources, list) or len(prepared_sources) != EXPECTED_SOURCE_COUNT:
+        raise PreparedReplayError("prepared replay source summary count mismatch")
+    if not isinstance(source_fingerprints, list) or len(source_fingerprints) != EXPECTED_SOURCE_COUNT:
+        raise PreparedReplayError("prepared replay source fingerprint count mismatch")
+    if candidate.get("duplicate_records"):
+        raise PreparedReplayError("duplicate historical records block prepared replay")
+
+    states: list[dict[str, Any]] = []
+    for raw_stream in candidate.get("streams") or []:
+        stream = dict(raw_stream)
+        stream_states = [copy.deepcopy(dict(row)) for row in stream.get("states") or []]
+        if int(stream.get("n_states") or 0) != len(stream_states):
+            raise PreparedReplayError("prepared replay stream state count mismatch")
+        _dependency_call(validate_chronological, stream_states)
+        for state in stream_states:
+            _dependency_call(validate_feature_state, state)
+            if state.get("completed_mbo_event_boundary") is not True:
+                raise PreparedReplayError("prepared replay state lacks completed MBO boundary")
+            states.append(state)
+    covered = sorted({str(state.get("session_day") or "") for state in states})
+    if covered != sorted(G15_DATES):
+        raise PreparedReplayError(
+            "prepared replay lacks canonical G15 state coverage; "
+            f"missing={sorted(set(G15_DATES)-set(covered))}"
+        )
+    if int(candidate.get("completed_mbo_event_boundaries") or 0) != len(states):
+        raise PreparedReplayError("prepared replay boundary count differs from emitted states")
+    if candidate.get("sequence_gaps"):
+        visible = any(
+            "collector_skipped_records"
+            in list((state.get("availability") or {}).get("stand_down_reasons") or [])
+            for state in states
+        )
+        if not visible:
+            raise PreparedReplayError("sequence gaps exist without a visible stand-down")
 
 
 def _fixture(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -235,6 +460,7 @@ def selftest() -> int:
         assert result["completed_mbo_event_boundaries"] == len(G15_DATES)
         assert result["processed_records"] == {"trade": 12, "mbo": 12, "definition": 2}
         assert prior == {"up": 0.4, "flat": 0.2, "down": 0.4}
+        validate_replay_output(result)
     print("[ng_historical_replay_prepared] selftest PASS")
     return 0
 
@@ -275,7 +501,7 @@ def main() -> int:
                 "processed": result["processed_records"],
                 "boundaries": result["completed_mbo_event_boundaries"],
                 "prepared_sources": result["prepared_source_count"],
-                "fingerprint": result["prepared_corpus_fingerprint"],
+                "fingerprint": result["prepared_replay_fingerprint"],
             },
             indent=2,
             sort_keys=True,
