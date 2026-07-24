@@ -32,7 +32,6 @@ class ExactCounterfactualCausalAuthorizationTests(unittest.TestCase):
         self.causal = {
             "schema": gate.COUNTERFACTUAL_SCHEMA,
             "status": gate.COUNTERFACTUAL_READY,
-            "fingerprint": "counterfactual-causal",
             "prepared_replay_gate_fingerprint": "prepared-replay",
             "manifest_fingerprint": "manifest",
             "prepared_corpus_fingerprint": "corpus",
@@ -52,26 +51,43 @@ class ExactCounterfactualCausalAuthorizationTests(unittest.TestCase):
             },
             "candidate_ids_observed_in_posterior_attribution": ["activity"],
             "all_stand_down_days": [],
+            "next_permitted_stage": gate.COUNTERFACTUAL_NEXT_STAGE,
+            "actual_g15_outcomes_used": True,
+            "actual_g16_outcomes_used": False,
+            "g16_scoring_authorized": False,
+            "paid_live_data_assumed": False,
+            "random_shuffle_used": False,
+            "one_signal_authority_preserved": True,
+            "blind_forecasts_immutable": True,
+            "may_change_g16_blind_prior": False,
+            "may_change_g16_blind_forecast": False,
+            "may_change_posterior": False,
+            "may_select_lessons_from_g16_outcomes": False,
+            "may_update_ng_brain": False,
+            "execution_authority": False,
+            "cme_event_contracts_mode": "SHADOW",
+            "brokerage_contract": "tastytrade_not_ibkr",
+            "options_lane_started": False,
         }
+        self.causal["fingerprint"] = gate.counterfactual_fingerprint(self.causal)
 
     def patched(self):
-        return mock.patch.multiple(
-            gate,
-            validate_exact_authorization=mock.DEFAULT,
-            validate_counterfactual_authorization=mock.DEFAULT,
-        )
+        return mock.patch.object(gate, "validate_exact_authorization")
 
     def build(self):
         with self.patched() as patched:
-            patched["validate_exact_authorization"].return_value = self.exact
-            patched["validate_counterfactual_authorization"].return_value = None
+            patched.return_value = self.exact
             return gate.build_authorization(self.exact, self.causal)
 
     def validate(self, value):
         with self.patched() as patched:
-            patched["validate_exact_authorization"].return_value = self.exact
-            patched["validate_counterfactual_authorization"].return_value = None
+            patched.return_value = self.exact
             return gate.validate_authorization(value)
+
+    def refingerprint_causal(self) -> None:
+        payload = copy.deepcopy(self.causal)
+        payload.pop("fingerprint", None)
+        self.causal["fingerprint"] = gate.counterfactual_fingerprint(payload)
 
     def test_valid_authorization_binds_both_proofs(self):
         result = self.build()
@@ -81,7 +97,7 @@ class ExactCounterfactualCausalAuthorizationTests(unittest.TestCase):
         )
         self.assertEqual(
             result["counterfactual_causal_authorization_fingerprint"],
-            "counterfactual-causal",
+            self.causal["fingerprint"],
         )
         self.assertEqual(result["bound_replay_source_count"], 22)
         self.assertEqual(result["candidate_count"], 2)
@@ -89,16 +105,19 @@ class ExactCounterfactualCausalAuthorizationTests(unittest.TestCase):
 
     def test_replay_fingerprint_substitution_is_rejected(self):
         self.causal["replay_fingerprint"] = "replacement-replay"
+        self.refingerprint_causal()
         with self.assertRaises(gate.G16ExactCounterfactualCausalAuthorizationError):
             self.build()
 
     def test_prepared_replay_gate_substitution_is_rejected(self):
         self.causal["prepared_replay_gate_fingerprint"] = "replacement-gate"
+        self.refingerprint_causal()
         with self.assertRaises(gate.G16ExactCounterfactualCausalAuthorizationError):
             self.build()
 
     def test_incomplete_candidate_evidence_is_rejected(self):
         self.causal["candidate_evidence_fingerprints"].pop("onset")
+        self.refingerprint_causal()
         with self.assertRaises(gate.G16ExactCounterfactualCausalAuthorizationError):
             self.build()
 
@@ -112,6 +131,7 @@ class ExactCounterfactualCausalAuthorizationTests(unittest.TestCase):
         self.exact["stand_down_days"] = ["2026-03-20"]
         self.causal["status"] = gate.COUNTERFACTUAL_STAND_DOWNS
         self.causal["all_stand_down_days"] = ["2026-03-23"]
+        self.refingerprint_causal()
         result = self.build()
         self.assertEqual(result["status"], gate.STATUS_STAND_DOWNS)
         self.assertEqual(
