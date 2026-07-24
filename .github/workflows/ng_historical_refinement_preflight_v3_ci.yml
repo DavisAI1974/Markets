@@ -1,0 +1,70 @@
+name: NG historical preflight v3
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_historical_refinement_preflight_v3.py
+      - research/kalshi/tests/test_ng_historical_refinement_preflight_v3.py
+      - research/kalshi/ng_historical_refinement_executor_v3.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_branch_alignment_gate.py
+      - research/kalshi/ng_historical_refinement_preflight.py
+      - .github/workflows/ng_historical_refinement_preflight_v3_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_historical_refinement_preflight_v3.py
+      - research/kalshi/tests/test_ng_historical_refinement_preflight_v3.py
+      - research/kalshi/ng_historical_refinement_executor_v3.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_branch_alignment_gate.py
+      - research/kalshi/ng_historical_refinement_preflight.py
+      - .github/workflows/ng_historical_refinement_preflight_v3_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight-v3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile readiness-v5 preflight chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_branch_alignment_gate.py \
+            ng_historical_refinement_preflight.py \
+            ng_historical_refinement_preflight_v3.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v2.py \
+            ng_historical_refinement_executor_v3.py \
+            ng_historical_refinement_readiness.py \
+            ng_historical_refinement_readiness_v4.py \
+            ng_historical_refinement_readiness_v5.py \
+            tests/test_ng_historical_refinement_preflight_v3.py
+      - name: Run focused preflight-v3 tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_preflight_v3.py' -v
+      - name: Verify branch-guarded broad-corpus boundary
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_preflight_v3 as preflight
+
+          assert preflight.EXECUTOR_CONTRACT == 'ng_historical_refinement_executor_v3'
+          assert preflight.READINESS_CONTRACT == 'ng_historical_refinement_readiness.v5'
+          assert preflight.STAGE_ORDER.index('broad_corpus_scope') < preflight.STAGE_ORDER.index('g15_exact_replay')
+          broad = next(row for row in preflight.STAGE_CONTRACT if row['key'] == 'broad_corpus_scope')
+          assert broad['pre_outcome'] is True
+          assert 'g15_counterfactual_scoring_lock' in preflight.STAGE_ORDER
+          assert 'g16_counterfactual_curve_lock' in preflight.STAGE_ORDER
+          assert 'g16_prepared_curve_lock' not in preflight.STAGE_ORDER
+          print('branch-guarded readiness-v5 broad corpus boundary PASS')
+          PY
