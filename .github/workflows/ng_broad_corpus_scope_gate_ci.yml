@@ -1,0 +1,64 @@
+name: NG broad corpus scope gate
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/tests/test_ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - .github/workflows/ng_broad_corpus_scope_gate_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/tests/test_ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - .github/workflows/ng_broad_corpus_scope_gate_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  broad-corpus-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile broad corpus verification chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_broad_corpus_scope_gate.py \
+            ng_corpus_inspection.py \
+            ng_corpus_coverage_audit.py \
+            tests/test_ng_broad_corpus_scope_gate.py
+      - name: Run module self-test
+        working-directory: research/kalshi
+        run: python ng_broad_corpus_scope_gate.py --selftest
+      - name: Run focused broad-scope tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_broad_corpus_scope_gate.py' -v
+      - name: Verify broad-scope and authority boundaries
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import ng_broad_corpus_scope_gate as gate
+
+          assert gate.MIN_EXPECTED_DAYS[gate.coverage.L1_CORPUS_ID] >= 250
+          assert gate.MIN_EXPECTED_DAYS[gate.coverage.MBO_CORPUS_ID] >= 80
+          source = inspect.getsource(gate._build_unchecked)
+          assert 'FULL_CORPUS_AND_G15_G16_EXACT_READY' in source
+          assert 'MATCHED_L1_MBO_READY' in source
+          assert gate.READY_STATUS == 'BROAD_CORPUS_SCOPE_VERIFIED'
+          assert gate.EXACT_NG_SYMBOL.fullmatch('NGJ26')
+          assert not gate.EXACT_NG_SYMBOL.fullmatch('NG.n.0')
+          print('broad corpus scope and permanent authority boundary PASS')
+          PY
