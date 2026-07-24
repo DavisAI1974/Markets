@@ -1,0 +1,111 @@
+name: NG broad corpus exact partition v7
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_broad_corpus_exact_partition_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v7.py
+      - research/kalshi/ng_historical_refinement_executor_v5.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v4.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v4.py
+      - research/kalshi/ng_historical_refinement_preflight_v5.py
+      - research/kalshi/tests/test_ng_broad_corpus_exact_partition_gate.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness_v7.py
+      - research/kalshi/tests/test_ng_historical_refinement_execution_v7.py
+      - .github/workflows/ng_broad_corpus_exact_partition_v7_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_broad_corpus_exact_partition_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v7.py
+      - research/kalshi/ng_historical_refinement_executor_v5.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v4.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v4.py
+      - research/kalshi/ng_historical_refinement_preflight_v5.py
+      - research/kalshi/tests/test_ng_broad_corpus_exact_partition_gate.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness_v7.py
+      - research/kalshi/tests/test_ng_historical_refinement_execution_v7.py
+      - .github/workflows/ng_broad_corpus_exact_partition_v7_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-partition-v7:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact-partition chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_corpus_coverage_audit.py \
+            ng_corpus_inspection.py \
+            ng_broad_corpus_scope_gate.py \
+            ng_broad_corpus_exact_overlap_gate.py \
+            ng_broad_corpus_exact_partition_gate.py \
+            ng_historical_refinement_readiness_v6.py \
+            ng_historical_refinement_readiness_v7.py \
+            ng_historical_refinement_executor_v4.py \
+            ng_historical_refinement_executor_v5.py \
+            ng_corpus_executor_plan_compiler_v3.py \
+            ng_corpus_executor_plan_compiler_v4.py \
+            ng_corpus_executor_pipeline_arm_v3.py \
+            ng_corpus_executor_pipeline_arm_v4.py \
+            ng_historical_refinement_preflight_v4.py \
+            ng_historical_refinement_preflight_v5.py \
+            tests/test_ng_broad_corpus_exact_partition_gate.py \
+            tests/test_ng_historical_refinement_readiness_v7.py \
+            tests/test_ng_historical_refinement_execution_v7.py
+      - name: Run exact-partition gate self-test and tests
+        working-directory: research/kalshi
+        run: |
+          python ng_broad_corpus_exact_partition_gate.py --selftest
+          python -m unittest discover -s tests -p 'test_ng_broad_corpus_exact_partition_gate.py' -v
+      - name: Run readiness v7 self-test and tests
+        working-directory: research/kalshi
+        run: |
+          python ng_historical_refinement_readiness_v7.py --selftest
+          python -m unittest discover -s tests -p 'test_ng_historical_refinement_readiness_v7.py' -v
+      - name: Run execution v7 tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_execution_v7.py' -v
+      - name: Verify partition-first safety boundary
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_pipeline_arm_v4 as arm
+          import ng_corpus_executor_plan_compiler_v4 as compiler
+          import ng_historical_refinement_executor_v5 as executor
+          import ng_historical_refinement_preflight_v5 as preflight
+          import ng_historical_refinement_readiness_v7 as readiness
+
+          expected = [
+              'corpus_coverage',
+              'basis_inventory_regeneration',
+              'replay_catalog_export',
+              'broad_corpus_scope',
+              'broad_corpus_exact_overlap',
+              'broad_corpus_exact_partition',
+          ]
+          order = [spec.key for spec in readiness.STAGES]
+          assert list(compiler.CONFIGURED_STAGES) == expected
+          assert list(arm.ARMED_STAGES) == expected
+          assert order[:6] == expected
+          assert order.index('broad_corpus_exact_partition') < order.index('g15_exact_replay')
+          assert executor.SUGGESTED_ENTRYPOINTS['broad_corpus_exact_partition'] == (
+              'python', 'ng_broad_corpus_exact_partition_gate.py'
+          )
+          assert preflight.READINESS_CONTRACT == 'ng_historical_refinement_readiness.v7'
+          assert preflight.EXECUTOR_CONTRACT == 'ng_historical_refinement_executor_v5'
+          assert 'g15_counterfactual_scoring_lock' in order
+          assert 'g16_counterfactual_curve_lock' in order
+          assert 'g16_prepared_curve_lock' not in order
+          print('readiness v7 exact-partition safety boundary PASS')
+          PY
