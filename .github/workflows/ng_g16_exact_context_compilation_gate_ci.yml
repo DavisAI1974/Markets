@@ -1,0 +1,93 @@
+name: NG exact G16 context compilation attestation
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - "research/kalshi/ng_g16_exact_publication_context_compiler.py"
+      - "research/kalshi/ng_g16_exact_context_compilation_gate.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v13.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v14.py"
+      - "research/kalshi/tests/test_ng_g16_exact_context_compilation_gate.py"
+      - "research/kalshi/tests/test_ng_historical_refinement_readiness_v14.py"
+      - ".github/workflows/ng_g16_exact_context_compilation_gate_ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-exact-context-compilation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact G16 compiler-attestation chain
+        run: |
+          python -m py_compile \
+            ng_g16_exact_publication_context_compiler.py \
+            ng_g16_exact_context_compilation_gate.py \
+            ng_historical_refinement_readiness_v13.py \
+            ng_historical_refinement_readiness_v14.py \
+            tests/test_ng_g16_exact_context_compilation_gate.py \
+            tests/test_ng_historical_refinement_readiness_v14.py
+      - name: Run module self-tests
+        run: |
+          python ng_g16_exact_context_compilation_gate.py --selftest
+          python ng_historical_refinement_readiness_v14.py --selftest
+      - name: Run focused compiler-attestation tests
+        run: |
+          python -m unittest \
+            tests.test_ng_g16_exact_context_compilation_gate \
+            tests.test_ng_historical_refinement_readiness_v14
+      - name: Verify compiler-attestation outcome boundary
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v14 as readiness
+
+          rows = {spec.key: spec for spec in readiness.STAGES}
+          keys = [spec.key for spec in readiness.STAGES]
+          lock = keys.index("g16_counterfactual_curve_lock")
+          lock_attestation = keys.index("g16_exact_lock_context_compilation")
+          publication = keys.index("g16_counterfactual_publication")
+          publication_attestation = keys.index(
+              "g16_exact_publication_context_compilation"
+          )
+          assert lock < lock_attestation < publication < publication_attestation
+          assert rows["g16_counterfactual_curve_lock"].pre_outcome
+          assert rows["g16_exact_lock_context_compilation"].pre_outcome
+          assert not rows["g16_counterfactual_publication"].pre_outcome
+          assert not rows["g16_exact_publication_context_compilation"].pre_outcome
+          assert rows["g16_exact_lock_context_compilation"].filename == (
+              "g16_exact_lock_context_compilation_attestation.json"
+          )
+          assert rows["g16_exact_publication_context_compilation"].filename == (
+              "g16_exact_publication_context_compilation_attestation.json"
+          )
+          PY
+      - name: Verify permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v14 as readiness
+
+          values = readiness._linked_fixture_chain()
+          for key in (
+              "g16_exact_lock_context_compilation",
+              "g16_exact_publication_context_compilation",
+          ):
+              value = values[key]
+              assert value["random_shuffle_used"] is False
+              assert value["one_signal_authority_preserved"] is True
+              assert value["blind_forecasts_immutable"] is True
+              assert value["may_update_ng_brain"] is False
+              assert value["execution_authority"] is False
+              assert value["cme_event_contracts_mode"] == "SHADOW"
+              assert value["brokerage_contract"] == "tastytrade_not_ibkr"
+              assert value["options_lane_started"] is False
+          PY
