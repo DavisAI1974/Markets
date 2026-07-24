@@ -6,22 +6,28 @@ on:
       - chatgpt/ng-forecaster-s103-audit
     paths:
       - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/ng_historical_refinement_executor.py
       - research/kalshi/tests/test_ng_historical_refinement_readiness.py
-      - research/kalshi/ng_corpus_basis_inventory_regeneration.py
-      - research/kalshi/ng_g16_prepared_replay_gate.py
-      - research/kalshi/ng_g16_prepared_causal_authorization.py
-      - research/kalshi/ng_g16_prepared_curve_authorization.py
-      - research/kalshi/ng_g16_prepared_publication_gate.py
+      - research/kalshi/tests/test_ng_historical_refinement_executor_counterfactual.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_g16_counterfactual_lineage_gate.py
+      - research/kalshi/ng_g16_counterfactual_causal_authorization.py
+      - research/kalshi/ng_g16_counterfactual_curve_authorization.py
+      - research/kalshi/ng_g16_counterfactual_publication_gate.py
       - .github/workflows/ng_historical_refinement_readiness_ci.yml
   pull_request:
     paths:
       - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/ng_historical_refinement_executor.py
       - research/kalshi/tests/test_ng_historical_refinement_readiness.py
-      - research/kalshi/ng_corpus_basis_inventory_regeneration.py
-      - research/kalshi/ng_g16_prepared_replay_gate.py
-      - research/kalshi/ng_g16_prepared_causal_authorization.py
-      - research/kalshi/ng_g16_prepared_curve_authorization.py
-      - research/kalshi/ng_g16_prepared_publication_gate.py
+      - research/kalshi/tests/test_ng_historical_refinement_executor_counterfactual.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_counterfactual_lesson_gate.py
+      - research/kalshi/ng_g15_g16_counterfactual_lineage_gate.py
+      - research/kalshi/ng_g16_counterfactual_causal_authorization.py
+      - research/kalshi/ng_g16_counterfactual_curve_authorization.py
+      - research/kalshi/ng_g16_counterfactual_publication_gate.py
       - .github/workflows/ng_historical_refinement_readiness_ci.yml
 
 permissions:
@@ -30,7 +36,7 @@ permissions:
 jobs:
   readiness:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -38,43 +44,74 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Compile hardened readiness chain
+      - name: Compile counterfactual readiness and executor chain
         working-directory: research/kalshi
         run: |
           python -m py_compile \
             ng_historical_refinement_readiness.py \
-            ng_corpus_basis_inventory_regeneration.py \
-            ng_g16_prepared_replay_gate.py \
-            ng_g16_prepared_causal_authorization.py \
-            ng_g16_prepared_curve_authorization.py \
-            ng_g16_prepared_publication_gate.py \
-            tests/test_ng_historical_refinement_readiness.py
+            ng_historical_refinement_executor.py \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_counterfactual_lesson_gate.py \
+            ng_g15_g16_counterfactual_lineage_gate.py \
+            ng_g16_counterfactual_causal_authorization.py \
+            ng_g16_counterfactual_curve_authorization.py \
+            ng_g16_counterfactual_publication_gate.py \
+            tests/test_ng_historical_refinement_readiness.py \
+            tests/test_ng_historical_refinement_executor_counterfactual.py
 
-      - name: Selftest
+      - name: Selftest readiness v3
         working-directory: research/kalshi
         run: python ng_historical_refinement_readiness.py --selftest
 
-      - name: Run 21 hardened readiness tests
+      - name: Run 33 readiness and executor integration tests
         working-directory: research/kalshi
-        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_readiness.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_ng_historical_refinement_readiness.py' -v
+          python -m unittest discover -s tests -p 'test_ng_historical_refinement_executor_counterfactual.py' -v
 
-      - name: Verify hardened stage contract
+      - name: Verify counterfactual stage contract
         working-directory: research/kalshi
         run: |
           python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import ng_historical_refinement_executor as executor
           from ng_historical_refinement_readiness import LINK_RULES, SCHEMA, STAGES
 
           keys = [stage.key for stage in STAGES]
-          assert SCHEMA == 'ng_historical_refinement_readiness.v2'
+          assert SCHEMA == 'ng_historical_refinement_readiness.v3'
           assert keys.index('basis_inventory_regeneration') < keys.index('replay_catalog_export')
+          assert keys.index('g15_counterfactual_attribution') < keys.index('g15_publication')
+          assert keys.index('g15_counterfactual_lesson_gate') < keys.index('g15_g16_counterfactual_lineage')
           assert keys[-5:] == [
-              'g16_exact_causal',
-              'g16_prepared_causal_authorization',
+              'g16_counterfactual_causal_authorization',
               'g16_prepared_curve_authorization',
-              'g16_prepared_curve_lock',
-              'g16_prepared_publication',
+              'g16_counterfactual_curve_authorization',
+              'g16_counterfactual_curve_lock',
+              'g16_counterfactual_publication',
           ]
-          assert any(rule[2] == 'g16_prepared_publication' for rule in LINK_RULES)
+          assert 'g16_prepared_curve_lock' not in keys
+          assert 'g16_prepared_publication' not in keys
+          assert any(rule[2] == 'g16_counterfactual_publication' for rule in LINK_RULES)
+          assert any('.' in rule[3] for rule in LINK_RULES)
+
+          with tempfile.TemporaryDirectory() as tempdir:
+              root = Path(tempdir)
+              work = root / 'work'
+              artifacts = root / 'artifacts'
+              work.mkdir()
+              artifacts.mkdir()
+              for relative in ('forecasts/grp15.json', 'forecasts/grp16.json', 'knowledge/ng_brain.json'):
+                  path = work / relative
+                  path.parent.mkdir(parents=True, exist_ok=True)
+                  path.write_text('{}\n', encoding='utf-8')
+              plan = executor.build_plan(artifacts, work)
+              executor.validate_plan(plan)
+              plan_keys = [row['key'] for row in plan['stages']]
+              assert plan_keys == keys
+              rows = {row['key']: row for row in plan['stages']}
+              assert rows['g16_counterfactual_curve_lock']['requires_fixed_outcomes'] is False
+              assert rows['g16_counterfactual_publication']['requires_fixed_outcomes'] is True
           print(len(STAGES), len(LINK_RULES))
           PY
 
@@ -96,6 +133,6 @@ jobs:
           assert report['paid_live_data_assumed'] is False
           assert report['random_shuffle_used'] is False
           assert report['options_lane_started'] is False
-          assert report['hardened_g16_chain_complete'] is False or report['g16_prepared_curve_locked_before_scoring'] is True
+          assert report['hardened_g16_chain_complete'] is False or report['g16_counterfactual_curve_locked_before_scoring'] is True
           print(report['status'], report['first_blocking_stage'])
           PY
