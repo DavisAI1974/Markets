@@ -1,0 +1,91 @@
+name: NG historical readiness v5
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_executor_v3.py
+      - research/kalshi/tests/test_ng_broad_corpus_scope_gate.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_readiness_v4.py
+      - research/kalshi/ng_historical_refinement_executor.py
+      - research/kalshi/ng_historical_refinement_executor_v2.py
+      - .github/workflows/ng_historical_refinement_readiness_v5_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_executor_v3.py
+      - research/kalshi/tests/test_ng_broad_corpus_scope_gate.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_readiness_v4.py
+      - research/kalshi/ng_historical_refinement_executor.py
+      - research/kalshi/ng_historical_refinement_executor_v2.py
+      - .github/workflows/ng_historical_refinement_readiness_v5_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness-v5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile broad-corpus-first readiness chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_broad_corpus_scope_gate.py \
+            ng_corpus_inspection.py \
+            ng_corpus_coverage_audit.py \
+            ng_historical_refinement_readiness.py \
+            ng_historical_refinement_readiness_v4.py \
+            ng_historical_refinement_readiness_v5.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v2.py \
+            ng_historical_refinement_executor_v3.py \
+            tests/test_ng_broad_corpus_scope_gate.py \
+            tests/test_ng_historical_refinement_readiness_v5.py
+      - name: Run broad scope gate self-test
+        working-directory: research/kalshi
+        run: python ng_broad_corpus_scope_gate.py --selftest
+      - name: Run readiness v5 self-test
+        working-directory: research/kalshi
+        run: python ng_historical_refinement_readiness_v5.py --selftest
+      - name: Run broad scope and readiness tests
+        working-directory: research/kalshi
+        run: |
+          python -m unittest discover -s tests -p 'test_ng_broad_corpus_scope_gate.py' -v
+          python -m unittest discover -s tests -p 'test_ng_historical_refinement_readiness_v5.py' -v
+      - name: Verify mandatory broad-corpus boundary
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_executor_v3 as executor
+          import ng_historical_refinement_readiness_v5 as readiness
+
+          order = [spec.key for spec in readiness.STAGES]
+          assert order[:5] == [
+              'corpus_coverage',
+              'basis_inventory_regeneration',
+              'replay_catalog_export',
+              'broad_corpus_scope',
+              'g15_exact_replay',
+          ]
+          broad = next(spec for spec in readiness.STAGES if spec.key == 'broad_corpus_scope')
+          assert broad.pre_outcome is True
+          assert broad.ready_statuses == frozenset({'BROAD_CORPUS_SCOPE_VERIFIED'})
+          assert executor.SUGGESTED_ENTRYPOINTS['broad_corpus_scope'] == (
+              'python', 'ng_broad_corpus_scope_gate.py'
+          )
+          assert readiness.SCHEMA == 'ng_historical_refinement_readiness.v5'
+          print('mandatory broad-corpus readiness boundary PASS')
+          PY
