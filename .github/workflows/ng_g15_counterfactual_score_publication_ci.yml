@@ -1,0 +1,97 @@
+name: NG G15 lock-first scoring and publication
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/ng_g15_counterfactual_score_gate.py
+      - research/kalshi/ng_g15_counterfactual_scored_publication_gate.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_score_gate.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_scored_publication_gate.py
+      - research/kalshi/ng_g15_path_score.py
+      - research/kalshi/ng_g15_exact_publication_gate.py
+      - .github/workflows/ng_g15_counterfactual_score_publication_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/ng_g15_counterfactual_score_gate.py
+      - research/kalshi/ng_g15_counterfactual_scored_publication_gate.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_score_gate.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_scored_publication_gate.py
+      - research/kalshi/ng_g15_path_score.py
+      - research/kalshi/ng_g15_exact_publication_gate.py
+      - .github/workflows/ng_g15_counterfactual_score_publication_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  locked-scoring:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile lock-first scoring and publication chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_g15_counterfactual_scoring_wall.py \
+            ng_g15_counterfactual_score_gate.py \
+            ng_g15_counterfactual_scored_publication_gate.py \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_path_score.py \
+            ng_g15_exact_publication_gate.py \
+            tests/test_ng_g15_counterfactual_score_gate.py \
+            tests/test_ng_g15_counterfactual_scored_publication_gate.py
+
+      - name: Run 27 focused tests
+        working-directory: research/kalshi
+        run: |
+          python -m unittest discover -s tests -p 'test_ng_g15_counterfactual_score_gate.py' -v
+          python -m unittest discover -s tests -p 'test_ng_g15_counterfactual_scored_publication_gate.py' -v
+
+      - name: Verify actual-file ordering contract
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import ng_g15_counterfactual_score_gate as score_gate
+          import ng_g15_counterfactual_scored_publication_gate as publication_gate
+
+          source = inspect.getsource(score_gate.main)
+          validate_at = source.index('validate_locked_forecasts')
+          actual_at = source.index('args.actual.read_text')
+          assert validate_at < actual_at
+          assert 'actual' not in inspect.signature(score_gate.validate_locked_forecasts).parameters
+          assert 'actual' not in inspect.signature(publication_gate.build_completion).parameters
+          print('lock-before-actual ordering PASS')
+          PY
+
+      - name: Verify permanent authority contract
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          from ng_g15_counterfactual_attribution import FACTORS
+          import ng_g15_counterfactual_scoring_wall as wall
+
+          lock = wall._selftest_lock()
+          wall.validate_lock(lock)
+          assert lock['actual_g15_outcomes_used'] is False
+          assert lock['counterfactual_factors'] == list(FACTORS)
+          assert lock['may_select_lesson_support_from_scores'] is False
+          assert lock['random_shuffle_used'] is False
+          assert lock['blind_forecast_immutable'] is True
+          assert lock['may_update_ng_brain'] is False
+          assert lock['execution_authority'] is False
+          assert lock['cme_event_contracts_mode'] == 'SHADOW'
+          assert lock['brokerage_contract'] == 'tastytrade_not_ibkr'
+          assert lock['options_lane_started'] is False
+          print(lock['status'], lock['lock_fingerprint'])
+          PY
