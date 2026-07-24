@@ -1,0 +1,74 @@
+name: NG G15 counterfactual scoring wall
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_exact_refinement_gate.py
+      - research/kalshi/ng_g15_exact_publication_gate.py
+      - .github/workflows/ng_g15_counterfactual_scoring_wall_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/tests/test_ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/ng_g15_counterfactual_attribution.py
+      - research/kalshi/ng_g15_exact_refinement_gate.py
+      - research/kalshi/ng_g15_exact_publication_gate.py
+      - .github/workflows/ng_g15_counterfactual_scoring_wall_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  scoring-wall:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile G15 counterfactual scoring chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_g15_counterfactual_scoring_wall.py \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_exact_refinement_gate.py \
+            ng_g15_exact_publication_gate.py \
+            tests/test_ng_g15_counterfactual_scoring_wall.py
+
+      - name: Run scoring-wall selftest
+        working-directory: research/kalshi
+        run: python ng_g15_counterfactual_scoring_wall.py --selftest
+
+      - name: Run 16 focused tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_g15_counterfactual_scoring_wall.py' -v
+
+      - name: Verify permanent authority wall
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_g15_counterfactual_scoring_wall as wall
+
+          lock = wall._selftest_lock()
+          wall.validate_lock(lock)
+          assert lock["actual_g15_outcomes_used"] is False
+          assert lock["random_shuffle_used"] is False
+          assert lock["blind_forecast_immutable"] is True
+          assert lock["may_select_lesson_support_from_scores"] is False
+          assert lock["may_update_ng_brain"] is False
+          assert lock["execution_authority"] is False
+          assert lock["cme_event_contracts_mode"] == "SHADOW"
+          assert lock["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert lock["options_lane_started"] is False
+          assert lock["counterfactual_factors"] == list(wall.FACTORS)
+          print(lock["status"], lock["lock_fingerprint"])
+          PY
