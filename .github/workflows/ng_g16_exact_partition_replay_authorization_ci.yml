@@ -1,0 +1,69 @@
+name: NG G16 exact partition replay authorization
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - "research/kalshi/ng_g16_exact_partition_replay_authorization.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v10.py"
+      - "research/kalshi/tests/test_ng_g16_exact_partition_replay_authorization.py"
+      - "research/kalshi/tests/test_ng_historical_refinement_readiness_v10.py"
+      - ".github/workflows/ng_g16_exact_partition_replay_authorization_ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-g16-partition-replay-authorization:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install focused test dependency
+        run: python -m pip install pytest
+      - name: Compile exact G16 partition/replay chain
+        run: |
+          python -m py_compile \
+            ng_broad_corpus_exact_partition_gate.py \
+            ng_g16_historical_replay.py \
+            ng_g16_prepared_replay_gate.py \
+            ng_g16_exact_partition_replay_authorization.py \
+            ng_historical_refinement_readiness_v9.py \
+            ng_historical_refinement_readiness_v10.py \
+            tests/test_ng_g16_exact_partition_replay_authorization.py \
+            tests/test_ng_historical_refinement_readiness_v10.py
+      - name: Run focused authorization and readiness tests
+        run: |
+          python -m pytest -q \
+            tests/test_ng_g16_exact_partition_replay_authorization.py \
+            tests/test_ng_historical_refinement_readiness_v10.py
+      - name: Run readiness v10 self-test
+        run: python ng_historical_refinement_readiness_v10.py --selftest
+      - name: Verify pre-cutoff G16 boundary and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v10 as readiness
+
+          rows = {spec.key: spec for spec in readiness.STAGES}
+          keys = [spec.key for spec in readiness.STAGES]
+          prepared = keys.index("g16_prepared_replay")
+          binding = keys.index("g16_exact_partition_replay_authorization")
+          causal = keys.index("g16_exact_causal")
+          assert prepared < binding < causal
+          assert rows["g16_exact_partition_replay_authorization"].pre_outcome
+          assert rows["g16_exact_causal"].pre_outcome
+
+          artifact = readiness._linked_fixture_chain()[
+              "g16_exact_partition_replay_authorization"
+          ]
+          assert artifact["all_g16_replay_sources_bound_to_exact_partition"] is True
+          assert artifact["all_g16_state_spans_inside_exact_common_windows"] is True
+          assert artifact["bound_replay_source_count"] == 22
+          PY
