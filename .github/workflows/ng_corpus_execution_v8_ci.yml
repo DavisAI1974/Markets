@@ -1,0 +1,72 @@
+name: NG corpus execution readiness v8
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v5.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v5.py
+      - research/kalshi/ng_historical_refinement_executor_v6.py
+      - research/kalshi/ng_historical_refinement_readiness_v8.py
+      - research/kalshi/tests/test_ng_corpus_execution_v8.py
+      - .github/workflows/ng_corpus_execution_v8_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v5.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v5.py
+      - research/kalshi/ng_historical_refinement_executor_v6.py
+      - research/kalshi/ng_historical_refinement_readiness_v8.py
+      - research/kalshi/tests/test_ng_corpus_execution_v8.py
+      - .github/workflows/ng_corpus_execution_v8_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corpus-execution-v8:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile corpus execution v8 chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_corpus_executor_plan_compiler.py \
+            ng_corpus_executor_plan_compiler_v3.py \
+            ng_corpus_executor_plan_compiler_v4.py \
+            ng_corpus_executor_plan_compiler_v5.py \
+            ng_corpus_executor_pipeline_arm_v4.py \
+            ng_corpus_executor_pipeline_arm_v5.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v5.py \
+            ng_historical_refinement_executor_v6.py \
+            ng_historical_refinement_readiness_v7.py \
+            ng_historical_refinement_readiness_v8.py \
+            tests/test_ng_corpus_execution_v8.py
+      - name: Run focused corpus execution v8 tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_corpus_execution_v8.py' -v
+      - name: Verify stable corpus prefix and replay-window wall
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_pipeline_arm_v5 as arm
+          import ng_corpus_executor_plan_compiler_v5 as compiler
+          import ng_historical_refinement_readiness_v8 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert list(compiler.CONFIGURED_STAGES) == keys[:6]
+          assert list(arm.ARMED_STAGES) == keys[:6]
+          assert keys.index('broad_corpus_exact_partition') < keys.index('g15_exact_replay')
+          assert keys.index('g15_exact_replay') < keys.index('g15_exact_replay_window_authorization')
+          assert keys.index('g15_exact_replay_window_authorization') < keys.index('g15_exact_refinement')
+          assert compiler.WINDOW_STAGE == 'g15_exact_replay_window_authorization'
+          assert arm.WINDOW_STAGE == compiler.WINDOW_STAGE
+          print('stable readiness-v8 corpus/replay-window boundary PASS')
+          PY
