@@ -1,0 +1,77 @@
+name: NG corpus executor pipeline v2
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v2.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v2.py
+      - research/kalshi/tests/test_ng_corpus_executor_pipeline_v2.py
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_executor_v3.py
+      - .github/workflows/ng_corpus_executor_pipeline_v2_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v2.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v2.py
+      - research/kalshi/tests/test_ng_corpus_executor_pipeline_v2.py
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_executor_v3.py
+      - .github/workflows/ng_corpus_executor_pipeline_v2_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corpus-pipeline-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile readiness-v5 corpus pipeline
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_corpus_executor_plan_compiler.py \
+            ng_corpus_executor_plan_compiler_v2.py \
+            ng_corpus_executor_pipeline_arm_v2.py \
+            ng_broad_corpus_scope_gate.py \
+            ng_historical_refinement_readiness_v5.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v2.py \
+            ng_historical_refinement_executor_v3.py \
+            tests/test_ng_corpus_executor_pipeline_v2.py
+      - name: Run focused compiler and arm tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_corpus_executor_pipeline_v2.py' -v
+      - name: Verify stable first-blocking broad corpus boundary
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import ng_corpus_executor_pipeline_arm_v2 as arm
+          import ng_corpus_executor_plan_compiler_v2 as compiler
+          import ng_historical_refinement_executor as legacy_executor
+          import ng_historical_refinement_readiness_v5 as readiness
+
+          assert compiler.CONFIGURED_STAGES == (
+              'corpus_coverage',
+              'basis_inventory_regeneration',
+              'replay_catalog_export',
+              'broad_corpus_scope',
+          )
+          assert arm.ARMED_STAGES == compiler.CONFIGURED_STAGES
+          assert tuple(spec.key for spec in readiness.STAGES[:4]) == arm.ARMED_STAGES
+          source = inspect.getsource(legacy_executor.execute_next)
+          assert 'first_key = before.get("first_blocking_stage")' in source
+          assert 'step = next(step for step in plan["stages"] if step["key"] == first_key)' in source
+          assert arm.STATUS == 'BROAD_CORPUS_PIPELINE_ARMED'
+          print('stable readiness-v5 broad corpus pipeline PASS')
+          PY
