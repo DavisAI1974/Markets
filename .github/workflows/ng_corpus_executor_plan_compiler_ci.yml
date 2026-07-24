@@ -65,6 +65,6 @@ jobs:
               "replay_catalog_export",
           ]
           assert compiler.READY_STATUS == "ANCHOR_G15_G16_TARGET_SLICES_READY"
-          assert "options" not in " ".join(sum(compiler._argv_paths.__annotations__.keys() and [] or [], []))
+          assert compiler.SCHEMA == "ng_corpus_executor_plan_compiler.v1"
           print("exact corpus executor boundary PASS")
           PY
