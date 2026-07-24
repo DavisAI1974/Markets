@@ -84,10 +84,19 @@ def test_linked_partition_fingerprint_substitution_is_rejected(tmp_path):
         {key: value for key, value in gate.items() if key != "fingerprint"}
     )
     _write_chain(tmp_path, values)
-    with pytest.raises(readiness.HistoricalRefinementReadinessError):
-        readiness.build_readiness_report(
-            tmp_path, validator_overrides=_overrides()
-        )
+    report = readiness.build_readiness_report(
+        tmp_path, validator_overrides=_overrides()
+    )
+    rows = {row["key"]: row for row in report["stages"]}
+    assert (
+        report["first_blocking_stage"]
+        == "g16_exact_partition_replay_authorization"
+    )
+    assert (
+        rows["g16_exact_partition_replay_authorization"]["effective_status"]
+        == "INVALID"
+    )
+    assert rows["g16_exact_causal"]["effective_status"] == "BLOCKED_BY_UPSTREAM"
 
 
 def test_linked_prepared_replay_substitution_is_rejected(tmp_path):
@@ -98,10 +107,19 @@ def test_linked_prepared_replay_substitution_is_rejected(tmp_path):
         {key: value for key, value in gate.items() if key != "fingerprint"}
     )
     _write_chain(tmp_path, values)
-    with pytest.raises(readiness.HistoricalRefinementReadinessError):
-        readiness.build_readiness_report(
-            tmp_path, validator_overrides=_overrides()
-        )
+    report = readiness.build_readiness_report(
+        tmp_path, validator_overrides=_overrides()
+    )
+    rows = {row["key"]: row for row in report["stages"]}
+    assert (
+        report["first_blocking_stage"]
+        == "g16_exact_partition_replay_authorization"
+    )
+    assert (
+        rows["g16_exact_partition_replay_authorization"]["effective_status"]
+        == "INVALID"
+    )
+    assert rows["g16_exact_causal"]["effective_status"] == "BLOCKED_BY_UPSTREAM"
 
 
 def test_linked_replay_fingerprint_substitution_is_rejected(tmp_path):
@@ -112,10 +130,19 @@ def test_linked_replay_fingerprint_substitution_is_rejected(tmp_path):
         {key: value for key, value in gate.items() if key != "fingerprint"}
     )
     _write_chain(tmp_path, values)
-    with pytest.raises(readiness.HistoricalRefinementReadinessError):
-        readiness.build_readiness_report(
-            tmp_path, validator_overrides=_overrides()
-        )
+    report = readiness.build_readiness_report(
+        tmp_path, validator_overrides=_overrides()
+    )
+    rows = {row["key"]: row for row in report["stages"]}
+    assert (
+        report["first_blocking_stage"]
+        == "g16_exact_partition_replay_authorization"
+    )
+    assert (
+        rows["g16_exact_partition_replay_authorization"]["effective_status"]
+        == "INVALID"
+    )
+    assert rows["g16_exact_causal"]["effective_status"] == "BLOCKED_BY_UPSTREAM"
 
 
 def test_v9_report_is_not_a_v10_report():
