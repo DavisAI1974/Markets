@@ -1,0 +1,72 @@
+name: NG historical readiness v6
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_broad_corpus_exact_overlap_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v6.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness_v6.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - .github/workflows/ng_historical_refinement_readiness_v6_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_broad_corpus_exact_overlap_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v6.py
+      - research/kalshi/tests/test_ng_historical_refinement_readiness_v6.py
+      - research/kalshi/ng_historical_refinement_readiness_v5.py
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - .github/workflows/ng_historical_refinement_readiness_v6_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness-v6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile broad-overlap readiness chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_corpus_coverage_audit.py \
+            ng_corpus_inspection.py \
+            ng_broad_corpus_scope_gate.py \
+            ng_broad_corpus_exact_overlap_gate.py \
+            ng_historical_refinement_readiness.py \
+            ng_historical_refinement_readiness_v4.py \
+            ng_historical_refinement_readiness_v5.py \
+            ng_historical_refinement_readiness_v6.py \
+            tests/test_ng_historical_refinement_readiness_v6.py
+      - name: Run readiness-v6 self-test
+        working-directory: research/kalshi
+        run: python ng_historical_refinement_readiness_v6.py --selftest
+      - name: Run focused readiness-v6 tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_readiness_v6.py' -v
+      - name: Verify exact overlap blocks G15 and preserves outcome wall
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v6 as readiness
+
+          order = [spec.key for spec in readiness.STAGES]
+          assert order.index('broad_corpus_scope') < order.index('broad_corpus_exact_overlap')
+          assert order.index('broad_corpus_exact_overlap') < order.index('g15_exact_replay')
+          overlap = next(spec for spec in readiness.STAGES if spec.key == 'broad_corpus_exact_overlap')
+          lock = next(spec for spec in readiness.STAGES if spec.key == 'g15_counterfactual_scoring_lock')
+          score = next(spec for spec in readiness.STAGES if spec.key == 'g15_counterfactual_score_gate')
+          assert overlap.pre_outcome is True
+          assert lock.pre_outcome is True
+          assert score.pre_outcome is False
+          assert readiness.SCHEMA == 'ng_historical_refinement_readiness.v6'
+          print('readiness v6 exact-overlap and outcome boundary PASS')
+          PY
