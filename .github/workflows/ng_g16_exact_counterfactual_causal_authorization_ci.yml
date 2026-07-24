@@ -1,0 +1,123 @@
+name: NG exact G16 counterfactual causal authorization
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - "research/kalshi/ng_g16_exact_counterfactual_causal_authorization.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v11.py"
+      - "research/kalshi/ng_g16_exact_partition_replay_authorization.py"
+      - "research/kalshi/ng_g16_counterfactual_causal_authorization.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v10.py"
+      - "research/kalshi/tests/test_ng_g16_exact_counterfactual_causal_authorization.py"
+      - ".github/workflows/ng_g16_exact_counterfactual_causal_authorization_ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-exact-counterfactual-causal-authority:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact G16 causal provenance chain
+        run: |
+          python -m py_compile \
+            ng_g16_exact_partition_replay_authorization.py \
+            ng_g16_counterfactual_causal_authorization.py \
+            ng_g16_exact_counterfactual_causal_authorization.py \
+            ng_historical_refinement_readiness_v10.py \
+            ng_historical_refinement_readiness_v11.py \
+            tests/test_ng_g16_exact_counterfactual_causal_authorization.py
+      - name: Run authorization self-test
+        run: python ng_g16_exact_counterfactual_causal_authorization.py --selftest
+      - name: Run readiness self-test
+        run: python ng_historical_refinement_readiness_v11.py --selftest
+      - name: Run focused tests
+        run: python -m unittest tests.test_ng_g16_exact_counterfactual_causal_authorization
+      - name: Verify exact causal wall precedes curve construction
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v11 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          exact_replay = keys.index("g16_exact_partition_replay_authorization")
+          causal = keys.index("g16_counterfactual_causal_authorization")
+          exact_causal = keys.index("g16_exact_counterfactual_causal_authorization")
+          curve = keys.index("g16_prepared_curve_authorization")
+          assert exact_replay < causal < exact_causal < curve
+          row = next(
+              spec
+              for spec in readiness.STAGES
+              if spec.key == "g16_exact_counterfactual_causal_authorization"
+          )
+          assert row.pre_outcome
+          PY
+      - name: Verify permanent authority wall
+        run: |
+          python - <<'PY'
+          from unittest import mock
+          import ng_g16_exact_counterfactual_causal_authorization as gate
+
+          exact = {
+              "schema": gate.EXACT_SCHEMA,
+              "status": gate.EXACT_READY,
+              "fingerprint": "exact",
+              "exact_partition_gate_fingerprint": "partition",
+              "prepared_replay_gate_fingerprint": "prepared-replay",
+              "manifest_fingerprint": "manifest",
+              "prepared_corpus_fingerprint": "corpus",
+              "replay_fingerprint": "replay",
+              "blind_prior_fingerprint": "blind",
+              "source_binding_fingerprint": "source-binding",
+              "window_contract_fingerprint": "window",
+              "bound_replay_source_count": 22,
+              "all_g16_replay_sources_bound_to_exact_partition": True,
+              "all_g16_state_spans_inside_exact_common_windows": True,
+              "stand_down_days": [],
+          }
+          causal = {
+              "schema": gate.COUNTERFACTUAL_SCHEMA,
+              "status": gate.COUNTERFACTUAL_READY,
+              "fingerprint": "causal",
+              "prepared_replay_gate_fingerprint": "prepared-replay",
+              "manifest_fingerprint": "manifest",
+              "prepared_corpus_fingerprint": "corpus",
+              "replay_fingerprint": "replay",
+              "blind_prior_fingerprint": "blind",
+              "counterfactual_lineage_gate_fingerprint": "lineage",
+              "prepared_causal_authorization_fingerprint": "prepared-causal",
+              "g16_plan_fingerprint": "plan",
+              "authorization_stream_fingerprint": "authorization-stream",
+              "posterior_stream_fingerprint": "posterior-stream",
+              "g16_blind_forecast_fingerprint": "blind-forecast",
+              "g16_blind_safe_state_fingerprint": "blind-state",
+              "candidate_ids": ["onset"],
+              "candidate_evidence_fingerprints": {"onset": "evidence"},
+              "candidate_ids_observed_in_posterior_attribution": ["onset"],
+              "all_stand_down_days": [],
+          }
+          with mock.patch.object(gate, "validate_exact_authorization"), mock.patch.object(
+              gate, "validate_counterfactual_authorization"
+          ):
+              value = gate.build_authorization(exact, causal)
+          assert value["actual_g16_outcomes_used"] is False
+          assert value["g16_scoring_authorized"] is False
+          assert value["paid_live_data_assumed"] is False
+          assert value["random_shuffle_used"] is False
+          assert value["one_signal_authority_preserved"] is True
+          assert value["blind_forecasts_immutable"] is True
+          assert value["may_update_ng_brain"] is False
+          assert value["execution_authority"] is False
+          assert value["cme_event_contracts_mode"] == "SHADOW"
+          assert value["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert value["options_lane_started"] is False
+          PY
