@@ -1,0 +1,113 @@
+name: NG exact G16 counterfactual curve authorization
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - "research/kalshi/ng_g16_exact_counterfactual_curve_authorization.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v12.py"
+      - "research/kalshi/ng_g16_exact_counterfactual_causal_authorization.py"
+      - "research/kalshi/ng_g16_counterfactual_curve_authorization.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v11.py"
+      - "research/kalshi/tests/test_ng_g16_exact_counterfactual_curve_authorization.py"
+      - ".github/workflows/ng_g16_exact_counterfactual_curve_authorization_ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-exact-counterfactual-curve:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact curve provenance chain
+        run: |
+          python -m py_compile \
+            ng_g16_exact_counterfactual_causal_authorization.py \
+            ng_g16_counterfactual_curve_authorization.py \
+            ng_g16_exact_counterfactual_curve_authorization.py \
+            ng_historical_refinement_readiness_v11.py \
+            ng_historical_refinement_readiness_v12.py \
+            tests/test_ng_g16_exact_counterfactual_curve_authorization.py
+      - name: Run exact curve gate self-test
+        run: python ng_g16_exact_counterfactual_curve_authorization.py --selftest
+      - name: Run readiness v12 self-test
+        run: python ng_historical_refinement_readiness_v12.py --selftest
+      - name: Run focused exact curve and readiness tests
+        run: python -m unittest tests.test_ng_g16_exact_counterfactual_curve_authorization
+      - name: Verify exact causal provenance is carried through curve before lock
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v12 as readiness
+
+          rows = {spec.key: spec for spec in readiness.STAGES}
+          keys = [spec.key for spec in readiness.STAGES]
+          exact_causal = keys.index("g16_exact_counterfactual_causal_authorization")
+          prepared_curve = keys.index("g16_prepared_curve_authorization")
+          counterfactual_curve = keys.index("g16_counterfactual_curve_authorization")
+          exact_curve = keys.index("g16_exact_counterfactual_curve_authorization")
+          curve_lock = keys.index("g16_counterfactual_curve_lock")
+          publication = keys.index("g16_counterfactual_publication")
+          assert (
+              exact_causal
+              < prepared_curve
+              < counterfactual_curve
+              < exact_curve
+              < curve_lock
+              < publication
+          )
+          for key in (
+              "g16_exact_counterfactual_causal_authorization",
+              "g16_prepared_curve_authorization",
+              "g16_counterfactual_curve_authorization",
+              "g16_exact_counterfactual_curve_authorization",
+              "g16_counterfactual_curve_lock",
+          ):
+              assert rows[key].pre_outcome
+          assert not rows["g16_counterfactual_publication"].pre_outcome
+          PY
+      - name: Verify permanent authority wall
+        run: |
+          python - <<'PY'
+          from unittest import mock
+          import ng_g16_exact_counterfactual_curve_authorization as gate
+
+          exact, curve, context = gate._selftest_inputs()
+          with mock.patch.object(
+              gate, "validate_exact_causal_authorization", return_value=exact
+          ), mock.patch.object(
+              gate, "validate_counterfactual_curve_authorization", return_value=None
+          ):
+              result = gate.build_authorization(
+                  exact, curve, curve_kwargs=context
+              )
+          for field in (
+              "actual_g16_outcomes_used",
+              "g16_scoring_authorized",
+              "paid_live_data_assumed",
+              "random_shuffle_used",
+              "may_change_g16_blind_prior",
+              "may_change_g16_blind_forecast",
+              "may_change_posterior",
+              "may_select_lessons_from_g16_outcomes",
+              "may_update_ng_brain",
+              "execution_authority",
+              "options_lane_started",
+          ):
+              assert result[field] is False
+          assert result["one_signal_authority_preserved"] is True
+          assert result["blind_forecasts_immutable"] is True
+          assert result["all_g16_replay_sources_bound_to_exact_partition"] is True
+          assert result["all_g16_state_spans_inside_exact_common_windows"] is True
+          assert result["bound_replay_source_count"] == 22
+          assert result["cme_event_contracts_mode"] == "SHADOW"
+          assert result["brokerage_contract"] == "tastytrade_not_ibkr"
+          PY
