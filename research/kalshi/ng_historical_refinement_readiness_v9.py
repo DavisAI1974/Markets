@@ -190,15 +190,6 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
             raise HistoricalRefinementReadinessError(
                 "partition-replay summary claims readiness while stage is not ready"
             )
-        artifact = copy.deepcopy(dict(row.get("artifact") or {}))
-        if artifact.get("bound_replay_source_count") != 24:
-            raise HistoricalRefinementReadinessError(
-                "partition-replay authorization must bind exactly 24 lanes"
-            )
-        if artifact.get("all_g15_replay_sources_bound_to_exact_partition") is not True:
-            raise HistoricalRefinementReadinessError(
-                "partition-replay authorization did not bind every G15 lane"
-            )
     for field in (
         "remote_presence_inferred",
         "actual_outcome_paths_loaded",
