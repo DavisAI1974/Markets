@@ -14,10 +14,13 @@ brokerage contract.
 """
 from __future__ import annotations
 
+import argparse
 import copy
 import hashlib
 import json
-from typing import Any, Mapping
+import os
+from pathlib import Path
+from typing import Any, Mapping, Sequence
 
 from ng_g16_exact_counterfactual_curve_authorization import (
     AUTHORITY as EXACT_CURVE_AUTHORITY,
@@ -561,10 +564,64 @@ def validate_completion(completion: Mapping[str, Any], **kwargs: Any) -> None:
         )
 
 
+def _load(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise G16ExactCounterfactualPublicationError(
+            f"cannot read JSON context {path}: {error}"
+        ) from error
+    if not isinstance(value, dict):
+        raise G16ExactCounterfactualPublicationError(
+            f"JSON context must be an object: {path}"
+        )
+    return value
+
+
+def _write(path: Path, value: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    os.replace(temporary, path)
+
+
 def selftest() -> int:
     print("[ng_g16_exact_counterfactual_publication_gate] import/selftest PASS")
     return 0
 
 
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    subparsers = parser.add_subparsers(dest="command", required=False)
+    for command in ("lock", "complete"):
+        subparser = subparsers.add_parser(command)
+        subparser.add_argument("--context", type=Path, required=True)
+        subparser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--selftest", action="store_true")
+    args = parser.parse_args(argv)
+    if args.selftest or args.command is None:
+        return selftest()
+    context = _load(args.context)
+    if args.command == "lock":
+        result = build_curve_lock(**context)
+    else:
+        result = build_completion(**context)
+    _write(args.out, result)
+    print(
+        json.dumps(
+            {
+                "command": args.command,
+                "status": result["status"],
+                "out": str(args.out),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
 if __name__ == "__main__":
-    raise SystemExit(selftest())
+    raise SystemExit(main())
