@@ -1,0 +1,70 @@
+name: NG corpus executor plan compiler
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler.py
+      - research/kalshi/tests/test_ng_corpus_executor_plan_compiler.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_target_day_slicer.py
+      - research/kalshi/ng_historical_refinement_executor_v2.py
+      - research/kalshi/ng_historical_refinement_readiness_v4.py
+      - .github/workflows/ng_corpus_executor_plan_compiler_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler.py
+      - research/kalshi/tests/test_ng_corpus_executor_plan_compiler.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_target_day_slicer.py
+      - research/kalshi/ng_historical_refinement_executor_v2.py
+      - research/kalshi/ng_historical_refinement_readiness_v4.py
+      - .github/workflows/ng_corpus_executor_plan_compiler_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corpus-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact corpus planning chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_corpus_executor_plan_compiler.py \
+            ng_corpus_inspection.py \
+            ng_corpus_target_day_slicer.py \
+            ng_corpus_basis_inventory_regeneration.py \
+            ng_corpus_replay_catalog_export.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v2.py \
+            ng_historical_refinement_readiness.py \
+            ng_historical_refinement_readiness_v4.py \
+            tests/test_ng_corpus_executor_plan_compiler.py
+      - name: Run focused compiler tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_corpus_executor_plan_compiler.py' -v
+      - name: Verify corpus-only boundary
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_plan_compiler as compiler
+          import ng_historical_refinement_readiness_v4 as readiness
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys[:3] == [
+              "corpus_coverage",
+              "basis_inventory_regeneration",
+              "replay_catalog_export",
+          ]
+          assert compiler.READY_STATUS == "ANCHOR_G15_G16_TARGET_SLICES_READY"
+          assert "options" not in " ".join(sum(compiler._argv_paths.__annotations__.keys() and [] or [], []))
+          print("exact corpus executor boundary PASS")
+          PY
