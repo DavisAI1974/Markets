@@ -1,0 +1,97 @@
+name: NG historical refinement readiness v4
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_historical_refinement_readiness_v4.py
+      - research/kalshi/ng_historical_refinement_executor_v2.py
+      - research/kalshi/tests/test_ng_historical_refinement_v4.py
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/ng_historical_refinement_executor.py
+      - research/kalshi/ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/ng_g15_counterfactual_score_gate.py
+      - research/kalshi/ng_g15_counterfactual_scored_publication_gate.py
+      - .github/workflows/ng_historical_refinement_readiness_v4_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_historical_refinement_readiness_v4.py
+      - research/kalshi/ng_historical_refinement_executor_v2.py
+      - research/kalshi/tests/test_ng_historical_refinement_v4.py
+      - research/kalshi/ng_historical_refinement_readiness.py
+      - research/kalshi/ng_historical_refinement_executor.py
+      - research/kalshi/ng_g15_counterfactual_scoring_wall.py
+      - research/kalshi/ng_g15_counterfactual_score_gate.py
+      - research/kalshi/ng_g15_counterfactual_scored_publication_gate.py
+      - .github/workflows/ng_historical_refinement_readiness_v4_ci.yml
+
+permissions:
+  contents: read
+
+jobs:
+  readiness-v4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile lock-first readiness and executor chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_historical_refinement_readiness.py \
+            ng_historical_refinement_readiness_v4.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v2.py \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_counterfactual_scoring_wall.py \
+            ng_g15_counterfactual_score_gate.py \
+            ng_g15_exact_publication_gate.py \
+            ng_g15_counterfactual_scored_publication_gate.py \
+            tests/test_ng_historical_refinement_v4.py
+
+      - name: Run readiness v4 self-test
+        working-directory: research/kalshi
+        run: python ng_historical_refinement_readiness_v4.py --selftest
+
+      - name: Run 16 focused readiness and executor tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_v4.py' -v
+
+      - name: Verify lock-first stage order and outcome boundary
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v4 as readiness
+          import ng_historical_refinement_executor_v2 as executor
+          from pathlib import Path
+          import tempfile
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys.index('g15_counterfactual_attribution') < keys.index('g15_counterfactual_scoring_lock')
+          assert keys.index('g15_counterfactual_scoring_lock') < keys.index('g15_counterfactual_score_gate')
+          assert keys.index('g15_counterfactual_score_gate') < keys.index('g15_publication')
+          assert keys.index('g15_publication') < keys.index('g15_counterfactual_scored_publication')
+          assert keys.index('g15_counterfactual_scored_publication') < keys.index('g15_counterfactual_lesson_gate')
+
+          with tempfile.TemporaryDirectory() as tempdir:
+              root = Path(tempdir)
+              plan = executor.build_plan(root / 'artifacts', root)
+          rows = {row['key']: row for row in plan['stages']}
+          assert rows['g15_counterfactual_scoring_lock']['requires_fixed_outcomes'] is False
+          assert rows['g15_counterfactual_score_gate']['requires_fixed_outcomes'] is True
+          assert rows['g15_counterfactual_scored_publication']['requires_fixed_outcomes'] is True
+          assert plan['random_shuffle_used'] is False
+          assert plan['blind_forecasts_immutable'] is True
+          assert plan['may_update_ng_brain'] is False
+          assert plan['execution_authority'] is False
+          assert plan['cme_event_contracts_mode'] == 'SHADOW'
+          assert plan['brokerage_contract'] == 'tastytrade_not_ibkr'
+          assert plan['options_lane_started'] is False
+          print('readiness v4 lock-first boundary PASS')
+          PY
