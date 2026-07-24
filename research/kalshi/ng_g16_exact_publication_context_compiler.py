@@ -16,6 +16,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -42,7 +43,20 @@ _REQUIRED_KEYS: dict[str, tuple[str, ...]] = {
     ),
 }
 
-_G16_OUTCOME_TOKENS = ("actual", "outcome", "score", "comparison", "render")
+_G16_OUTCOME_TOKENS = frozenset(
+    {
+        "actual",
+        "outcome",
+        "outcomes",
+        "score",
+        "scores",
+        "scoring",
+        "comparison",
+        "comparisons",
+        "render",
+        "renders",
+    }
+)
 
 
 class G16ExactPublicationContextCompilerError(ValueError):
@@ -148,6 +162,19 @@ def _is_empty_or_false(value: Any) -> bool:
     return value is None or value is False or value == "" or value == [] or value == {}
 
 
+def _identifier_tokens(value: str) -> tuple[str, ...]:
+    return tuple(re.findall(r"[a-z0-9]+", value.lower()))
+
+
+def _targets_g16_outcome(value: str) -> bool:
+    tokens = _identifier_tokens(value)
+    targets_g16 = "g16" in tokens or any(
+        tokens[index : index + 3] == ("target", "group", "16")
+        for index in range(max(0, len(tokens) - 2))
+    )
+    return targets_g16 and bool(set(tokens) & _G16_OUTCOME_TOKENS)
+
+
 def _assert_lock_outcome_blind(value: Any, *, trail: tuple[str, ...] = ()) -> None:
     if isinstance(value, list):
         for index, item in enumerate(value):
@@ -157,12 +184,7 @@ def _assert_lock_outcome_blind(value: Any, *, trail: tuple[str, ...] = ()) -> No
         return
     for key, item in value.items():
         normalized = str(key).lower()
-        targets_g16 = "g16" in normalized or "target_group_16" in normalized
-        if (
-            targets_g16
-            and any(token in normalized for token in _G16_OUTCOME_TOKENS)
-            and not _is_empty_or_false(item)
-        ):
+        if _targets_g16_outcome(normalized) and not _is_empty_or_false(item):
             raise G16ExactPublicationContextCompilerError(
                 "pre-outcome lock context contains G16 outcome-bearing value at "
                 + ".".join((*trail, str(key)))
@@ -175,9 +197,7 @@ def _assert_lock_reference_paths_outcome_blind(
 ) -> None:
     for reference in references:
         normalized = str(reference.get("path") or "").lower()
-        if "g16" in normalized and any(
-            token in normalized for token in _G16_OUTCOME_TOKENS
-        ):
+        if _targets_g16_outcome(normalized):
             raise G16ExactPublicationContextCompilerError(
                 "pre-outcome lock context references a G16 outcome-bearing path: "
                 + normalized
