@@ -1,0 +1,76 @@
+name: NG historical refinement preflight v2
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_historical_refinement_preflight_v2.py"
+      - "research/kalshi/ng_historical_refinement_preflight.py"
+      - "research/kalshi/ng_historical_refinement_executor_v2.py"
+      - "research/kalshi/ng_historical_refinement_executor.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v4.py"
+      - "research/kalshi/ng_branch_alignment_gate.py"
+      - "research/kalshi/tests/test_ng_historical_refinement_preflight_v2.py"
+      - ".github/workflows/ng_historical_refinement_preflight_v2_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_historical_refinement_preflight_v2.py"
+      - "research/kalshi/ng_historical_refinement_preflight.py"
+      - "research/kalshi/ng_historical_refinement_executor_v2.py"
+      - "research/kalshi/ng_historical_refinement_executor.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v4.py"
+      - "research/kalshi/ng_branch_alignment_gate.py"
+      - "research/kalshi/tests/test_ng_historical_refinement_preflight_v2.py"
+      - ".github/workflows/ng_historical_refinement_preflight_v2_ci.yml"
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Compile branch, readiness, executor, and preflight chain
+        run: |
+          python -m py_compile \
+            ng_branch_alignment_gate.py \
+            ng_historical_refinement_readiness.py \
+            ng_historical_refinement_readiness_v4.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v2.py \
+            ng_historical_refinement_preflight.py \
+            ng_historical_refinement_preflight_v2.py \
+            tests/test_ng_historical_refinement_preflight_v2.py
+      - name: Run v4-bound preflight self-test
+        run: PYTHONPATH=. python ng_historical_refinement_preflight_v2.py --selftest
+      - name: Run focused preflight tests
+        run: PYTHONPATH=. pytest -q tests/test_ng_historical_refinement_preflight_v2.py
+      - name: Verify exact lock-first stage contract
+        run: |
+          PYTHONPATH=. python - <<'PY'
+          import ng_historical_refinement_preflight_v2 as preflight
+          required = [
+              "g15_counterfactual_attribution",
+              "g15_counterfactual_scoring_lock",
+              "g15_counterfactual_score_gate",
+              "g15_publication",
+              "g15_counterfactual_scored_publication",
+              "g15_counterfactual_lesson_gate",
+              "g15_g16_counterfactual_lineage",
+              "g16_counterfactual_causal_authorization",
+              "g16_counterfactual_curve_authorization",
+              "g16_counterfactual_curve_lock",
+              "g16_counterfactual_publication",
+          ]
+          positions = [preflight.STAGE_ORDER.index(key) for key in required]
+          assert positions == sorted(positions)
+          assert "g16_prepared_curve_lock" not in preflight.STAGE_ORDER
+          assert "g16_prepared_publication" not in preflight.STAGE_ORDER
+          assert preflight.READINESS_CONTRACT == "ng_historical_refinement_readiness.v4"
+          PY
