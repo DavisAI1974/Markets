@@ -70,7 +70,7 @@ class ReadinessV13ExecutionChainTests(unittest.TestCase):
             executor.SUGGESTED_ENTRYPOINTS[compiler.G16_EXACT_CURVE_LOCK_STAGE],
             (
                 "python",
-                "ng_g16_exact_counterfactual_publication_gate.py",
+                "ng_g16_exact_publication_context_compiler.py",
                 "lock",
             ),
         )
@@ -78,7 +78,7 @@ class ReadinessV13ExecutionChainTests(unittest.TestCase):
             executor.SUGGESTED_ENTRYPOINTS[compiler.G16_EXACT_PUBLICATION_STAGE],
             (
                 "python",
-                "ng_g16_exact_counterfactual_publication_gate.py",
+                "ng_g16_exact_publication_context_compiler.py",
                 "complete",
             ),
         )
