@@ -1,0 +1,74 @@
+name: NG broad corpus exact overlap gate
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_broad_corpus_exact_overlap_gate.py
+      - research/kalshi/tests/test_ng_broad_corpus_exact_overlap_gate.py
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - .github/workflows/ng_broad_corpus_exact_overlap_gate_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_broad_corpus_exact_overlap_gate.py
+      - research/kalshi/tests/test_ng_broad_corpus_exact_overlap_gate.py
+      - research/kalshi/ng_broad_corpus_scope_gate.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - .github/workflows/ng_broad_corpus_exact_overlap_gate_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-overlap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact-overlap chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_corpus_coverage_audit.py \
+            ng_corpus_inspection.py \
+            ng_broad_corpus_scope_gate.py \
+            ng_broad_corpus_exact_overlap_gate.py \
+            tests/test_ng_broad_corpus_exact_overlap_gate.py
+      - name: Run module self-test
+        working-directory: research/kalshi
+        run: python ng_broad_corpus_exact_overlap_gate.py --selftest
+      - name: Run focused exact-overlap tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_broad_corpus_exact_overlap_gate.py' -v
+      - name: Verify exact alignment and permanent authority wall
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import ng_broad_corpus_exact_overlap_gate as gate
+
+          source = inspect.getsource(gate)
+          for field in (
+              'dataset',
+              'publisher_id',
+              'instrument_id',
+              'raw_symbol',
+              'definition_start_s',
+              'definition_end_s',
+              'positive_event_time_overlap',
+          ):
+              assert field in source
+          assert gate.READY_STATUS == 'BROAD_CORPUS_EXACT_OVERLAP_VERIFIED'
+          assert 'IDENTITY_REAPPEARED_AFTER_CONTRACT_TRANSITION' in source
+          assert 'AMBIGUOUS_EXACT_IDENTITY_PARTITIONS' in source
+          assert 'tastytrade_not_ibkr' in source
+          assert 'cme_event_contracts_mode' in source
+          assert 'options_lane_started' in source
+          print('broad corpus exact overlap authority wall PASS')
+          PY
