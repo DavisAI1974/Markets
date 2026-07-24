@@ -42,7 +42,7 @@ _REQUIRED_KEYS: dict[str, tuple[str, ...]] = {
     ),
 }
 
-_OUTCOME_TOKENS = ("actual", "outcome", "score", "comparison", "render")
+_G16_OUTCOME_TOKENS = ("actual", "outcome", "score", "comparison", "render")
 
 
 class G16ExactPublicationContextCompilerError(ValueError):
@@ -157,12 +157,31 @@ def _assert_lock_outcome_blind(value: Any, *, trail: tuple[str, ...] = ()) -> No
         return
     for key, item in value.items():
         normalized = str(key).lower()
-        if any(token in normalized for token in _OUTCOME_TOKENS) and not _is_empty_or_false(item):
+        targets_g16 = "g16" in normalized or "target_group_16" in normalized
+        if (
+            targets_g16
+            and any(token in normalized for token in _G16_OUTCOME_TOKENS)
+            and not _is_empty_or_false(item)
+        ):
             raise G16ExactPublicationContextCompilerError(
-                "pre-outcome lock context contains outcome-bearing value at "
+                "pre-outcome lock context contains G16 outcome-bearing value at "
                 + ".".join((*trail, str(key)))
             )
         _assert_lock_outcome_blind(item, trail=(*trail, str(key)))
+
+
+def _assert_lock_reference_paths_outcome_blind(
+    references: list[dict[str, Any]],
+) -> None:
+    for reference in references:
+        normalized = str(reference.get("path") or "").lower()
+        if "g16" in normalized and any(
+            token in normalized for token in _G16_OUTCOME_TOKENS
+        ):
+            raise G16ExactPublicationContextCompilerError(
+                "pre-outcome lock context references a G16 outcome-bearing path: "
+                + normalized
+            )
 
 
 def _validate_spec(spec: Mapping[str, Any], *, requested_mode: str) -> None:
@@ -222,6 +241,7 @@ def compile_context(
             )
     if mode == LOCK_MODE:
         _assert_lock_outcome_blind(context)
+        _assert_lock_reference_paths_outcome_blind(references)
         artifact = gate.build_curve_lock(**context)
     else:
         artifact = gate.build_completion(**context)
