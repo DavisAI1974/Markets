@@ -1,0 +1,105 @@
+name: NG readiness v10 execution chain
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - "research/kalshi/ng_historical_refinement_executor_v8.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v8.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v7.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v7.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v10.py"
+      - "research/kalshi/ng_g16_exact_partition_replay_authorization.py"
+      - "research/kalshi/tests/test_ng_readiness_v10_execution_chain.py"
+      - ".github/workflows/ng_readiness_v10_execution_chain_ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-readiness-v10-execution-chain:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact G16 partition-bound execution chain
+        run: |
+          python -m py_compile \
+            ng_historical_refinement_executor_v8.py \
+            ng_historical_refinement_preflight_v8.py \
+            ng_corpus_executor_plan_compiler_v7.py \
+            ng_corpus_executor_pipeline_arm_v7.py \
+            ng_historical_refinement_readiness_v10.py \
+            ng_g16_exact_partition_replay_authorization.py \
+            tests/test_ng_readiness_v10_execution_chain.py
+      - name: Run focused readiness v10 execution tests
+        run: python -m unittest tests.test_ng_readiness_v10_execution_chain
+      - name: Verify G16 exact pre-outcome stage boundary
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v10 as readiness
+
+          rows = {spec.key: spec for spec in readiness.STAGES}
+          keys = [spec.key for spec in readiness.STAGES]
+          prepared = keys.index("g16_prepared_replay")
+          binding = keys.index("g16_exact_partition_replay_authorization")
+          causal = keys.index("g16_exact_causal")
+          prepared_causal = keys.index("g16_prepared_causal_authorization")
+          assert prepared < binding < causal < prepared_causal
+          for key in (
+              "g16_prepared_replay",
+              "g16_exact_partition_replay_authorization",
+              "g16_exact_causal",
+              "g16_prepared_causal_authorization",
+          ):
+              assert rows[key].pre_outcome
+          PY
+      - name: Verify permanent authority wall
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import tempfile
+          from unittest import mock
+          import ng_corpus_executor_plan_compiler_v7 as compiler
+          import ng_corpus_executor_pipeline_arm_v7 as arm
+
+          with tempfile.TemporaryDirectory() as td:
+              root = Path(td)
+              slice_path = root / "slice.json"
+              inspection_path = root / "inspection.json"
+              slice_path.write_text("{}\n", encoding="utf-8")
+              inspection_path.write_text("{}\n", encoding="utf-8")
+              with mock.patch.object(
+                  compiler.v6.fingerprinting,
+                  "validate_inputs",
+                  return_value=(
+                      {"slice_bundle_fingerprint": "slice"},
+                      {"plan_fingerprint": "inspection"},
+                  ),
+              ):
+                  plan, receipt = compiler.build_compiled_plan(
+                      artifact_dir=root / "artifacts",
+                      working_directory=root / "work",
+                      slice_bundle_path=slice_path,
+                      inspection_plan_path=inspection_path,
+                  )
+              armed, arm_receipt = arm.build_armed_plan(plan, receipt)
+              for value in (receipt, arm_receipt):
+                  assert value["random_shuffle_used"] is False
+                  assert value["blind_forecasts_immutable"] is True
+                  assert value["may_update_ng_brain"] is False
+                  assert value["execution_authority"] is False
+                  assert value["cme_event_contracts_mode"] == "SHADOW"
+                  assert value["brokerage_contract"] == "tastytrade_not_ibkr"
+                  assert value["options_lane_started"] is False
+              rows = {row["key"]: row for row in armed["stages"]}
+              assert rows["g16_exact_partition_replay_authorization"]["enabled"] is False
+              assert rows["g16_exact_causal"]["enabled"] is False
+          PY
