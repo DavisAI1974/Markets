@@ -1,0 +1,136 @@
+name: NG exact G16 counterfactual publication gate
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - "research/kalshi/ng_g16_exact_counterfactual_publication_gate.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v13.py"
+      - "research/kalshi/ng_g16_exact_counterfactual_curve_authorization.py"
+      - "research/kalshi/ng_g16_counterfactual_publication_gate.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v12.py"
+      - "research/kalshi/tests/test_ng_g16_exact_counterfactual_publication_gate.py"
+      - ".github/workflows/ng_g16_exact_counterfactual_publication_gate_ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-exact-publication:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact curve lock and publication chain
+        run: |
+          python -m py_compile \
+            ng_g16_exact_counterfactual_curve_authorization.py \
+            ng_g16_counterfactual_publication_gate.py \
+            ng_g16_exact_counterfactual_publication_gate.py \
+            ng_historical_refinement_readiness_v12.py \
+            ng_historical_refinement_readiness_v13.py \
+            tests/test_ng_g16_exact_counterfactual_publication_gate.py
+      - name: Run exact publication gate self-test
+        run: python ng_g16_exact_counterfactual_publication_gate.py
+      - name: Run readiness v13 self-test
+        run: python ng_historical_refinement_readiness_v13.py --selftest
+      - name: Run focused exact lock publication and readiness tests
+        run: python -m unittest tests.test_ng_g16_exact_counterfactual_publication_gate
+      - name: Verify exact curve authorization is locked before outcomes
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v13 as readiness
+
+          rows = {spec.key: spec for spec in readiness.STAGES}
+          keys = [spec.key for spec in readiness.STAGES]
+          exact_curve = keys.index("g16_exact_counterfactual_curve_authorization")
+          curve_lock = keys.index("g16_counterfactual_curve_lock")
+          publication = keys.index("g16_counterfactual_publication")
+          assert exact_curve < curve_lock < publication
+          assert rows["g16_counterfactual_curve_lock"].schema == (
+              "ng_g16_exact_counterfactual_curve_lock.v1"
+          )
+          assert rows["g16_counterfactual_curve_lock"].pre_outcome
+          assert rows["g16_counterfactual_publication"].schema == (
+              "ng_g16_exact_counterfactual_publication_completion.v1"
+          )
+          assert not rows["g16_counterfactual_publication"].pre_outcome
+          assert (
+              "exact_counterfactual_curve_authorization_fingerprint"
+              in rows["g16_counterfactual_curve_lock"].required_fields
+          )
+          assert (
+              "source_binding_fingerprint"
+              in rows["g16_counterfactual_publication"].required_fields
+          )
+          assert (
+              "window_contract_fingerprint"
+              in rows["g16_counterfactual_publication"].required_fields
+          )
+          PY
+      - name: Verify permanent authority wall
+        run: |
+          python - <<'PY'
+          from unittest import mock
+          import ng_g16_exact_counterfactual_publication_gate as gate
+          from tests.test_ng_g16_exact_counterfactual_publication_gate import (
+              _exact,
+              _legacy_completion,
+              _legacy_lock,
+              _lock_kwargs,
+          )
+
+          with mock.patch.object(
+              gate, "validate_exact_curve_authorization", return_value=None
+          ), mock.patch.object(
+              gate, "build_legacy_curve_lock", return_value=_legacy_lock()
+          ), mock.patch.object(
+              gate, "validate_legacy_curve_lock", return_value=None
+          ), mock.patch.object(
+              gate,
+              "build_legacy_completion",
+              side_effect=lambda *, counterfactual_curve_lock, **kwargs: (
+                  _legacy_completion(counterfactual_curve_lock)
+              ),
+          ), mock.patch.object(
+              gate, "validate_legacy_completion", return_value=None
+          ):
+              kwargs = _lock_kwargs(_exact())
+              lock = gate.build_curve_lock(**kwargs)
+              completion = gate.build_completion(
+                  exact_curve_lock=lock,
+                  exact_lock_kwargs=kwargs,
+                  legacy_completion_kwargs={},
+              )
+
+          for artifact in (lock, completion):
+              for field in (
+                  "paid_live_data_assumed",
+                  "random_shuffle_used",
+                  "may_change_g16_blind_prior",
+                  "may_change_g16_blind_forecast",
+                  "may_change_posterior",
+                  "may_select_lessons_from_g16_outcomes",
+                  "may_update_ng_brain",
+                  "execution_authority",
+                  "options_lane_started",
+                  "options_implementation_authorized",
+              ):
+                  assert artifact[field] is False
+              assert artifact["one_signal_authority_preserved"] is True
+              assert artifact["blind_forecasts_immutable"] is True
+              assert artifact["all_g16_replay_sources_bound_to_exact_partition"] is True
+              assert artifact["all_g16_state_spans_inside_exact_common_windows"] is True
+              assert artifact["bound_replay_source_count"] == 22
+              assert artifact["cme_event_contracts_mode"] == "SHADOW"
+              assert artifact["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert lock["actual_g16_outcomes_used"] is False
+          assert completion["actual_g16_outcomes_used"] is True
+          PY
