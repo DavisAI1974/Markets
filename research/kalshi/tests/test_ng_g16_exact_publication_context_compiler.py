@@ -113,9 +113,22 @@ class ExactPublicationContextCompilerTests(unittest.TestCase):
         root = self._root()
         self._write(root / "g16_score.json", {"blind_score": 1})
         context = self._lock_context(root)
-        context["curve_kwargs"] = {"score": {"$file": "g16_score.json"}}
+        context["curve_kwargs"] = {"g16_score": {"$file": "g16_score.json"}}
         spec = self._spec(root, compiler.LOCK_MODE, context)
         with self.assertRaises(compiler.G16ExactPublicationContextCompilerError):
+            compiler.compile_context(spec, mode=compiler.LOCK_MODE)
+
+    def test_pre_outcome_lock_allows_validated_g15_score_lineage(self) -> None:
+        root = self._root()
+        self._write(root / "g15_score.json", {"actual_g15_outcomes_used": True})
+        context = self._lock_context(root)
+        context["legacy_lock_kwargs"] = {
+            "g15_score": {"$file": "g15_score.json"}
+        }
+        spec = self._spec(root, compiler.LOCK_MODE, context)
+        with mock.patch.object(
+            compiler.gate, "build_curve_lock", return_value=_lock_artifact()
+        ):
             compiler.compile_context(spec, mode=compiler.LOCK_MODE)
 
     def test_pre_outcome_lock_allows_explicit_false_outcome_flags(self) -> None:
