@@ -17,12 +17,12 @@ SUGGESTED_ENTRYPOINTS: dict[str, tuple[str, ...]] = {
     ),
     "g16_counterfactual_curve_lock": (
         "python",
-        "ng_g16_exact_counterfactual_publication_gate.py",
+        "ng_g16_exact_publication_context_compiler.py",
         "lock",
     ),
     "g16_counterfactual_publication": (
         "python",
-        "ng_g16_exact_counterfactual_publication_gate.py",
+        "ng_g16_exact_publication_context_compiler.py",
         "complete",
     ),
 }
