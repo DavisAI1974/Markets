@@ -1,0 +1,81 @@
+name: NG readiness v8 executor preflight
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_historical_refinement_executor_v6.py
+      - research/kalshi/ng_historical_refinement_preflight_v6.py
+      - research/kalshi/ng_historical_refinement_readiness_v8.py
+      - research/kalshi/ng_g15_exact_replay_window_authorization.py
+      - research/kalshi/tests/test_ng_readiness_v8_executor_preflight.py
+      - .github/workflows/ng_readiness_v8_executor_preflight_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_historical_refinement_executor_v6.py
+      - research/kalshi/ng_historical_refinement_preflight_v6.py
+      - research/kalshi/ng_historical_refinement_readiness_v8.py
+      - research/kalshi/ng_g15_exact_replay_window_authorization.py
+      - research/kalshi/tests/test_ng_readiness_v8_executor_preflight.py
+      - .github/workflows/ng_readiness_v8_executor_preflight_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness-v8-executor-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile readiness-v8 execution chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_branch_alignment_gate.py \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v5.py \
+            ng_historical_refinement_executor_v6.py \
+            ng_historical_refinement_preflight.py \
+            ng_historical_refinement_preflight_v5.py \
+            ng_historical_refinement_preflight_v6.py \
+            ng_historical_refinement_readiness_v7.py \
+            ng_historical_refinement_readiness_v8.py \
+            ng_g15_exact_replay_window_authorization.py \
+            tests/test_ng_readiness_v8_executor_preflight.py
+      - name: Run focused executor and preflight tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_readiness_v8_executor_preflight.py' -v
+      - name: Verify replay-window boundary before refinement
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ng_historical_refinement_executor_v6 as executor
+          import ng_historical_refinement_preflight_v6 as preflight
+          import ng_historical_refinement_readiness_v8 as readiness
+
+          plan = executor.build_plan(Path('renders/ng_refine_s95'), Path('.'))
+          keys = [row['key'] for row in plan['stages']]
+          assert keys == [spec.key for spec in readiness.STAGES]
+          assert keys.index('g15_exact_replay') < keys.index('g15_exact_replay_window_authorization')
+          assert keys.index('g15_exact_replay_window_authorization') < keys.index('g15_exact_refinement')
+          window = next(row for row in plan['stages'] if row['key'] == 'g15_exact_replay_window_authorization')
+          assert window['requires_fixed_outcomes'] is False
+          assert window['enabled'] is False
+          assert preflight.READINESS_CONTRACT == readiness.SCHEMA
+          assert preflight.EXECUTOR_CONTRACT == 'ng_historical_refinement_executor_v6'
+          assert plan['random_shuffle_used'] is False
+          assert plan['blind_forecasts_immutable'] is True
+          assert plan['may_update_ng_brain'] is False
+          assert plan['execution_authority'] is False
+          assert plan['cme_event_contracts_mode'] == 'SHADOW'
+          assert plan['brokerage_contract'] == 'tastytrade_not_ibkr'
+          assert plan['options_lane_started'] is False
+          print('readiness-v8 executor/preflight boundary PASS')
+          PY
