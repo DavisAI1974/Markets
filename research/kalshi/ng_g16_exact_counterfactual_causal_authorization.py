@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
 """Bind verified G16 replay bytes/windows into counterfactual causal authority.
 
-The exact partition/replay authorization proves that every G16 L1/MBO lane came
-from the verified broad-corpus partition and that every emitted replay-state
-cutoff stayed inside the exact common event-time window.  The counterfactual
-causal authorization proves that the pre-cutoff posterior used only the
-pre-registered G15 lesson lineage.  This wrapper requires both proofs together
-before any outcome-blind G16 curve adapter may run.
-
-No G16 outcomes are read.  Blind forecasts remain immutable, time series are
-never shuffled, ``knowledge/ng_brain.json`` cannot be updated, CME event
-contracts remain SHADOW, tastytrade remains the brokerage contract, and the
-options lane remains unstarted.
+This outcome-blind wrapper joins two independent proofs before any G16 refined
+curve may be built: (1) every replay lane and state cutoff is bound to the
+verified broad L1/MBO corpus partition and exact common event window; and (2)
+the causal posterior uses only the locked G15 counterfactual lesson lineage.
 """
 from __future__ import annotations
 
@@ -24,11 +17,11 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from ng_g16_counterfactual_causal_authorization import (
-    G16CounterfactualCausalAuthorizationError,
+    NEXT_STAGE as COUNTERFACTUAL_NEXT_STAGE,
     SCHEMA as COUNTERFACTUAL_SCHEMA,
     STATUS_READY as COUNTERFACTUAL_READY,
     STATUS_STAND_DOWNS as COUNTERFACTUAL_STAND_DOWNS,
-    validate_authorization_artifact as validate_counterfactual_authorization,
+    _fp as counterfactual_fingerprint,
 )
 from ng_g16_exact_partition_replay_authorization import (
     G16ExactPartitionReplayAuthorizationError,
@@ -82,7 +75,7 @@ def _write(path: Path, value: Mapping[str, Any]) -> None:
 
 
 def _authority(value: Mapping[str, Any]) -> None:
-    for field in (
+    false_fields = (
         "actual_g16_outcomes_used",
         "g16_scoring_authorized",
         "paid_live_data_assumed",
@@ -94,7 +87,8 @@ def _authority(value: Mapping[str, Any]) -> None:
         "may_update_ng_brain",
         "execution_authority",
         "options_lane_started",
-    ):
+    )
+    for field in false_fields:
         if value.get(field) is not False:
             raise G16ExactCounterfactualCausalAuthorizationError(
                 f"{field} must remain false"
@@ -131,13 +125,13 @@ def _validate_upstream(
         raise G16ExactCounterfactualCausalAuthorizationError(
             f"exact partition/replay authorization invalid: {error}"
         ) from error
-    try:
-        validate_counterfactual_authorization(counterfactual_authorization)
-    except G16CounterfactualCausalAuthorizationError as error:
-        raise G16ExactCounterfactualCausalAuthorizationError(
-            f"counterfactual causal authorization invalid: {error}"
-        ) from error
 
+    counterfactual_payload = copy.deepcopy(dict(counterfactual_authorization))
+    observed = counterfactual_payload.pop("fingerprint", None)
+    if observed != counterfactual_fingerprint(counterfactual_payload):
+        raise G16ExactCounterfactualCausalAuthorizationError(
+            "counterfactual causal authorization fingerprint mismatch"
+        )
     if exact_authorization.get("schema") != EXACT_SCHEMA or exact_authorization.get(
         "status"
     ) not in {EXACT_READY, EXACT_STAND_DOWNS}:
@@ -153,6 +147,11 @@ def _validate_upstream(
         raise G16ExactCounterfactualCausalAuthorizationError(
             "counterfactual causal authorization is not ready"
         )
+    if counterfactual_authorization.get("next_permitted_stage") != COUNTERFACTUAL_NEXT_STAGE:
+        raise G16ExactCounterfactualCausalAuthorizationError(
+            "counterfactual causal authorization has an unexpected next stage"
+        )
+    _authority(counterfactual_authorization)
 
 
 def _cross_checks(
@@ -174,18 +173,14 @@ def _cross_checks(
         raise G16ExactCounterfactualCausalAuthorizationError(
             "exactly 22 G16 replay lanes must be bound"
         )
-    if exact_authorization.get(
-        "all_g16_replay_sources_bound_to_exact_partition"
-    ) is not True:
-        raise G16ExactCounterfactualCausalAuthorizationError(
-            "not every G16 replay lane is bound to the exact partition"
-        )
-    if exact_authorization.get(
-        "all_g16_state_spans_inside_exact_common_windows"
-    ) is not True:
-        raise G16ExactCounterfactualCausalAuthorizationError(
-            "not every G16 replay-state span is inside the exact common event window"
-        )
+    for field in (
+        "all_g16_replay_sources_bound_to_exact_partition",
+        "all_g16_state_spans_inside_exact_common_windows",
+    ):
+        if exact_authorization.get(field) is not True:
+            raise G16ExactCounterfactualCausalAuthorizationError(
+                f"exact replay authorization must keep {field}=true"
+            )
     candidate_ids = list(counterfactual_authorization.get("candidate_ids") or [])
     if not candidate_ids or candidate_ids != sorted(set(candidate_ids)):
         raise G16ExactCounterfactualCausalAuthorizationError(
@@ -204,24 +199,18 @@ def _build_unchecked(
     exact_authorization: Mapping[str, Any],
     counterfactual_authorization: Mapping[str, Any],
 ) -> dict[str, Any]:
-    exact_value = copy.deepcopy(dict(exact_authorization))
-    counterfactual_value = copy.deepcopy(dict(counterfactual_authorization))
-    originals = copy.deepcopy((exact_value, counterfactual_value))
+    exact = copy.deepcopy(dict(exact_authorization))
+    causal = copy.deepcopy(dict(counterfactual_authorization))
+    originals = copy.deepcopy((exact, causal))
+    _validate_upstream(exact, causal)
+    _cross_checks(exact, causal)
 
-    _validate_upstream(exact_value, counterfactual_value)
-    _cross_checks(exact_value, counterfactual_value)
-
-    exact_stand_downs = sorted(
-        {str(day) for day in exact_value.get("stand_down_days") or []}
-    )
+    exact_stand_downs = sorted({str(day) for day in exact.get("stand_down_days") or []})
     causal_stand_downs = sorted(
-        {str(day) for day in counterfactual_value.get("all_stand_down_days") or []}
+        {str(day) for day in causal.get("all_stand_down_days") or []}
     )
     all_stand_downs = sorted(set(exact_stand_downs) | set(causal_stand_downs))
-    candidate_ids = list(counterfactual_value.get("candidate_ids") or [])
-    evidence = copy.deepcopy(
-        dict(counterfactual_value.get("candidate_evidence_fingerprints") or {})
-    )
+    candidate_ids = list(causal.get("candidate_ids") or [])
 
     result: dict[str, Any] = {
         "schema": SCHEMA,
@@ -230,62 +219,49 @@ def _build_unchecked(
         "target_group": 16,
         "status": STATUS_STAND_DOWNS if all_stand_downs else STATUS_READY,
         "authority": AUTHORITY,
-        "exact_partition_replay_authorization_fingerprint": exact_value.get(
-            "fingerprint"
-        ),
-        "counterfactual_causal_authorization_fingerprint": counterfactual_value.get(
-            "fingerprint"
-        ),
-        "exact_partition_gate_fingerprint": exact_value.get(
-            "exact_partition_gate_fingerprint"
-        ),
-        "prepared_replay_gate_fingerprint": exact_value.get(
-            "prepared_replay_gate_fingerprint"
-        ),
-        "manifest_fingerprint": exact_value.get("manifest_fingerprint"),
-        "prepared_corpus_fingerprint": exact_value.get(
-            "prepared_corpus_fingerprint"
-        ),
-        "replay_fingerprint": exact_value.get("replay_fingerprint"),
-        "blind_prior_fingerprint": exact_value.get("blind_prior_fingerprint"),
-        "source_binding_fingerprint": exact_value.get("source_binding_fingerprint"),
-        "window_contract_fingerprint": exact_value.get("window_contract_fingerprint"),
-        "bound_replay_source_count": exact_value.get("bound_replay_source_count"),
+        "exact_partition_replay_authorization_fingerprint": exact.get("fingerprint"),
+        "counterfactual_causal_authorization_fingerprint": causal.get("fingerprint"),
+        "exact_partition_gate_fingerprint": exact.get("exact_partition_gate_fingerprint"),
+        "prepared_replay_gate_fingerprint": exact.get("prepared_replay_gate_fingerprint"),
+        "manifest_fingerprint": exact.get("manifest_fingerprint"),
+        "prepared_corpus_fingerprint": exact.get("prepared_corpus_fingerprint"),
+        "replay_fingerprint": exact.get("replay_fingerprint"),
+        "blind_prior_fingerprint": exact.get("blind_prior_fingerprint"),
+        "source_binding_fingerprint": exact.get("source_binding_fingerprint"),
+        "window_contract_fingerprint": exact.get("window_contract_fingerprint"),
+        "bound_replay_source_count": exact.get("bound_replay_source_count"),
         "all_g16_replay_sources_bound_to_exact_partition": True,
         "all_g16_state_spans_inside_exact_common_windows": True,
-        "counterfactual_lineage_gate_fingerprint": counterfactual_value.get(
+        "counterfactual_lineage_gate_fingerprint": causal.get(
             "counterfactual_lineage_gate_fingerprint"
         ),
-        "prepared_causal_authorization_fingerprint": counterfactual_value.get(
+        "prepared_causal_authorization_fingerprint": causal.get(
             "prepared_causal_authorization_fingerprint"
         ),
-        "g16_plan_fingerprint": counterfactual_value.get("g16_plan_fingerprint"),
-        "authorization_stream_fingerprint": counterfactual_value.get(
+        "g16_plan_fingerprint": causal.get("g16_plan_fingerprint"),
+        "authorization_stream_fingerprint": causal.get(
             "authorization_stream_fingerprint"
         ),
-        "posterior_stream_fingerprint": counterfactual_value.get(
-            "posterior_stream_fingerprint"
-        ),
-        "g16_blind_forecast_fingerprint": counterfactual_value.get(
+        "posterior_stream_fingerprint": causal.get("posterior_stream_fingerprint"),
+        "g16_blind_forecast_fingerprint": causal.get(
             "g16_blind_forecast_fingerprint"
         ),
-        "g16_blind_safe_state_fingerprint": counterfactual_value.get(
+        "g16_blind_safe_state_fingerprint": causal.get(
             "g16_blind_safe_state_fingerprint"
         ),
         "candidate_count": len(candidate_ids),
         "candidate_ids": candidate_ids,
-        "candidate_evidence_fingerprints": evidence,
+        "candidate_evidence_fingerprints": copy.deepcopy(
+            dict(causal.get("candidate_evidence_fingerprints") or {})
+        ),
         "candidate_ids_observed_in_posterior_attribution": list(
-            counterfactual_value.get(
-                "candidate_ids_observed_in_posterior_attribution"
-            )
-            or []
+            causal.get("candidate_ids_observed_in_posterior_attribution") or []
         ),
         "exact_partition_stand_down_days": exact_stand_downs,
         "counterfactual_causal_stand_down_days": causal_stand_downs,
         "all_stand_down_days": all_stand_downs,
-        "source_exact_partition_replay_authorization": exact_value,
-        "source_counterfactual_causal_authorization": counterfactual_value,
+        "source_exact_partition_replay_authorization": exact,
+        "source_counterfactual_causal_authorization": causal,
         "actual_g15_outcomes_used": True,
         "actual_g16_outcomes_used": False,
         "g16_scoring_authorized": False,
@@ -304,13 +280,13 @@ def _build_unchecked(
         "options_lane_started": False,
         "next_permitted_stage": NEXT_STAGE,
         "note": (
-            "The G16 pre-cutoff posterior is authorized only when its replay bytes "
-            "and state windows match the verified broad corpus and its causal "
-            "attribution uses the locked G15 counterfactual lesson lineage."
+            "The G16 pre-cutoff posterior is authorized only when replay bytes and "
+            "state windows match the verified broad corpus and attribution uses the "
+            "locked G15 counterfactual lesson lineage."
         ),
     }
     result["fingerprint"] = _fp(result)
-    if (exact_value, counterfactual_value) != originals:
+    if (exact, causal) != originals:
         raise G16ExactCounterfactualCausalAuthorizationError(
             "authorization mutated an upstream artifact"
         )
@@ -381,7 +357,6 @@ def selftest() -> int:
     causal = {
         "schema": COUNTERFACTUAL_SCHEMA,
         "status": COUNTERFACTUAL_READY,
-        "fingerprint": "causal",
         "prepared_replay_gate_fingerprint": "prepared-replay",
         "manifest_fingerprint": "manifest",
         "prepared_corpus_fingerprint": "corpus",
@@ -398,11 +373,27 @@ def selftest() -> int:
         "candidate_evidence_fingerprints": {"candidate-a": "evidence-a"},
         "candidate_ids_observed_in_posterior_attribution": ["candidate-a"],
         "all_stand_down_days": [],
+        "next_permitted_stage": COUNTERFACTUAL_NEXT_STAGE,
+        "actual_g15_outcomes_used": True,
+        "actual_g16_outcomes_used": False,
+        "g16_scoring_authorized": False,
+        "paid_live_data_assumed": False,
+        "random_shuffle_used": False,
+        "one_signal_authority_preserved": True,
+        "blind_forecasts_immutable": True,
+        "may_change_g16_blind_prior": False,
+        "may_change_g16_blind_forecast": False,
+        "may_change_posterior": False,
+        "may_select_lessons_from_g16_outcomes": False,
+        "may_update_ng_brain": False,
+        "execution_authority": False,
+        "cme_event_contracts_mode": "SHADOW",
+        "brokerage_contract": "tastytrade_not_ibkr",
+        "options_lane_started": False,
     }
+    causal["fingerprint"] = counterfactual_fingerprint(causal)
     with mock.patch(
         __name__ + ".validate_exact_authorization", return_value=exact
-    ), mock.patch(
-        __name__ + ".validate_counterfactual_authorization", return_value=None
     ):
         result = build_authorization(exact, causal)
         assert result["status"] == STATUS_READY
