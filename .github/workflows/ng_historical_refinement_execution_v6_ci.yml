@@ -1,0 +1,91 @@
+name: NG historical execution v6
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_historical_refinement_executor_v4.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v3.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v3.py
+      - research/kalshi/ng_historical_refinement_preflight_v4.py
+      - research/kalshi/ng_historical_refinement_readiness_v6.py
+      - research/kalshi/tests/test_ng_historical_refinement_execution_v6.py
+      - .github/workflows/ng_historical_refinement_execution_v6_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_historical_refinement_executor_v4.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v3.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v3.py
+      - research/kalshi/ng_historical_refinement_preflight_v4.py
+      - research/kalshi/ng_historical_refinement_readiness_v6.py
+      - research/kalshi/tests/test_ng_historical_refinement_execution_v6.py
+      - .github/workflows/ng_historical_refinement_execution_v6_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execution-v6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile exact-overlap execution chain
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_historical_refinement_executor.py \
+            ng_historical_refinement_executor_v2.py \
+            ng_historical_refinement_executor_v3.py \
+            ng_historical_refinement_executor_v4.py \
+            ng_corpus_executor_plan_compiler.py \
+            ng_corpus_executor_plan_compiler_v2.py \
+            ng_corpus_executor_plan_compiler_v3.py \
+            ng_corpus_executor_pipeline_arm_v2.py \
+            ng_corpus_executor_pipeline_arm_v3.py \
+            ng_historical_refinement_preflight.py \
+            ng_historical_refinement_preflight_v3.py \
+            ng_historical_refinement_preflight_v4.py \
+            ng_historical_refinement_readiness_v5.py \
+            ng_historical_refinement_readiness_v6.py \
+            tests/test_ng_historical_refinement_execution_v6.py
+      - name: Run focused execution-v6 tests
+        working-directory: research/kalshi
+        run: python -m unittest discover -s tests -p 'test_ng_historical_refinement_execution_v6.py' -v
+      - name: Verify exact-overlap executor boundary
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_pipeline_arm_v3 as arm
+          import ng_corpus_executor_plan_compiler_v3 as compiler
+          import ng_historical_refinement_executor_v4 as executor
+          import ng_historical_refinement_preflight_v4 as preflight
+          import ng_historical_refinement_readiness_v6 as readiness
+
+          expected = [
+              'corpus_coverage',
+              'basis_inventory_regeneration',
+              'replay_catalog_export',
+              'broad_corpus_scope',
+              'broad_corpus_exact_overlap',
+          ]
+          order = [spec.key for spec in readiness.STAGES]
+          assert list(compiler.CONFIGURED_STAGES) == expected
+          assert list(arm.ARMED_STAGES) == expected
+          assert order[:5] == expected
+          assert order.index('broad_corpus_exact_overlap') < order.index('g15_exact_replay')
+          assert executor.SUGGESTED_ENTRYPOINTS['broad_corpus_exact_overlap'] == (
+              'python', 'ng_broad_corpus_exact_overlap_gate.py'
+          )
+          assert preflight.READINESS_CONTRACT == 'ng_historical_refinement_readiness.v6'
+          assert preflight.EXECUTOR_CONTRACT == 'ng_historical_refinement_executor_v4'
+          assert 'g15_counterfactual_scoring_lock' in order
+          assert 'g16_counterfactual_curve_lock' in order
+          assert 'g16_prepared_curve_lock' not in order
+          print('readiness v6 executor/compiler/arm/preflight boundary PASS')
+          PY
