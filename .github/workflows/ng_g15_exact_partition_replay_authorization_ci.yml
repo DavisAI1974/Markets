@@ -1,0 +1,86 @@
+name: NG G15 exact partition replay authorization
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - "research/kalshi/ng_g15_exact_partition_replay_authorization.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v9.py"
+      - "research/kalshi/tests/test_ng_g15_exact_partition_replay_authorization.py"
+      - "research/kalshi/tests/test_ng_historical_refinement_readiness_v9.py"
+      - ".github/workflows/ng_g15_exact_partition_replay_authorization_ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-partition-replay:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install pytest
+      - name: Compile exact partition-to-replay chain
+        run: |
+          python -m py_compile \
+            ng_broad_corpus_exact_partition_gate.py \
+            ng_g15_replay_manifest_bridge.py \
+            ng_g15_exact_replay_completion.py \
+            ng_g15_exact_partition_replay_authorization.py \
+            ng_g15_exact_replay_window_authorization.py \
+            ng_historical_refinement_readiness_v8.py \
+            ng_historical_refinement_readiness_v9.py
+      - name: Run focused contract tests
+        run: |
+          pytest -q \
+            tests/test_ng_g15_exact_partition_replay_authorization.py \
+            tests/test_ng_historical_refinement_readiness_v9.py
+      - name: Run readiness self-test
+        run: python ng_historical_refinement_readiness_v9.py --selftest
+      - name: Verify exact stage boundary
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v9 as readiness
+
+          keys = [stage.key for stage in readiness.STAGES]
+          assert keys.index("broad_corpus_exact_partition") < keys.index("g15_exact_replay")
+          assert keys.index("g15_exact_replay") < keys.index("g15_exact_partition_replay_authorization")
+          assert keys.index("g15_exact_partition_replay_authorization") < keys.index("g15_exact_replay_window_authorization")
+          assert keys.index("g15_exact_replay_window_authorization") < keys.index("g15_exact_refinement")
+
+          stage = next(
+              row for row in readiness.STAGES
+              if row.key == "g15_exact_partition_replay_authorization"
+          )
+          assert stage.pre_outcome is True
+          assert "bound_replay_source_count" in stage.required_fields
+          PY
+      - name: Verify permanent authority wall
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import tempfile
+          import ng_historical_refinement_readiness_v9 as readiness
+
+          with tempfile.TemporaryDirectory() as tempdir:
+              report = readiness.build_readiness_report(
+                  Path(tempdir),
+                  validator_overrides={stage.key: (lambda value: None) for stage in readiness.STAGES},
+              )
+          assert report["paid_live_data_assumed"] is False
+          assert report["random_shuffle_used"] is False
+          assert report["blind_forecasts_immutable"] is True
+          assert report["may_update_ng_brain"] is False
+          assert report["execution_authority"] is False
+          assert report["cme_event_contracts_mode"] == "SHADOW"
+          assert report["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert report["options_lane_started"] is False
+          PY
