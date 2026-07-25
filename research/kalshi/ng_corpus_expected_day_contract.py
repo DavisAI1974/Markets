@@ -187,9 +187,22 @@ def build_contract(source_spec: Mapping[str, Any]) -> dict[str, Any]:
             blockers.append(f"{corpus_id}:EXPECTED_DAYS_DUPLICATE_OR_NONCANONICAL")
         exclusions, exclusion_blockers = _normalize_exclusions(corpus, corpus_id=corpus_id)
         blockers.extend(exclusion_blockers)
+        expected_set = set(expected_days)
+        explicit_excluded = {row["day"] for row in exclusions}
+        implicit_saturdays = [
+            {
+                "day": day,
+                "reason_code": SATURDAY_REASON,
+                "classification_source": "canonical_weekday_rule",
+            }
+            for day in calendar_days
+            if _parse_day(day, label="calendar day").weekday() == 5
+            and day not in expected_set
+            and day not in explicit_excluded
+        ]
+        exclusions = sorted([*exclusions, *implicit_saturdays], key=lambda row: row["day"])
         excluded_days = [row["day"] for row in exclusions]
         excluded_set = set(excluded_days)
-        expected_set = set(expected_days)
 
         overlap = sorted(expected_set & excluded_set)
         missing_classifications = sorted(calendar_set - expected_set - excluded_set)
@@ -246,6 +259,7 @@ def build_contract(source_spec: Mapping[str, Any]) -> dict[str, Any]:
             "calendar_day_count": len(calendar_days),
             "expected_session_day_count": len(expected_days),
             "excluded_day_count": len(excluded_days),
+            "implicit_saturday_exclusion_count": len(implicit_saturdays),
             "declared_source_count": len(sources),
             "expected_object_count": object_count,
             "expected_days": expected_days,
@@ -279,6 +293,7 @@ def build_contract(source_spec: Mapping[str, Any]) -> dict[str, Any]:
         "expected_days_operator_truncation_rejected": True,
         "non_saturday_exclusions_require_evidence": True,
         "target_replay_days_may_not_be_excluded": True,
+        "scheduled_saturdays_classified_automatically": True,
         "identity_from_s3_keys_inferred": False,
         "blockers": blockers,
         "next_action": "RUN_PAGINATED_S3_LATEST_VERSION_RESOLUTION" if not blockers else "REPAIR_EXPECTED_DAY_CONTRACT",
@@ -319,7 +334,7 @@ def _selftest_spec() -> dict[str, Any]:
     for corpus_id, expected in coverage.EXPECTED_WINDOWS.items():
         days = _window_days(expected["start"], expected["end_exclusive"])
         expected_days = [_day_text(day) for day in days if day.weekday() != 5]
-        exclusions = [{"day": _day_text(day), "reason_code": SATURDAY_REASON} for day in days if day.weekday() == 5]
+        exclusions: list[dict[str, Any]] = []
         sources = [
             {
                 "source_id": f"{corpus_id}-{day}",
