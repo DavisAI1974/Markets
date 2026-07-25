@@ -1,0 +1,91 @@
+name: NG target-slice derivation plan readiness v19
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_target_slice_derivation_gate.py"
+      - "research/kalshi/ng_target_slice_derivation_gate_v2.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v18.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v19.py"
+      - "research/kalshi/tests/test_ng_target_slice_derivation_v18.py"
+      - "research/kalshi/tests/test_ng_target_slice_derivation_plan_v19.py"
+      - ".github/workflows/ng_target_slice_derivation_plan_v19_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_target_slice_derivation_gate.py"
+      - "research/kalshi/ng_target_slice_derivation_gate_v2.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v18.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v19.py"
+      - "research/kalshi/tests/test_ng_target_slice_derivation_v18.py"
+      - "research/kalshi/tests/test_ng_target_slice_derivation_plan_v19.py"
+      - ".github/workflows/ng_target_slice_derivation_plan_v19_ci.yml"
+
+jobs:
+  target-derivation-plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile target derivation chain
+        run: |
+          python -m py_compile \
+            ng_target_slice_derivation_gate.py \
+            ng_target_slice_derivation_gate_v2.py \
+            ng_historical_refinement_readiness_v18.py \
+            ng_historical_refinement_readiness_v19.py \
+            tests/test_ng_target_slice_derivation_v18.py \
+            tests/test_ng_target_slice_derivation_plan_v19.py
+      - name: Run readiness self-tests
+        run: |
+          python ng_historical_refinement_readiness_v18.py --selftest
+          python ng_historical_refinement_readiness_v19.py --selftest
+      - name: Run focused tests
+        run: |
+          python -m pytest -q \
+            tests/test_ng_target_slice_derivation_v18.py \
+            tests/test_ng_target_slice_derivation_plan_v19.py
+      - name: Verify plan-bound stage order and authority wall
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v19 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys.index("target_slice_broad_lineage") < keys.index("target_slice_derivation")
+          assert keys.index("target_slice_derivation") < keys.index("basis_inventory_regeneration")
+          derivation = next(spec for spec in readiness.STAGES if spec.key == "target_slice_derivation")
+          assert derivation.schema == "ng_target_slice_derivation_gate.v2"
+          assert derivation.pre_outcome is True
+          assert (
+              "target_slice_broad_lineage",
+              "target_inspection_plan_fingerprint",
+              "target_slice_derivation",
+              "target_inspection_plan_fingerprint",
+          ) in readiness.LINK_RULES
+          assert (
+              "target_slice_derivation",
+              "target_inspection_plan_fingerprint",
+              "basis_inventory_regeneration",
+              "inspection_plan_fingerprint",
+          ) in readiness.LINK_RULES
+          fixture = readiness._linked_fixture_chain()["target_slice_derivation"]
+          assert fixture["target_plan_bound_to_derivation"] is True
+          assert fixture["basis_may_substitute_target_plan"] is False
+          assert fixture["actual_outcomes_used"] is False
+          assert fixture["paid_live_data_assumed"] is False
+          assert fixture["random_shuffle_used"] is False
+          assert fixture["one_signal_authority_preserved"] is True
+          assert fixture["blind_forecasts_immutable"] is True
+          assert fixture["may_change_posterior"] is False
+          assert fixture["may_update_ng_brain"] is False
+          assert fixture["execution_authority"] is False
+          assert fixture["cme_event_contracts_mode"] == "SHADOW"
+          assert fixture["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert fixture["options_lane_started"] is False
+          PY
