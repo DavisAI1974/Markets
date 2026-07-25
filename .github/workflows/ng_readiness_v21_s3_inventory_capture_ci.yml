@@ -1,0 +1,87 @@
+name: NG readiness v21 S3 inventory capture wall
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_corpus_s3_inventory_capture.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v21.py"
+      - "research/kalshi/ng_historical_refinement_executor_v17.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_inventory_capture.py"
+      - "research/kalshi/tests/test_ng_readiness_v21_s3_inventory_capture.py"
+      - ".github/workflows/ng_readiness_v21_s3_inventory_capture_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_corpus_s3_inventory_capture.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v21.py"
+      - "research/kalshi/ng_historical_refinement_executor_v17.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_inventory_capture.py"
+      - "research/kalshi/tests/test_ng_readiness_v21_s3_inventory_capture.py"
+      - ".github/workflows/ng_readiness_v21_s3_inventory_capture_ci.yml"
+
+jobs:
+  readiness-v21-s3-inventory-capture:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile inventory capture execution chain
+        run: |
+          python -m py_compile \
+            ng_corpus_s3_inventory_capture.py \
+            ng_historical_refinement_readiness_v21.py \
+            ng_historical_refinement_executor_v17.py \
+            tests/test_ng_corpus_s3_inventory_capture.py \
+            tests/test_ng_readiness_v21_s3_inventory_capture.py
+      - name: Run inventory capture self-test
+        run: python ng_corpus_s3_inventory_capture.py selftest
+      - name: Run readiness self-test
+        run: python ng_historical_refinement_readiness_v21.py --selftest
+      - name: Run focused tests
+        run: |
+          python -m pytest -q \
+            tests/test_ng_corpus_s3_inventory_capture.py \
+            tests/test_ng_readiness_v21_s3_inventory_capture.py
+      - name: Verify capture wall and permanent authority controls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ng_historical_refinement_executor_v17 as executor
+          import ng_historical_refinement_readiness_v21 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys[0:4] == [
+              "corpus_s3_inventory_capture",
+              "corpus_s3_materialization",
+              "corpus_coverage",
+              "corpus_definition_byte_binding",
+          ]
+          assert (
+              "corpus_s3_inventory_capture",
+              "materialization_spec_fingerprint",
+              "corpus_s3_materialization",
+              "source_spec_fingerprint",
+          ) in readiness.LINK_RULES
+          assert executor.SUGGESTED_ENTRYPOINTS["corpus_s3_inventory_capture"] == (
+              "python",
+              "ng_corpus_s3_inventory_capture.py",
+              "capture",
+          )
+          plan = executor.build_plan(Path("renders/ng_refine_s95"), Path("."))
+          assert plan["outcome_paths"] == []
+          assert plan["paid_live_data_assumed"] is False
+          assert plan["random_shuffle_used"] is False
+          assert plan["one_signal_authority_preserved"] is True
+          assert plan["blind_forecasts_immutable"] is True
+          assert plan["may_update_ng_brain"] is False
+          assert plan["execution_authority"] is False
+          assert plan["cme_event_contracts_mode"] == "SHADOW"
+          assert plan["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert plan["options_lane_started"] is False
+          PY
