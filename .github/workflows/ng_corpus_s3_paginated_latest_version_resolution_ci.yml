@@ -1,0 +1,68 @@
+name: NG paginated S3 latest-version resolution
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_corpus_s3_latest_version_resolution.py"
+      - "research/kalshi/ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_paginated_latest_version_resolution.py"
+      - ".github/workflows/ng_corpus_s3_paginated_latest_version_resolution_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_corpus_s3_latest_version_resolution.py"
+      - "research/kalshi/ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_paginated_latest_version_resolution.py"
+      - ".github/workflows/ng_corpus_s3_paginated_latest_version_resolution_ci.yml"
+
+jobs:
+  paginated-latest-version-resolution:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile paginated resolver
+        run: |
+          python -m py_compile \
+            ng_corpus_s3_latest_version_resolution.py \
+            ng_corpus_s3_paginated_latest_version_resolution.py \
+            tests/test_ng_corpus_s3_paginated_latest_version_resolution.py
+      - name: Run resolver self-tests
+        run: |
+          python ng_corpus_s3_latest_version_resolution.py selftest
+          python ng_corpus_s3_paginated_latest_version_resolution.py selftest
+      - name: Run focused tests
+        run: python -m pytest -q tests/test_ng_corpus_s3_paginated_latest_version_resolution.py
+      - name: Verify explicit pagination and authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_s3_paginated_latest_version_resolution as gate
+
+          assert gate.DEFAULT_MAX_KEYS == 1000
+          assert gate.DEFAULT_MAX_PAGES >= 1000
+          source = open("ng_corpus_s3_paginated_latest_version_resolution.py", encoding="utf-8").read()
+          for token in (
+              "--no-paginate",
+              "--key-marker",
+              "--version-id-marker",
+              "complete_pagination_attested",
+              "continuation-marker cycle",
+          ):
+              assert token in source
+          controls = gate._authority_fields()
+          assert controls["paid_live_data_assumed"] is False
+          assert controls["random_shuffle_used"] is False
+          assert controls["one_signal_authority_preserved"] is True
+          assert controls["blind_forecasts_immutable"] is True
+          assert controls["may_update_ng_brain"] is False
+          assert controls["execution_authority"] is False
+          assert controls["cme_event_contracts_mode"] == "SHADOW"
+          assert controls["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert controls["options_lane_started"] is False
+          PY
