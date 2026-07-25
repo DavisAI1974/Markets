@@ -86,6 +86,7 @@ def test_executor_exposes_definition_byte_gate() -> None:
     assert executor.SUGGESTED_ENTRYPOINTS["corpus_definition_byte_binding"] == (
         "python",
         "ng_corpus_definition_byte_binding_gate.py",
+        "build",
     )
     plan = executor.build_plan(Path("renders/ng_refine_s95"), Path("."))
     executor.validate_plan(plan)
