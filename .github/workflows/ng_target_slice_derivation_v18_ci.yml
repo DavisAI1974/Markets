@@ -1,0 +1,74 @@
+name: NG target-slice derivation readiness v18
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_target_slice_derivation_gate.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v18.py"
+      - "research/kalshi/tests/test_ng_target_slice_derivation_v18.py"
+      - ".github/workflows/ng_target_slice_derivation_v18_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_target_slice_derivation_gate.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v18.py"
+      - "research/kalshi/tests/test_ng_target_slice_derivation_v18.py"
+      - ".github/workflows/ng_target_slice_derivation_v18_ci.yml"
+
+jobs:
+  target-slice-derivation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile derivation and readiness chain
+        run: |
+          python -m py_compile \
+            ng_target_slice_derivation_gate.py \
+            ng_historical_refinement_readiness_v18.py \
+            tests/test_ng_target_slice_derivation_v18.py
+      - name: Run readiness self-test
+        run: python ng_historical_refinement_readiness_v18.py --selftest
+      - name: Run focused derivation tests
+        run: python -m pytest -q tests/test_ng_target_slice_derivation_v18.py
+      - name: Verify stage order and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v18 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys.index("target_slice_coverage") < keys.index("target_slice_broad_lineage")
+          assert keys.index("target_slice_broad_lineage") < keys.index("target_slice_derivation")
+          assert keys.index("target_slice_derivation") < keys.index("basis_inventory_regeneration")
+          spec = next(spec for spec in readiness.STAGES if spec.key == "target_slice_derivation")
+          assert spec.pre_outcome is True
+          assert (
+              "target_slice_derivation",
+              "target_slice_bundle_fingerprint",
+              "basis_inventory_regeneration",
+              "slice_bundle_fingerprint",
+          ) in readiness.LINK_RULES
+          assert not any(
+              rule[0] == "target_slice_broad_lineage"
+              and rule[2] == "basis_inventory_regeneration"
+              for rule in readiness.LINK_RULES
+          )
+          fixture = readiness._linked_fixture_chain()["target_slice_derivation"]
+          assert fixture["actual_outcomes_used"] is False
+          assert fixture["paid_live_data_assumed"] is False
+          assert fixture["random_shuffle_used"] is False
+          assert fixture["one_signal_authority_preserved"] is True
+          assert fixture["blind_forecasts_immutable"] is True
+          assert fixture["may_change_posterior"] is False
+          assert fixture["may_update_ng_brain"] is False
+          assert fixture["execution_authority"] is False
+          assert fixture["cme_event_contracts_mode"] == "SHADOW"
+          assert fixture["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert fixture["options_lane_started"] is False
+          PY
