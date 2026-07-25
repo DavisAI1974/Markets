@@ -1,0 +1,67 @@
+name: NG readiness v15 definition byte binding
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_definition_byte_binding_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v15.py
+      - research/kalshi/ng_historical_refinement_executor_v12.py
+      - research/kalshi/ng_historical_refinement_preflight_v12.py
+      - research/kalshi/tests/test_ng_readiness_v15_definition_byte_binding.py
+      - .github/workflows/ng_readiness_v15_definition_byte_binding_ci.yml
+  workflow_dispatch:
+
+jobs:
+  definition-byte-readiness:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+      - name: Compile definition-byte readiness chain
+        run: |
+          python -m py_compile \
+            ng_corpus_definition_byte_binding_gate.py \
+            ng_historical_refinement_readiness_v14.py \
+            ng_historical_refinement_readiness_v15.py \
+            ng_historical_refinement_executor_v11.py \
+            ng_historical_refinement_executor_v12.py \
+            ng_historical_refinement_preflight_v11.py \
+            ng_historical_refinement_preflight_v12.py \
+            tests/test_ng_readiness_v15_definition_byte_binding.py
+      - name: Run definition-byte gate self-test
+        run: python ng_corpus_definition_byte_binding_gate.py --self-test
+      - name: Run readiness v15 self-test
+        run: python ng_historical_refinement_readiness_v15.py --selftest
+      - name: Run focused readiness and execution tests
+        run: python -m pytest -q tests/test_ng_readiness_v15_definition_byte_binding.py
+      - name: Verify exact ordering and authority wall
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_executor_v12 as executor
+          import ng_historical_refinement_readiness_v15 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys.index("corpus_coverage") < keys.index("corpus_definition_byte_binding") < keys.index("basis_inventory_regeneration")
+          assert keys.index("corpus_definition_byte_binding") < keys.index("broad_corpus_scope") < keys.index("g15_exact_replay")
+          spec = next(spec for spec in readiness.STAGES if spec.key == "corpus_definition_byte_binding")
+          assert spec.pre_outcome is True
+          assert executor.SUGGESTED_ENTRYPOINTS["corpus_definition_byte_binding"] == ("python", "ng_corpus_definition_byte_binding_gate.py")
+          fixture = readiness._linked_fixture_chain()["corpus_definition_byte_binding"]
+          assert fixture["actual_outcomes_used"] is False
+          assert fixture["random_shuffle_used"] is False
+          assert fixture["blind_forecasts_immutable"] is True
+          assert fixture["may_update_ng_brain"] is False
+          assert fixture["execution_authority"] is False
+          assert fixture["cme_event_contracts_mode"] == "SHADOW"
+          assert fixture["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert fixture["options_lane_started"] is False
+          PY
