@@ -1,0 +1,76 @@
+name: NG corpus definition byte binding gate
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_definition_byte_binding_gate.py
+      - research/kalshi/ng_corpus_inventory_plan_compiler.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - research/kalshi/ng_historical_normalize.py
+      - research/kalshi/tests/test_ng_corpus_definition_byte_binding_gate.py
+      - .github/workflows/ng_corpus_definition_byte_binding_gate_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_corpus_definition_byte_binding_gate.py
+      - research/kalshi/ng_corpus_inventory_plan_compiler.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - research/kalshi/ng_historical_normalize.py
+      - research/kalshi/tests/test_ng_corpus_definition_byte_binding_gate.py
+      - .github/workflows/ng_corpus_definition_byte_binding_gate_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  definition-byte-binding:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tests
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile inventory inspection and binding chain
+        run: |
+          python -m py_compile \
+            ng_corpus_coverage_audit.py \
+            ng_historical_normalize.py \
+            ng_corpus_inspection.py \
+            ng_corpus_inventory_plan_compiler.py \
+            ng_corpus_definition_byte_binding_gate.py \
+            tests/test_ng_corpus_definition_byte_binding_gate.py
+      - name: Run focused definition-byte tests
+        run: python -m pytest -q tests/test_ng_corpus_definition_byte_binding_gate.py
+      - name: Verify exact byte identity and permanent authority wall
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ng_corpus_definition_byte_binding_gate as gate
+
+          source = Path("ng_corpus_definition_byte_binding_gate.py").read_text()
+          assert "SOURCE_SHA256_MISMATCH" in source
+          assert "SOURCE_SIZE_BYTES_MISMATCH" in source
+          assert "DEFINITION_FINGERPRINT_MISMATCH" in source
+          authority = gate._authority_fields()
+          assert authority["actual_outcomes_used"] is False
+          assert authority["paid_live_data_assumed"] is False
+          assert authority["random_shuffle_used"] is False
+          assert authority["one_signal_authority_preserved"] is True
+          assert authority["blind_forecasts_immutable"] is True
+          assert authority["may_change_blind_forecast"] is False
+          assert authority["may_change_posterior"] is False
+          assert authority["may_update_ng_brain"] is False
+          assert authority["execution_authority"] is False
+          assert authority["cme_event_contracts_mode"] == "SHADOW"
+          assert authority["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert authority["options_lane_started"] is False
+          PY
