@@ -117,6 +117,12 @@ def build_readiness_report(
     paginated = "corpus_s3_latest_version_resolution" in ready
     captured = "corpus_s3_inventory_capture" in ready
     materialized = "corpus_s3_materialization" in ready
+    report["paginated_resolution_artifact"] = (
+        _PAGINATED_S3_LATEST_VERSION_RESOLUTION.filename
+    )
+    report["paginated_resolution_schema"] = (
+        _PAGINATED_S3_LATEST_VERSION_RESOLUTION.schema
+    )
     report["s3_complete_pagination_attested"] = paginated
     report["service_page_requests_and_responses_fingerprint_bound"] = paginated
     report["pagination_marker_progression_verified"] = paginated
@@ -153,6 +159,12 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
     captured = "corpus_s3_inventory_capture" in ready
     materialized = "corpus_s3_materialization" in ready
     expected = {
+        "paginated_resolution_artifact": (
+            _PAGINATED_S3_LATEST_VERSION_RESOLUTION.filename
+        ),
+        "paginated_resolution_schema": (
+            _PAGINATED_S3_LATEST_VERSION_RESOLUTION.schema
+        ),
         "s3_complete_pagination_attested": paginated,
         "service_page_requests_and_responses_fingerprint_bound": paginated,
         "pagination_marker_progression_verified": paginated,
@@ -170,14 +182,11 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
         raise HistoricalRefinementReadinessError(
             "inventory capture or materialization may not bypass complete S3 pagination"
         )
-    stage_contract = list(value.get("stage_contract") or [])
-    if not stage_contract or stage_contract[0].get("artifact") != (
-        "ng_corpus_s3_paginated_latest_version_resolution_attestation.json"
-    ):
+    if value.get("stage_order", [None])[0] != "corpus_s3_latest_version_resolution":
         raise HistoricalRefinementReadinessError(
-            "readiness v23 did not bind the paginated S3 resolution artifact"
+            "paginated S3 version resolution must remain the first readiness stage"
         )
-    if stage_contract[0].get("pre_outcome") is not True:
+    if _PAGINATED_S3_LATEST_VERSION_RESOLUTION.pre_outcome is not True:
         raise HistoricalRefinementReadinessError(
             "paginated S3 version resolution must remain pre-outcome"
         )
