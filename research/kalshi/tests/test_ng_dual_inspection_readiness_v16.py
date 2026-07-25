@@ -7,6 +7,7 @@ from unittest import mock
 import ng_corpus_executor_pipeline_arm_v12 as arm
 import ng_corpus_executor_plan_compiler_v12 as compiler
 import ng_historical_refinement_executor_v13 as executor
+import ng_historical_refinement_preflight_v13 as preflight
 import ng_historical_refinement_readiness_v16 as readiness
 
 
@@ -90,6 +91,29 @@ class DualInspectionReadinessV16Tests(unittest.TestCase):
             executor.SUGGESTED_ENTRYPOINTS["target_slice_coverage"],
             ("python", "ng_corpus_inspection.py", "inspect"),
         )
+
+    def test_preflight_binds_exact_v16_contract(self) -> None:
+        self.assertEqual(preflight.READINESS_CONTRACT, readiness.SCHEMA)
+        self.assertEqual(
+            preflight.EXECUTOR_CONTRACT,
+            "ng_historical_refinement_executor_v13",
+        )
+        self.assertEqual(
+            preflight.STAGE_ORDER,
+            [spec.key for spec in readiness.STAGES],
+        )
+        with preflight._v16_context():
+            self.assertIs(preflight.v12.executor, executor)
+            self.assertIs(preflight.v12.readiness, readiness)
+
+    def test_preflight_rejects_plan_without_target_inspection(self) -> None:
+        plan = self._minimal_plan(compiled=True)
+        plan["stages"] = [
+            row for row in plan["stages"] if row["key"] != "target_slice_coverage"
+        ]
+        with mock.patch.object(preflight.executor, "validate_plan", return_value=None):
+            with self.assertRaises(preflight.HistoricalRefinementPreflightV13Error):
+                preflight._check_plan(plan)
 
     def test_compiler_prefix_contains_both_inspection_lanes(self) -> None:
         expected = (
