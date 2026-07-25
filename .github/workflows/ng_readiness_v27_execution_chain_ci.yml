@@ -1,0 +1,95 @@
+name: NG runtime-observed readiness v27 execution chain
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_corpus_s3_runtime_observed_inventory_capture.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v27.py"
+      - "research/kalshi/ng_historical_refinement_executor_v23.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v22.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v22.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v23.py"
+      - "research/kalshi/tests/test_ng_readiness_v27_execution_chain.py"
+      - ".github/workflows/ng_readiness_v27_execution_chain_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_corpus_s3_runtime_observed_inventory_capture.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v27.py"
+      - "research/kalshi/ng_historical_refinement_executor_v23.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v22.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v22.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v23.py"
+      - "research/kalshi/tests/test_ng_readiness_v27_execution_chain.py"
+      - ".github/workflows/ng_readiness_v27_execution_chain_ci.yml"
+
+jobs:
+  runtime-observed-execution-v27:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile runtime-observed execution chain
+        run: |
+          python -m py_compile \
+            ng_corpus_s3_runtime_observed_inventory_capture.py \
+            ng_historical_refinement_readiness_v27.py \
+            ng_historical_refinement_executor_v23.py \
+            ng_corpus_executor_plan_compiler_v22.py \
+            ng_corpus_executor_pipeline_arm_v22.py \
+            ng_historical_refinement_preflight_v23.py \
+            tests/test_ng_readiness_v27_execution_chain.py
+      - name: Run upstream self-tests
+        run: |
+          python ng_corpus_s3_runtime_observed_inventory_capture.py selftest
+          python ng_historical_refinement_readiness_v27.py --selftest
+      - name: Run focused execution tests
+        run: python -m pytest -q tests/test_ng_readiness_v27_execution_chain.py
+      - name: Verify runtime capture boundary and authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_pipeline_arm_v22 as arm
+          import ng_corpus_executor_plan_compiler_v22 as compiler
+          import ng_historical_refinement_executor_v23 as executor
+          import ng_historical_refinement_readiness_v27 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys[:5] == [
+              "corpus_expected_day_contract",
+              "corpus_inventory_finalization_contract",
+              "corpus_s3_latest_version_resolution",
+              "corpus_s3_inventory_capture",
+              "corpus_s3_materialization",
+          ]
+          assert readiness.STAGES[3].filename == (
+              "ng_corpus_s3_runtime_observed_inventory_capture_attestation.json"
+          )
+          assert executor.SUGGESTED_ENTRYPOINTS["corpus_s3_inventory_capture"] == (
+              "python",
+              "ng_corpus_s3_runtime_observed_inventory_capture.py",
+              "capture",
+          )
+          assert arm.ARMED_STAGES == compiler.CONFIGURED_STAGES
+          assert "g15_exact_replay" not in arm.ARMED_STAGES
+          receipt = {
+              "actual_outcomes_used": False,
+              "paid_live_data_assumed": False,
+              "random_shuffle_used": False,
+              "one_signal_authority_preserved": True,
+              "blind_forecasts_immutable": True,
+              "may_change_blind_forecast": False,
+              "may_change_posterior": False,
+              "may_update_ng_brain": False,
+              "execution_authority": False,
+              "cme_event_contracts_mode": "SHADOW",
+              "brokerage_contract": "tastytrade_not_ibkr",
+              "options_lane_started": False,
+          }
+          compiler._authority(receipt, label="CI authority wall")
+          PY
