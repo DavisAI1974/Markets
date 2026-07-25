@@ -48,6 +48,8 @@ jobs:
             ng_corpus_inventory_plan_compiler.py \
             ng_corpus_definition_byte_binding_gate.py \
             tests/test_ng_corpus_definition_byte_binding_gate.py
+      - name: Run deterministic definition-byte self-test
+        run: python ng_corpus_definition_byte_binding_gate.py --self-test
       - name: Run focused definition-byte tests
         run: python -m pytest -q tests/test_ng_corpus_definition_byte_binding_gate.py
       - name: Verify exact byte identity and permanent authority wall
