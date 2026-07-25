@@ -39,7 +39,7 @@ def test_paginated_resolution_replaces_v22_first_stage() -> None:
         stage.schema
         == "ng_corpus_s3_paginated_latest_version_resolution_attestation.v1"
     )
-    assert stage.allowed_statuses == frozenset(
+    assert stage.ready_statuses == frozenset(
         {"S3_PAGINATED_LATEST_VERSIONS_RESOLVED_READY_FOR_CAPTURE"}
     )
     assert stage.pre_outcome is True
