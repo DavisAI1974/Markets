@@ -1,0 +1,96 @@
+name: NG readiness v23 stable execution chain
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v23.py"
+      - "research/kalshi/ng_historical_refinement_executor_v19.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v18.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v18.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v19.py"
+      - "research/kalshi/tests/test_ng_readiness_v23_execution_chain.py"
+      - ".github/workflows/ng_readiness_v23_execution_chain_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v23.py"
+      - "research/kalshi/ng_historical_refinement_executor_v19.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v18.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v18.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v19.py"
+      - "research/kalshi/tests/test_ng_readiness_v23_execution_chain.py"
+      - ".github/workflows/ng_readiness_v23_execution_chain_ci.yml"
+
+jobs:
+  readiness-v23-stable-execution:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile readiness-v23 execution chain
+        run: |
+          python -m py_compile \
+            ng_corpus_s3_paginated_latest_version_resolution.py \
+            ng_historical_refinement_readiness_v23.py \
+            ng_historical_refinement_executor_v19.py \
+            ng_corpus_executor_plan_compiler_v18.py \
+            ng_corpus_executor_pipeline_arm_v18.py \
+            ng_historical_refinement_preflight_v19.py \
+            tests/test_ng_readiness_v23_execution_chain.py
+      - name: Run upstream self-tests
+        run: |
+          python ng_corpus_s3_paginated_latest_version_resolution.py selftest
+          python ng_historical_refinement_readiness_v23.py --selftest
+      - name: Run focused execution tests
+        run: python -m pytest -q tests/test_ng_readiness_v23_execution_chain.py
+      - name: Verify pagination boundary and authority wall
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ng_corpus_executor_pipeline_arm_v18 as arm
+          import ng_corpus_executor_plan_compiler_v18 as compiler
+          import ng_historical_refinement_executor_v19 as executor
+          import ng_historical_refinement_preflight_v19 as preflight
+          import ng_historical_refinement_readiness_v23 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys[:3] == [
+              "corpus_s3_latest_version_resolution",
+              "corpus_s3_inventory_capture",
+              "corpus_s3_materialization",
+          ]
+          first = readiness.STAGES[0]
+          assert first.filename == (
+              "ng_corpus_s3_paginated_latest_version_resolution_attestation.json"
+          )
+          assert first.pre_outcome is True
+          assert compiler.CONFIGURED_STAGES == arm.ARMED_STAGES
+          assert compiler.CONFIGURED_STAGES[0] == "corpus_s3_latest_version_resolution"
+          assert preflight.STAGE_ORDER == keys
+          assert executor.SUGGESTED_ENTRYPOINTS[
+              "corpus_s3_latest_version_resolution"
+          ] == (
+              "python",
+              "ng_corpus_s3_paginated_latest_version_resolution.py",
+              "resolve",
+          )
+          plan = executor.build_plan(Path("renders/ng_refine_s95"), Path("."))
+          assert plan["outcome_paths"] == []
+          assert plan["paid_live_data_assumed"] is False
+          assert plan["random_shuffle_used"] is False
+          assert plan["one_signal_authority_preserved"] is True
+          assert plan["blind_forecasts_immutable"] is True
+          assert plan["may_update_ng_brain"] is False
+          assert plan["execution_authority"] is False
+          assert plan["cme_event_contracts_mode"] == "SHADOW"
+          assert plan["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert plan["options_lane_started"] is False
+          PY
