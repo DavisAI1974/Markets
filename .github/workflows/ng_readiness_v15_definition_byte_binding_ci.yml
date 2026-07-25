@@ -54,7 +54,7 @@ jobs:
           assert keys.index("corpus_definition_byte_binding") < keys.index("broad_corpus_scope") < keys.index("g15_exact_replay")
           spec = next(spec for spec in readiness.STAGES if spec.key == "corpus_definition_byte_binding")
           assert spec.pre_outcome is True
-          assert executor.SUGGESTED_ENTRYPOINTS["corpus_definition_byte_binding"] == ("python", "ng_corpus_definition_byte_binding_gate.py")
+          assert executor.SUGGESTED_ENTRYPOINTS["corpus_definition_byte_binding"] == ("python", "ng_corpus_definition_byte_binding_gate.py", "build")
           fixture = readiness._linked_fixture_chain()["corpus_definition_byte_binding"]
           assert fixture["actual_outcomes_used"] is False
           assert fixture["random_shuffle_used"] is False
