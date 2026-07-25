@@ -1,0 +1,89 @@
+name: NG target-slice broad-lineage v17
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_target_slice_broad_lineage_gate.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v17.py"
+      - "research/kalshi/ng_historical_refinement_executor_v14.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v13.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v13.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v14.py"
+      - "research/kalshi/tests/test_ng_target_slice_broad_lineage_v17.py"
+      - ".github/workflows/ng_target_slice_broad_lineage_v17_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_target_slice_broad_lineage_gate.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v17.py"
+      - "research/kalshi/ng_historical_refinement_executor_v14.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v13.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v13.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v14.py"
+      - "research/kalshi/tests/test_ng_target_slice_broad_lineage_v17.py"
+      - ".github/workflows/ng_target_slice_broad_lineage_v17_ci.yml"
+
+jobs:
+  target-broad-lineage:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile exact lineage execution chain
+        run: |
+          python -m py_compile \
+            ng_target_slice_broad_lineage_gate.py \
+            ng_historical_refinement_readiness_v17.py \
+            ng_historical_refinement_executor_v14.py \
+            ng_corpus_executor_plan_compiler_v13.py \
+            ng_corpus_executor_pipeline_arm_v13.py \
+            ng_historical_refinement_preflight_v14.py \
+            tests/test_ng_target_slice_broad_lineage_v17.py
+      - name: Run readiness self-test
+        run: python ng_historical_refinement_readiness_v17.py --selftest
+      - name: Run focused lineage tests
+        run: python -m pytest -q tests/test_ng_target_slice_broad_lineage_v17.py
+      - name: Verify ordering and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_plan_compiler_v13 as compiler
+          import ng_historical_refinement_executor_v14 as executor
+          import ng_historical_refinement_readiness_v17 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys.index("corpus_coverage") < keys.index("corpus_definition_byte_binding")
+          assert keys.index("corpus_definition_byte_binding") < keys.index("target_slice_coverage")
+          assert keys.index("target_slice_coverage") < keys.index("target_slice_broad_lineage")
+          assert keys.index("target_slice_broad_lineage") < keys.index("basis_inventory_regeneration")
+          assert keys.index("basis_inventory_regeneration") < keys.index("g15_exact_replay")
+          spec = next(spec for spec in readiness.STAGES if spec.key == "target_slice_broad_lineage")
+          assert spec.pre_outcome is True
+          assert executor.SUGGESTED_ENTRYPOINTS["target_slice_broad_lineage"] == (
+              "python", "ng_target_slice_broad_lineage_gate.py", "build"
+          )
+          assert compiler.CONFIGURED_STAGES[:5] == (
+              "corpus_coverage",
+              "corpus_definition_byte_binding",
+              "target_slice_coverage",
+              "target_slice_broad_lineage",
+              "basis_inventory_regeneration",
+          )
+          fixture = readiness._linked_fixture_chain()["target_slice_broad_lineage"]
+          assert fixture["actual_outcomes_used"] is False
+          assert fixture["paid_live_data_assumed"] is False
+          assert fixture["random_shuffle_used"] is False
+          assert fixture["one_signal_authority_preserved"] is True
+          assert fixture["blind_forecasts_immutable"] is True
+          assert fixture["may_change_posterior"] is False
+          assert fixture["may_update_ng_brain"] is False
+          assert fixture["execution_authority"] is False
+          assert fixture["cme_event_contracts_mode"] == "SHADOW"
+          assert fixture["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert fixture["options_lane_started"] is False
+          PY
