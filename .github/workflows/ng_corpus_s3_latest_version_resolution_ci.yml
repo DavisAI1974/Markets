@@ -1,0 +1,60 @@
+name: NG exact S3 latest-version resolution
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_corpus_s3_latest_version_resolution.py"
+      - "research/kalshi/ng_corpus_s3_inventory_capture.py"
+      - "research/kalshi/ng_corpus_coverage_audit.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_latest_version_resolution.py"
+      - ".github/workflows/ng_corpus_s3_latest_version_resolution_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_corpus_s3_latest_version_resolution.py"
+      - "research/kalshi/ng_corpus_s3_inventory_capture.py"
+      - "research/kalshi/ng_corpus_coverage_audit.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_latest_version_resolution.py"
+      - ".github/workflows/ng_corpus_s3_latest_version_resolution_ci.yml"
+
+jobs:
+  exact-s3-latest-version-resolution:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile exact S3 resolver
+        run: |
+          python -m py_compile \
+            ng_corpus_s3_latest_version_resolution.py \
+            ng_corpus_s3_inventory_capture.py \
+            ng_corpus_coverage_audit.py \
+            tests/test_ng_corpus_s3_latest_version_resolution.py
+      - name: Run resolver self-test
+        run: python ng_corpus_s3_latest_version_resolution.py selftest
+      - name: Run focused resolver tests
+        run: python -m pytest -q tests/test_ng_corpus_s3_latest_version_resolution.py
+      - name: Verify authority wall and explicit identity contract
+        run: |
+          python - <<'PY'
+          import ng_corpus_s3_latest_version_resolution as resolver
+
+          authority = resolver._authority_fields()
+          assert authority["actual_outcomes_used"] is False
+          assert authority["paid_live_data_assumed"] is False
+          assert authority["random_shuffle_used"] is False
+          assert authority["one_signal_authority_preserved"] is True
+          assert authority["blind_forecasts_immutable"] is True
+          assert authority["may_update_ng_brain"] is False
+          assert authority["execution_authority"] is False
+          assert authority["cme_event_contracts_mode"] == "SHADOW"
+          assert authority["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert authority["options_lane_started"] is False
+          assert resolver.READY_STATUS == "S3_LATEST_VERSIONS_RESOLVED_READY_FOR_CAPTURE"
+          PY
