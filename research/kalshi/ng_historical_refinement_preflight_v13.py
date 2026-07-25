@@ -2,11 +2,14 @@
 """Bind branch-guarded execution to dual-inspection readiness v16."""
 from __future__ import annotations
 
+import argparse
 import copy
+import json
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, Iterator, Mapping
+from typing import Any, Callable, Iterator, Mapping, Sequence
 
+import ng_branch_alignment_gate as branch_alignment
 import ng_historical_refinement_executor_v13 as executor
 import ng_historical_refinement_preflight as legacy
 import ng_historical_refinement_preflight_v12 as v12
@@ -90,14 +93,20 @@ def _check_plan(plan: Mapping[str, Any]) -> None:
         raise HistoricalRefinementPreflightV13Error(
             "embedded plan does not use readiness-v16 stage order"
         )
-    positions = {key: keys.index(key) for key in (
+    required = (
         "corpus_coverage",
         "corpus_definition_byte_binding",
         "target_slice_coverage",
         "basis_inventory_regeneration",
         "broad_corpus_scope",
         "g15_exact_replay",
-    )}
+    )
+    try:
+        positions = {key: keys.index(key) for key in required}
+    except ValueError as error:
+        raise HistoricalRefinementPreflightV13Error(
+            "required dual-inspection stage is missing"
+        ) from error
     if not (
         positions["corpus_coverage"]
         < positions["corpus_definition_byte_binding"]
@@ -202,9 +211,59 @@ def validate_receipt(receipt: Mapping[str, Any]) -> None:
         v12.validate_receipt(base)
 
 
-main = v12.main
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--plan")
+    parser.add_argument("--ledger")
+    parser.add_argument("--out")
+    parser.add_argument("--readiness-out")
+    parser.add_argument("--expected-branch", default=branch_alignment.DEFAULT_BRANCH)
+    parser.add_argument(
+        "--expected-repository", default=branch_alignment.DEFAULT_REPOSITORY
+    )
+    parser.add_argument("--remote", default=branch_alignment.DEFAULT_REMOTE)
+    parser.add_argument("--allow-dirty-prefix", action="append", default=[])
+    parser.add_argument("--allow-local-ahead", action="store_true")
+    parser.add_argument("--allow-missing-remote-ref", action="store_true")
+    parser.add_argument("--allow-fixed-outcomes", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+    if not args.plan or not args.ledger or not args.out:
+        parser.error("--plan, --ledger, and --out are required")
+    plan = legacy._load_json(Path(args.plan))
+    receipt = execute_preflight(
+        plan,
+        Path(args.ledger),
+        expected_branch=args.expected_branch,
+        expected_repository=args.expected_repository,
+        remote=args.remote,
+        allowed_dirty_prefixes=args.allow_dirty_prefix,
+        require_remote_match=not args.allow_missing_remote_ref,
+        allow_local_ahead=args.allow_local_ahead,
+        allow_fixed_outcomes=args.allow_fixed_outcomes,
+        dry_run=args.dry_run,
+        readiness_out=Path(args.readiness_out) if args.readiness_out else None,
+    )
+    legacy._atomic_json(Path(args.out), receipt)
+    print(
+        json.dumps(
+            {
+                "status": receipt["status"],
+                "executor_status": (receipt.get("executor_result") or {}).get("status"),
+                "executor_stage": (receipt.get("executor_result") or {}).get("stage"),
+                "readiness_contract": receipt["readiness_contract"],
+                "fingerprint": receipt["fingerprint"],
+                "blockers": receipt.get("blockers") or [],
+                "stand_downs": receipt.get("stand_downs") or [],
+            },
+            sort_keys=True,
+        )
+    )
+    return 0 if receipt["status"] in {
+        "PREFLIGHT_PASSED",
+        "PREFLIGHT_PASSED_WITH_STAND_DOWNS",
+    } else 2
 
 
 if __name__ == "__main__":
-    with _v16_context():
-        raise SystemExit(main())
+    raise SystemExit(main())
