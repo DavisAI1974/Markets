@@ -14,6 +14,7 @@ SUGGESTED_ENTRYPOINTS: dict[str, tuple[str, ...]] = {
     "corpus_definition_byte_binding": (
         "python",
         "ng_corpus_definition_byte_binding_gate.py",
+        "build",
     ),
 }
 
