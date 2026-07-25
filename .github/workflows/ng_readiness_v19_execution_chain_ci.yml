@@ -1,0 +1,87 @@
+name: NG readiness v19 execution chain
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_historical_refinement_executor_v15.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v14.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v14.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v15.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v19.py"
+      - "research/kalshi/ng_target_slice_derivation_gate_v2.py"
+      - "research/kalshi/tests/test_ng_readiness_v19_execution_chain.py"
+      - ".github/workflows/ng_readiness_v19_execution_chain_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_historical_refinement_executor_v15.py"
+      - "research/kalshi/ng_corpus_executor_plan_compiler_v14.py"
+      - "research/kalshi/ng_corpus_executor_pipeline_arm_v14.py"
+      - "research/kalshi/ng_historical_refinement_preflight_v15.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v19.py"
+      - "research/kalshi/ng_target_slice_derivation_gate_v2.py"
+      - "research/kalshi/tests/test_ng_readiness_v19_execution_chain.py"
+      - ".github/workflows/ng_readiness_v19_execution_chain_ci.yml"
+
+jobs:
+  readiness-v19-execution:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile execution chain
+        run: |
+          python -m py_compile \
+            ng_historical_refinement_executor_v15.py \
+            ng_corpus_executor_plan_compiler_v14.py \
+            ng_corpus_executor_pipeline_arm_v14.py \
+            ng_historical_refinement_preflight_v15.py \
+            ng_historical_refinement_readiness_v19.py \
+            ng_target_slice_derivation_gate_v2.py \
+            tests/test_ng_readiness_v19_execution_chain.py
+      - name: Run readiness self-test
+        run: python ng_historical_refinement_readiness_v19.py --selftest
+      - name: Run focused tests
+        run: python -m pytest -q tests/test_ng_readiness_v19_execution_chain.py
+      - name: Verify derivation boundary and authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_plan_compiler_v14 as compiler
+          import ng_historical_refinement_executor_v15 as executor
+          import ng_historical_refinement_preflight_v15 as preflight
+          import ng_historical_refinement_readiness_v19 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys.index("target_slice_broad_lineage") < keys.index("target_slice_derivation")
+          assert keys.index("target_slice_derivation") < keys.index("basis_inventory_regeneration")
+          assert compiler.CONFIGURED_STAGES[3:6] == (
+              "target_slice_broad_lineage",
+              "target_slice_derivation",
+              "basis_inventory_regeneration",
+          )
+          assert executor.SUGGESTED_ENTRYPOINTS["target_slice_derivation"] == (
+              "python",
+              "ng_target_slice_derivation_gate_v2.py",
+              "build",
+          )
+          derivation = next(spec for spec in readiness.STAGES if spec.key == "target_slice_derivation")
+          assert derivation.schema == "ng_target_slice_derivation_gate.v2"
+          assert derivation.pre_outcome is True
+          assert preflight.READINESS_CONTRACT == "ng_historical_refinement_readiness.v19"
+          assert preflight.EXECUTOR_CONTRACT == "ng_historical_refinement_executor_v15"
+          plan = executor.build_plan(__import__("pathlib").Path("renders/ng_refine_s95"), __import__("pathlib").Path("."))
+          assert plan["random_shuffle_used"] is False
+          assert plan["one_signal_authority_preserved"] is True
+          assert plan["blind_forecasts_immutable"] is True
+          assert plan["may_update_ng_brain"] is False
+          assert plan["execution_authority"] is False
+          assert plan["cme_event_contracts_mode"] == "SHADOW"
+          assert plan["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert plan["options_lane_started"] is False
+          PY
