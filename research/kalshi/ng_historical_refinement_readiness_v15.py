@@ -66,6 +66,24 @@ LINK_RULES: tuple[tuple[str, str, str, str], ...] = (
         "corpus_definition_byte_binding",
         "audit_fingerprint",
     ),
+    (
+        "corpus_definition_byte_binding",
+        "inspection_receipt_fingerprint",
+        "broad_corpus_scope",
+        "inspection_receipt_fingerprint",
+    ),
+    (
+        "corpus_definition_byte_binding",
+        "catalog_fingerprint",
+        "broad_corpus_scope",
+        "catalog_fingerprint",
+    ),
+    (
+        "corpus_definition_byte_binding",
+        "audit_fingerprint",
+        "broad_corpus_scope",
+        "coverage_audit_fingerprint",
+    ),
     *v14.LINK_RULES,
 )
 
@@ -222,14 +240,18 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
         )
 
 
-def _binding_fixture(coverage: Mapping[str, Any]) -> dict[str, Any]:
+def _binding_fixture(
+    coverage: Mapping[str, Any], broad_scope: Mapping[str, Any]
+) -> dict[str, Any]:
     value: dict[str, Any] = {
         "schema": "ng_corpus_definition_byte_binding_gate.v1",
         "status": "CORPUS_DEFINITION_BYTES_BOUND_READY",
         "inventory_compiler_receipt_fingerprint": "inventory-compiler",
-        "inspection_receipt_fingerprint": "inspection-receipt",
+        "inspection_receipt_fingerprint": broad_scope[
+            "inspection_receipt_fingerprint"
+        ],
         "plan_fingerprint": "inspection-plan",
-        "catalog_fingerprint": "inspection-catalog",
+        "catalog_fingerprint": broad_scope["catalog_fingerprint"],
         "audit_fingerprint": coverage["fingerprint"],
         "source_count": 2,
         "byte_bound_source_count": 2,
@@ -259,7 +281,7 @@ def _binding_fixture(coverage: Mapping[str, Any]) -> dict[str, Any]:
 def _linked_fixture_chain() -> dict[str, dict[str, Any]]:
     values = v14._linked_fixture_chain()
     values["corpus_definition_byte_binding"] = _binding_fixture(
-        values["corpus_coverage"]
+        values["corpus_coverage"], values["broad_corpus_scope"]
     )
     return values
 
