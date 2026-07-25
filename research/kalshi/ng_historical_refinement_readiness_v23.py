@@ -174,7 +174,7 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
         "materialization_bound_to_paginated_resolution": materialized,
     }
     for field, item in expected.items():
-        if value.get(field) is not item:
+        if value.get(field) != item:
             raise HistoricalRefinementReadinessError(
                 f"readiness v23 {field} summary mismatch"
             )
