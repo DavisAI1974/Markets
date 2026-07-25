@@ -1,0 +1,89 @@
+name: NG corpus execution v15 definition byte binding
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v11.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v11.py
+      - research/kalshi/ng_corpus_definition_byte_binding_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v15.py
+      - research/kalshi/ng_historical_refinement_executor_v12.py
+      - research/kalshi/tests/test_ng_corpus_execution_v15.py
+      - .github/workflows/ng_corpus_execution_v15_ci.yml
+  workflow_dispatch:
+
+jobs:
+  definition-byte-corpus-execution:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+      - name: Compile readiness v15 corpus execution chain
+        run: |
+          python -m py_compile \
+            ng_corpus_definition_byte_binding_gate.py \
+            ng_historical_refinement_readiness_v15.py \
+            ng_historical_refinement_executor_v12.py \
+            ng_corpus_executor_plan_compiler_v10.py \
+            ng_corpus_executor_plan_compiler_v11.py \
+            ng_corpus_executor_pipeline_arm_v10.py \
+            ng_corpus_executor_pipeline_arm_v11.py \
+            tests/test_ng_corpus_execution_v15.py
+      - name: Run definition-byte gate self-test
+        run: python ng_corpus_definition_byte_binding_gate.py --self-test
+      - name: Run focused compiler and arm tests
+        run: python -m pytest -q tests/test_ng_corpus_execution_v15.py
+      - name: Verify exact seven-stage prefix and permanent wall
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          import ng_corpus_executor_pipeline_arm_v11 as arm
+          import ng_corpus_executor_plan_compiler_v11 as compiler
+          import ng_historical_refinement_executor_v12 as executor
+          import ng_historical_refinement_readiness_v15 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          expected = [
+              "corpus_coverage",
+              "corpus_definition_byte_binding",
+              "basis_inventory_regeneration",
+              "replay_catalog_export",
+              "broad_corpus_scope",
+              "broad_corpus_exact_overlap",
+              "broad_corpus_exact_partition",
+          ]
+          assert list(compiler.CONFIGURED_STAGES) == expected
+          assert list(arm.ARMED_STAGES) == expected
+          assert keys[:7] == expected
+          command = compiler._commands(
+              Path("renders/ng_refine_s95"),
+              Path("renders/ng_refine_s95/ng_target_day_slice_bundle.json"),
+              Path("renders/ng_refine_s95/ng_corpus_inspection_plan.json"),
+          )["corpus_definition_byte_binding"]
+          assert command[:3] == ["python", "ng_corpus_definition_byte_binding_gate.py", "build"]
+          assert command[4].endswith("ng_corpus_inventory_plan_compiler.json")
+          assert command[6].endswith("ng_corpus_inspection_receipt.json")
+          assert command[8].endswith("ng_corpus_definition_byte_binding_gate.json")
+          fixture = readiness._linked_fixture_chain()["corpus_definition_byte_binding"]
+          assert fixture["actual_outcomes_used"] is False
+          assert fixture["paid_live_data_assumed"] is False
+          assert fixture["random_shuffle_used"] is False
+          assert fixture["one_signal_authority_preserved"] is True
+          assert fixture["blind_forecasts_immutable"] is True
+          assert fixture["may_update_ng_brain"] is False
+          assert fixture["execution_authority"] is False
+          assert fixture["cme_event_contracts_mode"] == "SHADOW"
+          assert fixture["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert fixture["options_lane_started"] is False
+          assert not any("option" in key.lower() for key in executor.SUGGESTED_ENTRYPOINTS)
+          PY
