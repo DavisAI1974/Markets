@@ -40,7 +40,6 @@ _S3_MATERIALIZATION = StageSpec(
         "materialization_evidence_fingerprint",
         "plan_fingerprint",
         "inventory_compiler_receipt_fingerprint",
-        "blockers",
         "next_action",
     ),
     pre_outcome=True,
