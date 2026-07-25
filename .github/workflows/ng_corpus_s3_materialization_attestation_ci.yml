@@ -1,0 +1,70 @@
+name: NG S3 corpus materialization attestation
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_s3_materialization_attestation.py
+      - research/kalshi/ng_corpus_inventory_plan_compiler.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - research/kalshi/tests/test_ng_corpus_s3_materialization_attestation.py
+      - .github/workflows/ng_corpus_s3_materialization_attestation_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_corpus_s3_materialization_attestation.py
+      - research/kalshi/ng_corpus_inventory_plan_compiler.py
+      - research/kalshi/ng_corpus_inspection.py
+      - research/kalshi/ng_corpus_coverage_audit.py
+      - research/kalshi/tests/test_ng_corpus_s3_materialization_attestation.py
+      - .github/workflows/ng_corpus_s3_materialization_attestation_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  s3-materialization-attestation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tests
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile S3 inventory and byte-inspection chain
+        run: |
+          python -m py_compile \
+            ng_corpus_coverage_audit.py \
+            ng_corpus_inspection.py \
+            ng_corpus_inventory_plan_compiler.py \
+            ng_corpus_s3_materialization_attestation.py \
+            tests/test_ng_corpus_s3_materialization_attestation.py
+      - name: Run deterministic materialization self-test
+        run: python ng_corpus_s3_materialization_attestation.py --self-test
+      - name: Run focused S3 materialization tests
+        run: python -m pytest -q tests/test_ng_corpus_s3_materialization_attestation.py
+      - name: Verify permanent authority and historical-first wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_s3_materialization_attestation as attestation
+
+          authority = attestation._authority_fields()
+          assert authority["actual_outcomes_used"] is False
+          assert authority["paid_live_data_assumed"] is False
+          assert authority["random_shuffle_used"] is False
+          assert authority["one_signal_authority_preserved"] is True
+          assert authority["blind_forecasts_immutable"] is True
+          assert authority["may_change_blind_forecast"] is False
+          assert authority["may_change_posterior"] is False
+          assert authority["may_update_ng_brain"] is False
+          assert authority["execution_authority"] is False
+          assert authority["cme_event_contracts_mode"] == "SHADOW"
+          assert authority["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert authority["options_lane_started"] is False
+          PY
