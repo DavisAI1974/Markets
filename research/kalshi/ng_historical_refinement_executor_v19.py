@@ -19,17 +19,54 @@ SUGGESTED_ENTRYPOINTS: dict[str, tuple[str, ...]] = {
 }
 
 
+def _check_v23_plan_contract(plan: Mapping[str, Any]) -> None:
+    stages = list(plan.get("stages") or [])
+    if len(stages) != len(readiness.STAGES):
+        raise legacy_executor.HistoricalRefinementExecutionError(
+            "readiness-v23 execution plan stage count mismatch"
+        )
+    for spec, step in zip(readiness.STAGES, stages):
+        if step.get("key") != spec.key:
+            raise legacy_executor.HistoricalRefinementExecutionError(
+                f"{spec.key}: readiness-v23 stage order mismatch"
+            )
+        if step.get("expected_output") != spec.filename:
+            raise legacy_executor.HistoricalRefinementExecutionError(
+                f"{spec.key}: readiness-v23 expected output mismatch"
+            )
+        expected_entrypoint = list(SUGGESTED_ENTRYPOINTS.get(spec.key, ()))
+        if step.get("suggested_entrypoint") != expected_entrypoint:
+            raise legacy_executor.HistoricalRefinementExecutionError(
+                f"{spec.key}: readiness-v23 suggested entrypoint mismatch"
+            )
+    first = stages[0]
+    if first.get("expected_output") != (
+        "ng_corpus_s3_paginated_latest_version_resolution_attestation.json"
+    ):
+        raise legacy_executor.HistoricalRefinementExecutionError(
+            "legacy non-paginated S3 resolution artifact may not enter readiness v23"
+        )
+
+
 @contextmanager
 def _v23_context() -> Iterator[None]:
     old_readiness = legacy_executor.readiness
     old_entrypoints = legacy_executor.SUGGESTED_ENTRYPOINTS
+    old_validate = legacy_executor.validate_plan
+
+    def guarded_validate(plan: Mapping[str, Any]) -> None:
+        old_validate(plan)
+        _check_v23_plan_contract(plan)
+
     legacy_executor.readiness = readiness
     legacy_executor.SUGGESTED_ENTRYPOINTS = SUGGESTED_ENTRYPOINTS
+    legacy_executor.validate_plan = guarded_validate
     try:
         yield
     finally:
         legacy_executor.readiness = old_readiness
         legacy_executor.SUGGESTED_ENTRYPOINTS = old_entrypoints
+        legacy_executor.validate_plan = old_validate
 
 
 def build_plan(*args: Any, **kwargs: Any) -> dict[str, Any]:
