@@ -1,0 +1,82 @@
+name: NG historical refinement readiness v23
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v22.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v23.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/tests/test_ng_historical_refinement_readiness_v23.py"
+      - ".github/workflows/ng_historical_refinement_readiness_v23_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v22.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v23.py"
+      - "research/kalshi/tests/test_ng_corpus_s3_paginated_latest_version_resolution.py"
+      - "research/kalshi/tests/test_ng_historical_refinement_readiness_v23.py"
+      - ".github/workflows/ng_historical_refinement_readiness_v23_ci.yml"
+
+jobs:
+  readiness-v23:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile paginated readiness chain
+        run: |
+          python -m py_compile \
+            ng_corpus_s3_latest_version_resolution.py \
+            ng_corpus_s3_paginated_latest_version_resolution.py \
+            ng_historical_refinement_readiness_v22.py \
+            ng_historical_refinement_readiness_v23.py \
+            tests/test_ng_corpus_s3_paginated_latest_version_resolution.py \
+            tests/test_ng_historical_refinement_readiness_v23.py
+      - name: Run upstream and v23 self-tests
+        run: |
+          python ng_corpus_s3_paginated_latest_version_resolution.py selftest
+          python ng_historical_refinement_readiness_v23.py --selftest
+      - name: Run focused tests
+        run: |
+          python -m pytest -q \
+            tests/test_ng_corpus_s3_paginated_latest_version_resolution.py \
+            tests/test_ng_historical_refinement_readiness_v23.py
+      - name: Verify paginated front wall
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v23 as readiness
+
+          stage = readiness.STAGES[0]
+          assert stage.key == "corpus_s3_latest_version_resolution"
+          assert stage.filename == (
+              "ng_corpus_s3_paginated_latest_version_resolution_attestation.json"
+          )
+          assert stage.schema == (
+              "ng_corpus_s3_paginated_latest_version_resolution_attestation.v1"
+          )
+          assert stage.pre_outcome is True
+          assert readiness.LINK_RULES[0] == (
+              "corpus_s3_latest_version_resolution",
+              "capture_spec_fingerprint",
+              "corpus_s3_inventory_capture",
+              "source_spec_fingerprint",
+          )
+          assert [spec.key for spec in readiness.STAGES][1:3] == [
+              "corpus_s3_inventory_capture",
+              "corpus_s3_materialization",
+          ]
+          fixture = readiness._linked_fixture_chain()[
+              "corpus_s3_latest_version_resolution"
+          ]
+          assert fixture["complete_pagination_attested"] is True
+          assert fixture["identity_from_s3_keys_inferred"] is False
+          assert fixture["options_lane_started"] is False
+          PY
