@@ -7,6 +7,7 @@ on:
     paths:
       - research/kalshi/ng_historical_refinement_readiness_v16.py
       - research/kalshi/ng_historical_refinement_executor_v13.py
+      - research/kalshi/ng_historical_refinement_preflight_v13.py
       - research/kalshi/ng_corpus_executor_plan_compiler_v12.py
       - research/kalshi/ng_corpus_executor_pipeline_arm_v12.py
       - research/kalshi/tests/test_ng_dual_inspection_readiness_v16.py
@@ -33,6 +34,8 @@ jobs:
             ng_historical_refinement_readiness_v16.py \
             ng_historical_refinement_executor_v12.py \
             ng_historical_refinement_executor_v13.py \
+            ng_historical_refinement_preflight_v12.py \
+            ng_historical_refinement_preflight_v13.py \
             ng_corpus_executor_plan_compiler_v12.py \
             ng_corpus_executor_pipeline_arm_v12.py \
             tests/test_ng_dual_inspection_readiness_v16.py
@@ -48,6 +51,7 @@ jobs:
           import ng_corpus_executor_pipeline_arm_v12 as arm
           import ng_corpus_executor_plan_compiler_v12 as compiler
           import ng_historical_refinement_executor_v13 as executor
+          import ng_historical_refinement_preflight_v13 as preflight
           import ng_historical_refinement_readiness_v16 as readiness
 
           keys = [spec.key for spec in readiness.STAGES]
@@ -64,6 +68,8 @@ jobs:
           assert keys[:8] == expected
           assert list(compiler.CONFIGURED_STAGES) == expected
           assert list(arm.ARMED_STAGES) == expected
+          assert preflight.STAGE_ORDER == keys
+          assert preflight.READINESS_CONTRACT == readiness.SCHEMA
           commands = compiler._commands(
               artifact_dir=Path("renders/ng_refine_s95"),
               inventory_receipt_path=Path("renders/ng_refine_s95/ng_corpus_inventory_plan_compiler.json"),
@@ -79,8 +85,10 @@ jobs:
           scope = " ".join(commands["broad_corpus_scope"])
           assert "ng_corpus_inspection_receipt.json" in broad
           assert "ng_corpus_inspection_receipt.json" in binding
+          assert "ng_target_slice_inspection_receipt.json" not in binding
           assert "ng_target_slice_inspection_receipt.json" in target
           assert "ng_target_slice_inspection_receipt.json" in basis
+          assert "ng_corpus_inspection_receipt.json" not in basis
           assert "ng_target_slice_catalog.json" in replay
           assert "ng_target_slice_coverage_audit.json" in replay
           assert "ng_corpus_inspection_receipt.json" in scope
