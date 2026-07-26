@@ -1,0 +1,89 @@
+name: NG readiness v35 attribution-bound G16 causal
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_g16_attribution_bound_causal_authorization_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v35.py
+      - research/kalshi/ng_historical_refinement_executor_v31.py
+      - research/kalshi/tests/test_ng_g16_attribution_bound_causal_authorization_gate.py
+      - research/kalshi/tests/test_ng_readiness_v35_attribution_bound_g16_causal.py
+      - .github/workflows/ng_readiness_v35_attribution_bound_g16_causal_ci.yml
+  workflow_dispatch:
+
+jobs:
+  attribution-bound-g16-causal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+      - name: Compile v35 attribution-bound G16 causal chain
+        run: |
+          python -m py_compile \
+            ng_g16_attribution_bound_causal_authorization_gate.py \
+            ng_historical_refinement_readiness_v35.py \
+            ng_historical_refinement_executor_v31.py \
+            tests/test_ng_g16_attribution_bound_causal_authorization_gate.py \
+            tests/test_ng_readiness_v35_attribution_bound_g16_causal.py
+      - name: Run deterministic self-tests
+        run: |
+          python ng_g15_g16_attribution_bound_lineage_gate.py --selftest
+          python ng_g16_counterfactual_causal_authorization.py --selftest
+          python ng_g16_attribution_bound_causal_authorization_gate.py --selftest
+          python ng_historical_refinement_readiness_v35.py --selftest
+      - name: Run focused causal lineage and readiness tests
+        run: |
+          pytest -q \
+            tests/test_ng_g15_g16_attribution_bound_lineage_gate.py \
+            tests/test_ng_g16_counterfactual_causal_authorization.py \
+            tests/test_ng_g16_attribution_bound_causal_authorization_gate.py \
+            tests/test_ng_readiness_v35_attribution_bound_g16_causal.py
+      - name: Verify fixed G15 outcome lineage and G16 outcome blind wall
+        run: |
+          python - <<'PY'
+          import ng_g16_attribution_bound_causal_authorization_gate as gate
+          import ng_historical_refinement_executor_v31 as executor
+          import ng_historical_refinement_readiness_v35 as readiness
+
+          order = [spec.key for spec in readiness.STAGES]
+          causal = order.index("g16_counterfactual_causal_authorization")
+          assert order[causal:causal + 3] == [
+              "g16_counterfactual_causal_authorization",
+              "g16_attribution_bound_causal_authorization",
+              "g16_prepared_curve_authorization",
+          ]
+          by_key = {spec.key: spec for spec in readiness.STAGES}
+          assert by_key["g16_counterfactual_causal_authorization"].pre_outcome is False
+          assert by_key["g16_attribution_bound_causal_authorization"].pre_outcome is False
+          assert by_key["g16_prepared_curve_authorization"].pre_outcome is True
+          assert executor.SUGGESTED_ENTRYPOINTS[
+              "g16_attribution_bound_causal_authorization"
+          ] == ("python", "ng_g16_attribution_bound_causal_authorization_gate.py")
+
+          result = gate.build_gate(**gate._synthetic_fixture())
+          assert result["g16_posterior_bound_to_attribution_scored_g15_lessons"] is True
+          assert result["all_six_factors_authorized_before_scoring"] is True
+          assert result["separate_blind_refined_scores_verified"] is True
+          assert result["blind_score_fingerprint"] != result["refined_score_fingerprint"]
+          assert result["actual_g15_outcomes_used"] is True
+          assert result["actual_g16_outcomes_used"] is False
+          assert result["g16_scoring_authorized"] is False
+          assert result["random_shuffle_used"] is False
+          assert result["one_signal_authority_preserved"] is True
+          assert result["blind_forecasts_immutable"] is True
+          assert result["may_update_ng_brain"] is False
+          assert result["execution_authority"] is False
+          assert result["g16_outcome_access_authorized"] is False
+          assert result["cme_event_contracts_mode"] == "SHADOW"
+          assert result["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert result["options_lane_started"] is False
+          PY
