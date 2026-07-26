@@ -20,13 +20,22 @@ def build_guard(
     *,
     verify_files: bool = True,
 ) -> dict[str, Any]:
-    """Build once while keeping implementation envelope validation non-recursive."""
+    """Build once while keeping implementation envelope validation non-recursive.
+
+    Public dependency hooks are mirrored into the implementation for the duration of
+    the call. This keeps focused tests and future adapters able to patch the public
+    validator seam without bypassing the implementation module.
+    """
     original_validate = _impl.validate_guard
+    original_bridge_validator = _impl.validate_bridge_output
+    original_prepared_validator = _impl.validate_prepared_index
 
     def envelope_only(guard: Mapping[str, Any], *, verify_files: bool = True) -> None:
         original_validate(guard, verify_files=False)
 
     _impl.validate_guard = envelope_only
+    _impl.validate_bridge_output = globals()["validate_bridge_output"]
+    _impl.validate_prepared_index = globals()["validate_prepared_index"]
     try:
         result = _impl.build_guard(
             bridge,
@@ -35,6 +44,8 @@ def build_guard(
         )
     finally:
         _impl.validate_guard = original_validate
+        _impl.validate_bridge_output = original_bridge_validator
+        _impl.validate_prepared_index = original_prepared_validator
     original_validate(result, verify_files=False)
     return result
 
