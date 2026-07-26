@@ -170,10 +170,27 @@ def build_gate(
         exact_value.get("source_count") or 0
     ) <= 0:
         blockers.append("MATERIALIZED_SOURCE_COUNT_NOT_POSITIVE")
-    if not exact_value.get("downstream_materialization_receipt_fingerprint"):
-        blockers.append("DOWNSTREAM_MATERIALIZATION_ATTESTATION_MISSING")
-    if not exact_value.get("plan_fingerprint"):
-        blockers.append("DOWNSTREAM_INSPECTION_PLAN_FINGERPRINT_MISSING")
+    for field, blocker in (
+        (
+            "downstream_materialization_receipt_fingerprint",
+            "DOWNSTREAM_MATERIALIZATION_ATTESTATION_MISSING",
+        ),
+        (
+            "canonical_inventory_spec_fingerprint",
+            "CANONICAL_INVENTORY_SPEC_FINGERPRINT_MISSING",
+        ),
+        (
+            "materialization_evidence_fingerprint",
+            "MATERIALIZATION_EVIDENCE_FINGERPRINT_MISSING",
+        ),
+        ("plan_fingerprint", "DOWNSTREAM_INSPECTION_PLAN_FINGERPRINT_MISSING"),
+        (
+            "inventory_compiler_receipt_fingerprint",
+            "INVENTORY_COMPILER_RECEIPT_FINGERPRINT_MISSING",
+        ),
+    ):
+        if not exact_value.get(field):
+            blockers.append(blocker)
 
     blockers = sorted(set(blockers))
     lineage = {
@@ -222,7 +239,16 @@ def build_gate(
         "downstream_materialization_receipt_fingerprint": exact_value.get(
             "downstream_materialization_receipt_fingerprint"
         ),
+        "canonical_inventory_spec_fingerprint": exact_value.get(
+            "canonical_inventory_spec_fingerprint"
+        ),
+        "materialization_evidence_fingerprint": exact_value.get(
+            "materialization_evidence_fingerprint"
+        ),
         "plan_fingerprint": exact_value.get("plan_fingerprint"),
+        "inventory_compiler_receipt_fingerprint": exact_value.get(
+            "inventory_compiler_receipt_fingerprint"
+        ),
         "provenance_lineage": lineage,
         "provenance_lineage_fingerprint": _fp(lineage),
         "runtime_capture_recursively_validated": True,
