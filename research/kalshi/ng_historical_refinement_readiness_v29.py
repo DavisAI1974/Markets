@@ -18,6 +18,9 @@ from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping, Sequence
 
 import ng_historical_refinement_readiness as legacy
+import ng_historical_refinement_readiness_v25 as v25
+import ng_historical_refinement_readiness_v26 as v26
+import ng_historical_refinement_readiness_v27 as v27
 import ng_historical_refinement_readiness_v28 as v28
 
 SCHEMA = "ng_historical_refinement_readiness.v29"
@@ -43,7 +46,10 @@ _MATERIALIZER_PROVENANCE = StageSpec(
         "source_materializations_fingerprint",
         "source_count",
         "downstream_materialization_receipt_fingerprint",
+        "canonical_inventory_spec_fingerprint",
+        "materialization_evidence_fingerprint",
         "plan_fingerprint",
+        "inventory_compiler_receipt_fingerprint",
         "provenance_lineage_fingerprint",
         "next_action",
     ),
@@ -83,6 +89,18 @@ LINK_RULES: tuple[tuple[str, str, str, str], ...] = (
         "corpus_s3_materialization_provenance",
         "plan_fingerprint",
     ),
+    (
+        "corpus_s3_materialization_provenance",
+        "plan_fingerprint",
+        "corpus_definition_byte_binding",
+        "plan_fingerprint",
+    ),
+    (
+        "corpus_s3_materialization_provenance",
+        "inventory_compiler_receipt_fingerprint",
+        "corpus_definition_byte_binding",
+        "inventory_compiler_receipt_fingerprint",
+    ),
 )
 
 
@@ -112,34 +130,6 @@ def _overall_status(ready_keys: list[str]) -> str:
 
 
 @contextmanager
-def _v28_contract() -> Iterator[None]:
-    saved = (
-        v28.SCHEMA,
-        v28.STAGES,
-        v28.LINK_RULES,
-        v28._overall_status,
-        v28.validate_readiness_report,
-    )
-    v28.SCHEMA = SCHEMA
-    v28.STAGES = STAGES
-    v28.LINK_RULES = LINK_RULES
-    v28._overall_status = _overall_status
-    # V28's own validator hard-codes coverage as stage six. V29 inserts the
-    # recursive provenance gate at stage six and validates the full report below.
-    v28.validate_readiness_report = lambda report: None
-    try:
-        yield
-    finally:
-        (
-            v28.SCHEMA,
-            v28.STAGES,
-            v28.LINK_RULES,
-            v28._overall_status,
-            v28.validate_readiness_report,
-        ) = saved
-
-
-@contextmanager
 def _legacy_contract() -> Iterator[None]:
     saved = (legacy.SCHEMA, legacy.STAGES, legacy.LINK_RULES)
     legacy.SCHEMA = SCHEMA
@@ -151,33 +141,84 @@ def _legacy_contract() -> Iterator[None]:
         legacy.SCHEMA, legacy.STAGES, legacy.LINK_RULES = saved
 
 
+def _summary_fields(ready: Sequence[str]) -> dict[str, Any]:
+    ready_set = set(ready)
+    expected_days = "corpus_expected_day_contract" in ready_set
+    finalized = "corpus_inventory_finalization_contract" in ready_set
+    resolved = "corpus_s3_latest_version_resolution" in ready_set
+    runtime_capture = "corpus_s3_inventory_capture" in ready_set
+    materialized = "corpus_s3_materialization" in ready_set
+    provenance = "corpus_s3_materialization_provenance" in ready_set
+    inspected = "corpus_coverage" in ready_set
+    definition_bound = "corpus_definition_byte_binding" in ready_set
+    return {
+        "expected_day_contract_artifact": v25._EXPECTED_DAY_CONTRACT.filename,
+        "expected_day_contract_schema": v25._EXPECTED_DAY_CONTRACT.schema,
+        "complete_canonical_calendar_partition_attested": expected_days,
+        "operator_shortened_expected_day_lists_rejected": True,
+        "non_saturday_exclusions_evidence_bound": expected_days,
+        "g15_g16_target_days_must_remain_expected": True,
+        "s3_resolution_bound_to_expected_day_contract": resolved,
+        "calendar_contract_required_before_any_s3_inventory_request": True,
+        "inventory_finalization_contract_artifact": v26._INVENTORY_FINALIZATION_CONTRACT.filename,
+        "inventory_finalization_contract_schema": v26._INVENTORY_FINALIZATION_CONTRACT.schema,
+        "product_specific_finalization_lags_attested": finalized,
+        "inventory_observation_after_corpus_end_attested": finalized,
+        "lag_policy_evidence_fingerprints_bound": finalized,
+        "s3_resolution_bound_to_finalized_inventory_snapshot": resolved,
+        "expected_day_contract_bound_to_finalization_contract": finalized,
+        "finalization_contract_required_before_any_s3_request": True,
+        "runtime_observed_inventory_artifact": v27._RUNTIME_OBSERVED_S3_INVENTORY_CAPTURE.filename,
+        "runtime_observed_inventory_schema": v27._RUNTIME_OBSERVED_S3_INVENTORY_CAPTURE.schema,
+        "actual_runtime_capture_bound_to_product_lags": runtime_capture,
+        "declared_inventory_observations_bound_to_runtime_interval": runtime_capture,
+        "paginated_checksum_inventory_embedded_and_validated": runtime_capture,
+        "materialization_bound_to_runtime_observed_capture": materialized,
+        "runtime_observation_required_before_materialization": True,
+        "exact_s3_materializer_artifact": v28._EXACT_S3_MATERIALIZATION.filename,
+        "exact_s3_materializer_schema": v28._EXACT_S3_MATERIALIZATION.schema,
+        "runtime_capture_bound_to_exact_materializer": materialized,
+        "exact_version_get_object_materialization_attested": materialized,
+        "checksum_verified_before_atomic_replace": materialized,
+        "verified_existing_local_bytes_may_be_reused": materialized,
+        "broad_inspection_bound_to_exact_materialization": inspected,
+        "exact_materialization_required_after_runtime_inventory": True,
+        "materializer_provenance_artifact": _MATERIALIZER_PROVENANCE.filename,
+        "materializer_provenance_schema": _MATERIALIZER_PROVENANCE.schema,
+        "runtime_capture_and_exact_materializer_recursively_bound": provenance,
+        "complete_runtime_inventory_embedded_with_materialized_byte_lineage": provenance,
+        "broad_inspection_blocked_until_recursive_provenance": True,
+        "broad_inspection_bound_to_recursive_materializer_provenance": inspected,
+        "definition_binding_bound_to_recursive_materializer_provenance": definition_bound,
+        "materializer_provenance_required_after_exact_materialization": True,
+    }
+
+
 def build_readiness_report(
     artifact_dir: Path,
     *,
     stage_paths: Mapping[str, Path] | None = None,
     validator_overrides: Mapping[str, Callable[[Mapping[str, Any]], Any]] | None = None,
 ) -> dict[str, Any]:
-    with _v28_contract():
-        report = v28.build_readiness_report(
+    # Build directly against the canonical legacy evaluator. Older wrapper versions
+    # hard-code their historical prefix lengths, so recursively re-entering them after
+    # inserting a new stage can reject a valid newer order before the latest validator
+    # runs. Direct evaluation keeps every StageSpec, link rule, and authority check while
+    # avoiding those stale positional assumptions.
+    with _legacy_contract():
+        report = legacy.build_readiness_report(
             artifact_dir,
             stage_paths=stage_paths,
             validator_overrides=validator_overrides,
         )
     ready = list(report.get("ready_stages") or [])
-    provenance = "corpus_s3_materialization_provenance" in ready
-    inspected = "corpus_coverage" in ready
-    report["materializer_provenance_artifact"] = _MATERIALIZER_PROVENANCE.filename
-    report["materializer_provenance_schema"] = _MATERIALIZER_PROVENANCE.schema
-    report["runtime_capture_and_exact_materializer_recursively_bound"] = provenance
-    report["complete_runtime_inventory_embedded_with_materialized_byte_lineage"] = provenance
-    report["broad_inspection_blocked_until_recursive_provenance"] = True
-    report["broad_inspection_bound_to_recursive_materializer_provenance"] = inspected
-    report["materializer_provenance_required_after_exact_materialization"] = True
+    report["status"] = _overall_status(ready)
+    report.update(_summary_fields(ready))
     report["note"] = (
         "Readiness v29 requires exact materialization to be followed by a deterministic "
         "provenance gate that embeds and recursively validates the complete runtime-observed "
-        "inventory and exact materializer receipts. Broad byte inspection cannot proceed "
-        "from a detached materializer fingerprint."
+        "inventory and exact materializer receipts. Its plan and inventory-compiler "
+        "fingerprints also bind into definition-byte verification before any replay."
     )
     report.pop("fingerprint", None)
     report["fingerprint"] = _fingerprint(report)
@@ -198,32 +239,21 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
         legacy.validate_readiness_report(value)
 
     ready = list(value.get("ready_stages") or [])
-    provenance = "corpus_s3_materialization_provenance" in ready
-    inspected = "corpus_coverage" in ready
-    materialized = "corpus_s3_materialization" in ready
-    expected = {
-        "exact_s3_materializer_artifact": v28._EXACT_S3_MATERIALIZATION.filename,
-        "exact_s3_materializer_schema": v28._EXACT_S3_MATERIALIZATION.schema,
-        "runtime_capture_bound_to_exact_materializer": materialized,
-        "exact_version_get_object_materialization_attested": materialized,
-        "checksum_verified_before_atomic_replace": materialized,
-        "verified_existing_local_bytes_may_be_reused": materialized,
-        "broad_inspection_bound_to_exact_materialization": inspected,
-        "exact_materialization_required_after_runtime_inventory": True,
-        "materializer_provenance_artifact": _MATERIALIZER_PROVENANCE.filename,
-        "materializer_provenance_schema": _MATERIALIZER_PROVENANCE.schema,
-        "runtime_capture_and_exact_materializer_recursively_bound": provenance,
-        "complete_runtime_inventory_embedded_with_materialized_byte_lineage": provenance,
-        "broad_inspection_blocked_until_recursive_provenance": True,
-        "broad_inspection_bound_to_recursive_materializer_provenance": inspected,
-        "materializer_provenance_required_after_exact_materialization": True,
-    }
-    for field, item in expected.items():
+    if value.get("status") != _overall_status(ready):
+        raise HistoricalRefinementReadinessError(
+            "readiness v29 overall status mismatch"
+        )
+    for field, item in _summary_fields(ready).items():
         if value.get(field) != item:
             raise HistoricalRefinementReadinessError(
                 f"readiness v29 {field} summary mismatch"
             )
 
+    ready_set = set(ready)
+    provenance = "corpus_s3_materialization_provenance" in ready_set
+    inspected = "corpus_coverage" in ready_set
+    materialized = "corpus_s3_materialization" in ready_set
+    definition_bound = "corpus_definition_byte_binding" in ready_set
     if provenance and not materialized:
         raise HistoricalRefinementReadinessError(
             "materializer provenance may not bypass exact S3 materialization"
@@ -231,6 +261,10 @@ def validate_readiness_report(report: Mapping[str, Any]) -> None:
     if inspected and not provenance:
         raise HistoricalRefinementReadinessError(
             "broad byte inspection may not bypass recursive materializer provenance"
+        )
+    if definition_bound and not provenance:
+        raise HistoricalRefinementReadinessError(
+            "definition-byte binding may not bypass recursive materializer provenance"
         )
     order = list(value.get("stage_order") or [])
     if order[:7] != [
@@ -279,15 +313,41 @@ def _linked_fixture_chain() -> dict[str, dict[str, Any]]:
             "downstream_materialization_receipt_fingerprint": exact[
                 "downstream_materialization_receipt_fingerprint"
             ],
+            "canonical_inventory_spec_fingerprint": exact[
+                "canonical_inventory_spec_fingerprint"
+            ],
+            "materialization_evidence_fingerprint": exact[
+                "materialization_evidence_fingerprint"
+            ],
             "plan_fingerprint": exact["plan_fingerprint"],
+            "inventory_compiler_receipt_fingerprint": exact[
+                "inventory_compiler_receipt_fingerprint"
+            ],
             "provenance_lineage_fingerprint": "l" * 64,
             "blockers": [],
             "next_action": "RUN_BYTE_LEVEL_CORPUS_INSPECTION",
+            "actual_outcomes_used": False,
+            "paid_live_data_assumed": False,
+            "one_signal_authority_preserved": True,
+            "blind_forecasts_immutable": True,
+            "may_change_blind_forecast": False,
+            "may_change_posterior": False,
+            "cme_event_contracts_mode": "SHADOW",
+            "brokerage_contract": "tastytrade_not_ibkr",
         }
     )
     provenance.pop("fingerprint", None)
     provenance["fingerprint"] = _fingerprint(provenance)
     values["corpus_s3_materialization_provenance"] = provenance
+
+    definition = values.get("corpus_definition_byte_binding")
+    if isinstance(definition, dict):
+        definition["plan_fingerprint"] = provenance["plan_fingerprint"]
+        definition["inventory_compiler_receipt_fingerprint"] = provenance[
+            "inventory_compiler_receipt_fingerprint"
+        ]
+        definition.pop("fingerprint", None)
+        definition["fingerprint"] = _fingerprint(definition)
     return values
 
 
