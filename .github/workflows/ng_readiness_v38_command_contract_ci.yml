@@ -1,0 +1,72 @@
+name: NG readiness v38 command contracts
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_v38_execution_command_contract_gate.py'
+      - 'research/kalshi/ng_corpus_executor_plan_compiler_v30.py'
+      - 'research/kalshi/tests/test_ng_v38_execution_command_contract_gate.py'
+      - 'research/kalshi/tests/test_ng_corpus_executor_plan_compiler_v30.py'
+      - '.github/workflows/ng_readiness_v38_command_contract_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_v38_execution_command_contract_gate.py'
+      - 'research/kalshi/ng_corpus_executor_plan_compiler_v30.py'
+      - 'research/kalshi/tests/test_ng_v38_execution_command_contract_gate.py'
+      - 'research/kalshi/tests/test_ng_corpus_executor_plan_compiler_v30.py'
+      - '.github/workflows/ng_readiness_v38_command_contract_ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  command-contract:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile command-contract chain
+        run: |
+          python -m py_compile \
+            ng_v38_execution_command_contract_gate.py \
+            ng_corpus_executor_plan_compiler_v30.py \
+            tests/test_ng_v38_execution_command_contract_gate.py \
+            tests/test_ng_corpus_executor_plan_compiler_v30.py
+      - name: Run command-contract self-test
+        run: python ng_v38_execution_command_contract_gate.py selftest
+      - name: Run focused command-contract tests
+        run: |
+          python -m pytest -q \
+            tests/test_ng_v38_execution_command_contract_gate.py \
+            tests/test_ng_corpus_executor_plan_compiler_v30.py
+      - name: Verify permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_plan_compiler_v30 as compiler
+          import ng_v38_execution_command_contract_gate as gate
+
+          assert gate.EXTENSION_STAGES == compiler.EXTENSION_STAGES
+          source = open('ng_v38_execution_command_contract_gate.py', encoding='utf-8').read()
+          for token in (
+              'help_only_probe',
+              'corpus_files_opened',
+              'outcome_files_opened',
+              'tastytrade_not_ibkr',
+              'SHADOW',
+              'options_lane_started',
+              'may_update_ng_brain',
+              'random_shuffle_used',
+          ):
+              assert token in source
+          assert compiler.STATUS.endswith('COMMAND_CONTRACT_COMPILED')
+          PY

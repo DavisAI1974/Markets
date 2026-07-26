@@ -241,7 +241,7 @@ def build_gate(
         "working_directory": str(working_directory.resolve(strict=False)),
         "stage_order": list(EXTENSION_STAGES),
         "stage_probes": probes,
-        "stage_probe_fingerprints": {p["stage_key"]: p["fingerprint"] for p in probes},
+        "stage_probe_fingerprints": {p["stage_key']: p["fingerprint"] for p in probes},
         "blockers": blockers,
         "stand_downs": [
             {
@@ -299,6 +299,19 @@ def validate_gate(
     probes = checked.get("stage_probes")
     if not isinstance(probes, list) or [p.get("stage_key") for p in probes] != list(EXTENSION_STAGES):
         raise V38ExecutionCommandContractError("command-contract probes are incomplete or reordered")
+    validated_probe_fingerprints: dict[str, str] = {}
+    for probe in probes:
+        if not isinstance(probe, Mapping):
+            raise V38ExecutionCommandContractError("command-contract probe must be an object")
+        payload = copy.deepcopy(dict(probe))
+        probe_fingerprint = payload.pop("fingerprint", None)
+        if not isinstance(probe_fingerprint, str) or probe_fingerprint != _fp(payload):
+            raise V38ExecutionCommandContractError(
+                f"{probe.get('stage_key')}: command-contract probe fingerprint mismatch"
+            )
+        validated_probe_fingerprints[str(probe.get("stage_key"))] = probe_fingerprint
+    if checked.get("stage_probe_fingerprints") != validated_probe_fingerprints:
+        raise V38ExecutionCommandContractError("command-contract probe fingerprint map mismatch")
     if verify_runtime:
         rebuilt = build_gate(
             manifest,
