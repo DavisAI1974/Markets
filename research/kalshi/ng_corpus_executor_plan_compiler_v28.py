@@ -214,8 +214,6 @@ def _validate_fixed_outcome_chain(
             "bound publication references a different six-factor attribution"
         )
 
-    _authority(bound_publication, label="attribution-bound publication")
-    _authority(counterfactual_lessons, label="counterfactual lesson adjudication")
     return {
         "publication": copy.deepcopy(dict(publication)),
         "bound_publication": copy.deepcopy(dict(bound_publication)),
