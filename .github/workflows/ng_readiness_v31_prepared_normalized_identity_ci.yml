@@ -6,6 +6,7 @@ on:
       - chatgpt/ng-forecaster-s103-audit
     paths:
       - research/kalshi/ng_g15_prepared_normalized_identity_guard.py
+      - research/kalshi/ng_g15_prepared_normalized_identity_guard_impl.py
       - research/kalshi/ng_historical_refinement_readiness_v31.py
       - research/kalshi/ng_historical_refinement_executor_v27.py
       - research/kalshi/tests/test_ng_g15_prepared_normalized_identity_guard.py
@@ -13,6 +14,7 @@ on:
   pull_request:
     paths:
       - research/kalshi/ng_g15_prepared_normalized_identity_guard.py
+      - research/kalshi/ng_g15_prepared_normalized_identity_guard_impl.py
       - research/kalshi/ng_historical_refinement_readiness_v31.py
       - research/kalshi/ng_historical_refinement_executor_v27.py
       - research/kalshi/tests/test_ng_g15_prepared_normalized_identity_guard.py
@@ -33,6 +35,7 @@ jobs:
         run: |
           python -m py_compile \
             ng_g15_prepared_normalized_identity_guard.py \
+            ng_g15_prepared_normalized_identity_guard_impl.py \
             ng_historical_refinement_readiness_v31.py \
             ng_historical_refinement_executor_v27.py \
             tests/test_ng_g15_prepared_normalized_identity_guard.py
