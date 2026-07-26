@@ -74,7 +74,6 @@ jobs:
               "activity",
           )
           assert tuple(gate.FACTORS) == tuple(attribution.FACTORS)
-          _, _, _, _, report = gate._synthetic_fixture() + (None,)
           fixture = gate._synthetic_fixture()[3]
           assert fixture["actual_outcomes_used"] is False
           assert fixture["random_shuffle_used"] is False
