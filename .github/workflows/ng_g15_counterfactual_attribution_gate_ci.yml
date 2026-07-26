@@ -1,0 +1,88 @@
+name: NG G15 counterfactual attribution authorization
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_g15_counterfactual_attribution.py"
+      - "research/kalshi/ng_g15_counterfactual_attribution_gate.py"
+      - "research/kalshi/ng_g15_exact_refinement_gate.py"
+      - "research/kalshi/ng_g15_exact_replay_completion.py"
+      - "research/kalshi/ng_g15_pipeline.py"
+      - "research/kalshi/ng_rt_refiner.py"
+      - "research/kalshi/tests/test_ng_g15_counterfactual_attribution.py"
+      - "research/kalshi/tests/test_ng_g15_counterfactual_attribution_gate.py"
+      - ".github/workflows/ng_g15_counterfactual_attribution_gate_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_g15_counterfactual_attribution.py"
+      - "research/kalshi/ng_g15_counterfactual_attribution_gate.py"
+      - "research/kalshi/ng_g15_exact_refinement_gate.py"
+      - "research/kalshi/ng_g15_exact_replay_completion.py"
+      - "research/kalshi/ng_g15_pipeline.py"
+      - "research/kalshi/ng_rt_refiner.py"
+      - "research/kalshi/tests/test_ng_g15_counterfactual_attribution.py"
+      - "research/kalshi/tests/test_ng_g15_counterfactual_attribution_gate.py"
+      - ".github/workflows/ng_g15_counterfactual_attribution_gate_ci.yml"
+
+jobs:
+  exact-six-factor-attribution:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile exact G15 attribution chain
+        run: |
+          python -m py_compile \
+            ng_g15_exact_replay_completion.py \
+            ng_g15_pipeline.py \
+            ng_g15_exact_refinement_gate.py \
+            ng_g15_counterfactual_attribution.py \
+            ng_g15_counterfactual_attribution_gate.py \
+            ng_rt_refiner.py \
+            tests/test_ng_g15_counterfactual_attribution.py \
+            tests/test_ng_g15_counterfactual_attribution_gate.py
+      - name: Run upstream deterministic self-tests
+        run: |
+          python ng_g15_exact_refinement_gate.py --selftest
+          python ng_g15_counterfactual_attribution.py --selftest
+      - name: Run recursive attribution authorization self-test
+        run: python ng_g15_counterfactual_attribution_gate.py --selftest
+      - name: Run focused attribution tests
+        run: |
+          python -m pytest -q \
+            tests/test_ng_g15_counterfactual_attribution.py \
+            tests/test_ng_g15_counterfactual_attribution_gate.py
+      - name: Verify factor set and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_g15_counterfactual_attribution as attribution
+          import ng_g15_counterfactual_attribution_gate as gate
+
+          assert tuple(attribution.FACTORS) == (
+              "move_onset",
+              "signed_flow",
+              "divergence_exhaustion",
+              "queue_depletion_replenishment",
+              "price_efficiency",
+              "activity",
+          )
+          assert tuple(gate.FACTORS) == tuple(attribution.FACTORS)
+          _, _, _, _, report = gate._synthetic_fixture() + (None,)
+          fixture = gate._synthetic_fixture()[3]
+          assert fixture["actual_outcomes_used"] is False
+          assert fixture["random_shuffle_used"] is False
+          assert fixture["one_signal_authority_preserved"] is True
+          assert fixture["blind_forecast_immutable"] is True
+          assert fixture["may_update_ng_brain"] is False
+          assert fixture["execution_authority"] is False
+          assert fixture["cme_event_contracts_mode"] == "SHADOW"
+          assert fixture["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert fixture["options_lane_started"] is False
+          PY
