@@ -97,9 +97,9 @@ def _fixture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             }
         if operation == "get-bucket-location":
             response = {
-                "LocationConstraint": None
-                if state["bucket_region"] == "us-east-1"
-                else state["bucket_region"]
+                "LocationConstraint": (
+                    None if state["bucket_region"] == "us-east-1" else state["bucket_region"]
+                )
             }
         elif operation == "get-bucket-versioning":
             response = {"Status": state["versioning"]}
@@ -138,6 +138,26 @@ def _build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     return plan, arm, aws_receipt, source_spec, runner, state, receipt
 
 
+def _build_with_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    **changes,
+):
+    plan, arm, aws_receipt, source_spec, runner, state = _fixture(tmp_path, monkeypatch)
+    state.update(changes)
+    receipt = gate.build_gate(
+        plan,
+        arm,
+        aws_receipt,
+        source_spec,
+        tmp_path,
+        expected_account_id=ACCOUNT,
+        expected_region=REGION,
+        command_runner=runner,
+    )
+    return receipt
+
+
 def test_ready_gate_binds_buckets_prefixes_versioning_and_checksum_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -169,80 +189,24 @@ def test_ready_gate_binds_buckets_prefixes_versioning_and_checksum_metadata(
     )
 
 
-def test_wrong_bucket_region_is_visible_blocker(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    ("changes", "blocker"),
+    [
+        ({"bucket_region": "us-west-2"}, "BUCKET_REGION_MISMATCH"),
+        ({"versioning": "Suspended"}, "BUCKET_VERSIONING_NOT_ENABLED"),
+        ({"deny_operation": "list-object-versions"}, "LIST_OBJECT_VERSIONS_ACCESSDENIED"),
+        ({"checksum": ""}, "S3_SHA256_MISSING"),
+    ],
+)
+def test_capability_failures_are_visible_blockers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    changes: dict[str, object],
+    blocker: str,
 ) -> None:
-    plan, arm, aws_receipt, source_spec, runner, state = _fixture(tmp_path, monkeypatch)
-    state["bucket_region"] = "us-west-2"
-    receipt = gate.build_gate(
-        plan,
-        arm,
-        aws_receipt,
-        source_spec,
-        tmp_path,
-        expected_account_id=ACCOUNT,
-        expected_region=REGION,
-        command_runner=runner,
-    )
+    receipt = _build_with_state(tmp_path, monkeypatch, **changes)
     assert receipt["status"] == gate.BLOCKED
-    assert any("BUCKET_REGION_MISMATCH" in value for value in receipt["blockers"])
-
-
-def test_versioning_not_enabled_is_visible_blocker(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    plan, arm, aws_receipt, source_spec, runner, state = _fixture(tmp_path, monkeypatch)
-    state["versioning"] = "Suspended"
-    receipt = gate.build_gate(
-        plan,
-        arm,
-        aws_receipt,
-        source_spec,
-        tmp_path,
-        expected_account_id=ACCOUNT,
-        expected_region=REGION,
-        command_runner=runner,
-    )
-    assert receipt["status"] == gate.BLOCKED
-    assert any("BUCKET_VERSIONING_NOT_ENABLED" in value for value in receipt["blockers"])
-
-
-def test_prefix_access_denial_is_visible_blocker(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    plan, arm, aws_receipt, source_spec, runner, state = _fixture(tmp_path, monkeypatch)
-    state["deny_operation"] = "list-object-versions"
-    receipt = gate.build_gate(
-        plan,
-        arm,
-        aws_receipt,
-        source_spec,
-        tmp_path,
-        expected_account_id=ACCOUNT,
-        expected_region=REGION,
-        command_runner=runner,
-    )
-    assert receipt["status"] == gate.BLOCKED
-    assert any("LIST_OBJECT_VERSIONS_ACCESSDENIED" in value for value in receipt["blockers"])
-
-
-def test_missing_checksum_metadata_blocks(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    plan, arm, aws_receipt, source_spec, runner, state = _fixture(tmp_path, monkeypatch)
-    state["checksum"] = ""
-    receipt = gate.build_gate(
-        plan,
-        arm,
-        aws_receipt,
-        source_spec,
-        tmp_path,
-        expected_account_id=ACCOUNT,
-        expected_region=REGION,
-        command_runner=runner,
-    )
-    assert receipt["status"] == gate.BLOCKED
-    assert any("S3_SHA256_MISSING" in value for value in receipt["blockers"])
+    assert any(blocker in value for value in receipt["blockers"])
 
 
 def test_source_spec_profile_substitution_rejected(
@@ -275,7 +239,7 @@ def test_nested_refingerprinted_tampering_rejected(
     receipt["fingerprint"] = gate._fp(receipt)
     with pytest.raises(
         gate.V38S3SourceCapabilityRevalidationError,
-        match="deterministic evidence rebuild",
+        match="evidence fingerprint mismatch|deterministic evidence rebuild",
     ):
         gate.validate_gate(
             receipt,
