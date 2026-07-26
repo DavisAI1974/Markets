@@ -1,0 +1,78 @@
+name: NG readiness v38 G16-blind execution chain
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - 'research/kalshi/ng_corpus_executor_plan_compiler_v29.py'
+      - 'research/kalshi/ng_corpus_executor_pipeline_arm_v29.py'
+      - 'research/kalshi/ng_historical_refinement_preflight_v30.py'
+      - 'research/kalshi/ng_historical_refinement_executor_v34.py'
+      - 'research/kalshi/ng_historical_refinement_readiness_v38.py'
+      - 'research/kalshi/tests/test_ng_readiness_v38_g16_blind_execution_chain.py'
+      - '.github/workflows/ng_readiness_v38_g16_blind_execution_chain_ci.yml'
+  pull_request:
+    paths:
+      - 'research/kalshi/ng_corpus_executor_plan_compiler_v29.py'
+      - 'research/kalshi/ng_corpus_executor_pipeline_arm_v29.py'
+      - 'research/kalshi/ng_historical_refinement_preflight_v30.py'
+      - 'research/kalshi/ng_historical_refinement_executor_v34.py'
+      - 'research/kalshi/ng_historical_refinement_readiness_v38.py'
+      - 'research/kalshi/tests/test_ng_readiness_v38_g16_blind_execution_chain.py'
+      - '.github/workflows/ng_readiness_v38_g16_blind_execution_chain_ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g16-blind-execution-chain:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile v38 execution chain
+        run: |
+          python -m py_compile \
+            ng_corpus_executor_plan_compiler_v29.py \
+            ng_corpus_executor_pipeline_arm_v29.py \
+            ng_historical_refinement_preflight_v30.py \
+            ng_historical_refinement_executor_v34.py \
+            ng_historical_refinement_readiness_v38.py \
+            tests/test_ng_readiness_v38_g16_blind_execution_chain.py
+      - name: Run compiler manifest self-test
+        run: python ng_corpus_executor_plan_compiler_v29.py selftest
+      - name: Run focused G16-blind execution tests
+        run: python -m pytest -q tests/test_ng_readiness_v38_g16_blind_execution_chain.py
+      - name: Verify chronology and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_pipeline_arm_v29 as arm
+          import ng_historical_refinement_preflight_v30 as preflight
+
+          assert arm.ARMED_STAGES[-1] == 'g16_attribution_bound_curve_lock'
+          assert arm.PUBLICATION_STAGES == (
+              'g16_counterfactual_publication',
+              'g16_attribution_bound_publication',
+          )
+          assert preflight.STAGE_ORDER[-4:] == [
+              'g16_counterfactual_curve_lock',
+              'g16_attribution_bound_curve_lock',
+              'g16_counterfactual_publication',
+              'g16_attribution_bound_publication',
+          ]
+          source = open('ng_corpus_executor_pipeline_arm_v29.py', encoding='utf-8').read()
+          assert 'tastytrade_not_ibkr' in source
+          assert 'cme_event_contracts_mode' in source and 'SHADOW' in source
+          assert 'options_lane_started' in source
+          assert 'may_update_ng_brain' in source
+          assert 'random_shuffle_used' in source
+          PY
