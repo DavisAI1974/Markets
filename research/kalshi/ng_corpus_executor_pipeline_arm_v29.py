@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Arm the complete readiness-v38 G16-blind chain from one durable plan.
+"""Arm readiness-v38 through the attribution-bound G16 curve lock only.
 
-The v29 compiler configures every historical, G15, and G16 command but enables only
-its first stage. This arm keeps the guarded first-blocking-stage execution model while
-making the full chain through the attribution-bound immutable G16 curve lock runnable.
-Only explicitly supplied G15 outcome paths are exposed. Both fixed-G16 publication
-stages remain configured and disabled, so G16 outcomes and scoring stay inaccessible.
+The compiler supplies every command. This arm recursively validates that compiler
+receipt, exposes only the fixed G15 outcome bound by ``g15_publication --actual``,
+and enables the first-blocking-stage chain through the immutable G16 curve lock.
+Both fixed-G16 scoring/publication stages remain disabled.
 """
 from __future__ import annotations
 
@@ -59,25 +58,21 @@ def _write(path: Path, value: Mapping[str, Any]) -> None:
 
 def _commands(plan: Mapping[str, Any]) -> dict[str, list[str]]:
     rows = {str(row.get("key")): row for row in plan.get("stages") or []}
-    commands: dict[str, list[str]] = {}
+    result: dict[str, list[str]] = {}
     for key in compiler.READINESS_STAGES:
         argv = (rows.get(key) or {}).get("argv")
         if not isinstance(argv, list) or not argv or not all(
             isinstance(part, str) and part for part in argv
         ):
-            raise CorpusExecutorPipelineArmV29Error(
-                f"{key}: complete v38 command is missing or invalid"
-            )
-        commands[key] = list(argv)
-    return commands
+            raise CorpusExecutorPipelineArmV29Error(f"{key}: v38 command is missing or invalid")
+        result[key] = list(argv)
+    return result
 
 
 def _normalize_g15_outcomes(paths: Sequence[str]) -> list[str]:
     normalized = sorted({str(path).strip() for path in paths if str(path).strip()})
     if not normalized:
-        raise CorpusExecutorPipelineArmV29Error(
-            "at least one explicit fixed-G15 outcome path is required"
-        )
+        raise CorpusExecutorPipelineArmV29Error("an explicit fixed-G15 outcome path is required")
     for path in normalized:
         lowered = path.lower().replace("\\", "/")
         if "g16" in lowered or "grp16" in lowered:
@@ -85,6 +80,26 @@ def _normalize_g15_outcomes(paths: Sequence[str]) -> list[str]:
                 f"G16 outcome path is forbidden in the G16-blind arm: {path}"
             )
     return normalized
+
+
+def _flag_values(argv: Sequence[str], flag: str) -> list[str]:
+    values: list[str] = []
+    for index, token in enumerate(argv):
+        if token != flag:
+            continue
+        if index + 1 >= len(argv) or not argv[index + 1]:
+            raise CorpusExecutorPipelineArmV29Error(f"g15_publication: {flag} lacks a value")
+        values.append(str(argv[index + 1]))
+    return values
+
+
+def _expected_g15_outcomes(commands: Mapping[str, Sequence[str]]) -> list[str]:
+    values = _flag_values(list(commands.get("g15_publication") or []), "--actual")
+    if len(values) != 1:
+        raise CorpusExecutorPipelineArmV29Error(
+            "g15_publication must bind exactly one fixed outcome through --actual"
+        )
+    return _normalize_g15_outcomes(values)
 
 
 def _validated_compiled(
@@ -95,10 +110,7 @@ def _validated_compiled(
     commands = _commands(source_plan)
     try:
         compiler.validate_receipt(
-            source_receipt,
-            plan=source_plan,
-            commands=commands,
-            verify_files=False,
+            source_receipt, plan=source_plan, commands=commands, verify_files=False
         )
     except Exception as error:
         raise CorpusExecutorPipelineArmV29Error(
@@ -107,7 +119,7 @@ def _validated_compiled(
     executor.validate_plan(source_plan)
     if source_plan.get("outcome_paths") != []:
         raise CorpusExecutorPipelineArmV29Error(
-            "compiled readiness-v38 plan must not already expose outcome paths"
+            "compiled readiness-v38 plan already exposes outcome paths"
         )
     return source_plan, source_receipt, commands
 
@@ -121,20 +133,6 @@ def _set_outcomes(plan: Mapping[str, Any], outcomes: Sequence[str]) -> dict[str,
     return result
 
 
-def _arm(
-    plan: Mapping[str, Any], commands: Mapping[str, Sequence[str]], outcomes: Sequence[str]
-) -> dict[str, Any]:
-    armed = _set_outcomes(plan, outcomes)
-    for key in ARMED_STAGES:
-        armed = executor.configure_stage(armed, key, commands[key], enabled=True)
-    for key in PUBLICATION_STAGES:
-        armed = executor.configure_stage(armed, key, commands[key], enabled=False)
-    executor.validate_plan(armed)
-    compiler._validate_plan(armed, commands, compiled=False)
-    _check_armed_policy(armed, outcomes)
-    return armed
-
-
 def _check_armed_policy(plan: Mapping[str, Any], outcomes: Sequence[str]) -> None:
     executor.validate_plan(plan)
     rows = {str(row.get("key")): row for row in plan.get("stages") or []}
@@ -144,20 +142,15 @@ def _check_armed_policy(plan: Mapping[str, Any], outcomes: Sequence[str]) -> Non
         raise CorpusExecutorPipelineArmV29Error("armed plan G15 outcome paths mismatch")
     for key in ARMED_STAGES:
         if rows[key].get("enabled") is not True:
-            raise CorpusExecutorPipelineArmV29Error(f"{key}: G16-blind chain stage is not armed")
+            raise CorpusExecutorPipelineArmV29Error(f"{key}: G16-blind stage is not armed")
     for key in PUBLICATION_STAGES:
         if rows[key].get("enabled") is not False:
-            raise CorpusExecutorPipelineArmV29Error(
-                f"{key}: fixed G16 scoring/publication must remain disabled"
-            )
+            raise CorpusExecutorPipelineArmV29Error(f"{key}: G16 scoring must remain disabled")
     outcome_tokens = set(outcomes)
     for spec in readiness.STAGES:
-        if not spec.pre_outcome:
-            continue
-        argv = set(rows[spec.key].get("argv") or [])
-        if outcome_tokens.intersection(argv):
+        if spec.pre_outcome and outcome_tokens.intersection(rows[spec.key].get("argv") or []):
             raise CorpusExecutorPipelineArmV29Error(
-                f"{spec.key}: outcome-blind command references a fixed G15 outcome"
+                f"{spec.key}: outcome-blind command references fixed G15 outcomes"
             )
     for field in (
         "remote_presence_inferred",
@@ -169,14 +162,27 @@ def _check_armed_policy(plan: Mapping[str, Any], outcomes: Sequence[str]) -> Non
     ):
         if plan.get(field) is not False:
             raise CorpusExecutorPipelineArmV29Error(f"armed plan must keep {field}=false")
-    if plan.get("blind_forecasts_immutable") is not True:
-        raise CorpusExecutorPipelineArmV29Error("blind forecasts must remain immutable")
     if plan.get("one_signal_authority_preserved") is not True:
         raise CorpusExecutorPipelineArmV29Error("one signal authority must be preserved")
+    if plan.get("blind_forecasts_immutable") is not True:
+        raise CorpusExecutorPipelineArmV29Error("blind forecasts must remain immutable")
     if plan.get("cme_event_contracts_mode") != "SHADOW":
         raise CorpusExecutorPipelineArmV29Error("CME event contracts must remain SHADOW")
     if plan.get("brokerage_contract") != "tastytrade_not_ibkr":
         raise CorpusExecutorPipelineArmV29Error("brokerage contract must remain tastytrade")
+
+
+def _arm(
+    plan: Mapping[str, Any], commands: Mapping[str, Sequence[str]], outcomes: Sequence[str]
+) -> dict[str, Any]:
+    armed = _set_outcomes(plan, outcomes)
+    for key in ARMED_STAGES:
+        armed = executor.configure_stage(armed, key, commands[key], enabled=True)
+    for key in PUBLICATION_STAGES:
+        armed = executor.configure_stage(armed, key, commands[key], enabled=False)
+    compiler._validate_plan(armed, commands, compiled=False)
+    _check_armed_policy(armed, outcomes)
+    return armed
 
 
 def build_armed_plan(
@@ -189,6 +195,11 @@ def build_armed_plan(
         compiled_plan, compiler_receipt
     )
     outcomes = _normalize_g15_outcomes(g15_outcome_paths)
+    expected_outcomes = _expected_g15_outcomes(commands)
+    if outcomes != expected_outcomes:
+        raise CorpusExecutorPipelineArmV29Error(
+            "explicit G15 outcomes do not match g15_publication --actual"
+        )
     armed = _arm(source_plan, commands, outcomes)
     receipt: dict[str, Any] = {
         "schema": SCHEMA,
@@ -202,7 +213,9 @@ def build_armed_plan(
         "compiled_plan": copy.deepcopy(source_plan),
         "compiler_receipt": copy.deepcopy(source_receipt),
         "g15_outcome_paths": list(outcomes),
-        "g15_outcome_paths_fingerprint": compiler._fp(list(outcomes)),
+        "g15_outcome_paths_fingerprint": compiler._fp(outcomes),
+        "g15_publication_actual_paths_fingerprint": compiler._fp(expected_outcomes),
+        "g15_outcomes_match_publication_command": True,
         "armed_stages": list(ARMED_STAGES),
         "terminal_stage": TERMINAL_STAGE,
         "publication_stages_disabled": list(PUBLICATION_STAGES),
@@ -239,9 +252,7 @@ def validate_arm_receipt(
     checked = copy.deepcopy(dict(value))
     observed = checked.pop("fingerprint", None)
     if checked.get("schema") != SCHEMA or observed != compiler._fp(checked):
-        raise CorpusExecutorPipelineArmV29Error(
-            "pipeline arm v29 schema or fingerprint mismatch"
-        )
+        raise CorpusExecutorPipelineArmV29Error("pipeline arm v29 fingerprint mismatch")
     checked["fingerprint"] = observed
     try:
         compiler._authority(checked, label="pipeline arm v29 receipt")
@@ -250,13 +261,16 @@ def validate_arm_receipt(
     source_plan = checked.get("compiled_plan")
     source_receipt = checked.get("compiler_receipt")
     if not isinstance(source_plan, Mapping) or not isinstance(source_receipt, Mapping):
-        raise CorpusExecutorPipelineArmV29Error(
-            "pipeline arm receipt lacks recursive compiler provenance"
-        )
+        raise CorpusExecutorPipelineArmV29Error("arm receipt lacks compiler provenance")
     validated_plan, validated_receipt, commands = _validated_compiled(
         source_plan, source_receipt
     )
     outcomes = _normalize_g15_outcomes(checked.get("g15_outcome_paths") or [])
+    expected_outcomes = _expected_g15_outcomes(commands)
+    if outcomes != expected_outcomes:
+        raise CorpusExecutorPipelineArmV29Error(
+            "receipt G15 outcomes do not match g15_publication --actual"
+        )
     expected_plan = _arm(validated_plan, commands, outcomes)
     if copy.deepcopy(dict(armed_plan)) != expected_plan:
         raise CorpusExecutorPipelineArmV29Error(
@@ -270,7 +284,9 @@ def validate_arm_receipt(
         "compiler_receipt_fingerprint": validated_receipt["fingerprint"],
         "armed_plan_fingerprint": expected_plan["fingerprint"],
         "commands_fingerprint": compiler._fp(commands),
-        "g15_outcome_paths_fingerprint": compiler._fp(list(outcomes)),
+        "g15_outcome_paths_fingerprint": compiler._fp(outcomes),
+        "g15_publication_actual_paths_fingerprint": compiler._fp(expected_outcomes),
+        "g15_outcomes_match_publication_command": True,
         "armed_stages": list(ARMED_STAGES),
         "terminal_stage": TERMINAL_STAGE,
         "publication_stages_disabled": list(PUBLICATION_STAGES),
@@ -284,9 +300,7 @@ def validate_arm_receipt(
     }
     for field, expected_value in expected.items():
         if checked.get(field) != expected_value:
-            raise CorpusExecutorPipelineArmV29Error(
-                f"pipeline arm v29 field mismatch: {field}"
-            )
+            raise CorpusExecutorPipelineArmV29Error(f"arm receipt field mismatch: {field}")
     _check_armed_policy(armed_plan, outcomes)
     return copy.deepcopy(dict(value))
 
@@ -306,16 +320,7 @@ def main() -> int:
     )
     _write(args.plan_out, armed)
     _write(args.receipt_out, receipt)
-    print(
-        json.dumps(
-            {
-                "status": receipt["status"],
-                "terminal_stage": receipt["terminal_stage"],
-                "plan": str(args.plan_out),
-            },
-            sort_keys=True,
-        )
-    )
+    print(json.dumps({"status": receipt["status"], "plan": str(args.plan_out)}, sort_keys=True))
     return 0
 
 
