@@ -8,6 +8,7 @@ on:
       - research/kalshi/ng_g15_prepared_normalized_identity_guard.py
       - research/kalshi/ng_g15_prepared_normalized_identity_guard_impl.py
       - research/kalshi/ng_historical_refinement_readiness_v31.py
+      - research/kalshi/ng_historical_refinement_readiness_v31_impl.py
       - research/kalshi/ng_historical_refinement_executor_v27.py
       - research/kalshi/tests/test_ng_g15_prepared_normalized_identity_guard.py
       - .github/workflows/ng_readiness_v31_prepared_normalized_identity_ci.yml
@@ -16,6 +17,7 @@ on:
       - research/kalshi/ng_g15_prepared_normalized_identity_guard.py
       - research/kalshi/ng_g15_prepared_normalized_identity_guard_impl.py
       - research/kalshi/ng_historical_refinement_readiness_v31.py
+      - research/kalshi/ng_historical_refinement_readiness_v31_impl.py
       - research/kalshi/ng_historical_refinement_executor_v27.py
       - research/kalshi/tests/test_ng_g15_prepared_normalized_identity_guard.py
       - .github/workflows/ng_readiness_v31_prepared_normalized_identity_ci.yml
@@ -37,6 +39,7 @@ jobs:
             ng_g15_prepared_normalized_identity_guard.py \
             ng_g15_prepared_normalized_identity_guard_impl.py \
             ng_historical_refinement_readiness_v31.py \
+            ng_historical_refinement_readiness_v31_impl.py \
             ng_historical_refinement_executor_v27.py \
             tests/test_ng_g15_prepared_normalized_identity_guard.py
       - name: Run gate self-test
