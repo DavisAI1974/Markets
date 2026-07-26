@@ -427,6 +427,7 @@ def _selftest() -> None:
 
         missing = dict(paths)
         missing.pop(_ATTRIBUTION_BOUND_PUBLICATION.key)
+        paths[_ATTRIBUTION_BOUND_PUBLICATION.key].unlink()
         partial = build_readiness_report(
             root,
             stage_paths=missing,
