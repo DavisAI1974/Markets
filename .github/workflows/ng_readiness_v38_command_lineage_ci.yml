@@ -1,0 +1,69 @@
+name: NG v38 execution command lineage
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_v38_execution_command_lineage_gate.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v30.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v31.py
+      - research/kalshi/tests/test_ng_v38_execution_command_lineage_gate.py
+      - .github/workflows/ng_readiness_v38_command_lineage_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  command-lineage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pytest
+
+      - name: Compile command-lineage sources
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_v38_execution_command_contract_gate.py \
+            ng_v38_execution_command_lineage_gate.py \
+            ng_corpus_executor_plan_compiler_v29.py \
+            ng_corpus_executor_plan_compiler_v30.py \
+            ng_corpus_executor_plan_compiler_v31.py \
+            tests/test_ng_v38_execution_command_lineage_gate.py
+
+      - name: Run deterministic command-lineage self-test
+        working-directory: research/kalshi
+        run: python ng_v38_execution_command_lineage_gate.py --selftest
+
+      - name: Run focused command-lineage tests
+        working-directory: research/kalshi
+        run: pytest -q tests/test_ng_v38_execution_command_lineage_gate.py
+
+      - name: Verify permanent authority wall
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import ng_corpus_executor_plan_compiler_v31 as compiler
+          import ng_v38_execution_command_lineage_gate as gate
+
+          text = inspect.getsource(gate) + inspect.getsource(compiler)
+          assert '"cme_event_contracts_mode": "SHADOW"' in text
+          assert '"brokerage_contract": "tastytrade_not_ibkr"' in text
+          assert '"options_lane_started": False' in text
+          assert '"may_update_ng_brain": False' in text
+          assert '"random_shuffle_used": False' in text
+          assert 'g16_counterfactual_publication' in text
+          assert 'RAW_ACTUAL_PATH_FORBIDDEN_BEFORE_SCORING' in text
+          assert 'exact_command_source_bindings_verified' in text
+          assert 'all_required_cli_options_verified' in text
+          PY
