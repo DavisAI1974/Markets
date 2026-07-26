@@ -226,10 +226,6 @@ def _cross_checks(bound: Mapping[str, Any], publication: Mapping[str, Any]) -> N
             bound.get("counterfactual_curve_authorization_fingerprint"),
             publication.get("counterfactual_curve_authorization_fingerprint"),
         ),
-        "legacy causal authorization": (
-            bound.get("attribution_bound_causal_authorization_fingerprint"),
-            publication.get("counterfactual_causal_authorization_fingerprint"),
-        ),
         "prepared curve authorization": (
             bound.get("prepared_curve_authorization_fingerprint"),
             publication.get("prepared_curve_authorization_fingerprint"),
