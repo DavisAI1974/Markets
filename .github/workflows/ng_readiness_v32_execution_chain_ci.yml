@@ -1,0 +1,86 @@
+name: NG readiness v32 stable execution chain
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_historical_refinement_executor_v28.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v27.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v27_core.py
+      - research/kalshi/ng_corpus_executor_plan_compiler_v27_impl.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v27.py
+      - research/kalshi/ng_historical_refinement_preflight_v28.py
+      - research/kalshi/tests/test_ng_readiness_v32_execution_chain.py
+      - .github/workflows/ng_readiness_v32_execution_chain_ci.yml
+  workflow_dispatch:
+
+jobs:
+  stable-g15-attribution-authorization:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+      - name: Compile v32 stable execution chain
+        run: |
+          python -m py_compile \
+            ng_historical_refinement_executor_v28.py \
+            ng_corpus_executor_plan_compiler_v27.py \
+            ng_corpus_executor_plan_compiler_v27_core.py \
+            ng_corpus_executor_plan_compiler_v27_impl.py \
+            ng_corpus_executor_pipeline_arm_v27.py \
+            ng_historical_refinement_preflight_v28.py \
+            tests/test_ng_readiness_v32_execution_chain.py
+      - name: Run deterministic upstream self-tests
+        run: |
+          python ng_g15_exact_replay_completion.py --selftest
+          python ng_g15_exact_refinement_gate.py --selftest
+          python ng_g15_counterfactual_attribution.py --selftest
+          python ng_g15_counterfactual_attribution_gate.py --selftest
+          python ng_historical_refinement_readiness_v32.py --selftest
+      - name: Run focused stable execution tests
+        run: |
+          pytest -q \
+            tests/test_ng_g15_counterfactual_attribution_gate.py \
+            tests/test_ng_readiness_v32_attribution_authorization.py \
+            tests/test_ng_readiness_v32_execution_chain.py
+      - name: Verify pre-outcome chronology and authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_plan_compiler_v27 as compiler
+          import ng_historical_refinement_executor_v28 as executor
+          import ng_historical_refinement_readiness_v32 as readiness
+
+          order = [spec.key for spec in readiness.STAGES]
+          assert list(compiler.CONFIGURED_STAGES) == order[:len(compiler.CONFIGURED_STAGES)]
+          assert list(compiler.CONFIGURED_STAGES)[-4:] == [
+              "g15_exact_replay",
+              "g15_exact_refinement",
+              "g15_counterfactual_attribution",
+              "g15_counterfactual_attribution_authorization",
+          ]
+          assert order[len(compiler.CONFIGURED_STAGES)] == "g15_publication"
+          assert executor.SUGGESTED_ENTRYPOINTS["g15_counterfactual_attribution"] == (
+              "python", "ng_g15_counterfactual_attribution.py"
+          )
+          authorization = readiness._linked_fixture_chain()[
+              "g15_counterfactual_attribution_authorization"
+          ]
+          assert authorization["actual_outcomes_used"] is False
+          assert authorization["random_shuffle_used"] is False
+          assert authorization["one_signal_authority_preserved"] is True
+          assert authorization["blind_forecasts_immutable"] is True
+          assert authorization["may_update_ng_brain"] is False
+          assert authorization["execution_authority"] is False
+          assert authorization["g16_authorized"] is False
+          assert authorization["cme_event_contracts_mode"] == "SHADOW"
+          assert authorization["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert authorization["options_lane_started"] is False
+          PY
