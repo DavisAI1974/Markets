@@ -116,14 +116,20 @@ def configure_stage(
         return legacy_executor.configure_stage(plan, stage_key, argv, **kwargs)
 
 
+def execute_next(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """Execute one v38 stage using the real base executor entrypoint."""
+    with _v38_context():
+        return legacy_executor.execute_next(*args, **kwargs)
+
+
 def run_next(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    with _v38_context():
-        return legacy_executor.run_next(*args, **kwargs)
+    """Compatibility alias retained for existing versioned preflight wrappers."""
+    return execute_next(*args, **kwargs)
 
 
-def validate_ledger(ledger: Mapping[str, Any]) -> None:
+def validate_ledger(ledger: Mapping[str, Any], plan: Mapping[str, Any]) -> None:
     with _v38_context():
-        legacy_executor.validate_ledger(ledger)
+        legacy_executor.validate_ledger(ledger, plan)
 
 
 def main() -> int:
