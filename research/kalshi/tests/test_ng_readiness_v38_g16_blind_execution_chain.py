@@ -13,12 +13,17 @@ import ng_historical_refinement_executor_v34 as executor
 
 def _compiled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(compiler.v28, "validate_receipt", lambda *args, **kwargs: None)
+    stages = []
+    by_key = {spec.key: spec for spec in compiler.readiness.STAGES}
+    for key in compiler.PREFIX_STAGES:
+        prefix = list(compiler.executor.SUGGESTED_ENTRYPOINTS.get(key, ()))
+        argv = [*(prefix or ["python", f"{key}.py"]), "--out", str(tmp_path / by_key[key].filename)]
+        if key == "g15_publication":
+            argv.extend(["--actual", "renders/ng_refine_s95/g15_actual_fixed.json"])
+        stages.append({"key": key, "argv": argv})
     upstream_plan = {
         "fingerprint": "p" * 64,
-        "stages": [
-            {"key": key, "argv": ["python", f"{key}.py"]}
-            for key in compiler.PREFIX_STAGES
-        ],
+        "stages": stages,
     }
     upstream_receipt = {"fingerprint": "r" * 64}
     manifest = compiler.build_extension_manifest(
@@ -89,6 +94,18 @@ def test_arm_rejects_g16_outcome_path(
             plan,
             receipt,
             g15_outcome_paths=["renders/ng_refine_s95/g16_actual.json"],
+        )
+
+
+def test_arm_rejects_outcome_not_bound_by_g15_publication(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    plan, receipt = _compiled(tmp_path, monkeypatch)
+    with pytest.raises(arm.CorpusExecutorPipelineArmV29Error):
+        arm.build_armed_plan(
+            plan,
+            receipt,
+            g15_outcome_paths=["renders/ng_refine_s95/another_g15_actual.json"],
         )
 
 
