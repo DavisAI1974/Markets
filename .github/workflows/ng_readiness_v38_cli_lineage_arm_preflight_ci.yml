@@ -1,0 +1,79 @@
+name: NG v38 CLI-lineage arm and preflight
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v31.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v31.py
+      - research/kalshi/ng_historical_refinement_preflight_v31.py
+      - research/kalshi/ng_v38_execution_command_contract_gate.py
+      - research/kalshi/ng_v38_execution_command_lineage_gate.py
+      - research/kalshi/tests/test_ng_readiness_v38_cli_lineage_arm_preflight.py
+      - .github/workflows/ng_readiness_v38_cli_lineage_arm_preflight_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cli-lineage-arm-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pytest
+
+      - name: Compile readiness-v38 arm and preflight sources
+        working-directory: research/kalshi
+        run: |
+          python -m py_compile \
+            ng_corpus_executor_plan_compiler_v29.py \
+            ng_corpus_executor_plan_compiler_v30.py \
+            ng_corpus_executor_plan_compiler_v31.py \
+            ng_corpus_executor_pipeline_arm_v29.py \
+            ng_corpus_executor_pipeline_arm_v31.py \
+            ng_historical_refinement_preflight_v30.py \
+            ng_historical_refinement_preflight_v31.py \
+            ng_v38_execution_command_contract_gate.py \
+            ng_v38_execution_command_lineage_gate.py \
+            tests/test_ng_readiness_v38_cli_lineage_arm_preflight.py
+
+      - name: Run deterministic command-lineage self-test
+        working-directory: research/kalshi
+        run: python ng_v38_execution_command_lineage_gate.py --selftest
+
+      - name: Run focused compiler-v31 arm and preflight tests
+        working-directory: research/kalshi
+        run: pytest -q tests/test_ng_readiness_v38_cli_lineage_arm_preflight.py
+
+      - name: Verify chronology and permanent authority wall
+        working-directory: research/kalshi
+        run: |
+          python - <<'PY'
+          import inspect
+          import ng_corpus_executor_pipeline_arm_v31 as arm
+          import ng_historical_refinement_preflight_v31 as preflight
+
+          assert arm.ARMED_STAGES[-1] == "g16_attribution_bound_curve_lock"
+          assert arm.PUBLICATION_STAGES == (
+              "g16_counterfactual_publication",
+              "g16_attribution_bound_publication",
+          )
+          text = inspect.getsource(arm) + inspect.getsource(preflight)
+          assert '"all_required_cli_options_verified": True' in text
+          assert '"exact_command_source_bindings_verified": True' in text
+          assert '"g16_actual_exposed_only_at_counterfactual_publication": True' in text
+          assert '"cme_event_contracts_mode": "SHADOW"' in text
+          assert '"brokerage_contract": "tastytrade_not_ibkr"' in text
+          assert '"options_lane_started": False' in text
+          assert '"may_update_ng_brain": False' in text
+          assert '"random_shuffle_used": False' in text
+          PY
