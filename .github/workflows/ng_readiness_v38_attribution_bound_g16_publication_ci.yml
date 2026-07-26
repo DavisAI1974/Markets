@@ -1,0 +1,84 @@
+name: NG readiness v38 attribution-bound G16 publication
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_g16_attribution_bound_publication_gate.py
+      - research/kalshi/ng_historical_refinement_readiness_v38.py
+      - research/kalshi/ng_historical_refinement_executor_v34.py
+      - research/kalshi/tests/test_ng_g16_attribution_bound_publication_gate.py
+      - research/kalshi/tests/test_ng_readiness_v38_attribution_bound_g16_publication.py
+      - .github/workflows/ng_readiness_v38_attribution_bound_g16_publication_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  attribution-bound-g16-publication:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+      - name: Compile attribution-bound publication chain
+        run: |
+          python -m py_compile \
+            ng_g16_attribution_bound_curve_lock_gate.py \
+            ng_g16_counterfactual_publication_gate.py \
+            ng_g16_attribution_bound_publication_gate.py \
+            ng_historical_refinement_readiness_v37.py \
+            ng_historical_refinement_readiness_v38.py \
+            ng_historical_refinement_executor_v33.py \
+            ng_historical_refinement_executor_v34.py \
+            tests/test_ng_g16_attribution_bound_publication_gate.py \
+            tests/test_ng_readiness_v38_attribution_bound_g16_publication.py
+      - name: Run deterministic self-tests
+        run: |
+          python ng_g16_attribution_bound_curve_lock_gate.py --selftest
+          python ng_g16_attribution_bound_publication_gate.py --selftest
+          python ng_historical_refinement_readiness_v38.py --selftest
+      - name: Run focused tests
+        run: |
+          python -m pytest -q \
+            tests/test_ng_g16_attribution_bound_curve_lock_gate.py \
+            tests/test_ng_g16_attribution_bound_publication_gate.py \
+            tests/test_ng_readiness_v38_attribution_bound_g16_publication.py
+      - name: Verify score separation and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_historical_refinement_readiness_v38 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys[-4:] == [
+              "g16_counterfactual_curve_lock",
+              "g16_attribution_bound_curve_lock",
+              "g16_counterfactual_publication",
+              "g16_attribution_bound_publication",
+          ]
+          by_key = {spec.key: spec for spec in readiness.STAGES}
+          assert by_key["g16_attribution_bound_publication"].pre_outcome is False
+
+          values = readiness._linked_fixture_chain()
+          publication = values["g16_attribution_bound_publication"]
+          assert publication["g15_blind_score_fingerprint"] != publication["g15_refined_score_fingerprint"]
+          assert publication["blind_score_fingerprint"] != publication["refined_score_fingerprint"]
+          assert publication["actual_g15_outcomes_used"] is True
+          assert publication["actual_g16_outcomes_used"] is True
+          assert publication["random_shuffle_used"] is False
+          assert publication["one_signal_authority_preserved"] is True
+          assert publication["blind_forecasts_immutable"] is True
+          assert publication["may_update_ng_brain"] is False
+          assert publication["execution_authority"] is False
+          assert publication["cme_event_contracts_mode"] == "SHADOW"
+          assert publication["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert publication["options_lane_started"] is False
+          PY
