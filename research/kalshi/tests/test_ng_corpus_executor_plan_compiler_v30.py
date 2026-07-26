@@ -54,6 +54,8 @@ def test_compiler_requires_ready_command_contract(tmp_path: Path, monkeypatch: p
     assert receipt["status"] == compiler.STATUS
     assert receipt["command_contract_fingerprint"] == contract["fingerprint"]
     assert receipt["all_required_cli_options_verified"] is True
+    assert receipt["may_change_blind_forecast"] is False
+    assert "max_change_blind_forecast" not in receipt
     assert receipt["options_lane_started"] is False
 
 
