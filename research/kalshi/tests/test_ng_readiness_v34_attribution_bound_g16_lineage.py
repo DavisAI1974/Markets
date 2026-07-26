@@ -104,7 +104,12 @@ def test_link_substitution_blocks_bound_lineage(tmp_path: Path) -> None:
         readiness._atomic_json(tmp_path / spec.filename, values[spec.key])
     report = readiness.build_readiness_report(tmp_path, validator_overrides=overrides)
     assert report["first_blocking_stage"] == "g15_g16_attribution_bound_lineage"
-    assert report["link_mismatches"]
+    row = next(
+        item
+        for item in report["stages"]
+        if item["key"] == "g15_g16_attribution_bound_lineage"
+    )
+    assert any("provenance link mismatch" in blocker for blocker in row["blockers"])
 
 
 def test_complete_fixture_preserves_g16_blind_wall(tmp_path: Path) -> None:
