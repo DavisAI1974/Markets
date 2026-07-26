@@ -1,0 +1,75 @@
+name: NG readiness v38 executor command manifest
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v29.py
+      - research/kalshi/tests/test_ng_corpus_executor_plan_compiler_v29.py
+      - .github/workflows/ng_readiness_v38_executor_manifest_ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v38-executor-manifest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+      - name: Compile v38 executor manifest chain
+        run: |
+          python -m py_compile \
+            ng_corpus_executor_plan_compiler_v28.py \
+            ng_corpus_executor_plan_compiler_v29.py \
+            ng_historical_refinement_readiness_v38.py \
+            ng_historical_refinement_executor_v34.py \
+            tests/test_ng_corpus_executor_plan_compiler_v29.py
+      - name: Run deterministic manifest self-test
+        run: python ng_corpus_executor_plan_compiler_v29.py selftest
+      - name: Run focused tests
+        run: python -m pytest -q tests/test_ng_corpus_executor_plan_compiler_v29.py
+      - name: Verify complete v38 extension and authority wall
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ng_corpus_executor_plan_compiler_v29 as compiler
+
+          assert compiler.EXTENSION_STAGES[0] == "g15_g16_counterfactual_lineage"
+          assert compiler.EXTENSION_STAGES[-1] == "g16_attribution_bound_publication"
+          for required in (
+              "g15_g16_attribution_bound_lineage",
+              "g16_attribution_bound_causal_authorization",
+              "g16_attribution_bound_curve_authorization",
+              "g16_attribution_bound_curve_lock",
+              "g16_attribution_bound_publication",
+          ):
+              assert required in compiler.EXTENSION_STAGES
+
+          root = Path("/tmp/ng-v38-ci")
+          manifest = compiler.build_extension_manifest(
+              artifact_dir=root,
+              commands=compiler._selftest_commands(root),
+          )
+          assert manifest["status"] == compiler.MANIFEST_READY
+          assert manifest["blockers"] == []
+          assert manifest["random_shuffle_used"] is False
+          assert manifest["one_signal_authority_preserved"] is True
+          assert manifest["blind_forecasts_immutable"] is True
+          assert manifest["may_update_ng_brain"] is False
+          assert manifest["execution_authority"] is False
+          assert manifest["cme_event_contracts_mode"] == "SHADOW"
+          assert manifest["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert manifest["options_lane_started"] is False
+          assert manifest["all_extension_stages_disabled_at_compile"] is True
+          assert manifest["outcome_paths_exposed_at_compile"] is False
+          PY
