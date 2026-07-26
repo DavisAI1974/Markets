@@ -1,0 +1,82 @@
+name: NG readiness v30 source-native identity chain
+
+on:
+  push:
+    paths:
+      - "research/kalshi/ng_corpus_source_identity_attestation.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v30.py"
+      - "research/kalshi/ng_historical_refinement_executor_v26.py"
+      - "research/kalshi/tests/test_ng_source_identity_readiness_v30.py"
+      - ".github/workflows/ng_readiness_v30_source_identity_ci.yml"
+  pull_request:
+    paths:
+      - "research/kalshi/ng_corpus_source_identity_attestation.py"
+      - "research/kalshi/ng_historical_refinement_readiness_v30.py"
+      - "research/kalshi/ng_historical_refinement_executor_v26.py"
+      - "research/kalshi/tests/test_ng_source_identity_readiness_v30.py"
+      - ".github/workflows/ng_readiness_v30_source_identity_ci.yml"
+
+jobs:
+  source-native-identity:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile source-native identity chain
+        run: |
+          python -m py_compile \
+            ng_corpus_source_identity_attestation.py \
+            ng_historical_refinement_readiness_v30.py \
+            ng_historical_refinement_executor_v26.py \
+            tests/test_ng_source_identity_readiness_v30.py
+      - name: Run source-native identity self-test
+        run: python ng_corpus_source_identity_attestation.py selftest
+      - name: Run readiness v30 self-test
+        run: python ng_historical_refinement_readiness_v30.py --selftest
+      - name: Run focused source-native identity tests
+        run: python -m pytest -q tests/test_ng_source_identity_readiness_v30.py
+      - name: Verify identity boundary and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_source_identity_attestation as identity
+          import ng_historical_refinement_executor_v26 as executor
+          import ng_historical_refinement_readiness_v30 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          assert keys[:8] == [
+              "corpus_expected_day_contract",
+              "corpus_inventory_finalization_contract",
+              "corpus_s3_latest_version_resolution",
+              "corpus_s3_inventory_capture",
+              "corpus_s3_materialization",
+              "corpus_s3_materialization_provenance",
+              "corpus_source_identity_attestation",
+              "corpus_coverage",
+          ]
+          assert readiness.STAGES[6].filename == "ng_corpus_source_identity_attestation.json"
+          assert readiness.STAGES[6].pre_outcome is True
+          assert executor.SUGGESTED_ENTRYPOINTS[
+              "corpus_source_identity_attestation"
+          ] == (
+              "python",
+              "ng_corpus_source_identity_attestation.py",
+              "build",
+          )
+          authority = identity._authority_fields()
+          identity._authority(authority, label="CI authority wall")
+          assert authority["actual_outcomes_used"] is False
+          assert authority["random_shuffle_used"] is False
+          assert authority["blind_forecasts_immutable"] is True
+          assert authority["may_update_ng_brain"] is False
+          assert authority["execution_authority"] is False
+          assert authority["cme_event_contracts_mode"] == "SHADOW"
+          assert authority["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert authority["options_lane_started"] is False
+          PY
