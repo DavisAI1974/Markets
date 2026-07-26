@@ -12,7 +12,7 @@ import copy
 import json
 import os
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 import ng_corpus_executor_plan_compiler_v29 as v29
 import ng_v38_execution_command_contract_gate as command_gate
@@ -139,7 +139,7 @@ def build_compiled_plan(
         "random_shuffle_used": False,
         "one_signal_authority_preserved": True,
         "blind_forecasts_immutable": True,
-        "max_change_blind_forecast": False,
+        "may_change_blind_forecast": False,
         "may_change_g16_blind_prior": False,
         "may_change_posterior": False,
         "may_update_ng_brain": False,
