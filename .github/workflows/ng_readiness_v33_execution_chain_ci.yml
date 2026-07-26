@@ -9,6 +9,7 @@ on:
       - research/kalshi/ng_corpus_executor_pipeline_arm_v28.py
       - research/kalshi/ng_historical_refinement_preflight_v29.py
       - research/kalshi/tests/test_ng_readiness_v33_execution_chain.py
+      - research/kalshi/tests/test_ng_v33_fixed_outcome_compiler.py
       - .github/workflows/ng_readiness_v33_execution_chain_ci.yml
   workflow_dispatch:
 
@@ -31,7 +32,8 @@ jobs:
             ng_corpus_executor_plan_compiler_v28.py \
             ng_corpus_executor_pipeline_arm_v28.py \
             ng_historical_refinement_preflight_v29.py \
-            tests/test_ng_readiness_v33_execution_chain.py
+            tests/test_ng_readiness_v33_execution_chain.py \
+            tests/test_ng_v33_fixed_outcome_compiler.py
       - name: Run upstream deterministic self-tests
         run: |
           python ng_g15_counterfactual_attribution_gate.py --selftest
@@ -44,7 +46,8 @@ jobs:
           pytest -q \
             tests/test_ng_readiness_v32_execution_chain.py \
             tests/test_ng_readiness_v33_attribution_bound_publication.py \
-            tests/test_ng_readiness_v33_execution_chain.py
+            tests/test_ng_readiness_v33_execution_chain.py \
+            tests/test_ng_v33_fixed_outcome_compiler.py
       - name: Verify chronology and permanent authority wall
         run: |
           python - <<'PY'
