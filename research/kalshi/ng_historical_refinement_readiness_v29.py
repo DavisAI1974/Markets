@@ -126,7 +126,12 @@ def _overall_status(ready_keys: list[str]) -> str:
         return "EXACT_S3_MATERIALIZATION_COMPLETE_RUNTIME_PROVENANCE_BINDING_INCOMPLETE"
     if "corpus_coverage" not in ready_keys:
         return "RUNTIME_MATERIALIZATION_PROVENANCE_BOUND_BROAD_BYTE_INSPECTION_INCOMPLETE"
-    return _V28_OVERALL_STATUS(ready_keys)
+    delegated = [
+        key
+        for key in ready_keys
+        if key != "corpus_s3_materialization_provenance"
+    ]
+    return _V28_OVERALL_STATUS(delegated)
 
 
 @contextmanager
@@ -200,11 +205,9 @@ def build_readiness_report(
     stage_paths: Mapping[str, Path] | None = None,
     validator_overrides: Mapping[str, Callable[[Mapping[str, Any]], Any]] | None = None,
 ) -> dict[str, Any]:
-    # Build directly against the canonical legacy evaluator. Older wrapper versions
-    # hard-code their historical prefix lengths, so recursively re-entering them after
-    # inserting a new stage can reject a valid newer order before the latest validator
-    # runs. Direct evaluation keeps every StageSpec, link rule, and authority check while
-    # avoiding those stale positional assumptions.
+    # Build directly against the canonical evaluator. Older wrapper versions hard-code
+    # historical prefix lengths, so recursively re-entering them after inserting a new
+    # stage can reject a valid newer order before the latest validator runs.
     with _legacy_contract():
         report = legacy.build_readiness_report(
             artifact_dir,
@@ -368,6 +371,13 @@ def selftest() -> int:
         assert complete[
             "runtime_capture_and_exact_materializer_recursively_bound"
         ] is True
+
+        final_stage = STAGES[-1]
+        (root / final_stage.filename).unlink()
+        partial = build_readiness_report(root, validator_overrides=overrides)
+        assert partial["status"] != "G15_G16_COUNTERFACTUAL_PUBLICATION_COMPLETE_V28"
+        assert partial["status"] != "G15_G16_COUNTERFACTUAL_PUBLICATION_COMPLETE_V29"
+        _atomic_json(root / final_stage.filename, values[final_stage.key])
 
         (root / _MATERIALIZER_PROVENANCE.filename).unlink()
         blocked = build_readiness_report(root, validator_overrides=overrides)
