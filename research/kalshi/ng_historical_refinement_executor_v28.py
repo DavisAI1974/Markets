@@ -11,6 +11,10 @@ import ng_historical_refinement_readiness_v32 as readiness
 
 SUGGESTED_ENTRYPOINTS: dict[str, tuple[str, ...]] = {
     **v27.SUGGESTED_ENTRYPOINTS,
+    "g15_counterfactual_attribution": (
+        "python",
+        "ng_g15_counterfactual_attribution.py",
+    ),
     "g15_counterfactual_attribution_authorization": (
         "python",
         "ng_g15_counterfactual_attribution_gate.py",
@@ -49,6 +53,23 @@ def _check_v32_plan_contract(plan: Mapping[str, Any]) -> None:
         raise legacy_executor.HistoricalRefinementExecutionError(
             "G15 attribution authorization must remain between attribution and publication"
         )
+    attribution = stages[attribution_index]
+    if attribution.get("expected_output") != "g15_counterfactual_attribution.json":
+        raise legacy_executor.HistoricalRefinementExecutionError(
+            "G15 counterfactual attribution artifact was substituted"
+        )
+    if attribution.get("suggested_entrypoint") != [
+        "python",
+        "ng_g15_counterfactual_attribution.py",
+    ]:
+        raise legacy_executor.HistoricalRefinementExecutionError(
+            "G15 counterfactual attribution entrypoint mismatch"
+        )
+    if attribution.get("requires_fixed_outcomes") is not False:
+        raise legacy_executor.HistoricalRefinementExecutionError(
+            "G15 counterfactual attribution must remain pre-outcome"
+        )
+
     authorization = stages[attribution_index + 1]
     if (
         authorization.get("expected_output")
