@@ -1,0 +1,93 @@
+name: NG readiness v33 durable execution chain
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_corpus_executor_plan_compiler_v28.py
+      - research/kalshi/ng_corpus_executor_pipeline_arm_v28.py
+      - research/kalshi/ng_historical_refinement_preflight_v29.py
+      - research/kalshi/tests/test_ng_readiness_v33_execution_chain.py
+      - .github/workflows/ng_readiness_v33_execution_chain_ci.yml
+  workflow_dispatch:
+
+jobs:
+  readiness-v33-execution:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+      - name: Compile durable readiness v33 execution sources
+        run: |
+          python -m py_compile \
+            ng_corpus_executor_plan_compiler_v28.py \
+            ng_corpus_executor_pipeline_arm_v28.py \
+            ng_historical_refinement_preflight_v29.py \
+            tests/test_ng_readiness_v33_execution_chain.py
+      - name: Run upstream deterministic self-tests
+        run: |
+          python ng_g15_counterfactual_attribution_gate.py --selftest
+          python ng_g15_exact_publication_gate.py --selftest
+          python ng_g15_attribution_bound_publication_gate.py --selftest
+          python ng_g15_counterfactual_lesson_gate.py --selftest
+          python ng_historical_refinement_readiness_v33.py --selftest
+      - name: Run durable execution-chain tests
+        run: |
+          pytest -q \
+            tests/test_ng_readiness_v32_execution_chain.py \
+            tests/test_ng_readiness_v33_attribution_bound_publication.py \
+            tests/test_ng_readiness_v33_execution_chain.py
+      - name: Verify chronology and permanent authority wall
+        run: |
+          python - <<'PY'
+          import ng_corpus_executor_plan_compiler_v28 as compiler
+          import ng_historical_refinement_preflight_v29 as preflight
+          import ng_historical_refinement_readiness_v33 as readiness
+
+          order = [spec.key for spec in readiness.STAGES]
+          tail = order[order.index("g15_counterfactual_attribution"):]
+          assert tail[:5] == [
+              "g15_counterfactual_attribution",
+              "g15_counterfactual_attribution_authorization",
+              "g15_publication",
+              "g15_attribution_bound_publication",
+              "g15_counterfactual_lesson_gate",
+          ]
+          assert compiler.PRE_OUTCOME_STAGES[-1] == (
+              "g15_counterfactual_attribution_authorization"
+          )
+          assert compiler.CONFIGURED_STAGES[-3:] == (
+              "g15_publication",
+              "g15_attribution_bound_publication",
+              "g15_counterfactual_lesson_gate",
+          )
+          assert preflight.EXECUTOR_CONTRACT == "ng_historical_refinement_executor_v29"
+          by_key = {spec.key: spec for spec in readiness.STAGES}
+          assert by_key["g15_counterfactual_attribution_authorization"].pre_outcome is True
+          assert by_key["g15_publication"].pre_outcome is False
+          assert by_key["g15_attribution_bound_publication"].pre_outcome is False
+          assert by_key["g15_counterfactual_lesson_gate"].pre_outcome is False
+
+          fixture = readiness._linked_fixture_chain()["g15_attribution_bound_publication"]
+          assert fixture["separate_blind_refined_scores_verified"] is True
+          assert fixture["all_six_factors_authorized_before_scoring"] is True
+          assert fixture["actual_g15_outcomes_used"] is True
+          assert fixture["actual_g16_outcomes_used"] is False
+          assert fixture["random_shuffle_used"] is False
+          assert fixture["one_signal_authority_preserved"] is True
+          assert fixture["blind_forecasts_immutable"] is True
+          assert fixture["may_update_ng_brain"] is False
+          assert fixture["execution_authority"] is False
+          assert fixture["g16_outcome_access_authorized"] is False
+          assert fixture["cme_event_contracts_mode"] == "SHADOW"
+          assert fixture["brokerage_contract"] == "tastytrade_not_ibkr"
+          assert fixture["options_lane_started"] is False
+          PY
