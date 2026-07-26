@@ -1,0 +1,71 @@
+name: NG readiness v31 prepared normalized identity
+
+on:
+  push:
+    branches:
+      - chatgpt/ng-forecaster-s103-audit
+    paths:
+      - research/kalshi/ng_g15_prepared_normalized_identity_guard.py
+      - research/kalshi/ng_historical_refinement_readiness_v31.py
+      - research/kalshi/ng_historical_refinement_executor_v27.py
+      - research/kalshi/tests/test_ng_g15_prepared_normalized_identity_guard.py
+      - .github/workflows/ng_readiness_v31_prepared_normalized_identity_ci.yml
+  pull_request:
+    paths:
+      - research/kalshi/ng_g15_prepared_normalized_identity_guard.py
+      - research/kalshi/ng_historical_refinement_readiness_v31.py
+      - research/kalshi/ng_historical_refinement_executor_v27.py
+      - research/kalshi/tests/test_ng_g15_prepared_normalized_identity_guard.py
+      - .github/workflows/ng_readiness_v31_prepared_normalized_identity_ci.yml
+
+jobs:
+  prepared-normalized-identity:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: research/kalshi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile v31 chain
+        run: |
+          python -m py_compile \
+            ng_g15_prepared_normalized_identity_guard.py \
+            ng_historical_refinement_readiness_v31.py \
+            ng_historical_refinement_executor_v27.py \
+            tests/test_ng_g15_prepared_normalized_identity_guard.py
+      - name: Run gate self-test
+        run: python ng_g15_prepared_normalized_identity_guard.py --selftest
+      - name: Run readiness self-test
+        run: python ng_historical_refinement_readiness_v31.py --selftest
+      - name: Run focused tests
+        run: python -m unittest -v tests.test_ng_g15_prepared_normalized_identity_guard
+      - name: Check chronology and permanent authority wall
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          import ng_historical_refinement_executor_v27 as executor
+          import ng_historical_refinement_readiness_v31 as readiness
+
+          keys = [spec.key for spec in readiness.STAGES]
+          index = keys.index('g15_prepared_normalized_identity')
+          assert keys[index - 1:index + 2] == [
+              'replay_catalog_export',
+              'g15_prepared_normalized_identity',
+              'g15_exact_replay',
+          ]
+          assert readiness.STAGES[index].pre_outcome is True
+          with tempfile.TemporaryDirectory() as temporary:
+              root = Path(temporary)
+              plan = executor.build_plan(root / 'artifacts', root)
+              assert plan['random_shuffle_used'] is False
+              assert plan['blind_forecasts_immutable'] is True
+              assert plan['may_update_ng_brain'] is False
+              assert plan['execution_authority'] is False
+              assert plan['cme_event_contracts_mode'] == 'SHADOW'
+              assert plan['brokerage_contract'] == 'tastytrade_not_ibkr'
+              assert plan['options_lane_started'] is False
+          PY
