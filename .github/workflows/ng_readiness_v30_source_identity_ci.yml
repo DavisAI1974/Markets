@@ -4,16 +4,20 @@ on:
   push:
     paths:
       - "research/kalshi/ng_corpus_source_identity_attestation.py"
+      - "research/kalshi/ng_corpus_source_identity_attestation_impl.py"
       - "research/kalshi/ng_historical_refinement_readiness_v30.py"
       - "research/kalshi/ng_historical_refinement_executor_v26.py"
       - "research/kalshi/tests/test_ng_source_identity_readiness_v30.py"
+      - "research/kalshi/tests/test_ng_source_identity_enum_adapter.py"
       - ".github/workflows/ng_readiness_v30_source_identity_ci.yml"
   pull_request:
     paths:
       - "research/kalshi/ng_corpus_source_identity_attestation.py"
+      - "research/kalshi/ng_corpus_source_identity_attestation_impl.py"
       - "research/kalshi/ng_historical_refinement_readiness_v30.py"
       - "research/kalshi/ng_historical_refinement_executor_v26.py"
       - "research/kalshi/tests/test_ng_source_identity_readiness_v30.py"
+      - "research/kalshi/tests/test_ng_source_identity_enum_adapter.py"
       - ".github/workflows/ng_readiness_v30_source_identity_ci.yml"
 
 jobs:
@@ -33,18 +37,25 @@ jobs:
         run: |
           python -m py_compile \
             ng_corpus_source_identity_attestation.py \
+            ng_corpus_source_identity_attestation_impl.py \
             ng_historical_refinement_readiness_v30.py \
             ng_historical_refinement_executor_v26.py \
-            tests/test_ng_source_identity_readiness_v30.py
+            tests/test_ng_source_identity_readiness_v30.py \
+            tests/test_ng_source_identity_enum_adapter.py
       - name: Run source-native identity self-test
         run: python ng_corpus_source_identity_attestation.py selftest
       - name: Run readiness v30 self-test
         run: python ng_historical_refinement_readiness_v30.py --selftest
       - name: Run focused source-native identity tests
-        run: python -m pytest -q tests/test_ng_source_identity_readiness_v30.py
+        run: |
+          python -m pytest -q \
+            tests/test_ng_source_identity_readiness_v30.py \
+            tests/test_ng_source_identity_enum_adapter.py
       - name: Verify identity boundary and permanent authority wall
         run: |
           python - <<'PY'
+          from types import SimpleNamespace
+
           import ng_corpus_source_identity_attestation as identity
           import ng_historical_refinement_executor_v26 as executor
           import ng_historical_refinement_readiness_v30 as readiness
@@ -69,6 +80,8 @@ jobs:
               "ng_corpus_source_identity_attestation.py",
               "build",
           )
+          assert identity._enum_text(SimpleNamespace(name="TRADES", value=4)) == "trades"
+          assert identity._enum_text(SimpleNamespace(name="MBO", value=0)) == "mbo"
           authority = identity._authority_fields()
           identity._authority(authority, label="CI authority wall")
           assert authority["actual_outcomes_used"] is False
