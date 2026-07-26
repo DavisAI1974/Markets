@@ -36,7 +36,7 @@ jobs:
             tests/test_ng_readiness_v36_attribution_bound_g16_curve.py
       - name: Run deterministic self-tests
         run: |
-          python ng_g16_attribution_bound_causal_authorization_gate.py --self-test
+          python ng_g16_attribution_bound_causal_authorization_gate.py --selftest
           python ng_g16_counterfactual_curve_authorization.py --selftest
           python ng_g16_attribution_bound_curve_authorization_gate.py --selftest
           python ng_historical_refinement_readiness_v36.py --selftest
