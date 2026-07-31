@@ -1,4 +1,32 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-22, Session 105)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-31, Session 106)
+
+## S106 — THE ONE-AGENT BLIND PROVED OUT ON G19 + brain s103.1 (61 plays) (read `SESSION_HANDOFF_2026-07-31_S106.md` + `DROP_IN_S107.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`**. FIRST group run under the S105
+re-architecture: blind and refine ran the IDENTICAL committed files (`mbo_refine_shared.md` +
+`mbo_specialist_{A..E}.md`), byte-identical, **NO agent file touched all session** — the ONLY difference
+was the DATA (blind = `mask_after` state, price-derived blocks frozen at the anchor vintage;
+`tape_conditions` never_masked). **The mask is a BUILT-IN PARAMETER** (`decision_state(days,
+mask_after=)`), not something to build. **G19 blind 4/10 mean|err| 939 -> refine r1 10/10 mean|err| 79**
+(every day <100, SIX sign-flips all correct, magnitudes derived and held UNDER actual). Greg caught the
+**seam-day bug** mid-run (the roll seam is a REAL SCORED day on the post-roll leg; only the overnight GAP
+voids — g17 0421 precedent) and round 1 was RE-RUN entirely for fairness. Greg then ordered a
+**five-specialist post-mortem** (`forecasts/grp19_postmortem_{A..E}.json`): four root causes —
+absorption read as a DAMP not a SIGN-FLIP; the wrong gate (`big_print_b_share>=0.55` NEVER fires in a
+covering rally, block max 0.537); crowded-short-as-TAIL not p50 driver; and **EXTENSION-BLINDNESS from
+the cum-0 reset** (Greg's own catch, "why wasn't he24 connected hr1") which caused BOTH failure modes —
+B: *"starting fresh at cum 0 is exactly what let me invent a down chain against a week of up days."*
+A found the doctrinal flaw: covering-self-limiting was **NON-FALSIFIABLE toward DOWN** (unfired->down AND
+spent->down). **MERGED s102.9 -> s103.1 (61 plays)**: 18 proposals consolidated to **7 general plays**
+(flow_conviction sign gate; absorption_is_reversal; covering_extension_distribution_flip;
+covering_self_limiting_cot_wow_gate; seam_gap_up_prior_on_worsening_cot;
+chain_label_must_track_realized_cum; friday_exit_close_location_over_flow_shape); **54/54 incumbents
+byte-identical**, strictly additive. **THE PRIZE (B, corroborated by all five): NEITHER Monday miss
+required the price curve** — both were fixable from the corrected handoff + the worsening COT alone;
+price only CONFIRMED. So most of the refine's gain is AVAILABLE TO THE BLIND once the handoff carries
+chain state. NEXT: G19 refine ROUND 2 (HE24->HE1, infra staged: databento + all 10 legs), then **G20
+blind on s103.1 with the handoff carrying chain state = the real test**. **Scoreboard = forward-curve
+error, NOT daily hit-rate.**
 
 ## S105 — BLIND RE-ARCHITECTED = REFINE GOLD MINUS ONLY THE PRICE CURVE + THE GOLD VAULT (read `SESSION_HANDOFF_2026-07-22_S105.md` + `DROP_IN_S106.md`)
 
@@ -291,7 +319,11 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** brain **s102.5 (47 plays)**; the WALK is at **G16 DONE -> merged; G17 (Apr 12-24,
+**One-line state:** brain **s103.1 (61 plays)**; the ONE-AGENT regime is PROVEN — G19 blind (price-masked
+state, same files as refine) 4/10 err 939 -> refine r1 10/10 err 79, merged; **G19 refine ROUND 2
+(HE24->HE1) = S107's opener**, then **G20 blind on s103.1 with the handoff carrying chain state** (the
+test of B's finding that most of the refine's gain does NOT need price). LEGACY line below (pre-S106):
+brain **s102.5 (47 plays)**; the WALK is at **G16 DONE -> merged; G17 (Apr 12-24,
 two-leg May->June seam ~0421) = S105's opener, run as the FIVE-specialist blind under the Friday/Monday
 focus doctrine (Greg S104: Friday is the cascade root; Sunday->2nd-Friday windows; coordinator guarded;
 honest under-100)**. PARALLEL **MBO CAUSAL-REFINEMENT TRACK** (branch
