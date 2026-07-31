@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s103.1",
+  "version": "s102.9",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -53,8 +53,7 @@
   "s102_6_note": "S105 MERGE: +6 plays (midblock under-action fixes - Friday turn/exhaustion gate + crest-trim discriminator, EIA pre-print over-extension gate, accumulation arm, midblock right-the-ship, covering-giveback self-limiting) + doctrine_tier3.midblock_underaction_s105. All PROVISIONAL, test-drive-validated (unscored) not forward-scored. 47 incumbents byte-identical.",
   "s102_7_note": "S105 forward-evidence update: the 6 mid-block-underaction plays validated on G17 (blind 5/10 -> refine r1 10/10 err24 -> r2 10/10 err11); forward_evidence updated (G18 blind = the scored forward test, pending). +doctrine orchestration_s105 (two-round coordinated handoffs both runs; blind sequenced spawn) + live_mbo_open_question. Play LOGIC unchanged; 47 pre-S105 incumbents byte-identical.",
   "s102_8_note": "S105 DATA DOCTRINE written everywhere (CLAUDE.md, agents/README.md, blind_shared.md, mbo_refine_shared.md, here): both agents get the kitchen sink; blind's only mask is the price curve; dip_imb_level repealed on decision-legit windows; one-group-at-a-time process. Plays unchanged (53); this is doctrine only.",
-  "s102_9_note": "S105 G18 merge: +1 play (structure.covering_absorption_directional_tell) + forward_evidence on the 6 S105 plays + doctrine g18_covering_rally_s105 (blind 5/10 but +440 P&L; refine 10/10 err30; blind-flow-read validated; P&L is the scoreboard). Pre-S105 incumbents byte-identical.",
-  "s103_1_note": "S106 G19 refine merge: +7 general plays consolidated from 18 specialist proposals (5 specialists, independently convergent). g19 refine r1 (S106): blind 4/10 mean|err| 939 -> refined 10/10 mean|err| 79, every day <100. Six sign-flips, all correct. All 54 incumbents byte-identical."
+  "s102_9_note": "S105 G18 merge: +1 play (structure.covering_absorption_directional_tell) + forward_evidence on the 6 S105 plays + doctrine g18_covering_rally_s105 (blind 5/10 but +440 P&L; refine 10/10 err30; blind-flow-read validated; P&L is the scoreboard). Pre-S105 incumbents byte-identical."
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -1421,181 +1420,6 @@
    "forward_evidence": "G18 refine 10/10 (first block); G19+ forward test",
    "provenance": "S105 G18 refine - A/B/C/E convergent covering-absorption finding",
    "merged": "s102.9 S105"
-  },
-  {
-   "id": "direction.flow_conviction_sign_gate",
-   "target": "direction",
-   "trigger": "any price-bearing (refine) day; per phase of the session",
-   "read": "flow_conviction = sign(signed_flow) * sign(price_change), computed PER PHASE from the MBO phase table",
-   "call": "ALIGNED (>0) delivers the band in the FLOW direction; NEGATIVE (<0) = flow absorbed against price = reversal in the PRICE direction. This sign gate REPLACES big_print_b_share>=0.55 as the direction discriminator.",
-   "evidence": {
-    "g19": "the 0.55 arm NEVER fired (block max 0.537) yet covering discharged full on every day; flow_conviction called 10/10 signs",
-    "source": "C (core) + D (EIA), convergent",
-    "n_days": 10
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.86,
-   "exemplars": [
-    "g19 0513 ph2 -1979 sflow / +400 px = absorbed sell -> UP (+420 actual)",
-    "g19 0520 ph2 +614 / -850 = absorbed buy -> DOWN (-1050 actual)"
-   ],
-   "caveats": "REFINE-side gate: requires realized price. The blind cannot compute it and must use the positioning/handoff channel instead (see boundary.seam_gap_up_prior_on_worsening_cot).",
-   "requires": [
-    "mbo phase table (sflow, pxchg per phase)"
-   ],
-   "scope": "price-bearing runs; any day-class",
-   "forward_evidence": "rides G20+ refine; blind-side proxy still open"
-  },
-  {
-   "id": "direction.absorption_is_reversal",
-   "target": "direction",
-   "trigger": "a phase/session where aggressor flow is absorbed (price does not follow the flow sign)",
-   "read": "absorbed SELL under flat/rising price; absorbed BUY under falling price",
-   "call": "Absorption is a REVERSAL against the absorbed side, NOT a damp in the nominal flow direction and never a cap: absorbed sell -> UP, absorbed buy -> DOWN. Size to the reversal move. On EIA prints this outranks both the surprise sign and the D-1 trade tilt; an ALIGNED final phase wins outright in its own direction.",
-   "evidence": {
-    "g19": "both EIA prints were blind-wrong-signed by reading absorption as a damp; as a reversal both flip correct (0514 +450 vs +590, 0521 -400 vs -420)",
-    "source": "C + D convergent",
-    "n_days": 4
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.85,
-   "exemplars": [
-    "g19 0514 D-1 sell absorbed -> covering discharge UP",
-    "g19 0521 0520 buy absorbed under falling px -> distribution DOWN"
-   ],
-   "caveats": "Direction only. Magnitude still comes from the phase table/bands.",
-   "requires": [
-    "absorption flags (ph_absorb / absorb_session)",
-    "phase flow-vs-price"
-   ],
-   "scope": "all day-classes incl EIA print days",
-   "forward_evidence": "rides G20+"
-  },
-  {
-   "id": "structure.covering_extension_distribution_flip",
-   "target": "direction",
-   "trigger": "a multi-session crowded-short covering rally with a running cum_from_anchor",
-   "read": "extension state (cum_from_anchor, chain age) CROSSED with realized flow_conviction; book polarity is never a standalone sign",
-   "call": "The covering-absorption UP tell is NOT unconditional - its SIGN flips with EXTENSION. Young/low-extension (cum low, age <=2): buyers absorbing a dip = short-covering UP. Maximally extended (cum high ~>+2000 vs block anchor AND age >=5) with the absorption tell ITSELF reversed (aligned-down delivery, or big BUY absorbed under falling price): the identical signature = late chasers absorbed = DISTRIBUTION DOWN. Extension alone does NOT flip it - while sell is still absorbed under rising price and COT WoW still worsens, covering stays UP. PRE-WARNING: a rally day whose SESSION conviction is negative (sflow opposite the day's price) is a terminal-squeeze signature - kill the covering-UP prior for the next extended session.",
-   "evidence": {
-    "g19": "same absorption signature: UP on 0515 (low extension) and DOWN on 0520 (cum +3610, age 6) - the pair is the discriminator; 0519 was AT extension but absorption had not reversed, so correctly NOT flipped (+840 actual)",
-    "source": "C + D + E convergent (3 specialists derived it independently)",
-    "n_days": 3
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.84,
-   "exemplars": [
-    "g19 0520 seam: blind +200 -> refined -950 (actual -1050)",
-    "g19 0519 held UP despite age 7 (absorption intact)"
-   ],
-   "caveats": "The flip needs BOTH extension AND a reversed absorption tell; age/cum alone is a false trigger (0519 would have been wrongly flipped).",
-   "requires": [
-    "cum_from_anchor carried across the seam",
-    "chain age",
-    "phase absorption"
-   ],
-   "scope": "crowded-short covering regimes",
-   "forward_evidence": "rides G20+; n=3 within one block, needs a second block"
-  },
-  {
-   "id": "positioning.covering_self_limiting_cot_wow_gate",
-   "target": "magnitude",
-   "trigger": "any 'spent / self-limiting / positioning-discharged' downgrade of a covering read",
-   "read": "COT managed-money net WoW DELTA (not the level, not chain age, not an intraday exhaustion flag)",
-   "call": "A 'spent' claim is a POSITIVE CLAIM and must clear an evidence bar: (a) the exit session shows POSITIVE flow_conviction under FALLING price (aligned selling delivering, or buy flow absorbed and failing) - a single final-phase give-back does NOT qualify; AND (b) the COT MM WoW delta is FLAT or improving. Worsening WoW (shorts still ADDING) = covering LIVE and RECURRING -> size full, re-fires at the next seam. FALSIFIABILITY CLAUSE: the doctrine must NEVER reach the same direction from OPPOSITE inherited exit states - if both the 'unfired/loaded' and the 'spent/discharged' readings point the same way, the read is non-falsifiable and the COT WoW delta breaks the tie. SCOPE: this gate governs the TAIL and the SIZE, never the p50 SIGN (an extreme+worsening short can sit under a p50-DOWN day).",
-   "evidence": {
-    "g19": "blind called BOTH weekends 'down' from opposite exits (unfired->down, spent->down) = non-falsifiable; both were worsening WoW (-10244, -12576) = live, and both gapped +580 UP",
-    "source": "A + B + C + D + E - all five convergent",
-    "n_weekends": 2
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.87,
-   "exemplars": [
-    "g19 0518: blind 'spent one-shot' -> actual +660 UP",
-    "g17 0424 flat WoW = genuinely spent, correct DOWN (incumbent behavior preserved)"
-   ],
-   "caveats": "Patches daytype.covering_giveback_self_limiting rather than replacing it; the G17 spent-revert-DOWN case must keep reproducing.",
-   "requires": [
-    "cot MM net + WoW delta",
-    "exit-session flow_conviction"
-   ],
-   "scope": "crowded-short regimes; weekend/holiday seams",
-   "forward_evidence": "rides G20+"
-  },
-  {
-   "id": "boundary.seam_gap_up_prior_on_worsening_cot",
-   "target": "direction",
-   "trigger": "a weekend / holiday reopen SEAM in a crowded-short regime (MM net at a low 1y-pctile)",
-   "read": "the COT WoW delta at the last publication + the inherited extension state",
-   "call": "The reopen GAP is NOT non-derivable noise - it carries a DIRECTIONAL prior. WORSENING WoW = the seam is the covering rally's FIRING window -> attach an UP gap prior at the block's covering-seam quantum, RECURRING on every seam while the COT keeps worsening; an UNFIRED maximal crowded short at a seam is BASE-CASE UP (a loaded spring), not a down-continuation with a small squeeze tail. FLAT WoW -> no prior, gap sign reverts to noise. The D-1 close-exit delivery-vs-absorption read is ORTHOGONAL to the seam sign (it governs intraday continuation, not the gap). MAGNITUDE is GAP-FIRST and allocated in two separately-derived parts: the seam gap (extension-INDEPENDENT, same quantum each seam) + the intraday (extension-GATED: at low extension the aligned continuation EXCEEDS the gap; at high extension it round-trips to ~0 and the day IS the gap). The Monday 06-10 catch-up window TESTS the gap rather than generating direction - a negative-conviction window leaves the gap intact (and may print the day's extreme); only positive-conviction aggression back through the gap overturns it.",
-   "evidence": {
-    "g19": "both weekends fired an IDENTICAL +580 UP seam gap from OPPOSITE inherited exit states (0511 aligned-sell press; 0518 covering-holding close-on-high); 0511 low extension intraday +1160 > gap, 0518 high extension intraday +80 = day is the gap",
-    "source": "A + B convergent",
-    "n_weekends": 2
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.85,
-   "exemplars": [
-    "g19 0511: blind -450 -> refined +1620 (actual +1740)",
-    "g19 0518: blind -550 -> refined +640 (actual +660)"
-   ],
-   "caveats": "n=2 seams in one block - the +580 quantum is block-specific, the SIGN rule is the general claim. Needs a second block.",
-   "requires": [
-    "cot WoW delta",
-    "inherited cum_from_anchor + chain age",
-    "handoff exit state"
-   ],
-   "scope": "weekend/holiday seams in crowded-short regimes",
-   "forward_evidence": "rides G20+ Mondays"
-  },
-  {
-   "id": "boundary.chain_label_must_track_realized_cum",
-   "target": "selector",
-   "trigger": "every day boundary (HE24 exit -> HE1 open), both blind and refine",
-   "read": "the inherited cum_from_anchor trajectory carried across the seam + the prior close's location in its own range",
-   "call": "A chain's POLARITY and AGE are NOT free parameters - they must derive from the realized cum trajectory carried in the handoff. No day may open with a chain label contradicting the inherited cum, and NO DAY RESTARTS AT CUM 0. A specialist that cannot state the inherited cum_from_anchor and the prior close's range-location may not assert a chain polarity at all. The masked-price case is NOT an exemption: chain STATE travels in the handoff, which is never masked.",
-   "evidence": {
-    "g19": "with every blind day reset to cum 0, B wrote a fictional 'age-5 DOWN chain' against a realized 4-session UP rally and demoted a correctly-identified covering tell; extension-blindness also drove E's 0520 inversion at the crest",
-    "source": "B; corroborated by all five post-mortems",
-    "n": 10
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.88,
-   "exemplars": [
-    "g19 blind: all 10 days path-started at cum 0, no inheritance",
-    "g19 blind 0518 'age-5 down chain' vs realized up-rally"
-   ],
-   "caveats": "Coordinator-enforceable. This is the structural fix behind the blind's failure mode, independent of the price mask.",
-   "requires": [
-    "HE24->HE1 handoff chain",
-    "cum_from_anchor"
-   ],
-   "scope": "ALL runs, blind and refine",
-   "forward_evidence": "rides G20+; enforce in round 2"
-  },
-  {
-   "id": "daytype.friday_exit_close_location_over_flow_shape",
-   "target": "boundary",
-   "trigger": "the Friday (or any weekend-feeding) exit read that seeds the weekend handoff",
-   "read": "close PRICE-LOCATION in the session range (close-on-high / close-on-low), NOT phase-flow-SHAPE decay",
-   "call": "Take the exhaustion/continuation verdict from where the session CLOSED in its range, not from a declining final-phase signed-flow count. A close on/near the HIGH is continuation (covering intact) even when the final-phase signed flow is smaller than the prior phase.",
-   "evidence": {
-    "g19": "E read 913->41 flow decay as 'exhaustion' and seeded monday_bias DOWN; 0514 AND 0515 both closed ON their highs and the rally accelerated (+660 then +840). Corrected handoff = covering_continuation_holding / monday_bias UP.",
-    "source": "E",
-    "n": 2
-   },
-   "status": "PROVISIONAL",
-   "confidence": 0.83,
-   "exemplars": [
-    "g19 0515 handoff: positioning_spent_fade (wrong) -> covering_continuation_holding (right)"
-   ],
-   "caveats": "Feeds the Friday->Monday cascade; a mis-read Friday exit propagates to A and B.",
-   "requires": [
-    "session range + close location",
-    "handoff_out"
-   ],
-   "scope": "weekend-feeding sessions",
-   "forward_evidence": "rides G20+ Fridays"
   }
  ],
  "mechanisms": [
