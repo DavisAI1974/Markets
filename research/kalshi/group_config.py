@@ -95,12 +95,23 @@ GROUPS = {
     "g20": {
         "window": "Sun 2026-05-24 -> Fri 2026-06-05 (Memorial Day 05-25)",
         "days": ["20260525","20260526","20260527","20260528","20260529","20260601","20260602","20260603","20260604","20260605"],
-        "anchor": None, "anchor_date": "20260522", "anchor_lasthr_dir": None,   # set from G19 actual
+        "anchor": None, "anchor_date": "20260522", "anchor_lasthr_dir": 1,   # anchor from G19 actual;
+        # lasthr_dir derived S107 from the 20260522 NGN26 tape (close 3.034, last hour +1) - the same
+        # field and same derivation G17/G18/G19 carry. It was left None here, which silently gave G20's
+        # blind one bit less anchor context than G19's had.
         "mask_after": "20260522",
         "seam": None, "legs": {"all": "ngn26"},                        # clean July (roll 06-19 outside)
-        "eia_thursdays": ["20260529","20260604"],   # 05-28 print SHIFTS to Fri 05-29 (Memorial Day)
+        # S107 CORRECTION. This was ["20260529","20260604"] on the assumption that Memorial Day shifts
+        # the print off Thursday. The EIA calendar feed says otherwise and is authoritative: grp20_state
+        # flow_calendar carries is_eia_print_day TRUE on 20260528 with shifted=false, shift_reason=null,
+        # and a single release that week at 2026-05-28T10:30 ET. A MONDAY holiday does not move the
+        # Thursday gas storage report (only a Thursday holiday does). owner_map derives D's ownership
+        # from this list, so the error had D applying the EIA lens to a non-print Friday while the real
+        # print day was handled as an ordinary core day. G21/G22/G23 were checked and all MATCH the feed.
+        "eia_thursdays": ["20260528","20260604"],
         "holidays": ["20260525"],
-        "basis": "July/NGN26 clean; Memorial Day 05-25 holiday; EIA shifts Thu05-28 -> Fri05-29",
+        "basis": "July/NGN26 clean; Memorial Day 05-25 holiday (Mon, does NOT shift the print); "
+                 "EIA prints Thu 05-28 and Thu 06-04, both on schedule",
     },
     # ---- past G20 (stretch; VERIFY holiday/roll specifics when reached) ----
     "g21": {
