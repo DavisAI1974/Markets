@@ -134,10 +134,35 @@ def _forecast_weather_asof(iso: str, mos: dict) -> dict | None:
         "forecast_run_delta": r.get("forecast_run_delta"),
         "forecast_run_delta_cdd": r.get("forecast_run_delta_cdd"),
         "fwd7_gw_hdd_span": r.get("fwd7_gw_hdd_span"),
+        # S109 THE HDD-ONLY LADDER. nws_temp_feed computes forecast_gw_cdd at EVERY horizon (see its
+        # header: "forecast_gw_hdd / forecast_gw_cdd - gas-weighted, for target D and each horizon out to
+        # D+7") and this assembly dropped it, exactly as S107 defect 3 dropped big_print_b_share. The
+        # cost is not a missing nicety: in a JULY block CDD is the entire demand signal, and with only
+        # HDD served the whole HDD-keyed play family degrades ONE WAY. Measured on G22, where realized
+        # CDD ran 9.0 -> 18.7 while forecast_gw_hdd sat at 0.03-0.30:
+        #   selector.divergence_resolution's catalyst override needs HDD >= 16.4 - unreachable in
+        #     summer, so it never fires and the selector silently defaults to the bearish angle;
+        #   magnitude.shoulder_weather_band_void needs HDD <= ~13.5 - trivially satisfied, so it VOIDS
+        #     the weather band on every summer day;
+        #   and both weekend-add delta channels read ~0 against a +4.7 CDD add.
+        # Four independent artifacts, every one leaning the same way, none of them a signal. Specialist
+        # B named this mechanism in its 0629 posterior BEFORE the block was scored; the blind then came
+        # in with four days called down that printed up and a drift of -1815. Served additively so
+        # empirically-fitted HDD bars keep reading exactly what they read before.
         "horizons": [{k: h[k] for k in ("horizon", "target_date", "forecast_gw_hdd", "forecast_vs_normal",
-                                        "partial", "coverage")} for h in r.get("horizons", [])],
+                                        "partial", "coverage")}
+                     | ({"forecast_gw_cdd": h["forecast_gw_cdd"]} if "forecast_gw_cdd" in h else {})
+                     for h in r.get("horizons", [])],
         "run_delta": [{k: h[k] for k in ("horizon", "target_date", "d_gw_hdd", "partial", "coverage")}
+                      | ({"d_gw_cdd": h["d_gw_cdd"]} if "d_gw_cdd" in h else {})
                       for h in r.get("run_delta", [])],
+        "fwd7_gw_cdd_span": r.get("fwd7_gw_cdd_span"),
+        "ladder_basis_note": (
+            "S109: forecast_gw_cdd / d_gw_cdd are served ALONGSIDE the HDD ladder, never replacing it. "
+            "In a summer block CDD is the demand signal and HDD is inert - a play stating an ABSOLUTE "
+            "HDD bar (divergence_resolution 16.4, shoulder_weather_band_void 13.5) is UNEVALUABLE in "
+            "summer, not satisfied and not refuted. Treat an unreachable HDD bar as UNKNOWN; do not let "
+            "it default the selector to a direction."),
         "complete": r.get("complete"),
         "asof_utc": r.get("asof_utc"),
         "coverage_note": r.get("coverage_note"),
@@ -529,9 +554,27 @@ def _mos_cycle_block(iso: str) -> dict | None:
                 "gw_hdd_d0": d0["gw_hdd"], "vs_normal_d0": d0["forecast_vs_normal"],
                 "regime_d0": d0.get("regime"),
                 "max_cycle_runtime_utc": (max(stamps) if stamps else None),
+                # S109, found by specialist B on 0629. This is the SECOND, INDEPENDENT weekend-add
+                # channel that was HDD-only - and it is the one built for precisely this job, labelled
+                # decision-time-legit for Mondays. On 20260629 sunday_reopen reported d_gw_hdd +0.096
+                # against a realized weekend CDD add of +4.7. Both purpose-built weekend-delta channels
+                # therefore read ~zero while the LEVEL channels read the block's largest add of the
+                # week. Serve the CDD delta and the D0 level beside the HDD ones.
+                "gw_cdd_d0": d0.get("gw_cdd"),
                 "delta_vs_prior_by_horizon": [
                     {"target": h["target_date"],
-                     "d_gw_hdd": (h.get("delta_vs_prior") or {}).get("d_gw_hdd")} for h in hs],
+                     "d_gw_hdd": (h.get("delta_vs_prior") or {}).get("d_gw_hdd"),
+                     "d_gw_cdd": (h.get("delta_vs_prior") or {}).get("d_gw_cdd")} for h in hs],
+                # S109, the general finding from the clean 0629 bridge: a RUN delta baselines against
+                # the previous model RUN, not the previous SESSION. Across a weekend spanning 4-8
+                # cycles the accumulation is spread thin and appears in no single delta - measured
+                # -0.219 on 0629 against a +4.7 LEVEL move, with the whole block's run-delta series
+                # inside a +1.05/-0.50 noise band while the level ran 10.08 -> 14.82. The delta channel
+                # is STRUCTURALLY BLIND ACROSS A SEAM and gets the sign wrong. Across any weekend or
+                # holiday boundary, difference the LEVELS; the deltas are for intra-week use only.
+                "seam_delta_warning": ("run deltas baseline run-over-run, NOT session-over-session. "
+                                       "Across a weekend/holiday seam use the LEVEL difference "
+                                       "(gw_cdd_d0 here vs the prior session's), never these deltas."),
                 "availability_rule": view["availability_rule"]}
 
     out = {"weekday_open": _compact(rec.get("weekday_open")),

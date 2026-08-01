@@ -136,6 +136,11 @@ def build(gid: str, write: bool, outdir: str) -> int:
         for b in bad:
             print(f"      {b}")
             rc = 1
+        # Reported, never fatal - see forward_stamps(). A capture stamp past the decision point is a
+        # weaker leak than a forward block, but it is invisible to the day-slice audit, so it has to be
+        # printed or it does not exist. Dead code here would have silently un-found C's catch.
+        for w in forward_stamps(sl, d):
+            print(f"      note {w}")
         if write and not bad:
             os.makedirs(outdir, exist_ok=True)
             p = os.path.join(outdir, f"state_{d}.json")
