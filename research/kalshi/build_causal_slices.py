@@ -77,6 +77,50 @@ def audit(sl: dict, upto: str) -> list[str]:
     return bad
 
 
+def forward_stamps(sl: dict, upto: str) -> list[str]:
+    """S109, found by specialist C on 0630 mid-run: cutting by DAY BLOCK is necessary and NOT
+    sufficient. A field INSIDE a legitimate block can carry a timestamp from past the decision point.
+    Measured: storage_consensus.next_print.consensus_pre_print_snapshot_utc reads 2026-07-02 under the
+    blocks for 0629, 0630 AND 0701 - a 'pre-print' field stamped after the days it is served to.
+
+    This is a WEAKER leak than the block-level one (a capture stamp is not an outcome), which is why it
+    is reported rather than hard-failed: several of these are declared, and stripping a field the
+    specialists are successfully discounting would cost more than it saves. But it must be VISIBLE, and
+    the day-slice audit alone would never show it.
+    """
+    import re
+    out, pat = [], re.compile(r"(20\d{2})-(\d{2})-(\d{2})T")
+
+    def walk(o, p=""):
+        if isinstance(o, dict):
+            for kk, vv in o.items():
+                yield from walk(vv, p + "/" + kk)
+        elif isinstance(o, list):
+            for i, vv in enumerate(o):
+                yield from walk(vv, p + f"[{i}]")
+        else:
+            yield p, o
+
+    for k, v in sl.items():
+        if not k[:1].isdigit() or k != upto:
+            continue            # only the decision day's own block: earlier blocks legitimately differ
+        for path, val in walk(v):
+            if not isinstance(val, str):
+                continue
+            m = pat.match(val)
+            if not m or f"{m.group(1)}{m.group(2)}{m.group(3)}" <= upto:
+                continue
+            # A SCHEDULED event time in the future is legitimate - a forecaster knows when the next EIA
+            # print lands; that is deterministic calendar, the same class flow_calendar serves live.
+            # A CAPTURE stamp in the future is not: it says the VALUE was observed after the decision
+            # point. Only the second is a leak, and conflating them would cry wolf on every block that
+            # correctly carries a forward schedule.
+            leaf = path.rsplit("/", 1)[-1]
+            if "snapshot" in leaf or leaf in ("captured_utc", "as_of_utc", "retrieved_utc"):
+                out.append(f"[{upto}]{path} = {val} - VALUE CAPTURED after the decision day")
+    return out
+
+
 def build(gid: str, write: bool, outdir: str) -> int:
     path = os.path.join(RENDER_DIR, f"{gid.replace('g', 'grp')}_state.json")
     state = json.loads(open(path, encoding="utf-8").read())
