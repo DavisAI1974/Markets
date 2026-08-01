@@ -44,7 +44,36 @@ by default): the identity recovers the value from already-served quantities, so 
 stranded waiting on keys that do not survive a session. Each repaired reading **declares itself** through
 `session_b_share_basis`; carries up to ~0.002 of rounding error vs a re-stage off raw lots, and a later
 re-stage overwrites it. Diff verified confined — 10 values changed + 10 basis keys added per group, none
-removed. **G22 and G23 now pass `state_health` 0 hard.** **NEXT: the G22 blind**, unblocked.
+removed. **G22 and G23 now pass `state_health` 0 hard.**
+
+**THE ANCHOR WAS NEVER DELIVERED TO THE AGENTS (checked before spawning, on Greg's call).** The README
+names the group data as three things — "the decision-state file **+ ANCHOR** + basis" — but
+`grp<N>_state.json` carries **zero anchor-keyed leaves**, the specialist rule files are static and hold
+no group data by design, and only **g15** ever had an anchor FILE. So the anchor has been a per-run
+hand-carried number, which is exactly the shape S108 lost when the blind coordinator's hand-built alias
+died with the scratchpad. A specialist spawned on "`grp22_state.json` ONLY" (as the S109 box words it)
+has **no reference level for the cum-from-anchor path it is required to emit**.
+
+`build_anchor_block.py` makes it a committed, reproducible artifact and **verifies rather than asserts**:
+each group's anchor must equal the **PRIOR group's actual last-day close** — an independent measurement,
+different file, different build step. That chain holds **exactly across G17->G23** (G22 3.198 = G21's
+close on 06-19; G23 3.245 = G22's close on 07-03), and `anchor_lasthr_dir` is re-derived from the actual
+price path and must agree (both -1, both confirmed). Either mismatch HARD-FAILS before a spawn: a wrong
+anchor moves every day in the block by the same amount while every per-day error still looks locally
+reasonable. Provenance is declared — final-hour levels come off the actual file's DOWNSAMPLED
+`continuous` path, so trade count and signed flow are emitted **null by design** rather than computed
+from a series that cannot support them.
+
+**G22 AND G23 ARE THE FIRST TWO GROUPS OF THE WALK TO ANCHOR ON A HOLIDAY** (Juneteenth 06-19,
+Independence Day observed 07-03; G17-G21 all anchor on normal Fridays). The anchor CLOSE is chain-verified
+and sound. The anchor's LAST-HOUR DIRECTION comes off a tape ~1/5 as active (6,935 and 11,501 trades vs a
+~37,000 median), and it feeds the E->A->B weekend seam — so the block carries an explicit
+`holiday_caveat` telling the specialists to size the reopen read accordingly. Declared, not hidden.
+Leak-audited: each anchor block contains only its own pre-block anchor session, zero in-window dates.
+**Blind input is now the brain + `grp22_state.json` + `g22_anchor.json` — never the actual/evidence
+files, which sit in the same directory and contain the answer.**
+
+**NEXT: the G22 blind**, unblocked.
 
 ## S108 — G20 DONE + G21 WALKED + **THREE MORE DATA HOLES** + brain s103.2 -> s103.6 (67 plays) (read `SESSION_HANDOFF_2026-08-01_S108.md` + `DROP_IN_S109.md`)
 

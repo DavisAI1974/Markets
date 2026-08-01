@@ -1,0 +1,38 @@
+{
+ "group": "g22",
+ "date": "20260619",
+ "dow": "Fri",
+ "anchor_close": 3.198,
+ "anchor_lasthr_dir": -1,
+ "leg": "ng_mbo_ngq26",
+ "basis": "Aug/NGQ26; boundary leg change NGN26->NGQ26 at 06-19/06-22 (anchor on the Aug leg); 07-03 Independence Day observed",
+ "is_holiday_session": true,
+ "verification": {
+  "source": "g21_actual.json last day 20260619",
+  "prior_group_close": 3.198,
+  "status": "MATCH"
+ },
+ "last_hour": {
+  "first_price": 3.2,
+  "last_price": 3.198,
+  "high_price": 3.206,
+  "low_price": 3.195,
+  "net_usd": -20,
+  "direction": "down",
+  "derived_dir": -1,
+  "n_points": 25,
+  "trade_count": null,
+  "signed_flow": null,
+  "provenance": "price levels derived from the actual file's DOWNSAMPLED `continuous` render path, not the raw tape. Trade count and signed flow are NOT recoverable from a downsampled series and are null by design - a number computed off this series would be wrong-but-well-formed."
+ },
+ "session_activity": {
+  "n_trades": 6935,
+  "volume_lots": 12148,
+  "trades_per_min": 6.8,
+  "session_signed_flow": -1353,
+  "session_b_share": 0.362,
+  "session_b_share_two_sided": 0.433,
+  "source": "tape_conditions.prior_full_session (the true tape, scored leg)"
+ },
+ "holiday_caveat": "20260619 is a HOLIDAY half-session (6935 trades against a ~37,000 normal-session median). The anchor CLOSE is chain-verified and sound. The anchor's LAST-HOUR DIRECTION is derived from this thin tape, so it is a weaker seam signal than the same field in G17-G21 - size the weekend/reopen read accordingly and do not treat it as a full-session exit. Declared, not hidden."
+}
