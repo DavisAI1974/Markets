@@ -81,7 +81,18 @@ def stage(gid):
     # S107: COMPLETENESS ASSERTION. Six times in one session a block was silently empty and read
     # downstream exactly like a deliberate mask. Refuse to hand a specialist a state with a hole in it.
     import state_health
-    state_health.assert_healthy(json.load(open(out_state)), gid)
+    _st = json.load(open(out_state))
+    state_health.assert_healthy(_st, gid)
+    # S108 HOLE #8: presence is not enough and internal consistency is not enough. tape_conditions
+    # selects its source by "whichever continuous store has more trades", so after a roll it silently
+    # switches to the DEFERRED contract while the group still forecasts the front leg. On G21 that
+    # served 18-60% of the real tape with signed flow SIGN-FLIPPED on the blind's only open-time flow
+    # channel - a channel declared never_masked, on days the doctrine says are masked on price ALONE.
+    # state_health cannot catch it (nothing is empty) and consistency checks cannot either (D verified
+    # the artifact as a real liquidity migration by checking exactly that). Only RECONCILIATION against
+    # an independent count of the same session on the SAME instrument settles it.
+    import tape_reconcile
+    tape_reconcile.assert_reconciled(gid, _st)
     # 4. actual + 5. MBO evidence (config anchor now set in-process)
     import importlib
     import group_actual, group_mbo_engine
