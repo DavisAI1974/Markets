@@ -14,6 +14,7 @@ import group_config as gc
 HERE = os.path.dirname(os.path.abspath(__file__))
 LEG_DIR = os.path.join(HERE, "..", "..", "data", "ng_mbo_g17")
 FC = os.path.join(HERE, "forecasts")
+RENDER_DIR = os.path.join(HERE, "renders", "ng_refine_s95")
 ET = "America/New_York"; MULT = 10000.0
 _DOW = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -56,7 +57,46 @@ def prior_owner_verdict(gid, prior_date, owner, source="actual"):
     return None
 
 
+def exit_states_path(gid):
+    return os.path.join(RENDER_DIR, f"{gid}_exit_states.json")
+
+
+_PRECOMPUTED = {}
+
+
+def _precomputed(gid):
+    """The stage-time exit-state artifact, or None if this group predates it / was never staged with it.
+
+    S108: exit_state() is the ONLY thing in a staged group's whole run cycle that still reached into
+    data/ (the raw MBO legs, ~146MB of a 463MB plane) - round-1 specialists, both coordinators and the
+    round-2 re-run all read committed artifacts only. data/ is gitignored and dies with the container,
+    so that single call forced a full S3 restore (and live credentials) on any session that only wanted
+    to run an already-staged group. Computing it at STAGE time - when the legs are local and the keys
+    are in hand by definition - and committing the result makes a staged group self-contained.
+    """
+    if gid not in _PRECOMPUTED:
+        p = exit_states_path(gid)
+        _PRECOMPUTED[gid] = json.load(open(p)).get("days") if os.path.exists(p) else None
+    return _PRECOMPUTED[gid]
+
+
 def exit_state(gid, day):
+    """ACTUAL-tape exit state. Prefers the stage-time artifact; falls back to reading the legs.
+
+    ONLY ever reached on source='actual' - the blind path calls exit_state_blind(), which is built
+    from the assembled forecast and never touches the tape. That separation is what S107's price-leak
+    fix established and it is load-bearing here: this artifact is realized-price-derived, so a blind
+    run must never consult it. main() asserts the separation rather than trusting the call graph.
+    """
+    pre = _precomputed(gid)
+    if pre is not None and day in pre:
+        return pre[day]          # authoritative: a stored null means the day genuinely had no trades
+    return exit_state_from_legs(gid, day)
+
+
+def exit_state_from_legs(gid, day):
+    """Read the raw MBO leg off disk. The original exit_state() body, unchanged - this is what the
+    stage-time precompute calls, and what exit_state() falls back to when no artifact exists."""
     ts, px, sd = load_trades(gid, day)
     if px.size == 0:
         return None
@@ -73,6 +113,39 @@ def exit_state(gid, day):
             "close_off_low_frac": off_low,
             "low_late": bool(et[lo_i] >= et[-1] - pd.Timedelta(hours=3)),
             "high_late": bool(et[hi_i] >= et[-1] - pd.Timedelta(hours=3))}
+
+
+def precompute_exit_states(gid):
+    """Compute every day's ACTUAL exit state from the legs and commit it. Called by stage_group, when
+    the legs are local and the credentials are in hand by definition.
+
+    Writes renders/ng_refine_s95/<gid>_exit_states.json. Stores an entry for EVERY configured day,
+    including an explicit null for a day whose leg holds no trades, so the reader can tell 'known to
+    have no trades' from 'not precomputed' - a silently missing key is the recurring failure mode this
+    whole artifact is meant to avoid, not one to introduce.
+    """
+    days = gc.GROUPS[gid]["days"]
+    out, missing = {}, []
+    for d in days:
+        try:
+            out[d] = exit_state_from_legs(gid, d)
+        except FileNotFoundError:
+            missing.append(d)
+    if missing:
+        raise SystemExit(f"{gid}: cannot precompute exit states - legs absent for {missing}. "
+                         f"Stage with the data plane restored; do NOT commit a partial artifact.")
+    p = exit_states_path(gid)
+    json.dump({"spec": "stage-time ACTUAL exit states for the HE24->HE1 chain (S108)",
+               "group": gid,
+               "provenance": "derived from the realized MBO legs - REFINE-ONLY. A blind run must never "
+                             "read this file; the blind chain is built by exit_state_blind() from the "
+                             "assembled forecast.",
+               "n_days": len(out),
+               "n_null": sum(1 for v in out.values() if v is None),
+               "days": out}, open(p, "w"), indent=1)
+    print(f"[exit_states] {gid}: {len(out)} days "
+          f"({sum(1 for v in out.values() if v is None)} null) -> {os.path.relpath(p, HERE)}")
+    return out
 
 
 def _date(d):
@@ -115,7 +188,13 @@ def main(gid, source="actual"):
         blind_days = {str(r["date"]).replace("-", ""): r for r in json.load(open(bpath)).get("days", [])}
 
     def _exit(day, prev_close):
-        return exit_state_blind(gid, day, blind_days, prev_close) if source == "blind" else exit_state(gid, day)
+        # S108: the precomputed artifact is realized-price-derived, so it is reachable ONLY through
+        # exit_state() and ONLY on source='actual'. Asserted here rather than left to the call graph -
+        # S107's leak was exactly this shape (a tape read that did not check the source), and moving
+        # the computation to stage time must not quietly re-open it.
+        if source == "blind":
+            return exit_state_blind(gid, day, blind_days, prev_close)
+        return exit_state(gid, day)
 
     moves, cum_by, exits, prev_close, cum = {}, {}, {}, ANCHOR, 0.0
     for d in DAYS:
@@ -189,5 +268,13 @@ if __name__ == "__main__":
     if _src not in ("actual", "blind"):
         raise SystemExit(f"--source must be 'actual' or 'blind', got {_src!r}")
     if not _a:
-        raise SystemExit("usage: group_he24_he1_handoff.py [--source actual|blind] <gid>")
-    main(_a[0], _src)
+        raise SystemExit("usage: group_he24_he1_handoff.py [--source actual|blind] [--precompute] <gid>")
+    # S108: --precompute builds the stage-time ACTUAL exit-state artifact from the legs (stage_group
+    # calls this). It is refine-side data by construction, so it is rejected under --source blind.
+    if "--precompute" in _a:
+        _a.remove("--precompute")
+        if _src == "blind":
+            raise SystemExit("--precompute builds ACTUAL exit states; it is meaningless under --source blind")
+        precompute_exit_states(_a[0])
+    else:
+        main(_a[0], _src)

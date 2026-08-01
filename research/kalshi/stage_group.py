@@ -90,6 +90,15 @@ def stage(gid):
     json.dump(act, open(os.path.join(RENDER_DIR, f"{gid}_actual.json"), "w"))
     ev = group_mbo_engine.build(gid)
     log(f"{gid} actual (ends {act['days'][-1]['cum_from_anchor_usd']:+d}) + mbo evidence ({len(ev)} days) built")
+    # 6. S108: precompute the round-2 HE24->HE1 exit states while the legs are local. This was the LAST
+    # thing in a staged group's run cycle that reached into data/ - everything else (round-1
+    # specialists, both coordinators, the round-2 re-run) reads committed artifacts only. Staging is
+    # the one step that legitimately needs the data plane and the credentials, so the read belongs
+    # here, not mid-run in a later session that would otherwise have to restore 463MB to get 146MB of
+    # legs for one function.
+    import group_he24_he1_handoff as hh
+    importlib.reload(hh)
+    hh.precompute_exit_states(gid)
     log(f"{gid} STAGED - anchor {anchor}, {len(days)} days, seam {g.get('seam')}")
 
 
