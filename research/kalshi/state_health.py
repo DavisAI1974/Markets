@@ -103,6 +103,18 @@ def audit(state: dict) -> dict:
                         f"{s.get('live_front_symbol_calendar')} (declared)")
         if state[d].get("flow_read_error"):
             hard.append(f"{d}: flow_read_error {state[d]['flow_read_error']!r}")
+        # S108 THE PARTIAL-TAIL DEFECT (hole #7). The last day of any nws_temp fetch range is computed
+        # on incomplete hours and is WRONG while still reporting coverage 1.0 and n_stations 16 - so it
+        # is a WRONG-VALUE defect, not an empty-block one, and the completeness assertion above cannot
+        # see it. Measured: 2026-07-13 read gw_cdd 8.034/mod_cool as a pull tail and 13.548/hard_cool
+        # once a later day was fetched, against neighbours of 14.2 and 15.5. G23's window ended exactly
+        # on such a day. HARD, because a wrong weather value is worse than a missing one: it reads as
+        # decision-legit.
+        w = state[d].get("weather") or {}
+        if isinstance(w, dict) and w.get("provisional_tail"):
+            hard.append(f"{d}: weather is a PROVISIONAL FETCH TAIL (computed on incomplete hours; "
+                        f"coverage/n_stations do not detect it) - re-fetch nws_temp with at least one "
+                        f"day of margin past {d} and restage")
 
     return {"hard": hard, "soft": soft, "days": len(days)}
 

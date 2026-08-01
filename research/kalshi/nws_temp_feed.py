@@ -362,6 +362,25 @@ def realized_index(start: str, end: str, use_cache: bool = True, verbose: bool =
         per_station[st] = daily_from_obs(rows)
         time.sleep(0.5)                 # politeness to IEM
     gw = gas_weighted(per_station)
+    # S108 THE PARTIAL-TAIL DEFECT. The LAST day of any fetched range is computed on incomplete hours
+    # and is WRONG - while still reporting coverage 1.0 and n_stations 16, so nothing downstream can
+    # tell. Measured twice on this store:
+    #   2026-07-13 was the tail of an earlier pull at gw_cdd 8.034 / regime mod_cool. Fetching
+    #     2026-07-14..18 recomputed it to 13.548 / hard_cool - its neighbours are 14.2 and 15.5, so the
+    #     8.034 was an anomalous dip and the correction is the real value.
+    #   2026-07-17 was the tail of that pull at gw_cdd 15.42 / precip 0.2029. Fetching 2026-07-18..20
+    #     recomputed it to 15.14 / precip 0.0002.
+    #   2026-07-16, which had a successor day INSIDE its own pull, was byte-identical across both.
+    # So a day is trustworthy only once a LATER day has been fetched. Flag the tail rather than dropping
+    # it: a silently missing day is the failure mode this project keeps hitting, and a declared one lets
+    # state_health refuse the group. cache.update() overwrites, so a later pull CLEARS the flag by
+    # itself - the store self-heals as it extends.
+    if gw:
+        tail = max(gw)
+        gw[tail] = {**gw[tail], "provisional_tail": True,
+                    "provisional_note": ("LAST DAY OF A FETCH RANGE - computed on incomplete hours and "
+                                         "NOT decision-legit. coverage/n_stations do NOT detect this. "
+                                         "Re-fetch with at least one day of margin past it to settle it.")}
     if use_cache:
         cache.update(gw)
         _save_cache(cache)
