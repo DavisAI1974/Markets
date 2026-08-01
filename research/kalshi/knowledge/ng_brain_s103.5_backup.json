@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s103.6",
+  "version": "s103.5",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -838,12 +838,6 @@
     "warm_cut_headroom_gate": "Weather rung, WARM-CUT side only: cuts targeting days <=~13.5 ABSOLUTE gw-HDD are VOID (no Bcf content near the baseload floor; every warm-owned walk gap sat >=16.4, both G14 failures <=13.6; boundary 13.6-16.4 unobserved, stated not tuned). COLD ADDS NEVER GATED, and in shoulder counted on the FULL window incl. D+5..D+7 (0311 priced a FAR-window jump the near-window mass never showed). The boundary is ABSOLUTE HDD, not vs_normal (vs_normal fails: 0104 owned at -8.2, 0301 failed at -8.7).",
     "near_sum_settled": "NEAR-SUM stays NEAR-WINDOW-ONLY - the G14 blind's total-weekend-mass override was the 0301 misfire (verbatim NEAR-SUM said moderate; the -10.5 mass was mid-horizon, same-shot deepening of a strip already bled -2590 = revision-class). Mid-horizon weekend mass does not price at the reopen.",
     "g14_gaps_scored": "0301 +720 (saturation rung, in-band lower third), 0308 +1220 (chain-drift/saturation degenerate, in-band mid). Structural declines 4/4 forward (G13+G14)."
-   },
-   "declined_evidence_chain_drift_rung": {
-    "g21_0608": "B declined the chain_drift rung in the blind 'ON EVIDENCE', reasoning that the anchor closed off its low and not at a chain-side extreme. The anchor's close_off_low_frac was 0.08 - that IS the chain-side extreme. The rung fires, band -600..-1600, and the realized -890 sits in band.",
-    "root_cause_one_substitution": "B's blind asserted the anchor's final phase was ABSORBED on the strength of last_hour_dir +1 - a 60-MINUTE object read as a phase verdict. 0605 ph3 actually ran -2,386 of sell under -590 of price, ph_absorb FALSE, low_late TRUE, turn_kind none. Four separate constructions rested on that one substitution.",
-    "why_recorded": "The two fields that catch it - last_hour_dir and close_off_low_frac - sit side by side in the same block. This is a reading discipline failure, not a data failure, and it cost 470 on a clean day.",
-    "proposed_by": "B (G21 refine)"
    }
   },
   {
@@ -1353,12 +1347,6 @@
     "now_licensed": "The verdict 'failed to consult' is WITHDRAWN. The blind ran the gate correctly on a wrong input. B: 'A was closer to right than I was: something WAS missing.' A had located it in a missing rung; it was a missing INPUT.",
     "attribution_note": "The harness defect is FIXED as of S108 commit 2a36fa2 (tape_conditions.prior_full_session). G21 and G22 are restaged and carry it. G23 is NOT restaged and still serves stubs on both Mondays - it is separately blocked on a four-day weather gap.",
     "proposed_by": "B (r2), self-corrected in A's favour"
-   },
-   "forward_evidence_g21_leg_vs_day": {
-    "measured": "Calls the Monday DAY-MOVE sign 4/4 on the walk's four scorable weekend seams, WITHOUT needing the leg instrument the A-vs-D dispute is about.",
-    "mechanism": "A confirming leg contributes ~1.0 of the day (0518 88%, 0608 39%); a non-confirming leg is ERASED and contributes ~0 (0601 leg +690 against a day of -990; 0615 leg -750 against a day of +160). The leg's magnitude cancels exactly where its sign is hardest to call.",
-    "consequence_for_the_merge": "The day-move never needed the seam-leg instrument. B credited no instrument for the leg and paid with a 1,300-wide band rather than asserting one.",
-    "proposed_by": "B (G21 refine)"
    }
   },
   {
@@ -1512,13 +1500,6 @@
     "blind_available": "YES - pre-decision flow plus a COT positioning extreme, both open-time.",
     "also_corrects": "D's own lens file: 'anchor to the print' applied literally puts the day's mass at 10:30; the right anchor is the print WINDOW, which opens ~06:00.",
     "proposed_by": "D (r1, carried into r2)"
-   },
-   "assumption_retired_timing_limb": {
-    "assumed": "That a crowded short still adding de-risks in the session's first liquid window (06:00-10:30), so the dominant leg is PRE-print.",
-    "measured": "Refuted 1 of 4 on the generator's own prints (per-leg decomposition above). On 0618 the pre-print window delivered zero and onset was 11:06.",
-    "now_licensed": "The SELECTION limb only (COT extreme + worsening WoW). No timing claim. The observed mechanism on 0618 is post-resolution covering - recorded as a candidate at n=1, deliberately NOT merged as a mechanism.",
-    "how_the_error_entered": "G20 credited the generator from DAY NETS; the intraday check was never run.",
-    "proposed_by": "D (G21 refine), against its own merged play"
    }
   },
   {
@@ -1556,14 +1537,6 @@
     "tested_and_REJECTED_1": "SIZE THE OVERNIGHT LEG BY close_off_low. Refuted on D's own pair: 0527 exits at 0.59 and its overnight ran -170; 0603 exits at 0.82 (more extended, so a give-back rule predicts DEEPER) and its overnight ran only -70. Wrong ordering.",
     "tested_and_REJECTED_2": "CONTINUE THE PRIOR FINAL-HOUR CONVICTION THROUGH THE SEAM. Refuted: 0603's last hour is dir +1 / flow +1 = aligned BUY delivery, predicting a positive overnight; realized -70.",
     "conclusion": "The handoff does NOT size the overnight leg. The overnight is ~4% of session volume (ph1 3,305 and 3,885 against 88,726 and 82,052 in ph2) and is not where the handoff pays. D declined to tune it."
-   },
-   "final_phase_arm_scope_UNRESOLVED": {
-    "the_dispute": "D scoped the final-phase-conviction arm OUT of Friday->Monday, believing its single failure was the weekend seam. A measured all 9 G21 boundaries and located the failure at 0616->0617, INTRA-WEEK, with the weekend seam as the arm's largest clean hit (-750).",
-    "B_adjudication_and_the_new_measurement": "D's scope conclusion is right and D's evidence for it is wrong; A's location correction is right and A's conclusion is wrong. 24 OF 24 intra-week boundaries across G19+G20+G21 carry |gap| <= 10 - identically zero by market structure - so D built a scope on eight vacuous cases and A banked one weekend hit off the same vacuity.",
-    "why_no_winner_may_be_merged": "The two specialists read the arm in OPPOSITE directions (A literally: absorbed -> positive terminal leg; D restated: delivers in the flow direction). All four G20 exemplars carry NEGATIVE ph3 flow, so with flow sign held constant the two readings are observationally IDENTICAL on 4 of 4. Picking a winner would be picking on a confound.",
-    "the_scorable_evidence": "On the four weekend seams the walk can score, BOTH readings go 2/4: 0518 (+580), 0601 (+690), 0605->0608 (-350, the one nobody ran), 0615 (-750). All four are ALIGNED; the ABSORBED branch has never met a seam.",
-    "status": "UNRESOLVED and recorded as unresolved. No scope change merged. The discriminating test is an ABSORBED final phase into a weekend seam, which has not occurred in the walk.",
-    "proposed_by": "B (G21 refine), adjudicating A vs D"
    }
   },
   {
@@ -1689,14 +1662,6 @@
     "measured": "On G20 0601 the rung-2 clause independently prescribes ~+690 against a realized -990. Two incumbents, two contradictory day-moves on one day.",
     "now_licensed": "TERMINATION CLAUSE: when structure.covering_extension_distribution_flip fires, this ladder does not apply - the gap is demoted to one component of the standing extension rather than a separate prescription.",
     "proposed_by": "A (r2), after A withdrew its own rung-3 proposal. A calls it additive BY SUBTRACTION: no new play, no n=1 exemplar, removes authority from a falsified clause."
-   },
-   "assumption_retired_cot_residual_coordinate": {
-    "assumed": "That an unconsumed COT residual can be metered by cumulative AGGRESSOR flow between publication and the seam.",
-    "measured": "A withdrew its own instrument as a COORDINATE ERROR. A covering short RESTS BIDS - it prints NEGATIVE aggressor flow under RISING price. On the corrupt tape the meter read +915 (CONSUMED); on the correct tape -14,775 (UNCONSUMED). Both wrong: the covering fired three times in that window as ABSORPTION (+160/+970/+520).",
-    "why_it_never_showed_before": "It is sign-inverted with respect to what it detects, so on G19 and G20 it returned UNCONSUMED both times and only ever AGREED with a play that was already firing. It had never discriminated.",
-    "and_the_seam_prior_itself": "E armed this play at the 0614 seam and wrote the falsifier verbatim; the seam gapped -750 and THE FALSIFIER FIRED - its first out-of-block test. A independently put 0.65 on an up gap and was wrong the same way.",
-    "now_licensed": "The gap arm is not carried by a positioning prior. A's own diagnosis: all three of its generators are SESSION generators and none is a LEG generator.",
-    "proposed_by": "A and E (G21 refine), each against their own prior"
    }
   },
   {
@@ -1813,14 +1778,7 @@
    "consequence": "Affects the PATH, not the day-move. A's p50 peak +250 -> +550, day-move HELD at +60.",
    "proposed_by": "A (r2), correcting its own r1 assumption",
    "n": 1,
-   "status": "PROPOSED, n=1",
-   "refuted_on_first_forward_test": {
-    "claim": "A thin session compresses NET and does not compress RANGE.",
-    "measured": "G21 0619 (Juneteenth partial): realized range 700 = sqrt(0.268) x the block's 1,342 mean - EXACTLY the scaling the play forbids. Its n=1 exemplar (G20 0525) held; its first forward test fails.",
-    "repair_offered_by_its_own_author": "Invariance needs a DEADLINE-BOUND PARTICIPANT, not thinness. A verified in_bcom_roll and in_gsci_roll both FALSE on 0619 and had recorded both in its blind file two lines above the prediction.",
-    "status": "DOWNGRADE to n=1 with a refuting instance recorded. Do NOT extrapolate to thin sessions generally.",
-    "proposed_by": "A (G21 refine), refuting its own merged play"
-   }
+   "status": "PROPOSED, n=1"
   },
   {
    "id": "boundary.chain_staleness_gate",
@@ -1842,25 +1800,7 @@
    "why_it_matters": "It is BLIND-AVAILABLE and resolves the G18-0506 class with no price - the slot flow_conviction cannot fill because flow_conviction requires realized price and is refine-only. But it does NOT resolve the sell-tape-absorbed class (0527, 0604), which is where G20's largest errors actually sat.",
    "proposed_by": "C (r1, scope tightened in r2)",
    "n": 2,
-   "status": "PROPOSED as a mechanism with a stated precondition, NOT an established play. n=2 firings plus one stand-down inside one block.",
-   "g21_forward_evidence_and_withdrawal": {
-    "withdrawn_fire": "C's G21 0616 fire is WITHDRAWN - its precondition rests on a session whose realized signed-flow sign is opposite to what was served (hole #8 contamination).",
-    "clean_fire": "C's 0609 fire is on clean week-1 input and is an honest 240 miss.",
-    "mirror_arm_still_refuted": "E adds a FIFTH datapoint (0611: 0.572 under -3,772 flow -> +620). Above-0.50 readings under a negative tape now run two up, two down, no ordering. The mirror arm stays refuted and the play stays HALF-SCOPE.",
-    "the_open_slot": "C's verdict on the blind's residual is that it is TIMIDITY, not bias - the blind emitted 24% of the available move (mean |blind| 148 against mean |actual| 625 on its days). Removing the structural down-gate did not install an up-gate; it removed what was manufacturing conviction. What is left is a blind that sees the flow but not whether it will be ABSORBED - and on this block absorb_session x sflow_sign calls the day sign 9 of 10. This play is the only instrument in that slot and it covers positive-flow only.",
-    "proposed_by": "C and E (G21 refine)"
-   }
-  },
-  {
-   "id": "flow.resting_program_inverts_aggressor_tilt",
-   "one_line": "On a scheduled-program day, a same-signed aggressor tilt is SUSPECT, not confirmation - a resting program is filled by the crowd, so it prints the opposite aggressor sign to its own direction.",
-   "trigger": "flow_calendar in_bcom_roll or in_gsci_roll TRUE (deterministic, never masked, open-time).",
-   "measured": "G21 0608 printed +3,261 of net aggressor BUY while falling -890, absorb_session TRUE, ph2 +2,858 of buy against -120 of price. The index program rested offers and the crowd hit them.",
-   "generalises_a_known_case": "A named the same inversion for a covering short (it RESTS BIDS and prints negative aggressor flow under rising price). B's finding is that this is a property of ANY resting program, not of covering specifically - which is why A's COT-residual meter was sign-inverted.",
-   "blind_available": "YES - the roll calendar is deterministic and never masked.",
-   "falsifier": "A scheduled-program session where the aggressor tilt matches the day sign and the program is demonstrably the dominant participant.",
-   "n": 1,
-   "status": "PROPOSED, n=1"
+   "status": "PROPOSED as a mechanism with a stated precondition, NOT an established play. n=2 firings plus one stand-down inside one block."
   }
  ],
  "mechanisms": [
