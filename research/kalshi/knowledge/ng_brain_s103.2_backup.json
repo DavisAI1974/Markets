@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s103.3",
+  "version": "s103.2",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -282,11 +282,6 @@
     "rule": "WATCH n=1: Monday after a saturation/covering-owned gap (no Bcf mass behind the weekend repricing) AND the covering impulse's WoW print has stalled AND the counter-driver's extreme realizes at the open -> the Monday fades the ENTIRE weekend repricing: core = -(gap + Sunday net) EXACT (anchor-measurable) + a give-back stub in the ramp-shallow class -700..-900.",
     "evidence": "0309: core -2250 + stub = band -2950..-3150, actual -3020 (record fade, 3.7x prior max). DAY-scoped not window-scoped: the crest was OVERNIGHT (3.466 Sun 22:00) and the 06-10 window carried only ~25% (E). Consistency: 1110 faded an OWNED gap only partially (-820 of +1560); 0202 RATIFIED a structural gap - fade depth tracks how much fundamental mass owned the premium.",
     "forward_evidence": "NONE - next saturation weekend is the test."
-   },
-   "declined_evidence": {
-    "R3_was_NOT_runnable_on_g20_0601": "R3 is EXTENSION-GATED (mature swing, fresh cum-extreme). The blind's constructed chain read cum -830 / polarity DOWN at that seam, so R3's trigger does not evaluate TRUE on the state the blind held. Banking R3 as forward evidence off this day would record a STATE DEFECT as evidence for a play.",
-    "raised_by": "A (r2), correcting B, which had listed R3 among the blind's 'clean failures-to-consult' while itself proving two paragraphs later that the constructed chain was inverted there.",
-    "why_recorded": "This is the precise failure mode the attribution discipline exists to prevent, caught between two specialists rather than in a post-mortem."
    }
   },
   {
@@ -492,14 +487,7 @@
    "caveats": "The >=75% threshold is soft (n=4); the shelf is a zone, not a tick. Distinguish mid-swing give-backs (R1 governs) from move-terminal stretches (this play governs). A shelf BREAK would falsify the give-back-not-reversal frame for that swing - treat as a live stop condition. S97.2: threshold softened to >=~70% (1125 at 72% fired); still a zone, not a tick. S98.2 VOID-CONDITION: after a confirmed parabolic polarity flip the shelf BREAKS (1211 through the 4.367 origin) - the break confirms reversal-not-give-back; only NON-parabolic give-backs respect the shelf (G7). n=1 break vs n=5 holds, condition = the parabolic arm.",
    "requires": "needs_day_N-1_tape",
    "scope": "magnitude (give-back floor) + the stabilization/turn day",
-   "forward_evidence": "FORWARD-CONFIRMED on G7/G8; FORWARD-VOIDED after a confirmed parabolic flip (G9, 1211 broke the shelf). Not exercised in G11 - no terminal give-back reached a shelf in the block.",
-   "arm_proposed_validated_leg": {
-    "statement": "A covering leg retraces IN FULL to its origin only when NO phase of it was validated by aligned flow. A leg containing a genuine aligned delivery phase is VALIDATED and gives back only its unvalidated residue.",
-    "measured": "G20 0529 gave back 160 off a leg containing an aligned delivery phase (0528 ph2 sflow +1,684 / pxchg +2,020, ph_absorb FALSE). G20 0605 gave back 1,350 off a leg built entirely on absorbed selling (no aligned up phase anywhere in its table).",
-    "why_it_matters": "It lets a Friday magnitude be derived as a LEVEL instead of guessed as a fraction. E used it to re-earn 0605 with no vol_regime term at all.",
-    "explicitly": "An added ARM on this incumbent, NOT a new play. E said so unprompted.",
-    "proposed_by": "E (r2)"
-   }
+   "forward_evidence": "FORWARD-CONFIRMED on G7/G8; FORWARD-VOIDED after a confirmed parabolic flip (G9, 1211 broke the shelf). Not exercised in G11 - no terminal give-back reached a shelf in the block."
   },
   {
    "id": "timing.catalyst_continuity_frontrun",
@@ -1091,13 +1079,7 @@
    "caveats": "n=3 splits within one block (+1 positive control). The two gates are pre-existing measured thresholds (16.4 = shoulder_weather_band_void boundary; 0.50 = flow-nowcast neutral) - no new free constant. Scoped to the S3-injection-regime storage-vs-weather split; a WINTER (S1-live) split is governed by the winter weather bands, not this rule. Test on the next block where a cold-add SHOULD win (near-window >= 16.4 AND buy-tape) - the rule must let weather own the day there.",
    "requires": "open_time_only (near-window forecast vintage + never-masked tape_conditions session_b_share)",
    "scope": "synthesis/selector - which angle wins a flagged storage-vs-weather divergence; direction + whether the cold-add earns a day-lean or only a gap",
-   "forward_evidence": "NONE - proposed s102.3 (G16 refine). G17+ is the forward test; a genuine >=16.4-gw buy-confirmed cold-add is the designed positive test.",
-   "negative_result_reported": {
-    "the_defect": "Gate (b) uses an ABSOLUTE 0.50 session_b_share bar. G20 ran sub-0.50 on all ten sessions (0.367-0.513, and the only reading above 0.50 is the degenerate 1,224-trade Sunday stub), so the gate excluded the up-angle on 10/10 days BY CONSTRUCTION in a block that rallied +1,860.",
-    "tested_and_REJECTED": "C's own proposed remedy - recentring session_b_share BLOCK-RELATIVE - predicts next-session direction on only 2 of 8. C refuted its own r1 proposal in r2 and says explicitly: do NOT recentre gate (b).",
-    "what_to_do_instead": "Replace it with the size-weighted big-print channel benchmarked against flow.big_print_bshare_thin_tape_guard's per-quartile equal-rate bars. Under the flat 0.55 bar C's 0603 trigger does not fire; under the q4 bar 0.547 it fires cleanly.",
-    "proposed_by": "C (r1 proposed, r2 refuted its own remedy)"
-   }
+   "forward_evidence": "NONE - proposed s102.3 (G16 refine). G17+ is the forward test; a genuine >=16.4-gw buy-confirmed cold-add is the designed positive test."
   },
   {
    "id": "magnitude.s1void_injection_chain_bleed",
@@ -1223,11 +1205,7 @@
    "provenance": "generalized from the G15 MBO round-2 specialist-C HE24->HE1 boundary finding (forecasts/grp15_mbo_specialist_C_r2.json).",
    "status": "PROVISIONAL",
    "forward_evidence": "NONE",
-   "merged": "s104_midweek_cleanup",
-   "evidence_partial_uncap": {
-    "g20_0527": "C's r1 exit read of 0526 said the sell 'holds into the close'; the realized exit state says last_hour_dir +1, last_hour_signed_flow +1, low at 14:29 - the prior exited ALIGNED with the up-turn, so this gate removes the mid-week cap that WAS C's r1 0.80 multiplier. The un-cap is PARTIAL (0.80 -> 0.90, not 1.00) because the incoming close sits at close_off_low_frac 0.17: the bid appeared but the close is still in the bottom fifth of its range - the turn is signalled and not yet paid for. 520 -> 580 against a realized 610.",
-    "generalizes": "The un-cap magnitude is scaled by the incoming close's location in its own range, not applied as a binary."
-   }
+   "merged": "s104_midweek_cleanup"
   },
   {
    "id": "midweek.giveback_exhaustion_reversal_recognition",
@@ -1321,14 +1299,7 @@
    "scope": "Monday direction at the catch-up window; consumes the Friday/Sunday handoff, never the gap sign",
    "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
    "caveats": "Direction/timing only. The sell-the-news FADE DEPTH on the crash days (0202/0309) is sized by seam_chainage + crash class but the extreme reactive tail is honest-under (not claimed at open). Sub-threshold cold (0406, HDD ~15.8) prices ONCE in the reopen gap then the tape reasserts - do not treat a sub-threshold shoulder cold add like a winter cold add.",
-   "merged": "s104_monday_cleanup",
-   "assumption_retired": {
-    "assumed": "That the blind's G20 0601 miss (+350 against a realized -990) was a failure to CONSULT this gate.",
-    "measured": "B audited tape_conditions.session across all ten G20 days: session 20260529 appears on NO DAY. The Monday was served the Sunday reopen stub (2,620 lots, session_signed_flow +278) in place of the Friday's -2,126 on ~117,069 lots - OPPOSITE SIGN. Consulting this gate on the state actually served REPRODUCES +350.",
-    "now_licensed": "The verdict 'failed to consult' is WITHDRAWN. The blind ran the gate correctly on a wrong input. B: 'A was closer to right than I was: something WAS missing.' A had located it in a missing rung; it was a missing INPUT.",
-    "attribution_note": "The harness defect is FIXED as of S108 commit 2a36fa2 (tape_conditions.prior_full_session). G21 and G22 are restaged and carry it. G23 is NOT restaged and still serves stubs on both Mondays - it is separately blocked on a four-day weather gap.",
-    "proposed_by": "B (r2), self-corrected in A's favour"
-   }
+   "merged": "s104_monday_cleanup"
   },
   {
    "id": "boundary.prior_close_flow_direction_disagreement",
@@ -1342,13 +1313,7 @@
    "forward_evidence": "NONE",
    "confidence": 0.5,
    "caveats": "flow measured only where tape/MBO grain exists (G15 MBO-proven; elsewhere tape_conditions last-hour approximations, labeled). A generalization of the flow_conviction discriminator to the day boundary.",
-   "merged": "s104_greg_carry_forward",
-   "assumption_retired": {
-    "assumed": "That price-down with flow-positive biases to the flow side (UP) unconditionally.",
-    "measured": "G20 0604 close: structure.covering_absorption_directional_tell (b) reads the IDENTICAL state as failing (DOWN). Read literally this play flips 0605 to UP and loses 1,350. What actually selects is the distribution flip at cum +3,200 with the tell reversed.",
-    "now_licensed": "Requires an explicit EXTENSION GATE. At block-extreme cum with the tell reversed, this play yields to the flip.",
-    "proposed_by": "E (r2)"
-   }
+   "merged": "s104_greg_carry_forward"
   },
   {
    "id": "daytype.friday_turn_exhaustion_gate",
@@ -1394,10 +1359,7 @@
    "scope": "EIA-print-day direction; the full-band down is spared when D-1 flow is coherent (0423)",
    "forward_evidence": "G17 refine 10/10: 0416 flipped DOWN->+720 (err 0 at r2), 0423 spared+held DOWN. Test-drive: fired 0416, spared 0423. G18 blind = scored forward test (pending). | G18 blind: D spared coherent-buy 0430 (UP, only up-day the blind caught) and split a same-net-flow pair via big_print_b_share; refine 0430 +1200/0507 +710 both UP.",
    "provenance": "S105 D tweak (blind_class_D.md + mbo_specialist_D.md)",
-   "merged": "s102.6 S105",
-   "declined_evidence": {
-    "g20_both_thursdays": "Run honestly on both days, only tell (b) fires on each - below the 2-of-3 bar - so the gate EXPLICITLY SPARED the full band on both, and the blind still emitted +150 and -450. Recorded because it establishes the gate was not the constraint: the failure was the absent generator, not an over-firing veto."
-   }
+   "merged": "s102.6 S105"
   },
   {
    "id": "structure.accumulation_arm_turn",
@@ -1458,15 +1420,7 @@
    "scope": "direction on covering/absorption days; the discriminator is conviction not imbalance",
    "forward_evidence": "G18 refine 10/10 (first block); G19+ forward test",
    "provenance": "S105 G18 refine - A/B/C/E convergent covering-absorption finding",
-   "merged": "s102.9 S105",
-   "scope_extension_proposed": {
-    "current_scope": "The play already names the 06-10 window but scopes it to the WEEKEND SEAM.",
-    "measured": "The 06:00-10:30 pre-print window is the largest leg on 8 of 10 G20 days, and on the two EIA Thursdays it is +1,060 of a +2,100 day and +1,030 of a +1,130 day (91%). The blind reproduced both negative overnight legs correctly and then truncated this leg to ~zero - 2,090 of D's 3,530 blind-vs-r1 gap.",
-    "mechanism": "A crowded short that is still ADDING must de-risk before a scheduled binary, and that de-risk dates to the session's first liquid window, NOT to the print. There is no cold weather ramp here (gw_hdd 0.28-0.88), so catalyst_continuity_frontrun does not license it and nothing downstream can PRODUCE an up-band - the Thursday stack is all vetoes and no generator.",
-    "blind_available": "YES - pre-decision flow plus a COT positioning extreme, both open-time.",
-    "also_corrects": "D's own lens file: 'anchor to the print' applied literally puts the day's mass at 10:30; the right anchor is the print WINDOW, which opens ~06:00.",
-    "proposed_by": "D (r1, carried into r2)"
-   }
+   "merged": "s102.9 S105"
   },
   {
    "id": "direction.flow_conviction_sign_gate",
@@ -1492,18 +1446,7 @@
    "scope": "price-bearing runs; any day-class",
    "forward_evidence": "rides G20+ refine; blind-side proxy still open",
    "complements_not_replaces": "This is the REFINE-side sign gate: it requires realized price, so the blind cannot compute it. big_print_b_share is open-time and non-price and is the BLIND's instrument in the same role. They are complements on different channels, never substitutes - retiring the 0.55 arm would leave the blind with nothing in this slot.",
-   "s107_adjudication": "REPLACES sentence struck; play otherwise unchanged and KEPT in full.",
-   "evidence_final_phase_arm": {
-    "statement": "Applied to the LAST PHASE rather than the whole session, the gate predicts the next day's terminal leg: an ABSORBED final phase delivers a POSITIVE terminal leg, an ALIGNED final phase delivers a NEGATIVE-to-flat one.",
-    "measured": "4 of 4 across D's two handoff pairs. Absorbed: 0528 ph3 -3,762 sflow under +160 px; 0603 ph3 -1,442 under +350. Aligned: 0527 ph3 -1,575 under -370; 0604 ph3 -2,816 under -90.",
-    "why_it_matters": "D calls this the handoff's real payload on a print day - not the prior close's position in range.",
-    "proposed_by": "D (r2)"
-   },
-   "negative_result_reported": {
-    "tested_and_REJECTED_1": "SIZE THE OVERNIGHT LEG BY close_off_low. Refuted on D's own pair: 0527 exits at 0.59 and its overnight ran -170; 0603 exits at 0.82 (more extended, so a give-back rule predicts DEEPER) and its overnight ran only -70. Wrong ordering.",
-    "tested_and_REJECTED_2": "CONTINUE THE PRIOR FINAL-HOUR CONVICTION THROUGH THE SEAM. Refuted: 0603's last hour is dir +1 / flow +1 = aligned BUY delivery, predicting a positive overnight; realized -70.",
-    "conclusion": "The handoff does NOT size the overnight leg. The overnight is ~4% of session volume (ph1 3,305 and 3,885 against 88,726 and 82,052 in ph2) and is not where the handoff pays. D declined to tune it."
-   }
+   "s107_adjudication": "REPLACES sentence struck; play otherwise unchanged and KEPT in full."
   },
   {
    "id": "direction.absorption_is_reversal",
@@ -1528,10 +1471,7 @@
     "phase flow-vs-price"
    ],
    "scope": "all day-classes incl EIA print days",
-   "forward_evidence": "rides G20+",
-   "declined_evidence": {
-    "g20_0528_self_caught": "D's round 1 read ph3 correctly as 3,762 lots of sell absorbed under a rising price and then sized it as 'a token positive, not an extension' - the exact damp this play forbids ('never a cap ... size to the reversal move'). Round 2 caught its own violation and sized to the reversal at ~0.2x n0_net_sigma_5, cross-checked against the only two absorbed final phases available (+160, +350) and taken at the LOW end. This is the play working as a check on a specialist, not on the market."
-   }
+   "forward_evidence": "rides G20+"
   },
   {
    "id": "structure.covering_extension_distribution_flip",
@@ -1557,17 +1497,7 @@
     "phase absorption"
    ],
    "scope": "crowded-short covering regimes",
-   "forward_evidence": "rides G20+; n=3 within one block, needs a second block",
-   "assumption_retired": {
-    "assumed": "That the age arm (age >= 5) can be read off the chain-age LABEL.",
-    "measured": "G20 0605: the handoff hands chain_age_sessions = 2 because a single -70 close on 0602 reset the close-alternation label, while cum ran +2,550 -> +3,200 WITHOUT EVER TURNING. Read off the label the gate does not fire and the block's largest day resolves the wrong way. Cost 1,350.",
-    "now_licensed": "The age arm must read REGIME AGE FROM REALIZED CUM, per the incumbent boundary.chain_label_must_track_realized_cum. NOTE: this is decidable at the OPEN and is therefore BLIND-AVAILABLE.",
-    "proposed_by": "E (r2)"
-   },
-   "declined_evidence": {
-    "g20_0601_pre_warning_fired_early": "The play's own PRE-WARNING clause was satisfied on 0527 (+620 on sflow -4,910) and 0528 (+2,090 on -1,966) - two and three sessions before the seam. B and A both adopted this earlier trigger over A's seam-side arming.",
-    "b_declined_a_concentration_adjustment": "B measured that G20 built +2,710 in two sessions (1,027/session) against G19's +2,830 over five (722/session), so a concentration adjustment would have moved -900 toward the realized -990. B DECLINED it: 'that is fitting.' Recorded so the decline is not re-derived as an opportunity."
-   }
+   "forward_evidence": "rides G20+; n=3 within one block, needs a second block"
   },
   {
    "id": "positioning.covering_self_limiting_cot_wow_gate",
@@ -1592,11 +1522,7 @@
     "exit-session flow_conviction"
    ],
    "scope": "crowded-short regimes; weekend/holiday seams",
-   "forward_evidence": "rides G20+",
-   "declined_evidence": {
-    "g20_0528_correct_refusal": "The incoming handoff's last_hour_dir -1 / last_hour_signed_flow -1 APPEARED to license a spent-downgrade of the 0528 pre-print band. Limb (a) refused it on its own text: it requires the exit SESSION to show positive conviction under falling price and states that a single final-phase give-back does NOT qualify. 0527's session and ph2 conviction are negative-under-rising. The gate CONFIRMED the band at its round-1 size and changed the number by zero.",
-    "why_recorded": "D calls this the most valuable thing the handoff did on 0528. A correct decline currently leaves no trace in the brain; this is the asymmetry the declined_evidence field exists to close."
-   }
+   "forward_evidence": "rides G20+"
   },
   {
    "id": "boundary.seam_gap_up_prior_on_worsening_cot",
@@ -1622,13 +1548,7 @@
     "handoff exit state"
    ],
    "scope": "weekend/holiday seams in crowded-short regimes",
-   "forward_evidence": "rides G20+ Mondays",
-   "assumption_retired": {
-    "assumed": "That the seam ladder's rung-2 MAGNITUDE clause applies whenever the seam prior arms, independently of whether a distribution flip is also firing.",
-    "measured": "On G20 0601 the rung-2 clause independently prescribes ~+690 against a realized -990. Two incumbents, two contradictory day-moves on one day.",
-    "now_licensed": "TERMINATION CLAUSE: when structure.covering_extension_distribution_flip fires, this ladder does not apply - the gap is demoted to one component of the standing extension rather than a separate prescription.",
-    "proposed_by": "A (r2), after A withdrew its own rung-3 proposal. A calls it additive BY SUBTRACTION: no new play, no n=1 exemplar, removes authority from a falsified clause."
-   }
+   "forward_evidence": "rides G20+ Mondays"
   },
   {
    "id": "boundary.chain_label_must_track_realized_cum",
@@ -1677,12 +1597,7 @@
     "handoff_out"
    ],
    "scope": "weekend-feeding sessions",
-   "forward_evidence": "rides G20+ Fridays",
-   "condition_proposed_volume_net_pair": {
-    "statement": "The rule must be stated on the (VOLUME, NET) PAIR, not on net flow alone. A flowless close on 4,000 lots is an unpriced print that reverts; a flowless close on 60,000 lots is a handover that continues.",
-    "measured": "G20 0529 phase volumes ph1 4,715 / ph2 51,424 / ph3 60,930 - ph3 is the session's LARGEST phase by 18%, with a net of only -59. E's r1 prose ('nobody sold this low', 'the covering bid went home') described PARTICIPATION, and participation was maximal.",
-    "proposed_by": "B objected, E conceded the fact and the mechanism, A verified independently and adopted it. Three specialists, one conclusion."
-   }
+   "forward_evidence": "rides G20+ Fridays"
   },
   {
    "id": "flow.big_print_bshare_thin_tape_guard",
@@ -1716,57 +1631,7 @@
    ],
    "scope": "any play keyed on a big_print_b_share threshold; open-time, so blind-available",
    "falsifier": "If thin-tape sessions (big_prints_n < 20) that clear 0.55 but not 0.60 go on to deliver conviction-consistent direction at the same rate as thick-tape 0.55 fires, the guard is wrong and should be withdrawn.",
-   "forward_evidence": "NONE. Rides G20+.",
-   "forward_evidence_g20": {
-    "first_ride_confirmed_by_four_lenses_r1": "C, D, E and A each independently found that Memorial Day 20260525 (0.599 on 13 big prints) is G20's only reading clearing 0.55, and that the ~0.60 thin-tape bar correctly kills it - disarming a spurious accumulation_arm_turn fire. 0526 then came in -190, so an unguarded fire would have called accumulation into a down day.",
-    "second_instance_r2": "The guard also stands down the degenerate Sunday-stub readings (big_print_b_share exactly 1.0 on 0-2 prints, 78-1,245 trades) that the Monday prior-session defect was serving. Four specialists referenced it without being told to.",
-    "note": "This play's own recorded negative (the 0.5+k/sqrt(n) form) is why nobody re-proposed that form this run - the working precedent for the negative_result_reported field."
-   }
-  },
-  {
-   "id": "flow.passive_ladder_displacement",
-   "one_line": "When both aggressor sides fight to a draw at MAXIMUM volume and price still travels, the travel belongs to the resting book, not to either aggressor.",
-   "trigger": "(a) final-phase |net| below ~5% of the prior phase's, AND (b) final-phase volume AT OR ABOVE the session maximum.",
-   "read": "A fifth exit_type. Conviction is UNDEFINED BY CANCELLATION, not by absence - the distinction the round-1 name got wrong.",
-   "measured": "G20 0529: ph3 net -59 against ph2's -1,573, on 60,930 lots (session max, +18% over ph2), price travelling -810. The 0601 seam then gapped +690 - 85% of the -810 recovered before a single Monday session traded, with no publication, no catalyst and no flow. A completed transfer at maximum aggression does not do that; a passive-ladder failure does.",
-   "history": "Proposed in r1 as FLOWLESS_BID_WITHDRAWAL. B refuted the name and the participation reading; E conceded the fact and the mechanism-as-location, rejected the consequence, and the two ledgers reconcile: B has the aggressor ledger right, E has price formation right, and the CONJUNCTION is the finding.",
-   "why_condition_b_is_mandatory": "Without it the play is a false-positive machine - B's actual objection. Note it runs OPPOSITE to what 'flowless' implies.",
-   "falsifier": "A final phase meeting both conditions whose price travel is subsequently NOT recovered at the next seam.",
-   "n": 1,
-   "status": "PROPOSED, n=1"
-  },
-  {
-   "id": "daytype.thin_session_range_invariance",
-   "one_line": "A thin session compresses NET and does not compress RANGE.",
-   "read": "When participation falls, price per unit of flow rises roughly as fast, so excursions survive even though the net does not. Scaling both by sqrt(participation) is wrong on the range half.",
-   "measured": "G20 0525 (Memorial Day, ~30% participation): realized day-move +30 against a derived holiday sigma of 360 = 0.08 sigma, so the NET scaling held exactly. Realized RANGE 1,140 against n0_range_20_mean 1,094 - compression 1.04x, not the predicted ~0.55x. A partial session printed a full-size regime range.",
-   "mechanism_not_tail": "A deadline-bound roll-in buyer facing a 13:00 early close in a thin book is a MECHANISM for overshoot-and-give-back, which is why A withdrew its r1 characterisation of the excursion as 'a reactive tail'.",
-   "consequence": "Affects the PATH, not the day-move. A's p50 peak +250 -> +550, day-move HELD at +60.",
-   "proposed_by": "A (r2), correcting its own r1 assumption",
-   "n": 1,
-   "status": "PROPOSED, n=1"
-  },
-  {
-   "id": "boundary.chain_staleness_gate",
-   "one_line": "A play keyed on cum_from_anchor or chain extension may assert a RUNG only for k <= 3 sessions from the block anchor; from k >= 4 it widens to the full band or stands down.",
-   "why_deterministic_not_triggered": "The blind CANNOT compute the divergence, and no never-masked proxy for realized cum survived testing. k is known in advance for a one-shot block blind, so this is a SCHEDULE, not a runtime signal.",
-   "measured": "Mean |constructed - realized| by k across G17-G20: 768 / 590 / 1,022 for k<=3; 2,182-2,730 for k>=4, against n0_range_20_mean ~1,094.",
-   "applied_to_g20_0601": "k=6, which stands down the seam play's cum-keyed rung-2 intraday arm and keeps its gap arm - the arm that was right at +690.",
-   "forward_test": "On G21+, record per day whether a cum-keyed play fired and at what k. PREDICTION: the blind's |err| on k>=4 days where a cum-keyed play fired exceeds its |err| on k>=4 days where none did. Zero or negative difference KILLS it.",
-   "proposed_by": "B (r2)",
-   "status": "PROPOSED, deterministic form only"
-  },
-  {
-   "id": "flow.price_free_absorption_proxy",
-   "one_line": "Under POSITIVE aggregate session signed flow, the size-weighted big-print channel says whether the absorber is still there - without price.",
-   "trigger": "Precondition: aggregate session signed flow POSITIVE and a guard-clean big-print sample (see flow.big_print_bshare_thin_tape_guard).",
-   "read": "Big prints STILL SELLING = absorber present = buy-absorption-failing risk live, take the turn small. Big prints FLIPPING BUY on a guard-clean sample = absorber gone = accumulation confirmed.",
-   "measured": "G20 0601->0602: sflow +3,796 positive, big_print_b_share 0.436 on 104 prints - big prints selling into a buying count tape; actual -80 against a blind +250. G20 0602->0603: sflow +3,524 positive, big prints FLIP to 0.585 on 122 prints, clearing the q4 equal-rate bar 0.547; actual +750.",
-   "scope_HALF_ONLY": "Covers sign(flow) = POSITIVE only. The mirror arm is REFUTED - under a negative count tape the big-print channel carries no next-session information (0527 .529 -> +2,100; 0528 .522 -> -160; 0604 .533 -> -1,340; 0603 .476 -> +1,130: two up, two down, and the one sell reading preceded the second-biggest up day).",
-   "why_it_matters": "It is BLIND-AVAILABLE and resolves the G18-0506 class with no price - the slot flow_conviction cannot fill because flow_conviction requires realized price and is refine-only. But it does NOT resolve the sell-tape-absorbed class (0527, 0604), which is where G20's largest errors actually sat.",
-   "proposed_by": "C (r1, scope tightened in r2)",
-   "n": 2,
-   "status": "PROPOSED as a mechanism with a stated precondition, NOT an established play. n=2 firings plus one stand-down inside one block."
+   "forward_evidence": "NONE. Rides G20+."
   }
  ],
  "mechanisms": [
