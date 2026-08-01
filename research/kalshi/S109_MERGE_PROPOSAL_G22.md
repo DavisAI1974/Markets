@@ -441,3 +441,77 @@ has now stated.
 **Falsifier:** if per-region coal headroom turns out to be uncorrelated with the realized weather→burn
 transmission across the walked blocks, the buffer is not the mechanism and this drops back to
 post-gate. Testable on data we would then have.
+
+---
+
+## P0.7 — THE RENEWABLE SUBTRACTOR: 0629 EXPLAINED, AND THE CHANNEL WAS SERVED
+
+**Greg pointed at the prior solar work.** Recovered:
+
+- **Feed P, `solar_calendar`** (built 2026-07-20, Greg: *"do we have sun up/sun down time in our feed
+  somewhere"* — answer was no). Records the **SUNSET POWER-BURN RAMP** — solar collapses at sunset, gas
+  peakers pick up; the duck-curve neck, strongest ERCOT/CAISO and **growing yearly** — plus day length
+  as the seasonal demand-shape descriptor.
+- **Feed Q, `grid_stack`** (Greg: *"if we weren't tracking the sun we would have no idea how much less
+  gas is being used because of solar"*). Feed P gives the ramp's CLOCK; Q gives its **QUANTITY**.
+  Gas-displaced-by-solar as a measured state variable.
+- **The BTM insight** (`NEW_SESSION_HANDOFF_BLIND_FORECASTER_2026-07-21.md` §8): *"Native load often
+  drops sharply as the sun rises because behind-the-meter residential and commercial solar subtracts
+  from what the utility can see."* Formalised as
+  `reported native load = gross customer demand − behind-the-meter solar ± battery activity`, with the
+  warning that **EIA-930 captures grid-visible utility solar and NOT residential/small-commercial PV**.
+  An 11-item desired solar stack is specified there, including solar surprise and gas displacement, plus
+  an open PR (`chatgpt/daylight-load-shape`, `daylight_load_shape.py`) under the design rule *enrich the
+  existing forecast authority, do not create a parallel signal*.
+
+**THIS EXPLAINS 0629 MECHANICALLY.** Across the 0626 → 0629 seam the bridge staked its flip on:
+
+| | 0626 | 0629 | Δ |
+|---|---|---|---|
+| gw_cdd | 10.0 | **14.8** | **+4.8** — the heat arrived, as forecast |
+| US48 demand | 12,850,328 | 12,739,224 | **−111,104** |
+| **wind_mwh** | 1,065,861 | **1,726,080** | **+660,219 (+62%)** |
+| gas_mwh | 5,063,457 | **4,507,457** | **−556,000** |
+| **est_gas_burn_bcfd** | 38.6 | **34.4** | **−4.2 Bcf/d** |
+
+**The heat came in exactly as forecast and gas burn FELL 4.2 Bcf/d**, because wind rose 62% and total
+demand declined. The hill was real; **wind ate it entirely and then some.** Actual day-move −1,110
+against a forecast +325.
+
+**AND THE CHANNEL WAS SERVED.** `wind_mwh`, `solar_mwh`, `gas_mwh` and `est_gas_burn_bcfd` are all in
+`grid_stack`, in every specialist's slice. A and B both adjusted for **nuclear** (~800 MW ≈ 19,200 MWh)
+and **neither looked at wind**, which moved **34× more, against their thesis**. Specialist C found the
+mechanism independently on 0630 — citing wind +96% against flat burn, and concluding "the CDD build is
+real and is not converting into marginal gas call" — but per-day isolation meant that read never reached
+the bridge. **A cost of causal isolation, recorded honestly: it removes cross-talk that would sometimes
+catch a shared error.**
+
+**THE SYNTHESIS — the gas call is a STACK, and weather is only its top term.**
+
+```
+gas call  =  weather-driven load  −  renewables (solar + wind)  −  what coal/nuclear can absorb
+             [the hill, P0]          [subtractor, growing yearly]   [headroom, P0.6]
+```
+
+Weather is THE driver of the top term (Greg, P0) — but the *transmission* to gas price runs through two
+subtractors, both of which are measured (grid_stack) and neither of which any weather play references.
+That is why a correctly-forecast +4.8 CDD add produced −4.2 Bcf/d of burn and a +50 gap.
+
+**PROPOSED AS BUILDS:**
+
+1. **A `gas_call_residual` served field** — weather-implied load minus realized renewables, per BA, so
+   the forecaster sees the *net* call rather than the gross weather signal. All inputs already served;
+   this is arithmetic on existing fields.
+2. **Renewable SURPRISE, not just level** — day-ahead expectation vs realized wind/solar. A +62% wind
+   day is only tradeable if it was not already in the strip. This is the same hill-vs-spike distinction
+   P0 draws for weather, applied to the subtractor.
+3. **Wire the existing solar work in.** Feed P's sunset ramp and the `daylight_load_shape` PR were built
+   or specified and never reached a specialist's reasoning. The G22 panel had the duck-curve clock
+   available and no play pointed at it.
+4. **BTM solar** — the named gap. EIA-930 misses residential/small-commercial PV, so native load is
+   already understated by an amount that grows every year. Until estimated, the demand read carries a
+   structural, one-directional error — the same shape as every other defect this session.
+
+**Falsifier:** if `gas_call_residual` does not track realized day-moves better than raw degree-days
+across the walked blocks, the subtractor is not the mechanism and this reduces to a monitoring field.
+Cheap to test — every input is on disk for all seven walked groups.
