@@ -58,12 +58,12 @@ def break_gaps(ct, cp, max_gap_h=3.0):
 def guard_assemble(gid, rnd):
     g = gc.GROUPS[gid]; days = g["days"]; owner = gc.owner_map(gid)
     weekend_feeding = {d for d in days if _DOW[pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}").weekday()] == "Fri"}
-    specs = {t: load_spec(gid, t, rnd) for t in ("B", "C", "D", "E")}
+    # S107: A is a full owner - see the matching note in group_coordinate_blind.py. Every other guard
+    # is unchanged. On a day A owns, A must emit a `days` array (its bridge-only file has none).
+    specs = {t: load_spec(gid, t, rnd) for t in ("A", "B", "C", "D", "E")}
     errs, block = [], []
     for d in days:
         o = owner[d]
-        if o == "A":
-            errs.append(f"{d}: owner A holiday reopen - handle separately"); continue
         sp = specs.get(o)
         if sp is None or sp.get(d) is None:
             errs.append(f"{d}: owner {o} posterior missing"); continue

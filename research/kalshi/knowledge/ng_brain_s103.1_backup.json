@@ -1,9 +1,9 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s103.2",
+  "version": "s103.1",
   "built_pass": 4,
-  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
+  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
   "regime_scope": "12 warm-season days (Jul-Sep) + G3/G4/G5 (Sep8-Oct21) autumn contango + G6 (Oct22-Nov4) the first TRUE holdout at the winter transition. Winter/backwardation + Mondays still thin.",
   "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders.",
@@ -1427,9 +1427,9 @@
    "target": "direction",
    "trigger": "any price-bearing (refine) day; per phase of the session",
    "read": "flow_conviction = sign(signed_flow) * sign(price_change), computed PER PHASE from the MBO phase table",
-   "call": "ALIGNED (>0) delivers the band in the FLOW direction; NEGATIVE (<0) = flow absorbed against price = reversal in the PRICE direction.",
+   "call": "ALIGNED (>0) delivers the band in the FLOW direction; NEGATIVE (<0) = flow absorbed against price = reversal in the PRICE direction. This sign gate REPLACES big_print_b_share>=0.55 as the direction discriminator.",
    "evidence": {
-    "g19": "flow_conviction called 10/10 signs on G19. The companion claim that the 0.55 arm never fired is WITHDRAWN (S107): block max 0.537 was the COUNT-based big_print_b_share; forecast_harness omitted the field from the flow_read copy-through so the count series shadowed the SIZE-WEIGHTED one under the same key. On the corrected series G19 0519 reaches 0.550 and the arm DOES fire. The two gates were never measured against each other on the same series.",
+    "g19": "the 0.55 arm NEVER fired (block max 0.537) yet covering discharged full on every day; flow_conviction called 10/10 signs",
     "source": "C (core) + D (EIA), convergent",
     "n_days": 10
    },
@@ -1444,9 +1444,7 @@
     "mbo phase table (sflow, pxchg per phase)"
    ],
    "scope": "price-bearing runs; any day-class",
-   "forward_evidence": "rides G20+ refine; blind-side proxy still open",
-   "complements_not_replaces": "This is the REFINE-side sign gate: it requires realized price, so the blind cannot compute it. big_print_b_share is open-time and non-price and is the BLIND's instrument in the same role. They are complements on different channels, never substitutes - retiring the 0.55 arm would leave the blind with nothing in this slot.",
-   "s107_adjudication": "REPLACES sentence struck; play otherwise unchanged and KEPT in full."
+   "forward_evidence": "rides G20+ refine; blind-side proxy still open"
   },
   {
    "id": "direction.absorption_is_reversal",
@@ -1598,40 +1596,6 @@
    ],
    "scope": "weekend-feeding sessions",
    "forward_evidence": "rides G20+ Fridays"
-  },
-  {
-   "id": "flow.big_print_bshare_thin_tape_guard",
-   "target": "direction",
-   "trigger": "before applying ANY big_print_b_share threshold (the 0.55 conviction arm, accumulation_arm_turn, eia_preprint_overextension_gate flow-coherence)",
-   "read": "big_prints_n for the session the ratio is computed on - the SAMPLE SIZE behind the ratio",
-   "call": "Below ~20 big prints in the session, the 0.55 bar OVER-FIRES on noise: raise the bar to ~0.60 for that session, or stand the arm down and say so. At or above ~20 big prints, 0.55 stands as measured. Do NOT float the bar by season - see the negative result below.",
-   "mechanism": "big_print_b_share is a proportion. Its dispersion is governed by the number of big prints behind it, so on a thin tape it wanders away from 0.50 for purely statistical reasons and an absolute bar silently becomes a looser bar. Measured: the thinnest quartile carries roughly DOUBLE the dispersion of the other three - sd 0.255 (median 9 big prints) versus 0.132 / 0.120 / 0.127. corr(|b_share - 0.50|, log big_prints_n) = -0.465, so extremity is substantially a thin-sample artifact.",
-   "evidence": {
-    "n": "204 sessions with a usable big-print read, 2025-11-02 through 2026-07-20 (spans winter, shoulder and summer), computed on the CORRECTED size-weighted series",
-    "pooled": "mean 0.461, sd 0.169, p50 0.479; 0.55 sits at the 72.5th percentile and fires on 27.5% of sessions",
-    "equal_fire_rate_bar_by_big_print_quartile": {
-     "q1 (<=20 big prints, median 9)": "sd 0.255, fixed 0.55 fires 31.4%, equal-rate bar 0.579",
-     "q2 (21-48, median 34)": "sd 0.132, fires 26.9%, equal-rate bar 0.536",
-     "q3 (49-87, median 68)": "sd 0.120, fires 23.5%, equal-rate bar 0.544",
-     "q4 (>87, median 130)": "sd 0.127, fires 28.0%, equal-rate bar 0.547"
-    },
-    "shape": "The equal-rate bar is a STEP, not a smooth decay - elevated only in the thinnest quartile and flat (0.536-0.547) across the other three. That is why the guard is a single thin-tape condition and not a continuous function.",
-    "guard_effect_measured": "Per-quartile fire-rate spread under a FIXED 0.55 is 7.9pp [31.4, 26.9, 23.5, 28.0]. Under the guard (0.60 when big_prints_n <= ~20, else 0.55) it is 4.5pp [23.5, 26.9, 23.5, 28.0]. The fixed bar is already reasonably well behaved; the thin quartile is the only material offender and the guard is a modest, targeted correction - it is NOT a large effect and should not be sold as one."
-   },
-   "negative_result_reported": {
-    "tested_and_REJECTED": "the smooth noise model bar = 0.50 + k/sqrt(big_prints_n)",
-    "result": "WORSE than the fixed bar at every k tested. Per-quartile fire-rate spread: k=0.25 -> 18.5pp, k=0.33 -> 22.4pp, k=0.40 -> 22.3pp, k=0.50 -> 16.3pp, versus FIXED 0.55 -> 7.9pp. The 1/sqrt(n) form over-corrects the thick tail, where the empirical equal-rate bar has already flattened, so it ends up FIRING MORE on the thickest quartile than the thinnest - the opposite of the intent.",
-    "why_this_is_reported": "Result Discipline: the elegant form was tested first and lost badly to the crude one. Recording the loss is what stops it being re-proposed next session."
-   },
-   "status": "PROPOSAL",
-   "confidence": 0.72,
-   "requires": [
-    "tape_conditions.big_prints_n",
-    "tape_conditions.big_print_b_share (size_weighted basis)"
-   ],
-   "scope": "any play keyed on a big_print_b_share threshold; open-time, so blind-available",
-   "falsifier": "If thin-tape sessions (big_prints_n < 20) that clear 0.55 but not 0.60 go on to deliver conviction-consistent direction at the same rate as thick-tape 0.55 fires, the guard is wrong and should be withdrawn.",
-   "forward_evidence": "NONE. Rides G20+."
   }
  ],
  "mechanisms": [

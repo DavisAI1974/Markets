@@ -60,12 +60,16 @@ def break_gaps(ct, cp, max_gap_h=3.0):
 def guard_assemble(gid):
     g = gc.GROUPS[gid]; days = g["days"]; owner = gc.owner_map(gid); seam = g.get("seam")
     weekend_feeding = {d for d in days if _DOW[pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}").weekday()] == "Fri"}
-    specs = {t: load_specialist(gid, t) for t in ("B", "C", "D", "E")}
+    # S107: A is a full owner. agents/README.md has always said "A owns holiday/extended-weekend
+    # reopens ONLY"; the coordinator carried a TODO instead ("handle when it occurs") and hard-failed
+    # the whole block on any A-owned day. It occurred on G20 (Memorial Day 20260525, a real if thin
+    # session). A is now loaded and selected like any other owner - EVERY other guard is unchanged
+    # (owner match, numeric day-move, Friday sign-off). A must emit a `days` array on a day it owns,
+    # not only its bridge block.
+    specs = {t: load_specialist(gid, t) for t in ("A", "B", "C", "D", "E")}
     errs, block = [], []
     for d in days:
         o = owner[d]
-        if o == "A":                       # holiday reopen owned by A - handle when it occurs
-            errs.append(f"{d}: owner A (holiday reopen) - not handled by the standard 4-owner assemble"); continue
         sp = specs.get(o)
         if sp is None:
             errs.append(f"{d}: owner {o} file missing"); continue
