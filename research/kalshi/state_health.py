@@ -150,6 +150,33 @@ def audit(state: dict) -> dict:
                         f"not reconcile, so at least one member is computed off a different tape or a "
                         f"different side encoding. Do not reason over it.")
 
+        # S109 f1 THE FROZEN-BUT-LIVE RECONCILIATION. A fifth kind of silently wrong input: a
+        # DETERMINISTIC quantity frozen alongside the designed price mask, then republished under a
+        # "_live" name and used to compute a boolean served as current. squeeze_watch's calendar limb
+        # read a constant dte 5 / NGN26 on all ten days of G22 and G23 while flow_carrying the real
+        # walk 4,3,2,1,0 then 21,20,19,18 - and asserted calendar_limb_satisfied_live TRUE on five
+        # sessions whose live dte was 18-21 against a play window of <=7. S108 fixed a false NEGATIVE
+        # here and shipped its mirror image. A presence check cannot see it: the field is there,
+        # integer, in range, and self-consistent with the rest of its own frozen block.
+        #
+        # The reconciliation is exact and free: flow_calendar carries the same two quantities LIVE and
+        # is never masked, so a "_live" field that disagrees with it is definitionally wrong.
+        sw, fc = state[d].get("squeeze_watch") or {}, state[d].get("flow_calendar") or {}
+        if isinstance(sw, dict) and isinstance(fc, dict):
+            lv, fv = sw.get("days_to_calendar_front_expiry_live"), fc.get("days_to_futures_expiry")
+            if isinstance(lv, int) and isinstance(fv, int) and lv != fv:
+                hard.append(f"{d}: squeeze_watch days_to_calendar_front_expiry_live={lv} CONTRADICTS "
+                            f"flow_calendar days_to_futures_expiry={fv} - the same deterministic "
+                            f"calendar quantity, one of them frozen. A '_live' field that disagrees "
+                            f"with the live block is not live.")
+            ls, fs = sw.get("calendar_front_symbol_live"), fc.get("front_symbol_calendar")
+            if ls and fs and ls != fs:
+                hard.append(f"{d}: squeeze_watch calendar_front_symbol_live={ls!r} CONTRADICTS "
+                            f"flow_calendar front_symbol_calendar={fs!r}")
+            if sw.get("frozen_front_expired") and ls and ls == sw.get("calendar_front_symbol"):
+                hard.append(f"{d}: squeeze_watch declares frozen_front_expired but its '_live' symbol "
+                            f"is still {ls!r}, the expired contract - self-contradictory in one block")
+
     return {"hard": hard, "soft": soft, "days": len(days)}
 
 

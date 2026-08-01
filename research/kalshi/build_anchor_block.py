@@ -97,12 +97,35 @@ def build(gid: str) -> dict:
                 if derived != lhd:
                     raise SystemExit(f"{gid}: anchor_lasthr_dir declared {lhd} but the actual final hour "
                                      f"ran {px[0]}->{px[-1]} ({derived}) - do not spawn on a wrong seam dir")
+                net = int(round((px[-1] - px[0]) * MULT))
+                rng = max(px) - min(px)
+                rng_usd = int(round(rng * MULT))
+                # S109 f14(b), raised by the state auditor against this very file. A last-hour NET can
+                # sit at the price resolution floor and still be published as a confident direction.
+                # On the G22 anchor the net is 2 ticks (3.200 -> 3.198) = 18% of an $110 last-hour
+                # range: that is noise, not a direction, and anchor_lasthr_dir feeds the E->A->B
+                # weekend seam. The close's LOCATION IN RANGE is the sturdier reading off the same
+                # data and is now served beside it. Declared, so the reader weights them itself.
+                close_in_range = round((px[-1] - min(px)) / rng, 3) if rng > 0 else None
+                ticks = abs(net) // 10
                 out["last_hour"] = {
                     "first_price": px[0], "last_price": px[-1],
                     "high_price": max(px), "low_price": min(px),
-                    "net_usd": int(round((px[-1] - px[0]) * MULT)),
+                    "net_usd": net,
                     "direction": "up" if derived > 0 else ("down" if derived < 0 else "flat"),
                     "derived_dir": derived, "n_points": len(hr),
+                    "range_usd": rng_usd,
+                    "net_ticks": ticks,
+                    "net_share_of_range": round(abs(net) / rng_usd, 3) if rng_usd else None,
+                    "close_in_range": close_in_range,
+                    "direction_is_resolution_floor": ticks <= 3,
+                    "direction_caveat": (
+                        f"the last-hour NET is {ticks} tick(s), {round(abs(net)/rng_usd*100) if rng_usd else 0}% "
+                        f"of the ${rng_usd} last-hour range - at or near the price resolution floor, so "
+                        f"anchor_lasthr_dir is a WEAK signal and should not be leaned on as a seam "
+                        f"direction. close_in_range ({close_in_range}) is derived from the same data and "
+                        f"is the sturdier read." if ticks <= 3 else
+                        f"last-hour net {ticks} ticks on a ${rng_usd} range - direction is supported."),
                     "trade_count": None, "signed_flow": None,
                     "provenance": ("price levels derived from the actual file's DOWNSAMPLED `continuous` "
                                    "render path, not the raw tape. Trade count and signed flow are NOT "
@@ -125,8 +148,19 @@ def build(gid: str) -> dict:
                 "session_signed_flow": pfs.get("session_signed_flow"),
                 "session_b_share": pfs.get("session_b_share"),
                 "session_b_share_two_sided": pfs.get("session_b_share_two_sided"),
-                "source": "tape_conditions.prior_full_session (the true tape, scored leg)",
+                "source": "tape_conditions.prior_full_session (scored leg)",
             }
+            # S109 f14(a), raised by the state auditor against this file. A REPUTATION problem: the
+            # source label said "the true tape" while session_b_share may be an S109 reconstruction
+            # (recovered by algebraic identity because the leg reader's side encoding zeroed the direct
+            # computation). Copying a declared value and dropping its declaration re-launders a
+            # reconstruction as a measurement - the exact failure the basis field exists to prevent.
+            # Carry the basis through whenever the source limb has one.
+            if pfs.get("session_b_share_basis"):
+                out["session_activity"]["session_b_share_basis"] = pfs["session_b_share_basis"]
+                out["session_activity"]["source"] = (
+                    "tape_conditions.prior_full_session (scored leg); NOTE session_b_share is a "
+                    "declared RECONSTRUCTION, not a direct measurement - see session_b_share_basis")
 
     if out["is_holiday_session"]:
         act = out["session_activity"].get("n_trades")
