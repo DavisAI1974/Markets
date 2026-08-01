@@ -543,3 +543,57 @@ carrying the Chicago mechanism. That one has no free equivalent identified.
 **Sequencing note:** the free items above should land BEFORE any subscription is evaluated, because
 they change what the slope channel measures. Buying a better forecast to feed a mis-weighted,
 HDD-only, anomaly-blind index would improve the input to an instrument that cannot use it.
+
+---
+
+## P0.8 — THE RESIDUAL TEST WAS RUN ENTIRELY OUTSIDE ITS CLAIMED REGIME
+
+**Greg, S109:** *"Residual is only going to drive it in cold or getting cold times."*
+
+**A SCOPE CONDITION, and it invalidates the S109 test.** The residual is not a universal instrument. It
+has authority when the system has no slack — cold, or turning cold, when storage is withdrawing,
+deliverability is tight, freeze-off risk is live, and an incremental call has nowhere to go. In a warm,
+well-supplied market the same residual moves and price absorbs it.
+
+**Measured coverage of the blocks I actually tested:**
+
+| grp | window | grid_stack | mean gw_hdd | mean gw_cdd | regime |
+|---|---|---|---|---|---|
+| g20 | 2026-05-24 → 06-05 | 10/10 | **0.72** | 7.14 | WARM |
+| g21 | 2026-06-07 → 06-19 | 10/10 | **0.27** | 10.19 | WARM |
+| g22 | 2026-06-21 → 07-03 | 10/10 | **0.26** | 13.05 | WARM |
+| g23 | 2026-07-05 → 07-17 | 10/10 | **0.12** | 14.38 | WARM |
+
+**Every testable block is warm. Mean gw_hdd 0.12–0.72. Not one cold or getting-cold day.**
+
+So the S109 verdict changes: **not "inconclusive" — UNTESTED IN ITS CLAIMED REGIME.** The at-chance sign
+agreement (dd 15/36, res 16/36) is not evidence against the residual; it is an absence of coverage where
+the claim lives. A null measured entirely outside a play's stated scope is not a null.
+
+**AND IT CORRECTS AN EARLIER CLAIM IN THIS PROPOSAL.** The negative degree-day correlation (−0.412,
+−0.293, −0.223, −0.243) was described as holding "across winter, spring and two summer blocks." **There
+was no winter block.** G20 is late May at mean HDD 0.72 — warm. That result is therefore scoped to the
+WARM season, and so scoped it *supports* the hill/spike model rather than being a general law: in warm
+months the degree-day ramp is the priced seasonal slope, so trading its level change fades an
+anticipated move. Whether it inverts in cold is exactly what is untested.
+
+**WHY THE COLD BLOCKS ARE MISSING:** feed Q (`grid_stack`, EIA-930) was built in S99. G7–G13 — the
+walked winter, Nov 2025 through Feb 2026 — were staged before it existed, so they carry no grid stack at
+all. The gap is chronological, not a data limitation.
+
+**PROPOSED BUILD — cheap, and it is the one that makes the residual testable at all:**
+
+1. **Backfill `grid_stack` (EIA-930) across the walked winter blocks G7–G13.** S98 recorded EIA-930 as
+   **free, ~1-day lag, historical**, so this is a pull, not a purchase. Scope to the same gas-relevant
+   BAs (ERCOT, CAISO, MISO, PJM, SPP, SOCO), per-BA and never pooled.
+2. **Re-run `gas_call_residual.py` on the cold blocks** — the regime where the claim lives. That is the
+   real test, and it also puts a cold arm under the degree-day correlation.
+3. **Re-stage G18/G19 weather** (the S107 path hole) for the cool-shoulder arm, giving three regime
+   cells rather than one: cold / shoulder / warm.
+4. **Scope the residual play explicitly to cold and turning-cold** when it is eventually written, with
+   the warm-season null recorded as its own forward evidence — *measured inert in warm*, which is a
+   result worth keeping rather than an embarrassment to bury.
+
+**Falsifier, restated so it is answerable:** if the residual is inert in the COLD blocks too, the
+subtractor is not a price mechanism and it reduces to a monitoring field. The S109 warm-season null
+cannot decide that either way.
