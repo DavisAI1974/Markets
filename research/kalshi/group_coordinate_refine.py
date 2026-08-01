@@ -12,6 +12,7 @@ import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import group_config as gc
+import render_util as ru
 import verify_gold
 verify_gold.assert_gold_intact()   # the concrete wall - no refine coordinate on a violated gold vault
 
@@ -43,16 +44,7 @@ def num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
-def break_gaps(ct, cp, max_gap_h=3.0):
-    """S104 RENDER RULE - never bridge a session gap with a straight line. Insert a NaN break
-    wherever consecutive tape points are >max_gap_h apart (weekend, holidays, multi-hour halts)."""
-    ct = np.asarray(ct, float); cp = np.asarray(cp, float)
-    if ct.size < 2:
-        return ct, cp
-    gi = np.where(np.diff(ct) > max_gap_h * 3600.0)[0]
-    if gi.size == 0:
-        return ct, cp
-    return np.insert(ct, gi + 1, ct[gi]), np.insert(cp, gi + 1, np.nan)
+break_gaps = ru.break_gaps   # S107: one implementation, in render_util
 
 
 def guard_assemble(gid, rnd):
@@ -89,29 +81,43 @@ def render(gid, rows, actual, blind_days):
     bmap = {r["date"]: r for r in blind_days}
 
     def step_line(get_move, get_path, color, label, z):
-        run = 0.0; lab = False
+        """S107: ONE polyline for the whole block (NaN breaks at real session gaps only), and the
+        grid-hour mapping comes from render_util.path_times so a trailing 18:00/20:00 stays on the
+        forecast day instead of folding back onto its own open."""
+        run = 0.0; fx, fy = [], []
         for b in rows:
-            d = b["date"]; gap = 0 if d == seam else 0
+            d = b["date"]
             net = get_move(b); day0 = pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}", tz="America/New_York")
             path = [(h, v) for h, v in (get_path(b) or []) if h is not None and v is not None]
             if path:
-                sx = [(day0 - pd.Timedelta(days=1) + pd.Timedelta(hours=h)) if h >= 18 else (day0 + pd.Timedelta(hours=h)) for h, _ in path]
+                sx = ru.path_times(day0, path)
                 sy = [anchor + (run + v) / MULT for _, v in path]
             else:
                 sx = [day0 + pd.Timedelta(hours=8), day0 + pd.Timedelta(hours=16)]
                 sy = [anchor + run / MULT, anchor + (run + net) / MULT]
-            ax.plot(sx, sy, color=color, lw=1.3, zorder=z, label=(label if not lab else None)); lab = True
+            fx.extend(sx); fy.extend(sy)
             run += net
+        ru.plot_forecast(ax, fx, fy, color=color, label=label, lw=1.3, z=z)
     # 1st pass = BLIND (red), last pass = REFINE (green)
+    # S107: the blind's intraday path lives under "path_p50" in grp<n>.json - that is the key
+    # group_coordinate_blind.py writes. This render asked for "path_distribution" (the SPECIALIST-side
+    # key, before the coordinator reshapes it), so the lookup always returned None and the blind fell
+    # through to a 2-point-per-day stub: the whole point of this chart is blind-vs-refine-vs-price and
+    # the blind curve was never actually drawn. Accept both keys.
+    def _blind_path(b):
+        r = bmap.get(b["date"], {})
+        pts = r.get("path_p50")
+        if pts:
+            return [(h, v) for h, v in pts]
+        return [(x.get("et_hr"), x.get("p50")) for x in (r.get("path_distribution") or [])] or None
     step_line(lambda b: bmap.get(b["date"], {}).get("guess_day_move_usd", 0),
-              lambda b: [(r.get("et_hr"), r.get("p50")) for r in (bmap.get(b["date"], {}).get("path_distribution") or [])] or None,
-              "#d1242f", "BLIND (1st pass)", 3)
+              _blind_path, "#d1242f", "BLIND (1st pass)", 3)
     step_line(lambda b: b["refined_day_move_usd"], lambda b: b["path_p50"], "#1a7f37", "REFINE (last pass)", 4)
     ax.axhline(anchor, color="#999", lw=0.7, ls="--")
     if seam:
         sd = pd.Timestamp(f"{seam[:4]}-{seam[4:6]}-{seam[6:]}", tz="America/New_York")
         ax.axvline(sd, color="#999", lw=0.8, ls=":")
-    ax.set_title(f"NG {gid.upper()}: actual price + BLIND (1st) + REFINE (last) - s102.8", fontsize=10, fontweight="bold")
+    ax.set_title(f"NG {gid.upper()}: actual price + BLIND (1st) + REFINE (last) - brain {ru.brain_version()}", fontsize=10, fontweight="bold")
     ax.set_ylabel("price ($/MMBtu)"); ax.legend(fontsize=8); ax.grid(True, color="#eee"); ax.set_axisbelow(True)
     out = os.path.join(RENDER_DIR, f"{gid}_blind_vs_refine_vs_price.png")
     fig.autofmt_xdate(); fig.tight_layout(); fig.savefig(out, dpi=130); plt.close(fig); return out
@@ -130,7 +136,7 @@ if __name__ == "__main__":
         rows.append({**b, "actual_day_move_usd": am, "refined_err_usd": err, "dir_hit": hit,
                      "blind_day_move_usd": bmap.get(b["date"], {}).get("guess_day_move_usd")})
     bl_dh = sum(1 for r in rows if (r["blind_day_move_usd"] or 0 > 0) == (r["actual_day_move_usd"] > 0))
-    json.dump({"group": gid, "phase": f"mbo_refined_r{rnd}", "brain_version": "s102.8", "mean_abs_err_usd": round(sabs/len(rows)),
+    json.dump({"group": gid, "phase": f"mbo_refined_r{rnd}", "brain_version": ru.brain_version(), "mean_abs_err_usd": round(sabs/len(rows)),
                "dir_hits": dh, "n": len(rows), "sum_abs_err_usd": sabs, "days": rows},
               open(os.path.join(FC, f"grp{gid[1:]}_mbo_refined{tag}.json"), "w"), indent=1)
     print(f"{'date':10} {'own':4} {'blind':>7} {'refined':>8} {'actual':>7} {'err':>7} {'dir':>4}")

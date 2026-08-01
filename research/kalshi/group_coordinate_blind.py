@@ -12,6 +12,7 @@ import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 import pandas as pd
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import group_config as gc
+import render_util as ru
 import verify_gold
 verify_gold.assert_gold_intact()   # the concrete wall - no blind coordinate on a violated gold vault
 
@@ -44,17 +45,7 @@ def num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
-def break_gaps(ct, cp, max_gap_h=3.0):
-    """S104 RENDER RULE - never bridge a session gap with a straight line. Insert a NaN break
-    wherever consecutive tape points are >max_gap_h apart (the weekend, holidays, multi-hour halts),
-    so matplotlib lifts the pen instead of drawing a fake diagonal across untraded time."""
-    ct = np.asarray(ct, float); cp = np.asarray(cp, float)
-    if ct.size < 2:
-        return ct, cp
-    gi = np.where(np.diff(ct) > max_gap_h * 3600.0)[0]
-    if gi.size == 0:
-        return ct, cp
-    return np.insert(ct, gi + 1, ct[gi]), np.insert(cp, gi + 1, np.nan)
+break_gaps = ru.break_gaps   # S107: one implementation, in render_util
 
 
 def guard_assemble(gid):
@@ -106,25 +97,27 @@ def render(gid, rows, actual, seam):
     ct, cp = break_gaps([t for t, _ in actual["continuous"]], [p for _, p in actual["continuous"]])
     adt = pd.to_datetime(ct, unit="s", utc=True).tz_convert("America/New_York")
     ax.plot(adt, cp, color="#1f6feb", lw=0.8, label="actual (MBO trades)", zorder=3)
-    anchor = actual["anchor"]; run = 0.0; labelled = False
+    anchor = actual["anchor"]; run = 0.0
+    fx, fy = [], []                     # S107: accumulate the WHOLE block, then draw ONE polyline
     for b in rows:
         d = b["date"]; gap = 0 if d == seam else b["overnight_gap_usd"]
         open_cum = run + gap; net = b["guess_day_move_usd"] - (0 if d == seam else gap)
         day0 = pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}", tz="America/New_York")
         path = [(h, v) for h, v in b["path_p50"] if h is not None and v is not None]
         if path:
-            sx = [(day0 - pd.Timedelta(days=1) + pd.Timedelta(hours=h)) if h >= 18 else (day0 + pd.Timedelta(hours=h)) for h, _ in path]
+            sx = ru.path_times(day0, path)
             sy = [anchor + (open_cum + v) / MULT for _, v in path]
         else:
             sx = [day0 + pd.Timedelta(hours=8), day0 + pd.Timedelta(hours=16)]
             sy = [anchor + open_cum / MULT, anchor + (open_cum + net) / MULT]
-        ax.plot(sx, sy, color="#d1242f", lw=1.2, zorder=4, label=("blind p50 path" if not labelled else None)); labelled = True
+        fx.extend(sx); fy.extend(sy)
         run = open_cum + net
+    ru.plot_forecast(ax, fx, fy, color="#d1242f", label="blind p50 path", lw=1.2, z=4)
     ax.axhline(anchor, color="#999", lw=0.7, ls="--")
     if seam:
         sd = pd.Timestamp(f"{seam[:4]}-{seam[4:6]}-{seam[6:]}", tz="America/New_York")
         ax.axvline(sd, color="#999", lw=0.8, ls=":")
-    ax.set_title(f"NG {gid.upper()} BLIND (5-specialist sequenced panel, s102.8 kitchen-sink) vs actual", fontsize=10, fontweight="bold")
+    ax.set_title(f"NG {gid.upper()} BLIND (5-specialist sequenced panel, brain {ru.brain_version()}) vs actual", fontsize=10, fontweight="bold")
     ax.set_ylabel("price ($/MMBtu)"); ax.legend(fontsize=8); ax.grid(True, color="#eee"); ax.set_axisbelow(True)
     out = os.path.join(RENDER_DIR, f"{gid}_blind_vs_actual.png")
     fig.autofmt_xdate(); fig.tight_layout(); fig.savefig(out, dpi=130); plt.close(fig); return out
@@ -135,7 +128,7 @@ if __name__ == "__main__":
     actual = json.load(open(os.path.join(RENDER_DIR, f"{gid}_actual.json")))
     block, seam = guard_assemble(gid)
     rows, sabs, dh = score(block, actual)
-    json.dump({"group": gid, "phase": "blind", "brain_version": "s102.8", "anchor": actual["anchor"],
+    json.dump({"group": gid, "phase": "blind", "brain_version": ru.brain_version(), "anchor": actual["anchor"],
                "sum_abs_err_usd": sabs, "mean_abs_err_usd": round(sabs / len(rows)), "dir_hits": dh,
                "n": len(rows), "days": rows}, open(os.path.join(FC, f"grp{gid[1:]}.json"), "w"), indent=1)
     print(f"{'date':10} {'dow':4} {'own':4} {'guess':>8} {'actual':>8} {'err':>7} {'dir':>4}")
