@@ -194,3 +194,21 @@ Adjudicated: **60/61 incumbents byte-identical**, all non-play sections byte-ide
 - git = code, S3 = data, `data/` is disposable. Committer noreply@anthropic.com. No emojis.
 - Never pool/average as the final word; each event individually.
 - Magnitudes DERIVED, never fitted; a reactive tail is not ours to claim.
+
+## FRAMING CORRECTION (Greg, at close) - read this before the next post-mortem
+
+Greg, verbatim intent: *"I'm not worried about comparisons in the groups. the whole point of this is
+to improve group over group."*
+
+S107 repeatedly flagged that a restored input made group-vs-group "not a clean A/B". That was the
+wrong lens. **The walk is a development loop, not a controlled experiment.** Each group is supposed
+to be better than the last precisely because the brain merges and the plumbing gets fixed between
+them. A widened input set is the program working, not a confound to apologise for. Do not hedge a
+result, and never hold a group back on a degraded input set to preserve a comparison - that is the
+silent turning-off the standing order forbids, wearing a scientist's coat.
+
+The one thing that genuinely survives from that concern, and it is narrow: **ATTRIBUTION INSIDE THE
+POST-MORTEM.** When a day improves, be explicit about whether the reasoning earned it or a restored
+input did - otherwise a brain merge banks a data fix as forward evidence for a play and we promote a
+rule that did not actually do the work. That is about not writing false lessons into the brain. It
+is not about comparability, and it is not a reason to caveat the scoreboard.

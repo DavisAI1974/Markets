@@ -71,9 +71,14 @@ data/storage_consensus`, `eia/ -> data/eia_surprise.json` (a FILE).
    round 2 (`group_he24_he1_handoff.py g20` - `--source` is now wired; refine uses the default
    `actual`).
 3. **G21** - the first group to run with the full kitchen sink actually intact (storage + vol_regime
-   + weather + the corrected size-weighted `big_print_b_share` all live for the first time since G16).
-   Note what that changes; it is a genuine step-change in the input set, so G21-vs-G20 is not a clean
-   A/B and should not be read as one.
+   + weather + the corrected size-weighted `big_print_b_share` all live for the first time since
+   G16). **This is the point of the walk, not a complication in it (Greg, S107): we are improving
+   the forecaster group over group, not running a controlled experiment.** A better input set is a
+   better forecaster - do not hedge the result or hold a group back to preserve a comparison.
+   The ONE thing to keep straight is ATTRIBUTION IN THE POST-MORTEM: when a day improves, say
+   whether the brain earned it or a restored input did, so a merge does not bank a data fix as
+   evidence for a play. That is about not writing false lessons into the brain - nothing to do with
+   comparability.
 4. The open items in the S107 handoff, in this order of value: per-day blind state slices (the mask
    is currently unenforced across days), the Sunday prior-session inconsistency, the live
    orchestrator, the options strike-ladder scale bug, the `nws_temp` extension for G23.
