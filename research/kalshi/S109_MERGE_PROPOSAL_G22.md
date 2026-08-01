@@ -373,3 +373,71 @@ evidence for a play.
 | `options_surface` 10× strike scale (auditor f6) | data fix; 0 of 67 plays read it, so it costs specialist budget, not signal. |
 | Session **close time in ET** absent on shortened sessions | A had to assume ~13:00 on 0703. `cme_early_close: false` on a `partial_session` should be a hard `state_health` failure. |
 | Phase boundaries carry no clock mapping | binds hardest on EIA days — D cannot anchor a mechanism to the 10:30 print, which is why its timing claims are testable only in post-mortem. |
+
+---
+
+## P0.6 — COAL HEADROOM IS THE SUPPLY-SIDE TWIN OF THE MULTIPLIER (and we measure the wrong quantity)
+
+**Greg, S109:** *"Coal is almost all the way out of the gen cap in the US. Look back in the handoffs for
+our discussions on this because we talked about a lot of stuff with this."*
+
+**The prior thread, recovered:**
+- **S97 item 10** — "Cross-market: power prices (gas sets marginal power price), **coal-switching
+  economics**, TTF/JKM. Real drivers, slower-moving. **Lowest priority** of the list."
+- **S98 DATA_GATE** — "Cross-market (TTF/JKM, power stack, coal switch) — S97 item 10 … **Post-gate.**"
+- **S98, Greg 2026-07-20** — "COAL + GAS PLANT maintenance: per-unit schedules are mostly confidential;
+  the free quantified source is the ISOs' **AGGREGATE outage reports** … **EIA-860M monthly status = the
+  slow layer.** Trade relevance both ways: **coal unit down pushes burn TOWARD gas**, gas unit down
+  pulls it away." Queued as arm 4 — **never built**.
+
+**What our served data actually shows** (`grid_stack`, 20260629, and across G22):
+
+| BA | coal share of gen | gas:coal |
+|---|---|---|
+| CISO | **0.000** | no coal |
+| ERCO | 0.120 | 2.5× |
+| PJM | 0.165 | 2.6× |
+| SOCO | 0.199 | 2.6× |
+| SWPP | 0.210 | 1.0× |
+| MISO | **0.272** | **1.3×** |
+| US48 | **0.161** | 2.3× |
+
+US48 coal share across the block runs 0.149 → 0.170 — **not declining within the window**.
+
+**So state it precisely, because generation is not capacity.** Coal is ~16% of US *generation* here, which
+is not "almost out" — but that measures the wrong thing, and the two diverge exactly when a fleet is
+retiring: capacity falls fast while the survivors run harder. **The trade-relevant quantity is neither
+share nor capacity — it is MARGINAL SWITCHING HEADROOM**, i.e. whether coal can actually absorb a demand
+shock. A 16% share that is baseload, must-run, or economically committed provides no buffer, and coal
+units cycle slowly. **We cannot answer that question with anything we serve.** We have fuel GENERATION
+and no fuel AVAILABILITY.
+
+**WHY IT BELONGS IN P0 AND NOT IN "cross-market, lowest priority."** Coal headroom is the **supply-side
+twin of the weather multiplier**. The demand side asks *how much load does the weather create*; the
+supply side asks *is there anything to absorb it*. If coal cannot step in, a summer heat event passes
+straight into gas burn with nothing damping it — a **steeper slope and a larger multiplier**. If MISO
+genuinely retains headroom at 27% coal, the same heat is partly absorbed there. **This is regional, and
+it multiplies against the seasonal power-burn weighting proposed in P0.5** — the two are the same
+calculation seen from opposite sides.
+
+The S97/S98 deprioritisation was right about the *mechanism it named* — classic gas-to-coal **price**
+switching is a slow, fading arbitrage. It undervalued the *structural consequence*: the disappearance of
+that buffer is precisely what makes weather translate more directly into price, which is the model Greg
+has now stated.
+
+**PROPOSED AS A BUILD (unblocks the supply side of the multiplier):**
+
+1. **EIA-860M capacity + retirement status** — the "slow layer" named in S98 and never built. Gives
+   installed coal capacity by region and the retirement schedule, so headroom is computable rather than
+   inferred from generation share.
+2. **ISO aggregate outage reports (arm 4)** — Greg's own 2026-07-20 spec, already scoped: planned +
+   forced MW, per-fuel where offered, coverage named per ISO and never assumed uniform. This is the
+   *availability* half.
+3. **Derive a per-region `coal_headroom` / switching-buffer field** and serve it beside `gas_share`. The
+   forecaster should be able to see, on the day, whether a heat shock has anywhere to go.
+4. **Do NOT build classic coal-switch price economics.** The prior calls were right on that. What is
+   wanted is the *headroom*, not the arbitrage.
+
+**Falsifier:** if per-region coal headroom turns out to be uncorrelated with the realized weather→burn
+transmission across the walked blocks, the buffer is not the mechanism and this drops back to
+post-gate. Testable on data we would then have.
