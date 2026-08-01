@@ -26,7 +26,14 @@
    "chain_polarity": 1,
    "chain_age_sessions": 1,
    "cum_from_anchor_usd": 30,
-   "prior_owner_read": null,
+   "prior_owner_read": {
+    "owner": "A",
+    "continuation_vs_reversal": "reversal AT THE SEAM (gap-rejection). The reopen gap extends the 05-22 down leg and the session rejects it. Relative to the day itself the net result is a near-flat: the reversal spends itself paying back the gap.",
+    "turn_time_et": "09:45",
+    "trend_vs_chop": "chop with ONE directional window. Not a trend day: the session is a thin overnight drift, a single 08:00-09:45 mechanical push, and a bleed. On a partial session the day-move is decided in about 100 minutes.",
+    "mbo_verdict": "CONFIRM DIRECTION, CUT MAGNITUDE 180 -> 60, AND REBUILD BOTH HALVES OF THE DAY. Direction is unchanged from the blind per doctrine. The three material MBO updates are: (a) the GAP sign flips +40 -> -220 off the never-masked reopen stub, which is the single biggest correction on the day and is availa",
+    "confidence": 0.6
+   },
    "carry_rules": [
     "Start from your blind + prior posterior; use this STATE to size/time, not to override direction.",
     "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR-day exhaustion read, not front-run.",
@@ -159,7 +166,14 @@
    "chain_polarity": 1,
    "chain_age_sessions": 0,
    "cum_from_anchor_usd": 2390,
-   "prior_owner_read": null,
+   "prior_owner_read": {
+    "owner": "E",
+    "continuation_vs_reversal": "reversal (intraday turn against the two-session covering ramp), self-limiting",
+    "turn_time_et": "09:00",
+    "trend_vs_chop": "two-leg: firm drift through the EU session, then a single monotone trend down from the crest - not chop",
+    "mbo_verdict": "CONFIRM DIRECTION, HALVE MAGNITUDE, RESHAPE PATH. Direction unchanged from the blind (the D-1 tilt is preserved per doctrine). The material MBO updates are (a) magnitude -380 -> -180 from the saturation tell plus the sigma ruler, (b) the path shape: the blind ran the day negative from the 22:00 prin",
+    "confidence": 0.72
+   },
    "carry_rules": [
     "Start from your blind + prior posterior; use this STATE to size/time, not to override direction.",
     "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR-day exhaustion read, not front-run.",
@@ -187,7 +201,14 @@
    "chain_polarity": 1,
    "chain_age_sessions": 0,
    "cum_from_anchor_usd": 1400,
-   "prior_owner_read": null,
+   "prior_owner_read": {
+    "owner": "B",
+    "continuation_vs_reversal": "reversal of the PRICE chain (the 5-session up chain flips) and simultaneously CONTINUATION of the FLOW tilt (four consecutive net-sell sessions into the seam). Tagged reversal, because the play that fires is structure.covering_extension_distribution_flip.",
+    "turn_time_et": "03:40",
+    "trend_vs_chop": "trend - a single monotone unwind with no counter-phase. A residual that has already discharged has no second wave, and a distribution has no reason to pause on day 1.",
+    "mbo_verdict": "OVERTURN THE DAY SIGN, KEEP THE GAP, DERIVE THE SIZE FROM THE EXTENSION FRACTION. Direction up -> down, on a doctrine restoration rather than a new model. The gap survives as the blind called it (sign right, +300 vs +690 - undersized, and the reopen print corrects that without any inference). Magnit",
+    "confidence": 0.74
+   },
    "carry_rules": [
     "Start from your blind + prior posterior; use this STATE to size/time, not to override direction.",
     "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR-day exhaustion read, not front-run.",
