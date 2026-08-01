@@ -116,6 +116,40 @@ def audit(state: dict) -> dict:
                         f"coverage/n_stations do not detect it) - re-fetch nws_temp with at least one "
                         f"day of margin past {d} and restage")
 
+        # S109 THE B_SHARE RECONCILIATION. Every check above this line asks "is the field THERE?" - and
+        # the recurring enemy has now worn four faces, three of which answer that question with a
+        # confident yes: EMPTY (S107's six), WRONG VALUE (the weather tail), OFF-INSTRUMENT (the tape
+        # after a roll), and now WRONG ENCODING (the leg reader spelling side as an int against math
+        # that tested for a string). session_b_share served a hard 0.0 on all 8 scored-leg days of both
+        # G22 and G23 - present, numeric, in range, right owner, internally consistent.
+        #
+        # The only thing that catches a wrong-but-well-formed value is a comparison against an
+        # INDEPENDENT measurement of the same quantity, and here the state already carries one. The
+        # three fields are algebraically locked: b_share = buys/tot and b_share_two_sided = buys/sides
+        # with sides = tot*(1-unsided_frac), so
+        #                 session_b_share == session_b_share_two_sided * (1 - unsided_volume_frac)
+        # is an IDENTITY, not a correlation. It reproduces every continuous-store day in G22/G23 to the
+        # third decimal and fails every leg day by 0.39-0.52. Tolerance 0.002 covers the compounding of
+        # two independently 3-dp-rounded inputs. HARD: a b_share pinned at zero silently satisfies every
+        # "sub-0.50 sell tape" bar in the brain, on every day at once, and those include SIGN plays.
+        for blk in ("tape_conditions",):
+            for scope in (state[d].get(blk) or {}, ((state[d].get(blk) or {}).get("prior_full_session") or {})):
+                if not isinstance(scope, dict):
+                    continue
+                b, b2 = scope.get("session_b_share"), scope.get("session_b_share_two_sided")
+                u = scope.get("unsided_volume_frac")
+                if not all(isinstance(x, (int, float)) for x in (b, b2, u)):
+                    continue
+                pred = b2 * (1.0 - u)
+                if abs(pred - b) > 0.002:
+                    hard.append(
+                        f"{d}: {blk}{'/prior_full_session' if scope is not state[d].get(blk) else ''} "
+                        f"session_b_share {b} CONTRADICTS its own two-sided pair "
+                        f"({b2} two-sided x {round(1.0 - u, 3)} sided-volume = {pred:.3f}) on session "
+                        f"{scope.get('session')} [{scope.get('source_store')}] - the b_share family does "
+                        f"not reconcile, so at least one member is computed off a different tape or a "
+                        f"different side encoding. Do not reason over it.")
+
     return {"hard": hard, "soft": soft, "days": len(days)}
 
 

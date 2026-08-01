@@ -1,4 +1,50 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-01, Session 108)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-01, Session 109)
+
+## S109 — **HOLE #9: `session_b_share` SERVED A HARD 0.0 ON EVERY SCORED-LEG DAY OF G22 AND G23** (caught BEFORE the G22 blind)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`.** The S108 filename-collision fix was
+verified still live (`archive_blind.py` MOVEs; `assert_not_the_blind()` hashes) — the S109 box lists it
+as open, but it was closed at S108 close-out. Nothing to redo.
+
+**THE DEFECT, found auditing G22's staged state before spawning the blind.** `session_b_share` read
+**exactly 0.0 on all 8 scored-leg days of G22 and of G23**, plus both `prior_full_session` limbs — 20
+readings. **A FOURTH KIND of silently wrong input: WRONG ENCODING.** The two readers that can serve
+`_tape_day_stats` disagree about how a side is spelled — the continuous reader appends the RAW TAPE
+STRING (`"B"`/`"A"`/`"N"`), the S108 leg reader `tape_reconcile.load_leg_trades` appends flow_read's
+SIGNED INT (`1`/`-1`/`0`) — and its docstring **claimed the two were mapped identically**. Every test in
+the shared math is `s == "B"`, so on the leg path nothing matched, `buys` summed to 0, and the served
+share was a flat zero. It is `state_health`-invisible for the same reason as holes #7 and #8: present,
+numeric, in range, right owner, self-consistent.
+
+**WHY ONLY THIS FIELD.** `_tape_enrich` copies `phase_b_share`, `big_print_b_share` and every
+`*_two_sided` through from `flow_read` (the S107 defect-3 fix) — which **silently rescued them**.
+`session_b_share` was the ONE b_share field missing from that copy list, so it alone showed the damage.
+The omission was invisible for exactly as long as the harness's own value happened to be right.
+
+**WHAT IT WOULD HAVE DONE.** 6 of 67 plays read the original series, 3 of them read ONLY it:
+`daytype.eia_preprint_overextension_gate` limb (b) tests **`session_b_share` vs `big_print_b_share` for
+COHERENCE** — a live 0.0 against a live 0.32-0.57 reads maximally INCOHERENT on **every day at once**,
+and G22 carries two EIA Thursdays (0625, 0702), the day class that was 3,530 of G20's 7,880;
+`timing.catalyst_continuity_frontrun` reads a sub-0.50 sell tape (0.0 is an extreme one, every day);
+`direction.giveback_exhaustion_boundary` is a **SIGN** play. Blast radius is **forward-only** — G20, G21
+and every earlier group were staged on the continuous string path and are untouched. **No completed
+group's score is affected.**
+
+**FIXED, three defences different in kind.** (1) SOURCE: `_tape_day_stats` normalizes the side encoding
+at the point of use, so both readers compute the same quantity from the same math. (2) COPY-THROUGH:
+`session_b_share` joins the `_tape_enrich` list, so flow_read's authoritative value overwrites.
+(3) GUARD — **a RECONCILIATION, not a presence check**, because presence is exactly what passed:
+`session_b_share == session_b_share_two_sided * (1 - unsided_volume_frac)` is an **algebraic IDENTITY**,
+and `state_health` now treats a >0.002 breach as HARD. It reproduces every continuous-store day to 3 dp,
+fails all 20 defective readings, and fires **zero** false positives across every historical group.
+`load_leg_trades`' false docstring claim is corrected at the source.
+
+**STATES REPAIRED WITHOUT A DATA PLANE** via `bshare_restage_repair.py` (committed, idempotent, dry-run
+by default): the identity recovers the value from already-served quantities, so two staged groups are not
+stranded waiting on keys that do not survive a session. Each repaired reading **declares itself** through
+`session_b_share_basis`; carries up to ~0.002 of rounding error vs a re-stage off raw lots, and a later
+re-stage overwrites it. Diff verified confined — 10 values changed + 10 basis keys added per group, none
+removed. **G22 and G23 now pass `state_health` 0 hard.** **NEXT: the G22 blind**, unblocked.
 
 ## S108 — G20 DONE + G21 WALKED + **THREE MORE DATA HOLES** + brain s103.2 -> s103.6 (67 plays) (read `SESSION_HANDOFF_2026-08-01_S108.md` + `DROP_IN_S109.md`)
 

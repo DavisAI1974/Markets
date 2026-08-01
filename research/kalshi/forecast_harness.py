@@ -655,6 +655,16 @@ def _tape_day_stats(ymd: str) -> dict | None:
     order = sorted(range(n), key=lambda i: ts[i])
     ts = [ts[i] for i in order]; px = [px[i] for i in order]
     sz = [sz[i] for i in order]; sd = [sd[i] for i in order]
+    # S109 SIDE-ENCODING COLLISION. The two readers that can fill `best` disagree about how a side is
+    # spelled: the continuous reader appends the RAW TAPE STRING ("B"/"A"/"N"), while the S108 leg
+    # reader (tape_reconcile.load_leg_trades) appends flow_read's SIGNED INT (1/-1/0) - and claimed in
+    # its docstring to map "exactly as the continuous reader maps it". Every test below is `s == "B"`,
+    # so on the leg path NOTHING matched: buys summed to 0 and session_b_share served a hard 0.0 on
+    # every scored-leg session of G22 and G23 (8 days each, plus both prior_full_session limbs).
+    # It survived because the OTHER b_share fields are overwritten from flow_read in _tape_enrich and
+    # session_b_share was the one field missing from that copy list - so only the broken one showed.
+    # Normalize to the string convention here so BOTH paths compute the same quantity from the same math.
+    sd = [("B" if s == 1 else "A" if s == -1 else "N") if isinstance(s, int) else s for s in sd]
     if ts and ts[0] > 1e15:
         ts = [t / 1e9 for t in ts]
     span_min = max((ts[-1] - ts[0]) / 60.0, 1.0)
@@ -758,8 +768,13 @@ def _tape_enrich(prev, ymd: str, st: dict) -> dict:
             # this list omitting a computed field (big_print_b_share), leaving a different series
             # shadowing it under the same name for four groups. Adding a series to flow_read and not to
             # this list produces the same silent failure - the field simply never reaches a specialist.
+            # S109: session_b_share JOINS this list. It was the ONE b_share field absent from it, so
+            # when the S108 leg path broke _tape_day_stats' own computation (side-encoding collision,
+            # see above) there was nothing to overwrite the 0.0 - while phase_b_share, big_print_b_share
+            # and every *_two_sided field were silently rescued by being copied through. The omission
+            # was invisible for as long as the harness's own value happened to be right.
             for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share",
-                      "big_print_b_share", "l1_book",
+                      "big_print_b_share", "l1_book", "session_b_share",
                       "session_b_share_two_sided", "phase_b_share_two_sided",
                       "big_print_b_share_two_sided", "unsided_volume_frac", "b_share_basis_note",
                       "phase_volume_lots", "phase_n_trades", "phase_volume_note"):

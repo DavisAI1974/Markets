@@ -56,8 +56,13 @@ def load_leg_trades(store: str, ymd: str):
     S108 hole #8 correction. The continuous stores select by max trade count and therefore follow the
     volume to the DEFERRED contract after a roll; worse, on the affected G21/G23 sessions they simply do
     not contain the tape at all (n0 6,262 and n1 5,554 against a leg of 34,221). Selecting better between
-    two short stores cannot work - the read has to come from the leg. Side is mapped exactly as the
-    continuous reader maps it, so the two paths produce the same quantity.
+    two short stores cannot work - the read has to come from the leg.
+
+    SIDE ENCODING: this returns flow_read's SIGNED INT (1 buy / -1 sell / 0 unsided), NOT the raw tape
+    string the continuous reader returns. Earlier wording here claimed the two were mapped identically;
+    they are not, and a caller that tests `side == "B"` gets zero matches on every session. That is
+    exactly what happened to forecast_harness._tape_day_stats in S108 (session_b_share served 0.0 across
+    G22 and G23), so the harness now normalizes explicitly at the point of use. Callers must convert.
     """
     p = leg_path(store, ymd)
     if p is None:
