@@ -215,7 +215,27 @@ def main(gid, source="actual"):
                 age += 1
             else:
                 break
-        return pol, age
+        # S108 THE CHAIN_AGE DEFINITION COLLISION. On G20's 0601 boundary one quantity carried THREE
+        # incompatible values: this builder said 0, the brain's own doctrine wording ("sessions since
+        # the turn") implies 3, and E read 5 (sessions from the anchor). The gap is not cosmetic - under
+        # the brain's definition B's day FAILS the age>=5 arm of covering_extension_distribution_flip
+        # whose exemplar G19 0520 PASSES it at age 5, and E separately measured the same arm costing
+        # 1,350 on 0605, where a single -70 close on 0602 reset this counter while realized cum ran
+        # +2,550 -> +3,200 WITHOUT EVER TURNING.
+        #
+        # What this counter measures is CONSECUTIVE SAME-SIGNED DAY-MOVES. That is a real quantity and
+        # nothing downstream is silently re-pointed - it keeps its name and its value. What was missing
+        # is REGIME age, which the incumbent boundary.chain_label_must_track_realized_cum already says
+        # the label must track: sessions since the realized CUM last set its running extreme on the far
+        # side of the current polarity. A one-day counter-move does not reset that; a genuine turn does.
+        # Both are emitted, both are labelled, and the specialist chooses - the same additive pattern as
+        # the Monday prior_full_session and the two-sided b_share.
+        cum_seq = [cum_by[ordered[j]] for j in range(upto + 1)]
+        if pol >= 0:
+            ext_i = min(range(len(cum_seq)), key=lambda i: cum_seq[i])      # UP chain -> age from the low
+        else:
+            ext_i = max(range(len(cum_seq)), key=lambda i: cum_seq[i])      # DOWN chain -> age from the high
+        return pol, age, upto - ext_i
 
     handoffs = {}
     for i, d in enumerate(ordered):
@@ -227,12 +247,22 @@ def main(gid, source="actual"):
         # still received the REALIZED close/open/day-move/signed-flow - a direct price leak into the
         # blind's handoff. In --source actual mode exits[pd_] IS exit_state(gid, pd_), so the refine
         # path is unchanged (verified byte-identical against the committed g19 chain).
-        pd_ = ordered[i - 1]; pol, age = chain_state(i - 1); st = exits[pd_]
+        pd_ = ordered[i - 1]; pol, age, regime_age = chain_state(i - 1); st = exits[pd_]
         weekend = (_date(d) - _date(pd_)).days > 1
         handoffs[d] = {"prior_date": pd_, "prior_dow": _DOW[_date(pd_).weekday()],
                        "prior_owner": OWNER.get(pd_), "receiving_owner": OWNER.get(d),
                        "boundary_kind": ("weekend_reopen" if weekend else ("post_seam" if pd_ == SEAM else "overnight")),
                        "prior_exit_state": st, "chain_polarity": pol, "chain_age_sessions": age,
+                       "chain_age_basis": ("consecutive same-signed DAY-MOVES ending at the prior "
+                                           "session; a single counter-signed close resets it"),
+                       "chain_regime_age_sessions": regime_age,
+                       "chain_regime_age_basis": ("sessions since realized CUM last set its running "
+                                                  "extreme opposite the current polarity - the 'sessions "
+                                                  "since the turn' the brain's own doctrine means, and "
+                                                  "what boundary.chain_label_must_track_realized_cum "
+                                                  "requires. A one-day counter-move does NOT reset it. "
+                                                  "Use this for age-gated plays "
+                                                  "(covering_extension_distribution_flip)."),
                        "cum_from_anchor_usd": cum_by[pd_], "prior_owner_read": prior_owner_verdict(gid, pd_, OWNER.get(pd_), source),
                        "carry_rules": [
                            "Start from your blind + prior posterior; use this STATE to size/time, not to override direction.",

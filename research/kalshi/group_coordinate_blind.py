@@ -35,14 +35,42 @@ def _find_report(fname):
 
 
 def load_specialist(gid, tag):
-    p = _find_report(f"grp{gid[1:]}_blind_{tag}.json")
-    if p is None:
-        return None
-    return {str(x["date"]).replace("-", ""): x for x in json.load(open(p)).get("days", [])}
+    # S108: accept the ENGINE filename too. Blind and refine run the IDENTICAL rule files, so the blind
+    # writes grp<N>_mbo_specialist_<X>.json like the refine does - but this coordinator only ever looked
+    # for grp<N>_blind_<X>.json, which forced a hand-built alias file every single blind run. That alias
+    # lived in the scratchpad, which does not survive a session, so it was re-authored from memory each
+    # time - a per-run manual step sitting directly upstream of the guard. Legacy name is still tried
+    # FIRST so every committed pre-S108 blind coordinates byte-identically.
+    n = gid[1:]
+    for fname in (f"grp{n}_blind_{tag}.json", f"grp{n}_mbo_specialist_{tag}.json"):
+        p = _find_report(fname)
+        if p is not None:
+            return {str(x["date"]).replace("-", ""): x for x in json.load(open(p)).get("days", [])}
+    return None
 
 
 def num(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
+def day_move(day):
+    """The scored day-move. The engine emits expected_magnitude_usd; the older blind alias files emit
+    guessed_net_usd. Same number, two names - accept both rather than making a human retype it."""
+    for k in ("guessed_net_usd", "expected_magnitude_usd"):
+        if num(day.get(k)):
+            return day[k]
+    return day.get("guessed_net_usd", day.get("expected_magnitude_usd"))   # non-numeric -> guard reports it
+
+
+def day_path(day):
+    """Intraday p50 path as [(et_hr, cum_usd), ...]. The engine emits path_p50_curve (pairs); the alias
+    files emit path_distribution (records). S107 lost the blind curve to exactly this kind of key
+    mismatch - the render asked for one name, the file carried the other, and the curve silently
+    vanished from the chart whose entire point was blind-vs-refine-vs-price."""
+    pts = day.get("path_distribution")
+    if pts:
+        return [(r.get("et_hr"), r.get("p50")) for r in pts]
+    return [(h, v) for h, v in (day.get("path_p50_curve") or [])]
 
 
 break_gaps = ru.break_gaps   # S107: one implementation, in render_util
@@ -67,15 +95,16 @@ def guard_assemble(gid):
         day = sp.get(d)
         if day is None:
             errs.append(f"{d}: owner {o} did not forecast this day"); continue
-        dm = day.get("guessed_net_usd")
+        dm = day_move(day)
         if not num(dm):
-            errs.append(f"{d}: owner {o} guessed_net_usd non-numeric ({dm!r})"); continue
+            errs.append(f"{d}: owner {o} day-move non-numeric ({dm!r}) - needs guessed_net_usd or "
+                        f"expected_magnitude_usd"); continue
         if d in weekend_feeding and "handoff_out" not in day:
             errs.append(f"{d}: FRIDAY SIGN-OFF FAIL - weekend-feeding, owner {o} no handoff_out")
         block.append({"date": d, "dow": _DOW[pd.Timestamp(f'{d[:4]}-{d[4:6]}-{d[6:]}').weekday()],
                       "owner": o, "guess_day_move_usd": int(dm),
                       "overnight_gap_usd": day.get("overnight_gap_usd", 0) or 0,
-                      "path_p50": [(r.get("et_hr"), r.get("p50")) for r in day.get("path_distribution", [])]})
+                      "path_p50": day_path(day)})
     if errs:
         raise SystemExit("BLIND COORDINATOR GUARD FAILED:\n  " + "\n  ".join(errs))
     return block, seam
