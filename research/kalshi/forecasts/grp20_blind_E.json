@@ -1,0 +1,139 @@
+{
+ "days": [
+  {
+   "date": "20260529",
+   "dow": "Fri",
+   "owner": "E",
+   "guessed_net_usd": -380,
+   "overnight_gap_usd": -60,
+   "path_distribution": [
+    {
+     "et_hr": 20,
+     "p50": 0
+    },
+    {
+     "et_hr": 22,
+     "p50": -30
+    },
+    {
+     "et_hr": 0,
+     "p50": -60
+    },
+    {
+     "et_hr": 2,
+     "p50": -45
+    },
+    {
+     "et_hr": 4,
+     "p50": -25
+    },
+    {
+     "et_hr": 6,
+     "p50": -45
+    },
+    {
+     "et_hr": 8,
+     "p50": -85
+    },
+    {
+     "et_hr": 10,
+     "p50": -170
+    },
+    {
+     "et_hr": 12,
+     "p50": -310
+    },
+    {
+     "et_hr": 14,
+     "p50": -460
+    },
+    {
+     "et_hr": 16,
+     "p50": -380
+    }
+   ],
+   "handoff_out": {
+    "exit_type": "positioning_loaded_carry",
+    "exit_type_mapping": "NEW named type, declared rather than smuggled. Against daytype.friday_exit_decomposition's four canonical types: NOT (1) crest_trim_fadeable - the chain is DOWN, there is no stretched same-side crest and the priced driver was counter-chain. NOT (2) positioning_spent_fade - BARRED outright: positioning.covering_self_limiting_cot_wow_gate requires a FLAT-or-improving COT WoW for any 'spent' claim, and the WoW published at 15:30 this very session is -38,123, i.e. WORSENING; a spent label here would be the exact non-falsifiable move the gate exists to block. NOT (3) fundamental_carry_continue - the driver FADES across this particular weekend (forecast gw-CDD 6.143 on D0 falling to 5.014 on D+1 Sat 05-30), so there is no unrealized bullish driver ahead of Monday. Only PARTIALLY (4) momentum_carry - the day is momentum-down but the final hour lifts off the low. Proposed as a candidate fifth exit type for the brain: a chain-side momentum close that stops going down against a FRESHLY PUBLISHED maximal counter-position, where the seam sign comes from the positioning channel and not from the exit channel.",
+    "monday_bias": "up",
+    "close_location": "DERIVED FROM MY OWN P50 PATH, NOT OBSERVED (price-masked). Close -380 against a path low of -460 (14:00) and a path high of 0 (20:00 reopen) = 0.174 of range from the low: lower quartile, off the low. Not a close-on-low, not a close-on-high.",
+    "last_hour_dir_and_flow": "last_hour_dir = +1 (UP), derived arithmetically from my path (14:00 -460 -> 16:00 -380). LAST-HOUR SIGNED FLOW IS UNOBSERVABLE TO ME - it is the target session's own tape and it is masked; I am NOT inferring it and I am NOT letting a flow-shape guess stand in for it. This is the field the refine round must fill first, because daytype.friday_exit_decomposition's covering-vs-squaring tell lives in it.",
+    "close_off_low": "yes - approximately +80 off the derived session low, arriving in the final 90 minutes, sited on the 15:30 COT publication. Late-low flag: the low is LATE (14:00, inside/just after the settle window), which normally reads as continuation; the lift after it is what qualifies the read.",
+    "chain_polarity_age": "FLOW-PROXY ONLY, formal chain polarity STOOD DOWN per boundary.chain_label_must_track_realized_cum. Signed-flow proxy: sell-side, 4 consecutive sell sessions by this close (05-26, 05-27, 05-28, 05-29). Whoever inherits this MUST replace the proxy with the realized cum before asserting a polarity.",
+    "cum_from_anchor": "NOT DERIVABLE UNDER THE MASK in USD. I hand the proxy instead and label it as such: cumulative signed flow from the 05-22 anchor is approximately -7,072 lots through the 05-28 close and is the running extreme of the block; my own forecast adds roughly another -380 USD of price to it. NO DAY MAY RESTART AT CUM 0 - inherit this as a running, extended DOWN state, not a fresh one.",
+    "conviction_verdict": "SESSION conviction: down-continuation, moderate (0.58), sized under. SEAM conviction: UP, and this is the load-bearing half. At 15:30 ET this session the COT for 05-26 positions publishes: managed-money net -134,426, 1-year percentile 0.94, 3-year percentile 2.23, WoW -38,123 (shorts +29,942, longs -8,181). That is a 1-YEAR RECORD CROWDED SHORT, FRESHLY BUILT AND UNFIRED, published before the weekend closure. boundary.seam_gap_up_prior_on_worsening_cot (conf 0.85) calls a worsening-WoW seam in a crowded-short regime BASE-CASE UP - a loaded spring, not a down-continuation with a small squeeze tail - and states explicitly that the D-1 close-exit read is ORTHOGONAL to the seam sign. positioning.covering_self_limiting_cot_wow_gate (conf 0.87) independently says worsening WoW = covering LIVE and RE-FIRES AT THE NEXT SEAM. The G19 precedent is the same exit class: 0511 was an aligned-sell press into the close and still gapped +580 UP and ran +1740. Nothing opposes it here - flow_calendar has in_gsci_roll FALSE and no roll window is open on Monday 06-01 (06-01 is business day 1; the GSCI NG roll does not start until business day 5, 06-05), so there is NO mechanical index supply against the seam. This is the strongest version of that trigger I have seen: 0.94 percentile and a -38k delta versus G19's -10,244/-12,576.",
+    "verbatim_read": "Monday 06-01 inherits a session that went down but STOPPED going down, into a weekend, holding a one-year record short that was published at 15:30 with the market still open. Do not inherit the Friday LABEL, inherit the STATE: a four-session sell run at the block's flow extreme, a close in the lower quartile but off the low, and an unfired maximal crowded short. Size the seam GAP first and separately from the intraday - the gap is the extension-independent part and it is UP; the intraday is extension-gated, and because the inherited extension is a DOWN extreme, a counter-move off it is the LOW-extension case for the up leg, so the intraday can EXCEED the gap rather than round-trip to it (the G19 0511 shape, not the 0518 shape). Do not front-run it into Friday's own close - the p50 for 05-29 is DOWN and the up-prior is a SEAM object. And do not read my 'off the low' close as exhaustion of the sell: exhaustion is a positive claim and the COT WoW delta bars it here. What I could NOT give you, and you should get first: the 05-29 last-hour SIGNED FLOW (masked to me), which is the covering-vs-squaring discriminator; and the realized cum_from_anchor, without which nobody downstream may assert a chain polarity.",
+    "seam_prior_rule": "boundary.seam_gap_up_prior_on_worsening_cot + positioning.covering_self_limiting_cot_wow_gate, both firing on the 05-29 15:30 publication. Scope discipline observed: the positioning gate governs the TAIL and the SIZE, never the p50 SIGN - which is exactly why my 05-29 p50 stays DOWN while my monday_bias is UP.",
+    "invalidation": "The seam-up prior dies if (a) the Sunday 05-31 20:00 reopen and the Monday 07:00-10:00 catch-up window show POSITIVE-conviction aggression back DOWN through the reopen level (per the same play, a negative-conviction window leaves the gap intact and may print the day's extreme; only positive-conviction aggression overturns it), or (b) the 06-01 tape prints session_b_share materially below 0.45 with a monotone sell phase table, i.e. the short is being added to rather than covered."
+   }
+  },
+  {
+   "date": "20260605",
+   "dow": "Fri",
+   "owner": "E",
+   "guessed_net_usd": -500,
+   "overnight_gap_usd": 25,
+   "path_distribution": [
+    {
+     "et_hr": 20,
+     "p50": 0
+    },
+    {
+     "et_hr": 22,
+     "p50": 30
+    },
+    {
+     "et_hr": 0,
+     "p50": 55
+    },
+    {
+     "et_hr": 2,
+     "p50": 40
+    },
+    {
+     "et_hr": 4,
+     "p50": 10
+    },
+    {
+     "et_hr": 6,
+     "p50": -20
+    },
+    {
+     "et_hr": 8,
+     "p50": 25
+    },
+    {
+     "et_hr": 10,
+     "p50": -120
+    },
+    {
+     "et_hr": 12,
+     "p50": -300
+    },
+    {
+     "et_hr": 14,
+     "p50": -490
+    },
+    {
+     "et_hr": 16,
+     "p50": -500
+    }
+   ],
+   "handoff_out": {
+    "exit_type": "momentum_carry_with_open_index_roll_window",
+    "exit_type_mapping": "Canonical daytype.friday_exit_decomposition type (4) MOMENTUM_CARRY - the day is directionally down and the D-1/D-0 flow is aligned down at the close - PLUS the play's own explicit sub-rule: 'an index roll whose WINDOW is still open Monday is positioning-CARRY, not spent.' The GSCI NG roll opens on this session at day 1 of 5 and its window runs through approximately Thu 06-11, so it is OPEN on Monday 06-08 and for the entire following week. Its precedent in the play's evidence is the roll-carry case 0206 down (window open) -> 0209 carried down -830. Explicitly NOT (2) positioning_spent_fade: I make no 'spent' claim - the COT WoW is still worsening on the last published report and a spent claim would have to clear an evidence bar it cannot clear.",
+    "monday_bias": "down",
+    "monday_bias_qualifier": "roll-carry DOWN, CONDITIONAL - see conviction_verdict and invalidation. DELIBERATELY THE OPPOSITE of my 05-29 handoff, and the reason is calendar (an open index-roll window in my own leg), not positioning.",
+    "close_location": "DERIVED FROM MY OWN P50 PATH, NOT OBSERVED (price-masked). The close -500 IS the path low (16:00), against a path high of +55 (00:00) = 0.00 of range from the low: a CLOSE ON THE LOW. Continuation, not exhaustion. If the realized path differs the label must be re-derived; this is arithmetic on my forecast, not a measurement.",
+    "last_hour_dir_and_flow": "last_hour_dir = -1 (DOWN), derived from my path (14:00 -490 -> 16:00 -500), i.e. flat-to-down, holding the low through the close rather than lifting off it - the opposite of the 05-29 exit. LAST-HOUR SIGNED FLOW IS UNOBSERVABLE TO ME and is NOT inferred. Get it first.",
+    "close_off_low": "no - the close sits ON the low. Late-low flag: YES, the low is the close, which is the strongest continuation form of this field. There is no give-back off the low into the weekend.",
+    "chain_polarity_age": "FLOW-PROXY ONLY, formal polarity STOOD DOWN per boundary.chain_label_must_track_realized_cum. Signed-flow proxy: sell-side, 3 consecutive sell sessions by this close (06-03, 06-04, 06-05), following a 2-session buy interruption (06-01, 06-02) that itself followed a 4-session sell run (05-26..05-29). The block is therefore NOT a clean single chain - it is sell / buy-interruption / sell, and G21 must not inherit it as an unbroken run.",
+    "cum_from_anchor": "NOT DERIVABLE UNDER THE MASK in USD - the anchor is 3.034 at the Fri 2026-05-22 close and I never see price. Proxy handed instead and labelled: cumulative signed flow from the anchor is approximately -10,392 lots through the 06-04 close, the deepest point of the block, and my own forecast adds roughly another -500 USD of price. G21 OPENS AT THIS CUM, NOT AT ZERO. A specialist who cannot state the realized cum may not assert a chain polarity - that is the brain's rule, not mine, and it applies to whoever picks this up.",
+    "conviction_verdict": "SESSION conviction: down-continuation, 0.60, aligned and roll-assisted. SEAM conviction: DOWN, but at LOWER conviction than the session and deliberately weaker than my 05-29 seam call - here is the full reasoning, because a reader without my context needs it. TWO mechanisms compete at this seam. (A) UP: boundary.seam_gap_up_prior_on_worsening_cot - managed-money net -134,426, 1y pctile 0.94, 3y 2.23, WoW -38,123 worsening, a 1-year record crowded short entering a weekend, plus an unrealized bullish heat ramp (first hard_cool of the block, D0 10.9 -> D+1 12.5) crossing the closure, plus a collapsing storage surplus. (B) DOWN: daytype.friday_exit_decomposition's index-roll-carry sub-rule - GSCI NG roll day 1 of 5 with BCOM hedge roll active, selling MY front leg (NGN26) in contango, window OPEN through approximately 06-11, i.e. all of the following week, plus a close on the low. I RESOLVE TO (B) AND HERE IS THE TIE-BREAKER: mechanism (A) is backed by the SAME COT REPORT that already backed my 05-29 seam call - 05-26 positions, published 05-29 15:30 - and there is NO new WoW delta between the two seams. By 06-05 that report is 6.35 days old and the tape shows its fuel already partly discharged: 06-01 +3796 and 06-02 +3524, a +7,320 two-session buy burst consistent with the loaded short firing at the previous seam, before shorts re-pressed on 06-03/06-04. positioning.covering_self_limiting_cot_wow_gate says in terms that a still-extreme-but-NOT-worsening COT is SPENT FUEL, NOT NEW FUEL, and its falsifiability clause forbids reaching the same direction from opposite inherited states. Firing covering-UP at a second consecutive weekend seam off one unrefreshed delta is exactly the G17 0424 error that E's own lens was rewritten to prevent (0417 covering was spent, 0424 should have resumed DOWN; called +250, actual -380). What HAS refreshed since the last seam is a fresh one-sided sell run (06-03 + 06-04 = -8,514 lots, the heaviest two-session sell of the block) - which is half of covering_giveback_self_limiting's fresh-stack exception, not the whole of it, since the COT half is absent. Half a fresh stack plus a mechanical week-long roll supply resolves DOWN. I am explicit that this is 1.5 of 2 conditions and that a reader is entitled to discount it.",
+    "verbatim_read": "G21 inherits the terminal session of a block that closed ON ITS LOW at its own flow extreme, with an index roll selling the front July leg for the whole of the week you are about to trade, and simultaneously sitting on a one-year record managed-money short with a genuine heat ramp building. Those two facts point opposite ways and you must not average them - pick, and I have picked roll-carry DOWN for the seam because the roll is mechanical, dated, in your leg and NEW, while the short is real but is fuel I already spent once at the previous seam. FIRST THING TO DO, BEFORE ANYTHING ELSE: read the COT that published Fri 2026-06-05 15:30 ET for 06-02 positions. I do not have it - it is not in my state file at all - and it is the direct tie-breaker. If it shows managed money still at/below roughly the 5th percentile with a flat or WORSENING WoW, the crowded short has been re-loaded rather than spent and my DOWN seam call should be downgraded toward flat or flipped, because a worsening WoW at a seam is base-case UP by boundary.seam_gap_up_prior_on_worsening_cot regardless of the roll. If it shows a large IMPROVING WoW (shorts covered through 06-02, which the +7,320 buy burst on 06-01/06-02 makes plausible), then the fuel is confirmed spent, my DOWN seam call stands and it strengthens. Second: size the seam GAP separately from the intraday - the gap is the extension-independent part, the intraday is extension-gated, and you are inheriting a DOWN extreme, so a counter-move off it is the low-extension case for an up leg and would not round-trip. Third: do NOT restart at cum 0 and do NOT assert a chain polarity until you can state the realized cum_from_anchor against the 3.034 anchor - I could not, and I have handed you a signed-flow proxy clearly labelled as a proxy, not a chain. Fourth: the block is sell / buy-interruption / sell, NOT one unbroken down run - treat the 06-01/06-02 buy burst as a real event, it is the previous seam's covering discharge. Fifth, the standing tail: the record short plus a building heat ramp is a fat UPPER tail on everything for the next week; my p50s are down, my tails are not symmetric, and if the roll programme finishes early or light the upper tail is what is left.",
+    "seam_prior_rule": "daytype.friday_exit_decomposition index-roll-carry sub-rule (window open Monday = positioning CARRY, not spent), overriding boundary.seam_gap_up_prior_on_worsening_cot on the tie-breaker that the COT WoW delta is unrefreshed since the prior seam and partly discharged. Both plays named so the refine can score which one was right.",
+    "invalidation": "This DOWN seam call is invalidated by any of: (a) the 06-05 15:30 COT showing MM net still at/below ~5th percentile with flat-or-worsening WoW (re-loaded short -> flip toward UP); (b) the Sunday 06-07 20:00 reopen gapping UP through the 06-05 range high on a positive-conviction buy tape (the loaded spring firing at the seam anyway); (c) the GSCI/BCOM roll programme proving to be executed off-screen or front-loaded such that no incremental front-leg supply appears on 06-08 (the roll-carry premise fails and only the short remains); (d) forecast gw-CDD continuing to build beyond the D+1 12.508 into a sustained ramp, which converts the heat from a one-shot reopen-gap object into a driver with intraday band authority."
+   }
+  }
+ ]
+}
