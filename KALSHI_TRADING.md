@@ -1,5 +1,56 @@
 # KALSHI TRADING — file index
 
+## NEW IN S108 (2026-08-01, current) — G20 done, G21 walked, holes #7/#8, brain s103.6
+
+**Data-integrity guards (the recurring enemy has now worn THREE faces: empty, wrong-value, off-instrument)**
+- `research/kalshi/tape_reconcile.py` — HOLE #8. Asserts `tape_conditions` measures the CONTRACT BEING
+  FORECAST by reconciling its trade count against the scored leg; hard-fails outside [0.95, 1.05]. Wired
+  into `stage_group` after `state_health`. Presence is not enough and internal consistency is not enough -
+  only reconciliation settles it. Also carries `load_leg_trades`, the leg reader the harness now uses.
+- `research/kalshi/state_health.py` — extended: a `provisional_tail` weather day is now HARD (hole #7).
+- `research/kalshi/archive_blind.py` — THE FILENAME COLLISION (3rd occurrence). Archives the blind's
+  posteriors by MOVE, not copy, so a specialist that fails to write hard-fails the guard instead of
+  silently serving blind numbers at the refine's filename.
+- `research/kalshi/group_coordinate_refine.py` — `assert_not_the_blind()`: hashes every round-1 posterior
+  against its blind archive and refuses a byte-identical match. Negative-tested. Also renders
+  blind-vs-refine-vs-price.
+- `research/kalshi/group_coordinate_blind.py` — speaks the ENGINE schema natively (accepts
+  `expected_magnitude_usd`/`path_p50_curve` as well as the legacy names), killing a per-run hand-built
+  alias that lived in the scratchpad and did not survive a session. Regression-proven byte-identical.
+
+**Session bootstrap**
+- `research/kalshi/session_bootstrap.py` — one command from empty to ready: keys chmod 600, STS verify
+  (prints only the account tail), restore, then the completeness gate. `--verify-only` reports without
+  writing. Strips the container's PLACEHOLDER creds on every AWS call.
+- `scripts/session_start.sh` — extended to restore automatically when creds are present and to NO-OP
+  LOUDLY when they are not.
+
+**Measurement / scoring tools (all read committed artifacts only - no restore, no creds)**
+- `research/kalshi/blind_score_nonpooled.py` — **the scoring view doctrine now requires**: per-day errors,
+  `sum|err|`, drift AND the survival ratio together, because drift is a sum of SIGNED errors and cancels.
+- `research/kalshi/blind_drift_trend.py` — forward-curve drift group over group.
+- `research/kalshi/blind_lean_decomp.py` — is the blind's error a LEVEL bias or SHAPE? (answer: shape).
+- `research/kalshi/bshare_normalization_probe.py` — the probe that found the b_share defect.
+- `research/kalshi/blind_input_audit.py` — what the BLIND actually sees in a staged state.
+
+**Harness fixes**
+- `research/kalshi/flow_read.py` — two-sided b_share series + `unsided_volume_frac` + `phase_volume_lots`
+  / `phase_n_trades`; reads the SCORED LEG when a group context is supplied.
+- `research/kalshi/forecast_harness.py` — `prior_full_session` (the Monday stub fix), the two-sided
+  copy-through, `squeeze_watch`'s live calendar limb, `--group` on decision-state, leg-targeted tape read.
+- `research/kalshi/nws_temp_feed.py` — flags `provisional_tail` on the last day of any fetch range.
+- `research/kalshi/group_he24_he1_handoff.py` — stage-time exit-state precompute + `chain_regime_age_sessions`.
+- `research/kalshi/stage_group.py` — passes `--group`, runs the reconciliation, precomputes exit states.
+
+**Brain + merge record**
+- `research/kalshi/knowledge/ng_brain.json` — **s103.6, 67 plays** (backups s103.2/.3/.4/.5).
+- `research/kalshi/G20_MERGE_PROPOSAL_S108.json`, `BSHARE_NORMALIZATION_PROPOSAL_S108.json`,
+  `BSHARE_REPOINT_COMPLETION_S108.json`, `G21_MERGE_PROPOSAL_S108.json`,
+  `BSHARE_REPOINT_GAP_S108.md` — the four merges and the gap C found in the first b_share fix.
+- `research/kalshi/adjudicate_g20_merge.py` — takes ANY proposal path; verifies strictly-additive.
+- `SESSION_HANDOFF_2026-08-01_S108.md` / `DROP_IN_S109.md` — the record + the next box (the branch box
+  is BOX 1 there, to be pasted alone first).
+
 ## NEW IN S104 (2026-07-21, current) — Friday->Monday cascade cleanup, G15 MBO round 2, coordinator guard
 
 - `research/kalshi/agents/mbo_refine_shared.md` + `mbo_specialist_{A,B,C,D,E}.md` — CANONICAL MBO

@@ -1,7 +1,7 @@
 {
  "group": "g21",
  "phase": "mbo_refined_r1",
- "brain_version": "s103.5",
+ "brain_version": "s103.6",
  "mean_abs_err_usd": 33,
  "dir_hits": 10,
  "n": 10,

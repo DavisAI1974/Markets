@@ -32,11 +32,44 @@ def _find_report(fname):
     return None
 
 
+def _sha(p):
+    import hashlib
+    return hashlib.sha256(open(p, "rb").read()).hexdigest()
+
+
+def assert_not_the_blind(gid, tag, path):
+    """S108 THE FILENAME COLLISION - third occurrence, and the guard could not see it.
+
+    The blind writes grp<N>_mbo_specialist_<X>.json. The refine ROUND 1 wants THE SAME NAME. The archive
+    step used `cp`, so the blind copy stayed at the canonical name - and every existing guard passed on
+    it: the file exists, the day is present, expected_magnitude_usd is numeric, the owner matches. All
+    true of a stale blind file.
+
+    On G21 SIX OF TEN days were about to assemble BLIND numbers labelled as the refine: B's refine had
+    never written (its agent died) and C had written to a slipped filename, leaving the blind copies in
+    place for both. Nothing downstream could tell. Only a hash against the blind archive catches it.
+
+    A refine posterior that is BYTE-IDENTICAL to its own blind archive is not a refine.
+    """
+    arch = os.path.join(FC, f"g{gid[1:]}_blind_round1", f"grp{gid[1:]}_mbo_specialist_{tag}.json")
+    if os.path.exists(arch) and os.path.exists(path) and _sha(path) == _sha(arch):
+        raise SystemExit(
+            f"REFINE COORDINATOR GUARD FAILED - {tag}: {os.path.basename(path)} is BYTE-IDENTICAL to its "
+            f"blind archive ({os.path.relpath(arch, FC)}).\n"
+            f"  That is the blind's posterior sitting at the refine's filename, not a refine. It would "
+            f"have been assembled and scored as one.\n"
+            f"  Cause is almost always: the specialist did not write (agent died, or wrote to a different "
+            f"name), and the archive step used cp instead of mv.\n"
+            f"  Fix: re-run specialist {tag}'s refine. Do NOT delete the archive to silence this.")
+
+
 def load_spec(gid, tag, rnd):
     suffix = "_r2" if rnd == 2 else ""
     p = _find_report(f"grp{gid[1:]}_mbo_specialist_{tag}{suffix}.json")
     if p is None:
         return None
+    if rnd == 1:
+        assert_not_the_blind(gid, tag, p)     # round 2 has its own _r2 name and cannot collide
     return {str(x["date"]).replace("-", ""): x for x in json.load(open(p)).get("days", [])}
 
 
