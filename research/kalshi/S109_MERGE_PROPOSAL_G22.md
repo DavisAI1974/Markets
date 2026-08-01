@@ -125,7 +125,66 @@ Any coefficient fitted on the modern tape must not be back-applied to older data
 
 ---
 
-## P1 — THE SUMMER ARTIFACT LEAN (mechanism stands; the FIX is now P0)
+## P0.5 — THE DEGREE-DAY STATION WEIGHTS ARE HAND-SET, UNVALIDATED, AND MISS OHIO ENTIRELY
+
+**Greg, S109:** *"Philly is a huge PJM load, as is Columbus where I live. DC, Baltimore, the whole I-95
+corridor actually."* Checked against `STATION_WEIGHTS_RAW` and EIA-930, and there is a real coverage
+hole.
+
+**What the index actually contains** — 16 stations, hand-set raw weights summing to 0.890:
+
+| region | stations | normalized weight |
+|---|---|---|
+| I-95 corridor | NYC .1348 · BOS .0562 · PHL .0562 · DCA .0562 | **0.3034** |
+| Midwest | ORD .1124 · DTW .0562 · MSP .0506 · STL .0393 | 0.2585 |
+| South/Texas | IAH .0787 · DFW .0730 · ATL .0618 | 0.2135 |
+| West | LAX .0618 · PHX .0506 · SEA .0393 · DEN .0393 · SFO .0337 | 0.2247 |
+
+**Absent, and they are not small:**
+
+| metro | utility / zone | status |
+|---|---|---|
+| **Columbus OH** | AEP Ohio (PJM) | **ABSENT** |
+| **Cleveland** | FirstEnergy (PJM) | **ABSENT** |
+| **Cincinnati** | Duke Ohio (PJM) | **ABSENT** |
+| **Baltimore** | BGE (PJM) — a separate metro from DCA | **ABSENT** |
+| Pittsburgh | Duquesne (PJM) | **ABSENT** |
+| Richmond | Dominion (PJM) | **ABSENT** |
+
+**Ohio has NO station in the index at all.**
+
+**The scale check (EIA-930, 20260629):** PJM is **18.3%** of US48 demand — **the largest single BA in
+the country**, ahead of MISO 15.0% and ERCOT 13.0%. PJM-footprint stations in the index are PHL + DCA =
+**11.2%** of weight (NYC is NYISO; BOS is ISO-NE).
+
+**Stated honestly, because this is the trap this session keeps hitting:** electric load share is **not**
+gas-demand share. The index is a *gas*-weighted proxy spanning heating, power gen and industrial, and
+PJM carries substantial nuclear and coal. So 18.3% does **not** imply the correct weight, and I am not
+proposing a number from it. **The coverage gap stands independently of the weighting question** — a
+major population and industrial center inside the largest-demand BA has no station.
+
+**The deeper issue: `STATION_WEIGHTS_RAW` is a hand-set table with no recorded provenance and has never
+been validated against actual gas consumption.** That is the same species as every other defect this
+session — a plausible, well-formed, in-range set of numbers that nobody reconciled against an
+independent source. It sits directly upstream of `gw_hdd` / `gw_cdd`, which is the **slope instrument**
+P0 just made the top build priority. A mis-weighted slope channel biases every weather read in every
+block, one direction, invisibly.
+
+**PROPOSED AS A BUILD (measurement first, no weights invented):**
+
+1. **Reconcile the existing weights against EIA state-level natural gas consumption** (residential +
+   commercial + industrial + electric power, which EIA publishes by state and month). That is the
+   independent source the table has never been checked against.
+2. **Add the missing metros** — Columbus/Cleveland or Cincinnati for Ohio, and Baltimore — weighted from
+   that reconciliation, not from judgement.
+3. **Record the provenance in the feed**, so the next reader can see what the weights are derived from
+   and re-derive them. Today they are bare literals.
+4. **Re-run the walked blocks on the corrected index** and measure whether the slope channel moves. If
+   G22's hill reads steeper or flatter under corrected weights, that is a direct measurement of how much
+   the weighting error was costing — and it is checkable, because the actual block cum (+470) is known.
+
+**Falsifier:** if the reconciled weights land within noise of the hand-set ones, the table was fine and
+only the coverage gap needs filling. Either outcome is a real result and worth having.
 
 *The measurement below stands and explains the down lean. What changed under P0 is the remedy: the
 answer is not to re-point these bars at CDD levels, it is that a LEVEL bar is the wrong instrument.
