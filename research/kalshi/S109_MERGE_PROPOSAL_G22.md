@@ -81,10 +81,18 @@ earlier P1 proposal to re-point them to CDD levels is WITHDRAWN.**
 | surprise | realized − forecast | **derivable now** (computed above; the feed carries both) |
 | revision | forecast run-over-run | served, but seam-blind (P2) |
 | duration | consecutive days of anomaly beyond a bar | **MISSING** — no persistence field anywhere |
-| constraint — regional basis | citygate / regional cash basis | **MISSING.** `cash_basis` is **Henry Hub only**, so a Chicago deliverability squeeze is unobservable |
+| constraint — regional basis | citygate / regional cash basis | **MISSING.** `cash_basis` is **Henry Hub only**. `nws_temp_feed`'s header names it: *"per-hub local weather (Chicago Citygate etc.) is the DEFERRED per-location basis stack"* — scoped out deliberately, never built |
 | constraint — maintenance | pipeline maintenance / capacity derates | **MISSING** — no feed exists |
 | constraint — regional tightness | `storage_regional.days_of_supply` | present but **null** |
 | supply headroom | production vs capacity | not served |
+| **demand at the location** | **COVERED, and heavily** | `ORD` is **11.24%** of the gas-weighted index (2nd after NYC 13.48%); `MISO` + `PJM` in `grid_stack`; `storage_regional.midwest` |
+
+**The split matters for scoping the build (Greg): Chicago is a huge city and is already factored into HH
+usage — it is tracked.** The DEMAND half of the Chicago mechanism is instrumented at heavy weight. What
+is absent is the CONSTRAINT half: the cap, the citygate blowout, the deliverability squeeze. So a cold
+snap parked on Chicago **would** move our degree-day index; what we could not see is whether it was
+landing into a constrained pipe — which is the difference between a slope and a spike. **Build the
+basis stack, not the demand side.**
 
 **PROPOSED AS BUILDS, NOT AS PLAYS.** The SPIKE limbs (anomaly, duration, constraint) cannot be written
 or tested until they are observable, and writing one against G22 — the block with the least *spike*

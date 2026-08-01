@@ -294,12 +294,29 @@ express "unexpected", "persistent", or "into a constraint". So re-pointing them 
 which is what I proposed before this correction — would reproduce the same error in a new season. That
 proposal is withdrawn.
 
-**And the multiplier's key limb has no instrument.** `cash_basis` is **Henry Hub only**, so a Chicago
-citygate squeeze is literally unobservable in the state; there is no pipeline-maintenance feed;
-`storage_regional.days_of_supply` is null; no CDD-vs-normal anomaly field exists; and nothing measures
-duration. **We could not have seen the Chicago case if it had happened.** That is the build list, and it
-is why no weather-authority play is proposed yet — writing one against a block with the least weather
-authority in the walk would be fitting of the worst kind.
+**The multiplier's CONSTRAINT limb has no instrument — but the DEMAND limb is well covered.** Greg
+followed up: Chicago was only an example, *"but it's a huge city — if it is factored into HH usage, it
+should be tracked."* Checked, and it is, heavily:
+
+| Chicago, as tracked today | status |
+|---|---|
+| temperature in the gas-weighted degree-day index | **`ORD` at 11.24%** — second-heaviest station after NYC (13.48%) |
+| electric load | `MISO` and `PJM` both served in `grid_stack` (ComEd load sits in PJM) |
+| regional storage | `storage_regional.midwest` |
+| **citygate BASIS** | **MISSING** — `cash_basis` is Henry Hub only |
+| **pipeline maintenance / capacity derates** | **MISSING** — no feed |
+| `storage_regional.days_of_supply` | present but **null** |
+
+**So I overstated earlier when I wrote "we could not have seen the Chicago case."** We would have seen
+the *cold* — ORD is one of the two heaviest inputs to the demand index. What we could not have seen is
+the **cap**: the maintenance, the citygate blowout, the deliverability squeeze. The demand half of the
+Chicago mechanism is instrumented; the constraint half is not.
+
+And the gap is not an oversight — `nws_temp_feed`'s own header names it: *"Per-hub local weather
+(Chicago Citygate etc.) is the DEFERRED per-location basis stack, not this."* It was scoped out
+deliberately and never built. That is precisely the multiplier limb, and it is why no weather-authority
+play is proposed yet: writing one against a block with no spike conditions, using instruments that
+cannot see a constraint, would be fitting of the worst kind.
 
 **The lesson about the LEDGER itself:** this correction came from outside the run, from twenty years of
 desk experience, and it re-explained a result four specialists had already reasoned over carefully.
