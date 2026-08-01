@@ -19,9 +19,39 @@ The illustration: transportation into Chicago is capped this week for maintenanc
 mild — then a cold snap blows in overnight and **sits on Chicago for days**. Now weather is a huge
 factor.
 
-**The structural claim:** weather authority is not a function of degree-day LEVEL. It is
-`anomaly × duration × constraint`, and it multiplies whatever the flow/fundamental read already is.
-Absent a constraint or an anomaly, weather is close to inert — because supply capacity absorbs it.
+**Greg, correcting an over-reading of the above:** *"That's not totally true about being a driver in
+only those 2 situations. Mild weather kills demand: big driver down. High heat/cold: driver up (some).
+The weather is the low grade hill. Until something extreme or unexpected happens. It is THE driver but
+it's gentle changes over time."*
+
+**The structural claim, in its corrected form — two regimes, not one:**
+
+1. **THE HILL (always on).** Weather **is** THE driver, continuously, as a **slope** — gentle changes
+   over time. It is **not** inert absent an anomaly; that was my over-correction and it was wrong. And
+   it is **ASYMMETRIC**: mild weather *kills demand* and is a **big driver down**; high heat/cold is a
+   driver **up, but only some**. The down-side of the asymmetry is the stronger one.
+2. **THE SPIKE (conditional).** `anomaly × duration × constraint` is a **MULTIPLIER on top of the
+   hill** — the Chicago case. This is when weather stops being a slope and becomes the whole story.
+
+The error to avoid is confusing them: **a hill slopes, it does not gap.**
+
+**G22 measures the hill directly, and the hill is the entire drift:**
+
+| | |
+|---|---|
+| realized gw_cdd across the block | **9.0 → 17.5** — a rising hill, demand building all block |
+| actual block cum | **+470** — the hill, sloping up, gently |
+| blind block cum | **−1,345** — called it down |
+| miss | **−1,815** = the block drift, exactly |
+
+So the drift is **not** "four bearish artifacts" as P1 framed it. The drift **is the missed hill**; the
+artifacts (P1) are the *mechanism* by which the blind could not see it — every HDD-keyed instrument
+being void or bearish in a CDD block left it with no slope channel at all.
+
+**And this re-reads 0629 correctly.** The error was not expecting weather to matter — weather mattered
+all block. It was expecting the **hill to gap**: a forecast gap of +480 from what was slope movement,
+against an actual +50. The hill was real and it was up; it simply does not arrive as an overnight
+repricing. That is a sharper and more useful lesson than "the panel was too bullish."
 
 **G22 is a clean confirming instance, and it explains the block's largest error.** Every authority
 condition was absent on 0629:
@@ -56,18 +86,26 @@ earlier P1 proposal to re-point them to CDD levels is WITHDRAWN.**
 | constraint — regional tightness | `storage_regional.days_of_supply` | present but **null** |
 | supply headroom | production vs capacity | not served |
 
-**PROPOSED AS BUILDS, NOT AS PLAYS.** No weather-authority play can be written — let alone tested —
-until the anomaly, duration and constraint limbs are observable. Writing one now would be fitting to a
-single block, and worse, it would be fitting to the block that has the least weather authority of any in
-the walk. Priority order, cheapest and highest-leverage first:
+**PROPOSED AS BUILDS, NOT AS PLAYS.** The SPIKE limbs (anomaly, duration, constraint) cannot be written
+or tested until they are observable, and writing one against G22 — the block with the least *spike*
+authority in the walk — would be fitting of the worst kind. The HILL, by contrast, is measurable right
+now and is the higher-value half, because it is always on. Priority order:
 
-1. **CDD vs NORMAL** — the anomaly instrument. The feed already computes normals for HDD; this is the
-   same computation on the other side of the balance point. Without it, summer has no anomaly channel.
-2. **Forecast surprise + persistence** — realized − forecast per day, and a run-length of consecutive
-   days beyond an anomaly bar. Both derivable from data already on disk.
-3. **Regional / citygate basis** — the constraint tell, and the one that carries the Chicago mechanism.
-   A cold snap parked on a constrained citygate shows up in basis *before* it shows up in the front.
-4. **Pipeline maintenance / capacity derates** — the "cap is lower this week" input. Genuinely new feed.
+1. **THE SLOPE CHANNEL — highest value, and it is now half-built.** The CDD level ladder landed this
+   session, so a summer block finally has a slope instrument at all. What is still missing is the
+   **asymmetry**: mild-kills-demand is a *bigger* down driver than heat-adds is an up driver, and
+   nothing in the brain encodes that. Measurable across the walked blocks — regress day-move against
+   the CDD/HDD slope separately on the mild side and the extreme side. This is a MEASUREMENT, not a
+   proposal; the coefficient must come from the tape, per block-class.
+2. **CDD vs NORMAL** — the anomaly instrument, and the thing that separates hill from spike. The feed
+   already computes normals for HDD; this is the same computation on the other side of the balance
+   point. Without it, summer has no way to tell a seasonal ramp from a genuine anomaly — which is
+   exactly the distinction 0629 got wrong.
+3. **Forecast surprise + persistence** — realized − forecast per day, and a run-length of consecutive
+   days beyond an anomaly bar (the "sitting on Chicago for days" limb). Both derivable from data on disk.
+4. **Regional / citygate basis** — the constraint tell, and the one carrying the Chicago mechanism. A
+   cold snap parked on a constrained citygate shows up in basis *before* it shows up in the front.
+5. **Pipeline maintenance / capacity derates** — the "cap is lower this week" input. Genuinely new feed.
 
 **Falsifier for the whole frame, stated so it can be killed:** a block where a large degree-day anomaly
 with high forecast surprise, long duration and a live regional constraint produces **no** outsized move

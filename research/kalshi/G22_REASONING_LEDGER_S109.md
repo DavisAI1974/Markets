@@ -247,19 +247,46 @@ transportation to Chicago is a lower cap this week because of maintenance, and t
 mild. But a cold snap blows in overnight and it's just sitting on Chicago for days — then the weather is
 a huge factor."*
 
-**What this says structurally.** Weather authority is not a function of degree-day LEVEL. It is
-`anomaly × duration × constraint`, multiplying whatever the flow/fundamental read already is. Absent an
-anomaly or a constraint, weather is close to inert, because production capacity absorbs it. The Chicago
-example is the whole mechanism in one sentence: a *deliverability cap* (maintenance) plus a *surprise*
-(nobody forecast it) plus *persistence* (sitting for days) converts a mild-weather week into a huge
-factor. Any one limb alone does not.
+**Greg, immediately correcting my over-reading of that** — recorded because the correction is the more
+important half, and because I got it wrong in a way that would have shipped: *"That's not totally true
+about being a driver in only those 2 situations. Mild weather kills demand: big driver down. High
+heat/cold: driver up (some). The weather is the low grade hill. Until something extreme or unexpected
+happens. It is THE driver but it's gentle changes over time."*
 
-**It explains the block's largest error better than anything the panel produced.** Measured on 0629:
-forecast surprise **−0.015**, vs normal **+0.096**, no duration (9.0 → 18.7 is the seasonal ramp), and a
-+112 Bcf surplus with ample production. Every authority condition absent — and the gap paid **+50**.
-Block-wide the largest surprise is −1.28 and vs-normal never leaves −0.078 to +0.175. **The ramp was
-June becoming July, priced weeks out.** The bridge treated a +4.7 CDD *level* move as a driver when the
-anomaly was zero.
+**What this says structurally — TWO regimes, and I had collapsed them into one.**
+
+1. **THE HILL (always on).** Weather **is** THE driver, continuously, as a **slope** — gentle changes
+   over time. My "close to inert absent an anomaly" was wrong. It is also **ASYMMETRIC**: mild weather
+   *kills demand* and is a **big driver down**; high heat/cold is a driver **up, but only some**.
+2. **THE SPIKE (conditional).** `anomaly × duration × constraint` is a **multiplier on top of the
+   hill** — the Chicago case, where weather stops being a slope and becomes the whole story. A
+   deliverability cap plus a surprise plus persistence converts a mild week into a huge factor; any one
+   limb alone does not.
+
+**The error to avoid is confusing them: a hill slopes, it does not gap.**
+
+**THE HILL WAS THE WHOLE BLOCK, AND THE BLIND MISSED EXACTLY IT.**
+
+| | |
+|---|---|
+| realized gw_cdd across G22 | **9.0 → 17.5** — a rising hill, demand building all block |
+| actual block cum | **+470** — the hill, sloping up, gently |
+| blind block cum | **−1,345** — called it down |
+| miss | **−1,815** = the block drift, exactly |
+
+So the drift is **not** "four bearish artifacts," as I framed it in the merge proposal. The drift **IS
+the missed hill**; the artifacts are the *mechanism* by which the blind could not see it — every
+HDD-keyed instrument void or bearish in a CDD block left it with no slope channel at all.
+
+**And the SPIKE conditions were genuinely absent on 0629**, which is why the gap paid nothing: forecast
+surprise **−0.015** (forecast 14.815, realized 14.8), vs normal **+0.096**, no duration (9.0 → 18.7 is
+the seasonal ramp), +112 Bcf surplus with ample production. Block-wide the largest surprise is −1.28 and
+vs-normal never leaves −0.078 to +0.175. **The ramp was June becoming July, priced weeks out.**
+
+**So the 0629 error was not "expected weather to matter."** Weather mattered all block — the hill was
+real and it was up. The error was expecting **the hill to gap**: a forecast gap of +480 from slope
+movement, against an actual **+50**. Slope arrives as slope. That is a sharper lesson than either "the
+panel was too bullish" or "weather was inert."
 
 **Why this is a KIND error, not a calibration error.** The brain's weather bars are levels
 (`divergence_resolution` HDD ≥ 16.4, `shoulder_weather_band_void` HDD ≤ 13.5). A level bar cannot
