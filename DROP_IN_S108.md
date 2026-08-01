@@ -75,6 +75,18 @@ data/storage_consensus`, `eia/ -> data/eia_surprise.json` (a FILE).
    (b) B's 0601 (+350 vs -990) missed even though the G19 cum-0 structural fix HELD - B built
    inherited cum properly and still called it wrong, so that is a reasoning miss sitting on top of a
    fixed mechanism, not a repeat of the old flaw.
+   **READ THE FIVE CROSS-CUTTING FINDINGS FIRST** - `SESSION_HANDOFF_2026-08-01_S107.md`, section
+   "G20 BLIND - THE FIVE CROSS-CUTTING FINDINGS". They are the input to this refine, not decoration.
+   The headline carry-forward: **G20's blind failed the same way G19's did - a down lean held through
+   a rally, 26c low on the curve - AFTER the G19 cum-0 structural fix demonstrably WORKED.** B built
+   inherited cum correctly and corroborated polarity off cumulative signed flow, and the block-level
+   lean survived anyway. **So whatever drives the lean is NOT the chain-state bug we already fixed.**
+   Go in with that framing rather than re-deriving it. Two specific things to TEST against the actual:
+   C's price-free absorption proxy (big prints still selling = absorber present; flipping buy on a
+   guard-clean sample = absorber gone - C claims it resolves the G18-0506 trap without price, which
+   would be the blind's missing substitute for `flow_conviction`), and A's + B's paired seam test
+   (A: is the prior LIVE - does the D-1 post-publication phase net CROSS or merely DECAY; B: how BIG -
+   sign from the venue at the extreme, size from the complex-level net WoW).
    Bridging note for any future blind: the engine emits `expected_magnitude_usd` / `path_p50_curve`
    and `group_coordinate_blind.py` reads `guessed_net_usd` / `path_distribution` - reformat VERBATIM
    in a scratchpad alias (numbers untouched, `handoff_out` carried through for the Friday sign-off).

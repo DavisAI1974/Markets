@@ -18,6 +18,72 @@ each one reading downstream exactly like a deliberate price mask.
   module built to condition MAGNITUDE, which the brain itself calls the walk's dominant residual.
   Five groups' magnitudes were scaled without it.
 
+## G20 BLIND - THE FIVE CROSS-CUTTING FINDINGS (raw material for the refine post-mortem)
+
+These were reported by the specialists and existed only in commit messages until now. They are the
+input to the G20 refine, not decoration.
+
+**THE CARRY-FORWARD THAT MATTERS MOST.** G20's blind failed the SAME WAY G19's did - a down lean held
+through a block that rallied, 26c low on the forward curve - and it did so **AFTER the G19 cum-0
+structural fix demonstrably WORKED.** B built inherited cum correctly from the block's own committed
+days, corroborated the polarity independently off cumulative signed flow, and used it for the
+extension gate, path shape and band floor while explicitly NOT using it for the sign. The mechanism
+we blamed for G19 is fixed and behaving, and the block-level lean survived it. **So whatever drives
+the lean is NOT the chain-state bug we already fixed.** That is the question the G20 refine has to
+answer, and it should go in with that framing rather than re-deriving it.
+
+**C (core).** (1) The absolute 0.50 `session_b_share` gate is DEAD in this block - sub-0.50 on all ten
+sessions (0.433-0.488), so `selector.divergence_resolution` gate (b) excludes the up-angle on 10/10
+days BY CONSTRUCTION. Proposes evaluating it BLOCK-RELATIVE, or replacing it with count-tape vs
+size-weighted channel divergence. (2) The COT WoW sign FLIPS INSIDE the block (+23,762 -> -38,123), so
+the covering gate and the seam-gap play point opposite ways in the two halves of one block - that one
+open-time field is what split C's four days 2 down / 2 up. (3) **A PRICE-FREE ABSORPTION PROXY**: while
+aggregate signed flow is positive, watch the size-weighted big-print channel - big prints STILL
+SELLING = absorber present = buy-absorption-failing risk live (take the turn small); big prints
+FLIPPING BUY on a guard-clean sample = absorber gone = accumulation confirmed. C claims this resolves
+the G18-0506 trap WITHOUT price. If it holds up it is a direct answer to the open question from G19:
+the blind's missing substitute for `flow_conviction`. **Test it against the actual in the refine.**
+
+**D (EIA).** The thin-tape guard fires as a SUPPRESSOR, and generalizes beyond the measured claim:
+EVERY holiday block feeds exactly one thin-sample session into the >=2-of-~5 accumulation window. Also
+flagged that G20 is the first block where the summer CDD side of the S1 salience switch is materially
+live (gw_cdd 5.9 -> 9.3) against a brain whose own scope note records no CDD>3 anywhere in the walk -
+D granted weather no directional authority in either sign rather than extrapolate off-sample.
+
+**E (Friday/seam).** (1) ONE COT report backed BOTH of E's seams and can only be spent once - reaching
+UP twice off a single unrefreshed WoW delta is the non-falsifiable double-count the falsifiability
+clause forbids - so E broke the tie on **CALENDAR, not positioning** (`in_gsci_roll` flips TRUE with
+`gsci_roll_day_n` 1 plus BCOM hedge roll on 06-05, making the second seam roll-carry DOWN while the
+first stays UP). Two near-identical Friday exits, opposite verdicts, from a decidable open-time field.
+(2) **A NEGATIVE worth as much as the positives**: the big-print-minus-session b_share SPREAD is NOT a
+discriminator in this regime - positive on 7/10 sessions, mean ~+4pp, ahead of sells and the bounce
+alike. Kills a plausible-looking instrument before it gets promoted.
+
+**A (weekend/holiday seam).** (1) **The seam prior belongs to the UNCONSUMED RESIDUAL of the last COT
+publication**, and the D-1 post-publication phase net flow measures how much was consumed - the test
+is whether that phase net CROSSES to the implied side or merely DECAYS toward zero. 05-22 (+23,762
+improving) was repriced inside the session (phase 3 crossed to +1,436) so A's holiday seam inherits
+nothing; 05-29 (-38,123 worsening) decelerated without crossing (-1,573 -> -59) so E's seam is loaded.
+Open-time, non-price, blind-available - it sits exactly in the slot the price mask leaves empty. It
+also dissolves E's "one COT, two seams" tension: the block has THREE seams and TWO publications,
+paired by publication date. (2) A frozen block needs a **CROSSOVER DATE, never a blanket verdict** -
+the `squeeze_watch` staleness C/D/E all repeated is only true FROM 05-28; on 0525-0527 the frozen
+vintage is factually current, so on A's own day the flag is a TRUE positive and A had to beat the
+ladder rung on the merits. (This is the same principle `frozen_structure_stale` implements by
+comparing expiry to the day - A derived it independently.)
+
+**B (Monday).** (1) **A positioning-seam prior takes its SIGN from the venue at the extreme and its
+SIZE from the complex-level net WoW.** On disagreement - record NYMEX short while the complex covers -
+keep the sign, lose the size premium. No brain play consumes ICE Penultimate despite the state serving
+it daily. Composes with A's test: A's says whether the prior is LIVE, B's says how BIG it can be.
+(2) **"Degraded block" is THREE failure modes, not one** - expiry-keyed (needs a crossover date),
+slow-state (retain with corroboration; B kept `curve_regime`), and null (`vol_regime` - widen the
+band, NEVER shift the p50). The group-wide blanket warning three specialists repeated was wrong at
+both ends. (3) B also caught that A's "the complex NET COVERED" was a naive lot-sum across
+quarter-sized ICE contracts; size-adjusted it still shortened (~-27k NYMEX-equivalent, ~30% below
+headline), and B used only the version of the claim surviving both bases - the one that did NOT
+flatter its own number.
+
 ## THE SIX HOLES (all closed except the last, which is correctly BLOCKING G23)
 
 | # | block | who it hit | cause | state |
