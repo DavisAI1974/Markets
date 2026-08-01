@@ -681,8 +681,14 @@ def _tape_enrich(prev, ymd: str, st: dict) -> dict:
             # value (big_b / len(bigs)) shadowing it under the same name. That was a G19 root cause:
             # the >=0.55 conviction gate saw a block max of 0.537 (count) while the size-weighted
             # series reaches 0.550 - the gate was fed the wrong series, not mis-specified.
+            # S108: the two-sided b_share series MUST be copied through here. S107 defect 3 was exactly
+            # this list omitting a computed field (big_print_b_share), leaving a different series
+            # shadowing it under the same name for four groups. Adding a series to flow_read and not to
+            # this list produces the same silent failure - the field simply never reaches a specialist.
             for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share",
-                      "big_print_b_share", "l1_book"):
+                      "big_print_b_share", "l1_book",
+                      "session_b_share_two_sided", "phase_b_share_two_sided",
+                      "big_print_b_share_two_sided", "unsided_volume_frac", "b_share_basis_note"):
                 if k in ff:
                     out[k] = ff[k]
             if "big_print_b_share" in ff:

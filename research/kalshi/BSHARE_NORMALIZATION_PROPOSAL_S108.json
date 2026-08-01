@@ -1,0 +1,88 @@
+{
+ "meta": {
+  "title": "The b_share normalization defect: the absolute 0.50 bars have been reading a series that essentially never clears 0.50",
+  "brain_base": "s103.3 (66 plays)",
+  "proposes": "s103.4",
+  "merge_rule": "STRICTLY ADDITIVE. Two plays gain an amendment key. No existing key is rewritten. Six plays gain an explicit DO-NOT-MOVE note so the fix is not over-applied.",
+  "code_already_landed": "flow_read.py now serves *_two_sided alongside the originals plus unsided_volume_frac; forecast_harness copies them through to tape_conditions. G21/G22 restaged, PASS, verified strictly additive (recursive strip: all pre-existing fields byte-identical).",
+  "what_is_PROVEN_vs_what_is_NOT": {
+   "proven": "The normalization defect, its magnitude, and its effect on any absolute 0.50 bar. All measured on the 223 sessions on disk.",
+   "not_proven": "That this defect is the WHOLE of the blind's -206 USD/day flat down bias. It is the leading candidate with a mechanism and a timeline fit, not a demonstrated cause.",
+   "the_test": "G21 is the forward test. It is the first blind to run with the two-sided series available."
+  }
+ },
+
+ "the_measurement": {
+  "sessions": 223,
+  "the_defect": "Every *_b_share divides by TOTAL volume. The tape carries a third side value ('N', neither B nor A). Unsided volume lands in the DENOMINATOR and can never land in the numerator, so every b_share is biased LOW.",
+  "side_volume_split": {"A": "43.38%", "B": "43.13%", "N (unsided)": "13.49%"},
+  "session_b_share_as_computed": {"mean": 0.4078, "median": 0.4000, "min": 0.2228, "max": 0.5208,
+                                  "clears_0.50": "5 of 223 = 2.2%"},
+  "session_b_share_two_sided": {"mean": 0.4999, "median": 0.4975, "min": 0.3130, "max": 0.6181,
+                                "clears_0.50": "107 of 223 = 48.0%"},
+  "why_0.4999_is_the_tell": "Two-sided aggressor balance over 223 sessions comes out at 0.4999 - dead on the 50/50 the physics requires, since every trade has a buyer and a seller. The served series averaging 0.4078 is therefore a measurement artifact, not a market feature.",
+  "it_is_NOT_a_constant_shift": {
+   "shift_mean": 0.0921, "shift_sd": 0.0446, "shift_min": 0.0195, "shift_max": 0.2364,
+   "unsided_frac_range": "0.037 to 0.486",
+   "corr_as_computed_vs_two_sided": 0.5318,
+   "consequence": "The served series retains only ~28% of the true series' variance. It is a NOISY downward-biased proxy, not a shifted coordinate - so it cannot be corrected by moving a bar down.",
+   "sessions_disagreeing_about_the_0.50_side": "102 of 223 = 45.7%"
+  },
+  "worked_example": "G22 20260622: served b_share 0.357 (strongly sell-leaning) against a true two-sided 0.549 (buy-leaning), on 34.9% unsided volume. A sign flip across 0.50 on one session.",
+  "what_is_NOT_affected": "session_signed_flow is CLEAN: (sd*sz).sum() with sd in {-1,0,+1} gives unsided trades zero weight and has no denominator. The blind's signed-flow channel was always correct - which is why the defect survived this long."
+ },
+
+ "amendments_to_incumbents": [
+  {
+   "play_id": "selector.divergence_resolution",
+   "add_field": "assumption_retired_bshare_basis",
+   "value": {
+    "assumed": "That the arm-(b) bar 'session_b_share >= 0.50' means 'more buying than selling'.",
+    "measured": "On the served series that bar clears on 5 of 223 sessions (2.2%). On the two-sided series it clears on 107 of 223 (48.0%). The two disagree about which side of 0.50 a session sits on 45.7% of the time.",
+    "now_licensed": "Arm (b) must read session_b_share_two_sided. The bar stays 0.50 - it was never the bar that was wrong, it was the series.",
+    "why_this_play_matters_most": "It is a SELECTOR on bimodal splits - the machinery that decides which angle wins when the read is two-sided. An arm that is structurally unreachable on ~98% of sessions does not merely mis-fire; it removes one side of the selection from the walk. C measured the symptom on G20 (sub-0.50 on 10 of 10 sessions, so the up angle was excluded BY CONSTRUCTION in a block that rallied +1,860) without identifying the cause.",
+    "timeline_fit_CIRCUMSTANTIAL_not_proof": "This play entered at s102.3, after G16. G17 was a DOWN block (actual cum -1,070) and the drift was only -970. G18, G19 and G20 were UP blocks (+610, +1,150, +1,860) and the drift ran -2,330 / -2,370 / -2,560. A structurally down-gated selector costs little in a falling block and progressively more in a rising one. That fits the observed pattern but does not establish it.",
+    "proposed_by": "session lead (S108), from C's G20 symptom"
+   }
+  },
+  {
+   "play_id": "magnitude.s1void_injection_chain_bleed",
+   "add_field": "assumption_retired_bshare_basis",
+   "value": {
+    "assumed": "Same absolute 0.50 b_share bar, same meaning.",
+    "measured": "Same measurement as above - the bar clears on 2.2% of sessions as served.",
+    "now_licensed": "Read session_b_share_two_sided. Bar unchanged at 0.50.",
+    "proposed_by": "session lead (S108)"
+   }
+  }
+ ],
+
+ "explicit_DO_NOT_MOVE_these": {
+  "principle": "A bar FITTED EMPIRICALLY on the served series was fitted where it is used, and silently re-normalizing underneath it would break it. Only THEORETICALLY-motivated bars - where 0.50 is meant to mean 'balance' - move. This distinction is the whole reason the code fix is additive rather than a replacement.",
+  "plays_that_must_keep_reading_the_ORIGINAL_series": [
+   {"id": "direction.giveback_exhaustion_boundary", "bars": ["0.20", "0.45", "0.62"]},
+   {"id": "timing.catalyst_continuity_frontrun", "bars": ["0.463"]},
+   {"id": "structure.squeeze_unwind", "bars": ["0.817"]},
+   {"id": "structure.accumulation_arm_turn", "bars": ["0.55"]},
+   {"id": "flow.big_print_bshare_thin_tape_guard", "bars": ["0.50", "0.55", "per-quartile 0.524/0.550/0.553"]},
+   {"id": "flow.price_free_absorption_proxy", "bars": ["0.436", "q4 0.547"]}
+  ],
+  "the_caveat_that_should_not_be_lost": "These bars are internally consistent but they were fitted on a proxy correlating 0.532 with the real quantity. They are not wrong; they are WEAK - a bar fitted on a half-informative proxy cannot separate as well as one fitted on the real series. RE-FITTING them on the two-sided series is a measurement study worth doing, and it is NOT part of this proposal. Do not re-fit by eye.",
+  "flow.big_print_bshare_thin_tape_guard_note": "Its thin-tape finding (dispersion doubles below ~20 big prints) is a SAMPLE-SIZE effect and survives the re-normalization untouched. Only its absolute bar levels are basis-dependent."
+ },
+
+ "forward_test_G21": {
+  "why_G21_is_the_test": "It is the first blind to run with the two-sided series available, and it is already the first group with the full kitchen sink intact (storage + vol_regime + weather + size-weighted big_print_b_share + the Monday prior_full_session fix).",
+  "prediction": "If this defect is a material part of the flat down bias, G21's blind block cum should not sit structurally below the actual the way G18/G19/G20 did (-1,720/-1,220/-700 against +610/+1,150/+1,860).",
+  "falsifier": "If G21's blind lean is unchanged in sign and comparable in size, the b_share normalization is NOT a material driver of the lean, and it should be recorded as a real defect that was nonetheless not the cause - the -206/day bias then lies elsewhere.",
+  "attribution_warning": "G21 changes several inputs at once. When it is scored, the post-mortem must say which change earned which improvement, or the merge banks a data fix as evidence for a play. This is exactly the discipline the G20 merge applied to weather, which earned nothing on any day."
+ },
+
+ "adjudication_checklist": [
+  "2 amendments, both ADD a new key. Verify all pre-existing keys on all 66 incumbents byte-identical.",
+  "0 new plays.",
+  "6 plays explicitly listed as DO-NOT-MOVE, recorded in the proposal rather than edited, so the fix is not over-applied later.",
+  "The code fix is already landed and verified additive; this proposal only re-points two theoretically-motivated bars.",
+  "The lean claim is stated as a CANDIDATE with a named falsifier, not as a demonstrated cause."
+ ]
+}
