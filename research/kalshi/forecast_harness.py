@@ -750,6 +750,28 @@ def decision_state(days: list[str], mask_after: str | None = None) -> dict:
             out[d]["_mask_note"] = ("price-derived blocks FROZEN at the block-anchor vintage (one-shot "
                                     "masking fix, brain s101.3 item 10) - the deterministic expiry/print "
                                     "clock stays live in flow_calendar; exogenous feeds stay live")
+            # S107: the one-shot freeze can OUTLIVE the contract it describes. When a front expires
+            # inside the block, the frozen contract_structure keeps naming the dead contract and
+            # squeeze_watch keeps reading active off an expiry that has already happened - a stale
+            # FALSE POSITIVE, not merely stale data (G20: on 20260603 the frozen block still said
+            # calendar_front NGM26, expiry 2026-05-27, days_to_expiry 2). The live front is always
+            # available in flow_calendar, which is never masked, so the discrepancy is detectable
+            # without un-masking anything. Flag it rather than let a reader infer a live squeeze.
+            _cs = out[d].get("contract_structure") or {}
+            _fe = _cs.get("calendar_front_expiry")
+            if _fe and _fe < iso:
+                for _blk in ("contract_structure", "squeeze_watch"):
+                    if isinstance(out[d].get(_blk), dict):
+                        out[d][_blk]["frozen_front_expired"] = True
+                out[d]["frozen_structure_stale"] = {
+                    "frozen_calendar_front_symbol": _cs.get("calendar_front_symbol"),
+                    "frozen_calendar_front_expiry": _fe,
+                    "live_front_symbol_calendar": (out[d].get("flow_calendar") or {}).get("front_symbol_calendar"),
+                    "note": "the anchor-vintage freeze describes a front that has already expired as of "
+                            "this day; contract_structure and squeeze_watch fields keyed to the calendar "
+                            "front are NOT decision-legit here. flow_calendar carries the live front and "
+                            "expiry clock and is never masked - use it.",
+                }
     return out
 
 

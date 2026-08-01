@@ -70,6 +70,14 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 ROOT = "NG"
 MULT = 10000.0                                   # NG contract: $ per 1.000 price point
 SPAN_START, SPAN_END = "2025-09-01", "2026-03-13"
+# S107: SPAN_END is now a FLOOR, not the build end. It was a hard-coded date pinned when the feed was
+# first built and never advanced, so every group whose anchor fell past 2026-03-13 got
+# vol_regime_asof -> None. That surfaced as {"masked_one_shot": true, "value": null} in the decision
+# state - indistinguishable from a deliberate price mask - and it silently cost G16 through G23 the
+# entire vol/range conditioner, i.e. the one module built to fix what the brain itself calls the walk's
+# dominant residual (bands calibrated in one vol regime applied in another). The build end is now
+# DERIVED from the tape actually on disk so it cannot go stale again.
+ASOF_FORWARD_MARGIN_DAYS = 7   # as-of rows a little past the last session; n0_prev_age_days exposes staleness
 WINS = (5, 10, 20)
 PCTILE_WIN = 60
 BASES = {
@@ -231,15 +239,28 @@ def _coverage(basis: str, rows: list[dict]) -> dict:
     return cov
 
 
+def _resolved_span_end(sessions: dict) -> str:
+    """S107: the as-of span ends where the TAPE ends (plus a small forward margin), never at a
+    hard-coded date. SPAN_END is kept as a floor so the feed's intended minimum span still holds."""
+    lasts = [s[-1]["date"] for s in sessions.values() if s]
+    if not lasts:
+        return SPAN_END
+    end = max(max(lasts), SPAN_END)
+    d = datetime.strptime(end, "%Y-%m-%d") + timedelta(days=ASOF_FORWARD_MARGIN_DAYS)
+    return d.strftime("%Y-%m-%d")
+
+
 def build_store(write: bool = True) -> dict:
-    print(f"[vol_regime] building sessions  span={SPAN_START}..{SPAN_END}")
+    print(f"[vol_regime] building sessions  span_start={SPAN_START} (end derived from tape)")
     sessions = {}
     for b in BASES:
         days = _list_session_days(b)
         print(f"[{b}] {BASES[b]['series']}  {BASES[b]['dir']}  files={len(days)}", flush=True)
         sessions[b] = build_sessions(b, days)
+    span_end = _resolved_span_end(sessions)
+    print(f"[vol_regime] as-of span resolved to {SPAN_START}..{span_end}")
     asof = {}
-    for iso in _daterange(SPAN_START, SPAN_END):
+    for iso in _daterange(SPAN_START, span_end):
         row = {"date": iso}
         for b in BASES:
             prior = [s for s in sessions[b] if s["date"] < iso and s["net"] is not None]
@@ -248,7 +269,10 @@ def build_store(write: bool = True) -> dict:
     meta = {
         "feed": "vol_regime (DATA_GATE_S98 feed B, family: tape conditioner)",
         "built_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
-        "span": [SPAN_START, SPAN_END],
+        "span": [SPAN_START, span_end],
+        "span_end_source": "derived from the last session on disk + "
+                           f"{ASOF_FORWARD_MARGIN_DAYS}d margin (floor {SPAN_END}); S107 - a "
+                           "hard-coded end silently starved every group past it",
         "root": ROOT, "mult_usd_per_pt": MULT,
         "definitions": {
             "session": "one continuous-tape day-file = one UTC calendar day; open/close = "

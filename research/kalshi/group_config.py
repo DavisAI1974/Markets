@@ -30,8 +30,23 @@ def dst_flag(ymd: str):
 
 # US federal market holidays / CME NG closures in-window (extend as the walk advances).
 HOLIDAYS = {
-    "20260525": {"name": "Memorial Day", "cme": "early_close/holiday", "eia_shift": "20260529",
-                 "note": "Mon holiday; EIA storage print shifts Thu->Fri 05-29; A owns the reopen"},
+    # S107 CORRECTION: this entry previously carried eia_shift "20260529" and a note claiming the print
+    # shifted Thu->Fri. It does not - the EIA calendar feed has is_eia_print_day TRUE on 20260528 with
+    # shifted=false / shift_reason=null. A MONDAY holiday does not move the Thursday gas storage report.
+    # This mattered beyond documentation: group_actual.py:63 stamps this record onto the holiday day of
+    # the ACTUAL file, so the wrong claim was propagating into a scored artifact. It was a SECOND copy
+    # of the same error already fixed in GROUPS["g20"]["eia_thursdays"] - the duplicate is why it
+    # survived that fix, and why it is corrected here rather than left as prose.
+    "20260525": {"name": "Memorial Day", "cme": "early_close/holiday", "eia_shift": None,
+                 "note": "Mon holiday, thin session that DOES trade; the EIA print stays on Thu 05-28 "
+                         "(a Monday holiday does not shift it); A owns the reopen and the day"},
+    "20260619": {"name": "Juneteenth", "cme": "early_close/holiday", "eia_shift": None,
+                 "note": "Fri holiday inside G21; A owns it per the holiday day-class. Verify the CME "
+                         "energy session class when G21 is run - Juneteenth is not a full CME closure "
+                         "in every year"},
+    "20260703": {"name": "Independence Day (observed)", "cme": "early_close/holiday", "eia_shift": None,
+                 "note": "July 4 falls Sat in 2026 so the observed holiday is Fri 07-03, the last day "
+                         "of G22; A owns it. Verify the early-close vs full-closure class when run"},
 }
 
 # Kalshi-underlying roll map (roll = 5 business days before LTD; from FLOW_CALENDAR_NOTES_S98).
@@ -117,7 +132,8 @@ GROUPS = {
     "g21": {
         "window": "Sun 2026-06-07 -> Fri 2026-06-19 (Juneteenth 06-19 + July->Aug roll)",
         "days": ["20260608","20260609","20260610","20260611","20260612","20260615","20260616","20260617","20260618","20260619"],
-        "anchor": None, "anchor_date": "20260605", "anchor_lasthr_dir": None,   # from G20 actual
+        "anchor": None, "anchor_date": "20260605", "anchor_lasthr_dir": 1,   # from G20 actual; lasthr_dir
+        # derived S107 from the 20260605 NGN26 anchor session (close 3.220, last hour +1)
         "mask_after": "20260605",
         # NGN26 LTD 06-26 -> roll 06-19, BUT 06-19 = Juneteenth (holiday); the Aug/NGQ26 underlying
         # effectively begins 06-22 (G22). Treat G21 as clean July/NGN26 with 06-19 a holiday day.
@@ -129,7 +145,10 @@ GROUPS = {
     "g22": {
         "window": "Sun 2026-06-21 -> Fri 2026-07-03 (Independence Day observed 07-03)",
         "days": ["20260622","20260623","20260624","20260625","20260626","20260629","20260630","20260701","20260702","20260703"],
-        "anchor": None, "anchor_date": "20260619", "anchor_lasthr_dir": None,   # from G21 actual (leg change NGN26->NGQ26 at this boundary)
+        "anchor": None, "anchor_date": "20260619", "anchor_lasthr_dir": -1,   # from G21 actual (leg change
+        # NGN26->NGQ26 at this boundary). lasthr_dir derived S107 on the PRIOR leg NGN26 (close 3.198,
+        # last hour -1) - the anchor CLOSE comes from G21, so its last hour must be read on G21's leg,
+        # not on this group's NGQ26. Reading it on the own-leg would describe a different contract.
         "mask_after": "20260619",
         "seam": None, "legs": {"all": "ngq26"},   # Aug/NGQ26 (Aug roll 07-22 outside)
         "eia_thursdays": ["20260625","20260702"],
@@ -139,7 +158,8 @@ GROUPS = {
     "g23": {
         "window": "Sun 2026-07-05 -> Fri 2026-07-17",
         "days": ["20260706","20260707","20260708","20260709","20260710","20260713","20260714","20260715","20260716","20260717"],
-        "anchor": None, "anchor_date": "20260703", "anchor_lasthr_dir": None,   # from G22 actual
+        "anchor": None, "anchor_date": "20260703", "anchor_lasthr_dir": -1,   # from G22 actual; lasthr_dir
+        # derived S107 from the 20260703 NGQ26 anchor session (close 3.245, last hour -1)
         "mask_after": "20260703",
         "seam": None, "legs": {"all": "ngq26"},   # Aug/NGQ26 clean (Aug roll 07-22 outside; data ends ~07-20)
         "eia_thursdays": ["20260709","20260716"],
