@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s103.4",
+  "version": "s103.3",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -1097,14 +1097,6 @@
     "tested_and_REJECTED": "C's own proposed remedy - recentring session_b_share BLOCK-RELATIVE - predicts next-session direction on only 2 of 8. C refuted its own r1 proposal in r2 and says explicitly: do NOT recentre gate (b).",
     "what_to_do_instead": "Replace it with the size-weighted big-print channel benchmarked against flow.big_print_bshare_thin_tape_guard's per-quartile equal-rate bars. Under the flat 0.55 bar C's 0603 trigger does not fire; under the q4 bar 0.547 it fires cleanly.",
     "proposed_by": "C (r1 proposed, r2 refuted its own remedy)"
-   },
-   "assumption_retired_bshare_basis": {
-    "assumed": "That the arm-(b) bar 'session_b_share >= 0.50' means 'more buying than selling'.",
-    "measured": "On the served series that bar clears on 5 of 223 sessions (2.2%). On the two-sided series it clears on 107 of 223 (48.0%). The two disagree about which side of 0.50 a session sits on 45.7% of the time.",
-    "now_licensed": "Arm (b) must read session_b_share_two_sided. The bar stays 0.50 - it was never the bar that was wrong, it was the series.",
-    "why_this_play_matters_most": "It is a SELECTOR on bimodal splits - the machinery that decides which angle wins when the read is two-sided. An arm that is structurally unreachable on ~98% of sessions does not merely mis-fire; it removes one side of the selection from the walk. C measured the symptom on G20 (sub-0.50 on 10 of 10 sessions, so the up angle was excluded BY CONSTRUCTION in a block that rallied +1,860) without identifying the cause.",
-    "timeline_fit_CIRCUMSTANTIAL_not_proof": "This play entered at s102.3, after G16. G17 was a DOWN block (actual cum -1,070) and the drift was only -970. G18, G19 and G20 were UP blocks (+610, +1,150, +1,860) and the drift ran -2,330 / -2,370 / -2,560. A structurally down-gated selector costs little in a falling block and progressively more in a rising one. That fits the observed pattern but does not establish it.",
-    "proposed_by": "session lead (S108), from C's G20 symptom"
    }
   },
   {
@@ -1126,13 +1118,7 @@
    "caveats": "n=1 block (G16). The bands are wide and honest; the WITHIN-band exact day magnitude is NOT derivable from session-grain state (it is leg-grain, creds-gated) - declared a band-position irreducible. Distinct from shoulder_counter_print_damping (that damps COUNTER prints to flat; this sizes CHAIN-SIDED days to their band). The trend/coil day-class assignment is the deliverable, not a point number.",
    "requires": "open_time_only for the class; the sell-tape confirmation is the never-masked tape_conditions session_b_share (open-conditions)",
    "scope": "magnitude (day-net band) of a chain-sided down session in an S1-void injection bleed",
-   "forward_evidence": "NONE - proposed s102.3 (G16 refine). G17+ is the forward test; the bands must hold on the next confirmed S1-void injection block with a persistent sub-0.50 sell-tape.",
-   "assumption_retired_bshare_basis": {
-    "assumed": "Same absolute 0.50 b_share bar, same meaning.",
-    "measured": "Same measurement as above - the bar clears on 2.2% of sessions as served.",
-    "now_licensed": "Read session_b_share_two_sided. Bar unchanged at 0.50.",
-    "proposed_by": "session lead (S108)"
-   }
+   "forward_evidence": "NONE - proposed s102.3 (G16 refine). G17+ is the forward test; the bands must hold on the next confirmed S1-void injection block with a persistent sub-0.50 sell-tape."
   },
   {
    "id": "daytype.friday_exit_decomposition",

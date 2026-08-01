@@ -12,15 +12,21 @@ import json, os, sys, copy
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRAIN = os.path.join(HERE, "knowledge", "ng_brain.json")
-PROP = os.path.join(HERE, "G20_MERGE_PROPOSAL_S108.json")
+# S108: takes a proposal path so the same adjudication runs on any proposal file, not just G20's.
+_paths = [a for a in sys.argv[1:] if not a.startswith("--")]
+PROP = _paths[0] if _paths else os.path.join(HERE, "G20_MERGE_PROPOSAL_S108.json")
 
 brain = json.load(open(BRAIN))
 prop = json.load(open(PROP))
+prop.setdefault("new_plays_proposed", [])
+prop.setdefault("data_plane_items_NOT_PLAYS", [])
+prop.setdefault("refuted_DO_NOT_BANK", [])
 plays = {p["id"]: p for p in brain["plays"]}
 fail = []
 
 print(f"brain: {brain['meta'].get('version', '?')}  plays: {len(plays)}")
-print(f"proposal: {prop['meta']['proposes']}  scope: {prop['meta']['scope_decision_greg_s108']}\n")
+print(f"proposal: {prop['meta']['proposes']}  "
+      f"scope: {prop['meta'].get('scope_decision_greg_s108', prop['meta'].get('merge_rule', ''))[:90]}\n")
 
 print("=== 1. amendments: id exists, key is NEW (additive, no rewrite) ===")
 for a in prop["amendments_to_incumbents"]:
