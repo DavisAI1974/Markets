@@ -91,7 +91,7 @@ data/storage_consensus`, `eia/ -> data/eia_surprise.json` (a FILE).
    and `group_coordinate_blind.py` reads `guessed_net_usd` / `path_distribution` - reformat VERBATIM
    in a scratchpad alias (numbers untouched, `handoff_out` carried through for the Friday sign-off).
    NOT a code change. `group_coordinate_refine.py` speaks the engine schema natively.
-3. **G21** - the first group to run with the full kitchen sink actually intact (storage + vol_regime
+2. **G21** - the first group to run with the full kitchen sink actually intact (storage + vol_regime
    + weather + the corrected size-weighted `big_print_b_share` all live for the first time since
    G16). **This is the point of the walk, not a complication in it (Greg, S107): we are improving
    the forecaster group over group, not running a controlled experiment.** A better input set is a
@@ -100,10 +100,10 @@ data/storage_consensus`, `eia/ -> data/eia_surprise.json` (a FILE).
    whether the brain earned it or a restored input did, so a merge does not bank a data fix as
    evidence for a play. That is about not writing false lessons into the brain - nothing to do with
    comparability.
-4. The open items in the S107 handoff, in this order of value: per-day blind state slices (the mask
+3. The open items in the S107 handoff, in this order of value: per-day blind state slices (the mask
    is currently unenforced across days), the Sunday prior-session inconsistency, the live
    orchestrator, the options strike-ladder scale bug, the `nws_temp` extension for G23.
-5. **DO NOT ROTATE THE KEYS.** Standing decision (Greg, S107): *"the keys won't rotate while we're
+4. **DO NOT ROTATE THE KEYS.** Standing decision (Greg, S107): *"the keys won't rotate while we're
    running the groups."* Both the AWS pair and the Databento key will need rotating eventually -
    **after the walk, not during it.** Rotating mid-walk breaks S3 and Databento access and stalls
    every staged group and every `restore_substrate` run. This is a DECISION, not a pending task:
