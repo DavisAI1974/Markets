@@ -20,7 +20,22 @@ L1_DIR = os.path.join(REPO, "data", "ng_l1")
 TICK = 0.001
 
 
+_ACTIVE_LEGS = None      # S108 hole #8: set by the harness so the flow read targets the SCORED leg
+
+
 def _load_trades(ymd):
+    # S108 HOLE #8. The continuous-store scan below picks whichever store has MORE trades, which after
+    # a roll is the DEFERRED contract - and on the affected sessions NEITHER continuous store even
+    # contains the tape. When a group context is known, read the SCORED LEG. Falls back unchanged.
+    if _ACTIVE_LEGS:
+        try:
+            import group_config as gc, tape_reconcile as tr
+            lt = tr.load_leg_trades(gc.leg_for(_ACTIVE_LEGS, ymd), ymd)
+            if lt:
+                ts, px, sz, sd = lt
+                return len(ts), np.array(ts), np.array(sz), np.array(sd)
+        except Exception:
+            pass
     best = None
     for d in CONT_DIRS:
         p = os.path.join(d, f"NG_{ymd}.jsonl.gz")

@@ -590,12 +590,44 @@ _TAPE_DIRS = (os.path.join(HERE, "..", "..", "data", "nymex_cont_n0"),
 _tape_cond_cache: dict = {}
 
 
+_ACTIVE_LEGS = None      # S108: set by decision_state(group=) so the tape read knows the SCORED contract
+
+
+def _leg_store_for(ymd: str):
+    """The per-contract leg this session should be measured on, if a group context was supplied."""
+    if not _ACTIVE_LEGS:
+        return None
+    try:
+        import group_config as gc
+        return gc.leg_for(_ACTIVE_LEGS, ymd)
+    except Exception:
+        return None
+
+
 def _tape_day_stats(ymd: str) -> dict | None:
-    if ymd in _tape_cond_cache:
-        return _tape_cond_cache[ymd]
+    _leg = _leg_store_for(ymd)
+    _ck = (ymd, _leg)
+    if _ck in _tape_cond_cache:
+        return _tape_cond_cache[_ck]
     import gzip as _gz
     best = None
-    for dpath in _TAPE_DIRS:
+    # S108 HOLE #8 CORRECTION. The loop below selects whichever CONTINUOUS store has more trades, which
+    # after a roll is the DEFERRED contract - so the flow read silently switched instrument while the
+    # group went on forecasting the front leg (G21: 18-60% of the real tape, signed flow sign-flipped).
+    # Selecting better between the continuous stores cannot fix it, because on the affected sessions
+    # NEITHER contains the tape (n0 6,262 and n1 5,554 against a leg of 34,221). So when a group context
+    # is known, read the SCORED LEG itself and skip the guessing entirely. Falls back to the old path
+    # when no group is supplied, so every existing caller behaves exactly as before.
+    if _leg:
+        try:
+            import tape_reconcile as _tr
+            _lt = _tr.load_leg_trades(_leg, ymd)
+        except Exception:
+            _lt = None
+        if _lt:
+            _ts, _px, _sz, _sd = _lt
+            best = (len(_ts), f"leg:{_leg}", _ts, _px, _sz, _sd)
+    for dpath in ([] if best is not None else _TAPE_DIRS):   # leg is authoritative; never overridden
         p = os.path.join(dpath, f"NG_{ymd}.jsonl.gz")
         if not os.path.exists(p):
             continue
@@ -617,7 +649,7 @@ def _tape_day_stats(ymd: str) -> dict | None:
         if best is None or len(ts) > best[0]:
             best = (len(ts), dpath, ts, px, sz, sd)
     if best is None:
-        _tape_cond_cache[ymd] = None
+        _tape_cond_cache[_ck] = None
         return None
     n, dpath, ts, px, sz, sd = best
     order = sorted(range(n), key=lambda i: ts[i])
@@ -648,7 +680,7 @@ def _tape_day_stats(ymd: str) -> dict | None:
            "leg_count_150": legs,
            "note": "NON-PRICE tape conditions of this session; open-conditions protocol (S102) - "
                    "served live under the one-shot mask; no price/return content"}
-    _tape_cond_cache[ymd] = out
+    _tape_cond_cache[_ck] = out
     return out
 
 
@@ -751,7 +783,7 @@ def _tape_enrich(prev, ymd: str, st: dict) -> dict:
     return out
 
 
-def decision_state(days: list[str], mask_after: str | None = None) -> dict:
+def decision_state(days: list[str], mask_after: str | None = None, group: str | None = None) -> dict:
     """Blind-safe decision-time state per day: weekday + EIA storage surprise + curve regime + the RUNNING
     STORAGE capacity story (level / vs-5yr / phase) + gas-weighted degree-day regime (S94 chronological walk)
     + (S98 Tier 0) COT positioning + regional/salt storage + contract structure incl. the calendar-front
@@ -767,6 +799,12 @@ def decision_state(days: list[str], mask_after: str | None = None) -> dict:
     freezes with them. Exogenous feeds (weather/storage/COT/calendar/nuclear/grid/solar/STEO) stay live -
     published information a forecaster legitimately learns mid-block. Deterministic calendar clocks stay
     live in flow_calendar. Default None = unchanged behavior (refine/audit use)."""
+    # S108: publish the group so _tape_day_stats can target the SCORED leg rather than guessing
+    # by max trade count - which after a roll picks the DEFERRED contract (hole #8).
+    global _ACTIVE_LEGS
+    _ACTIVE_LEGS = group
+    _tape_cond_cache.clear()
+
     import forward_curve as fc
     surp = _load_json("eia_surprise.json").get("KXNATGASD", {})
     stor = _storage_series()
@@ -1307,6 +1345,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd")
     a1 = sub.add_parser("decision-state"); a1.add_argument("--days", required=True); a1.add_argument("--out")
+    a1.add_argument("--group", help="gid (g21...) - S108: lets the tape read target the SCORED leg")
     a1.add_argument("--mask-after", default=None,
                     help="YYYYMMDD block anchor: freeze price-derived blocks at this vintage for later days (one-shot masking fix)")
     a2 = sub.add_parser("overlay"); a2.add_argument("--forecasts", required=True); a2.add_argument("--out", required=True); a2.add_argument("--source", default="s3")
@@ -1324,7 +1363,7 @@ def main() -> int:
     if a.cmd == "audit-joins":
         return 1 if audit_joins(a.start, a.end) else 0
     if a.cmd == "decision-state":
-        ds = decision_state(a.days.split(","), mask_after=a.mask_after)
+        ds = decision_state(a.days.split(","), mask_after=a.mask_after, group=a.group)
         print(json.dumps(ds, indent=1))
         if a.out: json.dump(ds, open(a.out, "w"))
         return 0

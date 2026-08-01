@@ -45,6 +45,45 @@ LEG_DIR = os.path.join(REPO, "data", "ng_mbo_g17")
 TOL_LO, TOL_HI = 0.95, 1.05
 
 
+def leg_path(store: str, ymd: str):
+    p = os.path.join(LEG_DIR, f"{store}_{ymd}.dbn.zst")
+    return p if os.path.exists(p) else None
+
+
+def load_leg_trades(store: str, ymd: str):
+    """(ts_seconds, price, size, side) for the SCORED contract, from its per-contract leg.
+
+    S108 hole #8 correction. The continuous stores select by max trade count and therefore follow the
+    volume to the DEFERRED contract after a roll; worse, on the affected G21/G23 sessions they simply do
+    not contain the tape at all (n0 6,262 and n1 5,554 against a leg of 34,221). Selecting better between
+    two short stores cannot work - the read has to come from the leg. Side is mapped exactly as the
+    continuous reader maps it, so the two paths produce the same quantity.
+    """
+    p = leg_path(store, ymd)
+    if p is None:
+        return None
+    try:
+        import databento as db
+    except Exception:
+        return None
+    ts, px, sz, sd = [], [], [], []
+    for r in db.DBNStore.from_file(p):
+        if type(r).__name__ != "MBOMsg" or str(getattr(r.action, "value", r.action)) != "T":
+            continue
+        pr = r.price
+        if pr in (None, 9223372036854775807, -9223372036854775808):
+            continue
+        s = str(getattr(r.side, "value", r.side))
+        ts.append(int(r.ts_event) / 1e9)
+        px.append(pr / 1e9)
+        sz.append(float(getattr(r, "size", 0) or 0))
+        sd.append(1 if s in ("B", "Bid") else (-1 if s in ("A", "Ask") else 0))
+    if not ts:
+        return None
+    o = sorted(range(len(ts)), key=lambda i: ts[i])
+    return [ts[i] for i in o], [px[i] for i in o], [sz[i] for i in o], [sd[i] for i in o]
+
+
 def leg_trade_count(store: str, ymd: str):
     """Trades in the per-contract leg - the instrument actually being forecast and scored."""
     p = os.path.join(LEG_DIR, f"{store}_{ymd}.dbn.zst")

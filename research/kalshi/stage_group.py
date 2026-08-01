@@ -75,7 +75,8 @@ def stage(gid):
     # 3. masked decision-state
     out_state = os.path.join(RENDER_DIR, f"grp{gid[1:]}_state.json")
     subprocess.run([sys.executable, os.path.join(HERE, "forecast_harness.py"), "decision-state",
-                    "--days", ",".join(days), "--mask-after", g["mask_after"], "--out", out_state],
+                    "--days", ",".join(days), "--mask-after", g["mask_after"], "--out", out_state,
+                    "--group", gid],
                    check=True, stdout=subprocess.DEVNULL)
     log(f"{gid} state -> {os.path.relpath(out_state, HERE)}")
     # S107: COMPLETENESS ASSERTION. Six times in one session a block was silently empty and read
