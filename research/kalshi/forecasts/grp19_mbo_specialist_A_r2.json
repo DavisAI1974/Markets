@@ -1,0 +1,247 @@
+{
+ "specialist": "A",
+ "lens": "weekend_seam_bridge",
+ "group": "g19",
+ "brain_version": "s103.1",
+ "round": 2,
+ "role": "weekend_seam_bridge",
+ "doctrine_note": "REFINE round 2 = the HE24->HE1 coordination pass. Starting point is my ROUND-1 bridge file, not a blank page. The one material new input is g19_he24_he1_handoffs.json 20260518 (boundary_kind weekend_reopen), which carries the REALIZED Friday 0515 exit STATE off the actual prior-day MBO tape instead of E's narrative of it. A INFORMS, B DECIDES, B OWNS the Monday number - nothing here is a Monday forecast. Per the shared directive: the handoff carries STATE, never a day-net; a direction change from round 1 requires NEW causal evidence, not re-reading the same state harder. FAIRNESS DISCLOSURE (mandatory on this block): brain s103.1 contains 7 plays merged from the post-mortem of these exact ten days, so every bridge below carries an explicit hindsight_ledger separating (i) state that is on the page at the Sunday 18:00 ET reopen / Monday open from (ii) facts only confirmable after the fact. No hindsight-available inference is presented as a decision-time one. Blind stays the CORE; the seam read is a posterior update.",
+ "cross_cutting_mbo_finding": "ROUND-2 SHARPENING AND PARTIAL SELF-CORRECTION. Round 1 argued the seam-gap UP prior is driven by the COT WoW delta rather than the D-1 exit tape, on the ground that the two g19 Mondays inherited OPPOSITE exit states yet fired the same +580 UP gap. The realized HE24 handoff shows that framing was half wrong in a way that makes the claim STRONGER, not weaker: the two seams are opposite in CHAIN state (0511 inherited chain polarity -1, cum 0, covering unfired; 0518 inherited chain polarity +1, age 3, cum +2110, covering four sessions in) but they are the SAME in exit TAPE - both exited with last_hour_dir -1 and last_hour_signed_flow -1, i.e. a final-hour aligned SELL into the closure. So the exit tape is constant across the pair while the chain state inverts and the gap sign stays UP in both: the exit tape cannot be the driver (it did not vary) and the chain state cannot be the driver (it inverted). What varied with neither, and was worsening at both publications (0508 pub pctile 2.83 chg_wow -10244; 0515 pub pctile 0.94 chg_wow -12576, both published Fri 15:30 ET i.e. BEFORE the Sunday reopen), is the positioning delta. Second, and new to round 2: the inherited final-hour aligned sell is not inert - it is the unfinished intraday press that the gap does not cancel. It belongs to the INTRADAY term, never the gap term, and it is a SECOND, independent suppressor of post-gap continuation alongside extension. Round 1 attributed 0518's flat intraday entirely to extension; that was one mechanism doing two mechanisms' work. Third: the weekend model cycles are the decision-legit forward-driver check and they separate the two weekends cleanly (day-0 d_gw_hdd +0.531 into 0511 vs +0.034 into 0518) - weekend 1 reopened with a fresh cold add to extend the gap, weekend 2 reopened with nothing, which is why weekend 2 is structurally a gap-and-hold rather than a gap-and-run. Net doctrine: the seam gap is derived from positioning (extension-independent); the intraday is derived from extension x inherited last-hour press x forward driver (all three, not extension alone).",
+ "bridges": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam",
+   "owner": "B",
+   "leg": "ng_mbo_ngm26_june",
+   "round2_status": "anchor bridge - block-open Monday, NO in-block prior session, so the handoff file carries only 'anchor to 2.75 down/flat'. Round-1 read stands unchanged in direction and size; round 2 adds only the fairness ledger and the corrected pair-statement (see cross_cutting).",
+   "handoff_in_used": {
+    "source": "g19_he24_he1_handoffs.json 20260511 = {note: block open - no prior in-block session; anchor to 2.75 down/flat}",
+    "realized_state_taken": "NONE available (no in-block prior). Anchor 2.750 = Fri 05-08 close; anchor last-hour dir -1.",
+    "what_changed_vs_round_1": "nothing - there is no realized prior-session state to sanity-check E against on this seam."
+   },
+   "inherited_exit_state": {
+    "source": "prior block Friday 0508 close (E-class exit, not an in-block E handoff)",
+    "anchor_usd_price": 2.75,
+    "exit_type": "aligned_sell_delivery",
+    "exit_read": "0508 closed on aligned-sell delivery (final phase heavy sell aggressor, bigs at the sell, no absorption) = an unrealized down-press into the weekend. CHAIN polarity -1, cum_from_anchor 0, covering UNFIRED.",
+    "cot_state": "MAXIMAL crowded short: managed-money net 1y-pctile 2.83, chg_wow -10244 = shorts STILL building into the 0508 publication (Fri 15:30 ET, pre-reopen) = WORSENING. UNFIRED.",
+    "reconciliation": "The aligned-sell close and the maximal-unfired-crowded-short are NOT the same signal. The close-exit tape sets the INTRADAY-continuation prior (down-press); the crowded-short-worsening positioning sets the SEAM prior (loaded spring). At the seam the positioning prior owns the gap: play boundary.seam_gap_up_prior_on_worsening_cot - an unfired maximal short is a spring, not a down cushion, and the exit read is ORTHOGONAL to the gap sign."
+   },
+   "reopen_scenarios": [
+    {
+     "scenario": "seam_covering_gap_fires_UP",
+     "prob": 0.7,
+     "read": "the illiquid Sunday reopen is the covering rally's preferred firing window; the unfired maximal-worsening short discharges into thin tape. Gap UP ~+580, then aligned-buy continuation off the reopen low, UNCONSTRAINED because extension is 0 and the weekend cycles added a fresh cold day-0 (d_gw_hdd +0.531) = a real forward driver to extend the gap."
+    },
+    {
+     "scenario": "down_press_continues_gap_rejected",
+     "prob": 0.2,
+     "read": "the 0508 aligned-sell press extends through the reopen; the gap fades and the chain reasserts DOWN. This is what the blind (price-walled, close-exit read only) took, sized -450."
+    },
+    {
+     "scenario": "flat_reopen_no_edge",
+     "prob": 0.1,
+     "read": "thin holiday-like reopen, no material gap, carry Friday's side small."
+    }
+   ],
+   "gap_ownership": {
+    "verdict": "UNREALIZED-AHEAD covering fuel firing at the seam - NOT spent, NOT noise.",
+    "directional_prior": "UP",
+    "gap_prior_usd": 580,
+    "gap_prior_band_usd": [450, 700],
+    "basis": "COT worsening-crowded-short magnitude sets an UP seam-gap prior. SIGN and approximate size are derivable from the positioning state, contra the blind's -60 gap and the round-0 'pure noise' dismissal."
+   },
+   "driver_realization_check": {
+    "verdict": "carry NOT spent over the weekend - the weekend cycles ADDED to it",
+    "evidence": "weather_forecast_cycle.sunday_reopen (asof 2026-05-10 17:59 ET, i.e. one minute before the reopen = decision-legit): d_gw_hdd +0.531 for the 05-11 target, +0.553 (05-14), +1.020 (05-15). A cold add across the front week.",
+    "implication": "no sell-the-news; the gap has a forward driver to run on, which is why the intraday term is NOT capped here."
+   },
+   "reopen_watch": {
+    "expected": "gap prints at the Sun 18:00 ET reopen on thin tape; conviction floor FAILS on reopen volume - MBO book layer STANDS DOWN as a standalone sign, fall back to trade-flow/L1 LABELED. Direction is taken from the positioning prior, not from the reopen microstructure.",
+    "stand_down_verdict": "book_trustworthy = NO at the reopen (thin tape, incomplete book). Trade-flow/L1 only until RTH volume arrives."
+   },
+   "seam_covering_prior": {
+    "gate": "crowded_short (pctile 2.83) AND worsening_WoW (chg -10244) => covering LIVE and RECURRING => seam gaps UP.",
+    "falsifiability": "If COT had been FLAT/not-worsening at 0508, the aligned-sell exit would rule and the seam bridges DOWN. The direction is NOT reached from the exit state alone. Per positioning.covering_self_limiting_cot_wow_gate the tie-breaker is the WoW delta.",
+    "extension_state": "cum_from_anchor 0 = LOW extension => intraday covering continuation UNCONSTRAINED."
+   },
+   "bias_for_B": {
+    "direction": "UP",
+    "conviction": "high",
+    "magnitude_sense": "GAP-FIRST then strong intraday continuation. Gap ~+580 (positioning-derived, extension-independent); intraday ~+900..+1150 (low extension + fresh weather add + turn at the reopen low). Day-move band [+1300, +1800], p50 ~+1550.",
+    "suggested_day_move_usd": 1550,
+    "suggested_band_usd": [1300, 1800],
+    "note_to_B": "Unchanged from round 1. Do NOT bridge this Monday DOWN off the 0508 aligned-sell close - that read governs the intraday, not the gap. Size gap-first (+580) and let the low-extension aligned-buy continuation add the bulk."
+   },
+   "hindsight_ledger": {
+    "decision_legit_at_open": [
+     "anchor 2.750 and the 0508 aligned-sell exit character",
+     "COT pctile 2.83, chg_wow -10244, published 2026-05-08 15:30 ET (pre-reopen)",
+     "weekend model cycles asof 2026-05-10 17:59 ET (d_gw_hdd +0.531 day-0)",
+     "cum_from_anchor 0 / chain polarity -1 / covering unfired",
+     "tape_conditions of the prior session (never masked, non-price)"
+    ],
+    "hindsight_only": [
+     "open 2.808 (gap +580), turn_up at the 06:20 reopen low, phase-2 sflow +2585 / px +830, close 2.924, day-move +1740",
+     "the fact that the +580 gap RECURRED identically at the second seam (a one-seam sample is all that exists at 0511)"
+    ],
+    "note": "The +580 gap SIZE at this seam is the weakest decision-legit element - the SIGN is positioning-derived, the magnitude at the FIRST seam of a block has no in-block precedent and is a regime-quantum estimate with a wide honest band."
+   }
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam",
+   "owner": "B",
+   "leg": "ng_mbo_ngm26_june",
+   "round2_status": "REWORKED against the realized HE24 exit state. Direction UNCHANGED (UP); gap term UNCHANGED (+580); intraday term RE-DERIVED and its downside tail OPENED; timing sharpened.",
+   "handoff_in_used": {
+    "source": "g19_he24_he1_handoffs.json 20260518, boundary_kind weekend_reopen, prior_owner E, receiving_owner B",
+    "realized_state_taken": {
+     "close_px": 2.961,
+     "open_px": 2.929,
+     "close_off_low_frac": 0.76,
+     "last_hour_dir": -1,
+     "last_hour_signed_flow": -1,
+     "low_et": "07:56",
+     "high_et": "12:49",
+     "low_late": false,
+     "high_late": false,
+     "chain_polarity": 1,
+     "chain_age_sessions": 3,
+     "cum_from_anchor_usd": 2110
+    },
+    "what_changed_vs_round_1": "Round 1 consumed E's handoff_out VERBATIM ('covering_continuation_holding / close_location on_high / last_hour_dir up / last_hour_flow aligned_buy_conviction / chain_age 4 / monday_bias up'). The realized tape supports the DIRECTION of E's read and contradicts its INTENSITY on two counts and its chain age on a third: (1) close_location is NOT on_high - close_off_low_frac 0.76, with the session high set at 12:49 and the close ~210 USD below it, i.e. an upper-quartile close after a 4-hour drift off the high; (2) last_hour_dir is -1 with last_hour_signed_flow -1 = a final-hour ALIGNED SELL, not aligned_buy_conviction. E's ph3 read (+703 sflow / +130 px, aligned buy) is TRUE at phase granularity and simply does not survive to the final hour - the phase table and the last hour disagree, and for a weekend handoff the LAST HOUR is the state that crosses the seam; (3) chain_age_sessions is 3, not 4. Per boundary.chain_label_must_track_realized_cum the label must track the realized cum trajectory carried in the handoff, so I take 3 and cum +2110 as authoritative over E's narrative count.",
+    "corrected_exit_label": "covering_continuation_holding_WITH_late_aligned_sell_fade",
+    "what_survives_of_E": "monday_bias UP survives; exit_type covering_continuation_holding survives at reduced intensity; the 'NOTHING is spent' claim survives, but on the COT bar (see below), not on E's close-on-high claim, which the tape does not support.",
+    "handoff_note_discarded": "E's handoff note ends '(Confirmed forward: 0518 was +660 UP, 0519 +840 UP.)' - that is hindsight leaking into a handoff and is DISCARDED as evidence here. It is not available at the seam and no part of this bridge rests on it."
+   },
+   "exit_sanity_check": {
+    "verdict": "E's exit read is DIRECTIONALLY RIGHT, ONE NOTCH TOO STRONG",
+    "detail": "A 0.76 close-off-low with a midday high and a final-hour aligned sell is a covering rally that is HOLDING but no longer being pressed at the bell - materially softer than 'closed on its high with buy conviction'. The distinction does not touch the gap sign (positioning owns that) but it directly changes the intraday prior B carries into the catch-up window.",
+    "does_this_flip_direction": "NO. A single final-hour give-back is exactly what positioning.covering_self_limiting_cot_wow_gate names as NOT qualifying for a 'spent' claim. The 'spent' bar requires (a) the exit session showing POSITIVE flow_conviction under FALLING price (aligned selling delivering, or buy flow absorbed and failing) - 0515 shows the opposite at session level (ph2 -662 sflow under +240 px = sell ABSORBED under rising price = covering, absorb_session false, session sflow +486 under a +320 up day = ALIGNED) - AND (b) COT WoW FLAT or improving - which fails outright at -12576. Both legs of the bar fail, so 'spent' is REFUSED and the direction stays UP.",
+    "brain_wording_flag": "daytype.friday_exit_close_location_over_flow_shape and boundary.seam_gap_up_prior_on_worsening_cot both describe the 0515 exit as 'closed ON its high' / 'covering-holding close-on-high'. The realized handoff does not support that at hour granularity (0.76 off low, last hour -1/-1). The plays' RULES are unaffected - close-location still beats flow-shape decay, and 0.76 is still an upper-range continuation close - but the exemplar wording overstates the tape. Flagged, not edited (no brain edits from this seat)."
+   },
+   "inherited_exit_state": {
+    "source": "REALIZED HE24 exit state (authoritative) reconciled against E's round-1 handoff_out (narrative)",
+    "exit_type": "covering_continuation_holding_with_late_aligned_sell_fade",
+    "close_location": "upper_quartile_off_high (0.76), high at 12:49, close ~210 below it",
+    "close_usd_from_anchor": 2110,
+    "last_hour_dir": "down",
+    "last_hour_flow": "aligned_sell",
+    "chain_polarity": "up",
+    "chain_age_sessions": 3,
+    "monday_bias": "up",
+    "cot_state": "STILL maximal crowded short: pctile 0.94 (more extreme than 0508's 2.83), chg_wow -12576 (MORE worsening than weekend 1), published Fri 2026-05-15 15:30 ET = BEFORE the Sunday 18:00 reopen, therefore decision-legit at the seam.",
+    "reconciliation": "Round 1 said 'both the exit state and the positioning delta point UP - agreeing this time'. Round 2 corrects that: they only PARTLY agree. The chain/close-location axis points UP (0.76 close, chain +1, age 3); the final-hour tape axis points mildly DOWN (aligned sell into the bell). The positioning axis points UP and is the only one with authority over the GAP. The mixed exit is why the intraday, not the gap, is where the softness has to be booked."
+   },
+   "reopen_scenarios": [
+    {
+     "scenario": "seam_covering_gap_fires_UP_and_HOLDS_gap_dominated",
+     "prob": 0.68,
+     "read": "BASE CASE. The second seam re-fires the covering quantum UP (~+580) - extension-independent, positioning-driven, with in-block precedent from weekend 1. Then the day goes flat-to-slightly-up: extension is high (cum +2110), the inherited final hour was an aligned SELL that the gap does not cancel, and the weekend cycles added no day-0 driver (d_gw_hdd +0.034). Expect the day's HIGH EARLY in the 06:00-10:00 ET catch-up window and a negative-conviction test that leaves the gap intact. The day IS the gap."
+    },
+    {
+     "scenario": "gap_fires_then_the_inherited_sell_press_takes_the_intraday_NEGATIVE",
+     "prob": 0.14,
+     "read": "NEW IN ROUND 2 - this scenario did not exist in my round-1 bridge. The inherited final-hour aligned sell resumes after the gap and the catch-up window gives back more than the post-gap pop, leaving day-move BELOW the gap (e.g. +580 gap, -150 intraday, day ~+430). Still an UP day; the gap is not overturned, only the continuation. This is the realistic downside and it is why the round-2 band opens below round 1's floor."
+    },
+    {
+     "scenario": "gap_rejection_spent_fade_DOWN",
+     "prob": 0.10,
+     "read": "the covering is spent (one-shot), the gap fades and the chain reasserts DOWN. This is the round-0 error and what the blind took, sized -550. REFUSED as base case on the play-57 evidence bar: a single final-hour give-back is not a 'spent' qualification and the WoW is worsening, not flat. Kept as a live tail only because the exit tape did soften.",
+     "what_would_confirm_it": "positive-conviction aggression back THROUGH the gap in the catch-up window (aligned sell delivering price below the Friday close), not merely a fade off the high."
+    },
+    {
+     "scenario": "extended_crest_distribution_DOWN",
+     "prob": 0.08,
+     "read": "the rally distributes at the seam (structure.covering_extension_distribution_flip). Tail, not base case, at this seam: the flip needs BOTH extension AND a REVERSED absorption tell, and 0515's absorption tell is not reversed (sell absorbed under rising price on ph2). Extension alone is a false trigger. The genuine crest landed later in the block, not here."
+    }
+   ],
+   "gap_ownership": {
+    "verdict": "SPLIT BY HORIZON (round-2 refinement). GAP: unrealized-ahead, live recurring covering fuel - NOT spent. INTRADAY EXTENSION: largely spent/capped - three independent suppressors (extension, inherited last-hour aligned sell, absent forward driver).",
+    "directional_prior": "UP",
+    "gap_prior_usd": 580,
+    "gap_prior_band_usd": [450, 700],
+    "gap_basis": "Extension-independent positioning quantum. Anchored on weekend 1's REALIZED seam gap (+580), which occurred earlier in this same block and is therefore decision-legit precedent at this seam, plus a COT that is MORE crowded (0.94) and MORE worsening (-12576) at this publication than at the last one. Confidence in the gap term is HIGHER in round 2 than round 1 because it now rests on realized in-block precedent rather than on E's exit narrative.",
+    "intraday_prior_usd": 40,
+    "intraday_prior_band_usd": [-150, 200],
+    "intraday_basis": "Round 1 booked the muted intraday to extension alone. Round 2 derives it from three separable terms: (i) EXTENSION - cum +2110 at the seam, boundary.seam_gap_up_prior_on_worsening_cot's intraday term goes to ~0 at high extension; (ii) INHERITED LAST-HOUR ALIGNED SELL - dir -1 / flow -1 is an unfinished down-press that crosses the seam and caps post-gap continuation, and it is what opens a genuinely NEGATIVE intraday tail that round 1 did not carry; (iii) NO FORWARD DRIVER - weekend cycles d_gw_hdd +0.034 for the 05-18 target vs +0.531 into 0511, so nothing fresh to extend the gap on."
+   },
+   "driver_realization_check": {
+    "verdict": "carry NEITHER spent NOR replenished over this weekend - flat forward driver",
+    "evidence": "weather_forecast_cycle.sunday_reopen (asof 2026-05-17 17:59 ET = pre-reopen, decision-legit): d_gw_hdd +0.034 for the 05-18 target, -0.017 (05-19), +0.393 (05-20), +0.306 (05-21), +0.447 (05-22), -0.910 (05-23). Regime hard_cool, vs_normal -0.671 - shoulder season, small absolute HDD either way.",
+    "sell_the_news_check": "NO. The weekend did not deliver a peak that could be sold - there is no weather peak to sell in a shoulder-season hard_cool regime, and the model runs added marginally rather than removed. The carry into this seam is POSITIONING, not weather, and positioning did not realize over the weekend (COT published Friday, no new publication before the reopen).",
+    "implication": "The gap has no forward driver to run on. This is the decision-legit half of why the day is gap-dominated rather than gap-and-run - it is available at the reopen, unlike the realized intraday."
+   },
+   "reopen_watch": {
+    "expected_at_18_20_ET": "gap prints UP at the Sun 18:00 ET reopen, sized to the positioning quantum, WITH the chain (chain polarity +1) rather than against it. A gap WITH the chain is not the gap-rejection setup from my G15 fingerprint - that fingerprint applies to a thin-tape gap AGAINST the chain, which exhausts within ~1h. This one is with-chain and expected to hold.",
+    "thin_tape_conviction": "reopen volume fails the flow floor. The MBO book layer STANDS DOWN as a standalone sign (book_trustworthy = NO: no execution authority, conviction under floor, book incomplete on the reopen). Fall back to trade-flow + L1, LABELED. Prior-session tape_conditions available and never masked: session_signed_flow +486, phase [445, -662, 703], b_share 0.464, big_print_b_share 0.506, quote_bid_share 0.526 - a mild resting-bid lean, not a standalone sign either.",
+    "stand_down_verdict": "The stand-down IS my MBO contribution at the reopen: the reopen microstructure is NOT the signal, and B should not let a thin-tape reopen print (in either direction) move the Monday number. The decision-legit open-time signal is the COT-worsening positioning prior plus the inherited exit state.",
+    "catch_up_window_rule": "The 06:00-10:00 ET catch-up window TESTS the gap rather than generating direction (play boundary.seam_gap_up_prior_on_worsening_cot). A negative-conviction window leaves the gap INTACT and may print the day's extreme. Only positive-conviction aggression back through the gap overturns it. Given the inherited final-hour aligned sell, expect a negative-conviction test and an EARLY session high inside this window - that is the round-2 timing sharpening."
+   },
+   "seam_covering_prior": {
+    "gate": "crowded_short (pctile 0.94) AND worsening_WoW (chg -12576, MORE worsening than weekend 1) => covering LIVE and RECURRING => the seam gap re-fires UP.",
+    "falsifiability": "RESTATED for round 2 with the realized state. The pair 0511/0518 is not 'opposite exit tapes' - both exited with last_hour_dir -1 and last_hour_signed_flow -1. They are opposite in CHAIN state (polarity -1 / cum 0 / unfired vs polarity +1 / age 3 / cum +2110). So across the pair the exit tape is CONSTANT and the chain state INVERTS while the gap sign holds UP: neither can be the driver. The shared, varying-with-neither driver is the COT WoW delta, which was worsening at both publications. The falsifiability clause of positioning.covering_self_limiting_cot_wow_gate is satisfied: a FLAT COT would have split the pair (0511 reverts DOWN off the aligned-sell press; 0518 reads spent off a soft upper-range close), and the doctrine does not reach the same direction from opposite states by construction.",
+    "extension_state": "cum_from_anchor +2110, chain age 3 = HIGH extension => intraday continuation goes to ~0. NOT a flip trigger: structure.covering_extension_distribution_flip requires extension AND a reversed absorption tell, and the 0515 tell is not reversed (ph2 sell absorbed under rising price, absorb_session false)."
+   },
+   "bias_for_B": {
+    "direction": "UP",
+    "conviction": "medium_high",
+    "conviction_change_vs_round_1": "unchanged overall - the gap term firmed (in-block realized precedent replaces narrative), the intraday term softened (inherited aligned-sell press), and the two roughly offset.",
+    "magnitude_sense": "GAP-DOMINATED. Gap ~+580 (positioning, extension-independent, in-block precedent). Intraday ~+40 with a real negative tail, not a floor at zero: [-150, +200]. Day-move p50 ~+600.",
+    "suggested_day_move_usd": 600,
+    "suggested_band_usd": [420, 760],
+    "band_change_vs_round_1": "round 1 was [450, 750]; round 2 opens the FLOOR to +420 to carry the inherited-aligned-sell downside that round 1 did not model, and leaves the p50 at +600 deliberately unmoved - the new information is intraday-only and the gap term is unchanged, so moving the p50 would be fitting, not deriving.",
+    "note_to_B": "Three things from the realized handoff. (1) Consume E's UP bias but NOT E's intensity: the Friday exit was 0.76 off low with a final-hour ALIGNED SELL, not a close-on-high buy-conviction bell. Discount any sizing that leaned on 'closed on its high'. (2) Do NOT let that softer exit flip you DOWN - it fails the play-57 'spent' bar on both legs (single final-hour give-back does not qualify; WoW -12576 is worsening, not flat), and the exit tape is orthogonal to the gap sign anyway. (3) Size GAP-FIRST: +580 from positioning, then add an intraday that is honestly near zero and allowed to be negative. Expect the day's high EARLY in the 06:00-10:00 catch-up window and a negative-conviction test that leaves the gap intact. The number is yours; this is the state it should be built on."
+   },
+   "hindsight_ledger": {
+    "decision_legit_at_open": [
+     "the entire realized 0515 exit state in the handoff: close 2.961, close_off_low 0.76, last_hour_dir -1, last_hour_signed_flow -1, low 07:56, high 12:49, chain polarity +1, chain age 3, cum_from_anchor +2110",
+     "COT pctile 0.94, chg_wow -12576, publication_ts 2026-05-15 15:30 ET (pre-reopen)",
+     "weekend model cycles asof 2026-05-17 17:59 ET (d_gw_hdd +0.034 day-0)",
+     "prior-session tape_conditions (never masked, non-price): session_signed_flow +486, phase [445,-662,703], big_print_b_share 0.506, quote_bid_share 0.526",
+     "weekend 1's realized seam gap of +580 - earlier in this same block, therefore legitimate in-block precedent at this seam",
+     "the 0515 phase table (sflow/pxchg/absorption) - refine-side, price-bearing, available to this round by construction"
+    ],
+    "hindsight_only": [
+     "0518 open 3.019 (gap +580), high 08:31 at +710 exc, turn_down 08:31, low 09:50 at -370, close 3.027, day-move +660, intraday +80, session sflow -1105 under a +80 up day",
+     "the EXACT equality of the two seam gaps at +580 - decision-legit only as an approximate quantum with a 450-700 band, never as a point identity",
+     "the later-block 0520 distribution, which E's round-1 file references and which is not on the page at this seam"
+    ],
+    "how_this_bridge_would_read_without_hindsight": "Identical in direction, gap size, band and timing. Every load-bearing input above is in the decision_legit list: the seam prior is positioning (COT published Friday afternoon), the intraday suppression is extension + inherited last-hour tape + weekend cycle deltas, and the gap quantum is anchored on the block's own earlier seam. The realized 0518 tape is used ONLY to state what happened, never to derive the read.",
+    "honest_bar": "p50 +600 sits UNDER the realized +660 and is not being nudged toward it. The floor was moved DOWN, away from the actual - the opposite direction to fitting."
+   }
+  }
+ ],
+ "summary": {
+  "round": 2,
+  "bridges_delivered": 2,
+  "bridge_of_record_this_block": "20260515 exit -> 20260518 open",
+  "0511": {
+   "status": "anchor bridge, unchanged from round 1 (no in-block prior session exists)",
+   "bias_for_B": "UP",
+   "suggested_day_move_usd": 1550,
+   "suggested_band_usd": [1300, 1800],
+   "gap_first": true
+  },
+  "0518": {
+   "status": "REWORKED against the realized HE24 exit state",
+   "bias_for_B": "UP",
+   "direction_change_vs_round_1": "none - no new causal evidence for a flip; the softer exit is orthogonal to the gap sign and fails the 'spent' evidence bar",
+   "suggested_day_move_usd": 600,
+   "suggested_band_usd": [420, 760],
+   "band_change_vs_round_1": "floor 450 -> 420 (opens the inherited-aligned-sell downside); p50 held at 600 deliberately",
+   "gap_prior_usd": 580,
+   "intraday_prior_usd": 40,
+   "intraday_band_usd": [-150, 200],
+   "gap_first": true,
+   "gap_dominated": true,
+   "what_the_realized_handoff_changed": "E's exit label is directionally right but one notch too strong (0.76 off low, midday high, final-hour ALIGNED SELL - not close-on-high buy conviction); chain age corrected 4 -> 3 per boundary.chain_label_must_track_realized_cum; the intraday term re-derived from three separable suppressors instead of extension alone; a new 14% scenario in which the intraday goes negative under the gap; timing sharpened to an EARLY high in the 06:00-10:00 catch-up window."
+  },
+  "cross_cutting": "The two seams share a CONSTANT exit tape (both last_hour_dir -1, last_hour_signed_flow -1) and INVERTED chain states, yet fire the same UP gap - so neither the exit tape nor the chain can be the driver, and the COT WoW-worsening delta is what remains. The inherited last-hour press is not inert: it belongs to the intraday term as a second, independent suppressor alongside extension, with the weekend forward-driver check (model-cycle d_gw_hdd deltas, pre-reopen) as the third.",
+  "fairness_statement": "Brain s103.1 carries 7 plays merged from the post-mortem of these exact ten days. Every bridge above carries a hindsight_ledger. The 20260518 bridge is load-bearing on decision-legit state only: the realized Friday exit STATE (which travels in the handoff and is never masked), the Friday-afternoon COT publication, the pre-reopen weekend model cycles, and the block's own earlier seam gap. The realized Monday tape (open 3.019, +660 close) is recorded as outcome, not used as input. The exact +580 gap equality across the two seams is explicitly NOT claimed as decision-time knowledge - only a ~580 quantum with a 450-700 band.",
+  "stopped_on": "nothing blocking. Two discrepancies reported rather than worked around: (1) E's round-1 handoff_out for 0515 states close_location 'on_high' / last_hour_dir 'up' / last_hour_flow 'aligned_buy_conviction' / chain_age 4, which the realized HE24 state contradicts (0.76 off low, dir -1, flow -1, age 3) - resolved in favour of the realized state per boundary.chain_label_must_track_realized_cum, E's file left untouched; (2) brain plays daytype.friday_exit_close_location_over_flow_shape and boundary.seam_gap_up_prior_on_worsening_cot describe the 0515 exit as 'closed ON its high' - the rules survive, the exemplar wording overstates the tape; flagged only, no brain edit. Also noted: g19_mbo_feature_states.jsonl and g19_mbo_l1_manifest.json do not exist for g19 (g15-era artifacts named in the generic read list); worked from g19_mbo_evidence.json as in round 1."
+ }
+}
