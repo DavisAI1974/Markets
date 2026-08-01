@@ -623,15 +623,35 @@ def _tape_conditions_block(iso: str) -> dict | None:
         st = _tape_day_stats(ymd)
         if st is not None:
             out = {"asof_prior_session": prev.isoformat(), "never_masked": True} | st
+            ff = None
             try:
                 import flow_read
                 ff = flow_read.session_flow(ymd)
                 if ff:
-                    for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share", "l1_book"):
+                    # S107 defect 3: big_print_b_share MUST be copied through from flow_read, whose value
+                    # is SIZE-WEIGHTED (big_b / big_tot lots). Omitting it left _tape_day_stats' COUNT-based
+                    # value (big_b / len(bigs)) shadowing it under the same name. That was a G19 root cause:
+                    # the >=0.55 conviction gate saw a block max of 0.537 (count) while the size-weighted
+                    # series reaches 0.550 - the gate was fed the wrong series, not mis-specified.
+                    for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share",
+                              "big_print_b_share", "l1_book"):
                         if k in ff:
                             out[k] = ff[k]
+                    if "big_print_b_share" in ff:
+                        out["big_print_b_share_basis"] = "size_weighted"
             except Exception as e:
                 out["flow_read_error"] = str(e)
+            # S107 defect 1: the flow read is the blind's PRIMARY channel (price is masked), so its absence
+            # has to be STATED, never inferred from a missing key. A silently absent store previously read
+            # as "no data" - that is how G20/G21 were staged with zero signed flow and nothing flagged it.
+            out["firehose_present"] = {"mbo_flow": bool(ff) and "session_signed_flow" in ff,
+                                       "l1_book": bool(ff) and "l1_book" in ff}
+            if not out["firehose_present"]["l1_book"]:
+                print(f"[tape_conditions] {ymd}: ng_l1 book read MISSING (data/ng_l1/NG_{ymd}.jsonl.gz) - "
+                      f"quote imbalance and spread unavailable for this session", file=sys.stderr)
+            if not out["firehose_present"]["mbo_flow"]:
+                print(f"[tape_conditions] {ymd}: MBO trade-flow read MISSING (data/nymex_cont_n0|n1) - "
+                      f"signed flow and unbalanced sides unavailable for this session", file=sys.stderr)
             return out
     return None
 
@@ -715,6 +735,12 @@ def decision_state(days: list[str], mask_after: str | None = None) -> dict:
                   "model_disagreement": _model_disagreement_block(iso),
                   "tape_conditions": _tape_conditions_block(iso),
                   "holiday": _holiday_asof(iso)}
+        # S107 defect 2: hoist the flow-read health to the DAY's top level. Buried inside tape_conditions
+        # a degraded firehose is invisible without digging; at the top level the reader cannot miss it.
+        _tc = out[d].get("tape_conditions") or {}
+        out[d]["firehose_present"] = _tc.get("firehose_present")
+        if _tc.get("flow_read_error"):
+            out[d]["flow_read_error"] = _tc["flow_read_error"]
         if frozen is not None and d > mask_after:
             for blk in _PRICE_DERIVED_BLOCKS:
                 fv = frozen[blk]
