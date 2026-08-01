@@ -515,3 +515,31 @@ That is why a correctly-forecast +4.8 CDD add produced −4.2 Bcf/d of burn and 
 **Falsifier:** if `gas_call_residual` does not track realized day-moves better than raw degree-days
 across the walked blocks, the subtractor is not the mechanism and this reduces to a monitoring field.
 Cheap to test — every input is on disk for all seven walked groups.
+
+---
+
+## DEFERRED (Greg, S109 close): PAID WEATHER SERVICE — "at some point but not tonight"
+
+Recorded so the scope is clear when it is revisited. **Almost nothing found in S109 requires a paid
+weather feed** — the failures were fields we already had and were not serving or not reading:
+
+| finding | cost to fix |
+|---|---|
+| CDD forward ladder | **free** — the feed computed it; assembly dropped it. Fixed this session. |
+| CDD vs normal (anomaly) | **free** — same computation the feed already does for HDD |
+| forecast surprise + persistence | **free** — derivable from data on disk |
+| station weights, Ohio + Baltimore | **free** — EIA state-level gas consumption by sector |
+| coal headroom | **free** — EIA-860M + ISO outage aggregates, already scoped in S98 |
+| BTM solar | **free-ish** — EIA-861M distributed-PV calibration |
+| renewable subtractor / `gas_call_residual` | **free** — built this session on served fields |
+
+**What a paid service would actually buy:** better model quality and ensemble spread — most concretely
+**ECMWF**, which S99 already logged as *"not freely archived; named gap, no proxy."* That is a genuine
+gap and a real improvement to the SLOPE input, but it is a different problem from the S109 findings.
+
+**The other paid candidate is not weather at all:** regional/citygate basis (P0), the constraint tell
+carrying the Chicago mechanism. That one has no free equivalent identified.
+
+**Sequencing note:** the free items above should land BEFORE any subscription is evaluated, because
+they change what the slope channel measures. Buying a better forecast to feed a mis-weighted,
+HDD-only, anomaly-blind index would improve the input to an instrument that cannot use it.
