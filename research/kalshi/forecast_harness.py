@@ -622,38 +622,85 @@ def _tape_conditions_block(iso: str) -> dict | None:
         ymd = prev.strftime("%Y%m%d")
         st = _tape_day_stats(ymd)
         if st is not None:
-            out = {"asof_prior_session": prev.isoformat(), "never_masked": True} | st
-            ff = None
-            try:
-                import flow_read
-                ff = flow_read.session_flow(ymd)
-                if ff:
-                    # S107 defect 3: big_print_b_share MUST be copied through from flow_read, whose value
-                    # is SIZE-WEIGHTED (big_b / big_tot lots). Omitting it left _tape_day_stats' COUNT-based
-                    # value (big_b / len(bigs)) shadowing it under the same name. That was a G19 root cause:
-                    # the >=0.55 conviction gate saw a block max of 0.537 (count) while the size-weighted
-                    # series reaches 0.550 - the gate was fed the wrong series, not mis-specified.
-                    for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share",
-                              "big_print_b_share", "l1_book"):
-                        if k in ff:
-                            out[k] = ff[k]
-                    if "big_print_b_share" in ff:
-                        out["big_print_b_share_basis"] = "size_weighted"
-            except Exception as e:
-                out["flow_read_error"] = str(e)
-            # S107 defect 1: the flow read is the blind's PRIMARY channel (price is masked), so its absence
-            # has to be STATED, never inferred from a missing key. A silently absent store previously read
-            # as "no data" - that is how G20/G21 were staged with zero signed flow and nothing flagged it.
-            out["firehose_present"] = {"mbo_flow": bool(ff) and "session_signed_flow" in ff,
-                                       "l1_book": bool(ff) and "l1_book" in ff}
-            if not out["firehose_present"]["l1_book"]:
-                print(f"[tape_conditions] {ymd}: ng_l1 book read MISSING (data/ng_l1/NG_{ymd}.jsonl.gz) - "
-                      f"quote imbalance and spread unavailable for this session", file=sys.stderr)
-            if not out["firehose_present"]["mbo_flow"]:
-                print(f"[tape_conditions] {ymd}: MBO trade-flow read MISSING (data/nymex_cont_n0|n1) - "
-                      f"signed flow and unbalanced sides unavailable for this session", file=sys.stderr)
+            out = _tape_enrich(prev, ymd, st)
+            # S108: THE MONDAY STUB. This loop returns the FIRST day with a tape file, so on a Monday it
+            # stops at the ~2h SUNDAY reopen and the FRIDAY - the last full session - is never consulted.
+            # Measured across every staged group, a Monday's prior session carried 78-1,245 trades with
+            # 0-2 big prints and no L1 book, against 30,000-58,000 trades and 49-288 big prints on every
+            # other day: 0.2%-3% of a normal tape. Doctrine puts DIRECTION on the D-1 trade tilt, so on the
+            # one day class the walk declares its focus, the blind had almost no tilt to read - which is
+            # why B has no independent read of E's Friday exit, and why Mondays run a -465 mean signed
+            # error across G17-G20 (second worst after Thursday's -692).
+            #
+            # The Sunday stub is NOT discarded: it is the gap-forming session (A, G20 - the 05-24 stub's
+            # uniform sell lean across all three sub-phases is what signed the -240 gap), and the Sunday
+            # fold already assigns it to Monday. So carry BOTH, each labelled, and let the specialist
+            # choose - the kitchen-sink doctrine, not a substitution.
+            #
+            # A stub is identified by the CME trade-date convention (the reopen falls on a Sunday), not by
+            # a trade-count threshold: every stub measured across G20/G21/G22 is a Sunday, and a calendar
+            # test cannot drift the way a magic number can.
+            if prev.weekday() == 6:
+                out["prior_session_is_reopen_stub"] = True
+                for back2 in range(back + 1, 9):
+                    prev2 = d - datetime.timedelta(days=back2)
+                    if prev2.weekday() == 6:
+                        continue
+                    ymd2 = prev2.strftime("%Y%m%d")
+                    st2 = _tape_day_stats(ymd2)
+                    if st2 is not None:
+                        out["prior_full_session"] = _tape_enrich(prev2, ymd2, st2)
+                        break
+                if "prior_full_session" not in out:
+                    out["prior_full_session"] = None
+                    out["prior_full_session_absent"] = ("no full session found within 8 days before "
+                                                        f"{iso} - this is a data gap, not a mask")
+                out["note_stub"] = (
+                    "prior session is the Sunday REOPEN STUB (CME trade-date convention: it belongs to "
+                    "this Monday). It is the GAP-FORMING session. `prior_full_session` carries the last "
+                    "FULL session (normally the Friday) - the D-1 trade tilt doctrine puts direction on. "
+                    "Both are open-time and non-price; use whichever the read calls for, and do not treat "
+                    "the stub's thin sample as a tilt (big_print_b_share on 0-2 prints is degenerate - "
+                    "see flow.big_print_bshare_thin_tape_guard).")
             return out
     return None
+
+
+def _tape_enrich(prev, ymd: str, st: dict) -> dict:
+    """The per-session non-price flow read. Factored out of _tape_conditions_block (S108) so a Monday can
+    carry BOTH the Sunday reopen stub and the prior full session through the identical code path - the two
+    blocks are the same measurement on different sessions, and must not be allowed to drift apart."""
+    out = {"asof_prior_session": prev.isoformat(), "never_masked": True} | st
+    ff = None
+    try:
+        import flow_read
+        ff = flow_read.session_flow(ymd)
+        if ff:
+            # S107 defect 3: big_print_b_share MUST be copied through from flow_read, whose value
+            # is SIZE-WEIGHTED (big_b / big_tot lots). Omitting it left _tape_day_stats' COUNT-based
+            # value (big_b / len(bigs)) shadowing it under the same name. That was a G19 root cause:
+            # the >=0.55 conviction gate saw a block max of 0.537 (count) while the size-weighted
+            # series reaches 0.550 - the gate was fed the wrong series, not mis-specified.
+            for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share",
+                      "big_print_b_share", "l1_book"):
+                if k in ff:
+                    out[k] = ff[k]
+            if "big_print_b_share" in ff:
+                out["big_print_b_share_basis"] = "size_weighted"
+    except Exception as e:
+        out["flow_read_error"] = str(e)
+    # S107 defect 1: the flow read is the blind's PRIMARY channel (price is masked), so its absence
+    # has to be STATED, never inferred from a missing key. A silently absent store previously read
+    # as "no data" - that is how G20/G21 were staged with zero signed flow and nothing flagged it.
+    out["firehose_present"] = {"mbo_flow": bool(ff) and "session_signed_flow" in ff,
+                               "l1_book": bool(ff) and "l1_book" in ff}
+    if not out["firehose_present"]["l1_book"]:
+        print(f"[tape_conditions] {ymd}: ng_l1 book read MISSING (data/ng_l1/NG_{ymd}.jsonl.gz) - "
+              f"quote imbalance and spread unavailable for this session", file=sys.stderr)
+    if not out["firehose_present"]["mbo_flow"]:
+        print(f"[tape_conditions] {ymd}: MBO trade-flow read MISSING (data/nymex_cont_n0|n1) - "
+              f"signed flow and unbalanced sides unavailable for this session", file=sys.stderr)
+    return out
 
 
 def decision_state(days: list[str], mask_after: str | None = None) -> dict:
