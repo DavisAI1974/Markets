@@ -34,8 +34,16 @@ def load_trades(gid, day):
     return np.asarray(ts)[o], np.asarray(px)[o], np.asarray(sd)[o]
 
 
-def prior_owner_verdict(gid, prior_date, owner):
+def prior_owner_verdict(gid, prior_date, owner, source="actual"):
+    """The prior owner's round-1 read, carried verbatim. grp<N>_mbo_specialist_<X>.json is a REFINE
+    artifact (written by a price-bearing run), so a blind run must never consult it - S107 guard: in
+    blind mode this returns a stated null rather than falling through to the refine's read. Whether the
+    blind should instead carry its OWN prior-owner read (and under what filename) is a design decision,
+    deliberately left open rather than guessed at here."""
     n = gid[1:]
+    if source == "blind":
+        return {"withheld": "refine posterior not readable from a blind run (price-bearing artifact); "
+                            "no blind-side prior-owner read is wired yet"}
     f = os.path.join(FC, f"grp{n}_mbo_specialist_{owner}.json")
     if not os.path.exists(f):
         return None
@@ -135,13 +143,18 @@ def main(gid, source="actual"):
         if i == 0:
             handoffs[d] = {"note": f"block open - no prior in-block session; anchor to {ANCHOR} down/flat."}
             continue
-        pd_ = ordered[i - 1]; pol, age = chain_state(i - 1); st = exit_state(gid, pd_)
+        # S107: use the SOURCE-AWARE exit state computed above, never a fresh read of the actual tape.
+        # This line previously called exit_state(gid, pd_) unconditionally, so a --source blind run
+        # still received the REALIZED close/open/day-move/signed-flow - a direct price leak into the
+        # blind's handoff. In --source actual mode exits[pd_] IS exit_state(gid, pd_), so the refine
+        # path is unchanged (verified byte-identical against the committed g19 chain).
+        pd_ = ordered[i - 1]; pol, age = chain_state(i - 1); st = exits[pd_]
         weekend = (_date(d) - _date(pd_)).days > 1
         handoffs[d] = {"prior_date": pd_, "prior_dow": _DOW[_date(pd_).weekday()],
                        "prior_owner": OWNER.get(pd_), "receiving_owner": OWNER.get(d),
                        "boundary_kind": ("weekend_reopen" if weekend else ("post_seam" if pd_ == SEAM else "overnight")),
                        "prior_exit_state": st, "chain_polarity": pol, "chain_age_sessions": age,
-                       "cum_from_anchor_usd": cum_by[pd_], "prior_owner_read": prior_owner_verdict(gid, pd_, OWNER.get(pd_)),
+                       "cum_from_anchor_usd": cum_by[pd_], "prior_owner_read": prior_owner_verdict(gid, pd_, OWNER.get(pd_), source),
                        "carry_rules": [
                            "Start from your blind + prior posterior; use this STATE to size/time, not to override direction.",
                            "Direction stays with the D-1 trade tilt; a turn realizing in the overnight seam is sized by the PRIOR-day exhaustion read, not front-run.",
@@ -157,11 +170,24 @@ def main(gid, source="actual"):
         if "prior_date" not in h:
             print(f"{d} {OWNER[d]}  [block open]"); continue
         st = h["prior_exit_state"]
+        # S107: blind-source exit states legitimately carry None for the fields the price mask withholds
+        # (signed flow, low/high timing) - render them as n/a instead of crashing the summary.
+        _sd = lambda v: f"{v:+d}" if isinstance(v, int) else "n/a"
         print(f"{d} {OWNER[d]} <- {h['prior_date']}({h['prior_owner']}) {h['boundary_kind']:14} "
               f"pol{h['chain_polarity']:+d} age{h['chain_age_sessions']} cum{h['cum_from_anchor_usd']:+5d} | "
-              f"prior close {st['close_px']} off_low {st['close_off_low_frac']} lh_dir{st['last_hour_dir']:+d} "
-              f"lh_flow{st['last_hour_signed_flow']:+d} low@{st['low_et']}{' LATE' if st['low_late'] else ''}")
+              f"prior close {st['close_px']} off_low {st['close_off_low_frac']} lh_dir{_sd(st['last_hour_dir'])} "
+              f"lh_flow{_sd(st['last_hour_signed_flow'])} low@{st['low_et'] or 'n/a'}{' LATE' if st['low_late'] else ''}")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    # S107: --source was accepted by main() but never wired to the CLI, so the BLIND round-2 chain
+    # (--source blind) was unreachable. Defaults to actual, so existing refine invocations are unchanged.
+    _a = sys.argv[1:]
+    _src = "actual"
+    if "--source" in _a:
+        _i = _a.index("--source"); _src = _a[_i + 1]; del _a[_i:_i + 2]
+    if _src not in ("actual", "blind"):
+        raise SystemExit(f"--source must be 'actual' or 'blind', got {_src!r}")
+    if not _a:
+        raise SystemExit("usage: group_he24_he1_handoff.py [--source actual|blind] <gid>")
+    main(_a[0], _src)
