@@ -145,21 +145,41 @@ Adjudicated: **60/61 incumbents byte-identical**, all non-play sections byte-ide
 ## STATE OF THE WALK
 
 - **G19 COMPLETE**: blind 4/10 err 939 -> refine r1 10/10 err 79 -> **refine r2 10/10 err 34**.
-- **G20 BLIND: NINE of ten days committed, NOT coordinated, NO score, NO render.** The session closed
-  with specialist B still running on its single day, 20260601. The coordinator guard hard-fails on a
-  missing owner, so the block cannot be assembled until B's number exists. What is on disk and
-  committed:
+- **G20 BLIND COMPLETE AND SCORED: 6/10 dir, mean abs err 788, sum abs 7880.** Coordinated under the
+  guard (A selected as a full owner; both Fridays signed off), rendered, engine files archived to
+  `forecasts/g20_blind_round1/`.
 
   ```
-  0525 A  +180      0529 E  -380     0603 C  +480
-  0526 C  -280      0601 B  MISSING  0604 D  -450
-  0527 C  -500      0602 C  +250     0605 E  -500
-  0528 D  +150
+  date       dow  own     guess   actual     err  dir
+  20260525   Mon  A         180       30     150   OK
+  20260526   Tue  C        -280     -190     -90   OK
+  20260527   Wed  C        -500      610   -1110    X
+  20260528   Thu  D         150     2100   -1950   OK
+  20260529   Fri  E        -380     -160    -220   OK
+  20260601   Mon  B         350     -990    1340    X
+  20260602   Tue  C         250      -80     330    X
+  20260603   Wed  C         480      750    -270   OK
+  20260604   Thu  D        -450     1130   -1580    X
+  20260605   Fri  E        -500    -1340     840   OK
   ```
 
-  To finish: re-run specialist B for 20260601 ONLY (wave 3, consuming A's committed bridge in
-  `grp20_mbo_specialist_A.json` and E's 0529 `handoff_out`), then bridge + coordinate + render per
-  the drop-in's step 1. Everything else G20 needs is committed and does not need re-running.
+  **READ IT ON THE SCOREBOARD WE ACTUALLY USE.** Block cum: blind **-700** vs actual **+1860** = a
+  **FORWARD-CURVE DRIFT of -2560**. The blind ended at 2.964 against an actual 3.220. 6/10 direction
+  flatters it; the curve is the product and the curve is 26c low. Same shape as G19 - a down lean
+  held through a block that rallied.
+
+  **The two Thursdays lost the block**: 0528 (+2100 actual vs +150) and 0604 (+1130 vs -450) are
+  **3,530 of the 7,880**. Both EIA prints, and 0528 is the day the corrected calendar moved C -> D,
+  so D's lens was correctly aimed at it and still under-called by 1,950. That is a REASONING result,
+  not a plumbing one, and it is the first clean read of a print day since the calendar fix.
+
+  **SEPARATE THESE TWO IN THE POST-MORTEM.** B's 0601 (+350 vs -990) was the other big miss, but B
+  did NOT repeat its G19 cum-0 error: it built inherited cum from the block's own committed days
+  (+180 -> -100 -> -600 -> -450 -> **-830**, the running minimum), corroborated the polarity
+  independently off cumulative signed flow (-9,198 lots, 4 consecutive net-sell sessions), and used
+  it for the extension gate, path shape and band floor while explicitly NOT using it for the sign.
+  **The structural fix held; the call was still wrong.** Those are different failures and must not be
+  merged into one lesson.
 - **G21, G22 staged and PASSING state_health.**
 - **G23 is BLOCKED and must NOT be run**: `weather` genuinely missing 2026-07-14..07-17 (the
   degree-day store ends 07-13). A real data gap, not a path bug. The gate is holding it back

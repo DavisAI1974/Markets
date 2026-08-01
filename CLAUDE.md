@@ -1,4 +1,55 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-07-31, Session 106)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-01, Session 107)
+
+## S107 — G19 ROUND 2 (err 34) + G20 BLIND SCORED + **SIX SILENT DATA HOLES** + brain s103.2 (62 plays) (read `SESSION_HANDOFF_2026-08-01_S107.md` + `DROP_IN_S108.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`.** **G19 COMPLETE**: blind 4/10 err 939 ->
+refine r1 10/10 err 79 -> **r2 10/10 err 34**, zero direction changes anywhere, every day honestly
+under actual. **G20 BLIND SCORED: 6/10, mean abs err 788 — but the FORWARD-CURVE DRIFT is -2560**
+(block cum blind -700 vs actual +1860; blind ended 2.964 vs actual 3.220). The hit-rate flatters it;
+the curve is the product. Same shape as G19 — a down lean held through a rally. The two EIA
+Thursdays are 3,530 of the 7,880 (0528 +2100 actual vs +150; 0604 +1130 vs -450).
+
+**THE REAL STORY OF S107: SIX decision-state blocks were silently EMPTY**, each reading downstream
+exactly like a deliberate price mask. `storage`/`stor_surprise` (G18-G21), the signed-flow +
+`l1_book` read (G20/G21), `options_surface` (G16/G20/G21), **`vol_regime` — DEAD SINCE G16 on a
+hard-coded `SPAN_END`**, `squeeze_watch` frozen on an EXPIRED front (a false positive, not just
+stale), and **`weather` — empty on EVERY staged group** from a path mismatch (`data/nws_temp/` vs
+where the pull landed it). Three different mechanisms produce the same indistinguishable null:
+`_load_json` returns `{}` for a missing file, feeds return `None` for no-coverage, and the one-shot
+mask emits `{"value": null}` when it has nothing to freeze. **`vol_regime` is the module built to
+condition MAGNITUDE — the brain's own stated dominant residual — and five groups were scaled without
+it.** All closed; `vol_regime` fixed at the ROOT (span now derives from the tape, not a constant).
+
+**BUILT: `state_health.py`** — a stage-time completeness assertion wired into `stage_group`. **A block
+may be empty only if something DECLARED it may be**; anything else hard-fails BEFORE a specialist
+reads it, instead of surfacing in a post-mortem where a data hole gets written into the brain as a
+reasoning lesson. **`restore_substrate.py`** — one idempotent command rebuilds the whole data plane
+(`data/` is gitignored and does NOT survive a session) and rebuilds `vol_regime`.
+
+**ALSO FIXED**: a **PRICE LEAK** in the handoff chain (`--source blind` would have carried the
+REALIZED close/open/day-move/signed-flow into the blind); `big_print_b_share` was the **WRONG SERIES**
+(count-based shadowing the size-weighted one — the G19 post-mortem's "the 0.55 gate never fires,
+block max 0.537" was an artifact; the size-weighted series reaches 0.550 and FIRES); three render
+defects incl. **the blind curve never actually being drawn**; both coordinators had `brain_version`
+hard-coded to s102.8 so every artifact since was mislabelled; **A is now a full coordinator owner**
+(it owned G20's Memorial Day and both coordinators hard-failed the whole block on it); and a G20 EIA
+calendar error caught in pre-flight **by a specialist stopping on its own** (a Monday holiday does
+NOT shift the Thursday gas print — `owner_map` derives D's ownership from that list, so D's lens was
+aimed at a non-print Friday).
+
+**BRAIN s103.1 -> s103.2 (62 plays)**, 60/61 incumbents byte-identical: struck the false claim that
+`flow_conviction` REPLACES the 0.55 arm (it is refine-only — needs realized price — while
+`big_print_b_share` is open-time and is the BLIND's instrument in that role; complements, never
+substitutes), and added `flow.big_print_bshare_thin_tape_guard` (measured on 204 sessions: the bar
+does **NOT** float by season, but the thinnest big-print quartile carries double the dispersion —
+below ~20 prints raise to ~0.60). Four specialists independently confirmed it on its first ride.
+
+**FRAMING (Greg):** the walk is a **development loop, not a controlled experiment** — improve group
+over group; never hold a group back on a degraded input set to preserve a comparison. Keep
+ATTRIBUTION straight in post-mortems so a merge does not bank a data fix as evidence for a play.
+**KEYS DO NOT ROTATE DURING THE WALK** (standing decision — see the AWS KEY section).
+**NEXT: the G20 refine.** G21/G22 staged and passing `state_health`; **G23 BLOCKED** (weather missing
+4 days).
 
 ## S106 — THE ONE-AGENT BLIND PROVED OUT ON G19 + brain s103.1 (61 plays) (read `SESSION_HANDOFF_2026-07-31_S106.md` + `DROP_IN_S107.md`)
 
@@ -327,10 +378,15 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** brain **s103.1 (61 plays)**; the ONE-AGENT regime is PROVEN — G19 blind (price-masked
-state, same files as refine) 4/10 err 939 -> refine r1 10/10 err 79, merged; **G19 refine ROUND 2
-(HE24->HE1) = S107's opener**, then **G20 blind on s103.1 with the handoff carrying chain state** (the
-test of B's finding that most of the refine's gain does NOT need price). LEGACY line below (pre-S106):
+**One-line state:** brain **s103.2 (62 plays)**; the ONE-AGENT regime holds — **G19 COMPLETE** (blind
+4/10 err 939 -> refine r1 10/10 err 79 -> **r2 10/10 err 34**, zero direction changes) and **G20 BLIND
+SCORED 6/10 err 788 with a -2560 FORWARD-CURVE DRIFT** (the hit-rate flatters it; the curve is 26c
+low, same down-lean-through-a-rally shape as G19). **NEXT = the G20 REFINE.** S107's real work was
+finding **SIX silently-empty decision-state blocks** — `vol_regime` dead since G16, `weather` dead on
+every staged group — each indistinguishable from a deliberate mask; all closed, plus `state_health.py`
+(a stage-time completeness assertion that hard-fails an empty block) and `restore_substrate.py` (the
+container does NOT keep `data/`). G21/G22 staged and passing; **G23 BLOCKED** on 4 missing weather
+days. **Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
 brain **s102.5 (47 plays)**; the WALK is at **G16 DONE -> merged; G17 (Apr 12-24,
 two-leg May->June seam ~0421) = S105's opener, run as the FIVE-specialist blind under the Friday/Monday
 focus doctrine (Greg S104: Friday is the cascade root; Sunday->2nd-Friday windows; coordinator guarded;

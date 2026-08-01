@@ -50,26 +50,35 @@ data/storage_consensus`, `eia/ -> data/eia_surprise.json` (a FILE).
 
 - **Brain s103.2, 62 plays.** Backup `ng_brain_s103.1_backup.json`.
 - **G19 COMPLETE**: blind 4/10 err 939 -> refine r1 10/10 err 79 -> **refine r2 10/10 err 34**.
-- **G20 blind: NINE of ten days committed, NOT coordinated, NO score.** A, C, D and E are done and
-  committed (`forecasts/grp20_mbo_specialist_{A,C,D,E}.json`). **Specialist B never finished** - it
-  owns exactly one day, **20260601**, and the coordinator guard hard-fails on a missing owner, so the
-  block cannot be assembled without it. Committed numbers:
-  `0525 A +180 | 0526 C -280 | 0527 C -500 | 0528 D +150 | 0529 E -380 | 0601 B MISSING |
-  0602 C +250 | 0603 C +480 | 0604 D -450 | 0605 E -500`.
-  **Re-run B for 20260601 only** - nothing else needs re-running.
+- **G20 BLIND DONE AND SCORED: 6/10 dir, mean abs err 788** (`forecasts/grp20.json`, engine files
+  archived at `forecasts/g20_blind_round1/`, render
+  `renders/ng_refine_s95/g20_blind_vs_actual.png`).
+  `0525 A +180/+30 | 0526 C -280/-190 | 0527 C -500/+610 | 0528 D +150/+2100 | 0529 E -380/-160 |
+  0601 B +350/-990 | 0602 C +250/-80 | 0603 C +480/+750 | 0604 D -450/+1130 | 0605 E -500/-1340`
+  (guess/actual).
+  **The number that matters: FORWARD-CURVE DRIFT -2560** - block cum blind -700 vs actual +1860, so
+  the blind ended at 2.964 against 3.220. 6/10 flatters it. **G20's refine is the next run.**
 - **G21, G22 staged and PASSING `state_health`.**
 - **G23 BLOCKED - do NOT run it.** `weather` genuinely missing 2026-07-14..07-17 (the degree-day
   store ends 07-13). Extend `nws_temp` four days, restage, confirm the gate passes.
 
 ## 4. DO THIS, IN ORDER
 
-1. **Finish / score G20 if it did not close.** Bridge the engine schema to the coordinator schema
-   (verbatim reformat: `expected_magnitude_usd` -> `guessed_net_usd`, `path_p50_curve` ->
-   `path_distribution`, numbers UNTOUCHED - a scratchpad alias, NOT a code change), archive the blind
-   files to `forecasts/g20_blind_round1/`, then `group_coordinate_blind.py g20`. PRINT the render.
-2. **HARD PAUSE for Greg on the blind score**, then the G20 refine (same sequenced spawn), then
-   round 2 (`group_he24_he1_handoff.py g20` - `--source` is now wired; refine uses the default
-   `actual`).
+1. **G20 REFINE** - the blind is done and scored (6/10, err 788, forward-curve -2560). Same sequenced
+   spawn (C+D+E -> A -> B), unblinded: the refine additionally gets `g20_mbo_evidence.json` and that
+   is the ONLY data difference. Coordinate with `group_coordinate_refine.py g20`, PRINT the render,
+   HARD PAUSE for Greg, then round 2 (`group_he24_he1_handoff.py g20` - `--source` is now wired and
+   the refine uses the default `actual`), coordinate `--r2`, PRINT, adjudicate, merge on Greg's go.
+   **Two things the refine must explain, and they are DIFFERENT failures - do not merge them:**
+   (a) the two EIA Thursdays are 3,530 of the 7,880 total error (0528 +2100 actual vs +150; 0604
+   +1130 vs -450), and 0528 is the first clean print-day read since the calendar was corrected C->D;
+   (b) B's 0601 (+350 vs -990) missed even though the G19 cum-0 structural fix HELD - B built
+   inherited cum properly and still called it wrong, so that is a reasoning miss sitting on top of a
+   fixed mechanism, not a repeat of the old flaw.
+   Bridging note for any future blind: the engine emits `expected_magnitude_usd` / `path_p50_curve`
+   and `group_coordinate_blind.py` reads `guessed_net_usd` / `path_distribution` - reformat VERBATIM
+   in a scratchpad alias (numbers untouched, `handoff_out` carried through for the Friday sign-off).
+   NOT a code change. `group_coordinate_refine.py` speaks the engine schema natively.
 3. **G21** - the first group to run with the full kitchen sink actually intact (storage + vol_regime
    + weather + the corrected size-weighted `big_print_b_share` all live for the first time since
    G16). **This is the point of the walk, not a complication in it (Greg, S107): we are improving
