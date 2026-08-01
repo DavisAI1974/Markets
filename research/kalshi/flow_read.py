@@ -80,13 +80,23 @@ def mbo_flow(ymd):
     _two = lambda num, den: (round(float(num) / den, 3) if den > 0 else None)
     big_sides = sz[bigs & (sd != 0)].sum()
     t0, t1 = ts[0], ts[-1]; span = max(t1 - t0, 1.0)
-    ph_sf, ph_bs, ph_bs2 = [], [], []
+    ph_sf, ph_bs, ph_bs2, ph_vol, ph_n = [], [], [], [], []
     for k in range(3):
         m = (ts >= t0 + span * k / 3) & (ts < t0 + span * (k + 1) / 3) if k < 2 else (ts >= t0 + span * 2 / 3)
         v = sz[m].sum() or 1.0
         ph_sf.append(int(round(float((sd[m] * sz[m]).sum()))))
         ph_bs.append(round(float(sz[m & (sd > 0)].sum()) / v, 3))
         ph_bs2.append(_two(sz[m & (sd > 0)].sum(), sz[m & (sd != 0)].sum()))
+        # S108: PHASE VOLUME. E filed this against its OWN play. flow.passive_ladder_displacement was
+        # merged with a MANDATORY second limb - final-phase volume at or above the session maximum - the
+        # limb B forced in because without it the play is a false-positive machine. And
+        # daytype.friday_exit_close_location_over_flow_shape was merged with a (volume, net) PAIR
+        # condition. But tape_conditions served phase_signed_flow and phase_b_share and NO phase volume,
+        # so both plays, merged as blind-available, were refine-only as served: E had the G20 numbers
+        # (ph1 4,715 / ph2 51,424 / ph3 60,930) only from the MBO evidence file, which the blind does not
+        # get. Both limbs are NON-PRICE and blind-legitimate in principle - this is the one-field fix.
+        ph_vol.append(int(sz[m].sum()))
+        ph_n.append(int(m.sum()))
     return {"n_trades": int(n), "volume_lots": int(tot), "trades_per_min": round(n / (span / 60), 1),
             "session_signed_flow": int(round(float((sd * sz).sum()))),
             "session_b_share": round(float(buys) / tot, 3),
@@ -95,6 +105,13 @@ def mbo_flow(ymd):
             "big_print_b_share": round(float(big_b) / big_tot, 3) if bigs.any() else None,
             # S108 additive two-sided series - see the normalization note above. Same measurements with
             # unsided volume removed from the denominator, so 0.50 means balance and nothing else moves.
+            "phase_volume_lots": ph_vol, "phase_n_trades": ph_n,
+            "phase_volume_note": ("per-phase VOLUME, non-price. Required by "
+                                  "flow.passive_ladder_displacement limb (b) - final-phase volume at or "
+                                  "above the session maximum - and by the (volume, net) pair on "
+                                  "daytype.friday_exit_close_location_over_flow_shape. A flowless close "
+                                  "on 4,000 lots is an unpriced print that reverts; a flowless close on "
+                                  "60,000 lots is a handover that continues."),
             "session_b_share_two_sided": _two(buys, sides),
             "phase_b_share_two_sided": ph_bs2,
             "big_print_b_share_two_sided": (_two(big_b, big_sides) if bigs.any() else None),

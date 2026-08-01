@@ -262,6 +262,47 @@ def _squeeze_watch(cs: dict | None, iso: str | None = None) -> dict | None:
                 m -= 1
                 if m == 0:
                     m, y = 12, y - 1
+            # S108 THE CONFIDENT FALSE NEGATIVE. `active` is derived from contract_structure, which is
+            # PRICE-DERIVED and therefore FROZEN at the anchor vintage in blind mode - so the whole block
+            # reports the anchor day's days-to-expiry and `active: false` on every day. On G21 that read
+            # dte=14 / active=false while the live calendar said dte=7 on 0616, 6 on 0617, 5 on 0618 and
+            # 5 on 0619: the block sat INSIDE the play's own <=7 window and the flag denied it, on four
+            # separate days. C and A found it independently and both used the live calendar instead.
+            #
+            # But only ONE of the two limbs is genuinely price-derived. `days_to_calendar_front_expiry`
+            # is DETERMINISTIC CALENDAR and needs no mask; only `calendar_front_next_spread_chg_3d` does.
+            # So derive the calendar limb LIVE here and say so. Additive: `active` keeps its name, type
+            # and value so nothing downstream is silently re-pointed - what is added is the truth
+            # alongside it, and an explicit false-negative flag when the two disagree. This is the same
+            # stale-block family as frozen_structure_stale, and state_health cannot catch it because the
+            # block is populated and internally consistent.
+            fy, fm = day.year, day.month
+            live_d2e = live_sym = None
+            for _ in range(6):                       # walk FORWARD to the nearest expiry on/after iso
+                exp_f = _fcal.ng_expiry(fy, fm)
+                if exp_f >= day:
+                    live_d2e, live_sym = _fcal.bd_between(day, exp_f), _fcal.ng_symbol(fy, fm)
+                    break
+                fm += 1
+                if fm == 13:
+                    fm, fy = 1, fy + 1
+            if live_d2e is not None:
+                cal_live = bool(live_d2e <= 7)
+                out |= {"days_to_calendar_front_expiry_live": live_d2e,
+                        "calendar_front_symbol_live": live_sym,
+                        "calendar_limb_satisfied_live": cal_live,
+                        "calendar_limb_basis": ("days_to_calendar_front_expiry_live is DETERMINISTIC "
+                                                "CALENDAR from flow_calendar and is never masked; the "
+                                                "spread limb is the only genuinely price-derived half. "
+                                                "Prefer the live value over the frozen one.")}
+                if cal_live and out.get("active") is False:
+                    out["active_false_negative"] = (
+                        f"active=false is NOT decision-legit here: the frozen vintage reports "
+                        f"days_to_calendar_front_expiry={d2e} while the LIVE calendar says {live_d2e} "
+                        f"- inside the play's own <=7 window. Only the spread limb is unknown, so treat "
+                        f"active as UNKNOWN, not absent. Take the note's SCOPE consequence (delivery "
+                        f"mechanics own the tape) and its TAIL consequence, and do not read a squeeze "
+                        f"into the p50 on a limb you cannot see.")
             if prev_exp is not None:
                 sessions_since = _fcal.bd_between(prev_exp, day)
                 out |= {"last_prompt_symbol": prev_sym,
@@ -688,7 +729,8 @@ def _tape_enrich(prev, ymd: str, st: dict) -> dict:
             for k in ("session_signed_flow", "phase_signed_flow", "phase_b_share",
                       "big_print_b_share", "l1_book",
                       "session_b_share_two_sided", "phase_b_share_two_sided",
-                      "big_print_b_share_two_sided", "unsided_volume_frac", "b_share_basis_note"):
+                      "big_print_b_share_two_sided", "unsided_volume_frac", "b_share_basis_note",
+                      "phase_volume_lots", "phase_n_trades", "phase_volume_note"):
                 if k in ff:
                     out[k] = ff[k]
             if "big_print_b_share" in ff:

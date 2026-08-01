@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s103.5",
+  "version": "s103.4",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -1267,12 +1267,7 @@
    ],
    "status": "PROVISIONAL",
    "forward_evidence": "NONE",
-   "merged": "s104_midweek_cleanup",
-   "checked_and_clear_bshare_basis": {
-    "claim_raised": "C named this as a third play carrying the same unrepointed absolute-0.50 semantic.",
-    "verdict": "NOT UPHELD. Its only b_share reference is 'an extreme sell-climax big_print_b_share at the low' - a SHAPE read, not an absolute 0.50 bar. Nothing to re-point.",
-    "why_recorded": "So the claim is not re-raised next group. C was right on two of three; recording the third as checked-and-clear is what stops a correct-but-partial finding from being re-litigated."
-   }
+   "merged": "s104_midweek_cleanup"
   },
   {
    "id": "midweek.young_chain_extension_full_band",
@@ -1431,16 +1426,7 @@
    "scope": "core-day direction; 'honest under-claim' is a MAGNITUDE lever only, never a sign justification",
    "forward_evidence": "G17 refine: 0422 flip UP (+130 vs +140) via the literal arm after the >=2-of-~5 window fix; 0414/0415 correctly held. G18 blind = scored forward test (pending). | G18 blind: C used the direct sides to differentiate 3 same-b_share sessions; the accumulation fired on adjacent D/B days (covering), C's 0506 RTS-up was wrong (buy-absorb-failing DOWN) - the arm needs price-turn confirmation.",
    "provenance": "S105 C tweak + test-drive #2 window fix (blind_class_C.md + mbo_specialist_C.md)",
-   "merged": "s102.6 S105",
-   "assumption_retired_bshare_basis": {
-    "assumed": "That the 'sub-0.50 sell tape' condition means the crowd is net selling.",
-    "measured": "session_b_share as served is biased LOW by unsided volume (13.49% of volume across 223 sessions) and clears 0.50 on only 5 of 223 sessions. Across G21 the sub-0.50 semantic FLIPS between bases on 5 of 10 days. On the served series G21 is an unbroken sell tape 10/10; on the two-sided series it is genuinely two-sided.",
-    "now_licensed": "The sub-0.50 SESSION-tape condition reads `session_b_share_two_sided`. The `big_print_b_share >= 0.55` arm and the thin-tape quartile bars (0.524/0.550/0.553) STAY on the original series - they are fitted there.",
-    "why_it_matters_more_than_the_s103.4_pair": "This is a SIGN play. The two plays re-pointed in s103.4 were a selector and a magnitude play. An unrepointed sign play is strictly worse.",
-    "it_already_changed_a_forecast": "G21 0618. D used exactly two sessions for the >=2-of-~5 window: 06-11 (bp 0.572; session 0.445 served / 0.481 two-sided - sub-0.50 on BOTH) and 06-12 (bp 0.597; session 0.479 served / 0.52 two-sided - FAILS). On the corrected basis one of two qualifies, the >=2 bar is not met, and the arm DOES NOT FIRE. D reported 0618 as having a second independent channel agreeing; on the corrected series it rested on ONE - the pre-print generator. The number may still be right; the confidence basis was not.",
-    "forward_evidence_NOT_to_bank": "C on G21 0616 found the arm holds at 0.406 served and FAILS at 0.520 two-sided, kept its sign, and credited flow.price_free_absorption_proxy explicitly NOT this arm. B did the same on 0615 one day earlier in the chain, unprompted. Neither day is forward evidence for this play.",
-    "proposed_by": "C (G21 blind), verified by the session lead"
-   }
+   "merged": "s102.6 S105"
   },
   {
    "id": "selector.midblock_right_the_ship",
@@ -1456,13 +1442,7 @@
    "forward_evidence": "G17 refine r2: the HE24->HE1 coordination halved error 24->11 (10/10) with zero direction changes - the mid-block re-derivation working. G18 blind = scored forward test (pending). | G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built.",
    "provenance": "S105 - Greg's mid-block-sanity-check insight + C/D/E convergent self-analyses",
    "caveats": "the escalation reserve is the coordinator HALL-MONITOR (a logged-a-turn-then-emitted-the-chain-sign compliance audit) if specialists keep repeating the flaw after this play",
-   "merged": "s102.6 S105",
-   "assumption_retired_bshare_basis": {
-    "assumed": "Same semantic, inherited by reference: 'recurring buy-absorption (>=2 of ~5, non-consecutive) UNDER A SELL TAPE'.",
-    "measured": "Same measurement. This play does not carry its own numeric bar; it restates accumulation_arm_turn's condition.",
-    "now_licensed": "Defers to structure.accumulation_arm_turn's definition, which now reads session_b_share_two_sided. Stated as a deferral rather than duplicated so there is ONE definition, not two that can drift.",
-    "proposed_by": "C (G21 blind)"
-   }
+   "merged": "s102.6 S105"
   },
   {
    "id": "daytype.covering_giveback_self_limiting",
