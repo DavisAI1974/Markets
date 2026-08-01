@@ -78,6 +78,10 @@ def stage(gid):
                     "--days", ",".join(days), "--mask-after", g["mask_after"], "--out", out_state],
                    check=True, stdout=subprocess.DEVNULL)
     log(f"{gid} state -> {os.path.relpath(out_state, HERE)}")
+    # S107: COMPLETENESS ASSERTION. Six times in one session a block was silently empty and read
+    # downstream exactly like a deliberate mask. Refuse to hand a specialist a state with a hole in it.
+    import state_health
+    state_health.assert_healthy(json.load(open(out_state)), gid)
     # 4. actual + 5. MBO evidence (config anchor now set in-process)
     import importlib
     import group_actual, group_mbo_engine
