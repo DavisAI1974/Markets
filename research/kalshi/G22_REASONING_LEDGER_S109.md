@@ -235,6 +235,55 @@ DOWN-SMALL had the sign right. See §4 — this is the most important entry in t
 
 ---
 
+## PART 3.5 — GREG'S DESK KNOWLEDGE: WEATHER IS A MULTIPLIER (the correction that explains §4)
+
+Recorded verbatim in substance, attributed, because it is the highest-value context in this session and
+it arrived *after* the block was scored — the exact "after the fact" case this ledger exists for.
+
+**Greg:** heat and cold *"do play a part, sometimes a small one. Where they play a big one is unexpected
+swings that no one forecasts for, or long durations of the extremes. It played a much bigger role when
+there was less production cap 20 years ago. What they can really be is a big multiplier. Let's say
+transportation to Chicago is a lower cap this week because of maintenance, and the expected temps are
+mild. But a cold snap blows in overnight and it's just sitting on Chicago for days — then the weather is
+a huge factor."*
+
+**What this says structurally.** Weather authority is not a function of degree-day LEVEL. It is
+`anomaly × duration × constraint`, multiplying whatever the flow/fundamental read already is. Absent an
+anomaly or a constraint, weather is close to inert, because production capacity absorbs it. The Chicago
+example is the whole mechanism in one sentence: a *deliverability cap* (maintenance) plus a *surprise*
+(nobody forecast it) plus *persistence* (sitting for days) converts a mild-weather week into a huge
+factor. Any one limb alone does not.
+
+**It explains the block's largest error better than anything the panel produced.** Measured on 0629:
+forecast surprise **−0.015**, vs normal **+0.096**, no duration (9.0 → 18.7 is the seasonal ramp), and a
++112 Bcf surplus with ample production. Every authority condition absent — and the gap paid **+50**.
+Block-wide the largest surprise is −1.28 and vs-normal never leaves −0.078 to +0.175. **The ramp was
+June becoming July, priced weeks out.** The bridge treated a +4.7 CDD *level* move as a driver when the
+anomaly was zero.
+
+**Why this is a KIND error, not a calibration error.** The brain's weather bars are levels
+(`divergence_resolution` HDD ≥ 16.4, `shoulder_weather_band_void` HDD ≤ 13.5). A level bar cannot
+express "unexpected", "persistent", or "into a constraint". So re-pointing them at a summer CDD level —
+which is what I proposed before this correction — would reproduce the same error in a new season. That
+proposal is withdrawn.
+
+**And the multiplier's key limb has no instrument.** `cash_basis` is **Henry Hub only**, so a Chicago
+citygate squeeze is literally unobservable in the state; there is no pipeline-maintenance feed;
+`storage_regional.days_of_supply` is null; no CDD-vs-normal anomaly field exists; and nothing measures
+duration. **We could not have seen the Chicago case if it had happened.** That is the build list, and it
+is why no weather-authority play is proposed yet — writing one against a block with the least weather
+authority in the walk would be fitting of the worst kind.
+
+**The lesson about the LEDGER itself:** this correction came from outside the run, from twenty years of
+desk experience, and it re-explained a result four specialists had already reasoned over carefully.
+Every one of them treated the CDD level as the signal because that is what the state serves and what the
+brain keys on. Not one asked *"is this heat a surprise, and is anything constrained?"* — the two
+questions that decide whether weather matters at all. **A panel can be internally rigorous and
+collectively wrong when the instrument itself encodes the wrong model**, and no amount of cross-checking
+inside the panel surfaces that. It took domain knowledge from outside.
+
+---
+
 ## PART 4 — THE ENTRY THAT MATTERS MOST: RIGOUR AND CORRECTNESS CAME APART
 
 **0629 was the block's largest error (1,435) and it was produced by the run's best reasoning.**

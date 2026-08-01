@@ -10,7 +10,80 @@ direction.
 
 ---
 
-## P1 — THE SUMMER ARTIFACT LEAN (highest value; systematic, not judgement)
+## P0 — WEATHER IS A MULTIPLIER, NOT A DRIVER (Greg, S109 — supersedes the framing of P1)
+
+**Greg, from the desk:** heat and cold usually play a *small* part. Where they play a big one is
+**unexpected swings nobody forecast for**, or **long durations of extremes**. Weather mattered far more
+20 years ago when there was less production capacity. *"What they can really be is a big multiplier."*
+The illustration: transportation into Chicago is capped this week for maintenance, expected temps are
+mild — then a cold snap blows in overnight and **sits on Chicago for days**. Now weather is a huge
+factor.
+
+**The structural claim:** weather authority is not a function of degree-day LEVEL. It is
+`anomaly × duration × constraint`, and it multiplies whatever the flow/fundamental read already is.
+Absent a constraint or an anomaly, weather is close to inert — because supply capacity absorbs it.
+
+**G22 is a clean confirming instance, and it explains the block's largest error.** Every authority
+condition was absent on 0629:
+
+| condition | 0629 | reading |
+|---|---|---|
+| forecast surprise | **−0.015** (forecast 14.815, realized 14.8) | nobody was surprised |
+| vs normal | **+0.096** | dead normal |
+| duration of extreme | none — 9.0 → 18.7 is the seasonal ramp | June becoming July |
+| supply constraint | +112 Bcf surplus, ample production | nothing to multiply |
+
+Block-wide the largest surprise is −1.28 and vs-normal never leaves −0.078 to +0.175. **The CDD ramp
+was summer arriving on schedule, priced weeks out.** The bridge read a +4.7 *level* move as a driver
+when the anomaly was zero — and the gap paid +50.
+
+**This reframes P1 from a calibration problem to a KIND problem.** `divergence_resolution` (HDD ≥ 16.4)
+and `shoulder_weather_band_void` (HDD ≤ 13.5) are **level** bars. A level bar cannot express
+"unexpected", "persistent", or "into a constraint" — so no re-pointing of those bars to a CDD ladder can
+be right, and setting a summer CDD level bar would reproduce the same error in a new season. **My
+earlier P1 proposal to re-point them to CDD levels is WITHDRAWN.**
+
+**INSTRUMENT INVENTORY — and the multiplier's key limb does not exist.**
+
+| limb | instrument | status |
+|---|---|---|
+| anomaly (CDD) | CDD **vs normal** | **MISSING.** `forecast_vs_normal` is HDD-keyed; the CDD levels landed this session, the anomaly did not |
+| surprise | realized − forecast | **derivable now** (computed above; the feed carries both) |
+| revision | forecast run-over-run | served, but seam-blind (P2) |
+| duration | consecutive days of anomaly beyond a bar | **MISSING** — no persistence field anywhere |
+| constraint — regional basis | citygate / regional cash basis | **MISSING.** `cash_basis` is **Henry Hub only**, so a Chicago deliverability squeeze is unobservable |
+| constraint — maintenance | pipeline maintenance / capacity derates | **MISSING** — no feed exists |
+| constraint — regional tightness | `storage_regional.days_of_supply` | present but **null** |
+| supply headroom | production vs capacity | not served |
+
+**PROPOSED AS BUILDS, NOT AS PLAYS.** No weather-authority play can be written — let alone tested —
+until the anomaly, duration and constraint limbs are observable. Writing one now would be fitting to a
+single block, and worse, it would be fitting to the block that has the least weather authority of any in
+the walk. Priority order, cheapest and highest-leverage first:
+
+1. **CDD vs NORMAL** — the anomaly instrument. The feed already computes normals for HDD; this is the
+   same computation on the other side of the balance point. Without it, summer has no anomaly channel.
+2. **Forecast surprise + persistence** — realized − forecast per day, and a run-length of consecutive
+   days beyond an anomaly bar. Both derivable from data already on disk.
+3. **Regional / citygate basis** — the constraint tell, and the one that carries the Chicago mechanism.
+   A cold snap parked on a constrained citygate shows up in basis *before* it shows up in the front.
+4. **Pipeline maintenance / capacity derates** — the "cap is lower this week" input. Genuinely new feed.
+
+**Falsifier for the whole frame, stated so it can be killed:** a block where a large degree-day anomaly
+with high forecast surprise, long duration and a live regional constraint produces **no** outsized move
+would refute the multiplier model. G22 cannot test it — it has none of those conditions, which is
+precisely why weather was inert here.
+
+**Historical scope note (Greg):** the multiplier was larger 20 years ago at lower production capacity.
+Any coefficient fitted on the modern tape must not be back-applied to older data, and vice versa.
+
+---
+
+## P1 — THE SUMMER ARTIFACT LEAN (mechanism stands; the FIX is now P0)
+
+*The measurement below stands and explains the down lean. What changed under P0 is the remedy: the
+answer is not to re-point these bars at CDD levels, it is that a LEVEL bar is the wrong instrument.
+Retained here because the one-directional degradation is real and must still be neutralised.*
 
 **Claim.** In a summer/CDD block the HDD-keyed play family is *unevaluable*, and every member degrades
 **in the same direction — bearish or void**. Four independent artifacts push down at once; none is a
