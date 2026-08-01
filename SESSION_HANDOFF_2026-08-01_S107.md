@@ -184,8 +184,14 @@ Adjudicated: **60/61 incumbents byte-identical**, all non-play sections byte-ide
    0.25-0.35 against a 2.907 front. The pin read was NOT COMPUTABLE on the one day it mattered
    (opex T-1). A substituted nothing.
 5. **`nws_temp` extension** for G23 (4 days).
-6. **ROTATE BOTH KEYS.** AWS and now the Databento key were both photographed into chat. Deferred by
-   Greg until the groups are done - still outstanding.
+6. **KEY ROTATION IS DEFERRED BY STANDING DECISION - DO NOT ROTATE (Greg, S107):** *"the keys won't
+   rotate while we're running the groups."* Both the AWS pair and the Databento key have been
+   photographed into chat and BOTH will need rotating - but **not until the walk is finished.**
+   Rotating mid-walk breaks S3 and Databento access and stalls every staged group and every restore,
+   so it is a decision, not an outstanding task. Do NOT treat it as a to-do, do not rotate
+   opportunistically, and do not keep raising it each session. Handle keys correctly in the
+   meantime - `~/.aws/credentials` and `scratchpad/aws.env` / `scratchpad/bento.env`, chmod 600,
+   never in the repo, never echoed - and rotate when the groups are done.
 
 ## DOCTRINE REMINDERS (unchanged)
 

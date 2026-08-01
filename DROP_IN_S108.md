@@ -82,8 +82,13 @@ data/storage_consensus`, `eia/ -> data/eia_surprise.json` (a FILE).
 4. The open items in the S107 handoff, in this order of value: per-day blind state slices (the mask
    is currently unenforced across days), the Sunday prior-session inconsistency, the live
    orchestrator, the options strike-ladder scale bug, the `nws_temp` extension for G23.
-5. **ROTATE BOTH KEYS** (AWS + Databento, both photographed into chat). Deferred by Greg until the
-   groups are done.
+5. **DO NOT ROTATE THE KEYS.** Standing decision (Greg, S107): *"the keys won't rotate while we're
+   running the groups."* Both the AWS pair and the Databento key will need rotating eventually -
+   **after the walk, not during it.** Rotating mid-walk breaks S3 and Databento access and stalls
+   every staged group and every `restore_substrate` run. This is a DECISION, not a pending task:
+   do not act on it and do not re-raise it each session. Just handle the keys properly -
+   `~/.aws/credentials`, `scratchpad/aws.env`, `scratchpad/bento.env`, all chmod 600, never in the
+   repo, never echoed into chat or a commit.
 
 ## 5. RUN MECHANICS (turnkey - do not re-author)
 

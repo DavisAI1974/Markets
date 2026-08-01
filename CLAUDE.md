@@ -137,7 +137,15 @@ NGJ26 + CL-year pulls DONE. **G15 REFINE IS GO - from a fresh S103.**
 
 ## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
 
-## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
+### KEY ROTATION IS DEFERRED — DO NOT ROTATE DURING THE WALK (Greg, S107, STANDING)
+
+Greg, verbatim: **"the keys won't rotate while we're running the groups."** Both the AWS pair and the
+Databento key have been photographed into chat and both DO need rotating — **after the group walk is
+finished, not during it.** Rotating mid-walk breaks S3 and Databento access and stalls every staged
+group and every `restore_substrate.py` run. Treat this as a DECISION ALREADY MADE, not an open
+to-do: do not rotate opportunistically, and do not re-raise it every session. Until then, handle the
+keys correctly — `~/.aws/credentials`, `scratchpad/aws.env`, `scratchpad/bento.env`, all chmod 600,
+outside the repo, never echoed into chat, a commit, or a log line.
 
 - THE CURRENT KEY (verified live S100): access key ID `AKIAYI6JDCBVLKYQGLMH`, secret begins
   `txRGHd` (40 chars), account `...4170`, bucket `bento-568968024170-us-east-2-*`. The FULL
