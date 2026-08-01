@@ -50,10 +50,14 @@ per-run hand-built alias that died with the scratchpad); `chain_regime_age_sessi
 dte=14 against a live 5 — a confident FALSE NEGATIVE inside its own window); **the MONDAY STUB fix**
 (`prior_full_session` — Mondays were served 0.2-3% of a normal tape, the Friday never consulted).
 
-**OPEN, highest value first**: the **refine/blind FILENAME COLLISION** (third occurrence — on G21 SIX OF
-TEN days were about to assemble BLIND numbers labelled as the refine; only a hash against the archive
-catches it); the live orchestrator; G21 round 2 (not run). **KEYS DO NOT ROTATE DURING THE WALK.**
-**NEXT: G22**, staged and reconciling on s103.6.
+**THE FILENAME COLLISION IS FIXED** (third occurrence): on G21 SIX OF TEN days were one command from
+assembling BLIND numbers as the refine — every field check passed, because "present / right day / numeric
+/ right owner" are all true of the blind's own file. Two defences: `archive_blind.py` archives by MOVE so
+a missing posterior HARD-FAILS instead of reading blind, and `assert_not_the_blind()` hashes each round-1
+posterior against the blind archive. Negative-tested. **The transferable lesson, shared with hole #8: a
+field-level check cannot catch a wrong-but-well-formed input — only comparison against an independent
+source can.** **OPEN, highest value first**: the live orchestrator; the `options_surface` strike ladder;
+G21 round 2 (not run). **KEYS DO NOT ROTATE DURING THE WALK.** **NEXT: G22**, staged and reconciling.
 
 ## S107 — G19 ROUND 2 (err 34) + G20 BLIND SCORED + **SIX SILENT DATA HOLES** + brain s103.2 (62 plays) (read `SESSION_HANDOFF_2026-08-01_S107.md` + `DROP_IN_S108.md`)
 
@@ -448,9 +452,11 @@ S108 adding #7 (`nws_temp` partial fetch TAIL - a 68% error and a regime flip wh
 signed flow SIGN-FLIPPED on the blind's only open-time flow channel, an undeclared handicap on 4 of 10
 days; it MANUFACTURED a false mechanism and one specialist "verified" the artifact by checking internal
 CONSISTENCY - consistency was never the test). Both fixed at the source; `tape_reconcile.py` blocks the
-rest. **G22 and G23 staged, passing and reconciling on s103.6. NEXT = G22.** OPEN and highest value: the
-refine/blind **FILENAME COLLISION** (third occurrence; six of ten G21 days were about to assemble BLIND
-numbers labelled as the refine). **Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
+rest. The **FILENAME COLLISION is also FIXED** (third occurrence; six of ten G21 days were one command
+from assembling BLIND numbers as the refine, and every field check passed because they are all true of
+the blind's own file - only a hash against the archive distinguishes them). **G22 and G23 staged, passing
+and reconciling on s103.6. NEXT = G22.** OPEN and highest value: the live orchestrator, then the
+`options_surface` strike ladder. **Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.

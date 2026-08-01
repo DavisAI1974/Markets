@@ -14,8 +14,8 @@ one group earlier**, on the author's own evidence.
   sum 330). Five direction flips, each on named causal evidence.
 - **The persistent DOWN lean is gone.** Blind block cum ran -2040 / -1720 / -1220 / -700 across
   G17-G20 and is **+740** on G21 - the first positive of the walk.
-- **THREE NEW DATA HOLES (#7, #8, and the filename collision)**, plus **five harness/brain fixes** and a
-  **retraction of a G20 merge**.
+- **THREE NEW DATA HOLES (#7, #8, and the filename collision) - ALL THREE FIXED**, plus five other
+  harness/brain fixes and a **retraction of a play merged one group earlier**.
 
 ## THE SCORING RULE THAT CHANGED (Greg, load-bearing)
 
@@ -153,14 +153,30 @@ forecasting 0612 and could not see 0612's own tape, which reaches B as `prior_fu
 - **`blind_score_nonpooled.py`, `blind_drift_trend.py`, `blind_lean_decomp.py`,
   `bshare_normalization_probe.py`, `blind_input_audit.py`** - all committed reproducible.
 
-## THE FILENAME COLLISION - OPEN, third occurrence
+## THE FILENAME COLLISION - FIXED at close-out, third occurrence
 
 The blind writes `grp<N>_mbo_specialist_<X>.json`; the refine round 1 wants the SAME name; the archive
-step uses `cp`. The coordinator guard checks presence, numeric type and owner - **all true of a stale
-blind file**. On G21 **six of ten days were about to assemble blind numbers labelled as the refine** (B's
-refine never wrote; C wrote to a slipped name). Only a sha256 against `g<N>_blind_round1/` catches it.
-FIX: archive by MOVE not COPY, plus a guard assertion that hard-fails when a posterior is byte-identical
-to its blind archive.
+step used `cp`. **Every existing guard passed on the stale blind file** - present, correct day, numeric
+magnitude, right owner. All of those are true of the blind's own output, which is exactly why it kept
+surviving. On G21 **six of ten days were one command from being assembled as the refine**: B's refine
+never wrote (its agent died) and C wrote to a slipped filename, leaving the blind copies in place for
+both.
+
+FIXED, with two defences deliberately different in kind:
+
+- **`archive_blind.py`** archives by **MOVE**, so the canonical name is left ABSENT and a specialist that
+  fails to write produces a HARD "owner posterior missing" failure instead of a silent blind read. It
+  refuses to run before the blind is coordinated, so the blind's own numbers cannot be lost.
+- **`group_coordinate_refine.assert_not_the_blind()`** hashes every round-1 posterior against its blind
+  archive and refuses a byte-identical match - catching a hand-recopy that the move discipline misses.
+
+NEGATIVE-TESTED on the exact G21 near-miss: planting the blind B at the refine filename hard-fails with
+the cause and the fix named; restoring the real refine coordinates normally at 10/10, mean 33.
+
+**The transferable lesson**: the only thing distinguishing a stale blind file from a refine is the BYTES.
+Every field-level check passes. That is the same shape as hole #8, where the block was populated and
+self-consistent and only reconciliation against an independent measurement settled it. **Field checks
+cannot catch a wrong-but-well-formed input; only a comparison against an independent source can.**
 
 ## STATE OF THE WALK
 
@@ -171,14 +187,17 @@ to its blind archive.
 
 ## OPEN
 
-1. **G21 refine round 2** was not run (r1 already at worst-day 80).
-2. **The filename collision** (above) - highest value, it has now bitten twice.
-3. **The live orchestrator** - A's own day and B's block-open day have no upstream dependency, yet the
+1. **The live orchestrator** - A's own day and B's block-open day have no upstream dependency, yet the
    fixed E->A->B order serializes them. ~2 of 3 waves recoverable on a block like G21.
+2. **`options_surface` strike ladder** still off the contract's price scale (top-OI strikes 0.25-0.35
+   against a ~2.9 front), so the pin read is not computable on the day it matters.
+3. **G21 refine round 2** was not run (r1 already at worst-day 80).
 4. **Per-day blind state slices** - measured: the token win is small (11% de-dup, 8% run-timestamps) and
-   causal slicing costs more than it saves. The real constraint is wall-clock, not tokens.
-5. **`options_surface` strike ladder** still off the contract's price scale.
-6. **KEYS DO NOT ROTATE DURING THE WALK** - standing decision, do not re-raise.
+   causal slicing costs MORE than it saves. The real constraint is wall-clock, not tokens.
+5. **KEYS DO NOT ROTATE DURING THE WALK** - standing decision, do not act on it and do not re-raise.
+
+CLOSED at close-out: the filename collision (above), and all three of the fixes queued for G22
+(the b_share re-point completion, `phase_volume`, the live `squeeze_watch` calendar limb).
 
 ## THE THING TO CARRY FORWARD
 
