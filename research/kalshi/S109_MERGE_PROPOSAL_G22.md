@@ -157,11 +157,48 @@ hole.
 the country**, ahead of MISO 15.0% and ERCOT 13.0%. PJM-footprint stations in the index are PHL + DCA =
 **11.2%** of weight (NYC is NYISO; BOS is ISO-NE).
 
-**Stated honestly, because this is the trap this session keeps hitting:** electric load share is **not**
-gas-demand share. The index is a *gas*-weighted proxy spanning heating, power gen and industrial, and
-PJM carries substantial nuclear and coal. So 18.3% does **not** imply the correct weight, and I am not
-proposing a number from it. **The coverage gap stands independently of the weighting question** — a
-major population and industrial center inside the largest-demand BA has no station.
+**MY CAVEAT HERE WAS WRONG, IN BOTH DIRECTIONS — Greg, S109:** *"In the summer, electricity gen is 50%
+of gas demand. We found that in EIA docs."*
+
+I had hedged that electric load share is not gas-demand share because PJM "carries substantial nuclear
+and coal." Both halves of that are wrong, and our own served data says so:
+
+| BA | `gas_mwh` | share of US gas-fired gen | `gas_share` of own stack |
+|---|---|---|---|
+| **PJM** | 1,045,767 | **23.2%** | **0.4286** |
+| MISO | 650,342 | 14.4% | 0.346 |
+| ERCO | 503,267 | 11.2% | 0.3048 |
+| SOCO | 393,197 | 8.7% | 0.5116 |
+| SWPP | 190,641 | 4.2% | 0.2047 |
+| CISO | 17,448 | 0.4% | 0.0411 |
+
+**PJM's gas share is HIGHER than MISO's or ERCOT's, and PJM is the single largest gas-burning BA in the
+country at 23.2% of national power-sector gas burn.** And the 50% figure is corroborated independently
+by our own state: `grid_stack.est_gas_burn_bcfd` reads **34.4 Bcf/d** against a summer total US
+consumption on the order of 70 Bcf/d — roughly 48%.
+
+**THE REAL CONSEQUENCE IS BIGGER THAN A REWEIGHT: THE WEIGHTS MUST BE SEASONAL.**
+
+- **Winter** — gas demand is dominated by residential/commercial **heating**. Population/heating-weighted
+  metros are the right basis. The current table is a plausible shape for this season.
+- **Summer** — **~50% of gas demand is power burn**. The right basis is **gas-fired generation by
+  region**, not heating population. A metro's summer weight should track the gas burn of the BA it sits
+  in, which is a completely different distribution: CISO is 4.8% of electric demand but **0.4%** of gas
+  generation, while SOCO burns gas for 51% of its stack.
+
+**A single static weight table cannot be correct in both seasons, and ours is static.** That is a
+misspecification of the SLOPE instrument — the channel P0 just made the top build priority — in the
+exact season G22 sits in, and the season where we just measured a missed hill of **−1,815**.
+
+It also lands squarely on existing doctrine: the brain's **SEASONAL SALIENCE SLIDER** (S101, S1/S2/S3)
+already says weather salience shifts by season. The degree-day index it reads has no such shift.
+
+**The instrument for the summer half already exists and is served daily:** `grid_stack.bas[*].gas_mwh`
+and `gas_share`, per BA, plus `est_gas_burn_bcfd`. No new feed is needed to build the summer weighting —
+only the reconciliation and the seasonal switch.
+
+**The coverage gap compounds it:** Ohio sits inside PJM, the largest gas-burning BA, and has no station
+at all. In a summer block that is a hole in the heaviest power-burn region in the country.
 
 **The deeper issue: `STATION_WEIGHTS_RAW` is a hand-set table with no recorded provenance and has never
 been validated against actual gas consumption.** That is the same species as every other defect this
@@ -172,19 +209,26 @@ block, one direction, invisibly.
 
 **PROPOSED AS A BUILD (measurement first, no weights invented):**
 
-1. **Reconcile the existing weights against EIA state-level natural gas consumption** (residential +
-   commercial + industrial + electric power, which EIA publishes by state and month). That is the
-   independent source the table has never been checked against.
-2. **Add the missing metros** — Columbus/Cleveland or Cincinnati for Ohio, and Baltimore — weighted from
-   that reconciliation, not from judgement.
-3. **Record the provenance in the feed**, so the next reader can see what the weights are derived from
-   and re-derive them. Today they are bare literals.
-4. **Re-run the walked blocks on the corrected index** and measure whether the slope channel moves. If
-   G22's hill reads steeper or flatter under corrected weights, that is a direct measurement of how much
-   the weighting error was costing — and it is checkable, because the actual block cum (+470) is known.
+1. **SEASONAL WEIGHTS — the headline.** Two tables, not one. Winter keyed to heating consumption; summer
+   keyed to **gas-fired generation by region**, since ~50% of summer gas demand is power burn. Blend
+   through the shoulders rather than switching hard, consistent with the seasonal salience slider.
+2. **Reconcile both against EIA state-level natural gas consumption** — residential + commercial +
+   industrial + electric power, published by state and month. That is the independent source the table
+   has never been checked against, and it decomposes by sector, which is exactly what the seasonal split
+   needs.
+3. **Build the summer table from data already on disk** — `grid_stack.bas[*].gas_mwh` / `gas_share` is
+   served daily per BA. No new feed required for the summer half.
+4. **Add the missing metros** — Ohio (Columbus/Cleveland/Cincinnati) and Baltimore — weighted from that
+   reconciliation, not from judgement. Ohio sits in the largest gas-burning BA and has no station.
+5. **Record the provenance in the feed.** Today the weights are bare literals with no derivation.
+6. **Re-run the walked blocks on the corrected index** and measure whether the slope channel moves. G22
+   is the natural test: it is a summer block, its actual cum (+470) is known, and the blind missed the
+   hill by −1,815. If the corrected summer weighting steepens the hill, that is a direct measurement of
+   what the misspecification was costing.
 
-**Falsifier:** if the reconciled weights land within noise of the hand-set ones, the table was fine and
-only the coverage gap needs filling. Either outcome is a real result and worth having.
+**Falsifier:** if the reconciled weights land within noise of the hand-set ones — and if the summer and
+winter tables turn out similar — the table was fine and only the coverage gap needs filling. Either
+outcome is a real result worth having, and both are cheap to test.
 
 *The measurement below stands and explains the down lean. What changed under P0 is the remedy: the
 answer is not to re-point these bars at CDD levels, it is that a LEVEL bar is the wrong instrument.
