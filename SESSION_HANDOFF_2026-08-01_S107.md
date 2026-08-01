@@ -145,7 +145,21 @@ Adjudicated: **60/61 incumbents byte-identical**, all non-play sections byte-ide
 ## STATE OF THE WALK
 
 - **G19 COMPLETE**: blind 4/10 err 939 -> refine r1 10/10 err 79 -> **refine r2 10/10 err 34**.
-- **G20 BLIND**: see the drop-in box for exact status at close.
+- **G20 BLIND: NINE of ten days committed, NOT coordinated, NO score, NO render.** The session closed
+  with specialist B still running on its single day, 20260601. The coordinator guard hard-fails on a
+  missing owner, so the block cannot be assembled until B's number exists. What is on disk and
+  committed:
+
+  ```
+  0525 A  +180      0529 E  -380     0603 C  +480
+  0526 C  -280      0601 B  MISSING  0604 D  -450
+  0527 C  -500      0602 C  +250     0605 E  -500
+  0528 D  +150
+  ```
+
+  To finish: re-run specialist B for 20260601 ONLY (wave 3, consuming A's committed bridge in
+  `grp20_mbo_specialist_A.json` and E's 0529 `handoff_out`), then bridge + coordinate + render per
+  the drop-in's step 1. Everything else G20 needs is committed and does not need re-running.
 - **G21, G22 staged and PASSING state_health.**
 - **G23 is BLOCKED and must NOT be run**: `weather` genuinely missing 2026-07-14..07-17 (the
   degree-day store ends 07-13). A real data gap, not a path bug. The gate is holding it back

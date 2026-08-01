@@ -50,9 +50,13 @@ data/storage_consensus`, `eia/ -> data/eia_surprise.json` (a FILE).
 
 - **Brain s103.2, 62 plays.** Backup `ng_brain_s103.1_backup.json`.
 - **G19 COMPLETE**: blind 4/10 err 939 -> refine r1 10/10 err 79 -> **refine r2 10/10 err 34**.
-- **G20 blind**: status at close is in the S107 handoff's headline. If the coordinate step did not
-  run, the five specialist files are committed under `forecasts/grp20_mbo_specialist_{A..E}.json`
-  and the block is one bridge + one coordinate away from a score.
+- **G20 blind: NINE of ten days committed, NOT coordinated, NO score.** A, C, D and E are done and
+  committed (`forecasts/grp20_mbo_specialist_{A,C,D,E}.json`). **Specialist B never finished** - it
+  owns exactly one day, **20260601**, and the coordinator guard hard-fails on a missing owner, so the
+  block cannot be assembled without it. Committed numbers:
+  `0525 A +180 | 0526 C -280 | 0527 C -500 | 0528 D +150 | 0529 E -380 | 0601 B MISSING |
+  0602 C +250 | 0603 C +480 | 0604 D -450 | 0605 E -500`.
+  **Re-run B for 20260601 only** - nothing else needs re-running.
 - **G21, G22 staged and PASSING `state_health`.**
 - **G23 BLOCKED - do NOT run it.** `weather` genuinely missing 2026-07-14..07-17 (the degree-day
   store ends 07-13). Extend `nws_temp` four days, restage, confirm the gate passes.
