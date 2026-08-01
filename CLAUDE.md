@@ -1,4 +1,59 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-01, Session 107)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-01, Session 108)
+
+## S108 — G20 DONE + G21 WALKED + **THREE MORE DATA HOLES** + brain s103.2 -> s103.6 (67 plays) (read `SESSION_HANDOFF_2026-08-01_S108.md` + `DROP_IN_S109.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`.** **G20 COMPLETE**: blind 6/10 err 788 ->
+r1 10/10 err 79 -> **r2 10/10 err 64**, drift -2560 -> -360. **G21 COMPLETE (r1)**: blind 5/10 err 632
+-> **refine 10/10, EVERY DAY UNDER 100, worst day 80**, five direction flips each on named evidence.
+
+**THE SCORING RULE CHANGED (Greg, load-bearing): WE CANNOT AVERAGE ABOVE AND BELOW.** A day high by
+4,000 and a day low by 4,000 net to ZERO on a forecaster that was catastrophically wrong twice. And
+**mean error is a dashboard number, never a diagnosis — FIX OFF INDIVIDUAL EVENTS.** Measured, with
+"survives" = |drift| as a share of total absolute error: G17 22% / G18 45% / G19 25% / G20 32% /
+**G21 15%** — so drift flatters G21 MORE than any block. Honestly: drift -2560 -> +960 is a "62%
+improvement"; **sum|err| 7880 -> 6320 is a 20% improvement**; the gap is cancellation. The lean fix
+DE-CORRELATED the errors, it did not shrink them. `blind_score_nonpooled.py` prints all four together.
+**The cost of ignoring this, measured**: G20 credited D's pre-print generator with 2,090 FROM DAY NETS,
+intraday check never run — G21 found the SELECTION limb survives 4/4 and the **TIMING limb is refuted
+1 of 4** (on its own firing day the 06:00-10:00 window delivered ZERO; onset 11:06, 36 min AFTER the
+print). **A right day-net carried a false mechanism into the brain, and the mechanism is what gets
+extrapolated.** s103.6 RETRACTS it.
+
+**THE PERSISTENT DOWN LEAN IS GONE** (blind cum -2040 / -1720 / -1220 / -700 -> **+740**), traced to
+**THE B_SHARE NORMALIZATION DEFECT**: every `*_b_share` divided by TOTAL volume while the tape carries
+a third side value ('N') worth **13.49%** of volume — denominator only. Served mean 0.4078, clearing
+0.50 on **5 of 223 sessions**; two-sided mean **0.4999** (dead on the 50/50 physics requires), clearing
+on 107. Not a constant shift (corr 0.532; the two disagree about the 0.50 side **45.7%** of the time).
+`session_signed_flow` was never affected, which is why nothing looked broken. Fixed ADDITIVELY. **The
+first fix was INCOMPLETE** — C found the semantic also lives in PROSE ("under a sub-0.50 sell tape") on
+a SIGN play; **a semantic can live in prose as well as in a bar**.
+
+**HOLES #7 AND #8, each a NEW KIND.** S107's six were all EMPTY and `state_health` was built for that.
+**#7 the `nws_temp` PARTIAL FETCH TAIL** — the last day of any pull is computed on incomplete hours and
+is WRONG while reporting `coverage 1.0` (07-13 read 8.034/mod_cool as a tail, 13.548/hard_cool once a
+later day was fetched — a 68% error and a REGIME FLIP inside G23's window). **#8 `tape_conditions`
+OFF-INSTRUMENT after a roll** — the source is picked by "whichever store has MORE trades", which after a
+roll is the DEFERRED contract: G21 served **18-60%** of the real tape with signed flow **SIGN-FLIPPED**
+on the blind's ONLY open-time flow channel, a channel declared `never_masked`. **The doctrine says the
+blind's one deliberate mask is the PRICE CURVE — this was an undeclared handicap on 4 of 10 days.** It
+is the hardest of the eight because the block is populated, self-consistent, and recomputes coherently
+off a different contract: it MANUFACTURED a false mechanism (C's "week-2 thinning", three corroborating
+markers, all withdrawn) and **D independently "verified" the artifact by checking internal consistency.
+Consistency was never the test** — only RECONCILIATION against the scored leg settles it. Fixed at the
+source; `tape_reconcile.py` blocks the rest. G20 clean, G21 4 days, G22 clean, G23 1 day (now fixed).
+
+**ALSO BUILT**: `session_bootstrap.py` (one command from empty to ready); the SessionStart hook restores
+automatically and **no-ops LOUDLY** without creds; **stage-time exit states** (a group staged at S108+
+runs BOTH rounds with NO data plane); the blind coordinator speaks the engine schema natively (killing a
+per-run hand-built alias that died with the scratchpad); `chain_regime_age_sessions`; `phase_volume_lots`
+(E, against its OWN play); `squeeze_watch`'s calendar limb derived live (it reported `active: false` at
+dte=14 against a live 5 — a confident FALSE NEGATIVE inside its own window); **the MONDAY STUB fix**
+(`prior_full_session` — Mondays were served 0.2-3% of a normal tape, the Friday never consulted).
+
+**OPEN, highest value first**: the **refine/blind FILENAME COLLISION** (third occurrence — on G21 SIX OF
+TEN days were about to assemble BLIND numbers labelled as the refine; only a hash against the archive
+catches it); the live orchestrator; G21 round 2 (not run). **KEYS DO NOT ROTATE DURING THE WALK.**
+**NEXT: G22**, staged and reconciling on s103.6.
 
 ## S107 — G19 ROUND 2 (err 34) + G20 BLIND SCORED + **SIX SILENT DATA HOLES** + brain s103.2 (62 plays) (read `SESSION_HANDOFF_2026-08-01_S107.md` + `DROP_IN_S108.md`)
 
@@ -378,81 +433,24 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** brain **s103.2 (62 plays)**; the ONE-AGENT regime holds — **G19 COMPLETE** (blind
-4/10 err 939 -> refine r1 10/10 err 79 -> **r2 10/10 err 34**, zero direction changes) and **G20 BLIND
-SCORED 6/10 err 788 with a -2560 FORWARD-CURVE DRIFT** (the hit-rate flatters it; the curve is 26c
-low, same down-lean-through-a-rally shape as G19). **NEXT = the G20 REFINE.** S107's real work was
-finding **SIX silently-empty decision-state blocks** — `vol_regime` dead since G16, `weather` dead on
-every staged group — each indistinguishable from a deliberate mask; all closed, plus `state_health.py`
-(a stage-time completeness assertion that hard-fails an empty block) and `restore_substrate.py` (the
-container does NOT keep `data/`). G21/G22 staged and passing; **G23 BLOCKED** on 4 missing weather
-days. **Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
-brain **s102.5 (47 plays)**; the WALK is at **G16 DONE -> merged; G17 (Apr 12-24,
-two-leg May->June seam ~0421) = S105's opener, run as the FIVE-specialist blind under the Friday/Monday
-focus doctrine (Greg S104: Friday is the cascade root; Sunday->2nd-Friday windows; coordinator guarded;
-honest under-100)**. PARALLEL **MBO CAUSAL-REFINEMENT TRACK** (branch
-`chatgpt/ng-forecaster-s103-audit`): the first full MBO 5-specialist refine ran on **G15** = blind 9/12
-(err 526) -> **refined 12/12 (err 72)** (two-leg NGJ26->NGK26 basis; the old blind stays the CORE
-predictor, MBO is a POSTERIOR UPDATE). Honest verdict: MBO TRADE-FLOW helps, MBO BOOK layer hurts if
-trusted raw (stood down all 12 days); the working discriminator is signed-flow-vs-price CONVICTION per
-phase, DIRECTION stays with the D-1 trade tilt. Brain merged to **s102.4 (36 plays, doctrine +
-findings)**. Renders now FORM-FIT the intraday p50 path (squiggle fixed = unwrapped the 2-hourly clock).
-The **HE24->HE1 handoff BUILDER is built** (`he24_he1_handoff.py` -> `g15_he24_he1_handoffs.json`); the
-round-2 specialist re-run with it injected is DEFERRED to next session (committed round-1 12/12 intact),
-along with a coordinator-only GUARD + an actual-curve-only render. Then G16/G17 MBO. Read
-`research/kalshi/G15_MBO_REFINE_HANDOFF_S103.md` + `DROP_IN_S104_MBO_REFINE.md`. **CANONICAL DROP-IN
-AGENT FILES are live in `research/kalshi/agents/` (blind panel + refine) + continuous_rt.py for renders -
-USE THEM, do not re-author per group; only the brain + group data change.** **OPEN RECURRING PROBLEM handed to ChatGPT: `NG_FORECASTER_PROBLEM_MEMO_S103.md`** (blind
-30-70% vs refine 90-100%; magnitude error flips sign block-to-block from mis-scoped lessons; selector
-averages bimodal splits instead of selecting; order-flow direction nowcast under-weighted). the
-futures→Kalshi LAG is the live edge — **NYMEX is the CANARY, Kalshi the delayed follower.**
-**THE DATA DOCTRINE (Greg, LOAD-BEARING, stated repeatedly): BOTH AGENTS GET EVERYTHING — THE KITCHEN
-SINK — TO CHOOSE FROM; THE BLIND'S ONE AND ONLY DELIBERATE MASK IS THE PRICE CURVE.** Blind AND refine
-both get all fundamentals/structure/calendar/positioning/weather/storage + the FULL MBO order-flow read
-(signed-flow imbalance, UNBALANCED SIDES = buy-vs-sell aggressor, absorption) of every decision-legit
-window (prior sessions in full + the current day's pre-decision reopen/overnight flow). The blind is
-withheld ONLY the price curve (settles/nets/levels/spreads/target-day price path it forecasts) — nothing
-else; we do NOT hamstring it, it is the FORWARD-CURVE BUILDER. `dip_imb_level` is USABLE on
-decision-legit windows (the old ban is repealed). Causality still applies (no FUTURE data — physics, not
-a mask). PROCESS (Greg S105): stage ALL groups' data turnkey-ready, but RUN one group (2 weeks) at a
-time — running ahead is scope creep. **git =
-CODE, S3 = ALL DATA. NEVER pool/average as the final word — each event individually; an extreme rate is a
-LEAD, individual numbers pinpoint the WHEN (Greg S92).** **S92 = the NG intraday FORECASTER
-program + DIRECTION cracked.** **S93 = the coach agent moved INTO AWS: box `i-08cee...` driveable via SSM,
-Bedrock LIVE (us-east-1; opus-4-1/haiku-4-5 via boto3), Claude Code installed — one Claude-Code model-preflight
-snag left before the LLM invokes; OpenAI written in as an alternative agent backend. Brain unchanged (s92.1); loop
-not yet run on the box. See `SESSION_HANDOFF_2026-07-14_S93.md` + `deploy/aws/COACH_AGENT_SETUP_S93.md`.**
-**S94 = PIVOT: run the loop IN THE CLAUDE ENV (the agent's brain = the session model; drop the AWS box/coach
-agent), and go CHRONOLOGICAL. Ran Groups 2/3/4/5 (14-cal-day = 10-trading-day CONSECUTIVE blocks) + merged
-each BLINDED into the brain -> now **s92.6, 12 plays** (PER-EVENT, NO averaging — Greg's hard rule). The
-walk: G3 down (storage surplus called it) -> G4 reversed UP -> G5 a V — so the agent's block-OPEN direction
-kept landing CONTRA the market -> NEW play `direction.cross_block_reversion` (n=3: LEAN AGAINST the prior
-block, don't extend it). Weekend-gap Monday REVERSALS are huge + under-sized (1020 +$2770 vs guessed $580);
-intraday direction still the open problem; fundamentals = slow backdrop not intraday timing. BUILT: running
-storage-capacity + weather + weekday-HOLIDAY conditioning in `decision_state`; block-start ACTUAL last-hour
-anchor; hr24->hr1 day-into-day reasoning + turn-detector; fast grep+npz scoring; continuous overlay. All 18
-corrupt Mondays (Sep29->Jan26) re-pulled clean on S3. READ `research/kalshi/REFINE_DIRECTIVE_S94.md` +
-`SESSION_HANDOFF_2026-07-14_S94.md`. NEXT (build left for next session): (1) the CONTINUOUS-CURVE forecast
-representation (days still don't flow — schema+render+scorer so the guess is ONE unbroken path from the
-anchor); (2) Group-6 (Oct 22->) on s92.6 + per-group blinded merge; (3) the UNBLINDED refine off the
-consecutive groups; (4) walk into WINTER.** Built the full-toolbox per-leg characterizer (`month_characterize` now carries
-the exhaustion suite + dipole + turning-point fingerprint + surprise/curve) and ran per-event learn/blind/hunt
-passes on 12 warm-season NG days: (1) **NG DIRECTION is callable** — `dip_imb_level` (order-flow imbalance)
-sorts a leg's side 7%/93%, monotone, **OOS-validated 100% on strong flow (34/34, 3 unseen days)**; a NOWCAST,
-ideal for the Kalshi lag. (2) **Magnitude staircase** ($350 crossing = 92% ride, $500 = 100%) + grind-vs-spike;
-book/dipole/exhaustion = noise for SHAPE (magnitude confounds). (3) **Turning point = far-side liquidity
-RECRUITMENT, not consumption** (held legs grow the far ladder; reversed tops eat it). (4) Built the **coach
-"brain"** `research/kalshi/knowledge/ng_brain.json` (versioned plays) + the self-growing loop (load brain ->
-forecast blind -> merge -> refine -> converge -> the agent becomes the COACH calling plays). (5) Year-box:
-**every Monday was corrupt** (Tue->Tue weeks -> Monday=last-day + `_flush` 'wb' clobber) — root-caused, FIXED
-(`_flush` 'ab' append) + DOW-naming + NG Mondays re-downloaded clean; box at ~Oct. (6) NYMEX-forward workflow
-rerouted git->S3, NWS-hourly RT collector built (need Greg's 3 GH secrets).
-The loop MACHINERY is BUILT + tested (`coach_replay.py` executable playbook, `forecast_harness.py` helpers,
-`FORECASTER_RUNBOOK_S93.md` the operating manual). **NEXT (S93) = RUN THE LOOP (brain -> forecast new group blind
--> overlay -> merge -> refine, walk the year); prove the plays net-of-fee (coach replay); the NYMEX-OPTIONS survey
-(Greg: the real trading vehicle for our NG-move edge, very soon); characterize NG Mondays; verify box year +
-reconcile + final Monday sweep; add GH secrets; rotate keys.**
-Detail: `SESSION_HANDOFF_2026-07-14_S92.md`, `KICKOFF_2026-07-15_S93.md`, `research/kalshi/FORECASTER_RUNBOOK_S93.md`.
+**One-line state:** brain **s103.6 (67 plays)**. **G20 COMPLETE** (blind 6/10 err 788 -> r1 79 -> **r2 64**,
+drift -2560 -> -360) and **G21 COMPLETE r1** (blind 5/10 err 632 -> **refine 10/10, every day under 100,
+worst day 80**). The persistent DOWN lean is GONE (blind cum -2040/-1720/-1220/-700 -> **+740**) - traced
+to the **b_share NORMALIZATION defect** (13.49% of volume is unsided and sat in the denominator only;
+served mean 0.4078 clearing 0.50 on 5 of 223 sessions, two-sided mean 0.4999 clearing on 107). But
+**read it on the honest scoreboard**: drift is a SUM OF SIGNED ERRORS and CANCELS - G21's drift survives
+only 15% of its absolute error, so the real improvement is sum|err| 7880 -> 6320 (20%), not the 62% the
+drift implies. **MEAN ERROR IS A DASHBOARD NUMBER, NEVER A DIAGNOSIS - FIX OFF INDIVIDUAL EVENTS** (Greg,
+S108): G20 banked D's pre-print generator from DAY NETS and G21's per-leg decomposition refuted its
+TIMING limb 1 of 4 while the SELECTION limb survived 4/4 - s103.6 retracts it. **EIGHT data holes now**,
+S108 adding #7 (`nws_temp` partial fetch TAIL - a 68% error and a regime flip while reporting
+`coverage 1.0`) and **#8 (`tape_conditions` OFF-INSTRUMENT after a roll** - 18-60% of the real tape with
+signed flow SIGN-FLIPPED on the blind's only open-time flow channel, an undeclared handicap on 4 of 10
+days; it MANUFACTURED a false mechanism and one specialist "verified" the artifact by checking internal
+CONSISTENCY - consistency was never the test). Both fixed at the source; `tape_reconcile.py` blocks the
+rest. **G22 and G23 staged, passing and reconciling on s103.6. NEXT = G22.** OPEN and highest value: the
+refine/blind **FILENAME COLLISION** (third occurrence; six of ten G21 days were about to assemble BLIND
+numbers labelled as the refine). **Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.
