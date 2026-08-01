@@ -1,0 +1,396 @@
+{
+ "group": "g22",
+ "phase": "blind",
+ "brain_version": "s103.6",
+ "anchor": 3.198,
+ "sum_abs_err_usd": 5965,
+ "mean_abs_err_usd": 596,
+ "dir_hits": 4,
+ "n": 10,
+ "days": [
+  {
+   "date": "20260622",
+   "dow": "Mon",
+   "owner": "B",
+   "guess_day_move_usd": -420,
+   "overnight_gap_usd": 20,
+   "path_p50": [
+    [
+     8,
+     -60
+    ],
+    [
+     9,
+     -130
+    ],
+    [
+     10,
+     -190
+    ],
+    [
+     12,
+     -270
+    ],
+    [
+     14,
+     -360
+    ],
+    [
+     16,
+     -440
+    ]
+   ],
+   "actual_day_move_usd": 650,
+   "err_usd": -1070,
+   "dir_hit": false
+  },
+  {
+   "date": "20260623",
+   "dow": "Tue",
+   "owner": "C",
+   "guess_day_move_usd": -430,
+   "overnight_gap_usd": -60,
+   "path_p50": [
+    [
+     8,
+     -40
+    ],
+    [
+     10,
+     -140
+    ],
+    [
+     12,
+     -260
+    ],
+    [
+     14,
+     -390
+    ],
+    [
+     16,
+     -370
+    ]
+   ],
+   "actual_day_move_usd": -730,
+   "err_usd": 300,
+   "dir_hit": true
+  },
+  {
+   "date": "20260624",
+   "dow": "Wed",
+   "owner": "C",
+   "guess_day_move_usd": -200,
+   "overnight_gap_usd": -30,
+   "path_p50": [
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     -80
+    ],
+    [
+     12,
+     -40
+    ],
+    [
+     14,
+     -120
+    ],
+    [
+     16,
+     -170
+    ]
+   ],
+   "actual_day_move_usd": 800,
+   "err_usd": -1000,
+   "dir_hit": false
+  },
+  {
+   "date": "20260625",
+   "dow": "Thu",
+   "owner": "D",
+   "guess_day_move_usd": -110,
+   "overnight_gap_usd": -30,
+   "path_p50": [
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     -10
+    ],
+    [
+     11,
+     -60
+    ],
+    [
+     12,
+     -95
+    ],
+    [
+     14,
+     -70
+    ],
+    [
+     15,
+     -78
+    ],
+    [
+     16,
+     -80
+    ]
+   ],
+   "actual_day_move_usd": -60,
+   "err_usd": -50,
+   "dir_hit": true
+  },
+  {
+   "date": "20260626",
+   "dow": "Fri",
+   "owner": "E",
+   "guess_day_move_usd": 250,
+   "overnight_gap_usd": 0,
+   "path_p50": [
+    [
+     8,
+     -40
+    ],
+    [
+     10,
+     60
+    ],
+    [
+     12,
+     190
+    ],
+    [
+     14,
+     310
+    ],
+    [
+     15,
+     290
+    ],
+    [
+     16,
+     250
+    ]
+   ],
+   "actual_day_move_usd": 230,
+   "err_usd": 20,
+   "dir_hit": true
+  },
+  {
+   "date": "20260629",
+   "dow": "Mon",
+   "owner": "B",
+   "guess_day_move_usd": 325,
+   "overnight_gap_usd": 480,
+   "path_p50": [
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     95
+    ],
+    [
+     12,
+     25
+    ],
+    [
+     14,
+     -70
+    ],
+    [
+     15,
+     -120
+    ],
+    [
+     16,
+     -155
+    ]
+   ],
+   "actual_day_move_usd": -1110,
+   "err_usd": 1435,
+   "dir_hit": false
+  },
+  {
+   "date": "20260630",
+   "dow": "Tue",
+   "owner": "C",
+   "guess_day_move_usd": -420,
+   "overnight_gap_usd": -30,
+   "path_p50": [
+    [
+     8,
+     0
+    ],
+    [
+     9,
+     -80
+    ],
+    [
+     10,
+     -180
+    ],
+    [
+     11,
+     -250
+    ],
+    [
+     12,
+     -190
+    ],
+    [
+     13,
+     -260
+    ],
+    [
+     14,
+     -330
+    ],
+    [
+     15,
+     -370
+    ],
+    [
+     16,
+     -390
+    ]
+   ],
+   "actual_day_move_usd": 780,
+   "err_usd": -1200,
+   "dir_hit": false
+  },
+  {
+   "date": "20260701",
+   "dow": "Wed",
+   "owner": "C",
+   "guess_day_move_usd": -380,
+   "overnight_gap_usd": -10,
+   "path_p50": [
+    [
+     8,
+     0
+    ],
+    [
+     9,
+     30
+    ],
+    [
+     10,
+     -60
+    ],
+    [
+     11,
+     -170
+    ],
+    [
+     12,
+     -250
+    ],
+    [
+     13,
+     -320
+    ],
+    [
+     14,
+     -370
+    ],
+    [
+     15,
+     -380
+    ],
+    [
+     16,
+     -370
+    ]
+   ],
+   "actual_day_move_usd": -500,
+   "err_usd": 120,
+   "dir_hit": true
+  },
+  {
+   "date": "20260702",
+   "dow": "Thu",
+   "owner": "D",
+   "guess_day_move_usd": 200,
+   "overnight_gap_usd": 40,
+   "path_p50": [
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     30
+    ],
+    [
+     11,
+     -140
+    ],
+    [
+     12,
+     -60
+    ],
+    [
+     14,
+     80
+    ],
+    [
+     16,
+     160
+    ]
+   ],
+   "actual_day_move_usd": 0,
+   "err_usd": 200,
+   "dir_hit": false
+  },
+  {
+   "date": "20260703",
+   "dow": "Fri",
+   "owner": "A",
+   "guess_day_move_usd": -160,
+   "overnight_gap_usd": -40,
+   "path_p50": [
+    [
+     8,
+     -25
+    ],
+    [
+     10,
+     -110
+    ],
+    [
+     11,
+     -155
+    ],
+    [
+     12,
+     -125
+    ],
+    [
+     13,
+     -120
+    ],
+    [
+     14,
+     -120
+    ],
+    [
+     16,
+     -120
+    ]
+   ],
+   "actual_day_move_usd": 410,
+   "err_usd": -570,
+   "dir_hit": false
+  }
+ ]
+}
