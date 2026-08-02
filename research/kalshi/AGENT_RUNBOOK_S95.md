@@ -1,3 +1,7 @@
+> **HISTORICAL (S110). SUPERSEDED by `agents/RUN_SOP.md` (the spec book).** Do not follow
+> the skeletons below - they are the S95-era record, kept for provenance only. The binding
+> run procedure with verbatim spawn templates lives in RUN_SOP.md and only there.
+
 # AGENT RUNBOOK — S95 (how to re-spin the two agent steps of the NG forecaster loop)
 
 > **S103 UPDATE (Greg-ordered): the agent prompts are now CANONICAL DROP-IN FILES in

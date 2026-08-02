@@ -36,6 +36,11 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.2 (S110): TURNAROUND MEMO adoptions (Greg's blanket go, "do your plan completely"): the
+  FIX-VERIFICATION rule and the FEED-CONSUMER rule added to STEP 2 / STEP 0.5 below; QA CADENCE
+  added to STEP 7 (platform audit recurs every 4 groups or monthly, whichever first); DECISIONS.md,
+  PLANT_MAP.md, KEYS.md are now standing plant documents the close-out maintains. AGENT_RUNBOOK_S95
+  marked historical (superseded by this file). First group under v1.2: g22 refine.
 - v1.1 (S110): CHANGE CONTROL section added — Greg's factory standard, quoted, adopted on his
   statement in-session. Also logged as a nonconformance specimen: the S109 auditor wrapper was
   never captured, so the S110 G23 audit ran on a re-composed wrapper (Greg: output accepted;
@@ -74,6 +79,12 @@ All commands run from `research/kalshi/` with python + numpy/pandas/matplotlib i
 - Spawn with TEMPLATE AUD-1 (appendix), slots filled by lookup only.
 - Output: `forecasts/grp{N}_state_audit.json` (schema per the role file) + prose report.
 
+## STEP 0.5 — THE FEED-CONSUMER RULE (D12, adopted S110)
+A feed enters the decision state only with a NAMED CONSUMER — a brain play, a specialist directive
+line, or another feed that reads it — or an explicit PARK note in its block ("context channel — no
+play yet"). Served-but-unread was the recurring enemy of S107–S110; presence without a reader is a
+staging defect, not a neutral fact. The QC sweep checks the consumer map.
+
 ## STEP 2 — ADJUDICATE + FIX PHASE (per `state_auditor.md` FIX PHASE rules)
 - Adjudicate each finding GO / NO-GO / DEFER. Data-plumbing defects with a committed, idempotent,
   negative-tested fix = session adjudicates and fixes. Anything touching the brain, a play's
@@ -82,6 +93,12 @@ All commands run from `research/kalshi/` with python + numpy/pandas/matplotlib i
   `adjudication` per finding id), so the audit file carries its own disposition.
 - Every fix: committed script, dry-run default, `--write` to apply, confined-diff verified,
   guards negative-tested (fires on the defect, zero false positives across historical groups).
+- **THE FIX-VERIFICATION RULE (D11, adopted S110 — the f2 lesson):** no fix is DONE until a test
+  proves the FIXED PATH EXECUTES and the guard fires on the original defect. A fix that cannot be
+  execution-verified this session (e.g. needs a data plane) is recorded as PENDING-VERIFICATION in
+  DECISIONS.md, never as done. And when a fix touches one of N parallel readers of a quantity, the
+  fix review must ENUMERATE ALL N readers (hole #9's copy-through omission and f2's dead second
+  reader were both this species).
 
 ## STEP 3 — BLIND (per-day causal slices; sequenced waves C/D/E -> A -> B)
 1. `python build_causal_slices.py {GID} --write` — must print CLEAN per day; forward_stamps notes
@@ -121,7 +138,16 @@ All commands run from `research/kalshi/` with python + numpy/pandas/matplotlib i
 ## STEP 7 — CLOSE-OUT (every session)
 - `SESSION_HANDOFF_<date>_S<n>.md` (full detail) + `KICKOFF`/`DROP_IN` for next session +
   CLAUDE.md header + `KALSHI_TRADING.md` index + this file's version log if the SOP changed.
+- Maintain the standing plant documents: `DECISIONS.md` (new/changed decisions with status),
+  `PLANT_MAP.md` (if any standing process moved), `KEYS.md` (if the inventory changed).
+- Diff this session's OPEN list against the prior handoff's — every dropped item is either
+  carried forward, closed in DECISIONS.md, or it is a nonconformance.
 - Commit + push. No emojis. Committer noreply@anthropic.com.
+
+## QA CADENCE (adopted S110)
+- The state auditor runs per group (STEP 1). The QC conformance checklist (`agents/QC_CHECKLIST.md`)
+  runs per session, by a small model, report-only. A FULL platform audit (turnaround-memo style)
+  recurs every 4 groups or monthly, whichever comes first — drift is caught by rhythm, not by pain.
 
 ---
 
