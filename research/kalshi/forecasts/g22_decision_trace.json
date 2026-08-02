@@ -9,7 +9,7 @@
   {
    "date": "20260622",
    "owner": "B",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -68,7 +68,7 @@
   {
    "date": "20260623",
    "owner": "C",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -127,7 +127,7 @@
   {
    "date": "20260624",
    "owner": "C",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -186,7 +186,7 @@
   {
    "date": "20260625",
    "owner": "D",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -247,7 +247,7 @@
   {
    "date": "20260626",
    "owner": "E",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -312,7 +312,7 @@
   {
    "date": "20260629",
    "owner": "B",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -374,7 +374,7 @@
   {
    "date": "20260630",
    "owner": "C",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -432,7 +432,7 @@
   {
    "date": "20260701",
    "owner": "C",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -490,7 +490,7 @@
   {
    "date": "20260702",
    "owner": "D",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,
@@ -550,7 +550,7 @@
   {
    "date": "20260703",
    "owner": "A",
-   "brain_version_at_trace": "s104.0",
+   "brain_version_at_trace": "s105.0",
    "inputs": {
     "state_sha": "5c5e96d22ee6706b",
     "causal_slice_sha": null,

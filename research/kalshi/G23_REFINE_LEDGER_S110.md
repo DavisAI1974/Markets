@@ -335,3 +335,154 @@ instance: 63,165 lots, 21.4 trades/min — the block's thinnest real session.
   they are the record.
 
 ---
+
+## PER-DAY, CONTINUED (the last three)
+
+### 0715 · C · blind +300 → **−50** (actual −60, err 10)
+**REASONING.** Maximum-absorption round trip: **+6,326 of net aggressor BUY across 72,162 lots — the
+block's largest tilt, 69% above the next — delivered −60.** Phases +116/+10 (hollow, 5.6% of volume),
++2,868/+40, then **+3,342 for −120 with flow_conviction NEGATIVE and `ph_absorb` TRUE**: absorption
+STRENGTHENED as the session ran. Turn down at 14:39:32, nine minutes after the settle window, then
+−410 continuous with no bounce. Posterior derived (origin-shelf terminal −10 + population-median
+post-17:00 drift −30, taken to −50 on ph3's extreme conviction); **C explicitly declined its day's
+realized −230 as fitting.**
+**IT CAUGHT MY ERROR.** The directive — and its own blind — called 0715 "the first post-roll session."
+`flow_calendar` says `in_bcom_roll` TRUE, `bcom_roll_day_n` **5**: the legs are OFFSET (GSCI
+0708–0714, BCOM 0709–0715), so 0715 is BCOM day 5 of 5 and the first clean session is 0716.
+Deterministic, never-masked, blind-available — **operator error, not a data gap** (nonconformance NC-1).
+**IT WITHDREW ITS OWN COLLISION.** The guard's `expiry_day_extension_s110` text already names
+`price_free_absorption_proxy` among the instruments that lose authority on program days — the
+precedence was in the brain all along.
+**MECHANISM CORRECTION:** the window does not SELL, it **CAPS** — usd per unit net flow 0.053 / 0.009
+/ 0.018 on 0714/0715/0716 against 0.158 and 0.092 on the clean pre-window days.
+**THE MIRROR OF 0709, six sessions apart in the same contract:** 0709 = price without flow; 0715 =
+**flow without price** (+6,210 net across 68,115 lots for −80). **usd per unit net flow 1.322 vs
+0.009 — a factor of 147.** Consequence stated: net signed flow carries essentially no magnitude
+information; the governing state is **resting depth**, which is exactly what the missing book files
+would show.
+**TWO NEGATIVES REPORTED SO NOBODY REBUILDS THEM.** `l1_book.quote_bid_share` divergence — the
+obvious blind-available absorption detector, and it reads perfectly on C's D-1 — is **null**: 9 fires,
+4 hits across G21–G23, with the diagnosed cause that the session mean spans only 0.475–0.512 while its
+own served intraday p25/p75 is [0.333, 0.667], so **the aggregation destroys it**. Also null: the
+forward-CDD-slope rescue of the burn gate (rank corr −0.033 slope, −0.017 level, +0.066 run-delta,
+−0.186 burn over 20 days — a screen, not a signal).
+**AND THE HARNESS ITEM (D26).** The render-day is scored 20:00-to-20:00 while `_information_clock`
+declares a 17:00 close, so every non-Friday scored day carries the next session's first two hours —
+**exactly 0 on 8/8 Fridays identifies the mechanism**; 32 non-Fridays run 21 neg / 9 pos / 2 zero,
+median −30, sum −1,420; on C's day it was **−230, the largest in 40 sessions and the only sign flip**
+(in-session +170 at 17:00, scored −60 = 230 of its 360 blind error). **C refused it as an excuse** —
+the tail was its own session's absorption turn to catch — but asked that it be reconciled ONCE at the
+harness rather than re-derived by each specialist.
+
+### 0706 · B · blind +500 → **+100** (actual +100, err 0)
+**THE HEADLINE: THE BLIND SCORE WAS A CANCELLATION ARTIFACT.** Graded "direction right, magnitude 5×,"
+it was wrong on **both components in opposite directions**: gap **+400 vs actual −580** (sign wrong,
+err 980) and session **+100 vs +680** (6.8× under, err 580). **Component error 1,560 behind a
+day-level score of 400 — the day number concealed 74% of the failure.** That is D4 (never average
+above and below) applying INSIDE a single day, between the gap and the session.
+**REASONING.** k3_prev = |0703 ph3 pxchg| / |ph3 flow| = |+20| / |−489| = **0.041, NUMB** — reached by
+a different road than C's void: **holiday thinness** (12,997 ph3 lots on a half-session). **Two
+independent roads into the same coefficient.** The numb ceiling (|day move| ≤ 200) was fully
+computable from the prior session's phase table before the reopen; the blind's +500 was 2.5× outside it.
+**THE QUALIFIER THAT MAKES IT TRADEABLE:** numb compresses the **NET 6.5×** (median |net| 80 vs 520)
+but the **RANGE only 1.5×** (875 vs 1,350) — **a net-suppressor, not a volatility-suppressor.** Its own
+day is the proof: +100 net wrapped around a 970 range, a 960 turn and a −840 low.
+**ITS OWN LENS REFUTED.** The 06:00–10:00 Monday catch-up window contributed **−710 / −510 / −50 /
+−360 on 4 of 4 Mondays across two groups** — the only unanimous sub-period of a Monday, negative even
+on the two Mondays that closed UP. The ratification arm is 0-for-2; retirement proposed with the
+downtrend confound declared and an explicit falsifier.
+**PROCESS GAP DECLARED:** there is **no A weekend-bridge for the 0703→0706 seam** (only the 0713 one
+ran, in G22 as well) while B's lens requires consuming a bridge before finalizing any Monday.
+
+### 0713 · B · blind +550 → **−600** (actual −620, err 20) — THE CHAIN AUDIT
+**REASONING.** Direction restored to the **D-1 session aggregate (−1,225 SELL)** — the instrument B's
+own lens names, which the blind discarded for the big-print residual (0.550 BUY) on E's instruction,
+now measured INVERTED and withdrawn by its author. B says in its own confidence field that the err 20
+is **"a wide-class-entered-at-a-justified-point result, not precision."** The day splits one level
+finer than the directive framed it: a **seam object** (gap −360 + overnight −170 = **85.5% of the
+day-move on 6.1% of the volume**) and an **inert deep-session object** — and the blind's "+150 catch-up
+ratify" was a forecast of the object that was incapable of moving.
+**THE AUDIT, in B's own order.**
+- **The TEST, primarily.** Both limbs measure demand ARRIVAL; neither has a balance-clearing term. The
+  proof it is the instrument and not the calibration: **limb A passed decisively and coherently**
+  (+1.84/+1.97/+3.25 against a +1.0 bar) — the noise filter worked perfectly and the answer still
+  inverted.
+- **The BASELINE second — and B assigns it to itself, not to A.** A flagged the July-4 comparator IN
+  ADVANCE and wrote that a FAIL would be the informative outcome. B recognised the softness in prose
+  and then cast a full PASS vote. **"A caveat that does not change the vote is not a caveat."** A's own
+  unreadable-limb rule was sitting in the file B was reading; invoking it routes to gap-only and cuts
+  the error from 1,170 to ~600–700 — a measured counterfactual.
+- **The CHAIN did not fail as process, which is why it AMPLIFIED.** *"Two verification layers delivered
+  a defective instrument with accumulated authority. Nobody anywhere asked whether the limbs measured
+  the right quantity; A's flags were all about whether they were measured correctly."*
+- **The ACCEPTANCE was B's.** No independent number anywhere in its blind; the reasoning field
+  literally disclaims authorship ("not by my override").
+**THE RULE B PROPOSES:** the owner's read comes first and in writing; executing a handed-down
+conditional yields a LIMB STATE, never a sign; disagreement ships as the finding with both numbers;
+check the failing branch is reachable before running the test; a declared-weak limb resolves
+UNREADABLE, not PASS; and never argue that following a table makes the call someone else's —
+**single ownership does not care where the sign came from.**
+**AND A DATA FINDING (exhaustive 30-phase audit):** the served `ph_absorb` flag fires only on
+sign-disagreement with a flow floor of 370–604 lots and has **NO MAGNITUDE TERM** — it is blind to the
+three magnitude-class absorption phases where this block's regime break actually lives, including B's
+own ph3.
+
+---
+
+## THE DISSENT ON THE BURN GATE — ONE RIGHT, FOUR INCOMPLETE
+
+*(Greg asked for this explicitly: "record the instance where the one had it right and the four said it
+was wrong and why they were wrong.")*
+
+**C-0707 dissented and was RIGHT on its point.** It returned MIS-SCOPED, NOT REFUTED: the blind had
+confirmed the gate off a **holiday-Sunday grid row** that the gate's own weekday-normalization rule
+disqualifies; read on the valid comparator in that same row (`gas_chg_7d_mwh` +1,012,635,
+Sunday-over-Sunday by construction) the gate **CONFIRMED and its day delivered +160 UP**. C stated it
+plainly — *"the falsifier is NOT discharged on my day (a burn-confirmed CDD add that DID deliver)"* —
+and **declined to bank a refutation** on the nearest candidate because that day is roll-confounded.
+
+**WHY THE OTHER FOUR WERE WRONG ON THE TALLY.** The refuting record was assembled as *"3 clean
+up-fires, 0 of 3 delivered"* (0708, 0715, 0716), with 0706 excluded as unevaluable. **0707 — a clean
+fire that DID deliver — was counted by nobody**, because it was not any refuter's own day and each
+specialist sees only its own causal slice. **Corrected record: 1 of 4, not 0 of 3.**
+
+**THE RETIREMENT STILL STANDS, AND THAT IS THE POINT.** It never rested on the tally. The two
+arguments that kill the play are MECHANISM arguments and survive C-0707's instance untouched:
+D-0709's **constant limb** (`d_gw_cdd` h1 positive **20/20** across two groups — a limb that never
+changes sign cannot gate, so the gate cannot have been what discriminated on 0707 either; something
+else carried that day), and C-0715's **pre-graft pair from inside the play's own evidence list** (G22
+0624 and 0625, IDENTICAL served burn 39.3, delivering +800 and −60 on consecutive sessions — the play
+cites 0624 and is silent on its twin). **A play can be right on a day and still be an instrument that
+cannot discriminate.**
+
+**THE STRUCTURAL LESSON, now merged with the retirement:** per-day causal isolation means no
+specialist sees another's instance, so **any TALLY assembled from independent slices is systematically
+incomplete.** Counts must be RECOMPUTED AT THE COORDINATOR across all ten days before any tally-based
+claim is merged. Mechanism claims are unaffected.
+
+---
+## DECISION CLAIMS (machine-checked - do not hand-edit; regenerate with `python decision_trace.py claims <gid>`)
+
+| date | owner | phase | number | decision_id |
+|---|---|---|---|---|
+| 20260706 | B | blind | +500 | `89c03fae585e` |
+| 20260706 | B | refine_r1 | UNNUMBERED | `188d711d3cd8` |
+| 20260707 | C | blind | -350 | `ce334024c0ef` |
+| 20260707 | C | refine_r1 | +150 | `a760f0fb5616` |
+| 20260708 | C | blind | +250 | `def9dc86f22c` |
+| 20260708 | C | refine_r1 | -520 | `d468d01a754d` |
+| 20260709 | D | blind | -250 | `daffbfb3dc6f` |
+| 20260709 | D | refine_r1 | UNNUMBERED | `7ecaea90a3ff` |
+| 20260710 | E | blind | -150 | `9a1f160c60a3` |
+| 20260710 | E | refine_r1 | UNNUMBERED | `af50d1c723a2` |
+| 20260713 | B | blind | +550 | `be8edf2fe464` |
+| 20260713 | B | refine_r1 | UNNUMBERED | `a05c683f2117` |
+| 20260714 | C | blind | +280 | `e4ec84ff19b8` |
+| 20260714 | C | refine_r1 | +170 | `9d23b5c55fde` |
+| 20260715 | C | blind | +300 | `8cc6e647e781` |
+| 20260715 | C | refine_r1 | -50 | `aa0cda58aa33` |
+| 20260716 | D | blind | +300 | `37556a8d641c` |
+| 20260716 | D | refine_r1 | UNNUMBERED | `996b9c7096fa` |
+| 20260717 | E | blind | +180 | `29ea78acb388` |
+| 20260717 | E | refine_r1 | +180 | `29ea78acb388` |
+

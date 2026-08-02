@@ -260,3 +260,28 @@ correct down-read* to a −150 floor against a −660 actual, the burn-conversio
 two-sided forward record on its first outing, and its own falsifier is the thing to test.
 
 ---
+## DECISION CLAIMS (machine-checked - do not hand-edit; regenerate with `python decision_trace.py claims <gid>`)
+
+| date | owner | phase | number | decision_id |
+|---|---|---|---|---|
+| 20260706 | B | blind | +500 | `89c03fae585e` |
+| 20260706 | B | refine_r1 | UNNUMBERED | `188d711d3cd8` |
+| 20260707 | C | blind | -350 | `ce334024c0ef` |
+| 20260707 | C | refine_r1 | +150 | `a760f0fb5616` |
+| 20260708 | C | blind | +250 | `def9dc86f22c` |
+| 20260708 | C | refine_r1 | -520 | `d468d01a754d` |
+| 20260709 | D | blind | -250 | `daffbfb3dc6f` |
+| 20260709 | D | refine_r1 | UNNUMBERED | `7ecaea90a3ff` |
+| 20260710 | E | blind | -150 | `9a1f160c60a3` |
+| 20260710 | E | refine_r1 | UNNUMBERED | `af50d1c723a2` |
+| 20260713 | B | blind | +550 | `be8edf2fe464` |
+| 20260713 | B | refine_r1 | UNNUMBERED | `a05c683f2117` |
+| 20260714 | C | blind | +280 | `e4ec84ff19b8` |
+| 20260714 | C | refine_r1 | +170 | `9d23b5c55fde` |
+| 20260715 | C | blind | +300 | `8cc6e647e781` |
+| 20260715 | C | refine_r1 | -50 | `aa0cda58aa33` |
+| 20260716 | D | blind | +300 | `37556a8d641c` |
+| 20260716 | D | refine_r1 | UNNUMBERED | `996b9c7096fa` |
+| 20260717 | E | blind | +180 | `29ea78acb388` |
+| 20260717 | E | refine_r1 | +180 | `29ea78acb388` |
+

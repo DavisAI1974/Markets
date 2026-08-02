@@ -46,6 +46,28 @@ for np_ in prop["new_plays_proposed"]:
         fail.append(f"new play {np_['id']} collides with an incumbent")
     print(f"  {'CLASH ' if clash else 'ok    '} {np_['id']:58} n={np_.get('n', '-')} {np_.get('status','')[:34]}")
 
+print("\n=== 2b. RETIREMENTS (S110): the ONE declared class allowed to mutate a key ===")
+# Additive-only is the right default - it is what stops a merge silently rewriting an incumbent. But
+# a play REFUTED on forward evidence must be able to say so, and a status is by definition a
+# mutation. So retirement is a SEPARATE, DECLARED, AUDITED class: it may touch `status` and nothing
+# else, it must carry its refuting evidence as a NEW field, and the before/after prints for the record.
+for r in prop["retirements"]:
+    pid = r["play_id"]
+    if pid not in plays:
+        fail.append(f"retirement targets missing play {pid}")
+        print(f"  MISSING PLAY  {pid}")
+        continue
+    if set(r.get("mutates", ["status"])) - {"status"}:
+        fail.append(f"{pid}: a retirement may only mutate status")
+    ev = r.get("add_field")
+    if not ev or ev in plays[pid]:
+        fail.append(f"{pid}: a retirement must ADD a NEW evidence field (got {ev!r})")
+    print(f"  retire {pid}")
+    print(f"         status: {str(plays[pid].get('status', '?'))[:44]!r} -> {r['new_status']!r}")
+    print(f"         + {ev}  ({len(str(r.get('value', '')))} chars of refuting evidence, new key)")
+if not prop["retirements"]:
+    print("  (none)")
+
 print("\n=== 3. simulate the merge, then diff every incumbent key-by-key ===")
 merged = copy.deepcopy(brain)
 mplays = {p["id"]: p for p in merged["plays"]}

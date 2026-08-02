@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s105.0",
+  "version": "s104.0",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -1855,8 +1855,7 @@
     "mirror_arm_still_refuted": "E adds a FIFTH datapoint (0611: 0.572 under -3,772 flow -> +620). Above-0.50 readings under a negative tape now run two up, two down, no ordering. The mirror arm stays refuted and the play stays HALF-SCOPE.",
     "the_open_slot": "C's verdict on the blind's residual is that it is TIMIDITY, not bias - the blind emitted 24% of the available move (mean |blind| 148 against mean |actual| 625 on its days). Removing the structural down-gate did not install an up-gate; it removed what was manufacturing conviction. What is left is a blind that sees the flow but not whether it will be ABSORBED - and on this block absorb_session x sflow_sign calls the day sign 9 of 10. This play is the only instrument in that slot and it covers positive-flow only.",
     "proposed_by": "C and E (G21 refine)"
-   },
-   "mis_scaled_not_refuted_tails_only_s110": "MIS-SCALED, NOT REFUTED (C-0715, on the block's cleanest instance). Its 0.553 cleared the 0.547 bar by 0.006. Across nine fires in G20-G23 the information is IN THE TAILS ONLY: bp <= 0.47 goes 3/3 non-positive across three groups, the one decisive clear (0.585) goes 1/1, and the five readings in 0.47-0.58 run +70, +230, -520, -60, -20 with NO ordering. Correct handling of the marginal 0714 clear was NO CALL. Named confound C could not separate at n=9: clean-input fires go 4/5 and program-input fires go 1/4, and two of the four program fires ARE the marginal clears. Also withdrawn: C-0715's own earlier 'proposal collision' declaration - the guard's expiry_day_extension_s110 text already names this proxy among the instruments that lose authority on program days, so the precedence was in the brain all along."
+   }
   },
   {
    "id": "flow.resting_program_inverts_aggressor_tilt",
@@ -1868,8 +1867,7 @@
    "falsifier": "A scheduled-program session where the aggressor tilt matches the day sign and the program is demonstrably the dominant participant.",
    "n": 1,
    "status": "PROPOSED, n=1",
-   "expiry_day_extension_s110": "A4 (E, n=2 spanning): the trigger set gains is_expiry_day on the ROLL-DESTINATION leg - the largest scheduled program in the NG calendar was the play's missing trigger. Instances: G21 0608 (resting/inverted form), G22 0626 (aggressor/saturated form: big prints 0.783 size-weighted on 210 while session_b_share_two_sided sat 0.509->0.504 and the residual tape net-sold). CONSEQUENCE GUARD: on program days big-print instruments (the 0.547 bar, price_free_absorption_proxy, handoff confirm/refute limbs) lose authority - read the RESIDUAL (ex-program) tape. Control: 0625 (opex+EIA, also scheduled-flow) shows none of the fingerprints.",
-   "g23_confirmation_and_scope_s110": "CONFIRMED, n=2 spanning G21/G23 (C-0715): 0715 fires its trigger (+6,326 buy tilt against a down day) with a fingerprint matching G21 0608's ph2 to within 10 units - +2,858/-120 vs +2,868/+40. The 0714 instance is a PARTIAL falsifier that does NOT discharge: limb 1 fires but 'program demonstrably dominant' is undemonstrated and 0714 was the block's thinnest full session. E-0710 adds a scope caution from the other direction: it printed opposite consequences on GSCI d2 and d3, so the play is proposed scoped to blind-only use until that is resolved."
+   "expiry_day_extension_s110": "A4 (E, n=2 spanning): the trigger set gains is_expiry_day on the ROLL-DESTINATION leg - the largest scheduled program in the NG calendar was the play's missing trigger. Instances: G21 0608 (resting/inverted form), G22 0626 (aggressor/saturated form: big prints 0.783 size-weighted on 210 while session_b_share_two_sided sat 0.509->0.504 and the residual tape net-sold). CONSEQUENCE GUARD: on program days big-print instruments (the 0.547 bar, price_free_absorption_proxy, handoff confirm/refute limbs) lose authority - read the RESIDUAL (ex-program) tape. Control: 0625 (opex+EIA, also scheduled-flow) shows none of the fingerprints."
   },
   {
    "id": "supply.lng_export_throughput_vessel_line",
@@ -1941,12 +1939,11 @@
    "evidence": "B-0622 refine (the P3 question answered mechanically); high-gain seams round-trip intraday n=2 (0615 gave back 121%, 0622 46%)",
    "forward_evidence": "n=2 misses opposite directions + n=3 sign ladder; forward test G23",
    "falsifier": "a block where a pre-committed POINT gap call lands inside +-300 on both Mondays (would license point emission again)",
-   "merged": "S110",
-   "sign_and_band_must_be_scored_separately_s110": "B-0706, measured: the emission behaved AS DESIGNED on magnitude (|580| sits inside the |150..700| band and the mid-book rung was correctly preferred to the extreme rung) and FAILED on sign, so a correct magnitude read scored as a 730 miss. A wide band that cannot straddle zero is a fuzzy point. AND THE DAY-LEVEL SCORE HID IT: gap +400 vs actual -580 (sign wrong, err 980) plus session +100 vs +680 (6.8x under, err 580) = 1,560 of component error behind a day-level score of 400 - the day number concealed 74% of the failure. This is D4 (never average above and below) applying INSIDE a single day, between the gap and the session. Emit sign and band as separate objects and score them separately."
+   "merged": "S110"
   },
   {
    "id": "weather.burn_conversion_gate",
-   "status": "REFUTED_FORWARD_TEST_S110_G23",
+   "status": "PROPOSED",
    "trigger": "any weather-slope directional lean in a CDD regime (and expected mirror in HDD once measured)",
    "read": "the slope's TRANSMISSION to gas call runs through the burn residual: gas call = weather load - renewables - absorbable. A CDD add converts only if est_gas_burn_bcfd confirms (flat-to-up) and wind is not ramping against it. WIND IS A DAMPER, NEVER A SORTER (0630 printed up under a rising-wind slice). WEEKDAY-NORMALIZE burn comparisons (Sat/Sun rows collapse mechanically; Sat-over-Sat form survives). grid_stack staleness ~D+2: a Monday reads Saturday - treat as the freshest SAME-DAY-CLASS comparison, never same-day truth.",
    "call": "burn-confirmed slope lean = full band; wind-on/burn-down = suppress the up-lean toward the constraint floor (-150..-200 class); the gate reads BOTH WAYS (an up-lean must check wind is not contradicting; a down-lean must check burn is not ramping)",
@@ -1955,8 +1952,7 @@
    "evidence": "BOTH polarities inside G22: 0629 wind +62%/burn -4.2 suppressed a realized +4.8 CDD add (-1,160); 0624 wind -22%/burn +6.3 delivered (+800); 0630 (+780 into 40.2), 0703 (+410 at 44.8 block-max); 0625/0702 confirming mirrors (D). E's two-limb flip test executed both ways (0629 HOLD DOWN vindicated; 0703 PASS UP delivered)",
    "forward_evidence": "6 in-block instances, 2 polarities, one block - forward test G23 (attribution fence: the ladder repair changed inputs)",
    "falsifier": "a burn-confirmed CDD add that fails to deliver, or a wind-on day that delivers gross-CDD anyway, in G23+",
-   "merged": "S110",
-   "forward_refutation_s110_g23": "REFUTED on its own named forward test (G23), by four specialists working independently on four day-classes. Its falsifier as written - 'a burn-confirmed CDD add that fails to deliver, in G23+' - discharges. (1) MECHANISM, D-0709: the CDD-add limb is a CONSTANT - d_gw_cdd at horizon 1 is positive 20/20 days across G22+G23 (min +0.129, max +2.256); a limb that never changes sign cannot gate, so whatever discriminating work the gate appeared to do in G22 was done by wind/burn. D tested and REJECTED the obvious repair: the forward integral does not sort direction (~10/19; the most positive forward limb of the 20 days delivered -60). (2) RECORD, C-0708: three clean up-fires in G23 - 0708 (-520), 0715 (-60), 0716 (-20) - 0 of 3 delivered; 0706 excluded honestly as unevaluable. (3) BOTH POLARITIES, E-0710 (the play's own author): the up arm re-run against the realized weekend passes both limbs and says 'flip UP +300..+800' into a -620 Monday, while the both-ways clause CAPPED a correct DOWN read to a -150..-200 floor against a -660 actual. E: 'Not softened - it is my play, and the G22 support (6 instances, one block, never spanning) should be read as having been insufficient.' (4) THE CLEANEST EVIDENCE IS PRE-GRAFT AND INSIDE THE PLAY'S OWN EVIDENCE LIST, C-0715: G22 0624 and 0625 carry the IDENTICAL served burn of 39.3 with 0625 on lower wind, and delivered +800 and -60 on consecutive sessions - the play cites 0624 and is silent on its twin. WHY IT FAILED (E's mechanism, corroborated by D-0716 and C-0714): the gate reads burn as a NUMERATOR WITH NO BALANCE-CLEARING DENOMINATOR, so when the balance loosens at the demand peak, burn confirmation is BEARISH information; +1.0 Bcf/d is 2.3% of burn against storage of 2,983 in injection season, which is why the numerator is always positive and always small. WHAT SURVIVES: the DAMPER limb (0709/0710 both wind-ramping, both fell) - carried forward inside weather.burn_is_demand_arrival_not_direction. Retired rather than amended because the failure is the play's core claim, not its calibration. ||| THE DISSENT, RECORDED IN FULL BECAUSE IT CORRECTS THE TALLY (Greg, S110: 'record the instance where the one had it right and the four said it was wrong and why they were wrong'). ONE specialist dissented: C-0707 returned MIS-SCOPED, NOT REFUTED, and it was RIGHT on the point it made. Its argument: the blind confirmed the gate off a HOLIDAY-SUNDAY grid row (period 2026-07-05) that the gate's OWN weekday-normalization rule disqualifies; read on the valid comparator in the same row (gas_chg_7d_mwh +1,012,635, Sunday-over-Sunday by construction) the gate CONFIRMED, and its day delivered +160 UP. C-0707 stated plainly: 'the falsifier is NOT discharged on my day (a burn-confirmed CDD add that DID deliver)', and it DECLINED to bank a refutation on the nearest candidate (0708) because that day is roll-confounded. WHY THE OTHER FOUR WERE WRONG ON THE TALLY: the refuting record was built as '3 clean up-fires, 0 of 3 delivered' (0708, 0715, 0716) with 0706 excluded as unevaluable - and 0707, a clean fire that DID deliver, was counted by NOBODY, because it was not any refuter's own day and each specialist works only its own causal slice. CORRECTED RECORD: 1 of 4 delivered, not 0 of 3. THE RETIREMENT STILL STANDS, AND THAT IS THE POINT: it does not rest on the tally. The two arguments that kill the play are MECHANISM arguments and survive C-0707's instance untouched - (a) D-0709's constant limb (d_gw_cdd h1 positive 20/20 across two groups; a limb that never changes sign cannot gate, so the gate cannot have been what discriminated on 0707 either - something else carried that day), and (b) C-0715's pre-graft pair from inside the play's own evidence list (G22 0624 and 0625, IDENTICAL served burn 39.3, delivered +800 and -60 on consecutive sessions). A play can be right on a day and still be an instrument that cannot discriminate. LESSON RECORDED: per-day causal isolation means no specialist sees another's instance, so any TALLY assembled from independent slices is systematically incomplete - counts must be RECOMPUTED AT THE COORDINATOR across all ten days before any tally-based claim is merged. Mechanism claims are unaffected by this."
+   "merged": "S110"
   },
   {
    "id": "daytype.eia_window_reopen_to_print",
@@ -1969,8 +1965,7 @@
    "evidence": "0625: 44.4% of variation pre-10:30, high at 09:00; 0702: overnight -480 delivery, print = stop-run into the absorber (-1.4 BELOW consensus flushed to a marginal low then reclaimed); G17 instances per D's lens record",
    "forward_evidence": "n=4 spanning; G20's decomposition lesson (2,090 credited from day nets, timing refuted 1-of-4) is the cautionary sibling",
    "falsifier": "a print day whose pre-10:30 share is trivial while the gate fired (would restore the narrow window)",
-   "merged": "S110",
-   "g23_confirmation_and_mass_calibration_s110": "CONFIRMED on assignment, CALIBRATED on mass, n 4 -> 6 spanning G17/G22/G23. D-0709: the window claim HELD harder than claimed - it predicted a range share and delivered 59% of NET, with the day's high and turn origin at 03:15 ET, outside any 08:00-start window. D-0716: assignment CONFIRMED (the window owned the whole up move and set the session HIGH at 10:29:06, fifty-four seconds before the release) while MASS was REFUTED 5x (+560 realized vs +110 forecast). CORPUS EVIDENCE (D24 state a - instances found): the pre-print share of day travel has MEDIAN 49.5% across n=14 print Thursdays in 7 groups - the EIA Thursday is half built before the print. Process note recorded and explicitly NOT named as a cause of any miss: on 0709 the blind fired this play BY NAME and emitted a path curve contradicting it."
+   "merged": "S110"
   },
   {
    "id": "magnitude.rally_quality_giveback_rung",
@@ -1996,85 +1991,6 @@
    "evidence": "B-0629: the tilt gate fed +871 gross and weighted the self-derived residual 0.10 - the sign correction in r1 was the blind's own rule fed a decontaminated input",
    "forward_evidence": "n=2 spanning",
    "falsifier": "a program day whose residual tilt misleads while the gross aggregate reads true",
-   "merged": "S110",
-   "inverted_counterinstance_and_impact_reformulation_s110": "COUNTER-INSTANCE, from the specialist that proposed it. E-0710: on 0710 the residual tilt read INVERTED - realized big-print 0.550 BUY against a -1,225 SELL aggregate - so the very field E instructed B to substitute would have handed B the WRONG Monday sign. B-0713 confirms it consumed that substitution and discarded its own lens instrument (the D-1 session aggregate, -1,225 SELL) to do so. REFORMULATION (C-0714): discount a D-1 tilt by its measured IMPACT, not its PROVENANCE - provenance needs a cohort field that does not exist, impact is already served. CORPUS (D24 state a): D-1 aggregate flow sign predicts next-day sign 16/36 = 44% across four groups - a coin flip everywhere, not a roll-day special case."
-  },
-  {
-   "id": "magnitude.terminal_impact_coefficient_carry",
-   "status": "PROPOSED",
-   "trigger": "the prior session's terminal-phase impact coefficient k3 = |ph3 price change| / |ph3 signed flow| is NUMB (<= 0.05 on >= 500 lots)",
-   "read": "the tape's marginal price impact per unit of aggressor imbalance CARRIES to the next session. A numb prior terminal phase means the next day's NET is small regardless of how large the flow is - and the corollary that makes it usable: it is a NET suppressor, NOT a volatility suppressor.",
-   "call": "size the next day's NET small (|day move| <= ~200 class); do NOT compress the expected RANGE by the same factor",
-   "requires": "prior session phase-3 price change and signed flow (tape_conditions) - ALL PRE-CUTOFF, so this is BLIND-LEGAL, not refine-only",
-   "scope": "sign-free by construction - it bounds magnitude, never direction",
-   "evidence": "C-0714 derived it and used it: k3 carried from 0713 (0.026) against served flow +3,747 gave +170 against a +200 actual. The week-2 series is the demonstration: flows of +3,747 / +6,326 / +1,089 / +1,333 produced only +200 / -60 / -20 / +180.",
-   "forward_evidence": "CORPUS SEARCHED, INSTANCES FOUND (D24 state a): n=6 spanning G20+G23, 5/6 at <= $200 (median 115) against a base rate of 12/40 days (30%) and a block median |net| of $535. ONE LIVE COUNTEREXAMPLE NAMED AND NOT EXPLAINED AWAY: g20 0605, -1,350. Independent out-of-sample instance in a day-class C did not sample (B-0706, block-open Monday): k3_prev 0.041 NUMB - reached by a DIFFERENT road, holiday thinness rather than a liquidity void - and the day landed in class at +100. All four numb seams in G22+G23 land in class. B's declared weakness: its ph3 flow is 489 vs the stated 500-lot floor, a boundary instance by 2%. QUALIFIER B MEASURED: numb compresses NET 6.5x (median |net| 80 vs 520) but RANGE only 1.5x (875 vs 1,350) - its own day was +100 net around a 970 range with a -840 low.",
-   "falsifier": "a numb prior terminal phase followed by a large next-day NET with no new driver; or the range compressing as much as the net (which would make it a volatility rule, not a net rule)",
-   "merged": "S110"
-  },
-  {
-   "id": "structure.void_precedes_impact_collapse",
-   "status": "PROPOSED",
-   "trigger": "a session phase prices materially on near-zero net flow (a liquidity VOID: the resting bid or offer withdraws rather than size changing hands)",
-   "read": "a void is price DISCOVERING where liquidity actually sits; once found, flow stops moving price. The impact coefficient collapses in the following session and stays collapsed for an undetermined span.",
-   "call": "after a void, expect the impact regime to be numb IN BOTH DIRECTIONS - this predicts quiet on up days too, not just continued decline",
-   "requires": "phase signed flow and phase price change (tape_conditions)",
-   "scope": "SEQUENCE claimed; DURATION explicitly NOT claimed",
-   "evidence": "G23 0709 is the archetype: phase 2 fell -1,860 on -11 net flow across 98,400 lots. The k3 series after it: 0.302 -> 0.026 -> 0.018, with week-2 flows of +3,747/+6,326/+1,089/+1,333 producing +200/-60/-20/+180. C-0715 supplies the exact mirror six sessions apart in the same contract: 0709 = price without flow, 0715 = flow without price (+6,210 net across 68,115 lots for -80) - usd per unit net flow 1.322 vs 0.009, a factor of 147.",
-   "forward_evidence": "CORPUS SEARCHED, INSTANCES FOUND (D24 state a): the void-signature scan across four groups returns EXACTLY TWO instances - g23 0709 and g20 0529 - both followed within one session by a k3 collapse. Duration differs (g20 one session, g23 four), which is why duration is not claimed.",
-   "falsifier": "a void followed by an intact impact coefficient in the next session",
-   "merged": "S110"
-  },
-  {
-   "id": "flow.flowless_reprice_is_not_absorption",
-   "status": "PROPOSED",
-   "trigger": "a phase whose price moves materially while net signed flow is near zero",
-   "read": "this is a WITHDRAWN BOOK, not absorption. Nothing was transferred, so the level was never tested and tends to be pressed again. True absorption is size CHANGING HANDS against price - flow present, price refusing.",
-   "call": "do not read a flowless reprice as a transfer of position or as exhaustion; a withdrawn book CONTINUES while an absent book ROUND-TRIPS",
-   "requires": "phase signed flow, phase price change, phase volume; separating the two objects needs TWO axes - flow intensity AND price efficiency (E-0717's correction to its own proposal)",
-   "scope": "phase-level, both polarities",
-   "evidence": "E-0710 named it on 0709 ph2 (-1,860 on -11 net across 98,400 lots) and reported its own inverted error honestly: it had called the genuinely absorbing phase (ph3, +1,390 of buying purchasing -160, ph_absorb TRUE in the file it was reading) a bullish 'buy handover' - polarity inverted on the flagged phase, label misapplied to the unflagged one, both errors pushing less bearish.",
-   "forward_evidence": "IN-BLOCK, BOTH POLARITIES, n=3 (E-0717) - and E found the proposal AS WRITTEN would have mislabelled its own morning phase, which is what forced the two-axis form. B-0713 supplies the counter-object the proposal needed: two flowless phases in the same block, 530x apart in price response, with opposite outcomes. BLIND-AVAILABLE DISCRIMINATOR OFFERED WITH AN HONEST NEGATIVE ATTACHED (E-0710): l1_book.quote_bid_share printed the block minimum 0.475 on 0709 - but it is NOT a day-ahead direction signal (6/10 in-block; C-0715 measured it null at 9 fires / 4 hits across G21-G23 and diagnosed the cause - the session mean spans only 0.475-0.512 while its own served intraday p25/p75 is [0.333, 0.667], so the aggregation destroys it). It is a LABELLER for the flowless case only.",
-   "falsifier": "a flowless reprice that behaves like absorption (level holds, no re-press) with no other driver",
-   "merged": "S110"
-  },
-  {
-   "id": "daytype.eia_print_impulse_arbiter",
-   "status": "PROPOSED",
-   "trigger": "an EIA print day whose reopen-to-10:30 window delivered an UP run of >= +300",
-   "read": "the 60-SECOND post-release impulse arbitrates continuation vs full round-trip. Inside +-300 the pre-print run continues; at <= -300 it round-trips entirely.",
-   "call": "use the first-minute impulse as the day's arbiter on pre-run-up print days; do not size the day from the surprise sign",
-   "requires": "intraday tape at 60-second resolution around 10:30 ET",
-   "scope": "print Thursdays with a material pre-print up run",
-   "evidence": "D-0716. The day it was found on: the session HIGH printed at 10:29:06, fifty-four seconds BEFORE the release, then -570 in nine seconds. And the decisive fact against surprise-sign reasoning: the print came in at +41 Bcf against a ~45 survey - a BULLISH surprise - and the market sold it 1,410 points in 33 minutes.",
-   "forward_evidence": "CORPUS SEARCHED, INSTANCES FOUND (D24 state a): 6/6 across FIVE groups - inside +-300 continues (0416, 0430, 0528, 0604); <= -300 round-trips (0625, 0716). STABILITY MEASURED: holds at 30s, 60s and 120s and DEGRADES at 300s, which places the arbiter inside the first two minutes - exactly where the established futures->Kalshi lag says the platform's edge lives.",
-   "falsifier": "a pre-run-up print day where the first-minute impulse points one way and the day resolves the other",
-   "merged": "S110"
-  },
-  {
-   "id": "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell",
-   "status": "PROPOSED",
-   "trigger": "SAME-DAY session buy flow above +1000 lots, rising in force above +1500 / +2000 / +3000",
-   "read": "heavy buy aggression is a SAME-DAY bearish tell and the asymmetry is one-sided: buy flow agrees with price 41% / 29% / 25% / 20% as the threshold rises (monotone), while the SELL side is flat at 46 / 43 / 46 / 47%. It is NOT a next-day signal - the D-1 version is a coin flip.",
-   "call": "never read a large same-day buy tilt as next-day bullish evidence; on the day itself, heavy buy aggression into a level is a warning, not a confirmation",
-   "requires": "session signed flow (tape_conditions) - same-day",
-   "scope": "SAME-DAY only. Explicitly refuted as a D-1 instrument (4/9).",
-   "evidence": "D-0716, and it names its own blind's error with it: the blind cited 0715's +6,326 - the largest buy flow in seven groups - as bullish evidence, reading a same-day bearish tell as a next-day bullish one. C-0715's day is the mechanism: +6,326 of net aggressor BUY across 72,162 lots, the block's largest tilt by 69%, delivered -60, with ph3 flow_conviction NEGATIVE and absorption strengthening as the session ran.",
-   "forward_evidence": "CORPUS SEARCHED, INSTANCES FOUND (D24 state a): all 70 sessions across the walked groups; monotone across four thresholds; 8 of 10 extreme days closed down.",
-   "falsifier": "a threshold band where heavy buy flow agrees with price at or above the sell side's rate",
-   "merged": "S110"
-  },
-  {
-   "id": "weather.burn_is_demand_arrival_not_direction",
-   "status": "PROPOSED",
-   "trigger": "a burn reading is available as evidence for a directional weather lean",
-   "read": "burn confirms that weather-driven DEMAND ARRIVED. It does not price it. Direction needs a balance-clearing term - whether the arriving demand is clearing the surplus - because burn is a numerator with no denominator.",
-   "call": "burn may CONFIRM demand arrival and may DAMP a lean that contradicts it (the surviving limb of the retired gate); it may NEVER license a directional lean of its own, and must never act as a SUPPRESSOR before magnitude is derived",
-   "requires": "grid_stack burn (D+2 stale by construction - a backward-looking instrument, labelled as such) AND a balance term",
-   "scope": "successor to the retired weather.burn_conversion_gate; the damper limb is what carries forward (0709 and 0710 both wind-ramping, both fell)",
-   "evidence": "E-0710's mechanism, D-0716's supply of the missing term: E's balance-clearing successor WOULD have sorted D's day in the specific form storage.vs_5yr and its WoW delta - 112 -> 151 -> 156 -> 162 while injections collapsed 87 -> 61 -> 41, both decision-time-visible in the same served state file and used by neither specialist.",
-   "forward_evidence": "HONEST AND THIN, stated as such by D-0716: as a gate REVOCATION the balance term is 2/3 (right 0709, right 0716, wrong 0618); as a STANDALONE DIRECTION SORTER it is 4/7 and D explicitly does NOT claim it as one. E offers a further reformulation as a MEASUREMENT TO RUN, not a play to fire (n=1 clean): re-aim the instrument from price to FLOW, since on the block's extreme day it called the order flow correctly and the price exactly wrong - the missing denominator may be resting supply at execution rather than a balance term.",
-   "falsifier": "a block where burn licenses a directional lean that delivers, with the balance term pointing the other way",
    "merged": "S110"
   }
  ],

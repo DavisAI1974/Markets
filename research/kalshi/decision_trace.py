@@ -140,7 +140,10 @@ def claims_block(gid: str) -> str:
              "| date | owner | phase | number | decision_id |", "|---|---|---|---|---|"]
     for r in t["days"]:
         for phase, ph in r["phases"].items():
-            lines.append(f"| {r['date']} | {r['owner']} | {phase} | {ph['number_usd']:+d} | "
+            # A phase can legitimately carry no number (a bridge, or a posterior whose magnitude
+            # field is absent) - record it as UNNUMBERED rather than crashing or silently dropping it.
+            num = f"{ph['number_usd']:+d}" if isinstance(ph["number_usd"], int) else "UNNUMBERED"
+            lines.append(f"| {r['date']} | {r['owner']} | {phase} | {num} | "
                          f"`{ph['decision_id']}` |")
     return "\n".join(lines) + "\n"
 
