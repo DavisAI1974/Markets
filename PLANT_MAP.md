@@ -28,7 +28,7 @@ not on this map it is not a standing process. Update on any change (SOP change c
 |---|---|---|---|
 | kalshi collectors (durable) | GH Actions on the old trunk | 6h cron (Greg dispatches when queued-stuck) | branch accrual check (kalshi-session-start skill) |
 | pyth collector | GH Actions on the old trunk | RETIRED (D14): free era ended 2026-07-31, not gas | verify workflow disabled when the trunk is next touched |
-| ng_live_collector + watchdog | the live box (designed for systemd) | NOT YET A SERVICE (G3) | health.json (built, unwired) |
+| ng_live_collector + watchdog | the live box (designed for systemd) | NOT YET A SERVICE (G3). Installer EXISTS (`deploy/aws/install-ng-live.sh`) — TRAP: it pins `CODE_BRANCH=chatgpt/rt-ng-mbp10-collector` (a third building, stale). Re-point to the working trunk before any deploy. | health.json (built, unwired) |
 | the walk (blind/refine per group) | the session | per SOP RUN_SOP.md | batch record (to build) + task list |
 | session bootstrap / substrate restore | the session | session start, keys pasted | session_bootstrap --verify-only |
 | paper loop (G2) | the live box | NOT YET BUILT | plant_status.py line (to build) |
