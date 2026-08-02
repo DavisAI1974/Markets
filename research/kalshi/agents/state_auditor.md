@@ -65,6 +65,16 @@ will be a sixth.
 5. **FROZEN-BUT-LIVE** — a deterministic quantity (an expiry countdown, a calendar) frozen alongside the
    designed price mask, then used to compute a boolean that is served as current. Produces confident
    false negatives AND false positives inside the field's own window.
+6. **READ-AT-THE-WRONG-LEVEL** (S110, found three times in one block by E/B/A) — the field is right;
+   the LEVEL is wrong: a GROSS quantity served where the tradeable object is the RESIDUAL. Aggressor
+   flow gross vs ex-program residual (a roll prints as buy on the leg being measured); CDD gross
+   demand vs the burn residual (wind ate a correctly-forecast add); raw D-1 tilt vs the
+   program-decontaminated tilt. The value passes every reconciliation because it IS correct — as the
+   wrong object. Hunt: on program days and subtractor-live days, ask what the residual reads.
+7. **SERVED-BUT-MISLABELED** (S110, B-0622) — the field is right AND present, and its own label
+   steers readers away (a sign-bearing revision ladder labeled "uncertainty conditioner"). The cost
+   is identical to served-but-unread. Hunt: does any block's NOTE describe a narrower use than its
+   fields support?
 
 **Also check LEVELS for plausibility, not only identities.** An identity check (`session_signed_flow ==
 sum(phase_signed_flow)`) can pass on a destroyed value. A net of -1 on a 22,490-trade session satisfies

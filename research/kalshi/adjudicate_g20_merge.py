@@ -98,7 +98,9 @@ print(f"ADJUDICATION PASSED. Strictly additive: {len(touched)} incumbents gain k
       f"= {len(plays) + len(prop['new_plays_proposed'])} plays.")
 
 if "--write" in sys.argv:
-    bak = os.path.join(HERE, "knowledge", "ng_brain_s103.2_backup.json")
+    # S110: backup name derives from the LIVE version (was hardcoded to the S108 vintage - a
+    # second run would have silently skipped the backup because the stale name already existed).
+    bak = os.path.join(HERE, "knowledge", f"ng_brain_{brain['meta'].get('version', 'unknown')}_backup.json")
     if not os.path.exists(bak):
         json.dump(brain, open(bak, "w"), indent=1)
         print(f"backup -> {os.path.relpath(bak, HERE)}")
