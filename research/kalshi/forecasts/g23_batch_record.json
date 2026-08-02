@@ -1,0 +1,38 @@
+{
+ "group": "g23",
+ "created": "2026-08-02T01:38:15Z",
+ "entries": [
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S108",
+   "station": "staged",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "staged S108 machinery; weather 4-day hole closed S108; b_share repaired S109; passes state_health"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S110",
+   "station": "audited",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "STATE AUDITOR (canonical role, AUD-1 first standardized run): 5 findings (f1 two-tape split 20260717, f2 dead leg path + wrong-reader gate, f3 n0 era, f4 consensus freshness, f5 strike scale), 15 clean areas, 8 uncheckables"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S110",
+   "station": "audit-fixed",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "all 5 GO (session authority, data plumbing): f1 repaired from leg-built evidence + nulled-with-basis; f2 fixed at source (flow_read leg context + loud fallback + flow-side reconcile); f3/f5 declared/rescaled; f4 nulled-with-basis; 4 new HARD state_health reconciliations, negative-tested 25 true fires / 0 false; both live states 0-hard"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S110",
+   "station": "nonconformance",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "S109 auditor wrapper was never captured; the S110 audit ran on a re-composed wrapper (Greg: output accepted). Closed forward by RUN_SOP AUD-1 (v1)"
+  }
+ ]
+}
