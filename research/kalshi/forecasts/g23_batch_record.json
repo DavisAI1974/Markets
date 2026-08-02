@@ -41,6 +41,14 @@
    "sop": "v1.2",
    "brain": "s103.7",
    "summary": "inspection manifest written (10-guard roster, PASS 0 hard)"
+  },
+  {
+   "ts": "2026-08-02T02:34:36Z",
+   "session": "S110",
+   "station": "audit-fixed",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "A11.1 CDD-ladder graft applied (state_repair_s110b): 8 horizon CDD + 8 run-delta CDD per day from the mos_asof store, two identity proofs per day (D0 equality + HDD-span arithmetic), fwd7_gw_cdd_span derived w/ basis; sunday_reopen/weekday_open get seam_delta_warning + declared cdd_basis (cycle store absent cold - declared, not fabricated). Purely additive: 224 leaves added, 0 changed, 0 removed. Inspection re-run PASS."
   }
  ]
 }
