@@ -57,6 +57,14 @@
    "sop": "v1.2",
    "brain": "s103.7",
    "summary": "IN FLIGHT: 10 per-day runs under RUN_SOP RFN-1 (first standardized use), two named targets (missed hill; 0629 slope-treated-as-spike); wave 1 (C x4, D x2, E x1) spawned"
+  },
+  {
+   "ts": "2026-08-02T01:40:53Z",
+   "session": "S110",
+   "station": "inspected",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "inspection manifest written (10-guard roster, PASS 0 hard)"
   }
  ]
 }

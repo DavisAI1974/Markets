@@ -1,0 +1,28 @@
+{
+ "group": "g22",
+ "ts": "2026-08-02T01:41:45Z",
+ "guards": [
+  "block-emptiness (declared-only exemptions)",
+  "tape_conditions required fields",
+  "flow_read_error surfacing",
+  "weather provisional-fetch-tail",
+  "b_share identity b == b2*(1-u) [S109 #9]",
+  "squeeze_watch _live vs flow_calendar [S109 #10]",
+  "phase-sum == session totals [S110 f1]",
+  "storage-vs-consensus freshness [S110 f4]",
+  "strike scale vs calendar_front_settle when units undeclared [S110 f5]",
+  "vol_regime n0 era vs same-session tape when undeclared [S110 f3]"
+ ],
+ "days": 10,
+ "hard": [],
+ "soft": [
+  "20260622: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260629: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260629: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
+  "20260630: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
+  "20260701: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
+  "20260702: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
+  "20260703: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)"
+ ],
+ "verdict": "PASS"
+}

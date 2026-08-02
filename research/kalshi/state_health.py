@@ -289,6 +289,50 @@ def report(state: dict, label: str = "") -> dict:
     return r
 
 
+GUARD_ROSTER = (
+    "block-emptiness (declared-only exemptions)", "tape_conditions required fields",
+    "flow_read_error surfacing", "weather provisional-fetch-tail",
+    "b_share identity b == b2*(1-u) [S109 #9]", "squeeze_watch _live vs flow_calendar [S109 #10]",
+    "phase-sum == session totals [S110 f1]", "storage-vs-consensus freshness [S110 f4]",
+    "strike scale vs calendar_front_settle when units undeclared [S110 f5]",
+    "vol_regime n0 era vs same-session tape when undeclared [S110 f3]",
+)
+
+
+def write_manifest(state: dict, gid: str) -> str:
+    """S110 (turnaround memo 1.2): the INCOMING-INSPECTION CERTIFICATE. A per-group record of what
+    was checked, by which guard roster, with what verdict - stapled into the batch record so
+    'it passed inspection' has a dated, versioned artifact instead of a memory."""
+    import json
+    import os
+    import time
+    r = audit(state)
+    out = {"group": gid, "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+           "guards": list(GUARD_ROSTER), "days": r["days"],
+           "hard": r["hard"], "soft": sorted(set(r["soft"])),
+           "verdict": "PASS" if not r["hard"] else "FAIL"}
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "forecasts",
+                     f"g{gid.lstrip('g')}_inspection.json")
+    with open(p, "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    return p
+
+
+if __name__ == "__main__":
+    import json
+    import os
+    import sys as _sys
+    _here = os.path.dirname(os.path.abspath(__file__))
+    for _gid in _sys.argv[1:] or ():
+        _n = _gid.lstrip("g")
+        _sp = os.path.join(_here, "renders", "ng_refine_s95", f"grp{_n}_state.json")
+        _st = json.load(open(_sp, encoding="utf-8"))
+        report(_st, f"g{_n}")
+        print("  manifest ->", os.path.relpath(write_manifest(_st, f"g{_n}"), _here))
+    if not _sys.argv[1:]:
+        print("usage: python state_health.py g22 [g23 ...] - report + write inspection manifest")
+
+
 def assert_healthy(state: dict, label: str = "") -> None:
     r = report(state, label)
     if r["hard"]:
