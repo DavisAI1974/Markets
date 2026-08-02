@@ -1,0 +1,616 @@
+{
+ "specialist": "C",
+ "group": "g23",
+ "days": [
+  {
+   "specialist": "C",
+   "group": "g23",
+   "date": "20260707",
+   "guessed_net_usd": -350,
+   "overnight_gap_usd": -40,
+   "path_p50_curve": [
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -30
+    ],
+    [
+     2,
+     -40
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     -30
+    ],
+    [
+     8,
+     -40
+    ],
+    [
+     10,
+     -160
+    ],
+    [
+     12,
+     -280
+    ],
+    [
+     14,
+     -350
+    ],
+    [
+     16,
+     -350
+    ]
+   ],
+   "reasoning": "Day 2 of g23, Tue core midweek, my lens's default ownership. CHAIN DISCIPLINE FIRST (boundary.chain_label_must_track_realized_cum): round-1 blind carries no realized cum_from_anchor for 0706 (price masked), so I assert NO hard chain polarity/age; the working hypothesis is a soft two-sided summer drift with a mild down bias, held at low weight. Evidence for that bias, all named: (1) D-1 (0706, never-masked tape) session_signed_flow -632 on 95,564 lots with the FINAL phase -1,207 at phase_b_share_two_sided 0.474 - the freshest unambiguous force is a sell close; doctrine keeps blind direction with the D-1 trade tilt. (2) 0703 anchor session was all-sell phases (-29/-487/-489, flow -1005) closing in the lower quarter of its last-hour range (close_in_range 0.222); anchor_lasthr_dir -1 is at the resolution floor on ~1/5 activity per the declared caveats and was NOT used as a direction input. (3) Backdrop S3-bearish: storage 2,922 Bcf, +151 vs 5yr, last print +87 vs +47.8 seasonal (chg_vs_5yr_chg +39.2, sign above), injection phase. (4) ICE ld1 MM long book at its 1y extreme LOW (pctile 0.94) and worsening (-27,542 WoW) = spec long liquidation flow. (5) GSCI roll (gsci_ng_roll_this_month true, business_day_of_month 4): the window opens BD5 = tomorrow 0708; in_gsci_roll is FALSE today so tilt instruments retain authority, but desks pre-position the mechanical sell-front/buy-next flow late on the last pre-roll day - small bearish-front weight. COUNTERWEIGHTS that cap the claim: (a) 0706 big prints n=85 (guard-clean, >=20 per flow.big_print_bshare_thin_tape_guard) leaned BUY 0.593 size-weighted (0.641 two-sided) against the mild sell aggregate, with the resting book bid-leaning (quote_bid_share 0.512) - the size cohort was on the other side of the tape; without price I cannot compute flow_conviction, so this reads as absorption-risk that caps the down band, not a turn signal. (b) weather.burn_conversion_gate (PROPOSED, G23 is its named forward test): CDD ladder warms into the EIA Thursday (D0 11.49 after a +0.36 target-matched overnight warm revision computed by LEVEL differencing per the seam rule, D1 12.64, D2 13.69 peak), grid burn ramping (US48 est 42.3 Bcf/d on the 0705 weekend row, gas_chg_7d +1.01M MWh), wind LOW (US48 673k MWh, PJM 19k, MISO 78k - not ramping against), nuclear outages +1.12 GW w/w - the gate reads both ways and a down-lean must check burn is not ramping; it IS, so the full down band is not funded. (c) NYMEX MM shorts covered +17,914 WoW to -64,808 (44.34 pctile 1y - neutral), published Mon 15:30 ET (delayed, holiday - decision-time legit). ACCUMULATION ARM (my lens headline) evaluated limb by limb and STOOD DOWN: limb sell-tape holds (0706 session_b_share 0.459 on the fitted original series, 0703 0.461, both sub-0.50 vs the shoulder weekday base 0.471-0.527); limb big-print recurrence >=0.55 on >=2 of last ~5 NOT ESTABLISHED - only 0706 qualifies (0.593); 0703 is 0.401 on 8 prints (guard-degenerate below ~20 anyway), the 0705 stub is 0 prints, and 0701/0702 are not carried in state - count is 1 visible, not 2; limb COT extreme-AND-worsening FAILS outright (44.34 pctile, improving +17,914; options-implied 10.38 pctile but WoW -156 flat on a 9,385-OI book). Per my lens the S3-down default is not sign-certain, but a turn cannot be manufactured from a failed stack either - selector.midblock_right_the_ship stays locked (no measurable turn stack building; day 2). selector.divergence_resolution's HDD>=16.4 gate and shoulder_weather_band_void's 13.5 bar are UNEVALUABLE in this CDD regime (fwd7 HDD span 0.0-0.236) per weather.absolute_hdd_bar_unevaluable_in_cdd_regime - I did NOT let the unreachable bar default the selector bearish; the bearish lean stands on tape+storage+positioning-flow evidence only. MAGNITUDE: non-catalyst midweek chop class (catalyst_condition_sort: down-size; no print today - EIA is 0709, D-2 not the pre-print coil day; no expiry/opex; pin corridor inert with anchor 3.245 dead-center between the 3.00 put wall and 3.50 call wall, 21d to opex; squeeze_watch dte limb 16 not <=7, spread limb masked - read neither way). vol_regime is era-degraded (n0 store ~0.226 of leg tape) but its low-vol shape (range pctile 13.3, sigma_20 609) supports a sub-sigma day. The s1void trend band -450..-780 is authority-discounted in summer (its <=20 gw normals limb is the trivially-satisfied HDD mirror), and chain-sidedness is unconfirmed, so I price BELOW that band: p50 -350 (about 0.6x the degraded-store sigma), with the honest alternative a flat/absorption day resolving up - which is why confidence is LOW and the close is flat, not accelerating. PATH: small negative overnight carry of the sell close (-40 by 08:00; the warmer 06z-visible runs stall the bleed briefly at 06:00), US session delivers the tilt 10:00-14:00 (-160/-280/-350) including pre-roll front selling, then the big-print buy cohort damps the last hours - no late extension claimed, settle window excluded as always. Tue-strongest-trend archetype was applied only as a secondary frame; with no confirmed chain it cannot own more than the tilt.",
+   "plays_fired": [
+    "daytype.weekday_archetype (Tue continuation frame, secondary only - no confirmed chain to extend)",
+    "magnitude.catalyst_condition_sort (non-catalyst midweek -> down-sized)",
+    "weather.burn_conversion_gate (PROPOSED, G23 forward test: burn ramping + wind low + CDD warming -> down band capped; named per its falsifier)",
+    "weather.absolute_hdd_bar_unevaluable_in_cdd_regime (marked divergence_resolution 16.4 and shoulder_weather_band_void 13.5 UNEVALUABLE; blocked the silent bearish default)",
+    "flow.big_print_bshare_thin_tape_guard (0706 sample guard-clean at n=85; disqualified 0703 n=8 from any 0.55-bar count)",
+    "magnitude.s1void_injection_chain_bleed (band REFERENCE only at reduced authority - summer HDD-limb mirror; p50 priced below its trend band)",
+    "supply.lng_export_throughput_vessel_line (read as instructed: 36 vessels / 136 Bcf, same 0702 issue as prior slice, no step -> context only, no widening)"
+   ],
+   "plays_stood_down": [
+    "structure.accumulation_arm_turn (COT limb fails: MM -64,808 at 44.34 pctile improving +17,914; recurrence limb 1-of-5 visible, 0701/0702 not carried)",
+    "selector.midblock_right_the_ship (turn stack not building on measurable limbs; day 2 of block)",
+    "selector.divergence_resolution (16.4 HDD gate unevaluable in CDD regime; no panel split flagged)",
+    "direction.flow_nowcast / direction.book_contrarian / shape.grind_vs_spike / ride.magnitude_staircase / exit.recruitment_reversal (needs_intraday_reveal - blind)",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal / structure.covering_absorption_directional_tell (require price-by-phase; also MM 44.34 pctile is not crowded-short < ~12)",
+    "positioning.covering_self_limiting_cot_wow_gate / structure.covering_extension_distribution_flip / boundary.seam_gap_up_prior_on_worsening_cot (not a crowded-short regime; no seam today)",
+    "structure.chain_polarity_flip / structure.post_parabolic_bleed (no parabolic arm in evidence; confirm bands unmeasurable under mask)",
+    "structure.mature_swing_alternation / midweek.stretched_extreme_close_giveback / midweek.young_chain_extension_full_band / midweek.prior_exit_lasthour_magnitude_gate (swing age, D-1 run size, close-off-extreme and last_hour_dir all masked/uncarried - limbs named, unevaluable)",
+    "direction.giveback_exhaustion_boundary / midweek.giveback_exhaustion_reversal_recognition (chain age >=3 and cum-extreme/shelf location unknowable; D-1 absorption tell only half-verifiable without price)",
+    "boundary.prior_close_flow_direction_disagreement (0706 last-hour price dir + last-hour flow not carried in tape_conditions; only the 0703 anchor has last_hour fields)",
+    "daytype.eia_preprint_overextension_gate / daytype.eia_window_reopen_to_print (print is 0709; today is D-2, not the coil day)",
+    "daytype.storage_thursday_magnitude / daytype.surprise_magnitude (not Thursday; weakened play, last surprise +6 small, no size-up)",
+    "flow.price_free_absorption_proxy (precondition fails: session signed flow -632, not positive)",
+    "flow.resting_program_inverts_aggressor_tilt / handoff.residual_tilt_field (no program on D-1 or today; in_gsci_roll false, BD4, window opens 0708)",
+    "daytype.monday_weekend_gap / weekend + Friday family (wrong day-class)",
+    "daytype.thin_session_range_invariance (D-1 was heavy 42,309 trades; today a normal Tuesday)",
+    "tape.squeeze_ignition_flush_conjunction / tape.squeeze_ratchet_confirm / structure.squeeze_unwind (dte 16 > 7, spread limb masked, unwind_watch false)"
+   ],
+   "confidence": "low",
+   "state_defects_and_gaps_reported": [
+    "storage_consensus.next_print: final_capture_is_post_print=true - the 49.0 Bcf consensus and house_disagreement 11.0 are post-print-stamped (first stamp 2026-07-10); the only pre-print snapshot (2026-07-07T06:28Z) shows TE had NOT posted a consensus. Decision-time reconstruction per the declared trap: NO survey consensus knowable at my open; not used in any play.",
+    "vol_regime.n0_era_basis (declared): n0 store carries ~0.226 of the g23 leg tape - used only as a weak low-vol magnitude prior, never as a band scaler. Its 0703 day-net (+270) also contradicts the leg's own 0703 sell-flow phases; the 0703 day-net sign was treated as unknown rather than resolved.",
+    "weather_forecast.ladder_graft_basis + weather_forecast_cycle.cdd_basis (declared repairs): CDD cycle deltas absent - computed the overnight CDD add by target-matched LEVEL differencing (yesterday's h1 for 0707 = 11.129 vs today's D0 = 11.492 -> +0.36), per the seam rule.",
+    "STATE GAP: tape_conditions carries no last-hour price/flow decomposition for D-1 (0706) - boundary.prior_close_flow_direction_disagreement and the whole R1 close-vs-extreme family are unevaluable blind; only the block anchor (0703) carries last_hour fields.",
+    "STATE GAP: big-print history spans only D-1 and D-1's prior_full_session - the accumulation arm's '>=2 of the last ~5 sessions' count cannot be executed as written (0701/0702 unobservable); the arm stood down partly on a countability gap, not only on refuted limbs.",
+    "contract_structure / squeeze_watch / vol_regime / cash_basis / options_surface frozen at the 20260703 anchor vintage (masked_one_shot, by design) - 0706 OI/settle/spread changes invisible; worked as designed, no violation.",
+    "cot.publication_delayed=true (holiday): report 2026-06-30 published Mon 2026-07-06 15:30 ET - decision-time legit for 0707 and used; the publication landed inside 0706's final tape phase, so Monday's sell close already traded on it.",
+    "options_surface.strike_rescale_basis (declared x10 repair) read as served; anchor direction_caveat + holiday_caveat respected - anchor_lasthr_dir not used as a direction input."
+   ]
+  },
+  {
+   "specialist": "C",
+   "group": "g23",
+   "date": "20260708",
+   "guessed_net_usd": 250,
+   "overnight_gap_usd": 60,
+   "path_p50_curve": [
+    [
+     20,
+     25
+    ],
+    [
+     22,
+     45
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     60
+    ],
+    [
+     4,
+     75
+    ],
+    [
+     6,
+     95
+    ],
+    [
+     8,
+     140
+    ],
+    [
+     10,
+     230
+    ],
+    [
+     12,
+     350
+    ],
+    [
+     14,
+     330
+    ],
+    [
+     16,
+     270
+    ],
+    [
+     17,
+     250
+    ]
+   ],
+   "reasoning": "Wed core midweek, D-1 to the 0709 EIA print, k=3 from the 3.245 holiday anchor. CHAIN STATE (stated per boundary.chain_label_must_track_realized_cum; constructed, price masked): the g22 down-chain shows termination tells at its tail (0702 print = stop-run flush then reclaim per the brain's own G22 record; 0703 thin holiday drift, close_in_range 0.222, anchor lasthr dir -1 declared resolution-floor WEAK); then 0706 Mon = sell tape (-632 signed, ph3 -1207) ABSORBED by big prints 0.593 sw / 0.641 ts (accumulation fingerprint session), then 0707 Tue = outright organic buy tape +1748 with all three phases positive and BUILDING (+391/+604/+753), b_share_two_sided 0.508, big prints 0.535/0.568, L1 book balanced 0.505, 50.5k trades. Constructed cum-from-anchor at my open ~ 0..+200 (LOW confidence, flow-sign construction only); polarity label = old down-chain terminated-to-basing, young up-turn age ~1 UNCONFIRMED (no C1 band-break check possible under the mask; no flip asserted, consistent with C3 never-front-run). DIRECTION: the D-1 trade tilt is UP and it is PROGRAM-CLEAN - 0707 was NOT in the roll window (in_gsci_roll false, bd4), so handoff.residual_tilt_field needs no decontamination; the +1748 is organic. The doctrine keeps direction with the D-1 tilt. Supporting stack: (1) weather.burn_conversion_gate (its G23 forward test) - CDD ladder ADDS overnight (+0.57 D0, +0.76 D1, D+1 14.46 CDD = warmest on ladder; MAV warmer than MET by ~1.06 CDD) AND the burn limb CONFIRMS (est_gas_burn 44.9 Bcf/d period-0706, at/above the G22 block max 44.8; US48 gas +610 GWh w/w same-day-class Monday compare; weekend compares +1.0-1.1 TWh) AND wind is FALLING not ramping against it (952k->673k->631k MWh across served periods; Sat/Sun rows partly mechanical per the play's weekday-normalization caveat, declared) -> the up-lean earns its band; (2) positioning: NYMEX MM net -64.8k at 44.3 pctile 1y and COVERING (+17.9k WoW), options-implied MM at 10.4 pctile, ICE LD1 at 0.94 pctile - washed-out length, shorts trimming, no crowded-short covering regime but no fresh-short appetite either; (3) EIA consensus for tomorrow ~49 Bcf (TE final-frozen; investing 60; disagreement 11) vs 87 last week = a sharply TIGHTENING print expectation; pre-print front-run in a young up-turn is chain-sided UP (the consensus value itself carries the declared post-print-capture trap and gets reduced weight); (4) Wed archetype weak up-lean (secondary, conf 0.4), Tue-strongest-trend just delivered buy flow. COUNTERWEIGHTS THAT CAP IT: (1) my day IS GSCI roll day 1 of 5 (in_gsci_roll true, in_bcom_hedge_roll true - flow_calendar has tilt authority this week): a volume-bound resting-offer program SELLS my scored leg (NGQ26) all session, concentrated into the 14:00-14:30 settle/TAS window; the one measured roll-window instance (G21 0608) fell -890 under +3,261 aggressor buy - flow.resting_program_inverts_aggressor_tilt fires as a GOVERNOR: intraday aggressor buy tilt is suspect today, big-print instruments lose authority on my own session, and the front leg wears the roll selling directly; the 0608 polarity context differed (crowd buying INTO a live down-chain vs today's based/turned tape), so it damps and caps rather than flips; (2) STEO jul26 vintage knowable at my open (conservative stamp; it may have been absorbed by Tue's tape, declared ambiguity): production +0.24, total consumption -1.20, power burn -0.93 revisions = fresh bearish balance document capping the overnight; (3) injection backdrop +151 vs 5yr, +39.2-above-pace last print, hard_cool regime LABEL - slow bearish backdrop (never a day-level side signal; the S3-down default is explicitly NOT licensed by the gated-out HDD limb per the CDD-regime guard play and my own lens); (4) quiet vol regime (n0 range pctile 13.3, sigma_5 ~665 - era-degraded store, declared). ACCUMULATION ARM: does NOT formally fire - only one clean >=0.55 session in the visible window (0706 0.593; 0707 0.535 misses the bar; window truncated at 3 full sessions, declared) and the COT limb is decisively absent (44th pctile, improving not worsening); the turn evidence is carried by the tape sequence itself, not the arm. flow.price_free_absorption_proxy (precondition met: D-1 aggregate flow positive, 90 big prints guard-clean): 0.535 sits BETWEEN its 0.436 absorber-present and 0.585 absorber-gone classes, under the 0.547 q4 bar -> fails to CONFIRM accumulation -> take the turn SMALL (a real output: size down, direction unchanged). MAGNITUDE: burn-confirmed CDD-add days in G22 ran +400..+800 (0624/0630/0703) with NO roll program; damping that band for the roll counterweight and the proxy's non-confirmation lands +250 net (day-move from prior close, gap included), peak ~ +380 around 12:30-13:30 ET, then the roll settle-window selling and pre-print squaring give back ~130 into a +250 close off the high (close_in_range ~0.6). Per daytype.thin_session_range_invariance's S110 participant taxonomy a volume-bound program PRESERVES RANGE: expect realized range ~700-1000 despite the modest net - the p50 path is the median path, not the range envelope. SHAPE: overnight carry +60 (ph3 +753 handover on 24k lots - moderate handover volume, not a flowless print; warm-adding 18z/00z runs; STEO caps), morning delivery 08:00-12:00 to +350, stall at the roll/TAS window 12:00-14:30, ease 14:30-17:00 on pre-print squaring. ALTERNATIVE BRANCH (stated, ~35-40% weight): the 0608-class program inversion - heavy aggressor buying absorbed by roll offers, day nets -300..-500; the tell intraday would be big buy prints with a stalling tape, unreadable to me at the open; p50 stays up because the turn stack (organic building flow, burn-confirmed add, covering positioning, tightening consensus) is broader than 0608's single-force setup. For the Thursday owner: D-1 (my day expected) coherent-buy + chain NOT over-extended (<$900 constructed cum run) means eia_preprint_overextension_gate's tells point to the chain-sided full band being EARNED tomorrow if my day delivers coherent buy.",
+   "plays_fired": [
+    "weather.burn_conversion_gate [PROPOSED; G23 is its named forward test] - CDD add + burn limb CONFIRMED (44.9 Bcf/d >= G22 block max; +610 GWh w/w Monday-class) + wind falling not ramping against -> up-lean earns band; band then damped by the roll program per its own PROPOSED status",
+    "flow.resting_program_inverts_aggressor_tilt [PROPOSED n=2] - in_gsci_roll TRUE on my day (roll day 1): fired as GOVERNOR (aggressor tilt suspect today; big-print instruments lose authority on my session; magnitude cap), not as a sign-flipper (0608 precedent carried an opposite chain context)",
+    "handoff.residual_tilt_field [PROPOSED] - contrapositive: D-1 carried NO program (verified in_gsci_roll false 0707), so the raw +1748 aggregate is the clean tilt; my own session's tape will need decontamination by tomorrow's owner",
+    "flow.price_free_absorption_proxy [PROPOSED, half-scope] - precondition met (positive D-1 flow, 90 big prints guard-clean); verdict INCONCLUSIVE at 0.535 (< 0.547 q4 bar): fails to confirm the absorber is gone -> turn taken SMALL",
+    "flow.big_print_bshare_thin_tape_guard [PROPOSAL] - 90/85 big prints >= 20 on the sessions read: 0.55-bar valid as measured, no thin-tape inflation",
+    "daytype.thin_session_range_invariance [PROPOSED n=1, S110 participant taxonomy limb] - volume-bound program day -> RANGE preserved (~700-1000 expected) while net stays modest",
+    "structure.mature_swing_alternation (young-swing limb) - if the turn is age 0-2, do not fade strength; consumed as direction support only, chain age constructed not realized (declared)",
+    "weather.absolute_hdd_bar_unevaluable_in_cdd_regime [PROPOSED] - HDD bars (16.4 / 13.5) UNEVALUABLE in this CDD block: blocks any silent S3-down default; CDD instruments used instead",
+    "boundary.chain_label_must_track_realized_cum - complied: constructed cum ~0..+200 stated with LOW confidence, no cum-0 restart, no polarity asserted beyond the evidence",
+    "boundary.chain_staleness_gate [PROPOSED, deterministic] - k=3 <= 3: cum-keyed reads still permitted today (last day before the gate widens)",
+    "daytype.weekday_archetype - Wed weak up-lean as SECONDARY frame, aligned with the primary read (conf 0.4)",
+    "supply.lng_export_throughput_vessel_line [WIRED_UNPROVEN] - context check only: 36 vessels / 136 Bcf, no step; export term stable under the forecast"
+   ],
+   "plays_stood_down": [
+    "structure.accumulation_arm_turn - COT limb ABSENT (MM 44.3 pctile 1y, improving +17.9k WoW, not extreme-and-worsening); only one clean >=0.55 session (0706) in a truncated 3-session window; the sub-0.50 two-sided sell-tape condition also fails on 0707 (0.508)",
+    "selector.midblock_right_the_ship - turn stack formally incomplete (COT limb); nothing to unlock, my sign already sits on the turn side",
+    "daytype.eia_preprint_overextension_gate - scoped to the PRINT day (Thu 0709), not D-1; its tells handed forward: chain not over-extended, D-1 flow coherent",
+    "daytype.eia_window_reopen_to_print [PROPOSED] - EIA Thursdays only",
+    "daytype.storage_thursday_magnitude - Thursday play",
+    "selector.divergence_resolution - no storage-vs-cold-add split flagged; its HDD limb unevaluable here anyway (CDD-regime guard)",
+    "magnitude.s1void_injection_chain_bleed - requires chain-sided-DOWN under a live sell tape; D-1 two-sided 0.508 is not a sell tape",
+    "magnitude.shoulder_counter_print_damping - print-day play, not mine",
+    "magnitude.shoulder_weather_band_void - winter weather-delivery band sizing not in use; HDD bar unevaluable in summer (guard play)",
+    "midweek.stretched_extreme_close_giveback - run-size/close-extreme limbs PRICE-based and masked; unevaluable, declared rather than guessed",
+    "midweek.giveback_exhaustion_reversal_recognition - its moment was TUESDAY (0706 absorption tell -> 0707 reversal day); by my open it is consumed; young-turn logic governs instead",
+    "midweek.prior_exit_lasthour_magnitude_gate - prior last_hour_dir is price and masked; the ph3 flow (+753, aligned) used informally, the play formally stood down",
+    "midweek.young_chain_extension_full_band - direction support taken, FULL-BAND sizing explicitly NOT taken (chain age constructed; program-day cap; honest under-claim as a magnitude lever only)",
+    "structure.chain_polarity_flip - C1 band-break unmeasurable under the mask; no polarity flip asserted (C3 respected)",
+    "flow.passive_ladder_displacement [PROPOSED n=1] - conditions absent on 0707 (ph3 net larger than ph2, ph3 volume 24k << session max 77k)",
+    "boundary.prior_close_flow_direction_disagreement - last-hour price direction masked; unevaluable blind",
+    "tape.squeeze_ignition_flush_conjunction / tape.squeeze_ratchet_confirm / structure.squeeze_unwind - squeeze_watch not active; dte 15 live; spread limb masked = UNKNOWN not false (declared); dead-sponsor window passed (4 sessions since NGN26 expiry, unwind_watch false)",
+    "positioning.covering_self_limiting_cot_wow_gate / structure.covering_extension_distribution_flip / boundary.seam_gap_up_prior_on_worsening_cot - crowded-short regime scope not met (MM 44th pctile)",
+    "structure.covering_absorption_directional_tell [PROPOSAL] - conviction discriminator is refine-side (needs price)",
+    "monday.* / weekend.* / boundary.weekend_gap_wide_band_emission / weekend.seam_* - not a seam day",
+    "daytype.surprise_magnitude [PROVISIONAL_WEAKENED] - print-day magnitude arm inert on D-1; sign never sorts direction",
+    "direction.flow_conviction_sign_gate / direction.absorption_is_reversal - refine-side (require realized price); the blind slot is filled by big_print/proxy channels as designed"
+   ],
+   "confidence": 0.55,
+   "state_defects_and_gaps_reported": [
+    "storage_consensus: next_print consensus 49 Bcf is a POST-PRINT frozen capture (final_capture_is_post_print true; the only pre-print snapshot had NO consensus posted; investing.com 60 also post-print). The declared trap acknowledged: used as approximate market expectation at reduced weight, not as a decision-time-verified number.",
+    "vol_regime n0_era_basis (declared): leg-era continuous store carries ~0.226 of the scored leg's tape - magnitude scalers era-degraded; used only as a weak quiet-regime conditioner.",
+    "weather_forecast ladder_graft_basis (declared repair): CDD horizon/run-delta fields grafted from the mos_asof store; read normally per spawn.",
+    "weather_forecast_cycle.cdd_basis: morning-cycle (06z-wall) CDD deltas NOT SERVED (cycle store absent cold); the freshest CDD delta is the D-1-evening run; the morning warm/cool nudge is unknowable except via inert HDD fields. Gap worked around by seam-level rule, not silently.",
+    "grid_stack serves gas_chg_7d and solar_chg_7d but NO wind_chg_7d: burn_conversion_gate's wind limb evaluated by differencing wind LEVELS across the three served periods (952k/673k/631k MWh, Sat/Sun/Mon - partly mechanical weekday collapse per the play's own caveat). A wind_chg_7d same-day-class field would make the limb clean; flagged for the feed.",
+    "steo_vintage knowable_from 0708 vs actual STEO release ~midday 0707: ambiguous whether Tuesday's tape already absorbed the bearish revisions; conservative reading taken (fresh at my open, caps the overnight). If Tuesday absorbed it, my gap/morning is modestly under-called.",
+    "tape_conditions visible window truncated: no 0630-0702 sessions in the slice, so the accumulation arm's ~5-session count was evaluated on 3 full sessions + the degenerate 0705 stub (declared in the arm's stand-down).",
+    "contract_structure (frozen 0703 vintage): OI-continuous front is NGU26 while volume front is NGQ26 (oi_volume_divergence true) - read the CALENDAR front pair per the S97 lesson (0.09 backwardation, +0.037 3d widening); no defect, provenance noted.",
+    "cot publication_delayed true (holiday week, published Mon 0706 15:30 ET, confidence 'derived') - knowable at my open either way; noted for provenance.",
+    "squeeze_watch spread limb masked: calendar_limb carried as UNKNOWN not false, per its own declaration - no squeeze read either way in the p50."
+   ]
+  },
+  {
+   "specialist": "C",
+   "group": "g23",
+   "date": "20260714",
+   "dow": "Tue",
+   "day_class": "core_midweek_week2",
+   "round": 1,
+   "mode": "BLIND",
+   "brain_version": "s104.0",
+   "guessed_net_usd": 280,
+   "overnight_gap_usd": 60,
+   "net_semantics": "guessed_net_usd = close-to-close DAY-MOVE from the 0713 17:00 close (gap included), the walk's standard scored quantity; overnight_gap_usd = the decomposed overnight seam component (17:00 -> ~06:00, the model-add window); implied intraday-from-morning component ~ +220. path_p50_curve is cum-from-prior-close on the 2-hourly ET clock from the 20:00 reopen.",
+   "path_p50_curve": [
+    [
+     20,
+     15
+    ],
+    [
+     22,
+     45
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     70
+    ],
+    [
+     4,
+     70
+    ],
+    [
+     6,
+     75
+    ],
+    [
+     8,
+     45
+    ],
+    [
+     10,
+     30
+    ],
+    [
+     12,
+     90
+    ],
+    [
+     14,
+     185
+    ],
+    [
+     16,
+     255
+    ],
+    [
+     17,
+     280
+    ]
+   ],
+   "expected_range_band_usd": [
+    -350,
+    700
+   ],
+   "reasoning": "Two-sided core Tuesday resolved modestly UP on a stack of burn-confirmed weather and program-decontamination reads against a discounted D-1 sell tilt. (1) D-1 TILT, DECONTAMINATED: 0713 aggregate signed flow -950 with phase-3 acceleration (-1162 on 26,616 lots) reads DOWN raw - but 0713 was GSCI roll day 4 (window BD5-9 = 0708/09/10/13/14) and BCOM day 3; settle-window roll executions land exactly in phase 3; big prints were BALANCED (0.483 two-sided, size-weighted) against the negative aggregate; and the week's two heavy sell-flow sessions were precisely the non-EIA roll days (0708 -2336, 0713 -950) while the pre-roll days carried big-print BUYING (0706 0.641, 0707 0.568). Per handoff.residual_tilt_field (n=2, both instances the raw aggregate misled), the decontaminated residual tilt is ~NEUTRAL, not down. 0714 is GSCI day 5 - the mechanical front-selling completes today. (2) WEATHER, BURN-CONFIRMED: the 0713-evening batch (as-of 23:59Z, arriving 21:30-04:30 DURING my session window) revised D1-D3 HOTTER (+1.23/+1.57/+1.60 GW CDD), lifting the 0715 peak to 17.55 GW and EXTENDING the shot through 0716-0717 at horizons whose Monday vintage showed cooling (13.84->15.41, 11.60->13.20) - duration-extension with first-appearance character (mos_first_appearance: the D1 peak wobble alone would be inert revision; the D2/D3 mass add is new Bcf). Burn confirms transmission (weather.burn_conversion_gate): US48 est burn 43.3 Sun-over-Sun vs 42.3 (+1.0 Bcf/d same-day-class), gas_chg_7d +134k MWh, weekday-scale burn ran 44.9-45.4 midweek; wind up moderately Sun-over-Sun (876k vs 673k MWh) = a damper arguing mid-band sizing, not suppression (the 0629 suppression case was wind +62% WITH burn -4.2; mine is burn-positive). (3) FLOW MEMORY: the 0709 EIA session absorbed a 12-Bcf BEARISH surprise (+61 vs +49) on the week's biggest tape (61k trades) and closed NET BUY (+1551, final phase +1390 on 50.9k lots) - the market refused to break on bad news at these levels. (4) PRE-PRINT: Thursday 0716 covers report-week 0710, the hot week (NGWU power burn +6.3 Bcf/d WoW, +16%; consumption +5.9; supply -1.1) - a tightening-lean print expectation supports Tue/Wed positioning; the survey consensus itself is NOT decision-time-known (next_print null; the 45B row carries a post-print capture stamp and was NOT consumed, per the declared trap). (5) CAPS: the slow backdrop stays bearish (storage 2983, +156 vs 5yr, injection phase, backwardation, STEO jul26 supply up-revised +0.24 / consumption -1.2 / power -0.93) and the ladder cools hard after 0717 (12.7 -> 11.5 by 0720, D5 run-delta -1.85), so this is a modest heat-window day, not a trend day: p50 +280 vs the G22 burn-confirmed delivered band +410..+800 (my limbs are weaker than 0624's). POSITIONING: NYMEX MM net -60k at the 50th 1y pctile, WoW +4.5k IMPROVING - no extreme, no worsening; ICE LD1 MM length at the 0.94th 1y pctile (washed out) - the liquidation pressure is largely spent; no covering-rally state claimed. SHAPE: reopen quiet, the 18z/00z hot batch prices +60-75 by 06:00; morning softness 08:00-10:00 (final roll supply + backdrop; the down-risk window); midday recovery as roll supply thins; post-settle (14:00+) firm into the close once GSCI completes, pre-print length building. RISK: if the residual D-1 tilt was informed distribution rather than program flow, the day runs the s1void chain-bleed trend band damped for the summer era (-250..-450); band [-350, +700]. Confidence held moderate: open-time from-flat side is doctrinally a coin-flip and my direction is a stack of modest PROPOSED-play reads, not one strong established signal.",
+   "plays_fired": [
+    {
+     "id": "weather.burn_conversion_gate",
+     "status": "PROPOSED_S110",
+     "how": "CDD up-lean (overnight D1-D3 adds, peak tomorrow) burn-CONFIRMED: est burn +1.0 Bcf/d Sun-over-Sun (weekday-normalized form), gas_chg_7d +134k MWh; wind up moderately = damper -> sized mid-band (+280), not full G22 band. This day is live forward evidence for the play; its falsifier (burn-confirmed lean failing with no program/positioning excuse) is armed."
+    },
+    {
+     "id": "handoff.residual_tilt_field",
+     "status": "PROPOSED_S110",
+     "how": "D-1 was a program day (GSCI day 4 / BCOM day 3): raw aggregate -950 NOT consumed as the tilt; decontaminated by proxy (balanced big prints 0.483 vs negative aggregate; phase-3/settle concentration; roll-day pattern 0708/0713) -> residual ~neutral. DECLARED: the play's cohort-decomposition field is absent from tape_conditions (refine-grain artifact), so this is the proxy form, not the measured residual."
+    },
+    {
+     "id": "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
+     "status": "PROPOSED_S110",
+     "how": "divergence_resolution's HDD>=16.4 limb and shoulder_weather_band_void's <=13.5 limb treated UNEVALUABLE/trivial in this CDD block - no silent bearish default taken from either; fell through to the CDD ladder + burn gate exactly per the play's call."
+    },
+    {
+     "id": "signal.mos_first_appearance_vs_revision",
+     "status": "PROVISIONAL",
+     "how": "partial fire: the D2/D3 (0716/0717) adds extend the heat shot into horizons whose prior vintage showed cooling -> first-appearance-character, side UP; the D1 peak wobble (+1.23 on an already-hot horizon) treated as inert revision. The weekend's 0715 entry (13.07->16.31) was Monday's information, not mine."
+    },
+    {
+     "id": "timing.catalyst_continuity_frontrun",
+     "status": "HYPOTHESIS_secondary",
+     "how": "a live continuous heat catalyst (run-over-run hotter) with the storage print 2 sessions ahead supports afternoon/pre-print firmness; consulted for shape only, never primary (no armed R1/R5 boundary establishable blind)."
+    }
+   ],
+   "plays_stood_down": [
+    {
+     "id": "structure.accumulation_arm_turn",
+     "why": "COT limb decisively absent: MM net -60k at the 50.0 pctile 1y and WoW +4.5k IMPROVING (not extreme-and-worsening); big-print buy-absorption sessions (0706 0.641, 0707 0.568) are consecutive-early-week and FADED across the last three sessions (0.389/0.465/0.483); session tape is balanced (b2s 0.487-0.508), not a persistent sub-0.50 sell tape."
+    },
+    {
+     "id": "selector.midblock_right_the_ship",
+     "why": "turn stack NOT building: only the 0709 counter-delivery-on-absorbing-flow leg is present; COT leg dead, buy-absorption fading, chain-base unknowable blind. No unlock - logged as watch. G18's lesson (RTS-up without price-turn confirmation missed) respected."
+    },
+    {
+     "id": "selector.divergence_resolution",
+     "why": "HDD>=16.4 limb unevaluable in a CDD regime (per play 68); its session_b limb was read (0.465 original-basis) but the play was not allowed to default the day bearish."
+    },
+    {
+     "id": "magnitude.s1void_injection_chain_bleed",
+     "why": "not applied as the sizer: the day is signed UP and the D-1 sell tape is program-discounted; its trend band (-450..-780, spring-measured) is quoted damped (-250..-450) as the wrong-way risk band only."
+    },
+    {
+     "id": "direction.flow_conviction_sign_gate",
+     "why": "refine-side: requires realized per-phase price; blind channel (big_print_b_share 0.483) is balanced = no absorption signal either way."
+    },
+    {
+     "id": "direction.absorption_is_reversal",
+     "why": "same - no price-vs-flow read available blind; no absorption state claimable from balanced big prints."
+    },
+    {
+     "id": "boundary.prior_close_flow_direction_disagreement",
+     "why": "needs D-1 last-hour PRICE direction (masked); phase-3 flow is negative but the disagreement cannot be evaluated."
+    },
+    {
+     "id": "midweek.stretched_extreme_close_giveback",
+     "why": "inputs price-derived (D-1 own-move >= $1200, close_off_extreme) - masked; not evaluable."
+    },
+    {
+     "id": "midweek.giveback_exhaustion_reversal_recognition",
+     "why": "requires a mature DOWN-chain (age>=3) at a cum-extreme with a D-1 absorption tell; flows alternate all week (-632/+1748/-2336/+1551/-950) - no mature chain establishable, no absorption tell."
+    },
+    {
+     "id": "midweek.young_chain_extension_full_band",
+     "why": "no fresh turn (chain age 0-1) identifiable; D-1 flow does not align with a new chain."
+    },
+    {
+     "id": "daytype.weekday_archetype",
+     "why": "Tue=trend-continuation consulted but the block trend is not establishable blind (cum signed flow ~ -619 over 5 full sessions = flat); inert, and it is a 0.4-confidence secondary frame anyway."
+    },
+    {
+     "id": "daytype.eia_preprint_overextension_gate",
+     "why": "not a print day (print 0716); the gate belongs to Thursday's owner."
+    },
+    {
+     "id": "daytype.eia_window_reopen_to_print",
+     "why": "not a print day."
+    },
+    {
+     "id": "structure.covering_extension_distribution_flip + positioning.covering_self_limiting_cot_wow_gate",
+     "why": "no covering-rally state claimed anywhere in my read (COT WoW improving = spent-fuel side; no covering-UP prior exists to limit or flip)."
+    },
+    {
+     "id": "weekend/seam family (69/70/71, monday.*, friday.*, weekend.*)",
+     "why": "wrong day-class (Tuesday, intra-week: run deltas are the valid instrument here per 69's own scope)."
+    },
+    {
+     "id": "tape.squeeze_* / structure.squeeze_unwind",
+     "why": "squeeze_watch inactive; live DTE limb 11 > 7; spread limb masked - absence NOT read as a negative, per the block's own note."
+    },
+    {
+     "id": "direction.flow_nowcast",
+     "why": "needs the intraday reveal (requires_intraday); not available at the blind open."
+    }
+   ],
+   "confidence": 0.55,
+   "state_defects_and_gaps_reported": [
+    "FRIDAY 0710 SESSION TAPE ABSENT: no slice carries the 0710 full session; the 0713 slice's tape_conditions serves the 0712 Sunday stub (256 trades) as prior-session, and the 0706 slice likewise serves the 0705 stub (149 trades). Week-1-exit tape conditions are unobservable at session grain. The Friday-close state the Monday inherited is a named hole in my causal chain.",
+    "tape_conditions carries NO program/cohort decomposition (handoff.residual_tilt_field's input) in a week where 4 of the 5 usable D-1 reads are GSCI/BCOM roll days - decontamination executed as a declared PROXY (big-print vs aggregate divergence + phase-3 concentration), not a measurement.",
+    "vol_regime n0_era_basis (declared trap, honored): the n0 store carries ~0.226 of the scored leg's tape in the g23 era - its sigma/range levels were NOT used for sizing; magnitude taken from G22 same-regime burn-gate exemplars instead.",
+    "storage_consensus estimates[] capture stamps (declared trap, honored): the 0716 print's forward consensus is NOT decision-time-known (next_print null; the investing.com 45B row is a 20260721 post-print capture) - only the 0709 frozen print (49 vs 61) consumed; the hot-week print expectation was built from NGWU/grid_stack only.",
+    "weather_forecast_cycle serves no CDD fields (declared cdd_basis repair): the 0714 morning-cycle (06z) CDD delta is unavailable; the weather read rests on the D-1-evening batch alone. weather_forecast ladder_graft_basis read normally per the declared repair.",
+    "model_disagreement CDD spread served only at h0/h1 (None beyond): near-term model agreement confirmed (spreads 0.04/0.37 GW), but D2+ disagreement - exactly where my first-appearance-character add sits - is unobservable.",
+    "cash_basis and options_surface frozen at the 0703 anchor vintage (masked one-shot): 11 days stale by my day; basis +0.065 and the 3.5/3.75/4.0 call walls noted as anchor-era context only, no live read taken.",
+    "contract_structure OI fields frozen at anchor with OI-vs-volume front divergence already visible (OI front NGU26, volume front NGQ26) - the live roll-progress state on my day (GSCI day 5) is not directly observable; inferred from flow_calendar's deterministic clock only."
+   ]
+  },
+  {
+   "specialist": "C",
+   "group": "g23",
+   "date": "20260715",
+   "dow": "Wed",
+   "round": 1,
+   "mode": "BLIND",
+   "brain_version": "s104.0",
+   "day_class": "core_midweek_d1_to_eia",
+   "guessed_net_usd": 300,
+   "overnight_gap_usd": 60,
+   "net_convention": "guessed_net_usd = full day-move from prior 17:00 close to 20260715 17:00 close (gap + session), the coordinator-scored quantity; overnight_gap_usd is its 20:00->06:00 seam component; path_p50_curve ends at guessed_net_usd",
+   "path_p50_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     25
+    ],
+    [
+     0,
+     40
+    ],
+    [
+     2,
+     45
+    ],
+    [
+     4,
+     55
+    ],
+    [
+     6,
+     60
+    ],
+    [
+     8,
+     150
+    ],
+    [
+     10,
+     260
+    ],
+    [
+     12,
+     340
+    ],
+    [
+     14,
+     400
+    ],
+    [
+     16,
+     340
+    ],
+    [
+     17,
+     300
+    ]
+   ],
+   "band_usd": [
+    -250,
+    700
+   ],
+   "confidence": 0.55,
+   "reasoning": "Direction UP on the exogenous stack, with the D-1 tape deliberately demoted. (1) PRIMARY: weather.burn_conversion_gate (S110 proposal, G23 is its named forward test) passes UP -- forecast_gw_cdd 18.08 is the block-max heat and the overnight runs WARMED every forward horizon (run_delta_cdd +0.53 D0, +1.25 D+1, +1.00 D+2, +1.74 D+4: the new information is warm), and the burn residual confirms: est_gas_burn_bcfd 47.2 = block max, Monday-over-Monday +2.3 (44.9 -> 47.2, the weekday-normalized form the play requires), gas_chg_7d +299 GWh with solar_chg_7d -230 GWh; wind rose Monday-over-Monday (+22%) but burn rose through it -- wind is a damper never a sorter, so it trims magnitude not sign. (2) The WNGSR week-0708 balance tightened decision-time-known since 0709: power burn +6.3 Bcf/d wow (+16%), total supply -1.1 Bcf/d. (3) COT: MM net -60,295 covering three straight weeks (+2.2k/+17.9k/+4.5k wow), 1y pctile 50 -- a live-but-slowing covering bid, and residual gross shorts (298k) de-risking ahead of tomorrow's 10:30 print is net buying in the morning liquid window. (4) The GSCI roll (days 1-5 = 0708-0714, gsci_ng_roll_this_month TRUE) ENDED with D-1: the mechanical front-selling overhang lifts today, first clean session. (5) Wednesday archetype weak up-lean agrees as a secondary frame (conf 0.4). THE TAPE DEMOTION: D-1 0714 printed the block's most coherent buy tape (sflow +3747, all three phases positive, big prints 0.553 on 61 prints, two-sided b_share 0.53) BUT 0714 was GSCI roll day 5 + BCOM day 4 -- flow.resting_program_inverts_aggressor_tilt (S110, deterministic trigger, blind-available) strips that read's authority: a long-index roll rests offers in the front and the crowd's lifts print aggressor-BUY regardless of true direction, and the program-decontaminated residual tilt (handoff.residual_tilt_field) is not derivable from tape_conditions aggregates. So the buy tape CORROBORATES but does not carry the call; if the residual was actually net-selling (the G22 0629 pattern) today is two-sided, which is priced into the band's -250 down tail. MAGNITUDE: G22 burn-confirmed delivered class ran +410..+800; I take the low-middle +300 because (a) today is the heat CREST -- the forward ladder cools 16.7 -> ~12-14 next week, capping forward-looking extension, (b) pre-EIA afternoon flattening (print tomorrow, D-1 coil behavior), (c) the LNG vessel line STEPPED AGAINST the thesis (36 vessels/136 Bcf -> 31/117, -14% export throughput wk-over-wk) and supply.lng_export_throughput_vessel_line requires saying so and widening rather than resolving it in my favor, (d) low-vol summer regime (pre-block n0_range_20_mean ~$990 at the 13th pctile, on the declared degraded store), (e) storage backdrop bearish (+156 vs 5yr, last print +12 above consensus, production 109.4 strong with STEO revised up, nuclear returning -1.1 GW 7d). PATH: modest overnight gap up (+60) on the warm run repricing; the build concentrates in the 06:00-10:30 liquid window (short de-risk before the binary + burn-max data); peak ~+400 around 14:00; pre-print trim into the close (+300). No cum-keyed or chain-extension claims: boundary.chain_staleness_gate k=8 stands all such rungs down, and the flow record 0706-0714 alternates sign (no coherent chain readable without price). EXIT READ FOR TOMORROW'S OWNER (EIA print day): today is the first post-program session, so TODAY's tape is the uncontaminated D-1 coherence input for daytype.eia_preprint_overextension_gate; no consensus number for the 0716 print exists in state (next_print null), so surprise-priced-vs-not cannot be pre-assessed -- read my session's flow coherence directly.",
+   "plays_fired": [
+    {
+     "id": "weather.burn_conversion_gate",
+     "role": "primary direction",
+     "status": "S110 PROPOSED - falsifier LIVE this day",
+     "note": "burn-confirmed CDD add (burn 47.2 block-max, Mon/Mon +2.3, solar falling) with warm run-deltas across all horizons -> up-lean at band; G23 is the play's named forward test; a burn-confirmed add that fails to deliver here fires its falsifier"
+    },
+    {
+     "id": "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
+     "role": "guard",
+     "status": "S110 PROPOSED - fires by scope",
+     "note": "gw_cdd 18.08 vs gw_hdd 0.0: divergence_resolution's 16.4 bar and shoulder_weather_band_void's 13.5 return UNKNOWN; the silent S3-bearish default is explicitly NOT taken"
+    },
+    {
+     "id": "flow.resting_program_inverts_aggressor_tilt",
+     "role": "guard on D-1 tape",
+     "status": "S110 PROPOSED - falsifier LIVE this day",
+     "note": "D-1 0714 = GSCI roll day 5 + BCOM day 4 (deterministic, never masked): the +3747 aggressor-buy tilt and big-print 0.553 lose authority; if 0714's tilt in fact matched its day sign with the program dominant, this instance counts toward the play's falsifier"
+    },
+    {
+     "id": "handoff.residual_tilt_field",
+     "role": "requirement fired, input absent",
+     "status": "S110 PROPOSED",
+     "note": "my day's D-1 carried a scheduled program, so the play demands the decontaminated residual tilt in place of raw session_signed_flow; the decomposition is not derivable from tape_conditions aggregates -- declared as a state gap, raw aggregate demoted instead"
+    },
+    {
+     "id": "boundary.chain_staleness_gate",
+     "role": "deterministic schedule",
+     "status": "S110 PROPOSED",
+     "note": "k=8 sessions from the block anchor >= 4: every cum-from-anchor / chain-extension rung stands down; wide band emitted, no cum-keyed claims"
+    },
+    {
+     "id": "daytype.weekday_archetype",
+     "role": "secondary frame",
+     "status": "PROVISIONAL conf 0.4",
+     "note": "Wed weak up-lean agrees with the force stack; never the primary caller"
+    },
+    {
+     "id": "supply.lng_export_throughput_vessel_line",
+     "role": "context-not-signal, band widener",
+     "status": "WIRED_UNPROVEN",
+     "note": "vessel line stepped -5 vessels / -19 Bcf (-14%) wk-over-wk AGAINST the up thesis; per the play's own text this is said aloud and the band widened (down tail -250), never resolved in my favor"
+    }
+   ],
+   "plays_stood_down": [
+    {
+     "id": "structure.accumulation_arm_turn",
+     "reason": "COT limb fails hard: mm 1y pctile 50.0 and IMPROVING 3 straight weeks (needs extreme AND worsening); session-tape limb fails on the licensed basis (0714 session_b_share_two_sided 0.53 = buy tape, not sub-0.50 sell); the only >=0.55 big-print hits in window (0706 0.593, 0714 0.553) sit on/adjacent to program days with 0714's authority stripped. Not tortured into firing"
+    },
+    {
+     "id": "selector.midblock_right_the_ship",
+     "reason": "turn stack not building: COT mid-range and improving, no based-chain evidence available blind"
+    },
+    {
+     "id": "selector.divergence_resolution",
+     "reason": "UNEVALUABLE in CDD regime (16.4 HDD bar unreachable); down-default not taken -- CDD instruments own the read"
+    },
+    {
+     "id": "magnitude.shoulder_weather_band_void",
+     "reason": "UNEVALUABLE: 13.5 HDD bar trivially satisfied every summer day = void artifact"
+    },
+    {
+     "id": "magnitude.s1void_injection_chain_bleed",
+     "reason": "spring S1-void scope; requires live sub-0.50 two-sided sell tape (0714 reads 0.53 buy) and a chain-sided-down day I cannot establish blind"
+    },
+    {
+     "id": "midweek.stretched_extreme_close_giveback",
+     "reason": "D-1 close_off_extreme and run size are price-derived and masked: UNKNOWN, not evaluable"
+    },
+    {
+     "id": "midweek.prior_exit_lasthour_magnitude_gate",
+     "reason": "prior last_hour_dir masked (vol block frozen at 0703 anchor vintage); no identified turn to size"
+    },
+    {
+     "id": "midweek.giveback_exhaustion_reversal_recognition",
+     "reason": "requires mature down-chain at cum extreme -- chain state unknowable blind at k=8; the D-1 absorption tell is program-contaminated"
+    },
+    {
+     "id": "midweek.young_chain_extension_full_band",
+     "reason": "chain birth/age unverifiable blind; consumed only as the rationale not to cap the morning leg, no full-band license taken"
+    },
+    {
+     "id": "flow.price_free_absorption_proxy",
+     "reason": "PRECONDITION MET (sflow +3747 positive, 61 big prints guard-clean, 0.553 flip-buy = 'absorber gone') but authority stripped on program days by resting_program_inverts_aggressor_tilt's consequence guard -- the S110 proposal collision is named in the cross-cutting finding; the deterministic roll calendar selects the guard"
+    },
+    {
+     "id": "flow.big_print_bshare_thin_tape_guard",
+     "reason": "evaluated: 61 big prints >= 20 so the 0.55 bar stands sample-wise, but every consumer of the bar is stood down on program-day authority; no threshold consumed"
+    },
+    {
+     "id": "flow.passive_ladder_displacement",
+     "reason": "both limbs fail cleanly: ph3 net +1128 is 56% of ph2 (needs <5%), ph3 volume 19,870 well below session max 40,827"
+    },
+    {
+     "id": "daytype.thin_session_range_invariance",
+     "reason": "not a thin session (D-1 29,224 trades; today a normal Wednesday)"
+    },
+    {
+     "id": "daytype.eia_preprint_overextension_gate",
+     "reason": "print-day play -- fires tomorrow 0716, not on the D-1; my session's tape becomes its coherence input"
+    },
+    {
+     "id": "daytype.eia_window_reopen_to_print",
+     "reason": "EIA Thursday scope -- tomorrow"
+    },
+    {
+     "id": "daytype.storage_thursday_magnitude",
+     "reason": "print-day scope -- tomorrow"
+    },
+    {
+     "id": "daytype.surprise_magnitude",
+     "reason": "no live surprise today; 0709's +12 is 6 days stale and next consensus not yet captured"
+    },
+    {
+     "id": "direction.flow_conviction_sign_gate",
+     "reason": "refine-side: requires realized price per phase; blind cannot compute"
+    },
+    {
+     "id": "direction.absorption_is_reversal",
+     "reason": "refine-side: absorption verdict needs price; blind pairing with my own forecast would be circular on a program-contaminated tape"
+    },
+    {
+     "id": "structure.covering_absorption_directional_tell",
+     "reason": "needs price for the conviction discriminator; additionally the crowded-short scope has lapsed (pctile 50)"
+    },
+    {
+     "id": "structure.covering_extension_distribution_flip",
+     "reason": "crowded-short covering regime scope lapsed; cum/age arms masked and staleness-gated"
+    },
+    {
+     "id": "positioning.covering_self_limiting_cot_wow_gate",
+     "reason": "scope = spent-downgrades at weekend/holiday seams in crowded-short regimes; no spent claim emitted today -- consumed only as context (covering live, slowing: wow +4.5k after +17.9k)"
+    },
+    {
+     "id": "boundary.prior_close_flow_direction_disagreement",
+     "reason": "needs last-hour price dir vs flow; price masked -- ph3 flow +1128 positive is known, its price counterpart is not"
+    },
+    {
+     "id": "structure.chain_polarity_flip",
+     "reason": "no ARM/CONFIRM evaluable without price; no flip claimed, no polarity asserted"
+    },
+    {
+     "id": "boundary.chain_label_must_track_realized_cum",
+     "reason": "realized cum masked; accordingly NO chain label is asserted anywhere in this forecast"
+    },
+    {
+     "id": "direction.flow_nowcast",
+     "reason": "needs intraday reveal; blind"
+    },
+    {
+     "id": "seam/weekend/monday family (8, 22, 23, 27, 30, 31, 32, 36, 37, 38, 43, 44, 45, 52, 58, 69, 70, 71)",
+     "reason": "not a seam day: core midweek Wednesday"
+    }
+   ],
+   "state_defects_and_gaps_reported": [
+    "Friday 0710's full-session tape is structurally ABSENT from the slice: the Monday 0713 key carries Sunday 0712's 256-trade stub as its prior session, so no day-key serves the 0710 session. The last-~5-sessions scans (accumulation arm, program-week flow read) run 4-of-5 sighted; 0710 was also GSCI roll day 3, deepening the program-week blind spot.",
+    "storage_consensus.next_print = null at as_of 2026-07-15: D-1 to the 0716 print with NO captured consensus (TE had not posted at capture -- the declared capture-stamp trap, read as declared). Surprise-priced-vs-not for tomorrow cannot be pre-assessed; flagged to tomorrow's owner.",
+    "vol_regime frozen at the 0703 anchor vintage (n0_prev_date 2026-07-03) AND n0_era_basis degraded store (g23 leg reconciliation 0.226): no current-vintage magnitude conditioner exists; bands rest on the pre-block read plus G22 burn-gate analogs. Declared trap, worked as declared, not around.",
+    "handoff.residual_tilt_field's required input (program-decontaminated D-1 tilt) is not derivable from tape_conditions aggregates -- no big-print cohort decomposition in the slice. The raw +3747 aggregate was demoted rather than decomposed; the residual sign is genuinely unknown and is the main two-sided risk in this forecast.",
+    "squeeze_watch / contract_structure / cash_basis / options_surface are anchor-frozen (vintage_asof 20260703): the +0.09 front backwardation widening +0.037/3d and the +0.065 cash premium are INCOMING block state, not current -- consumed as context only, not as live signals.",
+    "weather_forecast ladder_graft_basis: declared S110 repair, read normally per spawn; weather_forecast_cycle cdd_basis likewise declares the cycle store absent cold (CDD run-deltas served from the mos_asof store graft) -- consumed as served.",
+    "b_share basis compliance note: fitted bars (0.55 big-print arm) read the original series, absolute-0.50 semantics read the two-sided series, per b_share_basis_note; both applied accordingly (0714: 0.553 original for the bar, 0.53 two-sided for the tape-sign semantic)."
+   ]
+  }
+ ]
+}

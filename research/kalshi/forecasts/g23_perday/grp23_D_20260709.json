@@ -1,0 +1,83 @@
+{
+ "specialist": "D",
+ "group": "g23",
+ "date": "20260709",
+ "dow": "Thu",
+ "day_class": "eia_print_thursday (block's first print; 10:30 ET for week ending 2026-07-03)",
+ "round": 1,
+ "mode": "BLIND (price curve masked; forecast from market forces)",
+ "brain_version": "s104.0",
+ "guessed_net_usd": -250,
+ "overnight_gap_usd": 30,
+ "net_convention": "guessed_net_usd = full day-move prior close (0708 17:00) -> my close (0709 17:00), gap included; overnight_gap_usd is the reopen-gap component inside it (intraday net therefore ~ -280)",
+ "path_p50_curve": [
+  [20, 0],
+  [22, 30],
+  [0, 40],
+  [2, 30],
+  [4, 20],
+  [6, 50],
+  [8, 70],
+  [10, 10],
+  [12, -140],
+  [14, -230],
+  [16, -250],
+  [18, -250],
+  [20, -250]
+ ],
+ "expected_magnitude_band_usd": [-650, 250],
+ "expected_travel_usd": 1100,
+ "travel_note": "daytype.eia_window_reopen_to_print: catalyst up-size applies to RANGE, not NET, on my summer lens record (0625 44% of variation pre-10:30; 0702 1,380 travel / 0 net). Expect ~900-1,400 travel around a modest net.",
+ "reasoning": "SETUP: anchor 3.245 off the 0703 holiday half-session (direction_caveat + holiday_caveat honored: last-hour dir is a resolution-floor read, not leaned on). Block flow arc from the never-masked tape_conditions chain: Mon 0706 mixed (signed flow -632, big prints BUY 0.593, late fade -1207), Tue 0707 coherent BUY (+1748, all three phases positive, big prints 0.535), Wed 0708 coherent SELL (-2336, phases +441/-1969/-808, big prints 0.38 on n=96, session_b 0.465). An alternating two-sided tape around the anchor, flipped hard to sell the day before my print. Wednesday's sell has three NAMED drivers: (1) July STEO knowable 0708 - production revised UP (+0.24 cur/+0.27 next Bcf/d), total consumption revised DOWN (-1.2 Jul), power burn -0.93, LNG +0.11 only = looser balance; (2) GSCI roll day 1 (mechanical selling of NGQ26, the scored leg); (3) the 0708-evening cycle cooled the 7/11-7/13 window ~1.2-1.7 gw-CDD (12.4/11.9/11.5 vs prior 12.9/13.1/13.1). Two of the three persist into my day (roll day 2 of 5; the cool window now fully in the D-1 vintage) - the STEO repricing is one-shot and now absorbed. COUNTERWEIGHTS: D0/D+1 heat ADDED overnight (run_delta_cdd +0.28/+1.07; D0 14.73 gw-CDD, hot), MAV 1.35 gw hotter than MET at D0, burn 45.3 Bcf/d and +359k MWh 7d (ERCOT-led), cash basis +0.065 (weekly-stale), NYMEX MM net -65k (44th 1y pctile, mid) with ICE LD1 MM at the 0.94th 1y pctile = covering fuel exists but NYMEX positioning is not crowded-extreme. STORAGE BACKDROP: 2,922 Bcf, +151 vs 5yr, RE-WIDENED +39.2-above-seasonal last week (+6 vs consensus) - bearish and freshly more bearish. PRINT: decision-time consensus RECONSTRUCTED (see defects: the 49.0 headline is a post-print capture) as the 49-60 band, mid ~54.5, house_disagreement 11 Bcf (vs 0 last week) = elevated print uncertainty; vs an estimated ~55 +/- 5 seasonal (not in-state, derived from last week's 47.8 5yr chg + early-July shape) the street expects roughly-seasonal to slightly-below-seasonal - the loose anomaly read as a one-week blip. DIRECTION: the eia_preprint_overextension_gate does NOT fire (tell a: flows alternate Mon-/Tue+/Wed-, no >= $900 same-side run into the print; tell b: session_b 0.465 and big_print_b 0.38 AGREE = coherent D-1 sell, big_prints_n 96 clears the thin-tape guard; tell c: partial at most - heat is priced, the consensus is fresh/late-forming). Coherent D-1 sell + young 1-day down swing -> R2 sides the post-print leg DOWN with the running swing; roll flow and the cooling mid-window back it. But the swing is ONE session old in an alternating summer tape, the print is genuinely uncertain (11 Bcf house gap), and my own lens record says summer prints deliver travel not net, with counter-print pops damped/round-tripping (0326 class). SCENARIO WEIGHTS: loose >60 (p~0.30) -> chain-sided delivery -450..-700; in-band 49-60 (p~0.45) -> roll+digestion grind -150..-350; tight <49 (p~0.25) -> counter pop sold into absorption, -50..+250. Probability-weighted ~ -250. SHAPE: print_day_chain_sided class profile adapted - small warm reopen gap (+30), MAV-hot two-sided morning drift to ~+70 by 08:00, pre-print fade to ~+10 as roll selling resumes (reopen->10:30 window carries ~40% of variation per my window play), post-print delivery to -140 by 12:00, damped digestion to -230 by 14:00, settle -250. NOT exhaustion-class (fresh uncertain consensus, prior day normal-sized), so some net delivery is allowed - at summer scale, nowhere near winter Thursday bands.",
+ "plays_fired": [
+  "daytype.eia_window_reopen_to_print (PROPOSED, n=4 G17/G22, merged S110 from my own lens record - applied per spawn instruction and saying so: pre-print window set to REOPEN->10:30, morning variation share honored in the path; catalyst up-size applied to RANGE not NET)",
+  "daytype.eia_preprint_overextension_gate (run honestly: 0-1 of 3 tells fire -> chain-sided sign PERMITTED on coherent D-1 sell; full winter band still withheld because the swing is 1 session old - gate informs, does not force)",
+  "daytype.storage_thursday_magnitude (R2: post-print LEG sides with the running young down swing, never the print sign; magnitude up-size taken on travel; day net owned by chain state = young/alternating -> damped)",
+  "flow.big_print_bshare_thin_tape_guard (checked: big_prints_n 96 >= 20, the 0.38 sell read stands as measured)",
+  "boundary.prior_close_flow_direction_disagreement (0703 seam: price-up/flow-negative distribution tell -> giveback risk, consistent with the Mon-Wed net giveback already delivered; 0708->0709 boundary: late-phase sell flow aligned with a delivering sell close -> carry down tilt as normal)",
+  "weather.absolute_hdd_bar_unevaluable_in_cdd_regime (refused the HDD-based S1-void machinery for July; demand read on the CDD/burn channel)",
+  "selector.divergence_resolution (storage-bearish vs weather-hot split resolved to the storage/flow side for the p50 - its DEFAULT arm - but its numeric HDD gates declared unevaluable in a CDD regime, so resolution leaned on flow coherence + roll + STEO, with a wide band for the heat side)",
+  "structure.chain_polarity_flip (consulted: no parabolic arm, no confirm anywhere near - alternation, not flip mechanics; polarity read = young down, low conviction)"
+ ],
+ "plays_stood_down": [
+  "magnitude.shoulder_counter_print_damping (scope = S1-void SHOULDER on the HDD axis; July is a live-CDD regime - scope unevaluable per the CDD-mirror warning; its qualitative counter-pop-round-trips read carried via my own lens instead)",
+  "magnitude.s1void_injection_chain_bleed trend band (spring scope: confirmed multi-day chain + persistent sub-0.50 sell tape required; here a 1-day swing - band used only as the loose-print scenario, not the p50)",
+  "tape.squeeze_ignition/ratchet + structure.squeeze_unwind (squeeze_watch inactive; DTE limb 14 fails <=7; spread limb MASKED - per the state's own note, no squeeze read in either direction)",
+  "direction.flow_conviction_sign_gate / direction.absorption_is_reversal post-print form (refine-side, requires realized price; blind proxy = D-1 flow coherence, declared)",
+  "vol_regime magnitude scalers (n0_era_basis declared trap: n0 store carries ~0.226 of the leg tape in g23 - used only as an order-of-magnitude sanity, never as a scaler)",
+  "daytype.surprise_magnitude (sign never sorts direction per its own caveat; its size role replaced by the 11-Bcf house-disagreement width)",
+  "all monday/friday/weekend-seam plays (wrong day-class)"
+ ],
+ "confidence": 0.55,
+ "confidence_note": "direction ~0.55-0.60 down; the two-sided print risk is real and declared (a sub-49 print flips the day positive; band top +250). Magnitude honest per doctrine - no reactive tail claimed.",
+ "state_defects_and_gaps_reported": [
+  "DECLARED TRAP FOUND AND HANDLED - storage_consensus.next_print: the headline consensus_chg_bcf 49.0 carries source tradingeconomics_final_frozen with final_capture_is_post_print=true, and estimates[1].snapshot_utc = 2026-07-10T06:21:54Z (pre_print=false) - a capture PAST my 0709 decision point serving under my day. The ONLY strictly-pre-print entry, estimates[0] (TE snapshot 2026-07-07T06:28:04Z, pre_print=true), carries value_bcf = null ('TE had not yet posted a consensus at capture'). RECONSTRUCTION USED: no verified pre-print point consensus exists in the store for this print; the two houses' frozen forecasts (TE 49.0, investing.com 60.0 - both pre-print-FORMED numbers but post-print CAPTURED, 0710 and 0721) bound the street at 49-60; I used ~54.5 +/- 5.5 and treated the exact 49 as UNKNOWABLE at 10:29 ET. G22 discipline cross-check: house_disagreement_bcf = 11.0 vs 0.0 on the last print = elevated print uncertainty, which is load-bearing in my scenario widths and the -650..+250 band. Additional measured oddity: TE had no consensus posted 2 days pre-print (last week's was up same-morning), so the street number formed LATE this holiday-shifted survey week.",
+  "vol_regime.n0_era_basis (declared): n0 family computed on a degraded continuous store carrying ~22.6% of the scored leg's tape in g23 - all n0 sigma/range levels treated as era-degraded, no magnitude scaler consumed them.",
+  "weather_forecast.ladder_graft_basis (declared repair, read normally per spawn): CDD horizon/run-delta grafted from the mos_asof store after two identity proofs; fwd7_gw_cdd_span derived (store CDD span null this vintage).",
+  "storage_vintage frozen at as_of 2026-03-05 (age 126 days) - the named Mar-Jul 2026 feed hole; unusable for July and not worked around.",
+  "storage_consensus store note says 'spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)' yet next_print/last_print ARE populated for July via archive captures - note and payload disagree (cosmetic, declared).",
+  "ngwu_balance.latest_sd_levels age 288 days (the S&P S/D section died 2025-09-25, known structural loss); only the vessel line is current (36 vessels / 136 Bcf capacity, issue 0702).",
+  "cot.publication_delayed = true (0630 report published Mon 0706 15:30 ET after the holiday; confidence 'derived') - legitimately in my past, used.",
+  "cash_basis weekly-stale by design (hh_spot gas day 0630, frozen at the 0703 anchor vintage) - used as a mild-tightness backdrop only, no basis-change chain read across the gap.",
+  "contract_structure/squeeze_watch/options_surface masked_one_shot at vintage 20260703 (declared) - live calendar facts taken from flow_calendar (gsci_roll_day_n=2, days_to_futures_expiry=14, is_eia_print_day=true); options walls (3.00 puts / 3.50 calls around the 3.245 anchor) read as far-opex (19 cal days) weak-pin context only.",
+  "spawn calendar note says 'GSCI roll window inside week 1' while flow_calendar's day-numbering (day 2 on Thu 0709) implies the 5-day window runs Jul 8-14, spilling into Mon-Tue of week 2 - I trusted the state's per-day gsci_roll_day_n; roll pressure persists into early week 2 (relevant to whoever owns 0713/0714)."
+ ],
+ "evidence_used": [
+  "tape_conditions chain 0705-0708 (never-masked): the Mon/Tue/Wed flow arc and D-1 coherence",
+  "anchor g23_anchor.json 3.245 with holiday + direction caveats honored",
+  "storage + storage_regional (0702 print: 2,922 / +151 vs 5yr / +39.2 above-seasonal chg / +6 vs consensus)",
+  "storage_consensus estimates[] pre-print reconstruction + house_disagreement 11",
+  "steo_vintage jul26 revisions (prod up, consumption/power down, storage path 3,149 end-Jul)",
+  "weather_forecast 0708-evening vintage + run_delta_cdd + model_disagreement (MAV +1.35 vs MET at D0) + weather_forecast_cycle morning stamp (D0 -0.045, near-unchanged)",
+  "flow_calendar (print day flag, GSCI roll day 2, no expiry/opex inside block)",
+  "cot 0630 (NYMEX MM -65k / 44th pctile; ICE LD1 0.94th pctile; WoW +17.9k covering)",
+  "grid_stack (burn 45.3 Bcf/d, +359k MWh 7d, ERCOT-led) + nuclear (2.17 GW out, low) + solar (day length past peak)",
+  "cash_basis (+0.065, weekly-stale)"
+ ],
+ "evidence_rejected": [
+  "the 49.0 point consensus as a decision-time fact (post-print capture - the trap)",
+  "n0 sigma family as magnitude scalers (era-degraded)",
+  "squeeze_watch spread limb (masked - no read either way)",
+  "storage_vintage (126-day-old vintage, wrong season)"
+ ]
+}

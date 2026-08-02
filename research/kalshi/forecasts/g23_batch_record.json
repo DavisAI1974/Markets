@@ -49,6 +49,30 @@
    "sop": "v1.2",
    "brain": "s103.7",
    "summary": "A11.1 CDD-ladder graft applied (state_repair_s110b): 8 horizon CDD + 8 run-delta CDD per day from the mos_asof store, two identity proofs per day (D0 equality + HDD-span arithmetic), fwd7_gw_cdd_span derived w/ basis; sunday_reopen/weekday_open get seam_delta_warning + declared cdd_basis (cycle store absent cold - declared, not fabricated). Purely additive: 224 leaves added, 0 changed, 0 removed. Inspection re-run PASS."
+  },
+  {
+   "ts": "2026-08-02T02:40:49Z",
+   "session": "S110",
+   "station": "blind-r1",
+   "sop": "v1.2",
+   "brain": "s104.0",
+   "summary": "LAUNCHING: blind on brain s104.0 (76 plays, forward test of the S110 merge) + the ladder-repaired state; per-day causal slices; waves C/D/E -> Abridge -> B per SOP BLD-1/BLD-2"
+  },
+  {
+   "ts": "2026-08-02T04:23:13Z",
+   "session": "S110",
+   "station": "blind-r1",
+   "sop": "v1.3",
+   "brain": "s104.0",
+   "summary": "COMPLETE: 5/10 dir, sum|err| 5920 (2nd-best of walk), DRIFT +4900, survives 83% - the most one-directional block of the walk, and the lean flipped SIGN vs every prior block. Actual cum -3290 vs blind +1610."
+  },
+  {
+   "ts": "2026-08-02T04:23:13Z",
+   "session": "S110",
+   "station": "scored",
+   "sop": "v1.3",
+   "brain": "s104.0",
+   "summary": "FORWARD TEST RESULT: the S110 merge plays (burn_conversion_gate esp.) supported UP leans on a block that fell hard; 0709 print day -2050 actual vs -250 called. burn_conversion_gate falsifier appears HIT on first forward test - refine adjudicates. Attribution fence holds both ways."
   }
  ]
 }
