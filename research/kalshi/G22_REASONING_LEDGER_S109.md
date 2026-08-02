@@ -366,3 +366,37 @@ transmission is what failed**. Those imply opposite fixes, and only one of them 
 actual **+50**. Wrong in opposite directions, on the two days that are the walk's declared focus — while
 B's 0622 *session* read was off by 120. **The blind's intraday read is sound; its weekend-gap instrument
 is not.** That is a sharper and more useful conclusion than any aggregate, and it is invisible on a mean.
+
+
+---
+
+## PART 6 — WHY THE VESSEL LINE WAS WIRED (Greg, S109 close)
+
+Greg asked *"are we still tracking lng tankers?"* The audit found the vessel line **live and moving**
+(departures 36->35->36, capacity 133.0->135.0->136.0, Vortexa via EIA WNGSR) with **zero brain
+consumers**, while `lng_feedgas_bcfd` is null and its only figure is 278 days stale and self-declared
+dead. Wired on his instruction as **WIRED_UNPROVEN** — readable context, not a signal.
+
+**Then he gave the reason it matters, which is the part worth keeping:**
+
+> *"Tanker flows will matter when hurricanes blow through the gulf. And there's probably going to be more
+> of them leaving because they have to fill a supply hole in the Middle East."*
+
+Two forward drivers, both STEP events, which is exactly what a weekly throughput line can read:
+
+1. **Gulf hurricanes.** The US liquefaction fleet is Gulf Coast — Sabine Pass, Corpus Christi, Freeport,
+   Cameron. A storm hits **export capacity and Gulf production simultaneously**, and those pull gas price
+   in **opposite** directions: lost liquefaction is demand destruction (bearish), lost production is
+   supply loss (bullish). **Departures are the observable that separates them.** Season is **Aug–Oct and
+   live now.**
+2. **A Middle East supply hole** pulling more US cargoes — throughput rises, bullish US gas.
+
+**The honest weakness, recorded with the play:** the hurricane case is the one the line is *weakest* on,
+because departures LAG — a terminal that shuts today shows up days later while price reacts to the storm
+track immediately. So it is **confirmation, never early warning**. And it exposes a named gap: **we carry
+no tropical/hurricane feed at all.** `freeze_risk` is the winter analogue and has no summer counterpart,
+in a month when the Gulf carries both the export fleet and a large share of production.
+
+**Why this belongs in the ledger rather than only in the play:** the play records *what to read*. This
+records *why anyone should bother*, and the reasoning is what makes it extendable — the same logic says a
+tropical feed is now a higher-value build than it looked an hour ago.

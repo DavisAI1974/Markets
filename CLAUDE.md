@@ -1,6 +1,6 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-01, Session 109)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-02, Session 109)
 
-## S109 — **HOLE #9: `session_b_share` SERVED A HARD 0.0 ON EVERY SCORED-LEG DAY OF G22 AND G23** (caught BEFORE the G22 blind)
+## S109 — G22 BLIND (4/10, sum|err| 5,965) + **HOLES #9/#10/#11** + the **STATE AUDITOR** role + the WEATHER MODEL REBUILT + brain s103.7 (68 plays) (read `SESSION_HANDOFF_2026-08-01_S109.md` + `DROP_IN_S110.md`)
 
 **Branch = `claude/kalshi-agents-coordinator-guard-1175nr`.** The S108 filename-collision fix was
 verified still live (`archive_blind.py` MOVEs; `assert_not_the_blind()` hashes) — the S109 box lists it
@@ -73,7 +73,37 @@ Leak-audited: each anchor block contains only its own pre-block anchor session, 
 **Blind input is now the brain + `grp22_state.json` + `g22_anchor.json` — never the actual/evidence
 files, which sit in the same directory and contain the answer.**
 
-**NEXT: the G22 blind**, unblocked.
+**G22 BLIND COMPLETE: 4/10 dir, sum|err| 5,965, drift -1,815, survives 30%** — second-best blind of the
+walk on sum|err|, worst on direction. **THE DRIFT IS THE MISSED HILL**: realized gw_cdd ran 9.0 -> 17.5,
+actual cum **+470**, blind cum **-1,345**, miss **-1,815** exactly.
+
+**HOLE #11, and it VOIDED the first G22 blind: THE STATE LET EVERY SPECIALIST READ PAST ITS OWN DECISION
+POINT.** A day's tape is served under the NEXT day's key, so with all ten days in one file day X's own
+outcome sits one block later. **All three first-run specialists reached forward and ALL THREE DECLARED
+IT** — D forecast an EIA print day already knowing the print; E built its whole handoff on its own day's
+realized close phase. A prompt rule was not the fix (they were already under one); `build_causal_slices.py`
+makes the future ABSENT. **HOLE #10**: `squeeze_watch`'s `_live` limbs were the FROZEN value under a live
+name — S108 fixed a false negative here and shipped its mirror image, asserting `satisfied_live: true` on
+five sessions whose live dte is 18-21 against a <=7 window.
+
+**THE STATE AUDITOR is a new canonical role** (`agents/state_auditor.md`) — audit and forecast are now
+separate jobs, which keeps the cross-day discovery channel that found eleven holes while the forecasters
+run causally clean. Trialled blind on G21: found the off-instrument defect S108 called the hardest of the
+eight, **without** the scored-leg reconciliation S108 used, and corrected a ground-truth claim of mine.
+
+**THE WEATHER MODEL REBUILT (Greg, the session's most valuable thread).** Weather is **THE driver as a
+continuous ASYMMETRIC SLOPE** (mild kills demand: big down; heat/cold: up but only some), with
+`anomaly x duration x constraint` a **MULTIPLIER on top**. **A hill slopes, it does not gap** — that
+resolves 0629, where the error was expecting the hill to gap (+480 forecast vs +50 actual). And **the gas
+call is a STACK**: weather-driven load minus renewables minus what coal/nuclear can absorb. 0629
+mechanically: gw_cdd 10.0 -> 14.8 exactly as forecast and **gas burn FELL 4.2 Bcf/d** because **wind rose
+62%** — and `wind_mwh` was **served in every slice**, while A and B adjusted only for nuclear, 34x smaller.
+Also: **summer gas demand is ~50% power burn**, so degree-day weights must be SEASONAL; the weights are
+hand-set, unvalidated, and **OHIO HAS NO STATION AT ALL** against PJM being the largest gas-burning BA.
+
+**Brain s103.6 -> s103.7**: +`supply.lng_export_throughput_vessel_line` (WIRED_UNPROVEN — the vessel line
+is live and moving with zero consumers while `lng_feedgas_bcfd` is null and 278 days stale). 67 incumbents
+byte-identical. **NEXT: the G22 REFINE**, then the auditor on G23.
 
 ## S108 — G20 DONE + G21 WALKED + **THREE MORE DATA HOLES** + brain s103.2 -> s103.6 (67 plays) (read `SESSION_HANDOFF_2026-08-01_S108.md` + `DROP_IN_S109.md`)
 
@@ -512,26 +542,24 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** brain **s103.6 (67 plays)**. **G20 COMPLETE** (blind 6/10 err 788 -> r1 79 -> **r2 64**,
-drift -2560 -> -360) and **G21 COMPLETE r1** (blind 5/10 err 632 -> **refine 10/10, every day under 100,
-worst day 80**). The persistent DOWN lean is GONE (blind cum -2040/-1720/-1220/-700 -> **+740**) - traced
-to the **b_share NORMALIZATION defect** (13.49% of volume is unsided and sat in the denominator only;
-served mean 0.4078 clearing 0.50 on 5 of 223 sessions, two-sided mean 0.4999 clearing on 107). But
-**read it on the honest scoreboard**: drift is a SUM OF SIGNED ERRORS and CANCELS - G21's drift survives
-only 15% of its absolute error, so the real improvement is sum|err| 7880 -> 6320 (20%), not the 62% the
-drift implies. **MEAN ERROR IS A DASHBOARD NUMBER, NEVER A DIAGNOSIS - FIX OFF INDIVIDUAL EVENTS** (Greg,
-S108): G20 banked D's pre-print generator from DAY NETS and G21's per-leg decomposition refuted its
-TIMING limb 1 of 4 while the SELECTION limb survived 4/4 - s103.6 retracts it. **EIGHT data holes now**,
-S108 adding #7 (`nws_temp` partial fetch TAIL - a 68% error and a regime flip while reporting
-`coverage 1.0`) and **#8 (`tape_conditions` OFF-INSTRUMENT after a roll** - 18-60% of the real tape with
-signed flow SIGN-FLIPPED on the blind's only open-time flow channel, an undeclared handicap on 4 of 10
-days; it MANUFACTURED a false mechanism and one specialist "verified" the artifact by checking internal
-CONSISTENCY - consistency was never the test). Both fixed at the source; `tape_reconcile.py` blocks the
-rest. The **FILENAME COLLISION is also FIXED** (third occurrence; six of ten G21 days were one command
-from assembling BLIND numbers as the refine, and every field check passed because they are all true of
-the blind's own file - only a hash against the archive distinguishes them). **G22 and G23 staged, passing
-and reconciling on s103.6. NEXT = G22.** OPEN and highest value: the live orchestrator, then the
-`options_surface` strike ladder. **Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
+**One-line state:** brain **s103.7 (68 plays)**. **G22 BLIND COMPLETE** - 4/10 dir, **sum|err| 5,965**,
+drift -1,815, survives 30%: second-best blind of the walk on sum|err|, worst on direction. **G22 REFINE
+NOT RUN - that is the next job.** **THE DRIFT IS THE MISSED HILL** (realized gw_cdd 9.0 -> 17.5, actual
+cum +470, blind cum -1,345). **ELEVEN holes now**, S109 adding #9 (`session_b_share` WRONG ENCODING - a
+hard 0.0 on all 8 scored-leg days of two groups), #10 (`squeeze_watch` FROZEN-BUT-LIVE - S108 fixed a
+false negative here and shipped its mirror image) and **#11 (the state let EVERY specialist READ PAST ITS
+OWN DECISION POINT** - a day's tape is served under the next day's key, so all three first-run G22
+specialists reached forward and all three declared it; the first blind was VOIDED and re-run on per-day
+causal slices). **The STATE AUDITOR is a new canonical sixth role** - audit and forecast are now separate
+jobs, which keeps the cross-day discovery channel while the forecasters stay causally clean; trialled
+blind on G21 it found the hardest of the prior eight holes. **THE WEATHER MODEL IS REBUILT (Greg)**:
+weather is THE driver as a continuous ASYMMETRIC SLOPE (mild kills demand: big down; heat/cold: up but
+only some) with `anomaly x duration x constraint` a MULTIPLIER on top - **a hill slopes, it does not
+gap**. And the **gas call is a STACK**: weather load minus renewables minus what coal/nuclear absorbs -
+0629's +4.8 CDD add arrived exactly as forecast and **gas burn FELL 4.2 Bcf/d because wind rose 62%**,
+with `wind_mwh` served in every slice and read by nobody. **THE RECURRING ENEMY IS "SERVED BUT UNREAD."**
+Merge proposals P0-P0.8 in `S109_MERGE_PROPOSAL_G22.md`, the WHY in `G22_REASONING_LEDGER_S109.md`.
+**Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.

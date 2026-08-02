@@ -1,6 +1,62 @@
 # KALSHI TRADING — file index
 
-## NEW IN S108 (2026-08-01, current) — G20 done, G21 walked, holes #7/#8, brain s103.6
+## NEW IN S109 (2026-08-01, current) — G22 blind, holes #9/#10/#11, the AUDITOR role, brain s103.7
+
+**THE SIXTH AGENT ROLE (audit and forecast are now separate jobs)**
+- `research/kalshi/agents/state_auditor.md` — CANONICAL, static, drop into every group unchanged. Reads
+  the WHOLE block before the blind spawns and hunts inputs that would mislead a specialist; emits NO
+  forecasts. Resolves hole #11's tension: cross-day reading is how eleven holes were found, but a
+  forecaster reading across days acquires information past its own decision point. The auditor
+  cross-compares freely (nothing to contaminate); the specialists run on causal slices. Carries the five
+  known KINDS of silently wrong input, the declared-vs-silent split, the findings schema, and a FIX-PHASE
+  contract. Trialled blind on G21: found the off-instrument defect S108 called the hardest of eight,
+  WITHOUT the scored-leg reconciliation S108 used.
+
+**CAUSALITY (hole #11 — the state let every specialist read past its own decision point)**
+- `research/kalshi/build_causal_slices.py` — cuts ONE SLICE PER DAY: every block <= day X, later blocks
+  dropped. A day's tape is served under the NEXT day's key, so the whole block in one file let a
+  specialist read its own outcome. All three first-run G22 specialists reached forward and all three
+  declared it. Self-audits; `forward_stamps()` also reports capture stamps past the decision point.
+- `research/kalshi/merge_perday.py` — joins per-day posteriors into the per-specialist `days[]` shape the
+  coordinator reads, GUARDED on owner_map: a mis-owned or missing day fails at the join.
+
+**DATA-INTEGRITY GUARDS (the enemy has now worn FIVE faces: empty, wrong-value, off-instrument, wrong-ENCODING, frozen-but-LIVE)**
+- `research/kalshi/state_health.py` — two new RECONCILIATION guards, not presence checks:
+  the b_share identity (`session_b_share == session_b_share_two_sided * (1 - unsided_volume_frac)`) HARD
+  at >0.002 (hole #9), and `squeeze_watch._live` vs `flow_calendar` (hole #10). Both negative-tested
+  against the real defect and across all 17 groups for false positives.
+- `research/kalshi/bshare_restage_repair.py` — HOLE #9. Recovers `session_b_share` by algebraic identity
+  without a data plane; idempotent, dry-run by default, declares each repair via `session_b_share_basis`.
+- `research/kalshi/squeeze_watch_live_repair.py` — HOLE #10. Re-derives the `_live` calendar limbs from
+  `flow_calendar` and the dead-sponsor arm from the block's own expiry calendar. Nulls
+  `calendar_limb_satisfied_live` rather than emitting a confident false — a derived boolean whose input
+  is masked must not be served as `false`.
+- `research/kalshi/build_anchor_block.py` — the anchor was NEVER DELIVERED to the agents (only g15 ever
+  had an anchor file). VERIFIES rather than asserts: each anchor must equal the PRIOR group's actual
+  last-day close (chain holds exactly G17->G23) and `anchor_lasthr_dir` is re-derived from the price
+  path. Carries `direction_caveat` / `close_in_range` / `net_ticks` — both G22 and G23 anchors sit at the
+  price RESOLUTION FLOOR.
+
+**THE WEATHER / DEMAND STACK (rebuilt on Greg's desk knowledge)**
+- `research/kalshi/gas_call_residual.py` — `demand - solar - wind - nuclear` (coal deliberately NOT
+  subtracted: that reproduces `gas_mwh` by construction). Two alignments, mechanism and decision-time.
+  Result: **UNTESTED IN ITS CLAIMED REGIME** — every block carrying `grid_stack` is WARM (mean gw_hdd
+  0.12-0.72) and Greg scopes the residual to cold/turning-cold. Prints its own power warning.
+- `research/kalshi/forecast_harness.py` — CDD FORWARD LADDER served (`forecast_gw_cdd`, `d_gw_cdd`,
+  `fwd7_gw_cdd_span`), `gw_cdd_d0` + `d_gw_cdd` on `sunday_reopen`, a `seam_delta_warning` (run deltas
+  baseline run-over-run, so across a seam difference the LEVELS) and a `ladder_basis_note` (an
+  unreachable absolute HDD bar is UNEVALUABLE in summer, not satisfied and not refuted).
+
+**THE RECORD (Greg, S109: "if you only have actions without context, it's tough to learn and to replicate")**
+- `research/kalshi/G22_REASONING_LEDGER_S109.md` — WHY each specialist decided what it did, attributed:
+  the right calls with their reasoning, the catches, and the after-the-fact corrections — including
+  Greg's four corrections and the places I was wrong.
+- `research/kalshi/S109_MERGE_PROPOSAL_G22.md` — P0 through P0.8, each with a falsifier. P0 weather as
+  hill+spike; P0.5 seasonal station weights (OHIO HAS NO STATION); P0.6 coal headroom; P0.7 the renewable
+  subtractor; P0.8 the residual's cold-only scope.
+- `SESSION_HANDOFF_2026-08-01_S109.md` + `DROP_IN_S110.md`.
+
+## S108 (2026-08-01) — G20 done, G21 walked, holes #7/#8, brain s103.6
 
 **Data-integrity guards (the recurring enemy has now worn THREE faces: empty, wrong-value, off-instrument)**
 - `research/kalshi/tape_reconcile.py` — HOLE #8. Asserts `tape_conditions` measures the CONTRACT BEING

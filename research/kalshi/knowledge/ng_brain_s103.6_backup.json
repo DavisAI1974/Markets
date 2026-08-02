@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s103.7",
+  "version": "s103.6",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -54,10 +54,7 @@
   "s102_7_note": "S105 forward-evidence update: the 6 mid-block-underaction plays validated on G17 (blind 5/10 -> refine r1 10/10 err24 -> r2 10/10 err11); forward_evidence updated (G18 blind = the scored forward test, pending). +doctrine orchestration_s105 (two-round coordinated handoffs both runs; blind sequenced spawn) + live_mbo_open_question. Play LOGIC unchanged; 47 pre-S105 incumbents byte-identical.",
   "s102_8_note": "S105 DATA DOCTRINE written everywhere (CLAUDE.md, agents/README.md, blind_shared.md, mbo_refine_shared.md, here): both agents get the kitchen sink; blind's only mask is the price curve; dip_imb_level repealed on decision-legit windows; one-group-at-a-time process. Plays unchanged (53); this is doctrine only.",
   "s102_9_note": "S105 G18 merge: +1 play (structure.covering_absorption_directional_tell) + forward_evidence on the 6 S105 plays + doctrine g18_covering_rally_s105 (blind 5/10 but +440 P&L; refine 10/10 err30; blind-flow-read validated; P&L is the scoreboard). Pre-S105 incumbents byte-identical.",
-  "s103_1_note": "S106 G19 refine merge: +7 general plays consolidated from 18 specialist proposals (5 specialists, independently convergent). g19 refine r1 (S106): blind 4/10 mean|err| 939 -> refined 10/10 mean|err| 79, every day <100. Six sign-flips, all correct. All 54 incumbents byte-identical.",
-  "merge_log": [
-   "s103.6 -> s103.7 (S109, Greg-instructed): +supply.lng_export_throughput_vessel_line, WIRED_UNPROVEN. Strictly additive; all 67 incumbents byte-identical. Wires the only LIVE LNG channel (vessel departures x capacity, Vortexa via EIA WNGSR) after the audit found it moving with zero consumers, while lng_feedgas_bcfd is null and its only figure is 278 days stale. Merged to make a live channel READABLE, explicitly not as a signal - status carries confidence 'none-yet' and forward_evidence NONE."
-  ]
+  "s103_1_note": "S106 G19 refine merge: +7 general plays consolidated from 18 specialist proposals (5 specialists, independently convergent). g19 refine r1 (S106): blind 4/10 mean|err| 939 -> refined 10/10 mean|err| 79, every day <100. Six sign-flips, all correct. All 54 incumbents byte-identical."
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -1864,25 +1861,6 @@
    "falsifier": "A scheduled-program session where the aggressor tilt matches the day sign and the program is demonstrably the dominant participant.",
    "n": 1,
    "status": "PROPOSED, n=1"
-  },
-  {
-   "id": "supply.lng_export_throughput_vessel_line",
-   "target": "supply",
-   "trigger": "any session. The vessel line is the ONLY LIVE LNG channel in the state - read it whenever the export term could matter, and ALWAYS on a week where departures or capacity step.",
-   "read": "ngwu_balance.lng_vessels_departed and lng_vessel_capacity_bcf (Vortexa tanker tracker, published by EIA in the WNGSR Supplement). Weekly cadence. Read the STEP, not the level: departures x capacity is realized export throughput, so a liquefaction outage or a restart shows up here within a week even though feedgas nominations are not available.",
-   "call": "TREAT AS CONTEXT, NOT AS A SIGNAL. There is no forward evidence that this channel sorts direction or sizes magnitude - it has never been tested. Use it to avoid being blind to a large export move, and to flag when the export term is changing under a forecast that assumes it static. Do NOT fire a direction or a band off it. If it steps hard against your thesis, say so and widen, rather than resolving it in your own favour.",
-   "mechanism": "LNG feedgas is structurally one of the biggest modern NG drivers (a Freeport-class outage reprices the curve for months - S97 item 8). The live feedgas line DIED with the S&P section of the free weekly balance on 2025-10-02: ngwu_balance.lng_feedgas_bcfd is null, and the only feedgas figure carried (16.3) sits in latest_sd_levels at week_ending 2025-09-24, 278 days stale and self-declared sd_live:false. The VESSEL line survived that death and still advances. Departures x capacity is a coarse, lagging, but REAL measure of the same physical export throughput. S109 addendum (Greg): the two things that will move this line next are Gulf hurricanes hitting the Gulf Coast liquefaction fleet, and a Middle East supply hole pulling additional US cargoes. Both are exactly the case where feedgas would be the right instrument and is unavailable - which is why the throughput proxy is worth having.",
-   "evidence": "S109 audit: across G22 the line moves - lng_vessels_departed 36,36,36,36,35,35,35,35,35,36 and lng_vessel_capacity_bcf 133.0 -> 135.0 -> 136.0, attribution 'Vortexa Analytics tanker tracker (published by EIA, WNGSR Supplement)'. Confirmed live and updating on a weekly cadence.",
-   "status": "WIRED_UNPROVEN - merged on Greg's instruction (S109) to make a live channel readable. Zero brain plays referenced LNG, vessel or feedgas before this.",
-   "confidence": "none-yet (monitoring). No forward evidence exists. Explicitly NOT promoted on the basis of plausibility.",
-   "caveats": "WEEKLY resolution, so it cannot time a day. It LAGS the physical event - a cargo departs after liquefaction has already run. Capacity is fleet-mix dependent, so a capacity step is not necessarily a throughput step. And it is a THROUGHPUT proxy, not a feedgas nomination: it will miss an outage that has begun but not yet shown up in departures. AND THE HURRICANE CASE IS THE ONE IT IS WEAKEST ON: departures LAG, so a terminal that shuts today shows up in this line days later, while the price reacts to the storm track immediately. Treat it as CONFIRMATION of an export disruption, never as the early warning. We carry NO tropical/hurricane feed at all - freeze_risk is the winter analogue and has no summer counterpart. Named gap.",
-   "requires": [
-    "ngwu_balance.lng_vessels_departed",
-    "ngwu_balance.lng_vessel_capacity_bcf"
-   ],
-   "scope": "All seasons, and TWO live forward drivers make it more informative from here, not less (Greg, S109). (1) GULF HURRICANE SEASON: the US liquefaction fleet is Gulf Coast - Sabine Pass, Corpus Christi, Freeport, Cameron - so a storm track through the Gulf hits export capacity and Gulf production at the same time, and the two pull gas price in OPPOSITE directions. Departures are the observable that separates them: a terminal outage shows up as departures collapsing while production returns. Season is Aug-Oct and it is live NOW. (2) A MIDDLE EAST SUPPLY HOLE pulling cargoes: if that supply is short, more US cargoes leave, export throughput rises and the pull is bullish US gas. Both are STEP events, which is what this line reads. It remains a SLOWER term than the weather/renewables stack.",
-   "forward_evidence": "NONE. First ride is the next group. The falsifier: if departure/capacity STEPS show no association with realized moves across the walked blocks once the line is backfilled, this stays a context field and is never promoted to a signal. Do not fit a threshold to it.",
-   "s109_provenance": "Greg asked 'are we still tracking lng tankers?' The audit found the vessel line live and moving with ZERO consumers - the same shape as the renewable subtractor (served, unread), session_b_share (served, broken) and the CDD ladder (computed, dropped). Wired on Greg's instruction to close the served-but-unread class, NOT because it was shown to predict."
   }
  ],
  "mechanisms": [
