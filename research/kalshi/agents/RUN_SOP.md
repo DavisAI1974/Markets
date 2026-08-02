@@ -11,6 +11,23 @@ If a step needs to change, the change is an EDIT TO THIS FILE, proposed in-sessi
 Greg's go, version-logged below — never an in-session improvisation. If reality and this file
 disagree, STOP and say so; do not quietly adapt.
 
+## CHANGE CONTROL — NOTHING RUNS OFF-SOP (Greg, S110, the factory standard)
+*"Nothing is done in those places, and I mean nothing, without documentation and buy-in from
+everyone. There's no changing things just because, there's no missed policies or SOPs that get
+skipped or made up on the fly."*
+
+1. **NO OFF-SOP EXECUTION.** If a needed step is not covered here, or a covered step cannot run as
+   written, the line STOPS at that station. Report the gap. Do not compose a procedure and run it.
+2. **THE CHANGE LOOP (the only way this file changes):** write the proposed edit as a concrete
+   diff to this file, with WHY → Greg's explicit go is the buy-in → version-log entry (what, why,
+   session, first group run under it) → only then execute. The specs of the machine may change as
+   we go; the change is always logged and the process backbone stays the same.
+3. **DEVIATIONS ARE NONCONFORMANCES.** A run that accidentally departed from this file is recorded
+   as such in the group's record and the session handoff — never silently absorbed. Whether its
+   output stands is Greg's call at the next pause.
+4. **GATES CANNOT BE SKIPPED OR SOFTENED.** A failing gate stops the line (jidoka). Routing around
+   a gate, weakening a guard to pass, or "just this once" does not exist here.
+
 **WHY THIS FILE EXISTS.** The reasoning files went canonical in S103–S105 (`agents/*.md`, gold
 vault) — but the RUN WRAPPERS never did. `AGENT_RUNBOOK_S95.md` captured the S95-era prompts
 verbatim "so the loop is re-spinnable cold"; the S104/S105 re-architecture (5 specialists, waves,
@@ -19,6 +36,10 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.1 (S110): CHANGE CONTROL section added — Greg's factory standard, quoted, adopted on his
+  statement in-session. Also logged as a nonconformance specimen: the S109 auditor wrapper was
+  never captured, so the S110 G23 audit ran on a re-composed wrapper (Greg: output accepted;
+  the instance is exactly the pattern this file exists to end). First group under v1.1: g23.
 - v1 (S110): first capture. Auditor template AUD-1 codified from the S109-described procedure
   (S109's literal wrapper text was never committed — nothing to restore; this template is the
   standard from G23 forward). Blind/refine templates reconstructed from the committed record:
