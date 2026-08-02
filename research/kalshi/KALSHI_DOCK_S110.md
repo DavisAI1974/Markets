@@ -121,6 +121,18 @@ from anywhere HTTPS runs, container included.
   NOTE: one subaccount per coach = exchange-native "ledgers never pooled" (two-coach doctrine
   maps directly; risk/balance/positions all filter by subaccount).
 
+- **Fees (margin):** NOTIONAL-BASED bps, per ticker per tier (doc examples: maker 0.0005 = 5bps,
+  taker 0.0012 = 12bps of notional) — a DIFFERENT economics from classic's 0.07*p*(1-p) taker
+  formula. The paper ledger's fee model is CLASSIC-correct; any margin lane needs the bps model
+  + get-fee-tiers at wiring time.
+- **Funding (perps):** rate = time-weighted average of the premium index over
+  [last_funding_time, now), dynamic until finalized at next_funding_time; estimate endpoint
+  serves market_ticker/computed_time/funding_rate/mark_price/next_funding_time.
+- **WebSocket (margin):** wss hosts per env; auth at handshake; JSON cmd protocol
+  (subscribe/unsubscribe/list/update, unique cmd id); channels orderbook_delta / ticker / trade /
+  fill / user_orders / order_group_updates; snapshot+delta with sequence numbers;
+  send_initial_snapshot flag. Per-channel payload shapes: fetch at implementation.
+
 DOC WALK STATUS: CLOSED (S110). Classic demo quick-start + any residual CRUD page gets fetched at
 implementation time from the index (docs.kalshi.com/llms.txt). The dock's next dependency is G0:
 Greg's demo account + registered RSA key.
