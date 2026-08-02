@@ -13,9 +13,13 @@ import group_config as gc
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FC = os.path.join(HERE, "forecasts")
-PD = os.path.join(FC, "g22_perday")
 
-def main(gid="g22"):
+def main(gid="g22", perday_dir=None):
+    # S110 (RUN_SOP): per-day dir defaults to the blind's g<N>_perday; the refine passes its own
+    # (g<N>_refine_perday) so refine posteriors can never silently join from the blind's directory.
+    PD = os.path.join(FC, perday_dir or f"g{gid[1:]}_perday")
+    if not os.path.isdir(PD):
+        raise SystemExit(f"MERGE GUARD FAILED: per-day dir does not exist: {PD}")
     owner = gc.owner_map(gid); n = gid[1:]
     by_tag, errs = {}, []
     for f in sorted(glob.glob(os.path.join(PD, f"grp{n}_*.json"))):
