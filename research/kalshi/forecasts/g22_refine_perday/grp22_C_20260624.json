@@ -1,0 +1,89 @@
+{
+ "specialist": "C",
+ "group": "g22",
+ "date": "20260624",
+ "round": 1,
+ "mode": "refine",
+ "brain_version": "s103.7",
+ "lens": "core intraday tape (mbo_specialist_C.md)",
+ "dow": "Wed",
+ "day_class": "core_wednesday_cdd_near_window_pricing_day (pre-print/pre-opex D-1 calendar, but the day is owned by the weather slope, not the calendar)",
+ "blind_direction": "down",
+ "blind_net_usd": -200,
+ "blind_decomposition_note": "blind day-move -200 = gap -30 + net -170; actual day-move +800 = gap +10 + net +790. The blind's gap call was right (intra-week seam ~0, 24/24 measured); its sign and size were wrong by doctrine, not by data absence.",
+ "posterior_direction_by_horizon": {
+  "overnight_20_to_04": "flat_shallow_dip (0623 exited still mildly selling ph3 -593; the probe finds no follow-through under the anchor shelf; realized low -130 at 23:39)",
+  "cycle_leg_04_to_08": "up (00z cycle ~03:30-04:30 confirms the D0 CDD entry, main leg 06:00-08:00 on the 06z + EIA-930 burn evidence; engine onset 06:56)",
+  "morning_08_to_12": "up_hold_with_retrace (pre-opex/pre-print two-way flow buys a ~-240 retrace at 10:00, days_to_opex 1)",
+  "afternoon_12_to_16": "up_grind (passive markup resumes)",
+  "late_16_to_20": "up_flat_late_high (high 19:17, close 0.97 off low, no turn)"
+ },
+ "expected_magnitude_usd": 600,
+ "expected_magnitude_band_usd": [400, 800],
+ "onset_time_et": "04:00",
+ "onset_note": "causal onset = the 00z-cycle availability window (~03:30-04:30 ET per _information_clock); the replay engine's sustained-move onset is 06:56 and the dominant leg is 06:00-08:00 (+400 of +790). Both are cycle-clocked, neither is print-clocked.",
+ "turn_time_et": null,
+ "trend_vs_chop": "trend_up_passive_markup",
+ "continuation_vs_reversal": "reversal (flips the 0622-0623 two-session down net-chain; then all-day continuation of its own up leg, no intraday turn)",
+ "path_p50_curve": [
+  [20, 0],
+  [22, 10],
+  [0, -50],
+  [2, -20],
+  [4, 110],
+  [6, 170],
+  [8, 430],
+  [10, 300],
+  [12, 340],
+  [14, 470],
+  [16, 550],
+  [18, 560],
+  [20, 600]
+ ],
+ "confidence": "high",
+ "weight_assigned": {
+  "blind": 0.25,
+  "causal_mbo": 0.75,
+  "note": "kept from the blind: the ~0 gap call, the refusal of the -450..-780 chain-sided trend band (its own incoherence test), and the correct description of the D-1 tape as a near-neutral coil. Replaced: the sign channel (D-1 sell tilt) and the sizer, both overturned by the weather-slope causal read the realized curve confirms."
+ },
+ "reasoning": "THE HILL LIVES ON THIS DAY AND THE CAUSAL CHAIN IS FULLY VISIBLE. (1) THE SLOPE SEGMENT: the D-1-evening MOS state served a +2.205 gw-CDD step INTO THE NEAR WINDOW - forecast_gw_cdd 7.817 (0623) -> 10.022 (0624 D0), with D+1 mav 10.556. Critically this was NOT a forecast revision: 0623's h1 view of 06-24 was mav 10.034 and 0624's D0 view is 10.022 - the target-date forecast never moved; the mass ROLLED DOWN into D0 by the passage of time. forecast_run_delta_cdd -0.011 (which the blind read as 'nothing new = inert') measures revisions and is blind to roll-down. The brain already carries the correct instrument: the s101_6 PRICING-TIME RULE inside signal.mos_first_appearance_vs_revision - a moderate add prices when it ENTERS D0..D+2, not at appearance (G13: 0220 +590, 0222 +1310). The blind applied the revision arm to a roll-down event; the pricing-time rule supersedes it by the play's own text. (2) THE CONFIRMATION TRIGGER: 0623's near-window add was cross-model DISPUTED (h1 mav 10.034 vs met 8.402, spread 1.632, the widest in my slice - my own blind called it 'unconfirmed, earns at most a partial bid'). By the 0624 file the skeptic model capitulated UP: met 8.402 -> 9.115 on the same target date, D0 spread halved to 0.907, both models >= 9.1. The disagreement resolved toward the hot model - the add became CONFIRMED exactly at near-window entry. (3) THE TRANSMISSION WAS OPEN (the 0629 target's mirror, served in my slice and unread by the blind): grid_stack (EIA-930, period 06-22, wall period+2 = decision-legit) shows US48 demand +8.3% d/d (11.96M -> 12.95M MWh), wind DOWN 22% d/d (1,400,375 -> 1,091,380 MWh), est_gas_burn_bcfd 33.0 -> 39.3, a +6.3 Bcf/d single-day jump - the largest in the visible window. The renewable subtractor was ABSENT, so the CDD slope converted to burn at full force; nuclear chg_1d -446 MW is a minor offset. This is the exact mirror of 0629 (wind +62% / +660,219 MWh, burn -4.2 Bcf/d, the up-forecast day printed -1,160): same instrument, opposite gate state, opposite outcome. (4) THE TAPE CONFIRMS THE DRIVER WAS EXOGENOUS: total_sflow +311 on 69,964 lots - net aggressor flow ~ZERO while price rose +790. Phase conviction: ph1 +296/+110 ALIGNED up; ph2 +84/+270 aligned-but-flowless; ph3 -69/+410 = price +410 on noise-level negative flow. This is PASSIVE MARKUP - the offer ladder repricing upward on the fundamental confirmation without aggressive buying - the signature of a forecast-led day, not a flow-led day. It also explains why every blind flow channel missed: the D-1 tape genuinely was a near-neutral coil (phase_b_two_sided 0.487/0.483/0.489), and a coil is direction-agnostic - its RESOLUTION was set by the weather slope, which in a summer block outranks the flows/storage family per the seasonal-salience slider (doctrine: weather carries maximum weight in summer; realized gw_cdd ran 9.0 -> 18.7 across g22). The blind resolved the coil to the chain side by S3-default in a block where every HDD-keyed selector limb was void by construction. (5) TIMING IS CYCLE-CLOCKED: 02:00 -10 -> 04:00 +140 (00z cycle ~03:30-04:30), main leg 06:00-08:00 to +590 (06z + morning burn evidence), 10:00 retrace to +350 (pre-opex two-way, days_to_opex 1, opex/print both 0625), afternoon grind 14:00 +610 / 16:00 +740, high 19:17 (+800), close 0.97 off low, turn_kind none. The shape is the shock_add class profile ('delivery starts at the cycle that carries the add') with a pre-binary midday retrace. (6) MAGNITUDE, DERIVED NOT FITTED: the measured moderate-add near-window pricing days are G13 0220 +590 (add entering D+2..D+3) and 0222 +1310 (peak at D0/D+1 PLUS delivery pull). I take the +590 floor class, not the top: the S109 asymmetric-slope doctrine gives the heat side 'up, but only some'; my scored leg NGQ26 is deferred (no delivery pull - NGN26 carries the expiry mechanics); and the day carries a pre-binary damp (opex+print D+1). The open burn channel argues above-floor. p50 +600, band [+400, +800]. Cross-check: n0_net_sigma_5 589 / sigma_10 614 puts +600 at ~1.0 sigma on a store the S110 audit declares era-degraded LOW (0.265 of leg tape), so ~0.8-0.9 sigma on the true leg tape - a right-sized confirmed-catalyst day. The actual +800 sits at my band TOP: the 16:00->19:17 extension to the late high printed on negative flow and is the reactive tail the honest bar says is not mine to claim. GAP 0 on the 24/24 intra-week |gap|<=10 measurement (realized +10). (7) WHAT THIS DAY IS NOT: it is NOT a tape-exhaustion turn - midweek.giveback_exhaustion_reversal_recognition fails all three limbs even with price visible (chain age 2 < 3; cum_from_anchor -80, nowhere near an extreme; D-1 absorption tell absent - ph_absorb all false, big_print_two_sided 0.544 < 0.55). The accumulation arm stayed correctly silent (0 qualifying sessions). The turn instrument the blind lacked was never in the tape; it was the weather slope. That locates the miss precisely: DOCTRINE (revision-arm misapplication + HDD-keyed selector void + shoulder-weighted salience), not GATE and not DATA - consistent with my S105 flaw histogram, and correctable with instruments already in or proposed for the brain.",
+ "evidence_used": [
+  "s101_6 pricing-time rule (in signal.mos_first_appearance_vs_revision): moderate add prices at NEAR-WINDOW ENTRY (D0..D+2) - the +2.205 gw-CDD mass rolled down to D0/D+1 on 0624 (7.817 -> 10.022, D+1 mav 10.556); run_delta_cdd -0.011 proves it was roll-down, not revision, so the revision-arm inertness does not apply",
+  "model_disagreement convergence as the confirmation trigger: target 06-24 spread 1.632 (0623 h1, mav 10.034 vs met 8.402) -> 0.907 (0624 h0, met raised to 9.115); the skeptic model capitulated upward at entry",
+  "grid_stack burn transmission OPEN (served, previously unread - run-directive target 2 mirror): 06-22 demand +8.3% d/d, wind -22% d/d, est_gas_burn 33.0 -> 39.3 Bcf/d (+6.3); nuclear chg_1d -446 MW minor offset; STEO jun26 power_burn July 48.57 vs June 39.21 corroborates the seasonal ramp",
+  "MBO phase conviction (direction.flow_conviction_sign_gate, refine-side): ph1 +296/+110 ALIGNED, ph2 +84/+270 aligned-flowless, ph3 -69/+410 flowless markup; session sflow +311 ~ zero on 69,964 lots = passive markup, forecast-led not flow-led; turn_kind none",
+  "realized curve timing on the model-cycle clock: 04:00 +140 (00z), 06:00-08:00 main leg +400 (06z + EIA-930 morning), engine onset 06:56, 10:00 retrace -240 (pre-opex two-way), high 19:17 late, close_off_low 0.97",
+  "seasonal_salience_slider (doctrine_tier3): summer = weather family carries maximum weight; realized gw_cdd 9.0 -> 18.7 across the block confirms the regime the slider names",
+  "daytype.weekday_archetype Wed weak up-lean - trivially aligned, secondary frame only (conf 0.4)",
+  "COT 06-16 (pub 0622 15:30, age 1.35d): MM -84,909, wow +37,708, pctile 25.47 - shorts already covering into a demand ramp; covering_self_limiting caps a covering TAIL, not a fundamental repricing, so it does not cap this day",
+  "class_curve_profiles.shock_add as the path template ('delivery starts at the cycle that carries the add'), overlaid with a pre-binary midday retrace",
+  "exit state read (for the record, not a handoff field in round 1): last_hour_dir +1 on last_hour_signed_flow -1 with high_late true = extension on zero aggression at the boundary - round-trip risk into 0625, which realized (+850 early high at 09:01, close -40)"
+ ],
+ "evidence_rejected": [
+  "the blind's D-1 sell-tilt sign channel (session_signed_flow -1990, sub-0.50 b_share, 3-session negative-flow persistence): the D-1 tape was a genuine near-neutral coil (phase_b_two_sided 0.487/0.483/0.489, flow decaying -46% while volume rose 15%) - direction-agnostic; kept only as the reason the overnight probed down first",
+  "cash_basis hh_cash_minus_front_settle -0.139 'physical loosening': frozen 0619 vintage, gas_day 06-16, 4d stale - pre-dates the heat build entirely; not evidence against a live confirmed CDD entry",
+  "selector.divergence_resolution S3-down default: both of its up-gates are HDD-keyed and VOID by construction in a CDD block (near-window HDD 0.05-0.28 vs the 16.4 bar) - a void selector is not evidence for down (my lens file already forbids that inference; the refine confirms the up-angle needed a CDD gate that does not exist)",
+  "vol_regime n0_range_pctile 18.3 'quiet regime' as a cap: computed off the Juneteenth half-session on an era-degraded store (S110 f3: 0.265 of leg tape) - no authority over a confirmed-catalyst day",
+  "magnitude.s1void_injection_chain_bleed as the sizer: the play sizes CHAIN-SIDED DOWN days in an S1-void shoulder; this day is counter-chain UP in a summer demand regime - out of scope on both axes",
+  "storage_consensus consensus_chg_bcf 74.0: final_capture_is_post_print true (declared trap) - the decision-time number is the 67.0 pre-print estimate; immaterial to this day's read but discounted on principle"
+ ],
+ "stand_down_reasons": [
+  "MBO BOOK layer STANDS DOWN: no book_trustworthy verdict is served for g22 (no feature_states / l1 manifest in the render set; execution_authority / conviction floor / book_complete unavailable) - trade-flow + realized price only, per the shared doctrine",
+  "midweek.giveback_exhaustion_reversal_recognition: fails all three limbs WITH price visible (chain age 2 < 3; cum_from_anchor -80 at my open, no block extreme; D-1 exhaustion tell absent - 0623 ph_absorb all false, big_print_two_sided 0.544 < 0.55). Recorded so the wrong lesson is not learned: the 0624 turn was NOT a tape-exhaustion reversal and no tape instrument could have called it; the flip instrument was the weather slope",
+  "structure.accumulation_arm_turn: still zero qualifying sessions (max 0.544 vs the 0.55 bar, and COT improving not worsening) - the arm's silence was CORRECT, not a miss",
+  "tape.squeeze_ignition_flush_conjunction / squeeze_ratchet_confirm / squeeze_unwind: NGN26 dte-2 delivery mechanics are not on my deferred NGQ26 leg; calendar spread chg small (-0.007 1d); no squeeze evidence in the realized tape",
+  "timing.catalyst_continuity_frontrun: no armed with-chain resume existed (the chain was down, the move was counter-chain), and the up-move is cycle-clocked pricing of the add itself, not a front-run of the 0625 print",
+  "direction.absorption_is_reversal: NOT fired despite ph3's negative conviction sign - ph3 sflow -69 is 0.3% of phase volume, noise-level, and ph_absorb is false; calling that 'absorption' would manufacture a mechanism. The honest ph3 read is flowless passive markup"
+ ],
+ "selection_reason": "core Wednesday, no calendar catalyst on the day itself (EIA print and opex are both 0625, D+1); C is the default owner of non-catalyst midweek days.",
+ "mbo_verdict": "passive_markup_trend_up: forecast-led repricing of a confirmed CDD near-window entry with the burn channel open; ph1/ph2 aligned, ph3 flowless markup; net aggressor flow ~zero (+311) on 69,964 lots; no intraday turn; late high 19:17, close 0.97 off low; book layer stood down; exit carries extension-on-zero-aggression = round-trip risk into 0625 (realized)",
+ "state_defects_declared": [
+  "THE CDD LADDER HOLE (the block's structural defect, restated from the causal side): weather_forecast.horizons / run_delta / fwd7_*_span are HDD-ONLY and model_disagreement carries CDD at h0/h1 only, so on 0624 the visible CDD view ended at 06-25. The hill's steep segment (14.8 -> 18.9 on 0629+) was NOT in my day's decision file - my posterior uses only the visible D0/D+1 entry. The fix is a data build (serve the CDD ladder like the HDD one), and it is load-bearing: in a CDD regime the forecaster is currently walking a hill it can only see two steps of",
+  "weather_forecast.forecast_regime 'hard_cool' off gw_hdd 0.051 in a 10-gw-CDD block: HDD-derived label artifact, carries no cooling meaning (persists from my blind declaration)",
+  "weather.gw_cdd 9.7 is my own day's realized weather ('realized_as_proxy' flagged) - not used; the posterior derivation uses forecast_gw_cdd 10.022 and the 0623-evening model_disagreement file, both decision-legit",
+  "vol_regime era-degradation (S110 f3, declared in-band): n0 store carries ~0.265 of the scored leg's tape in the g22 era - used only as a cross-check, never as the sizer",
+  "g22 render set has no mbo_feature_states / l1_manifest files (evidence/exit/anchor/actual only) - declared as the basis of the book-layer stand-down rather than worked around"
+ ],
+ "proposal_contribution": "PROPOSAL 1 - WEATHER SLOPE PRICES AT NEAR-WINDOW ENTRY, AND ROLL-DOWN IS NOT A REVISION (CDD extension of the s101_6 pricing-time rule; implements the S109 asymmetric-slope doctrine): in the seasonal-salience summer/winter regime, a rising CDD/HDD track is a CONTINUOUS driver that prices segment by segment as each segment (a) ENTERS the near window D0..D+2 by roll-down and (b) is CONFIRMED (cross-model spread narrowing / the skeptic model raising). 'The forecast did not change' (run_delta ~ 0) does NOT mean 'priced' - the revision-arm inertness of signal.mos_first_appearance_vs_revision is scoped to wobbles at horizons of an already-PRICED shot and must never be applied to roll-down of a rising track. A hill slopes: the market walks up it day by day; it does not gap the whole hill at appearance. On such an entry day the D-1 tape tilt loses sign authority (a coil resolves to the slope side; even a coherent counter-tape only damps magnitude). Evidence n>=3 spanning groups: g13 0220 +590 (moderate add pricing at near-window entry) and 0222 +1310 (peak at D0/D+1 + delivery pull); g22 0624 +800 (entry day: step 7.817->10.022 at D0, spread 1.632->0.907, blind -200 wrong-signed); counter-instance defining the required gate limb: g22 0629 (entry arrived as forecast, day printed -1,160 because the transmission was closed - see Proposal 2). Magnitude stays DERIVED: floor = the measured moderate-entry class (~+590 winter); the S109 asymmetry damps the heat side ('up, but only some'); delivery pull and pre-binary calendar shift placement within band. PROPOSAL 2 - THE BURN-TRANSMISSION GATE (renewable subtractor as a limb of Proposal 1, n=2 IN-GROUP ONLY, needs a cross-group instance before merge): a confirmed CDD entry prices UP only when grid_stack shows the burn channel OPEN - est_gas_burn_bcfd rising d/d (equivalently: demand rising AND wind not surging). g22 0624: wind -22%, demand +8.3%, burn +6.3 Bcf/d -> +800. g22 0629: wind +62% (+660,219 MWh), burn -4.2 Bcf/d against the arriving heat -> -1,160. Same instrument, opposite gate state, opposite outcome; both values were served and unread. Proposed as a GATE LIMB (sign-authority condition) of the slope play, not a standalone play, and explicitly flagged n=2-within-one-group against the n>=2-spanning-groups bar - it rides G23+ for its cross-group instance. DATA BUILD FLAGGED WITH BOTH: serve the full CDD forecast ladder (horizons, run_delta, fwd7 span) exactly as the HDD one is served - Proposal 1 cannot see past D+1 in a CDD regime until then.",
+ "scoring_note": "expected_magnitude_usd +600 vs actual +800: the shortfall is deliberate (honest bar). The claimable causal move is the confirmed D0/D+1 entry segment with the channel open, sized off the measured moderate-entry class with the summer-asymmetry damp; the 16:00-19:17 extension to the late high printed on negative flow and is reactive tail."
+}

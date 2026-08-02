@@ -65,6 +65,22 @@
    "sop": "v1.2",
    "brain": "s103.7",
    "summary": "inspection manifest written (10-guard roster, PASS 0 hard)"
+  },
+  {
+   "ts": "2026-08-02T02:23:13Z",
+   "session": "S110",
+   "station": "refine-r1",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "r1 COMPLETE under RFN-1 (first standardized use): 10/10 dir, sum|err| 500, drift -80 (blind 4/10, 5965, -1815). Convergent proposals: burn-conversion gate both polarities (E/A/B/C), seam sign-from-stability-deltas n=3 (B-0622), expiry-day program extension n=2 (E), EIA window doctrine n=4 (D), read-at-the-wrong-level audit class (E/B/A co-signed)."
+  },
+  {
+   "ts": "2026-08-02T02:23:13Z",
+   "session": "S110",
+   "station": "nonconformance",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "S109 P4 claimed CDD ladder + seam_delta_warning SERVED; committed g22/g23 states carry NEITHER (harness code landed, artifacts never rebuilt - no data plane at S109 close). D11 fix-verification class, third instance this session. Repair disposition to Greg with the r1 report."
   }
  ]
 }
