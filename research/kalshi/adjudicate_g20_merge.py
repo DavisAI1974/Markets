@@ -19,6 +19,7 @@ PROP = _paths[0] if _paths else os.path.join(HERE, "G20_MERGE_PROPOSAL_S108.json
 brain = json.load(open(BRAIN))
 prop = json.load(open(PROP))
 prop.setdefault("new_plays_proposed", [])
+prop.setdefault("retirements", [])   # S110: see the RETIREMENTS block below
 prop.setdefault("data_plane_items_NOT_PLAYS", [])
 prop.setdefault("refuted_DO_NOT_BANK", [])
 plays = {p["id"]: p for p in brain["plays"]}
@@ -51,15 +52,21 @@ mplays = {p["id"]: p for p in merged["plays"]}
 for a in prop["amendments_to_incumbents"]:
     if a["play_id"] in mplays:
         mplays[a["play_id"]][a["add_field"]] = a["value"]
+for r in prop["retirements"]:
+    if r["play_id"] in mplays:
+        mplays[r["play_id"]]["status"] = r["new_status"]
+        mplays[r["play_id"]][r["add_field"]] = r["value"]
 for np_ in prop["new_plays_proposed"]:
     merged["plays"].append({k: v for k, v in np_.items()})
+_retired = {r["play_id"] for r in prop["retirements"]}
 
 touched, identical = set(a["play_id"] for a in prop["amendments_to_incumbents"]), 0
 for pid, orig in plays.items():
     new = mplays[pid]
     for k, v in orig.items():
         if json.dumps(new.get(k), sort_keys=True) != json.dumps(v, sort_keys=True):
-            fail.append(f"{pid}.{k} MUTATED - incumbent not byte-identical")
+            if not (pid in _retired and k == "status"):
+                fail.append(f"{pid}.{k} MUTATED - incumbent not byte-identical")
     if json.dumps(orig, sort_keys=True) == json.dumps(new, sort_keys=True):
         identical += 1
 print(f"  incumbents byte-identical (untouched): {identical}/{len(plays)}")
