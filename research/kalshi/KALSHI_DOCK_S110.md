@@ -92,6 +92,16 @@ from anywhere HTTPS runs, container included.
   leverage, ESTIMATED PORTFOLIO-AWARE LIQUIDATION PRICE. Dollars to 6dp, counts to 2dp.
   (No balance / unrealized PnL here - those live on portfolio endpoints.)
 
+## MARGIN-LANE MARKET DATA (REST; captured from Greg's walk)
+
+- **Orderbook:** futures-style `bids`/`asks` arrays of [price, quantity] dollar-strings (vs
+  classic's yes/no cent ladders); `depth` (0 = all) + `aggregation_tick_size` bucketing.
+- **Candlesticks:** 1m / 1h / 1d; per candle OHLC on BID, ASK and TRADE price + mean + prev
+  close, volume (+notional), OPEN INTEREST (+notional); start_ts/end_ts required; synthetic
+  prepend option. A real historical surface on the margin lane.
+- **Trades:** ticker + ts filters, cursor pagination (limit <=1000), per-trade taker_side
+  (bid|ask), fixed-point counts (0.01 granularity).
+
 ## PAPER DESIGN CONSEQUENCE (G2 refinement, decided S110)
 
 Two loops, different jobs:
