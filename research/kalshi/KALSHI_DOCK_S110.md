@@ -114,6 +114,13 @@ from anywhere HTTPS runs, container included.
   positions - reconcile the ledger against fills.
 - Subaccounts 0-63 throughout (0 = primary).
 
+- **Intra-account transfer:** event_contract <-> margined balance bridge, async (transfer_id),
+  amount in CENTICENTS - a third unit convention beside classic cents and margin fixed-point
+  dollars; availability gated on the margin production rollout per the overview page.
+- **Subaccounts:** POST create (no body) -> sequential 1-63 (+ primary 0). LIVE-STAGE DESIGN
+  NOTE: one subaccount per coach = exchange-native "ledgers never pooled" (two-coach doctrine
+  maps directly; risk/balance/positions all filter by subaccount).
+
 DOC WALK STATUS: CLOSED (S110). Classic demo quick-start + any residual CRUD page gets fetched at
 implementation time from the index (docs.kalshi.com/llms.txt). The dock's next dependency is G0:
 Greg's demo account + registered RSA key.
