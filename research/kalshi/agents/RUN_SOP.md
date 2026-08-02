@@ -36,6 +36,9 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.5 (S110): INSTANCE-INLINE RULE adopted (Greg: "include the instance next to that
+  sentence so i don't forget that you have something") - claims carry their evidence in place, in
+  ledgers, decision lines and handoffs alike.
 - v1.4 (S110): REASONING CAPTURE made standing (Greg: "are we logging the context of the refine's
   decisions? those are probably the most useful" + "they should be on the same file"). Close-out now
   requires a per-group REASONING LEDGER with a machine-checked DECISION CLAIMS table, plus
@@ -149,6 +152,10 @@ staging defect, not a neutral fact. The QC sweep checks the consumer map.
 ## STEP 7 — CLOSE-OUT (every session)
 - `SESSION_HANDOFF_<date>_S<n>.md` (full detail) + `KICKOFF`/`DROP_IN` for next session +
   CLAUDE.md header + `KALSHI_TRADING.md` index + this file's version log if the SOP changed.
+- INSTANCE-INLINE RULE (v1.5, Greg S110): in every ledger, decision line and handoff claim, the
+  supporting INSTANCE sits next to the sentence it supports - never in a separate section, never by
+  reference. A claim whose instance cannot be written beside it is not a claim we have yet; where the
+  instance is absent, state which D24 case applies in place (found / searched-none / not searched).
 - REASONING CAPTURE (v1.4, required): write `G<N>_REFINE_LEDGER_S<n>.md` (or blind ledger) - the
   WHY behind each decision, the self-catches, the corrections, and the cross-cutting finding;
   include the specialists' prose summaries, which otherwise die with the session. Then:

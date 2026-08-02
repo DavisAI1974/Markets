@@ -7,6 +7,8 @@ live path) -> VERIFIED (negative-tested / proven executing) | RETIRED (no longer
 line older than two sessions, because decided-then-dropped-then-relitigated is the disease this file
 kills. Never delete a line; supersede it with a new one.
 
+**INSTANCE-INLINE RULE (Greg, S110):** every claim in this file - and in every ledger and handoff - carries its supporting INSTANCE in the same sentence or the one beside it, never in a separate section and never by reference. If a line says a thing happens, the case it happened in is right there. Two reasons: a reader must never have to go hunting to find out whether evidence exists, and a claim whose instance cannot be written next to it is a claim we do not actually have yet. Where the instance is absent, say so in place ("corpus searched, none found" / "not yet searched") per D24.
+
 | # | session | decision (verbatim where possible) | status | enforced by |
 |---|---|---|---|---|
 | D1 | S107 (Greg) | Keys do NOT rotate during the walk; rotation happens after, as its own item | DECIDED | doc (CLAUDE.md AWS section + every drop-in) — expires at walk end, then becomes paper-trading item G5 |
