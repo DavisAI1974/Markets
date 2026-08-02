@@ -1,4 +1,70 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-02, Session 109)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-02, Session 110)
+
+## S110 — TWO GROUP CYCLES + TWO MERGES + THE FIRST RETIREMENT + THE PLANT'S OPERATING SYSTEM + THE PAPER DOCK (read `SESSION_HANDOFF_2026-08-02_S110.md` + `DROP_IN_S111.md` + `research/kalshi/agents/RUN_SOP.md` [BINDING])
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`. Brain s103.7 -> s104.0 -> s105.0, 82 plays.**
+
+**G22 COMPLETE**: blind 4/10 sum|err| 5,965 drift -1,815 -> r1 **10/10 / 500 / -80** -> r2 **10/10 /
+330 / +50**. **G23 COMPLETE (r1)**: blind 5/10 **5,920** drift **+4,900 surviving 83%** (the most
+one-directional block of the walk and the FIRST to lean UP; actual cum -3,290 vs blind +1,610) ->
+refine **10/10 / 720**. G23 was the last staged block.
+
+**THE RESULT THAT MATTERS: A MERGED PLAY DIED ON ITS OWN FORWARD TEST.**
+`weather.burn_conversion_gate` was merged at session start as the G22 centerpiece with a written
+falsifier; G23 was its named test; **four specialists refuted it independently and its author refuted
+it hardest**. D-0709's mechanism: **the CDD-add limb is a CONSTANT (d_gw_cdd h1 positive 20/20 across
+two groups) - a limb that never changes sign cannot gate.** E-0710: both limbs pass and say "flip UP"
+into a **-620** Monday, while the both-ways clause **capped a correct DOWN read** against a -660
+actual - *"Not softened, it is my play."* E's mechanism: **burn is a numerator with no
+balance-clearing denominator, so when the balance loosens at the demand peak, burn confirmation is
+BEARISH information.** C-0715's cleanest evidence is **pre-graft and inside the play's own evidence
+list**: G22 0624/0625, identical served burn 39.3, delivered **+800 and -60** on consecutive sessions.
+RETIRED under a new declared class (status + refuting evidence as a new key). **THE DISSENT IS
+RECORDED (Greg's instruction): C-0707 was RIGHT that the gate was mis-scoped on its day (+160
+delivered), and NOBODY counted that instance - corrected tally 1-of-4, not 0-of-3.** The retirement
+stands because it never rested on the tally. **Structural lesson merged: any tally assembled from
+independent slices is systematically incomplete and must be recomputed at the coordinator.**
+
+**THE LIVE CLAIM, AND IT IS BLIND-LEGAL: the IMPACT-COEFFICIENT COLLAPSE.** C-0714 retired the roll
+window **within the same run** (container, not cause - removing roll supply did NOT restore impact:
+realized 0.053 vs a 0.380 median, so *nothing was released because nothing was held*). What replaced
+it: **k3 = price change per unit aggressor flow**, collapsing 0.302 -> 0.026 -> 0.018 after the 0709
+void, with week-2 flows of +3,747/+6,326/+1,089/+1,333 producing only +200/-60/-20/+180. *A void is
+price discovering where liquidity sits; once found, flow stops moving price.* **n=6 spanning G20+G23,
+5/6 at <= $200 vs a 30% base rate, one counterexample named.** B-0706 adds an out-of-sample instance
+by a different road (holiday thinness) plus the qualifier: **numb suppresses the NET 6.5x but the
+RANGE only 1.5x.** **k3_prev is PRE-CUTOFF - it belongs in the blind's hands.**
+
+**GREG'S OPEN DESIGN CALLS (D23-D27 in `DECISIONS.md`, his first business next session):** **D23
+VALUE REPLACEMENT / SHAPE** - *"we can only pay attention to SHAPE for forecasting purposes; any time
+you use it after that, the value has to be replaced"*; measured, **24 of 76 plays carried an absolute
+bar and the plays that failed this session are the value-keyed ones**, sharpened by the burn gate's
+death into: **a condition that cannot change state carries no information, whatever form it is written
+in.** He expects to **test the changes on a new group**. **D24 RETRO-INSTANCE PROGRAM** - a mechanism
+is n=1 until the corpus is searched, **qualified: past evidence is used WHEN AVAILABLE and a finding
+is never disregarded for lacking it** (three states recorded distinctly). **D25 THE ORDER OF
+REASONING**. **D26 the harness scoring convention** (20:00-to-20:00 vs a 17:00 clock; 0 on 8/8
+Fridays identifies it). **D27 render continuity** (root-caused: why the drawn lines did not connect;
+no score affected).
+
+**THE PLANT (new, and the reason the rest survives):** **`agents/RUN_SOP.md` v1.6 = THE SPEC BOOK**
+(verbatim spawn templates, slots by lookup, **nothing runs off-SOP**, deviations are nonconformances);
+**`DECISIONS.md`** (append-only, 27 entries, **instance-inline rule**); **`plant_status.py`** andon
+board + **`agents/QC_CHECKLIST.md`** (small-model, report-only); **batch records** + **inspection
+certificates**; **`decision_trace.py`** binding reasoning to decisions by an id that stops resolving
+the instant a number changes (**g22 30 ids, g23 40 ids, 0 unresolved**); **four reasoning ledgers**
+carrying every specialist's ACTION beside its REASONING; `PLANT_MAP.md`, `KEYS.md`.
+
+**THE DOCK: G0 CLOSED** - signed REST auth proven on BOTH prod and demo (HTTP 200); paper ledger with
+four risk caps (11/11 selftest incl. negative tests proving each cap fires); daily paper loop quoting
+the Kalshi public API **from the session container - no box needed for the paper stage**; tropical
+feed built and live-smoked; `KALSHI_DOCK_S110.md` the full endpoint/auth reference. **Routing: NG
+paper trades on the CLASSIC demo (KXNATGASD is live there); the margin platform has 33 perps and NO
+natural gas.**
+
+**NONCONFORMANCES (recorded, per the SOP's own rule):** NC-1 - a refine directive I wrote carried a
+false calendar premise and C-0715 caught it against `flow_calendar`; plus my own D11 violation, caught
+by the rule itself - I verified code **parsed** rather than **executed**, twice.
 
 ## S109 — G22 BLIND (4/10, sum|err| 5,965) + **HOLES #9/#10/#11** + the **STATE AUDITOR** role + the WEATHER MODEL REBUILT + brain s103.7 (68 plays) (read `SESSION_HANDOFF_2026-08-01_S109.md` + `DROP_IN_S110.md`)
 

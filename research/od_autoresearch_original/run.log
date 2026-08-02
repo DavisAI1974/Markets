@@ -1,0 +1,12 @@
+---
+r_squared:         0.999997
+r_squared_holdout: 1.000000
+residual_mean:     0.000291
+residual_max:      0.002006
+runtime_seconds:   0.117
+peak_memory_mb:    0.1
+n_points:          401
+dataset:           spin_boson_001
+---
+operator:          Piecewise Liouvillian (8 segments)
+coefficients:      {'eigenvalues_real': [-2.808036729480122e-15, -0.17449539640560796, -0.17449539640560796, 0.5038125094182025], 'eigenvalues_imag': [1.1641829473831137e-17, 2.194596366877354, -2.1945963668773483, -5.809597052525703e-17], 'primary_decoherence_rate': 0.5038125094182025, 'method': 'least_squares', 'n_segments': 8, 'L_norms': [4.243615521084199, 3.2677313334837446, 3.26534707183205, 3.2654032599519978, 3.2637555003556558, 3.264987576105855, 3.264986015505358, 3.2649859569963566]}

@@ -1,5 +1,49 @@
 # KALSHI TRADING — file index
 
+## NEW IN S110 (2026-08-02, current) — the plant's operating system, two group cycles, the dock
+
+**THE SPEC BOOK AND THE PLANT (read these first; RUN_SOP is binding)**
+- `research/kalshi/agents/RUN_SOP.md` — **THE SPEC BOOK, v1.6.** Every station of the group cycle with
+  VERBATIM spawn templates (AUD-1 auditor, BLD-1/BLD-2 blind + bridge, RFN-1/RFN-2 refine); slots are
+  lookups, never judgment. Change control: nothing runs off-SOP, a gap stops the line, changes are
+  versioned diffs on Greg's go, deviations are recorded nonconformances.
+- `DECISIONS.md` — the append-only binding-decision ledger (27 entries) with the instance-inline rule.
+  D23-D27 are Greg's open design calls.
+- `research/kalshi/plant_status.py` — the ANDON BOARD: one read-only command, PASS/WARN/FAIL per area.
+- `research/kalshi/agents/QC_CHECKLIST.md` — the small-model conformance sweep, report-only, 7 items.
+- `research/kalshi/decision_trace.py` — binds REASONING to the DECISION it produced (decision_id
+  changes the instant a number changes; `--embed` writes the self-contained record; `verify` fails any
+  unresolved id and names unbound ledgers).
+- `research/kalshi/batch_record.py` — the traveler on the pallet: one record per group, appended at
+  every station with session + SOP version + brain version.
+- `PLANT_MAP.md` (what runs where), `KEYS.md` (inventory, names only), `.gitattributes` (the CRLF trap
+  that false-flagged the whole gold vault as tampered).
+
+**THE REASONING LEDGERS (action beside reasoning; corpus state per D24)**
+- `research/kalshi/G22_REFINE_LEDGER_S110.md`, `G23_BLIND_LEDGER_S110.md`,
+  `G23_REFINE_LEDGER_S110.md` — every specialist's decision with the reasoning that produced it, each
+  bound by a DECISION CLAIMS table. `G22_REASONING_LEDGER_S109.md` is legacy-declared (pre-binding).
+
+**THE MERGES**
+- `research/kalshi/S110_MERGE_PROPOSAL.json` (s104.0) and `S110_MERGE_PROPOSAL_G23.json` (s105.0, and
+  the first RETIREMENT: the burn gate, with the dissent recorded in full).
+- `research/kalshi/adjudicate_g20_merge.py` — now carries the declared RETIREMENT class (may mutate
+  `status` only, must add its refuting evidence as a new key, before/after printed).
+- `research/kalshi/S110_MERGE_ADDENDUM_G22.md` — the G22 refine's twelve proposal items.
+
+**THE DOCK (paper trading)**
+- `research/kalshi/kalshi_auth.py` — signed REST client (RSA-PSS SHA256); prod + demo both verified.
+- `research/kalshi/kalshi_paper_ledger.py` — append-only paper ledger, four risk caps, 11/11 selftest.
+- `research/kalshi/ng_paper_loop.py` — the daily loop skeleton (public-API quotes, no keys needed).
+- `research/kalshi/KALSHI_DOCK_S110.md` — the full endpoint/auth/FIX reference and the routing decision.
+- `research/kalshi/tropical_feed.py` — the NHC tropical feed (the named summer gap), live-smoked.
+
+**REPAIRS AND MEASUREMENTS**
+- `research/kalshi/state_repair_s110.py` (audit f1/f3/f4/f5), `state_repair_s110b.py` (the CDD-ladder
+  artifact graft, identity-proven), `promotion_review.py`, `WINTER_RESIDUAL_S110.md` (the residual
+  tested in COLD at last: inert as a day timer, alive as a slope instrument).
+- `TURNAROUND_MEMO_S110.md` — the platform audit and the paper-trading go-plan.
+
 ## NEW IN S109 (2026-08-01, current) — G22 blind, holes #9/#10/#11, the AUDITOR role, brain s103.7
 
 **THE SIXTH AGENT ROLE (audit and forecast are now separate jobs)**
