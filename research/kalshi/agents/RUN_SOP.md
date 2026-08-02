@@ -36,6 +36,11 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.6 (S110): PATH CUM CONVENTION PINNED - cum is measured from the day's OPEN, first point 0,
+  last point == day-move minus gap; the gap rides in overnight_gap_usd only. The prior wording was
+  genuinely ambiguous and the two groups read it two different ways (g22 cum-from-open, g23
+  cum-from-prior-close), which is why the rendered lines did not connect. Coordinator now announces
+  any mismatch per day.
 - v1.5 (S110): INSTANCE-INLINE RULE adopted (Greg: "include the instance next to that
   sentence so i don't forget that you have something") - claims carry their evidence in place, in
   ledgers, decision lines and handoffs alike.
@@ -256,7 +261,11 @@ OUTPUT — write forecasts/g{N}_perday/grp{N}_{X}_{DAY}.json:
 {"specialist": "{X}", "group": "{GID}", "date": "{DAY}", "guessed_net_usd": <int day-move from
 prior close, gap+net>, "overnight_gap_usd": <int>, "path_p50_curve": [[et_hr, cum_usd], ...] on
 the 2-HOURLY CLOCK FROM THE 20:00 REOPEN through the close — the FULL session, never
-daytime-hours-only (S110: sparse blind paths left the render half-drawn; the clock spec lived
+daytime-hours-only. **CUM IS MEASURED FROM THE DAY'S OPEN, NOT FROM THE PRIOR CLOSE: the first
+point is 0 and the LAST POINT MUST EQUAL (day-move minus gap).** The gap is carried separately in
+overnight_gap_usd and the coordinator adds it. Emitting cum-from-prior-close double-counts the gap
+and the drawn line lands a whole gap above where the next day starts (S110: g23 8/10 days
+mismatched, both Mondays by exactly +400) (S110: sparse blind paths left the render half-drawn; the clock spec lived
 only in RFN-1 until Greg caught it on the G22 render),
 "reasoning": <your full read: plays evaluated limb by limb, evidence used/rejected, stand-downs
 with the named measured quantity>, "plays_fired": [...], "plays_stood_down": [...],

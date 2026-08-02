@@ -73,6 +73,14 @@
    "sop": "v1.3",
    "brain": "s104.0",
    "summary": "FORWARD TEST RESULT: the S110 merge plays (burn_conversion_gate esp.) supported UP leans on a block that fell hard; 0709 print day -2050 actual vs -250 called. burn_conversion_gate falsifier appears HIT on first forward test - refine adjudicates. Attribution fence holds both ways."
+  },
+  {
+   "ts": "2026-08-02T05:18:42Z",
+   "session": "S110",
+   "station": "refine-r1",
+   "sop": "v1.6",
+   "brain": "s104.0",
+   "summary": "COMPLETE: 10/10 dir, sum|err| 720, mean 72 (blind 5/10, 5920, drift +4900). Burn gate refuted by FOUR specialists on its named forward test; roll window corrected to container-not-cause; impact-coefficient (k3) collapse is the live structural claim and k3_prev is blind-legal."
   }
  ]
 }

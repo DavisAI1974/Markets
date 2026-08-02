@@ -133,6 +133,17 @@ def render(gid, rows, actual, seam):
         open_cum = run + gap; net = b["guess_day_move_usd"] - (0 if d == seam else gap)
         day0 = pd.Timestamp(f"{d[:4]}-{d[4:6]}-{d[6:]}", tz="America/New_York")
         path = [(h, v) for h, v in b["path_p50"] if h is not None and v is not None]
+        # S110 (Greg spotted it in the render; measured after): the running level advances by NET
+        # while the LINE is drawn to the last path point. If a specialist emits its path as
+        # cum-from-PRIOR-CLOSE (gap included) instead of cum-from-OPEN, the pen lands one whole gap
+        # above where the next day starts - THAT is why the lines did not connect. Measured: g22
+        # 0/10 mismatched, g23 8/10, both Mondays off by exactly their +400 gap. Announced, not
+        # hard-failed: no SCORE is affected (scoring reads guess_day_move_usd, never the path), and
+        # hard-failing would invalidate committed artifacts - see DECISIONS D27, Greg's call.
+        if path and abs(path[-1][1] - net) > 1:
+            print(f"  [render-continuity] {d}: path ends {path[-1][1]:+.0f} but the running level "
+                  f"advances by net {net:+.0f} (delta {path[-1][1]-net:+.0f}, gap {gap:+.0f}) - the "
+                  f"drawn line will not meet the next day. Path convention is cum-from-OPEN.")
         if path:
             sx = ru.path_times(day0, path)
             sy = [anchor + (open_cum + v) / MULT for _, v in path]
