@@ -132,6 +132,23 @@ def reconcile(gid: str, state: dict, verbose: bool = True) -> list[str]:
                 f"only open-time flow channel and it is declared never_masked.")
         elif verbose:
             print(f"[reconcile] {d}: session {sess} {served:,} vs leg {legn:,} (ratio {ratio:.2f}) OK")
+        # S110 audit f2: the check above guards reader A's n_trades - which reader A sources FROM
+        # the leg since S108, so it is the leg against itself and reads 1.00 by construction. The
+        # flow/phase/b-family comes from flow_read and can sit on a DIFFERENT tape entirely
+        # (measured: sum(phase_n_trades)/leg = 0.49 on g23 session 20260716 while the check above
+        # read 1.00). Guard the FLOW side against the same independent leg count.
+        pn = tc.get("phase_n_trades")
+        if isinstance(pn, list) and pn and all(isinstance(x, (int, float)) for x in pn):
+            fratio = sum(pn) / legn
+            if not (TOL_LO <= fratio <= TOL_HI):
+                fails.append(
+                    f"{d}: FLOW-SIDE split - sum(phase_n_trades)={sum(pn):,} vs LEG {legn:,} "
+                    f"(ratio {fratio:.2f}) on session {sess}. The flow/b-share family was computed "
+                    f"on a different tape than the session counts beside it (S110 audit f1/f2); "
+                    f"every b_share, phase and signed-flow field in this block is suspect.")
+            elif verbose:
+                print(f"[reconcile] {d}: flow-side sum(phase_n_trades) {sum(pn):,} vs leg {legn:,} "
+                      f"(ratio {fratio:.2f}) OK")
     return fails
 
 

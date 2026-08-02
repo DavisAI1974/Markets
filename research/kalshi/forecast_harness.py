@@ -862,6 +862,13 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
     global _ACTIVE_LEGS
     _ACTIVE_LEGS = group
     _tape_cond_cache.clear()
+    # S110 audit f2: the line above sets only THIS module's global. flow_read has its OWN
+    # same-named global that no code ever assigned, so its leg path was dead code and every
+    # flow/phase/b-family field in every staged group came from the cont-store max-count fallback
+    # (correct on most days only by a ranking accident; wrong on g23 20260716). The flow reader
+    # gets the group context here, at the same moment, or the two tape readers describe two tapes.
+    import flow_read as _fr
+    _fr._ACTIVE_LEGS = group
 
     import forward_curve as fc
     surp = _load_json("eia_surprise.json").get("KXNATGASD", {})

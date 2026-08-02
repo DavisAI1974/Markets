@@ -177,6 +177,102 @@ def audit(state: dict) -> dict:
                 hard.append(f"{d}: squeeze_watch declares frozen_front_expired but its '_live' symbol "
                             f"is still {ls!r}, the expired contract - self-contradictory in one block")
 
+        # S110 audit f1 THE TWO-TAPE SPLIT. A sixth face of the enemy: HALF a block computed on a
+        # different tape than the other half, sitting side by side under one source_store label. On
+        # g23 20260717 the session counts (n_trades 39,965 / volume 100,272) came from the LEG while
+        # the entire flow/phase/b-family came from a degraded cont store carrying ~44% of the tape -
+        # and the S109 b_share identity PASSED, because the family is internally consistent within
+        # its own (wrong) tape. Root cause is audit f2: flow_read's leg context was never set, so its
+        # leg path was dead code and the cont max-count fallback served everything; it matched the
+        # leg on other days only because the leg tape happened to also be the biggest cont store.
+        # The reconciliation is free and exact: phases are thirds of ONE tape, so their sums ARE the
+        # session totals. Measured across all 17 committed group states: 46 scopes sum exactly, the
+        # 2 defective scopes (n 0.493, vol 0.438) are the only failures. HARD - the family feeds
+        # SIGN plays and the big-print pair straddled 0.50 across the two tapes.
+        for blk in ("tape_conditions",):
+            tc0 = state[d].get(blk) or {}
+            for scope, tag in ((tc0, blk), (tc0.get("prior_full_session") or {}, blk + "/prior_full_session")):
+                if not isinstance(scope, dict):
+                    continue
+                for plist, tot, nm in (("phase_n_trades", "n_trades", "trades"),
+                                       ("phase_volume_lots", "volume_lots", "lots")):
+                    pv, tv = scope.get(plist), scope.get(tot)
+                    if (isinstance(pv, list) and pv and all(isinstance(x, (int, float)) for x in pv)
+                            and isinstance(tv, (int, float))):
+                        if sum(pv) != tv:
+                            hard.append(
+                                f"{d}: {tag} sum({plist})={sum(pv):,} != {tot}={tv:,} "
+                                f"(ratio {sum(pv)/tv:.3f}) on session {scope.get('session')} - the "
+                                f"flow family and the session counts describe TWO DIFFERENT TAPES; "
+                                f"every b_share/phase/signed-flow field here is off-tape. Do not "
+                                f"reason over the flow family (S110 audit f1/f2).")
+
+        # S110 audit f4 CONSENSUS FRESHNESS. The survey store died after the 07-09 print and the
+        # state kept serving that print as last_print for eight days - while the SAME day's storage
+        # block correctly carried the 07-16 print. Two blocks, one fact, two answers: the one
+        # post-print day of the second week evaluates the WRONG print's age and surprise. The
+        # reconciliation: once storage knows a print, the consensus block may not claim an older one
+        # as "last". Measured: fires on exactly 1 of 99 day-blocks with both fields present (g23
+        # 20260717); a repaired block nulls last_print with a *_basis and is skipped here.
+        st0, sc0 = state[d].get("storage") or {}, state[d].get("storage_consensus") or {}
+        lp = sc0.get("last_print") if isinstance(sc0, dict) else None
+        if isinstance(st0, dict) and isinstance(lp, dict):
+            a, pdt = st0.get("as_of"), lp.get("print_date")
+            if isinstance(a, str) and isinstance(pdt, str) and a > pdt:
+                hard.append(
+                    f"{d}: storage.as_of {a} POSTDATES storage_consensus.last_print.print_date {pdt} "
+                    f"- storage knows a print the consensus block still calls future. last_print "
+                    f"affirmatively misdescribes which print is last; age/surprise reads off it are "
+                    f"about the wrong print (S110 audit f4).")
+
+        # S110 audit f5 STRIKE SCALE. options_surface serves strikes in units exactly 10x below the
+        # $/MMBtu convention of every other price field (0.35 on a 3.2 settle), undeclared, in every
+        # group that carries the block (g12-g23) - a standing feed convention defect. The in-block
+        # note directs distance-from-settle reads against contract_structure, which is $/MMBtu, so a
+        # reader must silently infer a rescale (the G19 lesson forbids relying on that). Repaired
+        # states carry strike_units; this fires only where the units are UNDECLARED and the scale is
+        # out of family with the settle - median top-OI strike inside [0.4x, 2.5x] settle passes any
+        # sane regime including the G11 squeeze.
+        op = state[d].get("options_surface") or {}
+        cs0 = state[d].get("contract_structure") or {}
+        months = op.get("months") if isinstance(op, dict) else None
+        settle = cs0.get("calendar_front_settle") if isinstance(cs0, dict) else None
+        if (isinstance(months, list) and months and isinstance(settle, (int, float)) and settle
+                and not op.get("strike_units")):
+            stks = [t.get("strike") for m in months for t in (m.get("top5_oi_strikes") or [])
+                    if isinstance(t.get("strike"), (int, float))]
+            if stks:
+                med = sorted(stks)[len(stks) // 2]
+                if not (0.4 * settle <= med <= 2.5 * settle):
+                    hard.append(
+                        f"{d}: options_surface median top-OI strike {med} vs calendar_front_settle "
+                        f"{settle} (ratio {med/settle:.3f}) with NO strike_units declared - the "
+                        f"strikes are off the $/MMBtu convention by ~10x; any distance-from-settle "
+                        f"read is nonsense (S110 audit f5).")
+
+        # S110 audit f3 THE n0 ERA BREAK. vol_regime's n0 'prior session' store carries ~a fifth to
+        # a quarter of the scored tape in the leg era (n0_prev_trades 2,594 vs the same session's
+        # leg-reconciled 11,501 in g23; 1,835 vs 6,935 in g22) while the pre-June era reconciles
+        # (g21: 0.978). The magnitude-band scalers read these levels. The values cannot be rebuilt
+        # without the stores, so the disposition is DECLARE, not destroy: a state whose n0 family
+        # breaks the ratio must say so in an n0_era_basis; declared = legitimate and skipped here.
+        vr0, tc1 = state[d].get("vol_regime") or {}, state[d].get("tape_conditions") or {}
+        if isinstance(vr0, dict) and isinstance(tc1, dict) and not vr0.get("n0_era_basis"):
+            nd, nt0 = str(vr0.get("n0_prev_date", "")).replace("-", ""), vr0.get("n0_prev_trades")
+            for scope in (tc1, tc1.get("prior_full_session") or {}):
+                if not isinstance(scope, dict):
+                    continue
+                ses, nt1 = str(scope.get("session", "")).replace("-", ""), scope.get("n_trades")
+                if (nd and nd == ses and isinstance(nt0, (int, float))
+                        and isinstance(nt1, (int, float)) and nt1):
+                    r0 = nt0 / nt1
+                    if not (0.8 <= r0 <= 1.25):
+                        hard.append(
+                            f"{d}: vol_regime n0_prev_trades {nt0:,} vs the same session's tape "
+                            f"n_trades {nt1:,} (ratio {r0:.3f}) with no n0_era_basis declared - the "
+                            f"n0 volatility basis is off the scored tape and the magnitude-band "
+                            f"scalers reading it do not know (S110 audit f3).")
+
     return {"hard": hard, "soft": soft, "days": len(days)}
 
 

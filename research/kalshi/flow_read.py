@@ -34,8 +34,17 @@ def _load_trades(ymd):
             if lt:
                 ts, px, sz, sd = lt
                 return len(ts), np.array(ts), np.array(sz), np.array(sd)
-        except Exception:
-            pass
+            # S110 audit f2: the silent `except: pass` here hid the fact that this leg path was
+            # dead code for a whole era (its _ACTIVE_LEGS was never set by anyone). A fallback to
+            # the cont scan is sometimes legitimate (Sunday stubs have no leg file) but it must be
+            # LOUD, because the cont stores are degraded in the leg era and the max-count selector
+            # can serve a fraction of the session as if it were the session.
+            print(f"[flow_read] WARN {ymd}: leg store empty for "
+                  f"{gc.leg_for(_ACTIVE_LEGS, ymd)} - falling back to cont-store max-count scan",
+                  flush=True)
+        except Exception as e:
+            print(f"[flow_read] WARN {ymd}: leg read FAILED ({type(e).__name__}: {e}) - falling "
+                  f"back to cont-store max-count scan", flush=True)
     best = None
     for d in CONT_DIRS:
         p = os.path.join(d, f"NG_{ymd}.jsonl.gz")
@@ -57,6 +66,11 @@ def _load_trades(ymd):
                 sd.append(1 if r.get("side") == "B" else (-1 if r.get("side") == "A" else 0))
         if ts and (best is None or len(ts) > best[0]):
             best = (len(ts), np.array(ts), np.array(sz), np.array(sd))
+    if best is not None and _ACTIVE_LEGS:
+        # In a group context this scan should be the exception, not the path. Announce what won so
+        # a stage log shows every session whose flow family is NOT leg-verified (audit S110 f2).
+        print(f"[flow_read] WARN {ymd}: serving CONT-store tape ({best[0]:,} trades) in group "
+              f"context {_ACTIVE_LEGS} - flow family is not leg-verified", flush=True)
     return best
 
 
