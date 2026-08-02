@@ -102,6 +102,22 @@ from anywhere HTTPS runs, container included.
 - **Trades:** ticker + ts filters, cursor pagination (limit <=1000), per-trade taker_side
   (bid|ask), fixed-point counts (0.01 granularity).
 
+## MARGIN-LANE PORTFOLIO (REST; completes the doc walk)
+
+- **Fills:** per-fill fees, entry_price, incremental realized_pnl, is_taker liquidity flag,
+  order_source user|system; cursor pagination; ts filters in UNIX MILLISECONDS (responses ISO).
+- **Balance:** per-subaccount breakdown - position_value (mark-to-market), maintenance_margin,
+  initial_margin, RESTING_ORDERS_MARGIN (margin locked by resting orders), available_balance;
+  settled_funds account-wide. Rate cost 5 tokens, 50 when computing available.
+- **Positions:** signed position (+long/-short), weighted-average entry_price, unrealized_pnl,
+  lifetime fees, margin_used, roe, is_portfolio hedge flag. Realized PnL lives on FILLS, not
+  positions - reconcile the ledger against fills.
+- Subaccounts 0-63 throughout (0 = primary).
+
+DOC WALK STATUS: CLOSED (S110). Classic demo quick-start + any residual CRUD page gets fetched at
+implementation time from the index (docs.kalshi.com/llms.txt). The dock's next dependency is G0:
+Greg's demo account + registered RSA key.
+
 ## PAPER DESIGN CONSEQUENCE (G2 refinement, decided S110)
 
 Two loops, different jobs:
