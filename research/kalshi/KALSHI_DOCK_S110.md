@@ -69,6 +69,28 @@ from anywhere HTTPS runs, container included.
   at `margin-rest/account/get-perps-account-api-limits`; grants split by exchange_instance
   (event_contract vs margined) — the classic lane has its own tiering.
 - **FCM subtrader endpoints:** FCM members only — NOT part of a retail demo signup; ignore for G0.
+- **Risk model (perps):** account-wide NOTIONAL risk limit (fixed-point dollars, e.g. 5000.0000
+  default-class) with per-market overrides (`get-notional-risk-limit`); global
+  liquidation-margin-ratio + queue-entry-margin-ratio thresholds and a per-market
+  initial-margin multiplier over maintenance (`get-risk-parameters`). The live stage sizes UNDER
+  the notional limit and treats the queue-entry ratio as its own hard floor — our ledger caps
+  stay the inner ring, the exchange's limits the outer.
+
+## MARGIN-LANE ORDER + RISK CONTRACTS (captured from Greg's walk; wire at live stage)
+
+- **create-order (REST):** required ticker / client_order_id / side(bid|ask) / count / price /
+  time_in_force(fok|gtc|ioc) / self_trade_prevention(taker_at_cross|maker); optional
+  expiration_time(ms), post_only, cancel_order_on_pause, reduce_only, subaccount(0-63),
+  order_group_id. Counts are FIXED-POINT CONTRACTS at 0.01 granularity (fractional!); prices
+  fixed-point USD up to 6dp. Response echoes fills: fill_count, remaining, avg_fill_price,
+  avg_fee_paid.
+- **get-orders:** filters ticker/min_ts/max_ts/status/subaccount, cursor pagination (limit
+  <=10000); last_update_reason vocabulary incl. MarginCancel / SelfTradeCancel /
+  PostOnlyCrossCancel; order_reason incl. liquidation and take_profit_stop_loss.
+- **get-risk:** account leverage (= notional / maintenance), total_position_notional,
+  total_maintenance_margin; per position: signed qty, mark, notional, maintenance required,
+  leverage, ESTIMATED PORTFOLIO-AWARE LIQUIDATION PRICE. Dollars to 6dp, counts to 2dp.
+  (No balance / unrealized PnL here - those live on portfolio endpoints.)
 
 ## PAPER DESIGN CONSEQUENCE (G2 refinement, decided S110)
 
