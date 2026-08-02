@@ -36,6 +36,10 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.3 (S110): BLD-1 output contract pins path_p50_curve to the 2-hourly clock from the 20:00
+  reopen (full session). Greg caught the sparse blind trace on the G22 render; the clock spec
+  existed only in RFN-1. G23 wave-1 ran under the un-pinned wording (cosmetic only — scoring
+  reads guessed_net_usd); waves 2-3 and all future groups run pinned.
 - v1.2 (S110): TURNAROUND MEMO adoptions (Greg's blanket go, "do your plan completely"): the
   FIX-VERIFICATION rule and the FEED-CONSUMER rule added to STEP 2 / STEP 0.5 below; QA CADENCE
   added to STEP 7 (platform audit recurs every 4 groups or monthly, whichever first); DECISIONS.md,
@@ -231,7 +235,10 @@ SPAWN PARAMETERS
 
 OUTPUT — write forecasts/g{N}_perday/grp{N}_{X}_{DAY}.json:
 {"specialist": "{X}", "group": "{GID}", "date": "{DAY}", "guessed_net_usd": <int day-move from
-prior close, gap+net>, "overnight_gap_usd": <int>, "path_p50_curve": [[et_hr, cum_usd], ...],
+prior close, gap+net>, "overnight_gap_usd": <int>, "path_p50_curve": [[et_hr, cum_usd], ...] on
+the 2-HOURLY CLOCK FROM THE 20:00 REOPEN through the close — the FULL session, never
+daytime-hours-only (S110: sparse blind paths left the render half-drawn; the clock spec lived
+only in RFN-1 until Greg caught it on the G22 render),
 "reasoning": <your full read: plays evaluated limb by limb, evidence used/rejected, stand-downs
 with the named measured quantity>, "plays_fired": [...], "plays_stood_down": [...],
 "confidence": "low|med|high", "state_defects_and_gaps_reported": [...]}
