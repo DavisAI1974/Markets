@@ -28,6 +28,17 @@ def main(gid="g22", perday_dir=None):
         if tag.endswith("bridge") or "bridge" in base:
             continue                      # the weekend bridge is not a day posterior
         d = json.load(open(f))
+        # S110 (found by specialist E-0717 before any gate saw it): the shared output contract is
+        # read two ways in practice - a FLAT day record, or a {days:[...]} wrapper carrying one day
+        # (the per-specialist shape). Both are legitimate readings of the same contract, so the JOIN
+        # normalizes rather than rejecting: a single-day wrapper is unwrapped, a multi-day wrapper in
+        # a per-DAY file is still an error. Fixing the tool, not the posteriors - the posteriors are
+        # the record and must not be edited to suit a reader.
+        if not d.get("date") and isinstance(d.get("days"), list):
+            if len(d["days"]) != 1:
+                errs.append(f"{base}: days[] carries {len(d['days'])} days in a per-day file"); continue
+            inner = d["days"][0]
+            d = {**{k: v for k, v in d.items() if k != "days"}, **inner}
         day = str(d.get("date", "")).replace("-", "")
         if not day:
             errs.append(f"{base}: no date"); continue
