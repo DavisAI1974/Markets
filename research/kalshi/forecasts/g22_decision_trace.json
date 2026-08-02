@@ -1,0 +1,614 @@
+{
+ "group": "g22",
+ "binding": "decision_id = sha256(group|date|owner|number)[:12] - changes the instant the number changes, so any artifact quoting a stale number fails to resolve against this trace",
+ "ledgers": [
+  "G22_REASONING_LEDGER_S109.md",
+  "G22_REFINE_LEDGER_S110.md"
+ ],
+ "days": [
+  {
+   "date": "20260622",
+   "owner": "B",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": -420,
+     "decision_id": "072d52a6f475",
+     "posterior": "forecasts/g22_perday/grp22_B_20260622.json",
+     "posterior_sha": "29344599a5880766",
+     "reasoning_bytes": {
+      "reasoning": 12469,
+      "plays_fired": 1659,
+      "plays_stood_down": 4505
+     },
+     "reasoning": null,
+     "err_vs_actual": -1070
+    },
+    "refine_r1": {
+     "number_usd": 650,
+     "decision_id": "af2a319ca0ed",
+     "posterior": "forecasts/g22_refine_perday/grp22_B_20260622.json",
+     "posterior_sha": "2d95a829bad6d490",
+     "reasoning_bytes": {
+      "reasoning": 5641,
+      "evidence_used": 3034,
+      "evidence_rejected": 1258,
+      "stand_down_reasons": 628,
+      "selection_reason": 151,
+      "mbo_verdict": 766,
+      "proposal_contribution": 2885
+     },
+     "reasoning": null,
+     "err_vs_actual": 0
+    },
+    "refine_r2": {
+     "number_usd": 650,
+     "decision_id": "af2a319ca0ed",
+     "posterior": "forecasts/grp22_mbo_specialist_B_r2.json",
+     "posterior_sha": "d99fa2d1bd6106cd",
+     "reasoning_bytes": {
+      "evidence_used": 2277,
+      "evidence_rejected": 838,
+      "stand_down_reasons": 489,
+      "selection_reason": 180,
+      "mbo_verdict": 825,
+      "handoff_out": 1806
+     },
+     "reasoning": null,
+     "err_vs_actual": 0
+    }
+   },
+   "actual_day_move_usd": 650
+  },
+  {
+   "date": "20260623",
+   "owner": "C",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": -430,
+     "decision_id": "9ba7dca4d555",
+     "posterior": "forecasts/g22_perday/grp22_C_20260623.json",
+     "posterior_sha": "f78f908d04a40677",
+     "reasoning_bytes": {
+      "reasoning": 6105,
+      "plays_fired": 1704,
+      "plays_stood_down": 4410
+     },
+     "reasoning": null,
+     "err_vs_actual": 300
+    },
+    "refine_r1": {
+     "number_usd": -700,
+     "decision_id": "65147514c786",
+     "posterior": "forecasts/g22_refine_perday/grp22_C_20260623.json",
+     "posterior_sha": "430db889867b038a",
+     "reasoning_bytes": {
+      "reasoning": 3378,
+      "evidence_used": 2113,
+      "evidence_rejected": 1446,
+      "stand_down_reasons": 1056,
+      "selection_reason": 210,
+      "mbo_verdict": 442,
+      "proposal_contribution": 2687
+     },
+     "reasoning": null,
+     "err_vs_actual": 30
+    },
+    "refine_r2": {
+     "number_usd": -700,
+     "decision_id": "65147514c786",
+     "posterior": "forecasts/grp22_mbo_specialist_C_r2.json",
+     "posterior_sha": "c5a1ce68c3dbc1be",
+     "reasoning_bytes": {
+      "evidence_used": 1814,
+      "evidence_rejected": 785,
+      "stand_down_reasons": 522,
+      "selection_reason": 163,
+      "mbo_verdict": 794,
+      "handoff_out": 1256
+     },
+     "reasoning": null,
+     "err_vs_actual": 30
+    }
+   },
+   "actual_day_move_usd": -730
+  },
+  {
+   "date": "20260624",
+   "owner": "C",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": -200,
+     "decision_id": "9d813b96b772",
+     "posterior": "forecasts/g22_perday/grp22_C_20260624.json",
+     "posterior_sha": "2e60cde5e09a40eb",
+     "reasoning_bytes": {
+      "reasoning": 3846,
+      "plays_fired": 1166,
+      "plays_stood_down": 3951
+     },
+     "reasoning": null,
+     "err_vs_actual": -1000
+    },
+    "refine_r1": {
+     "number_usd": 600,
+     "decision_id": "8f037a42fe8d",
+     "posterior": "forecasts/g22_refine_perday/grp22_C_20260624.json",
+     "posterior_sha": "2e609cb39cbea7b8",
+     "reasoning_bytes": {
+      "reasoning": 5162,
+      "evidence_used": 2217,
+      "evidence_rejected": 1471,
+      "stand_down_reasons": 1581,
+      "selection_reason": 150,
+      "mbo_verdict": 359,
+      "proposal_contribution": 2533
+     },
+     "reasoning": null,
+     "err_vs_actual": -200
+    },
+    "refine_r2": {
+     "number_usd": 700,
+     "decision_id": "14cd8a972924",
+     "posterior": "forecasts/grp22_mbo_specialist_C_r2.json",
+     "posterior_sha": "c5a1ce68c3dbc1be",
+     "reasoning_bytes": {
+      "evidence_used": 1668,
+      "evidence_rejected": 716,
+      "stand_down_reasons": 818,
+      "selection_reason": 160,
+      "mbo_verdict": 806,
+      "handoff_out": 1185
+     },
+     "reasoning": null,
+     "err_vs_actual": -100
+    }
+   },
+   "actual_day_move_usd": 800
+  },
+  {
+   "date": "20260625",
+   "owner": "D",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": -110,
+     "decision_id": "d080ba58adf5",
+     "posterior": "forecasts/g22_perday/grp22_D_20260625.json",
+     "posterior_sha": "136099a28f79f2a1",
+     "reasoning_bytes": {
+      "reasoning": 6771,
+      "plays_fired": 3157,
+      "plays_stood_down": 4092
+     },
+     "reasoning": null,
+     "err_vs_actual": -50
+    },
+    "refine_r1": {
+     "number_usd": -70,
+     "decision_id": "6d64d73ec460",
+     "posterior": "forecasts/g22_refine_perday/grp22_D_20260625.json",
+     "posterior_sha": "2a96f55e8ad34c4f",
+     "reasoning_bytes": {
+      "evidence_used": 2005,
+      "evidence_rejected": 1005,
+      "stand_down_reasons": 760,
+      "selection_reason": 181,
+      "mbo_verdict": 1429,
+      "magnitude_derivation": 309,
+      "proposal_contribution": 3284,
+      "handoff_out": 886
+     },
+     "reasoning": null,
+     "err_vs_actual": -10
+    },
+    "refine_r2": {
+     "number_usd": -70,
+     "decision_id": "6d64d73ec460",
+     "posterior": "forecasts/grp22_mbo_specialist_D_r2.json",
+     "posterior_sha": "3de70958b728c4fc",
+     "reasoning_bytes": {
+      "evidence_used": 1539,
+      "evidence_rejected": 743,
+      "stand_down_reasons": 471,
+      "selection_reason": 105,
+      "mbo_verdict": 889,
+      "magnitude_derivation": 520,
+      "handoff_out": 1476
+     },
+     "reasoning": null,
+     "err_vs_actual": -10
+    }
+   },
+   "actual_day_move_usd": -60
+  },
+  {
+   "date": "20260626",
+   "owner": "E",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": 250,
+     "decision_id": "dd476bf17075",
+     "posterior": "forecasts/g22_perday/grp22_E_20260626.json",
+     "posterior_sha": "5dd72c34a2e4718c",
+     "reasoning_bytes": {
+      "reasoning": 4396,
+      "plays_fired": 1813,
+      "plays_stood_down": 2344,
+      "handoff_out": 7173
+     },
+     "reasoning": null,
+     "err_vs_actual": 20
+    },
+    "refine_r1": {
+     "number_usd": 230,
+     "decision_id": "3eca232aaeb6",
+     "posterior": "forecasts/g22_refine_perday/grp22_E_20260626.json",
+     "posterior_sha": "a3cd35992828fea3",
+     "reasoning_bytes": {
+      "evidence_used": 2483,
+      "evidence_rejected": 1209,
+      "stand_down_reasons": 895,
+      "selection_reason": 183,
+      "mbo_verdict": 550,
+      "magnitude_derivation": 573,
+      "proposal_contribution": 3708,
+      "refine_targets_addressed": 1718,
+      "handoff_out": 4901
+     },
+     "reasoning": null,
+     "err_vs_actual": 0
+    },
+    "refine_r2": {
+     "number_usd": 230,
+     "decision_id": "3eca232aaeb6",
+     "posterior": "forecasts/grp22_mbo_specialist_E_r2.json",
+     "posterior_sha": "f52e0cb3c39b1e14",
+     "reasoning_bytes": {
+      "evidence_used": 3959,
+      "evidence_rejected": 1607,
+      "stand_down_reasons": 895,
+      "selection_reason": 236,
+      "mbo_verdict": 752,
+      "magnitude_derivation": 1061,
+      "proposal_contribution": 4318,
+      "refine_targets_addressed": 1812,
+      "handoff_out": 5591
+     },
+     "reasoning": null,
+     "err_vs_actual": 0
+    }
+   },
+   "actual_day_move_usd": 230
+  },
+  {
+   "date": "20260629",
+   "owner": "B",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": 325,
+     "decision_id": "1af30be59d28",
+     "posterior": "forecasts/g22_perday/grp22_B_20260629.json",
+     "posterior_sha": "fe118bd9085eeac4",
+     "reasoning_bytes": {
+      "reasoning": 8746,
+      "plays_fired": 2055,
+      "plays_stood_down": 4513
+     },
+     "reasoning": null,
+     "err_vs_actual": 1435
+    },
+    "refine_r1": {
+     "number_usd": -1000,
+     "decision_id": "34a4f46fe057",
+     "posterior": "forecasts/g22_refine_perday/grp22_B_20260629.json",
+     "posterior_sha": "84d503ddda40c7ee",
+     "reasoning_bytes": {
+      "evidence_used": 3602,
+      "evidence_rejected": 1802,
+      "stand_down_reasons": 1568,
+      "selection_reason": 169,
+      "mbo_verdict": 1292,
+      "magnitude_derivation": 1974,
+      "proposal_contribution": 3243,
+      "refine_targets_addressed": 1531,
+      "handoff_out": 1532,
+      "taken_vs_overridden": 3209
+     },
+     "reasoning": null,
+     "err_vs_actual": 110
+    },
+    "refine_r2": {
+     "number_usd": -1000,
+     "decision_id": "34a4f46fe057",
+     "posterior": "forecasts/grp22_mbo_specialist_B_r2.json",
+     "posterior_sha": "d99fa2d1bd6106cd",
+     "reasoning_bytes": {
+      "evidence_used": 2903,
+      "evidence_rejected": 1201,
+      "stand_down_reasons": 883,
+      "selection_reason": 260,
+      "mbo_verdict": 982,
+      "handoff_out": 2062
+     },
+     "reasoning": null,
+     "err_vs_actual": 110
+    }
+   },
+   "actual_day_move_usd": -1110
+  },
+  {
+   "date": "20260630",
+   "owner": "C",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": -420,
+     "decision_id": "7d54b97e89fb",
+     "posterior": "forecasts/g22_perday/grp22_C_20260630.json",
+     "posterior_sha": "be2a06d9615edfd9",
+     "reasoning_bytes": {
+      "reasoning": 5050,
+      "plays_fired": 1272,
+      "plays_stood_down": 3567
+     },
+     "reasoning": null,
+     "err_vs_actual": -1200
+    },
+    "refine_r1": {
+     "number_usd": 700,
+     "decision_id": "66e9c72e2d63",
+     "posterior": "forecasts/g22_refine_perday/grp22_C_20260630.json",
+     "posterior_sha": "d1b9e51671028484",
+     "reasoning_bytes": {
+      "evidence_used": 2980,
+      "evidence_rejected": 1376,
+      "stand_down_reasons": 1516,
+      "selection_reason": 308,
+      "mbo_verdict": 1632,
+      "proposal_contribution": 3631
+     },
+     "reasoning": null,
+     "err_vs_actual": -80
+    },
+    "refine_r2": {
+     "number_usd": 750,
+     "decision_id": "27bd098eddb5",
+     "posterior": "forecasts/grp22_mbo_specialist_C_r2.json",
+     "posterior_sha": "c5a1ce68c3dbc1be",
+     "reasoning_bytes": {
+      "evidence_used": 1835,
+      "evidence_rejected": 755,
+      "stand_down_reasons": 943,
+      "selection_reason": 170,
+      "mbo_verdict": 749,
+      "handoff_out": 1381
+     },
+     "reasoning": null,
+     "err_vs_actual": -30
+    }
+   },
+   "actual_day_move_usd": 780
+  },
+  {
+   "date": "20260701",
+   "owner": "C",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": -380,
+     "decision_id": "848991d524fc",
+     "posterior": "forecasts/g22_perday/grp22_C_20260701.json",
+     "posterior_sha": "1714bf197f56241f",
+     "reasoning_bytes": {
+      "reasoning": 3783,
+      "plays_fired": 1012,
+      "plays_stood_down": 4256
+     },
+     "reasoning": null,
+     "err_vs_actual": 120
+    },
+    "refine_r1": {
+     "number_usd": -470,
+     "decision_id": "b9985f6ed78e",
+     "posterior": "forecasts/g22_refine_perday/grp22_C_20260701.json",
+     "posterior_sha": "0f5ca8ad4a685946",
+     "reasoning_bytes": {
+      "evidence_used": 3570,
+      "evidence_rejected": 1249,
+      "stand_down_reasons": 1266,
+      "selection_reason": 196,
+      "mbo_verdict": 815,
+      "proposal_contribution": 2173
+     },
+     "reasoning": null,
+     "err_vs_actual": 30
+    },
+    "refine_r2": {
+     "number_usd": -490,
+     "decision_id": "53ebac970ca4",
+     "posterior": "forecasts/grp22_mbo_specialist_C_r2.json",
+     "posterior_sha": "c5a1ce68c3dbc1be",
+     "reasoning_bytes": {
+      "evidence_used": 1907,
+      "evidence_rejected": 846,
+      "stand_down_reasons": 929,
+      "selection_reason": 187,
+      "mbo_verdict": 823,
+      "handoff_out": 1542
+     },
+     "reasoning": null,
+     "err_vs_actual": 10
+    }
+   },
+   "actual_day_move_usd": -500
+  },
+  {
+   "date": "20260702",
+   "owner": "D",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": 200,
+     "decision_id": "d4f8fd78755d",
+     "posterior": "forecasts/g22_perday/grp22_D_20260702.json",
+     "posterior_sha": "c6d368154cbd425d",
+     "reasoning_bytes": {
+      "reasoning": 5506,
+      "plays_fired": 1780,
+      "plays_stood_down": 4764,
+      "handoff_out": 2018
+     },
+     "reasoning": null,
+     "err_vs_actual": 200
+    },
+    "refine_r1": {
+     "number_usd": 0,
+     "decision_id": "a11d6e131e5d",
+     "posterior": "forecasts/g22_refine_perday/grp22_D_20260702.json",
+     "posterior_sha": "8f07e155c1fba3c2",
+     "reasoning_bytes": {
+      "evidence_used": 2511,
+      "evidence_rejected": 1133,
+      "stand_down_reasons": 619,
+      "selection_reason": 205,
+      "mbo_verdict": 3079,
+      "proposal_contribution": 3591
+     },
+     "reasoning": null,
+     "err_vs_actual": 0
+    },
+    "refine_r2": {
+     "number_usd": 0,
+     "decision_id": "a11d6e131e5d",
+     "posterior": "forecasts/grp22_mbo_specialist_D_r2.json",
+     "posterior_sha": "3de70958b728c4fc",
+     "reasoning_bytes": {
+      "evidence_used": 2031,
+      "evidence_rejected": 863,
+      "stand_down_reasons": 446,
+      "selection_reason": 123,
+      "mbo_verdict": 1137,
+      "magnitude_derivation": 668,
+      "handoff_out": 2260
+     },
+     "reasoning": null,
+     "err_vs_actual": 0
+    }
+   },
+   "actual_day_move_usd": 0
+  },
+  {
+   "date": "20260703",
+   "owner": "A",
+   "brain_version_at_trace": "s104.0",
+   "inputs": {
+    "state_sha": "5c5e96d22ee6706b",
+    "causal_slice_sha": null,
+    "anchor_sha": "78e523c32edc636f"
+   },
+   "phases": {
+    "blind": {
+     "number_usd": -160,
+     "decision_id": "db7ddf0b69e6",
+     "posterior": "forecasts/g22_perday/grp22_A_20260703.json",
+     "posterior_sha": "832ee827b7b6afe4",
+     "reasoning_bytes": {
+      "reasoning": 4027,
+      "plays_fired": 1320,
+      "plays_stood_down": 3555,
+      "handoff_out": 6911
+     },
+     "reasoning": null,
+     "err_vs_actual": -570
+    },
+    "refine_r1": {
+     "number_usd": 450,
+     "decision_id": "b144708a9d82",
+     "posterior": "forecasts/g22_refine_perday/grp22_A_20260703.json",
+     "posterior_sha": "adac277a99ae63ec",
+     "reasoning_bytes": {
+      "evidence_used": 3295,
+      "evidence_rejected": 1797,
+      "stand_down_reasons": 1425,
+      "selection_reason": 218,
+      "mbo_verdict": 1187,
+      "magnitude_derivation": 992,
+      "proposal_contribution": 3507,
+      "refine_targets_addressed": 3070,
+      "handoff_out": 9107
+     },
+     "reasoning": null,
+     "err_vs_actual": 40
+    },
+    "refine_r2": {
+     "number_usd": 450,
+     "decision_id": "b144708a9d82",
+     "posterior": "forecasts/grp22_mbo_specialist_A_r2.json",
+     "posterior_sha": "28dc1ce99801eed8",
+     "reasoning_bytes": {
+      "evidence_used": 1903,
+      "evidence_rejected": 1261,
+      "stand_down_reasons": 940,
+      "selection_reason": 245,
+      "mbo_verdict": 1316,
+      "magnitude_derivation": 1856,
+      "handoff_out": 10114
+     },
+     "reasoning": null,
+     "err_vs_actual": 40
+    }
+   },
+   "actual_day_move_usd": 410
+  }
+ ]
+}

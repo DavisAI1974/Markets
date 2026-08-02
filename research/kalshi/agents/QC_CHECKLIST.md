@@ -69,6 +69,14 @@ cd /e/Markets && git status --short research/kalshi/agents/ || echo CLEAN
 EXPECT: empty output or `CLEAN` — the canonical rule files and SOP change only via committed,
 version-logged edits. Any uncommitted modification under agents/ is FAIL.
 
+## ITEM 7 — reasoning bound to decisions (v1.4)
+```
+python decision_trace.py verify g22
+```
+EXPECT: `0 UNRESOLVED`. Any `STALE` line is a FAIL (a ledger describes a number the system no
+longer holds). An `UNBOUND ... UNDECLARED` line is a FAIL; `LEGACY-DECLARED` is a PASS (a
+pre-binding ledger that says so). Substitute the group under review for g22.
+
 ---
 
 ## THE REPORT (deliver exactly this shape)
@@ -82,6 +90,7 @@ ITEM 3 sop-version:   PASS/WARN
 ITEM 4 decisions:     PASS/FAIL (count=N)
 ITEM 5 blind-immut:   PASS/FAIL
 ITEM 6 agents-clean:  PASS/FAIL
+ITEM 7 reasoning-tie: PASS/FAIL (N ids checked)
 VERDICT: ALL CLEAR | N FAIL - LINE STOPPED, human review required
 ```
 

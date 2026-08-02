@@ -400,3 +400,14 @@ in a month when the Gulf carries both the export fleet and a large share of prod
 **Why this belongs in the ledger rather than only in the play:** the play records *what to read*. This
 records *why anyone should bother*, and the reasoning is what makes it extendable — the same logic says a
 tropical feed is now a higher-value build than it looked an hour ago.
+
+---
+
+## DECISION CLAIMS — LEGACY, UNBOUND (recorded S110)
+
+This ledger predates the decision-trace binding (S110) and carries no machine-checked claims table.
+Its numbers were correct when written and are NOT verified against the live trace; treat every
+quoted figure as of-its-writing. Ledgers from S110 forward carry a generated claims table
+(`python decision_trace.py claims <gid>`) and are verified by `decision_trace.py verify`.
+Not retrofitted deliberately: back-filling ids into a historical document would assert a
+verification that never happened.

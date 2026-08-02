@@ -36,6 +36,13 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.4 (S110): REASONING CAPTURE made standing (Greg: "are we logging the context of the refine's
+  decisions? those are probably the most useful" + "they should be on the same file"). Close-out now
+  requires a per-group REASONING LEDGER with a machine-checked DECISION CLAIMS table, plus
+  `decision_trace.py build --embed` (the self-contained record: every number carries its own
+  explanation, inputs and outcome) and `decision_trace.py verify` (unresolved id = STALE). Also
+  D22: the ledger is NOT a second brain - lessons reach the blind only through the adjudicated
+  brain; spawn templates cite the brain, never ledgers.
 - v1.3 (S110): BLD-1 output contract pins path_p50_curve to the 2-hourly clock from the 20:00
   reopen (full session). Greg caught the sparse blind trace on the G22 render; the clock spec
   existed only in RFN-1. G23 wave-1 ran under the un-pinned wording (cosmetic only — scoring
@@ -142,6 +149,11 @@ staging defect, not a neutral fact. The QC sweep checks the consumer map.
 ## STEP 7 — CLOSE-OUT (every session)
 - `SESSION_HANDOFF_<date>_S<n>.md` (full detail) + `KICKOFF`/`DROP_IN` for next session +
   CLAUDE.md header + `KALSHI_TRADING.md` index + this file's version log if the SOP changed.
+- REASONING CAPTURE (v1.4, required): write `G<N>_REFINE_LEDGER_S<n>.md` (or blind ledger) - the
+  WHY behind each decision, the self-catches, the corrections, and the cross-cutting finding;
+  include the specialists' prose summaries, which otherwise die with the session. Then:
+  `python decision_trace.py build <gid> --embed` and `python decision_trace.py verify <gid>` - the
+  ledger must carry a generated DECISION CLAIMS table and verify must report 0 UNRESOLVED.
 - Maintain the standing plant documents: `DECISIONS.md` (new/changed decisions with status),
   `PLANT_MAP.md` (if any standing process moved), `KEYS.md` (if the inventory changed).
 - Diff this session's OPEN list against the prior handoff's — every dropped item is either
