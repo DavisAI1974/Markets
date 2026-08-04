@@ -608,10 +608,17 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state:** brain **s103.7 (68 plays)**. **G22 BLIND COMPLETE** - 4/10 dir, **sum|err| 5,965**,
-drift -1,815, survives 30%: second-best blind of the walk on sum|err|, worst on direction. **G22 REFINE
-NOT RUN - that is the next job.** **THE DRIFT IS THE MISSED HILL** (realized gw_cdd 9.0 -> 17.5, actual
-cum +470, blind cum -1,345). **ELEVEN holes now**, S109 adding #9 (`session_b_share` WRONG ENCODING - a
+**One-line state (S111):** brain **s105.0, 82 plays**. **G22 COMPLETE** (blind 4/10 5,965 -> r1 500 ->
+r2 330); **G23 COMPLETE r1** (blind 5/10 5,920, drift +4,900, survives 83% - the most one-directional
+block of the walk and the first to lean UP -> refine 10/10 720); r2 not run. Both merges executed and
+**`weather.burn_conversion_gate` was RETIRED on its own named forward test** - the first retirement in
+the system's history, with C-0707's dissent recorded (corrected tally 1-of-4, not 0-of-3; the retirement
+stands on mechanism, never on the tally). **G23 was the last staged block - no G24 exists, and it needs
+a data pull, not a re-stage** (`group_config` g23 basis: "data year ends ~07-20"). Greg's open design
+calls **D23-D27** are the live work; **D23 is now MEASURED** - see `condition_audit.py`, which found the
+disease is not value-vs-shape but **CENTRAL-vs-EXTREME**: the two percentile-form conditions are
+degenerate in 10 of 11 blocks while the healthiest condition in the brain is an absolute bar sited at
+the 50/50 line. **S109's line, kept for the holes record:** **ELEVEN holes**, S109 adding #9 (`session_b_share` WRONG ENCODING - a
 hard 0.0 on all 8 scored-leg days of two groups), #10 (`squeeze_watch` FROZEN-BUT-LIVE - S108 fixed a
 false negative here and shipped its mirror image) and **#11 (the state let EVERY specialist READ PAST ITS
 OWN DECISION POINT** - a day's tape is served under the next day's key, so all three first-run G22
