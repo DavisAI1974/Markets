@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 72 |
+| open | 75 |
 | in progress | 1 |
 | done | 11 |
 
-By size: **XS** 8, **S** 32, **M** 28, **L** 5
+By size: **XS** 8, **S** 33, **M** 29, **L** 6
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
+By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 20, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (4)
+## ESSENTIAL (6)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -30,8 +30,10 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
+| **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
+| **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
-## BIGGEST WIN (19)
+## BIGGEST WIN (20)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -43,6 +45,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 | **A-30** | S | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | It corrects the stack model every burn play reasons from, it is already measured on data we hold, and it supplies the per-BA instrument A-27 needs instead of a national constant. |
 | **A-31** | S | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
 | **A-35** | S | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | It puts a clock on four registered mechanisms rather than adding a fifth, it re-reads the S111 'market got quieter' finding as a risk error, and it supplies the analog library's validity window as a measured quantity. Buildable from grid_stack shares we already hold. |
+| **A-36** | S | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
@@ -124,12 +127,15 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
+| **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
+| **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
 | **A-30** | BIGGEST_WIN | S | OPEN | S113 | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | - |
 | **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | - |
 | **A-35** | BIGGEST_WIN | S | OPEN | S113 | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | - |
+| **A-36** | BIGGEST_WIN | S | OPEN | S113 | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
@@ -287,6 +293,36 @@ BUILT AND TESTED, AWAITING THE TEMPLATE EDIT: spawn.py day_calendar() emits prio
 **Source:** S112 conditions curation, found independently by 4 of 8 batches
 
 MEASURED S112: chain age, chain polarity and cum_from_anchor are served in NO grp*_state.json. chain_age_sessions exists only in the per-boundary g*_he24_he1_handoffs.json. Consequence: every play keyed to chain state is unevaluable from the state a specialist is actually given, and the curation pass had to refuse them all. Batch 4's count is the sharpest: four of its seven refusals are the Friday/weekend/chain family and ALL fail on these same two quantities - serving them would make three plays curatable at once. Named refusals across batches: giveback_exhaustion_reversal_recognition, young_chain_extension_full_band, seam_chainage_accommodation_gate, friday_turn_exhaustion_gate, structure.mature_swing_alternation, level.giveback_origin_shelf, structure.covering_extension_distribution_flip, midweek.stretched_extreme_close_giveback, structure.friday_exhausted_extreme_giveback. This is the same fact the DECLINE audit reached from the other side - boundary.chain_label_must_track_realized_cum is 4-of-4 DATA_ABSENT - and it is why its caveat 'chain STATE travels in the handoff, which is never masked' is false on every price-masked run.
+
+---
+
+### [ESSENTIAL] A-37 - HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn
+
+*size M | OPEN | raised S113 (implicit in D35 at S112; made explicit when Greg scoped the two lanes apart)*
+
+**Source:** Greg S113, following D35's finding that Henry Hub is ONE point near Erath, Louisiana
+
+D35 established the target is demand HH can SEE, and D38 established the HH lane needs its own fence flow. Neither says WHICH BAs are inside the fence. Without that boundary there is no HH-territory gas gen to measure, no import ceiling to bound it with, and no way to test the transmission weighting D35 prescribes. Every downstream HH item inherits this.
+
+---
+
+### [ESSENTIAL] A-38 - THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest
+
+*size L | OPEN | raised S113*
+
+**Source:** Greg S113: 'Storage wise we just want overall gas demand.' Measured immediately against our own steo_vintage store.
+
+MEASURED, STEO jul26 vintage, ACTUALS ONLY (<=202605), 52 month-over-month moves in US total gas consumption (NGTCPUS), each named individually - no averages:
+  * heating (NGRCPUS residential + NGCCPUS commercial) is the BIGGER MOVER on 33 of 52 months, and on 10 of the 10 LARGEST moves. Not one of the ten is power-dominated.
+  * 202503 total -26.7 Bcf/d = heating -17.21 vs power -6.49. 202512 total +20.1 = heating +15.88 vs power +2.24. 202412 total +18.1 = heating +15.19 vs power +0.53 (28.7x).
+  * ON 12 OF 52 MONTHS POWER BURN MOVED OPPOSITE TO TOTAL DEMAND. Every November transition in the record: 202211 total +16.1 / power -0.46; 202311 +15.4 / -0.67; 202411 +11.9 / -1.62; 202511 +13.9 / -1.87. The burn stack points DOWN into the month total demand turns UP.
+  * Level share, not just moves: January 2025 total 126.5 Bcf/d of which power 36.3 (28.7%) and res+comm 53.1 (42%). July 2025 total 87.9 of which power 48.2 (54.8%) and res+comm 8.6 (9.7%).
+
+WHAT THIS IS AND IS NOT (D31 - a refutation is SCOPED). It does NOT refute the burn stack. In SUMMER res/comm are flat near their floor, so essentially ALL summer demand variance IS power burn and the stack is the model. It also does not touch the HH lane, where gas-fired generation on the Gulf corridor is the point. What it says is narrow and specific: for the STORAGE lane in WINTER - the season that produces the draws the market trades - the apparatus this desk has built (stack subtraction, hydro carry, coal commitment, wind/solar, interchange) addresses the minority component, and in November it addresses one that is moving the other way.
+
+THE GAP: we serve degree days (gw_hdd) and we serve power burn. We serve NOTHING that converts heating degree days into res/comm Bcf/d. The registry was searched - A-19, A-26, A-24c and A-33 are the only items that mention residential or heating at all and none of them is this. So the largest single driver of the quantity Greg just named as the storage target is unmodelled, and was unmodelled without anyone having decided it should be.
+
+ALSO MISSING FROM THE EXTRACT: industrial consumption. It is 21.4-27.0 Bcf/d - the SECOND largest component - and appears in our steo_vintage store only as the arithmetic residual of NGTCPUS minus the six series we do carry. EIA publishes it; our parse drops it.
 
 ---
 
@@ -902,6 +938,16 @@ requires for transplanted days, and (c) a dated forward path for the coal ceilin
 FALSIFIER: if per-BA fuel shares turn out to drift SLOWLY enough that a three-year-old analog's evening
 ramp is within the tolerance D32's amplitude test already permits, then the library ceiling is not binding
 and this item reduces to bookkeeping on the coal ceiling alone.
+
+---
+
+### [BIGGEST_WIN] A-36 - INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up
+
+*size S | OPEN | raised S113*
+
+**Source:** Greg S113: 'even if I don't have gas gen, my neighbor probably has enough for both of us'; 'the import/export numbers only really matter in the hh territory'
+
+D38. Interchange between two BAs inside an aggregate cancels pairwise, so it is already gone from any total containing both ends - MEASURED at US48: net interchange p50 0.5% of demand, MAX 2.8%. The national/storage roll-up therefore needs NO interchange term and adding one would double-count. But any aggregate SHORT of US48 has a real fence: CISO imports p50 20.6% / MAX 41.7% of its load, MISO p50 5.6% / MAX 15.5%. A stack subtraction inside such a BA overstates its gas by roughly the import, because the load was served by somebody else's generation and the fuel is on their books. `interchange_mwh` is now served (sign VERIFIED by the accounting identity TI = sum(gen) - demand, positive = net EXPORT; residual/demand p50 0.00% on ERCO/SOCO/SWPP). It is not yet CONSUMED by anything - D12 requires a named consumer or a PARK note.
 
 ---
 

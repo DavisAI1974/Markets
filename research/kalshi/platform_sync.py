@@ -37,19 +37,14 @@ BUCKET = "bento-568968024170-us-east-2-an"
 REGION = "us-east-2"
 
 
-def _creds():
-    if not os.path.exists(ENV):
-        sys.exit(f"[platform_sync] missing {ENV} - keys are SECRETS, session-local, never committed")
-    for line in open(ENV):
-        if "=" in line and not line.strip().startswith("#"):
-            k, v = line.strip().split("=", 1)
-            os.environ.setdefault(k, v)
-
-
 def _s3():
-    _creds()
-    import boto3
-    return boto3.client("s3", region_name=REGION)
+    # S113 (Greg: "no more scratchpad. It's in the sop"). This used to require
+    # <repo>/scratchpad/aws.env and exit if it was absent, which made every push depend on a
+    # directory D33 forbids and that dies with the container. creds.aws_client() resolves the
+    # real pair from ~/.aws/credentials and strips the container's injected placeholders first.
+    sys.path.insert(0, HERE)
+    import creds
+    return creds.aws_client("s3", REGION)
 
 
 def _iter_prefix(s3, prefix: str):
@@ -114,6 +109,11 @@ def cmd_push(prefix: str, src: str, execute: bool, note: str = "") -> int:
             for n in names:
                 p = os.path.join(root, n)
                 files.append((p, os.path.relpath(p, src).replace(os.sep, "/")))
+    # manifest.json is GENERATED below, so a stale local copy must not be pushed as a source file:
+    # it gets uploaded, immediately overwritten by the generated one, and then the verify compares
+    # the new remote size against the old local size and reports VERIFY FAILED on a push that in
+    # fact succeeded - exit 1 on success, which would break any automation that checks the code.
+    files = [(p, rel) for p, rel in files if rel != "manifest.json"]
     if not files:
         sys.exit(f"[platform_sync] nothing to push at {src}")
     total = sum(os.path.getsize(p) for p, _ in files)

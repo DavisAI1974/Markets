@@ -18,6 +18,21 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEGACY = os.path.join(_ROOT, "scratchpad", "aws.env")
 
 
+# THE CONTAINER LIES ABOUT AWS. Claude Code cloud containers inject PLACEHOLDER values
+# (AWS_ACCESS_KEY_ID=proxy-injected) that sit FIRST in boto3's resolution order and therefore
+# override ~/.aws/credentials. That cost S100 an hour and the documented workaround has been to
+# remember `env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY` on every command. A resolution
+# order that reads the environment first - which this module does - walks straight into it and
+# hands back "proxy-injected" as though it were a key: present, well-formed, wrong. Handle it
+# HERE so no caller has to remember anything.
+PLACEHOLDERS = ("proxy-injected",)
+_AWS_VARS = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN")
+
+
+def _is_placeholder(v):
+    return bool(v) and v.strip().lower().startswith(PLACEHOLDERS)
+
+
 def _from_file(path, name):
     if not os.path.exists(path):
         return None
@@ -31,6 +46,8 @@ def _from_file(path, name):
 
 def get(name, required=True):
     v = os.environ.get(name)
+    if _is_placeholder(v):
+        v = None                      # the container's injected stub is NOT a credential
     if v:
         return v
     v = _from_file(HOME_ENV, name)
@@ -48,13 +65,33 @@ def get(name, required=True):
     return None
 
 
+def aws_client(service, region):
+    """A boto3 client that survives the container's injected placeholders.
+
+    Strips the stub AWS vars from this process so boto3 falls through to ~/.aws/credentials,
+    which is where the real pair lives. This replaces the `env -u AWS_ACCESS_KEY_ID
+    -u AWS_SECRET_ACCESS_KEY python ...` incantation - a rule you have to remember is a rule
+    that eventually gets forgotten, and the failure it produces (InvalidClientTokenId on a
+    known-good key) looks like a dead key rather than a shadowed one.
+    """
+    import boto3
+    for k in _AWS_VARS:
+        if _is_placeholder(os.environ.get(k)):
+            os.environ.pop(k, None)
+    return boto3.client(service, region_name=region)
+
+
 def status():
     """Which secrets are resolvable, by NAME only - never a value."""
     for n in ("EIA_API_KEY", "AWS_ACCESS_KEY_ID", "DATABENTO_API_KEY"):
-        src = ("env" if os.environ.get(n) else
+        src = ("CONTAINER PLACEHOLDER (ignored)" if _is_placeholder(os.environ.get(n)) else
+               "env" if os.environ.get(n) else
                "~/.config/markets/env" if _from_file(HOME_ENV, n) else
                "LEGACY scratchpad" if _from_file(LEGACY, n) else "ABSENT")
         print(f"  {n:<22} {src}")
+    print(f"  {'(aws fallback)':<22} ~/.aws/credentials "
+          f"{'present' if os.path.exists(os.path.expanduser('~/.aws/credentials')) else 'ABSENT'}"
+          f"  - use creds.aws_client(), not bare boto3.client()")
 
 
 if __name__ == "__main__":

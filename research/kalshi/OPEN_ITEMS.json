@@ -998,6 +998,42 @@
       "tier": "REST",
       "tier_why": "-",
       "why": "Greg, S113: 'no more scratchpad. It's in the sop.' A credential is NEITHER code nor data, so under D33/D34 it belongs outside the repo tree entirely - never in git, never in a scratchpad directory that dies with the session.\n\nBUILT S113: research/kalshi/creds.py resolves in order - process environment, then ~/.config/markets/env (chmod 600, outside the repo), then the legacy scratchpad path WITH A WARNING so nothing breaks mid-migration. It never prints or returns a value into an artifact; `python creds.py` reports only which secrets resolve and from where, by NAME.\n\ngrid_stack.py is repointed and verified live (EIA auth PASS, store rebuilt through 2026-08-05). STILL READING THE OLD PATH, and this is the open work: databento_live_smoke.py, nuclear_outages.py, plant_status.py, platform_sync.py, session_bootstrap.py. Each is a one-function change to creds.get(). Left undone deliberately rather than blind-patched - plant_status is the andon and session_bootstrap is the bring-up path, so both need their own verification rather than a sed."
+    },
+    {
+      "id": "A-38",
+      "tier": "ESSENTIAL",
+      "status": "OPEN",
+      "size": "L",
+      "title": "THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest",
+      "source": "Greg S113: 'Storage wise we just want overall gas demand.' Measured immediately against our own steo_vintage store.",
+      "first_raised": "S113",
+      "why": "MEASURED, STEO jul26 vintage, ACTUALS ONLY (<=202605), 52 month-over-month moves in US total gas consumption (NGTCPUS), each named individually - no averages:\n  * heating (NGRCPUS residential + NGCCPUS commercial) is the BIGGER MOVER on 33 of 52 months, and on 10 of the 10 LARGEST moves. Not one of the ten is power-dominated.\n  * 202503 total -26.7 Bcf/d = heating -17.21 vs power -6.49. 202512 total +20.1 = heating +15.88 vs power +2.24. 202412 total +18.1 = heating +15.19 vs power +0.53 (28.7x).\n  * ON 12 OF 52 MONTHS POWER BURN MOVED OPPOSITE TO TOTAL DEMAND. Every November transition in the record: 202211 total +16.1 / power -0.46; 202311 +15.4 / -0.67; 202411 +11.9 / -1.62; 202511 +13.9 / -1.87. The burn stack points DOWN into the month total demand turns UP.\n  * Level share, not just moves: January 2025 total 126.5 Bcf/d of which power 36.3 (28.7%) and res+comm 53.1 (42%). July 2025 total 87.9 of which power 48.2 (54.8%) and res+comm 8.6 (9.7%).\n\nWHAT THIS IS AND IS NOT (D31 - a refutation is SCOPED). It does NOT refute the burn stack. In SUMMER res/comm are flat near their floor, so essentially ALL summer demand variance IS power burn and the stack is the model. It also does not touch the HH lane, where gas-fired generation on the Gulf corridor is the point. What it says is narrow and specific: for the STORAGE lane in WINTER - the season that produces the draws the market trades - the apparatus this desk has built (stack subtraction, hydro carry, coal commitment, wind/solar, interchange) addresses the minority component, and in November it addresses one that is moving the other way.\n\nTHE GAP: we serve degree days (gw_hdd) and we serve power burn. We serve NOTHING that converts heating degree days into res/comm Bcf/d. The registry was searched - A-19, A-26, A-24c and A-33 are the only items that mention residential or heating at all and none of them is this. So the largest single driver of the quantity Greg just named as the storage target is unmodelled, and was unmodelled without anyone having decided it should be.\n\nALSO MISSING FROM THE EXTRACT: industrial consumption. It is 21.4-27.0 Bcf/d - the SECOND largest component - and appears in our steo_vintage store only as the arithmetic residual of NGTCPUS minus the six series we do carry. EIA publishes it; our parse drops it.",
+      "next": "1. Add industrial (and any other missing NGTCPUS component) to the steo_vintage parse so total consumption reconciles from carried series rather than from a residual. 2. Decide the winter storage lane's demand model explicitly - HDD -> res/comm Bcf/d - rather than inheriting the power stack by default. 3. Re-check on WEEKLY resolution: this is monthly evidence and the traded object is weekly (the EIA print) and daily (the curve); the monthly seasonal transition may overstate the heating share at trading horizon. That check is required BEFORE any of this is treated as settled.",
+      "blocks": "The storage lane. Any claim that our burn work forecasts the EIA storage number."
+    },
+    {
+      "id": "A-36",
+      "tier": "BIGGEST_WIN",
+      "status": "OPEN",
+      "size": "S",
+      "title": "INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up",
+      "source": "Greg S113: 'even if I don't have gas gen, my neighbor probably has enough for both of us'; 'the import/export numbers only really matter in the hh territory'",
+      "first_raised": "S113",
+      "why": "D38. Interchange between two BAs inside an aggregate cancels pairwise, so it is already gone from any total containing both ends - MEASURED at US48: net interchange p50 0.5% of demand, MAX 2.8%. The national/storage roll-up therefore needs NO interchange term and adding one would double-count. But any aggregate SHORT of US48 has a real fence: CISO imports p50 20.6% / MAX 41.7% of its load, MISO p50 5.6% / MAX 15.5%. A stack subtraction inside such a BA overstates its gas by roughly the import, because the load was served by somebody else's generation and the fuel is on their books. `interchange_mwh` is now served (sign VERIFIED by the accounting identity TI = sum(gen) - demand, positive = net EXPORT; residual/demand p50 0.00% on ERCO/SOCO/SWPP). It is not yet CONSUMED by anything - D12 requires a named consumer or a PARK note.",
+      "next": "Name the consumer once A-37 delimits HH territory, or PARK it with the reason.",
+      "blocks": "Nothing yet. Becomes blocking the moment an HH-territory burn figure is published."
+    },
+    {
+      "id": "A-37",
+      "tier": "ESSENTIAL",
+      "status": "OPEN",
+      "size": "M",
+      "title": "HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn",
+      "source": "Greg S113, following D35's finding that Henry Hub is ONE point near Erath, Louisiana",
+      "first_raised": "S113 (implicit in D35 at S112; made explicit when Greg scoped the two lanes apart)",
+      "why": "D35 established the target is demand HH can SEE, and D38 established the HH lane needs its own fence flow. Neither says WHICH BAs are inside the fence. Without that boundary there is no HH-territory gas gen to measure, no import ceiling to bound it with, and no way to test the transmission weighting D35 prescribes. Every downstream HH item inherits this.",
+      "next": "Delimit by measured HH coupling, not by pipeline map assertion (D35's own instruction). Then measure the territory's import ceiling from the served interchange.",
+      "blocks": "A-26, A-36, and the HH half of A-19."
     }
   ],
   "tiers": {

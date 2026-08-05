@@ -85,7 +85,7 @@ def main(groups):
     for prefix, dest in PREFIXES:
         full = os.path.join(REPO, dest)
         os.makedirs(full, exist_ok=True)
-        got = 0
+        got = kept = 0
         for page in s3.get_paginator("list_objects_v2").paginate(Bucket=BUCKET, Prefix=prefix):
             for o in page.get("Contents", []):
                 rel = o["Key"][len(prefix):]
@@ -95,10 +95,29 @@ def main(groups):
                 os.makedirs(os.path.dirname(local), exist_ok=True)
                 if os.path.exists(local) and os.path.getsize(local) == o["Size"]:
                     continue
+                # S113 GUARD - DO NOT DESTROY A NEWER LOCAL BUILD. Greg: "Fix that problem asap."
+                # MEASURED INSTANCE: grid_stack was rebuilt in-session with a live EIA key (2,774 days
+                # through 2026-08-05, interchange added) and this loop silently replaced it with the
+                # older S3 copy (last 2026-07-20, no interchange) on the next restore. The rebuild
+                # printed success, the file reverted, and nothing said so - present, well-formed,
+                # wrong vintage, which is this desk's signature defect applied to a whole store.
+                # D34 says data/ is disposable and rebuilt from S3; the corollary nobody wrote down is
+                # that a LOCAL rebuild is therefore TRANSIENT until it is pushed back. Until it is,
+                # refuse to overwrite it and say so loudly rather than reverting work in silence.
+                if os.path.exists(local):
+                    import datetime as _dt
+                    lm = o["LastModified"]
+                    if lm.timestamp() < os.path.getmtime(local):
+                        log(f"  KEPT LOCAL (newer than S3): {os.path.relpath(local, REPO)} "
+                            f"- local {_dt.datetime.utcfromtimestamp(os.path.getmtime(local)):%Y-%m-%d %H:%M}Z "
+                            f"vs S3 {lm:%Y-%m-%d %H:%M}Z. NOT overwritten. Push it to S3 or it dies "
+                            f"with this container (platform_sync.py).")
+                        kept += 1
+                        continue
                 s3.download_file(BUCKET, o["Key"], local)
                 got += 1
         n_files += got
-        log(f"{prefix:28} -> {dest:26} {got} new")
+        log(f"{prefix:28} -> {dest:26} {got} new" + (f", {kept} KEPT LOCAL (newer)" if kept else ""))
 
     for key, dest in SINGLES:
         full = os.path.join(REPO, dest)
