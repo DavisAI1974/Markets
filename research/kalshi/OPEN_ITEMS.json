@@ -13,7 +13,8 @@
    "blocked_by": null,
    "reraised": "at least twice, across sessions",
    "delegable": true,
-   "delegable_ask": "We need the FORWARD nuclear outage schedule sources, with endpoints.\n\n1. NRC daily reactor status: the exact data URL, format, history depth, and whether power level per unit is in it.\n2. Where licensees file or post REFUELLING OUTAGE SCHEDULES far enough ahead to be forward information - this is the point of the task. Nuclear refuelling is planned 12-18 months out and clustered in spring and autumn, which makes it the most schedulable event in the power system, and we currently read it only after the fact.\n3. ISO forward outage postings: ERCOT NP3-233-CD (168-hour hourly) and PJM frcstd_gen_outages (90 days) - exact endpoints, auth requirements, formats. Whether MISO, SPP, CAISO and the Southeast have equivalents, and if the Southeast does not, say so, because that is where our gap is.\n4. Anything equivalent for COAL retirements and additions (EIA-860M) - a retirement is a forward-dated calendar, which is the class we most want."
+   "delegable_ask": "We need the FORWARD nuclear outage schedule sources, with endpoints.\n\n1. NRC daily reactor status: the exact data URL, format, history depth, and whether power level per unit is in it.\n2. Where licensees file or post REFUELLING OUTAGE SCHEDULES far enough ahead to be forward information - this is the point of the task. Nuclear refuelling is planned 12-18 months out and clustered in spring and autumn, which makes it the most schedulable event in the power system, and we currently read it only after the fact.\n3. ISO forward outage postings: ERCOT NP3-233-CD (168-hour hourly) and PJM frcstd_gen_outages (90 days) - exact endpoints, auth requirements, formats. Whether MISO, SPP, CAISO and the Southeast have equivalents, and if the Southeast does not, say so, because that is where our gap is.\n4. Anything equivalent for COAL retirements and additions (EIA-860M) - a retirement is a forward-dated calendar, which is the class we most want.",
+   "tier": "REST"
   },
   {
    "id": "M-1",
@@ -23,7 +24,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "Same quantity, two names, one more filename-collision class waiting. MEASURED S111: guessed_net_usd in 13 files, expected_magnitude_usd in 6, and the blind and refine coordinators read different names. The S111 shrinkage query needed a fallback across both to read our own forecasts.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "M-2",
@@ -33,7 +35,8 @@
    "status": "DONE",
    "size": "S",
    "why": "Was twelve free-text statuses including a 40-word sentence. Fixed S111 by brain_schema.py: seven enum values, DESCRIPTOR added on Greg's call.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "DONE"
   },
   {
    "id": "M-3",
@@ -43,7 +46,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "47 PROVISIONAL plays accumulate forward evidence nobody schedules a review of. Proposal was: a promotion review rides every group close-out; n>=3 forward confirmations across >=2 groups is a promotion candidate, refuted twice in its own scope is a retirement candidate. MEASURED S111: zero mentions of a promotion review in RUN_SOP.md - never built.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "M-4",
@@ -53,7 +57,9 @@
    "status": "OPEN",
    "size": "M",
    "why": "THE ANOMALY INSTRUMENT, and it is the one that separates a HILL from a SPIKE. We serve absolute gw_cdd and gw_hdd; we do not serve either AGAINST NORMAL. Greg's rebuilt weather model (S109) makes weather a continuous ASYMMETRIC SLOPE with anomaly x duration x constraint as a MULTIPLIER on top - and the multiplier needs an anomaly, which is a departure from normal, not a level.\n\nMEASURED CONSEQUENCE, D28: gw_cdd >= 16.4 fires 46.6% pooled and is 0/10 on all four summer blocks. An absolute bar transfers badly across season by construction, because 16.4 CDD means something different in June than in October. A normalised instrument is the cure for the TRANSFER disease specifically (centring cures DISCRIMINATION, which is a separate rate property).\n\nCHEAP: nws_temp_feed already fetches NWS climatological normals (fetch_normals / _gw_normal exist). This is a serving change, not an ingest one. Pairs with A-21 - a normalised index built on the wrong stations is still the wrong index.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "BIGGEST_WIN",
+   "tier_why": "The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction."
   },
   {
    "id": "M-5",
@@ -64,7 +70,8 @@
    "size": "M",
    "why": "Ohio has NO station at all against PJM being the largest gas-burning BA. S111 research adds the mechanism: gas-weighted degree-day weights are HEATING-derived and wrong in summer; the fix is a seasonal switch to power-weighted CDD off EIA-930 BA gas generation we already ingest. THIS IS ALSO THE TEST THAT DECIDES THE BURN GATE REINSTATEMENT (D31) - its kill argument rested on a summer CDD limb measured on a winter-weighted index.",
    "blocked_by": null,
-   "delegated_prior": "S112 TASK 6 (LNG feedgas nomination sources). DELIVERED. Answer is with Greg, not in the repo."
+   "delegated_prior": "S112 TASK 6 (LNG feedgas nomination sources). DELIVERED. Answer is with Greg, not in the repo.",
+   "tier": "REST"
   },
   {
    "id": "M-6",
@@ -74,7 +81,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "The third absorber in Greg's own stack model and we have none of it. S111 sharpened it (Greg): the asymmetry is CAPACITY, not supply - coal plants are retired or retiring, so expensive gas cannot hand share back. Retirement is a FORWARD-DATED CALENDAR, which puts it in the one information class that survives past the weather horizon. Also the cross-year correction factor for the analog library.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "M-7",
@@ -84,7 +92,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "MEASURED: QC_CHECKLIST.md contains zero mentions of the brain. The status drift survived S110 partly because nothing swept it. Add: brain_schema.py validate must run and its counts be reported.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "M-8",
@@ -94,7 +103,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "D14 retired the Pyth collector: the free era ended 2026-07-31, all API access moved to a $500/mo-class tier, and Pyth never published NG feeds at all (three evidence lines, S99). The DECISION is made; what remains is that the WORKFLOWS ARE STILL LIVE on the old trunk (.github/workflows/pyth_collector_durable.yml, 6h cron).\n\nWHY IT IS NOT ZERO-COST TO LEAVE: a scheduled workflow that runs against a dead source keeps burning account-level Actions minutes on the same runner pool that the KALSHI collectors need - and those have already sat queued-and-never-executed, which is an account-level cap issue rather than a workflow bug. It also leaves a green-looking job that collects nothing, which is the same present-but-empty signature as six of the S107 data holes.\n\nPLANT_MAP already records the retirement and says 'verify workflow disabled when the trunk is next touched'. That is the whole task: the trunk is a different branch, so it needs a deliberate visit.",
-   "blocked_by": "requires a commit on the trunk branch, not this one"
+   "blocked_by": "requires a commit on the trunk branch, not this one",
+   "tier": "REST"
   },
   {
    "id": "S111-1",
@@ -104,7 +114,8 @@
    "status": "DONE",
    "size": "S",
    "why": "Dry-run verified lossless (2,598 leaves, 0 lost). Held only because the 82-play audit was reading knowledge/ng_brain.json. APPLIED S111 after the audit was stopped: doctrine_tier3 -> doctrine (21 entries, 10 carrying a session field), open_frontier normalized to one shape, fingerprints session key moved. Round-trip lossless, 2,598 leaves, 0 lost. Backup ng_brain_s105.0_presections_backup.json.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "DONE"
   },
   {
    "id": "S111-2",
@@ -114,7 +125,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "HARNESS NOW COMMITTED as research/kalshi/brain_audit.py (S111 fix after S112 found the original lived in session scratchpad under ~/.claude and died with the session - another A-7 instance, written in the same session that diagnosed A-7). Run: `python brain_audit.py prompts` emits all eight batch prompts GENERATED BY LOOKUP from the brain; spawn them; each agent writes forecasts/brain_audit/batch_N.json and self-checks with `brain_audit.py validate`; then `brain_audit.py collect forecasts/brain_audit/*.json --out ...` merges and reports the population. RUBRIC IS ALREADY CORRECTED in the harness: NOVEL_N1 (argued mechanism + a named first instance traced to a posterior or actual - NOT a weak class) is distinguished from ASSERTED (no mechanism, no traced instance), and NOT_A_PLAY exists for DESCRIPTOR-grade entries and WIRED_UNPROVEN feeds like supply.lng_export_throughput_vessel_line, which is an instrument rather than a mechanism and was mis-filed as ASSERTED in the S111 partial. The partial (BRAIN_AUDIT_PARTIAL_S111.json, 32 plays, 140 instances) is a CROSS-CHECK, not an answer - its three ASSERTED calls need re-reading.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "S111-3",
@@ -124,7 +136,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "58 of 82 plays carry no corpus or instance state. Greg: 'we started doing this late in the group runs and now we need to backfill.' Audit output is the input. Additive, proposal + adjudication + backup, incumbents untouched. Should be a RE-RUNNABLE SCRIPT, not a hand edit, because the corpus grows and searched-none decays.",
-   "blocked_by": "S111-2"
+   "blocked_by": "S111-2",
+   "tier": "REST"
   },
   {
    "id": "S111-4",
@@ -134,7 +147,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "The burn gate died on its own forward test BECAUSE someone wrote the falsifier sentence down. Sixty-five plays have no such sentence and therefore cannot be killed by evidence.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "A-1",
@@ -144,7 +158,9 @@
    "status": "OPEN",
    "size": "S",
    "why": "For seven blocks we compared MAE to previous MAE and called the fall an improvement, having never computed what doing nothing would score. It loses to zero-change in six of seven. Cheapest item on any list and it makes every future number readable.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "A MEASUREMENT PREREQUISITE. S111 measured the blind losing to a zero-change forecast in six of seven blocks, and the standing rule since is 'never report an error number without a named benchmark again' - which we currently CANNOT satisfy. Every number the next group produces is unreadable without this. Size S."
   },
   {
    "id": "A-2",
@@ -154,7 +170,9 @@
    "status": "OPEN",
    "size": "M",
    "why": "A MEASUREMENT PREREQUISITE, not a trading feature: one high-confidence day in fifty and a confidence field that does not discriminate, so a forced number and a confident one are indistinguishable downstream. A discord score is a number, so no output-contract change is needed.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "BIGGEST_WIN",
+   "tier_why": "THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed."
   },
   {
    "id": "A-3",
@@ -164,7 +182,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "L = k/r^d caps our library at a matching dimension of about 3. Condition on ten things and retrieval returns a day no closer than random - and returns it confidently with a magnitude attached. Nothing to build, only to measure.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "A-4",
@@ -174,7 +193,9 @@
    "status": "OPEN",
    "size": "M",
    "why": "The product is a curve and the scoreboard has never touched it. Greg's bar as a function: direction no tolerance, turn timing little, amplitude some, level free. Plus the time dimension - how EARLY was it decidable. S112 flagged that nothing on the S112 list touches the new architecture's spine - A-4 and A-5 are it, and A-4 was absent. Correct: SCOPE A-4 THIS SESSION even if it is not built, because it is what makes the product measurable at all. Note the partial reconciliation S112 had not seen: the audit's corpus search IS library work - 140 instances traced to posteriors and actuals in three batches is exactly the conditions-to-outcome mapping A-5 needs - so the audit is not purely play-chain hygiene.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "BIGGEST_WIN",
+   "tier_why": "D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by."
   },
   {
    "id": "A-5",
@@ -185,7 +206,8 @@
    "size": "L",
    "why": "The shape vocabulary is ALREADY emitted in every posterior (onset_time_et, turn_time_et, trend_vs_chop, continuation_vs_reversal, path_p50_curve) and has never been collected or searched. The regime label is what collapses the match to d~1-2.",
    "blocked_by": null,
-   "delegated_prior": "S112 TASK 5 (North American weather regime label). DELIVERED, with Greg, not in the repo."
+   "delegated_prior": "S112 TASK 5 (North American weather regime label). DELIVERED, with Greg, not in the repo.",
+   "tier": "REST"
   },
   {
    "id": "A-6",
@@ -195,7 +217,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "WHAT IT IS. The S36/S37 architecture split: the DIPOLE is the FILTER (which turns are real) and fine-resolution PRICE-REVERSAL is the TIMING. The measured payoff of resolution is the origin of the look-ahead number this desk quotes: 1-sec entry lands ~5-6 bps off the true turn against ~9-11 bps at 1-min - halving the distance to the turn purely from looking finer.\n\nWHY IT IS DECISION-RELEVANT, NOT ACADEMIC. Fee floor: never trade a swing smaller than round-trip fee plus 2x entry slippage. TAKER FLOOR ~22 bps; resting a maker limit at the predicted turn drops it to ~4 bps, with fill risk. So a 5-6 bps entry improvement is roughly a quarter of the cost a taker must clear before anything is tradeable, and the maker/taker gap is the difference between a strategy that pays and one that donates.\n\nTHREE DIFFERENT CONSTRUCTIONS FROM ONE TOOLKIT - DO NOT COLLAPSE THEM (corrected S111, Greg):\n  (1) dip_imb_level, the static signed imbalance, as a DIRECTION nowcast. WORKS ON NG. Brain play #1 direction.flow_nowcast, PROVISIONAL at confidence 0.87, FORWARD-CONFIRMED: side = sign(dip_imb_level) when |dip_imb_level| >= 0.15, monotone 0.68 -> 0.84 -> 0.94 -> 0.93, OOS-validated 34/34 on three unseen days, held-leg side re-confirmed on the S95 fingerprint pass across G3-G5. Greg reports ChatGPT independently demonstrated the direction result as well and is retrieving the specifics - PENDING, to be attached here. NOTHING IN THIS PROGRAMME SAYS THE DIPOLE IS FALSE ON DIRECTION; the opposite is our own best-evidenced play.\n  (2) static DIVERGENCE (aligned_flow = imb x sign(price_drift)) as a REVERSAL predictor. This - and only this - is what did not transfer in the S90 1-sec NG canary. It is a different construction with a different target and says nothing about (1).\n  (3) EXHAUSTION (the imbalance collapsing toward 0.5) as a TURN detector. Faint right-signed pulse on NG at 1-sec bins: oppose+exhaust 0.410 vs trend+strengthen 0.382, +2.7pp, n=1 trend day. THIS is the open item.\n  (4) SEPARATELY: month_characterize's depth-based turn_exhaustion (book support collapsing entry->push) independently DID separate NG turns - reversed median -0.107 vs held -0.018. Not the same measure as (3).\n\nWHAT WAS ALREADY DONE ON GAS (S90). The mechanism was run on NG NYMEX futures directly. Construction (2), static divergence-as-reversal, DID NOT TRANSFER. Construction (3), EXHAUSTION, factor showed a faint RIGHT-SIGNED pulse: oppose+exhaust 0.410 against trend+strengthen 0.382, +2.7pp, on n=1 trend day at 1-second bins. Greg's load-bearing note at the time: the 1-sec canary is FAR too coarse, the edge lives at NATIVE TICK / ms-us, and MBP-10 is nanosecond. Carried since as brain play timing.subsecond_reversal_exhaustion (target=turn, conf 0.25).\n\nTHE SUCCESS CRITERION, which is what makes this a well-defined job rather than an open question: run it at NATIVE TICK, per-cell, event-time, and MEASURE HOW FAR OFF THE TURN WE ENTER, in bps. That number is directly comparable to the two we already have (9-11 at 1-min, 5-6 at 1-sec) and is judged against the 22 bps taker floor and the 4 bps maker floor. It either compresses further and clears, or it does not - and either answer is worth having.\n\nSCOPE, and keep it: this is a TURN-TIMING / EXECUTION edge like the futures-to-Kalshi lag. It is NEVER a blind open-time curve input. WHY NOW: in the S111 monitor design the slope test and the missed-turn check are both LAGGING by construction, and this is the only instrument that fires before price confirms - so it is the leading edge of the adjustment loop, which D32 makes the product.\n\nPLACEMENT (S111, architecture doc s1.5 instrument panel): the whole dipole family lives in the LIVE loop and none of it is a pre-open forecast input - forced by direction.flow_nowcast's `requires: needs_intraday_reveal`. Three timing classes: LEADING = the exhaustion arm (this item, the only instrument that fires before price confirms); CONFIRMING = dip_imb_level direction and depth turn_exhaustion, both already measured on NG; LAGGING = slope divergence and named turn times.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "A-7",
@@ -205,7 +228,8 @@
    "status": "OPEN",
    "size": "L",
    "why": "RUN_SOP.md carries 13 slot placeholders across 36 occurrences, every one filled BY HAND - which is exactly how NC-1 happened (a calendar premise asserted from prose instead of looked up). spawn.py fills slots BY LOOKUP and emits the prompt, so running off-SOP becomes impossible rather than forbidden. Curve-building doctrine moves into the brain (served at spawn); plant policy stays in the ledger; both files become renders.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-1",
@@ -215,7 +239,9 @@
    "status": "OPEN",
    "size": "XS",
    "why": "CORRECTED S111 after S112 checked the code rather than the claim. WE ARE NOT NAIVELY POINTED AT A DEAD PAGE: ngwu_feed.py already implements BOTH eras - its header records the 2026-01-22 issue as the FINAL NGWU (era 1) and implements the WNGSR Supplement from 2026-01-29 (era 2). The real finding is worse and different: the feed's own note records that the S/D BALANCE SECTION DIED BEFORE THE PUBLICATION DID - frozen inside HTML comments in the late-2025 issues - and the Supplement does not carry the S/D balance table at all (era 2 publishes stated deltas attributed to LSEG, not absolute Bcf/d levels, from a different source than era 1's S&P Global). THAT IS WHY ngwu_balance is one of the 125 globally-constant served quantities, dead since September. So this item is ~20 minutes to confirm against the store, and the ACTUAL work is what REPLACES the balance - which is G-2 (EIA implied flow) and G-9 (degree-day-adjusted residual), both already on this registry. Blocked on verification only: data/ngwu/ needs the data plane.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block."
   },
   {
    "id": "G-2",
@@ -225,7 +251,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "Free noise floor (~4 Bcf at 90%). A print beating consensus by 3-4 Bcf is inside the measurement error of the print itself. Gives a defensible numeric NO CALL trigger immediately.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-3",
@@ -235,7 +262,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "COT LEVELS do not predict returns - three independent rejections. The CHANGE does, with a Journal of Finance horizon-resolved result landing inside our window (days 1-4 t=3.04, 5-10 t=3.62, 11-20 insignificant). Data already in hand. Caveat: the published result is cross-sectional across 26 commodities, so forward-test it rather than inherit it.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-4",
@@ -246,7 +274,9 @@
    "size": "M",
    "why": "MEASURED S112 against the served vocabulary, which sharpens this from 'a top gap' to a named half-a-variable: FORWARD load IS served - grid_stack.bas.*.demand_forecast_mwh for all seven BAs, all-modern - and the whole weather_forecast.* family is forward. But wind_mwh and solar_mwh are REALIZED ONLY; there is no forward wind or solar field in any block.\n\nSo NET LOAD CANNOT BE COMPUTED FORWARD AT ALL - we hold one half of it. Greg, S112: 'wind and solar is just on or off. Not regulating to load there. Solely depended on sun and wind so we have to be tracking those well.' Because nothing in the stack regulates except gas, a renewable miss lands on gas at full size.\n\n0629 is therefore not bad luck but the guaranteed consequence: gw_cdd rose 10.0 -> 14.8 exactly as forecast, burn FELL 4.2 Bcf/d on a 62% wind rise, and no forward instrument existed that could have said so.\n\nALL FREE: ERCOT NP4-742-CD (wind actual+forecast) and NP4-745-CD (solar), SPP Mid-Term Resource Forecast +7d, CAISO OASIS SLD_REN_FCST, PJM Data Miner 2 load_frcstd_7_day plus wind/solar, MISO 168-hour, ISO-NE seven-day. Wrapped by gridstatus. ChatGPT task 3 was commissioned to return the exact endpoints. KNOWN TRAP to carry: behind-the-meter solar is excluded from EIA-930 and is a one-directional growing bias in exactly the daylight hours that matter.",
    "blocked_by": null,
-   "delegated_prior": "S112 TASK 2 (ECMWF ENS + GEFS ensemble MEMBER retrieval) and TASK 3 (ISO day-ahead and 7-day wind, solar and load forecasts). Both DELIVERED. Answers are with Greg and are NOT in the repo - they must be brought in and wired before this item can move."
+   "delegated_prior": "S112 TASK 2 (ECMWF ENS + GEFS ensemble MEMBER retrieval) and TASK 3 (ISO day-ahead and 7-day wind, solar and load forecasts). Both DELIVERED. Answers are with Greg and are NOT in the repo - they must be brought in and wired before this item can move.",
+   "tier": "BIGGEST_WIN",
+   "tier_why": "THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first."
   },
   {
    "id": "G-5",
@@ -257,7 +287,9 @@
    "size": "M",
    "why": "FREE since 1 Oct 2025 - the full ECMWF real-time catalogue went open under CC-BY-4.0 with data charges removed. Our MOS deterministic guidance structurally cannot produce a spread. Fills the ensemble, spread, probabilistic-path and option-dispersion gaps in one feed, and is the prerequisite for a confidence gate. START ARCHIVING IMMEDIATELY - the archive is the asset.",
    "blocked_by": null,
-   "delegated_prior": "S112 TASK 1 (the dipole direction result). DELIVERED, with Greg, not in the repo."
+   "delegated_prior": "S112 TASK 1 (the dipole direction result). DELIVERED, with Greg, not in the repo.",
+   "tier": "BIGGEST_WIN",
+   "tier_why": "Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2)."
   },
   {
    "id": "G-6",
@@ -267,7 +299,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "The quantity that actually trades - the level is priced, the revision is not. Also the direct instrument for the documented Friday-to-Monday cascade. Carry as a NEWS process, not a forecast.",
-   "blocked_by": "G-5"
+   "blocked_by": "G-5",
+   "tier": "REST"
   },
   {
    "id": "G-7",
@@ -277,7 +310,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "Feedgas moved ~13 to ~15 Bcf/d on the Plaquemines ramp alone - a 14 Bcf/week storage swing sitting in a public posting. Our lng_feedgas_bcfd is null and 278 days stale. Smallest scrape with the largest demand-line payoff.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-8",
@@ -287,7 +321,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "1-6 weeks, DATED FORWARD BY CONSTRUCTION - almost the only supply-demand information genuinely known weeks ahead. Known failure mode declared up front: unstructured prose, no severity field, pipelines post and cancel, and NAESB's own working group abandoned scraping as unreliable.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-9",
@@ -297,7 +332,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "Every input already held. THE ONLY MEASURE THAT CARRIES PAST THE WEATHER HORIZON, because it describes the non-weather part of the balance. Natural home for the rebuilt asymmetric-slope model - it is the residual after the slope.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-10",
@@ -307,7 +343,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "Parsing changes on data we already own. TAS separation isolates benchmark/index flow from opinionated flow. Close-to-close RV throws away most of what the tick tape was bought for, and every VRP and event-vol number depends on the RV denominator.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-11",
@@ -317,7 +354,9 @@
    "status": "IN_PROGRESS",
    "size": "XS",
    "why": "ACCRUAL STARTED S112, 5 weeks captured (2026-07-03 .. 2026-07-31) by coal_prices.py -> research/kalshi/data_records/coal_basin_prices.json.\n\nMEASURED, and it is why this could not wait: the free endpoint (eia.gov/coal/markets/coal_markets_json.php, no key needed) carries a ROLLING FIVE-WEEK WINDOW and nothing older. EIA states on its own page, verbatim: 'Because the historical spot price data are proprietary, they cannot be released by EIA; see S&P Global.' So a week not captured while it sits in the window is gone permanently - not expensive, not for sale to us.\n\nSTILL OPEN: this needs a WEEKLY SCHEDULED RUN. Captured once by hand, the window rolls and we lose weeks again. EIA publishes Mondays (release_date_json.php confirms: week ending 07-31 released August 3, next August 10), so a weekly trigger any time Mon-Fri catches every week with slack.\n\nCHARACTER OF THE SERIES, so nobody over-reads it: PROMPT-QUARTER delivery, not a cash spot print, and sticky - all five captured weeks are identical (CAPP 82, NAPP 70, ILB 55.5, PRB 14.65, Uinta 25.3). A slow structural level for the burn stack's coal limb (M-6), never a weekly signal.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision."
   },
   {
    "id": "G-12",
@@ -327,7 +366,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "Pure calendar, free, dated forward, inside our window. UNG's 10-K: rolls over a FOUR-DAY period beginning two weeks from expiration, dates posted in advance. CLOCK TRAP to encode with it: NYMEX settles on a 14:28-14:30 ET VWAP, Kalshi at 17:00 - a signal calibrated on one mis-times the other.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-13",
@@ -337,7 +377,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "The listed price of a one-to-five-day Henry Hub distribution - the direct comparable to our Kalshi daily book - and it attacks our worst day class (G20's two EIA Thursdays were 3,530 of 7,880 total error). CRITICAL RULE: fit the no-event surface ONLY on non-spanning expiries or it silently absorbs the event premium.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-14",
@@ -347,7 +388,8 @@
    "status": "OPEN",
    "size": "XS",
    "why": "SOLVED, just not applied: confirmed Databento bug reported 12 Jun 2024 - the OPTION's display_factor is used to decode the strike instead of the underlying FUTURE's. The 0.1 multiplier circulating as a workaround is our x10. Then prove it with the put-call parity slope test (C-P regressed on K must give slope ~= -0.997).",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "G-15",
@@ -357,7 +399,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "An ALGEBRAIC IDENTITY, exactly like the session_b_share identity that closed hole #9: for premium-paid-upfront options C - P = e^-rT (F - K), so regressing (C-P) on K within one (root, expiry, date) cell must give slope = -e^-rT. A slope near -0.0997 proves a x10 scale; not near -1 at all proves a merged ladder. Run across all 294k settle IVs before another line of options code is written.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "A-8",
@@ -367,7 +410,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "The one turn instrument that is ALREADY MEASURED AND WORKING on NG and needs no new research: month_characterize's depth-based turn_exhaustion (book support collapsing entry->push) separates reversed turns from held ones - reversed median -0.107 against held -0.018. characterize_turns.py already saves the fingerprints. WIRE THIS FIRST of the turn instruments: A-6 (the flow-dipole exhaustion arm) is the LEADING channel but needs the native-tick test, whereas this is the CONFIRMING channel and is ready now. Independent of the flow dipole, so the two together give a leading signal and an independent confirmation rather than one instrument twice. Do NOT conflate the two measures.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "A-9",
@@ -377,7 +421,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "THE GAP THE SCRATCHPAD GATE DOES NOT CLOSE. D33's gate catches BROKEN references - scratchpad paths and files not tracked by git. It does NOT catch STALE-BUT-VALID ones: a drop-in can still instruct the next session to run work that was completed last session, because the drop-in RESTATES the work in prose rather than pointing at it. MEASURED INSTANCE, S112: the committed DROP_IN_S112 listed `brain_schema.py sections --write` and the condition_audit false-claim fix as work to do; both were already DONE. S112 caught it by checking, and correctly called the divergence between my pasted box and the committed file a small A-7 instance in itself.\n\nTHE FIX IS A-7 APPLIED TO THE DROP-IN. OPEN_ITEMS.json already carries `status` per item. If the drop-in's work list were GENERATED from the registry - emitting only items whose status is OPEN or IN_PROGRESS, ordered by the agreed rule (irreversible first, then XS, then blockers) - then a DONE item could not appear as a live instruction. Staleness becomes structurally impossible rather than something a careful reader has to notice.\n\nSAME PATTERN AS brain_audit.py's PROMPT GENERATION, which is the working precedent: slots filled by LOOKUP, nobody types a play id. Extend it to the handoff. Suggested shape: `python open_items.py dropin` emits the numbered work list; the drop-in carries that block verbatim; plant_status FAILs if the committed drop-in's list does not match what the registry currently generates - which also closes the pasted-box-versus-committed-file divergence, since both would come from one source.\n\nWHY IT MATTERS BEYOND TIDINESS: the whole S111 disease was documents describing what should happen sitting apart from the machinery that makes it happen. The drop-in is the LAST hand-written instruction set in the loop, and it is the one every session starts from.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "M-9",
@@ -387,7 +432,8 @@
    "status": "OPEN",
    "size": "S",
    "why": "D34 says there is nothing local and no artifact may name a desktop path. The live Kalshi forecaster is CLEAN - measured by git grep across *.py/*.js/*.sh/*.yml. The remaining hardcodes are all root-level OD/crypto-era scripts: _balanced_rerun.py, _canary_fingerprint.py, _canary_fingerprint_v2.py, _build_episode_onsets.py, _build_fingerprint_dataset.py, _build_onset_coeff_lists.py, _build_test_bars.py, each pinning E:\\Markets\\... and some pinning a .claude worktree, which is also a D33 scratchpad path. They are ARCHIVE (the OD toolkit's provenance lives in CLAUDE_ARCHIVE_OD.md) and nothing in the walk runs them, so this is low priority - but it is recorded rather than left to be rediscovered, per D30. Decide per file: re-root to repo-relative, or retire. Historical handoffs and kickoffs are RECORDS and are deliberately out of scope, same scoping as the D33 gate.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "REST"
   },
   {
    "id": "A-10",
@@ -397,7 +443,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "MEASURED. In renders/ng_refine_s95/fingerprints.json, ELEVEN book-derived features go HARD CONSTANT at exactly 2026-01-18 and stay constant for 35 days / 2,165 legs: dip_imb_level (exactly +1.000 on all 2,160 non-null legs, against 70-72 distinct values per day immediately before), dip_mi_flow, exhaustion, aligned_imb, imb_R, aligned_imb_R, aligned_imb_push, far_thinning, spread_ratio, bid_dep_entry, ask_dep_entry - all 0.000 or 1.000, one distinct value each. pre_vol SURVIVES with 841 distinct values, and that isolates the cause: pre_vol is TRADE-derived, every dead field is BOOK-derived.\n\nCAUSE, CONFIRMED. The break is exactly G11's first session and the builder is run_g11_fingerprints_s98.py, which runs on data/nymex_cont_n0 - the TRADES-ONLY continuous tape - and contains no book/MBP/depth source at all. It called the same month_characterize.characterize_day with no book input and the features were written as 0.0/1.0 DEFAULTS instead of nulls. Its own docstring says it used 'the SAME tool and definitions as every pre-G11 instance' to close a comparability gap; it opened a far larger one.\n\nA NEW VARIANT OF THE SIGNATURE: a builder that ran without an input it needed and DEFAULTED rather than failing. A null would have been caught by any presence check; 0.0 is present, numeric, in range, right owner.\n\nWHAT IT DOES NOT AFFECT: no walked group score. dip_imb_level is not among the 564 served numeric quantities in any committed state - the blind never read it, consistent with its requires: needs_intraday_reveal.\n\nWHAT IT DOES AFFECT: (1) the EVIDENCE BASE of play #1 direction.flow_nowcast. Re-measured on the era where its input is alive, it runs 0.877 at |dip| >= 0.15 over 1,532 legs / 73 days - the play is NOT refuted (D31, scoped). The pooled 0.665 and the 'inverted monotone' that batch 0 reported are artifacts of averaging a live era with a dead one, which is D4's cancellation shape applied to a RATE rather than to an error. Batch 0's DETECTION was right and its diagnosis (signal decay) was wrong. (2) A-6 and A-8 are BLOCKED and nobody knew: A-8 is on the registry as the one to wire first because it 'needs no new research', which is true and does not help, because bid_dep_entry, ask_dep_entry and far_thinning are dead in the corpus it would be measured on. A-6's exhaustion arm is the same. Both need an MBP-10 restore before either can be measured.\n\nFIX: re-run the G11+ fingerprint pass with the MBP-10 book source, and make the builder FAIL rather than default when a required input is absent. Until then, any measurement on fingerprints.json must be cut at 2026-01-16.",
-   "blocked_by": "MBP-10 restore from S3 (needs AWS keys, absent this session)"
+   "blocked_by": "MBP-10 restore from S3 (needs AWS keys, absent this session)",
+   "tier": "REST"
   },
   {
    "id": "A-11",
@@ -407,7 +454,9 @@
    "status": "OPEN",
    "size": "M",
    "why": "MEASURED S112: chain age, chain polarity and cum_from_anchor are served in NO grp*_state.json. chain_age_sessions exists only in the per-boundary g*_he24_he1_handoffs.json. Consequence: every play keyed to chain state is unevaluable from the state a specialist is actually given, and the curation pass had to refuse them all. Batch 4's count is the sharpest: four of its seven refusals are the Friday/weekend/chain family and ALL fail on these same two quantities - serving them would make three plays curatable at once. Named refusals across batches: giveback_exhaustion_reversal_recognition, young_chain_extension_full_band, seam_chainage_accommodation_gate, friday_turn_exhaustion_gate, structure.mature_swing_alternation, level.giveback_origin_shelf, structure.covering_extension_distribution_flip, midweek.stretched_extreme_close_giveback, structure.friday_exhausted_extreme_giveback. This is the same fact the DECLINE audit reached from the other side - boundary.chain_label_must_track_realized_cum is 4-of-4 DATA_ABSENT - and it is why its caveat 'chain STATE travels in the handoff, which is never masked' is false on every price-masked run.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list."
   },
   {
    "id": "A-12",
@@ -417,7 +466,9 @@
    "status": "OPEN",
    "size": "S",
    "why": "MEASURED: vol_regime.n0_prev_net has exactly ONE distinct value across all ten days of each block (g20 -1000, g21 -1350, g22 -80, g23 +270) and the block carries masked_one_shot true - it reports the ANCHOR session, frozen, not the prior session. It reads like 'prior session net move in USD' and is the hole-#8 shape: present, numeric, in range, right owner, wrong session.\n\nTHE SCOPE THAT MAKES IT SUBTLE: on a block's FIRST day the frozen anchor and the true prior session COINCIDE BY CONSTRUCTION. g21's first scored day is 20260608 and the session before it is 20260605 - g20's last day, net_usd -1350 - which is exactly g21's frozen value. So a derivation off this field is sound on day 1 and a trap on days 2-10. Two S112 subagents disagreed about it and both were right in their own cell, which is D31's own shape arriving in the tooling.\n\nACTION: either serve a true per-day prior-session net, or rename the field so it cannot be read as one, or gate it to the block's first day. Any of the three; leaving it as-is guarantees the trap is taken again.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "Same module, live wrong value. vol_regime.n0_prev_* is a PER-BLOCK CONSTANT and is only valid on a block's first day - so on days 2-10 the blind is reading a stale number as if it were current. Do it with G-28 in one pass."
   },
   {
    "id": "A-13",
@@ -427,7 +478,9 @@
    "status": "OPEN",
    "size": "S",
    "why": "MEASURED on the five canonical templates: CAL_FACTS appears in AUD-1 ONLY. BLD-1, BLD-2, RFN-1 and RFN-2 have no calendar slot at all, so NO FORECASTING SPECIALIST - blind or refine - ever receives calendar facts. The only calendar channel to a specialist is the hand-written {DIRECTIVE} slot in RFN-1.\n\nTHAT IS THE STRUCTURAL CAUSE OF NC-1, and it explains the part the nonconformance record left as a coincidence: the false 'first post-roll session' premise reached the refine directive AND sat unchallenged in the same day's BLIND posterior. The blind had nothing to contradict it with, because BLD-1 serves no calendar. C-0715 caught it only by going to flow_calendar unprompted.\n\nPROPOSED, and it is a change-controlled edit requiring Greg's go plus a version-log entry (D10), which is why it is a registry item and not a commit: add {CAL_FACTS} to BLD-1 and RFN-1, generated by spawn.py exactly as AUD-1's already is. spawn.py resolves the slot today - the templates simply do not ask for it.\n\nCOUNTER-ARGUMENT TO WEIGH FIRST: calendar facts are deterministic and never-masked, so serving them cannot leak. But CAL_FACTS as generated lists the whole block, and a blind specialist owns ONE day under D3 causal slicing - so the block-wide form would show it dates after its own decision point. The fix is a per-day CAL_FACTS for BLD-1/RFN-1, truncated at the owned day, NOT the block-wide form AUD-1 correctly receives.\n\nS112 UPDATE - GREG RAISED IT INDEPENDENTLY AND IT SHARPENS THE FIX: 'The agents are going to have to get the holiday schedule when those days are getting forecasts made because it will change the trading days.' MEASURED: the served flow_calendar carries holiday fields for THAT DAY ONLY and has NO prior-session field at all - `prior`, `since` and `prev` return nothing across the served state. So a specialist on the Monday after a Friday holiday cannot tell its prior session was Thursday; it inherits a handoff from a session it cannot locate.\n\nAND MY EARLIER CAUTION HERE WAS WRONG, corrected: I wrote that a per-day CAL_FACTS would have to be truncated at the decision point to avoid look-ahead. But the state ALREADY serves forward calendar - days_to_next_eia_release, days_to_futures_expiry, days_to_opex and next_eia_release_datetime_et are dated ahead by construction. Calendar is deterministic and public, and D2's one deliberate mask is the PRICE CURVE. Forward holiday facts are the same class the blind already reads.\n\nBUILT AND TESTED, AWAITING THE TEMPLATE EDIT: spawn.py day_calendar() emits prior/next trading session, the calendar-day gap with what was skipped, this session's class, and upcoming non-normal sessions - computed from plant_calendar RULES rather than the CME_HOLIDAYS table, which ends 2027-02-15. Worked cases now covered by selftest: 20260706 reports its prior session as 20260703 (Independence Day observed, partial), 3 days back, skipping Sat and Sun; 20260526 reports that it inherits FROM Memorial Day, a partial session with reduced tape, which no specialist could previously see. The only thing left is adding {DAY_CALENDAR} to BLD-1 and RFN-1, which is a change-controlled SOP edit (D10) needing Greg's go and a version-log entry.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit."
   },
   {
    "id": "A-14",
@@ -437,7 +490,9 @@
    "status": "OPEN",
    "size": "XS",
    "why": "MEASURED: the committed table is 11 partial_session + 5 full_closure + ZERO early_close, while flow_calendar.py's own docstring defines early_close as 'a full business day WITH settlements, shortened hours (day after Thanksgiving, Christmas Eve)'. So the class is specified and unpopulated, and four real CME early-close dates in the table's own span are simply absent: 2025-11-28, 2025-12-24, 2026-11-27, 2026-12-24.\n\nBLAST RADIUS - and my first answer on this was wrong, corrected here. I initially reported the dates as touching no walked group; that was an artifact of searching group_config, which only holds g17 onward. 20251128 and 20251224 DO appear in renders/ng_refine_s95/g8_refined_rt.json and g9_refined_rt.json - both walked blocks. They were served as ordinary sessions when they are shortened ones WITH settlements, which is a different day class from both 'normal' and 'partial_session'. Whether any score moves is unchecked; the day class was wrong either way.\n\nFIX: plant_calendar.py already generates all four from rules. Either have flow_calendar source its holidays from the generator, or add the four entries. The first is better - the table also runs out on 2027-02-15.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it. The four missing early-close dates land in g8 and g9, so this is a live wrong-day-class defect on walked groups, not a future risk. XS."
   },
   {
    "id": "A-15",
@@ -447,7 +502,9 @@
    "status": "OPEN",
    "size": "S",
    "why": "MEASURED against the brain: grid_stack.bas.*.coal_mwh is referenced by ZERO plays and carries ZERO conditions. nuclear_mwh: ZERO. wind_mwh and solar_mwh: exactly ONE play each, weather.burn_conversion_gate, which is RETIRED. So of the four terms that determine the gas residual under the merit order Greg states - nukes, coal, gas, with renewables ahead of all three - three have no reader at all and the fourth's only reader is dead.\n\nTHIS IS THE 0629 DEFECT GENERALISED, and 0629 is the desk's cleanest documented miss: wind_mwh was served in every slice and read by nobody, gw_cdd rose exactly as forecast and gas burn FELL 4.2 Bcf/d because wind rose 62%. Coal and nuclear sit in that identical state today - present, numeric, all-modern, consumed by nothing. D12: a feed with no named consumer is a staging defect, not a neutral fact.\n\nWHAT IS CHEAP HERE: the data is already served in every modern block, so this is a PLAY-SIDE job, not a feed build. The residual form is arithmetic we already hold - load minus wind minus solar minus nuclear minus coal - and est_gas_burn_bcfd is served beside it for a cross-check.\n\nSCOPE IT CORRECTLY (the same doctrine entry): coal and nuclear are LEVELS on outage / retirement / commitment timescales, never same-day absorbers. The play wants 'how much coal is running and is that level changing', not 'how much can coal absorb today'.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "BIGGEST_WIN",
+   "tier_why": "PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised."
   },
   {
    "id": "A-16",
@@ -457,7 +514,9 @@
    "status": "OPEN",
    "size": "XS",
    "why": "MEASURED S112: ZERO hydro fields in the served vocabulary - 938 numeric quantities, no match on hydro or water. Summing the served fuel fields (coal + nuclear + gas + wind + solar) against total_gen_mwh leaves 6.7-7.6% of US48 generation UNNAMED - about 950,000 to 1,030,000 MWh/day on the G23 days measured. That residual is hydro plus oil, biomass and other, hydro being the bulk.\n\nWHY IT IS NOT SAFE TO IGNORE AS A CONSTANT, which is Greg's actual point: hydro is CURTAILED SEASONALLY for non-power reasons - spring runoff forces spill and oversupply, summer brings reservoir drawdown, irrigation calls, water rights and minimum-flow and temperature limits. So it is a third EXOGENOUS forcing alongside wind and solar, driven by water rather than demand, and when it falls away GAS FILLS IT because gas is the only term in the stack that regulates. Seven percent of generation is larger than the day-moves this desk is trying to call.\n\nCHEAP: EIA-930 reports hydro as its own fuel type and we ALREADY ingest EIA-930 for coal, nuclear, gas, wind and solar. This is a one-field ingest change on a feed we pull today, not a new source - which is why it is sized XS despite mattering.\n\nDO IT WITH A-15: coal_mwh and nuclear_mwh are already served and read by ZERO plays, so serving hydro without giving the stack a consumer just adds a fifth unread field.\n\nSEASONAL ASYMMETRY (Greg, S112): 'Hydro might be small but it'll hit in part of the year where it has to be filled with gas. Spring not so much but it really matters in the summer.' The two seasons are OPPOSITE IN SIGN. Spring runoff = hydro ABUNDANT, curtailment is oversupply-driven, it DISPLACES gas at shoulder load. Summer = reservoirs drawn down against irrigation, water rights and minimum flows, so hydro is SHORT exactly when load peaks and the shortfall lands on gas AT THE PEAK.\n\nMEASURED ON OUR OWN STATES, 119 scored days Feb-Jul 2026: the unaccounted slice falls 9.40% (March) -> 7.04% (July) of US48 generation while gas share rises 34.8% -> 42.2%. The 2.36pp drop is ~290,000 MWh/day, or roughly 2.0-2.3 Bcf/d if gas fills it at 7-8 MMBtu/MWh - the same order as the 4.2 Bcf/d 0629 wind event. Caveat carried: the residual is hydro plus oil/biomass/other and summer gas share also rises on cooling load, so this is co-movement in the stated direction, not an isolated causal estimate. Enough to justify serving the field and instrumenting SUMMER first; not enough to write a bar on.\n\nSPRING IS NOT THE BEARISH END - CORRECTED S112 on Greg's mechanism: 'spring will lower the outputs once the rivers get too high... the Army Corps of Engineers will have the hydro operators open the gates so that high rivers don't start going over their banks.' That is FLOOD CONTROL and it is physical: past a river stage the water goes through the SPILLWAY INSTEAD OF THE TURBINES and bypasses generation. So the water-to-output curve is an INVERTED U - output rises with runoff to a point then FALLS - and BOTH TAILS ARE BULLISH GAS: extreme high water (spill, spring) and low water (drawdown, summer). The bearish case is the MIDDLE.\n\nCONSEQUENCE FOR HOW IT GETS WRITTEN, and it is D23/D28 exactly: a single bar on water level or runoff WILL BE WRONG IN ONE TAIL, because the same low-hydro reading comes from two opposite states. This needs a STATE, not a level - and an analog retrieval keyed on hydro output alone would match a high-water spring day to a low-water summer day and call them the same shape.\n\nSO THE INGEST IS TWO THINGS, NOT ONE: hydro generation from EIA-930 (XS, the field we already pull the feed for) AND a river-stage / spill indicator that distinguishes the two tails - USACE and USGS both publish free. Without the second, the first cannot carry a sign.\n\nCORRECTED S112 - THIS IS NOT AN INGEST CHANGE, IT IS A DROPPED FIELD, and that makes it cheaper AND worse. grid_stack.py:112-119 sets NO fueltype facet, so the pull returns EVERY fuel EIA reports and stores each one under gen_mwh[fueltype]. The serving read _ba_read (grid_stack.py:180-181) then hand-picks five - NG, SUN, WND, COL, NUC - and drops the rest. EIA-930's hydro code is WAT (conventional hydro, combined with pumped storage where a BA cannot separate them). So we have been holding daily per-BA hydro since START=2019-01-01 and serving none of it.\n\nTHE RESIDUAL I MEASURED IS ITSELF THE PROOF: total_gen_mwh is sum(gen.values()) over ALL fuels, so the 6.7-7.6% gap between the five named fields and the total can only be nonzero BECAUSE the unnamed fuels - WAT, OIL, OTH - are present in the store and counted in the denominator while unnamed in the numerator. I measured the hole using the very data the hole is made of.\n\nSAME DEFECT CLASS AS TWO WE HAVE ALREADY PAID FOR: the S107 big_print_b_share (size-weighted value computed then omitted from the emit list, the count-based one shadowing it under the same name) and the S109 session_b_share (the ONE b_share field missing from _tape_enrich's copy list - invisible for exactly as long as the other path's value happened to be right). A hand-maintained copy list is a place where correct data goes to die silently. The fix here is two lines; the transferable question is why a serving read enumerates fuels by hand at all when the store is a dict.\n\nAND THE SECOND HALF - the river-stage/spill indicator that separates the inverted-U's two tails - HAS A NAMED SOURCE NOW: see A-18. TVA publishes observed reservoir elevation, PREDICTED elevation, and PLANNED generation releases per dam. The planned-release series is forward-dated, which is the one information class the horizon research says survives past the 5-7 day boundary. USGS Water Data APIs (real-time streamflow and gage height, REST, machine-readable) are the programmatic fallback and cover far more than the TVA footprint.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "BIGGEST_WIN",
+   "tier_why": "TWO LINES for seven years of data. Hydro has been stored since 2019 and dropped at a five-element serving list. The stack's third forcing has never reached a specialist, and the summer shortfall is roughly 2 Bcf/d of gas fill - the same order as the 0629 wind event."
   },
   {
    "id": "A-18",
@@ -467,7 +526,9 @@
    "status": "OPEN",
    "size": "S",
    "why": "MEASURED: grid_stack.bas serves CISO, ERCO, MISO, PJM, SOCO, SWPP, US48. Of the five Southeast BAs the S111 research named as the largest summer-burn region - SOCO, TVA, DUK, FPL, SCEG - we serve exactly ONE. SOCO alone is 6.3% of US48 generation at 49.7% GAS SHARE, the highest of any BA we carry, so the four missing ones are comparably sized and sit in the highest-gas-share region in the country.\n\nTVA IS THE ONE THAT MATTERS MOST AND IT IS MISSING. It is named for its dam system, carries a large hydro fleet AND burns serious gas, which makes it the cleanest place in the country to observe the inverted-U hydro mechanism: when water goes to either tail - drought or flood spill - the substitution lands in TVA's gas burn fast.\n\nTHIS IS THE SAME GAP AS A-16, NOT A SEPARATE ONE. Serving hydro at US48 level would average TVA's drought against Pacific Northwest runoff and show almost nothing; the signal lives at BA level, in a BA we do not have. Do A-16 and A-18 together or neither works.\n\nFREE and on a feed we already pull: EIA-930 reports every BA, including the day-ahead demand forecast field, which the research separately flagged as the only free forward load number in the non-ISO Southeast. The per-BA coverage assertion the research asks for applies here - that field is not universally reported and must be checked per BA rather than assumed.\n\nGREG, S112 - TVA IS A FEDERAL ENTITY, SO ITS DATA SHOULD BE PUBLISHED. Verified: TVA is a corporate agency and instrumentality of the United States, created by Act of Congress in 1933, and is the largest government-owned electricity provider in the country (EIA's own words). It runs a public FOIA reading room and publishes operational reservoir data directly, per dam: today's observed level, PREDICTED elevation, PLANNED GENERATION RELEASES (discharge in cfs, schedules updated through the day), the year-long reservoir operating guide, streamflow and rainfall.\n\nWHY THAT IS BIGGER THAN THE BA GAP IT WAS RAISED AGAINST. A-16 says the hydro field cannot carry a sign without something that distinguishes the inverted U's two tails - flood spill from drought drawdown. TVA's PLANNED RELEASE plus OPERATING GUIDE is exactly that instrument, and it is FORWARD-DATED: it says what the operator intends to run and what the guide requires, before the generation happens. Dated-forward supply information is the class the horizon research says survives past the 5-7 day weather boundary, alongside the forward calendar and A-17's nuclear refuelling schedule.\n\nPUBLISHED IS NOT THE SAME AS SERVED OVER AN API - state this honestly rather than assume it. Searched S112: no documented public TVA API surfaced; the published route is the Lake Levels pages and the TVA Lake Info app, and tva.com returned HTTP 403 to an automated fetch, which is a scraping-policy fact, not an availability fact. Greg's principle stands and is the lever - a federal instrumentality's operational data is public by default and FOIA-reachable if it is not posted machine-readably. THE ORDER TO TRY, cheapest first: (1) USGS Water Data APIs - REST, machine-readable, real-time streamflow and gage height, national, already covers the Tennessee basin gauges; (2) USACE, which is the agency Greg named as the one ordering the gates open; (3) TVA's own posted series; (4) FOIA only if the first three leave a hole.\n\nCORRECTED S112 - I MADE THE COMPANY-IS-NOT-A-BA ERROR IN THIS VERY ITEM, one message after flagging it for Cincinnati. I wrote 'DUK' meaning 'Duke' and stopped there. The Carolinas are THREE respondents: DUK (Duke Energy Carolinas), CPLE (Duke Energy Progress East) and CPLW (Duke Energy Progress West). Greg naming RALEIGH and WILMINGTON caught it - both sit in CPLE, which I had not listed at all. CPLE is a reported EIA-930 respondent with about 100 plants and 64.7 TWh of annual generation, which is not a rounding error. Add CPLE; check CPLW for coverage before assuming it.\n\nTHE LESSON IS THE ONE A-19 ALREADY STATES AND I STILL TRIPPED ON IT: a utility brand name is not a balancing authority, and the failure mode is that the missing BA is INVISIBLE - nothing reports a respondent you never asked for. Enumerate against EIA's own BA reference table, never from memory of who owns what.\n\nCLOSING RULE, from D35: the BA list is closed by RECONCILIATION, not by map coverage. Add respondents until the served set sums to US48 within tolerance, then stop - US48 is carried as its own EIA-930 respondent so the gap is computable today. And the Southeast set is not an arbitrary region to have picked: it sits on the Gulf corridor, which is among the best-transmitting demand to Henry Hub itself.",
-   "blocked_by": null
+   "blocked_by": null,
+   "tier": "BIGGEST_WIN",
+   "tier_why": "A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing."
   },
   {
    "id": "A-19",
@@ -481,7 +542,9 @@
    "reraised": null,
    "delegable": true,
    "delegable_ask": "IMPORTANT - WE HAVE ALREADY ASKED YOU SOMETHING ADJACENT AND YOU ANSWERED IT. In S112 (Task 4) you covered the gas-weighted degree-day CONSTRUCTION and a summer weight replacement. This is NOT that task and does not need it redone. This one is about WHICH STATIONS and WHICH BALANCING AUTHORITIES.\n\nWe need the CANDIDATE STATION SETS the utilities themselves use, from their public filings - not an opinion on which cities matter.\n\n1. For Duke Energy Carolinas, Duke Energy Progress, Dominion Energy South Carolina, Georgia Power, Alabama Power and TVA: find the load-forecast / weather-normalization methodology in their Integrated Resource Plans or commission filings (NCUC docket E-100, SC PSC, Georgia PSC, TVA's IRP) and report WHICH WEATHER STATIONS each one weights and how. Duke's IRP states it uses a weighted average of several stations per service territory against a 30-year normal recomputed annually - we want the actual station lists wherever they are disclosed.\n2. Report the EIA-930 BALANCING-AUTHORITY boundaries for the Carolinas and the Southeast from EIA's own reference tables - DUK, CPLE, CPLW, SCEG, SC, SOCO, TVA, FPL, FPC, TEC, JEA - so we map stations to RESPONDENTS rather than to company names. We have already made that mistake in our own registry: we wrote DUK meaning Duke and missed CPLE entirely, which is where Raleigh and Wilmington sit.\n3. Anything you find on how these utilities handle Southern load having moved to suburbs and secondary metros. If a filing discusses RE-BASING station weights, we want it - our own weights were set once and never revisited.",
-   "delegated_prior": "S112 TASK 4 covered the gas-weighted degree-day CONSTRUCTION and a summer weight replacement. DELIVERED. That is adjacent to this item but NOT the same ask - T4 was about how the index is built and weighted for summer; A-19 is about WHICH STATIONS and which BAs. Narrow the new ask accordingly rather than re-running T4."
+   "delegated_prior": "S112 TASK 4 covered the gas-weighted degree-day CONSTRUCTION and a summer weight replacement. DELIVERED. That is adjacent to this item but NOT the same ask - T4 was about how the index is built and weighted for summer; A-19 is about WHICH STATIONS and which BAs. Narrow the new ask accordingly rather than re-running T4.",
+   "tier": "BIGGEST_WIN",
+   "tier_why": "L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this."
   },
   {
    "id": "A-20",
@@ -494,7 +557,8 @@
    "blocked_by": "A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites",
    "reraised": null,
    "delegable": true,
-   "delegable_ask": "We need the SOURCES for a hydro study, not the study. Specifically, and per item:\n\n1. **USGS gauges.** Site IDs and the exact API call for real-time and daily-value streamflow and gage height on: the Tennessee basin around TVA's Blue Ridge, Nottely and Chatuge; the Toccoa and the Etowah (they drain opposite sides of the Tennessee Valley Divide); the Coosa/Oostanaula at Rome; the upper Chattahoochee; the Savannah headwaters (Tugaloo/Tallulah/Chattooga); the Catawba; the Saluda and Broad. Tell us which have long continuous records and which do not.\n2. **TVA.** Does TVA publish observed elevation, predicted elevation and planned generation releases in any MACHINE-READABLE form, or is the Lake Levels site and app the only route? Note that tva.com returns HTTP 403 to automated fetches. TVA is a federal corporate agency and instrumentality of the United States, so if there is no feed, say what the FOIA route looks like and roughly what it costs in time.\n3. **USACE.** Which district water-management pages publish daily reservoir elevation, discharge and SPILL for the reservoirs above, and in what format.\n4. **Pumped storage per balancing authority.** Nameplate MW of pumped storage vs conventional hydro for TVA, SOCO, DUK, CPLE and SCEG. We need this to compute a dilution factor, because EIA-930 folds pumped storage into the WAT fuel code wherever a BA cannot separate it - and pumped storage follows price, not water. Also: does Rocky Mountain (Oglethorpe 75%, Georgia Power 25%) report inside the SOCO balancing authority? EIA-930 reports by balancing authority, not by ownership.\n5. **FERC licence articles.** For Duke Energy Carolinas (Catawba-Wateree, Keowee-Toxaway), Duke Energy Progress, Georgia Power (Wallace Dam is P-2413), Alabama Power (Coosa, Tallapoosa) and Dominion Energy South Carolina (Saluda): the docket numbers, and what the licence actually specifies - target elevation by date, minimum flows, drought contingency plan. This is the part we think nobody has looked at: a licensee's reservoir future is partly a LEGAL CONSTRAINT, dated and binding, whereas TVA's is discretionary."
+   "delegable_ask": "We need the SOURCES for a hydro study, not the study. Specifically, and per item:\n\n1. **USGS gauges.** Site IDs and the exact API call for real-time and daily-value streamflow and gage height on: the Tennessee basin around TVA's Blue Ridge, Nottely and Chatuge; the Toccoa and the Etowah (they drain opposite sides of the Tennessee Valley Divide); the Coosa/Oostanaula at Rome; the upper Chattahoochee; the Savannah headwaters (Tugaloo/Tallulah/Chattooga); the Catawba; the Saluda and Broad. Tell us which have long continuous records and which do not.\n2. **TVA.** Does TVA publish observed elevation, predicted elevation and planned generation releases in any MACHINE-READABLE form, or is the Lake Levels site and app the only route? Note that tva.com returns HTTP 403 to automated fetches. TVA is a federal corporate agency and instrumentality of the United States, so if there is no feed, say what the FOIA route looks like and roughly what it costs in time.\n3. **USACE.** Which district water-management pages publish daily reservoir elevation, discharge and SPILL for the reservoirs above, and in what format.\n4. **Pumped storage per balancing authority.** Nameplate MW of pumped storage vs conventional hydro for TVA, SOCO, DUK, CPLE and SCEG. We need this to compute a dilution factor, because EIA-930 folds pumped storage into the WAT fuel code wherever a BA cannot separate it - and pumped storage follows price, not water. Also: does Rocky Mountain (Oglethorpe 75%, Georgia Power 25%) report inside the SOCO balancing authority? EIA-930 reports by balancing authority, not by ownership.\n5. **FERC licence articles.** For Duke Energy Carolinas (Catawba-Wateree, Keowee-Toxaway), Duke Energy Progress, Georgia Power (Wallace Dam is P-2413), Alabama Power (Coosa, Tallapoosa) and Dominion Energy South Carolina (Saluda): the docket numbers, and what the licence actually specifies - target elevation by date, minimum flows, drought contingency plan. This is the part we think nobody has looked at: a licensee's reservoir future is partly a LEGAL CONSTRAINT, dated and binding, whereas TVA's is discretionary.",
+   "tier": "REST"
   },
   {
    "id": "A-21",
@@ -505,7 +569,9 @@
    "size": "M",
    "why": "CHECKED FIRST, AND THE SPATIAL HALF IS ALREADY CORRECT - recorded so nobody 'simplifies' it later. nws_temp_feed.gas_weighted() computes HDD/CDD PER STATION then weights the DEGREE DAYS; it does not average temperature first. That order is load-bearing: cooling load is CONVEX above the balance point, so by Jensen the mean of the degree days exceeds the degree days of the mean. Charlotte 98 with Raleigh 78 delivers MORE load than both at 88, so dispersion ADDS load and averaging temperature first would under-call every high-dispersion day by construction. Greg's cancellation is right in direction, incomplete in size, and the asymmetry has a sign we can state in advance.\n\nTHE OPEN HALF - THE SAME CONVEXITY IS STILL COLLAPSED ACROSS TIME. degree_days() takes a DAILY MEAN, so a 60F-to-96F day and a flat 78F day both score CDD 13 while drawing very different AC load, because the afternoon peak sets the burn. The raw hourly observations are ALREADY INGESTED (--ingest-hourly -> nws_hourly/) and the S90 record already named the daily degree-day store as 'the same reduction mistake'. It is still what feeds gw_cdd. This is the cheapest of the three because the data is in hand.\n\nTHE INDEX IS DRY BULB ONLY. Southern cooling load answers to wet bulb and dew point, not dry bulb alone - a rainy day is humid and the AC keeps pulling latent load after the dry bulb falls, so rain cancels LESS than the temperature drop implies. Measured: dewpoint, wet_bulb and humidity appear ZERO times in the brain. Pairs with A-19's convexity note on the winter side (heat-pump resistance strips), so the Southern index is mis-formed at BOTH tails.\n\nAND RAIN IS TWO-SIDED FOR GAS, which is why it cannot be folded into temperature at all: it cuts AC load (bearish) AND cuts SOLAR GENERATION (bullish, pushing load back onto gas). Both halves are measurable - solar_mwh is served per BA.\n\ngw_precip IS SERVED AND READ BY NOBODY. gas_weighted emits it every day, gas-weighted. It appears exactly ONCE in the brain, as a bare name in a field list: zero plays, zero conditions. A-15 for the fourth time - built, correct, unread. Greg's example is precisely the day it exists for.\n\nORDER OF WORK: hourly degree days first (data in hand, largest effect), then dew point / wet bulb, then give gw_precip a named consumer. Do NOT do this before A-19 fixes the station set - a better-formed index over the wrong stations is a more confident wrong number.\n\nCORRECTED S112 - I PUT THE CONVEXITY ON THE WRONG AXIS. Greg: 'it's not like both at 98 is my main point. They are 2 cities in the same utility. They won't burn gas independent of one another. CPL is an aggregate of the entire footprint.' Charlotte and Raleigh are not two load centres with two gas burns; they are two SAMPLING POINTS inside one footprint that dispatches as a single unit. The stations are THERMOMETERS, not load centres, so the station problem is a MEASUREMENT problem - estimate the footprint's area-integrated weather from point samples - not a combination-of-independent-burns problem.\n\nTHE ORDER OF OPERATIONS STILL STANDS but is demoted to what it is: a measurement convention, correct because load responds non-linearly at each sampled point. Not the main event.\n\nTHE CONVEXITY THAT MATTERS IS LOAD -> GAS BURN, NOT TEMPERATURE -> DEGREE DAYS, and it is a better-posed question: the footprint's gas burn is convex in the footprint's LOAD because gas is the residual and every cheaper stack term saturates - nuclear and coal are levels, wind, solar and hydro are forcings, so a rising share of each additional MWh lands on gas. NEW SUB-TASK, and it is the cheapest thing in this item: measure demand_mwh against gas_mwh per respondent from the grid_stack store, back to 2019. No new feed, no new station, and it is the actual curve the desk needs. Never measured.\n\nAND IT CONFIRMS A-19 FROM THE OTHER SIDE: EIA-930 reports the footprint's own demand, so for a served BA the aggregate load is MEASURED, not inferred from thermometers. The station set is the FORWARD instrument only.",
    "blocked_by": "A-19 (station set) should land first - form over the wrong stations is worse, not better",
-   "reraised": null
+   "reraised": null,
+   "tier": "BIGGEST_WIN",
+   "tier_why": "Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station."
   },
   {
    "id": "A-22",
@@ -516,7 +582,8 @@
    "size": "M",
    "why": "`data_registry.py` + `DATA_POINTS.md` + `store/data_points.json`. FOUR TIERS: SERVED (1,717 fields across 36 blocks), HELD-NOT-SERVED (5, each with the citation proving it), PLANNED (35, harvested from OPEN_ITEMS.json so registering an item lists its data automatically), IDENTIFIED-not-committed (9 free sources named by our own research with no item - the weakest tier and the one this exists to stop losing). Every row carries READ / NOT READ explicitly, plus block, upstream source, cadence, what the blind sees, and any known defect that damaged it.\n\nMEASURED ON FIRST RUN: 1,129 of 1,717 served data points are READ BY NOTHING. Reader counting OVER-counts by construction - any occurrence of the leaf name anywhere in ng_brain.json counts, including prose - so a ZERO is hard evidence and a small non-zero is only a prompt to look.\n\nWHY A REGISTRY AND NOT A REMINDER: every instance of this failure is invisible to state_health, which asks 'present, numeric, in range, self-consistent' - and 0629's wind_mwh was all four. The question none of our gates asked is the only one that catches the class: DOES ANYTHING READ IT. That is computable, so it is now a report instead of a memory.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "DONE"
   },
   {
    "id": "A-23",
@@ -529,7 +596,9 @@
    "blocked_by": null,
    "reraised": null,
    "delegable": true,
-   "delegable_ask": "This one needs a file we will send with the brief: DATA_POINTS.md, the master list of every data point we hold. 1,129 of 1,717 served fields are read by NOTHING, and we want to know which of them SHOULD be read.\n\nGive a verdict per field, and use exactly these four:\n  - SHOULD-BE-READ - and name the mechanism it belongs to and why\n  - SUMMARY-ONLY - the block needs a served aggregate, not per-cell reads\n  - CORRECTLY-UNREAD - with the reason\n  - UNUSABLE-IN-BLIND - it is a price-derived block the blind sees frozen at anchor vintage\n\nWork block by block, worst-unread first; the file ranks them for you. Two things to keep in mind. A large unread count in a HIGH-CARDINALITY block is expected and mostly benign - model_disagreement is a per-station by per-model cross-product and nobody was ever going to write a condition on each cell, so the right question there is whether the right SUMMARY is being served. An unread field in a SMALL block is a much stronger signal, because it was almost certainly built to be consumed. Do NOT propose thresholds or weights - only what should be read and why."
+   "delegable_ask": "This one needs a file we will send with the brief: DATA_POINTS.md, the master list of every data point we hold. 1,129 of 1,717 served fields are read by NOTHING, and we want to know which of them SHOULD be read.\n\nGive a verdict per field, and use exactly these four:\n  - SHOULD-BE-READ - and name the mechanism it belongs to and why\n  - SUMMARY-ONLY - the block needs a served aggregate, not per-cell reads\n  - CORRECTLY-UNREAD - with the reason\n  - UNUSABLE-IN-BLIND - it is a price-derived block the blind sees frozen at anchor vintage\n\nWork block by block, worst-unread first; the file ranks them for you. Two things to keep in mind. A large unread count in a HIGH-CARDINALITY block is expected and mostly benign - model_disagreement is a per-station by per-model cross-product and nobody was ever going to write a condition on each cell, so the right question there is whether the right SUMMARY is being served. An unread field in a SMALL block is a much stronger signal, because it was almost certainly built to be consumed. Do NOT propose thresholds or weights - only what should be read and why.",
+   "tier": "BIGGEST_WIN",
+   "tier_why": "Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input."
   },
   {
    "id": "A-24",
@@ -540,7 +609,8 @@
    "size": "L",
    "why": "WHY THE HUNCH IS WELL-FOUNDED, and it is not just optimism. Two measured reasons. (1) Our own S111 competitive research: gas is the LEAST machine-penetrated liquid energy contract - 24.5% HFT participation against WTI's 52.1%, and 19% of volume with a human on both sides. Unexploited structure is genuinely more likely here than in a crowded contract. (2) The DATA COMBINATION is unusual: we hold per-BA generation stack, NYMEX tape microstructure, positioning, and weather forecast VINTAGES in one place. Most desks have one or two of those. The cross-domain pairs are exactly where an outsider has not looked, because most people do not have both sides.\n\nTHE TRAP, QUANTIFIED, because it is the one way this dies: 1,717 fields is 1,473,186 unordered pairs. At p<0.05 chance alone returns about 73,659 'discoveries'; at p<0.001, still about 1,473. A naive pairwise sweep is GUARANTEED to produce a large, confident, entirely false result set - and worse than useless, because it would look like a finding. This desk has already paid for this exact shape once: S36's apparent directional lifts were trend and base-rate artifacts (Simpson's on a trending window) and died under window/forward sweep, temporal OOS and detrended targets. DEPLOY_VALIDATED=False exists because of it.\n\nWHAT MAKES IT SURVIVABLE - and every piece already exists. odcore/null_extract.py's circular-shift null (the tautology killer), odcore/leakage.py (mandatory, non-negotiable, catches look-ahead 40/40), odcore/validation.py's walk-forward net-of-cost promotion gate, the per-cell rule (a pair that survives on a SUBSET of cells is kept and used on those cells - partial coverage is not failure), and D28's degenerate-block test (a condition that cannot change state carries no information whatever its correlation).\n\nTHE SEARCH SHAPE THAT MAKES IT TRACTABLE, not the full cross-product: (a) CROSS-BLOCK ONLY - within-block pairs are largely mechanical (model_disagreement's 431 fields are a cross-product of each other, so they will correlate with themselves spectacularly and mean nothing); (b) BOTH SIDES BLIND-LEGAL - a pair where one side is post-cutoff is a leak, not an edge; (c) MECHANISM FIRST - require a stated causal story BEFORE testing, or failing that demand survival of the circular-shift null AND a temporal holdout AND per-cell replication. That turns 1.47M into a few hundred candidates that carry a prior.\n\nTHE STRONGEST A-PRIORI CANDIDATES, named now so the search starts with a prior instead of a sweep - each has a mechanism and each is cross-domain: (1) basin water anomaly x Southeast gas burn (A-20 - literally an unknown correlated pair, and the reason nobody has put it together is that it needs BA-level generation AND basin hydrology, two datasets that do not normally sit on one desk); (2) wind_mwh x the gas residual - 0629 proved the mechanism at 4.2 Bcf/d and NOTHING reads it; (3) load -> gas burn convexity per BA, the actual dispatch curve, never measured though demand_mwh and gas_mwh have sat beside each other since 2019; (4) k3 impact-coefficient collapse x liquidity void, already a live claim at n=6 spanning G20+G23; (5) forecast VINTAGE REVISION (weather_forecast_cycle x model_disagreement) x price - the revision process is one of the three things S111 measured as surviving past the 5-7 day horizon, and vintage data is rare.\n\nPAIRS WITH A-23: the triage says which fields SHOULD be read; this asks which PAIRS carry information. Do the triage first - a pair built on a field that turns out to be a defect artifact is the S108 hole-#8 failure again, where an off-instrument tape manufactured a false mechanism with three corroborating markers and a specialist independently 'verified' it by checking internal consistency. Consistency was never the test.",
    "blocked_by": "A-23 (triage first - a pair built on a defect artifact is a manufactured mechanism)",
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "A-25",
@@ -551,7 +621,8 @@
    "size": "S",
    "why": "`chatgpt_handoff.py` generates `CHATGPT_HANDOFF_S<N>.md` plus one self-contained file per task from OPEN_ITEMS.json. Items opt in with an explicit `delegable: true` flag and a `delegable_ask`, so nothing is included by keyword guess.\n\nGENERATED FOR THE SAME REASON THE DROP-IN'S WORK LIST IS (A-9): a hand-written brief drifts the moment an item is done and then asks for work already finished. A selftest asserts a DONE item can never appear as a live request, and the session number is derived from the committed drop-ins rather than typed.\n\nTHE DELEGATION LINE IS REAL, NOT A FORMALITY. Source hunting delegates well - which USGS gauge, which FERC docket, which ISO endpoint, what the licence article says - bounded, citation-heavy, parallelises, and checkable by following the link. FITTING DOES NOT: a coefficient tuned without our states is hindsight-fitted with zero forward evidence, and per D35 the output is a national total, so per-BA parameters fitted elsewhere are numbers we would discard. The brief says so in rule 6. The one exception is A-23, whose input is itself a shippable artifact.\n\nThe eight standing rules are each a defect already paid for - the load-bearing one is 'never invent a number, an endpoint, or a field name', because a plausible endpoint that 404s costs a session while an honest gap costs a sentence.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "DONE"
   },
   {
    "id": "G-16",
@@ -562,7 +633,8 @@
    "size": "S",
    "why": "Item 1c of the ranked under-use list, and it is the one that speaks most directly to what we trade: it needs NO options data and it is about CLOSE-SETTLED contracts, which is exactly what KXNATGASD is (per-contract NGD 1-min close at 17:00 ET). We already hold the full MBO tape, so the cost is a parsing pass.\n\nSCOPE IT STRICTLY INTRADAY - the paper is explicit that the effect REVERTS over subsequent days, so a version that carries overnight would be measuring the reversal. That constraint is the whole reason to write it down rather than remember it.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-17",
@@ -573,7 +645,8 @@
    "size": "XS",
    "why": "Item 1d. The levered gas ETFs rebalance into the close in a mechanically predictable direction, so the close-imbalance is a known flow we are not looking at - and the close is where the contract settles. Cheapest item on the tape list; no new data, we hold the tape.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-18",
@@ -584,7 +657,8 @@
    "size": "M",
    "why": "Item 2, and it is a FORM error not a coverage one - we hold the surface as a LEVEL, which is not a signal. Fit sigma(t,T) = theta(t) * exp(-beta*(T-t)) with BETA ESTIMATED SEPARATELY for winter and injection season: Gregoire and Boucher find the gas maturity effect present ONLY in winter, so a year-round decay will systematically over-forecast injection-season front-month vol. The RESIDUAL is the view.\n\nAnd compute VRP with the CORRECT DENOMINATOR - implied for calendar period X against realized for the SAME calendar period historically, never against trailing realized. Pairs with G-15 (the put-call parity gate) and G-13.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-19",
@@ -595,7 +669,8 @@
    "size": "S",
    "why": "Item 3. EIA-930 broke out battery storage as a separate category from Q1 2025, and the briefing names it as the reason a hot evening no longer produces the peaker burn the temperature implies. That is a DIRECT hit on our own residual model - the evening ramp is exactly where gas used to be the only answer.\n\nSAME SHAPE AS A-16 AND CHEAP FOR THE SAME REASON: grid_stack.py sets no fueltype facet, so if EIA returns battery under a fuel code we are probably already STORING it and dropping it at the five-element serving list. Check the stored keys before assuming a pull is needed.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-20",
@@ -606,7 +681,8 @@
    "size": "S",
    "why": "Item 3, and it is a data-integrity item of exactly the class this desk has been burned by eleven times. Documented EIA-930 defects: anomalous values replaced by IMPUTED values, energy sources not summing to net generation, subregion demand not summing to total, UTC-only timestamps with DST gaps, and BEHIND-THE-METER SOLAR EXCLUDED ENTIRELY - a one-directional and GROWING bias in precisely the daylight hours that matter for cooling.\n\nEvery one of those is state_health-invisible: present, numeric, in range, self-consistent. The fix is the same one that worked for the b_share repair - each served value DECLARES ITS BASIS, so an imputed value can never be read as a measured one.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-21",
@@ -617,7 +693,8 @@
    "size": "XS",
    "why": "Item 6. Magnitude of the print reaction scales with how genuinely unresolved the number was, and we carry a point estimate. Cheap - the range is in the same survey we already ingest.\n\nCARRY THE CONTAMINATION WITH IT, which is the part that would otherwise get lost: Ederington, Linn and Zhang find analysts ANTI-HERD, accuracy DECREASES with anti-herding intensity and with earlier release, and those two variables alone explain over 50% of cross-firm accuracy variance. So the median of a survey is NOT an equal-quality aggregate - later forecasts are systematically better, and a naive median throws that away. Crowd-sourced forecasts are measurably worse than professional ones and add nothing beyond them.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-22",
@@ -628,7 +705,8 @@
    "size": "M",
    "why": "Item 7, entirely untracked and it contains the one suggestion aimed straight at our scoreboard. Two parts.\n\n(a) REGIME, NOT LEVEL: spot and futures are MORE correlated in contango than in backwardation, and Samuelson strength itself varies with the degree of backwardation. That makes the curve shape a conditioning label, which is the D23/D28 form we want.\n\n(b) THE CARRYOUT PROJECTION - level plus cumulative forward balance - is named as the NATURAL TARGET VARIABLE for a curve-error-scored desk, which is what D32 made us. Its error compounds at roughly (balance error Bcf/d) x days, so 0.5 Bcf/d over 90 days is 45 Bcf of carryout error - WIDER THAN THE RANGE ANALYSTS ARGUE ABOUT. That is a sizing fact worth having before we quote a forward view.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-23",
@@ -639,7 +717,8 @@
    "size": "S",
    "why": "Item 8. Between-model disagreement (GFS vs ECMWF) is not within-ensemble spread. We carry the first - model_disagreement is our largest block at 431 fields - and none of the second, because MOS deterministic guidance structurally cannot produce a spread.\n\nCARRY BOTH. Pairs with G-5 (ensemble members through our own GWDD weighting), which supplies the missing half, and with A-23: 357 of model_disagreement's 431 fields are read by nothing, so the question is not only 'add spread' but 'is the right SUMMARY of disagreement being served at all'.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-24",
@@ -650,7 +729,8 @@
    "size": "M",
    "why": "Item 9, and the ratio is the argument: we built feed R for nuclear outages and the fossil fleet is roughly TEN TIMES the capacity. We are instrumenting the small term.\n\nDirectly relevant to Greg's stack (nukes, coal, gas): coal is a LEVEL that moves on outage and retirement timescales, so a coal unit out is a step change in how much of the residual lands on gas - and A-15 has already measured that coal_mwh is served with zero readers. Pairs with A-17 (forward nuclear schedule) and M-6 (coal headroom): same sources, ISO outage aggregates and EIA-860M.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-25",
@@ -661,7 +741,8 @@
    "size": "S",
    "why": "Item 10, and it is a live wrong-sign risk rather than a gap. We BUILT and smoke-tested the tropical feed at S110. The briefing says its sign inverted: offshore Gulf production is now a small share of supply while LNG EXPORT CAPACITY IS CONCENTRATED ON THE GULF COAST, so a single landfall at Sabine Pass could affect roughly half of US LNG capacity - about 12% of total US consumption. A storm now more often destroys DEMAND than supply, and trade press documents gas WEAKENING on tropical risk.\n\nDIRECTION DEPENDS ON TRACK relative to export terminals versus production and CANNOT BE ASSUMED - so this is not a sign flip to hardcode, it is a track-conditional read the feed has to carry. And it connects to D35: Gulf LNG feedgas is the most HH-coupled demand there is, so this lands on the target directly.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-26",
@@ -672,7 +753,8 @@
    "size": "XS",
    "why": "Item 11. Keep the calendars - they are cheap and already built (flow_calendar) - but the briefing puts the roll in the FOLKLORE column as an alpha source. Demotion is a scope change, and per D31 it is SCOPED: the roll window remains a legitimate LIQUIDITY-REGIME flag, which is a different claim from 'the roll moves price'. Related: C-0714 already retired the roll window as a cause within a run (container, not cause - removing roll supply did not restore impact).",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-27",
@@ -683,7 +765,8 @@
    "size": "XS",
    "why": "Item 12. Measured in the briefing: EIA experts WIN at h=9-12 months and LOSE BADLY to no-change at h=1 and h=3. We work day-ahead to two weeks, so at our horizon the STEO is a structural prior and must never be read as a short-horizon signal. 44 of steo_vintage's 95 served fields are read by nothing (A-23), so the scoping has to say what the block IS for, not only what it is not.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "REST"
   },
   {
    "id": "G-28",
@@ -694,7 +777,15 @@
    "size": "S",
    "why": "Item 13, and the leak is the load-bearing half. The gas-specific literature favours the discrete MARKOV-SWITCHING version of the regime rather than a threshold on realized vol.\n\nTHE LEAK: the published or SMOOTHED state probability is computed WITH HINDSIGHT; the real-time FILTERED state is materially noisier and is what a live system would actually have had. If our vol_regime uses a smoothed probability anywhere, every historical group was conditioned on information the day did not have - and vol_regime is the module built to condition MAGNITUDE, the brain's own stated dominant residual. CHECK THIS BEFORE THE NEXT GROUP: it is a leakage question, and the leakage gate is non-negotiable. Note vol_regime was already dead on a hardcoded SPAN_END for five groups (defect h-vol_regime), so this block has form.",
    "blocked_by": null,
-   "reraised": null
+   "reraised": null,
+   "tier": "ESSENTIAL",
+   "tier_why": "A LEAK, and the leakage gate is non-negotiable. If vol_regime uses a SMOOTHED state probability anywhere, every historical group was conditioned on information the day did not have - in the module built to condition MAGNITUDE, the brain's own stated dominant residual. Until this is checked, no group's magnitudes mean what they claim. Cheapest possible check on the whole list relative to what it invalidates."
   }
- ]
+ ],
+ "tiers": {
+  "note": "Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.",
+  "ESSENTIAL": "the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.",
+  "BIGGEST_WIN": "largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.",
+  "REST": "everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands."
+ }
 }
