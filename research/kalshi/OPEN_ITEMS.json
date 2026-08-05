@@ -64,8 +64,7 @@
    "size": "M",
    "why": "Ohio has NO station at all against PJM being the largest gas-burning BA. S111 research adds the mechanism: gas-weighted degree-day weights are HEATING-derived and wrong in summer; the fix is a seasonal switch to power-weighted CDD off EIA-930 BA gas generation we already ingest. THIS IS ALSO THE TEST THAT DECIDES THE BURN GATE REINSTATEMENT (D31) - its kill argument rested on a summer CDD limb measured on a winter-weighted index.",
    "blocked_by": null,
-   "delegable": true,
-   "delegable_ask": "We need LNG FEEDGAS nomination sources. Our lng_feedgas_bcfd field is null and 278 days stale, and Gulf-coast feedgas is the most Henry-Hub-coupled demand there is - Sabine Pass and the Cameron/Calcasieu cluster are close to the delivery point itself.\n\n1. What free sources publish pipeline nomination or scheduled-quantity data for the LNG terminals (interstate pipeline Electronic Bulletin Boards / EBBs are the usual route). Name the pipelines serving each major terminal and where their EBB posts scheduled quantities.\n2. Format, update cadence, history depth, and whether scraping is required.\n3. Which terminals are covered and which are not - per terminal, not pooled."
+   "delegated_prior": "S112 TASK 6 (LNG feedgas nomination sources). DELIVERED. Answer is with Greg, not in the repo."
   },
   {
    "id": "M-6",
@@ -185,7 +184,8 @@
    "status": "OPEN",
    "size": "L",
    "why": "The shape vocabulary is ALREADY emitted in every posterior (onset_time_et, turn_time_et, trend_vs_chop, continuation_vs_reversal, path_p50_curve) and has never been collected or searched. The regime label is what collapses the match to d~1-2.",
-   "blocked_by": null
+   "blocked_by": null,
+   "delegated_prior": "S112 TASK 5 (North American weather regime label). DELIVERED, with Greg, not in the repo."
   },
   {
    "id": "A-6",
@@ -246,8 +246,7 @@
    "size": "M",
    "why": "MEASURED S112 against the served vocabulary, which sharpens this from 'a top gap' to a named half-a-variable: FORWARD load IS served - grid_stack.bas.*.demand_forecast_mwh for all seven BAs, all-modern - and the whole weather_forecast.* family is forward. But wind_mwh and solar_mwh are REALIZED ONLY; there is no forward wind or solar field in any block.\n\nSo NET LOAD CANNOT BE COMPUTED FORWARD AT ALL - we hold one half of it. Greg, S112: 'wind and solar is just on or off. Not regulating to load there. Solely depended on sun and wind so we have to be tracking those well.' Because nothing in the stack regulates except gas, a renewable miss lands on gas at full size.\n\n0629 is therefore not bad luck but the guaranteed consequence: gw_cdd rose 10.0 -> 14.8 exactly as forecast, burn FELL 4.2 Bcf/d on a 62% wind rise, and no forward instrument existed that could have said so.\n\nALL FREE: ERCOT NP4-742-CD (wind actual+forecast) and NP4-745-CD (solar), SPP Mid-Term Resource Forecast +7d, CAISO OASIS SLD_REN_FCST, PJM Data Miner 2 load_frcstd_7_day plus wind/solar, MISO 168-hour, ISO-NE seven-day. Wrapped by gridstatus. ChatGPT task 3 was commissioned to return the exact endpoints. KNOWN TRAP to carry: behind-the-meter solar is excluded from EIA-930 and is a one-directional growing bias in exactly the daylight hours that matter.",
    "blocked_by": null,
-   "delegable": true,
-   "delegable_ask": "We need FORWARD wind and solar generation forecasts, per balancing authority where possible, with endpoints. Realized wind and solar we already have from EIA-930; without the forward version, net load is uncomputable forward, and net load is what determines gas.\n\n1. ISO day-ahead and 7-day wind and solar forecasts: ERCOT, PJM, MISO, SPP, CAISO, ISO-NE, NYISO - exact endpoints, formats, auth, history depth.\n2. The Southeast is not an ISO. Say what forward renewable information exists for SOCO, TVA, DUK, CPLE and SCEG, and if the honest answer is 'almost none publicly', say that - a clear negative is worth as much to us as a source.\n3. ECMWF ensemble members went CC-BY on 1 October 2025 and GEFS members are on NOAA open data. For each: how to retrieve MEMBERS (not just the mean), what variables are available, retention, and what a full daily pull would cost in bandwidth and time."
+   "delegated_prior": "S112 TASK 2 (ECMWF ENS + GEFS ensemble MEMBER retrieval) and TASK 3 (ISO day-ahead and 7-day wind, solar and load forecasts). Both DELIVERED. Answers are with Greg and are NOT in the repo - they must be brought in and wired before this item can move."
   },
   {
    "id": "G-5",
@@ -257,7 +256,8 @@
    "status": "OPEN",
    "size": "M",
    "why": "FREE since 1 Oct 2025 - the full ECMWF real-time catalogue went open under CC-BY-4.0 with data charges removed. Our MOS deterministic guidance structurally cannot produce a spread. Fills the ensemble, spread, probabilistic-path and option-dispersion gaps in one feed, and is the prerequisite for a confidence gate. START ARCHIVING IMMEDIATELY - the archive is the asset.",
-   "blocked_by": null
+   "blocked_by": null,
+   "delegated_prior": "S112 TASK 1 (the dipole direction result). DELIVERED, with Greg, not in the repo."
   },
   {
    "id": "G-6",
@@ -480,7 +480,8 @@
    "blocked_by": null,
    "reraised": null,
    "delegable": true,
-   "delegable_ask": "We need the CANDIDATE STATION SETS that the utilities themselves use, from their public filings - not your opinion on which cities matter.\n\n1. For Duke Energy Carolinas, Duke Energy Progress, Dominion Energy South Carolina, Georgia Power, Alabama Power and TVA: find the load-forecast / weather-normalization methodology in their Integrated Resource Plans or commission filings (NCUC docket E-100, the SC PSC dockets, Georgia PSC, TVA's IRP) and report WHICH WEATHER STATIONS each one weights and how. Duke's IRP states it uses a weighted average of several stations per service territory against a 30-year normal recomputed annually - we want the actual station lists where they are disclosed.\n2. Report the EIA-930 balancing-authority boundaries for the Carolinas and the Southeast from EIA's own reference tables - DUK, CPLE, CPLW, SCEG, SC, SOCO, TVA, FPL, FPC, TEC, JEA - so we map stations to RESPONDENTS rather than to company names. We have already made that mistake once in our own registry.\n3. Note anything you find about how these utilities handle the fact that Southern load has moved to suburbs and secondary metros - if a filing discusses re-basing station weights, we want it."
+   "delegable_ask": "IMPORTANT - WE HAVE ALREADY ASKED YOU SOMETHING ADJACENT AND YOU ANSWERED IT. In S112 (Task 4) you covered the gas-weighted degree-day CONSTRUCTION and a summer weight replacement. This is NOT that task and does not need it redone. This one is about WHICH STATIONS and WHICH BALANCING AUTHORITIES.\n\nWe need the CANDIDATE STATION SETS the utilities themselves use, from their public filings - not an opinion on which cities matter.\n\n1. For Duke Energy Carolinas, Duke Energy Progress, Dominion Energy South Carolina, Georgia Power, Alabama Power and TVA: find the load-forecast / weather-normalization methodology in their Integrated Resource Plans or commission filings (NCUC docket E-100, SC PSC, Georgia PSC, TVA's IRP) and report WHICH WEATHER STATIONS each one weights and how. Duke's IRP states it uses a weighted average of several stations per service territory against a 30-year normal recomputed annually - we want the actual station lists wherever they are disclosed.\n2. Report the EIA-930 BALANCING-AUTHORITY boundaries for the Carolinas and the Southeast from EIA's own reference tables - DUK, CPLE, CPLW, SCEG, SC, SOCO, TVA, FPL, FPC, TEC, JEA - so we map stations to RESPONDENTS rather than to company names. We have already made that mistake in our own registry: we wrote DUK meaning Duke and missed CPLE entirely, which is where Raleigh and Wilmington sit.\n3. Anything you find on how these utilities handle Southern load having moved to suburbs and secondary metros. If a filing discusses RE-BASING station weights, we want it - our own weights were set once and never revisited.",
+   "delegated_prior": "S112 TASK 4 covered the gas-weighted degree-day CONSTRUCTION and a summer weight replacement. DELIVERED. That is adjacent to this item but NOT the same ask - T4 was about how the index is built and weighted for summer; A-19 is about WHICH STATIONS and which BAs. Narrow the new ask accordingly rather than re-running T4."
   },
   {
    "id": "A-20",

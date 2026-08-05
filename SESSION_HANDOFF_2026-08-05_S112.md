@@ -150,3 +150,30 @@ per-block constant, valid only on a block's first day · **A-13** serve DAY_CALE
 Generated: `python research/kalshi/store.py worklist`. **G-11** is irreversible — every week waited is
 permanently lost. **A-13** and **A-11** need Greg's call. **A-1** (zero-change baseline) remains the
 cheapest thing that makes every future number readable.
+
+---
+
+## CHATGPT: PRIOR SCOPE, THE NEAR-MISS, AND WHAT IS OUT NOW
+
+**Six S112 tasks were delivered and NONE are in the repo** - the answers are with Greg. They map to
+G-5 (dipole direction), G-4 (ECMWF/GEFS members; ISO forward wind and solar), A-5/A-19 (degree-day
+construction and a summer replacement), G-7 (the regime label) and M-5 (LNG feedgas nominations).
+S113 must collect them at bring-up and COMMIT them, because paid-for work sitting outside git is the
+same defect D34 was written for.
+
+**THE NEAR-MISS, and it is the more useful half.** The first generated S113 brief re-asked three of
+those six questions and heavily overlapped a fourth. The generator had no way to know: the registry
+tracked what was OPEN and never tracked what had been DELEGATED. Greg caught it before it shipped.
+Fixed structurally rather than by memory - items carry `delegated_prior`, the brief renders it as its
+own section, and a selftest fails the build if an item is re-asked without declaring the prior ask in
+its own text. **A registry that tracks only status cannot prevent duplicate delegation; it has to
+track who was asked.** Same shape as A-9 one document over, and as A-17 one level up.
+
+**OUT NOW (four tasks, all source-hunting, none requiring our data):** A-17 forward nuclear outage
+schedules; A-19 the utilities' own IRP station lists and the EIA-930 BA boundaries, narrowed so it
+cannot re-run S112 T4; A-20 the hydro sources including the FERC licence articles; and A-23 the
+triage of the 1,129 unread data points, which ships with `DATA_POINTS.md` as its input.
+
+**The delegation line is real:** source hunting delegates, fitting does not. A coefficient tuned
+without our states is hindsight-fitted with zero forward evidence, and per D35 the output is a
+national total, so per-BA parameters fitted elsewhere are numbers we would discard.

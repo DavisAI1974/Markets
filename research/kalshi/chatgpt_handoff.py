@@ -83,6 +83,34 @@ def load_items():
             if i.get("delegable") and i.get("status") in ("OPEN", "IN_PROGRESS")]
 
 
+def prior_scope():
+    """WHAT WE ALREADY ASKED AND YOU ALREADY ANSWERED.
+
+    Greg, S112: "don't forget to mention the scope of chats previous work." Not a courtesy - a
+    DE-DUPLICATION GATE. The first generated S113 brief re-asked three questions ChatGPT had already
+    delivered in S112 (ECMWF/GEFS members, ISO forward wind and solar, LNG feedgas nominations) and
+    heavily overlapped a fourth. Nothing in the generator knew, because the registry did not record
+    what had been delegated. It does now, in `delegated_prior`, and this section renders it."""
+    try:
+        with open(OPEN_ITEMS, encoding="utf-8") as f:
+            items = json.load(f)["items"]
+    except (OSError, ValueError):
+        return ""
+    prior = [i for i in items if i.get("delegated_prior")]
+    if not prior:
+        return ""
+    L = ["## WHAT YOU ALREADY DID FOR US, AND WHAT BECAME OF IT", "",
+         "Read this before starting. You have worked for this desk before and we do not want a",
+         "question answered twice.", "",
+         "| our item | what you already delivered |", "|---|---|"]
+    for i in sorted(prior, key=lambda x: x["id"]):
+        L.append("| %s | %s |" % (i["id"], i["delegated_prior"].replace("\n", " ")))
+    L += ["", "**Where those answers live: with Greg, not in our repository.** They have not been",
+          "wired in yet. If a task below touches one of those areas, it says so in the task and asks",
+          "only for the part you have not already covered.", ""]
+    return "\n".join(L)
+
+
 def context_block():
     """What ChatGPT needs to know to answer usefully, and nothing else. Deliberately short: the
     brief is not a briefing on the whole desk, it is the minimum frame for these tasks."""
@@ -119,7 +147,7 @@ def render(items, sess):
          "registry, so a finished item cannot appear here as a live request. Ships with the",
          "session drop-in.", "",
          "**%d tasks.** They are independent - run one per conversation." % len(items), "",
-         context_block(), "", RULES, "",
+         context_block(), "", prior_scope(), RULES, "",
          "---", ""]
     for n, it in enumerate(items, 1):
         L += ["## TASK %d - %s" % (n, it["title"]), "",
@@ -147,7 +175,7 @@ def render_task(it, n, sess):
     must stand alone without the others. Same pattern as chatgpt_brief_split.py."""
     L = ["# S%d TASK %d - %s" % (sess, n, it["title"]), "",
          "Self-contained: everything you need is in this file. Registry item %s." % it["id"], "",
-         context_block(), "", RULES, "", "---", ""]
+         context_block(), "", prior_scope(), RULES, "", "---", ""]
     if it.get("delegable_ask"):
         L += ["## WHAT WE NEED FROM YOU", "", it["delegable_ask"], "", "---", ""]
     L += ["## THE REGISTRY ENTRY, VERBATIM", "",
@@ -213,6 +241,13 @@ def cmd_selftest(a):
           all(("THE CONTEXT YOU NEED" in render_task(it, n, sess)
                and "THE RULES ON WHAT YOU SEND BACK" in render_task(it, n, sess))
               for n, it in enumerate(items, 1)))
+    check("the brief declares what was already delegated", "ALREADY DID FOR US" in doc)
+    with open(OPEN_ITEMS, encoding="utf-8") as f:
+        allitems = json.load(f)["items"]
+    dupes = [i["id"] for i in allitems
+             if i.get("delegated_prior") and i.get("delegable")
+             and "ALREADY ASKED" not in (i.get("delegable_ask") or "")]
+    check("no item is re-asked without declaring the prior ask in its own text", not dupes)
     check("no emoji or em-dash reaches the generated brief",
           not any(ord(c) > 0x2000 for c in doc))
     print("\n  %d/%d passed" % (sum(res), len(res)))

@@ -1,6 +1,6 @@
-# S113 TASK 1 - NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112
+# S113 TASK 4 - TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not
 
-Self-contained: everything you need is in this file. Registry item A-17.
+Self-contained: everything you need is in this file. Registry item A-23.
 
 ## THE CONTEXT YOU NEED (and only what you need)
 
@@ -73,24 +73,27 @@ These are not style preferences. Each one is a failure this desk has already pai
 
 ## WHAT WE NEED FROM YOU
 
-We need the FORWARD nuclear outage schedule sources, with endpoints.
+This one needs a file we will send with the brief: DATA_POINTS.md, the master list of every data point we hold. 1,129 of 1,717 served fields are read by NOTHING, and we want to know which of them SHOULD be read.
 
-1. NRC daily reactor status: the exact data URL, format, history depth, and whether power level per unit is in it.
-2. Where licensees file or post REFUELLING OUTAGE SCHEDULES far enough ahead to be forward information - this is the point of the task. Nuclear refuelling is planned 12-18 months out and clustered in spring and autumn, which makes it the most schedulable event in the power system, and we currently read it only after the fact.
-3. ISO forward outage postings: ERCOT NP3-233-CD (168-hour hourly) and PJM frcstd_gen_outages (90 days) - exact endpoints, auth requirements, formats. Whether MISO, SPP, CAISO and the Southeast have equivalents, and if the Southeast does not, say so, because that is where our gap is.
-4. Anything equivalent for COAL retirements and additions (EIA-860M) - a retirement is a forward-dated calendar, which is the class we most want.
+Give a verdict per field, and use exactly these four:
+  - SHOULD-BE-READ - and name the mechanism it belongs to and why
+  - SUMMARY-ONLY - the block needs a served aggregate, not per-cell reads
+  - CORRECTLY-UNREAD - with the reason
+  - UNUSABLE-IN-BLIND - it is a price-derived block the blind sees frozen at anchor vintage
+
+Work block by block, worst-unread first; the file ranks them for you. Two things to keep in mind. A large unread count in a HIGH-CARDINALITY block is expected and mostly benign - model_disagreement is a per-station by per-model cross-product and nobody was ever going to write a condition on each cell, so the right question there is whether the right SUMMARY is being served. An unread field in a SMALL block is a much stronger signal, because it was almost certainly built to be consumed. Do NOT propose thresholds or weights - only what should be read and why.
 
 ---
 
 ## THE REGISTRY ENTRY, VERBATIM
 
-> WHAT WE HAVE vs WHAT WAS ASKED FOR. Served today: nuclear_outages.{capacity_out_mw, capacity_out_gw, pct_of_fleet_out, chg_1d_mw, chg_7d_mw, age_days} - all REALIZED or current, age 1 day, built as feed R arm 1 at S99. Served nowhere: any FORWARD planned-outage schedule. There is no planned start or end date in any block.
+> THE HAYSTACK IS NOW VISIBLE AND SORTED. `DATA_POINTS.md` ranks blocks by unread count, which is where a triage starts, and the ranking immediately separates two very different kinds of unread.
 > >
-> > WHY THIS ONE STINGS: nuclear refuelling is the MOST SCHEDULABLE EVENT IN THE POWER SYSTEM - planned 12-18 months ahead, publicly posted, clustered in spring and autumn. It is the one supply-side quantity genuinely knowable in advance, and it belongs to the class the horizon research says survives past the 5-7 day weather boundary: the forward calendar, dated by construction, with no horizon limit. We are reading the single most forecastable input backwards.
+> > HIGH-CARDINALITY BLOCKS where a large unread count is EXPECTED and mostly benign: model_disagreement 357 of 431 unread (a per-station x per-model cross-product - nobody was ever going to write a condition on each cell), freeze_risk 148 of 157, solar 68 of 86. The right question there is not 'read all of them' but 'is the right SUMMARY of this block being served'.
 > >
-> > THE TRACKING FAILURE, stated plainly because it is the more important half. This was agreed in conversation at least twice and NEVER BECAME A REGISTRY LINE. Searched S112: 'nuclear' appears in the registry only inside M-6's title (an item about COAL) and in a research briefing's Tier 3 (an item about NON-nuclear thermal). It had no id, no status, and no place on the andon board, so nothing could report it overdue and it surfaced only because Greg remembered.
+> > SMALL AND MID BLOCKS WHERE UNREAD IS A REAL SIGNAL, and these are where to look first: grid_stack (the stack itself - coal_mwh and nuclear_mwh have zero readers, A-15), weather (six fields, the dominant driver), storage/stor_surprise, nuclear_outages, flow_calendar. A field in a small block was almost certainly built to be consumed.
 > >
-> > THE MECHANISM GAP IT EXPOSES - D30 one level down: OPEN_ITEMS.json enforces tracking at the ITEM level, but a commitment living inside another item's PROSE is invisible to the count. plant_status can say '40 open items'; it cannot say 'and one thing agreed twice that belongs to no item'. The registry catches items that were entered. It cannot catch a decision that was never entered, and that is exactly what happened here. THE DISCIPLINE THAT WAS MISSING: a thing agreed in conversation becomes a registry line IN THAT SESSION, before the session ends - not when someone remembers.
+> > TWO SPECIFIC LEADS ALREADY VISIBLE: ngwu_balance is 70 of 83 unread AND its source is DISCONTINUED (final edition week ending 2026-01-21), so the triage must decide whether to mine what we have before it ages out or drop the block. And three price-derived blocks carry large unread counts (options_surface 49, contract_structure 39, vol_regime 28) where the blind sees them FROZEN at the anchor vintage - so an unread field there may be unread because it is unusable in the blind, which is a different verdict from 'nobody thought of it'.
 > >
-> > SOURCES, all free: NRC publishes daily reactor status (power level per unit, so an outage is visible as it happens) and licensees file refuelling schedules; ISO planned-outage postings carry forward dates - ERCOT NP3-233-CD is 168-hour hourly, PJM frcstd_gen_outages runs 90 days. Pair with A-15: nuclear_mwh is already served and read by ZERO plays, so a forward schedule with no consumer would repeat the same failure in a new field.
+> > GOOD DELEGATION CANDIDATE (Greg named it): the artifact is self-contained, the judgment is per-field, and the work parallelises cleanly by block. Verdict per field should be one of: SHOULD-BE-READ (with the play or condition it belongs in), SUMMARY-ONLY (the block needs a served aggregate, not per-cell reads), CORRECTLY-UNREAD (with the reason), or UNUSABLE-IN-BLIND.
 
