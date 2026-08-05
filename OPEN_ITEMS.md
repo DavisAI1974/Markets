@@ -6,27 +6,26 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 61 |
+| open | 60 |
 | in progress | 1 |
-| done | 5 |
+| done | 6 |
 
-By size: **XS** 9, **S** 27, **M** 21, **L** 5
+By size: **XS** 8, **S** 27, **M** 21, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 12, **REST** 45
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (5)
+## ESSENTIAL (4)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
-| **A-14** | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it. The four missing early-close dates land in g8 and g9, so this is a live wrong-day-class defect on walked groups, not a future risk. XS. |
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
@@ -109,7 +108,6 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 12, **REST** 45
 
 | id | tier | size | status | raised | title | blocked by |
 |---|---|---|---|---|---|---|
-| **A-14** | ESSENTIAL | XS | OPEN | S112 | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it | - |
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
@@ -177,6 +175,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 12, **REST** 45
 | id | size | title |
 |---|---|---|
 | A-1 | S | Wire zero-change and seasonal-naive baselines into blind_score_nonpooled |
+| A-14 | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it |
 | A-22 | M | THE MASTER DATA-POINT REGISTRY - built S112 |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -188,22 +187,6 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 12, **REST** 45
 
 Each item's `why` verbatim - the reasoning, not a summary of it. Ordered by tier, then
 by size, so the cheapest essential work is first.
-
-### [ESSENTIAL] A-14 - flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it
-
-*size XS | OPEN | raised S112*
-
-**Why it is ESSENTIAL:** flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it. The four missing early-close dates land in g8 and g9, so this is a live wrong-day-class defect on walked groups, not a future risk. XS.
-
-**Source:** S112, found while rule-generating the plant calendar
-
-MEASURED: the committed table is 11 partial_session + 5 full_closure + ZERO early_close, while flow_calendar.py's own docstring defines early_close as 'a full business day WITH settlements, shortened hours (day after Thanksgiving, Christmas Eve)'. So the class is specified and unpopulated, and four real CME early-close dates in the table's own span are simply absent: 2025-11-28, 2025-12-24, 2026-11-27, 2026-12-24.
-
-BLAST RADIUS - and my first answer on this was wrong, corrected here. I initially reported the dates as touching no walked group; that was an artifact of searching group_config, which only holds g17 onward. 20251128 and 20251224 DO appear in renders/ng_refine_s95/g8_refined_rt.json and g9_refined_rt.json - both walked blocks. They were served as ordinary sessions when they are shortened ones WITH settlements, which is a different day class from both 'normal' and 'partial_session'. Whether any score moves is unchecked; the day class was wrong either way.
-
-FIX: plant_calendar.py already generates all four from rules. Either have flow_calendar source its holidays from the generator, or add the four entries. The first is better - the table also runs out on 2027-02-15.
-
----
 
 ### [ESSENTIAL] G-1 - Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras)
 
