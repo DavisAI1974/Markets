@@ -1,0 +1,90 @@
+{
+ "batch": 2,
+ "conditions": [
+  {
+   "play_id": "magnitude.catalyst_condition_sort",
+   "conditions": [
+    {
+     "quantity": "day is an EIA storage print day (the play's flagship UP-size condition)",
+     "state_path": "flow_calendar.days_to_next_eia_release",
+     "reference": "absolute",
+     "comparator": "==",
+     "threshold": 0,
+     "units": "days"
+    }
+   ]
+  },
+  {
+   "play_id": "direction.giveback_exhaustion_boundary",
+   "conditions": [
+    {
+     "quantity": "big-print BUY absorption divergence on the flush/peak session",
+     "state_path": "tape_conditions.big_print_b_share",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 0.62,
+     "units": "share"
+    },
+    {
+     "quantity": "the session the big prints are absorbing is itself selling",
+     "state_path": "tape_conditions.session_b_share",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 0.45,
+     "units": "share"
+    }
+   ]
+  },
+  {
+   "play_id": "timing.catalyst_continuity_frontrun",
+   "conditions": [
+    {
+     "quantity": "scheduled EIA storage print is ahead, not today (lower bound of the 1-3 window)",
+     "state_path": "flow_calendar.days_to_next_eia_release",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 1,
+     "units": "days"
+    },
+    {
+     "quantity": "scheduled EIA storage print is within the front-run window (upper bound of the 1-3 window)",
+     "state_path": "flow_calendar.days_to_next_eia_release",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 3,
+     "units": "days"
+    }
+   ]
+  }
+ ],
+ "no_condition": [
+  {
+   "play_id": "magnitude.warm_season_scale_candidate",
+   "why": "NO BAR EXISTS. The trigger is 'when sizing the expected dominant-move magnitude', which is every day, and the call is an explicit instruction NOT to act ('CANDIDATE correction ONLY... Do NOT globally rescale'), deferring the actual sort to magnitude.catalyst_condition_sort. The play's own health field says the same in its own words. The only numbers in the record are five realized per-day forecast errors (guess vs actual), which are OUTCOMES logged after the fact, not a pre-decision quantity that can be read at the open and compared to a threshold. Turning a residual log into a bar would be manufacturing one."
+  },
+  {
+   "play_id": "direction.cross_block_reversion",
+   "why": "QUANTITIES UNSERVED AND NO THRESHOLD WRITTEN. The read is 'the running (roll-clean) path at a cum-EXTREME + a counter-move in the old swing's LAST 1-2 days + last-hour momentum into the seam'. All three are price-path content and none is in the vocabulary: there is no cum-from-anchor, no running-extreme, no last-hour-direction field. vol_regime.n0_prev_net is the prior SESSION's own net, which is a different quantity from 'a counter-move in the old swing's last 1-2 days measured against the running extreme' - naming it would be exactly the nearest-looking-name error. Separately the play states no number at all: 'a stretched swing' and 'cum-extreme' are qualitative descriptors, so even with the field served there would be nothing to write. The play's health field records a fire rate of 0 of 60 days on the current architecture for this reason."
+  },
+  {
+   "play_id": "structure.mature_swing_alternation",
+   "why": "BAR IS REAL BUT NAMES AN UNSERVED QUANTITY. The trigger carries two numeric bars - swing AGE (<=3 young / >=4 mature, in sessions since the swing turned) and a materiality bar of '>= ~$300 beyond the prior extreme close'. Neither operand is served: the vocabulary has no swing-age or chain-age field (squeeze_watch.sessions_since_prompt_expiry counts contract expiries, not swing turns) and no close-vs-running-extreme field. vol_regime.n0_prev_net is a session net, not a close measured against the running extreme, so it cannot carry the $300 bar. The play's own health field records that specialists stand it down day after day in the blind because 'chain age and cum-from-anchor are price content the mask removes'. The s101_6 expiry-day form appended in legacy_notes does reference stranded premium (contract_structure.calendar_front_next_spread), but that arm states no threshold and its own brain_action assigns it to structure.squeeze_unwind, not to this play's trigger."
+  },
+  {
+   "play_id": "level.giveback_origin_shelf",
+   "why": "BAR IS REAL BUT NAMES AN UNSERVED QUANTITY. The bar is a retrace fraction of the swing (>=~75%, softened to >=~70%) measured against the swing's origin/consolidation SHELF PRICE. Both operands are price-path content and neither is served: there is no retrace-fraction, no cum-from-anchor, and no swing-origin price level anywhere in the vocabulary. The shelf is explicitly 'a zone, not a tick', so even the reference level is not a single served number. The play's health field states it directly - refine-only in the modern architecture, and the one time a blind fired it, it fired against a shelf that had already broken."
+  },
+  {
+   "play_id": "structure.chain_polarity_flip",
+   "why": "EVERY ARM'S OPERAND IS UNSERVED, INCLUDING THE ONE THE BAR IS MEASURED AGAINST. The ARM needs swing amplitude as a ratio of 'the season's prior largest swing' (>=~1.5-2x), run length in sessions (>=~9), and a close >=~30% off the intraday extreme. The CONFIRM needs C1 (the counter day's net breaking its condition-class counter band by >=~1.5x), C2 (old-direction leg continuation <=~15% and big legs <=~1/3 alive), C3 (a sequencing rule - 'printed, never front-run' - which carries no bar at all), and C4 (the direction the next print delivers). None of swing amplitude, run length, close-off-extreme, leg-continuation rate or arbiter-print direction is served. vol_regime.n0_prev_net does serve a prior-session net, but C1's threshold is a 1.5x RATIO against a condition-class counter-band table that the play's own health field says 'are not served as a numeric table anywhere - each specialist re-derives them', so there is no reference value to write and any absolute dollar figure would be invented. The play's health field is unambiguous: C1 is 'permanently UNKNOWN - never true, never false' on the architecture that now runs."
+  },
+  {
+   "play_id": "magnitude.crash_regime_bands",
+   "why": "THE NUMBERS ARE OUTPUTS, NOT A CONDITION. Every figure in this play is an expected day-net dollar band (-2400..-2900, -1800..-4000, +800..+1900, and so on) - i.e. the play's emission, not a quantity read at the open and compared to a threshold. Its actual gating condition is 'after a confirmed polarity flip (crash chain / basing)', which is structure.chain_polarity_flip's output and is itself unserved, and the six condition classes ('flip-confirm + chained crash', 'print-liquidity crash', 'exhausted-leg bounce', 'liquidation flush', ...) are day-class descriptors with no served quantity behind them. Writing any of these dollar bands as a state_path threshold would assert that the forecaster can read its own answer at the open."
+  },
+  {
+   "play_id": "structure.failed_rally_tell",
+   "why": "BAR IS REAL BUT NAMES AN UNSERVED QUANTITY. The arming quantity is the prior day's INTRADAY counter-chain spike measured against its close - 'closes >=~60% off the counter extreme' - which is intraday price-path content. The vocabulary carries no intraday peak, close, or round-trip fraction; vol_regime.n0_prev_range and n0_prev_net give a prior session's high-low range and net, from which a signed, polarity-relative peak-to-close round-trip cannot be recovered. The declared FLOW substitute (a phase_signed_flow reversal within the session) is a genuinely different quantity, is not served either (only the session-level tape_conditions.session_signed_flow is, and a session aggregate cannot express an intraday round-trip), and one of the two specialists who used it withdrew it in writing with an explicit 'do not bank this'. The play's own health field records the deeper problem: in blind mode the fade percentage was taken off the forecaster's own GUESSED curve, so 'this play does not have an input; it has a mirror'."
+  }
+ ]
+}
