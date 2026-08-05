@@ -40,6 +40,21 @@ skipped or made up on the fly."*
 4. **GATES CANNOT BE SKIPPED OR SOFTENED.** A failing gate stops the line (jidoka). Routing around
    a gate, weakening a guard to pass, or "just this once" does not exist here.
 
+6. **THERE IS NOTHING LOCAL - AND NO ARTIFACT MAY NAME A DESKTOP PATH (D34).** Greg, S112:
+   *"all of this stuff is going to live in aws or git so there should be no paths from my
+   desktop"*, *"there should be nothing local"*, *"right now everything gets pushed to git.
+   zero to e drive."* The split is the whole rule: **git = code and records, S3 = data, `data/`
+   is disposable** and rebuilt by `restore_substrate.py`. Item 5 governs what the next session
+   must RUN; this item governs every path any artifact NAMES - citations, evidence lists,
+   handoffs, ledgers, decision lines. **INSTANCE:** `BRAIN_AUDIT_PARTIAL_S111.json` carries 140
+   instances and **51 of them, across 11 plays, cite `E:/Markets/research/kalshi/...`**. The
+   files are real and committed; the citations open on exactly one machine, and that partial is
+   the input to the S111-3 backfill, which writes instances into the brain. **ENFORCED:**
+   `brain_audit.py` `_is_machine_path()` hard-fails any instance whose `source_file` carries a
+   drive letter, a leading `/` or a leading `~`. **Do not "fix" such a path by silently
+   re-rooting it** - the first version of that guard did, and it hid the defect instead of
+   reporting it. Rewrite the citation repo-relative.
+
 **WHY THIS FILE EXISTS.** The reasoning files went canonical in S103–S105 (`agents/*.md`, gold
 vault) — but the RUN WRAPPERS never did. `AGENT_RUNBOOK_S95.md` captured the S95-era prompts
 verbatim "so the loop is re-spinnable cold"; the S104/S105 re-architecture (5 specialists, waves,
@@ -48,6 +63,11 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.8 (S112): CHANGE CONTROL item 6 - there is nothing local, and no artifact may name a desktop
+  path (D34). Generalises item 5 from what the next session must RUN to every path an artifact
+  NAMES. Added on Greg's "there should be nothing local... zero to e drive" after 51 of the 140
+  instances in the S111 audit partial were measured citing E:/Markets/... Enforced by
+  brain_audit.py `_is_machine_path()`, 14/14 negative tests. First session under it: S112.
 - v1.7 (S111): CHANGE CONTROL item 5 - nothing the next session must run may live
   outside git. Added after S112 found the S111 drop-in pointing at a harness in session scratchpad
   (NC-2). Enforced by a plant_status.py gate, not by this sentence. First session under it: S112.

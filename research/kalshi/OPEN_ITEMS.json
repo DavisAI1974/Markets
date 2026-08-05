@@ -361,6 +361,16 @@
    "size": "S",
    "why": "THE GAP THE SCRATCHPAD GATE DOES NOT CLOSE. D33's gate catches BROKEN references - scratchpad paths and files not tracked by git. It does NOT catch STALE-BUT-VALID ones: a drop-in can still instruct the next session to run work that was completed last session, because the drop-in RESTATES the work in prose rather than pointing at it. MEASURED INSTANCE, S112: the committed DROP_IN_S112 listed `brain_schema.py sections --write` and the condition_audit false-claim fix as work to do; both were already DONE. S112 caught it by checking, and correctly called the divergence between my pasted box and the committed file a small A-7 instance in itself.\n\nTHE FIX IS A-7 APPLIED TO THE DROP-IN. OPEN_ITEMS.json already carries `status` per item. If the drop-in's work list were GENERATED from the registry - emitting only items whose status is OPEN or IN_PROGRESS, ordered by the agreed rule (irreversible first, then XS, then blockers) - then a DONE item could not appear as a live instruction. Staleness becomes structurally impossible rather than something a careful reader has to notice.\n\nSAME PATTERN AS brain_audit.py's PROMPT GENERATION, which is the working precedent: slots filled by LOOKUP, nobody types a play id. Extend it to the handoff. Suggested shape: `python open_items.py dropin` emits the numbered work list; the drop-in carries that block verbatim; plant_status FAILs if the committed drop-in's list does not match what the registry currently generates - which also closes the pasted-box-versus-committed-file divergence, since both would come from one source.\n\nWHY IT MATTERS BEYOND TIDINESS: the whole S111 disease was documents describing what should happen sitting apart from the machinery that makes it happen. The drop-in is the LAST hand-written instruction set in the loop, and it is the one every session starts from.",
    "blocked_by": null
+  },
+  {
+   "id": "M-9",
+   "title": "Root-level OD/crypto-era scripts still hardcode E:\\Markets paths",
+   "source": "S112 sweep under D34",
+   "first_raised": "S112",
+   "status": "OPEN",
+   "size": "S",
+   "why": "D34 says there is nothing local and no artifact may name a desktop path. The live Kalshi forecaster is CLEAN - measured by git grep across *.py/*.js/*.sh/*.yml. The remaining hardcodes are all root-level OD/crypto-era scripts: _balanced_rerun.py, _canary_fingerprint.py, _canary_fingerprint_v2.py, _build_episode_onsets.py, _build_fingerprint_dataset.py, _build_onset_coeff_lists.py, _build_test_bars.py, each pinning E:\\Markets\\... and some pinning a .claude worktree, which is also a D33 scratchpad path. They are ARCHIVE (the OD toolkit's provenance lives in CLAUDE_ARCHIVE_OD.md) and nothing in the walk runs them, so this is low priority - but it is recorded rather than left to be rediscovered, per D30. Decide per file: re-root to repo-relative, or retire. Historical handoffs and kickoffs are RECORDS and are deliberately out of scope, same scoping as the D33 gate.",
+   "blocked_by": null
   }
  ]
 }

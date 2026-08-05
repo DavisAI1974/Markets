@@ -751,6 +751,23 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 
 ## Branch & data discipline (READ — recurring trap)
 
+- **THERE IS NOTHING LOCAL — GIT OR S3, NOTHING ON THE E DRIVE (Greg, S112, STANDING; D34).**
+  Verbatim: *"all of this stuff is going to live in aws or git so there should be no paths from my
+  desktop"*, *"there should be nothing local"*, *"right now everything gets pushed to git. zero to
+  e drive."* The split is the whole rule: **git = code and records, S3 = data, `data/` is
+  DISPOSABLE** and rebuilt by `restore_substrate.py`. It binds two ways. (1) Nothing the next
+  session must RUN may live outside git — no `~/.claude/projects/`, `workflows/scripts/`, `/tmp`
+  or scratchpad path (D33, gated by `plant_status.py`). (2) **No artifact may NAME a desktop
+  path** — not a citation, evidence list, ledger, handoff or decision line. INSTANCE: the S111
+  audit partial carried 140 instances and **51 of them, across 11 plays, cited
+  `E:/Markets/research/kalshi/...`**; the files were real and committed but the citations opened
+  on exactly one machine, and that file is the input to the S111-3 backfill, which writes
+  instances **into the brain**. Fixed S112 by `brain_audit.py fixpaths` (re-runnable, backed up)
+  → 140/140 clean. **Do not repair such a path by silently re-rooting it** — the first version of
+  that guard did, which hides the defect instead of reporting it. Rewrite it repo-relative.
+  Still carrying hardcoded `E:\Markets\...`: the root-level OD/crypto-era scripts
+  (`_balanced_rerun.py`, `_canary_fingerprint*.py`, `_build_*.py`) — archive, not the live
+  forecaster, and named here so the gap is declared rather than discovered.
 - **THE DROP-IN BOX'S BRANCH IS ALWAYS THE STARTING POINT (Greg, standing, 2026-07-20 S100).** The
   harness assigns each session its own auto-named branch — that branch is NEVER the work. First
   commands of every session: `git fetch origin <drop-in branch> && git checkout -B <drop-in branch>

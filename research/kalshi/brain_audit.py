@@ -26,6 +26,7 @@ USAGE
 """
 
 import argparse
+import re
 import glob as _glob
 import json
 import os
@@ -35,7 +36,150 @@ from collections import Counter, OrderedDict
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRAIN = os.path.join(HERE, "knowledge", "ng_brain.json")
 OUTDIR = os.path.join(HERE, "forecasts", "brain_audit")
+ROOT = os.path.dirname(os.path.dirname(HERE))
 N_BATCHES = 8
+
+
+_BASENAMES = None
+
+
+def _corpus_basenames():
+    """One-time index of every committed corpus file by basename, so a citation that names a real
+    file without its directory still resolves."""
+    global _BASENAMES
+    if _BASENAMES is None:
+        _BASENAMES = {}
+        for d in (os.path.join(HERE, "forecasts"), os.path.join(HERE, "renders", "ng_refine_s95")):
+            for p in _glob.glob(os.path.join(d, "**", "*.json"), recursive=True):
+                _BASENAMES.setdefault(os.path.basename(p), p)
+    return _BASENAMES
+
+
+def _expand_braces(s):
+    """g{17..23}_actual.json and g{18,20,22}_actual.json are how the S111 auditors cited a span.
+    Expand both forms so a range citation is checked as the files it names."""
+    m = re.search(r"\{([^{}]*)\}", s)
+    if not m:
+        return _expand_bare_range(s)
+    body, out = m.group(1), []
+    rng = re.fullmatch(r"(\d+)\.\.(\d+)", body.strip())
+    items = ([str(i) for i in range(int(rng.group(1)), int(rng.group(2)) + 1)] if rng
+             else [x.strip() for x in body.split(",") if x.strip()])
+    for it in items:
+        out.extend(_expand_braces(s[:m.start()] + it + s[m.end():]))
+    return out
+
+
+def _expand_bare_range(s):
+    """The other span shorthand, without braces: g17..g23_mbo_evidence.json,
+    grp6..grp23_state.json. Same intent, different keyboard."""
+    m = re.search(r"([A-Za-z]+)(\d+)\.\.(?:\1)?(\d+)", s)
+    if not m:
+        return [s]
+    pre, lo, hi = m.group(1), int(m.group(2)), int(m.group(3))
+    if hi < lo or hi - lo > 100:
+        return [s]
+    return [s[:m.start()] + pre + str(i) + s[m.end():] for i in range(lo, hi + 1)]
+
+
+def _split_citation(sf):
+    """Split a source_file into the files it names. Splits on + ; and commas, but NEVER on a
+    comma inside braces - g{18,20,22}_actual.json is ONE citation, and splitting it produced a
+    false failure on real S111 instances before this was fixed."""
+    parts, buf, depth = [], "", 0
+    for ch in str(sf):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth = max(0, depth - 1)
+        if depth == 0 and (ch in "+;," ):
+            parts.append(buf); buf = ""
+            continue
+        buf += ch
+    parts.append(buf)
+    # "grp22_C_20260623.json, _20260630.json" - a bare _suffix continues the previous prefix.
+    out, prev = [], None
+    for p in parts:
+        p = p.strip()
+        if not p:
+            continue
+        if p.startswith("_") and prev:
+            # A bare _suffix continues the previous citation: "grp22_C_20260623.json, _20260630.json"
+            # inherits grp22_C, while "grp23_B_20260706.json, _C_20260707.json" inherits only grp23.
+            # Rather than special-case each shape, try progressively shorter prefixes of the
+            # previous stem and keep the first that actually resolves. Special-casing the first
+            # shape rebuilt grp22_20260630.json - a file that does not exist - which would have
+            # read downstream as a fabricated citation.
+            head = prev.rsplit("/", 1)
+            d_, fname = (head[0] + "/", head[1]) if len(head) > 1 else ("", head[0])
+            toks = re.sub(r"\.json$", "", fname).split("_")
+            suffix = p.lstrip("_")
+            cand = None
+            for k in range(len(toks), 0, -1):
+                trial = d_ + "_".join(toks[:k]) + "_" + suffix
+                if _resolves(trial):
+                    cand = trial
+                    break
+            p = cand or (d_ + toks[0] + "_" + suffix)
+        out.append(p)
+        prev = p
+    return out
+
+
+def _is_machine_path(tok):
+    """A drive letter or an absolute filesystem path is a DESKTOP path. Greg, S112: "all of this
+    stuff is going to live in aws or git so there should be no paths from my desktop." Same rule
+    as D33 and for the same reason - a citation nobody else can open is a broken citation, and
+    silently re-rooting it would hide the defect instead of fixing it. The S111 auditors emitted
+    E:/Markets/... from Greg's box; those citations need rewriting repo-relative."""
+    t = tok.strip().strip("`'\"")
+    return bool(re.match(r"^[A-Za-z]:[/\\]", t)) or t.startswith("/") or t.startswith("~")
+
+
+def _resolves(tok):
+    """One path token -> does it name anything real in this repo, cited portably?"""
+    tok = tok.strip().strip("`'\"").rstrip(".,;")
+    if not tok or _is_machine_path(tok):
+        return False
+    for cand in _expand_braces(tok):
+        for base in (ROOT, HERE):
+            full = os.path.join(base, cand)
+            if os.path.exists(full):          # file OR directory
+                return True
+            if _glob.glob(full):              # a wildcard that matches something
+                return True
+        if os.path.basename(cand) in _corpus_basenames():
+            return True
+    return False
+
+
+def _traces(source_file):
+    """Does this instance's source_file RESOLVE to real evidence in this repo?
+
+    THE TRACEABILITY WALL (D32 s3): an instance counts only if it traces to a posterior or an
+    actual - a date, a number, A FILE. Checking the field is merely PRESENT is not the same as
+    checking it RESOLVES, and presence-without-correctness is this desk's signature defect
+    (holes #7, #8 and #9 were all well-formed and wrong). Measured before this existed: a batch
+    citing `forecasts/grp22_C_NEVER_EXISTED.json` validated PASS with zero errors.
+
+    Calibrated against the 140 real instances in BRAIN_AUDIT_PARTIAL_S111.json rather than
+    written from an idea of what a citation looks like - and the first draft, which required one
+    literal path, would have failed 93 of those 140 legitimately-cited instances. A guard that
+    always shows red is one people learn to ignore (D33's own lesson), so the shorthand the
+    auditors actually use is handled: multiple files joined by + ; or , a trailing annotation,
+    a brace range, a bare X..Y range, a glob, and a bare directory.
+
+    What is NOT handled, deliberately: a desktop path. Greg, S112: "all of this stuff is going to
+    live in aws or git so there should be no paths from my desktop." Everything must be cited
+    repo-relative, so E:/Markets/... FAILS rather than being silently re-rooted."""
+    parts = _split_citation(source_file)
+    if not parts:
+        return False
+    for p in parts:
+        # a trailing prose annotation is allowed: "…/grp23_state_audit.json finding f4"
+        if not any(_resolves(tok) for tok in (p, p.split()[0])):
+            return False
+    return True
 
 SUPPORT_CLASSES = ["MECHANISM_VERIFIED", "NOVEL_N1", "OUTCOME_CREDITED", "ASSERTED",
                    "NOT_A_PLAY", "UNCLEAR"]
@@ -240,10 +384,34 @@ def cmd_validate(a):
             errs.append("%s bad d24_state %s" % (pid, r.get("d24_state")))
         if r.get("d24_state") == "found" and not r.get("instances"):
             errs.append("%s says d24_state=found but lists no instances" % pid)
+        # The mirror check. searched_none and not_searched are REAL RESULTS (D24 states b and c),
+        # so a record claiming either while listing instances is incoherent in the direction that
+        # would silently under-count the corpus.
+        if r.get("d24_state") in ("searched_none", "not_searched") and r.get("instances"):
+            errs.append("%s says d24_state=%s but lists %d instances"
+                        % (pid, r.get("d24_state"), len(r.get("instances"))))
         for ins in r.get("instances", []):
             if not ins.get("source_file"):
                 errs.append("%s instance %s has no source_file (prose citing prose does not count)"
                             % (pid, ins.get("date")))
+            elif any(_is_machine_path(t) for t in _split_citation(ins["source_file"])):
+                # Greg, S112: everything lives in AWS or git, so a desktop path is a defect even
+                # when the file it names is real. Same rule as D33, same reason.
+                errs.append("%s instance %s: DESKTOP PATH - cite repo-relative, everything lives "
+                            "in git or S3: %s" % (pid, ins.get("date"), ins["source_file"]))
+            elif not _traces(ins["source_file"]):
+                # THE TRACEABILITY WALL. D32 s3: an instance counts only if it traces to a posterior
+                # or an actual - a date, a number, A FILE. Checking the field is PRESENT is not the
+                # same as checking it RESOLVES, and presence-without-correctness is this desk's
+                # signature defect (holes #7, #8, #9 were all well-formed and wrong). Measured
+                # before this check existed: a batch citing a grp22 posterior that never existed
+                # validated PASS with 0 errors. The audit's whole output is instances, and S111-3
+                # writes them INTO the brain, so an untraceable one becomes permanent evidence.
+                errs.append("%s instance %s: source_file does not exist: %s"
+                            % (pid, ins.get("date"), ins["source_file"]))
+        if pid in ids and expected is not None and pid not in expected:
+            errs.append("%s is not in this batch (audited by another batch - possible double count)"
+                        % pid)
     if expected is not None:
         missing = expected - seen
         if missing:
@@ -285,6 +453,164 @@ def cmd_collect(a):
     return 0
 
 
+def cmd_fixpaths(a):
+    """Rewrite desktop paths in an audit file to repo-relative (D34). Dry-run by default; --write
+    backs up first. Re-runnable and idempotent, per S111-3's rule that these tools must survive the
+    session that wrote them - a hand edit of 51 citations is exactly what decays."""
+    path = a.path
+    with open(path, encoding="utf-8") as f:
+        raw = f.read()
+    d = json.loads(raw)
+
+    changed, unresolved = [], []
+
+    def fix_token(tok):
+        t = tok.strip()
+        if not _is_machine_path(t):
+            return tok, False
+        m = re.search(r"(research[/\\]kalshi[/\\].*)", t)
+        if not m:
+            return tok, False
+        new = m.group(1).replace("\\", "/")
+        return new, True
+
+    for rec in d.get("audits", []):
+        for ins in rec.get("instances", []):
+            sf = ins.get("source_file")
+            if not sf or not any(_is_machine_path(t) for t in _split_citation(sf)):
+                continue
+            parts, any_fix = [], False
+            for p in _split_citation(sf):
+                np_, did = fix_token(p)
+                any_fix = any_fix or did
+                parts.append(np_)
+            new_sf = " + ".join(parts)
+            if not any_fix:
+                continue
+            if not _traces(new_sf):
+                unresolved.append((rec["play_id"], sf, new_sf))
+            changed.append((rec["play_id"], sf, new_sf))
+            if a.write:
+                ins["source_file"] = new_sf
+
+    print("%s: %d citations carry a desktop path" % (os.path.relpath(path, ROOT), len(changed)))
+    for pid, old, new in changed[:6]:
+        print("   %s\n     - %s\n     + %s" % (pid, old[:96], new[:96]))
+    if len(changed) > 6:
+        print("   ... and %d more" % (len(changed) - 6))
+    if unresolved:
+        # A rewrite that does not resolve is worse than the original: it looks portable and is not.
+        print("\nREFUSED - %d rewritten citations do not resolve; fix by hand:" % len(unresolved))
+        for pid, old, new in unresolved:
+            print("   %s: %s" % (pid, new[:110]))
+        return 1
+    if not a.write:
+        print("\ndry run - nothing written. Re-run with --write to apply.")
+        return 0
+    if changed:
+        bak = path.replace(".json", "_predesktoppath_backup.json")
+        if not os.path.exists(bak):
+            with open(bak, "w", encoding="utf-8") as f:
+                f.write(raw)
+            print("\nbackup: %s" % os.path.relpath(bak, ROOT))
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(d, f, indent=1, ensure_ascii=False)
+        print("rewrote %d citations in %s" % (len(changed), os.path.relpath(path, ROOT)))
+    return 0
+
+
+def cmd_selftest(a):
+    """Every guard must be SHOWN firing on its own defect (D11). Uses a temp file that is deleted
+    on exit - nothing is written to the repo and nothing is left outside git (D33)."""
+    import tempfile
+    _, ids = load_plays()
+    b0 = batches(ids)[0]
+    good_file = "research/kalshi/knowledge/ng_brain.json"   # tracked, so it resolves
+
+    def inst(path):
+        return {"date": "20260701", "group": "g22", "source_file": path,
+                "what_the_state_said": "x", "what_the_day_did": "x",
+                "supports_or_contradicts": "supports"}
+
+    def rec(pid, insts=None, **over):
+        r = {"play_id": pid, "support_class": "ASSERTED", "the_argument": "x",
+             "could_evidence_have_come_out_otherwise": "x",
+             "d24_state": "found" if insts else "not_searched", "instances": insts or [],
+             "condition_can_change_state": "x", "falsifier": "x",
+             "recommendation": "keep", "confidence": "low"}
+        r.update(over)
+        return r
+
+    def doc(audits):
+        return {"batch_index": 0, "batch_observations": "x", "audits": audits}
+
+    cases = []
+    cases.append(("positive control: well-formed batch validates",
+                  doc([rec(p) for p in b0]), None))
+    cases.append(("THE TRACEABILITY WALL: fabricated source_file is caught",
+                  doc([rec(b0[0], [inst("research/kalshi/forecasts/grp22_C_NEVER_EXISTED.json")])]
+                      + [rec(p) for p in b0[1:]]), "does not exist"))
+    cases.append(("real source_file still passes (guard is not blanket-rejecting)",
+                  doc([rec(b0[0], [inst(good_file)])] + [rec(p) for p in b0[1:]]), None))
+    cases.append(("DESKTOP PATH is caught even though the file it names is real",
+                  doc([rec(b0[0], [inst("E:/Markets/" + good_file)])] + [rec(p) for p in b0[1:]]),
+                  "DESKTOP PATH"))
+    cases.append(("multi-file citation joined by + passes when every part resolves",
+                  doc([rec(b0[0], [inst(good_file + " + research/kalshi/brain_audit.py")])]
+                      + [rec(p) for p in b0[1:]]), None))
+    cases.append(("brace list is ONE citation, not split on its commas",
+                  doc([rec(b0[0], [inst("renders/ng_refine_s95/g{18,20,22}_actual.json")])]
+                      + [rec(p) for p in b0[1:]]), None))
+    cases.append(("bare range g17..g23 resolves",
+                  doc([rec(b0[0], [inst("renders/ng_refine_s95/g17..g23_actual.json")])]
+                      + [rec(p) for p in b0[1:]]), None))
+    cases.append(("d24 'searched_none' while listing instances is caught",
+                  doc([rec(b0[0], [inst(good_file)], d24_state="searched_none")]
+                      + [rec(p) for p in b0[1:]]), "but lists 1 instances"))
+    cases.append(("d24 'found' with zero instances is caught",
+                  doc([rec(b0[0], d24_state="found")] + [rec(p) for p in b0[1:]]),
+                  "lists no instances"))
+    other = [p for p in ids if p not in b0][0]
+    cases.append(("play borrowed from another batch is caught",
+                  doc([rec(p) for p in b0] + [rec(other)]), "not in this batch"))
+    cases.append(("dropped play is caught",
+                  doc([rec(p) for p in b0[:-1]]), "batch incomplete"))
+    cases.append(("invented play id is caught",
+                  doc([rec(p) for p in b0] + [rec("weather.invented_play")]), "unknown play_id"))
+    cases.append(("missing required field is caught",
+                  doc([{k: v for k, v in rec(b0[0]).items() if k != "falsifier"}]
+                      + [rec(p) for p in b0[1:]]), "missing falsifier"))
+    cases.append(("off-enum support_class is caught",
+                  doc([rec(b0[0], support_class="PROBABLY_FINE")] + [rec(p) for p in b0[1:]]),
+                  "bad support_class"))
+
+    class _A:
+        pass
+
+    ok_all = []
+    with tempfile.TemporaryDirectory() as td:
+        path = os.path.join(td, "nt.json")
+        for name, d, expect in cases:
+            json.dump(d, open(path, "w", encoding="utf-8"))
+            arg = _A(); arg.path = path
+            import io, contextlib
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = cmd_validate(arg)
+            out = buf.getvalue()
+            if expect is None:
+                passed = (rc == 0)
+                why = "" if passed else "  (expected clean; got: %s)" % out.strip()[:130]
+            else:
+                passed = (rc == 1 and expect in out)
+                why = "" if passed else "  (guard did not fire; rc=%d out=%s)" % (rc, out.strip()[:130])
+            ok_all.append(passed)
+            print("  %-4s | %s%s" % ("PASS" if passed else "FAIL", name, why))
+
+    print("\n  %d/%d negative tests passed" % (sum(ok_all), len(ok_all)))
+    return 0 if all(ok_all) else 1
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -293,6 +619,9 @@ def main():
     p = sub.add_parser("validate"); p.add_argument("path")
     p = sub.add_parser("collect"); p.add_argument("paths", nargs="+"); p.add_argument("--out")
     sub.add_parser("rubric")
+    sub.add_parser("selftest")
+    p = sub.add_parser("fixpaths"); p.add_argument("path"); p.add_argument("--write",
+                                                                          action="store_true")
     a = ap.parse_args()
     if a.cmd == "prompts":
         return cmd_prompts(a)
@@ -300,6 +629,10 @@ def main():
         return cmd_validate(a)
     if a.cmd == "collect":
         return cmd_collect(a)
+    if a.cmd == "selftest":
+        return cmd_selftest(a)
+    if a.cmd == "fixpaths":
+        return cmd_fixpaths(a)
     print(RUBRIC)
     return 0
 

@@ -507,7 +507,7 @@
     {
      "date": "2025-09-08 to 2026-01-16 (73 days)",
      "group": "pre-G11 era, spans G3-G10",
-     "source_file": "research/kalshi/renders/ng_refine_s95/fingerprints.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/fingerprints.json",
      "what_the_state_said": "|dip_imb_level| >= 0.15 on 1,537 legs",
      "what_the_day_did": "sign(dip) matched leg dir on 87.6% of legs",
      "supports_or_contradicts": "supports"
@@ -515,7 +515,7 @@
     {
      "date": "2026-01-19 to 2026-02-27 (35 days)",
      "group": "G11-G13 era",
-     "source_file": "research/kalshi/renders/ng_refine_s95/fingerprints.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/fingerprints.json",
      "what_the_state_said": "|dip_imb_level| >= 0.15 on 2,160 legs",
      "what_the_day_did": "sign(dip) matched leg dir on 51.5% - a coin flip. Jan19-31 52.9%, Feb 49.9%. Excluding the three .v.0 whipsaw days (0122/0123/0125 named in PASS2_CONTINUOUS_SERIES_NOTES.md) it is still 51.9%, so the collapse is NOT the instrument whipsaw",
      "supports_or_contradicts": "contradicts"
@@ -523,7 +523,7 @@
     {
      "date": "2025-10-20",
      "group": "G5",
-     "source_file": "research/kalshi/renders/ng_refine_s95/fingerprints.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/fingerprints.json",
      "what_the_state_said": "the play's own caveat names 1020 as the weak day (7/12)",
      "what_the_day_did": "reproduces exactly at 10/14 on my |dip|>=0.15 slice - the play's self-declared failure is honest and traceable",
      "supports_or_contradicts": "supports"
@@ -531,7 +531,7 @@
     {
      "date": "2026-04-13 to 2026-07-17 (51 same-day joins)",
      "group": "g18-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/grp{18..23}_state.json joined to g{18..23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{18..23}_state.json joined to g{18..23}_actual.json",
      "what_the_state_said": "session_signed_flow (the only flow channel served in the modern era)",
      "what_the_day_did": "sign(session flow) == sign(session net) on 20/51 = 39%, i.e. contrarian at session scale. Different window and scale from the play's 300s leg read, so this scopes rather than refutes - but it means the play must never be generalised upward to the session aggregate",
      "supports_or_contradicts": "ambiguous"
@@ -539,7 +539,7 @@
     {
      "date": "20260625, 20260707, 20260710, 20260713, 20260714, 20260715",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/ + research/kalshi/forecasts/g23_perday/",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
      "what_the_state_said": "dip_imb_level is not served in any modern decision state (grepped grp20-grp23_state.json: absent)",
      "what_the_day_did": "stood down 6/6 as needs_intraday_reveal. Zero modern forward instances; the play has produced only stand-down text since G17",
      "supports_or_contradicts": "ambiguous"
@@ -560,7 +560,7 @@
     {
      "date": "20260413 to 20260713 (14 Mondays, 70 days total)",
      "group": "g17-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
      "what_the_state_said": "Monday = a BIG mover, size UP",
      "what_the_day_did": "Monday mean |day_move| 594 / median 615. THURSDAY is the big day class at 850 / 725. Monday ranks 2nd of 5 on both, ahead of Wed 526, Tue 486, Fri 435. The size-up prior is not wrong so much as misattributed - it belongs to Thursday",
      "supports_or_contradicts": "contradicts"
@@ -568,7 +568,7 @@
     {
      "date": "11 Mondays with |gap| >= 350",
      "group": "g17-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
      "what_the_state_said": "material gap -> FADE or EXTEND per swing state",
      "what_the_day_did": "session net opposed the gap on 6, extended it on 5. The raw gap carries zero information; 100% of the play's content sits in the unmeasured swing-state selector",
      "supports_or_contradicts": "ambiguous"
@@ -576,7 +576,7 @@
     {
      "date": "20260427, 20260525, 20260629",
      "group": "g18, g20, g22",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{18,20,22}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{18,20,22}_actual.json",
      "what_the_state_said": "no material gap -> carry FRIDAY's side",
      "what_the_day_did": "0/3. 0424 Fri -380 -> 0427 Mon +370; 0522 Fri -990 -> 0525 Mon +30 net +270; 0626 Fri +230 -> 0629 Mon -1110. The carry arm is 0-for-3 in the modern corpus",
      "supports_or_contradicts": "contradicts"
@@ -584,7 +584,7 @@
     {
      "date": "20260622, 20260629, 20260706, 20260713",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/grp22_B_*.json + research/kalshi/forecasts/g23_perday/grp23_B_*.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_B_*.json, E:/Markets/research/kalshi/forecasts/g23_perday/grp23_B_*.json",
      "what_the_state_said": "fired on all four modern Mondays: 0622 size-down exception overruled by the bigness prior (-420), 0629 EXTEND-at-a-turn (+325), 0706 carry-Friday (+500), 0713 EXTEND/ratify (+550)",
      "what_the_day_did": "actual nets -560, -1160, +680, -260. Right sign 2 of 4; both misses were the EXTEND arm and both were large (0629 off by 1,485; 0713 off by 810)",
      "supports_or_contradicts": "contradicts"
@@ -592,7 +592,7 @@
     {
      "date": "20260309",
      "group": "g14",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g14_rt.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g14_rt.json",
      "what_the_state_said": "s102_1 unowned-premium full-fade WATCH n=1 predicts band -2950..-3150",
      "what_the_day_did": "net -3020, inside the band. The number traces exactly; but the rule was written after the day and is self-declared n=1 with forward_evidence NONE",
      "supports_or_contradicts": "ambiguous"
@@ -613,7 +613,7 @@
     {
      "date": "20260401, 20260402, 20260409",
      "group": "g16",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g16_rt.json + grp16_state.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g16_rt.json + grp16_state.json",
      "what_the_state_said": "0401 session_b_share 0.463 (the play quotes 0.463), pre-print session, print priced at +34",
      "what_the_day_did": "0401 net -590 (play says -600), 0402 net -150 / day move -130 (play says -130), 0409 net -610 (play says -610). All three trace to the committed price file",
      "supports_or_contradicts": "supports"
@@ -621,7 +621,7 @@
     {
      "date": "20260701",
      "group": "g22",
-     "source_file": "research/kalshi/forecasts/g22_perday/grp22_C_20260701.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_C_20260701.json",
      "what_the_state_said": "fired as the only genuine directional front-run in the modern corpus: Wed pre-print under a coherent sell tape, days_to_next_eia_release=1, cited the G16 0401 configuration as exact",
      "what_the_day_did": "guessed -380, actual net -500. Right sign, err 120",
      "supports_or_contradicts": "supports"
@@ -629,7 +629,7 @@
     {
      "date": "20260625, 20260702, 20260714",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/ + research/kalshi/forecasts/g23_perday/",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
      "what_the_state_said": "three further fires, all explicitly non-directional: 0625 WAIT-form (licenses a post-print window), 0702 and 0714 SHAPE ONLY",
      "what_the_day_did": "guesses -110/+200/+280 against actuals -60/0/+200. Small errors, but three of the four modern fires do not exercise the play's direction claim at all",
      "supports_or_contradicts": "ambiguous"
@@ -637,7 +637,7 @@
     {
      "date": "20260624 vs 20260630",
      "group": "g22",
-     "source_file": "research/kalshi/forecasts/g22_perday/grp22_C_20260624.json + grp22_C_20260630.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_C_20260624.json, grp22_C_20260630.json",
      "what_the_state_said": "THE SAME specialist read the ramp limb two opposite ways in the same block on the same series: on 0624 'run_delta_cdd -0.011 and run_delta_hdd +0.034 are inert; the ramp is not updating' (stood down); on 0630 'a live continuous CDD ramp IS present' (read off the rising forecast_gw_cdd LEVEL 14.8 -> 16.2 -> 17.2)",
      "what_the_day_did": "0624 +800, 0630 +780. The read has no served definition, so its state depends on which quantity the reader picks",
      "supports_or_contradicts": "contradicts"
@@ -645,7 +645,7 @@
     {
      "date": "g21-g23, 30 sessions",
      "group": "g21, g22, g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/grp{21,22,23}_state.json weather_forecast.forecast_run_delta",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{21,22,23}_state.json weather_forecast.forecast_run_delta",
      "what_the_state_said": "the served run-over-run delta - the natural numeric reading of 'is a ramp live'",
      "what_the_day_did": "max |0.126| across 30 summer sessions, with exact repeats (0.034 on 0622/0623/0624; 0.000 on 0713/0714). Against g18-g19 where it reaches 0.846/0.747/-0.632. On the served field alone the limb is near-inert in the summer blocks",
      "supports_or_contradicts": "contradicts"
@@ -666,7 +666,7 @@
     {
      "date": "20260201, 20260202",
      "group": "g12",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g12_rt.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g12_rt.json",
      "what_the_state_said": "'-11850 of a ~+12600 leg in two sessions' and 'retraced to 3.159 +0.072 and STOPPED'",
      "what_the_day_did": "BOTH REPRODUCE EXACTLY. Anchor 4.416 (0130); 0201 net -510, 0202 net -4260, cum_from_anchor_close -11,850 on 0202. 0202 close 3.231 = 3.159 + 0.072 to the tick",
      "supports_or_contradicts": "supports"
@@ -674,7 +674,7 @@
     {
      "date": "20260202 to 20260213 (11 sessions)",
      "group": "g12",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g12_rt.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g12_rt.json",
      "what_the_state_said": "'G12 based 3.08-3.23 for nine sessions'",
      "what_the_day_did": "DOES NOT REPRODUCE. Post-unwind closes run 3.084 to 3.521; FIVE sessions closed above the stated 3.23 top (3.231, 3.344, 3.470, 3.521, 3.405), the highest by 0.291 (~$2,900 in day-move terms). The basing band as written is wrong on the upside",
      "supports_or_contradicts": "contradicts"
@@ -682,7 +682,7 @@
     {
      "date": "20260329",
      "group": "g16",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g16_rt.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g16_rt.json",
      "what_the_state_said": "g16_forward_evidence: a tiny-premium dead-sponsor pop gives back INTRADAY (session -990) with a ~flat overnight gap (+200), not as a -E structural gap",
      "what_the_day_did": "net -990, gap +200. Traces exactly. This is a genuine non-firing forward observation",
      "supports_or_contradicts": "supports"
@@ -690,7 +690,7 @@
     {
      "date": "20260623, 20260624, 20260625, 20260626, 20260702, 20260703, 20260707, 20260708, 20260709, 20260710, 20260713, 20260714, 20260716",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/ + research/kalshi/forecasts/g23_perday/",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
      "what_the_state_said": "squeeze_watch unwind_watch false throughout; calendar dte limb live-false from 0702 onward; spread limb price-masked",
      "what_the_day_did": "STOOD DOWN 13 of 13, and correctly - the configuration never arose in either group. 0626 gave the cleanest decline: the expiring front traded BELOW the next (-0.043) and cheapening (chg_3d -0.021), the inverse of a squeeze. searched_none is the honest D24 result here",
      "supports_or_contradicts": "ambiguous"
@@ -711,7 +711,7 @@
     {
      "date": "20260622, 20260629, 20260706, 20260713",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/grp22_B_20260622.json + grp22_B_20260629.json + research/kalshi/forecasts/g23_perday/grp23_B_20260706.json + grp23_B_20260713.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_B_20260622.json, grp22_B_20260629.json, E:/Markets/research/kalshi/forecasts/g23_perday/grp23_B_20260706.json, grp23_B_20260713.json",
      "what_the_state_said": "firehose_present.l1_book is FALSE on every modern Monday stub; no 06:00 L1-10 object exists in the served state (grepped grp20-grp23_state.json for imb10/imb_R: absent)",
      "what_the_day_did": "STOOD DOWN 4 of 4. B-0622 additionally noted that the 0619 book it could see is a Friday object and the play itself calls the reopen/overnight book uninformative at 8/14, so it carried the read at explicitly zero weight in the number",
      "supports_or_contradicts": "ambiguous"
@@ -719,7 +719,7 @@
     {
      "date": "20251006, 20251020, 20251027, 20251201, 20260202, 20260309, 20251222",
      "group": "pre-G17 (S102 derivation set)",
-     "source_file": "research/kalshi/S102_MERGE_PROPOSAL.md (prose only)",
+     "source_file": "E:/Markets/research/kalshi/S102_MERGE_PROPOSAL.md (prose only)",
      "what_the_state_said": "6 of 7 qualifying Mondays leaned correctly against the heavy deep side; 1222 the expensive miss",
      "what_the_day_did": "UNVERIFIABLE. No committed artifact carries imb10 for these dates. The one cross-check available is the play's own admission that on 1201 - the single Monday where R3 mis-phased - the book read was correct, which is a one-day counter-anchor and not a measurement",
      "supports_or_contradicts": "ambiguous"
@@ -740,7 +740,7 @@
     {
      "date": "40 sessions",
      "group": "g20, g21, g22, g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{20..23}_exit_states.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{20..23}_exit_states.json",
      "what_the_state_said": "base rate of last_hour_dir: -1 on 25, +1 on 12, 0 on 3",
      "what_the_day_did": "the gate's arming condition is TRUE by default 63% of the time. Any signature keyed on 'the prior exited down' inherits that rate for free",
      "supports_or_contradicts": "contradicts"
@@ -748,7 +748,7 @@
     {
      "date": "10 reversal-up days",
      "group": "g20, g21, g22, g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{20..23}_exit_states.json + g{20..23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{20..23}_exit_states.json + g{20..23}_actual.json",
      "what_the_state_said": "'EVERY clean mid-week reversal-up day had a prior session that exited DOWN'",
      "what_the_day_did": "7 of 10 had prior lhd < 0, against a 61% base rate across all consecutive pairs. Lift of 9 points on n=10 - nothing. Restricted to Tue-Thu it is 5 of 7 (71% vs 63% base). Two mid-week reversal-up days had an ALIGNED prior exit: 20260630 (prior lhd +1, delivered +790) and 20260527 (prior lhd +1, +620)",
      "supports_or_contradicts": "contradicts"
@@ -756,7 +756,7 @@
     {
      "date": "20260526 -> 20260527",
      "group": "g20",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g20_exit_states.json + g20_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g20_exit_states.json + g20_actual.json",
      "what_the_state_said": "evidence_partial_uncap: prior exited lhd +1, lhf +1, low at 14:29, close_off_low_frac 0.17; un-cap 0.80 -> 0.90 giving 520 -> 580",
      "what_the_day_did": "ALL FIVE NUMBERS REPRODUCE EXACTLY from the exit-state file, and 0527 delivered net +620 / day move +610. But this is a refine-era calibration fitted to one day with the answer visible, so it is an exact trace of an outcome-credited adjustment, not independent support",
      "supports_or_contradicts": "ambiguous"
@@ -764,7 +764,7 @@
     {
      "date": "20260603, 20260609, 20260618, 20260624, 20260714",
      "group": "g20-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{20..23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{20..23}_actual.json",
      "what_the_state_said": "opposing-exit reversal confirmed base = retrace-to-shelf, ~+1200..+1600",
      "what_the_day_did": "delivered +760, +70, +530, +790, +200. Median ~530, NONE inside the stated band. The magnitude band is a winter/spring artefact and does not transfer to the summer regime",
      "supports_or_contradicts": "contradicts"
@@ -772,7 +772,7 @@
     {
      "date": "20260624, 20260630, 20260707, 20260708, 20260715",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/ + research/kalshi/forecasts/g23_perday/",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
      "what_the_state_said": "prior last_hour_dir is price-derived and is the blind's one deliberate mask",
      "what_the_day_did": "STOOD DOWN 5 of 5. The gate is refine-only in practice despite being written as an open-time sizing rule",
      "supports_or_contradicts": "ambiguous"
@@ -793,7 +793,7 @@
     {
      "date": "20260313",
      "group": "g14",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g14_rt.json + g14_score.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g14_rt.json + g14_score.json",
      "what_the_state_said": "the false-negative case: called an up-grind, missed a real position-squaring trim",
      "what_the_day_did": "guess_net +300, actual net -1030 (the play says the tape broke -1010; day move -1050 with gap +20). Traces exactly. Entering cum was ~+3780 - genuinely stretched",
      "supports_or_contradicts": "supports"
@@ -801,7 +801,7 @@
     {
      "date": "20260327",
      "group": "g15",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g15_rt.json + g15_score.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g15_rt.json + g15_score.json",
      "what_the_state_said": "the false-positive case: crest-trim fired DOWN on a based chain that was expiry covering UP",
      "what_the_day_did": "guess_net -350, actual net +1160 / day move +1150 (play says +1150). Traces exactly. cum_from_anchor_close -600 - not stretched",
      "supports_or_contradicts": "supports"
@@ -809,7 +809,7 @@
     {
      "date": "20260626, 20260703, 20260710",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/grp22_E_20260626.json + grp22_A_20260703.json + research/kalshi/forecasts/g23_perday/grp23_E_20260710.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/grp22_E_20260626.json, grp22_A_20260703.json, E:/Markets/research/kalshi/forecasts/g23_perday/grp23_E_20260710.json",
      "what_the_state_said": "all three modern invocations ROUTED CREST-TRIM OUT: 0626 'chain BASED, not stretched', 0703 'the chain is DOWN and the driver realizing is the COUNTER-chain heat', 0710 'chain BASED not stretched - the 0327-class false positive avoided'",
      "what_the_day_did": "0626 +230, 0703 +410, 0710 -660. The discriminator has never once ROUTED A DAY IN. Its only demonstrated behaviour in three groups is to suppress",
      "supports_or_contradicts": "ambiguous"
@@ -817,7 +817,7 @@
     {
      "date": "20260710",
      "group": "g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g23_actual.json + forecasts/g23_perday/grp23_E_20260710.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g23_actual.json + forecasts/g23_perday/grp23_E_20260710.json",
      "what_the_state_said": "routed OUT as 'chain BASED not stretched'",
      "what_the_day_did": "entered at cum -2310, the running block extreme, after a -2050 Thursday, and closed -660 taking cum to -2970. Another specialist could have called that stretched with equal warrant. The day happened to extend, so the routing was right - by an unfalsifiable reason",
      "supports_or_contradicts": "contradicts"
@@ -825,7 +825,7 @@
     {
      "date": "14 Fridays, 8 at a running cum extreme",
      "group": "g17-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_actual.json",
      "what_the_state_said": "crest-trim candidates require a stretched chain near a cum-extreme",
      "what_the_day_did": "8 Fridays entered at a running cum extreme; 3 trimmed (0529 -160, 0605 -1340, 0612 +620) and 5 extended. Candidates plainly existed in G17-G23, so 'no mis-fire' means the play was never exercised, not that it worked. Suggestive gradient worth a real test: the two deepest stretches (+3200 and +2550) both trimmed",
      "supports_or_contradicts": "ambiguous"
@@ -846,7 +846,7 @@
     {
      "date": "20260515, 20260519, 20260520",
      "group": "g19",
-     "source_file": "research/kalshi/forecasts/grp19.json + grp19_mbo_refined.json + renders/ng_refine_s95/g19_actual.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp19.json + grp19_mbo_refined.json + renders/ng_refine_s95/g19_actual.json",
      "what_the_state_said": "exemplars: '0520 seam: blind +200 -> refined -950 (actual -1050)'; '0519 held UP despite age 7'",
      "what_the_day_did": "ALL REPRODUCE EXACTLY: 0520 blind +200, refined -950, actual -1050; 0519 blind +150, refined +750, actual +840; 0515 blind +90, actual +320. The numbers are honest - but the refined values are the play's own output with the curve visible",
      "supports_or_contradicts": "ambiguous"
@@ -854,7 +854,7 @@
     {
      "date": "20260519 vs 20260520",
      "group": "g19",
-     "source_file": "research/kalshi/knowledge/ng_brain.json (internal) + cross-checked against renders/ng_refine_s95/g19_actual.json",
+     "source_file": "E:/Markets/research/kalshi/knowledge/ng_brain.json (internal), cross-checked against renders/ng_refine_s95/g19_actual.json",
      "what_the_state_said": "evidence says 0520 is 'age 6'; the exemplar says 0519 'held UP despite age 7'",
      "what_the_day_did": "0519 precedes 0520, so its chain age cannot be higher under a monotone counter. On the realized sequence the covering rally began 0511, making 0519 the 7th session and 0520 the 8th. The ages in the play's own record are internally inconsistent and neither matches the series - a sign these were written narratively rather than read off a counter",
      "supports_or_contradicts": "contradicts"
@@ -862,7 +862,7 @@
     {
      "date": "20260605",
      "group": "g20",
-     "source_file": "research/kalshi/knowledge/ng_brain.json assumption_retired block + cross-checked against renders/ng_refine_s95/g20_actual.json",
+     "source_file": "E:/Markets/research/kalshi/knowledge/ng_brain.json assumption_retired block, cross-checked against renders/ng_refine_s95/g20_actual.json",
      "what_the_state_said": "assumption_retired: the handoff hands chain_age_sessions = 2 because a single -70 close on 0602 reset the alternation label, while cum ran +2,550 -> +3,200 without turning; cost 1,350",
      "what_the_day_did": "the cum path verifies exactly (0528 +2550, 0602 +1320 after -80, 0603 +2070, 0604 +3200). This is a REAL measured correction with a traced cost and it converts the age arm to a blind-available reading. The best-supported component of the play",
      "supports_or_contradicts": "supports"
@@ -870,7 +870,7 @@
     {
      "date": "30 sessions",
      "group": "g21, g22, g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{21,22,23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{21,22,23}_actual.json",
      "what_the_state_said": "flip requires cum > ~+2000 from the block anchor AND age >= 5",
      "what_the_day_did": "cum reached +2000 on ZERO of 30 sessions (g21 max +340, g22 max +890, g23 entirely negative to -3590). Across g17-g23 it is 8 of 70, all in g19 and g20. The condition is regime-bound, not dead - but it cannot fire in the current regime",
      "supports_or_contradicts": "ambiguous"
@@ -878,7 +878,7 @@
     {
      "date": "20260622, 20260623, 20260624, 20260626, 20260629, 20260701, 20260706, 20260707, 20260708, 20260714, 20260715",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/ + research/kalshi/forecasts/g23_perday/",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
      "what_the_state_said": "stood down 11 of 11, on two distinct grounds: scope (no crowded-short covering regime; COT MM 44th pctile) and masking (cum_from_anchor and phase flow_conviction are price-derived)",
      "what_the_day_did": "0629 was the one near-miss and was declared as such ('flow-cum is -3,909 and age is 4. Not triggered, but a near-miss to re-test'). Discipline is good; forward evidence remains nil",
      "supports_or_contradicts": "ambiguous"
@@ -899,7 +899,7 @@
     {
      "date": "40 forecast days",
      "group": "g17, g18, g19, g20",
-     "source_file": "research/kalshi/forecasts/grp{17,18,19,20}.json vs renders/ng_refine_s95/g{17..20}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp{17,18,19,20}.json vs renders/ng_refine_s95/g{17..20}_actual.json",
      "what_the_state_said": "'Mean |constructed - realized| by k: 768 / 590 / 1,022 for k<=3; 2,182-2,730 for k>=4'",
      "what_the_day_did": "REPRODUCES TO THE DOLLAR on an independent recomputation from the assembled blind guesses: 768, 590, 1022, 2182, 2408, 2645, 2730, 2388, 2612. Every figure the play states is exact",
      "supports_or_contradicts": "supports"
@@ -907,7 +907,7 @@
     {
      "date": "30 forecast days",
      "group": "g21, g22, g23 (blocks not in the derivation set)",
-     "source_file": "research/kalshi/forecasts/grp{21,22,23}.json vs renders/ng_refine_s95/g{21,22,23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp{21,22,23}.json vs renders/ng_refine_s95/g{21,22,23}_actual.json",
      "what_the_state_said": "the schedule predicts a step in chain-divergence at the same k on unseen blocks",
      "what_the_day_did": "FORWARD-CONFIRMED. Entering-k<=4 mean 489, k>=5 mean 1955 - a 4x step in the same place. Per k: 0, 647, 370, 940, 1797, 1640, 1605, 2088, 2208, 2392",
      "supports_or_contradicts": "supports"
@@ -915,7 +915,7 @@
     {
      "date": "structural check",
      "group": "g17-g23",
-     "source_file": "research/kalshi/forecasts/grp{17..23}.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/grp{17..23}.json",
      "what_the_state_said": "the boundary sits between k=4 and k=5",
      "what_the_day_did": "the step is 2.13x in the derivation set (1022 -> 2182) and 1.91x forward (940 -> 1797). Independent random-walk accumulation of uncorrelated daily errors predicts only 1.15x at that step. The kink is real and is evidence of CORRELATED (lean) error, not of mechanical accumulation - which is the play's implicit mechanism and it survives the null",
      "supports_or_contradicts": "supports"
@@ -923,7 +923,7 @@
     {
      "date": "20260623, 20260630, 20260701, 20260702, 20260703, 20260706, 20260708, 20260710, 20260713, 20260715, 20260716",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/ + research/kalshi/forecasts/g23_perday/",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
      "what_the_state_said": "applied as the schedule it is, at k=2,3,5,6,7,8,9,10",
      "what_the_day_did": "used correctly on 11 modern days, and it stood other plays' rungs down by name (mature_swing_alternation, covering_extension_distribution_flip, block_gap_ownership, giveback_exhaustion_reversal_recognition). Real load-bearing use, not decoration",
      "supports_or_contradicts": "supports"
@@ -931,7 +931,7 @@
     {
      "date": "all k>=4 days",
      "group": "g22, g23",
-     "source_file": "research/kalshi/forecasts/g22_perday/ + research/kalshi/forecasts/g23_perday/",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g22_perday/, E:/Markets/research/kalshi/forecasts/g23_perday/",
      "what_the_state_said": "forward_test: 'the blind's |err| on k>=4 days where a cum-keyed play FIRED exceeds its |err| on k>=4 days where none did. Zero or negative difference KILLS it'",
      "what_the_day_did": "THE TEST CANNOT RUN. Across g22 and g23 I found ZERO k>=4 days on which a cum-keyed rung was asserted - the gate stood every one down. Adoption of the gate eliminated its own treatment arm. The play's stated falsifier became undischargeable the moment the play was used",
      "supports_or_contradicts": "ambiguous"
@@ -952,7 +952,7 @@
     {
      "date": "19 sessions",
      "group": "g22 + g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/grp{22,23}_state.json weather_forecast.horizons",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{22,23}_state.json weather_forecast.horizons",
      "what_the_state_said": "D-0709's mechanism claim: d_gw_cdd at horizon 1 is positive 20/20 across G22+G23, min +0.129 max +2.256; a limb that never changes sign cannot gate",
      "what_the_day_did": "INDEPENDENTLY CONFIRMED. Reconstructing the h1 delta from the served ladder levels (today's ladder for target T minus yesterday's for the same T, as the state's own cdd_basis note instructs): POSITIVE 19 of 19 computable days, min +0.130, max +2.255. D's numbers are right to three decimals. The CDD-add limb is a constant",
      "supports_or_contradicts": "supports"
@@ -960,7 +960,7 @@
     {
      "date": "20260624 and 20260625",
      "group": "g22",
-     "source_file": "research/kalshi/renders/ng_refine_s95/grp22_state.json grid_stack + g22_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp22_state.json grid_stack + g22_actual.json",
      "what_the_state_said": "C-0715's pre-graft pair: identical served burn 39.3 on consecutive sessions, 0625 on lower wind",
      "what_the_day_did": "CONFIRMED EXACTLY. 0624 burn 39.3 / wind 1,091,380 -> +800. 0625 burn 39.3 / wind 1,071,933 (lower) -> -60. Identical inputs, opposite outcomes, on consecutive days - and the play cites 0624 in its evidence and is silent on its twin",
      "supports_or_contradicts": "contradicts"
@@ -968,7 +968,7 @@
     {
      "date": "18 sessions with a computable burn delta",
      "group": "g22 + g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/grp{22,23}_state.json grid_stack + g{22,23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{22,23}_state.json grid_stack + g{22,23}_actual.json",
      "what_the_state_said": "'burn-confirmed slope lean = full band' (the play's central call)",
      "what_the_day_did": "MY OWN INDEPENDENT TEST, not run by any specialist: on the 12 sessions where burn was flat-to-up (the confirm state) the day closed UP only 4 times = 33%, against a 50% base rate. On the 6 burn-down sessions the day closed down 3 times = 50%. The confirm state is ANTI-predictive, which corroborates E-0710's mechanism that burn confirmation is bearish information at the demand peak",
      "supports_or_contradicts": "contradicts"
@@ -976,7 +976,7 @@
     {
      "date": "20260707",
      "group": "g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/grp23_state.json grid_stack + g23_actual.json + forecasts/g23_perday/grp23_C_20260707.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp23_state.json grid_stack + g23_actual.json + forecasts/g23_perday/grp23_C_20260707.json",
      "what_the_state_said": "C-0707's recorded dissent: the blind confirmed off grid period 2026-07-05, a holiday SUNDAY row that the gate's own weekday-normalization rule disqualifies",
      "what_the_day_did": "the period field verifies (2026-07-05 is a Sunday) and the day delivered +160 UP. C-0707 was right that its day is not a refutation instance. The corrected tally is 1-of-4, as the brain now records. The retirement stands anyway because it never rested on the tally",
      "supports_or_contradicts": "supports"
@@ -984,7 +984,7 @@
     {
      "date": "20260708",
      "group": "g23",
-     "source_file": "research/kalshi/forecasts/g23_perday/grp23_C_20260708.json + renders/ng_refine_s95/grp23_state.json",
+     "source_file": "E:/Markets/research/kalshi/forecasts/g23_perday/grp23_C_20260708.json + renders/ng_refine_s95/grp23_state.json",
      "what_the_state_said": "C-0708 fired the gate on burn 44.9 >= the G22 block max",
      "what_the_day_did": "the burn figure verifies (44.9 on 0708; G22 block max 44.8 on 0703) and the day delivered -520. A clean up-fire that did not deliver",
      "supports_or_contradicts": "supports"
@@ -1005,7 +1005,7 @@
     {
      "date": "70 sessions",
      "group": "g17-g23 (all groups with realized MBO evidence)",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
      "what_the_state_said": "'Buy flow >+1000: 41% agree n=22 sum -5,840. >+1500: 29% n=17 -7,600. >+2000: 25% n=12 -4,880. >+3000: 20% n=10 -4,970. Sell over identical thresholds: 46/43/46/47%'",
      "what_the_day_did": "EVERY FIGURE REPRODUCES EXACTLY on independent recomputation: buy 41/29/25/20 at n=22/17/12/10 with sums -5,840/-7,600/-4,880/-4,970; sell 46/43/46/47 at n=35/30/24/15. Not one number is off",
      "supports_or_contradicts": "supports"
@@ -1013,7 +1013,7 @@
     {
      "date": "10 sessions above +3000 buy flow",
      "group": "g17, g18, g20, g21, g23 (5 groups)",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
      "what_the_state_said": "per-event, never pooled: 0429 +7,783 -> -440; 0715 +6,326 -> -50; 0423 +5,373 -> -1,240; 0601 +3,796 -> -1,680; 0714 +3,747 -> +200; 0602 +3,524 -> -70; 0608 +3,261 -> -540; 0505 +3,258 -> -830; 0415 +3,213 -> +60; 0424 +3,189 -> -380",
      "what_the_day_did": "all ten reproduce to the dollar, in the same order, and 8 of 10 closed down with the two exceptions correctly named. Spans five separate groups, so this is not a single-block artifact",
      "supports_or_contradicts": "supports"
@@ -1021,7 +1021,7 @@
     {
      "date": "D-1 negative control",
      "group": "g17-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
      "what_the_state_said": "'buy >+3000 -> next day agrees 4/9; >+2000 -> 6/11; sell <-3000 -> 8/13'",
      "what_the_day_did": "reproduces exactly: 4/9, 6/11, 8/13. The control is real and it is what licenses the play's actual instruction (a prohibition on next-day use), which is the only form in which the play is blind-available",
      "supports_or_contradicts": "supports"
@@ -1029,7 +1029,7 @@
     {
      "date": "51 independently-joined sessions",
      "group": "g18-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/grp{18..23}_state.json tape_conditions joined to g{18..23}_actual.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/grp{18..23}_state.json tape_conditions joined to g{18..23}_actual.json",
      "what_the_state_said": "same claim, via a completely different route - the served tape_conditions.session_signed_flow rather than the MBO evidence store",
      "what_the_day_did": "shape holds on the second route: buy 25/17/12/14% at the four thresholds, sell 43/40/44/40%. Different files, different subset, same asymmetry",
      "supports_or_contradicts": "supports"
@@ -1037,7 +1037,7 @@
     {
      "date": "base rate",
      "group": "g17-g23",
-     "source_file": "research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
+     "source_file": "E:/Markets/research/kalshi/renders/ng_refine_s95/g{17..23}_mbo_evidence.json",
      "what_the_state_said": "the sell side 'carries no comparable information'",
      "what_the_day_did": "the corpus up-close base rate is exactly 35/70 = 50%, so the buy side's 20-41% is a genuine departure and the sell side's 43-47% is at base rate. The claim is right, but 'flat at the base rate' is the accurate wording - on my second route the sell side runs 40-44%, so a weaker contrarian tilt on BOTH sides cannot be excluded and should not be described as zero",
      "supports_or_contradicts": "ambiguous"
