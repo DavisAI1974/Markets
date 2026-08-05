@@ -1,56 +1,81 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-05, Session 112)
 
-## S112 — THE D29 WORK LIST IS CLOSED, THE BRAIN HAS ITS EVIDENCE, AND THE PLANT HAS A STORE (read `SESSION_HANDOFF_2026-08-05_S112.md` + `DROP_IN_S113.md`)
+## S112 — THE D29 WORK LIST IS CLOSED, THE BURN STACK IS REBUILT, AND EVERY LIST IS NOW COUNTED (read `SESSION_HANDOFF_2026-08-05_S112.md` + `DROP_IN_S113.md`)
 
 **Branch = `claude/kalshi-agents-coordinator-guard-1175nr`. Brain s105.0, 82 plays — play CONTENT
 unchanged, EVIDENCE transformed. No group run, no merge.**
 
-**THE WORK LIST S111 MADE VISIBLE IS NOW CLOSED:** support unaudited **82 -> 0**, corpus unsearched
-**82 -> 2**, conditions unparsed **74 -> 0**, no falsifier **65 -> 0**. The brain carries **624
-instances — 306 `do` and 318 `dont`** across 55 plays holding both.
+**THE D29 WORK LIST IS CLOSED:** support unaudited **82 -> 0**, corpus unsearched **82 -> 2**,
+conditions unparsed **74 -> 0**, no falsifier **65 -> 0**. The brain carries **624 instances — 306
+`do` and 318 `dont`** across 55 plays holding both. Two audits ran: the 82-play support audit (**41
+OUTCOME_CREDITED, 26 MECHANISM_VERIFIED, 10 NOVEL_N1** — half the brain rests on a number coming out
+right rather than a mechanism being checked) and the decline audit (**384 declines, the rubric came
+back negative 13 times, and 115 — 30% — are DATA_ABSENT**). **EQUAL FOOTING (Greg):** one
+`instances[]` list, one `action` field, `do` vs `dont` — stamping found **43 declines already in the
+brain reading as fires**.
 
-**TWO AUDITS RAN.** The 82-play support audit: **41 OUTCOME_CREDITED, 26 MECHANISM_VERIFIED, 10
-NOVEL_N1** — half the brain rests on a number coming out right rather than a mechanism being checked.
-Worked instance: `eia_preprint_overextension_gate` says it SPARED the G20 band while the committed
-blind posterior says it FIRED and REFUSED — because limb (a) is denominated in chain cum, **which the
-blind masks**, so the brain merged the refine's account of a gate that only has to work in the blind.
-The decline audit: **384 declines, and the rubric came back negative 13 times** (7 MISSED_FIRE, 6
-OUTCOME_CREDITED), because my first ledger had no class for a wrong decline — every entry read as a
-save by construction. **115 declines (30%) are DATA_ABSENT** — the play could not be evaluated at all.
+**GREG REBUILT THE BURN STACK.** *"A stack would go nukes, coal, gas."* Coal is BASELOAD and cheaper,
+so gas does not take its place. Wind and solar are *"just on or off. Not regulating to load."*
+**Gas is the only term that regulates**, so anything that removes a forcing lands on gas. **HYDRO IS
+AN INVERTED U AND BOTH TAILS ARE BULLISH** — past a river stage the Army Corps has the gates opened
+and water goes through the SPILLWAY INSTEAD OF THE TURBINES, and *"hydro is never curtailed for
+econ."* So the same low reading comes from two opposite states and **a single bar will be wrong in
+one tail**. Measured on 119 scored days: the unaccounted slice falls 9.40% -> 7.04% while gas share
+rises 34.8% -> 42.2%, about **2.0-2.3 Bcf/d** — the order of the 0629 wind event.
 
-**EQUAL FOOTING (Greg):** one `instances[]` list, one `action` field, `do` vs `dont`, no parallel
-structure — *"so one isn't ignored over the other."* Stamping found **43 declines already in the brain
-reading as fires.** Every decline carries its verdict, so a DATA_ABSENT one can never be counted as a
-working off-switch.
+**THE HYDRO CARRY (A-20), Greg's hypothesis with its confounder.** *"When TVA is curtailed so are
+those others."* A STATE co-occurrence, not a level correlation — the only form that survives the
+inverted U. **Not the same rivers, the same HEADWATERS:** TVA's Blue Ridge, Nottely and Chatuge sit
+physically in north Georgia, the Etowah drains the SOUTH side of the Tennessee Valley Divide while
+the Toccoa drains the NORTH — **one storm total partitioned by a ridge**. **The confounder is pumped
+storage** (Duke's Bad Creek + Jocassee ~2,200 MW, comparable to Southern's ENTIRE 2,730 MW hydro
+fleet), which EIA-930 folds into `WAT`. **And TVA leads for a STATUTORY reason: FERC does not
+regulate federal agency dams** — TVA runs under its own Act while the other four are FERC licensees
+with binding guide curves. That makes the test DIRECTIONAL and falsifiable.
+
+**D35 — THE TARGET IS TOTAL GAS DEMAND, NOT ATTRIBUTION** (*"don't care who is burning it or
+where"*). No per-BA number is ever a deliverable — but per-BA is arithmetic we cannot skip, because
+the stack is a per-BA subtraction and the response is convex, so **the total is not recoverable from
+the average**. The BA list closes by **reconciliation to US48**, not map coverage. And the target is
+not a national index: **Henry Hub is ONE physical point near Erath, Louisiana**, so the object is
+**demand HH can SEE**, and the roll-up weight is burn x HH transmission.
+
+**D36 + SOP STATION 0 — THE SESSION'S SHARPEST FINDING.** Greg asked whether the 13 S111 build
+suggestions were still listed. **Twelve of thirteen had no registry item** — including the tropical
+feed's sign INVERTING post-shale (a feed we built at S110), `vol_regime`'s smoothed state probability
+computed WITH HINDSIGHT (a leak in the module that conditions magnitude), and EIA-930 excluding
+behind-the-meter solar entirely. A briefing is a RECORD, correctly frozen, so its recommendations
+live in prose nothing counts. Then: *"We can't spend time on an sop that we don't apply"* — **Station
+0 is four andon checks that fired on the session that wrote them**, including catching an earlier
+version of itself reading a `pending` placeholder as a pass. **It is RED on purpose: 6 of 7 briefings
+have never been audited.**
+
+**TWO REGISTRIES, because a list that is not counted is not a list.** **DOCUMENTS** —
+`store/documents.json` + `store.py docs`, five classes, CONTENT gates because **mtime is not
+staleness**: 55 of 151 tracked `.py` were absent from `KALSHI_TRADING.md`, and `PLANT_MAP.md` had
+been edited that same session while naming none of the SOP's tools. First live catch was
+`data_registry.py` itself. **DATA** — `data_registry.py` + `DATA_POINTS.md`: **1,717 served data
+points, 1,129 READ BY NOTHING**, plus HELD-not-served (hydro fetched since 2019 and dropped at a
+five-element serving list), PLANNED, and IDENTIFIED-not-committed.
+
+**THE WORK IS TIERED: 61 open — 8 ESSENTIAL, 11 BIGGEST WIN, 42 REST** (`OPEN_ITEMS.md`, a render).
+The essential eight are the honest gate on the next group, not the whole backlog. **G-28 first: it is
+a LEAK CHECK, and until it clears, no group's magnitudes mean what they claim.**
 
 **D34 — THERE IS NOTHING LOCAL.** git = code and records, S3 = data, `data/` disposable, and **no
-artifact may name a desktop path**. Instance: the S111 audit partial carried 140 instances and **51,
-across 11 plays, cited `E:/Markets/...`** — the input to a backfill that writes into the brain. Fixed
-140/140. **Do not repair such a path by silently re-rooting it** — my first guard did, and that hides
-the defect. The guard was calibrated against the real citations first, which changed it twice: the
-first draft would have failed **93 of 140 legitimate** instances.
+artifact may name a desktop path**. The S111 audit partial carried 140 instances and **51, across 11
+plays, cited `E:/Markets/...`**. Fixed 140/140. **Do not repair such a path by silently re-rooting
+it** — my first guard did, and that hides the defect.
 
-**THE STORE (A-7).** `DECISIONS.md` and `RUN_SOP.md`'s appendix are **RENDERS** — extract, render,
-**prove byte-identical**, then rely. The andon now **FAILS on render drift** (exit 1, stop the line).
-**`spawn.py` fills every SOP slot BY LOOKUP and NC-1 is a regression test** — generated `CAL_FACTS`
-emits `20260715: in_bcom_roll TRUE, bcom_roll_day_n 5`, the exact fact the directive denied. **A-9
-done:** the drop-in work list is generated from the registry, so a DONE item cannot appear as a live
-instruction — which `DROP_IN_S112` did twice.
+**THE PLANT (S112 additions).** `merge_gate.py` closes SOP gates 2 and 3 and **parks 5 of 5 real past
+proposals**. `plant_calendar.py` is the clock from **RULES** (the hardcoded holiday table ends
+2027-02-15), cal+0..cal+3 wrapping to day 1 — and **MEASURED: the calendar does NOT repeat on four
+years**; the RULE is invariant, the DATE is not. `spawn.py` fills every SOP slot BY LOOKUP with NC-1
+as a regression test. `chatgpt_handoff.py` generates the external brief from the registry, and
+`delegated_prior` stops it re-asking a delivered question — which the first draft did three times.
 
-**THE UNATTENDED PLANT.** `merge_gate.py` closes SOP gates 2 and 3: objective admissibility ->
-PROVISIONAL merge with a **registered forward test** -> settle, scoped per D31. **The automation is the
-bookkeeping, not the judgment** — a registered test cannot be forgotten, which is how the burn gate
-died correctly. It **parks 5 of 5 real past proposals**. `plant_calendar.py` is the plant's clock from
-**RULES** (the hardcoded holiday table ends 2027-02-15 — 194 days of runway), 1031 sessions,
-**cal+0..cal+3**, wrapping to cal+0 day 1. **MEASURED: the calendar does NOT repeat on four years** —
-Memorial Day runs 05-25/27/29/31 across 2026/2030/2034/2038 and Good Friday matches in **0 of the next
-100 years**. The RULE is invariant (why the loop works); the DATE is not (why dates are recomputed,
-never replayed). **The wrap is a REPEAT MEASUREMENT** — re-walking a session with a better brain.
-
-**NEEDS GREG'S CALL:** **A-13** — `CAL_FACTS` reaches **AUD-1 only**, so no forecasting specialist has
-ever received calendar facts; that is the structural cause of NC-1, and `day_calendar()` is built and
-tested but adding the slot is a change-controlled SOP edit. **A-11** — serving chain state
-(`cum_from_anchor` + chain age) unblocks nine plays; four of eight curation batches hit it independently.
+**NEEDS GREG'S CALL:** **A-13** (`CAL_FACTS` reaches AUD-1 only — the structural cause of NC-1) and
+**A-11** (serving chain state unblocks nine plays).
 
 ## S111 — THE TARGET CHANGED: THE PRODUCT IS A CURVE, AND WE HAD NEVER SCORED IT (read `research/kalshi/FORECAST_ARCHITECTURE_S111.md` FIRST, then `SESSION_HANDOFF_2026-08-05_S111.md` + `DROP_IN_S112.md`)
 
@@ -722,18 +747,17 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state (S111):** brain **s105.0, 82 plays**, now under `meta.schema = brain-schema-1`.
-**No group run, no merge.** The session's output is a REFRAME plus measurements. **The product is a
-PRICE CURVE and we have never scored it** - `FORECAST_ARCHITECTURE_S111.md` is the design, D32 the
-decision. **The blind loses to a zero-change forecast in six of seven blocks** and the 939 -> 592
-"improvement" was the market getting quieter (realized moves 799 -> 457); it is a BENCHMARK, not a
-verdict, because those runs had `vol_regime` dead G16-G20, `session_b_share` a hard 0.0 across two
-groups, and no ability to decline. **We cannot measure skill until the system can say NO CALL** - one
-high-confidence day in fifty, and the confidence field does not discriminate. Three research
-briefings committed (horizon dies at 5-7 days on price; the dimension budget caps matching at d~3;
-gas is the least machine-penetrated liquid energy contract but the Kalshi gas ladder is ~$3,600 of
-notional). **G23 was the last staged block - G24 needs a DATA PULL, not a re-stage.** **Keys do NOT
-rotate during the walk.** LEGACY line below (pre-S106):
+**One-line state (S112):** brain **s105.0, 82 plays**, **624 instances (306 do / 318 dont)**. **No
+group run, no merge.** The D29 work list is CLOSED. **Greg rebuilt the burn stack** — nukes, coal,
+gas, with wind/solar/hydro as non-regulating forcings and **hydro an INVERTED U whose both tails are
+bullish**. **D35: the target is total demand HENRY HUB CAN SEE** — HH is one point near Erath,
+Louisiana, not a national index. **D36 + SOP Station 0**: 12 of the 13 S111 build suggestions had no
+registry item, so a briefing's recommendations now become registry lines in the session they land,
+**enforced by the andon**. **Two registries born**: documents (55 of 151 `.py` unindexed; mtime is
+not staleness) and data (**1,717 served points, 1,129 read by NOTHING**). **61 open items tiered 8 /
+11 / 42**; the essential eight are the gate on the next group, and **G-28's leak check comes first**.
+**G23 was the last staged block — G24 needs a DATA PULL.** **Keys do NOT rotate during the walk.**
+LEGACY line below (pre-S106):
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.

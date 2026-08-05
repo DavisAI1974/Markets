@@ -457,19 +457,28 @@ def work_list(limit=12):
             return 1
         return 2
 
+    # TIER SORTS ABOVE SIZE (S112, Greg: "break out the essential ones and the biggest wins").
+    # Same argument as re-raised: an XS item in REST is cheap and does not unblock the next group,
+    # while an S item in ESSENTIAL decides whether the next group's numbers can be trusted at all.
+    # Effort is the tie-breaker, never the lead.
+    tier = {"ESSENTIAL": 0, "BIGGEST_WIN": 1, "REST": 2}
+
     def key(i):
         return (rank(i),
+                tier.get(i.get("tier"), 3),
                 1 if i.get("blocked_by") else 0,
                 order.get(i.get("size"), 9), i["id"])
     out = []
     for i in sorted(live, key=key)[:limit]:
         tag = ""
+        if i.get("tier") in ("ESSENTIAL", "BIGGEST_WIN"):
+            tag = "  [%s]" % i["tier"].replace("_", " ")
         if i["id"] in IRREVERSIBLE:
-            tag = "  [IRREVERSIBLE - value is permanently lost by waiting]"
+            tag += "  [IRREVERSIBLE - value is permanently lost by waiting]"
         elif i.get("reraised"):
-            tag = "  [RE-RAISED - Greg has had to ask for this %s]" % i.get("reraised")
+            tag += "  [RE-RAISED - Greg has had to ask for this %s]" % i.get("reraised")
         elif i.get("blocked_by"):
-            tag = "  [BLOCKED: %s]" % i["blocked_by"]
+            tag += "  [BLOCKED: %s]" % i["blocked_by"]
         out.append("- **%s** (%s) %s%s" % (i["id"], i.get("size", "?"), i["title"], tag))
     return "\n".join(out), len(live)
 

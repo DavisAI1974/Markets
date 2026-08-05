@@ -177,3 +177,100 @@ triage of the 1,129 unread data points, which ships with `DATA_POINTS.md` as its
 **The delegation line is real:** source hunting delegates, fitting does not. A coefficient tuned
 without our states is hindsight-fitted with zero forward evidence, and per D35 the output is a
 national total, so per-BA parameters fitted elsewhere are numbers we would discard.
+
+
+---
+
+# PART TWO OF S112 - THE REGISTRIES, THE STACK, AND THE SOP THAT IS ENFORCED
+
+Everything above was written mid-session. This is what landed after it, and it is most of the value.
+
+## GREG REBUILT THE BURN STACK, AND IT COST US FOUR CORRECTIONS
+
+**The model, in his words:** *"A stack would go nukes, coal, gas."* Coal is BASELOAD and cheaper -
+gas does not take its place. Wind and solar are *"just on or off. Not regulating to load"*. Hydro is
+in the stack and *"almost always on"*, but curtailed seasonally for non-power reasons. **Gas is the
+only term that regulates**, so anything that removes a forcing lands on gas.
+
+**HYDRO IS AN INVERTED U AND BOTH TAILS ARE BULLISH GAS.** Greg corrected my read twice. Spring is
+not the bearish end: *"spring will lower the outputs once the rivers get too high... the Army Corps
+of Engineers will have the hydro operators open the gates."* Past a river stage the water goes
+through the SPILLWAY INSTEAD OF THE TURBINES. And *"hydro is never curtailed for econ."* So the same
+low hydro reading comes from two opposite states, and **a single bar on water level will be wrong in
+one tail** - it needs a STATE, not a level (D23/D28).
+
+**Measured on 119 scored days:** the unaccounted generation slice falls 9.40% (March) to 7.04%
+(July) while gas share rises 34.8% to 42.2% - about 290,000 MWh/day, roughly 2.0-2.3 Bcf/d, the same
+order as the 0629 wind event.
+
+## THE HYDRO CARRY - GREG'S HYPOTHESIS, WITH ITS ONE CONFOUNDER (A-20)
+
+*"You could probably carry TVA's hydro levels across SOCO, SCEG and part of Duke... when TVA is
+curtailed so are those others."* Recorded as a hypothesis with a named test.
+
+**Note the FORM** - it is a STATE co-occurrence, not a level correlation, which is the only form
+that survives the inverted U. **Not the same rivers, the SAME HEADWATERS**, and the geography is
+better than the claim needed: TVA's Blue Ridge, Nottely and Chatuge reservoirs sit physically in
+north Georgia; the Chattahoochee rises near the Union/Towns county line; the Etowah drains the SOUTH
+side of the Tennessee Valley Divide while the Toccoa drains the NORTH. **One storm total, partitioned
+by a ridge.** Worked instance 2007-08: TVA and Duke both cut hydro and substituted fossil while Lake
+Lanier fell to 50% of storage - and Lake Norman sat less than a foot above the licence minimum for
+Duke's McGuire NUCLEAR plant, so a deep water anomaly takes down a stack LEVEL as well as a forcing.
+
+**THE CONFOUNDER: pumped storage.** EIA-930 folds it into `WAT` where a BA cannot separate it, and it
+follows price, not water. Duke's Bad Creek plus Jocassee is about 2,200 MW - **comparable to Southern
+Company's ENTIRE hydro fleet of 2,730 MW**. So `WAT` means categorically different things per BA.
+
+**AND TVA LEADS FOR A STATUTORY REASON.** Greg's operator testimony - TVA is *"really heavy handed...
+the others downstream just have to deal with it"* - checks out: **FERC does not regulate federal
+agency dams.** TVA operates under the TVA Act by its own board's decision while the other four are
+FERC licensees with guide curves and drought plans written into licence articles. That converts a
+symmetric correlation into a **directional lead-lag**, which is falsifiable: run BOTH directions, and
+if they come back equally strong it is common weather and TVA's forward data buys no horizon.
+
+## THE STATIONS ARE THERMOMETERS, NOT LOAD CENTRES (A-19, A-21)
+
+Greg's mapping put five Southeast BAs on ONE served station (ATL at 0.055). Raleigh and Wilmington
+broke my own BA list - both are **CPLE**, which A-18 had omitted because I wrote "DUK" meaning
+"Duke" one message after flagging that exact trap for Cincinnati.
+
+**And he corrected my framing, structurally:** *"They are 2 cities in the same utility. They won't
+burn gas independent of one another."* I led with Jensen arithmetic about temperatures cancelling
+when they were never two separate things to cancel. **The convexity that matters is LOAD -> GAS BURN
+within the footprint** - gas is the residual and every cheaper stack term saturates - and it is
+measurable TODAY from `demand_mwh` against `gas_mwh` per BA, held since 2019, never plotted.
+
+## TWO REGISTRIES, BECAUSE A LIST THAT IS NOT COUNTED IS NOT A LIST
+
+**THE DOCUMENT REGISTRY.** `store/documents.json` + `store.py docs`. Measured the day it was built:
+**55 of 151 tracked `research/kalshi/*.py` were absent from `KALSHI_TRADING.md`**, and `PLANT_MAP.md`
+had been EDITED THAT SAME SESSION while naming none of the SOP's own tools. **mtime is not staleness
+- CONTENT is.** Its first live catch was `data_registry.py` itself, one commit after being written.
+
+**THE DATA REGISTRY.** `data_registry.py` + `DATA_POINTS.md`. Four tiers: **SERVED 1,717 fields
+across 36 blocks - 1,129 READ BY NOTHING**; HELD-not-served 5, each with the citation proving it;
+PLANNED 35, harvested from the registry so it cannot drift; IDENTIFIED-not-committed 9. Reader
+counting OVER-counts by construction, so a zero is hard evidence and a small number is only a prompt.
+
+## D36 AND STATION 0 - THE SESSION'S SHARPEST FINDING
+
+Greg asked what looked like a bookkeeping question - *"your 13 build suggestions from last session
+are still listed right?"* - and **12 of 13 had no registry item**. Untracked: the tropical feed's
+sign INVERTED post-shale (a feed we built and smoke-tested at S110); `vol_regime`'s smoothed state
+probability computed with hindsight (a LEAK in the module that conditions magnitude); and EIA-930
+excluding behind-the-meter solar entirely, a growing one-directional bias in exactly the daylight
+hours that matter for cooling.
+
+**The mechanism is A-17 one level up:** a briefing is a RECORD, correctly frozen, so its
+recommendations live in prose that nothing counts. Then Greg: *"We can't spend time on an sop that we
+don't apply"* - and **Station 0 became four andon checks that fired on the session that wrote them**,
+including catching an earlier version of itself reading a `pending` placeholder as a pass.
+
+## MY ERRORS THIS HALF
+
+- **The same newline defect twice** - D35 then D36 both split their DECISIONS.md table row, invisible
+  to the render/compare gate because both sides carry the break. Twice is the definition of needing a
+  guard: `render_decisions` now REFUSES it.
+- **I put the convexity on the wrong axis** and led with arithmetic instead of the structure.
+- **I made the company-is-not-a-BA error inside the very item that flags it** - one message later.
+- **The first S113 ChatGPT brief re-asked three delivered questions.** Greg caught it.
