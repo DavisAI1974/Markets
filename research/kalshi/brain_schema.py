@@ -310,6 +310,141 @@ def run_migrate(write):
     return 0
 
 
+# --------------------------------------------------------------------------------------
+# THE NON-PLAY SECTIONS  (S111, Greg: "then do the same treatment for the other docs")
+#
+# Surveyed at s105.0:
+#   reasoning_method     18 keys, all strings, ZERO session-tagged  -> already clean, left alone
+#   mechanisms           6 items, uniform {id,text}                 -> already clean, left alone
+#   ruled_out_by_target  2 keys, small                              -> already clean, left alone
+#   doctrine_tier3       21 keys / 93k chars, NINE session-tagged    -> the disease. treated.
+#   open_frontier        33 items: 27 strings + 6 dicts in one list  -> untyped. treated.
+#   fingerprints         4 keys, one session-tagged                  -> treated.
+#
+# THE SAME GOVERNING RULE AS THE PLAYS: the session belongs in a FIELD, never in the key name.
+# `s101_3_protocol` becomes key `protocol` with session `s101.3` - so "what did S101.3 decide"
+# and "show me every protocol entry" both become queries instead of greps.
+# --------------------------------------------------------------------------------------
+SESSION_RE = __import__("re").compile(r"(?:^|_)(s\d{2,3}[_.]?\d?|g\d{1,2})(?:_|$)", __import__("re").I)
+
+
+def split_session_key(key):
+    """-> (topic, session|None). Session moves to a field; the raw key is preserved regardless."""
+    m = SESSION_RE.search(key)
+    if not m:
+        return key, None
+    tok = m.group(1)
+    topic = (key[:m.start()] + "_" + key[m.end():]).strip("_") or key
+    sess = tok.lower().replace("_", ".") if tok.lower().startswith("s") else tok.lower()
+    return topic, sess
+
+
+def migrate_sections(brain):
+    """returns (new_sections_dict, notes[]) - lossless: original keys always preserved."""
+    notes = []
+
+    # ---- doctrine_tier3 -> typed entry list ------------------------------------------
+    dt = brain.get("doctrine_tier3")
+    if isinstance(dt, dict):
+        entries = []
+        for k, v in dt.items():
+            topic, sess = split_session_key(k)
+            entries.append(OrderedDict([
+                ("topic", topic),
+                ("session", sess),
+                ("original_key", k),          # verbatim, so the round trip is provable
+                ("kind", "doctrine"),
+                ("body", v),
+            ]))
+            if sess:
+                notes.append("doctrine_tier3: %s -> topic=%s session=%s" % (k, topic, sess))
+        brain["doctrine"] = entries
+        # the superseded SECTION NAME is itself preserved as a value, so the round trip holds
+        brain["doctrine_legacy"] = OrderedDict([
+            ("superseded_section", "doctrine_tier3"),
+            ("note", "superseded by `doctrine` (S111 schema). Every entry, including its "
+                     "original key, is present in `doctrine` with the session as a field."),
+        ])
+        del brain["doctrine_tier3"]
+
+    # ---- open_frontier -> one uniform shape -------------------------------------------
+    of = brain.get("open_frontier")
+    if isinstance(of, list):
+        items = []
+        for i, it in enumerate(of):
+            if isinstance(it, dict):
+                e = OrderedDict([("kind", "structured"), ("session", None)])
+                e.update(it)
+                items.append(e)
+            else:
+                txt = str(it)
+                head = txt.split(" - ")[0].split(":")[0][:70]
+                _, sess = split_session_key(head.replace(" ", "_"))
+                items.append(OrderedDict([("kind", "note"), ("session", sess),
+                                          ("headline", head), ("text", txt)]))
+        brain["open_frontier"] = items
+        notes.append("open_frontier: normalized %d items (%d were bare strings) to one shape"
+                     % (len(items), sum(1 for x in of if not isinstance(x, dict))))
+
+    # ---- fingerprints: session out of the key ------------------------------------------
+    fp = brain.get("fingerprints")
+    if isinstance(fp, dict):
+        moved = {}
+        for k in list(fp):
+            topic, sess = split_session_key(k)
+            if sess:
+                moved[k] = OrderedDict([("topic", topic), ("session", sess),
+                                        ("original_key", k), ("body", fp.pop(k))])
+        if moved:
+            fp["session_additions"] = list(moved.values())
+            notes.append("fingerprints: %d session-tagged key(s) moved into session_additions"
+                         % len(moved))
+    return brain, notes
+
+
+def run_sections(write):
+    raw = json.load(open(BRAIN, encoding="utf-8"), object_pairs_hook=OrderedDict)
+    before_leaves = Counter(leaves(copy.deepcopy(raw), []))
+    new, notes = migrate_sections(copy.deepcopy(raw))
+    after_leaves = Counter(leaves(copy.deepcopy(new), []))
+
+    print("=" * 84)
+    print("NON-PLAY SECTION MIGRATION  (%s)" % ("WRITE" if write else "DRY RUN"))
+    print("=" * 84)
+    for n in notes:
+        print("  " + n)
+    if not notes:
+        print("  nothing to do - sections already conform")
+
+    dt = new.get("doctrine", [])
+    print("\ndoctrine entries: %d  (%d carry a session field)"
+          % (len(dt), sum(1 for e in dt if e.get("session"))))
+    of = new.get("open_frontier", [])
+    print("open_frontier   : %d items, kinds %s"
+          % (len(of), dict(Counter(x.get("kind") for x in of if isinstance(x, dict)))))
+
+    lost = {k: c for k, c in before_leaves.items() if after_leaves[k] < c}
+    print("\nROUND-TRIP: %d distinct leaves before, %d after; LOST: %d"
+          % (len(before_leaves), len(after_leaves), len(lost)))
+    if lost:
+        print("   LOSSY - refusing to write. Missing:")
+        for k in list(lost)[:10]:
+            print("      %s" % k[:100])
+        return 1
+    print("   lossless confirmed")
+
+    if not write:
+        print("\nDRY RUN - nothing written.")
+        return 0
+    ver = new.get("meta", {}).get("version", "unknown")
+    bak = os.path.join(HERE, "knowledge", "ng_brain_%s_presections_backup.json" % ver)
+    shutil.copy2(BRAIN, bak)
+    with open(BRAIN, "w", encoding="utf-8") as fh:
+        json.dump(new, fh, indent=1, ensure_ascii=False)
+    print("\nbackup  -> %s\nwritten -> knowledge/ng_brain.json" % os.path.basename(bak))
+    return 0
+
+
 def run_validate():
     brain = json.load(open(BRAIN, encoding="utf-8"))
     plays = brain["plays"]
@@ -351,11 +486,13 @@ def run_report():
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("cmd", choices=["validate", "migrate", "report"])
+    ap.add_argument("cmd", choices=["validate", "migrate", "sections", "report"])
     ap.add_argument("--write", action="store_true", help="apply the migration (default is dry run)")
     a = ap.parse_args()
     if a.cmd == "migrate":
         return run_migrate(a.write)
+    if a.cmd == "sections":
+        return run_sections(a.write)
     if a.cmd == "validate":
         return run_validate()
     return run_report()
