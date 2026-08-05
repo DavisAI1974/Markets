@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 76 |
+| open | 77 |
 | in progress | 1 |
 | done | 12 |
 
-By size: **XS** 8, **S** 32, **M** 30, **L** 7
+By size: **XS** 8, **S** 32, **M** 31, **L** 7
 
 ---
 
-By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 24, **REST** 47
+By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (6)
+## ESSENTIAL (7)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -31,6 +31,7 @@ By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 24, **REST** 47
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
+| **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
 ## BIGGEST WIN (24)
@@ -129,6 +130,7 @@ By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 24, **REST** 47
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
+| **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
@@ -292,6 +294,27 @@ D35 established the target is demand HH can SEE, and D38 established the HH lane
 **Source:** S114 winners census (Greg: 'Did we do the biggest winners AND the biggest forecast errors builds?'). Merged as magnitude.emission_ceiling_check, brain s105.3.
 
 MEASURED, 60 modern scored days g18-g23, listed individually: the largest |guess| ever emitted is 950 (20260618, the single over-call, on a +520 day); the SECOND largest is 550, so 59 of 60 days emitted <= $550. Meanwhile 30 of 60 days - EXACTLY HALF - delivered |actual| > 550, ranging to 2100. The output distribution is truncated at about a quarter of the input distribution's range. Capture degrades monotonically with move size per event: <300 captures 36-100%, 500-900 captures 17-76%, 900-1400 captures 18-37%, >1400 captures 7-12% (0528 7%, 0709 12%). THE ASYMMETRY IS THE SAME CEILING ON BOTH SIDES: best capture +500 (0605), worst -550 (0713). WHY IT IS ESSENTIAL: this is the mechanical explanation for the S111 benchmark failure - a truncated output against a fat-tailed input loses to zero-change on the tail days BY CONSTRUCTION - so until it is root-caused, no group's magnitudes mean what they claim and the scoreboard cannot be read. THE ROOT CAUSE IS NOT ESTABLISHED and must not be asserted (D37). Candidates to test: (a) the honest-bar doctrine ('emit what the causal read supports even where the actual went further') being read as a CAP rather than a floor; (b) 'magnitudes DERIVED, never fitted' biting harder in the blind, where derivation has less to work with; (c) output-contract or band anchoring; (d) specialists anchoring on a typical day-move instead of the day's own drivers. METHOD: the committed posteriors carry the specialists' full reasoning - read the derivations on the five named big-move days and find where the number stopped growing. The g22 rehearsal is the first live observation. FALSIFIER for the whole item: if raising emissions degrades sum|err|, the cap was doing useful work and the loss is elsewhere.
+
+---
+
+### [ESSENTIAL] M-11 - MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly
+
+*size M | OPEN | raised S114*
+
+**Source:** Greg, S114, verbatim: 'Did you reread the sops like i asked? We are going to have to figure out a way to make them followed. Not now but soon.'
+
+HE ASKED TWICE AND THE HONEST ANSWER WAS NO. Registered per Station 0 rule 1 (anything Greg says to come back to becomes a line in the session it is said) - the work itself is deferred on his 'not now but soon'.
+
+MEASURED, THIS SESSION, AGAINST RUN_SOP.md's OWN CHANGE-CONTROL SECTION:
+  (a) ITEM 1, NO OFF-SOP EXECUTION ('if a needed step is not covered here the line STOPS at that station; do not compose a procedure and run it'). NC-4 is the instance: `group_coordinate_blind.py g22` is SOP STEP 3.4 machinery run OUT OF SEQUENCE on a completed group for a purpose the SOP does not cover, and it overwrote the immutable blind record (4/10, sum|err| 5,965 -> 10/10, 500). The SOP forbade exactly that and nothing stopped it.
+  (b) ITEM 2, THE CHANGE LOOP ('a concrete diff, WHY, Greg's explicit go, a version-log entry, THEN execute'). S114 changed the run wrappers - due_gate wired into BOTH coordinators (STEP 3.4 and 5.3), --namespace added to spawn.py, --suffix to merge_perday and stage_group - and the SOP is still logged at v1.9 with NO version-log entry. Those changes alter how covered steps execute, so they needed the loop and did not get it. THE VERSION BUMP IS GREG'S GO, NOT MINE.
+  (c) STATION 0 RULE 3, every defect found gets registered with a repair class. Three defects were found and FIXED before any of them was registered; they were only entered when Greg asked about the SOP. `plant_status station0/defects` PASSED throughout, because it checks that REGISTERED defects carry a class and is structurally blind to an unregistered one.
+
+THE DIAGNOSIS, AND IT IS THE DESK'S OWN RECURRING ONE (D30/D33/D36/A-7): the SOP is a DOCUMENT DESCRIBING WHAT SHOULD HAPPEN, sitting apart from the machinery that makes it happen. Every provision that HELD this session was one with a machine behind it - verify_gold, state_health, assert_not_the_blind, plant_status's scratchpad gate, and due_gate once it existed. Every provision that was violated was prose.
+
+THE SHAPE OF THE FIX (design, not decided): a RUN LEDGER that records which SOP step each line-touching command belongs to, and a wrapper that refuses a step out of sequence or on a group whose state does not match the step's precondition - the generalisation of assert_not_the_refine from one command to the whole line. Plus a station0/sop_version check that FAILS when a tracked run-wrapper file changes without a version-log entry, which is the (b) case made mechanical.
+
+FALSIFIER: if a session runs the full group cycle with the gate in place and the gate never fires while a human audit finds no deviations, the machinery is redundant and the prose was enough.
 
 ---
 

@@ -54,6 +54,61 @@ RETRO, FWD, OPEN = "RETRO_REPAIRED", "FORWARD_ONLY", "OPEN"
 # re-verified here, `verified` says so - never a silent assumption.
 # --------------------------------------------------------------------------------------
 DEFECTS = [
+    dict(id="h-squeeze_live_calendar_twins", found="S114", fixed="S114", repair=FWD,
+         groups=[16, 17, 18, 19, 20, 21, 22, 23],
+         quantities=["squeeze_watch.days_to_calendar_front_expiry_live",
+                     "squeeze_watch.calendar_front_symbol_live",
+                     "squeeze_watch.calendar_limb_satisfied_live",
+                     "squeeze_watch.active_false_negative"],
+         what="THE _LIVE CALENDAR TWINS WERE THEMSELVES FROZEN - hole #10 recurring inside its own "
+              "cure. The twins were computed once at block-build time and carried through the "
+              "one-shot freeze unchanged, so on a fresh g22 stage "
+              "days_to_calendar_front_expiry_live read a CONSTANT 5 across all ten days while "
+              "flow_calendar correctly ran 4,3,2,1,0,21,20,19,18,18, and calendar_front_symbol_live "
+              "still named NGN26 on days after NGN26 expired - inside a block that simultaneously "
+              "set frozen_front_expired. Worse than a stale value: the S113 relive fix could not "
+              "relive the frozen sibling (squeeze_watch serves no expiry date) and recorded an "
+              "UNRESOLVED note telling readers to trust this twin instead. The escape hatch pointed "
+              "at a broken exit.",
+         fix="S114 forecast_harness._relive_squeeze_live: recomputes the calendar twins against the "
+             "READING day from flow_calendar (ng_expiry/ng_symbol/bd_between - deterministic, "
+             "public, never masked) and re-derives active_false_negative with them rather than "
+             "leaving a stale claim about a value that has since moved.",
+         verified="g22 re-stage under state_health: 20 of the 31 HARD findings cleared; the "
+                  "remaining classes were the two below. Both branches of the recompute exercised."),
+    dict(id="h-lne_strike_scale", found="S114 (registry G-14, vendor bug reported 2024-06-12)",
+         fixed="S114", repair=FWD, groups=[16, 17, 18, 19, 20, 21, 22, 23],
+         quantities=["options_surface.months", "options_surface.top5_oi_strikes",
+                     "options_surface.oi_weighted_strike"],
+         what="options_surface decoded LNE strikes at 1/10 of $/MMBtu - median top-OI strike 0.35 "
+              "against a 3.233 calendar-front settle. Databento decodes an OPTION's strike with the "
+              "OPTION's display_factor instead of the underlying FUTURE's. The scale was MEASURED "
+              "and cured in options_iv_surface.py at S100.1 (LNE_STRIKE_SCALE=10, verified per "
+              "build by matched-pair pricing) and the module that feeds the DECISION STATE never "
+              "got it - so every distance-from-settle read in the served block was nonsense. A "
+              "second defect surfaced while fixing it: the raw globs were NON-RECURSIVE and "
+              "silently skipped raw/ext_2026/, so a rebuild produced 81 sessions where the store "
+              "held 180, dropping exactly the Mar-Jul 2026 window the current groups sit in.",
+         fix="S114 options_surface._strike_on_scale (root-conditional, importing LNE_STRIKE_SCALE "
+             "from the one source rather than re-declaring it) + strike_units/strike_units_basis "
+             "declared on the served block so pre-fix and post-fix states are distinguishable + "
+             "both raw globs made recursive.",
+         verified="store rebuilt to 181 sessions; options_surface --selftest PASS; the 10 "
+                  "per-day HARD findings cleared on the g22 re-stage."),
+    dict(id="h-volregime_window_undeclared", found="S110 (audit f3)", fixed="S114", repair=FWD,
+         groups=[16, 17, 18, 19, 20, 21, 22, 23],
+         quantities=["vol_regime.n0_prev_trades", "vol_regime.v0_prev_trades"],
+         what="vol_regime *_prev_trades and tape_conditions.n_trades count the SAME tape over "
+              "DIFFERENT windows with nothing saying so - 1,835 vs 6,935 for 2026-06-19. "
+              "vol_regime slices by UTC CALENDAR DAY (_session_row asserts the ts span sits inside "
+              "d0..d0+86400); tape_conditions counts the EXCHANGE SESSION (18:00 ET prior day -> "
+              "17:00 ET) on the scored leg. NEITHER NUMBER IS WRONG - comparing them as one "
+              "quantity was, and the divergence is widest on holidays and shortened sessions, "
+              "which is exactly where g22 anchors (Juneteenth).",
+         fix="S114 vol_regime emits {basis}_era_basis naming both windows and forbidding the "
+             "reconciliation - the session_b_share_basis pattern (S109). Declared, not silenced.",
+         verified="the last HARD finding cleared; g22 re-stage now reports 0 hard, PASS on every "
+                  "required block, and tape reconciles to the scored leg on every verifiable day."),
     dict(id="h-frozen_countdowns", found="S113", fixed="S113", repair=FWD,
          groups=[16, 17, 18, 19, 20, 21, 22, 23],
          quantities=["vol_regime.n0_prev_age_days", "vol_regime.v0_prev_age_days",
