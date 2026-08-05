@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 75 |
+| open | 74 |
 | in progress | 1 |
-| done | 11 |
+| done | 12 |
 
-By size: **XS** 8, **S** 33, **M** 29, **L** 6
+By size: **XS** 8, **S** 32, **M** 29, **L** 6
 
 ---
 
-By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 20, **REST** 50
+By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 20, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (6)
+## ESSENTIAL (5)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -28,7 +28,6 @@ By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 20, **REST** 50
 |---|---|---|---|
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
-| **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -125,7 +124,6 @@ By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 20, **REST** 50
 |---|---|---|---|---|---|---|
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
-| **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -205,6 +203,7 @@ By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 20, **REST** 50
 | id | size | title |
 |---|---|---|
 | A-1 | S | Wire zero-change and seasonal-naive baselines into blind_score_nonpooled |
+| A-13 | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today |
 | A-14 | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it |
 | A-16 | XS | SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill |
 | A-22 | M | THE MASTER DATA-POINT REGISTRY - built S112 |
@@ -257,30 +256,6 @@ saturates at ~3.1M MWh/day around $7 gas because coal's cost per MWh sits below 
 BASIN-SPECIFIC. PRB at $14.65/ton is roughly $8/MWh of fuel and is never displaced; CAPP at $82/ton is
 roughly $33/MWh and is displaced by $3 gas. The switching threshold is a per-basin ladder and this feed IS
 that ladder. It is no longer a slow structural level for M-6 alone.
-
----
-
-### [ESSENTIAL] A-13 - SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today
-
-*size S | OPEN | raised S112*
-
-**Why it is ESSENTIAL:** NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit.
-
-**Source:** S112, measured while building spawn.py
-
-MEASURED on the five canonical templates: CAL_FACTS appears in AUD-1 ONLY. BLD-1, BLD-2, RFN-1 and RFN-2 have no calendar slot at all, so NO FORECASTING SPECIALIST - blind or refine - ever receives calendar facts. The only calendar channel to a specialist is the hand-written {DIRECTIVE} slot in RFN-1.
-
-THAT IS THE STRUCTURAL CAUSE OF NC-1, and it explains the part the nonconformance record left as a coincidence: the false 'first post-roll session' premise reached the refine directive AND sat unchallenged in the same day's BLIND posterior. The blind had nothing to contradict it with, because BLD-1 serves no calendar. C-0715 caught it only by going to flow_calendar unprompted.
-
-PROPOSED, and it is a change-controlled edit requiring Greg's go plus a version-log entry (D10), which is why it is a registry item and not a commit: add {CAL_FACTS} to BLD-1 and RFN-1, generated by spawn.py exactly as AUD-1's already is. spawn.py resolves the slot today - the templates simply do not ask for it.
-
-COUNTER-ARGUMENT TO WEIGH FIRST: calendar facts are deterministic and never-masked, so serving them cannot leak. But CAL_FACTS as generated lists the whole block, and a blind specialist owns ONE day under D3 causal slicing - so the block-wide form would show it dates after its own decision point. The fix is a per-day CAL_FACTS for BLD-1/RFN-1, truncated at the owned day, NOT the block-wide form AUD-1 correctly receives.
-
-S112 UPDATE - GREG RAISED IT INDEPENDENTLY AND IT SHARPENS THE FIX: 'The agents are going to have to get the holiday schedule when those days are getting forecasts made because it will change the trading days.' MEASURED: the served flow_calendar carries holiday fields for THAT DAY ONLY and has NO prior-session field at all - `prior`, `since` and `prev` return nothing across the served state. So a specialist on the Monday after a Friday holiday cannot tell its prior session was Thursday; it inherits a handoff from a session it cannot locate.
-
-AND MY EARLIER CAUTION HERE WAS WRONG, corrected: I wrote that a per-day CAL_FACTS would have to be truncated at the decision point to avoid look-ahead. But the state ALREADY serves forward calendar - days_to_next_eia_release, days_to_futures_expiry, days_to_opex and next_eia_release_datetime_et are dated ahead by construction. Calendar is deterministic and public, and D2's one deliberate mask is the PRICE CURVE. Forward holiday facts are the same class the blind already reads.
-
-BUILT AND TESTED, AWAITING THE TEMPLATE EDIT: spawn.py day_calendar() emits prior/next trading session, the calendar-day gap with what was skipped, this session's class, and upcoming non-normal sessions - computed from plant_calendar RULES rather than the CME_HOLIDAYS table, which ends 2027-02-15. Worked cases now covered by selftest: 20260706 reports its prior session as 20260703 (Independence Day observed, partial), 3 days back, skipping Sat and Sun; 20260526 reports that it inherits FROM Memorial Day, a partial session with reduced tape, which no specialist could previously see. The only thing left is adding {DAY_CALENDAR} to BLD-1 and RFN-1, which is a change-controlled SOP edit (D10) needing Greg's go and a version-log entry.
 
 ---
 

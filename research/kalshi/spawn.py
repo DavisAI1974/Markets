@@ -391,12 +391,12 @@ def cmd_selftest(a):
           rc == 0 and not leftover)
     check("the SOP's inline conditional prose survives verbatim",
           "{IF E, weekend-feeding Friday}" in out or "{IF B}" in out)
-    # AUD-1 is the ONLY canonical template carrying CAL_FACTS - measured S112, and it is a
-    # finding rather than a quirk: no forecasting specialist, blind or refine, receives generated
-    # calendar facts. That is the structural reason NC-1's false premise reached both the refine
-    # directive AND the blind posterior - the blind had no independent calendar channel to
-    # contradict it. Adding CAL_FACTS to BLD-1/RFN-1 is a change-controlled SOP edit (D10), not
-    # something this tool may do unilaterally, so the test asserts what the SOP ACTUALLY says.
+    # CAL_FACTS stays AUD-1-only ON PURPOSE, and that is now a DIFFERENT statement than it was at
+    # S112. It is the whole-group block quoting every served day's flow_calendar - correct for the
+    # auditor, who reads the block, and wrong for a per-day forecaster, who would be handed nine
+    # days he does not own. A-13 closed the gap with the RIGHT channel instead: BLD-1 and RFN-1
+    # now carry {DAY_CALENDAR}, the per-day block. So this check no longer says "the forecasters
+    # have no calendar channel" - they do - it says CAL_FACTS did not leak into them.
     arg2 = _A(); arg2.gid = "g23"; arg2.day = None; arg2.spec = None
     arg2.template = "AUD-1"; arg2.directive = None
     buf = io.StringIO()
@@ -404,10 +404,30 @@ def cmd_selftest(a):
         rc2 = cmd_emit(arg2)
     check("the auditor prompt carries the roll fact NC-1 got wrong",
           rc2 == 0 and "bcom_roll_day_n 5" in buf.getvalue())
-    check("MEASURED: only AUD-1 carries CAL_FACTS - the blind and refine templates have no "
-          "calendar channel (open SOP change, D10)",
+    check("CAL_FACTS stays AUD-1-only - the whole-group block does not leak into a per-day prompt",
           [t for t in templates().values() if "CAL_FACTS" in t["slots"]][0]["name"] == "AUD-1"
           and len([t for t in templates().values() if "CAL_FACTS" in t["slots"]]) == 1)
+
+    # A-13 CLOSED. The structural cause of NC-1 was that a per-day forecaster had no calendar
+    # channel of its own, so a false calendar premise typed into a directive met nothing that
+    # could contradict it. These checks EXECUTE the emit and read the delivered text - a slot
+    # that is generated but never rendered is exactly the failure this item was about.
+    for tname in ("BLD-1", "RFN-1"):
+        check("A-13: %s declares the DAY_CALENDAR slot" % tname,
+              "DAY_CALENDAR" in templates()[tname]["slots"])
+    arg3 = _A(); arg3.gid = "g23"; arg3.day = "20260706"; arg3.spec = None
+    arg3.template = "BLD-1"; arg3.directive = None
+    buf3 = io.StringIO()
+    with contextlib.redirect_stdout(buf3):
+        rc3 = cmd_emit(arg3)
+    emitted = buf3.getvalue()
+    check("A-13: the emitted BLIND prompt actually CONTAINS the prior trading session",
+          rc3 == 0 and "PRIOR TRADING SESSION:" in emitted)
+    check("A-13: and on the Monday after Independence Day observed it names the skipped session, "
+          "so the specialist cannot mistake a 3-day gap for a weekend",
+          "NOT the previous calendar day" in emitted and "20260703" in emitted)
+    check("A-13: no DAY_CALENDAR placeholder survives into the emitted prompt",
+          "{DAY_CALENDAR}" not in emitted)
 
     # PER-DAY CALENDAR (Greg, S112: the agents need the holiday schedule because it changes the
     # trading days). The Monday after the Independence Day observed session is the worked case.
