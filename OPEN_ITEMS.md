@@ -975,6 +975,18 @@ AND THE WINTER COLUMN CONFIRMS A-26 FROM A THIRD DIRECTION: burn alone explains 
 
 COVERAGE CAVEAT STILL BINDING: breadth is a count over six BAs summing to 64.5% of US48 power burn. Breadth is precisely the measure that biases with coverage, so the lift must be re-measured after A-18 lands rather than banked at this size.
 
+CORRECTED S113 ON GREG'S CATCH - I REPORTED R2, WHICH IS AN AVERAGE, AND THE RULE FORBIDS IT AS THE VERDICT. Greg: 'look at these numbers again individually and not averaged like our rule.' R2 is variance explained across all weeks; a model can post 0.554 and be catastrophically wrong on the weeks that matter. Re-run PER WEEK, D4 style - sum|err|, the distribution, and the individual events:
+  SUMMER  sum|err| 2947 -> 2709 Bcf (8% better) | 92 improved / 72 worsened = 56% of weeks |
+          |err| p50 15.1->13.3, p75 24.3->22.3, p90 35.1->31.2, but MAX 55.5 -> 60.0 WORSE
+  WINTER  sum|err| 11164 -> 10588 Bcf (5% better) | 88 / 72 = 55% | p75 98.7 -> 98.9 WORSE |
+          errors of 200-285 Bcf on weeks whose actuals are -250 to -360 Bcf
+
+WHAT THE AVERAGE WAS HIDING: the R2 lift came from getting a handful of LARGE-MOVE weeks somewhat less wrong, not from a broadly better model. Week by week it is 56/44 - near a coin flip - and the single worst summer week DETERIORATES. On winter extremes it is not close: 2026-02-05 actual -359 with a -202 error after breadth; 2024-01-25 actual -326 with the error GROWING from -174 to -214.
+
+REVISED VERDICT, replacing 'breadth survives and is the one that matters': breadth is a SMALL REAL improvement in summer and near-nothing in winter, and it is NOWHERE NEAR PROMOTABLE. Not refuted - 8% off sum|err| from an independent, forward-legal input keeps it a live candidate - but it does not carry the weight the R2 number implied. Anything built on it needs the per-week record beside it, never the fit statistic.
+
+THE META-LESSON, recorded because it is the second instance in one session: the pooled CORRELATION column inverted its sign (A-26), and now R2 flattered a coin-flip per-event record. Same disease, two dresses - and I reported it hours after building A-1 for exactly this reason. An averaged goodness-of-fit statistic is the same object as the drift metric D4 was written against. Any future candidate test reports sum|err|, the improved/worsened count, the error quantiles INCLUDING the max, and the named biggest events - never R2 alone.
+
 ---
 
 ### [REST] A-24f - Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin
