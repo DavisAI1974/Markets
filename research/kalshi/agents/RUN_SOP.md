@@ -214,6 +214,67 @@ staging defect, not a neutral fact. The QC sweep checks the consumer map.
 
 ---
 
+## STATION 0 - DOCUMENT IT NOW (added S112 on Greg's instruction, binding)
+
+Greg, S112, verbatim: *"This makes me crazy that we talk about updating things or carrying them
+over somehow and then they don't get done. We have to put something in the sop about immediately
+documenting things like this."*
+
+He is right and it is measured, four times over in one session:
+
+- **A-17** - the nuclear maintenance schedule was agreed in conversation AT LEAST TWICE across
+  sessions and never became a registry line. It surfaced only because Greg remembered.
+- **D36** - the S111 research synthesis ranked thirteen under-used data sources. **Twelve of the
+  thirteen had no registry item.** Among them a live WRONG-SIGN risk on a feed we had already built,
+  and a LEAKAGE question in the module that conditions magnitude.
+- **A-9** - the committed `DROP_IN_S112` listed two ALREADY-DONE items as live instructions.
+- **`delegated_prior`** - the first generated S113 ChatGPT brief re-asked three questions ChatGPT
+  had already answered, because the registry tracked what was open and never what was delegated.
+
+Every one is the same defect: **a document that states work, sitting apart from the list that counts
+it.** `plant_status` can report "61 open items". It cannot report "and twelve things we agreed to
+that belong to no item", because nothing that was never entered can be counted.
+
+### THE RULE
+
+**A thing agreed becomes a registry line IN THE SESSION IT IS AGREED, before that session ends.**
+Not when someone remembers, not at close-out, not "next session will pick it up".
+
+This binds to five kinds of thing, and the list is deliberately wide:
+
+1. **Anything Greg says to do, carry over, or come back to** - including an aside. A-17 was an aside
+   twice.
+2. **Every numbered recommendation in a research briefing, memo or external hand-off** (D36),
+   **including the ones we decide against** - a rejected recommendation with a recorded reason is
+   tracked; an unrecorded one returns as a surprise.
+3. **Every defect found**, whether or not it is fixed the same session, with its repair class:
+   RETRO_REPAIRED, FORWARD_ONLY or OPEN. Measured: only 2 of 13 known defects ever had history
+   rebuilt.
+4. **Every feed or field we decide to serve, drop, or stop reading** - `data_registry.py` counts
+   what is served and read, and cannot count a decision that was never written.
+5. **Every delegation** - who was asked, for what, and whether it came back. Track it on the item
+   with `delegated_prior`.
+
+### HOW, so the rule costs seconds and not minutes
+
+    python research/kalshi/store.py docs --write     # regenerates OPEN_ITEMS.md and the file index
+
+Add the entry to `research/kalshi/OPEN_ITEMS.json` with `id`, `title`, `source` (Greg's words
+verbatim where they exist), `first_raised`, `status`, `size`, and a `why` that carries the REASONING
+rather than a summary of it. Then regenerate. **`OPEN_ITEMS.md` is a RENDER - never edit it.**
+
+### THE STANDARD FOR `why`
+
+Write it so a session six months from now can act without re-deriving the argument. State the
+measurement if there is one, name the instance that motivated it, and record what would falsify it.
+An item that says only what to do is an item somebody will do wrong.
+
+### AND IT IS A CLOSE-OUT GATE
+
+Before writing the handoff: re-read the session for anything agreed that has no id. If the count of
+registry items did not change in a session where things were agreed, that is the smell this station
+exists to catch.
+
 ## APPENDIX — VERBATIM SPAWN TEMPLATES
 
 ### AUD-1 — the state auditor (STEP 1)
