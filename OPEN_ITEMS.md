@@ -960,6 +960,21 @@ RANK 2, and it is a CURVE-SHAPE candidate rather than a direction one, which is 
 RANK 3. The claim is that identical US48 burn concentrated in one BA is a different physical event from the same burn synchronised across several, and that the same South Central inventory absorbs it differently depending on salt/nonsalt composition. It is a CONVERSION candidate - when does the same weather shock become a large HH shock - which is the question A-26 left open.
 MEASURED CAVEAT THAT MUST TRAVEL WITH IT: any breadth count runs on the six BAs we serve, and those sum to 169.3 of US48's 262.6 Bcf/wk of summer power burn - 64.5% coverage, ~93 Bcf/wk unserved. So 'number of BAs whose gas share rose' is a count over a set missing more than a third of the burn, and breadth is exactly the measure that biases with coverage. Do A-18 first or carry the coverage number beside every result. The note's own line that the BA count is an equal-count diagnostic rather than an equal-transmission claim is correct and is reinforced by A-26: the price channel is null, so no transmission weighting should be applied here at all.
 
+FIRST PASS RUN S113 on the restored plane, 391 storage weeks 2019-01-24..2026-07-16, against the note's own named benchmark (US48 burn alone), per season, never pooled.
+                 n    burn alone   +breadth   +dispersion   +d salt_share
+  summer       164        0.469      0.554        0.470          0.510
+  winter       160        0.065      0.126        0.134          0.462
+
+BREADTH SURVIVES AND IS THE ONE THAT MATTERS. Summer R2 0.469 -> 0.554 over burn alone. Breadth is the count of served BAs whose gas SHARE rose week-over-week, so it comes from EIA-930 daily generation - a DIFFERENT SOURCE from storage - and it is available at period+2, meaning the storage week is complete before Thursday's print. Independent and forward-legal, which is what makes it a candidate worth promoting rather than an artifact.
+
+DISPERSION IS REFUTED IN SUMMER: 0.470 against a 0.469 benchmark is nothing. Cross-BA dispersion of gas-share changes adds no information over the count. Scoped per D31 - refuted for this cell and this instrument (weekly, 6 BAs, share-change dispersion), not declared dead.
+
+SALT SHARE IS QUARANTINED, AND THE SECOND REASON IS FATAL. It posts the largest apparent lift (winter 0.065 -> 0.462) and must not be reported as a finding. (1) storage_regional.py:60 defines salt_share = salt level / SOUTH CENTRAL level - both storage levels, and South Central is a COMPONENT of L48 - so regressing the L48 change on a ratio built from the same levels is substantially an accounting relationship. Salt is high-deliverability short-cycle storage and draws faster in a cold snap, so a large L48 draw and a falling salt share co-occur by construction. (2) DECISIVE: salt_share and the L48 level are PUBLISHED IN THE SAME WEEKLY REPORT, so it cannot forecast the number it is measured against - it is the same print. That kills it as a forecast input whatever its R2. Kept in the record because a large number with an innocent explanation is exactly what gets promoted by accident.
+
+AND THE WINTER COLUMN CONFIRMS A-26 FROM A THIRD DIRECTION: burn alone explains R2 0.065 of winter storage change against 0.469 in summer. Power burn barely touches the winter balance, because the winter draw is residential and commercial heating that EIA-930 cannot see. This is a SUMMER instrument, measured three separate ways now.
+
+COVERAGE CAVEAT STILL BINDING: breadth is a count over six BAs summing to 64.5% of US48 power burn. Breadth is precisely the measure that biases with coverage, so the lift must be re-measured after A-18 lands rather than banked at this size.
+
 ---
 
 ### [REST] A-24f - Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin
