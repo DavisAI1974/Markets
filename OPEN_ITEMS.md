@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 60 |
+| open | 61 |
 | in progress | 1 |
 | done | 5 |
 
-By size: **XS** 9, **S** 27, **M** 20, **L** 5
+By size: **XS** 9, **S** 27, **M** 21, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 11, **REST** 45
+By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 12, **REST** 45
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -32,7 +32,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 11, **REST** 45
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (11)
+## BIGGEST WIN (12)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -43,6 +43,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 11, **REST** 45
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
+| **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **G-5** | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2). |
@@ -118,6 +119,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 11, **REST** 45
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
+| **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **G-5** | BIGGEST_WIN | M | OPEN | S111 | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | - |
@@ -351,6 +353,8 @@ THE LESSON IS THE ONE A-19 ALREADY STATES AND I STILL TRIPPED ON IT: a utility b
 
 CLOSING RULE, from D35: the BA list is closed by RECONCILIATION, not by map coverage. Add respondents until the served set sums to US48 within tolerance, then stop - US48 is carried as its own EIA-930 respondent so the gap is computable today. And the Southeast set is not an arbitrary region to have picked: it sits on the Gulf corridor, which is among the best-transmitting demand to Henry Hub itself.
 
+RE-AIMED S113 BY MEASUREMENT (A-26): this item was registered on the Gulf-corridor argument - that the Southeast BAs are among the better-transmitting demand to Henry Hub. That argument is now the WEAKER of two, because per-BA burn does not move HH price at all (|r| <= 0.11 across every BA, national aggregate included). The item SURVIVES on the BALANCE channel: weekly per-BA burn against weekly storage change runs -0.44 to -0.69 in summer for every BA measured, so every region's burn is present in the print HH trades even when its price is not. Keep the build; change the reason. Closure remains D35's rule - reconcile to US48, not cover the map - and it is now the ONLY closure that makes sense, since basis-weighting would drop CISO (-0.666 vs storage) to nearly zero.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
@@ -392,6 +396,41 @@ THE ORDER OF OPERATIONS STILL STANDS but is demoted to what it is: a measurement
 THE CONVEXITY THAT MATTERS IS LOAD -> GAS BURN, NOT TEMPERATURE -> DEGREE DAYS, and it is a better-posed question: the footprint's gas burn is convex in the footprint's LOAD because gas is the residual and every cheaper stack term saturates - nuclear and coal are levels, wind, solar and hydro are forcings, so a rising share of each additional MWh lands on gas. NEW SUB-TASK, and it is the cheapest thing in this item: measure demand_mwh against gas_mwh per respondent from the grid_stack store, back to 2019. No new feed, no new station, and it is the actual curve the desk needs. Never measured.
 
 AND IT CONFIRMS A-19 FROM THE OTHER SIDE: EIA-930 reports the footprint's own demand, so for a served BA the aggregate load is MEASURED, not inferred from thermometers. The station set is the FORWARD instrument only.
+
+---
+
+### [BIGGEST_WIN] A-26 - HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE
+
+*size M | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once.
+
+**Source:** Greg, S113: 'did we ever answer what hh represents... we need to find that out now before we chase things down we don't need' and then the correction: 'their daily prices may not have any influence but their demand most definitely does. Two different pieces.'
+
+D35 SETTLED WHAT HENRY HUB IS AND NOT WHAT IT SEES - its own status line says 'Transmission weights NOT yet measured' and records the Southeast reasoning as 'Banked, not assumed'. Greg stopped the Southeast build to settle it. MEASURED S113, and the answer is that there are TWO CHANNELS and we had been reasoning about one.
+
+CHANNEL 1 - PRICE, daily, gated by pipe. D35 prescribed regressing HH day-moves on per-BA burn changes. RUN IT AND IT DOES NOT DISCRIMINATE: over 211 overlapping gas days (2025-09-02..2026-07-13) the correlation of d(HH cash spot) with d(per-BA gas burn) is US48 -0.018, ERCO -0.036, SOCO -0.106, PJM +0.025, MISO +0.061, SWPP +0.007, CISO +0.009 - nothing beyond |0.11|, and the national aggregate is no better than any BA. That is not 'HH is national' and not 'HH is a territory'; it is the instrument failing.
+THE JOIN IS SOUND, WHICH IS WHAT MAKES THE NULL READABLE: on the same days and the same code path, d(HH) vs d(gw_hdd) is +0.220 - right sign, sensible size - while d(HH) vs d(gw_cdd) is +0.003 and d(HH) vs d(US48 total generation) is -0.005. The price series itself is sane (mean |d HH| $0.410, lag-1 autocorrelation +0.08). So weather transmits to HH and realized power burn does not.
+WHY, AND IT IS STRUCTURAL RATHER THAN A DATA PROBLEM: realized power burn is a RESPONSE to price through same-day dispatch economics, so regressing price on it asks the price to explain its own consequence; power burn is only ~40% of gas demand; and the margin that sets HH in winter is residential and commercial heating, which EIA-930 does not carry at all.
+
+CHANNEL 2 - BALANCE, weekly, and this is the one that is real. Greg: 'their daily prices may not have any influence but their demand most definitely does.' Every region's burn draws the same storage complex and the EIA weekly print is what HH trades on Thursday. MEASURED over 392 storage weeks (2019-01-17..2026-07-16), weekly storage change against that BA's weekly power burn, expected sign NEGATIVE (more burn, smaller build):
+  SUMMER  US48 -0.685, CISO -0.666, ERCO -0.602, PJM -0.587, SWPP -0.558, MISO -0.476, SOCO -0.435
+  WINTER  ERCO -0.287, PJM -0.277, US48 -0.256, SOCO -0.248, SWPP -0.222, MISO -0.120, CISO +0.154
+So the channel the price test could not see is large, correctly signed, and present in every BA.
+
+THE DECIDING INSTANCE IS CISO. It is 3.2% of national gas burn, prices at SoCal citygate, and has no meaningful price transmission to Henry - and it scores -0.666 against national storage, statistically indistinguishable from US48's -0.685. A territory with no price relationship to HH is fully present in the number HH trades. That single row is why a basis-weighted roll-up would be wrong.
+
+CONSEQUENCES, and they re-aim the open build thread rather than adding to it:
+(1) A-18 STANDS but on a DIFFERENT JUSTIFICATION. It was registered on the Gulf-corridor / best-transmitting-to-HH argument, which is now the weaker of the two reasons. It survives on the balance channel: every region's burn draws the same tank. Closure is D35's own rule - RECONCILE TO US48, never cover the map.
+(2) A-19's ROLL-UP WEIGHT CHANGES. D35 says weight by 'burn x HH transmission'. For the balance channel that is wrong - it would down-weight CISO to nearly nothing. WEIGHT BY BURN. Transmission is parked against channel 1 and is a separate, smaller question.
+(3) IT IS MOSTLY A SUMMER INSTRUMENT. Summer -0.44..-0.69, winter -0.12..-0.29, because the winter draw is heating demand EIA-930 cannot see. Do not expect the per-BA programme to fix winter; that matches the S102 seasonal salience slider rather than fighting it.
+(4) MY OWN BASIS RECOMMENDATION WAS WRONG AND IS WITHDRAWN HERE. On seeing the price null I proposed buying regional hub basis before adding any BA. Greg's correction landed first and the measurement backs him: basis answers channel 1, which is the channel that does not set the weekly number.
+
+WHAT IS NOT ESTABLISHED, stated so nobody weights anything with these numbers yet: summer heat drives burn in every BA at once, so the BAs are largely co-moving on a shared seasonal driver. This establishes that the channel EXISTS and is seasonal. It does NOT give per-BA weights, because the common component has not been removed. Per D35 the attribution is never the deliverable anyway - the total is - so the remaining work is the total's reconciliation, not a per-BA league table.
+
+NEXT STEP: remove the common seasonal component (per-BA burn against its own seasonal norm, or against US48's contemporaneous burn) and re-measure, per season, never pooled. Then reconcile the served BA set to US48 and report the residual - that is the number that closes the list.
+
+AND A METHOD WARNING WORTH KEEPING: the POOLED column of the balance measurement INVERTS THE SIGN - US48 reads +0.178 pooled against -0.685 summer and -0.256 winter, because storage builds in summer and draws in winter. Pooled, we would have concluded that burning gas FILLS storage. D4 in the wild, on a correlation rather than an error.
 
 ---
 
@@ -498,6 +537,8 @@ AND HERE IS THE STRUCTURAL CONSEQUENCE - RE-SIZED HONESTLY FROM M TO L. You cann
 WHY THE SOUTH SPECIFICALLY, and it is not just population growth: the Southeast has the highest heat-pump and electric-resistance heating penetration in the country, concentrated in exactly the detached single-family suburban stock Greg is pointing at. So Southern stations drive BOTH peaks - summer cooling AND winter heating - through the electric meter, where a Northeast station drives the winter peak through the gas meter instead. SCOPING NOTE THAT FOLLOWS: below a heat pump's balance point the resistance strips cut in, so Southern winter electric load is sharply CONVEX in the cold tail, not smooth in HDD. A linear degree-day term will systematically under-call the Southern cold extreme, and the utility fills that jump with gas.
 
 ROLL-UP WEIGHT SHARPENED BY D35 (S112): I wrote 'weight the national roll-up by each BA's measured gas burn'. Greg's follow-up - 'what does HH really aggregate, is it a generic national price?' - forces the correction. It is not. Henry Hub is ONE physical point near Erath, Louisiana, on Sabine Pipe Line, and everything else trades at a basis differential. So the target is DEMAND HH CAN SEE, and the weight is burn TIMES HH TRANSMISSION. Measure the transmission by regressing HH day-moves on per-BA burn changes; never assert it from a pipeline map. New England burn can move Algonquin without moving HH; Gulf LNG feedgas is the most coupled demand there is.
+
+ROLL-UP WEIGHT CORRECTED S113 BY MEASUREMENT (A-26). This entry ends by adopting D35's 'weight the national roll-up by burn x HH TRANSMISSION'. That is wrong for the quantity we actually forecast. Transmission governs the DAILY PRICE channel, which measures as null (|r| <= 0.11 per BA against HH day-moves); the weekly BALANCE channel is the one that sets the storage print, and there CISO - no price relationship to Henry whatsoever - scores -0.666 against national storage, level with US48's -0.685. Weighting by transmission would delete a region that is fully present in the number. WEIGHT BY BURN. And scope it: summer -0.44..-0.69 vs winter -0.12..-0.29, because the winter draw is res/comm heating that EIA-930 cannot see - so the station/BA programme is primarily a SUMMER instrument.
 
 ---
 
