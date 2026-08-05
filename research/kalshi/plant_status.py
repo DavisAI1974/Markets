@@ -220,9 +220,14 @@ def main() -> int:
         txt = open(doc, encoding="utf-8", errors="replace").read()
         norm = txt.replace("\\", "/").lower()
         base = os.path.basename(doc)
-        for mk in SCRATCH_MARKERS:
-            if mk in norm:
-                scratch_hits.append("%s -> %s" % (base, mk.strip()))
+        # RUN_SOP.md is the file that DEFINES this prohibition, so it must be able to name what it
+        # prohibits. A substring check cannot tell "do X" from "never do X" - it fired on the rule
+        # text the moment the rule was written. Exempt it from the MARKER scan only; it stays
+        # subject to the untracked-path scan below, which is the half that could still bite it.
+        if base != "RUN_SOP.md":
+            for mk in SCRATCH_MARKERS:
+                if mk in norm:
+                    scratch_hits.append("%s -> %s" % (base, mk.strip()))
         for m in PATHY.finditer(txt):
             rel = m.group(1)
             if rel not in tracked and rel.rstrip("/") not in tracked:
