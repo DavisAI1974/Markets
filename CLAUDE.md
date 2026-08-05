@@ -1,4 +1,70 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-05, Session 112)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-05, Session 113)
+
+## S113 — THE NO-AVERAGE RULE BECAME A FUNCTION, AND THE STORAGE LANE'S BIGGEST TERM TURNS OUT TO BE UNMODELLED (read `SESSION_HANDOFF_2026-08-05_S113.md` + `DROP_IN_S114.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`. Brain s105.0, 82 plays — UNCHANGED. No
+group run, no merge.** Registry 87 items (75 live: 5 ESSENTIAL, 20 BIGGEST_WIN). Decisions 42.
+
+**D37 — NO AVERAGE MAY BE A VERDICT, AND A REFUTED STORY DOES NOT DEMOTE A MEASUREMENT.** Greg had
+to say the no-average rule for the tenth time, so it stopped being a sentence and became
+`research/kalshi/per_event.py`. **AN R2, A CORRELATION AND A FITTED SLOPE ARE ALL AVERAGES** — that
+is the form the rule kept being broken in, not the word "mean". Measured in ONE analysis: a pooled
+correlation whose sign was opposite to every constituent cell (pooled, it said burning gas FILLS
+storage); an R2 of 0.554 hiding a 92-improved / 72-worsened per-week record whose worst week got
+WORSE; and an OLS slope quoted as evidence. The second half cost more: I wrote "DEMOTED" on an
+observation because MY MECHANISM died. **An observation and the story explaining it are
+independent** — the full cycle ran (a regularity held 9 of 9 monthly cells, three mechanisms
+refuted, finally dropped for the right reason when its OWN evidence died holding burn constant
+inside month).
+
+**GREG TAUGHT UTILITY OPERATIONS AND IT KILLED FIVE OF MY MECHANISMS.** Registered, each measured
+against our own data: **wind and solar are seasonally ANTI-CORRELATED** (wind 9.9 TWh/wk April vs
+5.9 August; solar 3.5 June vs 1.4 December — never sum them into one "renewables" term); **time of
+day is load-bearing** (*"Wind at night does nothing for gas demand. Wind at 7 in the morning
+does"*) → A-28; **gas plays BOTH roles**, peaker and baseload, and is now more baseload than coal,
+inverting our written stack → A-30; **coal is a startup-constrained RAMP** — ~24 h boiler warmup
+forces a 1-2 week commitment, block-loaded at 100%, with tube leaks the reason for a shakedown week
+→ A-31 + `coal_commitment.py`; **reliability is the trump card rarely played** (economic dispatch is
+the base case, reliability-first a 2-3 month exception, regime-3 demand price-INSENSITIVE by
+obligation); **the correlated-failure tail** (>$20 intraday gas when nothing has surplus, and
+freeze-offs cut SUPPLY too) → A-33; **the mediated response** (a cold snap can show a coal ramp with
+NO gas bump for a week) → A-34.
+
+**D38 — BURN FOLLOWS GENERATION, NOT LOAD** (*"even if I don't have gas gen, my neighbor probably
+has enough for both of us"*). A BA with no gas generation still creates gas demand. **CISO
+net-imports p50 20.6% / MAX 41.7% of its load**; PJM runs both ways (2,691 export days, 25 import).
+**US48 is the ONLY level where the interchange term collapses (p50 0.5%)** — the arithmetic
+justification for D35 closing the BA list by reconciliation, not map coverage. **It is a BOUNDARY
+term**: the storage/national roll-up needs NONE (it cancels pairwise), the HH lane needs its own
+fence flow. Sign VERIFIED from the accounting identity `TI = sum(gen) − demand` — **not** by
+assuming anyone is always an importer, because **power flows both ways in every system**.
+
+**A-38 (ESSENTIAL) — THE STORAGE LANE'S DOMINANT COMPONENT HAS NO MODEL.** Greg scoped storage as
+*"overall gas demand"*, so it was measured: STEO actuals, 52 monthly moves named individually,
+**res/comm heating is the bigger mover on 33 of 52 and on 10 of the 10 largest**, and **on 12 of 52
+power burn moved OPPOSITE to total demand** — every November in the record (202211 total **+16.1**
+while power **−0.46**). **SCOPED PER D31: this does not refute the burn stack** (in summer res/comm
+sit at their floor so all summer variance IS power burn; the HH lane is untouched). It says the
+WINTER storage lane's dominant term — HDD to res/comm Bcf/d — is unmodelled. **The evidence is
+MONTHLY and the traded object is weekly, so the weekly re-check comes before anything is built on
+it.**
+
+**BUILT: A-1** (three named benchmarks in `blind_score_nonpooled.py` — no error number without one
+again); **A-13 / SOP v1.9** (BLD-1 and RFN-1 finally get `{DAY_CALENDAR}`, NC-1's structural cause;
+verified by EMITTING, 22/22); **defect `h-frozen_countdowns`** (the price mask was freezing
+distance-from-today fields — 20/20 mapping, FORWARD_ONLY g16-23); **`creds.py`** (ends the
+scratchpad credential path, and ignores the container's injected `proxy-injected` placeholder that
+would otherwise shadow the real AWS pair); **the restore do-not-destroy guard** plus the S3 push
+that makes a local rebuild durable.
+
+**NC-3, mine, and the third of its shape:** I reported that guard "negative-tested both directions"
+when its firing branch had never executed — `NameError` on the next run, which aborted the restore
+and took the data plane down. **A test that never produced the guard's OUTPUT did not test the
+guard.**
+
+**NEEDS GREG:** **A-11** (serving chain state means serving `cum_from_anchor`, which is PRICE
+content — what non-price form may the blind hold?) and **THE BRAIN MERGE** (nothing from S113 is in
+the brain, and specialists read the brain, not the registry — the largest gap at close).
 
 ## S112 — THE D29 WORK LIST IS CLOSED, THE BURN STACK IS REBUILT, AND EVERY LIST IS NOW COUNTED (read `SESSION_HANDOFF_2026-08-05_S112.md` + `DROP_IN_S113.md`)
 
@@ -746,6 +812,22 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S113):** brain **s105.0, 82 plays — UNCHANGED. No group run, no merge**, and
+**nothing from S113 is in the brain**, which is the largest gap at close (specialists read the
+brain, not the registry). **D37 made the no-average rule a FUNCTION** (`per_event.py`) — an R2, a
+correlation and a fitted slope are all averages — and separated an OBSERVATION from the STORY
+explaining it. **Greg taught utility operations and it killed five of my mechanisms**: wind and
+solar are seasonally ANTI-correlated, gas plays both peaker and baseload roles, coal is a
+startup-constrained ramp on a 1-2 week commitment, reliability is the rarely-played trump card, and
+the response can be MEDIATED (a cold snap with no gas bump for a week). **D38: burn follows
+GENERATION, not load** — CISO net-imports p50 20.6% / MAX 41.7% of its load, US48 is the only level
+where interchange collapses, and the term is a BOUNDARY term the storage roll-up does not need.
+**A-38: for the WINTER storage lane, res/comm heating outmoves power burn on 33 of 52 actual months
+and on 10 of the 10 largest, and on 12 of 52 power burn moved OPPOSITE to total demand** — scoped
+per D31, it does not refute the burn stack, and its weekly re-check comes first. **Registry 87 items
+(75 live: 5 ESSENTIAL, 20 BIGGEST_WIN).** **A-1 and A-13 closed** (SOP v1.9). **G23 was the last
+staged block — G24 needs a DATA PULL.** **Keys do NOT rotate during the walk.**
 
 **One-line state (S112):** brain **s105.0, 82 plays**, **624 instances (306 do / 318 dont)**. **No
 group run, no merge.** The D29 work list is CLOSED. **Greg rebuilt the burn stack** — nukes, coal,
