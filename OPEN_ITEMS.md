@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 70 |
+| open | 71 |
 | in progress | 1 |
 | done | 9 |
 
-By size: **XS** 8, **S** 31, **M** 27, **L** 5
+By size: **XS** 8, **S** 31, **M** 28, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 17, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 18, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,7 +31,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 17, **REST** 50
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (17)
+## BIGGEST WIN (18)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -48,6 +48,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 17, **REST** 50
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
 | **A-27** | M | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | It sits under A-26 and every burn-to-storage statement, and it is the DOMINANT sensitivity: power burn is 210-263 Bcf/wk against weekly storage changes of +/-67-91 Bcf. |
 | **A-28** | M | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | It is the prerequisite under A-24g, A-27 and G-19, and it is why A-24c could not be settled. An ingest change on a feed we already pull, and it is the third instance of the same reduction mistake this desk has recorded. |
+| **A-33** | M | THE CORRELATED-FAILURE TAIL - 'no surplus of any type of energy', including gas SUPPLY freeze-offs, and our data is daily | It is the largest event class there is, the desk's scoring rule says these are what cost money, and we already hold instruments for most of its components while reading almost none of them. It also reframes A-24f from a demand candidate into a supply-interruption instrument. |
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **G-5** | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2). |
@@ -133,6 +134,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 17, **REST** 50
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
 | **A-27** | BIGGEST_WIN | M | OPEN | S113 | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | - |
 | **A-28** | BIGGEST_WIN | M | OPEN | S113 | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | - |
+| **A-33** | BIGGEST_WIN | M | OPEN | S113 | THE CORRELATED-FAILURE TAIL - 'no surplus of any type of energy', including gas SUPPLY freeze-offs, and our data is daily | - |
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **G-5** | BIGGEST_WIN | M | OPEN | S111 | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | - |
@@ -1100,6 +1102,59 @@ AND IT SHARPENS A-27: the heat rate is worst exactly in these ramp hours, becaus
 cycling and part-loading rather than baseloading. So the hour that matters most for QUANTITY of gas is also
 the hour where the CONVERSION from MWh to Bcf is furthest from 7,900 Btu/kWh. The two errors compound in
 the same hours rather than cancelling.
+
+---
+
+### [BIGGEST_WIN] A-33 - THE CORRELATED-FAILURE TAIL - 'no surplus of any type of energy', including gas SUPPLY freeze-offs, and our data is daily
+
+*size M | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** It is the largest event class there is, the desk's scoring rule says these are what cost money, and we already hold instruments for most of its components while reading almost none of them. It also reframes A-24f from a demand candidate into a supply-interruption instrument.
+
+**Source:** Greg, S113: 'I've seen intraday gas go to above 20.00 before because everything went bad all at once and there wasn't a surplus of any type of energy'
+
+Greg, S113: 'I've seen intraday gas go to above 20.00 before because everything went bad all at once and
+there wasn't a surplus of any type of energy.' That is the complete form of the tail this desk exists to
+call, and it is NOT a gas shortage - it is a TOTAL ENERGY SCARCITY EVENT in which every source is
+simultaneously maxed and gas is the only term that can still move, so price goes wherever it must.
+
+THE CORRELATED-FAILURE CHAIN, and the point is that these arrive TOGETHER rather than independently:
+  DEMAND at maximum (cold), and per A-31 demand is price-insensitive by obligation at that point
+  RENEWABLES possibly DOWN - an Arctic high is calm, so the cold outbreak and the wind lull co-occur
+  IMPORTS GONE - no neighbour holds surplus (A-32: interchange collapse is the observable)
+  COAL maxed, its ramp spent, and some units TRIPPING on the very thermal cycling that starting them
+    causes (A-31 shakedown: tube leaks are the largest single cause of coal forced outages)
+  GAS SUPPLY ITSELF CUT by wellhead freeze-offs, at the exact moment demand peaks
+The last one is the supply side of the same storm and it is the piece our reasoning has never carried.
+
+AND WE ALREADY HOLD THE INSTRUMENT FOR IT, UNREAD: freeze_risk carries per-basin threshold crossings for
+MAF, OKC, PIT and SHV - first_below, last_below, max_consecutive, tmin_by_horizon - and 148 of its 157
+fields are read by NOTHING (A-24f). A correlated freeze across multiple producing basins is precisely the
+'everything at once' condition, and the geometry fields (how many basins below threshold simultaneously,
+and for how long) are the natural measure of it. A-24f was registered as a candidate about cold DEMAND
+geometry; this reframes it as the SUPPLY-INTERRUPTION instrument, which is a stronger claim.
+
+THE RESOLUTION PROBLEM, stated because it bounds everything above: GREG SAW IT INTRADAY AND OUR ENTIRE
+PICTURE IS DAILY. HH daily spot printed $30.72 on 2026-01-23, but the intraday cash market - the NAESB
+ID1/ID2/ID3 nomination cycles - clears far above a daily index during scarcity. So our daily data
+understates the tail on BOTH sides: the storage/burn arithmetic (A-28) and the price itself. A daily
+series cannot show a $20 intraday print at all, so any tail calibration built on daily data is calibrated
+on a smoothed version of the event.
+  CONSEQUENCE PER LANE: for KXNATGASD, which settles on a 17:00 NGD close, an intraday spike that resolves
+  before the close does not reach settlement - so the Kalshi lane is partly insulated. For the FUTURES and
+  OPTIONS lanes it is the whole event. Per S98 the ledgers are never pooled, and this is a case where the
+  same physical day is a different object in each lane.
+
+WHY THIS MATTERS MORE THAN ITS FREQUENCY SUGGESTS: by the desk's own scoring rule, being wrong on the
+largest events is what costs money. This is the largest event class there is, we hold instruments for most
+of its components (freeze_risk, interchange once A-32 lands, coal state, renewables, reserve declarations),
+and we read almost none of them. The gap is not data - it is that nothing joins them, which is the same
+finding the A-24 note reached from the registry side.
+
+NOT A PLAY AND NOT YET MEASURED: this is a structural description with named instruments. The first
+buildable step is to define the CONJUNCTION state (how many of the chain's components are simultaneously
+stressed) rather than any single threshold, and to check it against the known events in our corpus -
+starting with January 2026, which is in hand.
 
 ---
 
