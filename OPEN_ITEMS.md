@@ -808,6 +808,36 @@ serve it as a forward supply term. Falsifier is direct: if committed coal does N
 window when the weather breaks early, the commitment model is wrong and the whole account above fails with
 it.
 
+THE SIZING CORRECTION, AND IT RESCOPES THIS ENTIRE ITEM - Greg S113: 'as long as reliability isn't an
+issue price is king. It's maybe a couple or 3 months out of the year, maybe less that price takes a
+temporary backseat. As soon as load absorbs the new coal it's back to slitting the other guy's throat.'
+
+RELIABILITY-FIRST IS THE EXCEPTION, NOT THE RULE - two to three months a year, possibly less. For the
+other nine or ten the ECONOMIC model governs and merit order, switching and elasticity all work normally.
+Everything above was built off the dramatic regime and implicitly treated it as the general case. THE BASE
+MODEL IS ECONOMIC; the reliability regime is a flagged, announced exception.
+
+BUT THE TWO FACTS SIT IN TENSION AND BOTH MUST BE HELD: MOST DAYS ARE ECONOMIC, MOST OF THE MONEY IS IN
+THE EXCEPTION. By the desk's own scoring rule - being wrong on the big events is what costs - a regime
+that is 15-20% of the calendar can carry most of the P&L. So weight the BASE MODEL toward economics and
+the RISK MODEL toward the exception. Those are different weightings of the same year and conflating them
+is how a model that is right on 80% of days loses money.
+
+AND THE TRANSITION CONDITION IS SHARPER THAN I HAD IT. I wrote the reliability regime as ending when the
+weather breaks. It ends when LOAD RISES ENOUGH TO ABSORB THE COMMITTED COAL - surplus gone, headroom
+restored, competitive dispatch resumes. That is a MEASURABLE STATE (committed coal base against load), not
+a weather event, and it can end while the weather is still cold or persist after it warms.
+
+IT ALSO EXPLAINS A MEASUREMENT MADE EARLIER TODAY WITHOUT UNDERSTANDING IT: weekly burn-to-storage explains
+R2 0.065 in winter against 0.469 in summer. That is not one relationship with more winter noise - THEY ARE
+TWO DIFFERENT REGIMES and a single model was being fitted across both. Summer is economic dispatch with
+cooling load; winter mixes economic months with the reliability exception. Any burn-to-storage work should
+be cut on the REGIME, not on the season - the season is a poor proxy for it.
+
+SO THE HONEST SCOPE OF A-31: it is a description of the winter reliability exception and the transitions
+into and out of it. It is NOT a general model of gas dispatch, it does not apply for most of the calendar,
+and any play built on it must carry the regime test as a precondition rather than assuming it.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
