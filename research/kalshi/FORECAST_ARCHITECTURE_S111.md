@@ -141,13 +141,19 @@ resolution the market is trading.
 **Three instruments, one lagging, one leading, one falsifying:**
 - **Slope divergence** — lagging by construction; a slope change is only measurable after it starts.
 - **The dipole's exhaustion arm** — leading; reads the current leader failing before price turns.
-  *Open, and stated correctly: it HAS been tested on NG. At S90 static divergence did NOT transfer,
+  *It HAS been tested on NG, and it has a measurable success criterion. The architecture split is
+  DIPOLE = filter, fine-resolution PRICE-REVERSAL = timing, and the payoff of resolution is the origin
+  of our look-ahead number: **1-sec enters ~5-6 bps off the true turn against ~9-11 bps at 1-min**.
+  Against a **~22 bps taker floor** (round-trip fee + 2x entry slippage) and a **~4 bps maker floor**,
+  that improvement is a quarter of the cost a taker must clear. On gas at S90: At S90 static divergence did NOT transfer,
   but exhaustion showed a faint RIGHT-SIGNED pulse (oppose+exhaust 0.410 vs trend+strengthen 0.382,
   +2.7pp) on n=1 trend day at 1-sec bins. Greg's load-bearing note then: the 1-sec canary is FAR too
   coarse, the edge lives at NATIVE TICK, and the real test is pending at native tick, per-cell,
   event-time. Already carried as `timing.subsecond_reversal_exhaustion` (conf 0.25), correctly scoped
-  as a turn-timing/execution edge and never a blind open-time curve input. The open job is the
-  resolution, not the question.*
+  as a turn-timing/execution edge and never a blind open-time curve input. **The open job is the
+  resolution, not the question, and it has a number attached: run at native tick and measure how far
+  off the turn we enter, directly comparable to 9-11 and 5-6.** Distinct from the depth-based
+  `turn_exhaustion`, which separately DID separate NG turns (reversed median -0.107 vs held -0.018).*
 - **Named structural events** — did the turn arrive at `turn_time_et`? A missed or inverted turn
   falsifies the story regardless of the residual.
 
