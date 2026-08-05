@@ -14921,24 +14921,6 @@
     "open": "the blind's block-level bearish lean vs a covering rally is the remaining gap (the recurring-problem-memo's selector-averages / flow-nowcast-under-weighted). Candidate: weight the crowded-short-covering-discharge signal (structure.covering_absorption_directional_tell) into the blind's block lean. G19 forward test.",
     "status": "PROVISIONAL; G18 DONE: blind 5/10 (+440 P&L) -> refine r1 err30 -> r2 err8. G19 forward test next."
    }
-  },
-  {
-   "topic": "burn_stack_coal_is_baseload_not_an_absorber",
-   "session": "S112",
-   "kind": "doctrine",
-   "body": {
-    "greg_verbatim": "gas won't take the place of coal in a stack. Coal is baseload and it's cheaper",
-    "what_this_corrects": "The desk's burn-stack model has been written as 'weather-driven load, minus wind and solar, minus WHAT COAL AND NUCLEAR CAN ABSORB'. The word absorb is wrong for coal on our horizon. Coal is baseload and cheaper than gas: it is committed and runs, it does not ramp to meet a demand spike. GAS is the marginal fuel. So coal enters the stack as a LEVEL, not as a variable that responds to today's load.",
-    "the_correct_form": "MERIT ORDER (Greg, S112): NUKES, COAL, GAS - with zero-marginal-cost renewables ahead of all three. Gas is the RESIDUAL, last in the stack, which is why it takes the whole swing in both directions:  gas_burn = load - wind - solar - nuclear - coal .  Nuclear and coal enter as LEVELS moving on outage, retirement and seasonal-commitment timescales - weeks to years - never on the day-ahead timescale a session forecast lives on.",
-    "consequence_that_runs_the_other_way": "This makes the renewables channel MORE load-bearing, not less. If coal cannot absorb, every increment of net load lands on GAS. That is exactly the 0629 instance: gw_cdd rose 10.0 -> 14.8 as forecast and gas burn FELL 4.2 Bcf/d because wind rose 62%. Coal did not move; gas took the whole swing in both directions.",
-    "what_NOT_to_do_with_the_switching_bands": "The published coal-to-gas switching bands (gas competitive with PRB below ~$3.00/MMBtu, PRB parity ~$2.42, Illinois Basin ~$2.40) are a COMMITMENT-HORIZON signal - which units get committed over weeks and months - NOT a daily dispatch signal. Using them to predict a session's burn is a category error: it reads a slow economic decision as a fast physical one. EIA disclaims its own $/MWh conversion as illustrative only.",
-    "how_to_read_the_coal_price_accrual": "research/kalshi/data_records/coal_basin_prices.json (G-11) is PROMPT-QUARTER delivery and is sticky - the first five captured weeks move once and are otherwise flat. Read it as the slow level above, never as a weekly signal, and never lead with a week-over-week change on it.",
-    "the_asymmetry_that_survives": "The one directional claim that does hold is about CAPACITY, not dispatch: coal plants are retired or retiring, so cheap gas can take share over time but expensive gas can no longer reliably hand it back - there is less coal fleet to hand it to. 2022 is the counterexample of record for the naive floor story: Henry Hub hit $6.60 and gas burn still ROSE >7% y/y because coal stockpiles were ~65-76 days and rail could not replenish.",
-    "registry_consequence": "M-6 is re-scoped by this: what is wanted from coal is the RETIREMENT AND OUTAGE CALENDAR (EIA-860M additions/retirements, ISO outage aggregates) - a forward-dated level - not a headroom figure that flexes with load.",
-    "greg_verbatim_stack_order": "A stack would go nukes, coal, gas",
-    "what_we_actually_need_from_coal": "Greg, S112: 'We really only need to know how much of the coal gen is running.' Not the price - the GENERATION. And it is ALREADY SERVED: grid_stack.bas.{US48,PJM,MISO,ERCO,SWPP,SOCO,CISO}.coal_mwh, present in every modern block.",
-    "the_measured_defect_this_exposes": "THE WHOLE THERMAL STACK IS SERVED AND UNREAD. Measured S112 against the brain: coal_mwh is referenced by ZERO plays and carries ZERO conditions; nuclear_mwh by ZERO; wind_mwh and solar_mwh by exactly ONE play each - weather.burn_conversion_gate, which is RETIRED. So of the four stack terms that determine the gas residual, three are read by nothing at all and the fourth's only reader is dead.\n\nTHIS IS THE 0629 DEFECT GENERALISED. That miss happened because wind_mwh was served in every slice and read by nobody: gw_cdd rose 10.0 -> 14.8 exactly as forecast and gas burn FELL 4.2 Bcf/d because wind rose 62%. Coal and nuclear are in that identical state right now - present, numeric, all-modern, consumed by no play. Under D12 a feed with no named consumer is a staging defect, not a neutral fact."
-   }
   }
  ],
  "doctrine_legacy": {

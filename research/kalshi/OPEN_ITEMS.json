@@ -421,6 +421,16 @@
    "size": "XS",
    "why": "MEASURED: the committed table is 11 partial_session + 5 full_closure + ZERO early_close, while flow_calendar.py's own docstring defines early_close as 'a full business day WITH settlements, shortened hours (day after Thanksgiving, Christmas Eve)'. So the class is specified and unpopulated, and four real CME early-close dates in the table's own span are simply absent: 2025-11-28, 2025-12-24, 2026-11-27, 2026-12-24.\n\nBLAST RADIUS - and my first answer on this was wrong, corrected here. I initially reported the dates as touching no walked group; that was an artifact of searching group_config, which only holds g17 onward. 20251128 and 20251224 DO appear in renders/ng_refine_s95/g8_refined_rt.json and g9_refined_rt.json - both walked blocks. They were served as ordinary sessions when they are shortened ones WITH settlements, which is a different day class from both 'normal' and 'partial_session'. Whether any score moves is unchecked; the day class was wrong either way.\n\nFIX: plant_calendar.py already generates all four from rules. Either have flow_calendar source its holidays from the generator, or add the four entries. The first is better - the table also runs out on 2027-02-15.",
    "blocked_by": null
+  },
+  {
+   "id": "A-15",
+   "title": "THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers",
+   "source": "S112, Greg: 'A stack would go nukes, coal, gas' / 'we really only need to know how much of the coal gen is running'",
+   "first_raised": "S112",
+   "status": "OPEN",
+   "size": "S",
+   "why": "MEASURED against the brain: grid_stack.bas.*.coal_mwh is referenced by ZERO plays and carries ZERO conditions. nuclear_mwh: ZERO. wind_mwh and solar_mwh: exactly ONE play each, weather.burn_conversion_gate, which is RETIRED. So of the four terms that determine the gas residual under the merit order Greg states - nukes, coal, gas, with renewables ahead of all three - three have no reader at all and the fourth's only reader is dead.\n\nTHIS IS THE 0629 DEFECT GENERALISED, and 0629 is the desk's cleanest documented miss: wind_mwh was served in every slice and read by nobody, gw_cdd rose exactly as forecast and gas burn FELL 4.2 Bcf/d because wind rose 62%. Coal and nuclear sit in that identical state today - present, numeric, all-modern, consumed by nothing. D12: a feed with no named consumer is a staging defect, not a neutral fact.\n\nWHAT IS CHEAP HERE: the data is already served in every modern block, so this is a PLAY-SIDE job, not a feed build. The residual form is arithmetic we already hold - load minus wind minus solar minus nuclear minus coal - and est_gas_burn_bcfd is served beside it for a cross-check.\n\nSCOPE IT CORRECTLY (the same doctrine entry): coal and nuclear are LEVELS on outage / retirement / commitment timescales, never same-day absorbers. The play wants 'how much coal is running and is that level changing', not 'how much can coal absorb today'.",
+   "blocked_by": null
   }
  ]
 }
