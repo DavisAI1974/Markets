@@ -25,6 +25,18 @@ skipped or made up on the fly."*
 3. **DEVIATIONS ARE NONCONFORMANCES.** A run that accidentally departed from this file is recorded
    as such in the group's record and the session handoff — never silently absorbed. Whether its
    output stands is Greg's call at the next pause.
+5. **NOTHING THE NEXT SESSION MUST RUN MAY LIVE OUTSIDE GIT.** Greg, S111: *"fix in whatever doc
+   you need to that things don't go on scratchpads anymore. this was in the audit file!"* A path
+   under `~/.claude/projects/`, `workflows/scripts/`, `AppData/Local/Temp` or `/tmp` is SESSION
+   SCRATCHPAD - it does not exist on a fresh container and it dies with the session. A handoff that
+   names a file nobody else can open is a broken handoff. **INSTANCE (NC-2):** the S111 drop-in
+   pointed S112 at an audit harness under `~/.claude/projects/.../workflows/scripts/`; S112 ran
+   `git ls-files` against it, got ZERO, and had to re-author the harness. Written in the same
+   session that diagnosed this exact disease as A-7. **ENFORCED, not asserted:** `plant_status.py`
+   scans the newest drop-in, the newest handoff and this file for scratchpad markers and for
+   referenced repo paths that are not `git ls-files`-tracked, and **FAILS** on either - which stops
+   the line, since a FAIL row exits non-zero. Negative-tested by reintroducing NC-2 verbatim.
+
 4. **GATES CANNOT BE SKIPPED OR SOFTENED.** A failing gate stops the line (jidoka). Routing around
    a gate, weakening a guard to pass, or "just this once" does not exist here.
 
@@ -36,6 +48,9 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.7 (S111): CHANGE CONTROL item 5 - nothing the next session must run may live
+  outside git. Added after S112 found the S111 drop-in pointing at a harness in session scratchpad
+  (NC-2). Enforced by a plant_status.py gate, not by this sentence. First session under it: S112.
 - v1.6 (S110): PATH CUM CONVENTION PINNED - cum is measured from the day's OPEN, first point 0,
   last point == day-move minus gap; the gap rides in overnight_gap_usd only. The prior wording was
   genuinely ambiguous and the two groups read it two different ways (g22 cum-from-open, g23

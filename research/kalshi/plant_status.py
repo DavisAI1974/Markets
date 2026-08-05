@@ -183,6 +183,57 @@ def main() -> int:
         except Exception as e:                                   # a corrupt registry is a finding
             say("FAIL", "open-items", "OPEN_ITEMS.json unreadable: %s" % e)
 
+    # 10. THE SCRATCHPAD GATE (S111, D33 - Greg: "fix in whatever doc you need to that things
+    # don't go on scratchpads anymore. this was in the audit file!"). A-7's disease keeps recurring
+    # because it was only ever a sentence. INSTANCE (NC-2): the S111 drop-in pointed S112 at an audit
+    # harness under ~/.claude/projects/ - session scratchpad - which does not exist on a fresh
+    # container, so the next session had to re-author it. This row makes it mechanical: any FILE THE
+    # NEXT SESSION IS TOLD TO RUN must be tracked in git. FAIL, not WARN - a handoff that names a
+    # file nobody else can open is a broken handoff.
+    import subprocess as _sp
+    tracked = set(_sp.run(["git", "ls-files"], capture_output=True, text=True,
+                          cwd=ROOT).stdout.split())
+    # SCOPE: only the LIVE instructions - the newest drop-in, the newest handoff, and the SOP.
+    # Historical drop-ins are RECORDS, not instructions; scanning them yields permanent noise
+    # (DROP_IN_S104 references agents/blind_shared.md, deleted in S105 by design) and a gate that
+    # always shows red is a gate people learn to ignore. What matters is what the NEXT session is
+    # told to run.
+    def _newest(pat):
+        f = sorted(glob.glob(os.path.join(ROOT, pat)),
+                   key=lambda x: int(re.search(r"S(\d+)", os.path.basename(x)).group(1))
+                   if re.search(r"S(\d+)", os.path.basename(x)) else -1)
+        return f[-1:] if f else []
+    handoff_docs = (_newest("DROP_IN_*.md") + _newest("SESSION_HANDOFF_*.md")
+                    + [os.path.join(HERE, "agents", "RUN_SOP.md")])
+    # NO REGEX for the marker check. The first version of this guard used a character class
+    # containing a backslash, was mangled by shell escaping, compiled WITHOUT ERROR, and silently
+    # matched nothing - it "passed" its negative test by failing to fire at all. Plain substring
+    # matching on a slash-normalized, lowercased line cannot be broken that way. That is the D11
+    # lesson in miniature: a guard that cannot be SHOWN firing on the defect is not a guard.
+    SCRATCH_MARKERS = (".claude/projects", "appdata/local/temp", "workflows/scripts/", " /tmp/")
+    PATHY = re.compile(r"((?:research/kalshi/|odcore/|deploy/|dashboard/)[\w./-]*"
+                       r"\.(?:py|json|md|sh|yml))")
+    scratch_hits, missing = [], []
+    for doc in handoff_docs:
+        if not os.path.exists(doc):
+            continue
+        txt = open(doc, encoding="utf-8", errors="replace").read()
+        norm = txt.replace("\\", "/").lower()
+        base = os.path.basename(doc)
+        for mk in SCRATCH_MARKERS:
+            if mk in norm:
+                scratch_hits.append("%s -> %s" % (base, mk.strip()))
+        for m in PATHY.finditer(txt):
+            rel = m.group(1)
+            if rel not in tracked and rel.rstrip("/") not in tracked:
+                missing.append("%s -> %s" % (base, rel))
+    bad = scratch_hits + missing
+    say("PASS" if not bad else "FAIL", "scratchpad-gate",
+        ("no session-scratchpad paths in the handoff docs; every referenced file is tracked"
+         if not bad else
+         "%d BROKEN REFERENCE(S) - a handoff naming a file nobody else can open is a broken handoff: %s"
+         % (len(bad), "; ".join(bad[:4]))))
+
     # 10. THE ARCHITECTURE DOC - the target itself. Greg, S111: "how do we make sure the arch doc
     # isn't overlooked?" Answer: the andon board names it every session, because the alternative is
     # hoping someone remembers to read it, which is the exact failure this board exists to catch.
