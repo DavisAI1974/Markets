@@ -195,6 +195,7 @@ def apply_retractions(brain, retr, errs):
     """
     by_id = {p["id"]: p for p in brain["plays"]}
     n = 0
+    already = []
     for r in retr.get("retractions", []):
         pid, field = r.get("play_id"), r.get("field")
         disp = r.get("disposition")
@@ -211,6 +212,50 @@ def apply_retractions(brain, retr, errs):
                         % (pid, disp))
         if errs:
             continue
+        # INSTANCE-LEVEL RETRACTION. Not every false claim is a field: an INSTANCE can be wrong
+        # too, and the worked case is one I created today. grp21_mbo_specialist_A.json says
+        # verbatim "Do not bank 0619 as forward evidence for ... daytype.covering_giveback_self_
+        # limiting (de-triggered, not tested)", and the S112 backfill banked it anyway as
+        # `supports`, sourced from E's file while A had declared the day void. A void day banked as
+        # support inside a MECHANISM_VERIFIED play is a corrupt library entry in D32's exact sense.
+        # LEGACY-KEY RETRACTION, and it is the one that actually matters. The D29 migration
+        # preserved 367 ad-hoc keys under `legacy_notes`, so nearly every live field has a SHADOW
+        # COPY. Retracting `forward` while legacy_notes.forward_evidence still holds the identical
+        # false sentence achieves almost nothing: the brain is loaded whole at every spawn, so the
+        # claim is still in the agent's context, still asserted as true. Measured on the first two
+        # retractions of S112 - both left a verbatim copy behind. A retraction that does not sweep
+        # the shadow is theatre.
+        if field == "legacy_notes":
+            key = r.get("legacy_key")
+            ln = p.get("legacy_notes") or {}
+            if key not in ln:
+                # IDEMPOTENT: retraction's goal state is "not present", so a re-run is a no-op,
+                # not a failure. S111-3 requires these tools be re-runnable and a proposal file is
+                # a standing record, so it will be replayed. Reported, not counted, not an error.
+                already.append("%s legacy_notes.%s (already retracted)" % (pid, key))
+                continue
+            if replacement is not None:
+                ln[key] = replacement
+            else:
+                del ln[key]
+            n += 1
+            continue
+
+        if field == "instances":
+            sel_date = str(r.get("instance_date") or "")
+            sel_action = r.get("instance_action")
+            insts = p.get("instances") or []
+            keep = [i for i in insts
+                    if not (str(i.get("date")) == sel_date
+                            and (sel_action is None or i.get("action") == sel_action))]
+            if len(keep) == len(insts):
+                already.append("%s instance %s/%s (already retracted)"
+                               % (pid, sel_date, sel_action))
+                continue
+            p["instances"] = keep
+            n += 1
+            continue
+
         if field not in p:
             errs.append("%s: field '%s' not present, nothing to retract" % (pid, field))
             continue
@@ -238,6 +283,10 @@ def apply_retractions(brain, retr, errs):
         # brain - the retraction proposal file and git history carry the record.
         p[field] = replacement if replacement is not None else ""
         n += 1
+    if already:
+        print("   already applied (no-op): %d" % len(already))
+        for x in already[:8]:
+            print("      %s" % x)
     return n
 
 
@@ -308,9 +357,20 @@ def cmd_apply(a):
             if k == "retracted":
                 continue
             if json.dumps(new.get(k), sort_keys=True) != json.dumps(ov, sort_keys=True):
-                if a.retract and any(r.get("play_id") == pid and r.get("field") == k
-                                     for r in load(a.retract).get("retractions", [])):
-                    continue      # a declared retraction is the one licensed change
+                if a.retract:
+                    rets = load(a.retract).get("retractions", [])
+                    # a declared retraction licenses a change to the field it NAMES...
+                    if any(r.get("play_id") == pid and r.get("field") == k for r in rets):
+                        continue
+                    # ...and KEEP_AS_GUARD additionally licenses `caveats`, because that is where
+                    # the do-not-retry warning is written BY DESIGN. The wall fired here on a real
+                    # unlicensed change and was right to: the retraction named `forward` while the
+                    # guard wrote to `caveats`. Licensing the intended write is the fix; widening
+                    # the wall to "any field on a play with any retraction" would not be.
+                    if k == "caveats" and any(r.get("play_id") == pid
+                                              and r.get("disposition") == "KEEP_AS_GUARD"
+                                              for r in rets):
+                        continue
                 errs.append("INCUMBENT CHANGED: %s.%s" % (pid, k))
     if errs:
         print("REFUSED - the D8 incumbent wall fired:")

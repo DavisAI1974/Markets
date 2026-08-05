@@ -6588,7 +6588,7 @@
    "call": "carry the inherited monday_bias through the window; if E.driver_realization says the driver realized over the weekend, the catch-up is a FADE (sell-the-news), not an extend. This is the Monday operationalization of the flow-is-the-primary-direction-gate finding (NG_FORECASTER_PROBLEM_MEMO_S103 sec 5/7): flow gates SIGN, the fundamental families set magnitude/where-it-can-go.",
    "requires": "E.monday_bias + E.driver_realization (open_time_only) + the catch-up window conviction (needs_intraday_reveal for the live confirm)",
    "scope": "Monday direction at the catch-up window; consumes the Friday/Sunday handoff, never the gap sign",
-   "caveats": "Direction/timing only. The sell-the-news FADE DEPTH on the crash days (0202/0309) is sized by seam_chainage + crash class but the extreme reactive tail is honest-under (not claimed at open). Sub-threshold cold (0406, HDD ~15.8) prices ONCE in the reopen gap then the tape reasserts - do not treat a sub-threshold shoulder cold add like a winter cold add.",
+   "caveats": "Direction/timing only. The sell-the-news FADE DEPTH on the crash days (0202/0309) is sized by seam_chainage + crash class but the extreme reactive tail is honest-under (not claimed at open). Sub-threshold cold (0406, HDD ~15.8) prices ONCE in the reopen gap then the tape reasserts - do not treat a sub-threshold shoulder cold add like a winter cold add. DO NOT RE-TRY (retracted S112): Calls the Monday DAY-MOVE sign 4/4 on the walk's four scorable weekend seams. | why it fails: The play's own record contradicts it twice. Its assumption_retired block says of 0601 that consulting this gate on the state actually served 'REPRODUCES +350' against a realized -990; and the very field making the 4/4 claim writes, in its mechanism clause, '0601 leg +690 against a day of -990'. A day cannot be both a 4/4 member and a documented wrong sign. The S112 decline audit scored all four seams from the blind record: 0518 -550 vs +660 wrong, 0601 +350 vs -990 wrong, 0608 -420 vs -890 right, 0615 +320 vs +160 right. The honest tally is 2 of 4. On the six Mondays after the prior-session stub defect was fixed, the gate's owner went 3 of 6. | evidence: research/kalshi/knowledge/ng_brain.json (the play's own assumption_retired and mechanism fields) + research/kalshi/forecasts/g21_blind_round1/grp21_mbo_specialist_B.json + research/kalshi/STANDDOWN_AUDIT_S112.json DO NOT RE-TRY (retracted S112): Calls the Monday DAY-MOVE sign 4/4 on the walk's four scorable weekend seams. | why it fails: The play's own record contradicts it twice. Its assumption_retired block says of 0601 that consulting this gate on the state actually served 'REPRODUCES +350' against a realized -990; and the very field making the 4/4 claim writes, in its mechanism clause, '0601 leg +690 against a day of -990'. A day cannot be both a 4/4 member and a documented wrong sign. The S112 decline audit scored all four seams from the blind record: 0518 -550 vs +660 wrong, 0601 +350 vs -990 wrong, 0608 -420 vs -890 right, 0615 +320 vs +160 right. The honest tally is 2 of 4. On the six Mondays after the prior-session stub defect was fixed, the gate's owner went 3 of 6. | evidence: research/kalshi/knowledge/ng_brain.json (the play's own assumption_retired and mechanism fields) + research/kalshi/forecasts/g21_blind_round1/grp21_mbo_specialist_B.json + research/kalshi/STANDDOWN_AUDIT_S112.json",
    "confidence": 0.5,
    "status": "PROVISIONAL",
    "status_note": "",
@@ -6658,16 +6658,11 @@
    "forward": [
     {
      "tag": "forward_evidence",
-     "text": "NONE - proposed S104; G17+ is the forward test"
+     "text": "MEASURED S112 on the blind record, four scorable weekend seams: 0518 -550 vs +660 WRONG, 0601 +350 vs -990 WRONG, 0608 -420 vs -890 right, 0615 +320 vs +160 right = 2 of 4. On the six Mondays after the prior-session stub fix the gate's owner went 3 of 6."
     },
     {
-     "tag": "forward_evidence_g21_leg_vs_day",
-     "text": {
-      "measured": "Calls the Monday DAY-MOVE sign 4/4 on the walk's four scorable weekend seams, WITHOUT needing the leg instrument the A-vs-D dispute is about.",
-      "mechanism": "A confirming leg contributes ~1.0 of the day (0518 88%, 0608 39%); a non-confirming leg is ERASED and contributes ~0 (0601 leg +690 against a day of -990; 0615 leg -750 against a day of +160). The leg's magnitude cancels exactly where its sign is hardest to call.",
-      "consequence_for_the_merge": "The day-move never needed the seam-leg instrument. B credited no instrument for the leg and paid with a 1,300-wide band rather than asserting one.",
-      "proposed_by": "B (G21 refine)"
-     }
+     "tag": "instrument_caveat_s112",
+     "text": "The gate keys on an AGENT OUTPUT (E.monday_bias / C.conviction_verdict), not on a served field, so its calls cannot be recomputed from any state file and no state file can contradict them. Every recorded miss has been excused by its input (stub on 0601, roll contamination on 0629). Substituting the served Friday tilt gives 5 of 9."
     }
    ],
    "provenance": {
@@ -6692,12 +6687,12 @@
      "attribution_note": "The harness defect is FIXED as of S108 commit 2a36fa2 (tape_conditions.prior_full_session). G21 and G22 are restaged and carry it. G23 is NOT restaged and still serves stubs on both Mondays - it is separately blocked on a four-day weather gap.",
      "proposed_by": "B (r2), self-corrected in A's favour"
     },
-    "forward_evidence_g21_leg_vs_day": {
-     "measured": "Calls the Monday DAY-MOVE sign 4/4 on the walk's four scorable weekend seams, WITHOUT needing the leg instrument the A-vs-D dispute is about.",
-     "mechanism": "A confirming leg contributes ~1.0 of the day (0518 88%, 0608 39%); a non-confirming leg is ERASED and contributes ~0 (0601 leg +690 against a day of -990; 0615 leg -750 against a day of +160). The leg's magnitude cancels exactly where its sign is hardest to call.",
-     "consequence_for_the_merge": "The day-move never needed the seam-leg instrument. B credited no instrument for the leg and paid with a 1,300-wide band rather than asserting one.",
-     "proposed_by": "B (G21 refine)"
-    }
+    "forward_evidence_g21_leg_vs_day": [
+     {
+      "tag": "forward_evidence",
+      "text": "G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built. | MEASURED S112 across the four real blind unlocks: 2 of 4 (0616 hit, 0617 miss, 0618 hit, 0506 miss)."
+     }
+    ]
    },
    "audit": {
     "session": "S112",
@@ -7826,7 +7821,7 @@
    "forward": [
     {
      "tag": "forward_evidence",
-     "text": "G17 refine r2: the HE24->HE1 coordination halved error 24->11 (10/10) with zero direction changes - the mid-block re-derivation working. G18 blind = scored forward test (pending). | G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built."
+     "text": "G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built. | MEASURED S112 across the four real blind unlocks: 2 of 4 (0616 hit, 0617 miss, 0618 hit, 0506 miss)."
     }
    ],
    "provenance": {
@@ -7842,7 +7837,12 @@
    },
    "legacy_notes": {
     "evidence": "All three self-analyses (C/D/E S105) independently prescribed a mid-block re-derivation. G17 test-drive: C 0422 (RTS COT unlock + literal arm), E 0424 (covering spent -> revert DOWN), D 0416 (over-extension -> two-sided) all fired via this mechanism.",
-    "forward_evidence": "G17 refine r2: the HE24->HE1 coordination halved error 24->11 (10/10) with zero direction changes - the mid-block re-derivation working. G18 blind = scored forward test (pending). | G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built.",
+    "forward_evidence": [
+     {
+      "tag": "forward_evidence",
+      "text": "G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built. | MEASURED S112 across the four real blind unlocks: 2 of 4 (0616 hit, 0617 miss, 0618 hit, 0506 miss)."
+     }
+    ],
     "provenance": "S105 - Greg's mid-block-sanity-check insight + C/D/E convergent self-analyses",
     "merged": "s102.6 S105",
     "assumption_retired_bshare_basis": {
@@ -7898,19 +7898,6 @@
      "supports_or_contradicts": "supports",
      "added_by": "audit_S112",
      "action": "do"
-    },
-    {
-     "date": "20260619",
-     "group": "g21",
-     "source_file": "research/kalshi/forecasts/grp21_mbo_specialist_E.json",
-     "what_the_state_said": "Same report, now age 6.35 days with no new COT anywhere in week 2: 'this worsening is spent fuel once the 0614 seam consumes it and may NOT arm the 0618/0619 boundary a second time. A still-extreme-but-not-freshly-worsening COT reverts to the chain/state default.'",
-     "what_the_day_did": "Actual -110. No second covering rally. The decline limb held on the same instrument that had fired four sessions earlier.",
-     "supports_or_contradicts": "supports",
-     "added_by": "audit_S112",
-     "action": "dont",
-     "verdict": "JUSTIFIED",
-     "reason_class": "MARKET_JUDGMENT",
-     "counterfactual": "NOT DETERMINABLE, and that is the whole point: with the antecedent false the play emits nothing, so there is no counterfactual number. A -110 day cannot be evidence for or against a play that never had standing on it."
     },
     {
      "date": "20260626",
