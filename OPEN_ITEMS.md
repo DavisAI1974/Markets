@@ -697,6 +697,44 @@ physical parameter of the installed fleet that changes only as units retire (dat
 behavioural quantity that could drift. That makes the rate-against-rate spike condition durable enough to
 write a play on - which an anticipatory reading would not support.
 
+THE SHAKEDOWN, AND IT MOVES THE COMMITMENT HORIZON - Greg S113: 'when you are firing up a cold boiler
+there can be tube leaks and all sorts of things so they probably wanted that week to test.' Boiler tube
+failure is the largest single cause of coal forced outages, and thermal cycling after layup is what causes
+it - corroded tubes, expansion, failed seals. So a cold start is not warmup-then-run; it is start, find
+what broke, repair, THEN be ready. The week is a SHAKEDOWN.
+
+(1) COAL HEADROOM IS PROBABILISTIC, NOT DETERMINISTIC. A fraction of starts fail, so available capacity is
+strictly less than standby nameplate and the failure rate is a real parameter. Consequence for us: GAS
+EXPOSURE IS FATTER-TAILED than any deterministic ramp model implies - the bad case is not 'coal ramps
+slowly', it is 'coal ramps slowly AND two units do not make it'.
+
+(2) IT MAY ALREADY BE VISIBLE IN THE TAPE. During the January ramp-up, with HDD still climbing, coal FELL
+twice: -95,657 on 2026-01-17 and -191,162 on 2026-01-21. A NON-MONOTONIC RAMP INSIDE A START-UP WINDOW is
+what a failed or tripped start looks like. Not proven - a daily total cannot distinguish a trip from a
+dispatch decision - but it is a named, checkable signature and the hourly series (A-28) would separate
+them cleanly, since a trip is a step and a dispatch change is a slope.
+
+(3) THE SHARPEST CONSEQUENCE IS THE LEAD TIME, and it lands on a boundary we have already measured. If the
+sequence is forecast -> start -> shake down -> repair -> ready, the COMMITMENT DECISION SITS ROUGHLY A WEEK
+AHEAD, not 24-48 hours. And one week is exactly where our own horizon research puts the death of
+directional forecast skill: 5-7 days, measured on Henry Hub price itself.
+
+SO OPERATORS ARE FORCED TO COMMIT AT PRECISELY THE HORIZON WHERE THE FORECAST STOPS BEING RELIABLE. That is
+not a flaw in their process - the physics gives them no choice - and it MANUFACTURES BOTH TAILS as a
+structural feature rather than as bad luck:
+  COMMITTED AND THE COLD DOES NOT COME -> block-loaded coal runs into mild weather for the rest of its
+  commitment window, displacing gas longer than the weather justifies. BEARISH gas, with a known duration.
+  NOT COMMITTED AND THE COLD DOES COME -> only CTs (5-30 min) can answer, at the worst heat rate in the
+  fleet, at whatever price clears. BULLISH gas, and this is the regime-3 spike.
+This is the same forecast-error asymmetry the desk trades, appearing on the SUPPLY side - and it says the
+tradeable variable is not the weather forecast but THE ERROR IN THE WEEK-AHEAD FORECAST THE OPERATORS
+COMMITTED ON. That is retrievable: MOS run_delta at the commitment horizon versus what verified.
+
+TESTABLE: (a) do coal starts cluster 5-8 days before realized cold rather than 1-2; (b) do non-monotonic
+dips inside a start window predict a LOWER eventual coal ceiling for that event (failed starts); (c) do
+events where the week-ahead forecast OVERSTATED the cold show coal running into mild weather with gas
+displaced and a bearish tail.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
