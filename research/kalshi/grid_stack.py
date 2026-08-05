@@ -165,6 +165,25 @@ def _ba_read(days: dict, period: str, ba: str) -> dict | None:
     gen = d.get("gen_mwh", {})
     total = sum(v for v in gen.values() if v is not None) or None
     gas, sun, wnd = gen.get("NG"), gen.get("SUN"), gen.get("WND")
+    # S113 (A-16 / G-19): the pull sets NO fueltype facet, so gen_mwh already holds EVERY fuel EIA
+    # reports and this read hand-picked five of them. Hydro has therefore been on disk since
+    # START=2019-01-01 and served to nobody - the stack's third forcing, and per Greg an INVERTED U
+    # whose BOTH TAILS ARE BULLISH GAS (flood spill past a river stage bypasses the turbines; drought
+    # drawdown starves them), so it needs a STATE, not a level, and a single bar on it will be wrong
+    # in one tail. Measured on the restored store, US48 2026-07-15: WAT 675,777 MWh = 4.6% of
+    # generation, against a weekly storage change of +/-67-91 Bcf.
+    # PUMPED STORAGE AND BATTERY ARE SEPARATE CODES HERE, WHICH MATTERS AND WAS NOT ASSUMED: PS and
+    # BAT come back as their own fuels for US48 and SOCO. A-20 warned that EIA-930 folds pumped
+    # storage into WAT "wherever a BA cannot separate it" and told us to check per BA rather than
+    # assume - checked: PJM returns no PS key at all, so separability IS per-BA and wat_is_separable
+    # declares it per row instead of leaving a reader to guess. Pumped storage follows price and load
+    # shape, not water, so a BA where it is folded in has a different quantity under the same name.
+    # G-19: battery became its own EIA-930 category in Q1 2025 and is the reason a hot evening no
+    # longer produces the peaker burn the temperature implies - the evening ramp is exactly where gas
+    # used to be the only answer.
+    wat, ps, bat = gen.get("WAT"), gen.get("PS"), gen.get("BAT")
+    named = ("NG", "SUN", "WND", "COL", "NUC", "WAT", "PS", "BAT")
+    unnamed = sum(v for k, v in gen.items() if k not in named and v is not None) or None
 
     def ref(k: int, fuel: str):
         rp = (datetime.date.fromisoformat(period) - datetime.timedelta(days=k)).isoformat()
@@ -179,7 +198,19 @@ def _ba_read(days: dict, period: str, ba: str) -> dict | None:
         "demand_forecast_mwh": d.get("demand_forecast_mwh"),
         "gas_mwh": gas, "solar_mwh": sun, "wind_mwh": wnd,
         "coal_mwh": gen.get("COL"), "nuclear_mwh": gen.get("NUC"),
+        "hydro_mwh": wat,
+        "pumped_storage_mwh": ps,
+        "battery_mwh": bat,
+        # DECLARED PER ROW, never inferred: True = this BA reports PS separately, so hydro_mwh is
+        # water-driven conventional hydro. False = no PS key, so any pumped storage this BA runs is
+        # folded into WAT and hydro_mwh is a MIXTURE of a water-driven forcing and a price-driven
+        # arbitrage. Same name, different quantity - which is exactly how a coefficient fitted on one
+        # BA fails silently on another (A-20).
+        "wat_is_separable_from_pumped_storage": ps is not None,
+        "unnamed_gen_mwh": round(unnamed, 1) if unnamed else None,
         "total_gen_mwh": round(total, 1) if total else None,
+        "hydro_share": round(wat / total, 4) if (wat is not None and total) else None,
+        "hydro_chg_7d_mwh": chg(wat, ref(7, "WAT")),
         "gas_share": round(gas / total, 4) if (gas is not None and total) else None,
         "solar_share": round(sun / total, 4) if (sun is not None and total) else None,
         "gas_chg_7d_mwh": chg(gas, ref(7, "NG")),
@@ -212,7 +243,24 @@ def grid_stack_asof(iso: str) -> dict | None:
         "note": "EIA-930 daily, Eastern framing, wall period+2; est_gas_burn_bcfd is an ESTIMATE "
                 "(gas MWh x 7,900 Btu/kWh STEO-implied heat rate - stated method, not a "
                 "measurement); demand_forecast_mwh is the BA's own day-ahead forecast as "
-                "republished by EIA; per-BA always, US48 is a respondent not a pool",
+                "republished by EIA; per-BA always, US48 is a respondent not a pool. "
+                "PARK NOTE (D12, S113): hydro_mwh, pumped_storage_mwh, battery_mwh and "
+                "unnamed_gen_mwh are served as CONTEXT CHANNELS with no play consuming them yet - "
+                "the play-side work is A-15 (the thermal stack has zero readers) and A-20 (the "
+                "hydro carry), both of which touch the brain and are Greg's adjudication, not a "
+                "staging change. Declared rather than left to be discovered, because served-and-"
+                "unread is this desk's recurring defect and a fifth silent field would repeat it. "
+                "READ hydro_mwh AS A STATE, NOT A LEVEL: the water-to-output curve is an INVERTED U "
+                "and both tails are bullish gas - past a river stage the Army Corps has the gates "
+                "opened and water goes through the SPILLWAY INSTEAD OF THE TURBINES, while drought "
+                "drawdown starves the same turbines - so one low reading comes from two opposite "
+                "states and a single bar on it is wrong in one tail. "
+                "AND CHECK wat_is_separable_from_pumped_storage BEFORE COMPARING TWO BAs: measured "
+                "2026-07-15, only US48 and SOCO report PS as its own fuel; PJM, MISO, ERCO, SWPP "
+                "and CISO do not, so for those five hydro_mwh MIXES a water-driven forcing with a "
+                "price-driven arbitrage under one name. CISO is the sharpest case at 10.7% hydro "
+                "share with no separation. battery_mwh is NET and goes NEGATIVE while charging "
+                "(SOCO -103 on that date), so it is not a generation term to sum naively",
     }
 
 

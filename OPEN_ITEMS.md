@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 60 |
+| open | 58 |
 | in progress | 1 |
-| done | 6 |
+| done | 8 |
 
-By size: **XS** 8, **S** 27, **M** 21, **L** 5
+By size: **XS** 7, **S** 26, **M** 21, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 44
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,13 +31,12 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (12)
+## BIGGEST WIN (11)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
-| **A-16** | XS | SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill | TWO LINES for seven years of data. Hydro has been stored since 2019 and dropped at a five-element serving list. The stack's third forcing has never reached a specialist, and the summer shortfall is roughly 2 Bcf/d of gas fill - the same order as the 0629 wind event. |
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
@@ -50,7 +49,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 
-## REST (45)
+## REST (44)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -71,7 +70,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
 | **G-12** | S | UNG roll + NG futures/options expiry calendars as day-class tags | - |
 | **G-15** | S | Put-call parity slope test as a hard state_health gate on the options surface | - |
 | **G-16** | S | TAPE: the Baltussen rest-of-day to last-30-minute momentum measure | - |
-| **G-19** | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it | - |
 | **G-2** | S | EIA implied flow + reclassification flag + published sampling SE | - |
 | **G-20** | S | EIA-930: declare a BASIS field - the feed has documented, invisible defects | - |
 | **G-23** | S | MODEL DISAGREEMENT and ENSEMBLE SPREAD are two different variables and we hold one | - |
@@ -112,7 +110,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
-| **A-16** | BIGGEST_WIN | XS | OPEN | S112 | SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
@@ -139,7 +136,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
 | **G-12** | REST | S | OPEN | S111 | UNG roll + NG futures/options expiry calendars as day-class tags | - |
 | **G-15** | REST | S | OPEN | S111 | Put-call parity slope test as a hard state_health gate on the options surface | - |
 | **G-16** | REST | S | OPEN | S111 (recommendation); S112  | TAPE: the Baltussen rest-of-day to last-30-minute momentum measure | - |
-| **G-19** | REST | S | OPEN | S111 (recommendation); S112  | EIA-930: BATTERY STORAGE is now its own category and we do not carry it | - |
 | **G-2** | REST | S | OPEN | S111 | EIA implied flow + reclassification flag + published sampling SE | - |
 | **G-20** | REST | S | OPEN | S111 (recommendation); S112  | EIA-930: declare a BASIS field - the feed has documented, invisible defects | - |
 | **G-23** | REST | S | OPEN | S111 (recommendation); S112  | MODEL DISAGREEMENT and ENSEMBLE SPREAD are two different variables and we hold one | - |
@@ -176,8 +172,10 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 12, **REST** 45
 |---|---|---|
 | A-1 | S | Wire zero-change and seasonal-naive baselines into blind_score_nonpooled |
 | A-14 | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it |
+| A-16 | XS | SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill |
 | A-22 | M | THE MASTER DATA-POINT REGISTRY - built S112 |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
+| G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | M-2 | S | Brain status taxonomy normalized to an enum |
 | S111-1 | S | brain_schema.py sections --write |
 
@@ -251,42 +249,6 @@ BUILT AND TESTED, AWAITING THE TEMPLATE EDIT: spawn.py day_calendar() emits prio
 **Source:** S112 conditions curation, found independently by 4 of 8 batches
 
 MEASURED S112: chain age, chain polarity and cum_from_anchor are served in NO grp*_state.json. chain_age_sessions exists only in the per-boundary g*_he24_he1_handoffs.json. Consequence: every play keyed to chain state is unevaluable from the state a specialist is actually given, and the curation pass had to refuse them all. Batch 4's count is the sharpest: four of its seven refusals are the Friday/weekend/chain family and ALL fail on these same two quantities - serving them would make three plays curatable at once. Named refusals across batches: giveback_exhaustion_reversal_recognition, young_chain_extension_full_band, seam_chainage_accommodation_gate, friday_turn_exhaustion_gate, structure.mature_swing_alternation, level.giveback_origin_shelf, structure.covering_extension_distribution_flip, midweek.stretched_extreme_close_giveback, structure.friday_exhausted_extreme_giveback. This is the same fact the DECLINE audit reached from the other side - boundary.chain_label_must_track_realized_cum is 4-of-4 DATA_ABSENT - and it is why its caveat 'chain STATE travels in the handoff, which is never masked' is false on every price-masked run.
-
----
-
-### [BIGGEST_WIN] A-16 - SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill
-
-*size XS | OPEN | raised S112*
-
-**Why it is BIGGEST WIN:** TWO LINES for seven years of data. Hydro has been stored since 2019 and dropped at a five-element serving list. The stack's third forcing has never reached a specialist, and the summer shortfall is roughly 2 Bcf/d of gas fill - the same order as the 0629 wind event.
-
-**Source:** S112, Greg: 'hydro would be in that stack... in the summer or during the spring rainy season, hydros will be curtailed or completely turned off'
-
-MEASURED S112: ZERO hydro fields in the served vocabulary - 938 numeric quantities, no match on hydro or water. Summing the served fuel fields (coal + nuclear + gas + wind + solar) against total_gen_mwh leaves 6.7-7.6% of US48 generation UNNAMED - about 950,000 to 1,030,000 MWh/day on the G23 days measured. That residual is hydro plus oil, biomass and other, hydro being the bulk.
-
-WHY IT IS NOT SAFE TO IGNORE AS A CONSTANT, which is Greg's actual point: hydro is CURTAILED SEASONALLY for non-power reasons - spring runoff forces spill and oversupply, summer brings reservoir drawdown, irrigation calls, water rights and minimum-flow and temperature limits. So it is a third EXOGENOUS forcing alongside wind and solar, driven by water rather than demand, and when it falls away GAS FILLS IT because gas is the only term in the stack that regulates. Seven percent of generation is larger than the day-moves this desk is trying to call.
-
-CHEAP: EIA-930 reports hydro as its own fuel type and we ALREADY ingest EIA-930 for coal, nuclear, gas, wind and solar. This is a one-field ingest change on a feed we pull today, not a new source - which is why it is sized XS despite mattering.
-
-DO IT WITH A-15: coal_mwh and nuclear_mwh are already served and read by ZERO plays, so serving hydro without giving the stack a consumer just adds a fifth unread field.
-
-SEASONAL ASYMMETRY (Greg, S112): 'Hydro might be small but it'll hit in part of the year where it has to be filled with gas. Spring not so much but it really matters in the summer.' The two seasons are OPPOSITE IN SIGN. Spring runoff = hydro ABUNDANT, curtailment is oversupply-driven, it DISPLACES gas at shoulder load. Summer = reservoirs drawn down against irrigation, water rights and minimum flows, so hydro is SHORT exactly when load peaks and the shortfall lands on gas AT THE PEAK.
-
-MEASURED ON OUR OWN STATES, 119 scored days Feb-Jul 2026: the unaccounted slice falls 9.40% (March) -> 7.04% (July) of US48 generation while gas share rises 34.8% -> 42.2%. The 2.36pp drop is ~290,000 MWh/day, or roughly 2.0-2.3 Bcf/d if gas fills it at 7-8 MMBtu/MWh - the same order as the 4.2 Bcf/d 0629 wind event. Caveat carried: the residual is hydro plus oil/biomass/other and summer gas share also rises on cooling load, so this is co-movement in the stated direction, not an isolated causal estimate. Enough to justify serving the field and instrumenting SUMMER first; not enough to write a bar on.
-
-SPRING IS NOT THE BEARISH END - CORRECTED S112 on Greg's mechanism: 'spring will lower the outputs once the rivers get too high... the Army Corps of Engineers will have the hydro operators open the gates so that high rivers don't start going over their banks.' That is FLOOD CONTROL and it is physical: past a river stage the water goes through the SPILLWAY INSTEAD OF THE TURBINES and bypasses generation. So the water-to-output curve is an INVERTED U - output rises with runoff to a point then FALLS - and BOTH TAILS ARE BULLISH GAS: extreme high water (spill, spring) and low water (drawdown, summer). The bearish case is the MIDDLE.
-
-CONSEQUENCE FOR HOW IT GETS WRITTEN, and it is D23/D28 exactly: a single bar on water level or runoff WILL BE WRONG IN ONE TAIL, because the same low-hydro reading comes from two opposite states. This needs a STATE, not a level - and an analog retrieval keyed on hydro output alone would match a high-water spring day to a low-water summer day and call them the same shape.
-
-SO THE INGEST IS TWO THINGS, NOT ONE: hydro generation from EIA-930 (XS, the field we already pull the feed for) AND a river-stage / spill indicator that distinguishes the two tails - USACE and USGS both publish free. Without the second, the first cannot carry a sign.
-
-CORRECTED S112 - THIS IS NOT AN INGEST CHANGE, IT IS A DROPPED FIELD, and that makes it cheaper AND worse. grid_stack.py:112-119 sets NO fueltype facet, so the pull returns EVERY fuel EIA reports and stores each one under gen_mwh[fueltype]. The serving read _ba_read (grid_stack.py:180-181) then hand-picks five - NG, SUN, WND, COL, NUC - and drops the rest. EIA-930's hydro code is WAT (conventional hydro, combined with pumped storage where a BA cannot separate them). So we have been holding daily per-BA hydro since START=2019-01-01 and serving none of it.
-
-THE RESIDUAL I MEASURED IS ITSELF THE PROOF: total_gen_mwh is sum(gen.values()) over ALL fuels, so the 6.7-7.6% gap between the five named fields and the total can only be nonzero BECAUSE the unnamed fuels - WAT, OIL, OTH - are present in the store and counted in the denominator while unnamed in the numerator. I measured the hole using the very data the hole is made of.
-
-SAME DEFECT CLASS AS TWO WE HAVE ALREADY PAID FOR: the S107 big_print_b_share (size-weighted value computed then omitted from the emit list, the count-based one shadowing it under the same name) and the S109 session_b_share (the ONE b_share field missing from _tape_enrich's copy list - invisible for exactly as long as the other path's value happened to be right). A hand-maintained copy list is a place where correct data goes to die silently. The fix here is two lines; the transferable question is why a serving read enumerates fuels by hand at all when the store is a dict.
-
-AND THE SECOND HALF - the river-stage/spill indicator that separates the inverted-U's two tails - HAS A NAMED SOURCE NOW: see A-18. TVA publishes observed reservoir elevation, PREDICTED elevation, and PLANNED generation releases per dam. The planned-release series is forward-dated, which is the one information class the horizon research says survives past the 5-7 day boundary. USGS Water Data APIs (real-time streamflow and gage height, REST, machine-readable) are the programmatic fallback and cover far more than the TVA footprint.
 
 ---
 
@@ -760,18 +722,6 @@ An ALGEBRAIC IDENTITY, exactly like the session_b_share identity that closed hol
 Item 1c of the ranked under-use list, and it is the one that speaks most directly to what we trade: it needs NO options data and it is about CLOSE-SETTLED contracts, which is exactly what KXNATGASD is (per-contract NGD 1-min close at 17:00 ET). We already hold the full MBO tape, so the cost is a parsing pass.
 
 SCOPE IT STRICTLY INTRADAY - the paper is explicit that the effect REVERTS over subsequent days, so a version that carries overnight would be measuring the reversal. That constraint is the whole reason to write it down rather than remember it.
-
----
-
-### [REST] G-19 - EIA-930: BATTERY STORAGE is now its own category and we do not carry it
-
-*size S | OPEN | raised S111 (recommendation); S112 (registered)*
-
-**Source:** GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item
-
-Item 3. EIA-930 broke out battery storage as a separate category from Q1 2025, and the briefing names it as the reason a hot evening no longer produces the peaker burn the temperature implies. That is a DIRECT hit on our own residual model - the evening ramp is exactly where gas used to be the only answer.
-
-SAME SHAPE AS A-16 AND CHEAP FOR THE SAME REASON: grid_stack.py sets no fueltype facet, so if EIA returns battery under a fuel code we are probably already STORING it and dropping it at the five-element serving list. Check the stored keys before assuming a pull is needed.
 
 ---
 
