@@ -215,14 +215,28 @@ def apply_retractions(brain, retr, errs):
             errs.append("%s: field '%s' not present, nothing to retract" % (pid, field))
             continue
 
+        # SURGICAL, NOT BLUNT. A field often carries a false claim AND a valid one in the same
+        # run of sentences. selector.midblock_right_the_ship's forward field credits a run "with
+        # ZERO DIRECTION CHANGES - the mid-block re-derivation working", which is false because
+        # this play's only action IS a direction change, so a run with none is a run where it
+        # never fired - and the very next clause records a real G18 result, "RTS fired 0506 UP but
+        # the turn did not deliver". Blanking the field would delete the honest half with the
+        # false half. So a retraction MAY carry a `replacement`: the corrected value of the field.
+        # Omitting it clears the field, which is right only when the whole field was the claim.
+        replacement = r.get("replacement")
+        if replacement is not None and not str(replacement).strip():
+            errs.append("%s: replacement given but empty - omit it to clear the field, or supply "
+                        "the corrected text" % pid)
+            continue
+
         if disp == "KEEP_AS_GUARD":
             guard = ("DO NOT RE-TRY (retracted %s): %s | why it fails: %s | evidence: %s"
                      % (SESSION, r["claim"], r["why_invalid"], r["evidence"]))
             existing = str(p.get("caveats") or "").strip()
             p["caveats"] = (existing + " " + guard).strip() if existing else guard
-        # in BOTH cases the false claim leaves the served field. It is not parked anywhere in the
+        # in every case the false claim leaves the served field. It is not parked anywhere in the
         # brain - the retraction proposal file and git history carry the record.
-        p[field] = ""
+        p[field] = replacement if replacement is not None else ""
         n += 1
     return n
 
@@ -462,6 +476,24 @@ def cmd_selftest(a):
     check("KEEP_AS_GUARD puts the warning in caveats",
           "DO NOT RE-TRY" in str(t4.get("caveats")) and "record says 2/4" in str(t4.get("caveats")))
     check("KEEP_AS_GUARD still clears the served field", t4.get("trigger") == "")
+
+    # surgical replacement keeps the honest half of a mixed field
+    b5 = load(BRAIN)
+    pid5 = next(p["id"] for p in b5["plays"] if p.get("trigger"))
+    e8 = []
+    apply_retractions(b5, {"retractions": [{"play_id": pid5, "field": "trigger",
+                                            "claim": "the false half", "why_invalid": "w",
+                                            "evidence": "e", "disposition": "DELETE",
+                                            "replacement": "the corrected text only"}]}, e8)
+    t5 = next(p for p in b5["plays"] if p["id"] == pid5)
+    check("replacement REPLACES rather than blanks", t5.get("trigger") == "the corrected text only")
+
+    e9 = []
+    apply_retractions(load(BRAIN), {"retractions": [{"play_id": pid5, "field": "trigger",
+                                                     "claim": "c", "why_invalid": "w",
+                                                     "evidence": "e", "disposition": "DELETE",
+                                                     "replacement": "   "}]}, e9)
+    check("an empty replacement is refused", any("replacement given but empty" in x for x in e9))
 
     print("\n  %d/%d passed" % (sum(res), len(res)))
     return 0 if all(res) else 1
