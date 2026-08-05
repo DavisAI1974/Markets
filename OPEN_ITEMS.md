@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 68 |
+| open | 69 |
 | in progress | 1 |
 | done | 9 |
 
-By size: **XS** 7, **S** 30, **M** 27, **L** 5
+By size: **XS** 7, **S** 31, **M** 27, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 15, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 16, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,7 +31,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 15, **REST** 50
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (15)
+## BIGGEST WIN (16)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -41,6 +41,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 15, **REST** 50
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
 | **A-30** | S | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | It corrects the stack model every burn play reasons from, it is already measured on data we hold, and it supplies the per-BA instrument A-27 needs instead of a national constant. |
+| **A-31** | S | COAL SATURATES AT ~3.1M MWh/DAY AROUND $7 GAS - switching is a BEARISH-regime cap, not a bullish-regime backstop | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
@@ -124,6 +125,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 15, **REST** 50
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
 | **A-30** | BIGGEST_WIN | S | OPEN | S113 | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | - |
+| **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL SATURATES AT ~3.1M MWh/DAY AROUND $7 GAS - switching is a BEARISH-regime cap, not a bullish-regime backstop | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
@@ -234,6 +236,13 @@ MEASURED, and it is why this could not wait: the free endpoint (eia.gov/coal/mar
 STILL OPEN: this needs a WEEKLY SCHEDULED RUN. Captured once by hand, the window rolls and we lose weeks again. EIA publishes Mondays (release_date_json.php confirms: week ending 07-31 released August 3, next August 10), so a weekly trigger any time Mon-Fri catches every week with slack.
 
 CHARACTER OF THE SERIES, so nobody over-reads it: PROMPT-QUARTER delivery, not a cash spot print, and sticky - all five captured weeks are identical (CAPP 82, NAPP 70, ILB 55.5, PRB 14.65, Uinta 25.3). A slow structural level for the burn stack's coal limb (M-6), never a weekly signal.
+
+PROMOTED IN IMPORTANCE S113 BY A-31. This was registered as irreversible because the five-week window
+rolls and the history is proprietary. It is now also the PARAMETER a measured mechanism turns on: coal
+saturates at ~3.1M MWh/day around $7 gas because coal's cost per MWh sits below gas's - but that is
+BASIN-SPECIFIC. PRB at $14.65/ton is roughly $8/MWh of fuel and is never displaced; CAPP at $82/ton is
+roughly $33/MWh and is displaced by $3 gas. The switching threshold is a per-basin ladder and this feed IS
+that ladder. It is no longer a slow structural level for M-6 alone.
 
 ---
 
@@ -452,6 +461,64 @@ any implication that coal's economic function has been replaced. The right state
 assumed coal's PHYSICAL position while the SHOCK ABSORBER coal provided - inventory on site, and elastic
 switching headroom - is leaving the system. M-6 (coal headroom, EIA-860M additions/retirements plus ISO
 outage aggregates) is the item that measures the second half and should be read together with this one.
+
+---
+
+### [BIGGEST_WIN] A-31 - COAL SATURATES AT ~3.1M MWh/DAY AROUND $7 GAS - switching is a BEARISH-regime cap, not a bullish-regime backstop
+
+*size S | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on.
+
+**Source:** Greg, S113: 'If they have coal, they will use it' / 'coal is simply cheaper to burn' / 'The coal per mwh price is lower than gas'
+
+Greg, S113, in four statements that together explain the measurement: 'If they have coal, they will use
+it' / 'coal is simply cheaper to burn' / 'The coal per mwh price is lower than gas' / 'Gas is taking coals
+place physically but it doesn't replace it economically.'
+
+MEASURED, US48 daily, 212 days with both HH cash spot and EIA-930, individual days not fits:
+  HH bucket   days   median US48 coal MWh
+  $0-3          73        1,564,665
+  $3-4         108        1,908,601
+  $4-5          19        2,379,462
+  $5-7           5        2,377,145
+  $7-12          4        3,054,028
+  $12+           3        2,942,517   <- FALLS
+  every day above $7, by price: $7.18 3,103,423 | $8.42 2,596,341 | $9.34 3,054,028 | $10.25 3,013,502 |
+  $17.19 3,017,762 | $25.01 2,942,517 | $30.72 2,833,993
+
+THE CEILING IS ~3.1M MWh/DAY AND IT IS REACHED AT ABOUT $7 GAS. Above that the response is ZERO across a
+four-fold price move - the dearest day in the sample ($30.72) carries among the LOWEST coal of the group,
+and the single highest coal reading in the entire year (3,103,423) occurs at $7.18. Coal is a
+CAPACITY-CONSTRAINED MUST-RUN THAT SATURATES, not a price-elastic swing.
+
+WHY, AND IT IS GREG'S POINT: coal's fuel cost PER MWh sits below gas's, so coal is in the money nearly
+always and runs flat out whenever it physically can. The apparent 'price response' from $2.50 to $5 is
+coal being displaced only at the very BOTTOM of the gas range, plus cold weather lifting total load (the
+same buckets show median total generation rising 10.9M -> 14.2M, so share moves for two reasons and
+ABSOLUTE MWh is the honest instrument).
+
+THE CONSEQUENCE THAT MATTERS FOR TRADING, and it inverts the usual framing: GAS-TO-COAL SWITCHING IS A
+BEARISH-REGIME PHENOMENON, NOT A BULLISH-REGIME BACKSTOP. It caps how far gas demand can FALL when gas is
+cheap; it provides nothing when gas spikes. January 2026 is the worked instance - the absorber was
+exhausted at $7 and gas ran to $30.72 with no coal left to switch. Any play reasoning that 'coal will
+absorb it' above roughly $7 is reasoning about capacity that is already committed.
+
+AND IT PROMOTES G-11 FROM HOUSEKEEPING TO THE CORE OF THIS MECHANISM. Coal's per-MWh cost is BASIN-
+SPECIFIC: PRB at $14.65/ton (~17.6 MMBtu/ton) is about $0.83/MMBtu, roughly $8/MWh at a 10,000 Btu/kWh
+heat rate - below even $2 gas through a CCGT at ~$14/MWh, so PRB coal is essentially NEVER displaced.
+CAPP at $82/ton (~25 MMBtu/ton) is about $3.28/MMBtu, roughly $33/MWh - displaced by $3 gas. So the
+switching threshold is not one number, it is a per-basin ladder, and the five-week rolling window G-11 is
+capturing IS that ladder. The item was registered as irreversible because the history is proprietary; it
+is now also the parameter this mechanism turns on.
+
+FALSIFIER: if the ceiling is capacity, it must FALL as coal retires. FERC has coal contracting 40,828 MW
+over 2026-2028. Re-measure the ceiling annually - a ceiling that does not fall with retirements refutes
+the capacity reading and points at fuel supply or commitment constraints instead.
+
+CAVEAT: 212 days, and only 7 above $7, all in one January cold event. The saturation level is measured on
+a single episode and the ~$7 threshold is a reading of that episode, not a fitted parameter. It should be
+re-tested on the next cold event before any play is written on the number.
 
 ---
 
