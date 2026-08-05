@@ -67,8 +67,18 @@ STATUS_ENUM = ["HYPOTHESIS", "PROPOSED", "PROVISIONAL", "STABLE", "RETIRED",
 # labelled, is NOT the same object as a claim with no argument - and D24 already says a finding is
 # never disregarded for lacking past evidence. Anything genuinely new has no precedent by
 # construction; the tropical channel is the clean case.
+# NOT_A_PLAY added S112, on the same reasoning that added DESCRIPTOR to STATUS_ENUM: it is a real
+# category, not sloppiness. Some entries are not conditional rules at all and a support class does
+# not apply to them - forcing one is a category error that makes the entry look weakly-evidenced
+# when it was never making a claim. The 82-play audit assigned it to exactly three, and each is
+# independently corroborated by its own status field: structure.squeeze_unwind (status DESCRIPTOR,
+# and its own `call` reads "DESCRIPTOR grade - regime context, not a scored play"),
+# supply.lng_export_throughput_vessel_line (status WIRED_UNPROVEN - an INSTRUMENT merged to make a
+# live channel readable, with zero consumers), and weekend.seam_delta_requires_level_difference
+# (status PROPOSED). The S111 partial had filed the vessel line as ASSERTED, which read as a weak
+# claim rather than as what it is.
 SUPPORT_ENUM = ["MECHANISM_VERIFIED", "NOVEL_N1", "OUTCOME_CREDITED", "ASSERTED",
-                "UNCLEAR", "UNAUDITED"]
+                "NOT_A_PLAY", "UNCLEAR", "UNAUDITED"]
 D24_ENUM = ["found", "searched_none", "not_searched"]
 
 # core fields that survive as themselves
