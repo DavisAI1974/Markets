@@ -59,7 +59,9 @@ names but the plant map does not place is a step nobody knows the host for.
 
 | tool | what it governs | gate |
 |---|---|---|
-| `store.py` | ONE STORE, GENERATED VIEWS (A-7). `DECISIONS.md` and the SOP appendix are RENDERS; `docs` holds the DOCUMENT REGISTRY | `check` fails the line on render drift OR on a document content gate |
+| `store.py` | ONE STORE, GENERATED VIEWS (A-7). `DECISIONS.md`, the SOP appendix, `OPEN_ITEMS.md` and the file index are RENDERS; `docs` holds the DOCUMENT REGISTRY | `check` fails the line on render drift OR on a document content gate; `render_decisions` REFUSES a newline in a table cell (that defect landed twice) |
+| `data_registry.py` | THE MASTER DATA-POINT LIST (A-22) - four tiers: SERVED, HELD-not-served, PLANNED (harvested from the registry), IDENTIFIED-not-committed. Every row labelled READ or NOT READ | `build` refuses to write an empty list; `unread` is the triage view. Named by SOP Station 0 |
+| `chatgpt_handoff.py` | the external-research brief that ships with the drop-in (A-25), generated from the registry | a selftest fails the build if a DONE item appears, or if an item is re-asked without declaring its prior delegation |
 | `spawn.py` | fills every SOP slot BY LOOKUP, templates loaded from the store — NC-1 is structurally unreachable | 17/17 selftest incl. the NC-1 regression |
 | `merge_gate.py` | SOP gates 2 and 3: objective admissibility -> PROVISIONAL merge with a REGISTERED forward test -> settle, retirement scoped per D31 | a registered test cannot be forgotten |
 | `plant_calendar.py` | the plant's clock from RULES, not a hardcoded table (`flow_calendar.CME_HOLIDAYS` ends 2027-02-15). 1031 sessions, cal+0..cal+3, wrapping to cal+0 day 1 | 8/8 selftest; reproduces 16/16 committed holidays |
