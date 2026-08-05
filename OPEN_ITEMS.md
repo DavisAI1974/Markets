@@ -663,6 +663,40 @@ the revision series produce larger gas spikes than equally cold events forecast 
 cold event inside the 1-2 week commitment window produce a materially smaller gas response, since it meets
 an already-warm coal fleet.
 
+WHAT THE PRE-SPIKE RAMP ACTUALLY WAS - Greg S113: 'So that week ahead increase was them getting it going
+to make sure it's good and they may have thought gas was going up before it did but i would guess the
+answer is more mechanical.' Two readings, and they mean different things for how the number is used:
+  ANTICIPATORY - the ramp is an operator's market view, informed but a BET. Then it is a behavioural
+  leading indicator that can shift with sentiment and could stop working.
+  MECHANICAL - the ramp IS the physical act of starting: a boiler coming up to temperature produces
+  partial output for hours before full load, and the unit is proven out before anyone leans on it. Then
+  the ~150-310k MWh/day is the WARMUP CHARACTERISTIC OF THE FLEET - a hard physical constant, not a
+  decision, and therefore a constraint we can rely on.
+
+GREG'S READ IS MECHANICAL AND IT IS THE MORE PARSIMONIOUS ONE. It also fits the operator's actual job:
+they are not trading gas, they are serving load reliably. The commitment is made against a LOAD forecast
+and the gas price is a consequence they do not control - which is consistent with the measured fact that
+coal ramped on 01-18..01-20 while gas was still $3-4. If it were a price bet, the ramp should lead price
+moves even after controlling for the load forecast; if mechanical, it should track the LOAD FORECAST
+issued 24-48h earlier and be indifferent to price.
+
+NOT TESTABLE TODAY, STATED RATHER THAN FUDGED: the MOS forecast as-of store is not in the restored data
+plane (model_disagreement is present, the MOS store is not), so the forecast-vs-realized timing test
+cannot run this session. AND DAILY DATA CANNOT SETTLE IT IN PRINCIPLE - a warmup is an INTRADAY shape, so
+distinguishing 'a unit coming up to temperature' from 'a unit dispatched harder' requires hourly
+generation. That is A-28 again.
+
+WHICH IS NOW THE ARGUMENT FOR PROMOTING A-28: five separate things sit behind that one ingest change -
+A-24g (sunset compression, blocked outright), A-27 (heat rate is a time-of-day quantity), G-19 (battery
+nets to zero daily and is meaningless without hours), the block-loading falsifier (does gas intraday
+variability RISE during an event), and now this warmup-vs-dispatch question. One change on a feed we
+already pull with a key we already have.
+
+IF MECHANICAL IS RIGHT, THE PAYOFF IS THAT THE CONSTRAINT IS STABLE: the coal ramp ceiling becomes a
+physical parameter of the installed fleet that changes only as units retire (dated, FERC-published), not a
+behavioural quantity that could drift. That makes the rate-against-rate spike condition durable enough to
+write a play on - which an anticipatory reading would not support.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
