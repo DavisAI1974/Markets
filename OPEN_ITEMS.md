@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 71 |
+| open | 72 |
 | in progress | 1 |
 | done | 9 |
 
-By size: **XS** 8, **S** 31, **M** 28, **L** 5
+By size: **XS** 8, **S** 31, **M** 29, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 18, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,7 +31,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 18, **REST** 50
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (18)
+## BIGGEST WIN (19)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -49,6 +49,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 18, **REST** 50
 | **A-27** | M | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | It sits under A-26 and every burn-to-storage statement, and it is the DOMINANT sensitivity: power burn is 210-263 Bcf/wk against weekly storage changes of +/-67-91 Bcf. |
 | **A-28** | M | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | It is the prerequisite under A-24g, A-27 and G-19, and it is why A-24c could not be settled. An ingest change on a feed we already pull, and it is the third instance of the same reduction mistake this desk has recorded. |
 | **A-33** | M | THE CORRELATED-FAILURE TAIL - 'no surplus of any type of energy', including gas SUPPLY freeze-offs, and our data is daily | It is the largest event class there is, the desk's scoring rule says these are what cost money, and we already hold instruments for most of its components while reading almost none of them. It also reframes A-24f from a demand candidate into a supply-interruption instrument. |
+| **A-34** | M | THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING | It is the trading form of the entire S113 coal thread: it does not forecast weather better, it says WHEN a weather call reaches the gas price. Both sides of the state variable are already served or measurable, and it explains 0629 - a documented miss - as the same structure with an instant absorber. |
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **G-5** | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2). |
@@ -135,6 +136,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 18, **REST** 50
 | **A-27** | BIGGEST_WIN | M | OPEN | S113 | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | - |
 | **A-28** | BIGGEST_WIN | M | OPEN | S113 | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | - |
 | **A-33** | BIGGEST_WIN | M | OPEN | S113 | THE CORRELATED-FAILURE TAIL - 'no surplus of any type of energy', including gas SUPPLY freeze-offs, and our data is daily | - |
+| **A-34** | BIGGEST_WIN | M | OPEN | S113 | THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING | - |
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **G-5** | BIGGEST_WIN | M | OPEN | S111 | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | - |
@@ -1196,6 +1198,66 @@ AND THE PERIOD MATTERS FOR HOW WE USE IT: Greg dates the event to before renewab
 correlated-failure tail does NOT require a renewable collapse - it predates renewables entirely. Wind and
 solar are a modern ADDITIONAL failure correlate, not the cause. Any account of the tail that leans on
 renewables is over-fitted to the last decade.
+
+---
+
+### [BIGGEST_WIN] A-34 - THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING
+
+*size M | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** It is the trading form of the entire S113 coal thread: it does not forecast weather better, it says WHEN a weather call reaches the gas price. Both sides of the state variable are already served or measurable, and it explains 0629 - a documented miss - as the same structure with an instant absorber.
+
+**Source:** Greg, S113: 'we might see coal ramping up off of extreme cold temps BUT no gas jump immediately... the gas bump might be delayed a week if temps stick around or maybe not until the next cold event if they back off a little'
+
+Greg, S113, drawing the trading consequence out of the whole coal thread: 'So we might see coal ramping up
+off of extreme cold temps BUT no gas jump immediately when it feels like there should be because of a
+different fuel source eating demand so the gas bump might be delayed a week if temps stick around or maybe
+not until the next cold event if they back off a little.'
+
+THE GENERAL PRINCIPLE, which unifies this with a failure the desk has already paid for: THE GAS RESPONSE
+TO A WEATHER EVENT IS MEDIATED BY WHICHEVER OTHER SOURCE HAS HEADROOM, AND THE DELAY EQUALS THAT SOURCE'S
+RESPONSE TIME.
+  WIND / SOLAR   instant, weather-driven      -> offsets the SAME DAY and can flip the sign outright
+  IMPORTS        instant while a neighbour has surplus -> offsets until nobody does (A-32)
+  COAL           ~1 week ramp (A-31)          -> DELAYS the gas bump by roughly that long
+So 'cold, therefore gas up' fails not because the weather call was wrong but because SOMETHING ELSE ATE
+THE DEMAND. THE INSTANCE IS ALREADY IN OUR RECORD: 0629 - the cooling forecast was exactly right and burn
+FELL 4.2 Bcf/d because wind rose 62%. That is this same structure with an INSTANT absorber instead of a
+slow one, which is why it looked like a forecasting failure rather than a mediation effect.
+
+THE TIMING STRUCTURE THIS PREDICTS, and each leg is falsifiable:
+  (1) FIRST cold event: the gas bump is MUTED OR ABSENT while coal ramps, because the ramp is absorbing
+      the increment. Naive weather-to-gas reasoning is wrong here in the BEARISH direction.
+  (2) IF THE COLD PERSISTS: coal reaches its ceiling and stops absorbing, so the gas bump arrives roughly
+      A WEEK LATE - delayed, not cancelled.
+  (3) IF THE COLD BACKS OFF: no bump this event at all, and coal keeps running its committed window into
+      milder weather (A-31 P3, held 5/7), so gas stays displaced longer than the weather justifies.
+
+THE SECOND-EVENT CASE IS THE INTERESTING ONE AND IT CUTS BOTH WAYS - which is why it needs a STATE, not a
+rule (D23/D28):
+  coal already WARM      -> responds instantly, no 24h lag -> absorbs MORE -> BEARISH gas
+  coal already AT CEILING -> no headroom left -> all incremental load lands on gas at once -> BULLISH gas
+Both follow from the same commitment mechanism and they have OPPOSITE signs, so a play written on 'second
+cold event' without the state would be right half the time by construction.
+
+THEREFORE THE TRADEABLE VARIABLE IS COAL HEADROOM REMAINING, NOT COAL LEVEL. headroom = ceiling - current.
+Both sides are obtainable: the CEILING is a physical fleet property that changes only with retirements
+(dated, FERC-published, and measurable from our own history as the observed maximum per BA), and CURRENT
+coal is served daily at period+2. So this is arithmetic on data we hold plus one structural number.
+
+WHY IT IS WORTH BUILDING BEFORE ANOTHER PREDICTOR: it does not forecast the weather better, it says WHEN
+THE WEATHER WE ALREADY FORECAST WILL REACH THE GAS PRICE. Per the horizon research, level forecasting dies
+at 5-7 days while the forward calendar survives - and a coal commitment window is a forward calendar we
+can observe rather than predict.
+
+FALSIFIERS: (a) if the gas bump does NOT lag the cold onset when coal is ramping, the mediation account is
+wrong; (b) if second events show no dependence on remaining headroom, the state variable is wrong; (c) if
+the observed per-BA ceiling does not fall as capacity retires, the ceiling is not a capacity number and
+the whole headroom framing fails with it.
+
+AND THE TAIL CAVEAT FROM A-33 STILL BINDS: all of the above describes the ECONOMIC regime and the
+transition out of it. Once delivery is curtailed to protect heating, burn and price decouple and none of
+this applies.
 
 ---
 

@@ -585,7 +585,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **154 files.**
+new tool cannot go unlisted. **155 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -611,6 +611,7 @@ new tool cannot go unlisted. **154 files.**
 - `chatgpt_brief_split.py` — generate one self-contained hand-off file per task from CHATGPT_BRIEF.
 - `chatgpt_handoff.py` — GENERATE the ChatGPT hand-off that ships with the drop-in. (Registry A-25.)
 - `coach_replay.py` — deterministic backtest of the ng_brain.json PLAYBOOK on the NG canary tape (S92 build).
+- `coal_commitment.py` — measure the COAL COMMITMENT CYCLE from EIA-930 (S113, registry item A-31).
 - `coal_prices.py` — accrue the EIA weekly coal basin spot prices. (Registry G-11.)
 - `condition_audit.py` — can each brain condition CHANGE STATE? (report-only; never fixes anything)
 - `condition_rate_experiment.py` — DERIVE the condition-health thresholds instead of asserting them.
