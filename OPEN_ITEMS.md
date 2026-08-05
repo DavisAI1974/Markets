@@ -987,6 +987,21 @@ REVISED VERDICT, replacing 'breadth survives and is the one that matters': bread
 
 THE META-LESSON, recorded because it is the second instance in one session: the pooled CORRELATION column inverted its sign (A-26), and now R2 flattered a coin-flip per-event record. Same disease, two dresses - and I reported it hours after building A-1 for exactly this reason. An averaged goodness-of-fit statistic is the same object as the drift metric D4 was written against. Any future candidate test reports sum|err|, the improved/worsened count, the error quantiles INCLUDING the max, and the named biggest events - never R2 alone.
 
+SALT SHARE RE-EXAMINED PER EVENT ON GREG'S INSTRUCTION ('do the same with the salt level part you dismissed' / 'stop averaging again'), and the fit was dropped entirely - a single coefficient across 160 weeks IS an averaged coefficient, which the trading rules forbid as directly as a pooled hit rate. Individual weeks, no regression:
+  WINTER, 12 largest draws, actual dS | d salt% NOW | d salt% LAGGED
+    2026-02-05  -359 | -4.14 | -0.30      2021-02-25  -338 | -5.82 | -0.31
+    2024-01-25  -326 | -2.26 | +0.81      2025-01-30  -321 | -3.22 | -0.62
+    2025-01-16  -258 | -0.90 | +1.00      smallest winter weeks: -0.04..+0.67
+  sign agreement, top quartile: WINTER now 33/40, lagged 22/40 | SUMMER now 22/43, lagged 22/43
+
+MY DISMISSAL WAS RIGHT ON THE FATAL POINT AND WRONG ON THE OTHER ONE, and the difference matters. It is NOT merely an accounting artifact: every one of the twelve largest winter draws carries a negative salt move, the magnitudes SCALE with the draw, and flat weeks sit at +/-0.5. Salt is high-deliverability short-cycle storage and it is what gets pulled first in a cold snap - a real physical fingerprint, not a definitional echo. Calling it circular was too glib.
+
+IT STILL CANNOT FORECAST, AND THE LAGGED TEST CLOSES THE ESCAPE ROUTE PROPERLY. Same print remains fatal for the contemporaneous form. And the legitimate lagged form - the PRIOR week's report, which is genuinely knowable before this week's gas week ends - lands at 22/40, chance. The rows say why: the -326 week had a lagged +0.81 and the -258 week +1.00, wrong-signed on exactly the weeks you would want. The one lagged hit (2026-02-12, -4.14) is the previous week's -4.14 bleeding through, i.e. a cold spell persisting - which the weather forecast already carries. So the lag adds nothing that is not already priced.
+
+SUMMER IS NOTHING EITHER WAY (22/43 both). The apparent summer effect was the same fact seen sideways: the SMALLEST builds carry the largest negative salt moves AND the highest burn (334, 299 Bcf) - those are simply hot weeks.
+
+THE RESIDUE, and it is worth keeping: contemporaneous salt draw is a CONFIRMATION instrument, not a predictor. It says the balance model read the right week, and it is a per-week fingerprint the analog library (A-5) could match on - which is a legitimate use for a same-print quantity, because retrieval keys describe a day rather than forecast it. Recorded as such rather than deleted.
+
 ---
 
 ### [REST] A-24f - Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin
