@@ -97,7 +97,7 @@
    "falsifier": "The play carries NO falsifier field (empty string). One is writable and cheap: on any block with a per-leg flow run, sign(dip_imb_level) at |dip| >= 0.15 must agree with realized leg direction at a rate above the block's own base rate, and must not degrade as the bar rises. On the committed corpus it already fails the second clause outright.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "2025-09-08 to 2026-01-16, 73 days",
@@ -252,8 +252,7 @@
      "07-24 idx5126 dip+0.59->up $270",
      "OOS 07-15/07-30/08-15 strong-flow 34/34"
     ],
-    "forward_evidence": "FORWARD-CONFIRMED. Derived on 12 warm-season days (Jul-Sep); OOS-validated 34/34 on 3 unseen days; held-leg side re-confirmed on the S95 fingerprint pass over G3-G5 days it was not derived from. Not re-measured on G6-G11 (no per-leg flow run on those blocks).",
-    "conditions_note": "REAL BAR, UNSERVED QUANTITY. The play states a genuine numeric bar - |dip_imb_level| >= 0.15 - but dip_imb_level is a Lee-Ready signed aggressor imbalance computed over a ~300s window around a leg's trigger push, and it lives in the fingerprint / MBP corpus, not in decision_state. It resolves zero times in grp18-grp23_state.json, which the S112 audit verified independently. The served tape aggregates (tape_conditions.session_signed_flow, session_b_share, big_print_b_share) are whole-session, day-grain quantities on a different event window and a different denominator; the audit already ran them as a DECLARED PROXY and refused to score the play on them. No state_path is picked: attaching a leg-grain bar to a day-grain field is exactly the wrong-but-well-formed input that reads as evaluated and silently never fires."
+    "forward_evidence": "FORWARD-CONFIRMED. Derived on 12 warm-season days (Jul-Sep); OOS-validated 34/34 on 3 unseen days; held-leg side re-confirmed on the S95 fingerprint pass over G3-G5 days it was not derived from. Not re-measured on G6-G11 (no per-leg flow run on those blocks)."
    },
    "audit": {
     "session": "S112",
@@ -281,7 +280,7 @@
    "falsifier": "Re-run the imb_R split PER CELL (side x velocity-class x season) off the S3 MBP-10 corpus, restricted to legs where dip_imb_level is flat, on blocks the play was not derived from. The play dies if the ask-heavy/bid-heavy up-rate gap fails to survive within cells or inverts on any non-warm-season cell. That test has never been attempted. A cheaper interim: serve imb_R (or an L1 depth-imbalance-at-entry surrogate) in the decision state so the play can at least be evaluated - it currently cannot be, in either direction.",
    "support": "UNCLEAR",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260701",
@@ -349,8 +348,7 @@
      "flow_beats_book_when_disagree": "262/293 = 0.89"
     },
     "exemplars": [],
-    "forward_evidence": "NONE. Derived on the warm-season set; never re-tested on any later block. Zero forward evidence.",
-    "conditions_note": "NO NUMERIC BAR AND THE QUANTITY IS UNSERVED. The read is imb_R, resting-book imbalance measured AT LEG ENTRY off MBP-10 depth; the call is 'fade the heavy resting side', a qualitative heavy/light descriptor with no threshold anywhere in the record. imb_R resolves in zero committed states - the depth corpus is on S3, not in decision_state. tape_conditions.l1_book.quote_bid_share is the nearest-looking served field and is deliberately NOT used: it is a whole-session L1 quote-time share, not depth-at-entry, and the play's own S112 instance ran it as an explicitly declared proxy (48 percent at day grain, 43 percent inside the play's flat-flow scope) while stating 'that is a different instrument and I will not score the play on it'."
+    "forward_evidence": "NONE. Derived on the warm-season set; never re-tested on any later block. Zero forward evidence."
    },
    "audit": {
     "session": "S112",
@@ -378,7 +376,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. The one implied by the play is 'the continuation rate does not rise with peak_usd', and I ran it: it does rise, so that falsifier does not discharge. The falsifier that WOULD bite and has never been written: hold time-to-peak fixed and check whether size still sorts continuation. On my split it largely does not. A second one worth writing: re-measure the $350 and $500 rungs on any block of >=500 legs and check whether they reach 0.92 and 1.00 - measured, they reach 0.71 and 0.82.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20250908-20260227 (108 days, 6,358 legs)",
@@ -445,8 +443,7 @@
      "07-03 idx17768 $1060 ret.83",
      "08-06 idx9611 $840 ret.98"
     ],
-    "forward_evidence": "NONE beyond derivation. It is a real-time ride rule and the walk has been scored on day NETS, so it has never actually been exercised forward. Its high confidence reflects derivation strength, not forward evidence.",
-    "conditions_note": "REAL BARS, UNSERVED QUANTITY. The rungs ($50 / $150 / $250 / $350 / $500 of peak_usd) are genuine numeric thresholds, but peak_usd is a leg's realized-so-far favourable excursion inside a live 1800s window; it exists in renders/ng_refine_s95/fingerprints.json and in no decision_state. No served path carries a running intra-leg excursion. vol_regime.n0_prev_range is the nearest-looking numeric and measures a PRIOR SESSION's whole-day range - a different quantity at a different grain - so it is not used. Compounding this: the S112 audit found the staircase is substantially time-to-peak wearing a dollar bar, and time_to_peak_s is unserved as well, so neither the stated conditioning variable nor the true one can be written."
+    "forward_evidence": "NONE beyond derivation. It is a real-time ride rule and the walk has been scored on day NETS, so it has never actually been exercised forward. Its high confidence reflects derivation strength, not forward evidence."
    },
    "audit": {
     "session": "S112",
@@ -474,7 +471,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. A falsifier is computable from the file that already holds the evidence: over all 108 days in fingerprints.json, compute the old-swing continuation rate on the ~15 realized turn days versus all other days. If turn days are not a distinct tail of that distribution, the surviving arm is the same noise the far-thinning arm was. Second falsifier, cheaper: hand a refine specialist the play on a day it has the reveal for, and score whether the continuation-collapse read beat its own turn call.",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20251008",
@@ -528,8 +525,7 @@
     "exemplars": [
      "1008 old-swing up-legs 0/15 continuation-collapse at the G4->G5 top"
     ],
-    "forward_evidence": "PARTIAL/NEGATIVE. The turn_far_thinning arm was tested forward on the S95 fingerprint pass and DEMOTED to noise. The surviving continuation-collapse arm is now the same measurement as chain_polarity_flip C2 and inherits C2's G11 false negative. || S100.3: the shared continuation-collapse measurement is scoped by the C2 resolution - non-discriminating on the 0107/0120 tape class (C2_RATIO_FINDINGS_S98.md).",
-    "conditions_note": "NO NUMERIC BAR AND THE QUANTITIES ARE UNSERVED. The demoted arm (turn_far_thinning) and the surviving arm (old-swing continuation-collapse + negative turn_exhaustion + peaked_fast fade) are all per-leg fingerprint fields; none resolves in any committed state. The surviving arm is stated qualitatively as well - 'old-direction legs stop continuing' names no rate and no threshold. The 20251008 0-of-15 is an INSTANCE, not a bar, and the play's own falsifier records that the base rate which would turn it into one has never been computed."
+    "forward_evidence": "PARTIAL/NEGATIVE. The turn_far_thinning arm was tested forward on the S95 fingerprint pass and DEMOTED to noise. The surviving continuation-collapse arm is now the same measurement as chain_polarity_flip C2 and inherits C2's G11 false negative. || S100.3: the shared continuation-collapse measurement is scoped by the C2 resolution - non-discriminating on the 0107/0120 tape class (C2_RATIO_FINDINGS_S98.md)."
    },
    "audit": {
     "session": "S112",
@@ -557,7 +553,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. Proposed and directly runnable off fingerprints.json: on a fresh block, hold rate is NOT monotone in time-to-peak across the four buckets, or peaked_fast legs hold at >= the rate of slow-build legs. Separately, and this one should be run: state the GRIND limb as a falsifiable claim, because at 37.5% pooled it currently is not one.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "2025-09-08..2026-01-xx (108-day fingerprint store)",
@@ -643,8 +639,7 @@
      "g11_note": "G11: 2 fires, both grind calls, both sides HIT - 0119 +550a/+1600g and 0123 +1170a/+800g. Cold-model repricing was called continuous (grind, holds into the close) rather than spike-and-round-trip on both. Confidence 0.9 held."
     },
     "exemplars": [],
-    "forward_evidence": "FORWARD-CONFIRMED on G3-G5 (spike-fade 23/24) and again on G11 (2 fires, both grind calls, both sides hit: 0119, 0123) - neither block was used to derive it.",
-    "conditions_note": "REAL BAR, UNSERVED QUANTITY. peaked_fast is defined as time-to-peak <= 60s, a genuine numeric threshold that splits 1,246 of 6,358 legs in the fingerprint store. But time_to_peak_s, peaked_fast and retention are per-leg fields in fingerprints.json; decision_state carries no time-to-peak at any grain, so the bar cannot be evaluated at the moment the forecast is made. This is the play's own caveat ('usable once the first ~60s-2h of build is seen - NOT at the open') restated as a data fact, and it is why every modern appearance of the play is a needs_intraday_reveal stand-down."
+    "forward_evidence": "FORWARD-CONFIRMED on G3-G5 (spike-fade 23/24) and again on G11 (2 fires, both grind calls, both sides hit: 0119, 0123) - neither block was used to derive it."
    },
    "audit": {
     "session": "S112",
@@ -672,7 +667,7 @@
    "falsifier": "The play carries no falsifier. One is available and I ran it: on the days stor_surprise is served, regress |day_move_usd| on |stor_surprise|; a correlation indistinguishable from zero refutes the magnitude arm. Result on the full 40 served days: r = 0.087, big-surprise median 520 against small-surprise median 610. The magnitude arm is refuted on g20-g23. A sharper follow-up that would settle the instrument question: recompute the surprise as printed weekly_chg minus storage_consensus.next_print.consensus_chg_bcf and re-run the same regression - the consensus field is served and the two quantities differ by 7 Bcf on the one print I could check.",
    "support": "ASSERTED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260710",
@@ -820,8 +815,7 @@
     "exemplars": [
      "0820 big-|surprise| trend-bet UP -> actual DOWN (opposite)"
     ],
-    "forward_evidence": "NEGATIVE-TO-INERT forward. Across G6-G11 the surprise SIGN has been wrong on side wherever it was consulted, which is the play's own stated caveat, and its magnitude arm is subsumed by daytype.storage_thursday_magnitude. Kept as the record that surprise sign does not sort direction.",
-    "conditions_note": "THE QUANTITY IS SERVED BUT THE PLAY STATES NO BAR. stor_surprise resolves in the modern states, but the call - 'big |surprise| -> bigger-leg day; near-consensus -> range/chop' - is qualitative, and the 10 Bcf split that appears in the falsifier is the S112 auditor's own construction for a refutation test (r = 0.087, big-surprise median BELOW small-surprise median), not the play's threshold. Two further reasons not to manufacture one. (a) PROSE-VS-SERVED DISAGREEMENT: the read says '|stor_surprise| (Bcf vs SEASONAL)' while the mechanism it describes requires a surprise vs CONSENSUS; the state serves both, and storage_consensus.last_print.surprise_vs_consensus_bcf is the quantity the market actually prices. (b) DEGENERATE WITHIN THE WEEK: verified directly on grp20-grp23_state.json, stor_surprise is carried unchanged across ~5 consecutive sessions and on the print Thursday itself is still the PREVIOUS week's value (g22 serves -5.0 on 0625 and only becomes -1.4 on 0626), so any bar written on it has zero within-week variance and is stale on the one day the play most wants to size."
+    "forward_evidence": "NEGATIVE-TO-INERT forward. Across G6-G11 the surprise SIGN has been wrong on side wherever it was consulted, which is the play's own stated caveat, and its magnitude arm is subsumed by daytype.storage_thursday_magnitude. Kept as the record that surprise sign does not sort direction."
    },
    "audit": {
     "session": "S112",
@@ -849,7 +843,7 @@
    "falsifier": "NONE WRITTEN. The play's falsifier field is empty. A serviceable one exists and I ran it: on a rolling 40+ scored days, if Wednesday's up-share is not materially above 0.5 and Tuesday's mean absolute move is not materially above the week's median, the direction limbs are dead. On g17-g23 both fail.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260127",
@@ -959,8 +953,7 @@
      "1010 Fri range archetype OVERRIDDEN by the G5 crash regime (-1050)",
      "0910 Wed up-lean overridden by the down block (-950)"
     ],
-    "forward_evidence": "WEAK forward. G11: 5 fires, 3/5 on side, always as a secondary frame. The Monday-as-reversal arm was already retired forward by G7. It has never been the primary caller on any forward block.",
-    "conditions_note": "DAY-OF-WEEK IS A CATEGORICAL DESCRIPTOR, NOT A BAR. The read is literally 'day of week'; the state serves it as the STRING field `dow` ('Mon'..'Fri'), which is not a numeric quantity and is therefore not in the served vocabulary. No arm - Wed up-lean, Thu catalyst, Fri range, Tue continuation, Mon gap - states a threshold on any quantity. The S112 health note records the degenerate shape with the sign reversed: the play emits a call on all five weekdays, so it fires 10-of-10 days in every block and never declines. That is a property of the arms, not of a bar, and no condition can express it."
+    "forward_evidence": "WEAK forward. G11: 5 fires, 3/5 on side, always as a secondary frame. The Monday-as-reversal arm was already retired forward by G7. It has never been the primary caller on any forward block."
    },
    "audit": {
     "session": "S112",
@@ -988,7 +981,7 @@
    "falsifier": "The brain carries no falsifier field for this play, but OPEN_ITEMS A-6 supplies an operational one: measured at native tick, entry lands no closer to the turn than the 5-6bps already achieved at 1-sec, or lands outside the 4bps maker floor. That is a number that either compresses or does not.",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [],
    "corpus": {
     "d24_state": "searched_none",
@@ -1019,8 +1012,7 @@
      "n": "1 NG trend day (2025-07-17), 1-sec binned"
     },
     "exemplars": [],
-    "forward_evidence": "NONE. Hypothesis, never exercised on any block in the walk.",
-    "conditions_note": "NO TRIGGER BAR AND THE QUANTITY IS UNSERVED AT ANY RESOLUTION. The read is sub-second dipole EXHAUSTION (the imbalance collapsing toward 0.5) stacked with fine-resolution price-reversal timing; decision_state carries nothing sub-daily on the flow side, so no specialist could evaluate it even on a day that called for it. The numbers the play does carry - entry ~5-6 bps off the turn, the 4 bps maker floor, the 22 bps taker floor - are EXECUTION-QUALITY outcomes to be measured, not thresholds on a state quantity; they belong to the OPEN_ITEMS A-6 success criterion, not to conditions[]."
+    "forward_evidence": "NONE. Hypothesis, never exercised on any block in the walk."
    },
    "audit": {
     "session": "S112",
@@ -1048,7 +1040,7 @@
    "falsifier": "The play carries NO falsifier field. Writable and already half-discharged: the carry-Friday arm is 0-for-3 on the modern corpus, and the bigness claim loses to Thursday on the same 70 sessions. A real falsifier would name a numeric bar for 'mature swing' and 'fresh cum-extreme' and require the fade and extend arms to beat the 6-vs-5 coin flip the raw gap already gives.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260413 to 20260717, 70 sessions / 14 Mondays",
@@ -1184,8 +1176,7 @@
      "R3_was_NOT_runnable_on_g20_0601": "R3 is EXTENSION-GATED (mature swing, fresh cum-extreme). The blind's constructed chain read cum -830 / polarity DOWN at that seam, so R3's trigger does not evaluate TRUE on the state the blind held. Banking R3 as forward evidence off this day would record a STATE DEFECT as evidence for a play.",
      "raised_by": "A (r2), correcting B, which had listed R3 among the blind's 'clean failures-to-consult' while itself proving two paragraphs later that the constructed chain was inverted there.",
      "why_recorded": "This is the precise failure mode the attribution discipline exists to prevent, caught between two specialists rather than in a post-mortem."
-    },
-    "conditions_note": "THREE ARMS, NONE WRITABLE. (a) Monday-ness is the string field `dow`, not a numeric quantity. (b) The 'material gap' bar (|gap| >= ~350 'as the specialists apply it' - the tilde is the auditor's, the play states no number) reads the Sunday-reopen-to-Monday-open PRICE gap, and no gap field resolves anywhere in the committed states: it is price-curve content, which is the blind's one declared mask. (c) The arm SELECTOR - mature swing / fresh cum-extreme / no-material-gap - has no served numeric definition at all, which the S112 health note names as the reason the three arms partition every Monday by construction and no Monday can fall outside the play. Attaching a bar to any served field here would put a threshold on a quantity the play does not read."
+    }
    },
    "audit": {
     "session": "S112",
@@ -1213,7 +1204,7 @@
    "falsifier": "SIZE: a block in which both print Thursdays land below the block's own non-print median |day_move|. G22 already delivered exactly that and it is not recorded in the play. SIDE: a print day where the post-print leg runs against a chain label DECLARED BEFORE the print, with no post-hoc relabelling permitted. That falsifier cannot currently be written, because no artifact freezes the chain label at the open - which is precisely why the arm has survived five counterexamples.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260625",
@@ -1368,8 +1359,7 @@
      "forward_evidence": "NONE - 2 of 3 instances are this block. Incumbent owns both G13 Thursdays blind."
     },
     "s102_1_chain_state_extension": "CHAIN-STATE-IS-TAPE-STATE, hardened (2nd instance): a 'driver still delivering' model argument can NEVER overrule >=3 consecutive basing closes (+-700) - the G14 blind kept G13's down-chain live on the cut stream and missed the 0302 birth (the 0120 form). The warm strip was priced (-2590 since 0223); same-shot deepening = revision-class regardless of batch size.",
-    "g15_forward_evidence": "G15 two Thursdays, the CHAIN-STATE and SEASONAL-SALIENCE conditioning both loaded. 0319 (chain-SIDED bearish injection print, +59 loose = S3 bearish trajectory) delivered its damped band DOWN (-1080; refined -1000) - chain-sided print delivers even in S1-void. 0326 (COUNTER/backdrop-inversion print, -44 bullish draw, surplus erased) was FLAT (-60), NOT the +900 the blind sized on the 0129 spent-chain-with-print form. RESOLUTION: in S1-VOID shoulder a print that would trade AGAINST the running chain has its DAY NET damped toward FLAT - the with-print counter LEG delivers intraday (+480 midday) then ROUND-TRIPS (the seasonal amplifier that turns a fundamental into a big directional day is absent). This is DIFFERENT from the spent-chain rule (0129/0205/0212 were WINTER, S1 live, and delivered +1480/+540/+120): S1-void is the new discriminator that damps a counter print further. See NEW play magnitude.shoulder_counter_print_damping. ALSO: 0326 was the day AFTER a counter-BOUNCE (0325) -> mature_swing_alternation 'a bounce is never extended consecutively' independently called it a HOLD. The leg-side arm (R2, up on the bullish print) was RIGHT; the DAY NET was flat.",
-    "conditions_note": "A DAY-CLASS DESCRIPTOR PLUS A SIZE PRIOR, WITH NO BAR ON EITHER ARM. The read is 'day of week = Thursday storage-print day'; the SIZE call is 'up-size the magnitude prior' with no threshold, and its only measured form is 'beats its OWN block's non-print median' - a within-block relative comparison the {state_path, comparator, threshold} form cannot express (measured 8 of 14 print Thursdays across g17-g23, and 0 of 2 in g22). The SIDE arm reads 'the running chain', which the S112 health note records as having no served numeric bar anywhere in the state and therefore 'not checkable at all'. RECORDED BUT DELIBERATELY NOT WRITTEN AS A CONDITION: the day-class gate alone is exactly encodable as flow_calendar.days_to_next_eia_release == 0, verified to select 2 of 10 days in each of g20-g23 and to agree exactly with flow_calendar.is_eia_print_day. That is calendar membership of the trigger, not the play's bar, and marking the play 'parsed' on it would put a green tick on a play whose two substantive arms carry no bar at all."
+    "g15_forward_evidence": "G15 two Thursdays, the CHAIN-STATE and SEASONAL-SALIENCE conditioning both loaded. 0319 (chain-SIDED bearish injection print, +59 loose = S3 bearish trajectory) delivered its damped band DOWN (-1080; refined -1000) - chain-sided print delivers even in S1-void. 0326 (COUNTER/backdrop-inversion print, -44 bullish draw, surplus erased) was FLAT (-60), NOT the +900 the blind sized on the 0129 spent-chain-with-print form. RESOLUTION: in S1-VOID shoulder a print that would trade AGAINST the running chain has its DAY NET damped toward FLAT - the with-print counter LEG delivers intraday (+480 midday) then ROUND-TRIPS (the seasonal amplifier that turns a fundamental into a big directional day is absent). This is DIFFERENT from the spent-chain rule (0129/0205/0212 were WINTER, S1 live, and delivered +1480/+540/+120): S1-void is the new discriminator that damps a counter print further. See NEW play magnitude.shoulder_counter_print_damping. ALSO: 0326 was the day AFTER a counter-BOUNCE (0325) -> mature_swing_alternation 'a bounce is never extended consecutively' independently called it a HOLD. The leg-side arm (R2, up on the bullish print) was RIGHT; the DAY NET was flat."
    },
    "audit": {
     "session": "S112",
@@ -1397,7 +1387,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. The one the anti-lock-in clause implies is: measure whether the under-forecast persists once the catalyst/non-catalyst condition sort is applied, and whether reading B (a higher-vol autumn regime rather than a wrong warm-season scale) explains it instead. Neither arm was ever run. A cheaper falsifier available now: re-derive the claim on the three right-signed exemplars only and see whether a 2.5-4.8x under-call is still a scale statement or just the known magnitude residual.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20251008 / 20251010 / 20251016 / 20251020 / 20251021",
@@ -1450,8 +1440,7 @@
      "roll_note": "The G3->G4 'reversal magnitude' was ROLL-INFLATED by +0.276; the real amplitude is ~0.28 smaller. Cross-seam magnitude reads must be roll-clean."
     },
     "exemplars": [],
-    "forward_evidence": "SUPERSEDED, no forward evidence. Winter bands (crash_regime_bands, the winter magnitude bands in s97.2) replaced it from G7 onward.",
-    "conditions_note": "NO BAR EXISTS ANYWHERE IN THE PLAY. The trigger is 'when sizing the expected dominant-move magnitude', which is every day; the read is the blind's own per-day magnitude error; and the call is an explicit instruction NOT to act ('CANDIDATE correction ONLY... Do NOT globally rescale', deferring the actual sort to magnitude.catalyst_condition_sort). The play's own health field reaches the same conclusion in its own words: 'there is no numeric bar... it never selects a subset of days, and it never emits a number.' The only figures in the record are five realized guess-vs-actual pairs (1008 +320/-1980, 1010 +150/-1490, 1016 -300/-1190, 1020 +580/+2770, 1021 +440/+1100) - OUTCOMES logged after the fact, not a quantity readable at the open. A residual log is not a condition, and the audit further shows two of the five are wrong-SIGN days, so they do not even measure scale. Writing any bar here would be pure manufacture."
+    "forward_evidence": "SUPERSEDED, no forward evidence. Winter bands (crash_regime_bands, the winter magnitude bands in s97.2) replaced it from G7 onward."
    },
    "audit": {
     "session": "S112",
@@ -1479,7 +1468,7 @@
    "falsifier": "Brain falsifier field is EMPTY. The one that would settle it: assemble every block boundary in the walk (g3..g23, ~20 of them), score the trigger's arming state at each anchor from the committed rt/actual files - which are all present - and compare the give-back rate on armed boundaries against unarmed ones. The play has never been given a denominator. Until it is, it is a set of stories about turns.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20251113",
@@ -1555,8 +1544,7 @@
      "G4->G5: 1007 last-hour roll-over pre-signaled the 1008 intraday crash",
      "G6 week-1 give-back DOWN caught (week-2 recovery missed)"
     ],
-    "forward_evidence": "FORWARD-TESTED AND REFRAMED: G6 showed it is a GIVE-BACK not a sustained reversal; G7 showed the give-back can be one day deep. It has been superseded as a block-lean caller by structure.chain_polarity_flip + post_parabolic_bleed and is retained as the historical record of the seam lean.",
-    "conditions_note": "OPERANDS UNSERVED AND NO THRESHOLD WRITTEN - both disqualifiers hold independently. The read is 'the running (roll-clean) path at a cum-EXTREME + a counter-move in the old swing's LAST 1-2 days + last-hour momentum into the seam'. All three are price-path content and none appears in the vocabulary: I searched it for cum_, last_hour, close_off, retrace and swing/chain age and there is no such path. The nearest-looking candidates are vol_regime.n0_prev_net and n0_net_sigma_5/10/20, and naming either would be the hole-#8 error twice over: (a) a prior-session net is a different quantity from a close measured against a running extreme, and (b) I checked the served values - vol_regime carries masked_one_shot true and is FROZEN at the block-anchor vintage, so n0_prev_date reads 2026-06-19 and n0_prev_net reads -80 on all ten days of G22 alike. It is constant by construction, i.e. degenerate before it is even mis-scoped. Separately the play states no number at all: 'a stretched swing' and 'cum-extreme' are qualitative, so even a served operand would have no bar to attach to. Its health field records the consequence: 0 fires in 60 days across G17-G23."
+    "forward_evidence": "FORWARD-TESTED AND REFRAMED: G6 showed it is a GIVE-BACK not a sustained reversal; G7 showed the give-back can be one day deep. It has been superseded as a block-lean caller by structure.chain_polarity_flip + post_parabolic_bleed and is retained as the historical record of the seam lean."
    },
    "audit": {
     "session": "S112",
@@ -1583,17 +1571,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "The brain's falsifier field is EMPTY, which for a play at confidence 0.5 carrying nine years of accumulated band revisions is the finding. Proposed: over >= 3 unseen blocks, storage Thursdays and weekend-gap Mondays fail to exceed their own block's median |day_move| more often than the non-catalyst sessions do. Second, and it should be stated as policy: a band top exceeded by an extreme counts as a MISS, not as a request for a new band.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "day is an EIA storage print day - the play's flagship UP-size catalyst class, and the only one of its five day-classes whose selector is a served number",
-     "state_path": "flow_calendar.days_to_next_eia_release",
-     "reference": "absolute",
-     "comparator": "==",
-     "threshold": 0,
-     "units": "days"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260625",
@@ -1746,25 +1725,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "None written; the play has an empty falsifier field despite six arms. TWO ARE AVAILABLE. (1) For the flow-absorption arm, the one I ran: count fires of bp>=0.62 AND sb<=0.45 across served sessions and check the next-session direction. Result: 3 of 60 fires in g18-g23, all on <=6 big prints, 1 right and 2 wrong; adding the only thick-tape fire in the corpus (g16 0408, -450 against a called turn) makes it 1-of-4. (2) For the primary arm, the falsifier must be stated in refine terms since the blind cannot see it: on the refine's realized tape, classify each give-back day's close-recovery fraction BEFORE reading the next day, and require the resume/continue call to beat a coin flip on >= 10 boundary events not used in derivation. Nothing in the corpus has ever done that.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "big-print BUY absorption on the prior session (limb ii of the S102.2 flow-absorption turn arm)",
-     "state_path": "tape_conditions.big_print_b_share",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 0.62,
-     "units": "share"
-    },
-    {
-     "quantity": "the session those big prints are absorbing is itself selling (limb ii's second half)",
-     "state_path": "tape_conditions.session_b_share",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 0.45,
-     "units": "share"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260318",
@@ -1944,7 +1906,7 @@
    "falsifier": "NONE WRITTEN (falsifier field empty), but the play is de facto falsifiable and has been partly falsified: a mature swing posting two consecutive material fresh extremes, or a young chain that does not chain. G11 0121 is the first kind. A serviceable written form: over a block, count material-fresh-extreme closes and score the next session; two consecutive extensions in a mature chain more than ~30 pct of the time retires the rhythm.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260121",
@@ -2115,8 +2077,7 @@
      "brain_action": "ADD note to structure.squeeze_unwind / doctrine_tier3.usage_doctrine: EXPIRY-DAY FORM SPLIT - with stranded premium: fade/unwind watch (G12 form); without: alternation + short-covering into the settle governs (0225 +420, n=1). Never short an expiry session solely on the sponsor-expires argument.",
      "g15_n2": "0327 April-futures-expiry +1160 = n=2 for EXPIRY-DAY COVERING-INTO-SETTLE (with 0225 +420): NO stranded premium on the walk leg -> shorts cover into the settle; NEVER short an expiry session solely on sponsor-expires. 0327 stacked the covering base band (+300..+700) with (a) the counter-swing resume after the 0326 hold, (b) a bullish-inverted backdrop (0326 print -54, stor_surprise -52.8 tight), (c) the 0328 cold crossing the weekend as a risk-HOLDING/covering bid, (d) 0326 tape big_prints_n 64 / bigB 0.531 accumulation into expiry -> ~+1000..+1200, all-day steady (no afternoon flip). Expiry-covering and weekend-crest are now SEPARATED forms (see weekend_crest_friday)."
     },
-    "g15_forward_evidence": "G15: the alternation rhythm sequenced week 2 cleanly UP-side (the counter-rally): 0323/0324 two violent down extensions (bigB 0.373/0.174) -> 0325 bounce (+650) -> 0326 HOLD after the bounce (~flat -60: 'a bounce is never extended consecutively' HIT - the blind overrode it with a +900 print up-size) -> 0327 resume UP. The bounce/hold/resume cadence is the incumbent rhythm in the counter direction. The blind mis-sequenced it (front-loaded the up-move onto the 0326 PRINT day and expected a 0327 trim); the correct sequence puts the HOLD on 0326 and the delivery on the 0327 EXPIRY day.",
-    "conditions_note": "THE BARS ARE REAL AND BOTH OPERANDS ARE UNSERVED. The trigger carries two genuine numeric bars - swing AGE (<=3 young / >=4 mature, counted in sessions since the swing turned) and materiality of '>= ~$300 beyond the prior extreme close'. Neither quantity exists in the vocabulary. There is no swing-age or chain-age path (squeeze_watch.sessions_since_prompt_expiry counts sessions since a CONTRACT expiry, a different clock; the cot/storage/steo *.age_days fields are data staleness), and no close-versus-running-extreme path. vol_regime.n0_prev_net cannot carry the $300 bar: it is a session NET, not a close measured against the running extreme, and in the blind state it is frozen at the anchor vintage and constant across the block. The play's health field says the same from the other side - C stands it down on G20 0525/0603, G22 0624/0630/0701 and G23 0707 because 'chain age and cum-from-anchor are price content the mask removes'. NOTE ON THE ONE SERVED-LOOKING ARM: the s101_6_expiry_day_form sub-arm in legacy_notes turns on expiry proximity (served as flow_calendar.days_to_futures_expiry / days_to_opex) and on stranded premium (contract_structure.calendar_front_next_spread). I deliberately did not curate it: no threshold is written for 'stranded premium absent' - E-0626 judged -0.043 to be absent by eye - and the arm's own brain_action assigns it to structure.squeeze_unwind, not to this play's trigger. Curating it would be inventing a bar and attaching it to the wrong play."
+    "g15_forward_evidence": "G15: the alternation rhythm sequenced week 2 cleanly UP-side (the counter-rally): 0323/0324 two violent down extensions (bigB 0.373/0.174) -> 0325 bounce (+650) -> 0326 HOLD after the bounce (~flat -60: 'a bounce is never extended consecutively' HIT - the blind overrode it with a +900 print up-size) -> 0327 resume UP. The bounce/hold/resume cadence is the incumbent rhythm in the counter direction. The blind mis-sequenced it (front-loaded the up-move onto the 0326 PRINT day and expected a 0327 trim); the correct sequence puts the HOLD on 0326 and the delivery on the 0327 EXPIRY day."
    },
    "audit": {
     "session": "S112",
@@ -2144,7 +2105,7 @@
    "falsifier": "The brain's falsifier field is empty, but the caveats supply a live one: 'A shelf BREAK would falsify the give-back-not-reversal frame for that swing - treat as a live stop condition.' That is concrete and it has already fired once (1211). The newer validated/unvalidated arm needs its own: an unvalidated leg that does NOT retrace to its origin.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20251117",
@@ -2228,8 +2189,7 @@
      "why_it_matters": "It lets a Friday magnitude be derived as a LEVEL instead of guessed as a fraction. E used it to re-earn 0605 with no vol_regime term at all.",
      "explicitly": "An added ARM on this incumbent, NOT a new play. E said so unprompted.",
      "proposed_by": "E (r2)"
-    },
-    "conditions_note": "THE BAR IS REAL AND BOTH OPERANDS ARE UNSERVED. The bar is a retrace FRACTION of the swing (>=~75%, softened to >=~70%) measured against the swing's ORIGIN SHELF PRICE. Neither is in the vocabulary: no retrace fraction, no cum-from-anchor, no swing-origin level. The vocabulary does now serve price LEVELS - options_surface.months[i].top5_oi_strikes[j].strike and oi_weighted_strike, newly visible as indexed paths - and I rejected them explicitly: an open-interest pin strike is a different level from the price a swing launched off, and substituting one for the other is precisely the 'the name looked right' failure this curation exists to prevent. The play itself concedes the reference is not even a single number ('the shelf is a zone, not a tick'). Its health field confirms the play is refine-only on the current architecture, and records that the one time a blind did fire it (0227) it fired at a shelf price had already broken through."
+    }
    },
    "audit": {
     "session": "S112",
@@ -2256,25 +2216,8 @@
    "status_original": "HYPOTHESIS",
    "falsifier": "The play carries NO falsifier field, though its caveats name a decisive test in prose ('the decisive test is the next winter armed-turn near a print'). What it actually needs first is a SERVED DEFINITION of ramp-live - pick the quantity and the bar - because until then the condition is not falsifiable, only arguable. Once defined: front-runs under a live ramp must beat the base rate of the pre-print session, measured on the intraday window and not on the day net (this is the exact defect s103.6 had to retract on D's pre-print generator).",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "the scheduled EIA print is ahead, not today - lower bound of the play's 1-3-session front-run window",
-     "state_path": "flow_calendar.days_to_next_eia_release",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 1,
-     "units": "days"
-    },
-    {
-     "quantity": "the scheduled EIA print is inside the front-run window - upper bound of the 1-3-session window",
-     "state_path": "flow_calendar.days_to_next_eia_release",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 3,
-     "units": "days"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260401, 20260402, 20260409",
@@ -2462,7 +2405,7 @@
    "falsifier": "A counter day whose net breaks its condition-class band by >=1.5x, evaluated at the close and not front-run, that is NOT followed by a sustained polarity change - a genuine C1 false positive. Six fires and zero false positives is a real record and the falsifier is well formed. It has had no opportunity to discharge since G14 because in the blind the condition cannot be evaluated at all. TWO THINGS WOULD SETTLE IT, both cheap: serve the prior day's realized net (or the condition-class band table) in the blind state, and re-derive the bands for the modern amplitude regime, where the historical 1,800-5,010 fires sit at or above the corpus maximum day move of 2,100.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260626",
@@ -2660,8 +2603,7 @@
      "brain_action": "APPEND to structure.chain_polarity_flip evidence: G13 = fifth chain birth (down, 0223 C1 + 0226 C4), the first born OUT OF BASING (prior births came off parabolic crests/capitulations) - condition note: out-of-basing births skip the parabolic ARM (there is no crest; C1 alone carried it, consistent with the S100.2 finding that C1 is load-bearing). Confidence 0.4 -> 0.45 (clean no-false-positive block + a birth the bar catches when fed real tape).",
      "requires_note": "the play's 'requires' gains: prior-day ACTUAL nets (tape state) - it cannot run on forecast feedback (item 6)."
     },
-    "s102_1_g14_sixth_birth": "G14 = sixth C1 fire, out-of-basing UP birth at the 0302 close (1.7-2.6x basing band; C4 delivered by the 0305 bullish print trading UP counter-to-old-chain, 0925/1030 form; forward driver = deficit flip + 12th-pctile shorts + trough-end). 0309 -3020 = C1 TERMINATION (1.7x) correctly NOT birthed down (bear driver behind; 0310 pause + 0311 re-feed confirm basing). C1 record: 6 fires, 1 correct decline, 0 false positives. Confidence 0.45 -> 0.5.",
-    "conditions_note": "EVERY ARM'S OPERAND IS UNSERVED, INCLUDING THE REFERENCE THE BAR IS MEASURED AGAINST. The ARM needs swing amplitude as a ratio to 'the season's prior largest swing' (>=~1.5-2x), run length in sessions (>=~9) and a close >=~30% off the intraday extreme. The CONFIRM needs C1 (the counter day's net breaking its condition-class counter band by >=~1.5x), C2 (old-direction leg continuation <=~15%, big legs <=~1/3 alive), C3 (a pure sequencing rule - 'printed, never front-run' - which carries no bar at all) and C4 (the direction the next scheduled print delivers). None of swing amplitude, run length, close-off-extreme, leg-continuation rate or arbiter-print direction is in the vocabulary. C1 is the sharpest case and it fails twice: its operand (the prior day's realized net) is price content frozen under the mask, and its REFERENCE - the condition-class counter-band table - is, in the play's own health field, 'not served as a numeric table anywhere - each specialist re-derives them', so there is no value to compare against and any absolute dollar figure I wrote would be invented. The health field's verdict is unambiguous: under the mask C1 is 'permanently UNKNOWN - never true, never false'. That is exactly the state a curated condition must never be allowed to fake."
+    "s102_1_g14_sixth_birth": "G14 = sixth C1 fire, out-of-basing UP birth at the 0302 close (1.7-2.6x basing band; C4 delivered by the 0305 bullish print trading UP counter-to-old-chain, 0925/1030 form; forward driver = deficit flip + 12th-pctile shorts + trough-end). 0309 -3020 = C1 TERMINATION (1.7x) correctly NOT birthed down (bear driver behind; 0310 pause + 0311 re-feed confirm basing). C1 record: 6 fires, 1 correct decline, 0 false positives. Confidence 0.45 -> 0.5."
    },
    "audit": {
     "session": "S112",
@@ -2689,7 +2631,7 @@
    "falsifier": "The brain's falsifier field is EMPTY, and the g11_note supplies an anti-falsifier instead (magnitude misses are re-assigned to the polarity input). A usable one: on the next confirmed polarity flip, emit the band BEFORE the day and score the realized net against it, with the polarity input held fixed and declared, so a band miss cannot be re-attributed. A second, runnable today: re-score the six G12 fires as out-of-regime applications and record whether the play should have declined rather than sized.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260206 / 20260209 / 20260210 / 20260211 / 20260212 / 20260213",
@@ -2769,8 +2711,7 @@
      "1211 -3970 print-liquidity",
      "1223 +5010 the two-sided tail"
     ],
-    "forward_evidence": "FORWARD-CONFIRMED on G10 (both January crashes landed in band). FORWARD-INCOMPLETE on G11: the block had no crash days, and the block's two extreme UP days (0121 +3820, 0130 +5020) sit above every up-side band in the brain - the up-side of this play is unbuilt.",
-    "conditions_note": "THE NUMBERS ARE THE PLAY'S OUTPUT, NOT ITS CONDITION. Every figure in the record is an expected day-net dollar band (-2400..-2900 chained crash, -1800..-4000 print-liquidity crash, +800..+1900 exhausted-leg bounce, -2000..-2800 liquidation flush, and so on) - the emission, not a quantity read at the open and compared to a bar. Writing one as a state_path threshold would assert the forecaster can read its own answer before the session. The play's actual gate is 'after a confirmed polarity flip (crash chain / basing)', which is structure.chain_polarity_flip's OUTPUT and is itself unserved for the reasons given on that play; and the six condition classes ('flip-confirm + chained crash', 'print-liquidity crash', 'exhausted-leg bounce'...) are day-class descriptors with no served quantity behind any of them. The audit adds the reason this matters rather than being a technicality: the play fired six times in G12 entirely OUTSIDE its stated regime, which is what an ungated trigger looks like."
+    "forward_evidence": "FORWARD-CONFIRMED on G10 (both January crashes landed in band). FORWARD-INCOMPLETE on G11: the block had no crash days, and the block's two extreme UP days (0121 +3820, 0130 +5020) sit above every up-side band in the brain - the up-side of this play is unbuilt."
    },
    "audit": {
     "session": "S112",
@@ -2798,7 +2739,7 @@
    "falsifier": "Brain falsifier field is EMPTY, though the g11_note functions as one in practice. The two that would settle it: (1) run my mechanical screen with the polarity condition applied properly across all committed rt files and report the conditional rate with its denominator - the data is present and this is an hour's work; (2) score the FLOW round-trip substitute (phase_signed_flow reversal) against the PRICE round-trip on the days where both are observable, since the blind can only ever have the former. If the flow analogue does not track the price analogue, the blind's version of this play is a different play wearing its name.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20251211",
@@ -2883,8 +2824,7 @@
     "exemplars": [
      "1230 +1990->+180 on the cold peak -> 1231 -2630"
     ],
-    "forward_evidence": "FORWARD-CONFIRMED on G9 (1210->1211, 1230->1231) and G10 (0113->0114). NOT EXERCISED correctly in G11: the blind run fired it on 0127/0128 against a counter-spike that was not a counter-spike (the round-tripping days were give-backs inside an UP chain, not failed rallies inside a down chain) - a polarity-input error again, not a rule failure. The tell has never been tested at up-polarity.",
-    "conditions_note": "THE PRICE BAR'S OPERAND IS UNSERVED, AND THE FLOW SUBSTITUTE - WHICH IS NOW SERVED - CARRIES NO BAR. The written bar is the prior day's counter-chain intraday spike measured against its close ('closes >=~60% off the counter extreme'), which is intraday price-path content: the vocabulary has no intraday peak, no close, no round-trip fraction. vol_regime.n0_prev_range and n0_prev_net cannot reconstruct it (a signed, polarity-relative peak-to-close fraction is not recoverable from an unsigned session range plus a net, it would need two paths combined into a ratio the schema cannot express, and in the blind state both are frozen at the anchor vintage and constant across the block). CORRECTION TO THE PREVIOUS PASS, AND THE ONE PLACE THE NEW VOCABULARY CHANGES THE FACTS: the declared FLOW substitute (E's 0528 read of phase_signed_flow [+112, +1684, -3762] against phase_b_share [0.483, 0.475, 0.430]) IS now served - tape_conditions.phase_signed_flow[0..2] and phase_b_share[0..2] are legal paths, having previously been excluded as indexed list paths. I re-derived on that and it is still no_condition, for a different reason than servedness: NO THRESHOLD FOR THE FLOW FORM IS WRITTEN ANYWHERE. The ~60% bar belongs to the price round-trip; E called its substitute 'failed_rally_tell in flow terms' with no bar, and the only other user (A, on 0619, '109% phase flow round-trip') withdrew it in writing with an explicit 'do not bank this'. Writing phase_signed_flow[2] < 0 would be manufacturing a sign test in place of a 60% bar, on a quantity the play's own falsifier says may be 'a different play wearing its name'. The health field names the underlying defect: in blind mode the fade percentage was taken off the forecaster's own GUESSED curve, so 'this play does not have an input; it has a mirror'."
+    "forward_evidence": "FORWARD-CONFIRMED on G9 (1210->1211, 1230->1231) and G10 (0113->0114). NOT EXERCISED correctly in G11: the blind run fired it on 0127/0128 against a counter-spike that was not a counter-spike (the round-tripping days were give-backs inside an UP chain, not failed rallies inside a down chain) - a polarity-input error again, not a rule failure. The tell has never been tested at up-polarity."
    },
    "audit": {
     "session": "S112",
@@ -2912,7 +2852,7 @@
    "falsifier": "The brain's falsifier field is EMPTY, which is why two refutations could be absorbed as scoping. Proposed, and it has to be pre-registered: name the bleed class BEFORE a block opens; the class is refuted if that block's realized cum ends at the OPPOSITE polarity, or if a third-day bounce prints with no prior C1 band-break. The second clause matters because the existing B2 escape hatch was written after the escape.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260121",
@@ -3015,8 +2955,7 @@
      "question": "(iii) 0219 storage Thursday -180 vs chain-sided +600: was the chain actually live?",
      "audit": "NO. The actual tape 0215-0218 was -300/+380/-270/-170: four sessions two-sided inside +-400 = BASING. The 'live young 3-session up-swing' existed only in the blind's own guessed closes (+500/+300) - in fully-blind mode the walk fed its own forecasts back as chain state. Under the s101_3 spent/basing scoping the day was the WITH-PRINT class (0129/0205/0212 forms): the print surprise (+15.8 above consensus, first bearish surprise of the block, the surplus direction's first flip) owned the post-print leg DOWN; day net basing-small. Refined -250 vs actual -180.",
      "brain_action": "ADD to daytype.storage_thursday_magnitude caveats + blind_run_hygiene: CHAIN STATE IS TAPE STATE - the chain input to R1/R4/chain-sided reads is the prior days' ACTUAL nets when available; in fully-blind mode, after >=2 consecutive misses in the running forecast the chain read must be demoted to UNKNOWN (basing default) rather than compounding the walk's own phantom swing. G13 evidence: the phantom up-chain propagated 0218 (+300g/-170a), 0219 (+600g/-180a), 0223 (+600g/-1770a) - three misses chained off one wrong verdict (0217). Also records the CORRECT fire: 0226 chain-sided down (-500g/-650a) with the chain real."
-    },
-    "conditions_note": "REGIME/RHYTHM CLASSIFIER, NOT A BAR. The entry test is a CHAIN STATE ('terminated-to-basing/bleed at the OLD polarity') plus the day's position in a crash/bounce/pause sequence, and the read field says both come off day-N-1 ACTUAL tape - realized nets, price-derived, masked in the blind and served nowhere in the vocabulary. Every number the play carries is an OUTPUT day-net band in USD, not an entry threshold: B1 post-crash pause +300..+700, B2 bounce day-1 +800..+1500 / day-2 +200..+500, B3 bounce-death -2400..-2900, B4 in-chain print -400..-700, B5 small days -200..+300. B2's 'bounces run 1-2 days, NEVER 3' is a count of position in a sequence, not a bar on a served quantity, and the boundary condition retained after its G11 refutation ('applies only while no C1 band-break has printed') is itself keyed to a masked price band. Inventing a threshold here would put a number on the wrong object."
+    }
    },
    "audit": {
     "session": "S112",
@@ -3044,7 +2983,7 @@
    "falsifier": "The play carries no falsifier field, but its probation clause functioned as one and fired: 'the first-appearance arm as a STANDALONE day-net side caller is now 0/3 forward -> DEMOTED per its own probation.' The remaining arm needs the same treatment and the test is cheap: on every day where forecast_run_delta_cdd is within +-0.10 (nominally inert) but the D0 LEVEL moved more than +1.5 gw-CDD from the prior session, score the day-net sign of a rule that treats the day as inert. G22 0624 and 0630 are both such days and both refute it. If more than a couple of such days go the wrong way, the revision arm must be scoped to exclude roll-down of a rising continuous track.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260624",
@@ -3145,8 +3084,7 @@
      "finding": "The add DID price - but only when it reached the near window: +590 on 0220 (peak enters D+2..D+3, morning cycles add near-term, regime flips hard_heat) and +1310 at the 0222 reopen (peak at D0/D+1 + delivery pull). During 0217-0219 (add at D+5-6, run-deltas +1.0..+1.8) the market priced the OTHER stream: the block-warmest near-term days (D0 -8.8, D+1 -9.9). What killed the week-1 calls was not the cycles cutting the tail (that came 0218+) but PRICING TIME: a moderate far add does not price at appearance.",
      "rule": "PRICING-TIME RULE (amend signal.mos_first_appearance_vs_revision): a first-appearance add prices AT APPEARANCE only at shock scale (run-deltas >= ~3-4 gw-HDD: 0119 +4.0/+8.5 -> +2100 gap; 0123 +2.9/+4.5 -> +1170 same-day); a MODERATE add (deltas < ~2) prices when it ENTERS THE NEAR WINDOW (D+0..D+2): G13 add appeared 0216-0217 at D+5-6 (unpriced through 0219, days -270/-170/-180), priced 0220 (+590) and 0222 (+1310). n: shock-scale n=2 (G11), moderate-scale n=1 sequence (G13, three unpriced days + two pricing days) - back-checked against 1109 (shock, priced at once) and 1123 (priced shot, nothing to price).",
      "probation_resolution": "The first-appearance arm as a STANDALONE day-net side caller is now 0/3 forward (G12 0202, G12 0204, G13 0217) -> DEMOTED per its own probation: it is a block/regime trajectory + gap input (where it remains confirmed: the 0222 gap, the 0216 thin-session pricing) and a day-net caller ONLY via the pricing-time rule's near-window entry (0220 the first instance). Revision-inert arm: unchanged, still harmless (G13: 0218/0224-0225 tail cuts handled as trajectory, no side flips)."
-    },
-    "conditions_note": "THE DISCRIMINATOR IS PER-HORIZON AND THE SERVED FIELD IS NOT. The play separates a FIRST APPEARANCE at a horizon that previously carried no signal from a REVISION to a horizon already occupied for several runs; that needs the run-delta LADDER plus each horizon's prior-run occupancy. decision_state carries the ladder only as weather_forecast.run_delta[] (a list of per-horizon dicts) and the vocabulary does not expose it; the vocabulary-legal scalars weather_forecast.forecast_run_delta / forecast_run_delta_cdd are the h0 (D0) values only - verified on 20260622, forecast_run_delta 0.034 == run_delta[0].d_gw_hdd 0.034. The play's ONE numeric bar is the s101_6 pricing-time rule's shock scale ('a first-appearance add prices AT APPEARANCE only at shock scale, run-deltas >= ~3-4 gw-HDD'), and it was measured on FAR-horizon adds: 0119's +4.020 at Jan 23 and +8.511 at Jan 24, i.e. D+4/D+5. Measured across every committed grp*_state.json the h0 scalar spans [-1.267, +0.876] and never once reaches 3, while the horizon ladder reaches 8.511 on the founding day. A >=3 bar on the served scalar would read as evaluated and could never fire - not even on the play's own founding instances. The same field carries the audit's roll-down defect: run_delta compares one target date across two runs and is structurally blind to a shot that arrives by the passage of time, which is what refuted the revision arm on G22 0624 and 0630."
+    }
    },
    "audit": {
     "session": "S112",
@@ -3174,7 +3112,7 @@
    "falsifier": "NONE WRITTEN. The play needs one and it is easy: once the Sat/Sun 00Z and 12Z ingest lands, pre-register fresh vs priced from the D+2..D+6 delta BEFORE the reopen and score the gap against the two bands. Until that data build exists the arm is not falsifiable, which is the accurate description of its current state.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260629",
@@ -3283,8 +3221,7 @@
      "reaction_corollary": "0119's US session netted only +550 after a +2100 gap - the MLK thin flag is NOT what capped it; the catalyst had already been consumed by the gap it followed."
     },
     "forward_evidence": "n=3 fresh spanning G5 (1019), and G11 (0118, 0125); n=2 priced spanning G8 (1124) and G10 (0111). Not yet forward-tested as a stated rule.",
-    "summer_scope_retraction_s110": "S109 P3, adjudicated S110: the FRESH arm (+1500..+2500) is WINTER-measured with no summer instance, and G22 supplies an n=1 summer REFUTATION (0629: driver arrived exactly as forecast - CDD +4.7 realized 14.8 vs forecast 14.815 - and the gap paid +50 against a rescaled +350..+800 call; session -1,160). Scope the fresh arm to winter explicitly. No summer band is proposed - n=1 licenses a scope restriction, not a number. Summer weekend gaps emit via boundary.weekend_gap_wide_band_emission.",
-    "conditions_note": "THE DISCRIMINATING INPUT IS DECLARED UNSERVED BY THE PLAY ITSELF: requires reads 'the MAGNITUDE requires weekend-cycle model data that decision_state does not currently carry', and the health note repeats it. The read is whether the weekend cycle delivers a CHANGE at D+2..D+6; weather_forecast_cycle carries that only as sunday_reopen.delta_vs_prior_by_horizon[] - a list the vocabulary does not expose - and its vocabulary-legal scalars are D0 only (gw_hdd_d0, vs_normal_d0). The CDD channel is not served in the cycle store at all (the block's own cdd_basis note: 'the cycle store is absent cold, so gw_cdd_d0 / d_gw_cdd cannot be recomputed here and are NOT served'), which is exactly what both G22 proxy attempts had to work around - and they failed in opposite directions on consecutive weekends. Beyond that, the fresh-vs-priced switch is a categorical label with no bar, and +1500..+2500 / +200..+400 are OUTPUT gap bands, not entry thresholds."
+    "summer_scope_retraction_s110": "S109 P3, adjudicated S110: the FRESH arm (+1500..+2500) is WINTER-measured with no summer instance, and G22 supplies an n=1 summer REFUTATION (0629: driver arrived exactly as forecast - CDD +4.7 realized 14.8 vs forecast 14.815 - and the gap paid +50 against a rescaled +350..+800 call; session -1,160). Scope the fresh arm to winter explicitly. No summer band is proposed - n=1 licenses a scope restriction, not a number. Summer weekend gaps emit via boundary.weekend_gap_wide_band_emission."
    },
    "audit": {
     "session": "S112",
@@ -3311,33 +3248,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "None in the brain's falsifier field. A usable one exists and has arguably already fired twice: a gap whose owner rung is correctly identified and whose realized magnitude lands outside the owning arm's band (0629 at +50 against +200..+850; 0713 at -360 against +50..+900). Recording those two would convert the 13/13 in-sample table into a live scoreboard.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "sessions_since_prompt_expiry",
-     "state_path": "squeeze_watch.sessions_since_prompt_expiry",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 3,
-     "units": "sessions"
-    },
-    {
-     "quantity": "days_to_futures_expiry",
-     "state_path": "flow_calendar.days_to_futures_expiry",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 3,
-     "units": "days"
-    },
-    {
-     "quantity": "forecast_gw_hdd",
-     "state_path": "weather_forecast.forecast_gw_hdd",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 13.5,
-     "units": "gw_hdd"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260629",
@@ -3600,7 +3512,7 @@
    "falsifier": "Written, correctly scoped, and untested since G12: a dead-sponsor unwind that does NOT retrace to the pre-squeeze shelf inside its own unwind sessions, or that pierces the shelf on the unwind itself. The G9 1211 weather-parabola case is named as the contrast class rather than used to widen the claim. The basing-band statement, by contrast, carries no falsifier and is already contradicted by its own source file.",
    "support": "NOT_A_PLAY",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260201, 20260202",
@@ -3722,8 +3634,7 @@
      "finding": "No contradiction once the claim is scoped to its derivation: 'the shelf holds' was derived on the UNWIND ITSELF (0201-0202: the unwind retraced to 3.159 +0.072 and STOPPED - the claim is that the unwind's own momentum does not pierce the pre-squeeze level, because below it price is no longer squeeze-priced). It was never a durable floor claim. G13's break came THREE WEEKS later (nine sessions of two-sided basing 3.08-3.23 first), under NEW information: a cold arch priced up off the shelf and unwound through it as the lull hit and the 0226 print flipped the 5yr comparison to surplus (+44). A shelf holds against the unwind; it has NO authority against subsequent fundamental repricing.",
      "brain_action": "AMEND structure.squeeze_unwind (descriptor) + level.giveback_origin_shelf: 'shelf holds' is scoped to the unwind sessions (days-scale, n=1 G12); post-basing the shelf is an ordinary reference level that breaks when the weekly fundamental stream re-prices below it (G13: broke 0223-0224 on lull + surplus flip). The squeeze-form vs weather-parabola-form discriminator (holds-vs-breaks AT THE UNWIND: 0202 vs 1211) is UNCHANGED. Also: giveback-target logic is VOID below a broken shelf (0227 refined note - no floor claim available)."
     },
-    "g16_forward_evidence": "G16 0329: the dead-sponsor arm DECLINED to a clean NO-FIRE (calendar_front_next_spread 0.07, chg_3d 0.039 = tiny stranded premium; NGJ26 expired 0327, underlying already on May/996). The 0327 up last-hour (big_print_b_share 0.817 = expiry-covering buy) gave back INTRADAY (session -990) with a ~flat overnight gap (+200), NOT as a -E structural gap. FORWARD LESSON: a descriptor-grade (tiny-premium) dead-sponsor pop gives back through the session, not as the gap the blind guessed (-200) - the covering unwind is an intraday overlay on the S3 bleed. Consistent with the s101_3_sizing_rule non-firing conditions (no squeeze leg, normal spread).",
-    "conditions_note": "DESCRIPTOR GRADE AND IT SAYS SO: call = 'DESCRIPTOR grade - regime context, not a scored play', status DESCRIPTOR, support NOT_A_PLAY. It carries no bar of its own - its trigger is another play's branch firing ('after a dead-sponsor structural gap (block_gap_ownership structural branch fired)'), which is a play state, not a served quantity. Its numbers are arithmetic on masked price levels: gap = -E where E is the cum net of the post-expiry echo sessions; next session = the remaining premium down to the PRE-SQUEEZE SHELF; and the '3.08-3.23 for nine sessions' basing statement is a price range (which the S112 audit found does not reproduce - closes ran to 3.521). None of E, the premium P, the shelf, or a close level is served. The one conditionable quantity in its neighbourhood - the dead-sponsor expiry window - belongs to block_gap_ownership's structural rung and is curated there, not duplicated onto a descriptor."
+    "g16_forward_evidence": "G16 0329: the dead-sponsor arm DECLINED to a clean NO-FIRE (calendar_front_next_spread 0.07, chg_3d 0.039 = tiny stranded premium; NGJ26 expired 0327, underlying already on May/996). The 0327 up last-hour (big_print_b_share 0.817 = expiry-covering buy) gave back INTRADAY (session -990) with a ~flat overnight gap (+200), NOT as a -E structural gap. FORWARD LESSON: a descriptor-grade (tiny-premium) dead-sponsor pop gives back through the session, not as the gap the blind guessed (-200) - the covering unwind is an intraday overlay on the S3 bleed. Consistent with the s101_3_sizing_rule non-firing conditions (no squeeze leg, normal spread)."
    },
    "audit": {
     "session": "S112",
@@ -3751,7 +3662,7 @@
    "falsifier": "A day in a live structural pull state carrying a failed counter-flush in the final 30-75 min that does NOT ignite. That negative test has never been run and it is the only thing separating the conjunction from a re-description of three squeeze days. Discharging it requires either a winter block with squeeze_watch genuinely live and the spread limb unmasked, or a re-pull of the G9/G11 raw tape from S3 so the founding instances become traceable and the matched non-igniting days can be counted.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260625",
@@ -3968,8 +3879,7 @@
      },
      "g13_negative_instance": "G13 fired NO squeeze and the tape agrees: no walked day shows F1-F5 conjunctions (leg counts collapsed to 2-30/day vs G12's 53-122 - the thin-participation regime fact; 0223's crash pre-onset showed an ORDERLY gap-fade, no stalemate signature). The retrospective's signatures are squeeze-regime reads, not daily tools.",
      "brain_action": "ADD fingerprints.squeeze_onset_signatures carrying F1 (conjunction rule), F2 (thin-regime confirm rule), F3/F4/F5/compression (watches), F6/F7 (named noise) with the per-event tables above; scope: fires only while a structural pull state is live (squeeze_watch active / delivery week / dead-sponsor arm)."
-    },
-    "conditions_note": "THE BAR IS INTRADAY AND PRE-ONSET; requires = needs_intraday_reveal. The stated test is a failed counter-flush in the final 30-75 min - probes recovering >=60% within 30 min, the session low holding, imbalance normalizing against the session base - all windowed intraday quantities, and the recovery fraction is price-derived besides. The served tape_conditions block is a PRIOR-SESSION aggregate (n_trades, session_b_share, session_signed_flow, big_print_b_share, big_prints_n, trades_per_min, volume_lots, l1_book) with no intraday window and no probe/recovery measure anywhere. The conjunction's other limb, a 'live structural pull state', resolves through squeeze_watch, whose spread limb is genuinely price-masked (calendar_limb_satisfied_live is null on every day of g22 and g23) and whose frozen active flag the S112 audit measured as 10-of-10 or 0-of-10 in every modern block. Neither limb can be written as a bar on a served path; picking a squeeze_watch calendar field to stand in for the flush would name a quantity the play does not test."
+    }
    },
    "audit": {
     "session": "S112",
@@ -3997,7 +3907,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. The play's own scope note supplies half of one ('non-discriminating on liquid tapes'), which means a thin-regime session showing the ratchet fingerprint and then failing to sustain would discharge it. WHAT WOULD SETTLE THE WHOLE THING: a leg-grain replay that computes ticks-per-1,000-lots per session and writes it into the evidence store alongside phase sflow, then re-scores 20260121 and 20251223 against a matched set of thin non-squeeze sessions. Until that field is served, this play is unexercisable and unauditable, and it should not accumulate confidence in either direction.",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [],
    "corpus": {
     "d24_state": "not_searched",
@@ -4028,8 +3938,7 @@
      "0121",
      "1223"
     ],
-    "forward_evidence": "NONE",
-    "conditions_note": "THE TRIGGER QUANTITY IS NOT SERVED ANYWHERE, and the play's own health field says so: progress-per-1,000-lots ('>= ~2x the day baseline; 0121/1223 38-47t/k vs controls <=17t/k') 'is not stored in fingerprints.json, in any g*_mbo_evidence.json, or in any grp*_state.json, so the bar cannot be evaluated on a single day of the walk'. It is a ratio of PRICE PROGRESS - masked in the blind by construction - to traded lots; the vocabulary serves tape_conditions.volume_lots but no price-progress term, so the ratio cannot be formed from any served path. The thin-regime half of the trigger carries no stated numeric bar of its own. The play is unexercisable and unauditable until a lot-normalised progress field is served, which is its own falsifier's stated prerequisite."
+    "forward_evidence": "NONE"
    },
    "audit": {
     "session": "S112",
@@ -4056,25 +3965,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "Brain falsifier field is EMPTY, but the play carries a de facto one in its back-check design: any anchor passing (a)+(b)+(c)+(d) whose gap does NOT price to the counter/covering side refutes it, and the sweep was built to look for exactly that. The addition I would make: state limb (a) in SHAPE form (per D23) - both books in their own bottom decile, or a stated distance from each book's own 1y distribution - rather than as absolute percentile bars, one of which currently sits 0.26 points inside its own instances. And the play cannot be forward-tested at all until the walk re-enters a withdraw-phase contango window; that is a scheduling fact the plant should record, not an open question.",
    "support": "MECHANISM_VERIFIED",
-   "conditions": [
-    {
-     "quantity": "mm_net_pctile_1y",
-     "state_path": "cot.managed_money_net_pctile_1y",
-     "reference": "rank",
-     "comparator": "<=",
-     "threshold": 12,
-     "units": "pctile"
-    },
-    {
-     "quantity": "ice_ld1_mm_net_pctile_1y",
-     "state_path": "cot.ice.ld1.managed_money_net_pctile_1y",
-     "reference": "rank",
-     "comparator": "<=",
-     "threshold": 3,
-     "units": "pctile"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260308",
@@ -4340,17 +4232,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "The record's own words are the falsifier and they are still unmet: 'the 1.35 bottom bound IS 0311's own print... the bound needs G15+ forward evidence' and 'forward_evidence: NONE'. The concrete test: on the next block where limb (i) can fire (a heating block with far-window HDD rising two cycles) and limbs (ii)/(iii) hold, record the band top and the multiplier BEFORE the day. A realized multiplier outside [1.35, 2.55], or a fire on a day that delivers inside the ordinary band, refutes the band. A second, cheaper falsifier for the trigger: any day satisfying all three limbs that does NOT exceed its band top.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "mm_net_pctile_1y",
-     "state_path": "cot.managed_money_net_pctile_1y",
-     "reference": "rank",
-     "comparator": "<=",
-     "threshold": 12,
-     "units": "pctile"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260323",
@@ -4436,7 +4319,7 @@
    "falsifier": "NONE WRITTEN. Proposed: a covering-regime Sunday with a live chain whose day-move lands at the plain class bottom rather than near 2200 kills the doubled rung; and separately, if plain-rung Sundays are not distinguishable from non-chain-drift Sundays over a further ~6 instances, the plain rung should be deleted in favour of the prior.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260322",
@@ -4517,8 +4400,7 @@
    },
    "legacy_notes": {
     "evidence": "n=3: 1123 (day-move +640 ~ plain bottom), 1130 (-510 ~ plain bottom; k-x-gap form REFUTED here - no finite k), 0308 (+2250 ~ doubled mid; session call +1100 vs +1030). The 0308 'Sunday envelope break' (+1030 vs all 20 prior <=690) is EXPLAINED by the budget form, not declared. No other walk Sunday carries live-chain drift ownership - no false fires.",
-    "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test.",
-    "conditions_note": "No trigger bar. The trigger is an OWNERSHIP/REGIME label - 'chain-drift-family content owns a weekend WITH a live chain', then plain-vs-covering regime - and neither chain ownership, chain liveness nor 'first covering print in COT' is a served numeric quantity (no chain block exists in the vocabulary; cot.managed_money_net_chg_wow could show net covering but the play states no bar on it and 'FIRST covering print' is a sequencing rule, not a level). The numbers the play carries - the [600..1600] class, the ~2200 doubled rung, the <=690 Sunday prior - are OUTPUT magnitude bands on the emitted day-move, not gates on whether it fires. The brain's own health field says the same: the ownership precondition is what changes state and the rungs mostly do not."
+    "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
    },
    "audit": {
     "session": "S112",
@@ -4546,7 +4428,7 @@
    "falsifier": "None recorded. What it needs is the inverse population: qualifying Fridays (stretched same-side chain, driver realizing by the close) that CONTINUED rather than trimmed. Zero such days are named anywhere, which is why the 3/3 shape claim cannot be scored.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260327",
@@ -4651,8 +4533,7 @@
    "legacy_notes": {
     "evidence": "n=4-5 spanning G9/G13/G14 both polarities: 1205 (aft -1050 off the peak), 0227 (+340 counter to the mature down-chain - the note's first unapplied miss), 0313 (-1030; call -900; E: flow-led break 08-10, 3.1x session rate through thick books = position-driven squaring, not a liquidity event), plus the 0223 crest-mirror and 1215/1230 delivery-day forms. Promotes the Friday-bag terminal-squaring lean (was n=2 lean) to a conditional rule after two consecutive unapplied hits.",
     "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test.",
-    "g15_forward_evidence": "RESOLVED (S103): 0327 expiry-Friday +1160 is NOT a failure of this play - its TRIGGER was NOT MET. The trigger requires (a) the chain STRETCHED near its extreme and (b) the driver fully PRICED with its realization window REALIZING/EXPIRING by the close. On 0327 NEITHER held: the chain was a down-chain TURNING UP (0325 bounce + 0326 hold = 2 basing/counter closes -> chain-state-is-tape-state demotes it to basing, not a stretched same-side chain), and the priced driver (0328 cold, D+1 13.5 gw) was AHEAD, CROSSING the weekend UNREALIZED. The blind MIS-FIRED the play (blended a crest-trim afternoon-flip shape into a day the trigger excludes). DISCRIMINATOR (crest-trim vs expiry-covering): crest-trim fires only with a stretched same-side chain AND the driver realizing/expiring by the close (longs trim spent premium into the weekend); when the driver is AHEAD/unrealized crossing the weekend on an EXPIRY Friday with a bullish-inverted backdrop, the s101_6 EXPIRY covering-into-settle form governs -> an all-day covering bid (no afternoon flip). The 3/3 crest SHAPE stands where the trigger IS met; it is not extended to expiry-covering days. See mature_swing_alternation.s101_6_expiry_day_form (now n=2).",
-    "conditions_note": "All three trigger limbs are unserved or carry no bar. (1) 'chain stretched near its extreme' is cum-from-anchor vs block range - cum_from_anchor is not in the served vocabulary at all, and E declares it PRICE-MASKED and UNEVALUATED at the blind. (2) 'the chain-side driver fully PRICED with its realization window crossing the weekend closure' is a pricing-time/realization-timing read with no threshold. (3) 'the evening run delivering the shot's first same-sign trim' is a SIGN plus a SEQUENCING condition ('first'), and the sign it must take is relative to the chain side, which is unserved; weather_forecast.forecast_run_delta is served and is the D-1 evening run delta, but the play states no bar on it. The -600..-1200 basing-counter numbers are the output band. Day-of-week ('a Friday') is also not a served numeric quantity."
+    "g15_forward_evidence": "RESOLVED (S103): 0327 expiry-Friday +1160 is NOT a failure of this play - its TRIGGER was NOT MET. The trigger requires (a) the chain STRETCHED near its extreme and (b) the driver fully PRICED with its realization window REALIZING/EXPIRING by the close. On 0327 NEITHER held: the chain was a down-chain TURNING UP (0325 bounce + 0326 hold = 2 basing/counter closes -> chain-state-is-tape-state demotes it to basing, not a stretched same-side chain), and the priced driver (0328 cold, D+1 13.5 gw) was AHEAD, CROSSING the weekend UNREALIZED. The blind MIS-FIRED the play (blended a crest-trim afternoon-flip shape into a day the trigger excludes). DISCRIMINATOR (crest-trim vs expiry-covering): crest-trim fires only with a stretched same-side chain AND the driver realizing/expiring by the close (longs trim spent premium into the weekend); when the driver is AHEAD/unrealized crossing the weekend on an EXPIRY Friday with a bullish-inverted backdrop, the s101_6 EXPIRY covering-into-settle form governs -> an all-day covering bid (no afternoon flip). The 3/3 crest SHAPE stands where the trigger IS met; it is not extended to expiry-covering days. See mature_swing_alternation.s101_6_expiry_day_form (now n=2)."
    },
    "audit": {
     "session": "S112",
@@ -4680,7 +4561,7 @@
    "falsifier": "The play carries NO falsifier field, but two are named implicitly in its own text and both are writable: (a) a run of qualifying Mondays where the 06-10 window leans WITH the heavy L1-10 side; (b) a Tue-Thu control run showing the same rate, which would kill the Monday-specificity the play admits is unproven. WHAT WOULD SETTLE THIS PLAY: serve imb10 in decision_state at the Monday 06:00 ET snapshot, or archive the L1-10 book for the seven named derivation Mondays, then re-run. Until one of those exists neither falsifier can be run and the headline cannot be checked by anyone.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260601",
@@ -4773,8 +4654,7 @@
    },
    "legacy_notes": {
     "evidence": "14 Mondays MBP-10 (refine D): qualifying 6/7 (1006, 1020, 1027, 1201, 0202, 0309; miss 1222 expensive); L1-3 does NOT carry it (8/14); window repricing is desk-marked not aggressor-driven (against own flow 8/14). On the one Monday R3 mis-phased (1201) the book read was correct.",
-    "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test.",
-    "conditions_note": "THE BAR IS REAL AND ITS QUANTITY IS NOT SERVED. The play's bar is |imb10| >= ~0.05 on a Monday 06:00 ET L1-10 RESTING-DEPTH imbalance snapshot. No imb10 / imb_R / depth-imbalance path exists in the vocabulary. The three served l1_book fields are tape_conditions.l1_book.quote_bid_share, .quote_updates and .spread_ticks_med - quote_bid_share is a bid-side share of QUOTE UPDATE COUNTS at L1 only, which is a different quantity (wrong depth, wrong object, wrong timestamp), and naming it would be exactly the hole-#8/#9 error. The play's own falsifier says what is missing: 'serve imb10 in decision_state at the Monday 06:00 ET snapshot'. Separately, firehose_present.l1_book is FALSE on every modern Monday, so even the L1 fields are absent at the decision point."
+    "forward_evidence": "NONE - proposed s102.1 (G14 refine); G15+ is the forward test."
    },
    "audit": {
     "session": "S112",
@@ -4801,25 +4681,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "As written, none can be constructed that the play could fail. A usable falsifier requires REPLACING the absolute HDD bar with a condition that splits days - a seasonal-transition measure sited at the centre of its own distribution, on whichever degree-day axis is live - and then finding a counter print in that state that delivers a full counter band. Until the bar is replaced this play cannot be scored in either direction, and the 0326 instance cannot be extended.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "near_window_gw_hdd",
-     "state_path": "weather_forecast.forecast_gw_hdd",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 20,
-     "units": "gw_hdd"
-    },
-    {
-     "quantity": "days_to_next_eia_release",
-     "state_path": "flow_calendar.days_to_next_eia_release",
-     "reference": "absolute",
-     "comparator": "==",
-     "threshold": 0,
-     "units": "days"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260702",
@@ -4947,25 +4810,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "The brain's falsifier field is EMPTY. The caveats field supplies the right test and it has never been run: 'Test on the next block where a cold-add SHOULD win (near-window >= 16.4 AND buy-tape) - the rule must let weather own the day there.' Measured, that block does not exist in the corpus and cannot: the conjunction is 0 of 82. So the play's own designed positive test is unreachable, which is itself the falsification. WHAT WOULD SETTLE IT: re-site both bars as SHAPE or centred-percentile conditions per D23, or supply the seasonal analog (the state serves forecast_gw_cdd and forecast_run_delta_cdd at D0, but the per-horizon rows carry HDD only), then re-run the three G16 splits and see whether any of them still resolves DOWN for a reason rather than by construction.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "near_window_forecast_gw_hdd",
-     "state_path": "weather_forecast.forecast_gw_hdd",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 16.4,
-     "units": "gw_hdd"
-    },
-    {
-     "quantity": "session_b_share",
-     "state_path": "tape_conditions.session_b_share",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 0.5,
-     "units": "share"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "82 evaluable day-rows",
@@ -5449,7 +5295,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. Proposed, and it is cheap because the data now exists: score the BLIND-emitted exit_type - not the refine's - against the Monday it predicts, over >= 10 weekend seams. If the blind label flips at the reveal more often than it survives, the emitted type is not an open-time product and the cascade should inherit the measured close-location instead. The current standing on that test is 2 survivals in 8.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260529",
@@ -5559,8 +5405,7 @@
     "evidence": "POSITIONING_SPENT: 0327 (April expiry, +1150 covering with price-up-against-sell-flow absorb_session, -> Mon 0330 resumed pre-covering DOWN -650); 0213 (roll's last marked day, undersized -1400). ROLL-CARRY sub-rule: 0206 down (window open) -> 0209 carried down -830. FUNDAMENTAL_CARRY: 1128 (Black-Friday cold arriving +2340 -> Mon 1201 carried +910); 1121 (+910 -> 1124 held +90). MOMENTUM_CARRY missed by the default: 1107/1114 down-momentum -> 1110/1117 carried down. CREST_TRIM: 0410 fired clean -190. n>=2 spanning G8/G9/G12/G13/G15/G16.",
     "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
     "data_gap": "last-hour signed flow (field #3, the covering/exhaustion tell) is MBO-measured only for G15; for the rest of the record exit-type was inferred from archetype+curve-dir+calendar. Extending the flow measurement to all Friday closes is a DATA build.",
-    "merged": "s104_friday_cleanup",
-    "conditions_note": "The play emits a CATEGORICAL exit-type label (crest_trim_fadeable / positioning_spent_fade / fundamental_carry_continue / momentum_carry), not a gated call, and its trigger - 'any Friday close going into a weekend seam' - is unconditional. Its discriminating tell, last-hour price-dir vs last-hour signed-flow, is not served: no last_hour_dir or last_hour_signed_flow path exists in the vocabulary, the record says it is MBO-measured only for G15, and the exit_states file that carries it is declared refine-only ('a blind run must never read this file'). The calendar inputs ARE served (flow_calendar.days_to_opex, .days_to_futures_expiry, .gsci_roll_day_n, .bcom_roll_day_n) but the play states them as STATES with no number - 'index-roll LAST day', 'an index roll whose WINDOW is still open Monday' - and inventing a roll-day threshold to fill the slot would be manufacturing a bar the play does not have."
+    "merged": "s104_friday_cleanup"
    },
    "audit": {
     "session": "S112",
@@ -5588,7 +5433,7 @@
    "falsifier": "None written. The obvious one, which the corpus can already run: over all 12 weekend seams in g18-g23, classify each Friday's driver as REALIZING or AHEAD from weather_forecast.horizons known at the Friday close, then score the Monday day_move sign. Anything at or below chance refutes it. The traced fires give 1-of-4 already. A second, sharper test comes from B's own refine and is not in the play: run the peak-ahead test on the burn RESIDUAL (grid_stack est_gas_burn net of wind/solar) rather than gross CDD, and check whether the 0629 sign flips. If it does, the play needs a residual limb before it may be applied in a renewables-heavy summer regime.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260703",
@@ -5671,8 +5516,7 @@
     "evidence": "REALIZING->reverse (n=2 both spanning groups): 0220 (Friday extension into the cold weekend +600, correct; cold peak realized Sat-Mon -> Sun 0222 carried +1150 -> Mon 0223 REVERSED -1790); 0405 (cold-add realized over the Good-Friday extended weekend +400 -> Mon 0406 -470). AHEAD->carry (contrast): 1128 cold still arriving -> 1201 carried +910; 0111 cold shot Sunday still bleeding -> 0112 extend bounce.",
     "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
     "merged": "s104_friday_cleanup",
-    "scope_split_s110": "A6 (A, n=2 vs n=2): the REALIZING arm's exemplars are winter SHOT-class (unpriced driver lands). A slope-class crest (priced seasonal ramp visible in the ladder) is out of scope - applying the arm there produced the 0703 blind miss and 0629's gap call. Test: is the driver IN the forward ladder at the exit (priced branch) or absent from it (shot branch)? Shot -> arm applies; slope -> hill grammar applies (a hill slopes, it does not gap).",
-    "conditions_note": "The discriminator is the LOCATION of the driver's peak in the forward ladder - 'peak still AHEAD of Monday' vs 'peak lands Sat/Sun/Mon' - which is an argmax/ordering over horizons, not a level crossing a threshold. There is no bar to write. The quantity is also not served as a scalar: it lives in weather_forecast.horizons, a LIST of per-horizon rows, and the only served weather_forecast scalars are the D0 levels (forecast_gw_hdd / forecast_gw_cdd) and the run-over-run REVISION deltas (forecast_run_delta / forecast_run_delta_cdd). forecast_run_delta_cdd is the nearest-looking name and measures something else entirely - this run versus the previous MODEL RUN, not this horizon versus the next HORIZON - so it must not be used for the h0-vs-h1 step the specialists actually ran ('h1 CDD 15.933 > h0 14.815'). The falsifier's proposed burn-residual limb (grid_stack est_gas_burn net of wind/solar) is a proposed test, not the play's bar."
+    "scope_split_s110": "A6 (A, n=2 vs n=2): the REALIZING arm's exemplars are winter SHOT-class (unpriced driver lands). A slope-class crest (priced seasonal ramp visible in the ladder) is out of scope - applying the arm there produced the 0703 blind miss and 0629's gap call. Test: is the driver IN the forward ladder at the exit (priced branch) or absent from it (shot branch)? Shot -> arm applies; slope -> hill grammar applies (a hill slopes, it does not gap)."
    },
    "audit": {
     "session": "S112",
@@ -5700,7 +5544,7 @@
    "falsifier": "NONE WRITTEN (field empty). Proposed and cheap: an extreme/mature Friday close followed by a Monday that extends the move by more than the give-back class. Every ingredient is already in the exit_states + actual files, so it can be swept over G17-G23 without new data.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260601",
@@ -5775,8 +5619,7 @@
    "legacy_notes": {
     "evidence": "n>=3 spanning G9/G10/G12: 0130 blow-off +4990 -> 0201 give-back -7590 (Mon 0202 wrongly EXTENDED +1300, actual -4260); 1212 mature crest rolled over -1190 (Mon 1215 -1570); 0102 over-magnitude down -1250-guess/-700-actual = exhausting -> Mon 0105 mean-reverted up +270.",
     "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
-    "merged": "s104_friday_cleanup",
-    "conditions_note": "An OR-trigger whose both limbs sit on unserved quantities. Limb (a) 'closing at an EXTREME cum-from-anchor' - cum_from_anchor is absent from the vocabulary and is price content the blind masks (E declared it UNEVALUATED twice, at G22 0626 and G23 0710). Limb (b) 'a MATURE chain (age >= 4)' is a genuine numeric bar but chain age is served nowhere: there is no chain block in the vocabulary, and the only age-like paths are cot.age_days, grid_stack.age_days, steo_vintage.age_days and vol_regime.n0_prev_age_days, all of which are data-staleness clocks for a feed, not the age of a directional chain."
+    "merged": "s104_friday_cleanup"
    },
    "audit": {
     "session": "S112",
@@ -5802,7 +5645,7 @@
    "falsifier": "None in the falsifier field. The counterexample_and_scope block is effectively one - a coff>=0.95 day with a >=1200 run and chain age >=2 that CONTINUES would kill the high-side arm - and the boundary band 0.90-0.94 is already declared unclean rather than claimed.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260318",
@@ -5974,8 +5817,7 @@
     "counterexample_and_scope": "coff 0.90-0.94 is NOT clean: g8 0126 Wed +1370 coff0.95 -> Thu +170 (flat, mild), g12 0204 Wed +1260 coff0.93 -> Thu +510 (continued up). The exception is a YOUNG fresh-turn day (chain age 0-1) still building - see midweek.young_chain_extension_full_band; interaction rule: the stretched-close give-back is VOID on the 1st-2nd session of a fresh turn (that leg is still repricing). Threshold coff>=0.95 AND chain age >= 2.",
     "day_class_validity": "Tue/Wed core; the inheritance is consumed by the following Thu/Fri (and, across a weekend, by Sunday/Monday via the anchor CLOSE).",
     "forward_evidence": "NONE",
-    "merged": "s104_midweek_cleanup",
-    "conditions_note": "Three explicit bars, all on quantities that are not served. (1) close_off_extreme >= ~0.95 (coff, or <=0.05 on the low side) - no close_off_extreme / close_off_low_frac path exists in the vocabulary; it lives only in the refine-only exit_states files, which is why the blind declares the limb 'PRICE-based and masked; unevaluable'. (2) the prior day's own run >= ~$1200 - day_move_usd is not served either. The tempting near-match is vol_regime.n0_prev_net, and I MEASURED it before rejecting it: vol_regime carries masked_one_shot=true and is FROZEN at the block-anchor vintage, so n0_prev_net is a per-block CONSTANT on every staged day (g20 -1000, g21 -1350, g22 -80, g23 +270) reporting the anchor Friday rather than day N-1, and its own note says the n0 family is computed on a degraded continuous store carrying a fifth to a quarter of the scored leg's tape. It is neither the right session nor the right tape. (3) chain age >= 2 (the fresh-turn VOID clause) - chain age is served nowhere."
+    "merged": "s104_midweek_cleanup"
    },
    "audit": {
     "session": "S112",
@@ -6000,7 +5842,7 @@
    "falsifier": "The play carries NO falsifier field and its forward_evidence says NONE. The obvious one is already discharged against it on the modern corpus: reversal-up days with an ALIGNED prior exit exist (0527, 0630, 0717) and the opposing-exit magnitude band (+1200..+1600) is missed low by every single modern instance. A real falsifier must be stated as a LIFT over the measured base rate, not as 'every day in the record had X'.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "40 sessions",
@@ -6124,8 +5966,7 @@
     "evidence_partial_uncap": {
      "g20_0527": "C's r1 exit read of 0526 said the sell 'holds into the close'; the realized exit state says last_hour_dir +1, last_hour_signed_flow +1, low at 14:29 - the prior exited ALIGNED with the up-turn, so this gate removes the mid-week cap that WAS C's r1 0.80 multiplier. The un-cap is PARTIAL (0.80 -> 0.90, not 1.00) because the incoming close sits at close_off_low_frac 0.17: the bid appeared but the close is still in the bottom fifth of its range - the turn is signalled and not yet paid for. 520 -> 580 against a realized 610.",
      "generalizes": "The un-cap magnitude is scaled by the incoming close's location in its own range, not applied as a binary."
-    },
-    "conditions_note": "No bar, and no served quantity. What the gate actually tests is whether the PRIOR session's last_hour_dir (sign of the final-2h cum change) AGREES with the coming turn direction - a sign-agreement test between two derived signs, which carries no threshold on either. And neither operand is served: no last_hour_* field exists anywhere in the vocabulary; last_hour_dir/last_hour_signed_flow live only in the refine-only g*_exit_states.json, which is why the play's own instances record it standing down 5 of 5 in the blind. The only numbers it carries (+1200..+1600) are the OUTPUT magnitude band it emits, not a trigger bar - and the play's own instances refute that band on every modern day."
+    }
    },
    "audit": {
     "session": "S112",
@@ -6151,7 +5992,7 @@
    "falsifier": "A Tue/Wed with a mature down-chain at a cum-extreme AND a clean D-1 absorption or sell-climax tell that continues DOWN. Nothing in the corpus has ever been checked for this. 0714 is the nearest modern instance and it is a split verdict: direction right, magnitude refuted by 6-8x, and the exhaustion limb absent on the play's own definition. The cheap first step is a base-rate measurement of the configuration across g6-g16 (where the amplitudes it was derived from live), before any further forward test.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260714",
@@ -6286,8 +6127,7 @@
      "claim_raised": "C named this as a third play carrying the same unrepointed absolute-0.50 semantic.",
      "verdict": "NOT UPHELD. Its only b_share reference is 'an extreme sell-climax big_print_b_share at the low' - a SHAPE read, not an absolute 0.50 bar. Nothing to re-point.",
      "why_recorded": "So the claim is not re-raised next group. C was right on two of three; recording the third as checked-and-clear is what stops a correct-but-partial finding from being re-litigated."
-    },
-    "conditions_note": "The two bar-bearing limbs are on unserved price content and the served-adjacent limb has no bar. chain_polarity DOWN with chain_age>=3, and cum_from_anchor at/near the block extreme OR >=~75% retrace to the origin shelf, are both price-derived; the play's own health note calls them 'PRICE content and frozen in the blind', and no chain-age or cum-from-anchor quantity is served. The third limb - D-1 absorption (large sell flow with price holding) or an extreme sell-climax - is a SHAPE read: the brain's own checked_and_clear_bshare_basis entry states its big_print_b_share reference is 'a SHAPE read, not an absolute 0.50 bar. Nothing to re-point.' Writing a 0.50 bar here would manufacture the very semantic that note says is absent."
+    }
    },
    "audit": {
     "session": "S112",
@@ -6313,7 +6153,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. The obvious one, and it is runnable the moment chain age is served: count every day meeting all three limbs and score what fraction delivered the full class band versus the capped band. Three days delivering is not a rate. A second: the does_not_explain clause ('does NOT license extending a MATURE swing') implies a mature chain-sided aligned day should NOT extend - so a mature swing that delivers a full band would discharge it, and nobody has looked for one.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20251223 (brain writes '0223')",
@@ -6443,8 +6283,7 @@
     "derived_magnitude": "full class band (young chain-sided ran +1950..+5010 vs capped blinds +120..+800). This is the CHAIN-SIDED complement to the s102.3 rule that damping is for COUNTER prints only.",
     "does_not_explain": "does NOT license extending a MATURE swing (R4: mature swings give back, not extend); requires chain age 0-1 AND chain-sided AND aligned flow.",
     "forward_evidence": "NONE",
-    "merged": "s104_midweek_cleanup",
-    "conditions_note": "All three limbs are unserved. 'chain age 0-1' looks like a bar but chain age is a narrative label carried in the per-block handoff files, not a state quantity; 'chain-sided vs counter' is a classification, not a number; 'D-1 flow alignment' is a sign comparison of flow against the masked price. The play's health note is explicit - 'None of the three limbs is a served quantity' - and the corpus records eleven stand-downs, every one for unevaluable limbs. Any condition here would name a field the state does not carry."
+    "merged": "s104_midweek_cleanup"
    },
    "audit": {
     "session": "S112",
@@ -6472,7 +6311,7 @@
    "falsifier": "Brain falsifier field is EMPTY. Its own caveats supply the scope boundary (does not explain gap-driven Mondays, does not claim crash reactive tails) but not a test. Concrete falsifiers: (1) THE DIRECT ONE - a carry-Monday inheriting a MATURE chain whose ph2 buy is accommodated and which closes off the low; four instances have now gone the other way, so this is a live and cheap test on the next group; (2) split the play's two claims and score them separately, because close-location is verified four times and day-net depth fails three of five - the scope field currently claims both; (3) serve chain age as a computed state field derived from realized cum (which is what boundary.chain_label_must_track_realized_cum already demands) so the gate stops running on a label a specialist can construct to suit its own read.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260323",
@@ -6587,8 +6426,7 @@
     "evidence": "MBO-PROVEN n=2 both scales on G15: 0316 age-1 down chain -> ph2 buy +959 ACCOMMODATED (+140 px) -> close off low 0.29 -> shallow -540 (my posterior -570, err -30); 0323 age-3 down chain cum-890 -> ph2 buy +2409 ABSORBED (price still -290) -> close near low 0.14 -> deep -1080 (my posterior -1080, err 0). Generalizes off G15: deepens 1117 (continuing mature down-chain absorbed -> -1510; corr -900 -> rule -1400) and confirms shallow priced carries (1124 +90).",
     "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
     "provenance": "generalized from the G15 MBO round-2 specialist-B HE24->HE1 seam finding (forecasts/grp15_mbo_specialist_B_r2.json)",
-    "merged": "s104_monday_cleanup",
-    "conditions_note": "The bar is well-formed (inherited seam chain age <=2 young -> accommodated/shallow, >=3 mature -> absorbed/deep) but the quantity is not served. There is NO chain-age field in any grp*_state.json; chain_age_sessions exists only in the per-boundary forecasts/g*_he24_he1_handoffs.json, so the gate keys on a specialist-constructed label rather than a measurement - which is how it came to fire on the fictional 'age 5' at 0518 against a realized five-session UP rally. A condition pointing at any served path would be naming a different quantity than the one the gate reads."
+    "merged": "s104_monday_cleanup"
    },
    "audit": {
     "session": "S112",
@@ -6758,7 +6596,7 @@
    "falsifier": "None written. Two are needed and both are runnable today. (1) PIN THE INPUT: restate the gate on a SERVED quantity - sign(prior_full_session.session_signed_flow) or two-sided b_share versus 0.50 - and score the Monday day-move sign over the twelve seams in g18-g23. I ran the signed-flow form on the nine Mondays with a real Friday and got 5 of 9; the two-sided b_share form gives 3 of 6 where it is served. (2) RE-SCORE THE 4/4 HONESTLY: recompute the four named seams from the blind record rather than from the refine, which gives 2 of 4, and say in the field which round produced the number. Until (1) exists, no observation can refute this play, because any miss can be attributed to the upstream bias having been wrong - which is what happened on both 0601 and 0629.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260601",
@@ -6854,8 +6692,7 @@
       "tag": "forward_evidence",
       "text": "G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built. | MEASURED S112 across the four real blind unlocks: 2 of 4 (0616 hit, 0617 miss, 0618 hit, 0506 miss)."
      }
-    ],
-    "conditions_note": "The play states no numeric bar at all: it CARRIES A SIGN - the inherited D-1 tilt read off E.monday_bias / C.conviction_verdict - which are AGENT OUTPUTS produced later in the same run, not served fields, so no state file can evaluate or contradict them. Its own falsifier proposes a served restatement (sign of prior_full_session.session_signed_flow, or the two-sided b_share vs 0.50), but that is a PROPOSED REPLACEMENT rule, not this play's stated bar, and both named paths are served only in g21-g23 (3 of 6 modern blocks) so neither is in the legal vocabulary. Substituting the nearest served field would also measure the wrong session: on Mondays tape_conditions serves the Sunday reopen stub, not the Friday the play reads - the documented 0601 defect."
+    ]
    },
    "audit": {
     "session": "S112",
@@ -6881,7 +6718,7 @@
    "falsifier": "NONE WRITTEN (field empty), though the play does carry a retired assumption. The obvious falsifier is the sweep I ran: score the flow side against the next session over all served boundaries. It is now at 5 of 13 on G20-G23.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260605",
@@ -7087,8 +6924,7 @@
      "measured": "G20 0604 close: structure.covering_absorption_directional_tell (b) reads the IDENTICAL state as failing (DOWN). Read literally this play flips 0605 to UP and loses 1,350. What actually selects is the distribution flip at cum +3,200 with the tell reversed.",
      "now_licensed": "Requires an explicit EXTENSION GATE. At block-extreme cum with the tell reversed, this play yields to the flip.",
      "proposed_by": "E (r2)"
-    },
-    "conditions_note": "The trigger is a DISAGREEMENT between two signs - last-hour price direction versus last-hour signed flow - so there is no threshold on any quantity, only a comparison of polarities. And neither operand is served: the state carries phase-thirds and session aggregates but no last-hour object for an in-block session, which is the reason recorded verbatim for six blind stand-downs across G20-G23 (and for the anchor day, last_hour.signed_flow is null BY DESIGN off the downsampled series). The 5-of-13 measurement in the audit was run on the refine-only exit states, not on anything the condition could read."
+    }
    },
    "audit": {
     "session": "S112",
@@ -7116,7 +6952,7 @@
    "falsifier": "None in the falsifier field. A usable one: a Friday where the exhaustion limbs fire and the day continues with the chain anyway. Also worth noting the play's own caveat already carves out one class (the 0327-type mechanical settle-spent covering close) as wrong-signed but self-limiting, which is a scope limit rather than a falsifier.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260227",
@@ -7186,8 +7022,7 @@
     "evidence": "E self-analysis (CASCADE_S104_friday_self_analysis.md): 13/18 Friday misses (72%) = prior-over-state; every wrong sign decidable blind. G17 test-drive: gate flipped 0417 to covering-UP correctly.",
     "forward_evidence": "G17 refine (unblinded causal): 0417 covering flip correct. Test-drive: fired 0417. G18 blind = scored forward test (pending). | G18 blind: E read both Friday signs from the direct D-1 last-hour distribution (no prior-over-state).",
     "provenance": "Job 0 S105 (was ng_brain_friday_gate_proposal.json #1); E self-analysis prescription #1",
-    "merged": "s102.6 S105",
-    "conditions_note": "A procedural rule - run the turn/exhaustion check before emitting a Friday sign, and never take the sign from a day-class default - whose limbs split into unserved and unbarred. The one limb carrying a real number, chain_age>=4, is on an unserved quantity, as is 'cum-from-anchor at a session/block extreme'. The one limb that names a SERVED quantity - positioning percentile at an extreme (cot.managed_money_net_pctile_3y / cot.managed_money_net_options_implied_pctile_3y) - states no threshold: 'at an extreme' is a descriptor, and the incumbent <=5-pctile bar belongs to two other plays that write that number down. The remaining limbs (D-1 give-back or opposing flow tilt, based-vs-stretched, the crest-realization window) are qualitative. Recording a bar here would require inventing the number the play declines to state."
+    "merged": "s102.6 S105"
    },
    "audit": {
     "session": "S112",
@@ -7214,7 +7049,7 @@
    "falsifier": "The play carries NO falsifier field, and it needs one for each arm. Covering arm (writable today from the MBO evidence store): a Friday that closes UP into settle on heavy SELL flow and then DELIVERS a fade the following Monday would refute the do-not-fade instruction. Stretched arm (needs a bar first): pick a numeric definition of stretched - entering cum as a fraction of the block range, or entering cum at the running extreme - and require crest-trim to beat the 3-of-8 base rate that extreme-entering Fridays already give.",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260327",
@@ -7294,8 +7129,7 @@
     "evidence": "0327 crest-trim fired DOWN on a based chain that was expiry COVERING up (+1150) = false pos; 0313 MISSED a real position-squaring trim (called up-grind, tape broke -1010) = false neg",
     "forward_evidence": "G17: no crest-trim candidate mis-fired. G18 blind = scored forward test (pending). | G18: no crest-trim mis-fire.",
     "provenance": "Job 0 S105 (was ng_brain_friday_gate_proposal.json #2); E self-analysis prescription #2",
-    "merged": "s102.6 S105",
-    "conditions_note": "Two discriminators, neither carrying a bar. Based-vs-stretched: the play's own health note says it 'has NO numeric bar on any served quantity', and 0710 shows two readers classing the same day either way ('BASED / CHOPPY' on a day entering at the running block cum extreme). Covering-vs-squaring: a sign comparison - price UP into settle AGAINST sell flow - on last-hour direction and last-hour flow, neither of which is served; the play itself scopes the tell as 'MBO-measured for G15; inferred otherwise'. The play's own falsifier concedes the stretched arm 'needs a bar first'."
+    "merged": "s102.6 S105"
    },
    "audit": {
     "session": "S112",
@@ -7321,25 +7155,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "Re-score all 14 print Thursdays g17-g23 with limb (b) repointed to the two-sided series and limb (a) computed from real price, then check whether FIRED days show worse chain-sided reliability than SPARED days. On the modern instances I traced there is no separation: fired and spared both missed on 0528/0604, spared was right on 0709 and wrong on 0716. A second, cheaper falsifier is already twice-written in the field and never merged - D's G20 r1 AND r2 scope note: 'tell (b) is GENERATED by the very absorption mechanism I am trading, so at a <=~5 pctile short it is a CONTINUATION tell, not a caution tell, and should not count toward the 2-of-3 veto.'",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "d1_session_b_share_side",
-     "state_path": "tape_conditions.session_b_share",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 0.5,
-     "units": "share"
-    },
-    {
-     "quantity": "d1_big_print_b_share_side",
-     "state_path": "tape_conditions.big_print_b_share",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 0.5,
-     "units": "share"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260528",
@@ -7874,7 +7691,7 @@
    "falsifier": "Brain falsifier field is EMPTY; the caveats field offers only an escalation procedure (a coordinator hall-monitor audit), which is a process remedy, not a test. The falsifiers that matter: (1) SCORE THE FIRES - the four blind unlocks I list are all in committed posteriors with committed actuals, and the play's forward_evidence should say '2 of 4' instead of crediting a zero-direction-change run; (2) test the CORRECTED form, which the record already states ('confirm the turn DELIVERED, not just that the stack built') and which has never been run - on 0617 it would have declined; (3) strike or rewrite the G17 r2 credit, because a sign play cannot be evidenced by a run with no sign changes.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260617",
@@ -8033,8 +7850,7 @@
      "measured": "Same measurement. This play does not carry its own numeric bar; it restates accumulation_arm_turn's condition.",
      "now_licensed": "Defers to structure.accumulation_arm_turn's definition, which now reads session_b_share_two_sided. Stated as a deferral rather than duplicated so there is ONE definition, not two that can drift.",
      "proposed_by": "C (G21 blind)"
-    },
-    "conditions_note": "The brain record states outright that this play has no bar of its own: assumption_retired_bshare_basis reads 'This play does not carry its own numeric bar; it restates accumulation_arm_turn's condition' and the deferral was written that way deliberately - 'Stated as a deferral rather than duplicated so there is ONE definition, not two that can drift.' Curating a bar here would create the second definition that note exists to prevent. On the limbs themselves: 'COT extreme AND trending more extreme' names no number for 'extreme'; 'recurring buy-absorption (>=2 of ~5, non-consecutive) under a sell tape' is the one counted bar and it keys on the absorption flags, which are unserved (vocab filter 'absorb' returns 0); 'a based chain with no new cum-extreme >=2 sessions' keys on cum_from_anchor, also unserved; and 'an EIA print delivering COUNTER on absorbing flow' is qualitative. Its action - unlock the selector from chain-down to TURN-PENDING - is a sequencing decision, not a threshold."
+    }
    },
    "audit": {
     "session": "S112",
@@ -8060,17 +7876,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "The brain's falsifier field is EMPTY, and this play's confidence slot holds PROSE where every other play holds a float ('the spent-vs-fresh COT read across the specialist's own handoff seam is the discriminator; FREE'), so it carries no numeric confidence at all - a record defect worth fixing on its own. Proposed falsifier: a weekend-feeding day following a positioning_spent_fade, with COT still extreme but NOT worsening, that nonetheless delivers a covering-UP of >= the original give-back's size. Zero such days in G17-G23; that is the claim.",
    "support": "MECHANISM_VERIFIED",
-   "conditions": [
-    {
-     "quantity": "cot_mm_net_wow_delta_not_worsening",
-     "state_path": "cot.managed_money_net_chg_wow",
-     "reference": "delta",
-     "comparator": ">=",
-     "threshold": 0,
-     "units": "contracts"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260508",
@@ -8205,17 +8012,8 @@
    "status_original": "PROPOSAL",
    "falsifier": "None written, and this play needs one badly because its main flag is derived from the quantity it predicts. Two candidates. (1) FORWARD FORM, blind-legal: over all crowded-short Fridays (MM pctile < 12) in g18-g23, score whether final-phase absorption calls the Monday day-move sign. The arm fires once (0501 -> 0504, correct) and its aligned counterpart fires once (0508 -> 0511, wrong), which is 1-of-2 and not a test. (2) SEPARATE THE FLAG FROM THE OUTCOME: score absorb_session on day D against day D+1's direction, which does not reuse D+1's price. I ran it across g18-g23 and got 8 of 18 - at chance. A play whose discriminator is computed from realized price must be scored on a LATER day than the one that built it, and no evidence in this record does that.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "cot_mm_net_1y_pctile_crowded_short",
-     "state_path": "cot.managed_money_net_pctile_1y",
-     "reference": "absolute",
-     "comparator": "<",
-     "threshold": 12,
-     "units": "percentile"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260501",
@@ -8392,7 +8190,7 @@
    "falsifier": "NONE WRITTEN (field empty) for the core gate; the final-phase arm has a pre-registered discriminating test that has never occurred ('an ABSORBED final phase into a weekend seam'), correctly recorded as the reason the dispute stays UNRESOLVED. The core gate needs a falsifier stated on the only thing it can be wrong about: MAGNITUDE and SHAPE, not sign - e.g. absorbed phases whose subsequent leg is not larger than aligned phases' by a stated factor.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260513",
@@ -8804,8 +8602,7 @@
      "the_scorable_evidence": "On the four weekend seams the walk can score, BOTH readings go 2/4: 0518 (+580), 0601 (+690), 0605->0608 (-350, the one nobody ran), 0615 (-750). All four are ALIGNED; the ABSORBED branch has never met a seam.",
      "status": "UNRESOLVED and recorded as unresolved. No scope change merged. The discriminating test is an ABSORBED final phase into a weekend seam, which has not occurred in the walk.",
      "proposed_by": "B (G21 refine), adjudicating A vs D"
-    },
-    "conditions_note": "No threshold, and the quantity that decides it is not served. flow_conviction = sign(signed_flow) * sign(price_change) computed PER PHASE from the MBO phase table; the comparison is against zero, i.e. a sign test on a product of two signs, so nothing in it is a bar on a magnitude. HALF the input exists and half cannot: tape_conditions.phase_signed_flow is served on g18-g23 (array-valued, which is why it is not in the scalar vocabulary listing), but there is NO price-change quantity anywhere in the state - tape_conditions declares itself 'NON-PRICE ... no price/return content', price being the blind's one deliberate mask - so the discriminating operand is absent. The play's own caveats say exactly this: 'REFINE-side gate: requires realized price. The blind cannot compute it.' tape_conditions.session_signed_flow is the nearest-looking legal name and it is the WRONG QUANTITY: a whole-session aggregate of the PRIOR day's tape with no price term at all, so a condition pointed there would read as evaluated while measuring something the play never claims. Separately worth recording: the S112 audit measured the gate's OUTPUT to be sign(price_change) on 70 of 70 sessions, so even with both operands served the aligned and negative branches never disagree - a D23 degeneracy sitting in the call rather than the trigger, which no state_path can express."
+    }
    },
    "audit": {
     "session": "S112",
@@ -8836,7 +8633,7 @@
    "falsifier": "None in the falsifier field, which is itself the defect - a play at confidence 0.85 scoped to all day-classes with no stated way to lose. The obvious one: absorbed sessions where the following session goes with the absorbed side at better than chance. On the served flags that is currently 11 of 22.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260514",
@@ -9048,8 +8845,7 @@
     "forward_evidence": "rides G20+",
     "declined_evidence": {
      "g20_0528_self_caught": "D's round 1 read ph3 correctly as 3,762 lots of sell absorbed under a rising price and then sized it as 'a token positive, not an extension' - the exact damp this play forbids ('never a cap ... size to the reversal move'). Round 2 caught its own violation and sized to the reversal at ~0.2x n0_net_sigma_5, cross-checked against the only two absorbed final phases available (+160, +350) and taken at the LOW end. This is the play working as a check on a specialist, not on the market."
-    },
-    "conditions_note": "No bar, and the quantity is not served. The trigger is a BOOLEAN - ph_absorb / absorb_session true, i.e. price did not follow the flow sign - and the call is a direction flip against the absorbed side, so nothing in the play is a threshold on a magnitude. Its requires field names the absorption flags and phase flow-vs-price; the flags do not exist anywhere in the state (vocab filter 'absorb' returns 0), and while the phase FLOW half is served (tape_conditions.phase_signed_flow, array-valued and therefore not in the scalar vocabulary), the PRICE half that turns flow into absorption is the deliberate mask. The play's health note reports its fire rate off the committed g*_mbo_evidence.json files (absorb_session true on 24 of 70 days) - that is the post-hoc evidence store, not the decision state a specialist reads at the open, which is why the corpus records this play standing down on every blind day in the batch."
+    }
    },
    "audit": {
     "session": "S112",
@@ -9081,7 +8877,7 @@
    "falsifier": "The play carries NO falsifier field, but its forward field states the test in the right shape ('rides G20+; n=3 within one block, needs a second block') and its caveats name the false-trigger guard ('the flip needs BOTH extension AND a reversed absorption tell; age/cum alone is a false trigger - 0519 would have been wrongly flipped'). The honest falsifier: a maximally-extended session with a reversed absorption tell that continues UP. It has not been testable since G20 because the cum bar has been unreachable.",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260515, 20260519, 20260520",
@@ -9320,8 +9116,7 @@
     "declined_evidence": {
      "g20_0601_pre_warning_fired_early": "The play's own PRE-WARNING clause was satisfied on 0527 (+620 on sflow -4,910) and 0528 (+2,090 on -1,966) - two and three sessions before the seam. B and A both adopted this earlier trigger over A's seam-side arming.",
      "b_declined_a_concentration_adjustment": "B measured that G20 built +2,710 in two sessions (1,027/session) against G19's +2,830 over five (722/session), so a concentration adjustment would have moved -900 toward the realized -990. B DECLINED it: 'that is fitting.' Recorded so the decline is not re-derived as an opportunity."
-    },
-    "conditions_note": "The bars are well-formed and the quantities are unserved - the D31 case, not a missing-number case. The flip requires cum_from_anchor above about +2000 USD from the block anchor AND chain age >= 5 sessions AND a reversed absorption tell. cum_from_anchor is price-derived and does not exist in the vocabulary (filter returns 0); chain age likewise (no chain_age/chain_regime path is served - it lives only in the per-boundary forecasts/g*_he24_he1_handoffs.json, and the play's own assumption_retired block records the label form being measured BROKEN on 0605); the absorption tell is the same unserved ph_absorb channel. The health note's '9 of 70 sessions clear the cum bar' was computed off g*_actual.json, not off any state a specialist reads. Pointing the extension limb at a served path would name a different quantity than the one the play tests - the record already shows specialists substituting cumulative signed flow for it and declaring the substitution (B-0629: flow-cum -3,909 against a realized price cum of +890), which is precisely the two-quantities-one-name confusion the state_path slot exists to stop."
+    }
    },
    "audit": {
     "session": "S112",
@@ -9351,17 +9146,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "HERE IS THE STRUCTURAL WEAKNESS AND IT IS THE PLAY'S MAIN ONE: because it explicitly governs 'the TAIL and the SIZE, never the p50 SIGN', no day-net observation can refute it - and day nets are the walk's entire scoreboard. Its falsifier has to be a BAND observation: a seam where COT WoW is worsening, the gate forces a fat upper tail, and the realized path sits deep in the lower tail with no upside excursion at all. Nothing in the harness scores band coverage, so the play cannot be scored by the machine that scores everything else. The second, now-available falsifier is the stale-report pair above: if the COT channel carries seam information, an identical reading should not precede a -750 and a +1,210.",
    "support": "MECHANISM_VERIFIED",
-   "conditions": [
-    {
-     "quantity": "cot_mm_net_wow_delta_flat_or_improving",
-     "state_path": "cot.managed_money_net_chg_wow",
-     "reference": "delta",
-     "comparator": ">=",
-     "threshold": 0,
-     "units": "contracts"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260528",
@@ -9547,25 +9333,8 @@
    "status_original": "PROVISIONAL",
    "falsifier": "The brain's falsifier field is EMPTY - but a falsifier was WRITTEN VERBATIM by E before the 0614 seam and it FIRED, which is the single best piece of process in my batch. The problem is what happened next: the play's status stayed PROVISIONAL, its confidence stayed 0.85, its forward field still reads 'rides G20+ Mondays', and the assumption_retired note concludes 'The gap arm is not carried by a positioning prior' - a licence that contradicts the play's entire claim while the play itself is unchanged. THE RECORD CONTRADICTS ITSELF and the corrected tally (4 of 5 armed seams up, including an unrecorded +1,210) points the other way from the retirement. Next falsifier: pre-register the gap sign at every armed seam of the next block before the reopen, and separately record the percentile and the WoW so the collinear limbs can eventually be split.",
    "support": "MECHANISM_VERIFIED",
-   "conditions": [
-    {
-     "quantity": "cot_mm_net_wow_delta_worsening",
-     "state_path": "cot.managed_money_net_chg_wow",
-     "reference": "delta",
-     "comparator": "<",
-     "threshold": 0,
-     "units": "contracts"
-    },
-    {
-     "quantity": "cot_mm_net_1y_pctile_crowded_short",
-     "state_path": "cot.managed_money_net_pctile_1y",
-     "reference": "absolute",
-     "comparator": "<",
-     "threshold": 3,
-     "units": "percentile"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260427 / 20260504 / 20260511 / 20260518 / 20260525 / 20260601 / 20260608 / 20260615 / 20260622 / 20260629 / 20260706 / 20260713",
@@ -9754,7 +9523,7 @@
    "falsifier": "Brain falsifier field is EMPTY and the forward field is a to-do ('rides G20+; enforce in round 2'), never scored. Falsifiers: (1) THE MEASURABLE ONE - count chain-label/cum contradictions per group before and after enforcement, which is mechanically checkable against the handoff files and would turn an assertion into a rate; (2) test whether declaring a flow-derived substitute actually beats declaring nothing, since the substitute has now been wrong at least twice (A-0703, and the G19 label itself); (3) correct the caveat, because 'chain STATE travels in the handoff, which is never masked' is refuted by seven posteriors and a rule whose stated premise is false invites specialists to route around it. Also worth building: serve chain age/polarity as a computed state field, which would simultaneously fix monday.seam_chainage_accommodation_gate's input problem.",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260518",
@@ -9872,8 +9641,7 @@
      "g19 blind: all 10 days path-started at cum 0, no inheritance",
      "g19 blind 0518 'age-5 down chain' vs realized up-rally"
     ],
-    "forward_evidence": "rides G20+; enforce in round 2",
-    "conditions_note": "Not a market conditional at all - a consistency constraint on how a specialist may label a chain ('no day may open with a chain label contradicting the inherited cum, and NO DAY RESTARTS AT CUM 0'), so it has no trigger quantity and no threshold. Its own health field says it: 'Not a numeric bar - it is a consistency constraint'. And its one input, realized cum_from_anchor carried in the HE24->HE1 handoff, is not in the served vocabulary (filters 'cum_from_anchor' and 'handoff' both return 0) - which also falsifies the play's caveat that 'chain STATE travels in the handoff, which is never masked', a defect the S112 audit records against seven posteriors. What is enforceable here is a compliance rate (chain-label/cum contradictions per group), which is a scoreboard for the rule, not a condition on the state."
+    "forward_evidence": "rides G20+; enforce in round 2"
    },
    "audit": {
     "session": "S112",
@@ -9904,7 +9672,7 @@
    "falsifier": "The brain's falsifier field is EMPTY. Proposed, and it is the head-to-head the play is written as: over >= 10 weekend-feeding Fridays, last-hour flow shape predicts the next session's net sign at >= the rate close location does. Current standing on G20-G23: close location 5/7 (4/5 on the tight bar), flow sign 2/7, last-hour price direction 3/7. Second clause, from the play's own condition_proposed_volume_net_pair: a flowless close on LOW phase volume should revert while a flowless close on high phase volume continues - that pair has n=1 (G20 0529) and is the untested half.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260514",
@@ -10024,8 +9792,7 @@
      "statement": "The rule must be stated on the (VOLUME, NET) PAIR, not on net flow alone. A flowless close on 4,000 lots is an unpriced print that reverts; a flowless close on 60,000 lots is a handover that continues.",
      "measured": "G20 0529 phase volumes ph1 4,715 / ph2 51,424 / ph3 60,930 - ph3 is the session's LARGEST phase by 18%, with a net of only -59. E's r1 prose ('nobody sold this low', 'the covering bid went home') described PARTICIPATION, and participation was maximal.",
      "proposed_by": "B objected, E conceded the fact and the mechanism, A verified independently and adopted it. Three specialists, one conclusion."
-    },
-    "conditions_note": "The bar is real (close_off_low_frac >= 0.70 / <= 0.30 is the tight form the play is measured on, 4/5 on weekend-feeding Fridays) but the quantity is NOT SERVED - the vocabulary carries zero paths matching 'close', and close_off_low_frac lives only in the refine-only research/kalshi/renders/ng_refine_s95/g*_exit_states.json, which the play's own health note flags as declared REFINE-ONLY ('a blind run must never read this file'). The comparator half of the head-to-head is unserved for the same reason: no last_hour_signed_flow or last_hour_dir field exists in any grp*_state.json. The play's second clause, the (VOLUME, NET) pair, keys on PHASE volume - tape_conditions.phase_volume_lots is served only in g22 and g23, 2 of the 6 modern blocks, below the vocabulary's 4-of-6 bar. Pointing this at any served path would measure a different quantity than the play reads."
+    }
    },
    "audit": {
     "session": "S112",
@@ -10055,33 +9822,8 @@
    "status_original": "PROPOSAL",
    "falsifier": "If thin-tape sessions (big_prints_n < 20) that clear 0.55 but not 0.60 go on to deliver conviction-consistent direction at the same rate as thick-tape 0.55 fires, the guard is wrong and should be withdrawn.",
    "support": "MECHANISM_VERIFIED",
-   "conditions": [
-    {
-     "quantity": "big_print_sample_size_thin_gate",
-     "state_path": "tape_conditions.big_prints_n",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 20,
-     "units": "prints"
-    },
-    {
-     "quantity": "big_print_b_share_raised_bar_thin_tape",
-     "state_path": "tape_conditions.big_print_b_share",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 0.6,
-     "units": "share"
-    },
-    {
-     "quantity": "big_print_b_share_standing_bar_thick_tape",
-     "state_path": "tape_conditions.big_print_b_share",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 0.55,
-     "units": "share"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260526",
@@ -10260,7 +10002,7 @@
    "falsifier": "A final phase meeting both conditions whose price travel is subsequently NOT recovered at the next seam.",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260529",
@@ -10449,8 +10191,7 @@
     "history": "Proposed in r1 as FLOWLESS_BID_WITHDRAWAL. B refuted the name and the participation reading; E conceded the fact and the mechanism-as-location, rejected the consequence, and the two ledgers reconcile: B has the aggressor ledger right, E has price formation right, and the CONJUNCTION is the finding.",
     "why_condition_b_is_mandatory": "Without it the play is a false-positive machine - B's actual objection. Note it runs OPPOSITE to what 'flowless' implies.",
     "falsifier": "A final phase meeting both conditions whose price travel is subsequently NOT recovered at the next seam.",
-    "n": 1,
-    "conditions_note": "BOTH limbs carry hard numeric bars and NEITHER quantity is in the served vocabulary, so there is no legal state_path for either. Limb (a) is the ratio of final-phase |net| to the prior phase's, bar ~5 percent: tape_conditions.phase_signed_flow IS present in all six modern blocks but as a LIST, which the vocabulary builder does not descend into, so no path resolves to a phase element. Limb (b) - final-phase volume at or above the session maximum, recorded as MANDATORY ('without it the play is a false-positive machine') - needs tape_conditions.phase_volume_lots, and I verified it exists in g22 and g23 ONLY, 2 of 6 modern blocks. The play's own author filed exactly this gap against it in G21: 'grp21_state.json serves no phase_volume_lots, so limb (b) was un-runnable in the blind.' A condition on any session-aggregate path (session_signed_flow, volume_lots) would be a different measurement, not this conjunction."
+    "n": 1
    },
    "audit": {
     "session": "S112",
@@ -10472,7 +10213,7 @@
    "falsifier": "None in the falsifier field, but the play effectively supplied one and it fired: a thin session whose range compresses as sqrt(participation). That is now 0619 and, on my recomputation, 0703. The taxonomy repair needs its own - a VOLUME-BOUND thin session (roll, bidweek, expiry or opex flag actually true) whose range compresses as sqrt anyway. No such day has been tested.",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260525",
@@ -10724,8 +10465,7 @@
      "status": "DOWNGRADE to n=1 with a refuting instance recorded. Do NOT extrapolate to thin sessions generally.",
      "proposed_by": "A (G21 refine), refuting its own merged play"
     },
-    "participant_taxonomy_s110": "A7 (A; sqrt(participation) survives its second consecutive forward pass - net 410 vs 453 predicted on 0703): the repair clause's 'deadline-bound participant' now carries a taxonomy: VOLUME-BOUND programs (bcom/gsci roll, bidweek, expiry, opex) preserve RANGE (invariance holds); RISK-BOUND participants (holiday-eve weekend squaring/procurement) tilt SIGN without preserving range. A holiday-eve session can carry a risk-bound participant while all volume-bound flags read false.",
-    "conditions_note": "NO BAR IS STATED. 'Thin' is never defined numerically anywhere in the record - specialists judged it ad hoc against a rolling block mean, firing at 0.27-0.28 participation and declining at 0.81-0.93 with nothing tested in between, so any threshold I wrote would be manufactured out of that gap. What the play actually asserts is a SCALING RELATION - the net compresses as sqrt(participation) and the range does not - which is a functional form, not a threshold on a quantity. The S110 repair clause is a participant TAXONOMY (volume-bound programs preserve range, risk-bound do not) keyed on boolean calendar flags, and the play's own health note records those flags reading FALSE identically on both the supporting instance (G20 0525) and the refuting one (G21 0619), so they do not discriminate either. Separately worth recording: the natural served denominator for participation, vol_regime.n0_prev_trades, carries only 22-27 percent of the scored leg in G22/G23 per grp23_state_audit finding f3, so even the served half of the ratio is compromised in the modern blocks."
+    "participant_taxonomy_s110": "A7 (A; sqrt(participation) survives its second consecutive forward pass - net 410 vs 453 predicted on 0703): the repair clause's 'deadline-bound participant' now carries a taxonomy: VOLUME-BOUND programs (bcom/gsci roll, bidweek, expiry, opex) preserve RANGE (invariance holds); RISK-BOUND participants (holiday-eve weekend squaring/procurement) tilt SIGN without preserving range. A holiday-eve session can carry a risk-bound participant while all volume-bound flags read false."
    },
    "audit": {
     "session": "S112",
@@ -10746,7 +10486,7 @@
    "falsifier": "WRITTEN, with an explicit kill condition, which almost nothing else in this batch has - and it is currently UNDISCHARGEABLE for the reason above. It needs re-forming into something adoption does not destroy. Two workable replacements: (a) run it as a counterfactual - recompute what the assembled blind |err| would have been on k>=4 days had the stood-down cum-keyed rungs been asserted, which is computable from the committed posteriors; (b) test the underlying claim directly, that the k<=3 / k>=4 divergence step reproduces on the NEXT block, which is the aggregate I already re-ran forward on G21-G23 and which passed.",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "40 forecast days",
@@ -10882,8 +10622,7 @@
     "measured": "Mean |constructed - realized| by k across G17-G20: 768 / 590 / 1,022 for k<=3; 2,182-2,730 for k>=4, against n0_range_20_mean ~1,094.",
     "applied_to_g20_0601": "k=6, which stands down the seam play's cum-keyed rung-2 intraday arm and keeps its gap arm - the arm that was right at +690.",
     "forward_test": "On G21+, record per day whether a cum-keyed play fired and at what k. PREDICTION: the blind's |err| on k>=4 days where a cum-keyed play fired exceeds its |err| on k>=4 days where none did. Zero or negative difference KILLS it.",
-    "proposed_by": "B (r2)",
-    "conditions_note": "The bar is real, numeric and unusually clean - assert a cum-keyed RUNG only at k <= 3 sessions from the block anchor, widen or stand down from k >= 4 - but the quantity is NOT SERVED ANYWHERE. k is a schedule position, sessions-from-block-anchor, and the vocabulary carries zero paths matching 'anchor' or 'cum'; the anchor itself lives in the per-group g*_anchor.json build artifact, not in the decision state. The play's own health note reaches the same conclusion from the other direction: 'it needs no served market quantity... not a value bar at all.' squeeze_watch.sessions_since_prompt_expiry is the nearest-looking name in the vocabulary and measures a different thing entirely (sessions since the prompt contract expired, not since the block anchor); naming it would be precisely the hole-#8 error this slot exists to prevent."
+    "proposed_by": "B (r2)"
    },
    "audit": {
     "session": "S112",
@@ -10905,41 +10644,8 @@
    "status_original": "PROPOSED as a mechanism with a stated precondition, NOT an established play. n=2 firings plus one stand-down inside one block.",
    "falsifier": "Stated and LIVE: a guard-clean fire whose next session moves against the tail reading. 0507 (g18, bp 0.427, n 89, +730) is exactly that and it is NOT in the play's record, because the S110 tail count was scoped to G20-G23 and never searched backwards. The narrow fix is to restate the tail arm over the full served corpus (4/5 and 3/3, not 3/3 and 1/1) and to keep the NO CALL verdict S110 already reached for the 0.47-0.58 middle. A second falsifier is already discharged: the mirror arm on a negative tape, which the play retired rather than defended.",
    "support": "MECHANISM_VERIFIED",
-   "conditions": [
-    {
-     "quantity": "d1_aggregate_session_flow_positive_precondition",
-     "state_path": "tape_conditions.session_signed_flow",
-     "reference": "absolute",
-     "comparator": ">",
-     "threshold": 0,
-     "units": "lots"
-    },
-    {
-     "quantity": "guard_clean_big_print_sample",
-     "state_path": "tape_conditions.big_prints_n",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 20,
-     "units": "prints"
-    },
-    {
-     "quantity": "tail_sell_absorber_present",
-     "state_path": "tape_conditions.big_print_b_share",
-     "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 0.47,
-     "units": "share"
-    },
-    {
-     "quantity": "decisive_buy_absorber_gone",
-     "state_path": "tape_conditions.big_print_b_share",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 0.58,
-     "units": "share"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260507",
@@ -11325,33 +11031,8 @@
    "status_original": "PROPOSED, n=1",
    "falsifier": "A scheduled-program session where the aggressor tilt matches the day sign and the program is demonstrably the dominant participant.",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "bcom_roll_window_live",
-     "state_path": "flow_calendar.bcom_roll_day_n",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 1,
-     "units": "roll_day"
-    },
-    {
-     "quantity": "gsci_roll_window_live",
-     "state_path": "flow_calendar.gsci_roll_day_n",
-     "reference": "absolute",
-     "comparator": ">=",
-     "threshold": 1,
-     "units": "roll_day"
-    },
-    {
-     "quantity": "expiry_day_extension_s110",
-     "state_path": "flow_calendar.days_to_futures_expiry",
-     "reference": "absolute",
-     "comparator": "==",
-     "threshold": 0,
-     "units": "days"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "21 program/expiry sessions vs 38 others",
@@ -11594,7 +11275,7 @@
    "falsifier": "The entry supplies its own, and it is well specified: 'if departure/capacity STEPS show no association with realized moves across the walked blocks once the line is backfilled, this stays a context field and is never promoted to a signal. Do not fit a threshold to it.' The G23 step gives that falsifier its first data point and the backfill is the work that would let it be run. I would add: run the backfill BEFORE hurricane season produces a second step, so the association is measured out of sample rather than fitted to whatever August delivers.",
    "support": "NOT_A_PLAY",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260716",
@@ -11659,8 +11340,7 @@
    "legacy_notes": {
     "evidence": "S109 audit: across G22 the line moves - lng_vessels_departed 36,36,36,36,35,35,35,35,35,36 and lng_vessel_capacity_bcf 133.0 -> 135.0 -> 136.0, attribution 'Vortexa Analytics tanker tracker (published by EIA, WNGSR Supplement)'. Confirmed live and updating on a weekly cadence.",
     "forward_evidence": "NONE. First ride is the next group. The falsifier: if departure/capacity STEPS show no association with realized moves across the walked blocks once the line is backfilled, this stays a context field and is never promoted to a signal. Do not fit a threshold to it.",
-    "s109_provenance": "Greg asked 'are we still tracking lng tankers?' The audit found the vessel line live and moving with ZERO consumers - the same shape as the renewable subtractor (served, unread), session_b_share (served, broken) and the CDD ladder (computed, dropped). Wired on Greg's instruction to close the served-but-unread class, NOT because it was shown to predict.",
-    "conditions_note": "The only play in this batch whose quantities ARE fully served and where a condition must still not be written. ngwu_balance.lng_vessels_departed and ngwu_balance.lng_vessel_capacity_bcf both resolve on every day of every modern block, and the line genuinely moves (36 -> 31 -> 34 departures, 136 -> 117 -> 131 Bcf across G23). But the entry states no bar and explicitly forbids fitting one: status WIRED_UNPROVEN, support NOT_A_PLAY, confidence 'none-yet (monitoring)', call 'TREAT AS CONTEXT, NOT AS A SIGNAL... Do NOT fire a direction or a band off it', and its own falsifier closes with 'Do not fit a threshold to it.' It says to read the STEP rather than the level and never says how large a step counts. Writing a bar here would promote a monitoring channel to a signal by the back door."
+    "s109_provenance": "Greg asked 'are we still tracking lng tankers?' The audit found the vessel line live and moving with ZERO consumers - the same shape as the renewable subtractor (served, unread), session_b_share (served, broken) and the CDD ladder (computed, dropped). Wired on Greg's instruction to close the served-but-unread class, NOT because it was shown to predict."
    },
    "audit": {
     "session": "S112",
@@ -11685,7 +11365,7 @@
    "falsifier": "a winter block where this play fires (it must not - inertness outside CDD regimes is the claim)",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260629",
@@ -11755,8 +11435,7 @@
     "evidence": "S109/G22: four independent HDD-keyed artifacts all degraded bearish-or-void in one CDD block; the blind's four down-calls-that-printed-up contributed -3,840 signed error of a -1,815 drift; B named the mechanism in its 0629 posterior BEFORE scoring",
     "forward_evidence": "NONE yet - forward test = a winter block where the same bars evaluate normally (the play must be INERT outside CDD regimes)",
     "falsifier": "a winter block where this play fires (it must not - inertness outside CDD regimes is the claim)",
-    "merged": "S110",
-    "conditions_note": "A META-RULE about how other plays' limbs evaluate, and its own trigger carries no threshold: 'gw_cdd >> gw_hdd' is a regime comparison and the play never states where dominance begins. The two numbers it names - 16.4 gw_hdd and the 13.5 near-window bar - are the bars of selector.divergence_resolution and magnitude.shoulder_weather_band_void; attaching either to this play would bind another play's threshold to the rule that governs it. And what it detects is UNREACHABILITY, which is a BLOCK-level property of a bar across a whole window (measured: 16.4 fires 12/12 in G11 and 0/10 in each of G18-G23; 13.5 fires 0/12 in G11 and 10/10 in G18-G23), whereas a state_path evaluates one day at a time - weather_forecast.forecast_gw_hdd on a single day reports that day's value, never that the bar could not be reached across ten of them. No served quantity expresses the span, so the honest answer is none."
+    "merged": "S110"
    },
    "audit": {
     "session": "S112",
@@ -11781,7 +11460,7 @@
    "falsifier": "an intra-week day where the run delta and the level difference disagree (they should not - the claim is scoped to seams)",
    "support": "NOT_A_PLAY",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260629",
@@ -11841,8 +11520,7 @@
     "evidence": "G22 0629: forecast_run_delta_cdd -0.219 and sunday_reopen d +0.096 against a +4.7 LEVEL add; mechanism verified on 0624 (level +2.205, field -0.011); E's 0626 grammar; B-0629 executed the level rule by hand and derived the sign pre-tape",
     "forward_evidence": "n=2 channels x 2 instances in G22; B r2 adds close-at-the-slope n=3 spanning G21/G22",
     "falsifier": "an intra-week day where the run delta and the level difference disagree (they should not - the claim is scoped to seams)",
-    "merged": "S110",
-    "conditions_note": "INSTRUMENT-SELECTION RULE, NO MARKET BAR. The call - 'seam weather reads use LEVEL differences only; run deltas are intra-week instruments' - tells a reader WHICH served channel to consult; it states no threshold and makes no claim about price, direction or magnitude. Its one quasi-numeric statement, that across a multi-cycle seam the run-delta channel is 'STRUCTURALLY ~ZERO', is a descriptor with no stated cut, and the audit already refuted it on the corpus's second clean seam (20260713 d_gw_cdd h0 = +0.435 against a level difference of -0.778, opposite sign). Its trigger is a calendar fact (a weekend/holiday seam) and no numeric quantity in the served vocabulary marks a seam - flow_calendar carries cme_holiday and is_cme_business_day as booleans, and business_day_of_month is not a seam marker. Nothing to bar."
+    "merged": "S110"
    },
    "audit": {
     "session": "S112",
@@ -12086,17 +11764,8 @@
    "status_original": "REFUTED_FORWARD_TEST_S110_G23",
    "falsifier": "a burn-confirmed CDD add that fails to deliver, or a wind-on day that delivers gross-CDD anyway, in G23+",
    "support": "OUTCOME_CREDITED",
-   "conditions": [
-    {
-     "quantity": "us48_est_gas_burn_day_over_day",
-     "state_path": "grid_stack.bas.US48.est_gas_burn_bcfd",
-     "reference": "delta",
-     "comparator": ">=",
-     "threshold": 0,
-     "units": "bcfd"
-    }
-   ],
-   "conditions_state": "parsed",
+   "conditions": [],
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20 sessions",
@@ -12215,7 +11884,7 @@
    "falsifier": "a print day whose pre-10:30 share is trivial while the gate fired (would restore the narrow window)",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260716",
@@ -12322,8 +11991,7 @@
     "forward_evidence": "n=4 spanning; G20's decomposition lesson (2,090 credited from day nets, timing refuted 1-of-4) is the cautionary sibling",
     "falsifier": "a print day whose pre-10:30 share is trivial while the gate fired (would restore the narrow window)",
     "merged": "S110",
-    "g23_confirmation_and_mass_calibration_s110": "CONFIRMED on assignment, CALIBRATED on mass, n 4 -> 6 spanning G17/G22/G23. D-0709: the window claim HELD harder than claimed - it predicted a range share and delivered 59% of NET, with the day's high and turn origin at 03:15 ET, outside any 08:00-start window. D-0716: assignment CONFIRMED (the window owned the whole up move and set the session HIGH at 10:29:06, fifty-four seconds before the release) while MASS was REFUTED 5x (+560 realized vs +110 forecast). CORPUS EVIDENCE (D24 state a - instances found): the pre-print share of day travel has MEDIAN 49.5% across n=14 print Thursdays in 7 groups - the EIA Thursday is half built before the print. Process note recorded and explicitly NOT named as a cause of any miss: on 0709 the blind fired this play BY NAME and emitted a path curve contradicting it.",
-    "conditions_note": "WINDOW DEFINITION PLUS AN UNSERVED DISTRIBUTION. The operative claim is an assignment - the pre-print window is REOPEN->10:30, not 08:00-10:30 - which is a definition, not a threshold. The one number the play carries, the ~49.5 percent median pre-print share of day travel (and the falsifier's 'trivial pre-10:30 share'), is a quantity the decision state does not serve at any grain: intraday travel decomposition lives only in the g<N>_mbo_evidence render, not in a state block. The trigger (EIA print day) IS served numerically - flow_calendar.days_to_next_eia_release == 0 agrees with is_eia_print_day 60 of 60 across g18-g23 and fires exactly 2 of 10 days in every block - but a day-class selector is not the play's bar, and the incumbent hand-curated map encodes bars from the read rather than calendar triggers. Curating the selector alone would present the mass claim as evaluated when it is not."
+    "g23_confirmation_and_mass_calibration_s110": "CONFIRMED on assignment, CALIBRATED on mass, n 4 -> 6 spanning G17/G22/G23. D-0709: the window claim HELD harder than claimed - it predicted a range share and delivered 59% of NET, with the day's high and turn origin at 03:15 ET, outside any 08:00-start window. D-0716: assignment CONFIRMED (the window owned the whole up move and set the session HIGH at 10:29:06, fifty-four seconds before the release) while MASS was REFUTED 5x (+560 realized vs +110 forecast). CORPUS EVIDENCE (D24 state a - instances found): the pre-print share of day travel has MEDIAN 49.5% across n=14 print Thursdays in 7 groups - the EIA Thursday is half built before the print. Process note recorded and explicitly NOT named as a cause of any miss: on 0709 the blind fired this play BY NAME and emitted a path curve contradicting it."
    },
    "audit": {
     "session": "S112",
@@ -12348,7 +12016,7 @@
    "falsifier": "a conviction-negative pop followed by a held extension (no give-back) with no new driver",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260624 / 20260625 / 20260630 / 20260701",
@@ -12421,8 +12089,7 @@
     "evidence": "0630 pop (+790 on -4,266 absorbed) -> 0701 gave back 63%; 0624 aligned break (+790 on aligned phases) -> 0625 held (-60); D-0702's covering grammar; A-r2's two-sided derivation triangulating +450 vs actual +410",
     "forward_evidence": "n>=3 instances spanning g19/g22",
     "falsifier": "a conviction-negative pop followed by a held extension (no give-back) with no new driver",
-    "merged": "S110",
-    "conditions_note": "THE CLASSIFIER'S PRICE LEG IS THE BLIND'S DELIBERATE MASK. Both halves need price. The trigger, 'the session after a D-1 up-leg', requires D-1 price direction, which is not served (B-0713 stood the play down for exactly this reason). The classifier is a flow-VS-PRICE conviction read - an ALIGNED rally versus a rise on net-sell - so even though tape_conditions serves the flow leg at session and phase grain, the price leg it must be compared against is absent, and a bar on the flow alone would be a different quantity from the one the play tests. The '50-70 percent give-back' is a magnitude OUTPUT sized off the prior day's realized move, not a bar on any served quantity; the audit measured it capturing 2 of 21 conviction-negative cases (median give-back 21 percent), so it is also not a real population bar."
+    "merged": "S110"
    },
    "audit": {
     "session": "S112",
@@ -12447,7 +12114,7 @@
    "falsifier": "a program day whose residual tilt misleads while the gross aggregate reads true",
    "support": "OUTCOME_CREDITED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260629",
@@ -12508,8 +12175,7 @@
     "forward_evidence": "n=2 spanning",
     "falsifier": "a program day whose residual tilt misleads while the gross aggregate reads true",
     "merged": "S110",
-    "inverted_counterinstance_and_impact_reformulation_s110": "COUNTER-INSTANCE, from the specialist that proposed it. E-0710: on 0710 the residual tilt read INVERTED - realized big-print 0.550 BUY against a -1,225 SELL aggregate - so the very field E instructed B to substitute would have handed B the WRONG Monday sign. B-0713 confirms it consumed that substitution and discarded its own lens instrument (the D-1 session aggregate, -1,225 SELL) to do so. REFORMULATION (C-0714): discount a D-1 tilt by its measured IMPACT, not its PROVENANCE - provenance needs a cohort field that does not exist, impact is already served. CORPUS (D24 state a): D-1 aggregate flow sign predicts next-day sign 16/36 = 44% across four groups - a coin flip everywhere, not a roll-day special case.",
-    "conditions_note": "THE PLAY'S CENTRAL QUANTITY IS NOT SERVED AT ALL. It instructs the receiving specialist to consume a PROGRAM-DECONTAMINATED D-1 residual tilt in place of session_signed_flow's sign, and that decontamination requires a big-print COHORT decomposition of the D-1 tape. tape_conditions serves session and phase aggregates plus big_print_b_share and big_prints_n, and no cohort split - C stated this twice inside G23 ('no big-print cohort decomposition in the slice... decontamination executed as a declared PROXY, not a measurement'), so on 4 of the 5 usable G23 program days what ran under this play's name was hand-built. Naming any served flow field here would be the hole-#8 error. Separately, the trigger is a property of D-1 (a scheduled program on the prior session) while flow_calendar's numeric roll/expiry/opex fields describe the DECISION day, so no served path expresses the trigger at day-D grain either. The play states no threshold beyond a sign."
+    "inverted_counterinstance_and_impact_reformulation_s110": "COUNTER-INSTANCE, from the specialist that proposed it. E-0710: on 0710 the residual tilt read INVERTED - realized big-print 0.550 BUY against a -1,225 SELL aggregate - so the very field E instructed B to substitute would have handed B the WRONG Monday sign. B-0713 confirms it consumed that substitution and discarded its own lens instrument (the D-1 session aggregate, -1,225 SELL) to do so. REFORMULATION (C-0714): discount a D-1 tilt by its measured IMPACT, not its PROVENANCE - provenance needs a cohort field that does not exist, impact is already served. CORPUS (D24 state a): D-1 aggregate flow sign predicts next-day sign 16/36 = 44% across four groups - a coin flip everywhere, not a roll-day special case."
    },
    "audit": {
     "session": "S112",
@@ -12678,7 +12344,7 @@
    "falsifier": "a void followed by an intact impact coefficient in the next session",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260709",
@@ -12758,8 +12424,7 @@
     "evidence": "G23 0709 is the archetype: phase 2 fell -1,860 on -11 net flow across 98,400 lots. The k3 series after it: 0.302 -> 0.026 -> 0.018, with week-2 flows of +3,747/+6,326/+1,089/+1,333 producing +200/-60/-20/+180. C-0715 supplies the exact mirror six sessions apart in the same contract: 0709 = price without flow, 0715 = flow without price (+6,210 net across 68,115 lots for -80) - usd per unit net flow 1.322 vs 0.009, a factor of 147.",
     "forward_evidence": "CORPUS SEARCHED, INSTANCES FOUND (D24 state a): the void-signature scan across four groups returns EXACTLY TWO instances - g23 0709 and g20 0529 - both followed within one session by a k3 collapse. Duration differs (g20 one session, g23 four), which is why duration is not claimed.",
     "falsifier": "a void followed by an intact impact coefficient in the next session",
-    "merged": "S110",
-    "conditions_note": "NO SIGNATURE THRESHOLD IS RECORDED, AND THE CONSEQUENCE VARIABLE IS PRICE-DERIVED. 'A session phase prices materially on near-zero net flow' carries no cut for 'materially' or 'near-zero'; the audit had to invent one to scan (|sflow| <= 200, |pxchg| >= 300, vol >= 20,000) and labelled it explicitly as its own, finding five candidates where the record claims exactly two. The play's own forward note admits the scan is unauditable for this reason. The flow axis is served (tape_conditions phase_signed_flow, phase_volume_lots) but the price axis - phase price change, and the impact coefficient k3 = |price change| / |signed flow| that the collapse is measured on - is not served in any state block; k3 is reconstructed from the actual/evidence renders. A bar written on the flow half alone would fire on a different object from the one the play names."
+    "merged": "S110"
    },
    "audit": {
     "session": "S112",
@@ -12784,7 +12449,7 @@
    "falsifier": "a flowless reprice that behaves like absorption (level holds, no re-press) with no other driver",
    "support": "NOVEL_N1",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260709",
@@ -12844,8 +12509,7 @@
     "evidence": "E-0710 named it on 0709 ph2 (-1,860 on -11 net across 98,400 lots) and reported its own inverted error honestly: it had called the genuinely absorbing phase (ph3, +1,390 of buying purchasing -160, ph_absorb TRUE in the file it was reading) a bullish 'buy handover' - polarity inverted on the flagged phase, label misapplied to the unflagged one, both errors pushing less bearish.",
     "forward_evidence": "IN-BLOCK, BOTH POLARITIES, n=3 (E-0717) - and E found the proposal AS WRITTEN would have mislabelled its own morning phase, which is what forced the two-axis form. B-0713 supplies the counter-object the proposal needed: two flowless phases in the same block, 530x apart in price response, with opposite outcomes. BLIND-AVAILABLE DISCRIMINATOR OFFERED WITH AN HONEST NEGATIVE ATTACHED (E-0710): l1_book.quote_bid_share printed the block minimum 0.475 on 0709 - but it is NOT a day-ahead direction signal (6/10 in-block; C-0715 measured it null at 9 fires / 4 hits across G21-G23 and diagnosed the cause - the session mean spans only 0.475-0.512 while its own served intraday p25/p75 is [0.333, 0.667], so the aggregation destroys it). It is a LABELLER for the flowless case only.",
     "falsifier": "a flowless reprice that behaves like absorption (level holds, no re-press) with no other driver",
-    "merged": "S110",
-    "conditions_note": "TWO AXES ARE REQUIRED AND ONE OF THEM IS NOT SERVED; NEITHER CARRIES A PUBLISHED CUT. The play's own requires field states that separating a withdrawn book from an absent book needs BOTH flow intensity AND price efficiency (E-0717's correction to its own proposal). Price efficiency - price change per unit volume at the phase grain - is not served in the decision state. And no threshold is written for either axis: the numbers in the record (0.011 percent intensity, 18.9 versus 140.1 USD per 1k lots, impact 0.32 versus 169 USD per lot) are measurements of specific phases, not bars, which is precisely why B-0713's counter-object 'forced a THRESHOLD instead of a signature' - a threshold that has not yet been written down. The one blind-available field offered, l1_book.quote_bid_share, is declared a LABELLER rather than a gate and was measured null as a direction signal (9 fires / 4 hits across G21-G23); its cited 0.475 is an observed block minimum, not a bar."
+    "merged": "S110"
    },
    "audit": {
     "session": "S112",
@@ -12870,7 +12534,7 @@
    "falsifier": "a pre-run-up print day where the first-minute impulse points one way and the day resolves the other",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260716",
@@ -12940,8 +12604,7 @@
     "evidence": "D-0716. The day it was found on: the session HIGH printed at 10:29:06, fifty-four seconds BEFORE the release, then -570 in nine seconds. And the decisive fact against surprise-sign reasoning: the print came in at +41 Bcf against a ~45 survey - a BULLISH surprise - and the market sold it 1,410 points in 33 minutes.",
     "forward_evidence": "CORPUS SEARCHED, INSTANCES FOUND (D24 state a): 6/6 across FIVE groups - inside +-300 continues (0416, 0430, 0528, 0604); <= -300 round-trips (0625, 0716). STABILITY MEASURED: holds at 30s, 60s and 120s and DEGRADES at 300s, which places the arbiter inside the first two minutes - exactly where the established futures->Kalshi lag says the platform's edge lives.",
     "falsifier": "a pre-run-up print day where the first-minute impulse points one way and the day resolves the other",
-    "merged": "S110",
-    "conditions_note": "EXPLICIT BARS ON A QUANTITY THE STATE DOES NOT SERVE. This play does carry real numbers - the trigger is a reopen-to-10:30 UP run of >= +300, and the arbiter is the 60-second post-release impulse, continue inside +-300 and full round-trip at <= -300 - but both quantities are intraday tape at 60-second resolution around 10:30 ET, and the decision state serves no intraday price path at any grain. The audit states it directly: 'the 60-second impulse values themselves are not in the committed corpus'. Its requires field says the same thing in advance. The only servable element is the print-day selector (flow_calendar.days_to_next_eia_release == 0), and curating that alone would make the play read as evaluated on every EIA Thursday while its actual arbiter never fires - the exact failure mode the conditions slot exists to prevent. This is an execution-lane instrument, causally inside the day it adjudicates."
+    "merged": "S110"
    },
    "audit": {
     "session": "S112",
@@ -13104,7 +12767,7 @@
    "falsifier": "a block where burn licenses a directional lean that delivers, with the balance term pointing the other way",
    "support": "MECHANISM_VERIFIED",
    "conditions": [],
-   "conditions_state": "no_numeric_condition",
+   "conditions_state": "unparsed",
    "instances": [
     {
      "date": "20260716",
@@ -13184,8 +12847,7 @@
     "evidence": "E-0710's mechanism, D-0716's supply of the missing term: E's balance-clearing successor WOULD have sorted D's day in the specific form storage.vs_5yr and its WoW delta - 112 -> 151 -> 156 -> 162 while injections collapsed 87 -> 61 -> 41, both decision-time-visible in the same served state file and used by neither specialist.",
     "forward_evidence": "HONEST AND THIN, stated as such by D-0716: as a gate REVOCATION the balance term is 2/3 (right 0709, right 0716, wrong 0618); as a STANDALONE DIRECTION SORTER it is 4/7 and D explicitly does NOT claim it as one. E offers a further reformulation as a MEASUREMENT TO RUN, not a play to fire (n=1 clean): re-aim the instrument from price to FLOW, since on the block's extreme day it called the order flow correctly and the price exactly wrong - the missing denominator may be resting supply at execution rather than a balance term.",
     "falsifier": "a block where burn licenses a directional lean that delivers, with the balance term pointing the other way",
-    "merged": "S110",
-    "conditions_note": "IT IS A PROHIBITION, NOT A THRESHOLD - the play's own health note says so. 'Burn may CONFIRM demand arrival and may DAMP a lean that contradicts it; it may NEVER license a directional lean of its own, and must never act as a SUPPRESSOR before magnitude is derived' places no bar on any quantity; it restricts what a reading may be used FOR. Its two named inputs are served and both move freely (est_gas_burn_bcfd 21.9-51.0 and storage.vs_5yr 86-162 across the modern blocks), but the play attaches no cut to either, and the balance term it requires is under-specified at exactly the point where a bar would sit: the audit found the cited quantity has TWO counter-signed limbs (vs_5yr widening 151->162 reads bearish while injections collapsing 87->61->41 reads tightening) with no rule for which carries the sign. Writing a threshold here would manufacture the specification the play is missing."
+    "merged": "S110"
    },
    "audit": {
     "session": "S112",
