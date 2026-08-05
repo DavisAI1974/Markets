@@ -27,7 +27,7 @@ WHAT GOES IN, all of it from BRAIN_AUDIT_S112.json (82 plays, 349 traced instanc
 
 THE TYPED-SLOT RULE (D29, governing): "every field must be queryable across ALL plays; a session
 recording something new puts it in a TYPED SLOT with a session tag inside it, never in a new field
-name." `audit` and `retracted` are two typed slots, present on every play, with the session inside.
+name." `audit` is a typed slot, present on every play, with the session inside.
 That is why this does not add 82 bespoke keys, which is the disease D29 cured.
 
 RETRACTION (Greg, S112): "if the old claims are no longer valid, ditch them. They're just noise if
@@ -38,15 +38,22 @@ they aren't valid." TWO DIFFERENT OBJECTS, and conflating them would break D31:
     reading "calls the sign 4/4 on the walk's four scorable seams" when the same record's
     assumption_retired field concedes a reproduction of +350 against a realized -990, and the
     honest tally is 2/4.
-Retraction MOVES the claim out of the served fields into `retracted[]` with the refuting evidence
-beside it. The agent stops reading it as true, which is what "noise" means when the reader is a
-machine; the record survives, because this desk supersedes and never silently deletes (DECISIONS.md
-header: "Never delete a line; supersede it with a new one"). If a hard delete is wanted instead,
-that is a one-line change here and Greg's call, not mine.
+Retraction REMOVES the claim from the brain. It is NOT parked in a graveyard slot on the play -
+Greg overturned that design: "What's your reasoning for keeping false evidence? If we're going to
+use them as a reason NOT to do something then it's fine. Otherwise it feels like information that
+we don't need and are only setting ourselves up to have it accidentally used at a different time."
+He is right, and the rules I had reached for governed different objects: DECISIONS.md is append-only
+because a ledger's reversal history IS its content, and brain_schema's losslessness governed a
+MIGRATION. The brain is a working document agents LOAD AND READ AS TRUE, so a false claim parked
+inside it is still in the context window and still available to be picked up later. Nothing is lost
+by deleting - git holds every prior version, which is D34's own split: git is the record, the brain
+is the working set. Each retraction therefore carries a DISPOSITION: DELETE (guards nothing, goes),
+or KEEP_AS_GUARD (it functions as a reason NOT to do something - Greg's own test - so it is
+rewritten into `caveats` as a do-not-retry warning with its evidence, where a specialist reads it).
 
 GUARDS (D8: incumbents byte-identical, never a direct edit):
   - additive by default: a non-empty incumbent field is NEVER overwritten, only filled when empty
-  - retraction is opt-in per claim, from a proposal file, and always preserves the original text
+  - retraction is opt-in per claim, from a proposal file, and requires an explicit disposition
   - every instance path must resolve, and a desktop path is refused (D34)
   - dry-run default; --write takes a backup first and re-validates the schema after
 
@@ -158,12 +165,39 @@ def build_plan(brain, audit):
 
 
 def apply_retractions(brain, retr, errs):
-    """Move a no-longer-valid CLAIM out of a served field into retracted[], evidence beside it.
-    Never touches a refuted SIGNAL - that is D31's territory and is scoped, not deleted."""
+    """Remove a no-longer-valid CLAIM from the brain. Two dispositions, and the choice between them
+    is the whole design.
+
+    GREG, S112, and he overturned my first design: "What's your reasoning for keeping false
+    evidence? If we're going to use them as a reason NOT to do something then it's fine. Otherwise
+    it feels like information that we don't need and are only setting ourselves up to have it
+    accidentally used at a different time."
+
+    He is right. My first version parked retracted claims in a `retracted[]` slot ON THE PLAY, on
+    the reasoning that this desk supersedes rather than deletes. But that rule comes from
+    DECISIONS.md, an append-only LEDGER where the history of a reversal IS the content, and from
+    brain_schema's losslessness, which governed a MIGRATION - reshaping fields without dropping
+    values. The brain is neither. It is a working document that agents LOAD AND READ AS TRUE at
+    every spawn, so a false claim parked inside it is still in the context window, still readable,
+    still available to be picked up later. That is the accidental-reuse hazard, built in by hand.
+
+    Nothing is lost by deleting: git holds every prior version of this file, which is D34's own
+    split - git is the record, the brain is the working set.
+
+    DISPOSITION, required per retraction:
+      DELETE         the claim guards nothing. A play claiming 4/4 when the record says 2/4 does
+                     not help anyone by being remembered. Removed from the served field outright;
+                     the proposal file and git history are the record.
+      KEEP_AS_GUARD  the claim functions as a reason NOT to do something - Greg's own test. This is
+                     D31's scoped refutation: tried in this cell, failed in this cell, do not
+                     re-try it here. It is rewritten into `caveats` as a warning WITH its evidence,
+                     where a specialist will actually read it, rather than filed in a graveyard.
+    """
     by_id = {p["id"]: p for p in brain["plays"]}
     n = 0
     for r in retr.get("retractions", []):
         pid, field = r.get("play_id"), r.get("field")
+        disp = r.get("disposition")
         p = by_id.get(pid)
         if p is None:
             errs.append("retraction names an unknown play: %s" % pid)
@@ -171,20 +205,24 @@ def apply_retractions(brain, retr, errs):
         for k in ("claim", "why_invalid", "evidence"):
             if not str(r.get(k, "")).strip():
                 errs.append("%s: retraction missing '%s'" % (pid, k))
+        if disp not in ("DELETE", "KEEP_AS_GUARD"):
+            errs.append("%s: disposition must be DELETE or KEEP_AS_GUARD, got %r "
+                        "(Greg's test: does this claim function as a reason NOT to do something?)"
+                        % (pid, disp))
         if errs:
             continue
-        original = p.get(field)
-        if original is None and field not in (p.get("legacy_notes") or {}):
+        if field not in p:
             errs.append("%s: field '%s' not present, nothing to retract" % (pid, field))
             continue
-        p.setdefault("retracted", []).append(OrderedDict([
-            ("session", SESSION), ("field", field),
-            ("claim", r["claim"]), ("why_invalid", r["why_invalid"]),
-            ("evidence", r["evidence"]),
-            ("original_value", original)]))
-        # blank the served field so an agent cannot read the false claim as true
-        if field in p:
-            p[field] = ""
+
+        if disp == "KEEP_AS_GUARD":
+            guard = ("DO NOT RE-TRY (retracted %s): %s | why it fails: %s | evidence: %s"
+                     % (SESSION, r["claim"], r["why_invalid"], r["evidence"]))
+            existing = str(p.get("caveats") or "").strip()
+            p["caveats"] = (existing + " " + guard).strip() if existing else guard
+        # in BOTH cases the false claim leaves the served field. It is not parked anywhere in the
+        # brain - the retraction proposal file and git history carry the record.
+        p[field] = ""
         n += 1
     return n
 
@@ -298,13 +336,25 @@ def cmd_selftest(a):
     check("clean plan builds with no errors", not errs, str(errs[:2]))
     check("plan is non-empty", len(plan) > 0)
 
-    # a fabricated instance path must be refused
+    # The instance guards must be tested INDEPENDENTLY OF WHETHER THE BACKFILL HAS RUN. Once it
+    # has, every play carries instances and build_plan correctly skips instance-filling, so an
+    # injected bad instance is never reached and the test passes for the wrong reason. Clearing
+    # the target play's instances first tests the guard rather than the current brain state.
+    def _brain_with_cleared_instances(pid):
+        b = load(BRAIN)
+        for pl in b["plays"]:
+            if pl["id"] == pid:
+                pl["instances"] = []
+        return b
+
+    target = audit["audits"][0]["play_id"]
+
     bad = copy.deepcopy(audit)
     bad["audits"][0]["instances"] = [{"date": "20260701", "group": "g22",
                                       "source_file": "research/kalshi/forecasts/NOPE.json",
                                       "what_the_state_said": "x", "what_the_day_did": "x",
                                       "supports_or_contradicts": "supports"}]
-    _, e2 = build_plan(load(BRAIN), bad)
+    _, e2 = build_plan(_brain_with_cleared_instances(target), bad)
     check("fabricated instance path is refused", any("does not resolve" in x for x in e2))
 
     bad2 = copy.deepcopy(audit)
@@ -312,7 +362,7 @@ def cmd_selftest(a):
                                        "source_file": "E:/Markets/research/kalshi/knowledge/ng_brain.json",
                                        "what_the_state_said": "x", "what_the_day_did": "x",
                                        "supports_or_contradicts": "supports"}]
-    _, e3 = build_plan(load(BRAIN), bad2)
+    _, e3 = build_plan(_brain_with_cleared_instances(target), bad2)
     check("desktop path in an instance is refused (D34)", any("DESKTOP PATH" in x for x in e3))
 
     # additive: a play that already has a falsifier must not have it replaced
@@ -330,8 +380,15 @@ def cmd_selftest(a):
     # retraction requires evidence
     e4 = []
     apply_retractions(load(BRAIN), {"retractions": [
-        {"play_id": brain["plays"][0]["id"], "field": "caveats", "claim": "x"}]}, e4)
+        {"play_id": brain["plays"][0]["id"], "field": "caveats", "claim": "x",
+         "disposition": "DELETE"}]}, e4)
     check("retraction without why_invalid/evidence is refused", any("missing" in x for x in e4))
+
+    e4b = []
+    apply_retractions(load(BRAIN), {"retractions": [
+        {"play_id": brain["plays"][0]["id"], "field": "caveats", "claim": "x",
+         "why_invalid": "y", "evidence": "z"}]}, e4b)
+    check("retraction without a disposition is refused", any("disposition must be" in x for x in e4b))
 
     e5 = []
     apply_retractions(load(BRAIN), {"retractions": [
@@ -339,16 +396,31 @@ def cmd_selftest(a):
          "why_invalid": "y", "evidence": "z"}]}, e5)
     check("retraction on an unknown play is refused", any("unknown play" in x for x in e5))
 
-    # retraction preserves the original text
+    # DELETE leaves NO residue anywhere in the brain (Greg S112)
     b3 = load(BRAIN)
-    pid = b3["plays"][0]["id"]
-    orig = b3["plays"][0].get("caveats")
+    pid = next(p["id"] for p in b3["plays"] if p.get("trigger"))
     e6 = []
-    apply_retractions(b3, {"retractions": [{"play_id": pid, "field": "caveats",
-                                            "claim": "c", "why_invalid": "w", "evidence": "e"}]}, e6)
-    kept = b3["plays"][0].get("retracted", [{}])[0].get("original_value")
-    check("retraction PRESERVES the original value", kept == orig and not e6)
-    check("retraction BLANKS the served field", b3["plays"][0].get("caveats") == "")
+    apply_retractions(b3, {"retractions": [{"play_id": pid, "field": "trigger",
+                                            "claim": "c", "why_invalid": "w", "evidence": "e",
+                                            "disposition": "DELETE"}]}, e6)
+    tgt = next(p for p in b3["plays"] if p["id"] == pid)
+    check("DELETE clears the served field", tgt.get("trigger") == "" and not e6)
+    check("DELETE leaves NO retracted[] graveyard in the brain", "retracted" not in tgt)
+    check("DELETE does not smuggle the claim into caveats",
+          "c" not in str(tgt.get("caveats") or "") or "DO NOT RE-TRY" not in str(tgt.get("caveats") or ""))
+
+    # KEEP_AS_GUARD writes a do-not-retry warning where a specialist will read it
+    b4 = load(BRAIN)
+    pid4 = next(p["id"] for p in b4["plays"] if p.get("trigger"))
+    e7 = []
+    apply_retractions(b4, {"retractions": [{"play_id": pid4, "field": "trigger",
+                                            "claim": "the 4/4 tally", "why_invalid": "record says 2/4",
+                                            "evidence": "grp21 posterior",
+                                            "disposition": "KEEP_AS_GUARD"}]}, e7)
+    t4 = next(p for p in b4["plays"] if p["id"] == pid4)
+    check("KEEP_AS_GUARD puts the warning in caveats",
+          "DO NOT RE-TRY" in str(t4.get("caveats")) and "record says 2/4" in str(t4.get("caveats")))
+    check("KEEP_AS_GUARD still clears the served field", t4.get("trigger") == "")
 
     print("\n  %d/%d passed" % (sum(res), len(res)))
     return 0 if all(res) else 1
