@@ -617,6 +617,52 @@ should RISE even as its daily total rises, because block-loaded coal holds the b
 shape. The daily store cannot see this - it is a direct use for the hourly series and a clean falsifier
 for the whole block-loading account.
 
+THE TIME-CONSTANT ACCOUNT - Greg S113, and it is what the whole coal thread was actually about:
+'it takes about 24 hrs for those boilers to heat up so you have to plan on running them for a week or 2
+minimum otherwise the ramp costs are too high and by the time they warmed up they would have to ramp
+down' / 'A ct can be going in 15-30 min... Sometimes 5-10'.
+
+THE FLEET SORTED BY TIME CONSTANT, which is the ordering that actually governs a gas desk:
+  5-30 MINUTES   simple-cycle CT   gas, WORST heat rate (~9,500-11,500 Btu/kWh)
+  1-3 HOURS      CCGT              gas, BEST heat rate (~6,400-7,000)
+  ~24h + 1-2 WK  coal boiler       committed on a FORECAST, days before it produces anything
+  months-years   new build         irrelevant at our horizon
+GAS OWNS EVERY FAST TIMESCALE. That - not merit order - is why gas is the only term that regulates:
+anything happening faster than about 24 hours lands entirely on gas because nothing else can physically
+move. Greg's stack ordering is right about ECONOMICS; the time constants are what make it BINDING.
+
+THE COMMITMENT IS A REVEALED FORECAST BET, AND IT IS MEASURABLE. A 24-hour warmup plus ramp costs that
+only amortise over 1-2 weeks means the decision is taken on a WEATHER FORECAST, 24-48h before any output,
+and then locked. So coal generation reports what operators BELIEVED days earlier, with money behind it,
+and it reaches us in EIA-930 at period+2.
+
+MEASURED PREDICTION, AND IT HOLDS - coal must run into the MILD TAIL because it cannot economically shut
+down and restart. January 2026, after the gw_HDD peak of 43.0 on 01-24:
+  01-26  HDD 93% of peak / coal 94%   - still tracking
+  02-02  HDD 67% of peak / coal 92%   - NOT tracking
+  02-03  HDD 61% / coal 86%     02-05  HDD 64% / coal 81%
+By 02-02 the weather had given back a THIRD of the event and coal had given back EIGHT PERCENT. The same
+asymmetry appears on the way up: 01-21/01-22 HDD dips to 27.1 and 26.1, a warm interlude, and coal does not
+back off at all. COAL FOLLOWS WEATHER UP AND REFUSES TO FOLLOW IT DOWN.
+
+THE SPIKE CONDITION, FINAL FORM: a cold snap arriving FASTER THAN THE COAL COMMITMENT CYCLE can only be
+served by gas, at CT heat rates, at whatever price clears. The machine that physically balances the last
+hour is a 5-minute CT - the most gas-hungry unit in the fleet. So THE SPEED OF THE WEATHER SURPRISE, not
+its magnitude, decides which machines can answer, how much gas is burned per MWh, and what price it takes.
+A well-forecast 40-HDD event and a surprise 40-HDD event are different trades.
+
+WHICH PROMOTES THE FORECAST-REVISION VARIABLE FROM PSYCHOLOGY TO PHYSICS. A-24a was registered as 'market
+acceptance of the weather revision' - whether a revision was already priced. This says weather_forecast.
+run_delta matters for a HARDER reason: it determines WHETHER COAL COULD BE COMMITTED IN TIME. A late
+revision is bullish gas not because traders react to it but because no boiler can be warm by then. That is
+a physical, falsifiable claim where the original was a behavioural one.
+
+TESTABLE NEXT, all on served or already-fetched fields: (a) do coal STARTS lead realized cold, and do they
+align with the FORECAST at start time rather than the outcome; (b) do events whose cold appeared LATE in
+the revision series produce larger gas spikes than equally cold events forecast early; (c) does a second
+cold event inside the 1-2 week commitment window produce a materially smaller gas response, since it meets
+an already-warm coal fleet.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
@@ -1370,6 +1416,15 @@ FIX: re-run the G11+ fingerprint pass with the MBP-10 book source, and make the 
 **Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
 
 RANK 1 and the note's strongest candidate. We serve the SIZE of a GWDD revision and read neither of the two variables that say whether it should already be priced: inter-model disagreement, and whether the cycle completed BEFORE or AFTER the Globex reopen. Same revision, three different events. CHECKED S113 - the fields are real and populated: model_disagreement.summary carries max_abs_spread_gw_hdd, mean_abs_spread_over_overlap and n_overlap_horizons in the served state, and globex_reopen_et is present. NOTE THE PROVENANCE, because it strengthens the case: weather_forecast_cycle was built at S100 (feed A phase 1) for EXACTLY this question - the record says the 0118 Jan-24 +8.511 add was PRE-REOPEN available and that closing the weekend-gap blindness was the point - and then nothing ever read it. CAVEAT MEASURED: on the g23 state the block carries weekday_open only, with NO sunday_reopen key, so the Monday arm of the mechanism is unavailable on at least some blocks and must be checked per day rather than assumed. Benchmark: revision magnitude alone. Kill if timing and disagreement add no OOS discrimination to gap-vs-intraday delivery within revision-size cells.
+
+PROMOTED FROM BEHAVIOURAL TO PHYSICAL, S113 (see A-31). This item was registered as 'market ACCEPTANCE of
+the weather revision' - whether a revision was already priced into the gap. There is a harder reason it
+matters: a coal boiler takes ~24h to warm and its ramp costs only amortise over 1-2 weeks, so the
+commitment decision is made on a FORECAST 24-48h ahead and then locked. THE REVISION TIMING THEREFORE
+DETERMINES WHETHER COAL COULD BE COMMITTED IN TIME. A late-arriving cold signal is bullish gas because no
+boiler can be warm by then and only CTs (5-30 minutes) can answer - at the worst heat rate in the fleet.
+That converts this item's premise from a claim about trader behaviour into a claim about physical supply
+response, which is falsifiable against generation data rather than only against price.
 
 ---
 
