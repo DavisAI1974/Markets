@@ -1,8 +1,18 @@
 # KEYS.md — the key inventory (S110). NAMES AND HOLDERS ONLY — never a value, never a fragment.
 
-Rule (standing, learned the hard way in S99): keys live OUTSIDE the repo (`scratchpad/*.env`,
-`~/.aws/credentials`, chmod 600), are pasted per-session by Greg, and are NEVER echoed into chat,
-a commit, or a log line. Rotation of the compromised pairs happens AFTER the walk (D1).
+**THE CANONICAL LOCATION (S113 creds.py, confirmed live S114): `~/.config/markets/env`, chmod 600,
+outside the repo.** One file, `NAME=VALUE` lines, holding AWS_ACCESS_KEY_ID +
+AWS_SECRET_ACCESS_KEY + DATABENTO_API_KEY + EIA_API_KEY. Greg pastes/drops the values per-session
+(the container is ephemeral - no file survives it); the session installs them there, plus
+`~/.aws/credentials` as the boto3 fallback. `creds.py` resolves process env ->
+`~/.config/markets/env` -> legacy `scratchpad/aws.env` (with a warning), ignores the container's
+`proxy-injected` placeholder vars, and `creds.aws_client(service, region)` is the ONLY way to build
+a boto3 client. This paragraph is the answer to "which env file" - it is the one a handoff should
+point at.
+
+Rule (standing, learned the hard way in S99): keys live OUTSIDE the repo, are pasted per-session
+by Greg, and are NEVER echoed into chat, a commit, or a log line. Rotation of the compromised
+pairs happens AFTER the walk (D1).
 
 | key | used by | lives in | state | breaks without it |
 |---|---|---|---|---|

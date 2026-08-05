@@ -623,6 +623,15 @@ NGJ26 + CL-year pulls DONE. **G15 REFINE IS GO - from a fresh S103.**
 
 ## AWS KEY — READ THIS BEFORE TOUCHING S3 (S100 standing note; cost us an hour on 2026-07-20)
 
+### WHERE THE KEYS LIVE (S114, standing): `~/.config/markets/env`
+
+One file, chmod 600, outside the repo: `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` +
+`DATABENTO_API_KEY` + `EIA_API_KEY` as `NAME=VALUE` lines. Greg drops the values per-session
+(nothing survives the container); install there plus `~/.aws/credentials` as the boto3 fallback.
+`research/kalshi/creds.py` resolves env -> that file -> legacy scratchpad (warns), ignores the
+container's `proxy-injected` placeholders, and **`creds.aws_client(service, region)` is the only
+way to build a boto3 client**. Full inventory: `KEYS.md`.
+
 ### KEY ROTATION IS DEFERRED — DO NOT ROTATE DURING THE WALK (Greg, S107, STANDING)
 
 Greg, verbatim: **"the keys won't rotate while we're running the groups."** Both the AWS pair and the
