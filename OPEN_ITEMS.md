@@ -560,6 +560,35 @@ SUPERSEDES the earlier reading in this item that coal 'saturates at ~3.1M around
 real for that episode; the causal attribution to price was wrong. Kept above rather than deleted, per D37
 - the observation stood, my story about it did not.
 
+AND THE FINAL FRAMING, Greg S113: 'You'd hook a team of dogs up to a treadmill if the price gets high
+enough.' Which is the honest read of the flat $7-to-$30 stretch: it is NOT that coal ignores price, it is
+that EVERYTHING MONEY CAN BUY IS ALREADY RUNNING. What remains cannot physically start in time, is out on
+maintenance or fuel logistics, or no longer exists. Above the economic threshold the supply curve is
+VERTICAL and price stops carrying supply information.
+
+SO GAS PRICE IS SET BY A DIFFERENT MECHANISM IN EACH OF THREE REGIMES, and each needs a different
+instrument. This is the synthesis the whole S113 coal thread produces:
+  (1) BELOW THE COAL ECONOMIC THRESHOLD - price is set by FUEL SWITCHING. Coal displaces gas and the
+      switching caps how far gas demand can FALL. Instrument: G-11's per-basin coal ladder, because the
+      threshold is basin-specific (PRB ~$8/MWh never displaced; CAPP ~$33/MWh displaced by $3 gas).
+  (2) ABOVE IT, WITH RAMP HEADROOM LEFT - price is set by the RAMP RATE against the LOAD RAMP RATE.
+      Instrument: demand_forecast_mwh (served, all seven BAs, day-ahead) against the measured coal ramp
+      ceiling of ~150-310k MWh/day and the current coal base.
+  (3) AT THE PHYSICAL LIMIT - price is set by DEMAND DESTRUCTION, because supply cannot answer. Price
+      rises until something stops consuming. Instrument: LNG FEEDGAS (G-7, M-5) and industrial
+      curtailment - the demand that can actually leave.
+
+REGIME 3 IS WHERE THE MONEY IS AND WHERE WE ARE WEAKEST. The 2026-01-23 $30.72 print is a regime-3 day and
+we hold no instrument for it. LNG feedgas is currently registered as a data-plumbing item in REST; this
+reframes it as the DEMAND-DESTRUCTION GAUGE for exactly the days that dominate the P&L. Per D35 it is also
+the most HH-coupled demand there is, so a feedgas cut is both the largest single demand response available
+and the one closest to the delivery point.
+
+AND IT EXPLAINS WHY A LEVEL-BASED PLAY WOULD FAIL ACROSS REGIMES: the same $7 reading means 'switching is
+exhausted' in one regime and 'nothing left but demand destruction' in another, depending on the coal base
+and the load ramp. A bar on price cannot separate them - it needs the STATE (D23/D28), and the state is
+coal headroom, which is computable from served fields plus EIA-860M generator status.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
