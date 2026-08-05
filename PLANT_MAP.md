@@ -50,6 +50,7 @@ names but the plant map does not place is a step nobody knows the host for.
 | `archive_blind.py` | between rounds — archives by MOVE so a missing posterior hard-fails | the session |
 | `group_coordinate_blind.py` / `group_coordinate_refine.py` | BLD/RFN stations: SELECT and ASSEMBLE only, guarded | the session |
 | `merge_perday.py` | assembling the per-day posterior | the session |
+| `due_gate.py` | serves the REGISTERED FORWARD TESTS into a run and refuses a silent pass — announce in the blind coordinator, HARD in the refine (S114; `merge_gate` claimed the coordinators did this and a grep of both returned zero) | the session |
 | `blind_score_nonpooled.py` | scoring — all four numbers together, never a pooled mean | the session |
 | `decision_trace.py` | binds reasoning to the decision; `verify` fails any unresolved id | the session |
 | `brain_audit.py` | brain evidence audit + the D34 desktop-path guard (`fixpaths`) | the session |
