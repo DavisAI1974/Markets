@@ -1,5 +1,20 @@
 # KALSHI TRADING — file index
 
+## S114 (2026-08-05) — the A-24 paper dissected per event; the winter lane written up as a forward tool
+
+- `research/kalshi/WINTER_LANE_FORWARD_TOOL_S114.md` — **the winter storage lane as a forward
+  forecasting tool** (Greg: "This is huge"). The two-class taxonomy of winter deep-draw weeks
+  (heating-masked vs the A-33 conjunction, every member named), the same-burn November pairs that
+  corroborate A-38 at the weekly horizon, the NEW hydro result (winter-strong, dispatched INTO the
+  freeze events, drought = the unobserved tail), the seasonal revision sign map, and the tool's
+  term-by-term design mapped to registry items. Registered as A-39. Design only — nothing built.
+- `research/kalshi/data_records/us48_hydro_daily_S114.csv` — 1,093 days of national hydro from the
+  keyless EIA-930 six-month files (2021H1, 2024, 2025, 2026H1); definition column marks the 2021
+  pre-split vintage.
+- `research/kalshi/data_records/walk_census_g18_g23_S114.csv` — all 60 modern scored walk days:
+  error, CDD/HDD revisions, model disagreement, computed ages, tape integrity panel. The dissection's
+  census artifact.
+
 ## S111 (2026-08-05) — the reframe, the schema, three briefings
 
 - `research/kalshi/FORECAST_ARCHITECTURE_S111.md` — **READ FIRST.** The target: the product is a price

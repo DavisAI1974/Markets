@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 74 |
+| open | 75 |
 | in progress | 1 |
 | done | 12 |
 
-By size: **XS** 8, **S** 32, **M** 29, **L** 6
+By size: **XS** 8, **S** 32, **M** 29, **L** 7
 
 ---
 
-By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 20, **REST** 50
+By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -32,7 +32,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 20, **REST** 50
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
-## BIGGEST WIN (20)
+## BIGGEST WIN (21)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -58,6 +58,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 20, **REST** 50
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
+| **A-39** | L | THE WINTER LANE FORWARD TOOL - heating size term + power residual + hydro buffer + conjunction flag, from served fields | - |
 
 ## REST (50)
 
@@ -147,6 +148,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 20, **REST** 50
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
 | **A-23** | BIGGEST_WIN | L | OPEN | S112 | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | - |
+| **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - heating size term + power residual + hydro buffer + conjunction flag, from served fields | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | REST | XS | OPEN | S111 (recommendation); S112  | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -298,6 +300,8 @@ WHAT THIS IS AND IS NOT (D31 - a refutation is SCOPED). It does NOT refute the b
 THE GAP: we serve degree days (gw_hdd) and we serve power burn. We serve NOTHING that converts heating degree days into res/comm Bcf/d. The registry was searched - A-19, A-26, A-24c and A-33 are the only items that mention residential or heating at all and none of them is this. So the largest single driver of the quantity Greg just named as the storage target is unmodelled, and was unmodelled without anyone having decided it should be.
 
 ALSO MISSING FROM THE EXTRACT: industrial consumption. It is 21.4-27.0 Bcf/d - the SECOND largest component - and appears in our steo_vintage store only as the arithmetic residual of NGTCPUS minus the six series we do carry. EIA publishes it; our parse drops it.
+
+WEEKLY CORROBORATION LANDED S114, from a second committed file (storage_week_by_week_S113.csv), per event: four same-burn SAME-BREADTH pairs, each a November/early-December week against a January/February week, 219-369 Bcf apart - 2021-02-25 -338 vs 2020-11-19 +31 (burns 168/174, both br2); 2022-02-03 -268 vs 2022-11-10 +79 (197/197, br2); 2025-01-30 -321 vs 2024-12-05 -30 (248/256, br4); 2019-02-07 -237 vs 2020-11-27 -18 (171/172, br3). Identical power burn, identical breadth; the differing term is res/comm heating. The monthly finding now has its weekly echo at the traded horizon. ALSO: 12 of the 14 deepest breadth-0/1 winter weeks carry POSITIVE dVRE - wind was muting burn while heating drained the tank, which is why a burn-based model under-calls exactly the weeks that matter. See WINTER_LANE_FORWARD_TOOL_S114.md s1.
 
 ---
 
@@ -1228,6 +1232,8 @@ correlated-failure tail does NOT require a renewable collapse - it predates rene
 solar are a modern ADDITIONAL failure correlate, not the cause. Any account of the tail that leans on
 renewables is over-fitted to the last decade.
 
+S114, THE CONJUNCTION'S STORAGE-SIDE MEMBERS NAMED, and a hydro correction. The winter deep-draw weeks at breadth>=4 with negative dVRE are exactly the freeze events: 2024-01-25 -326 (dVRE -4,157k), 2026-01-29 -241 (-2,748k), 2019-01-31 -173 (-1,791k), 2021-01-28 -128 (-1,843k); ordinary renewables-down weeks with no cold draw nothing (-9..-81). AND HYDRO DOES NOT BELONG IN THE FAILURE CHAIN AS AN INTERMITTENT TERM: measured S114 (us48_hydro_daily_S114.csv), hydro ran ABOVE its month p50 INTO the events - Uri week 844-903 GWh/d vs p50 766; Jan-2024 787-842 vs 689; Jan-2026 883/791/787 vs 828 (exception Jan-2025, 593-642 vs 669). Hydro is the reliability BUFFER being played; the chain's hydro member is the DROUGHT state (buffer absent), unobserved in the three winters sampled - the inverted-U's dry limb.
+
 ---
 
 ### [BIGGEST_WIN] A-34 - THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING
@@ -1319,6 +1325,8 @@ So NET LOAD CANNOT BE COMPUTED FORWARD AT ALL - we hold one half of it. Greg, S1
 0629 is therefore not bad luck but the guaranteed consequence: gw_cdd rose 10.0 -> 14.8 exactly as forecast, burn FELL 4.2 Bcf/d on a 62% wind rise, and no forward instrument existed that could have said so.
 
 ALL FREE: ERCOT NP4-742-CD (wind actual+forecast) and NP4-745-CD (solar), SPP Mid-Term Resource Forecast +7d, CAISO OASIS SLD_REN_FCST, PJM Data Miner 2 load_frcstd_7_day plus wind/solar, MISO 168-hour, ISO-NE seven-day. Wrapped by gridstatus. ChatGPT task 3 was commissioned to return the exact endpoints. KNOWN TRAP to carry: behind-the-meter solar is excluded from EIA-930 and is a one-directional growing bias in exactly the daylight hours that matter.
+
+SECOND CANONICAL INSTANCE FOUND S114: 0601 is 0629's twin. The g20 state served wind +1,071,114 MWh (the largest wind move in the 60-day census) with gas -1,270,715 and coal -529,288 vs the prior served period, and the blind went +350 into a -990 day - same shape as 0629 (wind +660k, gas -556k, blind +325 into -1110), two groups earlier, also a B Monday. The mediation was served and unread BOTH times. Census artifact: data_records/walk_census_g18_g23_S114.csv.
 
 ---
 
@@ -1415,6 +1423,16 @@ SMALL AND MID BLOCKS WHERE UNREAD IS A REAL SIGNAL, and these are where to look 
 TWO SPECIFIC LEADS ALREADY VISIBLE: ngwu_balance is 70 of 83 unread AND its source is DISCONTINUED (final edition week ending 2026-01-21), so the triage must decide whether to mine what we have before it ages out or drop the block. And three price-derived blocks carry large unread counts (options_surface 49, contract_structure 39, vol_regime 28) where the blind sees them FROZEN at the anchor vintage - so an unread field there may be unread because it is unusable in the blind, which is a different verdict from 'nobody thought of it'.
 
 GOOD DELEGATION CANDIDATE (Greg named it): the artifact is self-contained, the judgment is per-field, and the work parallelises cleanly by block. Verdict per field should be one of: SHOULD-BE-READ (with the play or condition it belongs in), SUMMARY-ONLY (the block needs a served aggregate, not per-cell reads), CORRECTLY-UNREAD (with the reason), or UNUSABLE-IN-BLIND.
+
+---
+
+### [BIGGEST_WIN] A-39 - THE WINTER LANE FORWARD TOOL - heating size term + power residual + hydro buffer + conjunction flag, from served fields
+
+*size L | OPEN | raised S114*
+
+**Source:** Greg, S114, on the two-class winter taxonomy and the hydro cycle: 'Definitely write this up as a forward forecasting tool also. This is huge.' Design committed as research/kalshi/WINTER_LANE_FORWARD_TOOL_S114.md
+
+THE DESIGN IS WRITTEN AND THE EVIDENCE IS COMMITTED - this item tracks the BUILD. The S114 per-event dissection (no averages, every event named) produced a two-class taxonomy of winter deep-draw weeks: CLASS 1, cold with renewables UP - heating drives the draw while wind mutes the burn (12 of the 14 deepest breadth-0/1 weeks carry POSITIVE dVRE; Uri is the extreme: -338 on burn 168, the lowest in the table); CLASS 2, cold with renewables DOWN - the A-33 conjunction, and its members are exactly the named freeze weeks (2024-01-25 -326, 2026-01-29 -241, 2019-01-31 -173, 2021-01-28 -128, all negative dVRE). The heating term isolated: four same-burn same-breadth November-vs-deep-winter pairs 219-369 Bcf apart (A-38 at the weekly horizon). NEW S114 MEASUREMENT: national hydro is WINTER-STRONG (monthly p50 GWh/d: Jan 669-828, Mar 716-817 vs Sep-Oct 501-565, three-plus years, EIA-930 six-month files, keyless) and was dispatched ABOVE its month p50 INTO the freeze events (Uri week 844-903 vs 766; Jan-2024 787-842 vs 689; Jan-2026 883/791/787 vs 828) - hydro is the supply BUFFER, not an intermittent term, and its unobserved failure mode is the drought winter (~6 Bcf/d-equivalent at the January level). THE TOOL: weekly draw = fwd HDD x res/comm converter [A-38] + power residual (fwd load [SERVED] - fwd wind/solar [G-4/A-29] - hydro state [A-18/A-20] - nuclear sched [A-17] - committed-coal window [A-31]) via a declared conversion [A-27], plus the A-33 conjunction flag and the breadth exclusion gates as NO-CALL inputs [A-2]. Nothing needs a new source; the two long poles are the A-38 converter and the G-4 feeds. Validation per A-1/D37: per_event.report against zero-change and seasonal-naive, largest moves named, no scalar verdicts. Falsifiers are per-term and stated in the doc. Evidence: data_records/storage_week_by_week_S113.csv, data_records/us48_hydro_daily_S114.csv, data_records/walk_census_g18_g23_S114.csv.
 
 ---
 
@@ -1856,6 +1874,8 @@ DETERMINES WHETHER COAL COULD BE COMMITTED IN TIME. A late-arriving cold signal 
 boiler can be warm by then and only CTs (5-30 minutes) can answer - at the worst heat rate in the fleet.
 That converts this item's premise from a claim about trader behaviour into a claim about physical supply
 response, which is falsifiable against generation data rather than only against price.
+
+S114 PER-EVENT CENSUS (walk_census_g18_g23_S114.csv): the SIGN half is unusable without a SEASONAL MAP - the shoulder HDD axis runs BACKWARDS (the five biggest warm revisions -1.00..-1.70 landed +420/+30/+370/+610/+1230, five of five non-negative; small warm revisions landed -990/-1080/-830/-990; mid-size cold-adds +1.31..+1.56 landed -1050/-530/-960) - D28's transfer disease on a DELTA. The SIZE axis inverts too: the three largest CDD revisions (+2.66/+2.51/+2.26) landed on the QUIETEST days (+230/-60/+180) while the violence sat at mid-size revisions - consistent with the item's own already-priced limb, flagged as story not finding. The AUTHORITY half reads correctly per event: 0713 convergence 0.017 with every fresh instrument down against a +550 posterior (D25's override day); 0511 disagreement 1.127 on the walk's worst day (-2190). Build the seasonal sign map FIRST; the census also shows the variable is silent on EIA print Thursdays (0528, 0604) and wrong-signed where mediation eats the revision (0629, 0624) - couple to G-4/A-34.
 
 ---
 
