@@ -201,12 +201,31 @@ def cmd_build(a):
         f.write(render(items, sess))
     os.makedirs(TASK_DIR, exist_ok=True)
     written = [os.path.relpath(main_path, ROOT)]
+    fresh = set()
     for n, it in enumerate(items, 1):
         slug = re.sub(r"[^a-z0-9]+", "_", it["title"].lower())[:52].strip("_")
         p = os.path.join(TASK_DIR, "S%d_TASK_%d_%s.md" % (sess, n, slug))
         with open(p, "w", encoding="utf-8") as f:
             f.write(render_task(it, n, sess))
+        fresh.add(os.path.basename(p))
         written.append(os.path.relpath(p, ROOT))
+
+    # SWEEP SUPERSEDED TASK FILES. The filename carries the task NUMBER, so when the task list
+    # shrinks - which is exactly what de-duplication does - the old higher-numbered files survive
+    # on disk and get committed. MEASURED: the first run emitted six tasks, de-duplication cut it
+    # to four, and FIVE stale files were left behind INCLUDING THE TWO DUPLICATE TASKS THAT HAD
+    # JUST BEEN REMOVED. Anyone picking files out of this directory could have sent ChatGPT the
+    # question it had already answered - the precise failure the de-duplication was built to
+    # prevent, surviving as a file. Writing the new set is not the same as publishing the set.
+    stale = sorted(f for f in os.listdir(TASK_DIR)
+                   if f.startswith("S%d_TASK_" % sess) and f not in fresh)
+    for f in stale:
+        os.remove(os.path.join(TASK_DIR, f))
+    if stale:
+        print("\nremoved %d SUPERSEDED task file(s) - the list shrank and their numbers no longer "
+              "exist:" % len(stale))
+        for f in stale:
+            print("   %s" % f)
     print("\nwrote:")
     for w in written:
         print("   %s" % w)
@@ -248,6 +267,13 @@ def cmd_selftest(a):
              if i.get("delegated_prior") and i.get("delegable")
              and "ALREADY ASKED" not in (i.get("delegable_ask") or "")]
     check("no item is re-asked without declaring the prior ask in its own text", not dupes)
+    import glob as _g
+    on_disk = sorted(os.path.basename(x) for x in
+                     _g.glob(os.path.join(TASK_DIR, "S%d_TASK_*.md" % sess)))
+    check("no superseded task file survives on disk - the count matches the task list",
+          len(on_disk) == len(items))
+    check("every task file on disk has a number within the current list",
+          all(int(re.match(r"S\d+_TASK_(\d+)_", f).group(1)) <= len(items) for f in on_disk))
     check("no emoji or em-dash reaches the generated brief",
           not any(ord(c) > 0x2000 for c in doc))
     print("\n  %d/%d passed" % (sum(res), len(res)))
