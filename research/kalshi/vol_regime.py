@@ -185,6 +185,20 @@ def _basis_fields(b: str, prior: list[dict], iso: str) -> dict:
         f[f"{b}_prev_net"] = prev["net"]
         f[f"{b}_prev_range"] = prev["range"]
         f[f"{b}_prev_trades"] = prev["trades_n"]
+    # S114 (S110 audit f3): DECLARE THE WINDOW. `*_prev_trades` and `tape_conditions.n_trades` count
+    # the SAME tape over DIFFERENT windows, and nothing said so - state_health rightly refused a
+    # fresh g22 stage over it (1,835 here vs 6,935 there for 2026-06-19). This module slices by UTC
+    # CALENDAR DAY (`_session_row` asserts the tape's ts span sits inside d0..d0+86400), while
+    # tape_conditions counts the EXCHANGE SESSION (18:00 ET prior day -> 17:00 ET). The gap is
+    # largest on holidays and shortened sessions, which is exactly where g22 anchors (Juneteenth).
+    # Neither number is wrong; comparing them as if they were the same quantity is. Declared rather
+    # than silenced - the session_b_share_basis pattern (S109).
+    f[f"{b}_era_basis"] = (
+        f"{b}_prev_* count the {b} continuous store sliced by UTC CALENDAR DAY. "
+        f"tape_conditions.n_trades counts the EXCHANGE SESSION (18:00 ET prior day -> 17:00 ET) and "
+        f"is the scored-leg tape. The two windows do not coincide and diverge most on holidays and "
+        f"shortened sessions. Use {b}_prev_* for volatility-regime scaling only; never reconcile it "
+        f"against the tape block's trade count as though they were the same measurement.")
     nets = [s["net"] for s in prior]
     rngs = [s["range"] for s in prior]
     trd = [s["trades_n"] for s in prior]

@@ -673,9 +673,72 @@ _RELIVE_FIELDS = (
 _RELIVE_UNRESOLVED = {
     ("squeeze_watch", "days_to_calendar_front_expiry"):
         "no expiry date is served inside squeeze_watch, and resolving it from another block would "
-        "be a guess; days_to_calendar_front_expiry_live in this same block already carries the "
-        "live countdown - use it",
+        "be a guess; days_to_calendar_front_expiry_live in this same block carries the live "
+        "countdown - use it (and see _relive_squeeze_live: that twin is now genuinely relived, "
+        "which it was NOT before S114)",
 }
+
+
+def _relive_squeeze_live(block: dict, iso: str) -> None:
+    """Recompute squeeze_watch's `_live` CALENDAR twins against the reading day.
+
+    THE DEFECT THIS CLOSES (S114, found by re-staging g22 under the current checks). The `_live`
+    fields were computed once, at block-build time, and then carried through the one-shot freeze
+    unchanged - so `days_to_calendar_front_expiry_live` read a CONSTANT 5 on all ten days of g22
+    while flow_calendar correctly ran 4,3,2,1,0,21,20,19,18,18, and `calendar_front_symbol_live`
+    still said 'NGN26' on days after NGN26 had expired, inside a block that simultaneously set
+    `frozen_front_expired`. A '_live' field that never changes is not live - S109 hole #10 exactly,
+    recurring in the very fields added to cure it.
+
+    IT IS THE SHARPEST SHAPE OF THIS DESK'S SIGNATURE DEFECT: the S113 relive fix could not relive
+    `days_to_calendar_front_expiry` (squeeze_watch serves no expiry date), so it recorded an
+    UNRESOLVED note pointing the reader at the `_live` twin as the trustworthy one - and the twin
+    had the same disease. The escape hatch pointed at a broken exit.
+
+    Why these fields CAN be relived when their frozen sibling cannot: they are pure calendar
+    arithmetic over the NG expiry rule, needing only the reading day - `flow_calendar.ng_expiry` /
+    `ng_symbol` / `bd_between`, all deterministic, public and never masked (D2: the one deliberate
+    mask is the PRICE CURVE). No price content is touched.
+    """
+    if not isinstance(block, dict) or "days_to_calendar_front_expiry_live" not in block:
+        return
+    import flow_calendar as _fc
+    day = datetime.date.fromisoformat(iso)
+    fy, fm = day.year, day.month
+    d2e = sym = None
+    for _ in range(6):                       # walk FORWARD to the nearest expiry on/after the day
+        exp_f = _fc.ng_expiry(fy, fm)
+        if exp_f >= day:
+            d2e, sym = _fc.bd_between(day, exp_f), _fc.ng_symbol(fy, fm)
+            break
+        fm += 1
+        if fm == 13:
+            fm, fy = 1, fy + 1
+    if d2e is None:
+        return
+    changed = []
+    for f, was, now in (("days_to_calendar_front_expiry_live", block.get("days_to_calendar_front_expiry_live"), d2e),
+                        ("calendar_front_symbol_live", block.get("calendar_front_symbol_live"), sym),
+                        ("calendar_limb_satisfied_live", block.get("calendar_limb_satisfied_live"), bool(d2e <= 7))):
+        if was != now:
+            block[f] = now
+            changed.append({"field": f, "frozen": was, "live": now})
+    if not changed:
+        return
+    # The false-negative annotation is derived FROM these fields, so it must be re-derived with
+    # them or it becomes a stale claim about a value that has since moved.
+    if block.get("calendar_limb_satisfied_live") and block.get("active") is False:
+        block["active_false_negative"] = (
+            f"active=false is NOT decision-legit here: the frozen vintage reports the anchor day's "
+            f"structure, while the deterministic calendar puts the front {d2e} business day(s) out "
+            f"({sym}), inside the <=7 window.")
+    else:
+        block.pop("active_false_negative", None)
+    block.setdefault("_relived", []).extend(changed)
+    block["_relive_note_live"] = (
+        "the `_live` calendar twins are recomputed against THIS reading day. Before S114 they were "
+        "computed once at freeze time and carried through unchanged, so a field named `_live` held "
+        "a constant - S109 hole #10 recurring inside its own cure.")
 
 
 def _relive_distance_fields(blk: str, block: dict, iso: str) -> dict:
@@ -1048,6 +1111,8 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
                               {"masked_one_shot": True, "vintage_asof": mask_after, "value": None}
                 if fv:
                     _relive_distance_fields(blk, out[d][blk], iso)
+                    if blk == "squeeze_watch":
+                        _relive_squeeze_live(out[d][blk], iso)
             out[d]["curve_regime"] = frozen["curve_regime"]
             out[d]["_mask_note"] = ("price-derived blocks FROZEN at the block-anchor vintage (one-shot "
                                     "masking fix, brain s101.3 item 10) - the deterministic expiry/print "

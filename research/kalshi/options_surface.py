@@ -60,6 +60,15 @@ def _ns_to_date(ns: int) -> str:
     return datetime.datetime.fromtimestamp(ns / 1e9, tz=datetime.timezone.utc).date().isoformat()
 
 
+def _strike_on_scale(asset: str, k: float) -> float:
+    """Root-conditional strike scale (G-14). ON decodes correctly; LNE decodes at 1/10."""
+    try:
+        from options_iv_surface import LNE_STRIKE_SCALE as _S
+    except Exception:
+        _S = 10.0            # the measured value; the import is preferred so there is ONE source
+    return k * _S if (asset or "").upper().startswith("LNE") else k
+
+
 def _def_period(path: str) -> str:
     """Pull-window START date ('YYYY-MM-DD') from a raw filename like
     glbx_ng_opt_definition_20251101_20260301.dbn.zst. '' when the name carries no window
@@ -77,7 +86,12 @@ def build() -> dict:
     # statistics under the later definition. Definitions are therefore kept PER PULL PERIOD and a
     # statistics record resolves against the period covering ITS OWN session date.
     periods: list[tuple[str, dict[int, dict]]] = []   # (period_start_iso, {iid: def}) sorted
-    dpath = sorted(glob.glob(os.path.join(RAW_DIR, "*definition*.dbn.zst")))
+    # S114: RECURSIVE. The raw tree grew a subdirectory (raw/ext_2026/) when the surface was
+    # extended past March 2026, and this non-recursive glob silently stopped seeing it - a rebuild
+    # then produced 81 sessions where the store had 180, dropping exactly the Mar-Jul 2026 window
+    # the current groups sit in. Same hand-maintained-list failure as A-29/A-16: correct data on
+    # disk, never read.
+    dpath = sorted(glob.glob(os.path.join(RAW_DIR, "**", "*definition*.dbn.zst"), recursive=True))
     for p in dpath:
         start = _def_period(p)
         defs: dict[int, dict] = {}
@@ -85,10 +99,20 @@ def build() -> dict:
             cls = str(getattr(rec, "instrument_class", ""))
             if cls not in ("InstrumentClass.CALL", "InstrumentClass.PUT", "C", "P"):
                 continue
+            _asset = (rec.asset or "").strip()
             defs[rec.instrument_id] = {
                 "underlying": (rec.underlying or "").strip(),
-                "asset": (rec.asset or "").strip(),
-                "strike": rec.strike_price / 1e9,
+                "asset": _asset,
+                # S114 (G-14): DECODE THE STRIKE ON THE RIGHT SCALE. Databento's confirmed bug
+                # (reported 2024-06-12) decodes an OPTION's strike with the OPTION's display_factor
+                # instead of the underlying FUTURE's, so LNE strikes land at 1/10 of $/MMBtu. That
+                # was MEASURED and cured in options_iv_surface.py at S100.1 (LNE_STRIKE_SCALE=10,
+                # verified per build by matched-pair pricing) and this module - the one that feeds
+                # the decision state - never got the fix, which is why state_health rejected a fresh
+                # g22 stage on all ten days: "median top-OI strike 0.35 vs calendar_front_settle
+                # 3.233 (ratio 0.108)". Import the constant rather than re-declaring it; one store,
+                # one number.
+                "strike": _strike_on_scale(_asset, rec.strike_price / 1e9),
                 "cp": "C" if cls.endswith("CALL") or cls == "C" else "P",
                 "opex": _ns_to_date(rec.expiration),
             }
@@ -114,7 +138,7 @@ def build() -> dict:
     # sessions[date][asset][month][strike] = [call_oi, put_oi, call_settle, put_settle]
     sessions: dict = {}
     n_oi = n_set = 0
-    for p in sorted(glob.glob(os.path.join(RAW_DIR, "*statistics*.dbn.zst"))):
+    for p in sorted(glob.glob(os.path.join(RAW_DIR, "**", "*statistics*.dbn.zst"), recursive=True)):
         for rec in db.DBNStore.from_file(p):
             st = int(rec.stat_type)
             if st not in (STAT_SETTLEMENT, STAT_OPEN_INTEREST):
@@ -230,6 +254,18 @@ def options_surface_asof(iso: str, root: str = "NG") -> dict | None:
     if not months_out:
         return None
     return {"asof_session": sess, "months": months_out,
+            # S114 (G-14): a value that was wrong and is now right must SAY so - the
+            # session_b_share_basis pattern. Without this, a state built before the fix and one
+            # built after are indistinguishable downstream, which is how a 10x scale error survived
+            # from S100.1 to S114 in the block that feeds every specialist.
+            "strike_units": "usd_per_mmbtu",
+            "strike_units_basis": ("LNE strikes are decoded at 1/10 by Databento (confirmed vendor "
+                                   "bug, reported 2024-06-12: the OPTION's display_factor is used "
+                                   "instead of the underlying FUTURE's) and are multiplied by "
+                                   "LNE_STRIKE_SCALE=10 here, imported from options_iv_surface where "
+                                   "the scale is verified per build by matched-pair pricing. ON "
+                                   "strikes decode correctly and are untouched. States built before "
+                                   "S114 carry LNE strikes 10x too small and NO strike_units key."),
             "note": "OI walls = pin/unpin structure; distance-from-settle is the agent's read "
                     "against contract_structure's calendar-front settle; ON+LNE combined per "
                     "strike, per-asset totals and opex kept split; next-morning wall"}
