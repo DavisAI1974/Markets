@@ -1,4 +1,56 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-05, Session 111)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-05, Session 112)
+
+## S112 — THE D29 WORK LIST IS CLOSED, THE BRAIN HAS ITS EVIDENCE, AND THE PLANT HAS A STORE (read `SESSION_HANDOFF_2026-08-05_S112.md` + `DROP_IN_S113.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`. Brain s105.0, 82 plays — play CONTENT
+unchanged, EVIDENCE transformed. No group run, no merge.**
+
+**THE WORK LIST S111 MADE VISIBLE IS NOW CLOSED:** support unaudited **82 -> 0**, corpus unsearched
+**82 -> 2**, conditions unparsed **74 -> 0**, no falsifier **65 -> 0**. The brain carries **624
+instances — 306 `do` and 318 `dont`** across 55 plays holding both.
+
+**TWO AUDITS RAN.** The 82-play support audit: **41 OUTCOME_CREDITED, 26 MECHANISM_VERIFIED, 10
+NOVEL_N1** — half the brain rests on a number coming out right rather than a mechanism being checked.
+Worked instance: `eia_preprint_overextension_gate` says it SPARED the G20 band while the committed
+blind posterior says it FIRED and REFUSED — because limb (a) is denominated in chain cum, **which the
+blind masks**, so the brain merged the refine's account of a gate that only has to work in the blind.
+The decline audit: **384 declines, and the rubric came back negative 13 times** (7 MISSED_FIRE, 6
+OUTCOME_CREDITED), because my first ledger had no class for a wrong decline — every entry read as a
+save by construction. **115 declines (30%) are DATA_ABSENT** — the play could not be evaluated at all.
+
+**EQUAL FOOTING (Greg):** one `instances[]` list, one `action` field, `do` vs `dont`, no parallel
+structure — *"so one isn't ignored over the other."* Stamping found **43 declines already in the brain
+reading as fires.** Every decline carries its verdict, so a DATA_ABSENT one can never be counted as a
+working off-switch.
+
+**D34 — THERE IS NOTHING LOCAL.** git = code and records, S3 = data, `data/` disposable, and **no
+artifact may name a desktop path**. Instance: the S111 audit partial carried 140 instances and **51,
+across 11 plays, cited `E:/Markets/...`** — the input to a backfill that writes into the brain. Fixed
+140/140. **Do not repair such a path by silently re-rooting it** — my first guard did, and that hides
+the defect. The guard was calibrated against the real citations first, which changed it twice: the
+first draft would have failed **93 of 140 legitimate** instances.
+
+**THE STORE (A-7).** `DECISIONS.md` and `RUN_SOP.md`'s appendix are **RENDERS** — extract, render,
+**prove byte-identical**, then rely. The andon now **FAILS on render drift** (exit 1, stop the line).
+**`spawn.py` fills every SOP slot BY LOOKUP and NC-1 is a regression test** — generated `CAL_FACTS`
+emits `20260715: in_bcom_roll TRUE, bcom_roll_day_n 5`, the exact fact the directive denied. **A-9
+done:** the drop-in work list is generated from the registry, so a DONE item cannot appear as a live
+instruction — which `DROP_IN_S112` did twice.
+
+**THE UNATTENDED PLANT.** `merge_gate.py` closes SOP gates 2 and 3: objective admissibility ->
+PROVISIONAL merge with a **registered forward test** -> settle, scoped per D31. **The automation is the
+bookkeeping, not the judgment** — a registered test cannot be forgotten, which is how the burn gate
+died correctly. It **parks 5 of 5 real past proposals**. `plant_calendar.py` is the plant's clock from
+**RULES** (the hardcoded holiday table ends 2027-02-15 — 194 days of runway), 1031 sessions,
+**cal+0..cal+3**, wrapping to cal+0 day 1. **MEASURED: the calendar does NOT repeat on four years** —
+Memorial Day runs 05-25/27/29/31 across 2026/2030/2034/2038 and Good Friday matches in **0 of the next
+100 years**. The RULE is invariant (why the loop works); the DATE is not (why dates are recomputed,
+never replayed). **The wrap is a REPEAT MEASUREMENT** — re-walking a session with a better brain.
+
+**NEEDS GREG'S CALL:** **A-13** — `CAL_FACTS` reaches **AUD-1 only**, so no forecasting specialist has
+ever received calendar facts; that is the structural cause of NC-1, and `day_calendar()` is built and
+tested but adding the slot is a change-controlled SOP edit. **A-11** — serving chain state
+(`cum_from_anchor` + chain age) unblocks nine plays; four of eight curation batches hit it independently.
 
 ## S111 — THE TARGET CHANGED: THE PRODUCT IS A CURVE, AND WE HAD NEVER SCORED IT (read `research/kalshi/FORECAST_ARCHITECTURE_S111.md` FIRST, then `SESSION_HANDOFF_2026-08-05_S111.md` + `DROP_IN_S112.md`)
 

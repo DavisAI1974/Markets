@@ -198,6 +198,52 @@ RENDERS = {
 }
 
 
+
+OPEN_ITEMS = os.path.join(HERE, "OPEN_ITEMS.json")
+
+
+def work_list(limit=12):
+    """GENERATE the next session's work list from the registry. (Registry A-9.)
+
+    THE INSTANCE THAT CREATED THIS: the committed DROP_IN_S112 listed `brain_schema.py sections
+    --write` and the condition_audit false-claim fix as work to do when BOTH WERE ALREADY DONE.
+    The drop-in restated the work in prose instead of pointing at the registry, so a completed item
+    could still appear as a live instruction. Generated from OPEN_ITEMS.json, only OPEN and
+    IN_PROGRESS entries can ever appear - a DONE item becoming a live instruction is structurally
+    impossible rather than something a careful reader has to catch.
+
+    ORDER: irreversible first (work whose value is permanently lost by waiting), then XS, then
+    everything else by size. `blocked_by` items sort last and say what blocks them."""
+    with open(OPEN_ITEMS, encoding="utf-8") as f:
+        items = json.load(f)["items"]
+    live = [i for i in items if i.get("status") in ("OPEN", "IN_PROGRESS")]
+    IRREVERSIBLE = {"G-11"}          # accrual that cannot be backfilled - every week waited is lost
+    order = {"XS": 0, "S": 1, "M": 2, "L": 3}
+
+    def key(i):
+        return (0 if i["id"] in IRREVERSIBLE else 1,
+                1 if i.get("blocked_by") else 0,
+                order.get(i.get("size"), 9), i["id"])
+    out = []
+    for i in sorted(live, key=key)[:limit]:
+        tag = ""
+        if i["id"] in IRREVERSIBLE:
+            tag = "  [IRREVERSIBLE - value is permanently lost by waiting]"
+        elif i.get("blocked_by"):
+            tag = "  [BLOCKED: %s]" % i["blocked_by"]
+        out.append("- **%s** (%s) %s%s" % (i["id"], i.get("size", "?"), i["title"], tag))
+    return "\n".join(out), len(live)
+
+
+def cmd_worklist(a):
+    body, n = work_list(a.limit)
+    print("GENERATED FROM research/kalshi/OPEN_ITEMS.json - %d live items, showing %d.\n"
+          "Only OPEN and IN_PROGRESS can appear here, so a DONE item cannot be a live "
+          "instruction.\n" % (n, min(a.limit, n)))
+    print(body)
+    return 0
+
+
 def cmd_extract(a):
     name = a.what
     spec = RENDERS[name]
@@ -317,9 +363,11 @@ def main():
     p = sub.add_parser("render"); p.add_argument("what", choices=list(RENDERS))
     p = sub.add_parser("check"); p.add_argument("--write", action="store_true")
     sub.add_parser("selftest")
+    p = sub.add_parser("worklist"); p.add_argument("--limit", type=int, default=12)
     a = ap.parse_args()
     return {"extract": cmd_extract, "render": cmd_render,
-            "check": cmd_check, "selftest": cmd_selftest}[a.cmd](a)
+            "check": cmd_check, "selftest": cmd_selftest,
+            "worklist": cmd_worklist}[a.cmd](a)
 
 
 if __name__ == "__main__":

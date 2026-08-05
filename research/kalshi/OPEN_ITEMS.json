@@ -1,6 +1,6 @@
 {
  "note": "THE TRACKED WORK REGISTRY. Born S111 under D30 - 'a finding with no home in DECISIONS.md does not exist' - after seven items from the S110 turnaround memo were found undone because they lived only in prose. plant_status.py reads this file at every bring-up and prints the counts, so an open item cannot quietly stop existing. Statuses: OPEN | IN_PROGRESS | DONE | SUPERSEDED | BLOCKED. `first_raised` is the session it was first written down anywhere; `sessions_open` is computed by the andon board and is what makes staleness visible.",
- "current_session": "S111",
+ "current_session": "S112",
  "items": [
   {
    "id": "M-1",
