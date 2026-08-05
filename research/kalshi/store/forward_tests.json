@@ -62,11 +62,11 @@
    "refutations": []
   },
   {
-   "play_id": "weather.shoulder_month_tail_gates",
+   "play_id": "weather.month_tail_gates",
    "registered_session": "S114",
    "merged_status": "PROVISIONAL",
    "test_group": "g24",
-   "falsifier": "Any October week drawing, any November week beyond roughly +/-120 Bcf, any March week building beyond ~+50, or any April week drawing beyond ~-50 refutes that month's gate at its stated strength - each is a single-week, listable event. The hydro-asymmetry limb is refuted if a fall-shoulder freeze arrives and hydro cover proves irrelevant to the gas response.",
+   "falsifier": "A forward week landing beyond its month's listed seven-year extreme by more than ~15 Bcf refutes that month's gate at its stated strength - single-week, listable, cannot be missed. The anchor gates specifically: any February week shallower than -40, any May week below +45, any August week above +80, any October draw, any December build, any November week beyond ~+/-120. The hydro-asymmetry limb is refuted if a fall-shoulder freeze arrives and hydro cover proves irrelevant to the gas response.",
    "status": "DUE",
    "confirmations": [],
    "refutations": []

@@ -31,7 +31,8 @@
    ],
    "park_examination": "The group-span PARKs are by construction: their evidence is the 391-week EIA storage corpus and the keyless EIA-930 public files, not walk groups - the bar cannot see non-group evidence, and the human go covers them. The defect-exposure PARKs flag h-weather_path (S107, FORWARD_ONLY) via substring match on group tokens in the play text; examined per citation: the g7/g8/g11/g12/g13/g14/g15/g16/g18/g19 references in those plays are grid_stack coal/renewables served levels, calendar cross-refs (D28) and event-window naming - none of the load-bearing evidence flows through the defective nws_temp weather path, and the storage/hydro CSVs are EIA-sourced outside the walk's data plane entirely. Merged on the human go with this examination recorded; the g24 forward tests stand regardless.",
    "merged_as": "s105.1, seven plays, incumbents 82/82 byte-identical, backup research/kalshi/knowledge/ng_brain_s105.0_backup_pre_s105.1.json"
-  }
+  },
+  "s105_2_amendment": "Same session, same adjudication: the shoulder-gate play extended to the full 12-month tail map on Greg's 'There should be an overall pattern to the 12 months even in the most mild months. Low burn numbers is still setting a pattern even if it's a very mellow one.' Version s105.2; 88 other plays byte-identical."
  },
  "new_plays_proposed": [
   {
@@ -505,12 +506,12 @@
    }
   },
   {
-   "id": "weather.shoulder_month_tail_gates",
+   "id": "weather.month_tail_gates",
    "target": "no_call",
-   "trigger": "deterministic - the calendar month; applies unconditionally to storage-lane tail-size expectations in Oct/Nov/Mar/Apr, not a conditional trigger",
+   "trigger": "deterministic - the calendar month; applies unconditionally to every storage-lane tail-size expectation, all twelve months; not a conditional trigger",
    "read": "the calendar month, then the month's one-sided tail bound from seven years of listed weeks",
-   "call": "The storage lane's tails are ONE-SIDED BY MONTH, and the month where the sign is open has closed tails. Seven years, every week listed: OCTOBER builds only (+29..+129, zero draws in 32 weeks). NOVEMBER bounded both ways (-94..+107 in 29 weeks - no deep draw in seven Novembers; the model handoff month, where per A-38 power burn opposes total demand every year). DECEMBER-FEBRUARY is draw season with the monster tail (December alone: -213..-1, not one positive week in 31). MARCH one-sided DOWN (-200..+37 - winter-grade draws persist, build tail closed). APRIL one-sided UP (-37..+103 - draw tail gone). USE as month-gates on tail-size calls and NO-CALL inputs (A-2): an October or April deep-draw call, a March big-build call, or any November tail call sits outside seven years of listings and needs extraordinary evidence. DO NOT use as level forecasts - the market prices the seasonal level; our use is call-formation bands and the burn-stack validity window (the summer/burn model extends through NOVEMBER at the weekly horizon, not to the equinox).",
-   "mechanism": "Injection/withdrawal seasonality plus the A-38 handoff: res/comm heating sits at its floor through November (the burn stack still describes the balance) and lifts December-March (the heating term owns the tail). The shoulders also carry opposite hydro-buffer states measured S114: the fall shoulder sits at the hydro TROUGH (Sep-Oct p50 501-565 GWh/d - the year's weakest buffer would meet any early freeze; unobserved in sample, carried as structure not prediction) while the spring shoulder sits at the melt maximum (May 840-847) stacking with peak wind - consistent with G16's April injection-bleed block. Cross-ref D28: absolute HDD bars discriminate ONLY in shoulder blocks (g7 2/10, g8 4/10, g14 4/12, g15 3/12), so the shoulder is also where threshold conditions carry their information.",
+   "call": "THE TWELVE MONTHS ARE ONE PATTERN, and the QUIETEST months are the most COMMITTED - their low numbers set the strictest gates (Greg, S114: 'Low burn numbers is still setting a pattern even if it's a very mellow one'). Seven years, every week listed (n=391), dS Bcf [min..max] with labeled p50: Jan n33 [-326..+11] p50 -130 | Feb n33 [-359..-52] p50 -166 | Mar n34 [-200..+37] p50 -51 | Apr n35 [-37..+103] p50 +40 | May n35 [+54..+123] p50 +89 | Jun n34 [+16..+122] p50 +95 | Jul n34 [+10..+89] p50 +48 | Aug n31 [-6..+65] p50 +35 | Sep n30 [+13..+103] p50 +70 | Oct n32 [+29..+129] p50 +81 | Nov n29 [-94..+107] p50 +8 | Dec n31 [-213..-1] p50 -88. THE ANCHOR GATES: FEBRUARY always draws at least 52 (no shallower week in 33 - the only month with both tails committed); MAY always builds at least +54 (35 of 35 - the metronome month); AUGUST never builds more than +65 (31 weeks, the injection season's LOWEST ceiling, at the year's PEAK burn p50 298.8 - August's small numbers are not quiet, they are peak demand compressing the build). NOVEMBER is the hinge (p50 +8, the only month straddling zero, tails closed both ways at -94/+107). OCTOBER all-positive (+29 floor), DECEMBER all-negative (-1 ceiling). USE: month-conditional tail gates and band anchors for call formation and NO CALL (A-2) - never level forecasts, the market prices the seasonal level. AND THE TWO COLUMNS TELL THE WINTER STORY ALONE: winter burn p50 is nearly CONSTANT (Dec 216.5, Jan 214.7, Feb 213.0) while dS p50 swings -88 -> -130 -> -166 - the draw's size moves with HEATING at flat burn (weather.winter_heating_size_term, visible in the calendar itself). Summer is the mirror: burn peaks (Jul 304.9, Aug 298.8) exactly where builds COMPRESS - there the burn IS the story, and the burn-stack lane owns it (weather.summer_burn_lane_exclusion).",
+   "mechanism": "Injection/withdrawal seasonality plus the A-38 handoff (res/comm heating at floor through November, owning the tail December-March) plus summer burn compression (peak power burn eats the injection margin - August). The shoulders carry opposite hydro-buffer states (fall = the Sep-Oct trough 501-565 GWh/d; spring = the May melt maximum 840-847 stacked on peak wind - consistent with G16's April injection-bleed). Cross-ref D28: absolute HDD bars discriminate ONLY in shoulder blocks. The month bands are seven-year listing extremes, not fitted anything; the mellow months' tight bands are COMMITMENT (February to drawing, May to building), which is why they gate hardest.",
    "requires": [
     "flow_calendar month (deterministic, served)",
     "cross-ref: weather.winter_heating_size_term (the Dec-Mar size term), weather.summer_burn_lane_exclusion (the burn lane these gates hand off to)"
@@ -519,14 +520,14 @@
    "confidence": 0.7,
    "status": "PROVISIONAL",
    "support": "MECHANISM_VERIFIED",
-   "falsifier": "Any October week drawing, any November week beyond roughly +/-120 Bcf, any March week building beyond ~+50, or any April week drawing beyond ~-50 refutes that month's gate at its stated strength - each is a single-week, listable event. The hydro-asymmetry limb is refuted if a fall-shoulder freeze arrives and hydro cover proves irrelevant to the gas response.",
+   "falsifier": "A forward week landing beyond its month's listed seven-year extreme by more than ~15 Bcf refutes that month's gate at its stated strength - single-week, listable, cannot be missed. The anchor gates specifically: any February week shallower than -40, any May week below +45, any August week above +80, any October draw, any December build, any November week beyond ~+/-120. The hydro-asymmetry limb is refuted if a fall-shoulder freeze arrives and hydro cover proves irrelevant to the gas response.",
    "conditions": [
     {
      "quantity": "month_tail_gate",
      "state_path": "flow_calendar.month",
      "reference": "calendar",
      "comparator": "in",
-     "threshold": "Oct/Nov/Mar/Apr",
+     "threshold": "all twelve - each month carries its own band",
      "units": "month"
     }
    ],
@@ -554,6 +555,30 @@
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
      "what_the_state_said": "December: max -1 across 31 weeks - every December week in the record drew. The gate month before it (November) never draws deep; the month itself never builds."
+    },
+    {
+     "date": "2026-02-26",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "February's SHALLOWEST week in seven years: -52. The month's build side is empty and its shallow side is bounded away from zero - both tails committed."
+    },
+    {
+     "date": "2023-05-04",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "May's smallest build in 35 weeks: +54. The metronome month - every May week in the record built at least +54."
+    },
+    {
+     "date": "2019-08-01",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "August's build CEILING across 31 weeks: +65, at the year's peak burn (month p50 298.8) - peak demand compressing the build is the August pattern."
+    },
+    {
+     "date": "2023-01-12",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "January's single positive week (+11) - the exception that bounds January's shallow tail, against February which has none."
     }
    ],
    "corpus": {
@@ -574,9 +599,9 @@
    },
    "provenance": {
     "merged_session": "S114",
-    "brain_version": "s105.1",
+    "brain_version": "s105.2",
     "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
-    "proposed_by": "S114, on Greg's 'Is there anything that we can take for the shoulder months?'"
+    "proposed_by": "S114, on Greg's 'Is there anything that we can take for the shoulder months?'; extended to the full 12-month map same session on Greg's 'There should be an overall pattern to the 12 months even in the most mild months' (id renamed from weather.shoulder_month_tail_gates)"
    }
   }
  ]

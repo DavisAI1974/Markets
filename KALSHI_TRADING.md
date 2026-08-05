@@ -2,14 +2,14 @@
 
 ## S114 (2026-08-05) — the A-24 paper dissected per event; the two-sided lane discovery MERGED INTO THE BRAIN
 
-- **Brain s105.0 -> s105.1, 89 plays** — the two-sided winter/summer lane discovery lives in the
+- **Brain s105.0 -> s105.2, 89 plays** — the two-sided winter/summer lane discovery lives in the
   brain, NOT in a standalone doc (Greg: "Everything lives in the store now... put it where it can
   be used"; an S114 standalone md was created and deleted the same session). Seven plays, all
   PROVISIONAL with g24 forward tests registered in `research/kalshi/store/forward_tests.json`:
   `weather.winter_heating_size_term`, `weather.renewables_masking_flip`,
   `weather.freeze_conjunction_class2`, `weather.hydro_winter_buffer`,
   `weather.summer_burn_lane_exclusion`, `weather.revision_seasonal_sign_map`,
-  `weather.shoulder_month_tail_gates`.
+  `weather.month_tail_gates` (the full 12-month tail map, s105.2).
 - `forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json` — the D8 proposal + Greg's verbatim
   adjudication + merge_gate admit verdicts with the PARK examination recorded. Backup:
   `research/kalshi/knowledge/ng_brain_s105.0_backup_pre_s105.1.json`. Incumbents 82/82
