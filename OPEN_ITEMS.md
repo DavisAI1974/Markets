@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 66 |
+| open | 67 |
 | in progress | 1 |
 | done | 9 |
 
-By size: **XS** 7, **S** 28, **M** 27, **L** 5
+By size: **XS** 7, **S** 29, **M** 27, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 13, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 14, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,7 +31,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 13, **REST** 50
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (13)
+## BIGGEST WIN (14)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -39,6 +39,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 13, **REST** 50
 |---|---|---|---|
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
+| **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
@@ -120,6 +121,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 13, **REST** 50
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
+| **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
@@ -316,6 +318,59 @@ THE LESSON IS THE ONE A-19 ALREADY STATES AND I STILL TRIPPED ON IT: a utility b
 CLOSING RULE, from D35: the BA list is closed by RECONCILIATION, not by map coverage. Add respondents until the served set sums to US48 within tolerance, then stop - US48 is carried as its own EIA-930 respondent so the gap is computable today. And the Southeast set is not an arbitrary region to have picked: it sits on the Gulf corridor, which is among the best-transmitting demand to Henry Hub itself.
 
 RE-AIMED S113 BY MEASUREMENT (A-26): this item was registered on the Gulf-corridor argument - that the Southeast BAs are among the better-transmitting demand to Henry Hub. That argument is now the WEAKER of two, because per-BA burn does not move HH price at all (|r| <= 0.11 across every BA, national aggregate included). The item SURVIVES on the BALANCE channel: weekly per-BA burn against weekly storage change runs -0.44 to -0.69 in summer for every BA measured, so every region's burn is present in the print HH trades even when its price is not. Keep the build; change the reason. Closure remains D35's rule - reconcile to US48, not cover the map - and it is now the ONLY closure that makes sense, since basis-weighting would drop CISO (-0.666 vs storage) to nearly zero.
+
+---
+
+### [BIGGEST_WIN] A-29 - WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only
+
+*size S | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon.
+
+**Source:** Greg, S113: 'a windy day makes a difference so that's why we have to include wind speed forecast and actual in our weather data'
+
+Greg, S113: 'But a windy day makes a difference so that's why we have to include wind speed forecast and
+actual in our weather data.' He is right, and it is already being fetched and thrown away on BOTH sides.
+
+MEASURED, and it is a one-line drop in each case:
+  FORECAST - nws_temp_feed.py:566-570 reads a MOS CSV whose own documented columns (line 477) are
+  runtime,ftime,model,n_x,tmp,dpt,cld,wdr,wsp,...  and then appends {runtime, ftime, tmp} ONLY. wsp (wind
+  speed) and wdr (direction) are parsed and discarded three columns over.
+  ACTUALS - RAW_ASOS_FIELDS (line 251) already requests sknt, drct, gust, peak_wind_gust, peak_wind_drct,
+  peak_wind_time AND feel, under a header that says values are kept VERBATIM with 'zero reduction' and
+  stored raw on S3. Then _daily (126-147) collapses the hourly obs to {tmax, tmin, tmean, precip_in, n} and
+  gas_weighted() emits only gw_hdd, gw_cdd, gw_precip, n_stations, coverage, regime. Wind never survives
+  the roll-up.
+
+FOURTH INSTANCE OF ONE PATTERN IN A SINGLE SESSION - a hand-maintained field list is where correct data
+goes to die: hydro WAT and battery BAT dropped at grid_stack's five-element serving read (A-16, G-19),
+big_print_b_share computed then omitted from the emit list (S107), session_b_share missing from
+_tape_enrich's copy list (S109), and now wind on both weather paths. The transferable question is why any
+serving read enumerates fields by hand when the store is a dict.
+
+WHY IT MATTERS MORE THAN THE OTHER THREE: weather is the desk's stated DOMINANT DRIVER and our index is
+DRY BULB ONLY. Wind enters gas demand through two channels that partly OFFSET, which is precisely why it
+cannot be reasoned about from one side:
+  (1) LOAD - wind chill drives building infiltration and convective heat loss, which is why utility load
+  models carry wind speed as a standard term. A windy 20F day is not a still 20F day. The apparent
+  temperature is already on disk as `feel` and already discarded.
+  (2) GENERATION - wind speed drives wind output, which displaces gas in the hours gas is on the margin
+  (A-28: 'wind at night does nothing for gas demand, wind at 7 in the morning does').
+So the same windy winter day is bullish gas through heating load and bearish gas through power burn, and
+with neither term served we cannot even sign it.
+
+AND THE FORECAST HALF IS THE VALUABLE HALF: MOS wsp is DATED FORWARD, which is the information class the
+horizon research says survives past the 5-7 day boundary. It also closes half of G-4 from an unexpected
+direction - we have been treating forward wind as an absent ISO feed to be built, while a forward wind
+SPEED forecast for all 16 metros has been arriving in a CSV we already parse. Speed is not generation, so
+this does not replace G-4's ISO wind-generation forecasts; it is a free, already-paid-for proxy that can be
+measured against them.
+
+SCOPE: serving change, not an ingest, on both paths. Keep it gas-weighted the same way HDD/CDD are - per
+station then weighted, never averaging the temperature first (the A-21 convexity note). Serve wind speed
+and the apparent temperature separately rather than folding wind into a modified degree day, because the
+two channels have opposite signs and a combined index would cancel them. Per D12 give it a named consumer
+or an explicit PARK note before it lands.
 
 ---
 
