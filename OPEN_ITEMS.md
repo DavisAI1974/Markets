@@ -136,8 +136,8 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **A-12** | REST | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
-| **A-24d** | REST | S | OPEN | S113 | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
-| **A-24e** | REST | S | OPEN | S113 | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
+| **A-24d** | REST | S | OPEN | S113 | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
+| **A-24e** | REST | S | OPEN | S113 | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
@@ -159,11 +159,11 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **M-8** | REST | S | OPEN | S110 | Retire the Pyth collector workflows (D14) | requires a commit on the trunk branch, not this one |
 | **M-9** | REST | S | OPEN | S112 | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
 | **A-10** | REST | M | OPEN | S112 | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | MBP-10 restore from S3 (needs AWS keys, absent this session) |
-| **A-24a** | REST | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
-| **A-24b** | REST | M | OPEN | S113 | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
-| **A-24c** | REST | M | OPEN | S113 | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
-| **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
-| **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
+| **A-24a** | REST | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
+| **A-24b** | REST | M | OPEN | S113 | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
+| **A-24c** | REST | M | OPEN | S113 | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
+| **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
+| **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-6** | REST | M | OPEN | S90 | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
 | **G-13** | REST | M | OPEN | S111 | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | REST | M | OPEN | S111 (recommendation); S112  | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
@@ -663,7 +663,7 @@ AND IT UPGRADES TVA FROM CORRELATE TO INSTRUMENT. Its north Georgia dams are sto
 
 ### [REST] A-24d - Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous
 
-*size S | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+*size S | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
 **Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
 
@@ -675,7 +675,7 @@ RANK 4, and the note is right that it adds no predictor - it changes WHO IS ALLO
 
 ### [REST] A-24e - Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate)
 
-*size S | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+*size S | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
 **Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
 
@@ -927,7 +927,7 @@ FIX: re-run the G11+ fingerprint pass with the MBP-10 book source, and make the 
 
 ### [REST] A-24a - Weather information ACCEPTANCE: revision size x model convergence x release timing
 
-*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
 **Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
 
@@ -939,7 +939,7 @@ RANK 1 and the note's strongest candidate. We serve the SIZE of a GWDD revision 
 
 ### [REST] A-24b - Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location
 
-*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
 **Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
 
@@ -951,7 +951,7 @@ RANK 2, and it is a CURVE-SHAPE candidate rather than a direction one, which is 
 
 ### [REST] A-24c - Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition
 
-*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
 **Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
 
@@ -964,7 +964,7 @@ MEASURED CAVEAT THAT MUST TRAVEL WITH IT: any breadth count runs on the six BAs 
 
 ### [REST] A-24f - Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin
 
-*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
 **Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
 
@@ -976,7 +976,7 @@ RANK 6. freeze_risk is 148 of 157 fields unread and holds per-basin first_below,
 
 ### [REST] A-24g - Sunset compression x regional gas marginality - the synchronised thermal ramp
 
-*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
 **Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
 
@@ -1154,7 +1154,7 @@ PAIRS WITH A-23: the triage says which fields SHOULD be read; this asks which PA
 
 DELIVERED S113 as research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md, and broken out into A-24a..A-24g so each candidate carries its own status, benchmark and kill test rather than living in one item's prose - which is the A-17 defect this registry exists to prevent.
 
-ORDERING NOTE, recorded not grumbled: this item was registered BLOCKED BY A-23 precisely so a pair could not be built on a defect artifact, and it came back first. The note partly protects itself - it reads the defect column (it flags h-tape_offinstrument on Rank 5) and labels every item CANDIDATE with the limitation stated up front. No candidate is promoted before A-23's verdicts land.
+STANDING DEPENDENCY (on merit, not on sequence): no candidate is promoted before the unread-field triage lands, because a candidate built on a defect artifact is a manufactured mechanism. The note partly protects itself here - it reads the defect column, flagging h-tape_offinstrument on Rank 5, and labels every item CANDIDATE with the limitation stated up front.
 
 THE CRITIQUE THAT MATTERS MOST, and it is about the note's own final assessment rather than any single rank. It concludes the best structure is 'shock x confirmation x novelty x absorption capacity' - a FOUR-FACTOR interaction - and proposes testing it on 118-131 populated observations. That collides directly with the measured dimension budget (FORECAST_ARCHITECTURE_S111 s4.2, registry item A-3): L = k/r^d puts our supportable matching dimension at about 3, at most 4, and d=4 wants ~10,000 sessions. Conditioning on four things at once over ~130 observations returns a match provably no closer than random - AND RETURNS IT CONFIDENTLY WITH A MAGNITUDE ATTACHED, which is the specific failure mode. So each candidate should be tested as a TWO-FACTOR interaction at most, and the four-factor synthesis is a description of the problem rather than a testable object. That is not a reason to discard the note; it is the constraint the tests have to respect.
 
