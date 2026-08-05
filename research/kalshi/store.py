@@ -220,8 +220,22 @@ def work_list(limit=12):
     IRREVERSIBLE = {"G-11"}          # accrual that cannot be backfilled - every week waited is lost
     order = {"XS": 0, "S": 1, "M": 2, "L": 3}
 
+    # RE-RAISED SORTS SECOND, ABOVE SIZE. Greg, S112: "It scares me that things we talk about and
+    # decide on don't get implemented. We actually just had to revisit the nuke discussion for the
+    # 2nd time a few sessions ago and we still haven't addressed it." He is right, and sorting by
+    # size buried it: the nuclear schedule is an S, so a generated list ordered on effort alone put
+    # it below five XS items. THE COST OF A RE-RAISED ITEM IS NOT THE WORK, IT IS THE REPETITION -
+    # so having been asked for twice is itself a priority signal and now outranks how cheap the
+    # item is. Only IRREVERSIBLE (permanent data loss) sorts above it.
+    def rank(i):
+        if i["id"] in IRREVERSIBLE:
+            return 0
+        if i.get("reraised"):
+            return 1
+        return 2
+
     def key(i):
-        return (0 if i["id"] in IRREVERSIBLE else 1,
+        return (rank(i),
                 1 if i.get("blocked_by") else 0,
                 order.get(i.get("size"), 9), i["id"])
     out = []
@@ -229,6 +243,8 @@ def work_list(limit=12):
         tag = ""
         if i["id"] in IRREVERSIBLE:
             tag = "  [IRREVERSIBLE - value is permanently lost by waiting]"
+        elif i.get("reraised"):
+            tag = "  [RE-RAISED - Greg has had to ask for this %s]" % i.get("reraised")
         elif i.get("blocked_by"):
             tag = "  [BLOCKED: %s]" % i["blocked_by"]
         out.append("- **%s** (%s) %s%s" % (i["id"], i.get("size", "?"), i["title"], tag))

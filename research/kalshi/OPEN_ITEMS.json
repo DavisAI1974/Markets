@@ -3,6 +3,17 @@
  "current_session": "S112",
  "items": [
   {
+   "id": "A-17",
+   "title": "NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112",
+   "source": "Greg, raised again S112: 'We had talked already about getting the maintenance schedule for the nukes... we actually just had to revisit the nuke discussion for the 2nd time a few sessions ago and we still haven't addressed it'",
+   "first_raised": "pre-S112, exact session unrecorded - which is itself the defect",
+   "status": "OPEN",
+   "size": "S",
+   "why": "WHAT WE HAVE vs WHAT WAS ASKED FOR. Served today: nuclear_outages.{capacity_out_mw, capacity_out_gw, pct_of_fleet_out, chg_1d_mw, chg_7d_mw, age_days} - all REALIZED or current, age 1 day, built as feed R arm 1 at S99. Served nowhere: any FORWARD planned-outage schedule. There is no planned start or end date in any block.\n\nWHY THIS ONE STINGS: nuclear refuelling is the MOST SCHEDULABLE EVENT IN THE POWER SYSTEM - planned 12-18 months ahead, publicly posted, clustered in spring and autumn. It is the one supply-side quantity genuinely knowable in advance, and it belongs to the class the horizon research says survives past the 5-7 day weather boundary: the forward calendar, dated by construction, with no horizon limit. We are reading the single most forecastable input backwards.\n\nTHE TRACKING FAILURE, stated plainly because it is the more important half. This was agreed in conversation at least twice and NEVER BECAME A REGISTRY LINE. Searched S112: 'nuclear' appears in the registry only inside M-6's title (an item about COAL) and in a research briefing's Tier 3 (an item about NON-nuclear thermal). It had no id, no status, and no place on the andon board, so nothing could report it overdue and it surfaced only because Greg remembered.\n\nTHE MECHANISM GAP IT EXPOSES - D30 one level down: OPEN_ITEMS.json enforces tracking at the ITEM level, but a commitment living inside another item's PROSE is invisible to the count. plant_status can say '40 open items'; it cannot say 'and one thing agreed twice that belongs to no item'. The registry catches items that were entered. It cannot catch a decision that was never entered, and that is exactly what happened here. THE DISCIPLINE THAT WAS MISSING: a thing agreed in conversation becomes a registry line IN THAT SESSION, before the session ends - not when someone remembers.\n\nSOURCES, all free: NRC publishes daily reactor status (power level per unit, so an outage is visible as it happens) and licensees file refuelling schedules; ISO planned-outage postings carry forward dates - ERCOT NP3-233-CD is 168-hour hourly, PJM frcstd_gen_outages runs 90 days. Pair with A-15: nuclear_mwh is already served and read by ZERO plays, so a forward schedule with no consumer would repeat the same failure in a new field.",
+   "blocked_by": null,
+   "reraised": "at least twice, across sessions"
+  },
+  {
    "id": "M-1",
    "title": "Unify the two magnitude dialects (guessed_net_usd vs expected_magnitude_usd)",
    "source": "TURNAROUND_MEMO_S110 s1.3 (FIX,S)",
