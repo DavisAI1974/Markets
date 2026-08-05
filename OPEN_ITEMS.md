@@ -14,13 +14,13 @@ By size: **XS** 9, **S** 27, **M** 20, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
+By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 11, **REST** 45
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (7)
+## ESSENTIAL (5)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -29,9 +29,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 | **A-14** | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it. The four missing early-close dates land in g8 and g9, so this is a live wrong-day-class defect on walked groups, not a future risk. XS. |
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
-| **A-12** | S | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | Same module, live wrong value. vol_regime.n0_prev_* is a PER-BLOCK CONSTANT and is only valid on a block's first day - so on days 2-10 the blind is reading a stale number as if it were current. Do it with G-28 in one pass. |
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
-| **G-28** | S | VOL REGIME: Markov-switching form, and a LEAK to check in the state probability | A LEAK, and the leakage gate is non-negotiable. If vol_regime uses a SMOOTHED state probability anywhere, every historical group was conditioned on information the day did not have - in the module built to condition MAGNITUDE, the brain's own stated dominant residual. Until this is checked, no group's magnitudes mean what they claim. Cheapest possible check on the whole list relative to what it invalidates. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
 ## BIGGEST WIN (11)
@@ -52,7 +50,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 
-## REST (43)
+## REST (45)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -63,6 +61,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 | **G-21** | XS | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
 | **G-26** | XS | BCOM/GSCI ROLL: demote from alpha to a liquidity-regime flag | - |
 | **G-27** | XS | STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input | - |
+| **A-12** | S | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | DEMOTED FROM ESSENTIAL S113. The 'live wrong value' half was the age field, and that is fixed at source and registered as a defect. What remains is a NAMING decision on a value that is correct and correctly masked - real, small, and it gates nothing. |
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
 | **A-3** | S | Compute the effective matching dimension d of any retrieval | - |
@@ -77,6 +76,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 | **G-20** | S | EIA-930: declare a BASIS field - the feed has documented, invisible defects | - |
 | **G-23** | S | MODEL DISAGREEMENT and ENSEMBLE SPREAD are two different variables and we hold one | - |
 | **G-25** | S | TROPICAL: the sign has INVERTED post-shale and our feed does not know it | - |
+| **G-28** | S | VOL REGIME: Markov-switching form, and a LEAK to check in the state probability | DEMOTED FROM ESSENTIAL S113. It was essential as a LEAK CHECK and the leak does not exist - checked, negative, recorded. What is left is a modelling improvement (Markov-switching form), which gates nothing and blocks no group. |
 | **G-3** | S | Recompute COT as a CHANGE (Q = delta-net / OI), split MM vs Producer, three decay windows | - |
 | **G-6** | S | Forecast PROGRESSION deltas by block (1-5, 6-10, 11-15) | - |
 | **G-9** | S | Degree-day-adjusted balance residual (weather-normalised tightness) | - |
@@ -111,9 +111,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 | **A-14** | ESSENTIAL | XS | OPEN | S112 | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it | - |
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
-| **A-12** | ESSENTIAL | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
-| **G-28** | ESSENTIAL | S | OPEN | S111 (recommendation); S112  | VOL REGIME: Markov-switching form, and a LEAK to check in the state probability | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-16** | BIGGEST_WIN | XS | OPEN | S112 | SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -131,6 +129,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
 | **G-26** | REST | XS | OPEN | S111 (recommendation); S112  | BCOM/GSCI ROLL: demote from alpha to a liquidity-regime flag | - |
 | **G-27** | REST | XS | OPEN | S111 (recommendation); S112  | STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input | - |
+| **A-12** | REST | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
@@ -145,6 +144,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 | **G-20** | REST | S | OPEN | S111 (recommendation); S112  | EIA-930: declare a BASIS field - the feed has documented, invisible defects | - |
 | **G-23** | REST | S | OPEN | S111 (recommendation); S112  | MODEL DISAGREEMENT and ENSEMBLE SPREAD are two different variables and we hold one | - |
 | **G-25** | REST | S | OPEN | S111 (recommendation); S112  | TROPICAL: the sign has INVERTED post-shale and our feed does not know it | - |
+| **G-28** | REST | S | OPEN | S111 (recommendation); S112  | VOL REGIME: Markov-switching form, and a LEAK to check in the state probability | - |
 | **G-3** | REST | S | OPEN | S111 | Recompute COT as a CHANGE (Q = delta-net / OI), split MM vs Producer, three decay windows | - |
 | **G-6** | REST | S | OPEN | S111 | Forecast PROGRESSION deltas by block (1-5, 6-10, 11-15) | G-5 |
 | **G-9** | REST | S | OPEN | S111 | Degree-day-adjusted balance residual (weather-normalised tightness) | - |
@@ -233,22 +233,6 @@ CHARACTER OF THE SERIES, so nobody over-reads it: PROMPT-QUARTER delivery, not a
 
 ---
 
-### [ESSENTIAL] A-12 - vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day
-
-*size S | OPEN | raised S112*
-
-**Why it is ESSENTIAL:** Same module, live wrong value. vol_regime.n0_prev_* is a PER-BLOCK CONSTANT and is only valid on a block's first day - so on days 2-10 the blind is reading a stale number as if it were current. Do it with G-28 in one pass.
-
-**Source:** S112, settling a conflict between two subagents
-
-MEASURED: vol_regime.n0_prev_net has exactly ONE distinct value across all ten days of each block (g20 -1000, g21 -1350, g22 -80, g23 +270) and the block carries masked_one_shot true - it reports the ANCHOR session, frozen, not the prior session. It reads like 'prior session net move in USD' and is the hole-#8 shape: present, numeric, in range, right owner, wrong session.
-
-THE SCOPE THAT MAKES IT SUBTLE: on a block's FIRST day the frozen anchor and the true prior session COINCIDE BY CONSTRUCTION. g21's first scored day is 20260608 and the session before it is 20260605 - g20's last day, net_usd -1350 - which is exactly g21's frozen value. So a derivation off this field is sound on day 1 and a trap on days 2-10. Two S112 subagents disagreed about it and both were right in their own cell, which is D31's own shape arriving in the tooling.
-
-ACTION: either serve a true per-day prior-session net, or rename the field so it cannot be read as one, or gate it to the block's first day. Any of the three; leaving it as-is guarantees the trap is taken again.
-
----
-
 ### [ESSENTIAL] A-13 - SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today
 
 *size S | OPEN | raised S112*
@@ -270,20 +254,6 @@ S112 UPDATE - GREG RAISED IT INDEPENDENTLY AND IT SHARPENS THE FIX: 'The agents 
 AND MY EARLIER CAUTION HERE WAS WRONG, corrected: I wrote that a per-day CAL_FACTS would have to be truncated at the decision point to avoid look-ahead. But the state ALREADY serves forward calendar - days_to_next_eia_release, days_to_futures_expiry, days_to_opex and next_eia_release_datetime_et are dated ahead by construction. Calendar is deterministic and public, and D2's one deliberate mask is the PRICE CURVE. Forward holiday facts are the same class the blind already reads.
 
 BUILT AND TESTED, AWAITING THE TEMPLATE EDIT: spawn.py day_calendar() emits prior/next trading session, the calendar-day gap with what was skipped, this session's class, and upcoming non-normal sessions - computed from plant_calendar RULES rather than the CME_HOLIDAYS table, which ends 2027-02-15. Worked cases now covered by selftest: 20260706 reports its prior session as 20260703 (Independence Day observed, partial), 3 days back, skipping Sat and Sun; 20260526 reports that it inherits FROM Memorial Day, a partial session with reduced tape, which no specialist could previously see. The only thing left is adding {DAY_CALENDAR} to BLD-1 and RFN-1, which is a change-controlled SOP edit (D10) needing Greg's go and a version-log entry.
-
----
-
-### [ESSENTIAL] G-28 - VOL REGIME: Markov-switching form, and a LEAK to check in the state probability
-
-*size S | OPEN | raised S111 (recommendation); S112 (registered)*
-
-**Why it is ESSENTIAL:** A LEAK, and the leakage gate is non-negotiable. If vol_regime uses a SMOOTHED state probability anywhere, every historical group was conditioned on information the day did not have - in the module built to condition MAGNITUDE, the brain's own stated dominant residual. Until this is checked, no group's magnitudes mean what they claim. Cheapest possible check on the whole list relative to what it invalidates.
-
-**Source:** GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item
-
-Item 13, and the leak is the load-bearing half. The gas-specific literature favours the discrete MARKOV-SWITCHING version of the regime rather than a threshold on realized vol.
-
-THE LEAK: the published or SMOOTHED state probability is computed WITH HINDSIGHT; the real-time FILTERED state is materially noisier and is what a live system would actually have had. If our vol_regime uses a smoothed probability anywhere, every historical group was conditioned on information the day did not have - and vol_regime is the module built to condition MAGNITUDE, the brain's own stated dominant residual. CHECK THIS BEFORE THE NEXT GROUP: it is a leakage question, and the leakage gate is non-negotiable. Note vol_regime was already dead on a hardcoded SPAN_END for five groups (defect h-vol_regime), so this block has form.
 
 ---
 
@@ -603,11 +573,25 @@ Item 12. Measured in the briefing: EIA experts WIN at h=9-12 months and LOSE BAD
 
 ---
 
+### [REST] A-12 - vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day
+
+*size S | OPEN | raised S112*
+
+**Why it is REST:** DEMOTED FROM ESSENTIAL S113. The 'live wrong value' half was the age field, and that is fixed at source and registered as a defect. What remains is a NAMING decision on a value that is correct and correctly masked - real, small, and it gates nothing.
+
+**Source:** S112, settling a conflict between two subagents
+
+ROOT-CAUSED S113, AND ONE OF THIS ITEM'S THREE PROPOSED FIXES WOULD BE A PRICE LEAK - corrected here before anyone builds it. The constancy is NOT a bug in vol_regime.py. It is the one-shot price mask working as designed: vol_regime is in forecast_harness._PRICE_DERIVED_BLOCKS, so on every day after the anchor the WHOLE block is replaced by the anchor-vintage block. n0_prev_net is (close-open) of a session - that IS price content, and serving a true per-day prior-session net to the blind would hand it the block's own realized path. So proposed fix (1) 'serve a true per-day prior-session net' VIOLATES D2 and must not be built. Fixes (2) rename/ declare and (3) gate to day 1 remain sound. AND THE ITEM'S 'hole-#8 shape: present, numeric, in range, right owner, wrong session' IS TOO HARSH ON THE VALUE AND TOO SOFT ON WHAT IS ACTUALLY WRONG. The block declares its vintage four ways - n0_prev_date names the exact session (g20: 2026-05-22 on all ten days), plus masked_one_shot, vintage_asof and the mask note. Hole #8's signature was UNDECLARED; this value is declared. What is genuinely wrong is the field beside it: n0_prev_age_days reads 1 on every day of every block, so on day 10 the state says the conditioner is one day old when it is fourteen. THE FIELD BUILT TO DECLARE STALENESS IS THE ONE THE FREEZE FALSIFIED. That is now registered as defect h-frozen_countdowns and FIXED AT SOURCE (S113, forecast_harness._relive_distance_fields), and it generalises well beyond vol_regime - the same freeze was falsifying cash_basis.age_days and three contract_structure expiry countdowns. WHAT IS LEFT ON THIS ITEM: decide between (2) and (3) for n0_prev_net itself. My recommendation is (2) - the value is correct and correctly masked, so it needs a clearer name or an explicit per-field basis declaration (the S109 session_b_share_basis pattern), not a different number.
+
+---
+
 ### [REST] A-17 - NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112
 
 *size S | OPEN | raised pre-S112, exact session unrecorded - which is itself the defect*
 
 **Source:** Greg, raised again S112: 'We had talked already about getting the maintenance schedule for the nukes... we actually just had to revisit the nuke discussion for the 2nd time a few sessions ago and we still haven't addressed it'
+
+**Already delegated:** S113 TASK 1 (forward nuclear outage schedule sources). DELIVERED and COMMITTED as research/kalshi/CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md. Do not re-ask: the unit-level forward calendar was searched and found not to exist publicly.
 
 WHAT WE HAVE vs WHAT WAS ASKED FOR. Served today: nuclear_outages.{capacity_out_mw, capacity_out_gw, pct_of_fleet_out, chg_1d_mw, chg_7d_mw, age_days} - all REALIZED or current, age 1 day, built as feed R arm 1 at S99. Served nowhere: any FORWARD planned-outage schedule. There is no planned start or end date in any block.
 
@@ -618,6 +602,14 @@ THE TRACKING FAILURE, stated plainly because it is the more important half. This
 THE MECHANISM GAP IT EXPOSES - D30 one level down: OPEN_ITEMS.json enforces tracking at the ITEM level, but a commitment living inside another item's PROSE is invisible to the count. plant_status can say '40 open items'; it cannot say 'and one thing agreed twice that belongs to no item'. The registry catches items that were entered. It cannot catch a decision that was never entered, and that is exactly what happened here. THE DISCIPLINE THAT WAS MISSING: a thing agreed in conversation becomes a registry line IN THAT SESSION, before the session ends - not when someone remembers.
 
 SOURCES, all free: NRC publishes daily reactor status (power level per unit, so an outage is visible as it happens) and licensees file refuelling schedules; ISO planned-outage postings carry forward dates - ERCOT NP3-233-CD is 168-hour hourly, PJM frcstd_gen_outages runs 90 days. Pair with A-15: nuclear_mwh is already served and read by ZERO plays, so a forward schedule with no consumer would repeat the same failure in a new field.
+
+ANSWERED S113 (research/kalshi/CHATGPT_S113_T1_NUCLEAR_OUTAGE_SOURCES.md), AND IT REFUTES A PREMISE IN THIS ENTRY. I wrote that nuclear refuelling is 'planned 12-18 months ahead, PUBLICLY POSTED'. The planning is real; the public posting is not. SEARCHED AND FOUND NOTHING: no rule or endpoint requires licensees to publish exact planned unit start/end dates ahead of time. Duke states outage scheduling happens ~12 months out - internally. PJM states plainly that individual generator outages are CONFIDENTIAL and only aggregates are released. Georgia PSC requires monthly plant outage reports but with a trade-secret copy. So 'the most schedulable event in the power system' is schedulable and NOT public, which is a different item from the one I registered.
+
+WHAT IS ACTUALLY BUILDABLE, and the report's split is right, so adopt it: (A) PUBLIC AGGREGATE FORWARD OUTAGE - ERCOT NP3-233-CD 168h hourly (registration + bearer token, 30 req/min), PJM frcstd_gen_outages 90 days daily (account required; INTERNAL USE ONLY, redistribution prohibited - carry that restriction in the adapter metadata), MISO GetGenerationOutagesPlusMinusFiveDays (JSON, no auth observed), SPP capacity-of-generation-on-outage 7 days hourly. (B) UNIT-LEVEL FORWARD NUCLEAR - an OPEN measured public-data gap, not a build. (C) REALIZED nuclear truth - NRC daily status, free, back to 1999, header literally 'ReportDt|Unit|Power', with the daily HTML page carrying Down/Reason and coastdown-to-refuelling (a short real lead, not a calendar). (D) COAL - EIA-860M monthly workbook, Operating/Planned/Retired tabs with planned retirement dates; keep every monthly vintage because the dates get revised. That is M-6's other half.
+
+SPP IS THE ONLY FORWARD PRODUCT THAT SEPARATES BY FUEL TYPE, so it is the single public source that isolates nuclear outage capacity forward at all. Everything else is fuel-blind aggregate and CANNOT be resolved to a unit - the report's standing rule, and ours: do not infer a unit-level refuelling calendar from aggregate MW.
+
+AND THE GAP LANDS EXACTLY WHERE WE ARE ALREADY SHORT: 'the non-ISO Southeast has no standardized public equivalent' is the report's largest named hole. Put beside S112 T3 (EIA-930 gives the Southeast forward LOAD but no forward wind or solar) and A-20 (only TVA publishes forward water), the pattern is one finding: THE REGION WE MOST NEED FORWARD DATA FOR IS THE ONE WITH THE LEAST OF IT, ACROSS ALL THREE STACK TERMS. That is worth stating before we size any Southeast work.
 
 ---
 
@@ -790,6 +782,18 @@ CARRY BOTH. Pairs with G-5 (ensemble members through our own GWDD weighting), wh
 Item 10, and it is a live wrong-sign risk rather than a gap. We BUILT and smoke-tested the tropical feed at S110. The briefing says its sign inverted: offshore Gulf production is now a small share of supply while LNG EXPORT CAPACITY IS CONCENTRATED ON THE GULF COAST, so a single landfall at Sabine Pass could affect roughly half of US LNG capacity - about 12% of total US consumption. A storm now more often destroys DEMAND than supply, and trade press documents gas WEAKENING on tropical risk.
 
 DIRECTION DEPENDS ON TRACK relative to export terminals versus production and CANNOT BE ASSUMED - so this is not a sign flip to hardcode, it is a track-conditional read the feed has to carry. And it connects to D35: Gulf LNG feedgas is the most HH-coupled demand there is, so this lands on the target directly.
+
+---
+
+### [REST] G-28 - VOL REGIME: Markov-switching form, and a LEAK to check in the state probability
+
+*size S | OPEN | raised S111 (recommendation); S112 (registered)*
+
+**Why it is REST:** DEMOTED FROM ESSENTIAL S113. It was essential as a LEAK CHECK and the leak does not exist - checked, negative, recorded. What is left is a modelling improvement (Markov-switching form), which gates nothing and blocks no group.
+
+**Source:** GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item
+
+THE LEAK HALF IS ANSWERED S113, AND THE ANSWER IS A CLEAN NEGATIVE: there is no smoothed state probability, because there is no state model at all. vol_regime.py is a TRAILING-WINDOW descriptive feed - prior-session net/range/trades, net sigma over 5/10/20 prior sessions, range means, a 60-session range percentile and an activity trend. Its blind wall is ASSERTED on every window build (_basis_fields: `assert all(s['date'] < iso for s in prior)`) and AUDITED in --selftest by a full field-by-field recompute per date x basis, with the violation count required to be 0. A repo-wide sweep for markov / hmm / viterbi / kalman / state_prob / regime_prob / savgol / centered-rolling / ewm returns NOTHING in the feed set; the single 'smoothed' hit is live_dipole_update._smoothed_accuracy, a Beta(1,1) Laplace prior on a hit rate, which is not a state probability and carries no hindsight. SO NO HISTORICAL GROUP'S MAGNITUDES ARE INVALIDATED BY THIS - the essential-tier framing ('until this is checked, no group's magnitudes mean what they claim') is discharged, as a negative. The briefing was RECOMMENDING we adopt the Markov-switching form and warning about a leak we would introduce building it naively; it was not reporting one we had. CAVEAT KEPT HONEST: the selftest's blind-wall audit could not be EXECUTED this session because it needs data/vol_regime/, which does not survive a session - the verification above is a code audit plus the committed states, not a run of the audit itself. Re-run --selftest at the next restore. WHAT REMAINS OPEN is the FORM half: the gas-specific literature favours a discrete Markov-switching regime over a threshold on realized vol. That is a build, not a leak, and if it is ever built the CAUSAL requirement is now recorded: use the FILTERED state probability, never the smoothed one, and the same rule applies to the weather-regime label (S112 T5 requires a causal 10-day low-pass; a centred smoother leaks). Two independent warnings about the same construction - treat any smoothed or centred state variable as a leak candidate by default.
 
 ---
 

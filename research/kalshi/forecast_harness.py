@@ -620,6 +620,108 @@ def _freeze_risk_block(iso: str) -> dict | None:
 
 _PRICE_DERIVED_BLOCKS = ("contract_structure", "squeeze_watch", "vol_regime", "cash_basis", "options_surface")
 
+# ---- S113 (G-28 sweep / A-12 root cause): A VINTAGE IS MASKED. A DISTANCE FROM TODAY TO THAT
+# VINTAGE IS NOT.
+#
+# The one-shot freeze correctly holds every PRICE-derived value at the anchor vintage (D2: the
+# blind's one deliberate mask is the price curve). It was also freezing the fields that express
+# "how many days between the reading day and some date" - and those are not price content. They
+# are calendar arithmetic between two dates the specialist already has: a published expiry, or the
+# vintage the block itself declares. `contract_structure`'s own source comment says it outright -
+# "days_to_front_expiry (calendar fact about `date`; expiry published months earlier)". A calendar
+# fact about `date`, frozen against a different date, is simply wrong.
+#
+# MEASURED on the committed states, g20-g23, before the fix:
+#   vol_regime.n0_prev_age_days              1  on every day of every block (true value day 10: 14)
+#   cash_basis.age_days                      4  on every day of g23        (true value day 10: 17)
+#   contract_structure.days_to_front_expiry  39 on every day of g23        (true value day 10: 29)
+#   contract_structure.days_to_calendar_front_expiry 18 on every day of g23 (true: 8)
+# So on the last day of a block a specialist was told the vol conditioner it is weighting was ONE
+# day old when it was fourteen, and that the front expires in 39 business days when it expires in
+# 29. Both gate real decisions (staleness gates weight; expiry proximity gates squeeze and roll).
+#
+# THE STATE ALREADY CONTAINED ITS OWN DISPROOF, which is why this is a defect and not a design
+# choice: `squeeze_watch` carries days_to_calendar_front_expiry FROZEN at 18 beside
+# days_to_calendar_front_expiry_live which correctly runs 17 -> 8 (the S108 hole-#10 fix, which
+# repaired that one field and left its frozen twin next to it), and `flow_calendar`, never masked,
+# serves the same countdown live. Two answers to one question in one file.
+#
+# S107 already met a narrow form of this - the freeze OUTLIVING the contract it describes - and
+# annotated it (`frozen_front_expired` / `frozen_structure_stale`). But that flag only fires once
+# the expiry has actually passed. On every earlier day the countdown was silently wrong by exactly
+# the days elapsed since the anchor, with no flag at all.
+#
+# THE MAPPING IS PROVEN, NOT GUESSED. Each field below was verified by recomputing it AT THE FREEZE
+# REFERENCE DATE and requiring it to reproduce the frozen value exactly: 20 of 20 across g20-g23 x
+# 5 fields. (The reference is mask_after + 1 day, the anchor-CLOSE vintage built above - checking
+# against `vintage_asof` itself puts the three calendar-day fields out by exactly one, which is how
+# the reference date was pinned rather than assumed.)
+#
+# WHAT IS DELIBERATELY NOT DONE: `squeeze_watch.days_to_calendar_front_expiry` has no expiry date
+# inside its own block, so it is NOT resolved from a neighbouring block. Guessing a source field is
+# the fuzzy-matching error that produced holes #8 and #9. It is reported unresolved, pointing at the
+# `_live` twin that already carries the right number.
+_RELIVE_FIELDS = (
+    # (block, field, kind, source-date field IN THE SAME BLOCK)
+    ("contract_structure", "days_to_calendar_front_expiry", "bus_to", "calendar_front_expiry"),
+    ("contract_structure", "days_to_front_expiry", "bus_to", "front_expiry"),
+    ("contract_structure", "days_to_front_expiry_calendar", "cal_to", "front_expiry"),
+    ("cash_basis", "age_days", "cal_since", "hh_spot_gas_day"),
+    ("vol_regime", "n0_prev_age_days", "cal_since", "n0_prev_date"),
+    ("vol_regime", "v0_prev_age_days", "cal_since", "v0_prev_date"),
+)
+_RELIVE_UNRESOLVED = {
+    ("squeeze_watch", "days_to_calendar_front_expiry"):
+        "no expiry date is served inside squeeze_watch, and resolving it from another block would "
+        "be a guess; days_to_calendar_front_expiry_live in this same block already carries the "
+        "live countdown - use it",
+}
+
+
+def _relive_distance_fields(blk: str, block: dict, iso: str) -> dict:
+    """Recompute the frozen block's DISTANCE-FROM-TODAY fields against the reading day.
+
+    Price values stay frozen; only day-counts move. Every change DECLARES itself in `_relived` (a
+    value that changes must say it changed - the S109 `session_b_share_basis` pattern), and any
+    field whose source date is absent is reported in `_relive_unresolved` rather than being
+    silently left wrong or silently guessed. Pure: mutates and returns the block it is given.
+    """
+    import contract_structure as _cst
+
+    def _cal(a: str, b: str):
+        return (datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)).days
+
+    relived, unresolved = [], []
+    for _blk, field, kind, src in _RELIVE_FIELDS:
+        if _blk != blk or field not in block:
+            continue
+        sd = block.get(src)
+        if not sd:
+            if block.get(field) is not None:
+                unresolved.append({"field": field, "reason": f"source date {src} absent"})
+            continue
+        was = block.get(field)
+        if kind == "bus_to":
+            now = _cst.business_days_between(iso, sd)
+        elif kind == "cal_to":
+            now = _cal(iso, sd)
+        else:
+            now = _cal(sd, iso)
+        if now != was:
+            block[field] = now
+            relived.append({"field": field, "frozen": was, "live": now, "source": src})
+    for (_blk, field), why in _RELIVE_UNRESOLVED.items():
+        if _blk == blk and block.get(field) is not None:
+            unresolved.append({"field": field, "reason": why})
+    if relived:
+        block["_relived"] = relived
+        block["_relive_note"] = ("the VALUES here are frozen at the anchor vintage; these day-counts "
+                                 "are not - a distance from today to a published date is calendar "
+                                 "arithmetic, not price content, and is computed against THIS day")
+    if unresolved:
+        block["_relive_unresolved"] = unresolved
+    return block
+
 # ---- tape_conditions (S102, Greg's OPEN-CONDITIONS directive): NON-PRICE market conditions of the
 # PRIOR session, served LIVE even under the one-shot mask. The blind forecasts price from market
 # conditions - it sees everything the market generated except the price curve itself (settles, nets,
@@ -944,6 +1046,8 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
                 fv = frozen[blk]
                 out[d][blk] = ({"masked_one_shot": True, "vintage_asof": mask_after} | fv) if fv else \
                               {"masked_one_shot": True, "vintage_asof": mask_after, "value": None}
+                if fv:
+                    _relive_distance_fields(blk, out[d][blk], iso)
             out[d]["curve_regime"] = frozen["curve_regime"]
             out[d]["_mask_note"] = ("price-derived blocks FROZEN at the block-anchor vintage (one-shot "
                                     "masking fix, brain s101.3 item 10) - the deterministic expiry/print "

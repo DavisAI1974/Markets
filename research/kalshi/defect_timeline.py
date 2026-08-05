@@ -54,6 +54,53 @@ RETRO, FWD, OPEN = "RETRO_REPAIRED", "FORWARD_ONLY", "OPEN"
 # re-verified here, `verified` says so - never a silent assumption.
 # --------------------------------------------------------------------------------------
 DEFECTS = [
+    dict(id="h-frozen_countdowns", found="S113", fixed="S113", repair=FWD,
+         groups=[16, 17, 18, 19, 20, 21, 22, 23],
+         quantities=["vol_regime.n0_prev_age_days", "vol_regime.v0_prev_age_days",
+                     "cash_basis.age_days", "contract_structure.days_to_front_expiry",
+                     "contract_structure.days_to_calendar_front_expiry",
+                     "contract_structure.days_to_front_expiry_calendar",
+                     "squeeze_watch.days_to_calendar_front_expiry"],
+         what="THE ONE-SHOT PRICE MASK FROZE THE DISTANCE-FROM-TODAY FIELDS ALONG WITH THE PRICES. "
+              "A vintage is masked; the number of days between the reading day and that vintage is "
+              "not price content - it is calendar arithmetic on two dates the specialist already "
+              "has, and contract_structure's own source calls days_to_front_expiry 'a calendar "
+              "fact about `date`; expiry published months earlier'. MEASURED on committed states: "
+              "n0_prev_age_days reads 1 on EVERY day of EVERY block (true value on day 10: 14); "
+              "cash_basis.age_days reads 4 (true: 17); g23 days_to_front_expiry reads 39 (true: "
+              "29) and days_to_calendar_front_expiry reads 18 (true: 8). On g20 and g22 the "
+              "corrected countdown is NEGATIVE (-7, -4) - the frozen field showed 2 and 5 days "
+              "remaining on a calendar front that had already expired. So the field built to "
+              "declare staleness was the one field the freeze silently falsified. THE STATE "
+              "CONTAINED ITS OWN DISPROOF: squeeze_watch carries the frozen countdown beside "
+              "days_to_calendar_front_expiry_live which correctly runs 17 -> 8 (the S108 hole-#10 "
+              "fix repaired one field and left its frozen twin next to it), and flow_calendar, "
+              "never masked, serves the same countdown live - two answers to one question in one "
+              "file. S107 met the narrow form of this (the freeze OUTLIVING its contract) and "
+              "annotated it with frozen_front_expired, but that flag only fires once expiry has "
+              "passed; on every earlier day the countdown was wrong by exactly the days elapsed "
+              "since the anchor, unflagged.",
+         fix="S113 forecast_harness._relive_distance_fields: in the frozen block, any field "
+             "expressing a distance to a date is recomputed against the READING day using the "
+             "block's own declared source date and contract_structure's own business_days_between "
+             "(the same function, never a reimplementation - the f2 second-reader lesson). Every "
+             "change declares itself in _relived; a field whose source date is not in its own "
+             "block is REFUSED and reported in _relive_unresolved rather than guessed "
+             "(squeeze_watch has no expiry date of its own, so it is left frozen and pointed at "
+             "its _live twin).",
+         verified="D11 execution-verified against the committed g20-g23 states without a data "
+                  "plane: the mapping was PROVEN by recomputing each field at the freeze reference "
+                  "date and requiring it to reproduce the frozen value exactly - 20 of 20 across "
+                  "4 groups x 5 fields (and checking against vintage_asof instead put the three "
+                  "calendar-day fields out by exactly 1, which is how the reference was pinned to "
+                  "mask_after+1 rather than assumed). Re-running at the reference is a no-op, the "
+                  "function is idempotent, and squeeze_watch is confirmed unchanged-and-declared. "
+                  "FORWARD_ONLY BY CHOICE: the correct values are pure arithmetic on dates already "
+                  "in the committed states, so a retro-repair is possible without keys (the S109 "
+                  "bshare_restage_repair precedent) - but g20-g23 are RUN groups and rewriting the "
+                  "state a specialist actually read would falsify the record. Greg's call, not "
+                  "mine. A standing state_health guard is the remaining piece; this is BUILT and "
+                  "verified, not yet guarded."),
     dict(id="h-vol_regime", found="S107", fixed="S107", repair=FWD,
          groups=[16, 17, 18, 19, 20],
          quantities=["vol_regime"],
