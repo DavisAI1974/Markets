@@ -146,6 +146,41 @@ def main() -> int:
     say("WARN" if not keys else "PASS", "keys",
         ("aws.env present" if keys else "no aws.env (expected fresh session; needed only for staging/restore)"))
 
+    # 9. THE TRACKED WORK REGISTRY (S111, D30 - a finding with no home does not exist).
+    # Seven S110 turnaround-memo items were found undone in S111 because they lived only in prose.
+    # This row makes an open item impossible to overlook at bring-up: it is printed every session,
+    # and staleness (sessions_open) is what surfaces the decided-then-dropped pattern.
+    oi = os.path.join(HERE, "OPEN_ITEMS.json")
+    if not os.path.exists(oi):
+        say("WARN", "open-items", "OPEN_ITEMS.json ABSENT - the tracked work registry is the D30 "
+                                  "enforcement; without it findings live in prose and get dropped")
+    else:
+        try:
+            reg = json.load(open(oi, encoding="utf-8"))
+            items = reg.get("items", [])
+            cur_s = int(re.search(r"\d+", reg.get("current_session", "S0")).group())
+            openish = [i for i in items if i.get("status") in ("OPEN", "IN_PROGRESS", "BLOCKED")]
+            done = [i for i in items if i.get("status") == "DONE"]
+            stale2 = []
+            for i in openish:
+                m2 = re.search(r"\d+", str(i.get("first_raised", "")))
+                if m2 and cur_s - int(m2.group()) >= 2:
+                    stale2.append("%s(S%s)" % (i["id"], m2.group()))
+            xs = [i["id"] for i in openish if i.get("size") in ("XS",)]
+            say("WARN" if stale2 else "PASS", "open-items",
+                "%d open / %d done | carried 2+ sessions: %s | quickest first: %s"
+                % (len(openish), len(done), ",".join(stale2) or "none", ",".join(xs) or "-"))
+        except Exception as e:                                   # a corrupt registry is a finding
+            say("FAIL", "open-items", "OPEN_ITEMS.json unreadable: %s" % e)
+
+    # 10. THE ARCHITECTURE DOC - the target itself. Greg, S111: "how do we make sure the arch doc
+    # isn't overlooked?" Answer: the andon board names it every session, because the alternative is
+    # hoping someone remembers to read it, which is the exact failure this board exists to catch.
+    arch = os.path.join(HERE, "FORECAST_ARCHITECTURE_S111.md")
+    say("PASS" if os.path.exists(arch) else "FAIL", "architecture",
+        "FORECAST_ARCHITECTURE_S111.md - READ THIS FIRST; the product is a CURVE, the walk is a "
+        "LIBRARY BUILD (D32)" if os.path.exists(arch) else "ARCHITECTURE DOC MISSING")
+
     print("=" * 78)
     print("PLANT STATUS (andon) - read-only; this tool never fixes anything")
     print("=" * 78)
