@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 69 |
+| open | 70 |
 | in progress | 1 |
 | done | 9 |
 
-By size: **XS** 7, **S** 31, **M** 27, **L** 5
+By size: **XS** 8, **S** 31, **M** 27, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 16, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 17, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,12 +31,13 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 16, **REST** 50
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (16)
+## BIGGEST WIN (17)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
+| **A-32** | XS | INTERCHANGE (TI) IS NOT EVEN REQUESTED - and it is the instrument that says WHEN the reliability constraint binds | One element in a facet list on a feed we already pull, and it supplies the missing trigger for A-31 - which describes what happens once the reliability constraint binds but has no way to say when. Per-BA daily back to 2019 the moment it is added. |
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
@@ -121,6 +122,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 16, **REST** 50
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
+| **A-32** | BIGGEST_WIN | XS | OPEN | S113 | INTERCHANGE (TI) IS NOT EVEN REQUESTED - and it is the instrument that says WHEN the reliability constraint binds | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
@@ -279,6 +281,57 @@ BUILT AND TESTED, AWAITING THE TEMPLATE EDIT: spawn.py day_calendar() emits prio
 **Source:** S112 conditions curation, found independently by 4 of 8 batches
 
 MEASURED S112: chain age, chain polarity and cum_from_anchor are served in NO grp*_state.json. chain_age_sessions exists only in the per-boundary g*_he24_he1_handoffs.json. Consequence: every play keyed to chain state is unevaluable from the state a specialist is actually given, and the curation pass had to refuse them all. Batch 4's count is the sharpest: four of its seven refusals are the Friday/weekend/chain family and ALL fail on these same two quantities - serving them would make three plays curatable at once. Named refusals across batches: giveback_exhaustion_reversal_recognition, young_chain_extension_full_band, seam_chainage_accommodation_gate, friday_turn_exhaustion_gate, structure.mature_swing_alternation, level.giveback_origin_shelf, structure.covering_extension_distribution_flip, midweek.stretched_extreme_close_giveback, structure.friday_exhausted_extreme_giveback. This is the same fact the DECLINE audit reached from the other side - boundary.chain_label_must_track_realized_cum is 4-of-4 DATA_ABSENT - and it is why its caveat 'chain STATE travels in the handoff, which is never masked' is false on every price-masked run.
+
+---
+
+### [BIGGEST_WIN] A-32 - INTERCHANGE (TI) IS NOT EVEN REQUESTED - and it is the instrument that says WHEN the reliability constraint binds
+
+*size XS | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** One element in a facet list on a feed we already pull, and it supplies the missing trigger for A-31 - which describes what happens once the reliability constraint binds but has no way to say when. Per-BA daily back to 2019 the moment it is added.
+
+**Source:** Greg, S113: 'Reliability is always the trump card... You can buy energy on the market to import to cover load but if everyone is tight then price takes a backseat'
+
+Greg, S113, correcting my framing precisely: 'Reliability is always the trump card. It's just that it
+doesn't have to be played often. You can buy energy on the market to import to cover load but if everyone
+is tight then price takes a backseat while other things come online... it's the strong silent muscle bound
+dude who sits in the corner while his younger flashier little brother takes the spotlight but the big
+brother is the backbone that gives the younger brother the backing to be brash.'
+
+THE STRUCTURE IS A CONSTRAINT, NOT A MODE, and I had written it as a mode. The problem operators solve is
+MINIMISE COST SUBJECT TO SERVING LOAD RELIABLY. For most of the year that constraint is SLACK, so what is
+observed is pure cost minimisation - which is why 'price is king' is true almost all the time without
+reliability ever being absent. When the constraint BINDS, cost minimisation simply stops. There is no
+regime switch in anyone's head; there is a constraint that starts binding.
+
+AND THE IMPORT POINT IDENTIFIES WHAT MAKES IT BIND, WHICH I ALSO HAD WRONG. It is NOT local tightness. As
+long as ANY neighbour holds surplus you buy energy and satisfy reliability cheaply - the market itself is
+one of the cheap tools for meeting the constraint. The constraint binds only when EVERYONE IS TIGHT
+SIMULTANEOUSLY and there is nothing to import. That is why WIDESPREAD cold is dangerous in a way that
+merely severe LOCAL cold is not, and it means the regime trigger is a CORRELATION ACROSS BAs rather than a
+level in any one of them.
+
+THE MEASURABLE INSTRUMENT: when imports dry up, INTERCHANGE COLLAPSES TOWARD ZERO because no neighbour has
+surplus to send, and the BA must self-serve - which lands on gas, because gas owns the fast timescales.
+So interchange is the observable that says whether the cheap route to reliability is still open.
+
+MEASURED, AND IT IS THE CHEAPEST OF THE FIVE DROPPED-FIELD FINDINGS TODAY: grid_stack.py's own comment
+names 'interchange TI', but the request filter is facets[type][] = ['D','DF'] and the mapping is
+{'D': demand_mwh, 'DF': demand_forecast_mwh}. So unlike hydro, battery and wind - fetched then dropped at
+a serving list - TI IS NOT EVEN REQUESTED. It is excluded at the API call. Adding it is ONE ELEMENT in a
+facet list plus one line in a mapping, on a feed we already pull with a key we already have. (EIA-930
+region-data type codes: D demand, DF day-ahead demand forecast, NG NET GENERATION - not natural gas - and
+TI total interchange.)
+
+WHAT IT BUYS, and it is the missing half of A-31: that item describes what happens once the constraint
+binds but has no instrument saying WHEN it binds. Interchange is that instrument, and it is available
+per-BA daily back to 2019 the moment the facet is added, so the January 2026 event can be re-read
+immediately - the prediction is that regional interchange collapsed BEFORE the price spike, as neighbours
+ran out of surplus to sell.
+
+FALSIFIER: if interchange does NOT collapse ahead of a reliability event, the import-exhaustion account is
+wrong and the regime trigger must be something else - most likely a pure reserve-margin threshold, which
+would point back at the ISO reliability declarations instead.
 
 ---
 
