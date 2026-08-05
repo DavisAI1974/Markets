@@ -585,7 +585,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **153 files.**
+new tool cannot go unlisted. **154 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -694,6 +694,7 @@ new tool cannot go unlisted. **153 files.**
 - `options_md_measures.py` — FEED I phase MD: the free measurement program on the settle-IV surface
 - `options_replay.py` — E4: the settle-IV replay of the walked winter (OPTIONS_COACH_RESEARCH_S100.1).
 - `options_surface.py` — FEED I phase i (family DEL/P): NG options OI-by-strike pin map + opex clock (S99).
+- `per_event.py` — the reporting contract for any measurement on this desk.
 - `plant_calendar.py` — the plant's clock and work cycle. RULES, not a loaded table.
 - `plant_status.py` — THE ANDON BOARD (S110, turnaround memo 2.4). One command, no arguments.
 - `platform_sync.py` — the ONE door between local cache and the S3 data plane (S98 M2, AWS_PLATFORM_S98.md).

@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 65 |
+| open | 66 |
 | in progress | 1 |
-| done | 8 |
+| done | 9 |
 
-By size: **XS** 7, **S** 28, **M** 26, **L** 5
+By size: **XS** 7, **S** 28, **M** 27, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 13, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,7 +31,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (11)
+## BIGGEST WIN (13)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -42,6 +42,8 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
+| **A-27** | M | THE FLAT 7,900 Btu/kWh HEAT RATE - every MWh becomes Bcf via a constant, and it is the largest term in the balance | It sits under A-26 and every burn-to-storage statement, and it is the DOMINANT sensitivity: power burn is 210-263 Bcf/wk against weekly storage changes of +/-67-91 Bcf. |
+| **A-28** | M | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | It is the prerequisite under A-24g, A-27 and G-19, and it is why A-24c could not be settled. An ingest change on a feed we already pull, and it is the third instance of the same reduction mistake this desk has recorded. |
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **G-5** | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2). |
@@ -49,7 +51,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 
-## REST (51)
+## REST (50)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -88,7 +90,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **A-10** | M | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | - |
 | **A-24a** | M | Weather information ACCEPTANCE: revision size x model convergence x release timing | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-24b** | M | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
-| **A-24c** | M | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-24f** | M | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-6** | M | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
@@ -122,6 +123,8 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
+| **A-27** | BIGGEST_WIN | M | OPEN | S113 | THE FLAT 7,900 Btu/kWh HEAT RATE - every MWh becomes Bcf via a constant, and it is the largest term in the balance | - |
+| **A-28** | BIGGEST_WIN | M | OPEN | S113 | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | - |
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **G-5** | BIGGEST_WIN | M | OPEN | S111 | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | - |
@@ -161,7 +164,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | **A-10** | REST | M | OPEN | S112 | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | MBP-10 restore from S3 (needs AWS keys, absent this session) |
 | **A-24a** | REST | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24b** | REST | M | OPEN | S113 | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
-| **A-24c** | REST | M | OPEN | S113 | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-6** | REST | M | OPEN | S90 | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
@@ -188,6 +190,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 | A-14 | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it |
 | A-16 | XS | SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill |
 | A-22 | M | THE MASTER DATA-POINT REGISTRY - built S112 |
+| A-24c | M | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -390,6 +393,107 @@ WHAT IS NOT ESTABLISHED, stated so nobody weights anything with these numbers ye
 NEXT STEP: remove the common seasonal component (per-BA burn against its own seasonal norm, or against US48's contemporaneous burn) and re-measure, per season, never pooled. Then reconcile the served BA set to US48 and report the residual - that is the number that closes the list.
 
 AND A METHOD WARNING WORTH KEEPING: the POOLED column of the balance measurement INVERTS THE SIGN - US48 reads +0.178 pooled against -0.685 summer and -0.256 winter, because storage builds in summer and draws in winter. Pooled, we would have concluded that burning gas FILLS storage. D4 in the wild, on a correlation rather than an error.
+
+---
+
+### [BIGGEST_WIN] A-27 - THE FLAT 7,900 Btu/kWh HEAT RATE - every MWh becomes Bcf via a constant, and it is the largest term in the balance
+
+*size M | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** It sits under A-26 and every burn-to-storage statement, and it is the DOMINANT sensitivity: power burn is 210-263 Bcf/wk against weekly storage changes of +/-67-91 Bcf.
+
+**Source:** S113, found while closing A-24c; Greg: 'we also found a market signal along with a flaw'
+
+grid_stack.py converts generation to gas with HEAT_RATE_BTU_PER_KWH = 7,900, a single constant, served as
+est_gas_burn_bcfd. Its own note calls it 'an ESTIMATE (gas MWh x 7,900 Btu/kWh STEO-implied heat rate -
+stated method, not a measurement)', so the assumption is declared - but nothing downstream treats it as
+uncertain.
+
+WHY IT MATTERS AT THIS SIZE: measured S113, US48 power burn is 262.6 Bcf/wk in summer and 210.2 in winter
+against weekly storage changes of +66.8 and -91.1. The conversion term is 3-4x the quantity being
+forecast, so a few percent of heat-rate error is a large share of the weekly print.
+
+WHY IT CANNOT BE CONSTANT: fleet heat rate depends on how the fleet is RUNNING. Efficient CCGTs baseloading
+sit near 6,400-7,000 Btu/kWh; cycling, part-load and simple-cycle peaking run far worse. Renewables are
+must-take with near-zero capacity credit at the evening ramp, so as their share rises the gas fleet does
+not shrink - it CYCLES, at a worse average heat rate. The effective conversion therefore moves with
+renewable penetration, load shape and season, and has been drifting for years as renewables were added.
+
+AND IT IS A TIME-OF-DAY QUANTITY, which is why the daily store cannot settle it: the same daily gas MWh
+split as flat baseload versus a sharp evening ramp burns materially different amounts of gas. Pairs with
+A-28 - the hourly ingest is the prerequisite for measuring this properly.
+
+HOW TO MEASURE WITHOUT NEW SOURCES: EIA publishes implied heat rates, and we hold per-BA gas_mwh beside
+wind, solar and total generation daily back to 2019. Estimate effective weekly Btu/kWh and check whether it
+moves with renewable share and load factor. If it does, replace the constant with a SERVED, DECLARED
+conversion carrying its own basis field - the session_b_share_basis pattern - never another hardcoded
+number.
+
+SCOPE HONESTLY: a hypothesis that fits an observed sign, reached by elimination while closing A-24c, and
+NOT itself tested. It must not become the fourth story believed before it is checked.
+
+---
+
+### [BIGGEST_WIN] A-28 - WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest
+
+*size M | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** It is the prerequisite under A-24g, A-27 and G-19, and it is why A-24c could not be settled. An ingest change on a feed we already pull, and it is the third instance of the same reduction mistake this desk has recorded.
+
+**Source:** Greg, S113: 'And the time of day matters too.'
+
+Greg, S113: 'And the time of day matters too.' It does, and we discard it at ingest.
+
+MEASURED: grid_stack.py pulls https://api.eia.gov/v2/electricity/rto/daily-fuel-type-data and
+daily-region-data. EIA-930 publishes the same series HOURLY. So we chose the daily roll-up, and every
+downstream measurement inherits that choice - including the whole A-24c exercise, which then aggregated
+daily to WEEKLY and therefore tested a diurnal mechanism at 168x its natural resolution.
+
+WHY THE SHAPE IS THE MECHANISM, not a refinement of it: solar output collapses at sunset while load is
+still near peak, so the evening ramp is served by gas by construction (the duck curve); wind frequently
+peaks overnight when load is at its minimum, so its energy arrives when it is least needed. Two days with
+IDENTICAL daily renewable totals and IDENTICAL daily gas totals can have completely different gas
+behaviour, different peak burn, and different heat rates (A-27). A daily average is precisely the
+operation that destroys this.
+
+IT IS THE SAME REDUCTION MISTAKE ALREADY ON THE RECORD, twice: S90 named the daily degree-day store as 'the
+same reduction mistake' after building raw hourly weather ingestion, and A-21 carries it for the weather
+index (daily-mean degree days collapse the diurnal peak, and a 60F-to-96F day scores the same CDD as a flat
+78F day while drawing very different load). The grid store has the identical defect and nobody had written
+it down.
+
+WHAT IT UNBLOCKS: A-24g (sunset compression) is registered as blocked on exactly this and cannot be tested
+without it. A-27 (the flat heat rate) is a time-of-day quantity. G-19's battery field is an evening-ramp
+instrument and is meaningless daily - batteries charge midday and discharge into the peak, which nets to
+near zero over 24 hours, so the daily number hides the entire behaviour. A-24c should be re-tested here
+before it is treated as settled (D31: closed on the daily instrument, not refuted in principle).
+
+COST: an ingest change on a feed we already pull with a key we already have, plus storage volume - hourly
+is 24x the rows. Keep the daily roll-up as a derived view so nothing downstream breaks.
+THE SPECIFICATION, from Greg and it is the whole point of the item: 'Wind at night does nothing for gas
+demand. Wind at 7 in the morning does.'
+
+RENEWABLES ONLY MATTER TO GAS IN THE HOURS WHEN GAS IS ON THE MARGIN. Overnight, load sits at minimum and
+the marginal unit is coal or must-run; wind at 3am displaces coal or is curtailed, and gas barely moves.
+During the morning ramp gas IS the marginal unit, so the same MWh of wind displaces gas close to
+one-for-one. Two days with identical daily wind totals therefore have entirely different gas consequences
+depending on WHEN the wind blew - which a daily total cannot express, and which is why every daily and
+weekly test in A-24c was aimed at the wrong object.
+
+SO THE VARIABLE IS NOT WIND. It is RENEWABLE OUTPUT WEIGHTED BY WHETHER GAS IS MARGINAL IN THAT HOUR, and
+the weight is computable from the same hourly feed: gas share of generation in the hour, or the hour's
+position on the load curve. The two windows that matter are the MORNING RAMP and the EVENING RAMP after
+solar drops - the hours a utility actually dispatches gas to follow load.
+
+THIS ALSO RE-SCOPES THE BATTERY FIELD (G-19). A battery charges midday out of a surplus hour and discharges
+into the evening peak - a marginal hour. So a MWh of discharge at 7pm displaces gas roughly one-for-one
+while the midday charge takes from an hour where gas was not setting the margin. Daily, those two legs net
+to near zero and the entire behaviour disappears. battery_mwh is only interpretable hourly.
+
+AND IT SHARPENS A-27: the heat rate is worst exactly in these ramp hours, because that is when the fleet is
+cycling and part-loading rather than baseloading. So the hour that matters most for QUANTITY of gas is also
+the hour where the CONVERSION from MWh to Bcf is furthest from 7,900 Btu/kWh. The two errors compound in
+the same hours rather than cancelling.
 
 ---
 
@@ -946,82 +1050,6 @@ RANK 1 and the note's strongest candidate. We serve the SIZE of a GWDD revision 
 **Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
 
 RANK 2, and it is a CURVE-SHAPE candidate rather than a direction one, which is what D32 made the product. We hold three simultaneous descriptions of one storage event - headline surprise vs consensus, as-printed vs current vintage, and the regional location of the revision - and read only the first. A bullish headline CONFIRMED by revisions is a different event from a bullish headline OFFSET by them, even when the first price reaction has the same sign. Proposed as SIGN ALIGNMENT with no magnitude threshold, which is the right form under D23/D28 (a bar sited away from the centre of its distribution is what fails). Benchmark: headline surprise alone. Kill if alignment and regional topology do not change continuation, giveback or end-of-day direction WITHIN the same headline cells.
-
----
-
-### [REST] A-24c - Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition
-
-*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
-
-**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
-
-**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
-
-RANK 3. The claim is that identical US48 burn concentrated in one BA is a different physical event from the same burn synchronised across several, and that the same South Central inventory absorbs it differently depending on salt/nonsalt composition. It is a CONVERSION candidate - when does the same weather shock become a large HH shock - which is the question A-26 left open.
-MEASURED CAVEAT THAT MUST TRAVEL WITH IT: any breadth count runs on the six BAs we serve, and those sum to 169.3 of US48's 262.6 Bcf/wk of summer power burn - 64.5% coverage, ~93 Bcf/wk unserved. So 'number of BAs whose gas share rose' is a count over a set missing more than a third of the burn, and breadth is exactly the measure that biases with coverage. Do A-18 first or carry the coverage number beside every result. The note's own line that the BA count is an equal-count diagnostic rather than an equal-transmission claim is correct and is reinforced by A-26: the price channel is null, so no transmission weighting should be applied here at all.
-
-FIRST PASS RUN S113 on the restored plane, 391 storage weeks 2019-01-24..2026-07-16, against the note's own named benchmark (US48 burn alone), per season, never pooled.
-                 n    burn alone   +breadth   +dispersion   +d salt_share
-  summer       164        0.469      0.554        0.470          0.510
-  winter       160        0.065      0.126        0.134          0.462
-
-BREADTH SURVIVES AND IS THE ONE THAT MATTERS. Summer R2 0.469 -> 0.554 over burn alone. Breadth is the count of served BAs whose gas SHARE rose week-over-week, so it comes from EIA-930 daily generation - a DIFFERENT SOURCE from storage - and it is available at period+2, meaning the storage week is complete before Thursday's print. Independent and forward-legal, which is what makes it a candidate worth promoting rather than an artifact.
-
-DISPERSION IS REFUTED IN SUMMER: 0.470 against a 0.469 benchmark is nothing. Cross-BA dispersion of gas-share changes adds no information over the count. Scoped per D31 - refuted for this cell and this instrument (weekly, 6 BAs, share-change dispersion), not declared dead.
-
-SALT SHARE IS QUARANTINED, AND THE SECOND REASON IS FATAL. It posts the largest apparent lift (winter 0.065 -> 0.462) and must not be reported as a finding. (1) storage_regional.py:60 defines salt_share = salt level / SOUTH CENTRAL level - both storage levels, and South Central is a COMPONENT of L48 - so regressing the L48 change on a ratio built from the same levels is substantially an accounting relationship. Salt is high-deliverability short-cycle storage and draws faster in a cold snap, so a large L48 draw and a falling salt share co-occur by construction. (2) DECISIVE: salt_share and the L48 level are PUBLISHED IN THE SAME WEEKLY REPORT, so it cannot forecast the number it is measured against - it is the same print. That kills it as a forecast input whatever its R2. Kept in the record because a large number with an innocent explanation is exactly what gets promoted by accident.
-
-AND THE WINTER COLUMN CONFIRMS A-26 FROM A THIRD DIRECTION: burn alone explains R2 0.065 of winter storage change against 0.469 in summer. Power burn barely touches the winter balance, because the winter draw is residential and commercial heating that EIA-930 cannot see. This is a SUMMER instrument, measured three separate ways now.
-
-COVERAGE CAVEAT STILL BINDING: breadth is a count over six BAs summing to 64.5% of US48 power burn. Breadth is precisely the measure that biases with coverage, so the lift must be re-measured after A-18 lands rather than banked at this size.
-
-CORRECTED S113 ON GREG'S CATCH - I REPORTED R2, WHICH IS AN AVERAGE, AND THE RULE FORBIDS IT AS THE VERDICT. Greg: 'look at these numbers again individually and not averaged like our rule.' R2 is variance explained across all weeks; a model can post 0.554 and be catastrophically wrong on the weeks that matter. Re-run PER WEEK, D4 style - sum|err|, the distribution, and the individual events:
-  SUMMER  sum|err| 2947 -> 2709 Bcf (8% better) | 92 improved / 72 worsened = 56% of weeks |
-          |err| p50 15.1->13.3, p75 24.3->22.3, p90 35.1->31.2, but MAX 55.5 -> 60.0 WORSE
-  WINTER  sum|err| 11164 -> 10588 Bcf (5% better) | 88 / 72 = 55% | p75 98.7 -> 98.9 WORSE |
-          errors of 200-285 Bcf on weeks whose actuals are -250 to -360 Bcf
-
-WHAT THE AVERAGE WAS HIDING: the R2 lift came from getting a handful of LARGE-MOVE weeks somewhat less wrong, not from a broadly better model. Week by week it is 56/44 - near a coin flip - and the single worst summer week DETERIORATES. On winter extremes it is not close: 2026-02-05 actual -359 with a -202 error after breadth; 2024-01-25 actual -326 with the error GROWING from -174 to -214.
-
-REVISED VERDICT, replacing 'breadth survives and is the one that matters': breadth is a SMALL REAL improvement in summer and near-nothing in winter, and it is NOWHERE NEAR PROMOTABLE. Not refuted - 8% off sum|err| from an independent, forward-legal input keeps it a live candidate - but it does not carry the weight the R2 number implied. Anything built on it needs the per-week record beside it, never the fit statistic.
-
-THE META-LESSON, recorded because it is the second instance in one session: the pooled CORRELATION column inverted its sign (A-26), and now R2 flattered a coin-flip per-event record. Same disease, two dresses - and I reported it hours after building A-1 for exactly this reason. An averaged goodness-of-fit statistic is the same object as the drift metric D4 was written against. Any future candidate test reports sum|err|, the improved/worsened count, the error quantiles INCLUDING the max, and the named biggest events - never R2 alone.
-
-SALT SHARE RE-EXAMINED PER EVENT ON GREG'S INSTRUCTION ('do the same with the salt level part you dismissed' / 'stop averaging again'), and the fit was dropped entirely - a single coefficient across 160 weeks IS an averaged coefficient, which the trading rules forbid as directly as a pooled hit rate. Individual weeks, no regression:
-  WINTER, 12 largest draws, actual dS | d salt% NOW | d salt% LAGGED
-    2026-02-05  -359 | -4.14 | -0.30      2021-02-25  -338 | -5.82 | -0.31
-    2024-01-25  -326 | -2.26 | +0.81      2025-01-30  -321 | -3.22 | -0.62
-    2025-01-16  -258 | -0.90 | +1.00      smallest winter weeks: -0.04..+0.67
-  sign agreement, top quartile: WINTER now 33/40, lagged 22/40 | SUMMER now 22/43, lagged 22/43
-
-MY DISMISSAL WAS RIGHT ON THE FATAL POINT AND WRONG ON THE OTHER ONE, and the difference matters. It is NOT merely an accounting artifact: every one of the twelve largest winter draws carries a negative salt move, the magnitudes SCALE with the draw, and flat weeks sit at +/-0.5. Salt is high-deliverability short-cycle storage and it is what gets pulled first in a cold snap - a real physical fingerprint, not a definitional echo. Calling it circular was too glib.
-
-IT STILL CANNOT FORECAST, AND THE LAGGED TEST CLOSES THE ESCAPE ROUTE PROPERLY. Same print remains fatal for the contemporaneous form. And the legitimate lagged form - the PRIOR week's report, which is genuinely knowable before this week's gas week ends - lands at 22/40, chance. The rows say why: the -326 week had a lagged +0.81 and the -258 week +1.00, wrong-signed on exactly the weeks you would want. The one lagged hit (2026-02-12, -4.14) is the previous week's -4.14 bleeding through, i.e. a cold spell persisting - which the weather forecast already carries. So the lag adds nothing that is not already priced.
-
-SUMMER IS NOTHING EITHER WAY (22/43 both). The apparent summer effect was the same fact seen sideways: the SMALLEST builds carry the largest negative salt moves AND the highest burn (334, 299 Bcf) - those are simply hot weeks.
-
-THE RESIDUE, and it is worth keeping: contemporaneous salt draw is a CONFIRMATION instrument, not a predictor. It says the balance model read the right week, and it is a per-week fingerprint the analog library (A-5) could match on - which is a legitimate use for a same-print quantity, because retrieval keys describe a day rather than forecast it. Recorded as such rather than deleted.
-
-EVERY WEEK EXAMINED INDIVIDUALLY ON GREG'S INSTRUCTION ('look at every week individually and i don't want to see any more mean or average numbers'). All 391 weeks written raw to research/kalshi/data_records/storage_week_by_week_S113.csv - week, season, storage change, US48 burn, breadth, d(wind+solar) - no fit, no residual, no share. Three things are visible in the rows that every statistic hid.
-
-(1) BREADTH AND RENEWABLES ARE THE SAME VARIABLE. Winter breadth 0-1 is almost solid POSITIVE dVRE (+3,078 +2,653 +3,819 +3,715 +1,190) and breadth 5-6 almost solid NEGATIVE (-2,748 -3,692 -3,018 -4,157 -3,739). The count adds nothing over the SIGN of d(wind+solar). One variable, two names - so the 'breadth' framing should be dropped in favour of the physical quantity.
-
-(2) THE DIRECTION IS THE OPPOSITE OF THE DISPLACEMENT STORY, AND BOTH SEASONS AGREE. Renewables UP goes with TIGHTER storage; renewables DOWN with LOOSER. Winter breadth 0-1: -196 -187 -163 -143 -140 -136 -125 at burns 169-253. Winter breadth 6: -59 -55 -40 -21 -14 -9 +10 +107 at comparable burns 196-261. Same burn, opposite outcome. MECHANISM: renewable output is POSITIVELY correlated with weather extremity, not negatively - winter cold outbreaks come with strong pressure gradients and wind, summer heat with strong insolation and solar. High renewables therefore SIGNALS an extreme week, and the heating or cooling demand that comes with it dwarfs the gas those renewables displaced. CLEANEST INSTANCE: 2021-02-25, draw -338 on a burn of 168 - the LOWEST burn in the winter table - with dVRE +4,761. The power sector was barely burning; the draw was heating. THIS ALSO KILLS MY OWN EARLIER MECHANISM, which said broad breadth meant gas backfilling for absent renewables. Tested directly, d(wind+solar) does not reproduce breadth's sort (summer 50% vs 69% high-burn, winter 38% vs 60%) and the individual rows contradict it - 2024-01-25 had the largest winter VRE loss AND came in -174 BELOW, while 2022-11-17 had nearly as large a loss and came in +167 ABOVE.
-
-(3) THE VERDICT, AND NO AGGREGATE SHOWED IT: IT SORTS THE ORDINARY WEEKS AND FAILS ON THE EXTREMES. The four biggest winter draws sit at four DIFFERENT breadth levels - -359 at br3, -338 at br2, -326 at br6, -321 at br4. The five biggest summer builds span breadths 3 to 6 - +123 br4, +122 br3, +120 br6, +120 br4, +119 br5. The variable orders the quiet middle and says nothing about the weeks that move the price. For a desk whose scoring rule is that being wrong on the big events is what costs money, that is exactly backwards.
-
-SO A-24c IS DEMOTED, NOT PROMOTED. R2 0.554 said promising; share-below said 56%; the rows say it works where it does not matter. Scoped per D31 rather than killed: the quantity is real and the weather-extremity mechanism it exposed is worth keeping - see the note below - but gas-marginality breadth is not a storage-forecast input.
-
-WHAT SURVIVES AND IS WORTH MORE THAN THE CANDIDATE WAS: d(wind+solar) is a WEATHER-EXTREMITY indicator that we currently read as a supply-side displacement term. That is a sign error waiting to happen in any play that treats a renewable surge as bearish gas - it is bearish POWER BURN and bullish TOTAL DEMAND, because it co-occurs with the weather that drives heating and cooling. 0629 is the same fact from the power side (wind +62%, burn -4.2 Bcf/d) and this is its storage-side twin. Register the mechanism; do not register the breadth count.
-
-THE MECHANISM I PROPOSED WAS TESTED AND REFUTED - recorded because a pattern kept with a wrong story is worse than no pattern. Greg: 'that tells us a story still! It doesn't have to be one we thought it would be.' I claimed renewable output rises with weather EXTREMITY (winter cold arrives on pressure gradients and wind, summer heat with insolation). Tested per week on the 53 weeks holding both weather and generation: WINTER renewables and degree-days move the same way 9 of 21 - worse than chance - and the rows say the opposite outright: 2026-01-29 VRE -2,748 with HDD +63.3, the coldest week, renewables FALLING; 2026-03-12 VRE +3,646 with HDD -49.9, much milder, renewables RISING. That is the Arctic-high pattern - cold outbreaks are CALM. SUMMER is 15 of 22, weakly consistent (heat with sun). So the extremity story is refuted in winter and weak in summer, and it was my second failed mechanism of the session.
-
-WHAT THE REGULARITY POINTS AT INSTEAD, and it is a defect in OUR arithmetic rather than a signal in the market. The observed fact is stable: at the SAME burn, renewables up -> actual storage lands BELOW our prediction; renewables down -> ABOVE. If it is not weather, the remaining thing between burn and storage is THE CONVERSION - and we convert with a FLAT 7,900 Btu/kWh (grid_stack.py HEAT_RATE_BTU_PER_KWH, whose own note calls est_gas_burn_bcfd 'an ESTIMATE... stated method, not a measurement').
-HYPOTHESIS THAT FITS BOTH DIRECTIONS: the fleet heat rate is not constant, it varies with how hard gas is CYCLING. High renewables -> the surviving gas runs as peaking and part-load rather than efficient CCGT baseload -> the true heat rate RISES -> each MWh consumes MORE gas than 7,900 assumes -> we understate consumption -> actual storage lands BELOW. Low renewables -> gas runs flat and efficient -> true heat rate FALLS -> we overstate -> actual lands ABOVE. It also explains why the effect DISAPPEARS AT THE EXTREMES: when absolute demand is enormous the efficiency term is second-order, which is exactly where the sort failed.
-
-THIS IS A HYPOTHESIS, NOT A FINDING - it fits the observed sign in both directions and has not been measured. It is testable without new data: EIA publishes implied heat rates, and the served state already carries per-BA gas_mwh alongside renewable output, so the effective Btu/kWh can be estimated per week and checked against renewable share. NEXT STEP for this item is that test, not another candidate.
-
-AND IT RE-SCOPES A-26 IF IT HOLDS: the balance channel subtraction converts power burn to Bcf with this same constant, so every number in that measurement inherits the error. A varying heat rate would not change A-26's conclusion (the balance channel is real and the price channel is null) but it would change the SIZE of the power-burn term, which is 3-4x the weekly storage change and therefore the dominant sensitivity.
 
 ---
 
