@@ -771,6 +771,43 @@ item all describe the ECONOMIC regime and the transition out of it. Once reliabi
 predict price - they only predict how much gas gets burned. Those are different questions and this item
 should not be read as answering the second.
 
+THE COMMITMENT IS NOT REVISED, AND THAT IS WHAT MAKES IT MODELABLE - Greg S113: 'You look at the week
+ahead forecast and make a judgment call. If the weather doesn't come in like you thought but you scheduled
+those plants you just roll with it. It's not something that you hang your head over. Everyone knows at the
+end of the day, covering the load reliably is most important and sometimes you just can't do it the
+absolute cheapest way possible.'
+
+THE MODELING CONSEQUENCE, and it is the practical payoff of this whole item: A DECISION THAT IS NOT
+SECOND-GUESSED IS A DECISION WE CAN MODEL. If operators re-optimised daily as the forecast wobbled, coal
+would be a noisy behavioural series requiring us to predict their revisions. Because they commit, run the
+window and roll with it, the sequence is NEARLY DETERMINISTIC ONCE THE START IS OBSERVED: commit -> run
+1-2 weeks -> staged ramp-down. No mean reversion, no re-optimisation to forecast.
+
+SO A COAL START IS A FORWARD SIGNAL WITH A KNOWN DURATION. Observe units coming up in EIA-930 at period+2
+and you know approximately what coal will be doing for the following one to two weeks, LARGELY INDEPENDENT
+OF WHAT THE WEATHER ACTUALLY DOES NEXT. That is a DATED FORWARD SUPPLY QUANTITY - the one information
+class our horizon research says survives past the 5-7 day boundary, alongside nuclear refuelling schedules
+and LNG in-service dates - and unlike those it is DERIVED FROM A FEED WE ALREADY PULL, with no new source
+and no new key.
+
+IT ALSO EXPLAINS WHY THE MILD-TAIL PERSISTENCE MEASURED SO CLEANLY (gw_HDD at 67% of peak on 2026-02-02
+with coal still at 92%): nobody was trying to optimise it away. The stickiness is not friction or lag, it
+is a deliberate accepted cost, which is why it is stable enough to forecast on rather than a transient to
+be modelled away.
+
+AND IT NAMES THE OBJECTIVE FUNCTION WE SHOULD HAVE BEEN USING ALL ALONG: the operator is not minimising
+fuel cost, they are covering load reliably at acceptable cost. Every mechanism in this item that assumed
+profit-maximising dispatch was mis-specified at the root - which is why 'coal responds to the gas-coal
+spread' failed on the data. Reliability-first with cost as a constraint predicts the block-loading, the
+shakedown week, the un-revised commitment and the mild-tail persistence; cost-minimisation predicts none
+of them.
+
+BUILDABLE NOW, and it is the highest-value thing in this item: a COMMITTED-COAL WINDOW feature - detect
+starts from the daily per-BA coal series, carry a forward expectation for the committed duration, and
+serve it as a forward supply term. Falsifier is direct: if committed coal does NOT persist through its
+window when the weather breaks early, the commitment model is wrong and the whole account above fails with
+it.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
