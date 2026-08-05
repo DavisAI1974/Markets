@@ -589,6 +589,34 @@ exhausted' in one regime and 'nothing left but demand destruction' in another, d
 and the load ramp. A bar on price cannot separate them - it needs the STATE (D23/D28), and the state is
 coal headroom, which is computable from served fields plus EIA-860M generator status.
 
+BLOCK-LOADING - Greg S113, and it is what makes the coal and heat-rate mechanisms COMPOUND: 'those old
+units don't like to swing with the load so if they're getting fired up they are going to run at 100% until
+they get ramped down.'
+
+(1) COAL IS A STAIRCASE, NOT A CURVE. Each unit started adds a fixed block at rated output, so the
+aggregate steps in discrete chunks - which is exactly the shape of the measured +150k/+159k/+208k/+221k/
++238k/+310k daily increments, and it explains the seventeen-day decay, since ramping down is staged too.
+It also means the ramp ceiling is not smooth: headroom comes in unit-sized lumps, so 'how much coal can
+start' is a COUNT OF AVAILABLE UNITS, not a MW number. EIA-860M generator status plus nameplate gives the
+lump sizes.
+
+(2) THE DISPLACEMENT LANDS OVERNIGHT, NOT AT PEAK. A block-loaded unit does not back off when load falls
+at night, so during an event the LOW-LOAD hours are where coal squeezes gas hardest. At peak everything
+runs and gas is needed anyway. This is the A-28 marginal-hour point arriving from the supply side: the
+coal block changes WHICH HOURS gas serves, not just how much.
+
+(3) AND IT COMPOUNDS WITH A-27 ON THE WORST DAYS. If coal blocks take the base during a cold event, gas is
+pushed toward the MARGIN, so more of its output comes from simple-cycle peakers rather than CCGTs - the
+bimodal step firing exactly when it hurts. CONSEQUENCE, and it is directional and sized: OUR FLAT 7,900
+Btu/kWh UNDERSTATES GAS CONSUMPTION DURING COLD EVENTS, so the storage draw is larger than the generation
+MWh imply on precisely the days that move the price. The heat-rate error and the coal-ramp error do not
+cancel - they stack, and both point the same way on event days.
+
+TESTABLE PREDICTION for when A-28's hourly ingest lands: during a cold event, gas's INTRADAY variability
+should RISE even as its daily total rises, because block-loaded coal holds the base and gas takes the
+shape. The daily store cannot see this - it is a direct use for the hourly series and a clean falsifier
+for the whole block-loading account.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
@@ -727,6 +755,14 @@ A-30's per-BA floor ratio is the cheap proxy until it lands.
 REVISED FIX: not a better constant, not a fitted drift - serve a CC/CT capacity mix per BA and let the
 conversion respond to where the day sits against the CCGT ceiling. Until then treat est_gas_burn_bcfd as
 carrying an error LARGEST ON PEAK DAYS, which are the days that move the price.
+
+COMPOUNDING WITH A-31 (S113, Greg on block-loading): old coal units run at 100% once started and do not
+swing with load. So during a cold event coal blocks take the BASE and gas is pushed toward the MARGIN,
+meaning a larger share of gas output comes from simple-cycle peakers at ~9,500-11,500 Btu/kWh rather than
+CCGTs at ~6,400-7,000. The bimodal step therefore fires HARDEST on cold-event days, and the direction is
+knowable in advance: THE FLAT 7,900 CONSTANT UNDERSTATES GAS CONSUMPTION DURING COLD EVENTS. The storage
+draw is bigger than the generation MWh imply on exactly the days that move the price - and it stacks with
+the coal-ramp error rather than offsetting it.
 
 ---
 
