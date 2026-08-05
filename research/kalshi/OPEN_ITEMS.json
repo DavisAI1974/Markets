@@ -351,6 +351,16 @@
    "size": "S",
    "why": "The one turn instrument that is ALREADY MEASURED AND WORKING on NG and needs no new research: month_characterize's depth-based turn_exhaustion (book support collapsing entry->push) separates reversed turns from held ones - reversed median -0.107 against held -0.018. characterize_turns.py already saves the fingerprints. WIRE THIS FIRST of the turn instruments: A-6 (the flow-dipole exhaustion arm) is the LEADING channel but needs the native-tick test, whereas this is the CONFIRMING channel and is ready now. Independent of the flow dipole, so the two together give a leading signal and an independent confirmation rather than one instrument twice. Do NOT conflate the two measures.",
    "blocked_by": null
+  },
+  {
+   "id": "A-9",
+   "title": "Generate the drop-in's work list FROM the registry instead of restating it in prose",
+   "source": "S111 (residual gap found while verifying the S112 fixes)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "THE GAP THE SCRATCHPAD GATE DOES NOT CLOSE. D33's gate catches BROKEN references - scratchpad paths and files not tracked by git. It does NOT catch STALE-BUT-VALID ones: a drop-in can still instruct the next session to run work that was completed last session, because the drop-in RESTATES the work in prose rather than pointing at it. MEASURED INSTANCE, S112: the committed DROP_IN_S112 listed `brain_schema.py sections --write` and the condition_audit false-claim fix as work to do; both were already DONE. S112 caught it by checking, and correctly called the divergence between my pasted box and the committed file a small A-7 instance in itself.\n\nTHE FIX IS A-7 APPLIED TO THE DROP-IN. OPEN_ITEMS.json already carries `status` per item. If the drop-in's work list were GENERATED from the registry - emitting only items whose status is OPEN or IN_PROGRESS, ordered by the agreed rule (irreversible first, then XS, then blockers) - then a DONE item could not appear as a live instruction. Staleness becomes structurally impossible rather than something a careful reader has to notice.\n\nSAME PATTERN AS brain_audit.py's PROMPT GENERATION, which is the working precedent: slots filled by LOOKUP, nobody types a play id. Extend it to the handoff. Suggested shape: `python open_items.py dropin` emits the numbered work list; the drop-in carries that block verbatim; plant_status FAILs if the committed drop-in's list does not match what the registry currently generates - which also closes the pasted-box-versus-committed-file divergence, since both would come from one source.\n\nWHY IT MATTERS BEYOND TIDINESS: the whole S111 disease was documents describing what should happen sitting apart from the machinery that makes it happen. The drop-in is the LAST hand-written instruction set in the loop, and it is the one every session starts from.",
+   "blocked_by": null
   }
  ]
 }
