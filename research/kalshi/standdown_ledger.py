@@ -229,11 +229,205 @@ def cmd_saves(_):
     return 0
 
 
+
+
+# ======================================================================================
+# THE DECLINE AUDIT (Greg, S112: "Did we audit the declines to make sure they are valid
+# reasons?" then "do the same audit for those and fit them into the schema")
+#
+# THE FLAW THIS FIXES, and it was mine. The ledger above records 384 declines and every one of
+# them reads as a save BY CONSTRUCTION - there is no class for a decline that was WRONG. A ledger
+# that cannot return a bad verdict is non-falsifiable, which is the exact disease the 82-play audit
+# spent all session finding in the plays. Backfilling it as evidence would have committed on the
+# declines the same error the audit found on the fires: crediting them without checking the
+# mechanism. So the declines get audited, with a rubric that can come back negative.
+#
+# THE VERDICT SET, and MISSED_FIRE is the one that makes it falsifiable:
+#   JUSTIFIED          conditions were evaluable, were evaluated, and correctly said no. Evidence
+#                      of a working off-switch - the thing that makes a play falsifiable at all.
+#   OUTCOME_CREDITED   declined, the day happened to go the declining way, but the STATED REASON
+#                      does not hold on the record. The decline analogue of the S108 signature.
+#   MISSED_FIRE        the play should have fired. The decline COST us. Without this class the
+#                      whole ledger is self-congratulation.
+#   DATA_ABSENT        the play could not be evaluated - input unserved, masked, or dead. NOT
+#                      judgment, and it must never be counted as one. Separately valuable: this is
+#                      a worked NO CALL trigger (A-2), and the screen already finds ~90 of them.
+#   SCOPE              correctly not this day's or this specialist's play. Neutral.
+# ======================================================================================
+
+BATCHES = os.path.join(HERE, "STANDDOWN_AUDIT_BATCHES_S112.json")
+AUDIT_OUT = os.path.join(HERE, "forecasts", "standdown_audit")
+VERDICTS = ["JUSTIFIED", "OUTCOME_CREDITED", "MISSED_FIRE", "DATA_ABSENT", "SCOPE"]
+REASON_CLASSES = ["MARKET_JUDGMENT", "DATA_ABSENT", "SCOPE"]
+
+
+def _batch_plays(n):
+    with open(BATCHES, encoding="utf-8") as f:
+        b = json.load(f)["batches"]
+    if not (0 <= n < len(b)):
+        raise SystemExit("batch must be 0..%d" % (len(b) - 1))
+    return b[n]["plays"]
+
+
+def cmd_audit_prompt(a):
+    n = int(sys.argv[2])
+    plays = _batch_plays(n)
+    rows = [r for r in json.load(open(OUT, encoding="utf-8"))["entries"]
+            if r["action"] == "stood_down" and r["play_id"] in plays]
+    with open(os.path.join(HERE, "knowledge", "ng_brain.json"), encoding="utf-8") as f:
+        brain = {p["id"]: p for p in json.load(f)["plays"]}
+    recs = [{"play": brain[p]} for p in plays if p in brain]
+    print("""You are auditing DECLINES - the times a specialist evaluated a brain play and chose NOT to
+fire it. Batch %d. This is the companion to the 82-play support audit; the same discipline applies.
+
+WHY DECLINES MATTER. D25 records that STAND DOWN produced this desk's saves while OVERRIDE produced
+its disasters. A correct decline is also the FALSIFIABLE HALF of a play - the only direct proof its
+mechanism has a working off-switch. The strongest-evidenced gate on the desk (the C1 band-break) is
+the one whose record counts "five fires, ONE CORRECT DECLINE, zero false positives".
+
+BUT A LEDGER THAT CANNOT RETURN A BAD VERDICT IS WORTHLESS, so your job is emphatically NOT to
+confirm these were good calls. Assign one verdict per decline:
+
+  JUSTIFIED         conditions were evaluable, WERE evaluated, and correctly said no.
+  OUTCOME_CREDITED  declined, the day went the declining way, but THE STATED REASON DOES NOT HOLD
+                    on the record. The decline analogue of right-answer-wrong-reason.
+  MISSED_FIRE       the play SHOULD have fired; the decline cost us. Hunt for these - without them
+                    this ledger is self-congratulation. A decline is a MISS when the play's own
+                    trigger was satisfied on the served state and the day went the play's way.
+  DATA_ABSENT       the play could not be evaluated: input unserved, masked by design, or dead.
+                    NOT judgment. Never score it as one.
+  SCOPE             correctly not this day's or this specialist's play. Neutral.
+
+METHOD. For each decline you are given the play's full brain record (including its trigger, its
+newly-backfilled falsifier and its audited argument), the specialist's verbatim reason, the
+source posterior, and the day's REALIZED move. Open the posterior and the served state where you
+need them. Ask, in order: (1) was the play's trigger actually evaluable that day from the served
+state? (2) if evaluable, was it satisfied? (3) does the stated reason match what the state says?
+(4) what would firing have emitted, and how would that have scored against the realized move?
+
+Answer (4) ONLY where the record supports it. If the counterfactual is not determinable, say so -
+inventing it manufactures exactly the outcome-credited evidence this audit exists to catch.
+
+OUTPUT - write research/kalshi/forecasts/standdown_audit/batch_%d.json.
+
+THE SHAPE IS THE BRAIN'S OWN INSTANCE SHAPE, DELIBERATELY (Greg, S112): "There should be no
+difference in how they are listed in the schema for the brain except one is a do and the other a
+don't." So a decline is stored as an ordinary instance with `action` set to "dont" - it is NOT a
+separate structure, and it sits in the same instances[] list beside the fires. The audit-only
+fields (verdict, reason_class, counterfactual) ride alongside so the decline can be judged; the
+instance itself reads the same as any other.
+
+{"batch": %d,
+ "declines": [
+  {"play_id": "...", "date": "YYYYMMDD", "group": "gN",
+   "action": "dont",
+   "source_file": "<repo-relative, must exist - a desktop path is REFUSED under D34>",
+   "what_the_state_said": "<what the served state said that day, and the specialist's stated
+      reason for declining - this is the instance field, same as for a fire>",
+   "what_the_day_did": "<the realized move and the relevant intraday shape - same field as a fire>",
+   "supports_or_contradicts": "supports|contradicts|ambiguous",
+   "reason_class": "MARKET_JUDGMENT|DATA_ABSENT|SCOPE",
+   "verdict": "JUSTIFIED|OUTCOME_CREDITED|MISSED_FIRE|DATA_ABSENT|SCOPE",
+   "why": "<the argument. Whether the trigger was evaluable and satisfied, and whether the stated
+      reason holds on the record.>",
+   "counterfactual": "<what firing would have emitted and how it would have scored - or the exact
+      words NOT DETERMINABLE and why>",
+   "confidence": "low|med|high"}
+ ],
+ "batch_observations": "<verdict counts, any play whose declines are systematically one class, and
+   any decline that changed your view of the play itself>"}
+
+RULES. Audit every decline listed below - all %d of them. Cite repo-relative paths only. Never
+invent a source_file. You are auditing, not fixing: do not edit the brain or any posterior.
+
+THE DECLINES IN YOUR BATCH (%d declines across %d plays), verbatim from the ledger:
+
+%s
+
+THE FULL BRAIN RECORD FOR EACH PLAY IN YOUR BATCH:
+
+%s""" % (n, n, n, len(rows), len(rows), len(plays),
+         json.dumps(rows, indent=1)[:190000],
+         json.dumps(recs, indent=1)[:190000]))
+    return 0
+
+
+def cmd_audit_validate(a):
+    path = sys.argv[2]
+    d = json.load(open(path, encoding="utf-8"))
+    errs = []
+    exp = set(_batch_plays(d.get("batch", -1)))
+    led = [r for r in json.load(open(OUT, encoding="utf-8"))["entries"]
+           if r["action"] == "stood_down" and r["play_id"] in exp]
+    want = {(r["play_id"], r["date"]) for r in led}
+    got = set()
+    sys.path.insert(0, HERE)
+    import brain_audit as BA
+    for r in d.get("declines", []):
+        got.add((r.get("play_id"), r.get("date")))
+        if r.get("play_id") not in exp:
+            errs.append("play not in this batch: %s" % r.get("play_id"))
+        if r.get("verdict") not in VERDICTS:
+            errs.append("%s %s: bad verdict %r" % (r.get("play_id"), r.get("date"), r.get("verdict")))
+        if r.get("reason_class") not in REASON_CLASSES:
+            errs.append("%s %s: bad reason_class %r" % (r.get("play_id"), r.get("date"),
+                                                        r.get("reason_class")))
+        if r.get("action") != "dont":
+            errs.append("%s %s: action must be 'dont' (Greg S112 - a decline is an ordinary "
+                        "instance, one field marks do vs don't)" % (r.get("play_id"), r.get("date")))
+        if r.get("supports_or_contradicts") not in ("supports", "contradicts", "ambiguous"):
+            errs.append("%s %s: bad supports_or_contradicts" % (r.get("play_id"), r.get("date")))
+        for f in ("why", "counterfactual", "what_the_day_did", "what_the_state_said",
+                  "source_file", "confidence"):
+            if not str(r.get(f, "")).strip():
+                errs.append("%s %s: missing %s" % (r.get("play_id"), r.get("date"), f))
+        sf = r.get("source_file", "")
+        if sf and any(BA._is_machine_path(t) for t in BA._split_citation(sf)):
+            errs.append("%s: DESKTOP PATH (D34): %s" % (r.get("play_id"), sf))
+        elif sf and not BA._traces(sf):
+            errs.append("%s: source_file does not resolve: %s" % (r.get("play_id"), sf))
+    for miss in sorted(want - got)[:20]:
+        errs.append("decline NOT audited: %s %s" % miss)
+    print("%s  %d declines, %d errors" % ("FAIL" if errs else "PASS", len(d.get("declines", [])),
+                                          len(errs)))
+    for e in errs[:30]:
+        print("   " + e)
+    return 1 if errs else 0
+
+
+def cmd_audit_collect(a):
+    rows = []
+    for f in sorted(glob.glob(os.path.join(AUDIT_OUT, "batch_*.json"))):
+        rows.extend(json.load(open(f, encoding="utf-8")).get("declines", []))
+    from collections import Counter
+    print("collected %d audited declines from %d files\n" % (rows and len(rows) or 0,
+                                                             len(glob.glob(os.path.join(AUDIT_OUT, "batch_*.json")))))
+    print("VERDICT:")
+    for k, v in Counter(r.get("verdict") for r in rows).most_common():
+        print("   %-18s %3d  (%.0f%%)" % (k, v, 100 * v / max(1, len(rows))))
+    print("\nREASON CLASS:")
+    for k, v in Counter(r.get("reason_class") for r in rows).most_common():
+        print("   %-18s %3d" % (k, v))
+    miss = [r for r in rows if r.get("verdict") == "MISSED_FIRE"]
+    print("\nMISSED_FIRE - declines that COST us: %d" % len(miss))
+    for r in miss[:14]:
+        print("   %-46s %s %s" % (r["play_id"][:46], r.get("date"), str(r.get("counterfactual"))[:90]))
+    out = os.path.join(HERE, "STANDDOWN_AUDIT_S112.json")
+    json.dump({"note": "Audited declines. Verdicts can be negative: MISSED_FIRE is a decline that "
+                       "cost us, and its presence is what makes this ledger falsifiable.",
+               "session": "S112", "n": len(rows), "declines": rows},
+              open(out, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    print("\nwrote %s" % os.path.relpath(out, ROOT))
+    return 0
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         return 1
-    return {"build": cmd_build, "top": cmd_top, "saves": cmd_saves}.get(
+    return {"build": cmd_build, "top": cmd_top, "saves": cmd_saves,
+            "audit-prompt": cmd_audit_prompt, "audit-validate": cmd_audit_validate,
+            "audit-collect": cmd_audit_collect}.get(
         sys.argv[1], lambda _: (print(__doc__), 1)[1])(sys.argv)
 
 
