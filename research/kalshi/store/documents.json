@@ -8,8 +8,17 @@
   "ARCHIVE": "moved out of the live surface deliberately. Consulted, not maintained."
  },
  "close_out_trio": {
-  "note": "Greg, S112: 'update all of our docs other than the 3 ending ones.' These three are written LAST, at close-out, because they summarise everything else. They are excluded from mid-session doc sweeps by design.",
-  "docs": ["CLAUDE.md", "SESSION_HANDOFF_<date>_S<N>.md", "DROP_IN_S<N+1>.md"]
+  "note": "Greg, S112: 'update all of our docs other than the 3 ending ones.' These three are written LAST, at close-out, because they summarise everything else. They are excluded from mid-session doc sweeps by design. S112 addition (Greg: 'include a doc that i can download and send to chat along with the drop ins when you're printing'): the ChatGPT hand-off ships WITH the drop-in and is GENERATED from the registry by chatgpt_handoff.py, so a finished item cannot appear in it as a live request - A-9's rule, one document over.",
+  "docs": [
+   "CLAUDE.md",
+   "SESSION_HANDOFF_<date>_S<N>.md",
+   "DROP_IN_S<N+1>.md"
+  ],
+  "ships_with": [
+   "CHATGPT_HANDOFF_S<N>.md (generated)",
+   "research/kalshi/chatgpt_tasks/S<N>_TASK_*.md (generated)",
+   "DATA_POINTS.md (the master data list, needed by the triage task)"
+  ]
  },
  "documents": [
   {
@@ -154,6 +163,20 @@
    "role": "the full OD/crypto-era and physics-era research, verbatim. Moved out of always-loaded context because it is history.",
    "update_when": "never",
    "gate": null
+  },
+  {
+   "path": "CHATGPT_HANDOFF_S<N>.md",
+   "class": "RENDER",
+   "role": "the external-research hand-off that ships with the drop-in. Generated from OPEN_ITEMS.json - items opt in with `delegable: true` and carry a `delegable_ask`.",
+   "update_when": "at close-out, and any time a delegable item is added or completed",
+   "gate": "generated"
+  },
+  {
+   "path": "DATA_POINTS.md",
+   "class": "RENDER",
+   "role": "THE MASTER DATA-POINT LIST - four tiers (SERVED / HELD / PLANNED / IDENTIFIED), every row labelled READ or NOT READ, with block, upstream source, cadence, what the blind sees, and known defects.",
+   "update_when": "any feed or serving change; regenerate with data_registry.py build --write",
+   "gate": "generated"
   }
  ]
 }
