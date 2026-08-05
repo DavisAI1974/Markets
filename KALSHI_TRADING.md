@@ -1,13 +1,19 @@
 # KALSHI TRADING — file index
 
-## S114 (2026-08-05) — the A-24 paper dissected per event; the winter lane written up as a forward tool
+## S114 (2026-08-05) — the A-24 paper dissected per event; the two-sided lane discovery MERGED INTO THE BRAIN
 
-- `research/kalshi/WINTER_LANE_FORWARD_TOOL_S114.md` — **the winter storage lane as a forward
-  forecasting tool** (Greg: "This is huge"). The two-class taxonomy of winter deep-draw weeks
-  (heating-masked vs the A-33 conjunction, every member named), the same-burn November pairs that
-  corroborate A-38 at the weekly horizon, the NEW hydro result (winter-strong, dispatched INTO the
-  freeze events, drought = the unobserved tail), the seasonal revision sign map, and the tool's
-  term-by-term design mapped to registry items. Registered as A-39. Design only — nothing built.
+- **Brain s105.0 -> s105.1, 89 plays** — the two-sided winter/summer lane discovery lives in the
+  brain, NOT in a standalone doc (Greg: "Everything lives in the store now... put it where it can
+  be used"; an S114 standalone md was created and deleted the same session). Seven plays, all
+  PROVISIONAL with g24 forward tests registered in `research/kalshi/store/forward_tests.json`:
+  `weather.winter_heating_size_term`, `weather.renewables_masking_flip`,
+  `weather.freeze_conjunction_class2`, `weather.hydro_winter_buffer`,
+  `weather.summer_burn_lane_exclusion`, `weather.revision_seasonal_sign_map`,
+  `weather.shoulder_month_tail_gates`.
+- `forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json` — the D8 proposal + Greg's verbatim
+  adjudication + merge_gate admit verdicts with the PARK examination recorded. Backup:
+  `research/kalshi/knowledge/ng_brain_s105.0_backup_pre_s105.1.json`. Incumbents 82/82
+  byte-identical.
 - `research/kalshi/data_records/us48_hydro_daily_S114.csv` — 1,093 days of national hydro from the
   keyless EIA-930 six-month files (2021H1, 2024, 2025, 2026H1); definition column marks the 2021
   pre-split vintage.

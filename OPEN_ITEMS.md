@@ -58,7 +58,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
-| **A-39** | L | THE WINTER LANE FORWARD TOOL - heating size term + power residual + hydro buffer + conjunction flag, from served fields | - |
+| **A-39** | L | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 
 ## REST (50)
 
@@ -148,7 +148,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
 | **A-23** | BIGGEST_WIN | L | OPEN | S112 | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | - |
-| **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - heating size term + power residual + hydro buffer + conjunction flag, from served fields | - |
+| **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | REST | XS | OPEN | S111 (recommendation); S112  | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
@@ -1426,13 +1426,13 @@ GOOD DELEGATION CANDIDATE (Greg named it): the artifact is self-contained, the j
 
 ---
 
-### [BIGGEST_WIN] A-39 - THE WINTER LANE FORWARD TOOL - heating size term + power residual + hydro buffer + conjunction flag, from served fields
+### [BIGGEST_WIN] A-39 - THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins)
 
 *size L | OPEN | raised S114*
 
-**Source:** Greg, S114, on the two-class winter taxonomy and the hydro cycle: 'Definitely write this up as a forward forecasting tool also. This is huge.' Design committed as research/kalshi/WINTER_LANE_FORWARD_TOOL_S114.md
+**Source:** Greg, S114: 'Definitely write this up as a forward forecasting tool also. This is huge' -> then 'Everything lives in the store now and should be part of our schema... ditch the separate file and put it where it can be used' -> 'The overall findings and not just the hydro part' / 'And we have the summer piece to write up too. This is a 2 sided discovery'. The KNOWLEDGE is merged: brain s105.1, seven plays, proposal forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json. This item tracks the BUILD.
 
-THE DESIGN IS WRITTEN AND THE EVIDENCE IS COMMITTED - this item tracks the BUILD. The S114 per-event dissection (no averages, every event named) produced a two-class taxonomy of winter deep-draw weeks: CLASS 1, cold with renewables UP - heating drives the draw while wind mutes the burn (12 of the 14 deepest breadth-0/1 weeks carry POSITIVE dVRE; Uri is the extreme: -338 on burn 168, the lowest in the table); CLASS 2, cold with renewables DOWN - the A-33 conjunction, and its members are exactly the named freeze weeks (2024-01-25 -326, 2026-01-29 -241, 2019-01-31 -173, 2021-01-28 -128, all negative dVRE). The heating term isolated: four same-burn same-breadth November-vs-deep-winter pairs 219-369 Bcf apart (A-38 at the weekly horizon). NEW S114 MEASUREMENT: national hydro is WINTER-STRONG (monthly p50 GWh/d: Jan 669-828, Mar 716-817 vs Sep-Oct 501-565, three-plus years, EIA-930 six-month files, keyless) and was dispatched ABOVE its month p50 INTO the freeze events (Uri week 844-903 vs 766; Jan-2024 787-842 vs 689; Jan-2026 883/791/787 vs 828) - hydro is the supply BUFFER, not an intermittent term, and its unobserved failure mode is the drought winter (~6 Bcf/d-equivalent at the January level). THE TOOL: weekly draw = fwd HDD x res/comm converter [A-38] + power residual (fwd load [SERVED] - fwd wind/solar [G-4/A-29] - hydro state [A-18/A-20] - nuclear sched [A-17] - committed-coal window [A-31]) via a declared conversion [A-27], plus the A-33 conjunction flag and the breadth exclusion gates as NO-CALL inputs [A-2]. Nothing needs a new source; the two long poles are the A-38 converter and the G-4 feeds. Validation per A-1/D37: per_event.report against zero-change and seasonal-naive, largest moves named, no scalar verdicts. Falsifiers are per-term and stated in the doc. Evidence: data_records/storage_week_by_week_S113.csv, data_records/us48_hydro_daily_S114.csv, data_records/walk_census_g18_g23_S114.csv.
+THE KNOWLEDGE IS IN THE BRAIN (s105.1: weather.winter_heating_size_term, renewables_masking_flip, freeze_conjunction_class2, hydro_winter_buffer, summer_burn_lane_exclusion, revision_seasonal_sign_map, shoulder_month_tail_gates - all PROVISIONAL, all with g24 forward tests registered). WHAT REMAINS IS THE BUILD of the terms those plays declare NOT SERVED: (1) the HDD->res/comm Bcf/d converter [A-38] - the size term; (2) forward wind/solar [G-4] + wind speed on both weather paths [A-29] - the sign/mediation term; (3) hydro buffer forward state (reservoir/guide curves, TVA planned releases) [A-18/A-20]; (4) the conjunction JOIN (fwd cold x falling renewables x freeze_risk basin fields x hydro state) as a served flag [A-33/A-24f]; (5) the committed-coal window detector [A-31]; (6) the declared CC/CT conversion [A-27]. Nothing needs a new data source. Validation per A-1/D37: per_event.report against zero-change and seasonal-naive, largest moves named, no scalar verdicts. Evidence: data_records/storage_week_by_week_S113.csv, us48_hydro_daily_S114.csv, walk_census_g18_g23_S114.csv, us_gas_demand_by_sector_S113.csv.
 
 ---
 

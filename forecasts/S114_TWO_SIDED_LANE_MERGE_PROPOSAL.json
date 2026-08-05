@@ -1,0 +1,583 @@
+{
+ "proposal": "S114_TWO_SIDED_LANE_MERGE",
+ "session": "S114",
+ "adjudication": {
+  "adjudicated_by": "Greg, in-session S114, verbatim across three messages",
+  "quotes": [
+   "Stop we aren't going to have another knowledge file hanging out there that never gets used. Everything lives in the store now and should be part of our schema. This absolutely should be part of the agents decision making process. So ditch the separate file and put it where it can be used.",
+   "And we have the summer piece to write up too. This is a 2 sided discovery",
+   "The overall findings and not just the hydro part"
+  ],
+  "note": "SOP STEP 6 gate 3 (merge on Greg's explicit go) is satisfied by the instruction above. merge_gate admit was still run for the record; plays whose evidence is the 391-week EIA corpus rather than walk groups PARK on the groups-cited bar by construction, and merge on the human go. Forward tests for ALL merged plays are registered against g24 in store/forward_tests.json so none can be forgotten. The standalone document WINTER_LANE_FORWARD_TOOL_S114.md is deleted by this same commit; its content lives here and in the brain.",
+  "evidence_files": [
+   "research/kalshi/data_records/storage_week_by_week_S113.csv",
+   "research/kalshi/data_records/us48_hydro_daily_S114.csv",
+   "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+   "research/kalshi/data_records/us_gas_demand_by_sector_S113.csv"
+  ],
+  "merge_gate_verdicts": {
+   "ADMIT": [
+    "weather.renewables_masking_flip",
+    "weather.revision_seasonal_sign_map"
+   ],
+   "PARK_group_span": [
+    "weather.winter_heating_size_term",
+    "weather.summer_burn_lane_exclusion"
+   ],
+   "PARK_defect_exposure": [
+    "weather.freeze_conjunction_class2",
+    "weather.hydro_winter_buffer",
+    "weather.shoulder_month_tail_gates"
+   ],
+   "park_examination": "The group-span PARKs are by construction: their evidence is the 391-week EIA storage corpus and the keyless EIA-930 public files, not walk groups - the bar cannot see non-group evidence, and the human go covers them. The defect-exposure PARKs flag h-weather_path (S107, FORWARD_ONLY) via substring match on group tokens in the play text; examined per citation: the g7/g8/g11/g12/g13/g14/g15/g16/g18/g19 references in those plays are grid_stack coal/renewables served levels, calendar cross-refs (D28) and event-window naming - none of the load-bearing evidence flows through the defective nws_temp weather path, and the storage/hydro CSVs are EIA-sourced outside the walk's data plane entirely. Merged on the human go with this examination recorded; the g24 forward tests stand regardless.",
+   "merged_as": "s105.1, seven plays, incumbents 82/82 byte-identical, backup research/kalshi/knowledge/ng_brain_s105.0_backup_pre_s105.1.json"
+  }
+ },
+ "new_plays_proposed": [
+  {
+   "id": "weather.winter_heating_size_term",
+   "target": "magnitude",
+   "trigger": "any winter (Nov-Mar) storage-lane read - EIA print expectation, weekly balance reasoning, or a day-lean that rests on a storage view",
+   "read": "gw_hdd (forecast, dated ahead) and the storage phase - against the knowledge that the res/comm heating term is UNSERVED (no HDD->Bcf/d converter exists; registry A-38)",
+   "call": "In winter the SIZE of the weekly storage move is set by res/comm heating, not power burn. Heating is the bigger mover on 33 of 52 actual months and on 10 of the 10 largest (STEO actuals, A-38), and on every November in the record power burn moves OPPOSITE to total demand. A burn-based size call in winter addresses the minority term: hold wide bands, reason heating-first from gw_hdd, and say plainly that the converter does not exist yet.",
+   "mechanism": "Isolated at the weekly horizon by four same-burn SAME-BREADTH pairs, each a November/early-December week against a January/February week, 219-369 Bcf apart with the power side held constant: the differing term is heating. 2021-02-25 -338 vs 2020-11-19 +31 (burns 168/174, both breadth 2); 2022-02-03 -268 vs 2022-11-10 +79 (197/197, br2); 2025-01-30 -321 vs 2024-12-05 -30 (248/256, br4); 2019-02-07 -237 vs 2020-11-27 -18 (171/172, br3).",
+   "requires": [
+    "weather.gw_hdd (served, forecast dated ahead)",
+    "storage.phase (served)",
+    "NOT SERVED: HDD->res/comm Bcf/d converter - registry A-38, the build this play's bands wait on"
+   ],
+   "scope": "winter (Nov-Mar) storage lane only. Does NOT touch the summer lane (see weather.summer_burn_lane_exclusion - in summer the burn stack IS the model) or the HH lane (A-37). Blind-legal: every input named is non-price and never-masked or dated ahead.",
+   "confidence": 0.7,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "If same-burn same-breadth November-vs-deep-winter week pairs stop differing by more than ~100 Bcf once weather-normal heating is accounted for - i.e. the gap turns out to be burn mismeasurement rather than the heating term - the size claim is wrong and A-38's converter build is mis-aimed. Also refuted if the A-38 weekly re-check on a full HDD join shows power burn matching heating's share of weekly variance in Dec-Feb.",
+   "conditions": [
+    {
+     "quantity": "winter_month_gate",
+     "state_path": "flow_calendar.month",
+     "reference": "calendar",
+     "comparator": "in",
+     "threshold": "Nov-Mar",
+     "units": "month"
+    }
+   ],
+   "instances": [
+    {
+     "date": "2021-02-25",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "dS -338 on burn 168.3 (the LOWEST burn in the winter table) at breadth 2; its same-burn same-breadth twin 2020-11-19 BUILT +31. 369 Bcf apart on identical power-side readings - Uri's draw was heating plus supply freeze-offs with the power sector barely burning."
+    },
+    {
+     "date": "2022-02-03",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "dS -268 (burn 197.1, br2) vs 2022-11-10 +79 (burn 196.7, br2): 347 Bcf apart, same burn, same breadth, November vs February."
+    },
+    {
+     "date": "2025-01-30",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "dS -321 (burn 248.4, br4) vs 2024-12-05 -30 (burn 255.8, br4): 291 Bcf apart at matched readings."
+    },
+    {
+     "date": "2019-02-07",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "dS -237 (burn 171.1, br3) vs 2020-11-27 -18 (burn 172.1, br3): 219 Bcf apart."
+    },
+    {
+     "date": "202411",
+     "group": null,
+     "source_file": "research/kalshi/data_records/us_gas_demand_by_sector_S113.csv",
+     "what_the_state_said": "Every November in the STEO record: total demand +11.9 to +16.1 Bcf/d while power burn moves -0.46 to -1.87 - the burn stack points DOWN into the month total demand turns UP (A-38)."
+    }
+   ],
+   "corpus": {
+    "d24_state": "found",
+    "searched_on": "S114",
+    "searched_scope": "data_records/storage_week_by_week_S113.csv (391 weeks, 2019-2026) + data_records/us_gas_demand_by_sector_S113.csv (52 actual months)",
+    "n_found": 5
+   },
+   "forward": [
+    {
+     "tag": "forward_evidence",
+     "text": "NONE. Registered against g24 in store/forward_tests.json."
+    }
+   ],
+   "health": {
+    "degenerate_block_share": null,
+    "can_change_state": "The gate is the calendar month - deterministic, so the play is dormant Apr-Oct by construction and active every winter block."
+   },
+   "provenance": {
+    "merged_session": "S114",
+    "brain_version": "s105.1",
+    "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
+    "proposed_by": "S114 dissection under Greg's adjudication"
+   }
+  },
+  {
+   "id": "weather.renewables_masking_flip",
+   "target": "direction",
+   "trigger": "winter day or week where wind/solar output is RISING while heating-grade cold is present or forecast",
+   "read": "grid_stack.bas.US48.wind_mwh and solar_mwh (served, period+2) against gw_hdd; on the weekly lane, the renewables delta against the storage expectation",
+   "call": "Renewables UP into cold is NOT bearish total gas - it is bearish POWER BURN and the draw comes through the heating meter anyway. DO expect a burn-based read to UNDER-call the draw on these weeks (the tank drains while burn reads soft). DO NOT read a wind surge as bearish the storage print in winter. On the daily lane the same structure eats a weather bump: a forecast demand rise lands on gas only net of the renewables move.",
+   "mechanism": "Wind displaces gas in the power stack while res/comm heating - invisible to EIA-930 - takes the draw. Measured: 12 of the 14 deepest breadth-0/1 winter weeks carry POSITIVE dVRE (renewables rising into the draw): -258/+1493k, -252/+1461k, -206/+680k, -200/+1608k, -197/+838k, -196/+3078k, -190/+1484k, -190/+1986k, -187/+2653k, -163/+3819k, -152/+3286k, -151/+110k. Daily instances: g22 20260629 (state served wind +660k MWh, gas -556k vs prior period; actual -1110 against a blind +325) and g20 20260601 (wind +1,071k - the largest wind move in the 60-day census - gas -1,271k, coal -529k; actual -990 against +350).",
+   "requires": [
+    "grid_stack.bas.US48.wind_mwh (served)",
+    "grid_stack.bas.US48.solar_mwh (served)",
+    "grid_stack.bas.US48.gas_mwh (served)",
+    "weather.gw_hdd (served)"
+   ],
+   "scope": "winter storage lane + any daily read converting a weather bump into a burn bump. Summer daily instances (0629, 0601) show the same mediation with cooling. Blind-legal: all inputs non-price, period+2, never masked.",
+   "confidence": 0.65,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "Forward winter weeks with rising renewables AND heating-grade cold whose realized draws match the burn-implied size (no under-call) refute the masking claim. On the daily lane: forward days where a served renewables surge coexists with the weather-implied gas bump arriving in full refute the mediation form (0629/0601 class).",
+   "conditions": [
+    {
+     "quantity": "renewables_rising_gate",
+     "state_path": "grid_stack.bas.US48.wind_mwh",
+     "reference": "prior_served_period",
+     "comparator": "rising",
+     "threshold": null,
+     "units": "MWh"
+    }
+   ],
+   "instances": [
+    {
+     "date": "20260629",
+     "group": "g22",
+     "source_file": "research/kalshi/renders/ng_refine_s95/grp22_state.json + research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+     "what_the_state_said": "Served wind +660,219 MWh and gas -556,000 vs the prior period, with a +2.01 CDD revision; the day fell -1110 against a blind +325. The mediation was served and read by nothing."
+    },
+    {
+     "date": "20260601",
+     "group": "g20",
+     "source_file": "research/kalshi/renders/ng_refine_s95/grp20_state.json + research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+     "what_the_state_said": "Served wind +1,071,114 MWh (largest in the census), gas -1,270,715, coal -529,288; actual -990 against a blind +350. 0629's twin, two groups earlier, also a B Monday."
+    },
+    {
+     "date": "2021-02-25",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "The class extreme: dVRE +4,761k with burn 168.3 (lowest in the winter table) and a -338 draw - burn read soft while heating and freeze-offs drained the tank."
+    }
+   ],
+   "corpus": {
+    "d24_state": "found",
+    "searched_on": "S114",
+    "searched_scope": "storage_week_by_week_S113.csv winter breadth-0/1 column + walk census g18-g23 served stacks",
+    "n_found": 15
+   },
+   "forward": [
+    {
+     "tag": "forward_evidence",
+     "text": "NONE. Registered against g24."
+    }
+   ],
+   "health": {
+    "degenerate_block_share": null,
+    "can_change_state": "Gate is a served level rising vs its own prior period - changes state within any block."
+   },
+   "provenance": {
+    "merged_session": "S114",
+    "brain_version": "s105.1",
+    "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
+    "proposed_by": "S114 dissection under Greg's adjudication"
+   }
+  },
+  {
+   "id": "weather.freeze_conjunction_class2",
+   "target": "regime",
+   "trigger": "forecast heating-grade cold arriving WITH falling renewables (an Arctic high is calm), with or without producing-basin freeze signals",
+   "read": "gw_hdd forecast + grid_stack wind/solar falling + freeze_risk basin fields (A-24f) + hydro state where available",
+   "call": "This is the correlated-failure tail (A-33): demand price-INSENSITIVE by obligation, the coal ramp spent or spending, wind gone, supply itself freezing. Burn and price DECOUPLE - measured burn can FALL on the most violent day because generators are curtailed to protect heating load - so every economic-regime model is OFF and the only questions are physical. Hydro is the buffer being DISPATCHED (it ran above its month p50 in three of the four sampled events); a DRY winter removes that buffer and is the unobserved worse tail.",
+   "mechanism": "The storage table's own tail members are this conjunction and nothing else at high breadth: the winter deep draws at breadth>=4 with falling renewables are exactly the named freeze events, while ordinary renewables-down weeks with no cold draw -9 to -81. The conjunction is what makes the tail: heating demand exploding AND the instant absorber absent AND (2021/2024) wellhead supply cut.",
+   "requires": [
+    "weather.gw_hdd (served, forecast)",
+    "grid_stack.bas.US48.wind_mwh (served)",
+    "freeze_risk per-basin fields (served, 148/157 unread - A-24f)",
+    "NOT SERVED: hydro buffer state forward instruments (A-18/A-20)"
+   ],
+   "scope": "winter tail regime only - a flag that switches the MODEL, not a magnitude play. When up, burn->storage->price reasoning runs backwards at the extreme (curtailment order) and A-31's ramp findings describe the transition INTO it, not behaviour inside it.",
+   "confidence": 0.6,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "A forward cold+calm week delivering an ordinary draw with functioning price elasticity (no decoupling, no curtailment) refutes the flag's necessity at its stated strength. The hydro limb is separately falsifiable: a freeze event where hydro fails to rise above its month p50 WITHOUT drought conditions refutes the dispatch-buffer read - 2025-01-25..30 (593-642 vs p50 669) is the one recorded exception and rides with the play.",
+   "conditions": [
+    {
+     "quantity": "cold_with_falling_renewables",
+     "state_path": "grid_stack.bas.US48.wind_mwh",
+     "reference": "prior_served_period",
+     "comparator": "falling",
+     "threshold": null,
+     "units": "MWh"
+    }
+   ],
+   "instances": [
+    {
+     "date": "2024-01-25",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv + research/kalshi/data_records/us48_hydro_daily_S114.csv",
+     "what_the_state_said": "dS -326 at breadth 6 (all six BAs' gas share rose) with dVRE -4,157k - the January 2024 freeze. Hydro dispatched 787-842 GWh/d against a month p50 of 689."
+    },
+    {
+     "date": "2026-01-29",
+     "group": "g11",
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "dS -241 at breadth 5, dVRE -2,748k - the Arctic-high week: the coldest week of the S113 confound set with renewables FALLING, because cold outbreaks are calm."
+    },
+    {
+     "date": "2019-01-31",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "dS -173 at breadth 6, dVRE -1,791k - the 2019 polar vortex week."
+    },
+    {
+     "date": "2021-01-28",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "dS -128 at breadth 6, dVRE -1,843k - the week into Uri's ramp."
+    },
+    {
+     "date": "20260201",
+     "group": "g12",
+     "source_file": "research/kalshi/renders/ng_refine_s95/grp12_state.json",
+     "what_the_state_said": "The served aftermath: coal 3,103,423 MWh (the block-loaded plateau, period Jan-30) decaying 2.87M -> 2.39M -> 2.02M across g12 and 1.67M -> 1.57M into g13 - A-31's seventeen-day staged ramp-down, visible day by day in the committed states, with a +390k two-day re-ramp into the Feb-24/25 snap meeting a still-warm fleet (A-34's second-event case)."
+    }
+   ],
+   "corpus": {
+    "d24_state": "found",
+    "searched_on": "S114",
+    "searched_scope": "391-week storage file breadth>=4 deep-draw members + hydro daily file event days + g12/g13 served stacks",
+    "n_found": 5
+   },
+   "forward": [
+    {
+     "tag": "forward_evidence",
+     "text": "NONE. Registered against g24 (dormant unless a winter block is walked or traded live)."
+    }
+   ],
+   "health": {
+    "degenerate_block_share": null,
+    "can_change_state": "Conjunction of served quantities - each component changes state within blocks; the full flag is rare by construction (it is the tail)."
+   },
+   "provenance": {
+    "merged_session": "S114",
+    "brain_version": "s105.1",
+    "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
+    "proposed_by": "S114 dissection under Greg's adjudication"
+   }
+  },
+  {
+   "id": "weather.hydro_winter_buffer",
+   "target": "stack_model",
+   "trigger": "deterministic seasonal structure - applies unconditionally to any winter stack read; not a conditional trigger",
+   "read": "national hydro output and its month-of-year position; reservoir/guide-curve state where obtainable (A-18/A-20)",
+   "call": "Hydro does NOT belong in the intermittent-renewables term. It is WINTER-STRONG - monthly p50 GWh/d: Jan 669-828, Feb 714-766, Mar 716-817 against a Sep-Oct trough of 501-565, in every year measured (2024, 2025, 2026; 2021 consistent on the pre-split definition) - and it was dispatched ABOVE its month p50 INTO the freeze events (Uri week 844-903 vs 766; Jan-2024 787-842 vs 689; Jan-2026 883/791/787 vs 828). Treat hydro as the reliability BUFFER being played: ~6.5 Bcf/d-equivalent at the January level, with the year-to-year January spread (669 vs 828) itself the tradeable variance. The failure mode is not a calm day but a DRY YEAR - the inverted-U's drought limb, UNOBSERVED in the sampled winters - and its forward instruments are slow and dated (reservoir state, guide curves, TVA planned releases), the information class that survives past the 5-7 day horizon.",
+   "mechanism": "Reservoir hydro is storage, not weather - operators hold it for winter reliability and spring melt refills it, which is why the cycle is high Dec-Jun and low Sep-Oct, and why event days show dispatch ABOVE seasonal norm rather than weather-driven loss. Pumped storage is excluded from the modern series by construction (EIA-930 split the WAT/PS columns), so the A-20 confounder is out of these numbers.",
+   "requires": [
+    "national hydro daily (evidence series committed: data_records/us48_hydro_daily_S114.csv; live serving = grid_stack hydro, S113 rebuild, store on S3)",
+    "NOT SERVED: forward reservoir/guide-curve state (A-18/A-20)"
+   ],
+   "scope": "winter stack model and the Class-2 flag's buffer limb. Summer: hydro slides to its trough in fall, and the ~2 Bcf/d summer gas-fill shortfall is A-16's recorded number. Level alone cannot be signed at the tails (drought drawdown vs flood spill - the inverted U); this play carries the SEASONAL structure and the dispatch behaviour, not a level bar.",
+   "confidence": 0.7,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "Refuted if a further year's cycle shows winter (Jan-Mar) p50 at or below late-summer (Jul-Aug) p50 absent drought; or if freeze events systematically show hydro FALLING below month p50 without drought (the 2025-01 exception becoming the rule); or if the drought winter, when it arrives, does NOT produce the outsized gas response the buffer framing implies.",
+   "conditions": [
+    {
+     "quantity": "month_of_year",
+     "state_path": "flow_calendar.month",
+     "reference": "calendar",
+     "comparator": "in",
+     "threshold": "all - seasonal structure",
+     "units": "month"
+    }
+   ],
+   "instances": [
+    {
+     "date": "2021-02-15..19",
+     "group": null,
+     "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
+     "what_the_state_said": "Uri week: 895/848/859/903/844 GWh/d against a February p50 of 766 - dispatched into the event (pre-split definition, hydro incl PS in 2021)."
+    },
+    {
+     "date": "2024-01-15..17",
+     "group": null,
+     "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
+     "what_the_state_said": "January 2024 freeze: 823/842/787 vs month p50 689."
+    },
+    {
+     "date": "2026-01-20..23",
+     "group": "g11",
+     "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
+     "what_the_state_said": "The $30.72 window: 883/791/787 vs month p50 828 - at or above the strongest January in the sample."
+    },
+    {
+     "date": "2025-01-25..30",
+     "group": null,
+     "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
+     "what_the_state_said": "THE RECORDED EXCEPTION: 593/623/642 vs p50 669 - slightly below, in the driest January of the sample. Rides with the play as its honest counterinstance."
+    }
+   ],
+   "corpus": {
+    "d24_state": "found",
+    "searched_on": "S114",
+    "searched_scope": "1,093 days of national hydro built keyless from the public EIA-930 six-month balance files (2021H1, 2024, 2025, 2026H1); 46 artifact rows >30,000 MW/BA-hour dropped and counted",
+    "n_found": 4
+   },
+   "forward": [
+    {
+     "tag": "forward_evidence",
+     "text": "NONE. Registered against g24. The decisive forward instance is the next drought winter."
+    }
+   ],
+   "health": {
+    "degenerate_block_share": null,
+    "can_change_state": "Seasonal structure is deterministic by design (DESCRIPTOR-adjacent); the dispatch-into-events limb changes state per event."
+   },
+   "provenance": {
+    "merged_session": "S114",
+    "brain_version": "s105.1",
+    "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
+    "proposed_by": "S114 dissection under Greg's adjudication; hydro measured after Greg: 'You'll have to check hydro output in winter vs summer too'"
+   }
+  },
+  {
+   "id": "weather.summer_burn_lane_exclusion",
+   "target": "no_call",
+   "trigger": "summer storage-lane read where a tail-size weekly build or draw expectation is being formed",
+   "read": "the breadth of gas-share rises across the served BAs for the storage week (from grid_stack per-BA gas_share, period+2, week complete before the Thursday print)",
+   "call": "The summer lane is the burn stack's home (res/comm at floor, A-38 scope) and the breadth count works there as a ONE-SIDED EXCLUSION, never a sorter: breadth<=1 nearly excludes a monster build (builds >=+100 Bcf: zero at breadth 0, one of 25 weeks at breadth<=1 - 2019-05-23's +100 - against 27 of 139 at breadth 2-6), and the only summer DRAW in seven years sits at breadth 0 (2024-08-15, -6, burn 316.8). USE it to gate tail-size calls and feed NO CALL (A-2); DO NOT rank mid-size weeks with it - the middle does not ladder (br2 shallower-loaded than br3, br5 deeper than br4).",
+   "mechanism": "In summer essentially all demand variance IS power burn, so a week where gas share rose almost nowhere is a week without the broad burn lift that big builds' absence requires. Possible mechanical contribution - share ceilings in consecutive peak weeks - is FLAGGED AS A GUESS and untested (D37: the story is not the finding).",
+   "requires": [
+    "grid_stack.bas.*.gas_share (served, per BA, period+2)",
+    "coverage caveat: six served BAs = 64.5% of US48 summer power burn (A-24c) - re-measure after A-18 lands"
+   ],
+   "scope": "summer (injection season) storage lane, one-sided, tail-size only. The winter mirror (breadth>=4 nearly excludes monster draws EXCEPT the Class-2 freeze weeks) lives in weather.freeze_conjunction_class2's territory and fails exactly there by design.",
+   "confidence": 0.6,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "A second summer week at breadth<=1 delivering a >=+100 Bcf build, or a summer draw arriving at breadth>=4, refutes the exclusion at its stated strength. The coverage falsifier: if adding the missing Southeast BAs (A-18) materially moves the breadth of past weeks, the count was a coverage artifact and must be re-measured before further use.",
+   "conditions": [
+    {
+     "quantity": "summer_breadth_low_gate",
+     "state_path": "grid_stack.bas.*.gas_share (weekly rise count)",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 1,
+     "units": "BAs of 6"
+    }
+   ],
+   "instances": [
+    {
+     "date": "2024-08-15",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "The only summer draw in the file: -6 at breadth 0, burn 316.8 - the hottest-tail week sat at the exclusion's floor."
+    },
+    {
+     "date": "2019-05-23",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "THE ONE EXCEPTION, named so it cannot be forgotten: +100 at breadth 1, burn 180."
+    },
+    {
+     "date": "2020-06-25",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "Largest-build side behaving: +120 at breadth 6; the twelve biggest summer builds sit at breadths 2-6, none at 0."
+    }
+   ],
+   "corpus": {
+    "d24_state": "found",
+    "searched_on": "S114",
+    "searched_scope": "164 summer weeks, per-breadth-level listings, every extreme member read individually",
+    "n_found": 3
+   },
+   "forward": [
+    {
+     "tag": "forward_evidence",
+     "text": "NONE. Registered against g24."
+    }
+   ],
+   "health": {
+    "degenerate_block_share": null,
+    "can_change_state": "Weekly count 0-6, moves every week; the gate is its extreme value, present ~15% of summer weeks (25 of 164 at <=1)."
+   },
+   "provenance": {
+    "merged_session": "S114",
+    "brain_version": "s105.1",
+    "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
+    "proposed_by": "S114 dissection under Greg's adjudication ('the summer piece... this is a 2 sided discovery')"
+   }
+  },
+  {
+   "id": "weather.revision_seasonal_sign_map",
+   "target": "direction",
+   "trigger": "before reading ANY weather_forecast.run_delta sign or magnitude into a lean, in any season",
+   "read": "d_gw_hdd and d_gw_cdd separately, the calendar month, and model_disagreement.summary as the authority channel",
+   "call": "A weather revision has NO season-stable sign or size mapping. (1) The HDD axis INVERTS in the cooling season: on the g18-g19 shoulder days the five biggest warm revisions (-1.00..-1.70 GWDD) delivered +420/+30/+370/+610/+1230 - five of five non-negative - while mid-size cold-adds (+1.31/+1.41/+1.56) delivered -1050/-530/-960. Removing cold in May is BULLISH (more cooling), adding it is BEARISH - the opposite of winter. (2) The SIZE axis inverts: the three largest CDD revisions of the census (+2.66/+2.51/+2.26) landed on the QUIETEST days (+230/-60/+180) while the violence sat at mid-size revisions. DO NOT scale an expected move by revision size. (3) The authority channel is model CONVERGENCE, not the revision: 0713 carried convergence 0.017 with every fresh instrument pointing down against a +550 posterior (D25's override day); 0511 carried disagreement 1.127 - the fourth-highest of the census - on the walk's worst day (-2190). High disagreement is a NO-CALL state (A-2), not a direction.",
+   "mechanism": "The revision is a DELTA on an instrument whose demand meaning flips with season (HDD drives heating load in winter and kills cooling load in the shoulder) - D28's transfer disease arriving on a delta instead of a level. The size inversion is consistent with broadly-seen multi-day revisions being already priced (the acceptance limb, A-24a) - CARRIED AS A STORY, not a finding.",
+   "requires": [
+    "weather_forecast.run_delta[*].d_gw_hdd and d_gw_cdd (served, never masked)",
+    "model_disagreement.summary.max_abs_spread_gw_hdd (served, read by nothing until now)",
+    "flow_calendar month/day-class"
+   ],
+   "scope": "every lane, every season - it is a PREREQUISITE map, not a signal. EIA print Thursdays are excluded from the sign claims (0528, 0604: the print owns the day and the weather panel is silent). Mediation days (0629, 0624) show the revision losing to the served generation stack - couple with weather.renewables_masking_flip.",
+   "confidence": 0.65,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "Forward shoulder days where large warm-removals (<= -1.0 GWDD) deliver DOWN days at ordinary base rates refute the shoulder inversion. Forward days where the census's largest revisions deliver the largest moves refute the size inversion. If high-disagreement days (>=0.7 GWDD spread) stop containing disproportionate outcome width, the authority channel claim falls.",
+   "conditions": [
+    {
+     "quantity": "cooling_season_hdd_inversion_gate",
+     "state_path": "flow_calendar.month",
+     "reference": "calendar",
+     "comparator": "in",
+     "threshold": "Apr-Sep",
+     "units": "month"
+    },
+    {
+     "quantity": "authority_disagreement_gate",
+     "state_path": "model_disagreement.summary.max_abs_spread_gw_hdd",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 0.7,
+     "units": "GWDD"
+    }
+   ],
+   "instances": [
+    {
+     "date": "20260511",
+     "group": "g19",
+     "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+     "what_the_state_said": "The walk's worst day (actual +1740, blind -450, err -2190): HDD revision +1.02 in mid-May - which the inverted map reads BEARISH, aligned with the blind - under model disagreement 1.127, the census's fourth-highest. The honest state was NO CALL; the driver was positioning, not weather."
+    },
+    {
+     "date": "20260430",
+     "group": "g18",
+     "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+     "what_the_state_said": "The largest warm revision of the census (-1.70) delivered +1230 - the shoulder inversion's largest member."
+    },
+    {
+     "date": "20260713",
+     "group": "g23",
+     "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+     "what_the_state_said": "Convergence 0.017 (tightest in the census) with a -1.27 CDD removal, D-1 flow -1,225 SELL, and a served stack cooling off - every fresh instrument down; the posterior went +550 on a handed-down table (D25's B-0713). Actual -620."
+    },
+    {
+     "date": "20260626",
+     "group": "g22",
+     "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+     "what_the_state_said": "Size inversion member: +2.66 CDD - the largest revision in the census - delivered +230, a quiet day."
+    },
+    {
+     "date": "20260709",
+     "group": "g23",
+     "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
+     "what_the_state_said": "Mid-size revision violence: -1.66 CDD on the print Thursday delivered -2050 (direction right across the board; magnitude 8x under)."
+    }
+   ],
+   "corpus": {
+    "d24_state": "found",
+    "searched_on": "S114",
+    "searched_scope": "all 60 modern scored walk days (g18-g23), CDD and HDD revisions extracted separately per day, listed against actuals - data_records/walk_census_g18_g23_S114.csv",
+    "n_found": 60
+   },
+   "forward": [
+    {
+     "tag": "forward_evidence",
+     "text": "NONE. Registered against g24."
+    }
+   ],
+   "health": {
+    "degenerate_block_share": null,
+    "can_change_state": "Revisions move daily; the disagreement gate cleared on 18 of 60 census days and both extremes of the map fired inside single blocks."
+   },
+   "provenance": {
+    "merged_session": "S114",
+    "brain_version": "s105.1",
+    "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
+    "proposed_by": "S114 dissection under Greg's adjudication ('Do not let your assumed finding kill what the data is saying')"
+   }
+  },
+  {
+   "id": "weather.shoulder_month_tail_gates",
+   "target": "no_call",
+   "trigger": "deterministic - the calendar month; applies unconditionally to storage-lane tail-size expectations in Oct/Nov/Mar/Apr, not a conditional trigger",
+   "read": "the calendar month, then the month's one-sided tail bound from seven years of listed weeks",
+   "call": "The storage lane's tails are ONE-SIDED BY MONTH, and the month where the sign is open has closed tails. Seven years, every week listed: OCTOBER builds only (+29..+129, zero draws in 32 weeks). NOVEMBER bounded both ways (-94..+107 in 29 weeks - no deep draw in seven Novembers; the model handoff month, where per A-38 power burn opposes total demand every year). DECEMBER-FEBRUARY is draw season with the monster tail (December alone: -213..-1, not one positive week in 31). MARCH one-sided DOWN (-200..+37 - winter-grade draws persist, build tail closed). APRIL one-sided UP (-37..+103 - draw tail gone). USE as month-gates on tail-size calls and NO-CALL inputs (A-2): an October or April deep-draw call, a March big-build call, or any November tail call sits outside seven years of listings and needs extraordinary evidence. DO NOT use as level forecasts - the market prices the seasonal level; our use is call-formation bands and the burn-stack validity window (the summer/burn model extends through NOVEMBER at the weekly horizon, not to the equinox).",
+   "mechanism": "Injection/withdrawal seasonality plus the A-38 handoff: res/comm heating sits at its floor through November (the burn stack still describes the balance) and lifts December-March (the heating term owns the tail). The shoulders also carry opposite hydro-buffer states measured S114: the fall shoulder sits at the hydro TROUGH (Sep-Oct p50 501-565 GWh/d - the year's weakest buffer would meet any early freeze; unobserved in sample, carried as structure not prediction) while the spring shoulder sits at the melt maximum (May 840-847) stacking with peak wind - consistent with G16's April injection-bleed block. Cross-ref D28: absolute HDD bars discriminate ONLY in shoulder blocks (g7 2/10, g8 4/10, g14 4/12, g15 3/12), so the shoulder is also where threshold conditions carry their information.",
+   "requires": [
+    "flow_calendar month (deterministic, served)",
+    "cross-ref: weather.winter_heating_size_term (the Dec-Mar size term), weather.summer_burn_lane_exclusion (the burn lane these gates hand off to)"
+   ],
+   "scope": "storage-lane weekly tail expectations in the four shoulder-boundary months. The g18/g19 census adds the shoulder's DAILY-lane facts: model disagreement is structurally elevated there (nine of the census's eighteen >=0.70-spread days are g18, late April-May) so the authority/NO-CALL gate fires more, and the shoulder HDD revision axis is INVERTED (see weather.revision_seasonal_sign_map). Blind-legal: the gate is the calendar.",
+   "confidence": 0.7,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "Any October week drawing, any November week beyond roughly +/-120 Bcf, any March week building beyond ~+50, or any April week drawing beyond ~-50 refutes that month's gate at its stated strength - each is a single-week, listable event. The hydro-asymmetry limb is refuted if a fall-shoulder freeze arrives and hydro cover proves irrelevant to the gas response.",
+   "conditions": [
+    {
+     "quantity": "month_tail_gate",
+     "state_path": "flow_calendar.month",
+     "reference": "calendar",
+     "comparator": "in",
+     "threshold": "Oct/Nov/Mar/Apr",
+     "units": "month"
+    }
+   ],
+   "instances": [
+    {
+     "date": "2022-11-03",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "November's build extreme: +107 - and November's draw extreme in seven years is only -94 (2019-11-21). The transition month's tails are closed both ways."
+    },
+    {
+     "date": "2019-03-14",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "March's draw extreme: -200 at burn 172 - winter-grade, while March's build extreme across 34 weeks is +37. One-sided down."
+    },
+    {
+     "date": "2024-08-15",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "For contrast with October: the file's only summer draw (-6) is an August week; October's 32 weeks contain zero draws, floor +29."
+    },
+    {
+     "date": "2023-12-21",
+     "group": null,
+     "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
+     "what_the_state_said": "December: max -1 across 31 weeks - every December week in the record drew. The gate month before it (November) never draws deep; the month itself never builds."
+    }
+   ],
+   "corpus": {
+    "d24_state": "found",
+    "searched_on": "S114",
+    "searched_scope": "data_records/storage_week_by_week_S113.csv - every October (32), November (29), December (31), March (34) and April (35) week listed individually",
+    "n_found": 161
+   },
+   "forward": [
+    {
+     "tag": "forward_evidence",
+     "text": "NONE. Registered against g24. Each month's gate is tested by every future week in that month - the falsifier is single-week and cannot be missed."
+    }
+   ],
+   "health": {
+    "degenerate_block_share": null,
+    "can_change_state": "Deterministic calendar gate - dormant outside its months by design, active every shoulder block."
+   },
+   "provenance": {
+    "merged_session": "S114",
+    "brain_version": "s105.1",
+    "from_proposal": "forecasts/S114_TWO_SIDED_LANE_MERGE_PROPOSAL.json",
+    "proposed_by": "S114, on Greg's 'Is there anything that we can take for the shoulder months?'"
+   }
+  }
+ ]
+}

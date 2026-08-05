@@ -1,0 +1,75 @@
+{
+ "note": "REGISTERED FORWARD TESTS. An admitted play merges PROVISIONAL and its test is recorded here against a NAMED group. The coordinator serves the DUE list into that group's run and hard-fails if a due test goes unreported.",
+ "tests": [
+  {
+   "play_id": "weather.winter_heating_size_term",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "If same-burn same-breadth November-vs-deep-winter week pairs stop differing by more than ~100 Bcf once weather-normal heating is accounted for - i.e. the gap turns out to be burn mismeasurement rather than the heating term - the size claim is wrong and A-38's converter build is mis-aimed. Also refuted if the A-38 weekly re-check on a full HDD join shows power burn matching heating's share of weekly variance in Dec-Feb.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
+  },
+  {
+   "play_id": "weather.renewables_masking_flip",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "Forward winter weeks with rising renewables AND heating-grade cold whose realized draws match the burn-implied size (no under-call) refute the masking claim. On the daily lane: forward days where a served renewables surge coexists with the weather-implied gas bump arriving in full refute the mediation form (0629/0601 class).",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
+  },
+  {
+   "play_id": "weather.freeze_conjunction_class2",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "A forward cold+calm week delivering an ordinary draw with functioning price elasticity (no decoupling, no curtailment) refutes the flag's necessity at its stated strength. The hydro limb is separately falsifiable: a freeze event where hydro fails to rise above its month p50 WITHOUT drought conditions refutes the dispatch-buffer read - 2025-01-25..30 (593-642 vs p50 669) is the one recorded exception and rides with the play.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
+  },
+  {
+   "play_id": "weather.hydro_winter_buffer",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "Refuted if a further year's cycle shows winter (Jan-Mar) p50 at or below late-summer (Jul-Aug) p50 absent drought; or if freeze events systematically show hydro FALLING below month p50 without drought (the 2025-01 exception becoming the rule); or if the drought winter, when it arrives, does NOT produce the outsized gas response the buffer framing implies.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
+  },
+  {
+   "play_id": "weather.summer_burn_lane_exclusion",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "A second summer week at breadth<=1 delivering a >=+100 Bcf build, or a summer draw arriving at breadth>=4, refutes the exclusion at its stated strength. The coverage falsifier: if adding the missing Southeast BAs (A-18) materially moves the breadth of past weeks, the count was a coverage artifact and must be re-measured before further use.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
+  },
+  {
+   "play_id": "weather.revision_seasonal_sign_map",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "Forward shoulder days where large warm-removals (<= -1.0 GWDD) deliver DOWN days at ordinary base rates refute the shoulder inversion. Forward days where the census's largest revisions deliver the largest moves refute the size inversion. If high-disagreement days (>=0.7 GWDD spread) stop containing disproportionate outcome width, the authority channel claim falls.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
+  },
+  {
+   "play_id": "weather.shoulder_month_tail_gates",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "Any October week drawing, any November week beyond roughly +/-120 Bcf, any March week building beyond ~+50, or any April week drawing beyond ~-50 refutes that month's gate at its stated strength - each is a single-week, listable event. The hydro-asymmetry limb is refuted if a fall-shoulder freeze arrives and hydro cover proves irrelevant to the gas response.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
+  }
+ ]
+}
