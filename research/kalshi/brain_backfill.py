@@ -323,6 +323,47 @@ def cmd_apply(a):
     return 0
 
 
+def cmd_mark_actions(a):
+    """Give fires and declines EQUAL FOOTING in the brain (Greg, S112: "I just want to give them
+    equal footing so one isn't ignored over the other", and "there should be no difference in how
+    they are listed in the schema for the brain except one is a do and the other a don't").
+
+    So there is ONE instances[] list and ONE field that distinguishes them: action = do | dont.
+    No separate section, no second structure, no subordinate category - because a category filed
+    somewhere else is a category that gets read second, and the whole reason the declines were
+    invisible for 23 sessions is that nothing recorded them at all.
+
+    This stamps `action` onto instances that predate the field. A fire and a decline then differ by
+    exactly one token, and any consumer counting evidence counts both by default.
+    """
+    brain = load(BRAIN)
+    led_path = os.path.join(HERE, "STANDDOWN_LEDGER_S112.json")
+    declined = set()
+    if os.path.exists(led_path):
+        for r in load(led_path)["entries"]:
+            if r["action"] == "stood_down":
+                declined.add((r["play_id"], r["date"]))
+    n_do = n_dont = 0
+    for p in brain["plays"]:
+        for ins in p.get("instances") or []:
+            if "action" in ins:
+                continue
+            key = (p["id"], ins.get("date"))
+            said = str(ins.get("what_the_state_said") or "")
+            is_dont = key in declined or "stood_down" in said or "plays_stood_down" in said
+            ins["action"] = "dont" if is_dont else "do"
+            n_dont += is_dont
+            n_do += not is_dont
+    print("stamped action on instances: do=%d  dont=%d" % (n_do, n_dont))
+    if not a.write:
+        print("dry run - nothing written. Re-run with --write.")
+        return 0
+    with open(BRAIN, "w", encoding="utf-8") as f:
+        json.dump(brain, f, indent=1, ensure_ascii=False)
+    print("written to %s" % os.path.relpath(BRAIN, ROOT))
+    return 0
+
+
 def cmd_selftest(a):
     """The guards must fire on their own defects (D11)."""
     brain, audit = load(BRAIN), load(AUDIT)
@@ -434,8 +475,10 @@ def main():
     p = sub.add_parser("apply"); p.add_argument("--write", action="store_true")
     p.add_argument("--retract")
     sub.add_parser("selftest")
+    p = sub.add_parser("mark-actions"); p.add_argument("--write", action="store_true")
     a = ap.parse_args()
-    return {"plan": cmd_plan, "apply": cmd_apply, "selftest": cmd_selftest}[a.cmd](a)
+    return {"plan": cmd_plan, "apply": cmd_apply, "selftest": cmd_selftest,
+            "mark-actions": cmd_mark_actions}[a.cmd](a)
 
 
 if __name__ == "__main__":
