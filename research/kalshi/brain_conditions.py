@@ -215,6 +215,77 @@ def cmd_unparsed(a):
     return 0
 
 
+def cmd_curate_prompt(a):
+    """Emit a curation prompt, slots filled by lookup. The curator picks state_paths from the
+    SERVED VOCABULARY rather than from memory - which is the whole point, because holes #8 and #9
+    were both 'the name looked right'. Anything proposed is then hard-verified by `apply`, which
+    refuses a state_path that does not resolve in any committed state."""
+    b = load_brain()
+    ps = unparsed_plays(b)
+    base, extra = divmod(len(ps), N_BATCHES)
+    n = a.batch
+    start = (n - 1) * base + min(n - 1, extra)
+    mine = ps[start:start + base + (1 if n <= extra else 0)]
+    vocab = vocabulary()
+    modern = (18, 19, 20, 21, 22, 23)
+    # only offer quantities that actually survive into the modern blocks - proposing a bar on a
+    # path that died at g16 is how a condition becomes degenerate the day it is written
+    live = sorted(p for p, gs in vocab.items() if sum(g in gs for g in modern) >= 4)
+    print("""You are CURATING CONDITIONS for the NG forecaster's brain, batch %d of %d.
+
+WHAT THIS IS. %d of 82 plays have `conditions` unparsed. A condition is the machine-readable form of
+a play's numeric bar: {quantity, state_path, reference, comparator, threshold, units}. It matters
+more than it sounds - D29: conditions[].state_path "is the slot doing the most work: it makes the
+D28 degeneracy check run automatically at every merge instead of by hand-curated registry, which
+would have caught the burn gate's constant limb before the merge rather than on a forward test a
+session later."
+
+THE HARD RULE: DO NOT PARSE THE PROSE. D29 is explicit that regex-parsing triggers is the
+fuzzy-matching error that produced data holes #8 and #9. You READ the play, decide what quantity it
+actually tests, and pick the state_path FROM THE SERVED VOCABULARY BELOW. If the play's quantity is
+not in that list, it is NOT curatable - say so, do not find the nearest-looking name. A condition
+naming a field that is not served reads as evaluated and silently never fires, which is worse than
+no condition at all.
+
+MANY PLAYS HAVE NO NUMERIC BAR AND THAT IS A REAL ANSWER. A qualitative tape read, a descriptor, a
+sequencing rule - none carries a bar. Emit those under `no_condition` with a `why`. Do not invent a
+threshold to fill the slot; an honest "none" is a result and a manufactured bar is a defect.
+
+OUTPUT - write research/kalshi/forecasts/conditions/batch_%d.json:
+
+{"batch": %d,
+ "conditions": [
+   {"play_id": "...", "conditions": [
+      {"quantity": "<short name>", "state_path": "<EXACT path from the vocabulary below>",
+       "reference": "absolute|percentile_3y|percentile_block|ratio|delta|rank",
+       "comparator": "<|<=|>|>=|==|!=", "threshold": <number>, "units": "<share|lots|gw_hdd|usd|...>"}
+   ]}
+ ],
+ "no_condition": [
+   {"play_id": "...", "why": "<why this play carries no numeric bar>"}
+ ]}
+
+Every play in your batch must appear in exactly one of the two lists. Verify with:
+    python research/kalshi/brain_conditions.py apply research/kalshi/forecasts/conditions/batch_%d.json
+It refuses any state_path that does not resolve, any off-enum comparator or reference, and any
+attempt to overwrite a play that already has conditions.
+
+YOUR BATCH - %d plays:
+%s
+
+THE SERVED VOCABULARY - %d numeric quantities present in at least 4 of the 6 modern blocks
+(g18-g23). These are the ONLY legal state_path values:
+%s
+
+THE FULL BRAIN RECORD FOR EACH PLAY IN YOUR BATCH:
+
+%s""" % (n, N_BATCHES, len(ps), n, n, n, len(mine),
+         "\n".join("  %2d. %s" % (i + 1, p["id"]) for i, p in enumerate(mine)),
+         len(live), "\n".join("  " + x for x in live),
+         json.dumps(mine, indent=1)[:150000]))
+    return 0
+
+
 def cmd_apply(a):
     """Apply a curated proposal. Additive and verified: a condition whose state_path does not
     resolve is REFUSED, and no incumbent field is touched (D8)."""
@@ -359,10 +430,12 @@ def main():
     sub.add_parser("verify")
     p = sub.add_parser("unparsed"); p.add_argument("--batch", type=int)
     p = sub.add_parser("apply"); p.add_argument("path"); p.add_argument("--write", action="store_true")
+    p = sub.add_parser("curate-prompt"); p.add_argument("batch", type=int)
     sub.add_parser("selftest")
     a = ap.parse_args()
     return {"vocab": cmd_vocab, "verify": cmd_verify, "unparsed": cmd_unparsed,
-            "apply": cmd_apply, "selftest": cmd_selftest}[a.cmd](a)
+            "apply": cmd_apply, "selftest": cmd_selftest,
+            "curate-prompt": cmd_curate_prompt}[a.cmd](a)
 
 
 if __name__ == "__main__":
