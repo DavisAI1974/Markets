@@ -141,6 +141,11 @@ resolution the market is trading.
 **Three instruments, one lagging, one leading, one falsifying:**
 - **Slope divergence** — lagging by construction; a slope change is only measurable after it starts.
 - **The dipole's exhaustion arm** — leading; reads the current leader failing before price turns.
+  **Keep three constructions separate.** `dip_imb_level` as a **DIRECTION nowcast WORKS on NG** and is
+  brain play #1 (`direction.flow_nowcast`, conf 0.87, forward-confirmed, 34/34 OOS, monotone
+  0.68→0.94); Greg reports ChatGPT independently demonstrated it too, specifics pending. **Static
+  DIVERGENCE as a reversal predictor** is the only thing that failed to transfer at S90. **EXHAUSTION**
+  as a turn detector is the open item. Nothing here says the dipole is false on direction.
   *It HAS been tested on NG, and it has a measurable success criterion. The architecture split is
   DIPOLE = filter, fine-resolution PRICE-REVERSAL = timing, and the payoff of resolution is the origin
   of our look-ahead number: **1-sec enters ~5-6 bps off the true turn against ~9-11 bps at 1-min**.
