@@ -97,3 +97,22 @@ VERDICT: ALL CLEAR | N FAIL - LINE STOPPED, human review required
 Rules of conduct, repeated because they are the job: report-only; never fix; never delete; never
 re-run a failing command hoping it passes; never mark WARN as PASS; quote evidence verbatim. A
 short honest report beats a clean-looking one.
+
+
+## MEASUREMENT REPORTING (D37, S113) - report-only, and it is the one that keeps getting skipped
+
+- [ ] Does every measurement report the **per-event record** rather than an average as the verdict?
+      An **R2, a correlation and a fitted slope are ALL averages** - that is the form the rule is
+      broken in, not the word "mean".
+- [ ] Is `per_event.report(...)` used, or its output reproduced by hand: sum|err|, drift, survival,
+      p50/p90 **and MAX**, an improved/worsened **count**, and **the largest ACTUAL moves named
+      individually**?
+- [ ] Was any candidate promoted on a statistic that orders the quiet middle while missing the
+      largest moves? Fail, however good the summary number.
+- [ ] Is every error number accompanied by a **named benchmark** (A-1)?
+- [ ] Where a mechanism was refuted, was the OBSERVATION left standing on its own evidence rather
+      than demoted with the story - and conversely, was a dying observation dropped for ITS OWN
+      evidence rather than kept because the story was attractive?
+- [ ] Is any controlled comparison done **inside the cell** (hold the confounder constant
+      non-parametrically) rather than by residualising off a fitted line? A residual from an OLS
+      fit is an average and has hidden a real result here at least once.

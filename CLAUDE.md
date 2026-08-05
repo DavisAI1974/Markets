@@ -785,6 +785,26 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 - **EACH TRADE INDIVIDUALLY, never average.** No pooled hit-rate, no mean signed-bps, no averaged
   coefficient — every aggregate blurs away the per-trade fingerprint that IS the predictive content.
   Characterize the DISTRIBUTION + the per-trade fingerprint; never lead with the mean.
+  **ENFORCED, NOT ASSERTED (D37, S113 — Greg had to say this for the tenth time): use
+  `research/kalshi/per_event.py report(...)`.** It prints the D4 set (sum|err|, drift, survival,
+  p50/p90 AND MAX), an improved/worsened COUNT, and **the largest ACTUAL moves named one by one** —
+  and it returns NO scalar, so there is nothing to quote out of context. **AN R2, A CORRELATION AND A
+  FITTED SLOPE ARE ALL AVERAGES** — that is the form the rule keeps being broken in, not the word
+  "mean". Measured in ONE S113 analysis: a pooled correlation whose sign was opposite to every
+  constituent cell (+0.178 vs −0.685 summer / −0.256 winter, i.e. pooled it said burning gas FILLS
+  storage); an R2 of 0.554 hiding a 56%-of-weeks record whose worst week got WORSE; and an OLS slope
+  quoted as evidence. Pairs with A-1: `blind_score_nonpooled.py` never reports an error number without
+  a named benchmark.
+- **YOUR STORY IS A GUESS; THE DATA IS THE FINDING (D37).** An OBSERVATION and the STORY explaining it
+  are independent — a refuted mechanism never demotes the measurement it failed to explain, and a
+  measurement is dropped only when ITS OWN evidence fails. S113 ran the full cycle: a regularity held
+  9 monthly cells out of 9, three mechanisms were proposed and refuted (gas-backfill,
+  weather-extremity, calendar), and it was finally dropped for the right reason — holding burn constant
+  INSIDE month, non-parametrically, the effect vanished. Wrong reason to drop: my story died. Right
+  reason: the evidence died. **And know the domain before theorising** — wind peaks in spring/autumn
+  and troughs in summer while solar peaks at the solstice (measured on our own EIA-930: wind 9.9 TWh/wk
+  in April vs 5.9 in August; solar 3.5 in June vs 1.4 in December), so `wind+solar` is a composite of
+  two OPPOSITE annual cycles and must never be summed into one 'renewables' term.
 - **Per-cell always, never pool.** Cells = moneyness × side × velocity/lag-class × release (for
   level-hits); regime × city × season × bucket × swing-dir (for weather). A signal that survives on a
   SUBSET of cells is KEPT and used on those cells — partial coverage is not failure. Report "works on
