@@ -611,6 +611,18 @@ SPP IS THE ONLY FORWARD PRODUCT THAT SEPARATES BY FUEL TYPE, so it is the single
 
 AND THE GAP LANDS EXACTLY WHERE WE ARE ALREADY SHORT: 'the non-ISO Southeast has no standardized public equivalent' is the report's largest named hole. Put beside S112 T3 (EIA-930 gives the Southeast forward LOAD but no forward wind or solar) and A-20 (only TVA publishes forward water), the pattern is one finding: THE REGION WE MOST NEED FORWARD DATA FOR IS THE ONE WITH THE LEAST OF IT, ACROSS ALL THREE STACK TERMS. That is worth stating before we size any Southeast work.
 
+GREG, S113: 'look at the state puco levels for outage info maybe' - CHECKED, AND IT INVERTS THE REPORT'S CONCLUSION IN A USEFUL DIRECTION.
+
+THE OHIO NEGATIVE FIRST, so nobody spends the search again. PUCO is the WRONG DOOR IN OHIO for a structural reason: Ohio is RESTRUCTURED. SB3 (1999, effective 2001) and SB221 required the incumbents to divest generation, so PUCO regulates transmission and distribution while generation is merchant and dispatches into PJM. What PUCO collects under OAC 4901:1-10 is DISTRIBUTION reliability - annual system-wide outage-cause reports and worst-performing-circuit reports (the bottom 8% of circuits). That is customer-minutes on wires, not a generating unit being offline. Ohio is closed on both sides: no commission hook, and PJM states unit outages are confidential.
+
+BUT THE REASON GENERALISES AND IT IS THE VALUABLE HALF. A commission collects plant-level outage data when it has a regulatory hook for it - prudence review and fuel-cost recovery on RATE-REGULATED generation. That hook exists exactly where generation was never divested: the vertically integrated Southeast. The T1 report already found the instance without drawing the inference - Georgia PSC requires MONTHLY generating-plant outage reports, and SC PSC dockets carry outage proceedings (the V.C. Summer refuelling accrual case).
+
+SO THE TWO LANES ARE COMPLEMENTARY BY REGULATORY STRUCTURE, NOT BY LUCK: the ISO forward products exist in the restructured regions (PJM, ERCOT, MISO, SPP) and are aggregate and fuel-blind; the commission filings exist in the vertically integrated regions where no ISO product does. The non-ISO Southeast is 'the largest unresolved gap' for the ISO lane precisely BECAUSE it is the region where the commission lane is available. That converts A-17B from a gap into a target list: GA PSC, SC PSC, NCUC, FPSC, Alabama PSC, plus TVA by FOIA as a federal instrumentality.
+
+CAVEAT THAT MUST BE CHECKED PER COMMISSION, NOT ASSUMED: Georgia's own filing schedule contemplates a TRADE-SECRET copy alongside the public one, so the public copy may be redacted. Reachable and public-in-usable-form are different claims. Check the actual filed documents before sizing any build, and record per commission which of the two it is.
+
+AND NOTE WHAT THIS DOES NOT FIX: a monthly commission filing is a MONTHLY cadence on a day-ahead-to-two-week desk. Its value is the forward DATED calendar it may contain (planned start and end), not its refresh rate - which is the same class as EIA-860M's planned retirement dates. Judge it on whether it carries forward dates, never on timeliness.
+
 ---
 
 ### [REST] A-20 - TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none
