@@ -2,42 +2,345 @@
  "note": "THE TRACKED WORK REGISTRY. Born S111 under D30 - 'a finding with no home in DECISIONS.md does not exist' - after seven items from the S110 turnaround memo were found undone because they lived only in prose. plant_status.py reads this file at every bring-up and prints the counts, so an open item cannot quietly stop existing. Statuses: OPEN | IN_PROGRESS | DONE | SUPERSEDED | BLOCKED. `first_raised` is the session it was first written down anywhere; `sessions_open` is computed by the andon board and is what makes staleness visible.",
  "current_session": "S111",
  "items": [
-  {"id": "M-1", "title": "Unify the two magnitude dialects (guessed_net_usd vs expected_magnitude_usd)", "source": "TURNAROUND_MEMO_S110 s1.3 (FIX,S)", "first_raised": "S110", "status": "OPEN", "size": "S", "why": "Same quantity, two names, one more filename-collision class waiting. MEASURED S111: guessed_net_usd in 13 files, expected_magnitude_usd in 6, and the blind and refine coordinators read different names. The S111 shrinkage query needed a fallback across both to read our own forecasts.", "blocked_by": null},
-  {"id": "M-2", "title": "Brain status taxonomy normalized to an enum", "source": "TURNAROUND_MEMO_S110 s1.3 (FIX,S)", "first_raised": "S110", "status": "DONE", "size": "S", "why": "Was twelve free-text statuses including a 40-word sentence. Fixed S111 by brain_schema.py: seven enum values, DESCRIPTOR added on Greg's call.", "blocked_by": null},
-  {"id": "M-3", "title": "Promotion/demotion cadence for PROVISIONAL plays", "source": "TURNAROUND_MEMO_S110 s1.4 (BUILD,S)", "first_raised": "S110", "status": "OPEN", "size": "S", "why": "47 PROVISIONAL plays accumulate forward evidence nobody schedules a review of. Proposal was: a promotion review rides every group close-out; n>=3 forward confirmations across >=2 groups is a promotion candidate, refuted twice in its own scope is a retirement candidate. MEASURED S111: zero mentions of a promotion review in RUN_SOP.md - never built.", "blocked_by": null},
-  {"id": "M-4", "title": "CDD-vs-normal (the anomaly instrument separating hill from spike)", "source": "TURNAROUND_MEMO_S110 s1.4, carried from S109", "first_raised": "S109", "status": "OPEN", "size": "M", "why": "A named build gap blocking the weather play family. Free. Not built as of S111.", "blocked_by": null},
-  {"id": "M-5", "title": "Seasonal station weights + the Ohio/Baltimore holes", "source": "TURNAROUND_MEMO_S110 s1.4, carried from S109", "first_raised": "S109", "status": "OPEN", "size": "M", "why": "Ohio has NO station at all against PJM being the largest gas-burning BA. S111 research adds the mechanism: gas-weighted degree-day weights are HEATING-derived and wrong in summer; the fix is a seasonal switch to power-weighted CDD off EIA-930 BA gas generation we already ingest. THIS IS ALSO THE TEST THAT DECIDES THE BURN GATE REINSTATEMENT (D31) - its kill argument rested on a summer CDD limb measured on a winter-weighted index.", "blocked_by": null},
-  {"id": "M-6", "title": "Coal headroom (EIA-860M additions/retirements + ISO outage aggregates)", "source": "TURNAROUND_MEMO_S110 s1.4, carried from S109", "first_raised": "S109", "status": "OPEN", "size": "M", "why": "The third absorber in Greg's own stack model and we have none of it. S111 sharpened it (Greg): the asymmetry is CAPACITY, not supply - coal plants are retired or retiring, so expensive gas cannot hand share back. Retirement is a FORWARD-DATED CALENDAR, which puts it in the one information class that survives past the weather horizon. Also the cross-year correction factor for the analog library.", "blocked_by": null},
-  {"id": "M-7", "title": "QC checklist gains a brain-conformance item", "source": "S111 (D30 consequence)", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "MEASURED: QC_CHECKLIST.md contains zero mentions of the brain. The status drift survived S110 partly because nothing swept it. Add: brain_schema.py validate must run and its counts be reported.", "blocked_by": null},
-  {"id": "M-8", "title": "Retire the Pyth collector workflows (D14)", "source": "DECISIONS D14", "first_raised": "S110", "status": "OPEN", "size": "S", "why": "Free era ended 2026-07-31 and they are not gas. Workflow file still present on the trunk. Needs a trunk touch.", "blocked_by": "requires a commit on the trunk branch, not this one"},
-
-  {"id": "S111-1", "title": "brain_schema.py sections --write", "source": "S111", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "Dry-run verified lossless (2,598 leaves, 0 lost). Held only because the 82-play audit was reading knowledge/ng_brain.json.", "blocked_by": "the audit being off the file"},
-  {"id": "S111-2", "title": "Re-run the 82-play audit under the CORRECTED rubric", "source": "S111", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "The S111 run reached 3 of 8 batches (32 plays, 140 instances traced, saved as BRAIN_AUDIT_PARTIAL_S111.json). Its rubric conflates ASSERTED with a genuinely novel n=1 finding, which Greg flagged explicitly - NOVEL_N1 is already in the schema enum. Re-run all eight so the classification is consistent across the brain.", "blocked_by": null},
-  {"id": "S111-3", "title": "THE BACKFILL - instances and corpus state into the brain", "source": "S111 (Greg)", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "58 of 82 plays carry no corpus or instance state. Greg: 'we started doing this late in the group runs and now we need to backfill.' Audit output is the input. Additive, proposal + adjudication + backup, incumbents untouched. Should be a RE-RUNNABLE SCRIPT, not a hand edit, because the corpus grows and searched-none decays.", "blocked_by": "S111-2"},
-  {"id": "S111-4", "title": "Falsifier backfill - 65 of 82 plays have none", "source": "S111", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "The burn gate died on its own forward test BECAUSE someone wrote the falsifier sentence down. Sixty-five plays have no such sentence and therefore cannot be killed by evidence.", "blocked_by": null},
-
-  {"id": "A-1", "title": "Wire zero-change and seasonal-naive baselines into blind_score_nonpooled", "source": "FORECAST_ARCHITECTURE_S111 s9.1", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "For seven blocks we compared MAE to previous MAE and called the fall an improvement, having never computed what doing nothing would score. It loses to zero-change in six of seven. Cheapest item on any list and it makes every future number readable.", "blocked_by": null},
-  {"id": "A-2", "title": "Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)", "source": "FORECAST_ARCHITECTURE_S111 s9.2, D25", "first_raised": "S110", "status": "OPEN", "size": "M", "why": "A MEASUREMENT PREREQUISITE, not a trading feature: one high-confidence day in fifty and a confidence field that does not discriminate, so a forced number and a confident one are indistinguishable downstream. A discord score is a number, so no output-contract change is needed.", "blocked_by": null},
-  {"id": "A-3", "title": "Compute the effective matching dimension d of any retrieval", "source": "FORECAST_ARCHITECTURE_S111 s4.2", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "L = k/r^d caps our library at a matching dimension of about 3. Condition on ten things and retrieval returns a day no closer than random - and returns it confidently with a magnitude attached. Nothing to build, only to measure.", "blocked_by": null},
-  {"id": "A-4", "title": "Score the CURVE, not the scalar - four error terms kept separate", "source": "FORECAST_ARCHITECTURE_S111 s6, D32", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "The product is a curve and the scoreboard has never touched it. Greg's bar as a function: direction no tolerance, turn timing little, amplitude some, level free. Plus the time dimension - how EARLY was it decidable.", "blocked_by": null},
-  {"id": "A-5", "title": "Build the library index (seasonal window, regime label, day class, shape descriptor)", "source": "FORECAST_ARCHITECTURE_S111 s9.5", "first_raised": "S111", "status": "OPEN", "size": "L", "why": "The shape vocabulary is ALREADY emitted in every posterior (onset_time_et, turn_time_et, trend_vs_chop, continuation_vs_reversal, path_p50_curve) and has never been collected or searched. The regime label is what collapses the match to d~1-2.", "blocked_by": null},
-  {"id": "A-6", "title": "Test the dipole EXHAUSTION arm on gas", "source": "FORECAST_ARCHITECTURE_S111 s1.5, S90 unfinished", "first_raised": "S90", "status": "OPEN", "size": "M", "why": "The only LEADING instrument in the monitor - slope divergence is lagging by construction. S90 ran the NG canary, static divergence came back NULL, the note said 'test exhaustion next', and it was never done. RollingFlow is already an O(1)-per-tick operator built for this hot path.", "blocked_by": null},
-  {"id": "A-7", "title": "ONE STORE + generated spawns", "source": "FORECAST_ARCHITECTURE_S111 s8, Greg S111", "first_raised": "S111", "status": "OPEN", "size": "L", "why": "RUN_SOP.md carries 13 slot placeholders across 36 occurrences, every one filled BY HAND - which is exactly how NC-1 happened (a calendar premise asserted from prose instead of looked up). spawn.py fills slots BY LOOKUP and emits the prompt, so running off-SOP becomes impossible rather than forbidden. Curve-building doctrine moves into the brain (served at spawn); plant policy stays in the ledger; both files become renders.", "blocked_by": null},
-
-  {"id": "G-1", "title": "Check the weekly balance is not reading a dead EIA page", "source": "GAS_SIGNAL_BRIEFING_S111 s6.1", "first_raised": "S111", "status": "OPEN", "size": "XS", "why": "EIA Natural Gas Weekly Update's FINAL edition was the week ending 21 Jan 2026, replaced 29 Jan by the WNGSR Supplement. A pipeline pointed at the old vehicle goes stale silently - present, numeric, in range, right owner. Our hole signature, twelfth time. MINUTES OF WORK.", "blocked_by": null},
-  {"id": "G-2", "title": "EIA implied flow + reclassification flag + published sampling SE", "source": "GAS_SIGNAL_BRIEFING_S111 s6.2", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "Free noise floor (~4 Bcf at 90%). A print beating consensus by 3-4 Bcf is inside the measurement error of the print itself. Gives a defensible numeric NO CALL trigger immediately.", "blocked_by": null},
-  {"id": "G-3", "title": "Recompute COT as a CHANGE (Q = delta-net / OI), split MM vs Producer, three decay windows", "source": "GAS_SIGNAL_BRIEFING_S111 s2.7", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "COT LEVELS do not predict returns - three independent rejections. The CHANGE does, with a Journal of Finance horizon-resolved result landing inside our window (days 1-4 t=3.04, 5-10 t=3.62, 11-20 insignificant). Data already in hand. Caveat: the published result is cross-sectional across 26 commodities, so forward-test it rather than inherit it.", "blocked_by": null},
-  {"id": "G-4", "title": "ISO day-ahead and 7-day wind, solar, load -> NET LOAD", "source": "GAS_SIGNAL_BRIEFING_S111 s2.1 (TIER 1, top gap)", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "THE SIGN-FLIPPER. We hold REALIZED wind from EIA-930, which cannot fix a forward call because on a forecast day the realized value does not exist. Exactly the shape of the 0629 miss: gw_cdd rose as forecast and burn FELL 4.2 Bcf/d because wind rose 62%. All free - ERCOT, SPP, CAISO, PJM, MISO, ISO-NE, wrapped by gridstatus.", "blocked_by": null},
-  {"id": "G-5", "title": "ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY", "source": "GAS_SIGNAL_BRIEFING_S111 s2.2 (TIER 1)", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "FREE since 1 Oct 2025 - the full ECMWF real-time catalogue went open under CC-BY-4.0 with data charges removed. Our MOS deterministic guidance structurally cannot produce a spread. Fills the ensemble, spread, probabilistic-path and option-dispersion gaps in one feed, and is the prerequisite for a confidence gate. START ARCHIVING IMMEDIATELY - the archive is the asset.", "blocked_by": null},
-  {"id": "G-6", "title": "Forecast PROGRESSION deltas by block (1-5, 6-10, 11-15)", "source": "GAS_SIGNAL_BRIEFING_S111 s2.3 (TIER 1)", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "The quantity that actually trades - the level is priced, the revision is not. Also the direct instrument for the documented Friday-to-Monday cascade. Carry as a NEWS process, not a forecast.", "blocked_by": "G-5"},
-  {"id": "G-7", "title": "Scrape the ~10 LNG feedgas pipeline EBBs", "source": "GAS_SIGNAL_BRIEFING_S111 s2.4 (TIER 1)", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "Feedgas moved ~13 to ~15 Bcf/d on the Plaquemines ramp alone - a 14 Bcf/week storage swing sitting in a public posting. Our lng_feedgas_bcfd is null and 278 days stale. Smallest scrape with the largest demand-line payoff.", "blocked_by": null},
-  {"id": "G-8", "title": "Pipeline critical notices + planned-maintenance calendar", "source": "GAS_SIGNAL_BRIEFING_S111 s2.5 (TIER 1)", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "1-6 weeks, DATED FORWARD BY CONSTRUCTION - almost the only supply-demand information genuinely known weeks ahead. Known failure mode declared up front: unstructured prose, no severity field, pipelines post and cancel, and NAESB's own working group abandoned scraping as unreliable.", "blocked_by": null},
-  {"id": "G-9", "title": "Degree-day-adjusted balance residual (weather-normalised tightness)", "source": "GAS_SIGNAL_BRIEFING_S111 s2.6 (TIER 2)", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "Every input already held. THE ONLY MEASURE THAT CARRIES PAST THE WEATHER HORIZON, because it describes the non-weather part of the balance. Natural home for the rebuilt asymmetric-slope model - it is the residual after the slope.", "blocked_by": null},
-  {"id": "G-10", "title": "Separate TAS (NGT) from the tape; add jump-robust realized variance", "source": "GAS_SIGNAL_BRIEFING_S111 s3.1", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "Parsing changes on data we already own. TAS separation isolates benchmark/index flow from opinionated flow. Close-to-close RV throws away most of what the tick tape was bought for, and every VRP and event-vol number depends on the RV denominator.", "blocked_by": null},
-  {"id": "G-11", "title": "Start accruing EIA weekly coal basin spot prices", "source": "GAS_SIGNAL_BRIEFING_S111 s2.11", "first_raised": "S111", "status": "OPEN", "size": "XS", "why": "TIME-CRITICAL AND CANNOT BE BACKFILLED - EIA states the historical coal price series is vendor-proprietary and cannot be released. Zero value today; every week we wait is permanently lost. One hour of work.", "blocked_by": null},
-  {"id": "G-12", "title": "UNG roll + NG futures/options expiry calendars as day-class tags", "source": "GAS_SIGNAL_BRIEFING_S111 s6.13", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "Pure calendar, free, dated forward, inside our window. UNG's 10-K: rolls over a FOUR-DAY period beginning two weeks from expiration, dates posted in advance. CLOCK TRAP to encode with it: NYMEX settles on a 14:28-14:30 ET VWAP, Kalshi at 17:00 - a signal calibrated on one mis-times the other.", "blocked_by": null},
-  {"id": "G-13", "title": "NG weekly option settlements + EIA-print event variance extraction", "source": "GAS_SIGNAL_BRIEFING_S111 s2.9", "first_raised": "S111", "status": "OPEN", "size": "M", "why": "The listed price of a one-to-five-day Henry Hub distribution - the direct comparable to our Kalshi daily book - and it attacks our worst day class (G20's two EIA Thursdays were 3,530 of 7,880 total error). CRITICAL RULE: fit the no-event surface ONLY on non-spanning expiries or it silently absorbs the event premium.", "blocked_by": null},
-  {"id": "G-14", "title": "Fix the LNE strike decode at source (Databento display_factor bug)", "source": "GAS_OPTIONS_SYNTHESIS_S111 s1.10", "first_raised": "S111", "status": "OPEN", "size": "XS", "why": "SOLVED, just not applied: confirmed Databento bug reported 12 Jun 2024 - the OPTION's display_factor is used to decode the strike instead of the underlying FUTURE's. The 0.1 multiplier circulating as a workaround is our x10. Then prove it with the put-call parity slope test (C-P regressed on K must give slope ~= -0.997).", "blocked_by": null},
-  {"id": "G-15", "title": "Put-call parity slope test as a hard state_health gate on the options surface", "source": "GAS_OPTIONS_SYNTHESIS_S111 s1.1", "first_raised": "S111", "status": "OPEN", "size": "S", "why": "An ALGEBRAIC IDENTITY, exactly like the session_b_share identity that closed hole #9: for premium-paid-upfront options C - P = e^-rT (F - K), so regressing (C-P) on K within one (root, expiry, date) cell must give slope = -e^-rT. A slope near -0.0997 proves a x10 scale; not near -1 at all proves a merged ladder. Run across all 294k settle IVs before another line of options code is written.", "blocked_by": null}
+  {
+   "id": "M-1",
+   "title": "Unify the two magnitude dialects (guessed_net_usd vs expected_magnitude_usd)",
+   "source": "TURNAROUND_MEMO_S110 s1.3 (FIX,S)",
+   "first_raised": "S110",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Same quantity, two names, one more filename-collision class waiting. MEASURED S111: guessed_net_usd in 13 files, expected_magnitude_usd in 6, and the blind and refine coordinators read different names. The S111 shrinkage query needed a fallback across both to read our own forecasts.",
+   "blocked_by": null
+  },
+  {
+   "id": "M-2",
+   "title": "Brain status taxonomy normalized to an enum",
+   "source": "TURNAROUND_MEMO_S110 s1.3 (FIX,S)",
+   "first_raised": "S110",
+   "status": "DONE",
+   "size": "S",
+   "why": "Was twelve free-text statuses including a 40-word sentence. Fixed S111 by brain_schema.py: seven enum values, DESCRIPTOR added on Greg's call.",
+   "blocked_by": null
+  },
+  {
+   "id": "M-3",
+   "title": "Promotion/demotion cadence for PROVISIONAL plays",
+   "source": "TURNAROUND_MEMO_S110 s1.4 (BUILD,S)",
+   "first_raised": "S110",
+   "status": "OPEN",
+   "size": "S",
+   "why": "47 PROVISIONAL plays accumulate forward evidence nobody schedules a review of. Proposal was: a promotion review rides every group close-out; n>=3 forward confirmations across >=2 groups is a promotion candidate, refuted twice in its own scope is a retirement candidate. MEASURED S111: zero mentions of a promotion review in RUN_SOP.md - never built.",
+   "blocked_by": null
+  },
+  {
+   "id": "M-4",
+   "title": "CDD-vs-normal (the anomaly instrument separating hill from spike)",
+   "source": "TURNAROUND_MEMO_S110 s1.4, carried from S109",
+   "first_raised": "S109",
+   "status": "OPEN",
+   "size": "M",
+   "why": "A named build gap blocking the weather play family. Free. Not built as of S111.",
+   "blocked_by": null
+  },
+  {
+   "id": "M-5",
+   "title": "Seasonal station weights + the Ohio/Baltimore holes",
+   "source": "TURNAROUND_MEMO_S110 s1.4, carried from S109",
+   "first_raised": "S109",
+   "status": "OPEN",
+   "size": "M",
+   "why": "Ohio has NO station at all against PJM being the largest gas-burning BA. S111 research adds the mechanism: gas-weighted degree-day weights are HEATING-derived and wrong in summer; the fix is a seasonal switch to power-weighted CDD off EIA-930 BA gas generation we already ingest. THIS IS ALSO THE TEST THAT DECIDES THE BURN GATE REINSTATEMENT (D31) - its kill argument rested on a summer CDD limb measured on a winter-weighted index.",
+   "blocked_by": null
+  },
+  {
+   "id": "M-6",
+   "title": "Coal headroom (EIA-860M additions/retirements + ISO outage aggregates)",
+   "source": "TURNAROUND_MEMO_S110 s1.4, carried from S109",
+   "first_raised": "S109",
+   "status": "OPEN",
+   "size": "M",
+   "why": "The third absorber in Greg's own stack model and we have none of it. S111 sharpened it (Greg): the asymmetry is CAPACITY, not supply - coal plants are retired or retiring, so expensive gas cannot hand share back. Retirement is a FORWARD-DATED CALENDAR, which puts it in the one information class that survives past the weather horizon. Also the cross-year correction factor for the analog library.",
+   "blocked_by": null
+  },
+  {
+   "id": "M-7",
+   "title": "QC checklist gains a brain-conformance item",
+   "source": "S111 (D30 consequence)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "MEASURED: QC_CHECKLIST.md contains zero mentions of the brain. The status drift survived S110 partly because nothing swept it. Add: brain_schema.py validate must run and its counts be reported.",
+   "blocked_by": null
+  },
+  {
+   "id": "M-8",
+   "title": "Retire the Pyth collector workflows (D14)",
+   "source": "DECISIONS D14",
+   "first_raised": "S110",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Free era ended 2026-07-31 and they are not gas. Workflow file still present on the trunk. Needs a trunk touch.",
+   "blocked_by": "requires a commit on the trunk branch, not this one"
+  },
+  {
+   "id": "S111-1",
+   "title": "brain_schema.py sections --write",
+   "source": "S111",
+   "first_raised": "S111",
+   "status": "DONE",
+   "size": "S",
+   "why": "Dry-run verified lossless (2,598 leaves, 0 lost). Held only because the 82-play audit was reading knowledge/ng_brain.json. APPLIED S111 after the audit was stopped: doctrine_tier3 -> doctrine (21 entries, 10 carrying a session field), open_frontier normalized to one shape, fingerprints session key moved. Round-trip lossless, 2,598 leaves, 0 lost. Backup ng_brain_s105.0_presections_backup.json.",
+   "blocked_by": null
+  },
+  {
+   "id": "S111-2",
+   "title": "Re-run the 82-play audit under the CORRECTED rubric",
+   "source": "S111",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "STOPPED at 3 of 8 batches on Greg's call - all eight run in S112 under the corrected rubric so the classification is consistent across the brain. The partial (32 plays, 140 instances traced) is saved as BRAIN_AUDIT_PARTIAL_S111.json and stands as proof the method works: it found 19 of 32 OUTCOME_CREDITED against my regex's 9 of 82, and it caught the seeded known-broken burn gate unprompted. RUBRIC FIX REQUIRED BEFORE RE-RUN: it conflates ASSERTED with a genuinely novel n=1 finding; NOVEL_N1 is already in the schema's support enum.",
+   "blocked_by": null
+  },
+  {
+   "id": "S111-3",
+   "title": "THE BACKFILL - instances and corpus state into the brain",
+   "source": "S111 (Greg)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "58 of 82 plays carry no corpus or instance state. Greg: 'we started doing this late in the group runs and now we need to backfill.' Audit output is the input. Additive, proposal + adjudication + backup, incumbents untouched. Should be a RE-RUNNABLE SCRIPT, not a hand edit, because the corpus grows and searched-none decays.",
+   "blocked_by": "S111-2"
+  },
+  {
+   "id": "S111-4",
+   "title": "Falsifier backfill - 65 of 82 plays have none",
+   "source": "S111",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "The burn gate died on its own forward test BECAUSE someone wrote the falsifier sentence down. Sixty-five plays have no such sentence and therefore cannot be killed by evidence.",
+   "blocked_by": null
+  },
+  {
+   "id": "A-1",
+   "title": "Wire zero-change and seasonal-naive baselines into blind_score_nonpooled",
+   "source": "FORECAST_ARCHITECTURE_S111 s9.1",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "For seven blocks we compared MAE to previous MAE and called the fall an improvement, having never computed what doing nothing would score. It loses to zero-change in six of seven. Cheapest item on any list and it makes every future number readable.",
+   "blocked_by": null
+  },
+  {
+   "id": "A-2",
+   "title": "Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)",
+   "source": "FORECAST_ARCHITECTURE_S111 s9.2, D25",
+   "first_raised": "S110",
+   "status": "OPEN",
+   "size": "M",
+   "why": "A MEASUREMENT PREREQUISITE, not a trading feature: one high-confidence day in fifty and a confidence field that does not discriminate, so a forced number and a confident one are indistinguishable downstream. A discord score is a number, so no output-contract change is needed.",
+   "blocked_by": null
+  },
+  {
+   "id": "A-3",
+   "title": "Compute the effective matching dimension d of any retrieval",
+   "source": "FORECAST_ARCHITECTURE_S111 s4.2",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "L = k/r^d caps our library at a matching dimension of about 3. Condition on ten things and retrieval returns a day no closer than random - and returns it confidently with a magnitude attached. Nothing to build, only to measure.",
+   "blocked_by": null
+  },
+  {
+   "id": "A-4",
+   "title": "Score the CURVE, not the scalar - four error terms kept separate",
+   "source": "FORECAST_ARCHITECTURE_S111 s6, D32",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "The product is a curve and the scoreboard has never touched it. Greg's bar as a function: direction no tolerance, turn timing little, amplitude some, level free. Plus the time dimension - how EARLY was it decidable.",
+   "blocked_by": null
+  },
+  {
+   "id": "A-5",
+   "title": "Build the library index (seasonal window, regime label, day class, shape descriptor)",
+   "source": "FORECAST_ARCHITECTURE_S111 s9.5",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "L",
+   "why": "The shape vocabulary is ALREADY emitted in every posterior (onset_time_et, turn_time_et, trend_vs_chop, continuation_vs_reversal, path_p50_curve) and has never been collected or searched. The regime label is what collapses the match to d~1-2.",
+   "blocked_by": null
+  },
+  {
+   "id": "A-6",
+   "title": "Test the dipole EXHAUSTION arm on gas",
+   "source": "FORECAST_ARCHITECTURE_S111 s1.5, S90 unfinished",
+   "first_raised": "S90",
+   "status": "OPEN",
+   "size": "M",
+   "why": "The only LEADING instrument in the monitor - slope divergence is lagging by construction. S90 ran the NG canary, static divergence came back NULL, the note said 'test exhaustion next', and it was never done. RollingFlow is already an O(1)-per-tick operator built for this hot path.",
+   "blocked_by": null
+  },
+  {
+   "id": "A-7",
+   "title": "ONE STORE + generated spawns",
+   "source": "FORECAST_ARCHITECTURE_S111 s8, Greg S111",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "L",
+   "why": "RUN_SOP.md carries 13 slot placeholders across 36 occurrences, every one filled BY HAND - which is exactly how NC-1 happened (a calendar premise asserted from prose instead of looked up). spawn.py fills slots BY LOOKUP and emits the prompt, so running off-SOP becomes impossible rather than forbidden. Curve-building doctrine moves into the brain (served at spawn); plant policy stays in the ledger; both files become renders.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-1",
+   "title": "Check the weekly balance is not reading a dead EIA page",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s6.1",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "EIA Natural Gas Weekly Update's FINAL edition was the week ending 21 Jan 2026, replaced 29 Jan by the WNGSR Supplement. A pipeline pointed at the old vehicle goes stale silently - present, numeric, in range, right owner. Our hole signature, twelfth time. MINUTES OF WORK.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-2",
+   "title": "EIA implied flow + reclassification flag + published sampling SE",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s6.2",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Free noise floor (~4 Bcf at 90%). A print beating consensus by 3-4 Bcf is inside the measurement error of the print itself. Gives a defensible numeric NO CALL trigger immediately.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-3",
+   "title": "Recompute COT as a CHANGE (Q = delta-net / OI), split MM vs Producer, three decay windows",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.7",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "COT LEVELS do not predict returns - three independent rejections. The CHANGE does, with a Journal of Finance horizon-resolved result landing inside our window (days 1-4 t=3.04, 5-10 t=3.62, 11-20 insignificant). Data already in hand. Caveat: the published result is cross-sectional across 26 commodities, so forward-test it rather than inherit it.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-4",
+   "title": "ISO day-ahead and 7-day wind, solar, load -> NET LOAD",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.1 (TIER 1, top gap)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "THE SIGN-FLIPPER. We hold REALIZED wind from EIA-930, which cannot fix a forward call because on a forecast day the realized value does not exist. Exactly the shape of the 0629 miss: gw_cdd rose as forecast and burn FELL 4.2 Bcf/d because wind rose 62%. All free - ERCOT, SPP, CAISO, PJM, MISO, ISO-NE, wrapped by gridstatus.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-5",
+   "title": "ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.2 (TIER 1)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "FREE since 1 Oct 2025 - the full ECMWF real-time catalogue went open under CC-BY-4.0 with data charges removed. Our MOS deterministic guidance structurally cannot produce a spread. Fills the ensemble, spread, probabilistic-path and option-dispersion gaps in one feed, and is the prerequisite for a confidence gate. START ARCHIVING IMMEDIATELY - the archive is the asset.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-6",
+   "title": "Forecast PROGRESSION deltas by block (1-5, 6-10, 11-15)",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.3 (TIER 1)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "The quantity that actually trades - the level is priced, the revision is not. Also the direct instrument for the documented Friday-to-Monday cascade. Carry as a NEWS process, not a forecast.",
+   "blocked_by": "G-5"
+  },
+  {
+   "id": "G-7",
+   "title": "Scrape the ~10 LNG feedgas pipeline EBBs",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.4 (TIER 1)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "Feedgas moved ~13 to ~15 Bcf/d on the Plaquemines ramp alone - a 14 Bcf/week storage swing sitting in a public posting. Our lng_feedgas_bcfd is null and 278 days stale. Smallest scrape with the largest demand-line payoff.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-8",
+   "title": "Pipeline critical notices + planned-maintenance calendar",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.5 (TIER 1)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "1-6 weeks, DATED FORWARD BY CONSTRUCTION - almost the only supply-demand information genuinely known weeks ahead. Known failure mode declared up front: unstructured prose, no severity field, pipelines post and cancel, and NAESB's own working group abandoned scraping as unreliable.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-9",
+   "title": "Degree-day-adjusted balance residual (weather-normalised tightness)",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.6 (TIER 2)",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Every input already held. THE ONLY MEASURE THAT CARRIES PAST THE WEATHER HORIZON, because it describes the non-weather part of the balance. Natural home for the rebuilt asymmetric-slope model - it is the residual after the slope.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-10",
+   "title": "Separate TAS (NGT) from the tape; add jump-robust realized variance",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s3.1",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Parsing changes on data we already own. TAS separation isolates benchmark/index flow from opinionated flow. Close-to-close RV throws away most of what the tick tape was bought for, and every VRP and event-vol number depends on the RV denominator.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-11",
+   "title": "Start accruing EIA weekly coal basin spot prices",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.11",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "TIME-CRITICAL AND CANNOT BE BACKFILLED - EIA states the historical coal price series is vendor-proprietary and cannot be released. Zero value today; every week we wait is permanently lost. One hour of work.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-12",
+   "title": "UNG roll + NG futures/options expiry calendars as day-class tags",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s6.13",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Pure calendar, free, dated forward, inside our window. UNG's 10-K: rolls over a FOUR-DAY period beginning two weeks from expiration, dates posted in advance. CLOCK TRAP to encode with it: NYMEX settles on a 14:28-14:30 ET VWAP, Kalshi at 17:00 - a signal calibrated on one mis-times the other.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-13",
+   "title": "NG weekly option settlements + EIA-print event variance extraction",
+   "source": "GAS_SIGNAL_BRIEFING_S111 s2.9",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "M",
+   "why": "The listed price of a one-to-five-day Henry Hub distribution - the direct comparable to our Kalshi daily book - and it attacks our worst day class (G20's two EIA Thursdays were 3,530 of 7,880 total error). CRITICAL RULE: fit the no-event surface ONLY on non-spanning expiries or it silently absorbs the event premium.",
+   "blocked_by": null
+  },
+  {
+   "id": "G-14",
+   "title": "Fix the LNE strike decode at source (Databento display_factor bug)",
+   "source": "GAS_OPTIONS_SYNTHESIS_S111 s1.10",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "SOLVED, just not applied: confirmed Databento bug reported 12 Jun 2024 - the OPTION's display_factor is used to decode the strike instead of the underlying FUTURE's. The 0.1 multiplier circulating as a workaround is our x10. Then prove it with the put-call parity slope test (C-P regressed on K must give slope ~= -0.997).",
+   "blocked_by": null
+  },
+  {
+   "id": "G-15",
+   "title": "Put-call parity slope test as a hard state_health gate on the options surface",
+   "source": "GAS_OPTIONS_SYNTHESIS_S111 s1.1",
+   "first_raised": "S111",
+   "status": "OPEN",
+   "size": "S",
+   "why": "An ALGEBRAIC IDENTITY, exactly like the session_b_share identity that closed hole #9: for premium-paid-upfront options C - P = e^-rT (F - K), so regressing (C-P) on K within one (root, expiry, date) cell must give slope = -e^-rT. A slope near -0.0997 proves a x10 scale; not near -1 at all proves a merged ladder. Run across all 294k settle IVs before another line of options code is written.",
+   "blocked_by": null
+  }
  ]
 }

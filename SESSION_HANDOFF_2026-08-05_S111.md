@@ -150,9 +150,10 @@ says of itself *"DESCRIPTOR grade, regime context, not a scored play"*), and **`
 support enum (*"some things won't have past instances because it was the first time we saw them but
 that doesn't make them bad"*).
 
-**Non-play sections migrated and dry-run verified, WRITE HELD** while the audit reads the file:
+**Non-play sections migrated and APPLIED** (S111, after the audit was stopped):
 `doctrine_tier3` → `doctrine` with the session as a field (10 of 21 entries carried one);
 `open_frontier` normalized from 27 strings + 6 dicts to one shape; `fingerprints` session key moved.
+Round-trip lossless (2,598 leaves, 0 lost); backup `ng_brain_s105.0_presections_backup.json`.
 `reasoning_method`, `mechanisms` and `ruled_out_by_target` were surveyed and **left alone — already
 clean**.
 
@@ -177,13 +178,14 @@ forecast architecture.
 
 ## OPEN, IN PRIORITY ORDER
 
-1. **The 82-play audit is still running** (`w8319y7l4`, 8 batches + consolidation). It classifies each
-   play's support and runs the D24 corpus search. Its output is the input to the **backfill** Greg
-   asked for — instances and context written into the brain for the 58 plays that carry none.
-   *Note for whoever reads it: the rubric conflates `ASSERTED` with a genuinely novel n=1 finding. The
-   consolidation prompt should be corrected and resumed from the run id — batches replay from cache.*
-2. **Run `brain_schema.py sections --write`** once the audit is off the file.
-3. **Wire the zero-change and seasonal-naive benchmarks** into `blind_score_nonpooled`.
+1. **RE-RUN THE 82-PLAY AUDIT, all eight batches, under a CORRECTED RUBRIC** (Greg's call: "let's do
+   all 8 in the next session"). The S111 run was stopped at 3 of 8. **The partial is real and it is
+   the headline finding: 19 of 32 plays are OUTCOME_CREDITED — the S108 signature, right answer wrong
+   reason — against my regex's estimate of 9 in all 82.** It traced **140 instances** across 32 plays
+   and caught the seeded burn gate unprompted. Saved as `BRAIN_AUDIT_PARTIAL_S111.json`. **Fix the
+   rubric first**: it conflates `ASSERTED` with a genuinely novel n=1 finding, which Greg flagged —
+   `NOVEL_N1` is already in the schema enum.
+2. **Wire the zero-change and seasonal-naive benchmarks** into `blind_score_nonpooled`.
 4. **Build NO CALL** — the prerequisite for any subsequent measurement being interpretable.
 5. **Check whether the weekly balance reads the dead EIA page.** Minutes; live staleness risk.
 6. **One store + generated spawns.** `RUN_SOP.md` carries 13 slot placeholders across 36 occurrences,
