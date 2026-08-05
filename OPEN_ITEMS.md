@@ -44,7 +44,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 15, **REST** 50
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
-| **A-27** | M | THE FLAT 7,900 Btu/kWh HEAT RATE - every MWh becomes Bcf via a constant, and it is the largest term in the balance | It sits under A-26 and every burn-to-storage statement, and it is the DOMINANT sensitivity: power burn is 210-263 Bcf/wk against weekly storage changes of +/-67-91 Bcf. |
+| **A-27** | M | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | It sits under A-26 and every burn-to-storage statement, and it is the DOMINANT sensitivity: power burn is 210-263 Bcf/wk against weekly storage changes of +/-67-91 Bcf. |
 | **A-28** | M | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | It is the prerequisite under A-24g, A-27 and G-19, and it is why A-24c could not be settled. An ingest change on a feed we already pull, and it is the third instance of the same reduction mistake this desk has recorded. |
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
@@ -127,7 +127,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 15, **REST** 50
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
-| **A-27** | BIGGEST_WIN | M | OPEN | S113 | THE FLAT 7,900 Btu/kWh HEAT RATE - every MWh becomes Bcf via a constant, and it is the largest term in the balance | - |
+| **A-27** | BIGGEST_WIN | M | OPEN | S113 | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | - |
 | **A-28** | BIGGEST_WIN | M | OPEN | S113 | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | - |
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
@@ -427,6 +427,32 @@ proxy for role, not a measurement of unit commitment, and it will understate cyc
 day - which is exactly the resolution A-28 is about. Re-measure hourly when that lands; the ranking across
 BAs is unlikely to change but the levels will.
 
+CORRECTED S113 - MY WORDING OVERREACHED. Greg: 'Gas is taking coals place physically but it doesn't
+replace it economically.' The floor-ratio measurement supports the PHYSICAL claim (gas holds the higher
+floor, coal cycles) and does NOT support the stronger reading that gas has inherited coal's role. It has
+not, in two specific ways, and both matter more to a gas desk than the dispatch ordering does.
+
+(1) COAL IS A STOCKPILED FUEL; GAS IS JUST-IN-TIME. A coal plant sits on weeks of inventory bought earlier,
+so burning it creates NO same-day fuel demand - the purchase already happened. Gas is nominated and
+delivered on the gas day, so burning it today IS demand today. When gas physically takes the baseload job,
+that block of demand stops being buffered by a fuel pile and becomes INSTANTANEOUS AND WEATHER-EXPOSED.
+The pipeline and storage system now absorbs the variability the coal pile used to absorb - which is a
+structural increase in how much of the power sector's weather sensitivity reaches the gas balance, and
+therefore reaches storage (A-26) and Henry Hub.
+
+(2) THE COAL FLEET IS GAS'S PRICE SHOCK ABSORBER, AND IT IS BEING REMOVED. Coal's cost is contracted and
+sticky, gas's is spot, so gas-to-coal switching is what makes gas demand price-ELASTIC: when gas spikes,
+coal picks up dispatch and gas demand falls away. FERC has coal contracting 40,828 MW over 2026-2028. As
+that headroom disappears, gas demand becomes less price-elastic and price spikes get LARGER for the same
+physical shock. That is a steepening of the demand curve, not a fuel swap - and it is a directional,
+dated, structural claim rather than a correlation.
+
+CONSEQUENCE FOR THE STACK MODEL: keep the correction that gas now holds the higher floor in dispatch, drop
+any implication that coal's economic function has been replaced. The right statement is that gas has
+assumed coal's PHYSICAL position while the SHOCK ABSORBER coal provided - inventory on site, and elastic
+switching headroom - is leaving the system. M-6 (coal headroom, EIA-860M additions/retirements plus ISO
+outage aggregates) is the item that measures the second half and should be read together with this one.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
@@ -506,7 +532,7 @@ AND A METHOD WARNING WORTH KEEPING: the POOLED column of the balance measurement
 
 ---
 
-### [BIGGEST_WIN] A-27 - THE FLAT 7,900 Btu/kWh HEAT RATE - every MWh becomes Bcf via a constant, and it is the largest term in the balance
+### [BIGGEST_WIN] A-27 - THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days
 
 *size M | OPEN | raised S113*
 
@@ -541,6 +567,30 @@ number.
 
 SCOPE HONESTLY: a hypothesis that fits an observed sign, reached by elimination while closing A-24c, and
 NOT itself tested. It must not become the fourth story believed before it is checked.
+
+THE ACTUAL STRUCTURE, Greg S113: 'Same fuel different gen plants. Peaker vs baseload.' Not one fleet whose
+efficiency drifts - TWO MACHINE TYPES burning the same fuel, which makes the correction a STEP, not a drift.
+  COMBINED CYCLE       ~6,400-7,000 Btu/kWh, high capacity factor, baseload and intermediate
+  SIMPLE-CYCLE TURBINE ~9,500-11,500 Btu/kWh, low capacity factor, peaking
+  GAS STEAM TURBINE    older and worse, largely reserve
+The MARGINAL MACHINE SWITCHES TYPE at a threshold: past the CCGT fleet you start CTs and the marginal heat
+rate jumps roughly 50% discontinuously. A single 7,900 constant is the average of a BIMODAL fleet and is
+wrong in BOTH directions depending on where the day sits against that threshold.
+
+IT SUPPLIES THE MISSING MECHANISM FOR A-21's CONVEXITY, which is currently asserted rather than explained.
+The CCGT-to-CT switch IS the convexity, physically: the last MWh of a peak hour costs about 50% more gas
+than a baseload MWh of the same fuel.
+
+MEASUREMENT PROBLEM, CHECKED NOT ASSUMED: EIA-930 REPORTS FUEL, NOT TECHNOLOGY. Our store carries a single
+NG code (BAT COL GEO NG NUC OES OIL OTH PS SNB SUN UNK WAT WNB WND), so the hourly feed can never show the
+CC/CT split however fine its resolution - A-28 does not fix this one. The split is in EIA-860M (technology
+per generator) and EIA-923 (plant-level generation AND fuel consumption, i.e. realized heat rates).
+CONVERGENCE: 860M is already the file A-17D needs for coal retirements, so one ingest serves both, and
+A-30's per-BA floor ratio is the cheap proxy until it lands.
+
+REVISED FIX: not a better constant, not a fitted drift - serve a CC/CT capacity mix per BA and let the
+conversion respond to where the day sits against the CCGT ceiling. Until then treat est_gas_burn_bcfd as
+carrying an error LARGEST ON PEAK DAYS, which are the days that move the price.
 
 ---
 
