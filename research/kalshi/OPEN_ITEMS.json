@@ -52,7 +52,7 @@
    "first_raised": "S109",
    "status": "OPEN",
    "size": "M",
-   "why": "A named build gap blocking the weather play family. Free. Not built as of S111.",
+   "why": "THE ANOMALY INSTRUMENT, and it is the one that separates a HILL from a SPIKE. We serve absolute gw_cdd and gw_hdd; we do not serve either AGAINST NORMAL. Greg's rebuilt weather model (S109) makes weather a continuous ASYMMETRIC SLOPE with anomaly x duration x constraint as a MULTIPLIER on top - and the multiplier needs an anomaly, which is a departure from normal, not a level.\n\nMEASURED CONSEQUENCE, D28: gw_cdd >= 16.4 fires 46.6% pooled and is 0/10 on all four summer blocks. An absolute bar transfers badly across season by construction, because 16.4 CDD means something different in June than in October. A normalised instrument is the cure for the TRANSFER disease specifically (centring cures DISCRIMINATION, which is a separate rate property).\n\nCHEAP: nws_temp_feed already fetches NWS climatological normals (fetch_normals / _gw_normal exist). This is a serving change, not an ingest one. Pairs with A-21 - a normalised index built on the wrong stations is still the wrong index.",
    "blocked_by": null
   },
   {
@@ -93,7 +93,7 @@
    "first_raised": "S110",
    "status": "OPEN",
    "size": "S",
-   "why": "Free era ended 2026-07-31 and they are not gas. Workflow file still present on the trunk. Needs a trunk touch.",
+   "why": "D14 retired the Pyth collector: the free era ended 2026-07-31, all API access moved to a $500/mo-class tier, and Pyth never published NG feeds at all (three evidence lines, S99). The DECISION is made; what remains is that the WORKFLOWS ARE STILL LIVE on the old trunk (.github/workflows/pyth_collector_durable.yml, 6h cron).\n\nWHY IT IS NOT ZERO-COST TO LEAVE: a scheduled workflow that runs against a dead source keeps burning account-level Actions minutes on the same runner pool that the KALSHI collectors need - and those have already sat queued-and-never-executed, which is an account-level cap issue rather than a workflow bug. It also leaves a green-looking job that collects nothing, which is the same present-but-empty signature as six of the S107 data holes.\n\nPLANT_MAP already records the retirement and says 'verify workflow disabled when the trunk is next touched'. That is the whole task: the trunk is a different branch, so it needs a deliberate visit.",
    "blocked_by": "requires a commit on the trunk branch, not this one"
   },
   {

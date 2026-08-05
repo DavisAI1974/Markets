@@ -44,12 +44,103 @@ def sha(p: str) -> str:
     return hashlib.sha256(open(p, "rb").read()).hexdigest()
 
 
+
+# ---------------------------------------------------------------------------------------------
+# STATION 0 - DOCUMENT IT NOW. The SOP station, ENFORCED.
+#
+# Greg, S112: "We can't spend time on an sop that we don't apply." He is right, and the first
+# version of Station 0 was prose - which is the exact disease it describes: a document that states
+# what should happen, sitting apart from the machinery that makes it happen. These are the parts of
+# that station a machine can actually check, so they run at every bring-up and every close-out.
+#
+# What is NOT checkable is deliberately left out rather than faked: no gate can tell whether a thing
+# said in conversation was entered. What a gate CAN do is refuse the shapes that always accompany a
+# miss - a briefing whose recommendations were never audited, a defect with no repair class, an item
+# with no reasoning - and make the registry delta visible so a silent session is loud.
+# ---------------------------------------------------------------------------------------------
+
+BRIEFING_AUDITS = os.path.join(HERE, "store", "briefing_audits.json")
+
+
+def station0():
+    """Returns (level, detail) rows for the Station 0 checks."""
+    rows = []
+    reg_path = os.path.join(HERE, "OPEN_ITEMS.json")
+    with open(reg_path, encoding="utf-8") as f:
+        reg = json.load(f)
+    items = reg["items"]
+    live = [i for i in items if i.get("status") in ("OPEN", "IN_PROGRESS")]
+
+    # (a) every item must carry REASONING, not just an instruction. An item that says only what to
+    # do is an item somebody will do wrong six months from now.
+    thin = [i["id"] for i in live if len((i.get("why") or "").split()) < 25]
+    rows.append(("FAIL" if thin else "PASS", "station0/why",
+                 ("%d item(s) carry no reasoning: %s" % (len(thin), ", ".join(thin[:6])))
+                 if thin else "all %d live items carry their reasoning" % len(live)))
+
+    # (b) D36: every research briefing's numbered recommendations must have been AUDITED against the
+    # registry, and the audit recorded. The gate does not parse prose - it requires the audit to
+    # exist. Measured instance: 12 of the S111 synthesis's 13 recommendations had no item, and
+    # nothing could report it because nothing knew the recommendations existed.
+    briefings = sorted(os.path.basename(p) for p in
+                       glob.glob(os.path.join(HERE, "*BRIEFING*.md")) +
+                       glob.glob(os.path.join(HERE, "*SYNTHESIS*.md")) +
+                       glob.glob(os.path.join(HERE, "*MEMO*.md")))
+    audited = {}
+    if os.path.exists(BRIEFING_AUDITS):
+        with open(BRIEFING_AUDITS, encoding="utf-8") as f:
+            audited = json.load(f).get("audited", {})
+    # A PLACEHOLDER MUST NOT READ AS DONE. The first version counted any recorded briefing as
+    # audited, so six entries explicitly marked `pending` produced a green line - manufacturing the
+    # exact false clean bill this station exists to prevent. Presence is not completion.
+    missing = [b for b in briefings
+               if b not in audited or audited[b].get("pending")]
+    rows.append(("FAIL" if missing else "PASS", "station0/briefings",
+                 ("%d of %d briefings NOT audited against the registry: %s"
+                  % (len(missing), len(briefings), ", ".join(missing[:4])))
+                 if missing else "all %d briefings audited (D36)" % len(briefings)))
+
+    # (c) every known defect carries a repair class - RETRO_REPAIRED, FORWARD_ONLY or OPEN. A defect
+    # with no class is a defect nobody can ask "was history rebuilt?" about.
+    try:
+        import defect_timeline
+        noclass = [d["id"] for d in defect_timeline.DEFECTS
+                   if d.get("repair") not in ("RETRO_REPAIRED", "FORWARD_ONLY", "OPEN")]
+        rows.append(("FAIL" if noclass else "PASS", "station0/defects",
+                     ("%d defect(s) with no repair class: %s" % (len(noclass), ", ".join(noclass)))
+                     if noclass else "all %d defects carry a repair class"
+                     % len(defect_timeline.DEFECTS)))
+    except Exception as e:
+        rows.append(("WARN", "station0/defects", "could not read defect_timeline: %s" % e))
+
+    # (d) THE REGISTRY DELTA. Not a pass/fail - a session can legitimately add nothing. It is
+    # printed so a session that agreed things and entered none is LOUD instead of silent, which is
+    # the close-out gate the station asks for.
+    prev = git("show", "HEAD~1:research/kalshi/OPEN_ITEMS.json")
+    added = "?"
+    if prev and not prev.startswith("fatal"):
+        try:
+            old = {i["id"] for i in json.loads(prev)["items"]}
+            added = len({i["id"] for i in items} - old)
+        except (ValueError, KeyError):
+            added = "?"
+    rows.append(("INFO", "station0/registry",
+                 "%d items (%d live, %d open, %d in progress); %s added since the last commit"
+                 % (len(items), len(live),
+                    sum(1 for i in live if i["status"] == "OPEN"),
+                    sum(1 for i in live if i["status"] == "IN_PROGRESS"), added)))
+    return rows
+
 def main() -> int:
     # 1. branch
     br = git("rev-parse", "--abbrev-ref", "HEAD")
     tip = git("log", "--oneline", "-1")
     say("PASS" if br == EXPECTED_BRANCH else "FAIL", "branch",
         f"{br} @ {tip[:60]}" + ("" if br == EXPECTED_BRANCH else f" - EXPECTED {EXPECTED_BRANCH}"))
+
+    # 1b. STATION 0 - the SOP station, enforced rather than described
+    for level, area, detail in station0():
+        say(level, area, detail)
 
     # 2. gold vault
     sys.path.insert(0, HERE)

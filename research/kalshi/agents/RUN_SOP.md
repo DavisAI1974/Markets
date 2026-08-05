@@ -269,11 +269,27 @@ Write it so a session six months from now can act without re-deriving the argume
 measurement if there is one, name the instance that motivated it, and record what would falsify it.
 An item that says only what to do is an item somebody will do wrong.
 
-### AND IT IS A CLOSE-OUT GATE
+### THIS STATION IS ENFORCED, NOT DESCRIBED
 
-Before writing the handoff: re-read the session for anything agreed that has no id. If the count of
-registry items did not change in a session where things were agreed, that is the smell this station
-exists to catch.
+Greg, S112: *"We can't spend time on an sop that we don't apply."* The first version of this station
+was prose - which is the exact disease it describes. **`plant_status.py` now runs it at every
+bring-up and every close-out**, four checks:
+
+| check | what it refuses |
+|---|---|
+| `station0/why` | any live item whose `why` carries an instruction but no reasoning |
+| `station0/briefings` | any briefing, synthesis or memo whose recommendations were never audited against the registry (D36). **A `pending` placeholder counts as NOT audited** - presence is not completion |
+| `station0/defects` | any defect with no repair class (RETRO_REPAIRED / FORWARD_ONLY / OPEN) |
+| `station0/registry` | INFO, not pass/fail: prints the item count and how many were added since the last commit, so a session that agreed things and entered none is LOUD rather than silent |
+
+**What is deliberately NOT gated:** no machine can tell whether something said in conversation was
+entered. The gates refuse the SHAPES THAT ALWAYS ACCOMPANY A MISS - an unaudited briefing, a defect
+with no class, an item with no reasoning - and make the registry delta visible. The judgment stays
+human; the bookkeeping does not.
+
+**Both checks fired on the session that wrote them.** `station0/why` caught M-4 and M-8 carrying
+instructions with no reasoning. `station0/briefings` caught six of seven briefings never audited -
+and caught an earlier version of itself reading a `pending` placeholder as a pass.
 
 ## APPENDIX — VERBATIM SPAWN TEMPLATES
 

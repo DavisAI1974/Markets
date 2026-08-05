@@ -1,0 +1,67 @@
+{
+ "note": "BRIEFING AUDITS (D36). A research briefing is a RECORD - dated, frozen, correctly never edited - so its recommendations live in prose that nothing counts. This records, per briefing, that its numbered recommendations were audited against OPEN_ITEMS.json and what came of them. The gate does not parse the prose; it requires the audit to have been DONE. An unaudited briefing FAILS the andon.\n\nTHE INSTANCE: GAS_SIGNAL_SYNTHESIS_S111 section 3 ranked 13 under-used data sources and TWELVE OF THIRTEEN had no registry item - including a live wrong-sign risk on a feed we had already built and a leakage question in the module that conditions magnitude. Greg found it by asking whether they were still listed.",
+ "audited": {
+  "GAS_OPTIONS_BRIEFING_S111.md": {
+   "session": "S112",
+   "n_recommendations": null,
+   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
+   "items": [],
+   "pending": true
+  },
+  "GAS_OPTIONS_SYNTHESIS_S111.md": {
+   "session": "S112",
+   "n_recommendations": null,
+   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
+   "items": [],
+   "pending": true
+  },
+  "GAS_SIGNAL_BRIEFING_S111.md": {
+   "session": "S112",
+   "n_recommendations": null,
+   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
+   "items": [],
+   "pending": true
+  },
+  "GAS_SIGNAL_SYNTHESIS_S111.md": {
+   "session": "S112",
+   "n_recommendations": 13,
+   "result": "12 of 13 had NO registry item; registered as G-16..G-28. One (VRP denominator) was already inside G-10.",
+   "items": [
+    "G-16",
+    "G-17",
+    "G-18",
+    "G-19",
+    "G-20",
+    "G-21",
+    "G-22",
+    "G-23",
+    "G-24",
+    "G-25",
+    "G-26",
+    "G-27",
+    "G-28"
+   ]
+  },
+  "NG_FORECASTER_PROBLEM_MEMO_S103.md": {
+   "session": "S112",
+   "n_recommendations": null,
+   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
+   "items": [],
+   "pending": true
+  },
+  "NG_FORECASTER_PROBLEM_MEMO_S103_ADDENDUM_FILES.md": {
+   "session": "S112",
+   "n_recommendations": null,
+   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
+   "items": [],
+   "pending": true
+  },
+  "TURNAROUND_MEMO_S110.md": {
+   "session": "S112",
+   "n_recommendations": null,
+   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
+   "items": [],
+   "pending": true
+  }
+ }
+}
