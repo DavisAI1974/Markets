@@ -1,4 +1,66 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-02, Session 110)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-05, Session 111)
+
+## S111 — THE TARGET CHANGED: THE PRODUCT IS A CURVE, AND WE HAD NEVER SCORED IT (read `research/kalshi/FORECAST_ARCHITECTURE_S111.md` FIRST, then `SESSION_HANDOFF_2026-08-05_S111.md` + `DROP_IN_S112.md`)
+
+**Branch = `claude/kalshi-agents-coordinator-guard-1175nr`. Brain s105.0, 82 plays — content
+unchanged, FORM restructured (`meta.schema = brain-schema-1`). No group run, no merge.**
+
+**THE REFRAME (Greg, D32).** The walk is not a scoring exercise, it is a **LIBRARY BUILD**: each past
+session with the conditions present and the curve it traded. Forecasting inverts it — project
+conditions, reason to how the session should **BEHAVE**, retrieve a past day whose **SHAPE** matches
+that behaviour, re-anchor its level, monitor continuously. **The analog does not do the forecasting,
+it RENDERS it.** Level is the only free parameter; **amplitude is a REJECTION TEST, not a knob**
+(*"a little knob turning is fine but if you're doing it too much then you're no longer forecasting"*).
+**The scrap signal is SLOPE, not level** — level errors are correctable, slope errors are not. Checks
+are **tape-triggered, not clock-triggered**. **The adjustment loop is the product.** One object, three
+lanes (Kalshi wants a probability at a point, futures a trajectory, options a distribution over
+trajectories), diverging as late as possible, with dispersion free from the cohort that passed the
+match test but was not chosen.
+
+**THE MEASUREMENT THAT REFRAMES THE SCOREBOARD.** The blind **loses to a zero-change forecast in six
+of seven blocks** (MAE 1.13x the mean absolute actual move; direction 4-6/10 throughout), and the
+939 -> 592 "improvement" is **the market getting quieter** — realized moves fell 799 -> 457 over the
+same span. Shrinkage was tested and refuted. **It is a BENCHMARK, not a verdict** (Greg's correction):
+those runs had `vol_regime` dead G16-G20, `session_b_share` a hard 0.0 across two groups, the book
+layer stood down group-wide, and no ability to decline. **Never report an error number without a named
+benchmark again.**
+
+**AND WE CANNOT MEASURE SKILL UNTIL THE SYSTEM CAN DECLINE.** Greg: *"we didn't have a 'no call'
+option so we had to pick something and it would make something up to justify its guess."* Measured:
+**one high-confidence day in fifty**, and the confidence field does not discriminate (`low` beats
+`med`). **NO CALL is a measurement prerequisite, not a trading feature** — and a matrix-profile
+discord score is a number, so no contract change is needed.
+
+**D23 MEASURED, AND IT INVERTED THE OBVIOUS FIX.** `condition_audit.py`: the measure is the
+**degenerate-block share**, not the pooled fire rate — which is a cancellation artifact in the shape
+D4 forbids, applied to a trigger instead of an error. `gw_hdd >= 16.4` fires 46.6% pooled and is
+**0/10 on all four summer blocks**. The percentile form I recommended turned out to be the **worst**
+in the set; the healthiest is an absolute bar sited at the **centre** of its distribution. Two
+diseases: **transfer** (cured by shape form) and **discrimination** (cured by centring — a RATE
+property, not a FORM property).
+
+**THE BRAIN GETS A SCHEMA (D29).** 97 field names -> 24, twelve statuses -> seven, **provably
+lossless** (367 ad-hoc keys preserved, 0 of 1,652 leaf values dropped; the dry run refused to write
+three times). `brain_schema.py`. **The work list is now visible: 82 unaudited, 82 corpus-unsearched,
+74 conditions unparsed, 65 with no falsifier.**
+
+**THREE RESEARCH BRIEFINGS, all committed, all research not doctrine.** **Horizon: directional level
+forecasting dies at 5-7 days measured on Henry Hub price itself** (not the day 10-12 meteorological
+number); dispersion, the forward calendar and the revision process survive past it. **The dimension
+budget `L = k/r^d` caps our matching dimension at ~3**, so a regime label is the only viable retrieval
+key. **Gas is the least machine-penetrated liquid energy contract** (24.5% HFT vs WTI 52.1%, 19% of
+volume with a human on both sides) — **but the Kalshi gas ladder is ~$3,600 of notional with eleven
+ATM trades in 6.5 hours**, so the lag edge is uncontested because it is too small to contest. **ECMWF
+ensemble members went free under CC-BY on 1 Oct 2025.** **LIVE RISK: the EIA Natural Gas Weekly
+Update's final edition was the week ending 21 Jan 2026.**
+
+**GREG'S STANDING CALLS.** **D31 nothing we declared dead is actually dead** — a refutation is SCOPED
+to the cell and instrument it was measured on; the burn gate is first in line and its kill argument
+rested on a heating-weighted degree-day index that is wrong in summer. **D30 a finding with no home in
+DECISIONS.md does not exist** — the instance is the memo that created the file. **ONE STORE, GENERATED
+VIEWS**: `RUN_SOP.md` has 13 slot placeholders filled by hand (that is how NC-1 happened);
+curve-building doctrine belongs in the brain where specialists actually read it, plant policy stays in
+the ledger, both files become renders.
 
 ## S110 — TWO GROUP CYCLES + TWO MERGES + THE FIRST RETIREMENT + THE PLANT'S OPERATING SYSTEM + THE PAPER DOCK (read `SESSION_HANDOFF_2026-08-02_S110.md` + `DROP_IN_S111.md` + `research/kalshi/agents/RUN_SOP.md` [BINDING])
 
@@ -608,31 +670,18 @@ FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the drive
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
 
-**One-line state (S111):** brain **s105.0, 82 plays**. **G22 COMPLETE** (blind 4/10 5,965 -> r1 500 ->
-r2 330); **G23 COMPLETE r1** (blind 5/10 5,920, drift +4,900, survives 83% - the most one-directional
-block of the walk and the first to lean UP -> refine 10/10 720); r2 not run. Both merges executed and
-**`weather.burn_conversion_gate` was RETIRED on its own named forward test** - the first retirement in
-the system's history, with C-0707's dissent recorded (corrected tally 1-of-4, not 0-of-3; the retirement
-stands on mechanism, never on the tally). **G23 was the last staged block - no G24 exists, and it needs
-a data pull, not a re-stage** (`group_config` g23 basis: "data year ends ~07-20"). Greg's open design
-calls **D23-D27** are the live work; **D23 is now MEASURED** - see `condition_audit.py`, which found the
-disease is not value-vs-shape but **CENTRAL-vs-EXTREME**: the two percentile-form conditions are
-degenerate in 10 of 11 blocks while the healthiest condition in the brain is an absolute bar sited at
-the 50/50 line. **S109's line, kept for the holes record:** **ELEVEN holes**, S109 adding #9 (`session_b_share` WRONG ENCODING - a
-hard 0.0 on all 8 scored-leg days of two groups), #10 (`squeeze_watch` FROZEN-BUT-LIVE - S108 fixed a
-false negative here and shipped its mirror image) and **#11 (the state let EVERY specialist READ PAST ITS
-OWN DECISION POINT** - a day's tape is served under the next day's key, so all three first-run G22
-specialists reached forward and all three declared it; the first blind was VOIDED and re-run on per-day
-causal slices). **The STATE AUDITOR is a new canonical sixth role** - audit and forecast are now separate
-jobs, which keeps the cross-day discovery channel while the forecasters stay causally clean; trialled
-blind on G21 it found the hardest of the prior eight holes. **THE WEATHER MODEL IS REBUILT (Greg)**:
-weather is THE driver as a continuous ASYMMETRIC SLOPE (mild kills demand: big down; heat/cold: up but
-only some) with `anomaly x duration x constraint` a MULTIPLIER on top - **a hill slopes, it does not
-gap**. And the **gas call is a STACK**: weather load minus renewables minus what coal/nuclear absorbs -
-0629's +4.8 CDD add arrived exactly as forecast and **gas burn FELL 4.2 Bcf/d because wind rose 62%**,
-with `wind_mwh` served in every slice and read by nobody. **THE RECURRING ENEMY IS "SERVED BUT UNREAD."**
-Merge proposals P0-P0.8 in `S109_MERGE_PROPOSAL_G22.md`, the WHY in `G22_REASONING_LEDGER_S109.md`.
-**Keys do NOT rotate during the walk.** LEGACY line below (pre-S106):
+**One-line state (S111):** brain **s105.0, 82 plays**, now under `meta.schema = brain-schema-1`.
+**No group run, no merge.** The session's output is a REFRAME plus measurements. **The product is a
+PRICE CURVE and we have never scored it** - `FORECAST_ARCHITECTURE_S111.md` is the design, D32 the
+decision. **The blind loses to a zero-change forecast in six of seven blocks** and the 939 -> 592
+"improvement" was the market getting quieter (realized moves 799 -> 457); it is a BENCHMARK, not a
+verdict, because those runs had `vol_regime` dead G16-G20, `session_b_share` a hard 0.0 across two
+groups, and no ability to decline. **We cannot measure skill until the system can say NO CALL** - one
+high-confidence day in fifty, and the confidence field does not discriminate. Three research
+briefings committed (horizon dies at 5-7 days on price; the dimension budget caps matching at d~3;
+gas is the least machine-penetrated liquid energy contract but the Kalshi gas ladder is ~$3,600 of
+notional). **G23 was the last staged block - G24 needs a DATA PULL, not a re-stage.** **Keys do NOT
+rotate during the walk.** LEGACY line below (pre-S106):
 
 **READ THIS FIRST, in order — do NOT read this whole file for detail, it points you at the detail:**
 1. The latest `SESSION_HANDOFF_*.md` (highest S-number) — the actual current state.

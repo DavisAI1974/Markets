@@ -1,5 +1,24 @@
 # KALSHI TRADING — file index
 
+## S111 (2026-08-05) — the reframe, the schema, three briefings
+
+- `research/kalshi/FORECAST_ARCHITECTURE_S111.md` — **READ FIRST.** The target: the product is a price
+  curve, the walk is a library build, the analog renders the forecast rather than making it. D32.
+- `research/kalshi/brain_schema.py` — the brain's schema: validate / migrate / sections / report.
+  Dry-run default, backup first, lossless round-trip enforced. D29.
+- `research/kalshi/condition_audit.py` — can a brain condition change state inside a block. D28.
+  Report-only. Carries an inline correction to its own original wording (D28.1).
+- `research/kalshi/condition_rate_experiment.py` — the rate/reference-window experiment. Its
+  information layer is superseded; its Q0 quantity triage (block-constant census) stands.
+- `research/kalshi/GAS_SIGNAL_BRIEFING_S111.md` (+ `_SYNTHESIS_`) — horizon, the dimension budget,
+  ranked signal gaps, folklore to drop.
+- `research/kalshi/GAS_OPTIONS_SYNTHESIS_S111.md` (+ `_BRIEFING_`) — contract mechanics, the gas vol
+  surface, and why our forecaster does not support an options business yet.
+- `research/kalshi/COMPETITIVE_BRIEF_S111.md` (+ `_FULL_`) — who is on the other side, where the
+  machines are weak, and whether the lag edge is crowded.
+- `SESSION_HANDOFF_2026-08-05_S111.md`, `DROP_IN_S112.md`.
+
+
 ## NEW IN S110 (2026-08-02, current) — the plant's operating system, two group cycles, the dock
 
 **THE SPEC BOOK AND THE PLANT (read these first; RUN_SOP is binding)**

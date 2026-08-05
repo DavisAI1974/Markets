@@ -6,9 +6,18 @@ WHY THIS EXISTS (S111, D23).
 We have always audited forecast ERROR for cancellation (D4: never average above and below).
 We had never once audited a TRIGGER for it. Measured on s105.0: `gw_hdd >= 16.4` fires 46.6%
 pooled over 161 sessions - a healthy-looking discriminator - while per block it runs 19/20,
-12/12, 12/12, 10/12 in winter and 0/10, 0/10, 0/10, 0/10 in all four summer blocks. It never
-discriminates INSIDE a block. The pooled rate is a cancellation artifact, exactly the shape D4
-forbids, applied to a condition instead of to an error.
+12/12, 12/12, 10/12 in winter and 0/10, 0/10, 0/10, 0/10 in all four summer blocks. The pooled
+rate is a cancellation artifact, exactly the shape D4 forbids, applied to a condition instead of
+to an error.
+
+CORRECTION (S111, and the earlier wording was FALSE): this file originally said the bar "never
+discriminates INSIDE a block". The tool's own output contradicts that - it is degenerate in 7 of
+14 blocks and DOES split in the other seven (g7 2/10, g8 4/10, g9 19/20, g10 9/11, g13 10/12,
+g14 4/12, g15 3/12). The true shape is worse than the false claim and more interesting: it is
+degenerate at BOTH extremes - always-on in deep winter, always-off in summer - and discriminates
+only in the SHOULDER, i.e. exactly the season the S102 salience slider says weather matters least.
+The false sentence was carried into a commit message and into DECISIONS D28; recorded here rather
+than quietly edited, per the standing rule that corrections are stated, not absorbed.
 
 THE DISEASE, stated precisely (Greg, D23, sharpened): a condition whose state is decided by the
 REGIME rather than by the DAY carries no information, whatever form it is written in. A limb that
