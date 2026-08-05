@@ -113,6 +113,36 @@ def station0():
     except Exception as e:
         rows.append(("WARN", "station0/defects", "could not read defect_timeline: %s" % e))
 
+    # (c2) THE SOP CHANGE LOOP, MADE MECHANICAL (M-11, S114). RUN_SOP change-control item 2 requires
+    # a version-log entry before a change to how a covered step executes. It is PROSE, and S114
+    # broke it: due_gate was wired into BOTH coordinators (STEP 3.4 and 5.3) and --namespace/--suffix
+    # added to spawn/merge_perday/stage_group, while the SOP sat at v1.9 with no entry. Every SOP
+    # provision that HELD this session had a machine behind it; every one violated was prose. This
+    # is the smallest piece of that machine: if a RUN-WRAPPER file named by an SOP step has changed
+    # since the last commit that touched RUN_SOP.md, the version log is overdue and the line says so.
+    # Scoped deliberately to the run wrappers - the files the SOP's steps actually invoke - because a
+    # gate that fires on every edit anywhere is one people learn to ignore (D33's own lesson).
+    RUN_WRAPPERS = ("build_causal_slices.py", "merge_perday.py", "group_coordinate_blind.py",
+                    "group_coordinate_refine.py", "archive_blind.py", "blind_score_nonpooled.py",
+                    "stage_group.py", "spawn.py", "state_health.py", "due_gate.py")
+    try:
+        sop_rel = "research/kalshi/agents/RUN_SOP.md"
+        last_sop = (git("log", "-1", "--format=%H", "--", sop_rel) or "").strip()
+        drifted = []
+        if last_sop:
+            changed = (git("diff", "--name-only", last_sop, "HEAD") or "") + "\n" + \
+                      (git("diff", "--name-only", "HEAD") or "")
+            for w in RUN_WRAPPERS:
+                if f"research/kalshi/{w}" in changed:
+                    drifted.append(w)
+        rows.append(("FAIL" if drifted else "PASS", "station0/sop_version",
+                     ("%d run-wrapper(s) changed since RUN_SOP.md was last touched, with no version-log "
+                      "entry: %s - change-control item 2 requires the loop (diff, WHY, Greg's go, "
+                      "version-log, THEN execute)" % (len(drifted), ", ".join(drifted)))
+                     if drifted else "no run wrapper has drifted ahead of the SOP version log"))
+    except Exception as e:
+        rows.append(("WARN", "station0/sop_version", "could not evaluate: %s" % e))
+
     # (d) THE REGISTRY DELTA. Not a pass/fail - a session can legitimately add nothing. It is
     # printed so a session that agreed things and entered none is LOUD instead of silent, which is
     # the close-out gate the station asks for.

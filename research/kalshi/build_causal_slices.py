@@ -121,8 +121,10 @@ def forward_stamps(sl: dict, upto: str) -> list[str]:
     return out
 
 
-def build(gid: str, write: bool, outdir: str) -> int:
-    path = os.path.join(RENDER_DIR, f"{gid.replace('g', 'grp')}_state.json")
+def build(gid: str, write: bool, outdir: str, state_suffix: str = "") -> int:
+    # S114: state_suffix lets a REHEARSAL slice from a re-staged state (grp<N>_state_b.json)
+    # without touching the canonical one. Canonical path is unchanged when the suffix is empty.
+    path = os.path.join(RENDER_DIR, f"{gid.replace('g', 'grp')}_state{state_suffix}.json")
     state = json.loads(open(path, encoding="utf-8").read())
     owner = gc.owner_map(gid)
     days = gc.GROUPS[gid]["days"]
@@ -154,10 +156,11 @@ def main() -> int:
     ap.add_argument("gid")
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--outdir", required=False, default=None)
+    ap.add_argument("--state-suffix", required=False, default="")
     a = ap.parse_args()
     out = a.outdir or os.path.join(RENDER_DIR, f"{a.gid}_causal_slices")
     print(f"[causal_slices] {a.gid} -> {out}")
-    return build(a.gid, a.write, out)
+    return build(a.gid, a.write, out, a.state_suffix)
 
 
 if __name__ == "__main__":

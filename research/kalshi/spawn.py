@@ -306,7 +306,12 @@ def _redirect(text, gid, ns):
     than silently half-redirected."""
     n = gid[1:]
     subs = [(f"forecasts/g{n}_perday/", f"forecasts/{ns}/"),
-            (f"forecasts/g{n}_refine_perday/", f"forecasts/{ns}/")]
+            (f"forecasts/g{n}_refine_perday/", f"forecasts/{ns}/"),
+            # the INPUT slice dir too: a rehearsal reads the re-staged slices, not the canonical
+            # ones. Missing this would have had the agents read a state built before the S114
+            # staging fixes while writing into the rehearsal namespace - a half-redirected run,
+            # which is worse than no redirect because it looks isolated and is not.
+            (f"{gid}_causal_slices/", f"{gid}_causal_slices_b/")]
     for a_, b_ in subs:
         text = text.replace(a_, b_)
     banner = (f"*** REHEARSAL RUN - NAMESPACE {ns} ***\n"

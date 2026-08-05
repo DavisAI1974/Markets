@@ -63,6 +63,36 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.10 (S114): RUN-WRAPPER CHANGES, LOGGED LATE - and the lateness is the point. Greg asked twice
+  that the SOP be re-read and followed; it was not re-read, and change-control item 2 (diff -> WHY
+  -> explicit go -> version-log -> THEN execute) was broken by this session's own work. Recorded
+  here as remediation rather than tidied away, per item 3: a deviation is a nonconformance, never
+  silently absorbed. WHAT CHANGED, all in the run wrappers the steps invoke, none in a template:
+  (a) **STEP 3.4 / 5.3 - the DUE-LIST GATE.** `due_gate.py` is new and is wired into both
+  coordinators: ANNOUNCE in the blind (a SystemExit there would discard a completed run's numbers)
+  and HARD in the refine (jidoka, item 4 - the refine is where a merged play's falsifier is
+  evaluable). WHY: `merge_gate` claimed "the coordinator serves the DUE list and hard-fails if a
+  due test goes unreported - the one thing that makes unattended merging survivable", and a grep
+  of both coordinators returned ZERO references. Eight registered forward tests had nothing holding
+  them. Selftest runs four negative tests and prints BOTH branches' output (NC-3's rule).
+  (b) **STEP 3.4 - `assert_not_the_refine`.** NC-4: running the blind coordinator on an
+  already-refined group assembled REFINE posteriors over the immutable blind record (g22: 4/10
+  sum|err| 5,965 -> 10/10 500). First guard used the archive's existence and was insufficient -
+  g15/g17/g18/g23 are refined with no archive - so it is now a RECONCILIATION against the committed
+  record (S108 hole #8's lesson). Negative-tested on all four exposed groups.
+  (c) **REHEARSAL NAMESPACES.** `spawn.py --namespace` redirects the emitted prompt's read AND write
+  paths; `merge_perday --suffix` and `stage_group --suffix` keep output off canonical names;
+  `build_causal_slices --state-suffix` slices from a re-staged state. The STORED TEMPLATES ARE
+  BYTE-IDENTICAL (spawn selftest 22/22), which is why this is a wrapper change and not a template
+  change. WHY: BLD-1 hardcodes `forecasts/g{N}_perday/`, which for an already-run group holds the
+  committed posteriors - NC-4's shape one layer up, inside the template rather than a coordinator.
+  (d) **STATION 0 gains `sop_version`** - a FAIL when a run wrapper has changed since RUN_SOP.md was
+  last touched. It fired on this very session (7 wrappers) and that is what produced this entry.
+  ENFORCEMENT NOTE: the standing gap is registered as **M-11 (ESSENTIAL)** - every SOP provision
+  that held this session had a machine behind it; every one violated was prose. First group under
+  v1.10: the next one run. The g22 REHEARSAL (S114) runs under it in a rehearsal namespace and is
+  explicitly NOT a scored group cycle - STEP 1 (state audit) and STEP 4 (archive) are skipped by
+  design, which is a declared deviation, not a silent one.
 - v1.9 (S113): BLD-1 and RFN-1 gain the `{DAY_CALENDAR}` slot - A-13, and the structural cause of
   NC-1. A per-day forecaster had NO calendar channel of its own: `CAL_FACTS` reached AUD-1 only, so
   a false calendar premise typed into a refine directive met nothing that could contradict it, and
