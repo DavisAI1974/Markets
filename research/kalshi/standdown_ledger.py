@@ -67,6 +67,25 @@ PLAY_ID = re.compile(r"^\s*[\"']?([a-z_]+\.[a-z0-9_]+)")
 CF = re.compile(r"would have|had it fired|firing it|if fired|would\s+(?:be|invert|cap|flip|"
                 r"produce|emit)|inverted a correct|saved the", re.I)
 
+# NOT A DECLINE AT ALL. The harvester matches a leading play id inside plays_stood_down, and the
+# S112 decline audit found three ways that over-collects - each caught by an auditor, none by me:
+#   (a) THE PLAY FIRED. A refine row reads "flow.price_free_absorption_proxy: not stood down - it
+#       FIRED and it MIS-READ". Imported as a decline it would have entered the brain as a CORRECT
+#       DECLINE on a day the instrument leaned the wrong way: outcome-credit manufactured by the
+#       collector rather than earned by a specialist.
+#   (b) THE PLAY WAS APPLIED to stand something ELSE down - "boundary.chain_staleness_gate -
+#       APPLIED as a stand-down, not as a fire". That is the gate WORKING, recorded as a decline
+#       OF the gate.
+#   (c) THE RULE WAS OBEYED. boundary.chain_label_must_track_realized_cum says do not assert a
+#       chain label without cum; "I therefore assert NO chain polarity and NO chain age" is
+#       compliance, not a judgment about the market.
+# These are recorded as NOT_A_DECLINE rather than dropped, because the row is real evidence about
+# the play - just not evidence of an off-switch. Signatures are built from the committed text of
+# the rows the auditors named, never guessed.
+NOT_A_DECLINE = re.compile(
+    r"not stood down|it FIRED|APPLIED as a stand-?down|applied,? not as a fire|"
+    r"rungs? (?:are|is) widened, not asserted|would have been permitted", re.I)
+
 
 def brain_ids():
     with open(os.path.join(HERE, "knowledge", "ng_brain.json"), encoding="utf-8") as f:
@@ -157,6 +176,7 @@ def build():
                 "reason": text.strip()[:900],
                 "day_move_usd": a[0] if a else None,
                 "counterfactual_stated": bool(CF.search(text)),
+                "not_a_decline": bool(NOT_A_DECLINE.search(text)),
             })
     # de-duplicate: the same decline can appear in a per-day file and again in the merged file
     seen, uniq = set(), []
@@ -257,7 +277,12 @@ def cmd_saves(_):
 
 BATCHES = os.path.join(HERE, "STANDDOWN_AUDIT_BATCHES_S112.json")
 AUDIT_OUT = os.path.join(HERE, "forecasts", "standdown_audit")
-VERDICTS = ["JUSTIFIED", "OUTCOME_CREDITED", "MISSED_FIRE", "DATA_ABSENT", "SCOPE"]
+# NOT_A_DECLINE added S112 after the first decline audit found the harvester over-collecting in
+# three ways no regex catches reliably (the play FIRED; the play was APPLIED to stand another down;
+# the rule was OBEYED). The signature screen in this file catches the explicit cases only - the
+# semantic ones need a reader, which is what the auditors are. Same lesson as MISSED_FIRE one level
+# down: a classification that cannot say "this is not what you think it is" will not say it.
+VERDICTS = ["JUSTIFIED", "OUTCOME_CREDITED", "MISSED_FIRE", "DATA_ABSENT", "SCOPE", "NOT_A_DECLINE"]
 REASON_CLASSES = ["MARKET_JUDGMENT", "DATA_ABSENT", "SCOPE"]
 
 

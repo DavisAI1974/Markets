@@ -337,6 +337,89 @@ def cmd_apply(a):
     return 0
 
 
+def cmd_declines(a):
+    """Backfill AUDITED declines into instances[] as action=dont, with the verdict attached.
+
+    EQUAL FOOTING (Greg, S112): "There should be no difference in how they are listed in the schema
+    for the brain except one is a do and the other a don't", and "I just want to give them equal
+    footing so one isn't ignored over the other". So a decline is an ordinary instance in the same
+    list, distinguished by one field.
+
+    WHY THE VERDICT TRAVELS WITH IT, and this is the safeguard rather than a decoration: the first
+    decline audit found the harvester over-collecting three ways - a row where the play FIRED, rows
+    where the play was APPLIED to stand something else down, rows where a rule was OBEYED. A regex
+    catches the explicit cases and cannot catch the semantic ones. Carrying `verdict` and
+    `reason_class` on every imported instance means nothing is hidden: a DATA_ABSENT decline reads
+    as DATA_ABSENT to any consumer and can never be silently counted as evidence of a working
+    off-switch, which is the only way this import could have done harm.
+    """
+    brain = load(BRAIN)
+    audit_path = os.path.join(HERE, "STANDDOWN_AUDIT_S112.json")
+    if not os.path.exists(audit_path):
+        print("no decline audit at %s" % os.path.relpath(audit_path, ROOT))
+        return 1
+    aud = load(audit_path)
+    by_id = {p["id"]: p for p in brain["plays"]}
+    added, skipped, errs = 0, 0, []
+    from collections import Counter
+    per_verdict = Counter()
+    for r in aud.get("declines", []):
+        pid = r.get("play_id")
+        p = by_id.get(pid)
+        if p is None:
+            errs.append("unknown play: %s" % pid)
+            continue
+        sf = r.get("source_file", "")
+        if any(BA._is_machine_path(t) for t in BA._split_citation(sf)):
+            errs.append("%s %s: DESKTOP PATH" % (pid, r.get("date")))
+            continue
+        if not BA._traces(sf):
+            errs.append("%s %s: source_file does not resolve: %s" % (pid, r.get("date"), sf))
+            continue
+        insts = p.setdefault("instances", [])
+        key = (str(r.get("date")), "dont")
+        existing = next((i for i in insts
+                         if (str(i.get("date")), i.get("action")) == key), None)
+        if existing is not None:
+            # ENRICH, DO NOT SKIP. 43 declines reached the brain via the PLAY audit and carry no
+            # verdict; skipping them left a decline that reads as evidence with no indication of
+            # whether it was judgment, a data gap, or a miss - the exact ambiguity carrying the
+            # verdict was meant to remove. Additive: never overwrite a field that is already set.
+            for f in ("verdict", "reason_class", "counterfactual"):
+                if not existing.get(f) and r.get(f):
+                    existing[f] = r[f]
+            skipped += 1
+            continue
+        insts.append(OrderedDict([
+            ("date", r.get("date")), ("group", r.get("group")),
+            ("action", "dont"),
+            ("source_file", sf),
+            ("what_the_state_said", r.get("what_the_state_said")),
+            ("what_the_day_did", r.get("what_the_day_did")),
+            ("supports_or_contradicts", r.get("supports_or_contradicts")),
+            ("verdict", r.get("verdict")),
+            ("reason_class", r.get("reason_class")),
+            ("counterfactual", r.get("counterfactual")),
+            ("added_by", "decline_audit_%s" % SESSION)]))
+        per_verdict[r.get("verdict")] += 1
+        added += 1
+    print("declines to import: %d  (already present: %d, errors: %d)" % (added, skipped, len(errs)))
+    for k, v in per_verdict.most_common():
+        print("   %-18s %3d" % (k, v))
+    for e in errs[:15]:
+        print("   %s" % e)
+    if errs:
+        print("\nREFUSED - fix the citations first.")
+        return 1
+    if not a.write:
+        print("\ndry run - nothing written. Re-run with --write.")
+        return 0
+    with open(BRAIN, "w", encoding="utf-8") as f:
+        json.dump(brain, f, indent=1, ensure_ascii=False)
+    print("written to %s" % os.path.relpath(BRAIN, ROOT))
+    return 0
+
+
 def cmd_mark_actions(a):
     """Give fires and declines EQUAL FOOTING in the brain (Greg, S112: "I just want to give them
     equal footing so one isn't ignored over the other", and "there should be no difference in how
@@ -508,9 +591,10 @@ def main():
     p.add_argument("--retract")
     sub.add_parser("selftest")
     p = sub.add_parser("mark-actions"); p.add_argument("--write", action="store_true")
+    p = sub.add_parser("declines"); p.add_argument("--write", action="store_true")
     a = ap.parse_args()
     return {"plan": cmd_plan, "apply": cmd_apply, "selftest": cmd_selftest,
-            "mark-actions": cmd_mark_actions}[a.cmd](a)
+            "mark-actions": cmd_mark_actions, "declines": cmd_declines}[a.cmd](a)
 
 
 if __name__ == "__main__":
