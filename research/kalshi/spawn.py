@@ -293,6 +293,32 @@ def templates():
         return {t["name"]: t for t in json.load(f)["templates"]}
 
 
+def _redirect(text, gid, ns):
+    """Rewrite canonical per-day OUTPUT paths in an emitted prompt into a rehearsal namespace.
+
+    WHY THIS IS NEEDED AND WHY IT IS NOT AN SOP CHANGE. The BLD-1/RFN-1 bodies hardcode
+    `forecasts/g{N}_perday/...` as the write target. For a group that has already run, that
+    directory HOLDS THE COMMITTED POSTERIORS - so an agent following its prompt verbatim would
+    overwrite the record (NC-4's shape, one layer up, inside the template rather than a
+    coordinator). The stored template is left byte-identical; only the EMITTED text is redirected,
+    which is why this needs no change-control diff (D10). Anything not matched is left alone, so a
+    path this does not recognise stays canonical and is caught by the byte-identity check rather
+    than silently half-redirected."""
+    n = gid[1:]
+    subs = [(f"forecasts/g{n}_perday/", f"forecasts/{ns}/"),
+            (f"forecasts/g{n}_refine_perday/", f"forecasts/{ns}/")]
+    for a_, b_ in subs:
+        text = text.replace(a_, b_)
+    banner = (f"*** REHEARSAL RUN - NAMESPACE {ns} ***\n"
+              f"This is a MECHANICS SHAKEDOWN, not a scored forecast. The block has already been run\n"
+              f"and its actual is committed, so your output is NOT evidence of forecasting skill and\n"
+              f"must never be cited as such. Write ONLY into forecasts/{ns}/. Do not write to any\n"
+              f"canonical grp*/g{n}_perday path, and do not open {gid}_actual.json, {gid}_exit_states.json\n"
+              f"or {gid}_mbo_evidence.json - the point is to exercise the pipeline as the blind sees it.\n"
+              f"Report explicitly on any brain play you evaluated, including ones you stood down.\n\n")
+    return banner + text
+
+
 def cmd_emit(a):
     try:
         s = slots(a.gid, a.day, a.spec)
@@ -308,6 +334,7 @@ def cmd_emit(a):
         print("unknown template %r - have %s" % (a.template, ", ".join(sorted(tmap))))
         return 1
     t = tmap[a.template]["body"]
+    ns = getattr(a, "namespace", None)
     if getattr(a, "directive", None):
         s["DIRECTIVE"] = (a.directive, "argument, quoted verbatim per SOP STEP 5.1")
     need = set(re.findall(r"\{([A-Za-z_0-9]+)\}", t))
@@ -331,6 +358,8 @@ def cmd_emit(a):
     out = t
     for k, (v, _src) in s.items():
         out = out.replace("{%s}" % k, str(v))
+    if ns:
+        out = _redirect(out, a.gid, ns)
     print(out)
     return 0
 
@@ -458,6 +487,9 @@ def main():
     p = sub.add_parser("calfacts"); p.add_argument("gid")
     p = sub.add_parser("emit"); p.add_argument("template"); p.add_argument("gid")
     p.add_argument("--day"); p.add_argument("--spec"); p.add_argument("--directive")
+    p.add_argument("--namespace", default=None, help="REHEARSAL redirect: rewrite canonical "
+                   "forecasts/<gid>_perday/ output paths to forecasts/<namespace>/ in the EMITTED "
+                   "text. The stored template is NOT modified, so this is not an SOP change.")
     sub.add_parser("selftest")
     a = ap.parse_args()
     return {"slots": cmd_slots, "calfacts": cmd_calfacts,

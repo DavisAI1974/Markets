@@ -14,7 +14,7 @@ import group_config as gc
 HERE = os.path.dirname(os.path.abspath(__file__))
 FC = os.path.join(HERE, "forecasts")
 
-def main(gid="g22", perday_dir=None):
+def main(gid="g22", perday_dir=None, suffix=""):
     # S110 (RUN_SOP): per-day dir defaults to the blind's g<N>_perday; the refine passes its own
     # (g<N>_refine_perday) so refine posteriors can never silently join from the blind's directory.
     PD = os.path.join(FC, perday_dir or f"g{gid[1:]}_perday")
@@ -52,10 +52,16 @@ def main(gid="g22", perday_dir=None):
         raise SystemExit("MERGE GUARD FAILED:\n  " + "\n  ".join(errs))
     for tag, days in by_tag.items():
         days.sort(key=lambda x: x["date"])
-        out = os.path.join(FC, f"grp{n}_mbo_specialist_{tag}.json")
+        # NC-4: this writes the CANONICAL specialist names, which after a refine hold the refine
+        # posteriors. A rehearsal must never land here. `suffix` redirects the OUTPUT only.
+        out = os.path.join(FC, f"grp{n}_mbo_specialist_{tag}{suffix}.json")
         json.dump({"specialist": tag, "group": gid, "days": days}, open(out, "w"), indent=1)
         print(f"  {tag}: {len(days)} day(s) -> {os.path.basename(out)}  {[x['date'] for x in days]}")
     print(f"[merge] {gid}: {sum(len(v) for v in by_tag.values())}/{len(owner)} days assembled")
 
 if __name__ == "__main__":
-    main(*(sys.argv[1:] or ["g22"]))
+    _a = sys.argv[1:] or ["g22"]
+    _sfx = ""
+    if "--suffix" in _a:
+        _i = _a.index("--suffix"); _sfx = _a[_i + 1]; _a = _a[:_i] + _a[_i + 2:]
+    main(*_a, suffix=_sfx)

@@ -118,3 +118,7 @@ data/contract_structure/NG_statistics_raw.json.gz
 # S100 doctrine alignment: git = CODE, S3 = DATA (platform_sync pull restores local stores).
 # The last 7 legacy-tracked store files untracked 2026-07-20; S3 manifests are authoritative.
 data/
+
+# S114: rehearsal artifacts (suffix _b) - regenerable from stage_group --suffix, and per D34
+# data/ is disposable. The REHEARSAL STATE is not a record; the committed g22 state is.
+research/kalshi/renders/ng_refine_s95/*_b.json

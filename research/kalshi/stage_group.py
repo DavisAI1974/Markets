@@ -47,7 +47,13 @@ def resolve_anchor(gid):
     return close
 
 
-def stage(gid):
+def stage(gid, suffix=""):
+    """suffix: REHEARSAL redirect (NC-4). Writes grp<N>_state<suffix>.json and <gid>_actual<suffix>.json
+    instead of the canonical names, so a re-stage can be DIFFED against the committed artifacts rather
+    than replacing them. group_config lookup still uses the real gid. Downstream steps that write their
+    own canonical files (mbo evidence, exit states) are SKIPPED when a suffix is given, and that is
+    stated in the log rather than silently done - a partial rehearsal that pretends to be a full one is
+    the failure this whole exercise exists to prevent."""
     g = gc.GROUPS[gid]; days = g["days"]
     anchor = resolve_anchor(gid)
     os.makedirs(LEG_DIR, exist_ok=True)
@@ -73,7 +79,7 @@ def stage(gid):
             _dl(f"nymex/{storet}/NG_{d}.jsonl.gz", os.path.join(dd, f"NG_{d}.jsonl.gz"))
     log(f"{gid} prior tape + L1 book pulled")
     # 3. masked decision-state
-    out_state = os.path.join(RENDER_DIR, f"grp{gid[1:]}_state.json")
+    out_state = os.path.join(RENDER_DIR, f"grp{gid[1:]}_state{suffix}.json")
     subprocess.run([sys.executable, os.path.join(HERE, "forecast_harness.py"), "decision-state",
                     "--days", ",".join(days), "--mask-after", g["mask_after"], "--out", out_state,
                     "--group", gid],
@@ -99,7 +105,12 @@ def stage(gid):
     import group_actual, group_mbo_engine
     importlib.reload(group_actual); importlib.reload(group_mbo_engine)
     act = group_actual.build(gid)
-    json.dump(act, open(os.path.join(RENDER_DIR, f"{gid}_actual.json"), "w"))
+    json.dump(act, open(os.path.join(RENDER_DIR, f"{gid}_actual{suffix}.json"), "w"))
+    if suffix:
+        log(f"{gid} SUFFIXED RUN ({suffix}): skipping mbo_evidence and exit_states - they write "
+            f"canonical names with no redirect. State + actual only.")
+        log(f"{gid} STAGED{suffix} - anchor {anchor}, {len(days)} days")
+        return
     ev = group_mbo_engine.build(gid)
     log(f"{gid} actual (ends {act['days'][-1]['cum_from_anchor_usd']:+d}) + mbo evidence ({len(ev)} days) built")
     # 6. S108: precompute the round-2 HE24->HE1 exit states while the legs are local. This was the LAST
@@ -115,5 +126,9 @@ def stage(gid):
 
 
 if __name__ == "__main__":
-    for gid in sys.argv[1:]:
-        stage(gid)
+    _a = sys.argv[1:]
+    _sfx = ""
+    if "--suffix" in _a:
+        _i = _a.index("--suffix"); _sfx = _a[_i + 1]; _a = _a[:_i] + _a[_i + 2:]
+    for gid in _a:
+        stage(gid, _sfx)
