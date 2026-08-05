@@ -14,7 +14,7 @@ small non-zero is a prompt to look, never a clean bill.
 | served data points | 1717 |
 | **served and READ BY NOTHING** | **1129** |
 | HELD but not served | 5 |
-| PLANNED (from the work registry) | 37 |
+| PLANNED (from the work registry) | 48 |
 | IDENTIFIED, not committed | 9 |
 | named ABSENT | 7 |
 | source blocks | 36 |
@@ -1226,6 +1226,17 @@ here automatically. Deliberately over-inclusive - omission is the failure mode.
 | A-21 | M | OPEN | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers |
 | A-23 | L | OPEN | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not |
 | A-24 | L | OPEN | THE UNKNOWN CORRELATED PAIR - search the 1,717 for structure nobody has put together, WITHOUT manufacturing it |
+| G-16 | S | OPEN | TAPE: the Baltussen rest-of-day to last-30-minute momentum measure |
+| G-17 | XS | OPEN | TAPE: the BOIL/KOLD close-imbalance test |
+| G-18 | M | OPEN | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it |
+| G-19 | S | OPEN | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
+| G-20 | S | OPEN | EIA-930: declare a BASIS field - the feed has documented, invisible defects |
+| G-21 | XS | OPEN | STORAGE CONSENSUS: carry the RANGE, not just the median |
+| G-23 | S | OPEN | MODEL DISAGREEMENT and ENSEMBLE SPREAD are two different variables and we hold one |
+| G-24 | M | OPEN | OUTAGES: extend beyond nuclear to the WHOLE THERMAL FLEET - it is ~10x the capacity |
+| G-25 | S | OPEN | TROPICAL: the sign has INVERTED post-shale and our feed does not know it |
+| G-27 | XS | OPEN | STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input |
+| G-28 | S | OPEN | VOL REGIME: Markov-switching form, and a LEAK to check in the state probability |
 
 ## IDENTIFIED - free and available, no registry item yet
 

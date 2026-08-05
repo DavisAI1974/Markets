@@ -49171,6 +49171,131 @@
     "field",
     "forecast"
    ]
+  },
+  {
+   "item": "G-16",
+   "status": "OPEN",
+   "size": "S",
+   "title": "TAPE: the Baltussen rest-of-day to last-30-minute momentum measure",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "data"
+   ]
+  },
+  {
+   "item": "G-17",
+   "status": "OPEN",
+   "size": "XS",
+   "title": "TAPE: the BOIL/KOLD close-imbalance test",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "data"
+   ]
+  },
+  {
+   "item": "G-18",
+   "status": "OPEN",
+   "size": "M",
+   "title": "OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "forecast"
+   ]
+  },
+  {
+   "item": "G-19",
+   "status": "OPEN",
+   "size": "S",
+   "title": "EIA-930: BATTERY STORAGE is now its own category and we do not carry it",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "eia",
+    "pull",
+    "serving"
+   ]
+  },
+  {
+   "item": "G-20",
+   "status": "OPEN",
+   "size": "S",
+   "title": "EIA-930: declare a BASIS field - the feed has documented, invisible defects",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "data",
+    "eia",
+    "feed",
+    "field",
+    "serve"
+   ]
+  },
+  {
+   "item": "G-21",
+   "status": "OPEN",
+   "size": "XS",
+   "title": "STORAGE CONSENSUS: carry the RANGE, not just the median",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "forecast",
+    "ingest"
+   ]
+  },
+  {
+   "item": "G-23",
+   "status": "OPEN",
+   "size": "S",
+   "title": "MODEL DISAGREEMENT and ENSEMBLE SPREAD are two different variables and we hold one",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "ecmwf",
+    "field",
+    "serve"
+   ]
+  },
+  {
+   "item": "G-24",
+   "status": "OPEN",
+   "size": "M",
+   "title": "OUTAGES: extend beyond nuclear to the WHOLE THERMAL FLEET - it is ~10x the capacity",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "eia",
+    "feed",
+    "schedule",
+    "serve"
+   ]
+  },
+  {
+   "item": "G-25",
+   "status": "OPEN",
+   "size": "S",
+   "title": "TROPICAL: the sign has INVERTED post-shale and our feed does not know it",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "feed"
+   ]
+  },
+  {
+   "item": "G-27",
+   "status": "OPEN",
+   "size": "XS",
+   "title": "STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "eia",
+    "field",
+    "serve"
+   ]
+  },
+  {
+   "item": "G-28",
+   "status": "OPEN",
+   "size": "S",
+   "title": "VOL REGIME: Markov-switching form, and a LEAK to check in the state probability",
+   "blocked_by": null,
+   "acquisition_terms": [
+    "publish",
+    "published"
+   ]
   }
  ],
  "identified_not_committed": [

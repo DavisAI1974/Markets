@@ -552,6 +552,149 @@
    "why": "`chatgpt_handoff.py` generates `CHATGPT_HANDOFF_S<N>.md` plus one self-contained file per task from OPEN_ITEMS.json. Items opt in with an explicit `delegable: true` flag and a `delegable_ask`, so nothing is included by keyword guess.\n\nGENERATED FOR THE SAME REASON THE DROP-IN'S WORK LIST IS (A-9): a hand-written brief drifts the moment an item is done and then asks for work already finished. A selftest asserts a DONE item can never appear as a live request, and the session number is derived from the committed drop-ins rather than typed.\n\nTHE DELEGATION LINE IS REAL, NOT A FORMALITY. Source hunting delegates well - which USGS gauge, which FERC docket, which ISO endpoint, what the licence article says - bounded, citation-heavy, parallelises, and checkable by following the link. FITTING DOES NOT: a coefficient tuned without our states is hindsight-fitted with zero forward evidence, and per D35 the output is a national total, so per-BA parameters fitted elsewhere are numbers we would discard. The brief says so in rule 6. The one exception is A-23, whose input is itself a shippable artifact.\n\nThe eight standing rules are each a defect already paid for - the load-bearing one is 'never invent a number, an endpoint, or a field name', because a plausible endpoint that 404s costs a session while an honest gap costs a sentence.",
    "blocked_by": null,
    "reraised": null
+  },
+  {
+   "id": "G-16",
+   "title": "TAPE: the Baltussen rest-of-day to last-30-minute momentum measure",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Item 1c of the ranked under-use list, and it is the one that speaks most directly to what we trade: it needs NO options data and it is about CLOSE-SETTLED contracts, which is exactly what KXNATGASD is (per-contract NGD 1-min close at 17:00 ET). We already hold the full MBO tape, so the cost is a parsing pass.\n\nSCOPE IT STRICTLY INTRADAY - the paper is explicit that the effect REVERTS over subsequent days, so a version that carries overnight would be measuring the reversal. That constraint is the whole reason to write it down rather than remember it.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-17",
+   "title": "TAPE: the BOIL/KOLD close-imbalance test",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "Item 1d. The levered gas ETFs rebalance into the close in a mechanically predictable direction, so the close-imbalance is a known flow we are not looking at - and the close is where the contract settles. Cheapest item on the tape list; no new data, we hold the tape.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-18",
+   "title": "OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "M",
+   "why": "Item 2, and it is a FORM error not a coverage one - we hold the surface as a LEVEL, which is not a signal. Fit sigma(t,T) = theta(t) * exp(-beta*(T-t)) with BETA ESTIMATED SEPARATELY for winter and injection season: Gregoire and Boucher find the gas maturity effect present ONLY in winter, so a year-round decay will systematically over-forecast injection-season front-month vol. The RESIDUAL is the view.\n\nAnd compute VRP with the CORRECT DENOMINATOR - implied for calendar period X against realized for the SAME calendar period historically, never against trailing realized. Pairs with G-15 (the put-call parity gate) and G-13.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-19",
+   "title": "EIA-930: BATTERY STORAGE is now its own category and we do not carry it",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Item 3. EIA-930 broke out battery storage as a separate category from Q1 2025, and the briefing names it as the reason a hot evening no longer produces the peaker burn the temperature implies. That is a DIRECT hit on our own residual model - the evening ramp is exactly where gas used to be the only answer.\n\nSAME SHAPE AS A-16 AND CHEAP FOR THE SAME REASON: grid_stack.py sets no fueltype facet, so if EIA returns battery under a fuel code we are probably already STORING it and dropping it at the five-element serving list. Check the stored keys before assuming a pull is needed.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-20",
+   "title": "EIA-930: declare a BASIS field - the feed has documented, invisible defects",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Item 3, and it is a data-integrity item of exactly the class this desk has been burned by eleven times. Documented EIA-930 defects: anomalous values replaced by IMPUTED values, energy sources not summing to net generation, subregion demand not summing to total, UTC-only timestamps with DST gaps, and BEHIND-THE-METER SOLAR EXCLUDED ENTIRELY - a one-directional and GROWING bias in precisely the daylight hours that matter for cooling.\n\nEvery one of those is state_health-invisible: present, numeric, in range, self-consistent. The fix is the same one that worked for the b_share repair - each served value DECLARES ITS BASIS, so an imputed value can never be read as a measured one.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-21",
+   "title": "STORAGE CONSENSUS: carry the RANGE, not just the median",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "Item 6. Magnitude of the print reaction scales with how genuinely unresolved the number was, and we carry a point estimate. Cheap - the range is in the same survey we already ingest.\n\nCARRY THE CONTAMINATION WITH IT, which is the part that would otherwise get lost: Ederington, Linn and Zhang find analysts ANTI-HERD, accuracy DECREASES with anti-herding intensity and with earlier release, and those two variables alone explain over 50% of cross-firm accuracy variance. So the median of a survey is NOT an equal-quality aggregate - later forecasts are systematically better, and a naive median throws that away. Crowd-sourced forecasts are measurably worse than professional ones and add nothing beyond them.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-22",
+   "title": "TERM STRUCTURE: use as a REGIME LABEL, and carry the CARRYOUT PROJECTION",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "M",
+   "why": "Item 7, entirely untracked and it contains the one suggestion aimed straight at our scoreboard. Two parts.\n\n(a) REGIME, NOT LEVEL: spot and futures are MORE correlated in contango than in backwardation, and Samuelson strength itself varies with the degree of backwardation. That makes the curve shape a conditioning label, which is the D23/D28 form we want.\n\n(b) THE CARRYOUT PROJECTION - level plus cumulative forward balance - is named as the NATURAL TARGET VARIABLE for a curve-error-scored desk, which is what D32 made us. Its error compounds at roughly (balance error Bcf/d) x days, so 0.5 Bcf/d over 90 days is 45 Bcf of carryout error - WIDER THAN THE RANGE ANALYSTS ARGUE ABOUT. That is a sizing fact worth having before we quote a forward view.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-23",
+   "title": "MODEL DISAGREEMENT and ENSEMBLE SPREAD are two different variables and we hold one",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Item 8. Between-model disagreement (GFS vs ECMWF) is not within-ensemble spread. We carry the first - model_disagreement is our largest block at 431 fields - and none of the second, because MOS deterministic guidance structurally cannot produce a spread.\n\nCARRY BOTH. Pairs with G-5 (ensemble members through our own GWDD weighting), which supplies the missing half, and with A-23: 357 of model_disagreement's 431 fields are read by nothing, so the question is not only 'add spread' but 'is the right SUMMARY of disagreement being served at all'.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-24",
+   "title": "OUTAGES: extend beyond nuclear to the WHOLE THERMAL FLEET - it is ~10x the capacity",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "M",
+   "why": "Item 9, and the ratio is the argument: we built feed R for nuclear outages and the fossil fleet is roughly TEN TIMES the capacity. We are instrumenting the small term.\n\nDirectly relevant to Greg's stack (nukes, coal, gas): coal is a LEVEL that moves on outage and retirement timescales, so a coal unit out is a step change in how much of the residual lands on gas - and A-15 has already measured that coal_mwh is served with zero readers. Pairs with A-17 (forward nuclear schedule) and M-6 (coal headroom): same sources, ISO outage aggregates and EIA-860M.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-25",
+   "title": "TROPICAL: the sign has INVERTED post-shale and our feed does not know it",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Item 10, and it is a live wrong-sign risk rather than a gap. We BUILT and smoke-tested the tropical feed at S110. The briefing says its sign inverted: offshore Gulf production is now a small share of supply while LNG EXPORT CAPACITY IS CONCENTRATED ON THE GULF COAST, so a single landfall at Sabine Pass could affect roughly half of US LNG capacity - about 12% of total US consumption. A storm now more often destroys DEMAND than supply, and trade press documents gas WEAKENING on tropical risk.\n\nDIRECTION DEPENDS ON TRACK relative to export terminals versus production and CANNOT BE ASSUMED - so this is not a sign flip to hardcode, it is a track-conditional read the feed has to carry. And it connects to D35: Gulf LNG feedgas is the most HH-coupled demand there is, so this lands on the target directly.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-26",
+   "title": "BCOM/GSCI ROLL: demote from alpha to a liquidity-regime flag",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "Item 11. Keep the calendars - they are cheap and already built (flow_calendar) - but the briefing puts the roll in the FOLKLORE column as an alpha source. Demotion is a scope change, and per D31 it is SCOPED: the roll window remains a legitimate LIQUIDITY-REGIME flag, which is a different claim from 'the roll moves price'. Related: C-0714 already retired the roll window as a cause within a run (container, not cause - removing roll supply did not restore impact).",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-27",
+   "title": "STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "Item 12. Measured in the briefing: EIA experts WIN at h=9-12 months and LOSE BADLY to no-change at h=1 and h=3. We work day-ahead to two weeks, so at our horizon the STEO is a structural prior and must never be read as a short-horizon signal. 44 of steo_vintage's 95 served fields are read by nothing (A-23), so the scoping has to say what the block IS for, not only what it is not.",
+   "blocked_by": null,
+   "reraised": null
+  },
+  {
+   "id": "G-28",
+   "title": "VOL REGIME: Markov-switching form, and a LEAK to check in the state probability",
+   "source": "GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item",
+   "first_raised": "S111 (recommendation); S112 (registered)",
+   "status": "OPEN",
+   "size": "S",
+   "why": "Item 13, and the leak is the load-bearing half. The gas-specific literature favours the discrete MARKOV-SWITCHING version of the regime rather than a threshold on realized vol.\n\nTHE LEAK: the published or SMOOTHED state probability is computed WITH HINDSIGHT; the real-time FILTERED state is materially noisier and is what a live system would actually have had. If our vol_regime uses a smoothed probability anywhere, every historical group was conditioned on information the day did not have - and vol_regime is the module built to condition MAGNITUDE, the brain's own stated dominant residual. CHECK THIS BEFORE THE NEXT GROUP: it is a leakage question, and the leakage gate is non-negotiable. Note vol_regime was already dead on a hardcoded SPAN_END for five groups (defect h-vol_regime), so this block has form.",
+   "blocked_by": null,
+   "reraised": null
   }
  ]
 }
