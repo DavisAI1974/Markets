@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 67 |
+| open | 68 |
 | in progress | 1 |
 | done | 9 |
 
-By size: **XS** 7, **S** 29, **M** 27, **L** 5
+By size: **XS** 7, **S** 30, **M** 27, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 14, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 15, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,7 +31,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 14, **REST** 50
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (14)
+## BIGGEST WIN (15)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -40,6 +40,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 14, **REST** 50
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
+| **A-30** | S | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | It corrects the stack model every burn play reasons from, it is already measured on data we hold, and it supplies the per-BA instrument A-27 needs instead of a national constant. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
@@ -122,6 +123,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 14, **REST** 50
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
+| **A-30** | BIGGEST_WIN | S | OPEN | S113 | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
@@ -371,6 +373,59 @@ station then weighted, never averaging the temperature first (the A-21 convexity
 and the apparent temperature separately rather than folding wind into a modified degree day, because the
 two channels have opposite signs and a combined index would cancel them. Per D12 give it a named consumer
 or an explicit PARK note before it lands.
+
+---
+
+### [BIGGEST_WIN] A-30 - GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack
+
+*size S | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** It corrects the stack model every burn play reasons from, it is already measured on data we hold, and it supplies the per-BA instrument A-27 needs instead of a national constant.
+
+**Source:** Greg, S113: 'a lot of places now have gas as baseload so it's not just gas peaker demand' / 'It plays both roles' / 'Go to the ferc site and study up on electricity gen %'s'
+
+Greg, S113: 'a lot of places now have gas as baseload so it's not just gas peaker demand... It plays both
+roles.' Measured on our own EIA-930 daily, 2025-08-01..2026-07-20, per BA, never pooled.
+
+FLOOR RATIO = p10 daily output / p90 daily output. A baseload unit never turns off so its floor sits near
+its ceiling; a peaker's floor collapses. Nuclear is the reference at 0.70-0.82.
+  BA     gas share  gas floor  coal floor  nuclear floor
+  US48      39.1%      0.63       0.53         0.81
+  PJM       41.5%      0.58       0.44         0.82
+  SOCO      49.9%      0.62       0.47         0.75
+  MISO      36.8%      0.60       0.50         0.77
+  ERCO      40.0%      0.41       0.58         0.73
+  SWPP      25.7%      0.41       0.38         0.40
+  CISO      33.7%      0.13        --          0.70
+
+(1) GAS PLAYS BOTH ROLES AND THE MIX IS A PER-BA FACT. CISO 0.13 is pure swing - 30.1% solar takes the
+middle of every day out from under it. SOCO 0.62 at half of all generation means gas IS the fleet, base
+and margin at once. A 5x difference in what the same fuel is doing, so any national parameter for 'how
+gas responds' is an average over two different machines.
+
+(2) THE LOAD-BEARING CORRECTION: GAS IS NOW MORE BASELOAD THAN COAL. US48 gas 0.63 vs coal 0.53; PJM 0.58
+vs 0.44; SOCO 0.62 vs 0.47; MISO 0.60 vs 0.50. Coal holds a higher floor only in ERCOT. CLAUDE.md's stack
+records 'A stack would go nukes, coal, gas. Coal is BASELOAD and cheaper, so gas does not take its place.'
+On measured behaviour that ordering no longer holds: COAL HAS BECOME THE CYCLING UNIT AND GAS THE BASE,
+which is what cheap shale gas does to switching economics. FERC's Energy Infrastructure Update has coal
+contracting 40,828 MW over 2026-2028 against gas at 40.6% of installed capacity, so the trend finishes
+the job. Recorded as a correction to a written model, not a preference - and it is Greg's own model, which
+is why it needs the measurement attached rather than an assertion.
+
+(3) CONSEQUENCES:
+  - 'Gas is the residual' holds only for the SWING portion. In SOCO and PJM a large block of gas burn does
+    not respond to renewables at all, so a renewable forecast cannot move it.
+  - RE-SCOPES A-27: baseload CCGTs run efficiently, cycling gas runs badly, so the effective heat rate
+    should vary BY BA WITH THE FLOOR RATIO rather than being one national 7,900 Btu/kWh constant. The
+    floor ratio measured here is a candidate instrument for that variation.
+  - COAL AT 0.38-0.58 MEANS COAL IS ABSORBING SWING in several regions, which contradicts the assumption
+    that coal is a level that cannot absorb. A-15 scopes coal as 'a LEVEL on outage/retirement timescales,
+    never a same-day absorber' - true of capacity, false of these floor ratios, and worth re-testing.
+
+CAVEAT ON THE INSTRUMENT: a daily p10/p90 ratio measures how much a fleet's DAILY TOTAL varies. It is a
+proxy for role, not a measurement of unit commitment, and it will understate cycling that happens WITHIN a
+day - which is exactly the resolution A-28 is about. Re-measure hourly when that lands; the ranking across
+BAs is unlikely to change but the levels will.
 
 ---
 
