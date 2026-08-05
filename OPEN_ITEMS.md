@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 61 |
+| open | 60 |
 | in progress | 1 |
-| done | 4 |
+| done | 5 |
 
-By size: **XS** 9, **S** 28, **M** 20, **L** 5
+By size: **XS** 9, **S** 27, **M** 20, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 11, **REST** 43
+By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 11, **REST** 43
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (8)
+## ESSENTIAL (7)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -29,7 +29,6 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 11, **REST** 43
 | **A-14** | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it. The four missing early-close dates land in g8 and g9, so this is a live wrong-day-class defect on walked groups, not a future risk. XS. |
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
-| **A-1** | S | Wire zero-change and seasonal-naive baselines into blind_score_nonpooled | A MEASUREMENT PREREQUISITE. S111 measured the blind losing to a zero-change forecast in six of seven blocks, and the standing rule since is 'never report an error number without a named benchmark again' - which we currently CANNOT satisfy. Every number the next group produces is unreadable without this. Size S. |
 | **A-12** | S | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | Same module, live wrong value. vol_regime.n0_prev_* is a PER-BLOCK CONSTANT and is only valid on a block's first day - so on days 2-10 the blind is reading a stale number as if it were current. Do it with G-28 in one pass. |
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **G-28** | S | VOL REGIME: Markov-switching form, and a LEAK to check in the state probability | A LEAK, and the leakage gate is non-negotiable. If vol_regime uses a SMOOTHED state probability anywhere, every historical group was conditioned on information the day did not have - in the module built to condition MAGNITUDE, the brain's own stated dominant residual. Until this is checked, no group's magnitudes mean what they claim. Cheapest possible check on the whole list relative to what it invalidates. |
@@ -112,7 +111,6 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 11, **REST** 43
 | **A-14** | ESSENTIAL | XS | OPEN | S112 | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it | - |
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
-| **A-1** | ESSENTIAL | S | OPEN | S111 | Wire zero-change and seasonal-naive baselines into blind_score_nonpooled | - |
 | **A-12** | ESSENTIAL | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
 | **G-28** | ESSENTIAL | S | OPEN | S111 (recommendation); S112  | VOL REGIME: Markov-switching form, and a LEAK to check in the state probability | - |
@@ -176,6 +174,7 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 11, **REST** 43
 
 | id | size | title |
 |---|---|---|
+| A-1 | S | Wire zero-change and seasonal-naive baselines into blind_score_nonpooled |
 | A-22 | M | THE MASTER DATA-POINT REGISTRY - built S112 |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
 | M-2 | S | Brain status taxonomy normalized to an enum |
@@ -231,18 +230,6 @@ MEASURED, and it is why this could not wait: the free endpoint (eia.gov/coal/mar
 STILL OPEN: this needs a WEEKLY SCHEDULED RUN. Captured once by hand, the window rolls and we lose weeks again. EIA publishes Mondays (release_date_json.php confirms: week ending 07-31 released August 3, next August 10), so a weekly trigger any time Mon-Fri catches every week with slack.
 
 CHARACTER OF THE SERIES, so nobody over-reads it: PROMPT-QUARTER delivery, not a cash spot print, and sticky - all five captured weeks are identical (CAPP 82, NAPP 70, ILB 55.5, PRB 14.65, Uinta 25.3). A slow structural level for the burn stack's coal limb (M-6), never a weekly signal.
-
----
-
-### [ESSENTIAL] A-1 - Wire zero-change and seasonal-naive baselines into blind_score_nonpooled
-
-*size S | OPEN | raised S111*
-
-**Why it is ESSENTIAL:** A MEASUREMENT PREREQUISITE. S111 measured the blind losing to a zero-change forecast in six of seven blocks, and the standing rule since is 'never report an error number without a named benchmark again' - which we currently CANNOT satisfy. Every number the next group produces is unreadable without this. Size S.
-
-**Source:** FORECAST_ARCHITECTURE_S111 s9.1
-
-For seven blocks we compared MAE to previous MAE and called the fall an improvement, having never computed what doing nothing would score. It loses to zero-change in six of seven. Cheapest item on any list and it makes every future number readable.
 
 ---
 
@@ -458,7 +445,7 @@ The product is a curve and the scoreboard has never touched it. Greg's bar as a 
 
 **Source:** GAS_SIGNAL_BRIEFING_S111 s2.1 (TIER 1, top gap)
 
-**Already delegated:** S112 TASK 2 (ECMWF ENS + GEFS ensemble MEMBER retrieval) and TASK 3 (ISO day-ahead and 7-day wind, solar and load forecasts). Both DELIVERED. Answers are with Greg and are NOT in the repo - they must be brought in and wired before this item can move.
+**Already delegated:** S112 TASK 3 (ISO day-ahead and 7-day wind, solar and load forecasts). DELIVERED and COMMITTED S113 as research/kalshi/CHATGPT_S112_SIX_WORKSTREAMS.md. CORRECTED S113: this item also claimed TASK 2 (ECMWF/GEFS), which belongs to G-5.
 
 MEASURED S112 against the served vocabulary, which sharpens this from 'a top gap' to a named half-a-variable: FORWARD load IS served - grid_stack.bas.*.demand_forecast_mwh for all seven BAs, all-modern - and the whole weather_forecast.* family is forward. But wind_mwh and solar_mwh are REALIZED ONLY; there is no forward wind or solar field in any block.
 
@@ -478,7 +465,7 @@ ALL FREE: ERCOT NP4-742-CD (wind actual+forecast) and NP4-745-CD (solar), SPP Mi
 
 **Source:** GAS_SIGNAL_BRIEFING_S111 s2.2 (TIER 1)
 
-**Already delegated:** S112 TASK 1 (the dipole direction result). DELIVERED, with Greg, not in the repo.
+**Already delegated:** S112 TASK 2 (ECMWF ENS + GEFS ensemble MEMBER retrieval). DELIVERED and COMMITTED S113 as research/kalshi/CHATGPT_S112_SIX_WORKSTREAMS.md. CORRECTED S113: this item previously recorded TASK 1 (the dipole direction result), which belongs to the flow_nowcast family, not here.
 
 FREE since 1 Oct 2025 - the full ECMWF real-time catalogue went open under CC-BY-4.0 with data charges removed. Our MOS deterministic guidance structurally cannot produce a spread. Fills the ensemble, spread, probabilistic-path and option-dispersion gaps in one feed, and is the prerequisite for a confidence gate. START ARCHIVING IMMEDIATELY - the archive is the asset.
 
@@ -990,6 +977,8 @@ Directly relevant to Greg's stack (nukes, coal, gas): coal is a LEVEL that moves
 
 **Source:** GAS_SIGNAL_BRIEFING_S111 s2.4 (TIER 1)
 
+**Already delegated:** S112 TASK 6 (LNG feedgas nomination sources). DELIVERED and COMMITTED S113 as research/kalshi/CHATGPT_S112_SIX_WORKSTREAMS.md. REGISTERED S113: this item carried NO delegated_prior at all while M-5 wrongly carried it, so the anti-duplication guard could not have stopped T6 being re-asked here - the exact failure delegated_prior was built for. Key semantic from the answer: the nomination is Total Scheduled Quantity at the terminal-boundary delivery meter; Operationally Available Capacity is NOT the nomination.
+
 Feedgas moved ~13 to ~15 Bcf/d on the Plaquemines ramp alone - a 14 Bcf/week storage swing sitting in a public posting. Our lng_feedgas_bcfd is null and 278 days stale. Smallest scrape with the largest demand-line payoff.
 
 ---
@@ -1010,7 +999,7 @@ Feedgas moved ~13 to ~15 Bcf/d on the Plaquemines ramp alone - a 14 Bcf/week sto
 
 **Source:** TURNAROUND_MEMO_S110 s1.4, carried from S109
 
-**Already delegated:** S112 TASK 6 (LNG feedgas nomination sources). DELIVERED. Answer is with Greg, not in the repo.
+**Already delegated:** CORRECTED S113: this item previously claimed S112 TASK 6 (LNG feedgas nomination sources). It does not - T6 belongs to G-7. Nothing has been delegated for M-5 (seasonal station weights + the Ohio/Baltimore holes); the adjacent delivered work is TASK 4, recorded on A-19.
 
 Ohio has NO station at all against PJM being the largest gas-burning BA. S111 research adds the mechanism: gas-weighted degree-day weights are HEATING-derived and wrong in summer; the fix is a seasonal switch to power-weighted CDD off EIA-930 BA gas generation we already ingest. THIS IS ALSO THE TEST THAT DECIDES THE BURN GATE REINSTATEMENT (D31) - its kill argument rested on a summer CDD limb measured on a winter-weighted index.
 
