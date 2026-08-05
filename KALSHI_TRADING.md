@@ -585,7 +585,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **155 files.**
+new tool cannot go unlisted. **156 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -622,6 +622,7 @@ new tool cannot go unlisted. **155 files.**
 - `coordinate_g15_mbo.py` — COORDINATOR for the G15 MBO 5-specialist refine (S103; guard + render S104).
 - `cot_combined_feed.py` — CFTC COT FUTURES-AND-OPTIONS COMBINED positioning feed (DATA_GATE_S98 feed H).
 - `cot_feed.py` — CFTC Commitments of Traders (COT) positioning feed for the NG intraday forecaster.
+- `creds.py` — credential resolution, OUTSIDE the repo (S113, Greg: "no more scratchpad. It's in the sop").
 - `data_registry.py` — THE MASTER LIST OF EVERY DATA POINT WE HAVE. (Registry A-22.)
 - `databento_backfill.py` — TRUE-TICK historical NYMEX tape from Databento (S84).
 - `databento_live_smoke.py` — one-shot validation that the Databento LIVE plan is active (S99).
