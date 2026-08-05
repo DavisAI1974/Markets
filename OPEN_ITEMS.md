@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 73 |
+| open | 72 |
 | in progress | 1 |
-| done | 9 |
+| done | 10 |
 
-By size: **XS** 8, **S** 32, **M** 29, **L** 5
+By size: **XS** 8, **S** 32, **M** 28, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -58,7 +58,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 50
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 
-## REST (50)
+## REST (49)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -96,7 +96,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 50
 | **M-9** | S | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
 | **A-10** | M | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | - |
 | **A-24a** | M | Weather information ACCEPTANCE: revision size x model convergence x release timing | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
-| **A-24b** | M | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-24f** | M | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-6** | M | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
@@ -177,7 +176,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 50
 | **M-9** | REST | S | OPEN | S112 | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
 | **A-10** | REST | M | OPEN | S112 | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | MBP-10 restore from S3 (needs AWS keys, absent this session) |
 | **A-24a** | REST | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
-| **A-24b** | REST | M | OPEN | S113 | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-6** | REST | M | OPEN | S90 | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
@@ -204,6 +202,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 50
 | A-14 | XS | flow_calendar.CME_HOLIDAYS documents an early_close class and contains ZERO entries of it |
 | A-16 | XS | SERVE HYDRO - it is ALREADY IN THE STORE back to 2019 and dropped at the serving read. The SUMMER shortfall is ~2 Bcf/d of gas fill |
 | A-22 | M | THE MASTER DATA-POINT REGISTRY - built S112 |
+| A-24b | M | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location |
 | A-24c | M | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
@@ -1870,18 +1869,6 @@ DETERMINES WHETHER COAL COULD BE COMMITTED IN TIME. A late-arriving cold signal 
 boiler can be warm by then and only CTs (5-30 minutes) can answer - at the worst heat rate in the fleet.
 That converts this item's premise from a claim about trader behaviour into a claim about physical supply
 response, which is falsifiable against generation data rather than only against price.
-
----
-
-### [REST] A-24b - Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location
-
-*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
-
-**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
-
-**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
-
-RANK 2, and it is a CURVE-SHAPE candidate rather than a direction one, which is what D32 made the product. We hold three simultaneous descriptions of one storage event - headline surprise vs consensus, as-printed vs current vintage, and the regional location of the revision - and read only the first. A bullish headline CONFIRMED by revisions is a different event from a bullish headline OFFSET by them, even when the first price reaction has the same sign. Proposed as SIGN ALIGNMENT with no magnitude threshold, which is the right form under D23/D28 (a bar sited away from the centre of its distribution is what fails). Benchmark: headline surprise alone. Kill if alignment and regional topology do not change continuation, giveback or end-of-day direction WITHIN the same headline cells.
 
 ---
 
