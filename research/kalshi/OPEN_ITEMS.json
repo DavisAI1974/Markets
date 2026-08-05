@@ -431,6 +431,16 @@
    "size": "S",
    "why": "MEASURED against the brain: grid_stack.bas.*.coal_mwh is referenced by ZERO plays and carries ZERO conditions. nuclear_mwh: ZERO. wind_mwh and solar_mwh: exactly ONE play each, weather.burn_conversion_gate, which is RETIRED. So of the four terms that determine the gas residual under the merit order Greg states - nukes, coal, gas, with renewables ahead of all three - three have no reader at all and the fourth's only reader is dead.\n\nTHIS IS THE 0629 DEFECT GENERALISED, and 0629 is the desk's cleanest documented miss: wind_mwh was served in every slice and read by nobody, gw_cdd rose exactly as forecast and gas burn FELL 4.2 Bcf/d because wind rose 62%. Coal and nuclear sit in that identical state today - present, numeric, all-modern, consumed by nothing. D12: a feed with no named consumer is a staging defect, not a neutral fact.\n\nWHAT IS CHEAP HERE: the data is already served in every modern block, so this is a PLAY-SIDE job, not a feed build. The residual form is arithmetic we already hold - load minus wind minus solar minus nuclear minus coal - and est_gas_burn_bcfd is served beside it for a cross-check.\n\nSCOPE IT CORRECTLY (the same doctrine entry): coal and nuclear are LEVELS on outage / retirement / commitment timescales, never same-day absorbers. The play wants 'how much coal is running and is that level changing', not 'how much can coal absorb today'.",
    "blocked_by": null
+  },
+  {
+   "id": "A-16",
+   "title": "SERVE HYDRO from EIA-930 - it is in the stack, we serve nothing, and ~7% of generation is unaccounted",
+   "source": "S112, Greg: 'hydro would be in that stack... in the summer or during the spring rainy season, hydros will be curtailed or completely turned off'",
+   "first_raised": "S112",
+   "status": "OPEN",
+   "size": "XS",
+   "why": "MEASURED S112: ZERO hydro fields in the served vocabulary - 938 numeric quantities, no match on hydro or water. Summing the served fuel fields (coal + nuclear + gas + wind + solar) against total_gen_mwh leaves 6.7-7.6% of US48 generation UNNAMED - about 950,000 to 1,030,000 MWh/day on the G23 days measured. That residual is hydro plus oil, biomass and other, hydro being the bulk.\n\nWHY IT IS NOT SAFE TO IGNORE AS A CONSTANT, which is Greg's actual point: hydro is CURTAILED SEASONALLY for non-power reasons - spring runoff forces spill and oversupply, summer brings reservoir drawdown, irrigation calls, water rights and minimum-flow and temperature limits. So it is a third EXOGENOUS forcing alongside wind and solar, driven by water rather than demand, and when it falls away GAS FILLS IT because gas is the only term in the stack that regulates. Seven percent of generation is larger than the day-moves this desk is trying to call.\n\nCHEAP: EIA-930 reports hydro as its own fuel type and we ALREADY ingest EIA-930 for coal, nuclear, gas, wind and solar. This is a one-field ingest change on a feed we pull today, not a new source - which is why it is sized XS despite mattering.\n\nDO IT WITH A-15: coal_mwh and nuclear_mwh are already served and read by ZERO plays, so serving hydro without giving the stack a consumer just adds a fifth unread field.",
+   "blocked_by": null
   }
  ]
 }
