@@ -297,9 +297,9 @@
    "title": "Start accruing EIA weekly coal basin spot prices",
    "source": "GAS_SIGNAL_BRIEFING_S111 s2.11",
    "first_raised": "S111",
-   "status": "OPEN",
+   "status": "IN_PROGRESS",
    "size": "XS",
-   "why": "TIME-CRITICAL AND CANNOT BE BACKFILLED - EIA states the historical coal price series is vendor-proprietary and cannot be released. Zero value today; every week we wait is permanently lost. One hour of work.",
+   "why": "ACCRUAL STARTED S112, 5 weeks captured (2026-07-03 .. 2026-07-31) by coal_prices.py -> research/kalshi/data_records/coal_basin_prices.json.\n\nMEASURED, and it is why this could not wait: the free endpoint (eia.gov/coal/markets/coal_markets_json.php, no key needed) carries a ROLLING FIVE-WEEK WINDOW and nothing older. EIA states on its own page, verbatim: 'Because the historical spot price data are proprietary, they cannot be released by EIA; see S&P Global.' So a week not captured while it sits in the window is gone permanently - not expensive, not for sale to us.\n\nSTILL OPEN: this needs a WEEKLY SCHEDULED RUN. Captured once by hand, the window rolls and we lose weeks again. EIA publishes Mondays (release_date_json.php confirms: week ending 07-31 released August 3, next August 10), so a weekly trigger any time Mon-Fri catches every week with slack.\n\nCHARACTER OF THE SERIES, so nobody over-reads it: PROMPT-QUARTER delivery, not a cash spot print, and sticky - all five captured weeks are identical (CAPP 82, NAPP 70, ILB 55.5, PRB 14.65, Uinta 25.3). A slow structural level for the burn stack's coal limb (M-6), never a weekly signal.",
    "blocked_by": null
   },
   {
