@@ -14,7 +14,7 @@ By size: **XS** 8, **S** 32, **M** 29, **L** 7
 
 ---
 
-By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
+By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 24, **REST** 47
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -32,7 +32,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
-## BIGGEST WIN (21)
+## BIGGEST WIN (24)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -40,6 +40,8 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 |---|---|---|---|
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
+| **A-24d** | S | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | RE-TIERED S114 on Greg's go. Proposes NO correlation - it changes who is allowed to speak - so the shared 'candidates not findings' tier_why never applied to it. Instances were already in the ledger (B-0713's override, the block's worst wrong-direction day; E's PRIOR-OVER-STATE, 13 of 18 Friday misses) and the census re-derived 0713 independently: every fresh instrument down, the stale table won, -620. The age fields it needs were WRONG until S113's h-frozen_countdowns fix - unreadable, not unread - and became readable one session ago. Zero new data required. |
+| **A-24e** | S | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | RE-TIERED S114 on Greg's go. A quality GATE on the desk's best forward-confirmed play (flow_nowcast 0.87, 34/34 OOS) whose input family has produced THREE documented defects (S108 denominator, S109 encoding, hole #8 off-instrument). Census, by name: stub Mondays 0622 (191 trades, b/2s on OPPOSITE sides of 0.50), 0629, 0713, 0706 - four of the six worst Mondays sat on sub-1,300-trade panels; quiet stubs (0615, 0525) prove gate-not-signal, exactly as proposed. Feeds A-2's NO CALL on B's Monday lane, the walk's worst. The note's own data limitation stands: several quality fields carry <=29 observations - diagnosis first, authority accrues forward. |
 | **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
 | **A-30** | S | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | It corrects the stack model every burn play reasons from, it is already measured on data we hold, and it supplies the per-BA instrument A-27 needs instead of a national constant. |
 | **A-31** | S | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
@@ -47,6 +49,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **A-36** | S | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
+| **A-24a** | M | Weather information ACCEPTANCE: revision size x model convergence x release timing | RE-TIERED S114 on Greg's go, per-event evidence in walk_census_g18_g23_S114.csv. Its own why already said PROMOTED FROM BEHAVIORAL TO PHYSICAL (A-31: revision timing decides whether coal can be warm - falsifiable against generation); the census showed the authority half working per event (0713 convergence 0.017 = D25's override day; 0511 disagreement 1.127 = the walk's worst day) and the sign half's prerequisite - the seasonal sign map - is now IN THE BRAIN (s105.1 weather.revision_seasonal_sign_map, g24 test registered). The old shared blocker (A-23 triage) was decoration: A-24b/c ran to completion with it in place. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
 | **A-27** | M | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | It sits under A-26 and every burn-to-storage statement, and it is the DOMINANT sensitivity: power burn is 210-263 Bcf/wk against weekly storage changes of +/-67-91 Bcf. |
 | **A-28** | M | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | It is the prerequisite under A-24g, A-27 and G-19, and it is why A-24c could not be settled. An ingest change on a feed we already pull, and it is the third instance of the same reduction mistake this desk has recorded. |
@@ -60,7 +63,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 | **A-39** | L | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 
-## REST (50)
+## REST (47)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -75,8 +78,6 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **A-12** | S | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | DEMOTED FROM ESSENTIAL S113. The 'live wrong value' half was the age field, and that is fixed at source and registered as a defect. What remains is a NAMING decision on a value that is correct and correctly masked - real, small, and it gates nothing. |
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
-| **A-24d** | S | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
-| **A-24e** | S | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-3** | S | Compute the effective matching dimension d of any retrieval | - |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
@@ -98,9 +99,8 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **M-8** | S | Retire the Pyth collector workflows (D14) | - |
 | **M-9** | S | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
 | **A-10** | M | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | - |
-| **A-24a** | M | Weather information ACCEPTANCE: revision size x model convergence x release timing | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
-| **A-24f** | M | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
-| **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
+| **A-24f** | M | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | Stays REST S114 only because it is BLOCKED, not because it is a mere candidate - A-33 already promoted its content. Unblocks at the g12/g13 actual repull or the first winter block. |
+| **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Stays REST S114: correctly parked by its own author on A-28. Six findings queue behind that one ingest change; when it lands this item is testable. |
 | **A-6** | M | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
 | **G-13** | M | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | M | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
@@ -130,6 +130,8 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
+| **A-24d** | BIGGEST_WIN | S | OPEN | S113 | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
+| **A-24e** | BIGGEST_WIN | S | OPEN | S113 | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
 | **A-30** | BIGGEST_WIN | S | OPEN | S113 | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | - |
 | **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | - |
@@ -137,6 +139,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **A-36** | BIGGEST_WIN | S | OPEN | S113 | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
+| **A-24a** | BIGGEST_WIN | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
 | **A-27** | BIGGEST_WIN | M | OPEN | S113 | THE FLAT 7,900 Btu/kWh HEAT RATE - it averages a BIMODAL fleet (CCGT baseload vs simple-cycle peaker), and the error is largest on peak days | - |
 | **A-28** | BIGGEST_WIN | M | OPEN | S113 | WE INGEST EIA-930 DAILY WHEN IT PUBLISHES HOURLY - the diurnal shape IS the mechanism and we discard it at ingest | - |
@@ -158,8 +161,6 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **A-12** | REST | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
-| **A-24d** | REST | S | OPEN | S113 | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
-| **A-24e** | REST | S | OPEN | S113 | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
@@ -181,7 +182,6 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 21, **REST** 50
 | **M-8** | REST | S | OPEN | S110 | Retire the Pyth collector workflows (D14) | requires a commit on the trunk branch, not this one |
 | **M-9** | REST | S | OPEN | S112 | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
 | **A-10** | REST | M | OPEN | S112 | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | MBP-10 restore from S3 (needs AWS keys, absent this session) |
-| **A-24a** | REST | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-6** | REST | M | OPEN | S90 | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
@@ -352,6 +352,30 @@ THE LESSON IS THE ONE A-19 ALREADY STATES AND I STILL TRIPPED ON IT: a utility b
 CLOSING RULE, from D35: the BA list is closed by RECONCILIATION, not by map coverage. Add respondents until the served set sums to US48 within tolerance, then stop - US48 is carried as its own EIA-930 respondent so the gap is computable today. And the Southeast set is not an arbitrary region to have picked: it sits on the Gulf corridor, which is among the best-transmitting demand to Henry Hub itself.
 
 RE-AIMED S113 BY MEASUREMENT (A-26): this item was registered on the Gulf-corridor argument - that the Southeast BAs are among the better-transmitting demand to Henry Hub. That argument is now the WEAKER of two, because per-BA burn does not move HH price at all (|r| <= 0.11 across every BA, national aggregate included). The item SURVIVES on the BALANCE channel: weekly per-BA burn against weekly storage change runs -0.44 to -0.69 in summer for every BA measured, so every region's burn is present in the print HH trades even when its price is not. Keep the build; change the reason. Closure remains D35's rule - reconcile to US48, not cover the map - and it is now the ONLY closure that makes sense, since basis-weighting would drop CISO (-0.666 vs storage) to nearly zero.
+
+---
+
+### [BIGGEST_WIN] A-24d - Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous
+
+*size S | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
+
+**Why it is BIGGEST WIN:** RE-TIERED S114 on Greg's go. Proposes NO correlation - it changes who is allowed to speak - so the shared 'candidates not findings' tier_why never applied to it. Instances were already in the ledger (B-0713's override, the block's worst wrong-direction day; E's PRIOR-OVER-STATE, 13 of 18 Friday misses) and the census re-derived 0713 independently: every fresh instrument down, the stale table won, -620. The age fields it needs were WRONG until S113's h-frozen_countdowns fix - unreadable, not unread - and became readable one session ago. Zero new data required.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 4, and the note is right that it adds no predictor - it changes WHO IS ALLOWED TO SPEAK. Ages and knowable-from stamps are served throughout (ngwu_balance.issue_age_days, cot.age_days_combined, steo_vintage.knowable_from, every asof_utc) and are read by nothing. THE INSTANCE IS ALREADY IN THE LEDGER: D25 records B-0713 overriding its own instrument on a handed-down verdict table - the block's worst wrong-direction day - and E's self-analysis names PRIOR-OVER-STATE as its ONE dominant Friday flaw, 13 of 18 misses. Both are stale-beats-fresh. Cheap because it needs no new data. Benchmark: the current fixed precedence. Kill if source-age spread does not discriminate which side wins on conflict days.
+
+---
+
+### [BIGGEST_WIN] A-24e - Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate)
+
+*size S | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
+
+**Why it is BIGGEST WIN:** RE-TIERED S114 on Greg's go. A quality GATE on the desk's best forward-confirmed play (flow_nowcast 0.87, 34/34 OOS) whose input family has produced THREE documented defects (S108 denominator, S109 encoding, hole #8 off-instrument). Census, by name: stub Mondays 0622 (191 trades, b/2s on OPPOSITE sides of 0.50), 0629, 0713, 0706 - four of the six worst Mondays sat on sub-1,300-trade panels; quiet stubs (0615, 0525) prove gate-not-signal, exactly as proposed. Feeds A-2's NO CALL on B's Monday lane, the walk's worst. The note's own data limitation stands: several quality fields carry <=29 observations - diagnosis first, authority accrues forward.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 5, and it needs one correction the note could not make from the registry alone: HALF OF THIS ALREADY EXISTS AND IS ENFORCED. The identity session_b_share == session_b_share_two_sided x (1 - unsided_volume_frac) is a HARD state_health gate since S109 (state_health.py:130-140), so denominator disagreement cannot reach a specialist at all - it stops the line at stage time. What is genuinely new is the rest of the panel as a PLAY-LEVEL authority gate: phase-level agreement vs cancellation, reopen-stub exclusion, trade and phase counts as an information floor, quote-side confirmation. That is a different object from a staging assertion and is not built. Honour the note's own data limitation - several quality fields carry 29 observations or fewer, so diagnosis only, accrue forward evidence before any authority.
 
 ---
 
@@ -969,6 +993,29 @@ THE ORDER OF OPERATIONS STILL STANDS but is demoted to what it is: a measurement
 THE CONVEXITY THAT MATTERS IS LOAD -> GAS BURN, NOT TEMPERATURE -> DEGREE DAYS, and it is a better-posed question: the footprint's gas burn is convex in the footprint's LOAD because gas is the residual and every cheaper stack term saturates - nuclear and coal are levels, wind, solar and hydro are forcings, so a rising share of each additional MWh lands on gas. NEW SUB-TASK, and it is the cheapest thing in this item: measure demand_mwh against gas_mwh per respondent from the grid_stack store, back to 2019. No new feed, no new station, and it is the actual curve the desk needs. Never measured.
 
 AND IT CONFIRMS A-19 FROM THE OTHER SIDE: EIA-930 reports the footprint's own demand, so for a served BA the aggregate load is MEASURED, not inferred from thermometers. The station set is the FORWARD instrument only.
+
+---
+
+### [BIGGEST_WIN] A-24a - Weather information ACCEPTANCE: revision size x model convergence x release timing
+
+*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
+
+**Why it is BIGGEST WIN:** RE-TIERED S114 on Greg's go, per-event evidence in walk_census_g18_g23_S114.csv. Its own why already said PROMOTED FROM BEHAVIORAL TO PHYSICAL (A-31: revision timing decides whether coal can be warm - falsifiable against generation); the census showed the authority half working per event (0713 convergence 0.017 = D25's override day; 0511 disagreement 1.127 = the walk's worst day) and the sign half's prerequisite - the seasonal sign map - is now IN THE BRAIN (s105.1 weather.revision_seasonal_sign_map, g24 test registered). The old shared blocker (A-23 triage) was decoration: A-24b/c ran to completion with it in place.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 1 and the note's strongest candidate. We serve the SIZE of a GWDD revision and read neither of the two variables that say whether it should already be priced: inter-model disagreement, and whether the cycle completed BEFORE or AFTER the Globex reopen. Same revision, three different events. CHECKED S113 - the fields are real and populated: model_disagreement.summary carries max_abs_spread_gw_hdd, mean_abs_spread_over_overlap and n_overlap_horizons in the served state, and globex_reopen_et is present. NOTE THE PROVENANCE, because it strengthens the case: weather_forecast_cycle was built at S100 (feed A phase 1) for EXACTLY this question - the record says the 0118 Jan-24 +8.511 add was PRE-REOPEN available and that closing the weekend-gap blindness was the point - and then nothing ever read it. CAVEAT MEASURED: on the g23 state the block carries weekday_open only, with NO sunday_reopen key, so the Monday arm of the mechanism is unavailable on at least some blocks and must be checked per day rather than assumed. Benchmark: revision magnitude alone. Kill if timing and disagreement add no OOS discrimination to gap-vs-intraday delivery within revision-size cells.
+
+PROMOTED FROM BEHAVIOURAL TO PHYSICAL, S113 (see A-31). This item was registered as 'market ACCEPTANCE of
+the weather revision' - whether a revision was already priced into the gap. There is a harder reason it
+matters: a coal boiler takes ~24h to warm and its ramp costs only amortise over 1-2 weeks, so the
+commitment decision is made on a FORECAST 24-48h ahead and then locked. THE REVISION TIMING THEREFORE
+DETERMINES WHETHER COAL COULD BE COMMITTED IN TIME. A late-arriving cold signal is bullish gas because no
+boiler can be warm by then and only CTs (5-30 minutes) can answer - at the worst heat rate in the fleet.
+That converts this item's premise from a claim about trader behaviour into a claim about physical supply
+response, which is falsifiable against generation data rather than only against price.
+
+S114 PER-EVENT CENSUS (walk_census_g18_g23_S114.csv): the SIGN half is unusable without a SEASONAL MAP - the shoulder HDD axis runs BACKWARDS (the five biggest warm revisions -1.00..-1.70 landed +420/+30/+370/+610/+1230, five of five non-negative; small warm revisions landed -990/-1080/-830/-990; mid-size cold-adds +1.31..+1.56 landed -1050/-530/-960) - D28's transfer disease on a DELTA. The SIZE axis inverts too: the three largest CDD revisions (+2.66/+2.51/+2.26) landed on the QUIETEST days (+230/-60/+180) while the violence sat at mid-size revisions - consistent with the item's own already-priced limb, flagged as story not finding. The AUTHORITY half reads correctly per event: 0713 convergence 0.017 with every fresh instrument down against a +550 posterior (D25's override day); 0511 disagreement 1.127 on the walk's worst day (-2190). Build the seasonal sign map FIRST; the census also shows the variable is silent on EIA print Thursdays (0528, 0604) and wrong-signed where mediation eats the revision (0629, 0624) - couple to G-4/A-34.
 
 ---
 
@@ -1592,30 +1639,6 @@ AND IT UPGRADES TVA FROM CORRELATE TO INSTRUMENT. Its north Georgia dams are sto
 
 ---
 
-### [REST] A-24d - Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous
-
-*size S | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
-
-**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
-
-**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
-
-RANK 4, and the note is right that it adds no predictor - it changes WHO IS ALLOWED TO SPEAK. Ages and knowable-from stamps are served throughout (ngwu_balance.issue_age_days, cot.age_days_combined, steo_vintage.knowable_from, every asof_utc) and are read by nothing. THE INSTANCE IS ALREADY IN THE LEDGER: D25 records B-0713 overriding its own instrument on a handed-down verdict table - the block's worst wrong-direction day - and E's self-analysis names PRIOR-OVER-STATE as its ONE dominant Friday flaw, 13 of 18 misses. Both are stale-beats-fresh. Cheap because it needs no new data. Benchmark: the current fixed precedence. Kill if source-age spread does not discriminate which side wins on conflict days.
-
----
-
-### [REST] A-24e - Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate)
-
-*size S | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
-
-**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
-
-**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
-
-RANK 5, and it needs one correction the note could not make from the registry alone: HALF OF THIS ALREADY EXISTS AND IS ENFORCED. The identity session_b_share == session_b_share_two_sided x (1 - unsided_volume_frac) is a HARD state_health gate since S109 (state_health.py:130-140), so denominator disagreement cannot reach a specialist at all - it stops the line at stage time. What is genuinely new is the rest of the panel as a PLAY-LEVEL authority gate: phase-level agreement vs cancellation, reopen-stub exclusion, trade and phase counts as an information floor, quote-side confirmation. That is a different object from a staging assertion and is not built. Honour the note's own data limitation - several quality fields carry 29 observations or fewer, so diagnosis only, accrue forward evidence before any authority.
-
----
-
 ### [REST] A-3 - Compute the effective matching dimension d of any retrieval
 
 *size S | OPEN | raised S111*
@@ -1856,34 +1879,11 @@ FIX: re-run the G11+ fingerprint pass with the MBP-10 book source, and make the 
 
 ---
 
-### [REST] A-24a - Weather information ACCEPTANCE: revision size x model convergence x release timing
-
-*size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
-
-**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
-
-**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
-
-RANK 1 and the note's strongest candidate. We serve the SIZE of a GWDD revision and read neither of the two variables that say whether it should already be priced: inter-model disagreement, and whether the cycle completed BEFORE or AFTER the Globex reopen. Same revision, three different events. CHECKED S113 - the fields are real and populated: model_disagreement.summary carries max_abs_spread_gw_hdd, mean_abs_spread_over_overlap and n_overlap_horizons in the served state, and globex_reopen_et is present. NOTE THE PROVENANCE, because it strengthens the case: weather_forecast_cycle was built at S100 (feed A phase 1) for EXACTLY this question - the record says the 0118 Jan-24 +8.511 add was PRE-REOPEN available and that closing the weekend-gap blindness was the point - and then nothing ever read it. CAVEAT MEASURED: on the g23 state the block carries weekday_open only, with NO sunday_reopen key, so the Monday arm of the mechanism is unavailable on at least some blocks and must be checked per day rather than assumed. Benchmark: revision magnitude alone. Kill if timing and disagreement add no OOS discrimination to gap-vs-intraday delivery within revision-size cells.
-
-PROMOTED FROM BEHAVIOURAL TO PHYSICAL, S113 (see A-31). This item was registered as 'market ACCEPTANCE of
-the weather revision' - whether a revision was already priced into the gap. There is a harder reason it
-matters: a coal boiler takes ~24h to warm and its ramp costs only amortise over 1-2 weeks, so the
-commitment decision is made on a FORECAST 24-48h ahead and then locked. THE REVISION TIMING THEREFORE
-DETERMINES WHETHER COAL COULD BE COMMITTED IN TIME. A late-arriving cold signal is bullish gas because no
-boiler can be warm by then and only CTs (5-30 minutes) can answer - at the worst heat rate in the fleet.
-That converts this item's premise from a claim about trader behaviour into a claim about physical supply
-response, which is falsifiable against generation data rather than only against price.
-
-S114 PER-EVENT CENSUS (walk_census_g18_g23_S114.csv): the SIGN half is unusable without a SEASONAL MAP - the shoulder HDD axis runs BACKWARDS (the five biggest warm revisions -1.00..-1.70 landed +420/+30/+370/+610/+1230, five of five non-negative; small warm revisions landed -990/-1080/-830/-990; mid-size cold-adds +1.31..+1.56 landed -1050/-530/-960) - D28's transfer disease on a DELTA. The SIZE axis inverts too: the three largest CDD revisions (+2.66/+2.51/+2.26) landed on the QUIETEST days (+230/-60/+180) while the violence sat at mid-size revisions - consistent with the item's own already-priced limb, flagged as story not finding. The AUTHORITY half reads correctly per event: 0713 convergence 0.017 with every fresh instrument down against a +550 posterior (D25's override day); 0511 disagreement 1.127 on the walk's worst day (-2190). Build the seasonal sign map FIRST; the census also shows the variable is silent on EIA print Thursdays (0528, 0604) and wrong-signed where mediation eats the revision (0629, 0624) - couple to G-4/A-34.
-
----
-
 ### [REST] A-24f - Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin
 
 *size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
-**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+**Why it is REST:** Stays REST S114 only because it is BLOCKED, not because it is a mere candidate - A-33 already promoted its content. Unblocks at the g12/g13 actual repull or the first winter block.
 
 **Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
 
@@ -1895,7 +1895,7 @@ RANK 6. freeze_risk is 148 of 157 fields unread and holds per-basin first_below,
 
 *size M | OPEN | raised S113 | BLOCKED BY: The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint.*
 
-**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+**Why it is REST:** Stays REST S114: correctly parked by its own author on A-28. Six findings queue behind that one ingest change; when it lands this item is testable.
 
 **Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
 
