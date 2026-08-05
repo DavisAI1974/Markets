@@ -1,6 +1,7 @@
 {
  "note": "THE PLANT'S WORK SCHEDULE. Sessions are GENERATED FROM RULES against the real clock, never a loaded date table - flow_calendar.CME_HOLIDAYS runs out on 2027-02-15 and a date past a table reads as 'not a holiday', which is present, boolean and wrong. The plant walks these in order; after the last session it wraps to index 0 and increments `cycle`. The wrap is the point: re-walking a session on a later cycle with a better brain is a REPEAT MEASUREMENT, which is what makes 'get better over the runs' measurable rather than an impression.",
  "generated_by": "plant_calendar.py (rules; verified against flow_calendar.CME_HOLIDAYS)",
+ "why_materialised_dates_are_safe_here": "These are ALREADY-HAPPENED sessions and the plant RE-WALKS them, so writing the dates down is exact - the wrap returns to cal+0 day 1, it does not assert that those dates recur. THE ONE THING THIS TABLE MUST NEVER BE USED FOR is projecting past cal+3: the calendar does NOT repeat on four years. Memorial Day runs 05-25 / 05-27 / 05-29 / 05-31 across 2026/2030/2034/2038 and Good Friday moves +16 or -12 days, so replaying cal+0's dates as year five would drift about two days per cycle and would eventually put a Monday holiday on a day that is not a Monday. To extend the window, RE-RUN the rules for the new years - never copy a cal offset forward.",
  "span": {
   "start": "2026-01-01",
   "end": "2029-12-31",
@@ -16,6186 +17,8248 @@
   {
    "date": "20260102",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260105",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260106",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260107",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260108",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260109",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260112",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260113",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260114",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260115",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260116",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260119",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "MLK_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20260120",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260121",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260122",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260123",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260126",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260127",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260128",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260129",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260130",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260202",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260203",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260204",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260205",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260206",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260209",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260210",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260211",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260212",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260213",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260216",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Presidents_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20260217",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260218",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260219",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260220",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260223",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260224",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260225",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260226",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260227",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260302",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260303",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260304",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260305",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260306",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260309",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260310",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260311",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260312",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260313",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260316",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260317",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260318",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260319",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260320",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260323",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260324",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260325",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260326",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260327",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260330",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260331",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260401",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260402",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260406",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260407",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260408",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260409",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260410",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260413",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260414",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260415",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260416",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260417",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260420",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260421",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260422",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260423",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260424",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260427",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260428",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260429",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260430",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260501",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260504",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260505",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260506",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260507",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260508",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260511",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260512",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260513",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260514",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260515",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260518",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260519",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260520",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260521",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260522",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260525",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Memorial_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20260526",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260527",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260528",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260529",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260601",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260602",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260603",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260604",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260605",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260608",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260609",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260610",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260611",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260612",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260615",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260616",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260617",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260618",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260619",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Juneteenth",
    "session_class": "partial_session"
   },
   {
    "date": "20260622",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260623",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260624",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260625",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260626",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260629",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260630",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260701",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260702",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260703",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Independence_Day_observed",
    "session_class": "partial_session"
   },
   {
    "date": "20260706",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260707",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260708",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260709",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260710",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260713",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260714",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260715",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260716",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260717",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260720",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260721",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260722",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260723",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260724",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260727",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260728",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260729",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260730",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260731",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260803",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260804",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260805",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260806",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260807",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260810",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260811",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260812",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260813",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260814",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260817",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260818",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260819",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260820",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260821",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260824",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260825",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260826",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260827",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260828",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260831",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260901",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260902",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260903",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260904",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260907",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Labor_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20260908",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260909",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260910",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260911",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260914",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260915",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260916",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260917",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260918",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260921",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260922",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260923",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260924",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260925",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260928",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260929",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20260930",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261001",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261002",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261005",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261006",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261007",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261008",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261009",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261012",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261013",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261014",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261015",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261016",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261019",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261020",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261021",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261022",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261023",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261026",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261027",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261028",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261029",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261030",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261102",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261103",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261104",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261105",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261106",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261109",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261110",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261111",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261112",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261113",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261116",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261117",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261118",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261119",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261120",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261123",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261124",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261125",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261126",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Thanksgiving",
    "session_class": "partial_session"
   },
   {
    "date": "20261127",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Day_After_Thanksgiving",
    "session_class": "early_close"
   },
   {
    "date": "20261130",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261201",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261202",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261203",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261204",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261207",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261208",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261209",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261210",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261211",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261214",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261215",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261216",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261217",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261218",
    "dow": "Fri",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261221",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261222",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261223",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261224",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": "Christmas_Eve",
    "session_class": "early_close"
   },
   {
    "date": "20261228",
    "dow": "Mon",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261229",
    "dow": "Tue",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261230",
    "dow": "Wed",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20261231",
    "dow": "Thu",
+   "cal_offset": 0,
+   "cal_label": "cal+0",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270104",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270105",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270106",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270107",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270108",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270111",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270112",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270113",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270114",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270115",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270118",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "MLK_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20270119",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270120",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270121",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270122",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270125",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270126",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270127",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270128",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270129",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270201",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270202",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270203",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270204",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270205",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270208",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270209",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270210",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270211",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270212",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270215",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "Presidents_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20270216",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270217",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270218",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270219",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270222",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270223",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270224",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270225",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270226",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270301",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270302",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270303",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270304",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270305",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270308",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270309",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270310",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270311",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270312",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270315",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270316",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270317",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270318",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270319",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270322",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270323",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270324",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270325",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270329",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270330",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270331",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270401",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270402",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270405",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270406",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270407",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270408",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270409",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270412",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270413",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270414",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270415",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270416",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270419",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270420",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270421",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270422",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270423",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270426",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270427",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270428",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270429",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270430",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270503",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270504",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270505",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270506",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270507",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270510",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270511",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270512",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270513",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270514",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270517",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270518",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270519",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270520",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270521",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270524",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270525",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270526",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270527",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270528",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270531",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "Memorial_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20270601",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270602",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270603",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270604",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270607",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270608",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270609",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270610",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270611",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270614",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270615",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270616",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270617",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270618",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "Juneteenth_observed",
    "session_class": "partial_session"
   },
   {
    "date": "20270621",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270622",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270623",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270624",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270625",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270628",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270629",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270630",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270701",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270702",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270705",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "Independence_Day_observed",
    "session_class": "partial_session"
   },
   {
    "date": "20270706",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270707",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270708",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270709",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270712",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270713",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270714",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270715",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270716",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270719",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270720",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270721",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270722",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270723",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270726",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270727",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270728",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270729",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270730",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270802",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270803",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270804",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270805",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270806",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270809",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270810",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270811",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270812",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270813",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270816",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270817",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270818",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270819",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270820",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270823",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270824",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270825",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270826",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270827",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270830",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270831",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270901",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270902",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270903",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270906",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "Labor_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20270907",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270908",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270909",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270910",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270913",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270914",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270915",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270916",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270917",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270920",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270921",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270922",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270923",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270924",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270927",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270928",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270929",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20270930",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271001",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271004",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271005",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271006",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271007",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271008",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271011",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271012",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271013",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271014",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271015",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271018",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271019",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271020",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271021",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271022",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271025",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271026",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271027",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271028",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271029",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271101",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271102",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271103",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271104",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271105",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271108",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271109",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271110",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271111",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271112",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271115",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271116",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271117",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271118",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271119",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271122",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271123",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271124",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271125",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "Thanksgiving",
    "session_class": "partial_session"
   },
   {
    "date": "20271126",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": "Day_After_Thanksgiving",
    "session_class": "early_close"
   },
   {
    "date": "20271129",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271130",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271201",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271202",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271203",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271206",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271207",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271208",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271209",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271210",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271213",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271214",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271215",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271216",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271217",
    "dow": "Fri",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271220",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271221",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271222",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271223",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271227",
    "dow": "Mon",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271228",
    "dow": "Tue",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271229",
    "dow": "Wed",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20271230",
    "dow": "Thu",
+   "cal_offset": 1,
+   "cal_label": "cal+1",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280103",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280104",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280105",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280106",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280107",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280110",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280111",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280112",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280113",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280114",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280117",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "MLK_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20280118",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280119",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280120",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280121",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280124",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280125",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280126",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280127",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280128",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280131",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280201",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280202",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280203",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280204",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280207",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280208",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280209",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280210",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280211",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280214",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280215",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280216",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280217",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280218",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280221",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "Presidents_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20280222",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280223",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280224",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280225",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280228",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280229",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280301",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280302",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280303",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280306",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280307",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280308",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280309",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280310",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280313",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280314",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280315",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280316",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280317",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280320",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280321",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280322",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280323",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280324",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280327",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280328",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280329",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280330",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280331",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280403",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280404",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280405",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280406",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280407",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280410",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280411",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280412",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280413",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280417",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280418",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280419",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280420",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280421",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280424",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280425",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280426",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280427",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280428",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280501",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280502",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280503",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280504",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280505",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280508",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280509",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280510",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280511",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280512",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280515",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280516",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280517",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280518",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280519",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280522",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280523",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280524",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280525",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280526",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280529",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "Memorial_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20280530",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280531",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280601",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280602",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280605",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280606",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280607",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280608",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280609",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280612",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280613",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280614",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280615",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280616",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280619",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "Juneteenth",
    "session_class": "partial_session"
   },
   {
    "date": "20280620",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280621",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280622",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280623",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280626",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280627",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280628",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280629",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280630",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280703",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280704",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "Independence_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20280705",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280706",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280707",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280710",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280711",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280712",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280713",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280714",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280717",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280718",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280719",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280720",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280721",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280724",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280725",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280726",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280727",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280728",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280731",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280801",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280802",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280803",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280804",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280807",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280808",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280809",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280810",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280811",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280814",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280815",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280816",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280817",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280818",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280821",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280822",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280823",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280824",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280825",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280828",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280829",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280830",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280831",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280901",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280904",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "Labor_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20280905",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280906",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280907",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280908",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280911",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280912",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280913",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280914",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280915",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280918",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280919",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280920",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280921",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280922",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280925",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280926",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280927",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280928",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20280929",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281002",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281003",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281004",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281005",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281006",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281009",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281010",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281011",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281012",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281013",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281016",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281017",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281018",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281019",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281020",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281023",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281024",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281025",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281026",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281027",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281030",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281031",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281101",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281102",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281103",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281106",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281107",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281108",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281109",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281110",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281113",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281114",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281115",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281116",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281117",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281120",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281121",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281122",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281123",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "Thanksgiving",
    "session_class": "partial_session"
   },
   {
    "date": "20281124",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": "Day_After_Thanksgiving",
    "session_class": "early_close"
   },
   {
    "date": "20281127",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281128",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281129",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281130",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281201",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281204",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281205",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281206",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281207",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281208",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281211",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281212",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281213",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281214",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281215",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281218",
    "dow": "Mon",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281219",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281220",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281221",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281222",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281226",
    "dow": "Tue",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281227",
    "dow": "Wed",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281228",
    "dow": "Thu",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20281229",
    "dow": "Fri",
+   "cal_offset": 2,
+   "cal_label": "cal+2",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290102",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290103",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290104",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290105",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290108",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290109",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290110",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290111",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290112",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290115",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "MLK_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20290116",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290117",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290118",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290119",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290122",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290123",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290124",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290125",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290126",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290129",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290130",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290131",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290201",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290202",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290205",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290206",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290207",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290208",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290209",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290212",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290213",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290214",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290215",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290216",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290219",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Presidents_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20290220",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290221",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290222",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290223",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290226",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290227",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290228",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290301",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290302",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290305",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290306",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290307",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290308",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290309",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290312",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290313",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290314",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290315",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290316",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290319",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290320",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290321",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290322",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290323",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290326",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290327",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290328",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290329",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290402",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290403",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290404",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290405",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290406",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290409",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290410",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290411",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290412",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290413",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290416",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290417",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290418",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290419",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290420",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290423",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290424",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290425",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290426",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290427",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290430",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290501",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290502",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290503",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290504",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290507",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290508",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290509",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290510",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290511",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290514",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290515",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290516",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290517",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290518",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290521",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290522",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290523",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290524",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290525",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290528",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Memorial_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20290529",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290530",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290531",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290601",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290604",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290605",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290606",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290607",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290608",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290611",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290612",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290613",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290614",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290615",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290618",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290619",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Juneteenth",
    "session_class": "partial_session"
   },
   {
    "date": "20290620",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290621",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290622",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290625",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290626",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290627",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290628",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290629",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290702",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290703",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290704",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Independence_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20290705",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290706",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290709",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290710",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290711",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290712",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290713",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290716",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290717",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290718",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290719",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290720",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290723",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290724",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290725",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290726",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290727",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290730",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290731",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290801",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290802",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290803",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290806",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290807",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290808",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290809",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290810",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290813",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290814",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290815",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290816",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290817",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290820",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290821",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290822",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290823",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290824",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290827",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290828",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290829",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290830",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290831",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290903",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Labor_Day",
    "session_class": "partial_session"
   },
   {
    "date": "20290904",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290905",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290906",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290907",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290910",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290911",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290912",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290913",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290914",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290917",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290918",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290919",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290920",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290921",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290924",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290925",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290926",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290927",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20290928",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291001",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291002",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291003",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291004",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291005",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291008",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291009",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291010",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291011",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291012",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291015",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291016",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291017",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291018",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291019",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291022",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291023",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291024",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291025",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291026",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291029",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291030",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291031",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291101",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291102",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291105",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291106",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291107",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291108",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291109",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291112",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291113",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291114",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291115",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291116",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291119",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291120",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291121",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291122",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Thanksgiving",
    "session_class": "partial_session"
   },
   {
    "date": "20291123",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Day_After_Thanksgiving",
    "session_class": "early_close"
   },
   {
    "date": "20291126",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291127",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291128",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291129",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291130",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291203",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291204",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291205",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291206",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291207",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291210",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291211",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291212",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291213",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291214",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291217",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291218",
    "dow": "Tue",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291219",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291220",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291221",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291224",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": "Christmas_Eve",
    "session_class": "early_close"
   },
   {
    "date": "20291226",
    "dow": "Wed",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291227",
    "dow": "Thu",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291228",
    "dow": "Fri",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   },
   {
    "date": "20291231",
    "dow": "Mon",
+   "cal_offset": 3,
+   "cal_label": "cal+3",
    "holiday": null,
    "session_class": "normal"
   }

@@ -173,7 +173,13 @@ def sessions(start, end):
         if d.weekday() < 5:
             h = hol.get(d.isoformat())
             if not h or h[1] != FULL:
+                # CAL OFFSET (Greg, S112): "I'm designating whatever year is the first as cal + 0
+                # and the numbers are the years after." Every session is addressable as
+                # (cal+N, date), so the plant can reason in cycle-relative terms - cal+0 day 1 is
+                # where a wrap returns to, whatever the absolute year happens to be.
+                off = d.year - start.year
                 out.append({"date": d.strftime("%Y%m%d"), "dow": d.strftime("%a"),
+                            "cal_offset": off, "cal_label": "cal+%d" % off,
                             "holiday": h[0] if h else None,
                             "session_class": h[1] if h else "normal"})
         d += dt.timedelta(days=1)
@@ -193,6 +199,15 @@ def cmd_build(a):
                  "session on a later cycle with a better brain is a REPEAT MEASUREMENT, which is "
                  "what makes 'get better over the runs' measurable rather than an impression."),
         "generated_by": "plant_calendar.py (rules; verified against flow_calendar.CME_HOLIDAYS)",
+        "why_materialised_dates_are_safe_here": (
+            "These are ALREADY-HAPPENED sessions and the plant RE-WALKS them, so writing the dates "
+            "down is exact - the wrap returns to cal+0 day 1, it does not assert that those dates "
+            "recur. THE ONE THING THIS TABLE MUST NEVER BE USED FOR is projecting past cal+3: the "
+            "calendar does NOT repeat on four years. Memorial Day runs 05-25 / 05-27 / 05-29 / "
+            "05-31 across 2026/2030/2034/2038 and Good Friday moves +16 or -12 days, so replaying "
+            "cal+0's dates as year five would drift about two days per cycle and would eventually "
+            "put a Monday holiday on a day that is not a Monday. To extend the window, RE-RUN the "
+            "rules for the new years - never copy a cal offset forward."),
         "span": {"start": start.isoformat(), "end": end.isoformat(), "years": a.years},
         "n_sessions": len(ss),
         "cursor": {"index": 0, "cycle": 1, "brain_version_at_start": None},
@@ -226,11 +241,14 @@ def cmd_cursor(a):
     ss = d["sessions"]
     i = cur["index"]
     print("cycle %d, index %d of %d" % (cur["cycle"], i, len(ss)))
-    print("  current : %s %s (%s)" % (ss[i]["date"], ss[i]["dow"], ss[i]["session_class"]))
+    print("  current : %s %s  %s  (%s)" % (ss[i]["date"], ss[i]["dow"],
+                                            ss[i].get("cal_label", "?"), ss[i]["session_class"]))
     for j in range(i + 1, min(i + 4, len(ss))):
-        print("  next    : %s %s (%s)" % (ss[j]["date"], ss[j]["dow"], ss[j]["session_class"]))
+        print("  next    : %s %s  %s  (%s)" % (ss[j]["date"], ss[j]["dow"],
+                                                ss[j].get("cal_label", "?"), ss[j]["session_class"]))
     if i + 1 >= len(ss):
-        print("  next    : WRAP -> index 0, cycle %d (%s)" % (cur["cycle"] + 1, ss[0]["date"]))
+        print("  next    : WRAP -> index 0 = cal+0 day 1 (%s), cycle %d"
+              % (ss[0]["date"], cur["cycle"] + 1))
     return 0
 
 
