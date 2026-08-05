@@ -141,8 +141,13 @@ resolution the market is trading.
 **Three instruments, one lagging, one leading, one falsifying:**
 - **Slope divergence** — lagging by construction; a slope change is only measurable after it starts.
 - **The dipole's exhaustion arm** — leading; reads the current leader failing before price turns.
-  *Open: S90 ran the NG canary, static divergence came back NULL, the note said "test exhaustion
-  next", and it was never done. The one instrument that fires early is the one never tested on gas.*
+  *Open, and stated correctly: it HAS been tested on NG. At S90 static divergence did NOT transfer,
+  but exhaustion showed a faint RIGHT-SIGNED pulse (oppose+exhaust 0.410 vs trend+strengthen 0.382,
+  +2.7pp) on n=1 trend day at 1-sec bins. Greg's load-bearing note then: the 1-sec canary is FAR too
+  coarse, the edge lives at NATIVE TICK, and the real test is pending at native tick, per-cell,
+  event-time. Already carried as `timing.subsecond_reversal_exhaustion` (conf 0.25), correctly scoped
+  as a turn-timing/execution edge and never a blind open-time curve input. The open job is the
+  resolution, not the question.*
 - **Named structural events** — did the turn arrive at `turn_time_et`? A missed or inverted turn
   falsifies the story regardless of the residual.
 

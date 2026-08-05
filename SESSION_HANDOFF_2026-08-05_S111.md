@@ -210,6 +210,11 @@ forecast architecture.
 - **A false claim reached a commit.** `condition_audit.py` asserted `gw_hdd >= 16.4` "never
   discriminates INSIDE a block" while the tool's own output says it splits in 7 of 14. That sentence
   went into the commit message and into D28. **Still to fix.**
+- - **A-6 corrected on Greg's challenge.** I wrote that the dipole exhaustion arm was "never tested on
+  gas". It was — S90 ran it on NG NYMEX directly: static divergence did not transfer, exhaustion gave a
+  faint right-signed pulse (0.410 vs 0.382) on one trend day at 1-sec bins, and Greg's own note said the
+  1-sec canary is far too coarse because the edge lives at native tick. It is already a brain play. The
+  open item is the RESOLUTION of the test, not whether it was done.
 - **125 served quantities are globally constant** — one value across all 60 scored days of all six
   blocks (`storage_vintage` frozen at an as-of date in March, `ngwu_balance` dead since September).
   Served-but-dead at a scale nobody had counted. Belongs on the andon board.

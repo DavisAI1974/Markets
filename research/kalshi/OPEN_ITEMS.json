@@ -174,12 +174,12 @@
   },
   {
    "id": "A-6",
-   "title": "Test the dipole EXHAUSTION arm on gas",
+   "title": "Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK (the S90 pending test)",
    "source": "FORECAST_ARCHITECTURE_S111 s1.5, S90 unfinished",
    "first_raised": "S90",
    "status": "OPEN",
    "size": "M",
-   "why": "The only LEADING instrument in the monitor - slope divergence is lagging by construction. S90 ran the NG canary, static divergence came back NULL, the note said 'test exhaustion next', and it was never done. RollingFlow is already an O(1)-per-tick operator built for this hot path.",
+   "why": "CORRECTED S111 - my earlier framing of 'never tested on gas' was WRONG and Greg caught it. It WAS tested. NG_BEHAVIOR_KNOWLEDGE.md records it: the crypto edge was run on NG NYMEX futures directly at S90 - STATIC DIVERGENCE DID NOT TRANSFER, but the EXHAUSTION factor showed a faint RIGHT-SIGNED pulse (oppose+exhaust 0.410 vs trend+strengthen 0.382, +2.7pp, BTC-direction), on n=1 trend day, 1-sec binned. Greg's own load-bearing note at the time: THE 1-SEC CANARY IS FAR TOO COARSE - the edge lives at NATIVE TICK / ms-us and MBP-10 is nanosecond, so the real test is pending at native tick, per-cell, event-time. It is already carried as brain play timing.subsecond_reversal_exhaustion (target=turn, conf 0.25), correctly scoped as a TURN-TIMING / EXECUTION edge and explicitly NEVER a blind open-time curve input. SEPARATE AND ALSO MEASURED: month_characterize's depth-based turn_exhaustion DID separate turns on NG (reversed median -0.107 vs held -0.018), and characterize_turns.py saved dipole + exhaustion + far-side-recruitment fingerprints for the S95 refine. SO THE OPEN ITEM IS NOT 'does it work' BUT 'run it at the resolution the edge actually lives at' - a much better-defined job with a faint positive already behind it. Why it matters now: in the S111 monitor design the slope test and the missed-turn check are both LAGGING by construction, and this is the only instrument that fires before price confirms.",
    "blocked_by": null
   },
   {
