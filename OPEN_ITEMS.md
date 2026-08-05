@@ -8,13 +8,13 @@ home does not exist.
 |---|---|
 | open | 72 |
 | in progress | 1 |
-| done | 10 |
+| done | 11 |
 
 By size: **XS** 8, **S** 32, **M** 28, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,13 +31,12 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (20)
+## BIGGEST WIN (19)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
-| **A-32** | XS | INTERCHANGE (TI) IS NOT EVEN REQUESTED - and it is the instrument that says WHEN the reliability constraint binds | One element in a facet list on a feed we already pull, and it supplies the missing trigger for A-31 - which describes what happens once the reliability constraint binds but has no way to say when. Per-BA daily back to 2019 the moment it is added. |
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
@@ -58,7 +57,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 
-## REST (49)
+## REST (50)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -69,6 +68,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
 | **G-21** | XS | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
 | **G-26** | XS | BCOM/GSCI ROLL: demote from alpha to a liquidity-regime flag | - |
 | **G-27** | XS | STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input | - |
+| **M-10** | XS | KILL THE scratchpad/aws.env CREDENTIAL PATH - five files still read it | - |
 | **A-12** | S | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | DEMOTED FROM ESSENTIAL S113. The 'live wrong value' half was the age field, and that is fixed at source and registered as a defect. What remains is a NAMING decision on a value that is correct and correctly masked - real, small, and it gates nothing. |
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
@@ -124,7 +124,6 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-13** | ESSENTIAL | S | OPEN | S112 | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
-| **A-32** | BIGGEST_WIN | XS | OPEN | S113 | INTERCHANGE (TI) IS NOT EVEN REQUESTED - and it is the instrument that says WHEN the reliability constraint binds | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
@@ -149,6 +148,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
 | **G-26** | REST | XS | OPEN | S111 (recommendation); S112  | BCOM/GSCI ROLL: demote from alpha to a liquidity-regime flag | - |
 | **G-27** | REST | XS | OPEN | S111 (recommendation); S112  | STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input | - |
+| **M-10** | REST | XS | OPEN | S113 | KILL THE scratchpad/aws.env CREDENTIAL PATH - five files still read it | - |
 | **A-12** | REST | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
@@ -205,6 +205,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 49
 | A-24b | M | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location |
 | A-24c | M | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
+| A-32 | XS | INTERCHANGE (TI) SERVED - the collapse hypothesis is refuted, but it discriminates ramp-limited events from no-surplus events |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
 | M-2 | S | Brain status taxonomy normalized to an enum |
 | S111-1 | S | brain_schema.py sections --write |
@@ -286,57 +287,6 @@ BUILT AND TESTED, AWAITING THE TEMPLATE EDIT: spawn.py day_calendar() emits prio
 **Source:** S112 conditions curation, found independently by 4 of 8 batches
 
 MEASURED S112: chain age, chain polarity and cum_from_anchor are served in NO grp*_state.json. chain_age_sessions exists only in the per-boundary g*_he24_he1_handoffs.json. Consequence: every play keyed to chain state is unevaluable from the state a specialist is actually given, and the curation pass had to refuse them all. Batch 4's count is the sharpest: four of its seven refusals are the Friday/weekend/chain family and ALL fail on these same two quantities - serving them would make three plays curatable at once. Named refusals across batches: giveback_exhaustion_reversal_recognition, young_chain_extension_full_band, seam_chainage_accommodation_gate, friday_turn_exhaustion_gate, structure.mature_swing_alternation, level.giveback_origin_shelf, structure.covering_extension_distribution_flip, midweek.stretched_extreme_close_giveback, structure.friday_exhausted_extreme_giveback. This is the same fact the DECLINE audit reached from the other side - boundary.chain_label_must_track_realized_cum is 4-of-4 DATA_ABSENT - and it is why its caveat 'chain STATE travels in the handoff, which is never masked' is false on every price-masked run.
-
----
-
-### [BIGGEST_WIN] A-32 - INTERCHANGE (TI) IS NOT EVEN REQUESTED - and it is the instrument that says WHEN the reliability constraint binds
-
-*size XS | OPEN | raised S113*
-
-**Why it is BIGGEST WIN:** One element in a facet list on a feed we already pull, and it supplies the missing trigger for A-31 - which describes what happens once the reliability constraint binds but has no way to say when. Per-BA daily back to 2019 the moment it is added.
-
-**Source:** Greg, S113: 'Reliability is always the trump card... You can buy energy on the market to import to cover load but if everyone is tight then price takes a backseat'
-
-Greg, S113, correcting my framing precisely: 'Reliability is always the trump card. It's just that it
-doesn't have to be played often. You can buy energy on the market to import to cover load but if everyone
-is tight then price takes a backseat while other things come online... it's the strong silent muscle bound
-dude who sits in the corner while his younger flashier little brother takes the spotlight but the big
-brother is the backbone that gives the younger brother the backing to be brash.'
-
-THE STRUCTURE IS A CONSTRAINT, NOT A MODE, and I had written it as a mode. The problem operators solve is
-MINIMISE COST SUBJECT TO SERVING LOAD RELIABLY. For most of the year that constraint is SLACK, so what is
-observed is pure cost minimisation - which is why 'price is king' is true almost all the time without
-reliability ever being absent. When the constraint BINDS, cost minimisation simply stops. There is no
-regime switch in anyone's head; there is a constraint that starts binding.
-
-AND THE IMPORT POINT IDENTIFIES WHAT MAKES IT BIND, WHICH I ALSO HAD WRONG. It is NOT local tightness. As
-long as ANY neighbour holds surplus you buy energy and satisfy reliability cheaply - the market itself is
-one of the cheap tools for meeting the constraint. The constraint binds only when EVERYONE IS TIGHT
-SIMULTANEOUSLY and there is nothing to import. That is why WIDESPREAD cold is dangerous in a way that
-merely severe LOCAL cold is not, and it means the regime trigger is a CORRELATION ACROSS BAs rather than a
-level in any one of them.
-
-THE MEASURABLE INSTRUMENT: when imports dry up, INTERCHANGE COLLAPSES TOWARD ZERO because no neighbour has
-surplus to send, and the BA must self-serve - which lands on gas, because gas owns the fast timescales.
-So interchange is the observable that says whether the cheap route to reliability is still open.
-
-MEASURED, AND IT IS THE CHEAPEST OF THE FIVE DROPPED-FIELD FINDINGS TODAY: grid_stack.py's own comment
-names 'interchange TI', but the request filter is facets[type][] = ['D','DF'] and the mapping is
-{'D': demand_mwh, 'DF': demand_forecast_mwh}. So unlike hydro, battery and wind - fetched then dropped at
-a serving list - TI IS NOT EVEN REQUESTED. It is excluded at the API call. Adding it is ONE ELEMENT in a
-facet list plus one line in a mapping, on a feed we already pull with a key we already have. (EIA-930
-region-data type codes: D demand, DF day-ahead demand forecast, NG NET GENERATION - not natural gas - and
-TI total interchange.)
-
-WHAT IT BUYS, and it is the missing half of A-31: that item describes what happens once the constraint
-binds but has no instrument saying WHEN it binds. Interchange is that instrument, and it is available
-per-BA daily back to 2019 the moment the facet is added, so the January 2026 event can be re-read
-immediately - the prediction is that regional interchange collapsed BEFORE the price spike, as neighbours
-ran out of surplus to sell.
-
-FALSIFIER: if interchange does NOT collapse ahead of a reliability event, the import-exhaustion account is
-wrong and the regime trigger must be something else - most likely a pure reserve-margin threshold, which
-would point back at the ISO reliability declarations instead.
 
 ---
 
@@ -1496,6 +1446,22 @@ Item 11. Keep the calendars - they are cheap and already built (flow_calendar) -
 **Source:** GAS_SIGNAL_SYNTHESIS_S111.md section 3, 'data you already have and are under-using - ranked by wasted value'. Greg, S112: 'your 13 build suggestions from last session are still listed right?' - audited, and 12 of the 13 had NO registry item
 
 Item 12. Measured in the briefing: EIA experts WIN at h=9-12 months and LOSE BADLY to no-change at h=1 and h=3. We work day-ahead to two weeks, so at our horizon the STEO is a structural prior and must never be read as a short-horizon signal. 44 of steo_vintage's 95 served fields are read by nothing (A-23), so the scoping has to say what the block IS for, not only what it is not.
+
+---
+
+### [REST] M-10 - KILL THE scratchpad/aws.env CREDENTIAL PATH - five files still read it
+
+*size XS | OPEN | raised S113*
+
+**Why it is REST:** -
+
+**Source:** Greg, S113: 'And no more scratchpad. It's in the sop'
+
+Greg, S113: 'no more scratchpad. It's in the sop.' A credential is NEITHER code nor data, so under D33/D34 it belongs outside the repo tree entirely - never in git, never in a scratchpad directory that dies with the session.
+
+BUILT S113: research/kalshi/creds.py resolves in order - process environment, then ~/.config/markets/env (chmod 600, outside the repo), then the legacy scratchpad path WITH A WARNING so nothing breaks mid-migration. It never prints or returns a value into an artifact; `python creds.py` reports only which secrets resolve and from where, by NAME.
+
+grid_stack.py is repointed and verified live (EIA auth PASS, store rebuilt through 2026-08-05). STILL READING THE OLD PATH, and this is the open work: databento_live_smoke.py, nuclear_outages.py, plant_status.py, platform_sync.py, session_bootstrap.py. Each is a one-function change to creds.get(). Left undone deliberately rather than blind-patched - plant_status is the andon and session_bootstrap is the bring-up path, so both need their own verification rather than a sed.
 
 ---
 

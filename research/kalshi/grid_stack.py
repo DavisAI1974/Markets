@@ -71,10 +71,11 @@ HEAT_RATE_BTU_PER_KWH = 7900.0  # STEO-implied fleet heat rate, measured stable 
 
 
 def _api_key() -> str:
-    for line in open(ENV_PATH):
-        if line.startswith("EIA_API_KEY="):
-            return line.split("=", 1)[1].strip()
-    raise RuntimeError("EIA_API_KEY not found in scratchpad/aws.env")
+    """S113: resolved by creds.py - environment, then ~/.config/markets/env, then the legacy
+    scratchpad path with a warning. Greg: "no more scratchpad. It's in the sop." A credential is
+    neither code nor data, so it lives outside the repo tree entirely (D33/D34)."""
+    import creds
+    return creds.get("EIA_API_KEY")
 
 
 def _f(v):
@@ -120,11 +121,18 @@ def build() -> dict:
         drows = _paged(f"{API}/daily-region-data/data", {
             "api_key": key, "data[]": ["value"], "start": START,
             "facets[respondent][]": ba, "facets[timezone][]": TZ,
-            "facets[type][]": ["D", "DF"],
+            # S113 (A-32): TI added. The route's own docstring above already named "interchange TI"
+            # and the facet filter excluded it, so unlike hydro/battery/wind - fetched then dropped at
+            # a serving list - interchange was never even REQUESTED. It is the observable that says
+            # whether the cheap route to reliability is still open: when every neighbour is tight
+            # simultaneously nobody has surplus to sell, interchange collapses toward zero, and the BA
+            # must self-serve - which lands on gas, because gas owns the fast timescales (A-31).
+            "facets[type][]": ["D", "DF", "TI"],
             "sort[0][column]": "period", "sort[0][direction]": "asc"})
         for r in drows:
             v = _f(r.get("value"))
-            k = {"D": "demand_mwh", "DF": "demand_forecast_mwh"}.get(r["type"])
+            k = {"D": "demand_mwh", "DF": "demand_forecast_mwh",
+                 "TI": "interchange_mwh"}.get(r["type"])
             if v is not None and k:
                 slot(r["period"], ba)[k] = v
         print(f"[grid_stack] {ba}: {len(rows)} fuel rows + {len(drows)} demand rows")
@@ -196,6 +204,10 @@ def _ba_read(days: dict, period: str, ba: str) -> dict | None:
     out = {
         "demand_mwh": d.get("demand_mwh"),
         "demand_forecast_mwh": d.get("demand_forecast_mwh"),
+        # A-32: NET total interchange. POSITIVE = net EXPORTER (surplus to sell), NEGATIVE = net
+        # IMPORTER (leaning on neighbours). Toward zero across many BAs at once = nobody has surplus,
+        # the import route to reliability has closed, and load must be self-served.
+        "interchange_mwh": d.get("interchange_mwh"),
         "gas_mwh": gas, "solar_mwh": sun, "wind_mwh": wnd,
         "coal_mwh": gen.get("COL"), "nuclear_mwh": gen.get("NUC"),
         "hydro_mwh": wat,
