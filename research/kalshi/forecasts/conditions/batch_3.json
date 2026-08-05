@@ -1,0 +1,94 @@
+{
+ "batch": 3,
+ "conditions": [
+  {
+   "play_id": "magnitude.block_gap_ownership",
+   "conditions": [
+    {
+     "quantity": "sessions_since_prompt_expiry",
+     "state_path": "squeeze_watch.sessions_since_prompt_expiry",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 3,
+     "units": "sessions"
+    },
+    {
+     "quantity": "days_to_futures_expiry",
+     "state_path": "flow_calendar.days_to_futures_expiry",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 3,
+     "units": "days"
+    },
+    {
+     "quantity": "forecast_gw_hdd",
+     "state_path": "weather_forecast.forecast_gw_hdd",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 13.5,
+     "units": "gw_hdd"
+    }
+   ]
+  },
+  {
+   "play_id": "magnitude.positioning_saturation_turn",
+   "conditions": [
+    {
+     "quantity": "mm_net_pctile_1y",
+     "state_path": "cot.managed_money_net_pctile_1y",
+     "reference": "rank",
+     "comparator": "<=",
+     "threshold": 12,
+     "units": "pctile"
+    },
+    {
+     "quantity": "ice_ld1_mm_net_pctile_1y",
+     "state_path": "cot.ice.ld1.managed_money_net_pctile_1y",
+     "reference": "rank",
+     "comparator": "<=",
+     "threshold": 3,
+     "units": "pctile"
+    }
+   ]
+  },
+  {
+   "play_id": "magnitude.unpriced_shot_extension",
+   "conditions": [
+    {
+     "quantity": "mm_net_pctile_1y",
+     "state_path": "cot.managed_money_net_pctile_1y",
+     "reference": "rank",
+     "comparator": "<=",
+     "threshold": 12,
+     "units": "pctile"
+    }
+   ]
+  }
+ ],
+ "no_condition": [
+  {
+   "play_id": "structure.post_parabolic_bleed",
+   "why": "REGIME/RHYTHM CLASSIFIER, NOT A BAR. The entry test is a CHAIN STATE ('terminated-to-basing/bleed at the OLD polarity') plus the day's position in a crash/bounce/pause sequence, and the read field says both come off day-N-1 ACTUAL tape - realized nets, price-derived, masked in the blind and served nowhere in the vocabulary. Every number the play carries is an OUTPUT day-net band in USD, not an entry threshold: B1 post-crash pause +300..+700, B2 bounce day-1 +800..+1500 / day-2 +200..+500, B3 bounce-death -2400..-2900, B4 in-chain print -400..-700, B5 small days -200..+300. B2's 'bounces run 1-2 days, NEVER 3' is a count of position in a sequence, not a bar on a served quantity, and the boundary condition retained after its G11 refutation ('applies only while no C1 band-break has printed') is itself keyed to a masked price band. Inventing a threshold here would put a number on the wrong object."
+  },
+  {
+   "play_id": "signal.mos_first_appearance_vs_revision",
+   "why": "THE DISCRIMINATOR IS PER-HORIZON AND THE SERVED FIELD IS NOT. The play separates a FIRST APPEARANCE at a horizon that previously carried no signal from a REVISION to a horizon already occupied for several runs; that needs the run-delta LADDER plus each horizon's prior-run occupancy. decision_state carries the ladder only as weather_forecast.run_delta[] (a list of per-horizon dicts) and the vocabulary does not expose it; the vocabulary-legal scalars weather_forecast.forecast_run_delta / forecast_run_delta_cdd are the h0 (D0) values only - verified on 20260622, forecast_run_delta 0.034 == run_delta[0].d_gw_hdd 0.034. The play's ONE numeric bar is the s101_6 pricing-time rule's shock scale ('a first-appearance add prices AT APPEARANCE only at shock scale, run-deltas >= ~3-4 gw-HDD'), and it was measured on FAR-horizon adds: 0119's +4.020 at Jan 23 and +8.511 at Jan 24, i.e. D+4/D+5. Measured across every committed grp*_state.json the h0 scalar spans [-1.267, +0.876] and never once reaches 3, while the horizon ladder reaches 8.511 on the founding day. A >=3 bar on the served scalar would read as evaluated and could never fire - not even on the play's own founding instances. The same field carries the audit's roll-down defect: run_delta compares one target date across two runs and is structurally blind to a shot that arrives by the passage of time, which is what refuted the revision arm on G22 0624 and 0630."
+  },
+  {
+   "play_id": "magnitude.weekend_gap_delivery",
+   "why": "THE DISCRIMINATING INPUT IS DECLARED UNSERVED BY THE PLAY ITSELF: requires reads 'the MAGNITUDE requires weekend-cycle model data that decision_state does not currently carry', and the health note repeats it. The read is whether the weekend cycle delivers a CHANGE at D+2..D+6; weather_forecast_cycle carries that only as sunday_reopen.delta_vs_prior_by_horizon[] - a list the vocabulary does not expose - and its vocabulary-legal scalars are D0 only (gw_hdd_d0, vs_normal_d0). The CDD channel is not served in the cycle store at all (the block's own cdd_basis note: 'the cycle store is absent cold, so gw_cdd_d0 / d_gw_cdd cannot be recomputed here and are NOT served'), which is exactly what both G22 proxy attempts had to work around - and they failed in opposite directions on consecutive weekends. Beyond that, the fresh-vs-priced switch is a categorical label with no bar, and +1500..+2500 / +200..+400 are OUTPUT gap bands, not entry thresholds."
+  },
+  {
+   "play_id": "structure.squeeze_unwind",
+   "why": "DESCRIPTOR GRADE AND IT SAYS SO: call = 'DESCRIPTOR grade - regime context, not a scored play', status DESCRIPTOR, support NOT_A_PLAY. It carries no bar of its own - its trigger is another play's branch firing ('after a dead-sponsor structural gap (block_gap_ownership structural branch fired)'), which is a play state, not a served quantity. Its numbers are arithmetic on masked price levels: gap = -E where E is the cum net of the post-expiry echo sessions; next session = the remaining premium down to the PRE-SQUEEZE SHELF; and the '3.08-3.23 for nine sessions' basing statement is a price range (which the S112 audit found does not reproduce - closes ran to 3.521). None of E, the premium P, the shelf, or a close level is served. The one conditionable quantity in its neighbourhood - the dead-sponsor expiry window - belongs to block_gap_ownership's structural rung and is curated there, not duplicated onto a descriptor."
+  },
+  {
+   "play_id": "tape.squeeze_ignition_flush_conjunction",
+   "why": "THE BAR IS INTRADAY AND PRE-ONSET; requires = needs_intraday_reveal. The stated test is a failed counter-flush in the final 30-75 min - probes recovering >=60% within 30 min, the session low holding, imbalance normalizing against the session base - all windowed intraday quantities, and the recovery fraction is price-derived besides. The served tape_conditions block is a PRIOR-SESSION aggregate (n_trades, session_b_share, session_signed_flow, big_print_b_share, big_prints_n, trades_per_min, volume_lots, l1_book) with no intraday window and no probe/recovery measure anywhere. The conjunction's other limb, a 'live structural pull state', resolves through squeeze_watch, whose spread limb is genuinely price-masked (calendar_limb_satisfied_live is null on every day of g22 and g23) and whose frozen active flag the S112 audit measured as 10-of-10 or 0-of-10 in every modern block. Neither limb can be written as a bar on a served path; picking a squeeze_watch calendar field to stand in for the flush would name a quantity the play does not test."
+  },
+  {
+   "play_id": "tape.squeeze_ratchet_confirm",
+   "why": "THE TRIGGER QUANTITY IS NOT SERVED ANYWHERE, and the play's own health field says so: progress-per-1,000-lots ('>= ~2x the day baseline; 0121/1223 38-47t/k vs controls <=17t/k') 'is not stored in fingerprints.json, in any g*_mbo_evidence.json, or in any grp*_state.json, so the bar cannot be evaluated on a single day of the walk'. It is a ratio of PRICE PROGRESS - masked in the blind by construction - to traded lots; the vocabulary serves tape_conditions.volume_lots but no price-progress term, so the ratio cannot be formed from any served path. The thin-regime half of the trigger carries no stated numeric bar of its own. The play is unexercisable and unauditable until a lot-normalised progress field is served, which is its own falsifier's stated prerequisite."
+  }
+ ]
+}

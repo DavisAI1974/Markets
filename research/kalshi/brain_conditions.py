@@ -115,6 +115,15 @@ def _walk(obj, prefix, out):
             if str(k).startswith("_"):
                 continue          # _mask_note and friends are annotations, not quantities
             _walk(v, "%s.%s" % (prefix, k) if prefix else str(k), out)
+    elif isinstance(obj, list):
+        # LIST ELEMENTS ARE LEGAL PATHS and were missing from the vocabulary. resolve() has always
+        # walked `name[i]`, and the brain already carries a curated condition on
+        # tape_conditions.phase_signed_flow[2] - so the vocabulary was offering LESS than the
+        # schema accepts, and a curator was told a real quantity did not exist. Batch 7 hit this
+        # exactly: it filed flow.passive_ladder_displacement as uncuratable partly because no
+        # phase element appeared in the list.
+        for i, v in enumerate(obj[:8]):
+            _walk(v, "%s[%d]" % (prefix, i), out)
     elif isinstance(obj, (int, float)) and not isinstance(obj, bool):
         out[prefix] = out.get(prefix, 0) + 1
 
@@ -231,6 +240,13 @@ def cmd_curate_prompt(a):
     # only offer quantities that actually survive into the modern blocks - proposing a bar on a
     # path that died at g16 is how a condition becomes degenerate the day it is written
     live = sorted(p for p, gs in vocab.items() if sum(g in gs for g in modern) >= 4)
+    # NO TRUNCATION. The first version capped the record block at 150,000 chars, which SILENTLY
+    # cut batch 6 (202KB), batch 7 (170KB) and batch 2 (162KB) - batch 6 lost the last three plays'
+    # records entirely and batch 7's header listed 9 plays while its body carried 7.2. Two curators
+    # caught it and recovered by reading the brain directly; a curator who did not notice would
+    # either invent bars or file no_condition on a play they never saw. A prompt that lists a task
+    # it does not supply the material for is the same defect class as a served field that is
+    # present but empty - it reads complete and is not.
     print("""You are CURATING CONDITIONS for the NG forecaster's brain, batch %d of %d.
 
 WHAT THIS IS. %d of 82 plays have `conditions` unparsed. A condition is the machine-readable form of
@@ -282,7 +298,7 @@ THE FULL BRAIN RECORD FOR EACH PLAY IN YOUR BATCH:
 %s""" % (n, N_BATCHES, len(ps), n, n, n, len(mine),
          "\n".join("  %2d. %s" % (i + 1, p["id"]) for i, p in enumerate(mine)),
          len(live), "\n".join("  " + x for x in live),
-         json.dumps(mine, indent=1)[:150000]))
+         json.dumps(mine, indent=1)))
     return 0
 
 

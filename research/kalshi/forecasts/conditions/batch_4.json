@@ -1,0 +1,77 @@
+{
+  "batch": 4,
+  "conditions": [
+    {
+      "play_id": "magnitude.shoulder_counter_print_damping",
+      "conditions": [
+        {
+          "quantity": "near_window_gw_hdd",
+          "state_path": "weather_forecast.forecast_gw_hdd",
+          "reference": "absolute",
+          "comparator": "<=",
+          "threshold": 20,
+          "units": "gw_hdd"
+        },
+        {
+          "quantity": "days_to_next_eia_release",
+          "state_path": "flow_calendar.days_to_next_eia_release",
+          "reference": "absolute",
+          "comparator": "==",
+          "threshold": 0,
+          "units": "days"
+        }
+      ]
+    },
+    {
+      "play_id": "selector.divergence_resolution",
+      "conditions": [
+        {
+          "quantity": "near_window_forecast_gw_hdd",
+          "state_path": "weather_forecast.forecast_gw_hdd",
+          "reference": "absolute",
+          "comparator": ">=",
+          "threshold": 16.4,
+          "units": "gw_hdd"
+        },
+        {
+          "quantity": "session_b_share",
+          "state_path": "tape_conditions.session_b_share",
+          "reference": "absolute",
+          "comparator": ">=",
+          "threshold": 0.5,
+          "units": "share"
+        }
+      ]
+    }
+  ],
+  "no_condition": [
+    {
+      "play_id": "magnitude.weekend_chain_drift_day_move",
+      "why": "No trigger bar. The trigger is an OWNERSHIP/REGIME label - 'chain-drift-family content owns a weekend WITH a live chain', then plain-vs-covering regime - and neither chain ownership, chain liveness nor 'first covering print in COT' is a served numeric quantity (no chain block exists in the vocabulary; cot.managed_money_net_chg_wow could show net covering but the play states no bar on it and 'FIRST covering print' is a sequencing rule, not a level). The numbers the play carries - the [600..1600] class, the ~2200 doubled rung, the <=690 Sunday prior - are OUTPUT magnitude bands on the emitted day-move, not gates on whether it fires. The brain's own health field says the same: the ownership precondition is what changes state and the rungs mostly do not."
+    },
+    {
+      "play_id": "daytype.weekend_crest_friday",
+      "why": "All three trigger limbs are unserved or carry no bar. (1) 'chain stretched near its extreme' is cum-from-anchor vs block range - cum_from_anchor is not in the served vocabulary at all, and E declares it PRICE-MASKED and UNEVALUATED at the blind. (2) 'the chain-side driver fully PRICED with its realization window crossing the weekend closure' is a pricing-time/realization-timing read with no threshold. (3) 'the evening run delivering the shot's first same-sign trim' is a SIGN plus a SEQUENCING condition ('first'), and the sign it must take is relative to the chain side, which is unserved; weather_forecast.forecast_run_delta is served and is the D-1 evening run delta, but the play states no bar on it. The -600..-1200 basing-counter numbers are the output band. Day-of-week ('a Friday') is also not a served numeric quantity."
+    },
+    {
+      "play_id": "monday.window_deep_book_shakeout",
+      "why": "THE BAR IS REAL AND ITS QUANTITY IS NOT SERVED. The play's bar is |imb10| >= ~0.05 on a Monday 06:00 ET L1-10 RESTING-DEPTH imbalance snapshot. No imb10 / imb_R / depth-imbalance path exists in the vocabulary. The three served l1_book fields are tape_conditions.l1_book.quote_bid_share, .quote_updates and .spread_ticks_med - quote_bid_share is a bid-side share of QUOTE UPDATE COUNTS at L1 only, which is a different quantity (wrong depth, wrong object, wrong timestamp), and naming it would be exactly the hole-#8/#9 error. The play's own falsifier says what is missing: 'serve imb10 in decision_state at the Monday 06:00 ET snapshot'. Separately, firehose_present.l1_book is FALSE on every modern Monday, so even the L1 fields are absent at the decision point."
+    },
+    {
+      "play_id": "daytype.friday_exit_decomposition",
+      "why": "The play emits a CATEGORICAL exit-type label (crest_trim_fadeable / positioning_spent_fade / fundamental_carry_continue / momentum_carry), not a gated call, and its trigger - 'any Friday close going into a weekend seam' - is unconditional. Its discriminating tell, last-hour price-dir vs last-hour signed-flow, is not served: no last_hour_dir or last_hour_signed_flow path exists in the vocabulary, the record says it is MBO-measured only for G15, and the exit_states file that carries it is declared refine-only ('a blind run must never read this file'). The calendar inputs ARE served (flow_calendar.days_to_opex, .days_to_futures_expiry, .gsci_roll_day_n, .bcom_roll_day_n) but the play states them as STATES with no number - 'index-roll LAST day', 'an index roll whose WINDOW is still open Monday' - and inventing a roll-day threshold to fill the slot would be manufacturing a bar the play does not have."
+    },
+    {
+      "play_id": "weekend.carry_realization_flip",
+      "why": "The discriminator is the LOCATION of the driver's peak in the forward ladder - 'peak still AHEAD of Monday' vs 'peak lands Sat/Sun/Mon' - which is an argmax/ordering over horizons, not a level crossing a threshold. There is no bar to write. The quantity is also not served as a scalar: it lives in weather_forecast.horizons, a LIST of per-horizon rows, and the only served weather_forecast scalars are the D0 levels (forecast_gw_hdd / forecast_gw_cdd) and the run-over-run REVISION deltas (forecast_run_delta / forecast_run_delta_cdd). forecast_run_delta_cdd is the nearest-looking name and measures something else entirely - this run versus the previous MODEL RUN, not this horizon versus the next HORIZON - so it must not be used for the h0-vs-h1 step the specialists actually ran ('h1 CDD 15.933 > h0 14.815'). The falsifier's proposed burn-residual limb (grid_stack est_gas_burn net of wind/solar) is a proposed test, not the play's bar."
+    },
+    {
+      "play_id": "structure.friday_exhausted_extreme_giveback",
+      "why": "An OR-trigger whose both limbs sit on unserved quantities. Limb (a) 'closing at an EXTREME cum-from-anchor' - cum_from_anchor is absent from the vocabulary and is price content the blind masks (E declared it UNEVALUATED twice, at G22 0626 and G23 0710). Limb (b) 'a MATURE chain (age >= 4)' is a genuine numeric bar but chain age is served nowhere: there is no chain block in the vocabulary, and the only age-like paths are cot.age_days, grid_stack.age_days, steo_vintage.age_days and vol_regime.n0_prev_age_days, all of which are data-staleness clocks for a feed, not the age of a directional chain."
+    },
+    {
+      "play_id": "midweek.stretched_extreme_close_giveback",
+      "why": "Three explicit bars, all on quantities that are not served. (1) close_off_extreme >= ~0.95 (coff, or <=0.05 on the low side) - no close_off_extreme / close_off_low_frac path exists in the vocabulary; it lives only in the refine-only exit_states files, which is why the blind declares the limb 'PRICE-based and masked; unevaluable'. (2) the prior day's own run >= ~$1200 - day_move_usd is not served either. The tempting near-match is vol_regime.n0_prev_net, and I MEASURED it before rejecting it: vol_regime carries masked_one_shot=true and is FROZEN at the block-anchor vintage, so n0_prev_net is a per-block CONSTANT on every staged day (g20 -1000, g21 -1350, g22 -80, g23 +270) reporting the anchor Friday rather than day N-1, and its own note says the n0 family is computed on a degraded continuous store carrying a fifth to a quarter of the scored leg's tape. It is neither the right session nor the right tape. (3) chain age >= 2 (the fresh-turn VOID clause) - chain age is served nowhere."
+    }
+  ]
+}
