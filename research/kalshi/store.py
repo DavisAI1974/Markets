@@ -127,9 +127,74 @@ def render_decisions(store):
     return "\n".join(out) + "\n"
 
 
+
+
+SOP_MD = os.path.join(HERE, "agents", "RUN_SOP.md")
+SOP_JSON = os.path.join(STORE, "sop_templates.json")
+APPENDIX_HEAD = "## APPENDIX — VERBATIM SPAWN TEMPLATES"
+
+
+def extract_sop():
+    """The spawn templates, verbatim, out of RUN_SOP.md's appendix.
+
+    SCOPE, deliberately: only the APPENDIX becomes a render, not the whole SOP. The appendix is
+    39% of the file and is the only part a MACHINE consumes - spawn.py fills these templates and
+    nothing else. The prose above it (change control, the version log, the step list) is written
+    for people, is genuinely append-only history, and turning it into a generated view would buy
+    nothing and risk rewriting the record. One store per thing that is actually consumed."""
+    with open(SOP_MD, encoding="utf-8") as f:
+        text = f.read()
+    i = text.index(APPENDIX_HEAD)
+    head, appendix = text[:i], text[i:]
+    blocks = re.findall(r"^### (\S+) — ([^\n]*)\n```\n(.*?)\n```", appendix, re.M | re.S)
+    if not blocks:
+        raise SystemExit("no templates found in the appendix - refusing to write an empty store")
+    return OrderedDict([
+        ("note", "THE SPAWN TEMPLATE STORE. Extracted VERBATIM from RUN_SOP.md's appendix, which "
+                 "stays as the human-readable render. spawn.py fills these BY LOOKUP - nobody "
+                 "types a slot value. Edit a template HERE and regenerate; editing the SOP "
+                 "directly makes the two diverge, which is the A-7 disease this store exists to "
+                 "end."),
+        ("renders_to", "research/kalshi/agents/RUN_SOP.md (appendix section only)"),
+        ("appendix_header", APPENDIX_HEAD),
+        ("preamble_sha_note", "the SOP prose above the appendix is NOT generated - see extract_sop"),
+        ("templates", [OrderedDict([
+            ("name", n), ("title", t), ("body", b),
+            ("slots", sorted(set(re.findall(r"\{([A-Za-z_0-9]+)\}", b))))]) for n, t, b in blocks])])
+
+
+def render_sop(store):
+    """Rebuild the appendix section from the store, byte-for-byte."""
+    out = [store["appendix_header"], ""]
+    for i, t in enumerate(store["templates"]):
+        if i:
+            out.append("")          # the committed appendix separates blocks with a blank line
+        out.append("### %s — %s" % (t["name"], t["title"]))
+        out.append("```")
+        out.append(t["body"])
+        out.append("```")
+    return "\n".join(out) + "\n"
+
+
+def sop_target_read():
+    """The committed appendix, for comparison."""
+    with open(SOP_MD, encoding="utf-8") as f:
+        text = f.read()
+    return text[text.index(APPENDIX_HEAD):]
+
+
+def sop_target_write(new_appendix):
+    with open(SOP_MD, encoding="utf-8") as f:
+        text = f.read()
+    i = text.index(APPENDIX_HEAD)
+    with open(SOP_MD, "w", encoding="utf-8") as f:
+        f.write(text[:i] + new_appendix)
+
 RENDERS = {
     "decisions": dict(store=DECISIONS_JSON, target=DECISIONS_MD,
                       extract=extract_decisions, render=render_decisions),
+    "sop": dict(store=SOP_JSON, target=SOP_MD, extract=extract_sop, render=render_sop,
+                read=sop_target_read, write=sop_target_write),
 }
 
 
@@ -141,11 +206,11 @@ def cmd_extract(a):
     with open(spec["store"], "w", encoding="utf-8") as f:
         json.dump(st, f, indent=1, ensure_ascii=False)
     # PROVE IT ROUND-TRIPS before anyone trusts it
-    with open(spec["target"], encoding="utf-8") as f:
-        original = f.read()
+    original = spec["read"]() if "read" in spec else open(spec["target"], encoding="utf-8").read()
     rendered = spec["render"](st)
     ok = rendered == original
-    print("extracted %d entries -> %s" % (len(st["entries"]), os.path.relpath(spec["store"], ROOT)))
+    n_items = len(st.get("entries") or st.get("templates") or [])
+    print("extracted %d entries -> %s" % (n_items, os.path.relpath(spec["store"], ROOT)))
     print("round-trip reproduces %s: %s" % (os.path.relpath(spec["target"], ROOT),
                                             "YES, byte-identical" if ok else "NO"))
     if not ok:
@@ -182,14 +247,18 @@ def cmd_check(a):
         with open(spec["store"], encoding="utf-8") as f:
             st = json.load(f, object_pairs_hook=OrderedDict)
         rendered = spec["render"](st)
-        with open(spec["target"], encoding="utf-8") as f:
-            committed = f.read()
+        committed = (spec["read"]() if "read" in spec
+                     else open(spec["target"], encoding="utf-8").read())
         if rendered == committed:
             print("PASS  %-12s %s matches its store (%d entries)"
-                  % (name, os.path.relpath(spec["target"], ROOT), len(st["entries"])))
+                  % (name, os.path.relpath(spec["target"], ROOT),
+                     len(st.get("entries") or st.get("templates") or [])))
         elif a.write:
-            with open(spec["target"], "w", encoding="utf-8") as f:
-                f.write(rendered)
+            if "write" in spec:
+                spec["write"](rendered)
+            else:
+                with open(spec["target"], "w", encoding="utf-8") as f:
+                    f.write(rendered)
             print("REGEN %-12s %s regenerated from its store"
                   % (name, os.path.relpath(spec["target"], ROOT)))
         else:

@@ -239,6 +239,33 @@ def main() -> int:
          "%d BROKEN REFERENCE(S) - a handoff naming a file nobody else can open is a broken handoff: %s"
          % (len(bad), "; ".join(bad[:4]))))
 
+    # 9.5 STORE CONFORMANCE (A-7, S112). Every generated document must equal what its store
+    # currently produces. A render that has DRIFTED from its store is a document describing what
+    # should happen while the machinery does something else - the disease in one sentence, and the
+    # reason DECISIONS.md and the SOP appendix became renders in the first place. This is the row
+    # that makes a stale render impossible rather than merely discouraged: it FAILS, and a FAIL
+    # exits non-zero, which stops the line.
+    try:
+        import io as _io
+        import contextlib as _cl
+        sys.path.insert(0, HERE)
+        import store as _store
+
+        class _A:
+            write = False
+        _buf = _io.StringIO()
+        with _cl.redirect_stdout(_buf):
+            _rc = _store.cmd_check(_A())
+        _drift = [l for l in _buf.getvalue().split("\n") if l.startswith("FAIL")]
+        say("PASS" if _rc == 0 else "FAIL", "store",
+            ("every generated document matches its store (%d checked)"
+             % len([l for l in _buf.getvalue().split("\n") if l.startswith("PASS")])
+             if _rc == 0 else
+             "RENDER DRIFTED FROM ITS STORE - edit the store, not the document: %s"
+             % "; ".join(x.split()[1] for x in _drift)))
+    except Exception as _e:                                    # noqa: BLE001
+        say("WARN", "store", "store conformance not checked: %s" % _e)
+
     # 10. THE ARCHITECTURE DOC - the target itself. Greg, S111: "how do we make sure the arch doc
     # isn't overlooked?" Answer: the andon board names it every session, because the alternative is
     # hoping someone remembers to read it, which is the exact failure this board exists to catch.

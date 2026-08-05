@@ -31,6 +31,7 @@ USAGE
 """
 
 import argparse
+import datetime as dt
 import json
 import os
 import re
@@ -43,6 +44,71 @@ BRAIN = os.path.join(HERE, "knowledge", "ng_brain.json")
 
 sys.path.insert(0, HERE)
 import group_config as gc  # noqa: E402
+
+
+
+import plant_calendar as pcal  # noqa: E402
+
+
+def day_calendar(gid, day):
+    """PER-DAY calendar context for the specialist forecasting THIS day.
+
+    GREG, S112: "The agents are going to have to get the holiday schedule when those days are
+    getting forecasts made because it will change the trading days."
+
+    THE MEASURED GAP HE IS NAMING. The served flow_calendar carries holiday fields for THAT DAY
+    ONLY (cme_holiday, cme_early_close, cme_session_class) and has NO prior-session field of any
+    kind - checked across the served state, `prior`/`since`/`prev` return nothing. So a specialist
+    on a Monday after a Friday holiday cannot tell that its prior session was THURSDAY. It inherits
+    a handoff from a session it cannot locate, and the weekend seam it thinks it is crossing is
+    actually a four-day gap.
+
+    NOT A LEAK, and this is why it can be served to a BLIND specialist. The state ALREADY serves
+    forward-looking calendar: days_to_next_eia_release, days_to_futures_expiry, days_to_opex and
+    next_eia_release_datetime_et are all dated ahead by construction. Calendar is deterministic and
+    public; D2's one deliberate mask is the PRICE CURVE. So forward holiday facts are the same
+    class as what the blind already reads, and my earlier A-13 note - that a per-day CAL_FACTS
+    would have to be truncated at the decision point - was over-cautious for calendar specifically.
+
+    Computed from plant_calendar's RULES, not from flow_calendar.CME_HOLIDAYS, because that table
+    ends 2027-02-15 and a specialist forecasting past it would be told every day is a normal one."""
+    d = dt.datetime.strptime(day, "%Y%m%d").date()
+    # a generous window either side so the block's own shape is visible
+    ss = pcal.sessions(d - dt.timedelta(days=21), d + dt.timedelta(days=21))
+    dates = [x["date"] for x in ss]
+    if day not in dates:
+        raise SlotError("DAY_CALENDAR: %s is not a trading session under the calendar rules "
+                        "(full closure or weekend)" % day)
+    i = dates.index(day)
+    prior = ss[i - 1] if i > 0 else None
+    nxt = ss[i + 1] if i + 1 < len(ss) else None
+    me = ss[i]
+    out = []
+    out.append("THIS SESSION: %s %s, class %s%s"
+               % (me["date"], me["dow"], me["session_class"],
+                  " (%s)" % me["holiday"] if me["holiday"] else ""))
+    if prior:
+        gap = (d - dt.datetime.strptime(prior["date"], "%Y%m%d").date()).days
+        note = ""
+        if gap > 1:
+            skipped = []
+            probe = d - dt.timedelta(days=1)
+            while probe.strftime("%Y%m%d") != prior["date"]:
+                h = pcal.holidays(probe.year).get(probe.isoformat())
+                skipped.append("%s %s%s" % (probe.strftime("%Y%m%d"), probe.strftime("%a"),
+                                            " %s" % h[0] if h else ""))
+                probe -= dt.timedelta(days=1)
+            note = "  <- NOT the previous calendar day. Skipped: %s" % "; ".join(reversed(skipped))
+        out.append("PRIOR TRADING SESSION: %s %s, class %s, %d calendar day(s) back%s"
+                   % (prior["date"], prior["dow"], prior["session_class"], gap, note))
+    if nxt:
+        out.append("NEXT TRADING SESSION: %s %s, class %s"
+                   % (nxt["date"], nxt["dow"], nxt["session_class"]))
+    ahead = [x for x in ss[i + 1:] if x["session_class"] != "normal"]
+    out.append("NON-NORMAL SESSIONS IN THE NEXT THREE WEEKS: %s"
+               % ("; ".join("%s %s %s" % (x["date"], x["holiday"], x["session_class"])
+                            for x in ahead[:4]) if ahead else "none"))
+    return "\n".join(out)
 
 
 class SlotError(Exception):
@@ -146,6 +212,9 @@ def slots(gid, day=None, spec=None):
         s["dow"] = (served[day].get("dow") or "?", "state.%s.dow" % day)
         s["DAYS_OWNED"] = (", ".join(d for d, o in sorted(owners.items()) if o == owners[day]),
                            "group_config.owner_map")
+        s["DAY_CALENDAR"] = (day_calendar(gid, day),
+                             "GENERATED from plant_calendar RULES - prior/next trading session, "
+                             "holiday gaps, upcoming non-normal sessions")
         s["SLICE"] = (os.path.relpath(os.path.join(RN, "%s_causal_slices" % gid,
                                                    "state_%s.json" % day), ROOT),
                       "per-day causal slice (D3)")
@@ -339,6 +408,22 @@ def cmd_selftest(a):
           "calendar channel (open SOP change, D10)",
           [t for t in templates().values() if "CAL_FACTS" in t["slots"]][0]["name"] == "AUD-1"
           and len([t for t in templates().values() if "CAL_FACTS" in t["slots"]]) == 1)
+
+    # PER-DAY CALENDAR (Greg, S112: the agents need the holiday schedule because it changes the
+    # trading days). The Monday after the Independence Day observed session is the worked case.
+    dc = day_calendar("g23", "20260706")
+    check("per-day calendar names the PRIOR TRADING SESSION, not the previous calendar day",
+          "PRIOR TRADING SESSION: 20260703" in dc and "NOT the previous calendar day" in dc)
+    check("it says how many calendar days back, so a long gap is visible",
+          "3 calendar day(s) back" in dc)
+    check("it names what was skipped", "20260704 Sat" in dc and "20260705 Sun" in dc)
+    dc2 = day_calendar("g23", "20260709")
+    check("an ordinary day reports a 1-day gap and no skip note",
+          "1 calendar day(s) back" in dc2 and "NOT the previous" not in dc2)
+    # a session inheriting FROM a holiday session - reduced tape, previously invisible
+    dc3 = day_calendar("g21", "20260526")
+    check("a day inheriting from a partial (holiday) session says so",
+          "class partial_session" in dc3)
 
     print("\n  %d/%d passed" % (sum(res), len(res)))
     return 0 if all(res) else 1

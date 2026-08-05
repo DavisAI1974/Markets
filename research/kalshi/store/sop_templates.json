@@ -1,6 +1,8 @@
 {
- "note": "THE SPAWN TEMPLATE STORE. Extracted VERBATIM from RUN_SOP.md's appendix, which remains the human-readable render. spawn.py fills these BY LOOKUP - nobody types a slot value. Edit a template HERE, then regenerate the SOP; editing the SOP directly makes the two diverge, which is the A-7 disease this store exists to end. Round-trip is proven: the extraction reproduces the committed SOP byte-for-byte before it is trusted.",
- "renders_to": "research/kalshi/agents/RUN_SOP.md (appendix section)",
+ "note": "THE SPAWN TEMPLATE STORE. Extracted VERBATIM from RUN_SOP.md's appendix, which stays as the human-readable render. spawn.py fills these BY LOOKUP - nobody types a slot value. Edit a template HERE and regenerate; editing the SOP directly makes the two diverge, which is the A-7 disease this store exists to end.",
+ "renders_to": "research/kalshi/agents/RUN_SOP.md (appendix section only)",
+ "appendix_header": "## APPENDIX — VERBATIM SPAWN TEMPLATES",
+ "preamble_sha_note": "the SOP prose above the appendix is NOT generated - see extract_sop",
  "templates": [
   {
    "name": "AUD-1",
