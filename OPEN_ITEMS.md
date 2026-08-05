@@ -1156,6 +1156,47 @@ buildable step is to define the CONJUNCTION state (how many of the chain's compo
 stressed) rather than any single threshold, and to check it against the known events in our corpus -
 starting with January 2026, which is in hand.
 
+THE ACTUAL EVENT CLASS, Greg S113 recalling one: 'This was before renewables were a thing. Polar blast,
+and i think there was a major breakdown at a pumping station somewhere around a big hub... they were
+talking about cutting gas delivery and cutting power to save gas for heat.' Two elements neither our data
+nor our reasoning has ever carried, and the second one INVERTS the model at the extreme.
+
+(1) THE PIPELINE ITSELF CAN FAIL. Not only wellhead freeze-offs - a COMPRESSOR / PUMPING STATION outage
+near a hub is a single point that removes delivery capability for a whole region, independent of how much
+gas exists or how cold it is. That is an infrastructure failure mode with no representation anywhere in
+our state. Pipelines post it: OFOs, operational flow orders, force majeure and critical notices are
+published on the same EBBs the LNG feedgas work (G-7) already targets, so the adapter fleet overlaps.
+
+(2) THE CURTAILMENT PRIORITY ORDER, AND IT REVERSES OUR RESIDUAL MODEL AT THE TAIL. 'Cutting gas delivery
+and cutting power to save gas for heat' is the contractual hierarchy: LDCs and residential heating hold
+FIRM service, while gas-fired generators very commonly hold INTERRUPTIBLE transportation. So in a delivery
+emergency GAS-FIRED POWER IS AMONG THE FIRST CUT, not the last.
+
+EVERYTHING WE HAVE BUILT ASSUMES GAS IS THE RESIDUAL THAT ABSORBS. At the tail that is FALSE: the power
+sector is physically cut off from its fuel to protect heating load, so electricity sheds load BECAUSE gas
+was curtailed to it. CONSEQUENCE, and it is the sharpest single implication in this item: BURN AND PRICE
+DECOUPLE AT THE EXTREME, AND IN THE DIRECTION NOBODY WOULD GUESS - measured burn can FALL on the most
+violent day, because the plants are cut, while price goes to $20+. Our whole burn -> storage -> price
+chain runs BACKWARDS there, and any model calibrated on the economic regime will read the tail exactly
+wrong: it will see burn falling and infer demand easing.
+
+THIS ALSO EXPLAINS A PATTERN ALREADY IN OUR OWN DATA. 2021-02-25 carries the largest winter storage draw in
+the corpus (-338 Bcf) on the LOWEST burn in the winter table (168 Bcf/wk). I noted that earlier as 'the
+power sector was barely burning, the draw was heating' and treated it as a demand-mix fact. Under the
+curtailment order it is more likely a SUPPLY-SIDE and DELIVERY-SIDE fact: generators cut, heating
+protected, wells frozen. Same observation, materially different mechanism - and the distinction matters
+because one is seasonal mix and the other is a tail regime with its own instruments.
+
+WHAT TO CARRY, since none of it is in the state today: pipeline OFOs / critical notices / force majeure
+(G-7's EBB adapters reach the same sites); interruptible-vs-firm exposure per region as a structural
+level; and the recognition that in this regime EIA-930 gas generation is a CURTAILED quantity rather than
+a demand signal.
+
+AND THE PERIOD MATTERS FOR HOW WE USE IT: Greg dates the event to before renewables were material. So the
+correlated-failure tail does NOT require a renewable collapse - it predates renewables entirely. Wind and
+solar are a modern ADDITIONAL failure correlate, not the cause. Any account of the tail that leans on
+renewables is over-fitted to the last decade.
+
 ---
 
 ### [BIGGEST_WIN] A-4 - Score the CURVE, not the scalar - four error terms kept separate
