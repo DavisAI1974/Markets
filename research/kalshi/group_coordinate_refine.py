@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import group_config as gc
 import render_util as ru
 import verify_gold
+import due_gate
 verify_gold.assert_gold_intact()   # the concrete wall - no refine coordinate on a violated gold vault
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -177,6 +178,12 @@ if __name__ == "__main__":
         print(f"{r['date']:10} {r['owner']:4} {str(r['blind_day_move_usd']):>7} {r['refined_day_move_usd']:8d} "
               f"{r['actual_day_move_usd']:7d} {r['refined_err_usd']:7d} {'OK' if r['dir_hit'] else 'X':>4}")
     print(f"\n{gid.upper()} REFINE r{rnd}: {dh}/{len(rows)} dir, mean abs err {round(sabs/len(rows))}, sum abs {sabs}")
+    # REGISTERED FORWARD TESTS - HARD here (jidoka: a failing gate stops the line, SOP change
+    # control item 4). The refine is where a merged play's falsifier is actually evaluable, so an
+    # unreported due test stops the run rather than being absorbed. See due_gate.py for why this
+    # was prose-only until S114.
+    _rep = [_find_report(f"grp{gid[1:]}_mbo_specialist_{t}{tag}.json") for t in "ABCDE"]
+    due_gate.assert_reported(gid, [p for p in _rep if p], hard=True)
     try:
         print("render ->", render(gid, rows, actual, blind["days"]))
     except Exception as e:

@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import group_config as gc
 import render_util as ru
 import verify_gold
+import due_gate
 verify_gold.assert_gold_intact()   # the concrete wall - no blind coordinate on a violated gold vault
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -163,10 +164,67 @@ def render(gid, rows, actual, seam):
     fig.autofmt_xdate(); fig.tight_layout(); fig.savefig(out, dpi=130); plt.close(fig); return out
 
 
+def assert_not_the_refine(gid, block):
+    """THE MIRROR OF assert_not_the_blind, AND IT DID NOT EXIST UNTIL S114 (NC-4).
+
+    D9 guards one direction: a refine posterior byte-identical to its blind archive is rejected.
+    NOTHING guarded the other direction. After a group's refine, `archive_blind.py` has MOVED the
+    blind posteriors into g<N>_blind_round1/ and the canonical names `grp<N>_mbo_specialist_<X>.json`
+    now hold the REFINE posteriors - so re-running this blind coordinator on a refined group
+    silently assembles REFINE numbers and overwrites the immutable blind record.
+
+    INSTANCE (NC-4, mine, S114): running `group_coordinate_blind.py g22` to D11-verify a newly wired
+    due-gate rewrote forecasts/grp22.json from the true blind (4/10 dir, sum|err| 5,965) to the
+    refine's numbers (10/10, 500) - a 12x improvement in the record, from a command that only meant
+    to prove an import executed. Caught by `git diff` and restored; it would have been invisible in
+    a dirty tree. This is the S108 filename-collision family, fourth occurrence.
+
+    THE FIRST VERSION OF THIS GUARD USED THE ARCHIVE'S EXISTENCE AS THE SIGNAL, AND IT WAS
+    INSUFFICIENT - recorded rather than tidied away, because it is the same lesson twice. Only
+    g19-g22 have archives; g15, g17, g18 and g23 are refined with NO archive (they predate or
+    skipped archive_blind), so a presence check passed on four of the eight exposed groups and the
+    D11 negative test walked straight into overwriting grp18.json.
+
+    The working guard is a RECONCILIATION against an independent source, which is exactly the S108
+    hole-#8 lesson: a field-level or presence check cannot catch a wrong-but-well-formed input -
+    only comparison against something independent can. Here the independent source is the committed
+    blind record itself: if grp<N>.json already exists as phase "blind" and the numbers we just
+    assembled DISAGREE with it, then whatever is sitting in the canonical specialist names is not
+    what produced that record, and writing would destroy it."""
+    n = gid[1:]
+    rec = os.path.join(FC, f"grp{n}.json")
+    if not os.path.exists(rec):
+        return                                   # first blind for this group - nothing to protect
+    try:
+        old = json.load(open(rec, encoding="utf-8"))
+    except Exception:
+        return
+    if old.get("phase") != "blind":
+        return
+    oldmap = {d["date"]: d.get("guess_day_move_usd") for d in old.get("days", [])}
+    newmap = {d["date"]: num(d.get("guess_day_move_usd")) for d in block}
+    diffs = [(k, oldmap.get(k), newmap.get(k)) for k in sorted(set(oldmap) | set(newmap))
+             if oldmap.get(k) != newmap.get(k)]
+    if diffs:
+        lines = "\n".join(f"      {k}: committed {a}  vs  assembled {b}" for k, a, b in diffs[:6])
+        arch = os.path.join(FC, f"g{n}_blind_round1")
+        hint = (f"  The blind posteriors were archived to {os.path.relpath(arch, HERE)} - read them from there."
+                if os.path.isdir(arch) else
+                "  No blind archive exists for this group, so the original blind posteriors are NOT recoverable\n"
+                "  from disk - the committed record is the only copy. Do not overwrite it.")
+        raise SystemExit(
+            f"[blind-coordinator] HARD FAIL: assembling {gid} would OVERWRITE the committed blind record\n"
+            f"  with different numbers - so the canonical specialist files are not the blind ones.\n"
+            f"  {len(diffs)} day(s) disagree:\n{lines}\n{hint}\n"
+            f"  NC-4 (S114): this exact command rewrote grp22.json from the true blind (4/10, sum|err|\n"
+            f"  5,965) to the refine's numbers (10/10, 500). To rehearse, write to a rehearsal namespace.")
+
+
 if __name__ == "__main__":
     gid = sys.argv[1]
     actual = json.load(open(os.path.join(RENDER_DIR, f"{gid}_actual.json")))
     block, seam = guard_assemble(gid)
+    assert_not_the_refine(gid, block)
     rows, sabs, dh = score(block, actual)
     json.dump({"group": gid, "phase": "blind", "brain_version": ru.brain_version(), "anchor": actual["anchor"],
                "sum_abs_err_usd": sabs, "mean_abs_err_usd": round(sabs / len(rows)), "dir_hits": dh,
@@ -176,6 +234,13 @@ if __name__ == "__main__":
         print(f"{r['date']:10} {r['dow']:4} {r['owner']:4} {r['guess_day_move_usd']:8d} "
               f"{r['actual_day_move_usd']:8d} {r['err_usd']:7d} {'OK' if r['dir_hit'] else 'X':>4}")
     print(f"\n{gid.upper()} BLIND: {dh}/{len(rows)} dir, mean abs err {round(sabs/len(rows))}, sum abs {sabs}")
+    # REGISTERED FORWARD TESTS (merge_gate/due_gate): a play merged PROVISIONAL names this group as
+    # its test. Measured S114: the coordinators referenced the DUE list NOWHERE, so the mechanism
+    # merge_gate calls "the one thing that makes unattended merging survivable" was prose only.
+    # Announce-not-hard-fail HERE by design: the blind is scored before any human sees it and a
+    # SystemExit would discard a completed run's numbers. The refine coordinator hard-fails.
+    _reports = [_find_report(f"grp{gid[1:]}_mbo_specialist_{t}.json") for t in "ABCDE"]
+    due_gate.assert_reported(gid, [p for p in _reports if p], hard=False)
     try:
         print("render ->", render(gid, rows, actual, seam))
     except Exception as e:
