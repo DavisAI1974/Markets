@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 75 |
+| open | 76 |
 | in progress | 1 |
 | done | 12 |
 
-By size: **XS** 8, **S** 32, **M** 29, **L** 7
+By size: **XS** 8, **S** 32, **M** 30, **L** 7
 
 ---
 
-By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 24, **REST** 47
+By tier: **ESSENTIAL** 6, **BIGGEST_WIN** 24, **REST** 47
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (5)
+## ESSENTIAL (6)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -30,6 +30,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 24, **REST** 47
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
+| **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
 ## BIGGEST WIN (24)
@@ -127,6 +128,7 @@ By tier: **ESSENTIAL** 5, **BIGGEST_WIN** 24, **REST** 47
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
+| **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
@@ -283,6 +285,16 @@ D35 established the target is demand HH can SEE, and D38 established the HH lane
 
 ---
 
+### [ESSENTIAL] A-40 - ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it
+
+*size M | OPEN | raised S114*
+
+**Source:** S114 winners census (Greg: 'Did we do the biggest winners AND the biggest forecast errors builds?'). Merged as magnitude.emission_ceiling_check, brain s105.3.
+
+MEASURED, 60 modern scored days g18-g23, listed individually: the largest |guess| ever emitted is 950 (20260618, the single over-call, on a +520 day); the SECOND largest is 550, so 59 of 60 days emitted <= $550. Meanwhile 30 of 60 days - EXACTLY HALF - delivered |actual| > 550, ranging to 2100. The output distribution is truncated at about a quarter of the input distribution's range. Capture degrades monotonically with move size per event: <300 captures 36-100%, 500-900 captures 17-76%, 900-1400 captures 18-37%, >1400 captures 7-12% (0528 7%, 0709 12%). THE ASYMMETRY IS THE SAME CEILING ON BOTH SIDES: best capture +500 (0605), worst -550 (0713). WHY IT IS ESSENTIAL: this is the mechanical explanation for the S111 benchmark failure - a truncated output against a fat-tailed input loses to zero-change on the tail days BY CONSTRUCTION - so until it is root-caused, no group's magnitudes mean what they claim and the scoreboard cannot be read. THE ROOT CAUSE IS NOT ESTABLISHED and must not be asserted (D37). Candidates to test: (a) the honest-bar doctrine ('emit what the causal read supports even where the actual went further') being read as a CAP rather than a floor; (b) 'magnitudes DERIVED, never fitted' biting harder in the blind, where derivation has less to work with; (c) output-contract or band anchoring; (d) specialists anchoring on a typical day-move instead of the day's own drivers. METHOD: the committed posteriors carry the specialists' full reasoning - read the derivations on the five named big-move days and find where the number stopped growing. The g22 rehearsal is the first live observation. FALSIFIER for the whole item: if raising emissions degrades sum|err|, the cap was doing useful work and the loss is elsewhere.
+
+---
+
 ### [ESSENTIAL] A-38 - THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest
 
 *size L | OPEN | raised S113*
@@ -376,6 +388,8 @@ RANK 4, and the note is right that it adds no predictor - it changes WHO IS ALLO
 **Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
 
 RANK 5, and it needs one correction the note could not make from the registry alone: HALF OF THIS ALREADY EXISTS AND IS ENFORCED. The identity session_b_share == session_b_share_two_sided x (1 - unsided_volume_frac) is a HARD state_health gate since S109 (state_health.py:130-140), so denominator disagreement cannot reach a specialist at all - it stops the line at stage time. What is genuinely new is the rest of the panel as a PLAY-LEVEL authority gate: phase-level agreement vs cancellation, reopen-stub exclusion, trade and phase counts as an information floor, quote-side confirmation. That is a different object from a staging assertion and is not built. Honour the note's own data limitation - several quality fields carry 29 observations or fewer, so diagnosis only, accrue forward evidence before any authority.
+
+S114 WINNERS CENSUS SHARPENS THE TARGET: on the 34 days with |actual|>=500, owner B is 1 HIT / 7 MISS - hit 20260608, missed 20260504, 20260511, 20260518, 20260601, 20260622, 20260629, 20260713. That is the Monday lane, and five of those seven are the days this item and the mediation plays already name (0629/0601 wind, 0713 the override, 0622 the b/2s straddle at 191 trades). C is 7/6, D 4/4, E 3/2 - B is the outlier by a wide margin, on the day class with the thinnest prior tape.
 
 ---
 
@@ -1352,6 +1366,8 @@ this applies.
 **Source:** FORECAST_ARCHITECTURE_S111 s6, D32
 
 The product is a curve and the scoreboard has never touched it. Greg's bar as a function: direction no tolerance, turn timing little, amplitude some, level free. Plus the time dimension - how EARLY was it decidable. S112 flagged that nothing on the S112 list touches the new architecture's spine - A-4 and A-5 are it, and A-4 was absent. Correct: SCOPE A-4 THIS SESSION even if it is not built, because it is what makes the product measurable at all. Note the partial reconciliation S112 had not seen: the audit's corpus search IS library work - 140 instances traced to posteriors and actuals in three batches is exactly the conditions-to-outcome mapping A-5 needs - so the audit is not purely play-chain hygiene.
+
+S114 WINNERS CENSUS - THE SCOREBOARD IS CONTAMINATED BY CHEAP DAYS, measured: of the 15 most accurate days in g18-g23, only TWO had a real move on offer (20260428 -440 vs -350; 20260701 -500 vs -380). Thirteen were quiet or small - 20260625 (act -60), 20260702 (act 0), 20260525 (act +30), 20260619 (act -110), 20260609 (act +70). So a day-level error metric rewards days where being right was free. The curve score must carry CAPTURE (|actual| - |err|, now a committed column in walk_census_g18_g23_S114.csv) beside error, or the scoreboard keeps flattering quiet days. Also: on the 34 days with |actual|>=500 the walk is 15 HIT / 19 MISS on direction - worse than a coin flip exactly where the money is.
 
 ---
 

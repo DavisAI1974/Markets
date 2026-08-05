@@ -70,6 +70,16 @@
    "status": "DUE",
    "confirmations": [],
    "refutations": []
+  },
+  {
+   "play_id": "magnitude.emission_ceiling_check",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "If forward runs emit magnitudes above 550 on days whose drivers support it AND capture on |actual|>900 days does not improve above the measured 18-37% band, the ceiling was not the binding constraint and this play is wrong. Equally refuted if raising emissions degrades sum|err| - i.e. if the cap was doing useful work - which would mean the honest bar is correctly calibrated and the loss is elsewhere.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
   }
  ]
 }
