@@ -43,6 +43,7 @@ USAGE
 import argparse
 import json
 import os
+import subprocess
 import re
 import sys
 from collections import OrderedDict
@@ -200,6 +201,138 @@ RENDERS = {
 
 
 OPEN_ITEMS = os.path.join(HERE, "OPEN_ITEMS.json")
+DOCS_JSON = os.path.join(HERE, "store", "documents.json")
+KALSHI_INDEX = os.path.join(ROOT, "KALSHI_TRADING.md")
+PLANT_MAP = os.path.join(ROOT, "PLANT_MAP.md")
+INVENTORY_BEGIN = "<!-- BEGIN GENERATED FILE INVENTORY - store.py docs --write -->"
+INVENTORY_END = "<!-- END GENERATED FILE INVENTORY -->"
+
+
+def load_docs():
+    with open(DOCS_JSON, encoding="utf-8") as f:
+        return json.load(f, object_pairs_hook=OrderedDict)
+
+
+def _tracked_py():
+    """Every tracked research/kalshi/*.py, with the first sentence of its docstring.
+
+    Derived from git, never from a hand-kept list - a hand-kept list is the thing that failed."""
+    out = subprocess.run(["git", "-C", ROOT, "ls-files", "research/kalshi/*.py"],
+                         capture_output=True, text=True).stdout.split()
+    inv = []
+    for rel in sorted(out):
+        summary = ""
+        try:
+            with open(os.path.join(ROOT, rel), encoding="utf-8") as f:
+                head = f.read(4000)
+            # The FIRST NON-EMPTY line inside the docstring. Not the first line: every file here
+            # opens `"""\nname.py - summary`, so a naive match captures the empty opener and the
+            # summary reads as absent. That is what the 62%-coverage selftest failure caught -
+            # the extractor was broken, not the files, and lowering the threshold would have
+            # buried a real defect under a passing test.
+            m = re.search(r'"""\s*(\S.*?)\n', head)
+            if m:
+                summary = " ".join(m.group(1).split()).replace("—", "-")
+                base = os.path.basename(rel)
+                if summary.lower().startswith(base.lower()):
+                    summary = summary[len(base):].lstrip(" -:")
+        except OSError:
+            pass
+        inv.append((rel, summary))
+    return inv
+
+
+def _sop_named_py():
+    """The .py files the SOP itself names. Non-circular: derived from another document, so adding a
+    tool to the run automatically puts it on PLANT_MAP's hook."""
+    with open(SOP_MD, encoding="utf-8") as f:
+        return sorted(set(re.findall(r"\b([a-z_][a-z0-9_]*\.py)\b", f.read())))
+
+
+def render_inventory():
+    """The COMPLETENESS half of the file index. The curated sections above it carry the judgment -
+    which file is current, which superseded - and this carries the guarantee that nothing is
+    missing. One store, generated views: the part a human must decide stays hand-written, the part
+    a machine can compute is computed."""
+    inv = _tracked_py()
+    out = [INVENTORY_BEGIN, "",
+           "## COMPLETE FILE INVENTORY (generated - do not hand-edit)",
+           "",
+           "Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.",
+           "Regenerate with `python research/kalshi/store.py docs --write`. The curated sections",
+           "above carry the judgment (current vs superseded); this carries the completeness, so a",
+           "new tool cannot go unlisted. **%d files.**" % len(inv), ""]
+    for rel, summary in inv:
+        base = os.path.basename(rel)
+        out.append("- `%s` — %s" % (base, summary if summary else "(no docstring summary)"))
+    out += ["", INVENTORY_END]
+    return "\n".join(out) + "\n"
+
+
+def _index_gate(path, needed, label):
+    """A doc must NAME every member of a computed set. Returns the missing ones."""
+    if not os.path.exists(path):
+        return needed
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    return [n for n in needed if n not in text]
+
+
+def docs_problems():
+    """The content gates. mtime is not staleness - a document edited today can still be silently
+    missing what it exists to list, which is exactly what was measured the day this was built."""
+    probs = []
+    missing_py = _index_gate(KALSHI_INDEX,
+                             [os.path.basename(r) for r, _ in _tracked_py()], "index_py")
+    if missing_py:
+        probs.append(("KALSHI_TRADING.md", "index_py",
+                      "%d tracked research/kalshi/*.py not named: %s"
+                      % (len(missing_py), ", ".join(missing_py[:6])
+                         + (" ..." if len(missing_py) > 6 else ""))))
+    missing_sop = _index_gate(PLANT_MAP, _sop_named_py(), "index_sop_py")
+    if missing_sop:
+        probs.append(("PLANT_MAP.md", "index_sop_py",
+                      "%d tools the SOP names are absent from the plant map: %s"
+                      % (len(missing_sop), ", ".join(missing_sop[:6])
+                         + (" ..." if len(missing_sop) > 6 else ""))))
+    return probs
+
+
+def cmd_docs(a):
+    """THE DOCUMENT REGISTRY (Greg, S112: 'so one doesn't get forgotten about')."""
+    store = load_docs()
+    if a.write:
+        with open(KALSHI_INDEX, encoding="utf-8") as f:
+            text = f.read()
+        block = render_inventory()
+        if INVENTORY_BEGIN in text:
+            i, j = text.index(INVENTORY_BEGIN), text.index(INVENTORY_END) + len(INVENTORY_END)
+            text = text[:i] + block.rstrip("\n") + text[j:]
+        else:
+            text = text.rstrip("\n") + "\n\n" + block
+        with open(KALSHI_INDEX, "w", encoding="utf-8") as f:
+            f.write(text)
+        print("regenerated the file inventory in KALSHI_TRADING.md")
+    by_class = OrderedDict()
+    for d in store["documents"]:
+        by_class.setdefault(d["class"], []).append(d)
+    print("THE DOCUMENT REGISTRY - %d entries\n" % len(store["documents"]))
+    for cls, docs in by_class.items():
+        print("%s  (%s)" % (cls, store["classes"][cls]))
+        for d in docs:
+            print("   %-46s gate=%s" % (d["path"], d.get("gate") or "-"))
+        print()
+    print("CLOSE-OUT TRIO (excluded from mid-session sweeps by design): %s"
+          % ", ".join(store["close_out_trio"]["docs"]))
+    probs = docs_problems()
+    print()
+    if not probs:
+        print("PASS  docs        every content gate satisfied")
+        return 0
+    for path, gate, msg in probs:
+        print("FAIL  %-14s [%s] %s" % (path, gate, msg))
+    print("\n%d document gate(s) failed. mtime is not staleness - CONTENT is." % len(probs))
+    return 1
 
 
 def work_list(limit=12):
@@ -330,6 +463,13 @@ def cmd_check(a):
     if bad:
         print("\n%d render(s) drifted. The render is generated; edit the STORE, not the document."
               % bad)
+    # THE DOCUMENT CONTENT GATES (S112). A render gate catches a generated document drifting from
+    # its store; it cannot catch a HAND-KEPT index that quietly stopped listing things. Measured the
+    # day this was added: 55 of 151 tracked research/kalshi/*.py were absent from KALSHI_TRADING.md,
+    # and PLANT_MAP.md had been edited that same session while naming none of the SOP's own tools.
+    for path, gate, msg in docs_problems():
+        bad += 1
+        print("FAIL  %-12s [%s] %s" % ("docs", gate, path + ": " + msg))
     return 1 if bad else 0
 
 
@@ -367,6 +507,30 @@ def cmd_selftest(a):
         RENDERS["decisions"] = saved
         check("gate FAILS when the document is edited behind the store", rc == 1)
 
+    # --- the DOCUMENT registry gates (S112) ---
+    docs = load_docs()
+    check("document registry loads and classifies every entry",
+          all(d["class"] in docs["classes"] for d in docs["documents"]))
+    check("the close-out trio is declared and excluded from sweeps",
+          len(docs["close_out_trio"]["docs"]) == 3)
+    inv = _tracked_py()
+    check("file inventory is derived from git, not a hand list", len(inv) > 100)
+    check("inventory carries a docstring summary for most files",
+          sum(1 for _, sm in inv if sm) > 0.8 * len(inv))
+    # the gate must FIRE on a document that stopped listing what it exists to list
+    with tempfile.TemporaryDirectory() as td:
+        empty = os.path.join(td, "EMPTY.md")
+        with open(empty, "w", encoding="utf-8") as f:
+            f.write("# an index that lists nothing\n")
+        miss = _index_gate(empty, [b for b, _ in [(os.path.basename(r), s) for r, s in inv]], "x")
+        check("index gate FIRES on a document naming none of its members", len(miss) == len(inv))
+        full = os.path.join(td, "FULL.md")
+        with open(full, "w", encoding="utf-8") as f:
+            f.write("\n".join(os.path.basename(r) for r, _ in inv))
+        check("index gate PASSES when every member is named",
+              _index_gate(full, [os.path.basename(r) for r, _ in inv], "x") == [])
+    check("PLANT_MAP's needed set is derived from the SOP, not hand-kept", len(_sop_named_py()) > 5)
+
     print("\n  %d/%d passed" % (sum(res), len(res)))
     return 0 if all(res) else 1
 
@@ -380,10 +544,12 @@ def main():
     p = sub.add_parser("check"); p.add_argument("--write", action="store_true")
     sub.add_parser("selftest")
     p = sub.add_parser("worklist"); p.add_argument("--limit", type=int, default=12)
+    p = sub.add_parser("docs"); p.add_argument("--write", action="store_true",
+                                               help="regenerate the file inventory in KALSHI_TRADING.md")
     a = ap.parse_args()
     return {"extract": cmd_extract, "render": cmd_render,
             "check": cmd_check, "selftest": cmd_selftest,
-            "worklist": cmd_worklist}[a.cmd](a)
+            "worklist": cmd_worklist, "docs": cmd_docs}[a.cmd](a)
 
 
 if __name__ == "__main__":
