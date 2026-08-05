@@ -49159,6 +49159,18 @@
     "serve",
     "station"
    ]
+  },
+  {
+   "item": "A-24",
+   "status": "OPEN",
+   "size": "L",
+   "title": "THE UNKNOWN CORRELATED PAIR - search the 1,717 for structure nobody has put together, WITHOUT manufacturing it",
+   "blocked_by": "A-23 (triage first - a pair built on a defect artifact is a manufactured mechanism)",
+   "acquisition_terms": [
+    "data",
+    "field",
+    "forecast"
+   ]
   }
  ],
  "identified_not_committed": [

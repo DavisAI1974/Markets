@@ -14,7 +14,7 @@ small non-zero is a prompt to look, never a clean bill.
 | served data points | 1717 |
 | **served and READ BY NOTHING** | **1129** |
 | HELD but not served | 5 |
-| PLANNED (from the work registry) | 36 |
+| PLANNED (from the work registry) | 37 |
 | IDENTIFIED, not committed | 9 |
 | named ABSENT | 7 |
 | source blocks | 36 |
@@ -1225,6 +1225,7 @@ here automatically. Deliberately over-inclusive - omission is the failure mode.
 | A-20 | S | OPEN | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none |
 | A-21 | M | OPEN | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers |
 | A-23 | L | OPEN | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not |
+| A-24 | L | OPEN | THE UNKNOWN CORRELATED PAIR - search the 1,717 for structure nobody has put together, WITHOUT manufacturing it |
 
 ## IDENTIFIED - free and available, no registry item yet
 
