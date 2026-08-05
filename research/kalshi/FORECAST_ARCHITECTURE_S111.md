@@ -138,29 +138,46 @@ attention on a quiet market. Our `path_p50_curve` 2-hourly grid is a human summa
 what the monitor consumes — **the retrieved analog's own tick tape is the reference**, at whatever
 resolution the market is trading.
 
-**Three instruments, one lagging, one leading, one falsifying:**
-- **Slope divergence** — lagging by construction; a slope change is only measurable after it starts.
-- **The dipole's exhaustion arm** — leading; reads the current leader failing before price turns.
-  **Keep three constructions separate.** `dip_imb_level` as a **DIRECTION nowcast WORKS on NG** and is
-  brain play #1 (`direction.flow_nowcast`, conf 0.87, forward-confirmed, 34/34 OOS, monotone
-  0.68→0.94); Greg reports ChatGPT independently demonstrated it too, specifics pending. **Static
-  DIVERGENCE as a reversal predictor** is the only thing that failed to transfer at S90. **EXHAUSTION**
-  as a turn detector is the open item. Nothing here says the dipole is false on direction.
-  *It HAS been tested on NG, and it has a measurable success criterion. The architecture split is
-  DIPOLE = filter, fine-resolution PRICE-REVERSAL = timing, and the payoff of resolution is the origin
-  of our look-ahead number: **1-sec enters ~5-6 bps off the true turn against ~9-11 bps at 1-min**.
-  Against a **~22 bps taker floor** (round-trip fee + 2x entry slippage) and a **~4 bps maker floor**,
-  that improvement is a quarter of the cost a taker must clear. On gas at S90: At S90 static divergence did NOT transfer,
-  but exhaustion showed a faint RIGHT-SIGNED pulse (oppose+exhaust 0.410 vs trend+strengthen 0.382,
-  +2.7pp) on n=1 trend day at 1-sec bins. Greg's load-bearing note then: the 1-sec canary is FAR too
-  coarse, the edge lives at NATIVE TICK, and the real test is pending at native tick, per-cell,
-  event-time. Already carried as `timing.subsecond_reversal_exhaustion` (conf 0.25), correctly scoped
-  as a turn-timing/execution edge and never a blind open-time curve input. **The open job is the
-  resolution, not the question, and it has a number attached: run at native tick and measure how far
-  off the turn we enter, directly comparable to 9-11 and 5-6.** Distinct from the depth-based
-  `turn_exhaustion`, which separately DID separate NG turns (reversed median -0.107 vs held -0.018).*
-- **Named structural events** — did the turn arrive at `turn_time_et`? A missed or inverted turn
-  falsifies the story regardless of the residual.
+**THE MONITOR'S INSTRUMENT PANEL — where each dipole construction actually goes.**
+
+The dipole toolkit yields four distinct constructions with four different targets. They are NOT
+interchangeable, and the S111 correction was that describing them separately is not the same as
+placing them. **A hard constraint decides the placement for all of them:** `direction.flow_nowcast`
+carries `requires: needs_intraday_reveal` and the caveat *"NOWCAST (flow overlaps the nascent leg),
+not a from-flat forecast."* The same is true of the rest. **So the entire dipole family lives in the
+LIVE loop and none of it is a pre-open forecast input.** They are execution and monitoring
+instruments, which is exactly what the adjustment loop needs and exactly what D32 makes the product.
+
+| instrument | target | timing | status on NG | where it goes |
+|---|---|---|---|---|
+| **`dip_imb_level`** signed imbalance | **DIRECTION** of the running leg | nowcast, overlaps the leg | **WORKS.** Play #1 `direction.flow_nowcast`, PROVISIONAL conf **0.87**, FORWARD-CONFIRMED: side = sign(dip_imb_level) at \|dip_imb_level\| >= 0.15, monotone **0.68 → 0.84 → 0.94 → 0.93**, **34/34 OOS** on three unseen days, held-leg side re-confirmed on the S95 pass across G3-G5. *(Greg reports ChatGPT independently demonstrated the direction result; specifics PENDING, to be attached.)* | **§1.5 monitor, direction channel** — an independent check that the leg is still running the way the analog says. And **§5 Kalshi lane**: it fires on the LAGGING Kalshi mark, which is the lag edge itself. **Caveat to encode: it LAGS on an extreme gap melt-up (1020, 7/12) — lean on continuation-asymmetry there.** |
+| **static DIVERGENCE** `imb x sign(price_drift)` | **REVERSAL** | — | **Did not transfer** in the S90 1-sec NG canary. This construction alone. Per D31, scoped — tested at 1-sec on n=1 day, not "dead". | **Not implemented.** Re-testable at native tick alongside the exhaustion arm, since it failed at the same resolution the exhaustion arm was flagged for. |
+| **EXHAUSTION** imbalance collapsing toward 0.5 | **TURN**, leading | fires *before* price confirms | Faint RIGHT-SIGNED pulse: oppose+exhaust **0.410** vs trend+strengthen **0.382**, +2.7pp, n=1 trend day, 1-sec bins. Carried as `timing.subsecond_reversal_exhaustion`, conf 0.25. | **§1.5 monitor, the LEADING channel — the only one that fires early.** Open item A-6: run at native tick and measure bps-off-the-turn. |
+| **depth `turn_exhaustion`** book support collapsing entry→push | **TURN**, confirming | — | **Measured on NG and it separates**: reversed median **-0.107** vs held **-0.018**. Computed by `month_characterize`; fingerprints already saved by `characterize_turns.py`. | **§1.5 monitor, second turn channel** — independent of the flow dipole, and already working. Wire this one FIRST; it needs no new research. |
+
+**Three timing classes in the monitor, and the panel is only useful because they differ:**
+
+- **LEADING** — the dipole exhaustion arm. The only instrument that fires before price confirms, which
+  is why A-6 matters: it is the leading edge of an adjustment loop that D32 makes the product.
+- **CONFIRMING** — `dip_imb_level` direction, and depth `turn_exhaustion`. Both already measured on NG.
+- **LAGGING by construction** — slope divergence (a slope change is only measurable after it starts)
+  and named structural events (did the turn arrive at `turn_time_et`?). A missed or inverted turn
+  falsifies the analog's story regardless of the residual.
+
+**Why the resolution question decides the value, with the numbers.** The S36/S37 split is DIPOLE =
+the filter (which turns are real), fine-resolution PRICE-REVERSAL = the timing. The payoff of
+resolution is the origin of our look-ahead number: **1-sec entry lands ~5-6 bps off the true turn
+against ~9-11 bps at 1-min.** Against a **~22 bps taker floor** (round-trip fee + 2x entry slippage)
+and a **~4 bps maker floor**, that improvement is roughly a quarter of what a taker must clear — and
+the maker/taker gap is the difference between a strategy that pays and one that donates. Greg's
+load-bearing note at S90: the 1-sec canary is **far too coarse**, the edge lives at **native tick**,
+and MBP-10 is nanosecond. **A-6's success criterion is therefore a number, not an opinion: run at
+native tick, per-cell, event-time, and measure how far off the turn we enter — directly comparable to
+9-11 and 5-6, and judged against the two floors.**
+
+**Scope, and keep it.** Every one of these is a turn-timing and execution edge, in the same class as
+the futures-to-Kalshi lag. **None is ever a blind open-time curve input.** They tell us whether the
+retrieved analog is still holding and when to act — not what to retrieve.
 
 **The band is calibrated from the library, not chosen.** Replay past days against their own best
 analogs and measure how good matches actually diverge hour by hour. That gives a threshold that came
@@ -291,7 +308,7 @@ Divergent: how each product reads it.
 
 | lane | wants | notes |
 |---|---|---|
-| **Kalshi daily** | a probability at a point (17:00 settle vs strike) | horizon-native, already docked. A binary is a **digital**: `N(d2) − Vega·(∂σ/∂K)`, so positive gas call skew makes an upside digital worth **less** than naive flat-vol N(d2) |
+| **Kalshi daily** | a probability at a point (17:00 settle vs strike) | horizon-native, already docked. **`dip_imb_level` fires on the LAGGING Kalshi mark** - that IS the lag edge, and it is the one dipole construction already forward-confirmed on NG. A binary is a **digital**: `N(d2) − Vega·(∂σ/∂K)`, so positive gas call skew makes an upside digital worth **less** than naive flat-vol N(d2) |
 | **Futures** | a trajectory, marked continuously | slope break *is* the loss; tightest response |
 | **Options** | a distribution over trajectories | needs dispersion, not just a path |
 
