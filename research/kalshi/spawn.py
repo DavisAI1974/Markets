@@ -153,6 +153,35 @@ def slots(gid, day=None, spec=None):
         s["X"] = (spec, "argument")
         s["DAYS_OWNED"] = (", ".join(d for d, o in sorted(owners.items()) if o == spec),
                            "group_config.owner_map")
+    if day:
+        fc = _served_days(gid)[day].get("flow_calendar") or {}
+        # day_class is NOT served, so it is DERIVED - and the derivation quotes the served fields
+        # it rests on, so a reader can check it rather than trust it.
+        parts = [s["dow"][0]]
+        if fc.get("days_to_next_eia_release") == 0:
+            parts.append("eia_print_thursday")
+        if fc.get("cme_holiday"):
+            parts.append("cme_holiday:%s" % (fc.get("cme_holiday_name") or "unnamed"))
+        elif fc.get("cme_early_close"):
+            parts.append("cme_early_close")
+        if fc.get("days_to_futures_expiry") == 0:
+            parts.append("futures_expiry")
+        if fc.get("in_bcom_roll") or fc.get("in_gsci_roll"):
+            parts.append("index_roll")
+        s["day_class"] = (" | ".join(parts),
+                          "DERIVED from state.dow + flow_calendar "
+                          "(days_to_next_eia_release, cme_holiday, days_to_futures_expiry, "
+                          "in_*_roll) - not a served field")
+        # the weekend bridge pair: a Monday and the Friday whose exit feeds it
+        served = sorted(_served_days(gid))
+        if s["dow"][0] == "Mon":
+            i = served.index(day)
+            fri = served[i - 1] if i > 0 else str(g.get("anchor_date") or "").replace("-", "")
+            if not fri:
+                raise SlotError("DAY_FRI: no preceding session and no anchor_date for %s" % day)
+            s["DAY_MON"] = (day, "argument")
+            s["DAY_FRI"] = (fri, "preceding served session"
+                            if i > 0 else "group_config anchor_date (block's first Monday)")
     return s
 
 
@@ -178,44 +207,21 @@ def cmd_calfacts(a):
     return 0
 
 
-TEMPLATES = {
-    "BLD-1": """You are specialist {X} of the NG 5-specialist forecaster, BLIND mode, group {GID}, round 1.
-Your reasoning files are canonical and shared with the refine - read BOTH, in full, FIRST:
-  research/kalshi/agents/mbo_refine_shared.md
-  research/kalshi/agents/mbo_specialist_{X}.md
-Follow them exactly. Blind mode is a DATA fact, not a rule change: your state has the price curve
-masked. Causality is physics: your state is a per-day causal slice and contains nothing past your
-decision point. Do not attempt to obtain masked or future data.
+TEMPLATE_STORE = os.path.join(HERE, "store", "sop_templates.json")
 
-SPAWN PARAMETERS
-- GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, BLIND. Brain: knowledge/ng_brain.json ({BRAIN_V}).
-- YOUR DAY: {DAY} ({dow}). You own this one day in this run.
-- YOUR STATE (the only state you read): {SLICE}
-- ANCHOR (group reference level): {ANCHOR}
 
-CONTEXT - CALENDAR FACTS, QUOTED FROM THE SERVED flow_calendar. These are lookups, not hints, and
-they are generated rather than typed. If your own read of the state disagrees with any line here,
-STOP and report the discrepancy - do not reason past it:
-{CAL_FACTS}
+def templates():
+    """The CANONICAL templates, loaded from the store - not a copy written here.
 
-OUTPUT - write forecasts/g{N}_perday/grp{N}_{X}_{DAY}.json per the output contract in
-mbo_refine_shared.md. Declare any input you found defective rather than silently working around it.
-""",
-    "AUD-1": """You are the STATE AUDITOR for group {GID} of the NG forecaster walk. Your canonical role file is
-research/kalshi/agents/state_auditor.md - read it FIRST, in full, and follow it exactly.
-
-THE GROUP UNDER AUDIT
-- Group: {GID}. Days: {DAYS}. Window: {WINDOW}. Seam: {SEAM}.
-- Decision state (your primary object): {STATE}
-- Anchor artifact (also served to the run, in scope): {ANCHOR}
-- Brain (for plays_affected greps): knowledge/ng_brain.json ({BRAIN_V})
-
-CONTEXT - CALENDAR FACTS, QUOTED FROM THE SERVED flow_calendar, generated rather than typed:
-{CAL_FACTS}
-
-You produce NO forecasts, no direction calls, no price reasoning. Output per the role file.
-""",
-}
+    An earlier version of this file carried its own abridged BLD-1 and AUD-1 and had no BLD-2,
+    RFN-1 or RFN-2 at all. Letting those become the source would have quietly replaced the
+    canonical templates with simpler ones: the exact A-7 divergence this store exists to end,
+    committed by the tool built to end it. The store is extracted VERBATIM from RUN_SOP.md's
+    appendix and round-trip proven against it before it is trusted."""
+    if not os.path.exists(TEMPLATE_STORE):
+        raise SlotError("template store missing: %s" % os.path.relpath(TEMPLATE_STORE, ROOT))
+    with open(TEMPLATE_STORE, encoding="utf-8") as f:
+        return {t["name"]: t for t in json.load(f)["templates"]}
 
 
 def cmd_emit(a):
@@ -224,19 +230,39 @@ def cmd_emit(a):
     except SlotError as e:
         print("STOP - slot lookup failed: %s" % e)
         return 1
-    t = TEMPLATES.get(a.template)
-    if t is None:
-        print("unknown template %r - have %s" % (a.template, ", ".join(TEMPLATES)))
+    try:
+        tmap = templates()
+    except SlotError as e:
+        print("STOP - %s" % e)
         return 1
-    need = set(re.findall(r"\{([A-Za-z_]+)\}", t))
+    if a.template not in tmap:
+        print("unknown template %r - have %s" % (a.template, ", ".join(sorted(tmap))))
+        return 1
+    t = tmap[a.template]["body"]
+    if getattr(a, "directive", None):
+        s["DIRECTIVE"] = (a.directive, "argument, quoted verbatim per SOP STEP 5.1")
+    need = set(re.findall(r"\{([A-Za-z_0-9]+)\}", t))
     missing = sorted(need - set(s))
     if missing:
         # THE STOP RULE: an unresolved slot halts emission. Never blank, never guessed.
         print("STOP - template %s needs slots that did not resolve: %s"
               % (a.template, ", ".join(missing)))
-        print("       (supply --day / --spec, or fix the missing artifact)")
+        if "DIRECTIVE" in missing:
+            print("       DIRECTIVE is an INPUT, not a lookup - the SOP requires the run directive "
+                  "quoted VERBATIM (STEP 5.1). Supply --directive; it is never invented.")
+        print("       (supply --day / --spec / --directive, or fix the missing artifact)")
         return 1
-    print(t.format(**{k: v for k, (v, _) in s.items()}))
+    # SUBSTITUTE ONLY KNOWN SLOTS, never str.format. The canonical templates use braces for TWO
+    # different things: real slots like {DAY}, and conditional prose the SOP writes inline, e.g.
+    # "{IF E, weekend-feeding Friday}: you MUST emit the 9-field handoff_out" and "{IF B}". format()
+    # cannot tell them apart and raised KeyError on the first one it met. Targeted replacement also
+    # has the better failure mode: an unrecognised brace expression is preserved VERBATIM rather
+    # than crashing or being silently swallowed, so the SOP's own conditional instructions survive
+    # into the emitted prompt exactly as written.
+    out = t
+    for k, (v, _src) in s.items():
+        out = out.replace("{%s}" % k, str(v))
+    print(out)
     return 0
 
 
@@ -277,6 +303,7 @@ def cmd_selftest(a):
     import io, contextlib
     class _A: pass
     arg = _A(); arg.gid = "g23"; arg.day = None; arg.spec = None; arg.template = "BLD-1"
+    arg.directive = None
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         rc = cmd_emit(arg)
@@ -288,10 +315,30 @@ def cmd_selftest(a):
     with contextlib.redirect_stdout(buf):
         rc = cmd_emit(arg)
     out = buf.getvalue()
-    check("a fully-resolved template emits with no placeholder left",
-          rc == 0 and not re.search(r"\{[A-Z_]{2,}\}", out))
-    check("the emitted prompt carries the roll fact NC-1 got wrong",
-          "bcom_roll_day_n 5" in out)
+    # only SLOT-shaped braces must be gone; the SOP's inline conditionals ({IF E, ...}) are
+    # deliberate prose and are expected to survive verbatim
+    leftover = [m for m in re.findall(r"\{([A-Za-z_0-9]+)\}", out)]
+    check("a fully-resolved template emits with no SLOT placeholder left",
+          rc == 0 and not leftover)
+    check("the SOP's inline conditional prose survives verbatim",
+          "{IF E, weekend-feeding Friday}" in out or "{IF B}" in out)
+    # AUD-1 is the ONLY canonical template carrying CAL_FACTS - measured S112, and it is a
+    # finding rather than a quirk: no forecasting specialist, blind or refine, receives generated
+    # calendar facts. That is the structural reason NC-1's false premise reached both the refine
+    # directive AND the blind posterior - the blind had no independent calendar channel to
+    # contradict it. Adding CAL_FACTS to BLD-1/RFN-1 is a change-controlled SOP edit (D10), not
+    # something this tool may do unilaterally, so the test asserts what the SOP ACTUALLY says.
+    arg2 = _A(); arg2.gid = "g23"; arg2.day = None; arg2.spec = None
+    arg2.template = "AUD-1"; arg2.directive = None
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc2 = cmd_emit(arg2)
+    check("the auditor prompt carries the roll fact NC-1 got wrong",
+          rc2 == 0 and "bcom_roll_day_n 5" in buf.getvalue())
+    check("MEASURED: only AUD-1 carries CAL_FACTS - the blind and refine templates have no "
+          "calendar channel (open SOP change, D10)",
+          [t for t in templates().values() if "CAL_FACTS" in t["slots"]][0]["name"] == "AUD-1"
+          and len([t for t in templates().values() if "CAL_FACTS" in t["slots"]]) == 1)
 
     print("\n  %d/%d passed" % (sum(res), len(res)))
     return 0 if all(res) else 1
@@ -305,7 +352,7 @@ def main():
     p.add_argument("--spec")
     p = sub.add_parser("calfacts"); p.add_argument("gid")
     p = sub.add_parser("emit"); p.add_argument("template"); p.add_argument("gid")
-    p.add_argument("--day"); p.add_argument("--spec")
+    p.add_argument("--day"); p.add_argument("--spec"); p.add_argument("--directive")
     sub.add_parser("selftest")
     a = ap.parse_args()
     return {"slots": cmd_slots, "calfacts": cmd_calfacts,
