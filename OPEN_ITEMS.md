@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 58 |
+| open | 65 |
 | in progress | 1 |
 | done | 8 |
 
-By size: **XS** 7, **S** 26, **M** 21, **L** 5
+By size: **XS** 7, **S** 28, **M** 26, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 44
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 51
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -49,7 +49,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 44
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 
-## REST (44)
+## REST (51)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -63,6 +63,8 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 44
 | **A-12** | S | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | DEMOTED FROM ESSENTIAL S113. The 'live wrong value' half was the age field, and that is fixed at source and registered as a defect. What remains is a NAMING decision on a value that is correct and correctly masked - real, small, and it gates nothing. |
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
+| **A-24d** | S | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
+| **A-24e** | S | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-3** | S | Compute the effective matching dimension d of any retrieval | - |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
@@ -84,6 +86,11 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 44
 | **M-8** | S | Retire the Pyth collector workflows (D14) | - |
 | **M-9** | S | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
 | **A-10** | M | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | - |
+| **A-24a** | M | Weather information ACCEPTANCE: revision size x model convergence x release timing | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
+| **A-24b** | M | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
+| **A-24c** | M | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
+| **A-24f** | M | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
+| **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample. |
 | **A-6** | M | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
 | **G-13** | M | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | M | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
@@ -129,6 +136,8 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 44
 | **A-12** | REST | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
+| **A-24d** | REST | S | OPEN | S113 | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
+| **A-24e** | REST | S | OPEN | S113 | Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate) | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
@@ -150,6 +159,11 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 11, **REST** 44
 | **M-8** | REST | S | OPEN | S110 | Retire the Pyth collector workflows (D14) | requires a commit on the trunk branch, not this one |
 | **M-9** | REST | S | OPEN | S112 | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
 | **A-10** | REST | M | OPEN | S112 | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | MBP-10 restore from S3 (needs AWS keys, absent this session) |
+| **A-24a** | REST | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
+| **A-24b** | REST | M | OPEN | S113 | Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
+| **A-24c** | REST | M | OPEN | S113 | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
+| **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
+| **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land. |
 | **A-6** | REST | M | OPEN | S90 | Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion | - |
 | **G-13** | REST | M | OPEN | S111 | NG weekly option settlements + EIA-print event variance extraction | - |
 | **G-18** | REST | M | OPEN | S111 (recommendation); S112  | OPTIONS: de-Samuelsonize and de-seasonalize the IV surface before reading it | - |
@@ -647,6 +661,30 @@ AND IT UPGRADES TVA FROM CORRELATE TO INSTRUMENT. Its north Georgia dams are sto
 
 ---
 
+### [REST] A-24d - Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous
+
+*size S | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+
+**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 4, and the note is right that it adds no predictor - it changes WHO IS ALLOWED TO SPEAK. Ages and knowable-from stamps are served throughout (ngwu_balance.issue_age_days, cot.age_days_combined, steo_vintage.knowable_from, every asof_utc) and are read by nothing. THE INSTANCE IS ALREADY IN THE LEDGER: D25 records B-0713 overriding its own instrument on a handed-down verdict table - the block's worst wrong-direction day - and E's self-analysis names PRIOR-OVER-STATE as its ONE dominant Friday flaw, 13 of 18 misses. Both are stale-beats-fresh. Cheap because it needs no new data. Benchmark: the current fixed precedence. Kill if source-age spread does not discriminate which side wins on conflict days.
+
+---
+
+### [REST] A-24e - Order-flow signal INTEGRITY as a play-level authority gate (not a staging gate)
+
+*size S | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+
+**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 5, and it needs one correction the note could not make from the registry alone: HALF OF THIS ALREADY EXISTS AND IS ENFORCED. The identity session_b_share == session_b_share_two_sided x (1 - unsided_volume_frac) is a HARD state_health gate since S109 (state_health.py:130-140), so denominator disagreement cannot reach a specialist at all - it stops the line at stage time. What is genuinely new is the rest of the panel as a PLAY-LEVEL authority gate: phase-level agreement vs cancellation, reopen-stub exclusion, trade and phase counts as an information floor, quote-side confirmation. That is a different object from a staging assertion and is not built. Honour the note's own data limitation - several quality fields carry 29 observations or fewer, so diagnosis only, accrue forward evidence before any authority.
+
+---
+
 ### [REST] A-3 - Compute the effective matching dimension d of any retrieval
 
 *size S | OPEN | raised S111*
@@ -887,6 +925,67 @@ FIX: re-run the G11+ fingerprint pass with the MBP-10 book source, and make the 
 
 ---
 
+### [REST] A-24a - Weather information ACCEPTANCE: revision size x model convergence x release timing
+
+*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+
+**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 1 and the note's strongest candidate. We serve the SIZE of a GWDD revision and read neither of the two variables that say whether it should already be priced: inter-model disagreement, and whether the cycle completed BEFORE or AFTER the Globex reopen. Same revision, three different events. CHECKED S113 - the fields are real and populated: model_disagreement.summary carries max_abs_spread_gw_hdd, mean_abs_spread_over_overlap and n_overlap_horizons in the served state, and globex_reopen_et is present. NOTE THE PROVENANCE, because it strengthens the case: weather_forecast_cycle was built at S100 (feed A phase 1) for EXACTLY this question - the record says the 0118 Jan-24 +8.511 add was PRE-REOPEN available and that closing the weekend-gap blindness was the point - and then nothing ever read it. CAVEAT MEASURED: on the g23 state the block carries weekday_open only, with NO sunday_reopen key, so the Monday arm of the mechanism is unavailable on at least some blocks and must be checked per day rather than assumed. Benchmark: revision magnitude alone. Kill if timing and disagreement add no OOS discrimination to gap-vs-intraday delivery within revision-size cells.
+
+---
+
+### [REST] A-24b - Storage headline vs REVISION POLARITY, including South Central salt/nonsalt location
+
+*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+
+**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 2, and it is a CURVE-SHAPE candidate rather than a direction one, which is what D32 made the product. We hold three simultaneous descriptions of one storage event - headline surprise vs consensus, as-printed vs current vintage, and the regional location of the revision - and read only the first. A bullish headline CONFIRMED by revisions is a different event from a bullish headline OFFSET by them, even when the first price reaction has the same sign. Proposed as SIGN ALIGNMENT with no magnitude threshold, which is the right form under D23/D28 (a bar sited away from the centre of its distribution is what fails). Benchmark: headline surprise alone. Kill if alignment and regional topology do not change continuation, giveback or end-of-day direction WITHIN the same headline cells.
+
+---
+
+### [REST] A-24c - Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition
+
+*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+
+**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 3. The claim is that identical US48 burn concentrated in one BA is a different physical event from the same burn synchronised across several, and that the same South Central inventory absorbs it differently depending on salt/nonsalt composition. It is a CONVERSION candidate - when does the same weather shock become a large HH shock - which is the question A-26 left open.
+MEASURED CAVEAT THAT MUST TRAVEL WITH IT: any breadth count runs on the six BAs we serve, and those sum to 169.3 of US48's 262.6 Bcf/wk of summer power burn - 64.5% coverage, ~93 Bcf/wk unserved. So 'number of BAs whose gas share rose' is a count over a set missing more than a third of the burn, and breadth is exactly the measure that biases with coverage. Do A-18 first or carry the coverage number beside every result. The note's own line that the BA count is an equal-count diagnostic rather than an equal-transmission claim is correct and is reinforced by A-26: the price channel is null, so no transmission weighting should be applied here at all.
+
+---
+
+### [REST] A-24f - Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin
+
+*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+
+**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 6. freeze_risk is 148 of 157 fields unread and holds per-basin first_below, last_below, max_consecutive and tmin_by_horizon for MAF, OKC, PIT, SHV. National GWDD collapses the ORDER, OVERLAP and DURATION of basin cold - the three properties that plausibly separate a local cold snap from a correlated production-system freeze-off. The thresholds are published and already in the data; the note is explicit that they must not be retuned against price, which is the D23 discipline. Benchmark: GWDD revision and the coldest single basin. Kill if overlap and sequence add nothing within equal-GWDD cells. WINTER-ONLY by construction, so it cannot be tested on the summer blocks we have most of.
+
+---
+
+### [REST] A-24g - Sunset compression x regional gas marginality - the synchronised thermal ramp
+
+*size M | OPEN | raised S113 | BLOCKED BY: A-23 (the unread-field triage) - A-24 was deliberately gated behind it so a candidate could not be built on a defect artifact, and this note arrived first. Not fatal: the note reads the defect column and labels everything CANDIDATE. But no candidate is promoted before A-23's verdicts land.*
+
+**Why it is REST:** Candidates, not findings - the note states plainly that DATA_POINTS.md holds field names and coverage, never values, so none of this is a correlation result. They enter as REST until one beats a named benchmark out of sample.
+
+**Source:** ChatGPT S113 A-24 discovery note (research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md); registered under D36 - every numbered recommendation in a briefing becomes a registry line in the session it lands, including ones we decide against
+
+RANK 7, lowest confidence and the note says so. The solar clock is fully deterministic and served (gw_day_length_h, per-metro sunset_et, earliest/latest) and read by nothing for this purpose - though note gw_day_length_h ALREADY HAS a use under D32, where the +/-2 week analog window exists to hold day length near-constant. The candidate is that when several high-solar, high-gas-share BAs lose sun inside a narrow ET window the thermal ramp synchronises, producing a repeatable late-session leg at unchanged daily temperature. THE NOTE NAMES ITS OWN BLOCKER HONESTLY: the served grid block is DAILY and this is an intraday mechanism, so the real test needs the hourly EIA-930 series that is upstream of our roll-up. Treat as blocked on an hourly ingest, not as ready.
+
+---
+
 ### [REST] A-6 - Re-test the dipole EXHAUSTION arm on gas AT NATIVE TICK - it has a measurable success criterion
 
 *size M | OPEN | raised S90*
@@ -1052,6 +1151,14 @@ THE SEARCH SHAPE THAT MAKES IT TRACTABLE, not the full cross-product: (a) CROSS-
 THE STRONGEST A-PRIORI CANDIDATES, named now so the search starts with a prior instead of a sweep - each has a mechanism and each is cross-domain: (1) basin water anomaly x Southeast gas burn (A-20 - literally an unknown correlated pair, and the reason nobody has put it together is that it needs BA-level generation AND basin hydrology, two datasets that do not normally sit on one desk); (2) wind_mwh x the gas residual - 0629 proved the mechanism at 4.2 Bcf/d and NOTHING reads it; (3) load -> gas burn convexity per BA, the actual dispatch curve, never measured though demand_mwh and gas_mwh have sat beside each other since 2019; (4) k3 impact-coefficient collapse x liquidity void, already a live claim at n=6 spanning G20+G23; (5) forecast VINTAGE REVISION (weather_forecast_cycle x model_disagreement) x price - the revision process is one of the three things S111 measured as surviving past the 5-7 day horizon, and vintage data is rare.
 
 PAIRS WITH A-23: the triage says which fields SHOULD be read; this asks which PAIRS carry information. Do the triage first - a pair built on a field that turns out to be a defect artifact is the S108 hole-#8 failure again, where an off-instrument tape manufactured a false mechanism with three corroborating markers and a specialist independently 'verified' it by checking internal consistency. Consistency was never the test.
+
+DELIVERED S113 as research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md, and broken out into A-24a..A-24g so each candidate carries its own status, benchmark and kill test rather than living in one item's prose - which is the A-17 defect this registry exists to prevent.
+
+ORDERING NOTE, recorded not grumbled: this item was registered BLOCKED BY A-23 precisely so a pair could not be built on a defect artifact, and it came back first. The note partly protects itself - it reads the defect column (it flags h-tape_offinstrument on Rank 5) and labels every item CANDIDATE with the limitation stated up front. No candidate is promoted before A-23's verdicts land.
+
+THE CRITIQUE THAT MATTERS MOST, and it is about the note's own final assessment rather than any single rank. It concludes the best structure is 'shock x confirmation x novelty x absorption capacity' - a FOUR-FACTOR interaction - and proposes testing it on 118-131 populated observations. That collides directly with the measured dimension budget (FORECAST_ARCHITECTURE_S111 s4.2, registry item A-3): L = k/r^d puts our supportable matching dimension at about 3, at most 4, and d=4 wants ~10,000 sessions. Conditioning on four things at once over ~130 observations returns a match provably no closer than random - AND RETURNS IT CONFIDENTLY WITH A MAGNITUDE ATTACHED, which is the specific failure mode. So each candidate should be tested as a TWO-FACTOR interaction at most, and the four-factor synthesis is a description of the problem rather than a testable object. That is not a reason to discard the note; it is the constraint the tests have to respect.
+
+WHAT WAS ALREADY OWNED, checked rather than assumed, so we do not pay twice: Rank 5's denominator check is ALREADY a hard state_health gate (S109, the b_share identity), so half of that candidate is enforced at stage time and only the play-level half is new. Rank 1's information-clock fields exist because S100 built weather_forecast_cycle for exactly this question and nothing ever read it - which makes it a stronger candidate, not a weaker one. Rank 7's gw_day_length_h already has a use under D32 as the analog window's seasonal key.
 
 ---
 
