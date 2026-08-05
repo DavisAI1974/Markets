@@ -14923,7 +14923,7 @@
    }
   },
   {
-   "topic": "burn_stack_coal_is_baseload_not_an_absorber",
+   "topic": "burn_stack_merit_order_and_what_regulates",
    "session": "S112",
    "kind": "doctrine",
    "body": {
@@ -14937,7 +14937,10 @@
     "registry_consequence": "M-6 is re-scoped by this: what is wanted from coal is the RETIREMENT AND OUTAGE CALENDAR (EIA-860M additions/retirements, ISO outage aggregates) - a forward-dated level - not a headroom figure that flexes with load.",
     "greg_verbatim_stack_order": "A stack would go nukes, coal, gas",
     "what_we_actually_need_from_coal": "Greg, S112: 'We really only need to know how much of the coal gen is running.' Not the price - the GENERATION. And it is ALREADY SERVED: grid_stack.bas.{US48,PJM,MISO,ERCO,SWPP,SOCO,CISO}.coal_mwh, present in every modern block.",
-    "the_measured_defect_this_exposes": "THE WHOLE THERMAL STACK IS SERVED AND UNREAD. Measured S112 against the brain: coal_mwh is referenced by ZERO plays and carries ZERO conditions; nuclear_mwh by ZERO; wind_mwh and solar_mwh by exactly ONE play each - weather.burn_conversion_gate, which is RETIRED. So of the four stack terms that determine the gas residual, three are read by nothing at all and the fourth's only reader is dead.\n\nTHIS IS THE 0629 DEFECT GENERALISED. That miss happened because wind_mwh was served in every slice and read by nobody: gw_cdd rose 10.0 -> 14.8 exactly as forecast and gas burn FELL 4.2 Bcf/d because wind rose 62%. Coal and nuclear are in that identical state right now - present, numeric, all-modern, consumed by no play. Under D12 a feed with no named consumer is a staging defect, not a neutral fact."
+    "the_measured_defect_this_exposes": "THE WHOLE THERMAL STACK IS SERVED AND UNREAD. Measured S112 against the brain: coal_mwh is referenced by ZERO plays and carries ZERO conditions; nuclear_mwh by ZERO; wind_mwh and solar_mwh by exactly ONE play each - weather.burn_conversion_gate, which is RETIRED. So of the four stack terms that determine the gas residual, three are read by nothing at all and the fourth's only reader is dead.\n\nTHIS IS THE 0629 DEFECT GENERALISED. That miss happened because wind_mwh was served in every slice and read by nobody: gw_cdd rose 10.0 -> 14.8 exactly as forecast and gas burn FELL 4.2 Bcf/d because wind rose 62%. Coal and nuclear are in that identical state right now - present, numeric, all-modern, consumed by no play. Under D12 a feed with no named consumer is a staging defect, not a neutral fact.",
+    "greg_verbatim_renewables": "And wind and solar is just on or off. Not regulating to load there. Solely depended on sun and wind so we have to be tracking those well",
+    "what_regulates_and_what_does_not": "NOTHING IN THE STACK REGULATES TO LOAD EXCEPT GAS. Wind and solar are NON-DISPATCHABLE - output is set by sun and wind, not by demand, so they are a FORCING on the system rather than a response to it. Nuclear and coal are baseload LEVELS. Gas is therefore the sole regulator and absorbs BOTH the load swing AND the renewable swing. That is why net load - not load - is the causal driver, and why a renewable miss lands on gas at full size in whichever direction it goes.",
+    "the_measured_asymmetry_that_makes_0629_inevitable": "MEASURED S112 across the served vocabulary. FORWARD: grid_stack.bas.*.demand_forecast_mwh for all seven BAs, all-modern, plus the whole weather_forecast.* family. REALIZED ONLY: wind_mwh and solar_mwh - there is NO forward wind or solar field anywhere in any block.\n\nSo we can see LOAD coming and DEGREE DAYS coming and cannot see THE WIND THAT DECIDES THE BURN. Net load is uncomputable forward because exactly one half of it is served. 0629 was not bad luck: gw_cdd rose 10.0 -> 14.8 precisely as forecast and burn FELL 4.2 Bcf/d on a 62% wind rise, and no forward instrument existed that could have said so. Realized wind cannot fix a forward call because on a forecast day the realized value does not exist yet.\n\nThis is registry G-4 and the measurement upgrades it from 'a top gap' to 'the half of net load we do not have'."
    }
   }
  ],

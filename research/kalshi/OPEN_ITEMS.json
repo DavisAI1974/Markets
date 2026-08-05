@@ -224,12 +224,12 @@
   },
   {
    "id": "G-4",
-   "title": "ISO day-ahead and 7-day wind, solar, load -> NET LOAD",
+   "title": "ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent)",
    "source": "GAS_SIGNAL_BRIEFING_S111 s2.1 (TIER 1, top gap)",
    "first_raised": "S111",
    "status": "OPEN",
    "size": "M",
-   "why": "THE SIGN-FLIPPER. We hold REALIZED wind from EIA-930, which cannot fix a forward call because on a forecast day the realized value does not exist. Exactly the shape of the 0629 miss: gw_cdd rose as forecast and burn FELL 4.2 Bcf/d because wind rose 62%. All free - ERCOT, SPP, CAISO, PJM, MISO, ISO-NE, wrapped by gridstatus.",
+   "why": "MEASURED S112 against the served vocabulary, which sharpens this from 'a top gap' to a named half-a-variable: FORWARD load IS served - grid_stack.bas.*.demand_forecast_mwh for all seven BAs, all-modern - and the whole weather_forecast.* family is forward. But wind_mwh and solar_mwh are REALIZED ONLY; there is no forward wind or solar field in any block.\n\nSo NET LOAD CANNOT BE COMPUTED FORWARD AT ALL - we hold one half of it. Greg, S112: 'wind and solar is just on or off. Not regulating to load there. Solely depended on sun and wind so we have to be tracking those well.' Because nothing in the stack regulates except gas, a renewable miss lands on gas at full size.\n\n0629 is therefore not bad luck but the guaranteed consequence: gw_cdd rose 10.0 -> 14.8 exactly as forecast, burn FELL 4.2 Bcf/d on a 62% wind rise, and no forward instrument existed that could have said so.\n\nALL FREE: ERCOT NP4-742-CD (wind actual+forecast) and NP4-745-CD (solar), SPP Mid-Term Resource Forecast +7d, CAISO OASIS SLD_REN_FCST, PJM Data Miner 2 load_frcstd_7_day plus wind/solar, MISO 168-hour, ISO-NE seven-day. Wrapped by gridstatus. ChatGPT task 3 was commissioned to return the exact endpoints. KNOWN TRAP to carry: behind-the-meter solar is excluded from EIA-930 and is a one-directional growing bias in exactly the daylight hours that matter.",
    "blocked_by": null
   },
   {
