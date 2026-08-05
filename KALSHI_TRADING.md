@@ -606,7 +606,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **156 files.**
+new tool cannot go unlisted. **157 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -649,6 +649,7 @@ new tool cannot go unlisted. **156 files.**
 - `databento_live_smoke.py` — one-shot validation that the Databento LIVE plan is active (S99).
 - `decision_trace.py` — BIND the reasoning to the decision it produced (S110, Greg's question:
 - `defect_timeline.py` — which groups ran on a known-broken input, and was the EVIDENCE re-measured?
+- `due_gate.py` — serve the REGISTERED FORWARD TESTS into a group's run, and refuse a silent pass.
 - `eia_surprise.py` — historical EIA release SURPRISE for the NYMEX-canary release windows (S86).
 - `event_move_baseline.py` — the NYMEX-canary EVENT-MOVE baseline (S85).
 - `extract_guesses.py` — the per-day guess-vs-actual scorecard for G3/4/5 survived in the brain's
