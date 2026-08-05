@@ -735,6 +735,42 @@ dips inside a start window predict a LOWER eventual coal ceiling for that event 
 events where the week-ahead forecast OVERSTATED the cold show coal running into mild weather with gas
 displaced and a bearish tail.
 
+THE REGIME-3 CORRECTION - Greg S113: 'Price feels like it's the only thing that matters and to the traders
+it does but they know when they have to take a backseat to reliability and that's understood by everyone.'
+I wrote regime 3 as 'price set by DEMAND DESTRUCTION'. That is the margin, not the mechanism.
+
+THE TRUER STATEMENT: near a reliability constraint, DEMAND BECOMES PRICE-INSENSITIVE BECAUSE RELIABILITY
+OUTRANKS ECONOMICS. Load must be served; the alternative is shedding it, which is the failure state rather
+than a choice. So the largest block of demand has ZERO elasticity by obligation, and price stops acting as
+a rationing mechanism for most of the volume. Demand destruction is what happens at the MARGIN - industrial
+users and LNG exporters, the buyers actually permitted to stop - which is why those remain the right
+instruments; but the reason price reaches $30.72 is that the core of the curve cannot respond at all.
+Both sides go vertical at once: supply is physically exhausted (the ramp is spent) and demand is
+contractually and legally obligated. Price then does whatever it must.
+
+AND CRITICALLY - IT IS AN UNDERSTOOD, ANNOUNCED MODE SWITCH, NOT A SURPRISE. Greg: 'that's understood by
+everyone.' Operators declare it publicly and in advance: ISO cold weather alerts and advisories,
+conservation appeals, maximum generation emergencies, EEA levels, forecast reserve margins. So THE REGIME
+IS OBSERVABLE BEFORE IT IS PRICED, and it is exactly the STATE variable D23/D28 demand - a published,
+dated, categorical declaration rather than a bar on a price.
+
+THE INSTRUMENT WE DO NOT HAVE, and it is a new class: ISO RELIABILITY DECLARATIONS AND FORECAST RESERVE
+MARGINS as the regime trigger. Free and published (ERCOT advisories and reserve-margin forecasts, PJM cold
+weather alerts and max gen emergencies, MISO conservative operations and maximum generation events, SPP
+and ISO-NE equivalents). We hold none of it. It belongs beside A-17A's aggregate outage postings, from the
+same portals and often the same feeds - so one adapter fleet serves both.
+
+WHY IT MATTERS MORE THAN ANOTHER PRICE FEATURE: it tells you WHICH MODEL APPLIES. Below it, dispatch is
+economic and switching, elasticity and merit order all mean something. At it, they mean nothing and the
+only questions are physical - what can start, how fast, and who is allowed to stop consuming. A single
+model spanning both regimes will be wrong in one of them, which is the D23 disease appearing at the level
+of the model rather than the threshold.
+
+AND IT SETS THE HONEST LIMIT ON EVERYTHING ABOVE: the coal ramp, heat-rate and commitment findings in this
+item all describe the ECONOMIC regime and the transition out of it. Once reliability governs, none of them
+predict price - they only predict how much gas gets burned. Those are different questions and this item
+should not be read as answering the second.
+
 ---
 
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
