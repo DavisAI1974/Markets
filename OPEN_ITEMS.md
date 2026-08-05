@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 72 |
+| open | 73 |
 | in progress | 1 |
 | done | 9 |
 
-By size: **XS** 8, **S** 31, **M** 29, **L** 5
+By size: **XS** 8, **S** 32, **M** 29, **L** 5
 
 ---
 
-By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
+By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 20, **REST** 50
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -31,7 +31,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 | **A-13** | S | SOP CHANGE PROPOSAL: serve DAY_CALENDAR (+CAL_FACTS) to BLD-1 and RFN-1 - only the AUDITOR gets calendar today | NEEDS GREG'S CALL. CAL_FACTS reaches AUD-1 only, so no forecasting specialist has ever received calendar facts - the structural cause of NC-1, and the reason a false calendar premise sat unchallenged in a blind posterior. day_calendar() is built and tested; adding the slot is a change-controlled SOP edit. |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 
-## BIGGEST WIN (19)
+## BIGGEST WIN (20)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -43,6 +43,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 | **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
 | **A-30** | S | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | It corrects the stack model every burn play reasons from, it is already measured on data we hold, and it supplies the per-BA instrument A-27 needs instead of a national constant. |
 | **A-31** | S | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
+| **A-35** | S | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | It puts a clock on four registered mechanisms rather than adding a fifth, it re-reads the S111 'market got quieter' finding as a risk error, and it supplies the analog library's validity window as a measured quantity. Buildable from grid_stack shares we already hold. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
@@ -130,6 +131,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 19, **REST** 50
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
 | **A-30** | BIGGEST_WIN | S | OPEN | S113 | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | - |
 | **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | - |
+| **A-35** | BIGGEST_WIN | S | OPEN | S113 | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
@@ -894,6 +896,63 @@ be cut on the REGIME, not on the season - the season is a poor proxy for it.
 SO THE HONEST SCOPE OF A-31: it is a description of the winter reliability exception and the transitions
 into and out of it. It is NOT a general model of gas dispatch, it does not apply for most of the calendar,
 and any play built on it must carry the regime test as a precondition rather than assuming it.
+
+---
+
+### [BIGGEST_WIN] A-35 - THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter
+
+*size S | OPEN | raised S113*
+
+**Why it is BIGGEST WIN:** It puts a clock on four registered mechanisms rather than adding a fifth, it re-reads the S111 'market got quieter' finding as a risk error, and it supplies the analog library's validity window as a measured quantity. Buildable from grid_stack shares we already hold.
+
+**Source:** Greg, S113: 'Renewables are on the rise' (with FERC: 88% of 2025 additions, coal -40,828 MW 2026-2028)
+
+Greg, S113: 'Renewables are on the rise.' A structural trend, and it does not merely add a variable - it
+CHANGES THE MECHANISMS ALREADY REGISTERED, because the absorber mix is what mediates every gas response
+(A-34).
+
+THE TWO TRENDS RUN IN OPPOSITE DIRECTIONS AND BOTH FAVOUR THE FAST ABSORBER. FERC: renewables were 88% of
+new US generating capacity in 2025, with utility-scale solar projected at 17.6% of installed capacity by
+2029 and all renewables near 39-40%; coal contracts by 40,828 MW over 2026-2028. So THE INSTANT ABSORBER
+IS GROWING WHILE THE SLOW ABSORBER RETIRES, and the mediation profile shifts from 'delayed about a week by
+coal' toward 'offset instantly, or not at all'.
+
+BUT THEY ARE NOT SUBSTITUTES, AND THIS IS THE POINT: COAL ABSORBED ENERGY AND CAPACITY. RENEWABLES ABSORB
+ENERGY AND HAVE NEAR-ZERO CAPACITY CREDIT AT THE EVENING RAMP. Replacing one with the other therefore does
+TWO OPPOSITE THINGS AT ONCE:
+  more ordinary days where gas demand is quietly muted by wind and solar -> THE MIDDLE GETS QUIETER
+  fewer buffers left when renewables are absent and load peaks       -> THE TAILS GET FATTER
+That is VARIANCE EXPANSION, not reduction, and it is the distribution we are actually forecasting.
+
+IT RE-READS A NUMBER WE HAVE ALREADY BANKED. S111 measured realized moves falling 799 -> 457 across the
+walk and concluded the market got quieter - which is how the blind's apparent 939 -> 592 'improvement'
+turned out to be nothing. Under this framing the quiet middle is PARTLY THE RENEWABLE BUILDOUT muting
+normal days, while tail risk grows underneath it. A calmer average and a more dangerous distribution are
+the SAME transition, so 'the market got quieter' is a half-truth that misleads specifically about risk.
+Anything sized off recent realized vol inherits that error.
+
+IT PUTS A CEILING ON THE ANALOG LIBRARY, and it is a second one alongside Greg's existing coal limit. D32
+retrieves a past day's SHAPE and re-anchors its level; Greg already capped that at one year for coal load
+because the fleet no longer exists. Renewables rising is the same argument from the other side: A DAY FROM
+THREE YEARS AGO HAD A MATERIALLY DIFFERENT EVENING RAMP, so its intraday shape is not transplantable
+however well its weather matches. THE LIBRARY'S VALIDITY WINDOW IS SET BY THE GENERATION MIX, NOT BY THE
+WEATHER - which is a sharper statement than 'archives saturate around four years' and it is measurable
+from our own store: per-BA fuel shares by year are already in grid_stack back to 2019.
+
+CONSEQUENCES FOR REGISTERED ITEMS: A-34's delay SHRINKS over time and must not be fitted as a constant.
+A-31's coal ceiling FALLS with retirements - already its stated falsifier, now with a dated schedule.
+A-27's heat rate WORSENS as the fleet cycles harder behind more renewables. A-5 gains a validity window
+keyed to fleet composition. None of these are new mechanisms; they are the existing ones with a clock on
+them.
+
+WHAT TO BUILD, and it is cheap: a per-BA FUEL-MIX DRIFT series from grid_stack (annual shares by fuel,
+2019 onward, already held) plus the FERC forward capacity schedule. That gives (a) the analog validity
+window as a measured quantity rather than a rule of thumb, (b) the structural correction D32 s1.4 already
+requires for transplanted days, and (c) a dated forward path for the coal ceiling. No new source.
+
+FALSIFIER: if per-BA fuel shares turn out to drift SLOWLY enough that a three-year-old analog's evening
+ramp is within the tolerance D32's amplitude test already permits, then the library ceiling is not binding
+and this item reduces to bookkeeping on the coal ceiling alone.
 
 ---
 
