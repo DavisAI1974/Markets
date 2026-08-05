@@ -41,7 +41,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 16, **REST** 50
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-29** | S | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | A serving change on both paths, on the desk's stated dominant driver, where the data is already being fetched - and the forecast half (MOS wsp) is dated forward, the one class that survives past the 5-7 day horizon. |
 | **A-30** | S | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | It corrects the stack model every burn play reasons from, it is already measured on data we hold, and it supplies the per-BA instrument A-27 needs instead of a national constant. |
-| **A-31** | S | COAL SATURATES AT ~3.1M MWh/DAY AROUND $7 GAS - switching is a BEARISH-regime cap, not a bullish-regime backstop | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
+| **A-31** | S | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-26** | M | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | It re-aims A-18 and A-19, which are the largest open build thread, and it does so on a measurement rather than an argument. Cheap to finish because the data plane is restored and both halves already ran once. |
@@ -125,7 +125,7 @@ By tier: **ESSENTIAL** 4, **BIGGEST_WIN** 16, **REST** 50
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-29** | BIGGEST_WIN | S | OPEN | S113 | WIND SPEED IS FETCHED ON BOTH THE FORECAST AND ACTUAL PATH AND DROPPED AT THE ROLL-UP - the index is dry bulb only | - |
 | **A-30** | BIGGEST_WIN | S | OPEN | S113 | GAS PLAYS BOTH ROLES AND IT IS PER-BA - and gas is now more BASELOAD than coal, which inverts our written stack | - |
-| **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL SATURATES AT ~3.1M MWh/DAY AROUND $7 GAS - switching is a BEARISH-regime cap, not a bullish-regime backstop | - |
+| **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-26** | BIGGEST_WIN | M | OPEN | S113 | HH TRANSMISSION IS TWO CHANNELS, AND THE BURN-vs-PRICE TEST D35 PRESCRIBED DOES NOT DISCRIMINATE | - |
@@ -464,7 +464,7 @@ outage aggregates) is the item that measures the second half and should be read 
 
 ---
 
-### [BIGGEST_WIN] A-31 - COAL SATURATES AT ~3.1M MWh/DAY AROUND $7 GAS - switching is a BEARISH-regime cap, not a bullish-regime backstop
+### [BIGGEST_WIN] A-31 - COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate
 
 *size S | OPEN | raised S113*
 
@@ -519,6 +519,46 @@ the capacity reading and points at fuel supply or commitment constraints instead
 CAVEAT: 212 days, and only 7 above $7, all in one January cold event. The saturation level is measured on
 a single episode and the ~$7 threshold is a reading of that episode, not a fitted parameter. It should be
 re-tested on the next cold event before any play is written on the number.
+
+CORRECTED S113, AND IT REWRITES THE CONCLUSION. Greg: 'That means people fired up some old inefficient
+coal plants to run because they were cheaper but not to run all year.' Right - so the ~3.1M is not a wall,
+it is how much dormant coal could be STARTED IN TIME. Measured day by day through the January 2026 event:
+  trough 2026-01-10  1,639,527 MWh at ~$2.9 gas
+  ramp   01-18 +220,916 | 01-19 +159,218 | 01-20 +208,343   <- gas still $3-4 here
+         01-23 +237,652 ($30.72) | 01-24 +309,955
+  peak   2026-01-24  3,143,948   <- ONE DAY AFTER the price peak
+  plateau 01-25..01-30 ~2.94-3.10M
+  decay  02-03 2.69M | 02-06 2.39M | 02-10 2.02M
+
+(1) IT RAMPS, IT DOES NOT STEP: 1.64M -> 3.14M is +92% over FOURTEEN DAYS in daily increments of roughly
+150-310k MWh. That is units being started one at a time - old plants brought up for the event, which
+nobody runs all year, so the available headroom depends on how much capacity is in cold reserve or
+seasonal layup and how fast it can be staffed and fuelled. EIA-860M carries generator STATUS (operating /
+standby / retired), so the dormant-but-alive fleet is enumerable - the same file A-17D and A-27 need.
+
+(2) COAL FOLLOWS LOAD, NOT THE GAS PRICE. On 01-18..01-20 coal climbed +221k/+159k/+208k while gas was
+still $3-4 and total generation rose 11.98M -> 13.34M. The price spike is the CONSEQUENCE of coal being
+maxed while load kept climbing, not the cause of coal starting. This kills the 'coal responds to the
+gas-coal spread' framing outright for this event.
+
+(3) THE PEAK LAGS THE PRICE BY A DAY and the decay takes SEVENTEEN DAYS to return near 2.0M. Hysteresis on
+both sides: started units do not shut straight off. So a second cold event arriving inside the decay
+window meets a much higher coal base than the first one did - the same weather is less bullish gas the
+second time, within about two weeks.
+
+THE REVISED MECHANISM, and it is forecastable where the old one was not: THE SPIKE HAPPENS WHEN THE COAL
+RAMP RATE CANNOT KEEP UP WITH THE LOAD RAMP RATE. That is a rate-against-rate condition, not a price
+level. The $7 'threshold' was never a threshold - it is where the ramp ran out during THAT event, and it
+would sit somewhere else given a different starting coal base or a slower load ramp.
+
+WHY THIS IS BUILDABLE: we already serve grid_stack.bas.*.demand_forecast_mwh, the BA's own day-ahead load
+forecast, for all seven respondents - so the LOAD ramp is knowable a day ahead. The coal ramp ceiling is
+now a measured constant (~150-310k MWh/day at US48) and the current coal base is served daily. The
+comparison is arithmetic on served fields. NOT YET BUILT and not yet tested on a second event.
+
+SUPERSEDES the earlier reading in this item that coal 'saturates at ~3.1M around $7'. The saturation was
+real for that episode; the causal attribution to price was wrong. Kept above rather than deleted, per D37
+- the observation stood, my story about it did not.
 
 ---
 
