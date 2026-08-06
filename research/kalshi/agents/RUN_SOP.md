@@ -63,6 +63,27 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.14 (S114): THE CURVE CONTRACT IS ENFORCED AT BLD/RFN — `path_contract.py`, ANNOUNCE in the
+  blind coordinator and HARD in the refine (the `due_gate` pattern: a SystemExit in the blind would
+  discard a completed run's numbers, and a path is repairable only by re-running the specialist).
+  **The contract was never checked, and it is violated on the record.** The committed g22 blind
+  fails 10 of 10 days — every one starting at hour 08, so the entire overnight leg is missing —
+  while g21 was 8 of 10 correct. **g22 is a REGRESSION, and the cause is already on file:** the
+  2-hourly clock spec lived only in RFN-1 until S110, so the blind template never carried it.
+  **THE CLOCK IS DERIVED, NOT DECREED:** read off the refine posteriors that were accepted as good
+  — `[20,22,0,2,4,6,8,10,12,14,16]` (n=7) and the same plus the `17` close (n=5). Both pass;
+  ending early or running past 17 into the next session does not.
+  **SCOPED PER D31:** every blind through g16 emitted no path at all, which is an ERA (the curve
+  was not yet the product), reported as ABSENT and never as a violation — otherwise 100+ phantom
+  defects would bury the three real ones.
+  **The guard is a FUNCTION (`assert_rows`), not inline coordinator code**, and that is the point:
+  the first version sat inline in each `__main__`, where its firing branch could never execute in a
+  test because both coordinators correctly refuse to run on a group with a committed record (NC-4,
+  which fired and protected `grp22.json` during this very build). A guard whose firing branch
+  cannot be executed has not been tested (NC-3). All three branches — announce, hard, and a clean
+  block passing — now execute against the real committed g22 rows in the selftest.
+  Backlog registered as A-47: the committed curves are library entries and must be RE-EMITTED by
+  re-running the specialist, never hand-patched, since a synthesised overnight leg is invented data.
 - v1.13 (S114): THE JUDGE'S DOCTRINE LEAVES THE BRAIN, AND EVERY ROLE IS DEBRIEFED.
   (a) **`failure_localization` MOVED OUT of the brain** to `store/failure_judge.json` ->
   `agents/failure_judge.md`, where the other single-role files already live. Greg's test was

@@ -15,6 +15,7 @@ import group_config as gc
 import render_util as ru
 import verify_gold
 import due_gate
+import path_contract
 verify_gold.assert_gold_intact()   # the concrete wall - no refine coordinate on a violated gold vault
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -184,6 +185,16 @@ if __name__ == "__main__":
     # was prose-only until S114.
     _rep = [_find_report(f"grp{gid[1:]}_mbo_specialist_{t}{tag}.json") for t in "ABCDE"]
     due_gate.assert_reported(gid, [p for p in _rep if p], hard=True)
+    # THE PATH CONTRACT (S114). BLD-1/RFN-1 require the 2-hourly clock FROM THE 20:00
+    # REOPEN through the close, first point 0, last == (day-move minus gap). Nothing
+    # checked it, and the committed g22 blind violates it on 10 of 10 days - every one
+    # starting at hour 08, so every curve was missing its overnight leg. g21 got it right
+    # on 8 of 10, which makes g22 a REGRESSION, and the cause is recorded: the clock spec
+    # lived only in RFN-1 until S110.
+    # HARD here (jidoka, SOP change control item 4). The refine's output is what gets merged and what
+    # becomes a library entry, and a truncated curve has a shape no session traded - so it can
+    # never be matched on shape (D32) and is worse than absent.
+    path_contract.assert_rows(rows, hard=True)
     try:
         print("render ->", render(gid, rows, actual, blind["days"]))
     except Exception as e:

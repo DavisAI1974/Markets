@@ -1781,6 +1781,15 @@
    "status": "OPEN",
    "session": "S114",
    "source": "measured while wiring brain_view / the mission brief, S114"
+  },
+  {
+   "id": "A-47",
+   "tier": "BIGGEST_WIN",
+   "title": "Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg",
+   "why": "path_contract.py (S114) measures it per group, scoped per D31 so an era is not called a defect. PRE-g17 blinds emitted NO path at all - the curve was not yet the product, so those are era, not violations. The real findings are in the curve era: g17 10/10 and g18 10/10 and g22 10/10 miss the 20:00 REOPEN entirely (every day starts at hour 08, so the whole overnight leg is absent); g20 10/10 overrun PAST the 17:00 close into the next session; g23 9/10; and g21 is 3/10 - the best block, 8 of 10 days on the canonical clock. SO g22 IS A REGRESSION FROM g21, AND THE CAUSE IS ALREADY RECORDED: the 2-hourly clock spec lived only in RFN-1 until S110, so the BLIND template never carried it. BLD-1 carries it now and path_contract enforces it, which closes it forward. WHAT IS STILL OWED: the committed curves themselves. They are library entries (D32) and retrieval matches on SHAPE, so a curve missing its first six hours is furniture that can never be matched. DO NOT hand-patch them - a synthesised overnight leg is invented data. They are re-emitted by re-running the specialist under the fixed template, in a rehearsal namespace, or they stay declared-truncated. Deciding which is Greg's call and is cheap either way now that the measurement is per-group.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "path_contract.py measurement, S114"
   }
  ],
  "tiers": {
