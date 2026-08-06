@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import Any
 
 from frankie_core import (
+    ALLOWED_STATES,
     FrankieConfig,
     FrankieDecision,
     FrankieEvent,
     GateStop,
-    canonical_json,
     load_json,
     sha256_json,
 )
@@ -58,6 +58,8 @@ def lookup_existing(
     index = load_json(index_path)
     if not isinstance(index, dict) or index.get("event_hash") != event_hash:
         raise GateStop(f"invalid Frankie event index: {index_path}")
+    if index.get("execution_enabled") is not False:
+        raise GateStop(f"Frankie event index violates execution invariant: {index_path}")
     evidence_path = Path(str(index.get("local_path") or ""))
     if not evidence_path.is_file():
         raise GateStop(f"Frankie index points to missing evidence: {evidence_path}")
@@ -75,6 +77,14 @@ def lookup_existing(
     if not isinstance(decision_raw, dict):
         raise GateStop(f"indexed evidence missing decision: {evidence_path}")
     decision = FrankieDecision(**decision_raw)
+    if decision.execution_enabled is not False:
+        raise GateStop(f"indexed decision violates execution invariant: {evidence_path}")
+    if decision.state not in ALLOWED_STATES or decision.authority not in ALLOWED_STATES:
+        raise GateStop(f"indexed decision carries an invalid state or authority: {evidence_path}")
+    if decision.event_id != event.event_id or decision.candidate_id != event.candidate_id:
+        raise GateStop(f"indexed decision identity does not match incoming event: {evidence_path}")
+    if decision.decision_hash != index.get("decision_hash"):
+        raise GateStop(f"event index and decision hash disagree: {index_path}")
     return decision, {
         "local_path": str(evidence_path),
         "envelope_hash": envelope["envelope_hash"],
@@ -91,6 +101,8 @@ def record_first(
     decision: FrankieDecision,
     evidence: dict[str, Any],
 ) -> dict[str, Any]:
+    if decision.execution_enabled is not False:
+        raise GateStop("cannot index a decision with execution enabled")
     event_hash = sha256_json(event.as_dict())
     index_path = _index_path(config, event_hash)
     payload = {
