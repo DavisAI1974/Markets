@@ -214,7 +214,7 @@ def consume_once(
         QueueUrl=config.sqs_queue_url,
         MaxNumberOfMessages=1,
         WaitTimeSeconds=20,
-        VisibilityTimeout=180,
+        VisibilityTimeout=900,
         AttributeNames=["ApproximateReceiveCount"],
         MessageAttributeNames=["All"],
     )
