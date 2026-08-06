@@ -137,17 +137,17 @@ def cmd_legacy(args: argparse.Namespace) -> int:
 
 
 def cmd_consume_once(args: argparse.Namespace) -> int:
-    print_json(
-        consume_once(
-            config=FrankieConfig.from_env(),
-            deterministic_only=args.deterministic_only,
-        )
-    )
+    # None means honor FRANKIE_DETERMINISTIC_ONLY from the environment. The flag may
+    # force deterministic mode on, but absence must never force it off.
+    only = True if args.deterministic_only else None
+    print_json(consume_once(config=FrankieConfig.from_env(), deterministic_only=only))
     return 0
 
 
 def cmd_serve(args: argparse.Namespace) -> int:
-    return serve(config=FrankieConfig.from_env(), deterministic_only=args.deterministic_only)
+    # Same tri-state rule as consume-once: environment is authoritative by default.
+    only = True if args.deterministic_only else None
+    return serve(config=FrankieConfig.from_env(), deterministic_only=only)
 
 
 def cmd_record_outcome(args: argparse.Namespace) -> int:
