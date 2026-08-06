@@ -23,7 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 RD = os.path.join(HERE, "renders", "ng_refine_s95")
 FC = os.path.join(HERE, "forecasts")
-EXPECTED_BRANCH = "claude/kalshi-agents-coordinator-guard-1175nr"
+EXPECTED_BRANCH = "claude/kalshi-agents-coordinator-guard-sg0n15"   # S114 drop-in branch
 TAGS = ("A", "B", "C", "D", "E")
 
 lines, nfail = [], 0

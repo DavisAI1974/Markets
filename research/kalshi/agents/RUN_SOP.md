@@ -63,6 +63,28 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.12 (S114): THE SPECIALIST IS TOLD WHAT IT WAS SERVED, AND WHERE A REPORTED GAP GOES.
+  WHY: Greg asked *"Do the agents know about registry?"* and the answer, checked rather than
+  assumed, was NO — none of the six templates mentioned any registry, and no specialist had ever
+  been told what its own state contains. It discovers fields by opening whatever it thinks to open,
+  across **419 fields in 29 blocks**. The measured cost is the desk's cleanest miss: 0629, where
+  `wind_mwh` was served in every slice and read by nobody. WHAT CHANGED:
+  (a) **BLD-1 and RFN-1 gain the `{INVENTORY}` slot** — an ATTACHED file, generated from the day's
+  own causal slice, listing every served field by name with no values and no lean, so it carries
+  nothing that could leak or steer. Greg's framing decided its form: *"On an attached one that
+  doesn't follow them to curve building unless it needs to"* — a PATH, not inline text, consulted
+  at the moment the question arises and otherwise out of the way. The prompt says to open it before
+  concluding nothing served speaks to a question, and before any stand-down.
+  (b) **`reasoning_method.reporting_duty_and_where_it_goes`** (brain, WORKING phase — it binds
+  during the run, so it is not in the briefing): declare a defective, absent, stale or suspicious
+  input rather than routing around it, and know the destination — a reported gap becomes a tracked
+  line in the OPEN ITEMS REGISTRY, not a sentence that dies in a posterior. Greg: *"if it dictates
+  agent behavior it should be in schema doc."* Both sides are measured: eleven silent data holes
+  found because a specialist stopped, and 12 of 13 S111 build suggestions lost because they had no
+  registry item.
+  (c) **FJ-1 added** — the failure judge had a role file, a frozen taxonomy and a protocol, and no
+  way to be invoked. Slot declarations resynced across all six templates.
+  SCOPE LIMIT: no change to the output contract, the mask, the scoring or any play.
 - v1.11 (S114): THE BRAIN IS SERVED BY ROLE AND PHASE, AND A MISSION BRIEF IS DELIVERED PRE-LAUNCH.
   Logged BEFORE execute this time, which is what item 2 asks for and what v1.10 recorded failing.
   WHY, in Greg's words: *"We don't want the agents seeing nonsense when they are making a
@@ -454,6 +476,14 @@ SPAWN PARAMETERS
 - YOUR STATE (the only state you read): renders/ng_refine_s95/{GID}_causal_slices/state_{DAY}.json
 - ANCHOR (group reference level, cum-from-anchor is measured from it): {ANCHOR}
   (respect direction_caveat: an anchor at the tick resolution floor does not carry a lean)
+- FIELD INVENTORY (attached, consult when needed - do NOT read it start to finish):
+  {INVENTORY} lists every field served to you today, names only, no values, no lean.
+  Open it at the moment you are about to conclude that nothing served speaks to a
+  question, and before any stand-down - then say which fields you checked. It exists
+  because on 0629 `wind_mwh` was served in every slice and read by nobody.
+  Anything defective, absent, stale or suspicious goes in
+  `state_defects_and_gaps_reported` and becomes a tracked line in the OPEN ITEMS
+  REGISTRY - it does not die in your posterior. See reasoning_method.
 - CALENDAR FOR YOUR DAY (facts, not hints - do not reinterpret them into a lean):
 {DAY_CALENDAR}
   Your PRIOR TRADING SESSION is named there and is NOT always the previous calendar day. The
@@ -529,6 +559,14 @@ SPAWN PARAMETERS
   the scoping. This is a relevance filter, not a blind wall: D2's one deliberate mask is
   the PRICE CURVE, and the brain carries no price.
 - YOUR DAY: {DAY} ({dow}, {day_class}).
+- FIELD INVENTORY (attached, consult when needed - do NOT read it start to finish):
+  {INVENTORY} lists every field served to you today, names only, no values, no lean.
+  Open it at the moment you are about to conclude that nothing served speaks to a
+  question, and before any stand-down - then say which fields you checked. It exists
+  because on 0629 `wind_mwh` was served in every slice and read by nobody.
+  Anything defective, absent, stale or suspicious goes in
+  `state_defects_and_gaps_reported` and becomes a tracked line in the OPEN ITEMS
+  REGISTRY - it does not die in your posterior. See reasoning_method.
 - CALENDAR FOR YOUR DAY (facts, not hints - do not reinterpret them into a lean):
 {DAY_CALENDAR}
   Your PRIOR TRADING SESSION is named there and is NOT always the previous calendar day. The

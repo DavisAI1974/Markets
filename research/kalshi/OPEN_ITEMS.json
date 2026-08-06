@@ -1772,6 +1772,15 @@
    "status": "OPEN",
    "session": "S114",
    "source": "Scale AI arXiv:2607.28802 - applied S114"
+  },
+  {
+   "id": "A-46",
+   "tier": "BIGGEST_WIN",
+   "title": "The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90",
+   "why": "Greg, S114: 'I'm trying to straddle the line of being right there but not clutter for their job.' MEASURED, and it redirects where the clutter actually is. The spawn prompt is 21,783 chars (~5.4k tokens), of which the mission brief is 76%. The WORKING BRAIN VIEW the same specialist holds is 1,581,814 chars - about 395k tokens. So the entire prompt, brief included, is roughly 1% of what is in front of the agent, and trimming it would be optimising noise. The clutter is 90 plays served whole on a day that fires a handful. THIS IS A RETRIEVAL PROBLEM AND WE ALREADY HAVE THE FINDING THAT SHAPES IT: the dimension budget L = k/r^d caps a viable matching dimension at ~3, which is why a regime/day-class label is the only workable retrieval key. Plays already carry `conditions` (parsed, 0 unparsed as of S112) and a day already carries its class, so a relevance cut is buildable from committed fields rather than invented. DO NOT BUILD IT BLIND: a play withheld from a specialist that needed it is a silent absence, which is the hole #7/#8 shape - so any cut must DECLARE what it withheld, exactly as brain_view already does at section level, and the first version should be measured against a full-brain run before it is trusted.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "measured while wiring brain_view / the mission brief, S114"
   }
  ],
  "tiers": {

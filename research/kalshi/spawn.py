@@ -177,6 +177,74 @@ def mission_brief(role):
     return "\n".join(out)
 
 
+def day_inventory(gid, day):
+    """EVERY FIELD SERVED TO THIS SPECIALIST ON THIS DAY, generated from the slice itself.
+
+    Greg, S114: "Do the agents know about registry?" They did not - no template mentioned any
+    registry, and no specialist has ever been told what its own state contains. It discovers fields
+    by opening whatever it thinks to open.
+
+    MEASURED COST, and it is the desk's cleanest miss: 0629. `wind_mwh` was SERVED IN EVERY SLICE
+    and read by nobody; gw_cdd rose exactly as forecast and gas burn FELL 4.2 Bcf/d because wind
+    rose 62%. `coal_mwh` and `nuclear_mwh` are served across US48 and six BAs and referenced by
+    ZERO plays. A model cannot consult a field it does not know exists, and 419 fields across 29
+    blocks is past the size where browsing finds them.
+
+    This is an INVENTORY, not a hint: names and counts only, never values, so it carries no lean
+    and nothing that could leak. Generated from the served file, so it cannot drift from what was
+    actually served - which is the difference between this and a hand-kept field list, the thing
+    that failed (A-22).
+    """
+    path = os.path.join(RN, "%s_causal_slices" % gid, "state_%s.json" % day)
+    if not os.path.exists(path):
+        alt = os.path.join(RN, "%s_causal_slices_b" % gid, "state_%s.json" % day)
+        if not os.path.exists(alt):
+            raise SlotError("INVENTORY: no causal slice for %s %s (looked in %s)"
+                            % (gid, day, os.path.relpath(path, ROOT)))
+        path = alt
+    with open(path, encoding="utf-8") as f:
+        slice_ = json.load(f)
+    dayblk = slice_.get(day) or {}
+    lines, total = [], 0
+    for block in sorted(dayblk):
+        v = dayblk[block]
+        if isinstance(v, dict):
+            names = sorted(v)
+            total += len(names)
+            lines.append("  %-24s (%d) %s" % (block, len(names), ", ".join(names)))
+        else:
+            total += 1
+            lines.append("  %-24s (1) <%s>" % (block, type(v).__name__))
+    head = ("%d fields across %d blocks are served to you on this day. This list is the INVENTORY, "
+            "not a recommendation - it carries names only, no values and no lean. It exists because "
+            "a field you do not know about cannot be consulted: on 0629 `wind_mwh` was served in "
+            "every slice and read by nobody, and the day was missed by 430 for exactly that reason. "
+            "If you STAND DOWN on a question, say which of these you checked first."
+            % (total, len(dayblk)))
+    return head + "\n" + "\n".join(lines)
+
+
+def write_inventory(gid, day):
+    """Write the day's field inventory to disk and return its PATH.
+
+    ATTACHED, NOT INLINE (Greg, S114): "On an attached one that doesn't follow them to curve
+    building unless it needs to." 419 field names inline would sit in front of the specialist for
+    every step of the reasoning, which is the noise problem, not the fix for it. As a file it is a
+    LOOKUP: consulted at the moment the question "is there anything served that speaks to this?"
+    actually arises, and otherwise out of the way.
+
+    Under data/ because it is regenerable from a committed slice and data/ is disposable (D34)."""
+    txt = day_inventory(gid, day)
+    rel = os.path.join("data", "brain_view", "%s_inventory_%s.txt" % (gid, day))
+    dest = os.path.join(ROOT, rel)
+    d = os.path.dirname(dest)
+    if not os.path.isdir(d):
+        os.makedirs(d)
+    with open(dest, "w", encoding="utf-8") as f:
+        f.write(txt + "\n")
+    return rel
+
+
 def cal_facts(gid):
     """THE NC-1 FIX. Every calendar premise is QUOTED from the served flow_calendar with its field
     name and value beside it, so a directive cannot assert a calendar fact the data contradicts.
@@ -272,6 +340,10 @@ def slots(gid, day=None, spec=None):
         s["dow"] = (served[day].get("dow") or "?", "state.%s.dow" % day)
         s["DAYS_OWNED"] = (", ".join(d for d, o in sorted(owners.items()) if o == owners[day]),
                            "group_config.owner_map")
+        s["INVENTORY"] = (write_inventory(gid, day),
+                          "ATTACHED file generated from the day's OWN causal slice - names only, "
+                          "never values. A path, not inline text: Greg, S114 - it is an attachment "
+                          "'that doesn't follow them to curve building unless it needs to'")
         s["DAY_CALENDAR"] = (day_calendar(gid, day),
                              "GENERATED from plant_calendar RULES - prior/next trading session, "
                              "holiday gaps, upcoming non-normal sessions")
