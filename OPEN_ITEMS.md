@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 154 |
+| open | 155 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 69, **M** 48, **L** 9
+By size: **XS** 18, **S** 70, **M** 48, **L** 9
 
 ---
 
-By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 102
+By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -87,7 +87,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 102
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (102)
+## REST (103)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -112,6 +112,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 102
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
 | **A-3** | S | Compute the effective matching dimension d of any retrieval | - |
+| **A-64** | S | Kernel Forge (arXiv 2607.24762) - CUDA optimization NOT APPLICABLE to us; the MCTS-over-candidates harness pattern IS | Registered under D36 because a delivered external recommendation gets a line even when most of it is rejected - an unrecorded rejection returns as a surprise. The applicable slice is one harness idea, not a build; the domain half is closed with a stated reason. |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | S | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -274,6 +275,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 102
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
+| **A-64** | REST | S | OPEN | S115 | Kernel Forge (arXiv 2607.24762) - CUDA optimization NOT APPLICABLE to us; the MCTS-over-candidates harness pattern IS | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | REST | S | OPEN | S111 | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -2295,6 +2297,27 @@ AND IT UPGRADES TVA FROM CORRELATE TO INSTRUMENT. Its north Georgia dams are sto
 **Source:** FORECAST_ARCHITECTURE_S111 s4.2
 
 L = k/r^d caps our library at a matching dimension of about 3. Condition on ten things and retrieval returns a day no closer than random - and returns it confidently with a magnitude attached. Nothing to build, only to measure.
+
+---
+
+### [REST] A-64 - Kernel Forge (arXiv 2607.24762) - CUDA optimization NOT APPLICABLE to us; the MCTS-over-candidates harness pattern IS
+
+*size S | OPEN | raised S115*
+
+**Why it is REST:** Registered under D36 because a delivered external recommendation gets a line even when most of it is rejected - an unrecorded rejection returns as a surprise. The applicable slice is one harness idea, not a build; the domain half is closed with a stated reason.
+
+**Source:** Greg, S115: https://arxiv.org/abs/2607.24762 (after a terminology mix-up - Greg meant COMPUTE kernels; Claude had been discussing SIMILARITY kernels, which is A-63 and a separate thing)
+
+THE PAPER: 'Kernel Forge: An Agent Harness for LLM-based Generation and Optimization of CUDA Kernels' (Brodsky, Kumar, Kashmira, Danatanarayana, Mars, Flautner, Tang; cs.AI/cs.PF). An open-source agentic harness that takes an UNMODIFIED PyTorch model in place, supports vision/diffusion/LLM workloads, uses MONTE CARLO TREE SEARCH to explore multiple optimization paths rather than a single linear refinement chain, and ships a GUI for monitoring, inspecting candidates and debugging. Measured on an NVIDIA DGX Spark/GB10, 50 optimization iterations per kernel: 14 kernels beat PyTorch eager - 1.52x adaptive_avgpool2d (ResNet-50), 1.70x group_norm (Stable Diffusion 3.5 Medium), 2.83x softmax (Gemma 4 E2B), 1.54x softmax (Qwen 3.5 35B-A3B). Numbers taken from the abstract, which reports them explicitly; the full PDF exceeded the fetch limit and was NOT read.
+
+THE DOMAIN HALF IS CLOSED, WITH A REASON: we run NO PyTorch models anywhere in the forecaster or the dock. Compute is small numpy over a ~0.4 GB data plane; the latency-critical path is NETWORK (the Databento live gateway, measured 7.7 ms median from the box at S100, and the Kalshi API), not GPU. There is no kernel here to optimize, so this would be buying speed in a part that is not slow. Do not reopen on the grounds that we might add GPU work later - reopen only if a GPU workload actually enters the live path.
+
+THE TRANSFERABLE HALF, AND IT IS REAL: their stated contribution over prior tools is exploring MULTIPLE OPTIMIZATION PATHS rather than a SINGLE LINEAR REFINEMENT CHAIN. Our refine is precisely a single linear chain - blind -> refine r1 -> refine r2, one path, no branching, no candidate pool, no selection among alternatives. And we already carry the vocabulary for the alternative without having built it: D32 specifies 'one analog for the central path, the cohort that PASSED the match test but was not chosen for the band', and the coordinator's entire declared job is SELECT and ASSEMBLE. A candidate POOL with a selection step is the shape our own architecture describes and has never implemented.
+PAIRS WITH: A-63 (the retrieval kernel supplies the candidate cohort) and A-60 (the cohort spread IS the band). Those three are one idea seen from three sides - candidates, selection, dispersion.
+
+THEIR METHODOLOGICAL COMPLAINT IS OUR OWN DOCTRINE, worth noting as corroboration: they criticise prior work for evaluating on 'randomly generated tensors and isolated kernels' and insist on real models in place. That is per-event scoring on real days, never pooled and never synthetic (D4/D37).
+
+FALSIFIER for the transferable half: if a branching refine (N candidate reads, scored, one selected) does not beat the linear chain on sum|err| per event on a walked block, the linear chain was not the constraint and this closes.
 
 ---
 
