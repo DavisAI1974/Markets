@@ -9,9 +9,12 @@ on:
       - research/kalshi/frankie_*.py
       - research/kalshi/frankie_*.json
       - research/kalshi/tests/test_agent_frankie.py
-      - deploy/aws/markets-frankie.service
+      - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
+      - deploy/aws/markets-frankie*.service
+      - deploy/aws/markets-frankie*.timer
       - deploy/aws/install_frankie.sh
       - deploy/aws/requirements-frankie.txt
+      - CHATGPT_HANDOFF_S117_AGENT_FRANKIE.md
       - .github/workflows/agent_frankie_ci.yml
   pull_request:
     paths:
@@ -19,9 +22,12 @@ on:
       - research/kalshi/frankie_*.py
       - research/kalshi/frankie_*.json
       - research/kalshi/tests/test_agent_frankie.py
-      - deploy/aws/markets-frankie.service
+      - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
+      - deploy/aws/markets-frankie*.service
+      - deploy/aws/markets-frankie*.timer
       - deploy/aws/install_frankie.sh
       - deploy/aws/requirements-frankie.txt
+      - CHATGPT_HANDOFF_S117_AGENT_FRANKIE.md
       - .github/workflows/agent_frankie_ci.yml
   workflow_dispatch:
 
@@ -45,16 +51,21 @@ jobs:
             research/kalshi/frankie_core.py \
             research/kalshi/frankie_backends.py \
             research/kalshi/frankie_engine.py \
-            research/kalshi/frankie_improve.py
+            research/kalshi/frankie_improve.py \
+            research/kalshi/frankie_reflect.py \
+            research/kalshi/frankie_reflect_runner.py
       - name: Validate JSON contracts
         run: |
           python -m json.tool research/kalshi/frankie_event_schema.json >/dev/null
+          python -m json.tool research/kalshi/frankie_outcome_schema.json >/dev/null
           python -m json.tool research/kalshi/frankie_paper_manifest.json >/dev/null
-      - name: Validate shell and service template
+      - name: Validate shell and systemd templates
         run: |
           bash -n deploy/aws/install_frankie.sh
           grep -q 'ExecStart=/usr/bin/python3 agent_frankie.py serve' deploy/aws/markets-frankie.service
           grep -q 'NoNewPrivileges=true' deploy/aws/markets-frankie.service
+          grep -q 'frankie_reflect_runner.py' deploy/aws/markets-frankie-reflect.service
+          grep -q 'Persistent=true' deploy/aws/markets-frankie-reflect.timer
       - name: Prove original spawner is untouched
         run: |
           test "$(git hash-object research/kalshi/spawn.py)" = "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
@@ -72,6 +83,7 @@ jobs:
           assert data['execution_enabled'] is False
           assert data['origin']['verified'] is True
           assert data['self_improvement']['automatic_apply'] is False
+          assert data['self_improvement']['immutable_outcome_sidecars'] is True
           text = open('/tmp/frankie-health.json').read()
           assert 'AWS_SECRET_ACCESS_KEY' not in text
           assert 'OPENAI_API_KEY' not in text
