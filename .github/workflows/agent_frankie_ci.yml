@@ -8,7 +8,7 @@ on:
       - research/kalshi/agent_frankie.py
       - research/kalshi/frankie_*.py
       - research/kalshi/frankie_*.json
-      - research/kalshi/tests/test_agent_frankie.py
+      - research/kalshi/tests/test_*frankie*.py
       - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
       - deploy/aws/markets-frankie*.service
       - deploy/aws/markets-frankie*.timer
@@ -24,7 +24,7 @@ on:
       - research/kalshi/agent_frankie.py
       - research/kalshi/frankie_*.py
       - research/kalshi/frankie_*.json
-      - research/kalshi/tests/test_agent_frankie.py
+      - research/kalshi/tests/test_*frankie*.py
       - research/kalshi/FRANKIE_ARCHITECTURE_S117.md
       - deploy/aws/markets-frankie*.service
       - deploy/aws/markets-frankie*.timer
@@ -81,7 +81,7 @@ jobs:
       - name: Run Frankie selftest
         run: python research/kalshi/agent_frankie.py selftest
       - name: Run Frankie unit tests
-        run: python research/kalshi/tests/test_agent_frankie.py
+        run: python -m unittest discover -s research/kalshi/tests -p 'test_*frankie*.py'
       - name: Verify health is secret-free and non-executable
         run: |
           python research/kalshi/agent_frankie.py health > /tmp/frankie-health.json
