@@ -394,7 +394,96 @@ def build(brain, role, phase="working", window_days=None):
     return view, served, withheld
 
 
-def cmd_view(role, out, phase="working", gid=None):
+def _resolve(state_day, path):
+    """Walk a dotted state_path against ONE day's served slice. -> (found, value)."""
+    cur = state_day
+    for part in (path or "").split("."):
+        if isinstance(cur, dict) and part in cur:
+            cur = cur[part]
+        else:
+            return False, None
+    return True, cur
+
+
+_CMP = {
+    ">=": lambda a, b: a >= b, ">": lambda a, b: a > b,
+    "<=": lambda a, b: a <= b, "<": lambda a, b: a < b,
+    "==": lambda a, b: a == b, "!=": lambda a, b: a != b,
+}
+
+
+def annotate_evaluability(view, state_day):
+    """A-46, requested by EVERY g24 specialist in near-identical words.
+
+    C-0721: "pre-compute each play's conditions[].state_path against the served slice and label it
+    EVALUABLE / INPUT-ABSENT before I open it. I burned real effort establishing that
+    direction.flow_nowcast and direction.book_contrarian read variables that appear in zero of my
+    415 served fields." E-0731: "half my step-4 work was arithmetic a script does better -
+    pctile_1y 14.15 vs bar 3 -> NOT ARMED. Doing that by hand is where I would silently get one
+    wrong, AND NOBODY DOWNSTREAM WOULD EVER KNOW."
+
+    ANNOTATES, NEVER DROPS. Every specialist that asked for this ALSO asked not to lose the
+    falsifiers, the health notes and the CONTRADICTING instances ("a view that kept only the
+    supports instances would have made me worse"). So a play whose inputs are absent is LABELLED,
+    not deleted - a dropped play cannot be audited.
+
+    NO LEAK: every value written here is read out of the specialist's OWN served slice, which it
+    already holds in full. This adds no information to the view; it does arithmetic the reader
+    would otherwise do by hand.
+    """
+    if not isinstance(state_day, dict):
+        return view
+    for pl in view.get("plays", []) or []:
+        conds = pl.get("conditions")
+        if not isinstance(conds, list) or not conds:
+            pl["evaluability"] = {
+                "verdict": "NO_PARSED_CONDITIONS",
+                "note": ("this play carries no machine-readable conditions[], so nothing could be "
+                         "resolved for you - read it in full. Absence of a verdict here is NOT a "
+                         "verdict."),
+            }
+            continue
+        rows, n_found = [], 0
+        for c in conds:
+            path = c.get("state_path")
+            found, val = _resolve(state_day, path)
+            n_found += bool(found)
+            row = {"quantity": (c.get("quantity") or "")[:160], "state_path": path,
+                   "comparator": c.get("comparator"), "threshold": c.get("threshold"),
+                   "units": c.get("units"), "resolved": found, "served_value": val}
+            fn = _CMP.get(c.get("comparator"))
+            if found and fn is not None and isinstance(val, (int, float)) \
+                    and isinstance(c.get("threshold"), (int, float)) and not isinstance(val, bool):
+                try:
+                    row["armed"] = bool(fn(val, c["threshold"]))
+                    row["reads"] = "%s %s %s -> %s" % (val, c["comparator"], c["threshold"],
+                                                       "ARMED" if row["armed"] else "NOT ARMED")
+                except Exception:
+                    row["armed"] = None
+            elif found:
+                row["armed"] = None
+                row["reads"] = ("served, but not a numeric comparison this tool can settle - "
+                                "evaluate it yourself")
+            else:
+                row["armed"] = None
+                row["reads"] = "INPUT ABSENT from your slice - this limb cannot be evaluated today"
+            rows.append(row)
+        verdict = ("EVALUABLE" if n_found == len(rows)
+                   else "INPUT_ABSENT" if n_found == 0 else "PARTIALLY_EVALUABLE")
+        pl["evaluability"] = {
+            "verdict": verdict,
+            "resolved_limbs": "%d of %d" % (n_found, len(rows)),
+            "limbs": rows,
+            "note": ("computed against YOUR served slice at view-build time. INPUT_ABSENT means "
+                     "the play's own state_path resolves to nothing in your day - stand it down on "
+                     "that ground and say so, rather than reconstructing the quantity from "
+                     "somewhere else. ARMED/NOT ARMED is arithmetic, not a call: a play can be "
+                     "armed and still wrong for your day."),
+        }
+    return view
+
+
+def cmd_view(role, out, phase="working", gid=None, state_path=None, day=None):
     brain = load()
     days = None
     if gid:
@@ -404,6 +493,19 @@ def cmd_view(role, out, phase="working", gid=None):
             raise SystemExit("brain_view: unknown group %r" % gid)
         days = gc.GROUPS[gid]["days"]
     view, served, withheld = build(brain, role, phase, days)
+    # A-46: resolve every parsed condition against THIS specialist's own served slice.
+    _ev = None
+    if state_path and day:
+        try:
+            with open(state_path, encoding="utf-8") as fh:
+                _st = json.load(fh)
+            _sd = _st.get(day)
+            if _sd is None:
+                raise KeyError("day %s not in %s" % (day, state_path))
+            view = annotate_evaluability(view, _sd)
+            _ev = sum(1 for x in view.get("plays", []) if (x.get("evaluability") or {}).get("verdict") == "EVALUABLE")
+        except Exception as e:
+            print("[brain_view] evaluability annotation SKIPPED: %s" % e)
     if out:
         d = os.path.dirname(os.path.abspath(out))
         if d and not os.path.isdir(d):
@@ -422,6 +524,12 @@ def cmd_view(role, out, phase="working", gid=None):
     elif gid is None:
         print("  BLIND WALL : NOT APPLIED - no --gid given. A blind specialist MUST be served with "
               "--gid, or the brain hands it dated realized outcomes for its own day.")
+    if _ev is not None:
+        from collections import Counter as _C
+        _c = _C((x.get("evaluability") or {}).get("verdict") for x in view.get("plays", []))
+        print("  EVALUABILITY (A-46, resolved against %s day %s):" % (os.path.basename(state_path), day))
+        for _k, _n in _c.most_common():
+            print("      %-22s %d" % (_k, _n))
     if out:
         print("  written -> %s  (%.0f KB)" % (out, os.path.getsize(out) / 1024.0))
     return 0
@@ -569,6 +677,9 @@ def main():
     ap.add_argument("--gid", help="group id - REDACT every in-window date from the view (the blind "
                                   "wall). Required for any blind specialist.")
     ap.add_argument("--roles", action="store_true", help="the section x role matrix")
+    ap.add_argument("--state", help="a staged decision-state file; with --day, resolves every "
+                                    "play's parsed conditions against that day's slice (A-46)")
+    ap.add_argument("--day", help="YYYYMMDD - the day inside --state to resolve against")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -576,7 +687,7 @@ def main():
     if a.roles:
         return cmd_roles()
     if a.role:
-        return cmd_view(a.role, a.out, a.phase, a.gid)
+        return cmd_view(a.role, a.out, a.phase, a.gid, a.state, a.day)
     ap.print_help()
     return 2
 

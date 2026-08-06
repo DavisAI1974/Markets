@@ -539,12 +539,13 @@ nothing past your decision point. Do not attempt to obtain masked or future data
 
 SPAWN PARAMETERS
 - GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, BLIND. Brain ({BRAIN_V}): your reasoning file names knowledge/ng_brain.json and that is correct
-  - run `python brain_view.py --role specialist --gid {GID} --out {VIEW}` and read {VIEW}, which IS that
+  - run `python brain_view.py --role specialist --gid {GID} --state {STATE} --day {DAY} --out {VIEW}` and read {VIEW}, which IS that
   brain with the sections meant for another phase left out (your MISSION brief, delivered above,
   and superseded doctrine_legacy). meta.view_withheld names each and why. --gid applies the BLIND WALL: the brain records DATED REALIZED OUTCOMES against
   block days (S112 stamped 624 instances and every merge since adds more), so every string naming
   a day inside your block is redacted and replaced with a marker that says so. meta
   .window_redaction gives the count.
+  `--state`/`--day` resolve EVERY play's parsed conditions against YOUR OWN served slice and stamp each play EVALUABLE / PARTIALLY_EVALUABLE / INPUT_ABSENT / NO_PARSED_CONDITIONS, with each numeric limb read out as e.g. `14.15 >= 3 -> ARMED` (A-46). Every g24 specialist asked for this in near-identical words - E-0731: "half my step-4 work was arithmetic a script does better... doing that by hand is where I would silently get one wrong, and nobody downstream would ever know." It ANNOTATES, never drops: a play whose inputs are absent is LABELLED so you can stand it down on that ground and say so, rather than reconstructing the quantity from somewhere else. ARMED is arithmetic, not a call - a play can be armed and still wrong for your day.
   DO NOT read knowledge/ng_brain.json directly on a blind run. An earlier version of this prompt
   said the brain "carries no price" - that was FALSE, and two specialists forecasting g22 hit
   their own realized day-move in it and said so. The section scoping is a relevance filter; this
@@ -644,12 +645,13 @@ the causal read supports even where the actual went further); general mechanisms
 
 SPAWN PARAMETERS
 - GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, REFINE. Brain ({BRAIN_V}): your reasoning file names knowledge/ng_brain.json and that is correct
-  - run `python brain_view.py --role specialist --gid {GID} --out {VIEW}` and read {VIEW}, which IS that
+  - run `python brain_view.py --role specialist --gid {GID} --state {STATE} --day {DAY} --out {VIEW}` and read {VIEW}, which IS that
   brain with the sections meant for another phase left out (your MISSION brief, delivered above,
   and superseded doctrine_legacy). meta.view_withheld names each and why. --gid applies the BLIND WALL: the brain records DATED REALIZED OUTCOMES against
   block days (S112 stamped 624 instances and every merge since adds more), so every string naming
   a day inside your block is redacted and replaced with a marker that says so. meta
   .window_redaction gives the count.
+  `--state`/`--day` resolve EVERY play's parsed conditions against YOUR OWN served slice and stamp each play EVALUABLE / PARTIALLY_EVALUABLE / INPUT_ABSENT / NO_PARSED_CONDITIONS, with each numeric limb read out as e.g. `14.15 >= 3 -> ARMED` (A-46). Every g24 specialist asked for this in near-identical words - E-0731: "half my step-4 work was arithmetic a script does better... doing that by hand is where I would silently get one wrong, and nobody downstream would ever know." It ANNOTATES, never drops: a play whose inputs are absent is LABELLED so you can stand it down on that ground and say so, rather than reconstructing the quantity from somewhere else. ARMED is arithmetic, not a call - a play can be armed and still wrong for your day.
   DO NOT read knowledge/ng_brain.json directly on a blind run. An earlier version of this prompt
   said the brain "carries no price" - that was FALSE, and two specialists forecasting g22 hit
   their own realized day-move in it and said so. The section scoping is a relevance filter; this

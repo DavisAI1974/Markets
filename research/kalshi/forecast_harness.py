@@ -889,6 +889,60 @@ def _leg_store_for(ymd: str):
         return None
 
 
+_GEFS_CACHE: dict | None = None
+
+
+def _weather_forcing_block(ymd: str) -> dict | None:
+    """(S114, registry G-5 / A-51) THE FORWARD RENEWABLES FORCING - wind and solar, as a DENSITY.
+
+    THE GAP THIS CLOSES, and it is the single most-requested missing input of the g24 run: FOUR
+    specialists independently reported that no FORWARD wind or solar expectation is served
+    anywhere. `grid_stack.wind_mwh` is D+2 stale BY CONSTRUCTION (EIA-930's publication lag), so on
+    the exact channel the 0629 lesson is about - gw_cdd rose exactly as forecast and gas burn FELL
+    4.2 Bcf/d because wind rose 62% - wind could only ever CORROBORATE, never forecast.
+
+    BLIND-LEGAL BY VINTAGE, not by assertion. The record is built from the GEFS **12Z cycle of
+    D-1**, which publishes about 17Z (12:00 ET on D-1) - roughly eight hours before the 20:00 ET
+    reopen that is this day's decision point, and a full cycle more conservative than the 18Z that
+    would also qualify. Every record carries `cycle_utc` and `knowable_from` so the claim is
+    auditable rather than trusted (the S97 COT-publication lesson).
+
+    NOT PRICE-DERIVED, so it is deliberately NOT in _PRICE_DERIVED_BLOCKS: freezing a forward
+    forecast at the anchor vintage would serve the same weather to all ten days, which is the
+    S113/A-12 defect in a new field.
+
+    WIND AND SOLAR ARE NEVER SUMMED. They are seasonally ANTI-correlated (wind peaks
+    spring/autumn, solar at the solstice), so a single 'renewables' term is a composite of two
+    opposite annual cycles - D37, and Greg's S113 correction.
+
+    READS A STORE, NEVER FETCHES. Serving would otherwise make every state build wait on ~31
+    ensemble members over HTTP. A missing store yields None, which state_health turns into a hard
+    failure - the model_disagreement lesson from this same session says an empty-but-PRESENT record
+    is worse than an absent one, so this returns None rather than a hollow shell.
+    """
+    global _GEFS_CACHE
+    if _GEFS_CACHE is None:
+        _GEFS_CACHE = _load_json(os.path.join("gefs_forcing", "gefs_forcing.json")) or {}
+    rec = _GEFS_CACHE.get(ymd)
+    if not rec:
+        return None
+    keep = ("day", "cycle_utc", "knowable_from", "members_used", "wind_cf_proxy",
+            "solar_irradiance_proxy", "precip_proxy", "n_wind_cells", "n_solar_cells",
+            "served_separately", "wind_method", "geography", "validation", "these_are_proxies")
+    out = {k: rec[k] for k in keep if k in rec}
+    out["is_forecast_not_realized"] = True
+    out["how_to_read_the_spread"] = (
+        "p10/p50/p90 across ensemble members, in the model's own proxy units - NOT MWh. A WIDE "
+        "spread means the ensemble disagrees about the forcing, which is a reason to widen your "
+        "band or decline, not a reason to move your p50. A NARROW spread on a large p50 move is "
+        "the confident case. The validated claim is DIRECTION of the day-over-day CHANGE (wind "
+        "84%, solar 75% against realized EIA-930 US48, benchmark 50%), never the level.")
+    out["pairs_with"] = (
+        "grid_stack.wind_mwh / solar_mwh are REALIZED and D+2 stale; this is the FORWARD view of "
+        "the same forcings. Use realized to check the proxy's recent tracking, forward to forecast.")
+    return out
+
+
 def _scored_leg_block(ymd: str) -> dict | None:
     """S114: WHICH CONTRACT THIS DAY IS SCORED ON, declared in the state.
 
@@ -1244,6 +1298,11 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
                   "weather": _weather_asof(iso, wx),
                   "weather_forecast": _forecast_weather_asof(iso, mos),
                   "weather_forecast_cycle": _mos_cycle_block(iso),
+                  # S114 / G-5 / A-51: the FORWARD renewables forcing. Keyed on the SESSION day (d),
+                  # not the ISO calendar date - the record is built for the gas day labelled d from
+                  # the 12Z cycle of d-1. Exogenous and forward-looking, so it stays LIVE under the
+                  # one-shot price mask, exactly like weather_forecast.
+                  "weather_forcing_forecast": _weather_forcing_block(d),
                   "freeze_risk": _freeze_risk_block(iso),
                   "model_disagreement": _model_disagreement_block(iso),
                   "tape_conditions": _tape_conditions_block(iso),

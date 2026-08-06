@@ -35,6 +35,11 @@ REQUIRED_EVERY_DAY = (
     # S114: the scored contract, declared per day. Required because its ABSENCE on a
     # roll-straddling block is the exact condition under which hole #8 recurs silently.
     "scored_leg",
+    # S114 / G-5 / A-51: the FORWARD renewables forcing (wind + solar as a density). REQUIRED
+    # because the whole point of the feed is that its absence was invisible: four g24 specialists
+    # had to discover by hand that no forward wind expectation existed anywhere, and hole #4 is
+    # exactly a block wired behind a try/except with no entry here (vol_regime, dead five groups).
+    "weather_forcing_forecast",
 )
 
 # Price-derived blocks. Under a mask they are EXPECTED to be frozen at the anchor vintage - but the

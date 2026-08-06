@@ -13477,11 +13477,12 @@
    "conditions": [
     {
      "quantity": "winter_month_gate",
-     "state_path": "flow_calendar.month",
+     "state_path": "flow_calendar.bidweek_delivery_month",
      "reference": "calendar",
      "comparator": "in",
      "threshold": "Nov-Mar",
-     "units": "month"
+     "units": "month",
+     "state_path_corrected_S114": "was 'flow_calendar.month', which does not exist in the served block and resolved to nothing. bidweek_delivery_month is the served month field. Found by the A-46 evaluability sweep, not by a specialist - these are winter-scoped plays that stood down on season in g24, so the broken path was never exercised."
     }
    ],
    "instances": [
@@ -13712,11 +13713,12 @@
    "conditions": [
     {
      "quantity": "month_of_year",
-     "state_path": "flow_calendar.month",
+     "state_path": "flow_calendar.bidweek_delivery_month",
      "reference": "calendar",
      "comparator": "in",
      "threshold": "all - seasonal structure",
-     "units": "month"
+     "units": "month",
+     "state_path_corrected_S114": "was 'flow_calendar.month', which does not exist in the served block and resolved to nothing. bidweek_delivery_month is the served month field. Found by the A-46 evaluability sweep, not by a specialist - these are winter-scoped plays that stood down on season in g24, so the broken path was never exercised."
     }
    ],
    "instances": [
@@ -13787,11 +13789,12 @@
    "conditions": [
     {
      "quantity": "summer_breadth_low_gate",
-     "state_path": "grid_stack.bas.*.gas_share (weekly rise count)",
+     "state_path": "grid_stack.bas.US48.gas_share_chg_7d",
      "reference": "absolute",
-     "comparator": "<=",
-     "threshold": 1,
-     "units": "BAs of 6"
+     "comparator": ">",
+     "threshold": 0.0,
+     "units": "share of generation, w/w change",
+     "state_path_corrected_S114": "was 'grid_stack.bas.*.gas_share (weekly rise count)' - PROSE, not a resolvable path, so the play read INPUT_ABSENT and stood down on 8 of 10 g24 days as uncomputable rather than as inapplicable. The share CHANGE now exists as a served field (added S114): gas MWh and gas SHARE moved in OPPOSITE directions on 20260727, so the MWh delta was never a valid substitute for it."
     }
    ],
    "instances": [
@@ -13857,11 +13860,12 @@
    "conditions": [
     {
      "quantity": "cooling_season_hdd_inversion_gate",
-     "state_path": "flow_calendar.month",
+     "state_path": "flow_calendar.bidweek_delivery_month",
      "reference": "calendar",
      "comparator": "in",
      "threshold": "Apr-Sep",
-     "units": "month"
+     "units": "month",
+     "state_path_corrected_S114": "was 'flow_calendar.month', which does not exist in the served block and resolved to nothing. bidweek_delivery_month is the served month field. Found by the A-46 evaluability sweep, not by a specialist - these are winter-scoped plays that stood down on season in g24, so the broken path was never exercised."
     },
     {
      "quantity": "authority_disagreement_gate",
@@ -13946,11 +13950,12 @@
    "conditions": [
     {
      "quantity": "month_tail_gate",
-     "state_path": "flow_calendar.month",
+     "state_path": "flow_calendar.bidweek_delivery_month",
      "reference": "calendar",
      "comparator": "in",
      "threshold": "all twelve - each month carries its own band",
-     "units": "month"
+     "units": "month",
+     "state_path_corrected_S114": "was 'flow_calendar.month', which does not exist in the served block and resolved to nothing. bidweek_delivery_month is the served month field. Found by the A-46 evaluability sweep, not by a specialist - these are winter-scoped plays that stood down on season in g24, so the broken path was never exercised."
     }
    ],
    "instances": [

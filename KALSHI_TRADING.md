@@ -735,6 +735,9 @@ new tool cannot go unlisted. **161 files.**
 - `options_md_measures.py` — FEED I phase MD: the free measurement program on the settle-IV surface
 - `options_replay.py` — E4: the settle-IV replay of the walked winter (OPTIONS_COACH_RESEARCH_S100.1).
 - `options_surface.py` — FEED I phase i (family DEL/P): NG options OI-by-strike pin map + opex clock (S99).
+- `blind_legality.py` — can each brain play FIRE on a price-masked blind slice? Flags the CONTRADICTION case: a play asserting blind-legality while naming a price-derived quantity (S114, A-53).
+- `build_realized_forcings.py` — realized US48 wind/solar/hydro from EIA-930, the comparator the GEFS forcing proxy is validated against (S114).
+- `gefs_validate.py` — scores the GEFS forcing proxy's day-over-day DIRECTION against realized EIA-930 US48 (wind 84%, solar 75%, benchmark 50%) (S114, G-5).
 - `path_contract.py` — is the emitted curve actually a full-session curve? (S114)
 - `per_event.py` — the reporting contract for any measurement on this desk.
 - `plant_calendar.py` — the plant's clock and work cycle. RULES, not a loaded table.

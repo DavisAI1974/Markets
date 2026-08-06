@@ -43,6 +43,11 @@ PREFIXES = [
     ("cash_basis/",               "data/cash_basis"),
     ("grid_stack/",               "data/grid_stack"),
     ("model_disagreement/",       "data/model_disagreement"),
+    # S114 / G-5 / A-51: the FORWARD renewables forcing store (wind + solar as an ensemble
+    # density). REQUIRED_EVERY_DAY in state_health, so a session without it cannot stage a group -
+    # which is deliberate: its absence was invisible for the whole walk until four g24 specialists
+    # found it by hand.
+    ("nymex/gefs_forcing/",       "data/gefs_forcing"),
     ("nuclear_outages/",          "data/nuclear_outages"),
     ("solar_calendar/",           "data/solar_calendar"),
     ("flow_calendar/",            "data/flow_calendar"),

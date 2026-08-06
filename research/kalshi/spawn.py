@@ -32,6 +32,7 @@ USAGE
 
 import argparse
 import datetime as dt
+import glob
 import json
 import os
 import re
@@ -485,6 +486,44 @@ def _redirect(text, gid, ns):
     return banner + text
 
 
+def _weekend_bridge_gate(gid, day, spec, namespace=None):
+    """-> a reason string if this spawn is a Monday whose weekend A-bridge is missing, else None.
+
+    Only fires for the B/Monday case that the E -> A -> B chain is built for, and only when the
+    preceding Friday is INSIDE the block (a block-opening Monday inherits the anchor, not a
+    specialist). Returns a reason rather than raising so the caller decides hard-fail vs declared
+    deviation.
+    """
+    import datetime as _dt
+    import group_config as _gc
+    g = _gc.GROUPS.get(gid) or {}
+    days = g.get("days") or []
+    if day not in days:
+        return None
+    d = _dt.date(int(day[:4]), int(day[4:6]), int(day[6:]))
+    if d.weekday() != 0:                       # Mondays only
+        return None
+    i = days.index(day)
+    if i == 0:
+        return None                            # block-opening Monday inherits the anchor
+    prev = days[i - 1]
+    pd_ = _dt.date(int(prev[:4]), int(prev[4:6]), int(prev[6:]))
+    if pd_.weekday() != 4:                     # the predecessor must be a Friday
+        return None
+    n = gid[1:]
+    sub = f"g{n}_refine_perday" if namespace == "refine" else f"g{n}_perday"
+    base = os.path.join(HERE, "forecasts", sub)
+    hits = glob.glob(os.path.join(base, f"grp{n}_Abridge_{day}.json")) + \
+        glob.glob(os.path.join(base, f"grp{n}_A_{day}.json"))
+    if hits:
+        return None
+    return (f"WAVE-2 GAP: {day} is a Monday whose weekend seam runs off the in-block Friday {prev}, "
+            f"and NO A bridge exists at {os.path.relpath(base, HERE)}/grp{n}_Abridge_{day}.json. "
+            f"The E -> A -> B chain is the desk's answer to '10 of 14 bad Mondays root to a mis-read "
+            f"Friday' - running B without it drops the seam read and leaves the Monday's score "
+            f"un-attributable.")
+
+
 def cmd_emit(a):
     # A-50 GATE. CLAUDE.md is auto-loaded into every agent before it reads any instruction, and it
     # states walked blocks' scores and mechanisms outright - so a BLIND run on a block already in
@@ -497,6 +536,26 @@ def cmd_emit(a):
             brain_view.assert_no_context_leak(a.gid, hard=True)
         except SystemExit as e:
             print("STOP - %s" % e)
+            return 1
+    # S114: THE WEEKEND-SEAM WAVE GATE. E-0731, a weekend-feeding Friday, wrote: "the brain says 10
+    # of 14 bad Mondays root to a mis-read Friday, and chain_label_must_track_realized_cum forbids
+    # me asserting a chain polarity without the inherited cum. Both rules are correct. Together they
+    # mean MY HANDOFF HANDS NO CHAIN STATE FORWARD AT ALL - I complied my way into an empty field.
+    # That is not a reasoning failure, it is a PLUMBING GAP, and it should be a hard stage-time
+    # check." B-0727 hit the other end: "A did not run and three plays lost their stated input."
+    # ROOT CAUSE, measured on g24: the owner map has NO A DAY AT ALL - correctly, because A does not
+    # own a session, it produces a BRIDGE artifact (BLD-2). So the SOP's wave 2 was skipped by
+    # omission and nothing noticed. A Monday that follows an in-block Friday must not be spawned
+    # until that bridge exists, or its absence must be stated so the score can be attributed.
+    _gate = _weekend_bridge_gate(a.gid, a.day, a.spec, getattr(a, "namespace", None))
+    if _gate:
+        if getattr(a, "no_bridge", False):
+            print("[spawn] WAVE-2 DEVIATION DECLARED (--no-bridge): %s" % _gate)
+        else:
+            print("STOP - %s\n"
+                  "  Spawn the A bridge first (template BLD-2), or pass --no-bridge to declare the\n"
+                  "  deviation on the record. Do not run this Monday on an unstated missing bridge."
+                  % _gate)
             return 1
     try:
         s = slots(a.gid, a.day, a.spec)
@@ -683,6 +742,7 @@ def main():
     p = sub.add_parser("calfacts"); p.add_argument("gid")
     p = sub.add_parser("emit"); p.add_argument("template"); p.add_argument("gid")
     p.add_argument("--day"); p.add_argument("--spec"); p.add_argument("--directive")
+    p.add_argument("--no-bridge", action="store_true", help="declare a missing weekend A-bridge as a deviation instead of stopping")
     p.add_argument("--namespace", default=None, help="REHEARSAL redirect: rewrite canonical "
                    "forecasts/<gid>_perday/ output paths to forecasts/<namespace>/ in the EMITTED "
                    "text. The stored template is NOT modified, so this is not an SOP change.")
