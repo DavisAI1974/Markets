@@ -266,3 +266,48 @@ grounds.
   **G25 is impossible** (only 3 of 10 sessions have happened).
 - `storage_vintage` 5 months stale (STEO archived workbooks, not pulled).
 - **Keys do NOT rotate during the walk** (D1, standing).
+
+---
+
+## 12. THE SCHEMA CORRECTION (added at close, Greg's call)
+
+*"We should have a big correction that should be noted in the schema when the agents ignore the
+things that was our biggest win. Not good."* — and *"build on the instances that we got right in
+the schema and note the stuff we got wrong."*
+
+**THE MEASURED DEFECT: 15 of the 22 plays flagged by their OWN health or falsifier still read
+PROVISIONAL.** In every case the refutation was written down honestly — it just sat BELOW the
+`call`, under a status saying the play was in good standing. That is the worst form of the fault,
+because **the falsifier fields were the run's most-praised content** (every specialist named them;
+one said "if you cut the view, cut CALLS before FALSIFIERS"), so a live status on a discharged
+falsifier spends exactly the credibility they earned.
+
+**AND THE do/dont RULE HAD SILENTLY EXPIRED.** S112 stamped `do`/`dont` across 624 instances and
+found 43 declines reading as fires — but it was never made a SCHEMA RULE. So it held for the
+instances that existed then and **every play merged since dropped it: 38 instances carried no
+action at all.** A missing action reads as a FIRE. The identical defect, by the identical door,
+two sessions later.
+
+**WHAT WENT IN, brain s105.8 -> s105.9 (no play added, no call changed):**
+- `DEGENERATE` status — the TRIGGER carries no information as written (the D23 disease). Distinct
+  from `REFUTED`, which says the CLAIM is wrong. **The repair differs**: re-site the bar, keep the
+  mechanism. **9 plays demoted on their OWN opening verdict**, never on my inference.
+- `ACTION_ENUM` = do / dont / **observation** (narrow: a corpus measurement on a day the play was
+  not run as a gate) + a hard gate. All 38 stamped.
+- `fire_record` per play, do/dont counted and observations EXCLUDED — so the 8 plays merged at S114
+  now show **n=0 fires, n=0 declines**, which is the honest reading of a merged-but-never-run play
+  instead of letting an instance count imply a track record.
+- `check_status_honesty`, `check_instance_actions`, `check_field_types` — all three negative-tested.
+- A full **S114 CORRECTION RECORD** written into `brain_schema.py` itself, covering **five things
+  we got RIGHT and should build on** (falsifiers are the most valuable field; contradicting
+  instances earn their keep; equal footing works; a play's OWN opening words are a trustworthy
+  classifier while prose anywhere in the body is not; declaring an absence beats removing it) and
+  **six we got WRONG** (a cleanup that does not become a gate expires; a live status on dead
+  evidence; a field that is a float on most plays and a sentence on a few; a play asserting an
+  input it does not have; a test whose premise can expire; and — the one that caught three of my
+  own guards — the fix needs the same scepticism as the defect).
+
+It is kept in the ENFORCING file rather than a session doc, because that is the lesson: **a finding
+recorded somewhere nothing reads is a finding that expires.** Mirrored into the brain as
+`reasoning_method.what_a_play_status_means_S114` so specialists — who read the brain, not the
+schema — get the operative half.

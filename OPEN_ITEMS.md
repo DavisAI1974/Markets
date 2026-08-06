@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 145 |
+| open | 142 |
 | in progress | 1 |
-| done | 13 |
+| done | 17 |
 
 By size: **XS** 18, **S** 63, **M** 43, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 10, **BIGGEST_WIN** 34, **REST** 102
+By tier: **ESSENTIAL** 9, **BIGGEST_WIN** 32, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (10)
+## ESSENTIAL (9)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -35,9 +35,8 @@ By tier: **ESSENTIAL** 10, **BIGGEST_WIN** 34, **REST** 102
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
-| **A-51** | ? | Serve FORWARD wind and solar - all three specialists named it independently | - |
 
-## BIGGEST WIN (34)
+## BIGGEST WIN (32)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -71,10 +70,8 @@ By tier: **ESSENTIAL** 10, **BIGGEST_WIN** 34, **REST** 102
 | **A-39** | L | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 | **G-29** | L | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
 | **A-42** | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
-| **A-46** | ? | The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90 | - |
 | **A-47** | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
 | **A-49** | ? | stage_group --suffix still writes canonical names: the inspection certificate leaked | - |
-| **A-52** | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do | - |
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
@@ -202,7 +199,6 @@ By tier: **ESSENTIAL** 10, **BIGGEST_WIN** 34, **REST** 102
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
-| **A-51** | ESSENTIAL | ? | OPEN | ? | Serve FORWARD wind and solar - all three specialists named it independently | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
@@ -231,10 +227,8 @@ By tier: **ESSENTIAL** 10, **BIGGEST_WIN** 34, **REST** 102
 | **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
 | **G-29** | BIGGEST_WIN | L | OPEN | S114 | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
 | **A-42** | BIGGEST_WIN | ? | OPEN | ? | RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair | - |
-| **A-46** | BIGGEST_WIN | ? | OPEN | ? | The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90 | - |
 | **A-47** | BIGGEST_WIN | ? | OPEN | ? | Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg | - |
 | **A-49** | BIGGEST_WIN | ? | OPEN | ? | stage_group --suffix still writes canonical names: the inspection certificate leaked | - |
-| **A-52** | BIGGEST_WIN | ? | OPEN | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do | - |
 | **A-53** | BIGGEST_WIN | ? | OPEN | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | BIGGEST_WIN | ? | OPEN | ? | The output contract cannot express what the specialists actually derived | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
@@ -353,8 +347,12 @@ By tier: **ESSENTIAL** 10, **BIGGEST_WIN** 34, **REST** 102
 | A-24c | M | Physical absorption: gas-marginality BREADTH across BAs x South Central salt composition |
 | A-25 | S | THE CHATGPT HAND-OFF IS GENERATED AND SHIPS WITH THE DROP-IN - built S112 |
 | A-32 | XS | INTERCHANGE (TI) SERVED - the collapse hypothesis is refuted, but it discriminates ramp-limited events from no-surplus events |
+| A-46 | ? | The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90 |
 | A-48 | ? | grp22_state.json is STALE at the canonical name - promote the corrected state or delete it |
+| A-51 | ? | Serve FORWARD wind and solar - all three specialists named it independently |
+| A-52 | ? | wind_mwh has no chg_7d twin while gas, solar and hydro all do |
 | G-19 | S | EIA-930: BATTERY STORAGE is now its own category and we do not carry it |
+| G-5 | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY |
 | M-2 | S | Brain status taxonomy normalized to an enum |
 | S111-1 | S | brain_schema.py sections --write |
 
@@ -494,16 +492,6 @@ WEEKLY CORROBORATION LANDED S114, from a second committed file (storage_week_by_
 **Source:** g22 rehearsal specialist debriefs, S114
 
 Specialist E, S114: 'You have three leak channels, not one.' Brain view (walled), mission brief (walled), and CLAUDE.md - which states G22's blind and refine scores outright, names 0629's mechanism and its actual, and is loaded into EVERY agent in this repo before it reads a single instruction. Fencing the brain and the brief does not give a clean blind run while this stands. It is structural and needs Greg's call because CLAUDE.md is the session record and cannot simply be emptied: options are (a) a blind-safe CLAUDE.md variant selected at spawn, (b) moving walked-block numbers out of it into a handoff the agents do not load, or (c) accepting it and declaring every blind contaminated, which would end blind measurement. Do not run G24 blind before this is decided.
-
----
-
-### [ESSENTIAL] A-51 - Serve FORWARD wind and solar - all three specialists named it independently
-
-*size ? | OPEN | raised ?*
-
-**Source:** g22 rehearsal specialist debriefs, S114
-
-Greg, S114: 'We also have to ingest wind and solar and prec data.' The three rehearsal specialists reached the same conclusion from three different days without seeing each other. E: 'You give me a seven-day CDD ladder with run deltas and NOTHING forward at all on the forcings, which by your own 0629 post-mortem is the term that breaks forecasts' - its weekend handoff shipped with an unresolvable caveat on the exact seam where 10 of 14 bad Mondays live. D: carry_realization_flip's own falsifier says run the test on the burn RESIDUAL net of wind and solar, and it could not. SERVE THEM SEPARATELY, never summed: wind peaks spring/autumn, solar at the solstice, and summing two opposite annual cycles is worse than nothing (D37). GEFS carries the fields - the retrieval is already built in gefs_ensemble.py and needs only the extra GRIB messages (10 m U/V wind, downward shortwave, APCP for precip).
 
 ---
 
@@ -1735,16 +1723,6 @@ The role file, the frozen taxonomy, the validator and now the FJ-1 spawn templat
 
 ---
 
-### [BIGGEST_WIN] A-46 - The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90
-
-*size ? | OPEN | raised ?*
-
-**Source:** measured while wiring brain_view / the mission brief, S114
-
-Greg, S114: 'I'm trying to straddle the line of being right there but not clutter for their job.' MEASURED, and it redirects where the clutter actually is. The spawn prompt is 21,783 chars (~5.4k tokens), of which the mission brief is 76%. The WORKING BRAIN VIEW the same specialist holds is 1,581,814 chars - about 395k tokens. So the entire prompt, brief included, is roughly 1% of what is in front of the agent, and trimming it would be optimising noise. The clutter is 90 plays served whole on a day that fires a handful. THIS IS A RETRIEVAL PROBLEM AND WE ALREADY HAVE THE FINDING THAT SHAPES IT: the dimension budget L = k/r^d caps a viable matching dimension at ~3, which is why a regime/day-class label is the only workable retrieval key. Plays already carry `conditions` (parsed, 0 unparsed as of S112) and a day already carries its class, so a relevance cut is buildable from committed fields rather than invented. DO NOT BUILD IT BLIND: a play withheld from a specialist that needed it is a silent absence, which is the hole #7/#8 shape - so any cut must DECLARE what it withheld, exactly as brain_view already does at section level, and the first version should be measured against a full-brain run before it is trusted.
-
----
-
 ### [BIGGEST_WIN] A-47 - Re-emit the truncated curves: g17/g18/g22 blinds have no overnight leg
 
 *size ? | OPEN | raised ?*
@@ -1762,16 +1740,6 @@ path_contract.py (S114) measures it per group, scoped per D31 so an era is not c
 **Source:** found staging the g22 rehearsal, S114
 
 The suffixed run prints 'skipping mbo_evidence and exit_states - they write canonical names with no redirect', so the leak is KNOWN and enumerated - but the list is incomplete. Staging g22 with --suffix _fresh rewrote forecasts/g22_inspection.json, a committed record, changing its timestamp. Only a timestamp this time; the point is that a path advertised as safe for rehearsal is not, and this is the NC-4 class (a rehearsal command mutating a record). Fix by deriving the redirect at the WRITE site rather than maintaining a hand-kept skip list - a hand-kept list of what to skip is the same shape as the hand-kept field list that failed (A-22). Until then a suffixed run must be followed by a git status check.
-
----
-
-### [BIGGEST_WIN] A-52 - wind_mwh has no chg_7d twin while gas, solar and hydro all do
-
-*size ? | OPEN | raised ?*
-
-**Source:** g22 rehearsal specialist debriefs, S114
-
-Found independently by D and E. Every other stack term carries <x>_chg_7d_mwh; wind does not, for any BA. Wind is the term the 0629 lesson is ABOUT. D recovered the trend by hand only because its slice happened to carry four days - 'a one-day slice could not read it at all'. Cheap and mechanical.
 
 ---
 

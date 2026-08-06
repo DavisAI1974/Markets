@@ -19,8 +19,16 @@
    "merged_status": "PROVISIONAL",
    "test_group": "g24",
    "falsifier": "Forward winter weeks with rising renewables AND heating-grade cold whose realized draws match the burn-implied size (no under-call) refute the masking claim. On the daily lane: forward days where a served renewables surge coexists with the weather-implied gas bump arriving in full refute the mediation form (0629/0601 class).",
-   "status": "DUE",
-   "confirmations": [],
+   "status": "REPORTED_NOT_SETTLED",
+   "confirmations": [
+    {
+     "session": "S114",
+     "group": "g24",
+     "what_the_run_did": "EVALUATED and FIRED on 2 of 10 days; the clearest use was B-0727, which ran the damper check and found the gate's own precondition ABSENT AND REVERSED: it wants US48 wind RISING, and wind was -206,525 MWh w/w (-16.4%). It reported wind, solar (-37,393) and hydro (+30,947) SEPARATELY and said so explicitly - the D37/S113 anti-correlation rule applied correctly by a specialist without prompting.",
+     "why_not_settled": "g24 is a SUMMER block (gw_hdd 0.0 every day). The play's winter limb - rising renewables plus heating-grade cold - could not arise, and the daily-lane limb needs a served renewables SURGE, which did not occur. An absent precondition is not a confirmation.",
+     "what_changed_for_the_next_test": "the forward wind/solar DENSITY is now served (weather_forcing_forecast, S114/A-51). Until g24 the gate could only be checked against a D+2 STALE realized wind number; it can now be checked against a forecast, which is the form the play actually needs."
+    }
+   ],
    "refutations": []
   },
   {
@@ -53,8 +61,18 @@
    "merged_status": "PROVISIONAL",
    "test_group": "g24",
    "falsifier": "A second summer week at breadth<=1 delivering a >=+100 Bcf build, or a summer draw arriving at breadth>=4, refutes the exclusion at its stated strength. The coverage falsifier: if adding the missing Southeast BAs (A-18) materially moves the breadth of past weeks, the count was a coverage artifact and must be re-measured before further use.",
-   "status": "DUE",
-   "confirmations": [],
+   "status": "UNRUNNABLE_AS_SERVED_NOW_FIXED",
+   "confirmations": [
+    {
+     "session": "S114",
+     "group": "g24",
+     "what_the_run_did": "STOOD DOWN ON 8 OF 10 DAYS, and NOT on season or scope - it was UNCOMPUTABLE. Two specialists found it independently: the play keys on the gas share RISING week over week, and the state served the share as a LEVEL plus a change in MWh, with no last-week denominator.",
+     "the_deeper_cause_found_after_the_run": "the play's own conditions[].state_path was PROSE - 'grid_stack.bas.*.gas_share (weekly rise count)' - which resolves to nothing. Found by the A-46 evaluability sweep, not by a specialist.",
+     "why_this_matters_more_than_the_test": "this was the block's CENTREPIECE play, the summer-scoped one from the monthly weather/burn mapping, and it failed silently. A play whose input is absent does not fail loudly - it stands down, reads as 'considered and declined', and nothing counts it.",
+     "fixed": "grid_stack now serves gas/wind/solar/hydro *_share_chg_7d and the state_path is repointed. Re-resolved against the g24 slice it is now EVALUABLE and reads ARMED (gas share +0.0135). The MWh delta was never a valid substitute: on 20260727 gas MWh FELL 82,071 while gas SHARE ROSE.",
+     "verdict": "NOT a test of the claim - a test of the plumbing, which failed. RE-REGISTER against the next summer block, where it can now actually run."
+    }
+   ],
    "refutations": []
   },
   {
@@ -63,8 +81,17 @@
    "merged_status": "PROVISIONAL",
    "test_group": "g24",
    "falsifier": "Forward shoulder days where large warm-removals (<= -1.0 GWDD) deliver DOWN days at ordinary base rates refute the shoulder inversion. Forward days where the census's largest revisions deliver the largest moves refute the size inversion. If high-disagreement days (>=0.7 GWDD spread) stop containing disproportionate outcome width, the authority channel claim falls.",
-   "status": "DUE",
-   "confirmations": [],
+   "status": "REPORTED_PARTIALLY_UNRUNNABLE",
+   "confirmations": [
+    {
+     "session": "S114",
+     "group": "g24",
+     "what_the_run_did": "EVALUATED and FIRED on 5 of 10 days - the most-used weather play of the block. D-0723 applied its scope clause correctly, excluding EIA print Thursdays from its sign claims.",
+     "the_limb_that_could_not_run": "its named AUTHORITY CHANNEL - model_disagreement - was 100% NULL for the entire block, so the high-disagreement arbitration limb was dark on all ten days. Named by 8 of 10 specialists as the run's highest-cost gap. E-0722: it is 'the authority channel the brain names as the arbiter for exactly the one observation my call rests on'.",
+     "cause_found_and_fixed": "a BUILD-ORDER defect - the store was built 8 minutes before the raw MOS archive landed - and the empty-but-PRESENT record SHADOWED the on-the-fly recompute fallback, which only fires when a date is MISSING. Rebuilt; h0/h1 now carry all 16 metros.",
+     "verdict": "the sign-map limb is REPORTED and survived its day; the authority limb is UNTESTED and must ride the next block, where the channel is live."
+    }
+   ],
    "refutations": []
   },
   {
@@ -73,8 +100,16 @@
    "merged_status": "PROVISIONAL",
    "test_group": "g24",
    "falsifier": "A forward week landing beyond its month's listed seven-year extreme by more than ~15 Bcf refutes that month's gate at its stated strength - single-week, listable, cannot be missed. The anchor gates specifically: any February week shallower than -40, any May week below +45, any August week above +80, any October draw, any December build, any November week beyond ~+/-120. The hydro-asymmetry limb is refuted if a fall-shoulder freeze arrives and hydro cover proves irrelevant to the gas response.",
-   "status": "DUE",
-   "confirmations": [],
+   "status": "REPORTED_NO_TAIL_AROSE",
+   "confirmations": [
+    {
+     "session": "S114",
+     "group": "g24",
+     "what_the_run_did": "Evaluated and did not fire. Its falsifier is single-week and listable: a forward week landing beyond its month's seven-year extreme by more than ~15 Bcf. The two prints inside g24 were +32 (07-23) and +28 (07-30) against a July seven-year p50 of +48 - well inside the listed August/July bounds, so no tail arose to test the gate.",
+     "why_not_settled": "a gate that is not approached is not confirmed. This is the correct outcome for a quiet mid-summer block and carries no information either way.",
+     "note": "the storage series was a full print stale during the run (fixed S114), so the specialists saw +41 where the decision-legal print was +32/+28. It does not change this verdict - all three are inside the same bounds - but the next test must run on the corrected series."
+    }
+   ],
    "refutations": []
   },
   {
@@ -83,8 +118,19 @@
    "merged_status": "PROVISIONAL",
    "test_group": "g24",
    "falsifier": "If forward runs emit magnitudes above 550 on days whose drivers support it AND capture on |actual|>900 days does not improve above the measured 18-37% band, the ceiling was not the binding constraint and this play is wrong. Equally refuted if raising emissions degrades sum|err| - i.e. if the cap was doing useful work - which would mean the honest bar is correctly calibrated and the loss is elsewhere.",
-   "status": "DUE",
-   "confirmations": [],
+   "status": "REFUTED_ON_ITS_PREMISE",
+   "confirmations": [
+    {
+     "session": "S114",
+     "group": "g24",
+     "what_the_test_was_watching_for": "emissions CAPPING at ~550 where drivers support more, with capture on |actual|>900 days stuck in an 18-37% band.",
+     "what_actually_happened_and_it_inverts_the_premise": "the cap did not arrive at 550. THE MAXIMUM EMISSION OF THE ENTIRE BLOCK WAS 250, against a maximum realized move of 1,360. Measured per event (D37): mean|guess| / mean|actual| = 0.29x, UNDER-emitted on 8 of 10 days, per-day ratios 0.18 to 0.40 with no clustering. The trend across blocks is DOWNWARD: g22 0.55x, g23 0.68x, g24 0.29x.",
+     "verdict": "THE TEST WAS AIMED AT THE WRONG NUMBER. It cannot be confirmed or refuted as written, because the failure mode it describes did not occur - a worse one did. A 550 ceiling was never the binding constraint on this block; something is holding emissions at roughly half that.",
+     "three_competing_explanations_none_promoted": "(a) the mission brief's stand-down passage biased small - several specialists named 'a confident wrong number is expensive and a declared stand-down is cheap' as the line that did the most work; (b) shrinking was CORRECT - four specialists wrote that their number moved toward zero because the brain refuted the instrument their read rested on (D-1 flow at 44% next-day, heavy_buy_aggression 4/9); (c) the block was genuinely hard (gw_hdd 0.0, model_disagreement dark, a roll seam splitting the block).",
+     "how_to_tell_them_apart": "(b) predicts under-emission CONCENTRATES on days whose specialists declared a refuted channel; (a) predicts it is UNIFORM. It is uniform here, which leans toward (a) - but n=1 block and the three are not exclusive.",
+     "the_replacement_test": "vary the brief's stand-down passage, hold everything else, and compare the emission ratio on the next block. Re-register with the bar at the MEASURED ceiling (~250), not 550."
+    }
+   ],
    "refutations": []
   },
   {

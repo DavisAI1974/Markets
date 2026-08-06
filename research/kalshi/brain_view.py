@@ -292,6 +292,24 @@ def build(brain, role, phase="working", window_days=None):
             pl.clear()
             pl.update(pl_new)
 
+    # FIRE RECORD (S114) - GENERATED. do/dont counted, `observation` EXCLUDED, so a play merged
+    # but never run shows n=0 fires and n=0 declines rather than letting an instance COUNT imply a
+    # track record it does not have. Equal footing (Greg, S112): a decline is evidence exactly as
+    # much as a fire, and burying declines is how 43 of them read as fires before S112 stamped them.
+    for pl in view.get("plays", []) or []:
+        insts = pl.get("instances") or []
+        if not insts:
+            continue
+        do = sum(1 for i in insts if i.get("action") == "do")
+        dont = sum(1 for i in insts if i.get("action") == "dont")
+        obs = sum(1 for i in insts if i.get("action") == "observation")
+        rec = OrderedDict([("do", do), ("dont", dont), ("observation", obs)])
+        if not (do or dont):
+            rec["note"] = ("NO LIVE RECORD. Every instance here is a corpus observation - this play "
+                           "has never fired or declined on a scored day. Its instance count is "
+                           "EVIDENCE FOR the claim, not a track record of the play.")
+        pl["fire_record"] = rec
+
     # INSTRUMENT PRIORS (S114) - GENERATED, never a second copy.
     # C-0721, after the g24 run: "the most valuable content in the view was NOT the plays - it was
     # the health.can_change_state notes, and those are buried inside each play. Two of them (44%

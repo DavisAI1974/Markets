@@ -284,13 +284,14 @@
    "title": "ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY",
    "source": "GAS_SIGNAL_BRIEFING_S111 s2.2 (TIER 1)",
    "first_raised": "S111",
-   "status": "OPEN - unblocked, retrieval proven",
+   "status": "DONE",
    "size": "M",
    "why": "FREE since 1 Oct 2025 - the full ECMWF real-time catalogue went open under CC-BY-4.0 with data charges removed. Our MOS deterministic guidance structurally cannot produce a spread. Fills the ensemble, spread, probabilistic-path and option-dispersion gaps in one feed, and is the prerequisite for a confidence gate. START ARCHIVING IMMEDIATELY - the archive is the asset.\n\nS114 UNBLOCKED, AND THE RETRIEVAL CODE WAS ALREADY DELIVERED. Greg: 'Chat gave you path code in the paper.' CHATGPT_S112_SIX_WORKSTREAMS.md carries working GEFS retrieval - bucket noaa-gefs-pds, UNSIGNED (no credentials), key shape gefs.<YYYYMMDD>/<cycle>/atmos/pgrb2sp25/gep<NN>.t<cc>z.pgrb2s.0p25.f<FFF>, plus the .idx range-request trick to fetch ONLY the 2 m temperature message instead of the whole file. MEASURED S114, and it settles the objection that killed this before: the archive is NOT recent-days-only. 2026 retains 217 days (20260101..20260805) and every G24 date is present (20260719, 20260724, 20260731 all confirmed by direct probe). NOTE THE TRAP - a plain list_objects_v2 with MaxKeys=1000 returns 20170101..20190927 and looks like a stale archive, because the listing is alphabetical and truncates. Probe the exact dates, never the listing. WHAT IS STILL A BUILD, not a pull: G-5's actual ask is the members through OUR gas-weighted degree-day weighting to produce a DENSITY, and G-23 is the reminder that model disagreement and ensemble spread are two different variables. Wiring it badly before a group is worse than not wiring it.",
    "blocked_by": null,
    "delegated_prior": "S112 TASK 2 (ECMWF ENS + GEFS ensemble MEMBER retrieval). DELIVERED and COMMITTED S113 as research/kalshi/CHATGPT_S112_SIX_WORKSTREAMS.md. CORRECTED S113: this item previously recorded TASK 1 (the dipole direction result), which belongs to the flow_nowcast family, not here.",
    "tier": "BIGGEST_WIN",
-   "tier_why": "Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2)."
+   "tier_why": "Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2).",
+   "resolution_S114": "DONE S114. Built and WIRED as the served block `weather_forcing_forecast`: 31-member GEFS ensemble density through OUR gas-weighted station weighting, per day. Blind-legal by vintage (12Z cycle of D-1) and AUDITED - 10 of 10 g24 days, 7.0h lead, zero violations. Wind and solar served SEPARATELY and never summed (D37). In state_health.REQUIRED_EVERY_DAY; store on S3 and in restore_substrate."
   },
   {
    "id": "G-6",
@@ -1778,9 +1779,10 @@
    "tier": "BIGGEST_WIN",
    "title": "The clutter is the BRAIN, not the prompt: serve plays by relevance, not all 90",
    "why": "Greg, S114: 'I'm trying to straddle the line of being right there but not clutter for their job.' MEASURED, and it redirects where the clutter actually is. The spawn prompt is 21,783 chars (~5.4k tokens), of which the mission brief is 76%. The WORKING BRAIN VIEW the same specialist holds is 1,581,814 chars - about 395k tokens. So the entire prompt, brief included, is roughly 1% of what is in front of the agent, and trimming it would be optimising noise. The clutter is 90 plays served whole on a day that fires a handful. THIS IS A RETRIEVAL PROBLEM AND WE ALREADY HAVE THE FINDING THAT SHAPES IT: the dimension budget L = k/r^d caps a viable matching dimension at ~3, which is why a regime/day-class label is the only workable retrieval key. Plays already carry `conditions` (parsed, 0 unparsed as of S112) and a day already carries its class, so a relevance cut is buildable from committed fields rather than invented. DO NOT BUILD IT BLIND: a play withheld from a specialist that needed it is a silent absence, which is the hole #7/#8 shape - so any cut must DECLARE what it withheld, exactly as brain_view already does at section level, and the first version should be measured against a full-brain run before it is trusted.",
-   "status": "OPEN",
+   "status": "DONE",
    "session": "S114",
-   "source": "measured while wiring brain_view / the mission brief, S114"
+   "source": "measured while wiring brain_view / the mission brief, S114",
+   "resolution_S114": "DONE S114. brain_view --state --day resolves every parsed condition against the specialist's OWN served slice and stamps EVALUABLE / PARTIALLY_EVALUABLE / INPUT_ABSENT / NO_PARSED_CONDITIONS, each numeric limb read out ('14.15 >= 3 -> ARMED'). ANNOTATES, never drops - the same specialists asked to keep falsifiers, health notes and contradicting instances. Found two broken state_paths nobody had exercised."
   },
   {
    "id": "A-47",
@@ -1824,18 +1826,20 @@
    "tier": "ESSENTIAL",
    "title": "Serve FORWARD wind and solar - all three specialists named it independently",
    "why": "Greg, S114: 'We also have to ingest wind and solar and prec data.' The three rehearsal specialists reached the same conclusion from three different days without seeing each other. E: 'You give me a seven-day CDD ladder with run deltas and NOTHING forward at all on the forcings, which by your own 0629 post-mortem is the term that breaks forecasts' - its weekend handoff shipped with an unresolvable caveat on the exact seam where 10 of 14 bad Mondays live. D: carry_realization_flip's own falsifier says run the test on the burn RESIDUAL net of wind and solar, and it could not. SERVE THEM SEPARATELY, never summed: wind peaks spring/autumn, solar at the solstice, and summing two opposite annual cycles is worse than nothing (D37). GEFS carries the fields - the retrieval is already built in gefs_ensemble.py and needs only the extra GRIB messages (10 m U/V wind, downward shortwave, APCP for precip).",
-   "status": "OPEN",
+   "status": "DONE",
    "session": "S114",
-   "source": "g22 rehearsal specialist debriefs, S114"
+   "source": "g22 rehearsal specialist debriefs, S114",
+   "resolution_S114": "DONE S114 - same build as G-5. Four specialists had named it independently, not three. grid_stack.wind_mwh is D+2 stale BY CONSTRUCTION, so on the 0629 channel wind could only corroborate; it can now forecast."
   },
   {
    "id": "A-52",
    "tier": "BIGGEST_WIN",
    "title": "wind_mwh has no chg_7d twin while gas, solar and hydro all do",
    "why": "Found independently by D and E. Every other stack term carries <x>_chg_7d_mwh; wind does not, for any BA. Wind is the term the 0629 lesson is ABOUT. D recovered the trend by hand only because its slice happened to carry four days - 'a one-day slice could not read it at all'. Cheap and mechanical.",
-   "status": "OPEN",
+   "status": "DONE",
    "session": "S114",
-   "source": "g22 rehearsal specialist debriefs, S114"
+   "source": "g22 rehearsal specialist debriefs, S114",
+   "resolution_S114": "DONE S114. wind_chg_7d_mwh and wind_share added, plus *_share_chg_7d for gas, wind, solar and hydro - the share CHANGE needs last week's denominator and so cannot be derived downstream. The gap was load-bearing: weather.summer_burn_lane_exclusion was uncomputable without it."
   },
   {
    "id": "A-53",

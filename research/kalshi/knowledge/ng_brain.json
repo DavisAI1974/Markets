@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s105.8",
+  "version": "s105.9",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -197,6 +197,19 @@
      "~ magnitude.terminal_impact_coefficient_carry: struck a FALSE blind-legality claim (4 specialists)",
      "~ 8 plays: prose moved from `confidence` to `confidence_note`, confidence set null (never invented)"
     ]
+   },
+   {
+    "version": "s105.9",
+    "session": "S114",
+    "group_run": "g24 blind (no merge of new plays)",
+    "plays": "90 - no play ADDED, no call changed",
+    "what_changed": [
+     "STATUS HONESTY: 9 plays demoted PROVISIONAL -> DEGENERATE on their OWN opening verdict (health.can_change_state opens with NO). A live status on dead evidence invites a specialist to fire the play, and in every case the refutation was already written down - below the call.",
+     "+ DEGENERATE status (schema): the TRIGGER carries no information as written. Distinct from REFUTED, which says the CLAIM is wrong. The repair differs - re-site the bar, keep the mechanism.",
+     "+ ACTION_ENUM do/dont/observation + a gate. S112 stamped do/dont across 624 instances and it was never made a rule, so 38 instances merged since carried NO action - a missing action reads as a FIRE, which is the S112 defect returning by the same door. All 38 stamped `observation` (D24 retro-instances for plays merged S114 that have never run).",
+     "+ fire_record per play: do/dont counted, observations excluded, so a merged-but-never-run play shows n=0 and cannot look like it has a track record.",
+     "+ reasoning_method.what_a_play_status_means_S114 - what a specialist must DO on meeting a REFUTED/DEGENERATE/RETIRED play, and why the live_verdict and evaluability stamps come first."
+    ]
    }
   ]
  },
@@ -322,6 +335,18 @@
    "consumption_rule_for_A_and_B": "Read exit_type + monday_bias, NOT the Friday day-move sign. Sunday inherits the CLOSE + chain state (gap sign is noise). Monday's 07-10 ET catch-up window REPRICES driver_realization: if the driver realized over the weekend the catch-up is a FADE (sell-the-news), not an extend.",
    "blind_mode_amendment_S114": "On a PRICE-MASKED blind slice, fields 1 and 4 are not emittable as realized values and field 2's cum is masked. EMIT THEM AS FORECASTS, LABELLED - or emit null with a named reason. Do NOT manufacture them and do NOT silently drop them: g24 produced both good behaviour (E-0731 wrote '1_close_px: null / NOT EMITTABLE - every price in this block is masked') and a structural gap (E-0731 was a weekend-feeding Friday with NO inbound handoff because A never ran, so it complied its way into an empty chain-state field). A weekend-feeding day with no inbound handoff should fail at STAGE time, not be discovered by the specialist.",
    "exit_type_is_open_ended": "E-0731 emitted FUNDAMENTAL_CARRY_REALIZING and declared it a FIFTH type rather than forcing one of the enumerated six. That is the correct behaviour: name the new type and say so. The enumeration is a checklist, not a closed set."
+  },
+  "what_a_play_status_means_S114": {
+   "why_this_is_here": "Greg, S114: \"we should have a big correction... when the agents ignore the things that was our biggest win. Not good.\" The falsifier fields ARE the biggest win - every g24 specialist named them as the most valuable content in the brain, and one said plainly: 'if you cut the view, cut CALLS before FALSIFIERS.' A play that carries a discharged falsifier and still reads live spends exactly the credibility those fields earned.",
+   "the_measured_defect": "15 of the 22 plays whose OWN health or falsifier flags them were still statused PROVISIONAL. The refutation was written down honestly in every case - it just sat BELOW the `call`, under a status saying the play was in good standing. Nine were demoted at S114 on their own opening words.",
+   "the_statuses_that_mean_STOP": {
+    "REFUTED": "the play's OWN falsifier came back negative. The claim is wrong. Do not fire it.",
+    "DEGENERATE": "NEW S114. The TRIGGER carries no information as written - it fires always, or never, or on a bar sited outside its own distribution (the D23 disease). THE CLAIM MAY STILL BE TRUE. The repair is to RE-SITE THE BAR, not to discard the mechanism - several of these carry mechanisms worth keeping. Do not fire it as written; you MAY cite its mechanism if you re-derive the trigger and say so.",
+    "RETIRED": "withdrawn with its refuting evidence attached."
+   },
+   "what_you_must_do_when_you_meet_one": "STAND IT DOWN AND NAME THE STATUS. Do not quietly route around it by reconstructing its quantity from another field - that is the shape that produced the false blind-legality claim, where a derived value reads exactly like a measured one. If you believe a DEGENERATE play's mechanism applies to your day, say so explicitly, derive the trigger yourself, and declare that you did.",
+   "and_read_the_live_verdict_first": "Your view hoists each play's own refuting line ABOVE its call as `live_verdict`, and stamps `evaluability` telling you whether the play's inputs even exist in your slice. Both are GENERATED from the play's own content - they add no judgment. Read them before the call, which is the whole point: E-0722 reported that reading top-down 'costs real time before you reach the line that kills them'.",
+   "instances_carry_do_dont_or_observation": "EQUAL FOOTING (Greg, S112): one instances[] list, `do` beside `dont`, because a DECLINE is evidence exactly as much as a fire - stamping the brain found 43 declines reading as fires. S114 adds `observation`, NARROWLY: a corpus/census measurement on a day the play was not run as a gate at all. It asserts NO live record, and `fire_record` counts do/dont only - so a play whose instances are all observations shows n=0 fires and n=0 declines, which is the honest reading of a merged-but-never-run play."
   }
  },
  "plays": [
@@ -2700,7 +2725,7 @@
    "scope": "block lean / polarity - the input every other polarity-relative play consumes. It owns no day net directly.",
    "caveats": "PER-INSTANCE, never pooled. The rule is KEPT and is used on the instances its conditions discriminate on. C1 carries it everywhere tested. C2's absolute arm is used on low-activity tapes only. The G11 miss is a PROTOCOL residual as much as a rule residual: C1 was measurable at the 0120 close and the one-shot blind protocol withholds that close - the same live-coach argument the walk has now raised four times.",
    "confidence": 0.5,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "A counter day whose net breaks its condition-class band by >=1.5x, evaluated at the close and not front-run, that is NOT followed by a sustained polarity change - a genuine C1 false positive. Six fires and zero false positives is a real record and the falsifier is well formed. It has had no opportunity to discharge since G14 because in the blind the condition cannot be evaluated at all. TWO THINGS WOULD SETTLE IT, both cheap: serve the prior day's realized net (or the condition-class band table) in the blind state, and re-derive the bands for the modern amplitude regime, where the historical 1,800-5,010 fires sit at or above the corpus maximum day move of 2,100.",
@@ -2915,6 +2940,13 @@
     "recommendation": "needs_reading_by_greg",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO IN THE BLIND, AND THAT IS THE FINDING. C1 compares a day's dollar NET against a condition-class band. The blind's price-derived blocks are frozen at the block-anchor vintage, so the prior day's net is unavailable and ",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -3412,7 +3444,7 @@
    "scope": "gap",
    "caveats": "The three under-forecast instances (1020's +2770 day, 0118, 0125) are now attributed to ONE condition rather than three separate misses. The magnitude is conditionable IN PRINCIPLE but not from the current feed - closing it is a DATA BUILD (ingest the Sat/Sun 00Z and 12Z runs), not a rule refinement. Until then the gap magnitude on a fresh-shot weekend stays a declared irreducible.",
    "confidence": 0.5,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "NONE WRITTEN. The play needs one and it is easy: once the Sat/Sun 00Z and 12Z ingest lands, pre-register fresh vs priced from the D+2..D+6 delta BEFORE the reopen and score the gap against the two bands. Until that data build exists the arm is not falsifiable, which is the accurate description of its current state.",
@@ -3538,6 +3570,13 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO, on the served state - and the play says so itself. The discriminating read is a change at D+2..D+6 in the weekend model cycle; decision_state carries no weekend cycle and, per A at G22, no CDD coverage beyond h1 anyw",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -3989,7 +4028,7 @@
    "scope": "timing (ignition watch)",
    "caveats": "conjunction ONLY - standalone flush is named noise; pre-onset window discipline (never blur with post-onset)",
    "confidence": 0.5,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "A day in a live structural pull state carrying a failed counter-flush in the final 30-75 min that does NOT ignite. That negative test has never been run and it is the only thing separating the conjunction from a re-description of three squeeze days. Discharging it requires either a winter block with squeeze_watch genuinely live and the spread limb unmasked, or a re-pull of the G9/G11 raw tape from S3 so the founding instances become traceable and the matched non-igniting days can be counted.",
@@ -4223,6 +4262,13 @@
     "recommendation": "cannot_assess",
     "confidence": "med",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO WITHIN A BLOCK on the frozen limb, and only in one block of six on the live limb. Measured above: squeeze_watch.active is 10-of-10 or 0-of-10 in all six modern blocks; the live DTE limb crosses <=7 only in g22. SEPARA",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -4784,7 +4830,7 @@
    "scope": "day net (side + band) on qualifying Fridays",
    "caveats": "The Friday close remains the weekend anchor - this rule shapes the close the weekend bag then consumes.",
    "confidence": 0.55,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "None recorded. What it needs is the inverse population: qualifying Fridays (stretched same-side chain, driver realizing by the close) that CONTINUED rather than trimmed. Zero such days are named anywhere, which is why the 3/3 shape claim cannot be scored.",
@@ -4906,6 +4952,13 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO, NOT IN THE MODERN CORPUS - THIS IS THE CLEAREST DEGENERATE CONDITION IN THE BATCH. I classified every mention across forecasts/ by whether it sat in a plays_fired or a stand-down field. TWO fires in the entire corpus",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -5040,7 +5093,7 @@
    "scope": "day net (magnitude class) of a counter print in S1-void shoulder",
    "caveats": "n=1 - a single event. Promotes g15_watch#1 (S1-void band-bottom damping) to the counter-print-day case. Distinct from storage_thursday_magnitude's leg-side rule (which stays chain-sided and correct) - this governs the DAY NET magnitude of a counter print only. Retest on the next S1-void print that disagrees with the chain.",
    "confidence": 0.4,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "As written, none can be constructed that the play could fail. A usable falsifier requires REPLACING the absolute HDD bar with a condition that splits days - a seasonal-transition measure sited at the centre of its own distribution, on whichever degree-day axis is live - and then finding a counter print in that state that delivers a full counter band. Until the bar is replaced this play cannot be scored in either direction, and the 0326 instance cannot be extended.",
@@ -5173,6 +5226,13 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO. The trigger's only numeric bar is near-window normals base <=~20 gw-HDD, and on every HDD instrument served it fires 40 of 40 days across g20-g23 with 4-13x of headroom. The play is therefore always-on in summer, its",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -5186,7 +5246,7 @@
    "scope": "synthesis/selector - which angle wins a flagged storage-vs-weather divergence; direction + whether the cold-add earns a day-lean or only a gap",
    "caveats": "n=3 splits within one block (+1 positive control). The two gates are pre-existing measured thresholds (16.4 = shoulder_weather_band_void boundary; 0.50 = flow-nowcast neutral) - no new free constant. Scoped to the S3-injection-regime storage-vs-weather split; a WINTER (S1-live) split is governed by the winter weather bands, not this rule. Test on the next block where a cold-add SHOULD win (near-window >= 16.4 AND buy-tape) - the rule must let weather own the day there.",
    "confidence": 0.5,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "The brain's falsifier field is EMPTY. The caveats field supplies the right test and it has never been run: 'Test on the next block where a cold-add SHOULD win (near-window >= 16.4 AND buy-tape) - the rule must let weather own the day there.' Measured, that block does not exist in the corpus and cannot: the conjunction is 0 of 82. So the play's own designed positive test is unreachable, which is itself the falsification. WHAT WOULD SETTLE IT: re-site both bars as SHAPE or centred-percentile conditions per D23, or supply the seasonal analog (the state serves forecast_gw_cdd and forecast_run_delta_cdd at D0, but the per-horizon rows carry HDD only), then re-run the three G16 splits and see whether any of them still resolves DOWN for a reason rather than by construction.",
@@ -5476,6 +5536,13 @@
     "recommendation": "needs_reading_by_greg",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO - this is the batch's clearest degenerate condition, and it is degenerate on BOTH limbs simultaneously. Gate (a) has a degenerate-block share of 8 of 11 staged blocks (0/10 six times, 12/12 twice, 1/11 once); it split",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -5489,7 +5556,7 @@
    "scope": "magnitude (day-net band) of a chain-sided down session in an S1-void injection bleed",
    "caveats": "n=1 block (G16). The bands are wide and honest; the WITHIN-band exact day magnitude is NOT derivable from session-grain state (it is leg-grain, creds-gated) - declared a band-position irreducible. Distinct from shoulder_counter_print_damping (that damps COUNTER prints to flat; this sizes CHAIN-SIDED days to their band). The trend/coil day-class assignment is the deliverable, not a point number.",
    "confidence": 0.45,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "The brain's falsifier field is EMPTY, and the play's own stated forward test ('the bands must hold on the next confirmed S1-void injection block with a persistent sub-0.50 sell-tape') was never scored even though G17 and G18 both qualified and both ran it. Concrete falsifiers: (1) score the 15 G17/G18 fires I list above and write the result into forward_evidence, which currently still says NONE; (2) re-express the S1-void limb seasonally - HDD base in the shoulder, CDD base in summer - or scope the play out of summer entirely; (3) settle the inverted two_sided bar with the conditional test (down-days only) rather than my marginal, since if it inverts conditionally too the sell-tape confirmation limb should be struck rather than re-based.",
@@ -5675,6 +5742,13 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO as originally written, and INVERTED on the licensed replacement - I measured both. (1) AS SERVED: session_b_share < 0.50 fires 56 of 59 day-rows in G17-G23 (94.9%). The three non-fires are 20260430 (0.52), 20260601 (0",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -6040,7 +6114,7 @@
     "the day's own run size",
     "chain age"
    ],
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "None in the falsifier field. The counterexample_and_scope block is effectively one - a coff>=0.95 day with a >=1200 run and chain age >=2 that CONTINUES would kill the high-side arm - and the boundary band 0.90-0.94 is already declared unclean rather than claimed.",
@@ -6229,6 +6303,13 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO IN G20-G23, AND IT IS THE ABSOLUTE BARS. Classified every corpus mention: ZERO fires and about twenty-one stand-downs across G20-G23. Two distinct causes and both matter. In the BLIND the limbs are price content and u",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -6854,7 +6935,7 @@
    "scope": "Monday direction gate at the 06-10 catch-up window",
    "caveats": "A DIRECTION gate only - sizes nothing. Does not fix the fresh-shot gap MAGNITUDE (1027) - that is weekend_gap_delivery's data build. On a Monday whose overnight gap DOES confirm the D-1 tilt (fresh-shot cold add), the gap is real and this play does not fire (see the incumbent block_gap_ownership / weekend_gap_delivery).",
    "confidence": 0.5,
-   "status": "PROVISIONAL",
+   "status": "DEGENERATE",
    "status_note": "",
    "status_original": "PROVISIONAL",
    "falsifier": "The brain's falsifier field is EMPTY. Proposed: over >= 15 Mondays, the overnight gap sign predicts the regular-session net at >= the rate the inherited D-1 tilt does. Current standing on G17-G23: gap 5/14, D-1 tilt 8/13.",
@@ -6984,6 +7065,13 @@
     "recommendation": "scope_narrower",
     "confidence": "med",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "status_correction_S114": {
+    "was": "PROVISIONAL",
+    "why": "DEMOTED ON THE PLAY'S OWN WORDS, not on inference: its health.can_change_state OPENS with a NO. A live status on a trigger that cannot change state is an invitation to fire the play, and the refutation was already written down here - it just sat BELOW the call under a status saying the play was in good standing.",
+    "its_own_verdict": "NO AS WRITTEN - THIS IS THE PLAY'S REAL DEFECT. Its one parsed condition is session_b_share < 0.50 at state_path tape_conditions.session_b_share, which is the KNOWN-BIASED single-sided series (the S108 normalization defe",
+    "what_DEGENERATE_does_and_does_not_mean": "It does NOT say the claim is false - that is REFUTED. It says the TRIGGER carries no information as written (the D23 disease: fires always, or never, or on a bar sited outside its own distribution). The repair is to RE-SITE THE BAR, not to discard the mechanism. Several of these carry mechanisms worth keeping.",
+    "session": "S114"
    }
   },
   {
@@ -13490,31 +13578,41 @@
      "date": "2021-02-25",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "dS -338 on burn 168.3 (the LOWEST burn in the winter table) at breadth 2; its same-burn same-breadth twin 2020-11-19 BUILT +31. 369 Bcf apart on identical power-side readings - Uri's draw was heating plus supply freeze-offs with the power sector barely burning."
+     "what_the_state_said": "dS -338 on burn 168.3 (the LOWEST burn in the winter table) at breadth 2; its same-burn same-breadth twin 2020-11-19 BUILT +31. 369 Bcf apart on identical power-side readings - Uri's draw was heating plus supply freeze-offs with the power sector barely burning.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2022-02-03",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "dS -268 (burn 197.1, br2) vs 2022-11-10 +79 (burn 196.7, br2): 347 Bcf apart, same burn, same breadth, November vs February."
+     "what_the_state_said": "dS -268 (burn 197.1, br2) vs 2022-11-10 +79 (burn 196.7, br2): 347 Bcf apart, same burn, same breadth, November vs February.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2025-01-30",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "dS -321 (burn 248.4, br4) vs 2024-12-05 -30 (burn 255.8, br4): 291 Bcf apart at matched readings."
+     "what_the_state_said": "dS -321 (burn 248.4, br4) vs 2024-12-05 -30 (burn 255.8, br4): 291 Bcf apart at matched readings.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2019-02-07",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "dS -237 (burn 171.1, br3) vs 2020-11-27 -18 (burn 172.1, br3): 219 Bcf apart."
+     "what_the_state_said": "dS -237 (burn 171.1, br3) vs 2020-11-27 -18 (burn 172.1, br3): 219 Bcf apart.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "202411",
      "group": null,
      "source_file": "research/kalshi/data_records/us_gas_demand_by_sector_S113.csv",
-     "what_the_state_said": "Every November in the STEO record: total demand +11.9 to +16.1 Bcf/d while power burn moves -0.46 to -1.87 - the burn stack points DOWN into the month total demand turns UP (A-38)."
+     "what_the_state_said": "Every November in the STEO record: total demand +11.9 to +16.1 Bcf/d while power burn moves -0.46 to -1.87 - the burn stack points DOWN into the month total demand turns UP (A-38).",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {
@@ -13573,19 +13671,25 @@
      "date": "20260629",
      "group": "g22",
      "source_file": "research/kalshi/renders/ng_refine_s95/grp22_state.json + research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "Served wind +660,219 MWh and gas -556,000 vs the prior period, with a +2.01 CDD revision; the day fell -1110 against a blind +325. The mediation was served and read by nothing."
+     "what_the_state_said": "Served wind +660,219 MWh and gas -556,000 vs the prior period, with a +2.01 CDD revision; the day fell -1110 against a blind +325. The mediation was served and read by nothing.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260601",
      "group": "g20",
      "source_file": "research/kalshi/renders/ng_refine_s95/grp20_state.json + research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "Served wind +1,071,114 MWh (largest in the census), gas -1,270,715, coal -529,288; actual -990 against a blind +350. 0629's twin, two groups earlier, also a B Monday."
+     "what_the_state_said": "Served wind +1,071,114 MWh (largest in the census), gas -1,270,715, coal -529,288; actual -990 against a blind +350. 0629's twin, two groups earlier, also a B Monday.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2021-02-25",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "The class extreme: dVRE +4,761k with burn 168.3 (lowest in the winter table) and a -338 draw - burn read soft while heating and freeze-offs drained the tank."
+     "what_the_state_said": "The class extreme: dVRE +4,761k with burn 168.3 (lowest in the winter table) and a -338 draw - burn read soft while heating and freeze-offs drained the tank.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {
@@ -13644,31 +13748,41 @@
      "date": "2024-01-25",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv + research/kalshi/data_records/us48_hydro_daily_S114.csv",
-     "what_the_state_said": "dS -326 at breadth 6 (all six BAs' gas share rose) with dVRE -4,157k - the January 2024 freeze. Hydro dispatched 787-842 GWh/d against a month p50 of 689."
+     "what_the_state_said": "dS -326 at breadth 6 (all six BAs' gas share rose) with dVRE -4,157k - the January 2024 freeze. Hydro dispatched 787-842 GWh/d against a month p50 of 689.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2026-01-29",
      "group": "g11",
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "dS -241 at breadth 5, dVRE -2,748k - the Arctic-high week: the coldest week of the S113 confound set with renewables FALLING, because cold outbreaks are calm."
+     "what_the_state_said": "dS -241 at breadth 5, dVRE -2,748k - the Arctic-high week: the coldest week of the S113 confound set with renewables FALLING, because cold outbreaks are calm.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2019-01-31",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "dS -173 at breadth 6, dVRE -1,791k - the 2019 polar vortex week."
+     "what_the_state_said": "dS -173 at breadth 6, dVRE -1,791k - the 2019 polar vortex week.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2021-01-28",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "dS -128 at breadth 6, dVRE -1,843k - the week into Uri's ramp."
+     "what_the_state_said": "dS -128 at breadth 6, dVRE -1,843k - the week into Uri's ramp.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260201",
      "group": "g12",
      "source_file": "research/kalshi/renders/ng_refine_s95/grp12_state.json",
-     "what_the_state_said": "The served aftermath: coal 3,103,423 MWh (the block-loaded plateau, period Jan-30) decaying 2.87M -> 2.39M -> 2.02M across g12 and 1.67M -> 1.57M into g13 - A-31's seventeen-day staged ramp-down, visible day by day in the committed states, with a +390k two-day re-ramp into the Feb-24/25 snap meeting a still-warm fleet (A-34's second-event case)."
+     "what_the_state_said": "The served aftermath: coal 3,103,423 MWh (the block-loaded plateau, period Jan-30) decaying 2.87M -> 2.39M -> 2.02M across g12 and 1.67M -> 1.57M into g13 - A-31's seventeen-day staged ramp-down, visible day by day in the committed states, with a +390k two-day re-ramp into the Feb-24/25 snap meeting a still-warm fleet (A-34's second-event case).",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {
@@ -13726,25 +13840,33 @@
      "date": "2021-02-15..19",
      "group": null,
      "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
-     "what_the_state_said": "Uri week: 895/848/859/903/844 GWh/d against a February p50 of 766 - dispatched into the event (pre-split definition, hydro incl PS in 2021)."
+     "what_the_state_said": "Uri week: 895/848/859/903/844 GWh/d against a February p50 of 766 - dispatched into the event (pre-split definition, hydro incl PS in 2021).",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2024-01-15..17",
      "group": null,
      "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
-     "what_the_state_said": "January 2024 freeze: 823/842/787 vs month p50 689."
+     "what_the_state_said": "January 2024 freeze: 823/842/787 vs month p50 689.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2026-01-20..23",
      "group": "g11",
      "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
-     "what_the_state_said": "The $30.72 window: 883/791/787 vs month p50 828 - at or above the strongest January in the sample."
+     "what_the_state_said": "The $30.72 window: 883/791/787 vs month p50 828 - at or above the strongest January in the sample.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2025-01-25..30",
      "group": null,
      "source_file": "research/kalshi/data_records/us48_hydro_daily_S114.csv",
-     "what_the_state_said": "THE RECORDED EXCEPTION: 593/623/642 vs p50 669 - slightly below, in the driest January of the sample. Rides with the play as its honest counterinstance."
+     "what_the_state_said": "THE RECORDED EXCEPTION: 593/623/642 vs p50 669 - slightly below, in the driest January of the sample. Rides with the play as its honest counterinstance.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {
@@ -13802,19 +13924,25 @@
      "date": "2024-08-15",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "The only summer draw in the file: -6 at breadth 0, burn 316.8 - the hottest-tail week sat at the exclusion's floor."
+     "what_the_state_said": "The only summer draw in the file: -6 at breadth 0, burn 316.8 - the hottest-tail week sat at the exclusion's floor.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2019-05-23",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "THE ONE EXCEPTION, named so it cannot be forgotten: +100 at breadth 1, burn 180."
+     "what_the_state_said": "THE ONE EXCEPTION, named so it cannot be forgotten: +100 at breadth 1, burn 180.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2020-06-25",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "Largest-build side behaving: +120 at breadth 6; the twelve biggest summer builds sit at breadths 2-6, none at 0."
+     "what_the_state_said": "Largest-build side behaving: +120 at breadth 6; the twelve biggest summer builds sit at breadths 2-6, none at 0.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {
@@ -13881,31 +14009,41 @@
      "date": "20260511",
      "group": "g19",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "The walk's worst day (actual +1740, blind -450, err -2190): HDD revision +1.02 in mid-May - which the inverted map reads BEARISH, aligned with the blind - under model disagreement 1.127, the census's fourth-highest. The honest state was NO CALL; the driver was positioning, not weather."
+     "what_the_state_said": "The walk's worst day (actual +1740, blind -450, err -2190): HDD revision +1.02 in mid-May - which the inverted map reads BEARISH, aligned with the blind - under model disagreement 1.127, the census's fourth-highest. The honest state was NO CALL; the driver was positioning, not weather.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260430",
      "group": "g18",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "The largest warm revision of the census (-1.70) delivered +1230 - the shoulder inversion's largest member."
+     "what_the_state_said": "The largest warm revision of the census (-1.70) delivered +1230 - the shoulder inversion's largest member.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260713",
      "group": "g23",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "Convergence 0.017 (tightest in the census) with a -1.27 CDD removal, D-1 flow -1,225 SELL, and a served stack cooling off - every fresh instrument down; the posterior went +550 on a handed-down table (D25's B-0713). Actual -620."
+     "what_the_state_said": "Convergence 0.017 (tightest in the census) with a -1.27 CDD removal, D-1 flow -1,225 SELL, and a served stack cooling off - every fresh instrument down; the posterior went +550 on a handed-down table (D25's B-0713). Actual -620.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260626",
      "group": "g22",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "Size inversion member: +2.66 CDD - the largest revision in the census - delivered +230, a quiet day."
+     "what_the_state_said": "Size inversion member: +2.66 CDD - the largest revision in the census - delivered +230, a quiet day.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260709",
      "group": "g23",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "Mid-size revision violence: -1.66 CDD on the print Thursday delivered -2050 (direction right across the board; magnitude 8x under)."
+     "what_the_state_said": "Mid-size revision violence: -1.66 CDD on the print Thursday delivered -2050 (direction right across the board; magnitude 8x under).",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {
@@ -13963,49 +14101,65 @@
      "date": "2022-11-03",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "November's build extreme: +107 - and November's draw extreme in seven years is only -94 (2019-11-21). The transition month's tails are closed both ways."
+     "what_the_state_said": "November's build extreme: +107 - and November's draw extreme in seven years is only -94 (2019-11-21). The transition month's tails are closed both ways.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2019-03-14",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "March's draw extreme: -200 at burn 172 - winter-grade, while March's build extreme across 34 weeks is +37. One-sided down."
+     "what_the_state_said": "March's draw extreme: -200 at burn 172 - winter-grade, while March's build extreme across 34 weeks is +37. One-sided down.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2024-08-15",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "For contrast with October: the file's only summer draw (-6) is an August week; October's 32 weeks contain zero draws, floor +29."
+     "what_the_state_said": "For contrast with October: the file's only summer draw (-6) is an August week; October's 32 weeks contain zero draws, floor +29.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2023-12-21",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "December: max -1 across 31 weeks - every December week in the record drew. The gate month before it (November) never draws deep; the month itself never builds."
+     "what_the_state_said": "December: max -1 across 31 weeks - every December week in the record drew. The gate month before it (November) never draws deep; the month itself never builds.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2026-02-26",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "February's SHALLOWEST week in seven years: -52. The month's build side is empty and its shallow side is bounded away from zero - both tails committed."
+     "what_the_state_said": "February's SHALLOWEST week in seven years: -52. The month's build side is empty and its shallow side is bounded away from zero - both tails committed.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2023-05-04",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "May's smallest build in 35 weeks: +54. The metronome month - every May week in the record built at least +54."
+     "what_the_state_said": "May's smallest build in 35 weeks: +54. The metronome month - every May week in the record built at least +54.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2019-08-01",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "August's build CEILING across 31 weeks: +65, at the year's peak burn (month p50 298.8) - peak demand compressing the build is the August pattern."
+     "what_the_state_said": "August's build CEILING across 31 weeks: +65, at the year's peak burn (month p50 298.8) - peak demand compressing the build is the August pattern.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "2023-01-12",
      "group": null,
      "source_file": "research/kalshi/data_records/storage_week_by_week_S113.csv",
-     "what_the_state_said": "January's single positive week (+11) - the exception that bounds January's shallow tail, against February which has none."
+     "what_the_state_said": "January's single positive week (+11) - the exception that bounds January's shallow tail, against February which has none.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {
@@ -14062,31 +14216,41 @@
      "date": "20260528",
      "group": "g20",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "Direction RIGHT and captured 7.1%: actual +2100, emitted +150. The largest move of the modern walk, called correctly, and 93% of it left on the table."
+     "what_the_state_said": "Direction RIGHT and captured 7.1%: actual +2100, emitted +150. The largest move of the modern walk, called correctly, and 93% of it left on the table.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260709",
      "group": "g23",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "Direction RIGHT and captured 12.2%: actual -2050, emitted -250."
+     "what_the_state_said": "Direction RIGHT and captured 12.2%: actual -2050, emitted -250.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260605",
      "group": "g20",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "THE BEST DAY OF THE MODERN WALK: actual -1340, emitted -500, captured +500 = 37%. The best result the desk has produced is a 37% capture, and it sits at the ceiling."
+     "what_the_state_said": "THE BEST DAY OF THE MODERN WALK: actual -1340, emitted -500, captured +500 = 37%. The best result the desk has produced is a 37% capture, and it sits at the ceiling.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260618",
      "group": "g21",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "THE ONE EXCEPTION, named so it is not forgotten: the only emission above 550 in 60 days (+950) and it OVER-called a +520 day. So the single time the ceiling was broken, it was broken wrongly - which is why the repair must be derivation, not permission to inflate."
+     "what_the_state_said": "THE ONE EXCEPTION, named so it is not forgotten: the only emission above 550 in 60 days (+950) and it OVER-called a +520 day. So the single time the ceiling was broken, it was broken wrongly - which is why the repair must be derivation, not permission to inflate.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     },
     {
      "date": "20260713",
      "group": "g23",
      "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv",
-     "what_the_state_said": "The loss side of the same ceiling: emitted +550 into a -620 day, captured -550. Best win +500, worst loss -550 - both the ceiling."
+     "what_the_state_said": "The loss side of the same ceiling: emitted +550 into a -620 day, captured -550. Best win +500, worst loss -550 - both the ceiling.",
+     "action": "observation",
+     "action_basis_S114": "D24 RETRO-INSTANCE: corpus/census evidence for a play merged at S114 that has never run as a gate. It neither fired nor declined, so labelling it `do` would manufacture a track record this play does not have."
     }
    ],
    "corpus": {

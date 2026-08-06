@@ -620,7 +620,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **161 files.**
+new tool cannot go unlisted. **164 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -628,6 +628,7 @@ new tool cannot go unlisted. **161 files.**
 - `blind_drift_trend.py` — Is the BLIND improving group over group? Forward-curve drift is the scoreboard."""
 - `blind_input_audit.py` — What does the BLIND actually see? Audit the price-masked state G21 will be run on."""
 - `blind_lean_decomp.py` — Is the blind's error a LEVEL bias (removable by shifting the curve) or SHAPE?
+- `blind_legality.py` — can this play actually FIRE on a blind slice? (A-53.)
 - `blind_score_nonpooled.py` — How much of the blind's error does the DRIFT metric cancel away? (S108, Greg's rule)
 - `blind_state_audit.py` — Strict blind-wall audit for NG forecaster decision-state artifacts.
 - `brain_audit.py` — the 82-play audit harness, IN THE REPO. (S111, fixing an S111 defect.)
@@ -642,6 +643,7 @@ new tool cannot go unlisted. **161 files.**
 - `build_anchor_block.py` — S109: build the per-group ANCHOR BLOCK that gets handed to the specialists at spawn.
 - `build_blind_state.py` — Build the canonical blind forecaster state from the existing decision_state path.
 - `build_causal_slices.py` — S109 HOLE #11: build per-day CAUSAL SLICES of a blind state, so a specialist physically cannot
+- `build_realized_forcings.py` — the VALIDATION TARGET for the GEFS forcing proxies (S114).
 - `cash_basis.py` — FEED G (family DEL): Henry Hub CASH vs front-futures-settle basis (S98 data gate).
 - `characterize_turns.py` — run month_characterize.characterize_day on the pivotal turn days of the
 - `chatgpt_brief_split.py` — generate one self-contained hand-off file per task from CHATGPT_BRIEF.
@@ -685,6 +687,7 @@ new tool cannot go unlisted. **161 files.**
 - `g17_refine_coordinate.py` — COORDINATOR for the G17 MBO 5-specialist REFINE (round 1, S105).
 - `gas_call_residual.py` — S109 P0.7: the GAS CALL RESIDUAL - weather-driven load net of what renewables and baseload absorb.
 - `gefs_ensemble.py` — the GEFS ensemble through OUR gas-weighted degree days, to a DENSITY. (G-5.)
+- `gefs_validate.py` — does the GEFS forward forcing proxy TRACK realized US48 output? (S114, G-5.)
 - `grid_stack.py` — FEED Q (family D/power): EIA-930 grid stack - daily demand, day-ahead demand
 - `group_actual.py` — build ANY group's two-leg ACTUAL curve from per-contract MBO trades, config-driven.
 - `group_config.py` — per-group turnkey config for the NG forecaster walk (S105).
@@ -735,9 +738,6 @@ new tool cannot go unlisted. **161 files.**
 - `options_md_measures.py` — FEED I phase MD: the free measurement program on the settle-IV surface
 - `options_replay.py` — E4: the settle-IV replay of the walked winter (OPTIONS_COACH_RESEARCH_S100.1).
 - `options_surface.py` — FEED I phase i (family DEL/P): NG options OI-by-strike pin map + opex clock (S99).
-- `blind_legality.py` — can each brain play FIRE on a price-masked blind slice? Flags the CONTRADICTION case: a play asserting blind-legality while naming a price-derived quantity (S114, A-53).
-- `build_realized_forcings.py` — realized US48 wind/solar/hydro from EIA-930, the comparator the GEFS forcing proxy is validated against (S114).
-- `gefs_validate.py` — scores the GEFS forcing proxy's day-over-day DIRECTION against realized EIA-930 US48 (wind 84%, solar 75%, benchmark 50%) (S114, G-5).
 - `path_contract.py` — is the emitted curve actually a full-session curve? (S114)
 - `per_event.py` — the reporting contract for any measurement on this desk.
 - `plant_calendar.py` — the plant's clock and work cycle. RULES, not a loaded table.

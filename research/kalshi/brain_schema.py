@@ -55,7 +55,28 @@ SCHEMA_VERSION = "brain-schema-1"
 # THE SCHEMA
 # --------------------------------------------------------------------------------------
 STATUS_ENUM = ["HYPOTHESIS", "PROPOSED", "PROVISIONAL", "STABLE", "RETIRED",
-               "REFUTED", "WIRED_UNPROVEN", "DESCRIPTOR"]
+               "REFUTED", "WIRED_UNPROVEN", "DESCRIPTOR", "DEGENERATE"]
+# DEGENERATE added S114, on Greg's call, and it closes the session's sharpest correction.
+#
+# THE DEFECT, MEASURED: 15 of the 22 plays whose OWN evidence flags them - health.can_change_state
+# opening with "NO", or a falsifier recording that it is already discharged or cannot be run - were
+# still statused PROVISIONAL. A LIVE STATUS ON DEAD EVIDENCE IS AN INVITATION TO FIRE THE PLAY.
+# The refutation was written down, honestly, in every case; it just sat BELOW the `call`, under a
+# status that said the play was in good standing. Greg: "we should have a big correction... when
+# the agents ignore the things that was our biggest win. Not good."
+#
+# The falsifier fields were the g24 run's most-praised content - specialists repeatedly said they
+# were what stopped a bad emission ("if you cut the view, cut calls before falsifiers"). That makes
+# a play that CARRIES a discharged falsifier and still reads PROVISIONAL the worst case of all: it
+# spends the credibility the falsifiers earned.
+#
+# TWO DIFFERENT DEATHS, kept distinct because D37 keeps the observation and the story apart:
+#   REFUTED    - the play's OWN falsifier came back negative. The claim is wrong.
+#   DEGENERATE - the trigger cannot change state on the served data (the D23 disease): it fires
+#                always, or never, or on a bar sited outside its own distribution. The claim may
+#                still be TRUE; it carries no information as written, which is a different fault
+#                and wants a different repair (re-site the bar, not discard the mechanism).
+# Neither may read as a live gate. `check_status_honesty` below enforces it.
 # DESCRIPTOR added on Greg's call, S111. It is a real and distinct category, not sloppiness:
 # structure.squeeze_unwind's own `call` field reads "DESCRIPTOR grade - regime context, not a
 # scored play", and the day-class doctrine calls day-class "the OVERARCHING descriptor". Filing it
@@ -77,9 +98,118 @@ STATUS_ENUM = ["HYPOTHESIS", "PROPOSED", "PROVISIONAL", "STABLE", "RETIRED",
 # live channel readable, with zero consumers), and weekend.seam_delta_requires_level_difference
 # (status PROPOSED). The S111 partial had filed the vessel line as ASSERTED, which read as a weak
 # claim rather than as what it is.
+
+# ==========================================================================================
+# S114 CORRECTION RECORD — WHAT THE SCHEMA LEARNED FROM THE G24 RUN
+# Greg: "Build on the instances that we got right in the schema and note the stuff we got wrong."
+# Kept HERE, in the enforcing file, because that is the whole lesson below: a finding recorded
+# somewhere nothing reads is a finding that expires.
+# ==========================================================================================
+#
+# ---------------------------------------------------------------------------------------
+# WHAT WE GOT RIGHT — the patterns to BUILD ON, each with the evidence that it worked
+# ---------------------------------------------------------------------------------------
+# 1. THE FALSIFIER FIELD IS THE MOST VALUABLE THING IN A PLAY, MEASURED BY ITS READERS.
+#    Every g24 specialist said so unprompted and one put it as an instruction: "if you cut the
+#    view, cut CALLS before FALSIFIERS." D-0723 named the falsifiers as what stopped it taking a
+#    -450..-780 band. KEEP THEM VERBOSE. When trimming a view, trim anywhere else first.
+#
+# 2. CONTRADICTING INSTANCES EARN THEIR KEEP. E-0722: "a view that kept only the SUPPORTS
+#    instances would have made me worse." The most useful single row it found was a play's own
+#    falsifier text describing the exact configuration its day stood in, and recording that it had
+#    already failed there twice. Never prune an instance for being unflattering.
+#
+# 3. EQUAL FOOTING (S112, Greg) WORKS — ONE instances[] list, one `action`, do beside dont. A
+#    decline is evidence exactly as much as a fire. This is why ACTION_ENUM exists above.
+#
+# 4. A PLAY'S OWN WORDS ARE A TRUSTWORTHY CLASSIFIER; PROSE ANYWHERE IN THE PARAGRAPH IS NOT.
+#    The nine DEGENERATE demotions of S114 were made on health.can_change_state OPENING with the
+#    word NO - the play's own verdict, stated first. The same sweep keyed on the substring
+#    "degenerate" ANYWHERE flagged 43 of 90 and was WRONG, catching plays that merely discuss
+#    degeneracy while concluding they are sound. Read the opening verdict; never grep the body.
+#
+# 5. DECLARING AN ABSENCE BEATS REMOVING IT. Every guard added this session replaces a silent gap
+#    with a NAMED one - the retro-instance `observation` action, the LEGACY-state note, the
+#    unmeasured-vs-zero split in freeze_risk. A specialist can reason about a declared absence and
+#    cannot reason about a missing one.
+#
+# ---------------------------------------------------------------------------------------
+# WHAT WE GOT WRONG — the failure modes this file now gates
+# ---------------------------------------------------------------------------------------
+# A. A ONE-TIME CLEANUP THAT DOES NOT BECOME A GATE IS A CLEANUP THAT EXPIRES.
+#    S112 stamped do/dont across 624 instances and found 43 declines reading as fires. It was
+#    never made a schema rule - so every play merged since silently dropped the field, and by
+#    S114 thirty-eight instances carried NO action at all. The identical defect, by the identical
+#    door, two sessions later. `check_instance_actions` is the gate that should have existed then.
+#
+# B. A LIVE STATUS ON DEAD EVIDENCE IS AN INVITATION TO FIRE THE PLAY.
+#    15 of the 22 plays flagged by their own health/falsifier still read PROVISIONAL. In EVERY
+#    case the refutation was written down honestly - it just sat BELOW the `call`, under a status
+#    saying the play was in good standing. This is the worst form of the fault because it spends
+#    the credibility the falsifiers earned (see RIGHT #1). `check_status_honesty` gates it.
+#
+# C. A FIELD THAT IS A FLOAT ON MOST PLAYS AND A SENTENCE ON A FEW BREAKS EVERY CONSUMER.
+#    8 of 90 plays carried PROSE in `confidence`. Anything that sorts or thresholds on it
+#    mis-handled them silently. Fixed by moving prose to `confidence_note` and NULLING the value -
+#    an invented number would have been worse than the prose. `check_field_types` gates it, and
+#    it also rejects bool, which is an int subclass and would have sorted as the highest
+#    confidence in the brain.
+#
+# D. A PLAY CAN ASSERT AN INPUT IT DOES NOT HAVE, AND THE ASSERTION IS WHAT GETS TRUSTED.
+#    `magnitude.terminal_impact_coefficient_carry` advertised "ALL PRE-CUTOFF, so BLIND-LEGAL"
+#    while its quantity needs a price the blind is never served. Four specialists caught it; its
+#    own author was one. BEING PRE-CUTOFF IN TIME IS NOT THE SAME AS BEING SERVED. The A-46
+#    evaluability pass now resolves every state_path against the actual slice - and immediately
+#    found two more paths that resolve to nothing, one of them PROSE, on the play that should have
+#    carried the whole block.
+#
+# E. A TEST WHOSE PREMISE CAN EXPIRE WILL EXPIRE. spawn's A-50 selftest asserted "g24 has no
+#    outcome anywhere" - true when written, false within the same session once g24 was walked and
+#    written up. Every group eventually becomes a walked group. Assert the GATE's behaviour on a
+#    synthetic input, never a named live entity's current state.
+#
+# F. THE FIX ITSELF NEEDS THE SAME SCEPTICISM AS THE DEFECT. Three guards written this session
+#    were wrong on their first cut and were caught only by negative-testing them: the
+#    "degenerate"-substring sweep (RIGHT #4), a nested relive that mutated a SHARED list and
+#    served one day's answer to all ten, and a percentile that sited a 1-hour stub inside a
+#    distribution of 23-hour sessions. NC-3 is not paperwork - it caught all three.
+# ==========================================================================================
+
 SUPPORT_ENUM = ["MECHANISM_VERIFIED", "NOVEL_N1", "OUTCOME_CREDITED", "ASSERTED",
                 "NOT_A_PLAY", "UNCLEAR", "UNAUDITED"]
 D24_ENUM = ["found", "searched_none", "not_searched"]
+
+# ACTION_ENUM added S114 (Greg: "I want to make sure we picked up that don't-do for the schema").
+#
+# EQUAL FOOTING IS A GREG RULE FROM S112: one `instances[]` list, one `action` field, `do` vs
+# `dont` - because a DECLINE is evidence exactly as much as a fire is, and burying declines in a
+# separate list (or omitting them) makes a play look better than its record. Stamping the brain
+# then found 43 DECLINES ALREADY READING AS FIRES.
+#
+# THE REGRESSION, MEASURED S114: that stamping was a one-time pass and was NEVER MADE A SCHEMA
+# RULE - `action` appeared in no enum and no gate. So it held for the instances that existed in
+# S112 and every play merged since silently dropped it: 38 of 661 instances carried NO action at
+# all, every one of them in a recently-merged weather play. An instance with no action reads as a
+# fire by default, which is the S112 defect returning by the same door.
+#
+# THE LESSON, and it is the one this whole file exists for: a one-time cleanup that does not
+# become a gate is a cleanup that expires. `check_instance_actions` below is the gate.
+ACTION_ENUM = ["do", "dont", "observation"]
+# `observation` added S114, and it is deliberately NARROW so it cannot become an escape hatch from
+# the do/dont discipline it sits beside.
+#
+#   do          - the play FIRED on that day and this is what followed.
+#   dont        - the play DECLINED on that day. Equal footing: a decline is evidence exactly as
+#                 much as a fire, and burying declines is how 43 of them read as fires pre-S112.
+#   observation - a CORPUS or CENSUS measurement supporting or refuting the claim, on a day the
+#                 play was NOT RUN AS A GATE AT ALL (it neither fired nor declined - typically
+#                 because it did not exist yet). These are D24 retro-instances.
+#
+# WHY IT IS NOT A LOOPHOLE: `observation` asserts NO live record, and `fire_record` below counts
+# do/dont ONLY. A play whose instances are entirely observations therefore shows n=0 fires and
+# n=0 declines - visibly untested - which is the honest reading and the opposite of what a
+# mislabelled `do` would have claimed for it. All 38 unstamped instances found at S114 were of
+# this kind: every one belongs to a play merged that same session that has never run.
 
 # core fields that survive as themselves
 CORE = ["id", "target", "one_line", "trigger", "read", "call", "mechanism",
@@ -520,6 +650,78 @@ TYPED_FIELDS = {
 }
 
 
+
+def check_instance_actions(plays):
+    """Every instance must declare `do` or `dont`. A missing action is not neutral - it reads as a
+    FIRE, which is how 43 declines were mis-counted before S112 stamped them."""
+    bad, missing = [], []
+    for p in plays:
+        for k, i in enumerate(p.get("instances") or []):
+            a = i.get("action")
+            if a is None:
+                missing.append("%s[%d]" % (p["id"], k))
+            elif a not in ACTION_ENUM:
+                bad.append("%s[%d] action=%r" % (p["id"], k, a))
+    # SURFACE THE SPLIT. A play with instances but ZERO do/dont has no live record at all,
+    # however many observations it carries - say so rather than letting the instance COUNT imply
+    # a track record.
+    for p in plays:
+        insts = p.get("instances") or []
+        if not insts:
+            continue
+        live = [i for i in insts if i.get("action") in ("do", "dont")]
+        if insts and not live:
+            p.setdefault("fire_record", {})
+            p["fire_record"] = {"do": 0, "dont": 0, "observation": len(insts),
+                                "note": "NO LIVE RECORD. Every instance is a corpus observation - "
+                                        "this play has never fired or declined on a scored day."}
+        else:
+            p["fire_record"] = {
+                "do": sum(1 for i in insts if i.get("action") == "do"),
+                "dont": sum(1 for i in insts if i.get("action") == "dont"),
+                "observation": sum(1 for i in insts if i.get("action") == "observation")}
+    out = []
+    if missing:
+        out.append("instances with NO `action` (%d): %s%s - a missing action reads as a FIRE, which "
+                   "is exactly how 43 declines were mis-counted before S112. Stamp do/dont."
+                   % (len(missing), ", ".join(missing[:6]),
+                      " ..." if len(missing) > 6 else ""))
+    if bad:
+        out.append("instances with an action outside %s (%d): %s"
+                   % (ACTION_ENUM, len(bad), ", ".join(bad[:6])))
+    return out
+
+
+LIVE_STATUSES = ("PROVISIONAL", "STABLE")
+
+
+def check_status_honesty(plays):
+    """A play may not read LIVE while its own evidence says it is dead. (S114, Greg.)
+
+    MEASURED: 15 of the 22 plays whose own health/falsifier flags them were still PROVISIONAL. The
+    refutation was written down honestly in every case - it just sat BELOW the `call`, under a
+    status saying the play was in good standing.
+
+    THIS REPORTS, IT DOES NOT AUTO-DEMOTE, except where the play's OWN opening verdict is the word
+    NO. Inferring death from prose anywhere in a paragraph is the fuzzy-matching error this file
+    warns about at the top - it produced a 43-of-90 false-positive sweep on the first attempt, which
+    would have talked specialists out of working plays.
+    """
+    import re as _re
+    fails = []
+    for p in plays:
+        if p.get("status") not in LIVE_STATUSES:
+            continue
+        h = ((p.get("health") or {}).get("can_change_state") or "")
+        h = h if isinstance(h, str) else ""
+        opens_no = _re.match(r"no\b|not applicable\b|none\b", h.lower().lstrip(" -*\"'"))
+        if opens_no:
+            fails.append("%s is %s but its OWN health.can_change_state opens \"%s\" - a live status "
+                         "on a trigger that cannot change state. Use DEGENERATE (the claim may still "
+                         "be true; it carries no information as written)."
+                         % (p["id"], p["status"], h[:60]))
+    return fails
+
 def check_field_types(plays):
     """Type gate for the fields something downstream computes on. Declaration-only elsewhere -
     this deliberately constrains a handful of fields, not the schema at large."""
@@ -546,6 +748,8 @@ def run_validate():
           % (brain.get("meta", {}).get("version"), schema or "NONE (pre-migration)", len(plays)))
     section_fails = check_sections(brain)
     type_fails = check_field_types(plays)
+    action_fails = check_instance_actions(plays)
+    honesty_fails = check_status_honesty(plays)
     bad = Counter()
     for p in plays:
         if p.get("status") not in STATUS_ENUM:
@@ -561,7 +765,7 @@ def run_validate():
     print("\nopen items (these are the work list, not errors):")
     for k, v in bad.most_common():
         print("   %-24s %3d of %d" % (k, v, len(plays)))
-    if section_fails or type_fails:
+    if section_fails or type_fails or action_fails or honesty_fails:
         if section_fails:
             print("\nHARD FAIL - section index:")
             for f in section_fails:
@@ -569,6 +773,14 @@ def run_validate():
         if type_fails:
             print("\nHARD FAIL - field types:")
             for f in type_fails:
+                print("   %s" % f)
+        if action_fails:
+            print("\nHARD FAIL - instance do/dont (equal footing, S112 Greg rule):")
+            for f in action_fails:
+                print("   %s" % f)
+        if honesty_fails:
+            print("\nHARD FAIL - status honesty (S114): a live status on dead evidence")
+            for f in honesty_fails:
                 print("   %s" % f)
         return 1
     return 0
