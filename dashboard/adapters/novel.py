@@ -15,12 +15,51 @@ from zoneinfo import ZoneInfo
 from . import paths
 
 CONFIG = os.path.join(paths.DASHBOARD, "novel_candidates.json")
+RULE_SCAN = os.path.join(paths.DATA, "novel", "kalshi_rule_scan.json")
 ET = ZoneInfo("America/New_York")
 
 
 def _load_config() -> dict:
     with open(CONFIG, encoding="utf-8") as f:
         return json.load(f)
+
+
+def _load_rule_scan() -> dict:
+    if not os.path.isfile(RULE_SCAN):
+        return {
+            "available": False,
+            "path": os.path.relpath(RULE_SCAN, paths.REPO),
+            "reason": (
+                "rule scan not generated; run research/kalshi/kalshi_rule_canonicalizer.py "
+                "against a current market JSON snapshot"
+            ),
+        }
+    try:
+        with open(RULE_SCAN, encoding="utf-8") as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as exc:
+        return {
+            "available": False,
+            "path": os.path.relpath(RULE_SCAN, paths.REPO),
+            "reason": f"rule scan unreadable: {exc}",
+        }
+    summary = payload.get("summary", {})
+    return {
+        "available": True,
+        "path": os.path.relpath(RULE_SCAN, paths.REPO),
+        "generated_at_utc": payload.get("generated_at_utc"),
+        "input_markets": summary.get("input_markets", 0),
+        "canonical_markets": summary.get("canonical_markets", 0),
+        "exact_normalized_rule_groups": summary.get("exact_normalized_rule_groups", 0),
+        "semantic_near_match_groups": summary.get("semantic_near_match_groups", 0),
+        "gross_pair_checks": summary.get("gross_pair_checks", 0),
+        "positive_gross_pairs_before_fees": summary.get("positive_gross_pairs_before_fees", 0),
+        "warning_counts": payload.get("warning_counts", {}),
+        "note": (
+            "Exact groups still require human review of complete current rules. Positive gross pairs "
+            "are before fees, slippage, legging, disputes, and execution failure."
+        ),
+    }
 
 
 def _path_state(rel: str) -> dict:
@@ -134,11 +173,18 @@ def _immediate_schedule(now: dt.datetime) -> list[dict]:
 
 def snapshot(now: dt.datetime | None = None) -> dict:
     cfg = _load_config()
+    rule_scan = _load_rule_scan()
     now = now.astimezone(ET) if now else dt.datetime.now(ET)
     candidates = []
     for raw in cfg["candidates"]:
         item = dict(raw)
-        item["readiness"] = _readiness(raw.get("required_paths", []), raw.get("supporting_paths", []))
+        supporting = list(raw.get("supporting_paths", []))
+        if raw["id"] == "KALSHI_DUPLICATE_WRAPPER_PARITY":
+            supporting.extend([
+                "research/kalshi/kalshi_rule_canonicalizer.py",
+                "data/novel/kalshi_rule_scan.json",
+            ])
+        item["readiness"] = _readiness(raw.get("required_paths", []), supporting)
         item["execution_enabled"] = False
         item["provenance"] = "PREREGISTERED_CANDIDATE"
         item["status_note"] = (
@@ -146,6 +192,8 @@ def snapshot(now: dt.datetime | None = None) -> dict:
             if "STRUCTURAL" in raw["verdict"] or "CONFIRMED" in raw["verdict"]
             else "Predictive candidate: mechanism is specified, but untouched-forward evidence is not yet present."
         )
+        if raw["id"] == "KALSHI_DUPLICATE_WRAPPER_PARITY":
+            item["live_diagnostic"] = rule_scan
         candidates.append(item)
 
     schedules = _immediate_schedule(now)
@@ -169,13 +217,20 @@ def snapshot(now: dt.datetime | None = None) -> dict:
             "partial_inputs": partial,
             "awaiting_data": awaiting,
             "next_48h_watch_windows": len(schedules),
+            "rule_scan_available": rule_scan["available"],
+            "exact_rule_groups": rule_scan.get("exact_normalized_rule_groups", 0),
+            "positive_gross_pairs_before_fees": rule_scan.get("positive_gross_pairs_before_fees", 0),
         },
         "immediate_schedule": schedules,
         "candidates": sorted(candidates, key=lambda x: x["rank"]),
+        "candidate_diagnostics": {
+            "KALSHI_DUPLICATE_WRAPPER_PARITY": rule_scan,
+        },
         "source_files": [
             "DATA_POINTS.md",
             "research/kalshi/SIGNALS_IN_USE.json",
             "research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md",
+            "research/kalshi/kalshi_rule_canonicalizer.py",
             "dashboard/novel_candidates.json",
         ],
     }
