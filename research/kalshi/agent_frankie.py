@@ -26,28 +26,31 @@ from frankie_core import (  # noqa: E402
     FrankieConfig,
     FrankieEvent,
     GateStop,
-    adjudicate,
     load_candidate_registry,
     load_paper_manifest,
     qualify_event,
     verify_original_spawn,
 )
 from frankie_engine import consume_once, evaluate_event, serve  # noqa: E402
-from frankie_improve import propose_improvement  # noqa: E402
+from frankie_improve import propose_improvement, record_outcome  # noqa: E402
 
 
 def print_json(value) -> None:
     print(json.dumps(value, indent=2, sort_keys=True))
 
 
-def read_event(path: str) -> FrankieEvent:
+def read_json_object(path: str, label: str) -> dict:
     try:
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise GateStop(f"cannot read event JSON {path}: {exc}") from exc
+        raise GateStop(f"cannot read {label} JSON {path}: {exc}") from exc
     if not isinstance(raw, dict):
-        raise GateStop("event JSON must contain one object")
-    return FrankieEvent.from_dict(raw)
+        raise GateStop(f"{label} JSON must contain one object")
+    return raw
+
+
+def read_event(path: str) -> FrankieEvent:
+    return FrankieEvent.from_dict(read_json_object(path, "event"))
 
 
 def cmd_health(args: argparse.Namespace) -> int:
@@ -82,6 +85,7 @@ def cmd_health(args: argparse.Namespace) -> int:
                 "sqs_region": config.sqs_region,
             },
             "self_improvement": {
+                "immutable_outcome_sidecars": True,
                 "proposal_generation": True,
                 "independent_critic": True,
                 "automatic_apply": False,
@@ -133,13 +137,27 @@ def cmd_legacy(args: argparse.Namespace) -> int:
 
 
 def cmd_consume_once(args: argparse.Namespace) -> int:
-    config = FrankieConfig.from_env()
-    print_json(consume_once(config=config, deterministic_only=args.deterministic_only))
+    print_json(
+        consume_once(
+            config=FrankieConfig.from_env(),
+            deterministic_only=args.deterministic_only,
+        )
+    )
     return 0
 
 
 def cmd_serve(args: argparse.Namespace) -> int:
     return serve(config=FrankieConfig.from_env(), deterministic_only=args.deterministic_only)
+
+
+def cmd_record_outcome(args: argparse.Namespace) -> int:
+    result = record_outcome(
+        evidence_path=Path(args.evidence),
+        outcome=read_json_object(args.outcome, "outcome"),
+        config=FrankieConfig.from_env(),
+    )
+    print_json(result)
+    return 0
 
 
 def cmd_improve(args: argparse.Namespace) -> int:
@@ -208,7 +226,6 @@ def cmd_selftest(args: argparse.Namespace) -> int:
     base = FrankieConfig.from_env()
     registry = load_candidate_registry(base.novel_registry)
     check("Novel candidate registry is readable", "CME_KALSHI_DIGITAL_PARITY" in registry)
-    manifest = load_paper_manifest(base.paper_manifest, allow_missing=True)
     event = sample_event()
     qualification = qualify_event(event, registry[event.candidate_id])
     check("qualified synthetic event clears deterministic gates", qualification.eligible)
@@ -229,33 +246,38 @@ def cmd_selftest(args: argparse.Namespace) -> int:
             critic_backend=critic,
             deterministic_only=False,
         )
+        evidence_path = Path(evidence["local_path"])
         check("paper-incomplete gate caps SHADOW to WATCH_ONLY", decision.state == "WATCH_ONLY")
         check("Frankie can never enable execution", decision.execution_enabled is False)
-        check("evidence is written after adjudication", Path(evidence["local_path"]).is_file())
+        check("evidence is written after adjudication", evidence_path.is_file())
 
-        disagreement = adjudicate(
-            event=event,
-            candidate=registry[event.candidate_id],
-            qualification=qualification,
-            primary=decision.primary_lane and None,
-            critic=None,
-            manifest=manifest,
-            spawn_provenance=origin,
+        outcome = record_outcome(
+            evidence_path=evidence_path,
+            outcome={
+                "resolved_at": "2026-08-07T21:00:00Z",
+                "result": "NO_EDGE_AFTER_COSTS",
+                "metrics": {"net_edge": 0.0},
+                "source_provenance": [
+                    {
+                        "source": "selftest-outcome",
+                        "knowable_at": "2026-08-07T21:00:00Z",
+                        "content_hash": "selftest-outcome-hash",
+                    }
+                ],
+                "execution_enabled": False,
+            },
+            config=config,
         )
-        check("missing independent lanes cannot advance", disagreement.state == "WATCH_ONLY")
+        check("resolved outcomes are immutable sidecars", Path(outcome["outcome_path"]).is_file())
+        evidence_hash = json.loads(evidence_path.read_text(encoding="utf-8"))["envelope_hash"]
 
-        evidence_path = Path(tmp) / "improvement_evidence.json"
-        evidence_path.write_text(
-            json.dumps({"envelope_hash": "evidence-selftest", "decision": decision.as_dict()}),
-            encoding="utf-8",
-        )
         proposal = ScriptedBackend(
             "scripted-proposer",
             {
                 "target_component": "test_harness",
                 "hypothesis": "a missing null test allowed a false positive",
                 "change_summary": "add one session-preserving null regression",
-                "evidence_refs": ["evidence-selftest"],
+                "evidence_refs": [evidence_hash],
                 "requested_files": ["research/kalshi/tests/test_agent_frankie.py"],
                 "expected_benefit": "reject false positives before shadow",
                 "falsifiers": ["new test does not separate the failed case"],
@@ -287,10 +309,7 @@ def cmd_selftest(args: argparse.Namespace) -> int:
 
         forbidden = ScriptedBackend(
             "scripted-forbidden",
-            {
-                **proposal.result,
-                "requested_files": ["research/kalshi/spawn.py"],
-            },
+            {**proposal.result, "requested_files": ["research/kalshi/spawn.py"]},
         )
         stopped = False
         try:
@@ -325,6 +344,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--deterministic-only", action="store_true")
     p = sub.add_parser("serve")
     p.add_argument("--deterministic-only", action="store_true")
+    p = sub.add_parser("record-outcome", help="append an immutable resolved-outcome sidecar")
+    p.add_argument("evidence")
+    p.add_argument("outcome")
     p = sub.add_parser("improve", help="propose and independently critique one bounded improvement")
     p.add_argument("evidence", nargs="+")
     p.add_argument("--proposer", choices=("bedrock", "openai"))
@@ -343,6 +365,7 @@ def main() -> int:
         "legacy": cmd_legacy,
         "consume-once": cmd_consume_once,
         "serve": cmd_serve,
+        "record-outcome": cmd_record_outcome,
         "improve": cmd_improve,
         "selftest": cmd_selftest,
     }
