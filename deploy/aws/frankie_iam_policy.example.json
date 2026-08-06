@@ -1,0 +1,44 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "FrankieQueueConsumer",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:ChangeMessageVisibility",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:us-east-2:ACCOUNT_ID:frankie-events"
+    },
+    {
+      "Sid": "FrankieEvidenceWriter",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::bento-568968024170-us-east-2-an/frankie/evidence/*"
+    },
+    {
+      "Sid": "FrankieBedrockReasoning",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:ACCOUNT_ID:inference-profile/APPROVED_PROFILE",
+        "arn:aws:bedrock:us-east-1::foundation-model/APPROVED_MODEL"
+      ]
+    },
+    {
+      "Sid": "FrankieReadNonBootstrapParameters",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter"
+      ],
+      "Resource": "arn:aws:ssm:us-east-2:ACCOUNT_ID:parameter/markets/*"
+    }
+  ]
+}
