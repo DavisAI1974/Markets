@@ -1,6 +1,6 @@
 {
  "group": "g22",
- "ts": "2026-08-02T05:27:09Z",
+ "ts": "2026-08-06T01:40:41Z",
  "guards": [
   "block-emptiness (declared-only exemptions)",
   "tape_conditions required fields",

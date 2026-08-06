@@ -197,11 +197,13 @@ def day_inventory(gid, day):
     """
     path = os.path.join(RN, "%s_causal_slices" % gid, "state_%s.json" % day)
     if not os.path.exists(path):
-        alt = os.path.join(RN, "%s_causal_slices_b" % gid, "state_%s.json" % day)
-        if not os.path.exists(alt):
-            raise SlotError("INVENTORY: no causal slice for %s %s (looked in %s)"
-                            % (gid, day, os.path.relpath(path, ROOT)))
-        path = alt
+        # No _b fallback any more (S114). The `_b` re-stage artifacts were GITIGNORED, so the
+        # CORRECTED state was local-only while the STALE one held the tracked canonical name -
+        # which is how the rehearsal nearly ran on pre-fix data. Corrected content is now promoted
+        # into the tracked name and the _b family deleted, so a missing slice is a real stop.
+        raise SlotError("INVENTORY: no causal slice for %s %s (looked in %s) - run "
+                        "build_causal_slices.py %s --write"
+                        % (gid, day, os.path.relpath(path, ROOT), gid))
     with open(path, encoding="utf-8") as f:
         slice_ = json.load(f)
     dayblk = slice_.get(day) or {}
