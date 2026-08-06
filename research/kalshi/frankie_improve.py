@@ -10,7 +10,7 @@ import dataclasses
 import json
 import uuid
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Sequence
 
 from frankie_backends import ReasoningBackend
@@ -37,10 +37,21 @@ ALLOWED_COMPONENTS = {
     "calibration_report",
 }
 ALLOWED_REVIEW = {"SANDBOX_ELIGIBLE", "REVISE", "REJECT"}
+ALLOWED_PROPOSAL_PATHS = (
+    "research/kalshi/",
+    "dashboard/novel_candidates.json",
+)
 FORBIDDEN_PATH_TOKENS = {
     "spawn.py",
     "creds.py",
     "kalshi_auth.py",
+    "agent_frankie.py",
+    "frankie_core.py",
+    "frankie_engine.py",
+    "frankie_backends.py",
+    "frankie_idempotency.py",
+    "frankie_improve.py",
+    "frankie_reflect.py",
     "order_router",
     "execution_router",
     "live_executor",
@@ -48,6 +59,8 @@ FORBIDDEN_PATH_TOKENS = {
     "risk_service",
     "private_key",
     "markets.env",
+    ".github/",
+    "deploy/",
 }
 MAX_EVIDENCE_FILES = 100
 MAX_EVIDENCE_BYTES = 8_000_000
@@ -98,11 +111,17 @@ def _strings(raw: Mapping[str, Any], name: str, *, required: bool = True) -> tup
     return tuple(v.strip() for v in value)
 
 
-def _forbidden_file(path: str) -> str | None:
-    lower = path.replace("\\", "/").lower()
+def _validate_requested_path(path: str) -> str | None:
+    normalized = path.replace("\\", "/").strip()
+    pure = PurePosixPath(normalized)
+    if not normalized or pure.is_absolute() or ".." in pure.parts:
+        return "path must be repository-relative with no parent traversal"
+    lower = normalized.lower()
     for token in FORBIDDEN_PATH_TOKENS:
         if token in lower:
-            return token
+            return f"forbidden token: {token}"
+    if not any(normalized == prefix or normalized.startswith(prefix) for prefix in ALLOWED_PROPOSAL_PATHS):
+        return "path is outside the permitted research/candidate-registry scope"
     return None
 
 
@@ -140,9 +159,10 @@ def validate_proposal(
             "resolved-outcome sidecar"
         )
     requested_files = _strings(raw, "requested_files")
-    forbidden = [(path, _forbidden_file(path)) for path in requested_files if _forbidden_file(path)]
+    forbidden = [(path, _validate_requested_path(path)) for path in requested_files]
+    forbidden = [(path, reason) for path, reason in forbidden if reason]
     if forbidden:
-        detail = ", ".join(f"{path} ({token})" for path, token in forbidden)
+        detail = ", ".join(f"{path} ({reason})" for path, reason in forbidden)
         raise GateStop(f"self-improvement requested forbidden files: {detail}")
     if raw.get("execution_enabled") is True or raw.get("apply_allowed") is True:
         raise GateStop("self-improvement attempted to grant itself execution or apply authority")
@@ -200,6 +220,9 @@ def record_outcome(
         if not outcome.get(key):
             raise GateStop(f"outcome missing required field: {key}")
     resolved_at = parse_iso(str(outcome["resolved_at"]))
+    generated_at = parse_iso(str(decision.get("generated_at_utc") or ""))
+    if resolved_at < generated_at:
+        raise GateStop("outcome resolved_at precedes the decision timestamp")
     provenance = outcome["source_provenance"]
     if not isinstance(provenance, list) or not provenance:
         raise GateStop("outcome source_provenance must be a non-empty list")
@@ -304,7 +327,7 @@ def propose_improvement(
         "hypothesis": "specific causal diagnosis",
         "change_summary": "one bounded proposed change",
         "evidence_refs": ["exact envelope hash"],
-        "requested_files": ["paths a human sandbox PR may change"],
+        "requested_files": ["repository-relative paths inside the permitted research scope"],
         "expected_benefit": "measurable expected improvement",
         "falsifiers": ["conditions that kill the proposal"],
         "test_plan": ["replay, null, holdout, cost, and shadow steps"],
@@ -321,6 +344,7 @@ def propose_improvement(
                 "origin": origin,
                 "evidence": records,
                 "required_schema": proposal_schema,
+                "allowed_proposal_paths": list(ALLOWED_PROPOSAL_PATHS),
                 "forbidden_path_tokens": sorted(FORBIDDEN_PATH_TOKENS),
             },
             indent=2,
