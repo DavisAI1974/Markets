@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 149 |
+| open | 150 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 68, **M** 45, **L** 8
+By size: **XS** 18, **S** 69, **M** 45, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 102
+By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -82,7 +82,7 @@ By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 102
 | **A-53** | ? | Sweep every play's `requires` against the served BLIND field set | - |
 | **A-54** | ? | The output contract cannot express what the specialists actually derived | - |
 
-## REST (102)
+## REST (103)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -107,6 +107,7 @@ By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 102
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
 | **A-3** | S | Compute the effective matching dimension d of any retrieval | - |
+| **A-59** | S | NOOA (arXiv 2607.20709) - steal the TYPED CONTRACT now, PARK prompts-as-docstrings: it collides with the gold vault | Registered under D36 because a delivered external recommendation gets a line even when the verdict is DO NOT ADOPT - an unrecorded rejection returns as a surprise. The extractable slice is small and fits A-54; the framework half is a spawn-layer rewrite and is explicitly parked with a falsifier. |
 | **A-8** | S | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | S | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | S | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -264,6 +265,7 @@ By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 102
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
 | **A-3** | REST | S | OPEN | S111 | Compute the effective matching dimension d of any retrieval | - |
+| **A-59** | REST | S | OPEN | S115 | NOOA (arXiv 2607.20709) - steal the TYPED CONTRACT now, PARK prompts-as-docstrings: it collides with the gold vault | - |
 | **A-8** | REST | S | OPEN | S111 | Wire the depth-based turn_exhaustion as the monitor's CONFIRMING turn channel | - |
 | **A-9** | REST | S | OPEN | S111 | Generate the drop-in's work list FROM the registry instead of restating it in prose | - |
 | **G-10** | REST | S | OPEN | S111 | Separate TAS (NGT) from the tape; add jump-robust realized variance | - |
@@ -2156,6 +2158,30 @@ AND IT UPGRADES TVA FROM CORRELATE TO INSTRUMENT. Its north Georgia dams are sto
 **Source:** FORECAST_ARCHITECTURE_S111 s4.2
 
 L = k/r^d caps our library at a matching dimension of about 3. Condition on ten things and retrieval returns a day no closer than random - and returns it confidently with a magnitude attached. Nothing to build, only to measure.
+
+---
+
+### [REST] A-59 - NOOA (arXiv 2607.20709) - steal the TYPED CONTRACT now, PARK prompts-as-docstrings: it collides with the gold vault
+
+*size S | OPEN | raised S115*
+
+**Why it is REST:** Registered under D36 because a delivered external recommendation gets a line even when the verdict is DO NOT ADOPT - an unrecorded rejection returns as a surprise. The extractable slice is small and fits A-54; the framework half is a spawn-layer rewrite and is explicitly parked with a falsifier.
+
+**Source:** Greg, S115: 'something to consider. just want you to look it over.' https://arxiv.org/abs/2607.20709
+
+THE PAPER: NVIDIA Object-Oriented Agents. An agent IS a Python object - methods are actions, fields are state, DOCSTRINGS ARE THE PROMPTS, type annotations are contracts; a method whose body is `...` is completed by the model at runtime while normal methods stay deterministic. Benchmarks cited: SWE-bench Verified, Terminal-Bench 2.0, ARC-AGI-3.
+
+WHY IT LANDS ON US, and it lands hard - two of its six features answer defects MEASURED this session:
+ (a) DOCSTRINGS-AS-PROMPTS is the one-doc problem solved structurally. S115 found knowledge/refinement_architecture_doctrine.md merged into the brain at S103 and STILL in RFN-1's read list twelve sessions later, plus FOUR citations to files deleted at S105 by design. Every one is prompt-text living apart from the machine that consumes it - A-7's disease. If the prompt is the docstring of the function that does the work, orphaning it requires deleting the function.
+ (b) TYPED I/O moves contract failures to EMISSION time. Ours is prose in a template: a specialist emits JSON and the coordinator hard-fails downstream, after the reasoning is already spent. That IS A-54 ('the output contract cannot express what the specialists actually derived').
+
+WHY WE DO NOT ADOPT THE FRAMEWORK, stated so it is not re-argued each session:
+ (1) THE GOLD VAULT. agents/mbo_refine_shared.md + the five lens files are frozen 0444 under a sha256 manifest and verify_gold hard-fails any run on drift - that freeze is what PROVES blind and refine ran the identical engine (D7; the S105 re-architecture exists precisely because they once did not). Prompts-as-docstrings puts doctrine in code that changes every session: a provable freeze traded for an ergonomic one.
+ (2) D8. Brain merges are proposal -> adjudication -> merge, never a direct edit. Code-as-prompt makes every code edit a potential doctrine edit - the opposite of the direction S115 drove all day.
+ (3) TIMING. It is a spawn-layer rewrite, proposed in the session whose stated instruction was 'this should be live ready'.
+
+THE ACTIONABLE SLICE (do this, small): give the per-day posterior a TYPED schema validated at WRITE time inside spawn/merge_perday, so a malformed or under-specified posterior fails where it is produced rather than at the coordinator. Pairs with A-54 and with A-2 - the contract currently cannot express NO CALL, which is why a forced number is indistinguishable downstream from a confident one.
+FALSIFIER for the parked half: if a later session finds prompt/code drift that a typed-docstring design would have prevented AND the vault's freeze can be preserved another way (e.g. hashing the docstrings themselves into the manifest), the parking reason is void and this reopens.
 
 ---
 

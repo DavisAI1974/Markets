@@ -2,6 +2,15 @@
 
 ## S115 — the pre-paper-trade platform audit: the blind wall, the brain view, and the D47 failure
 
+- **`research/kalshi/brain_onedoc_fix_s115.py`** — closes the ONE-DOC holes in the brain (Greg:
+  *"merge the reasoning file"*, *"is there another hidden doc somewhere"*). Merges the last
+  un-merged field of `knowledge/refinement_architecture_doctrine.md` (which had been merged at S103
+  and left in RFN-1's read list for twelve sessions), repairs four dead `.md` citations inside
+  served sections (`blind_class_C/D/E.md` + `blind_shared.md`, all deleted at S105 BY DESIGN under
+  D7), and reframes the doctrine entry that deferred substance to an external file. Dry-run
+  default, backup before write, refuses to shrink the brain. Paired gate:
+  `brain_schema.check_cited_files` — a `.md` named in a role-served section must EXIST, hard fail,
+  skipping citations that declare their own death.
 - **`research/kalshi/storage_restage_repair.py`** — grafts the correct EIA-weekly family (`storage`,
   `stor_surprise`/`_sign`/`_basis`, `storage_regional`) onto a committed group state instead of
   re-staging it. Built because the g24 refine needed a correct storage lane across the block's two
