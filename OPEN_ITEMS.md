@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 77 |
+| open | 131 |
 | in progress | 1 |
 | done | 12 |
 
-By size: **XS** 8, **S** 32, **M** 31, **L** 7
+By size: **XS** 18, **S** 63, **M** 43, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
+By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 27, **REST** 97
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (7)
+## ESSENTIAL (8)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -28,18 +28,20 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 |---|---|---|---|
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
+| **O-1** | S | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
-## BIGGEST WIN (24)
+## BIGGEST WIN (27)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
 | id | size | title | why it is here |
 |---|---|---|---|
+| **O-2** | XS | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | S | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | PLAY-SIDE ONLY, no feed work. coal_mwh and nuclear_mwh are served across US48 and six BAs and referenced by ZERO plays; wind and solar have one reader each and it is RETIRED. Three of the four terms that set the gas residual have no consumer. This is 0629 generalised. |
 | **A-18** | S | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | A LIST EDIT plus a rebuild. We serve one of six Southeast BAs in the highest-gas-share region in the country, and per D35 the Gulf corridor is among the best-transmitting demand to Henry Hub itself. Pairs with A-16 - hydro at US48 level averages TVA's drought against Pacific Northwest runoff and shows nothing. |
 | **A-24d** | S | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | RE-TIERED S114 on Greg's go. Proposes NO correlation - it changes who is allowed to speak - so the shared 'candidates not findings' tier_why never applied to it. Instances were already in the ledger (B-0713's override, the block's worst wrong-direction day; E's PRIOR-OVER-STATE, 13 of 18 Friday misses) and the census re-derived 0713 independently: every fresh instrument down, the stale table won, -620. The age fields it needs were WRONG until S113's h-frozen_countdowns fix - unreadable, not unread - and became readable one session ago. Zero new data required. |
@@ -49,6 +51,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **A-31** | S | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
 | **A-35** | S | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | It puts a clock on four registered mechanisms rather than adding a fifth, it re-reads the S111 'market got quieter' finding as a risk error, and it supplies the analog library's validity window as a measured quantity. Buildable from grid_stack shares we already hold. |
 | **A-36** | S | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
+| **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
 | **A-24a** | M | Weather information ACCEPTANCE: revision size x model convergence x release timing | RE-TIERED S114 on Greg's go, per-event evidence in walk_census_g18_g23_S114.csv. Its own why already said PROMOTED FROM BEHAVIORAL TO PHYSICAL (A-31: revision timing decides whether coal can be warm - falsifiable against generation); the census showed the authority half working per event (0713 convergence 0.017 = D25's override day; 0511 disagreement 1.127 = the walk's worst day) and the sign half's prerequisite - the seasonal sign map - is now IN THE BRAIN (s105.1 weather.revision_seasonal_sign_map, g24 test registered). The old shared blocker (A-23 triage) was decoration: A-24b/c ran to completion with it in place. |
@@ -64,8 +67,9 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
 | **A-23** | L | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | Turns 1,129 unread data points into a ranked verdict list, and it is the gate on A-24 - Greg's correlated-pair hunch. Delegable in full, with DATA_POINTS.md as its input. |
 | **A-39** | L | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
+| **G-29** | L | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
 
-## REST (47)
+## REST (97)
 
 *everything else - real work, correctly tracked, and none of it deleted. Several become cheap once an ESSENTIAL or BIGGEST_WIN item lands.*
 
@@ -77,6 +81,15 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **G-26** | XS | BCOM/GSCI ROLL: demote from alpha to a liquidity-regime flag | - |
 | **G-27** | XS | STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input | - |
 | **M-10** | XS | KILL THE scratchpad/aws.env CREDENTIAL PATH - five files still read it | - |
+| **O-33** | XS | HEDGE-FREQUENCY POLICY - and never hedge on a clock through 10:30 ET Thursday or the settle window | - |
+| **O-34** | XS | OPEN A BROKER / CLEARPORT RELATIONSHIP BEFORE VALIDATION, NOT AFTER | - |
+| **O-35** | XS | LONG-PREMIUM OR DEFINED-RISK ONLY; never a naked wing | - |
+| **O-38** | XS | NEVER EXPRESS A DOWN VIEW AS AN OUTRIGHT LONG PUT - down views go to futures or put spreads | - |
+| **O-42** | XS | READ THE CME POSITION-LIMIT / ACCOUNTABILITY TABLE including the options delta-equivalent conversion | - |
+| **O-48** | XS | ACCEPT THAT WITHIN-SESSION TIMING IS AN EXECUTION ASSET, NEVER A POSITION | - |
+| **O-49** | XS | STATED RULE: NO EV, KELLY FRACTION OR POSITION SIZE MAY BE COMPUTED FROM REFINE STATISTICS | - |
+| **O-50** | XS | RECORD LNE-AS-SURFACE-BACKBONE AS A DELIBERATE DATED DECISION | - |
+| **O-9** | XS | DECIDE THE DAY-COUNT ONCE (252 / 365 / weighted) AND WRITE IT INTO RUN_SOP | - |
 | **A-12** | S | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | DEMOTED FROM ESSENTIAL S113. The 'live wrong value' half was the age field, and that is fixed at source and registered as a defect. What remains is a NAMING decision on a value that is correct and correctly masked - real, small, and it gates nothing. |
 | **A-17** | S | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | S | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | - |
@@ -100,6 +113,35 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **M-7** | S | QC checklist gains a brain-conformance item | - |
 | **M-8** | S | Retire the Pyth collector workflows (D14) | - |
 | **M-9** | S | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
+| **O-10** | S | MEASURE HOW THE MARKET PRICES WEEKEND VARIANCE - Friday-to-Monday realized against mid-week | - |
+| **O-11** | S | RESOLVE THE ON / LN / LNE ROOT MAPPING from our own GLBX definitions and record it in KEYS.md as a dated measured fact | - |
+| **O-12** | S | TAG EVERY SETTLE IV OBSERVED-vs-FITTED and restrict alpha claims to OTM, near-dated, actually-traded strikes | - |
+| **O-13** | S | RE-KEY THE PIN / OI MAP by (root, expiry, DELIVERY month), handle-filtered, weekly exercising into the second nearby | - |
+| **O-14** | S | KEY EVERY ROW OF OPTIONS DATA BY DELIVERY MONTH, NOT EXPIRY MONTH | - |
+| **O-15** | S | STORE THE SKEW SIGN CONVENTION AS DATA, reconciled against our own 25-delta re-derivation | - |
+| **O-16** | S | RE-TEST THE BLACK-76 JUSTIFICATION ON TRADED PRICES - the settle-based test is circular | - |
+| **O-17** | S | ROOT DISCIPLINE AS A HARD GATE - never merge ladders, never mix ON into LNE, normalize contract sizes | - |
+| **O-18** | S | EXTEND THE NO-CROSS-SEAM RULE from the ATM decay fit to SKEW and IMPLIED CORRELATION | - |
+| **O-19** | S | RE-VERIFY THE CME CONTRACT SPECS FIRST-PARTY before any of them becomes load-bearing | - |
+| **O-20** | S | ESTABLISH WHETHER THE SETTLE SURFACE SUPPORTS GREEKS OUTSIDE ATM +/-2 STRIKES AT ALL | - |
+| **O-21** | S | CONFIRM WHETHER THE MEASURED 'FAT LEFT TAIL' IS A PRICE PROPERTY OR A SHORT-VOL P&L ARTIFACT | - |
+| **O-22** | S | INGEST CVOL DAILY (NGVL/NGSK/NGUP/NGDN/NGAM/NGCV) as an independent vol construction | - |
+| **O-25** | S | MEASURE THE VOL PATH SLOPE - regress d(ATM IV) on d(ln F) per month, season and curve regime, then FREEZE it | - |
+| **O-26** | S | MEASURE STICKY-STRIKE vs STICKY-DELTA PER REGIME on our own 180-session surface | - |
+| **O-27** | S | HEDGE EVERY OPTION IN ITS OWN CONTRACT MONTH; aggregate delta via a measured hedge ratio h, gamma via h^2 | - |
+| **O-31** | S | EXPRESS EVERY SPREAD IN VOL POINTS AND % OF VEGA; build the execution-cost model in vega units | - |
+| **O-37** | S | STRESS GRIDS MUST COUPLE PRICE AND VOL POSITIVELY AND ASYMMETRICALLY UPWARD, and include a front-to-back correlation break | - |
+| **O-4** | S | WIRE THE SIGMA YARDSTICK - print every forecast and error in sigma_day units beside dollars | - |
+| **O-40** | S | QUOTE OUR DISPERSION AS A NORMAL (BACHELIER) VOL IN $/MMBtu and convert to Black only at the comparison step | - |
+| **O-41** | S | BUDGET SPAN / SPAN 2 MARGIN AS A SCENARIO, NOT A NUMBER | - |
+| **O-43** | S | ADOPT THE FIVE SIZING RULES - blind-only Kelly inputs, pessimistic end of the range, quarter Kelly at N=20, shorts sized off a 15-20% up-gap stress, reject any edge inside one SE | - |
+| **O-44** | S | TEST WHETHER OI PINNING ACTUALLY OCCURS IN GAS, and whether our pin map is predictive or merely descriptive | - |
+| **O-5** | S | MEASURE k = RV/IV AT 1, 5 AND 21 DAYS, PER SEASON AND PER DAY-CLASS | - |
+| **O-51** | S | ANSWER THE INSTRUMENT QUESTION IN WRITING - which lane owns a one-session view, and what an options trade would have to look like | - |
+| **O-53** | S | ADJUDICATE THE TWO INTERNAL CONTRADICTIONS in the options briefing | - |
+| **O-6** | S | SELECTION-BIAS SWEEP ON THE ANALOG COHORT - does sigma_emp rise monotonically as the match tolerance loosens | - |
+| **O-7** | S | PUBLISH SE(sigma_emp) WITH EVERY DISPERSION OUTPUT AND GATE OUT ANY EDGE INSIDE ONE STANDARD ERROR | - |
+| **O-8** | S | DECIDE THE RE-ANCHORING CONVENTION - absolute cents vs log returns - by testing both on the extreme analogs | - |
 | **A-10** | M | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | - |
 | **A-24f** | M | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | Stays REST S114 only because it is BLOCKED, not because it is a mere candidate - A-33 already promoted its content. Unblocks at the g12/g13 actual repull or the first winter block. |
 | **A-24g** | M | Sunset compression x regional gas marginality - the synchronised thermal ramp | Stays REST S114: correctly parked by its own author on A-28. Six findings queue behind that one ingest change; when it lands this item is testable. |
@@ -112,6 +154,18 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **G-8** | M | Pipeline critical notices + planned-maintenance calendar | - |
 | **M-5** | M | Seasonal station weights + the Ohio/Baltimore holes | - |
 | **M-6** | M | Coal headroom (EIA-860M additions/retirements + ISO outage aggregates) | - |
+| **O-23** | M | OBTAIN ONE INDEPENDENT BROKER IV SOURCE quoting straddles with bid/ask in vol points | - |
+| **O-24** | M | BUILD THE QUOTE-BASED LNE SURFACE (bid/ask/size from GLBX MDP3) as the backtest input; settle stays the mark | - |
+| **O-28** | M | BUILD THE MONTH-BY-MONTH HEDGE-RATIO MATRIX from the per-leg MBP-10 tape already on S3 | - |
+| **O-29** | M | BUILD THE GREEK ENGINE (Black-76 + discounting for LNE, BAW/binomial for ON) and TEST the ON-minus-LNE settle-IV gap against its predicted size r*intrinsic*T | - |
+| **O-30** | M | RE-MARK THE 51-EVENT VERTICAL REPLAY on quotes, at RFQ and legged economics, with a skew-dynamics assumption | - |
+| **O-32** | M | MEASURE TOUCH WIDTH AND DEPTH BY MONTH AND HOUR from our own MBP-10 and recompute the Leland crossover | - |
+| **O-36** | M | THE RISK REPORT GRID by delivery month and season - net AND gross vega, gamma per 10c, theta with a separate weekend line, charm on the Friday report | - |
+| **O-39** | M | IMPLEMENT BACHELIER / SHIFTED-LOGNORMAL alongside Black-76 from the start | - |
+| **O-45** | M | WIRE THE BREEDEN-LITZENBERGER DENSITY-TO-DENSITY COMPARISON - LNE risk-neutral density against the cohort's empirical density | - |
+| **O-46** | M | SPLIT THE FORECAST INTO TERMINAL DISPERSION AND PATH ROUGHNESS - they price different instruments | - |
+| **O-47** | M | MATCH THE DISPERSION COHORT ON VOL CELL - strip, time-to-expiry bucket, event class, price level | - |
+| **O-52** | M | EXTEND THE FORECAST HORIZON TO 5+ SESSIONS, or aggregate daily paths into a weekly terminal density | - |
 | **S111-2** | M | Run the 82-play audit, all eight batches, using the COMMITTED harness | - |
 | **S111-3** | M | THE BACKFILL - instances and corpus state into the brain | - |
 | **S111-4** | M | Falsifier backfill - 65 of 82 plays have none | - |
@@ -127,11 +181,13 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 |---|---|---|---|---|---|---|
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
+| **O-1** | ESSENTIAL | S | OPEN | S114 | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
+| **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
 | **A-18** | BIGGEST_WIN | S | OPEN | S112 | SERVE THE MISSING SOUTHEAST BAs - TVA, CPLE, DUK, FPL, SCEG (+check CPLW). We carry 1 of 6 in the largest summer-burn region | - |
 | **A-24d** | BIGGEST_WIN | S | OPEN | S113 | Freshness-weighted source precedence - stale and fresh blocks should not vote as simultaneous | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
@@ -141,6 +197,7 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | - |
 | **A-35** | BIGGEST_WIN | S | OPEN | S113 | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | - |
 | **A-36** | BIGGEST_WIN | S | OPEN | S113 | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
+| **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
 | **A-24a** | BIGGEST_WIN | M | OPEN | S113 | Weather information ACCEPTANCE: revision size x model convergence x release timing | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
@@ -156,12 +213,22 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
 | **A-23** | BIGGEST_WIN | L | OPEN | S112 | TRIAGE THE 1,129 UNREAD DATA POINTS - find the ones that should be read and are not | - |
 | **A-39** | BIGGEST_WIN | L | OPEN | S114 | THE WINTER LANE FORWARD TOOL - build the missing terms behind the seven s105.1 plays (A-38 converter, G-4 feeds, conjunction joins) | - |
+| **G-29** | BIGGEST_WIN | L | OPEN | S114 | DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it | - |
 | **G-14** | REST | XS | OPEN | S111 | Fix the LNE strike decode at source (Databento display_factor bug) | - |
 | **G-17** | REST | XS | OPEN | S111 (recommendation); S112  | TAPE: the BOIL/KOLD close-imbalance test | - |
 | **G-21** | REST | XS | OPEN | S111 (recommendation); S112  | STORAGE CONSENSUS: carry the RANGE, not just the median | - |
 | **G-26** | REST | XS | OPEN | S111 (recommendation); S112  | BCOM/GSCI ROLL: demote from alpha to a liquidity-regime flag | - |
 | **G-27** | REST | XS | OPEN | S111 (recommendation); S112  | STEO VINTAGES: scope them as a SLOW PRIOR, explicitly NOT a short-horizon input | - |
 | **M-10** | REST | XS | OPEN | S113 | KILL THE scratchpad/aws.env CREDENTIAL PATH - five files still read it | - |
+| **O-33** | REST | XS | OPEN | S114 | HEDGE-FREQUENCY POLICY - and never hedge on a clock through 10:30 ET Thursday or the settle window | - |
+| **O-34** | REST | XS | OPEN | S114 | OPEN A BROKER / CLEARPORT RELATIONSHIP BEFORE VALIDATION, NOT AFTER | - |
+| **O-35** | REST | XS | OPEN | S114 | LONG-PREMIUM OR DEFINED-RISK ONLY; never a naked wing | - |
+| **O-38** | REST | XS | OPEN | S114 | NEVER EXPRESS A DOWN VIEW AS AN OUTRIGHT LONG PUT - down views go to futures or put spreads | - |
+| **O-42** | REST | XS | OPEN | S114 | READ THE CME POSITION-LIMIT / ACCOUNTABILITY TABLE including the options delta-equivalent conversion | - |
+| **O-48** | REST | XS | OPEN | S114 | ACCEPT THAT WITHIN-SESSION TIMING IS AN EXECUTION ASSET, NEVER A POSITION | - |
+| **O-49** | REST | XS | OPEN | S114 | STATED RULE: NO EV, KELLY FRACTION OR POSITION SIZE MAY BE COMPUTED FROM REFINE STATISTICS | - |
+| **O-50** | REST | XS | OPEN | S114 | RECORD LNE-AS-SURFACE-BACKBONE AS A DELIBERATE DATED DECISION | - |
+| **O-9** | REST | XS | OPEN | S114 | DECIDE THE DAY-COUNT ONCE (252 / 365 / weighted) AND WRITE IT INTO RUN_SOP | - |
 | **A-12** | REST | S | OPEN | S112 | vol_regime.n0_prev_* is a PER-BLOCK CONSTANT - valid only on a block's first day | - |
 | **A-17** | REST | S | OPEN | pre-S112, exact session unre | NUCLEAR PLANNED-OUTAGE SCHEDULE (forward) - agreed TWICE across sessions and never tracked until S112 | - |
 | **A-20** | REST | S | OPEN | S112 | TEST GREG'S HYDRO CARRY - does TVA's curtailed state predict SOCO/SCEG/DUK? If it does, TVA's FORWARD water becomes a forward signal for three BAs that publish none | A-16 (serve WAT) and A-18 (add the BAs) - both small, both prerequisites |
@@ -185,6 +252,35 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **M-7** | REST | S | OPEN | S111 | QC checklist gains a brain-conformance item | - |
 | **M-8** | REST | S | OPEN | S110 | Retire the Pyth collector workflows (D14) | requires a commit on the trunk branch, not this one |
 | **M-9** | REST | S | OPEN | S112 | Root-level OD/crypto-era scripts still hardcode E:\Markets paths | - |
+| **O-10** | REST | S | OPEN | S114 | MEASURE HOW THE MARKET PRICES WEEKEND VARIANCE - Friday-to-Monday realized against mid-week | - |
+| **O-11** | REST | S | OPEN | S114 | RESOLVE THE ON / LN / LNE ROOT MAPPING from our own GLBX definitions and record it in KEYS.md as a dated measured fact | - |
+| **O-12** | REST | S | OPEN | S114 | TAG EVERY SETTLE IV OBSERVED-vs-FITTED and restrict alpha claims to OTM, near-dated, actually-traded strikes | - |
+| **O-13** | REST | S | OPEN | S114 | RE-KEY THE PIN / OI MAP by (root, expiry, DELIVERY month), handle-filtered, weekly exercising into the second nearby | - |
+| **O-14** | REST | S | OPEN | S114 | KEY EVERY ROW OF OPTIONS DATA BY DELIVERY MONTH, NOT EXPIRY MONTH | - |
+| **O-15** | REST | S | OPEN | S114 | STORE THE SKEW SIGN CONVENTION AS DATA, reconciled against our own 25-delta re-derivation | - |
+| **O-16** | REST | S | OPEN | S114 | RE-TEST THE BLACK-76 JUSTIFICATION ON TRADED PRICES - the settle-based test is circular | - |
+| **O-17** | REST | S | OPEN | S114 | ROOT DISCIPLINE AS A HARD GATE - never merge ladders, never mix ON into LNE, normalize contract sizes | - |
+| **O-18** | REST | S | OPEN | S114 | EXTEND THE NO-CROSS-SEAM RULE from the ATM decay fit to SKEW and IMPLIED CORRELATION | - |
+| **O-19** | REST | S | OPEN | S114 | RE-VERIFY THE CME CONTRACT SPECS FIRST-PARTY before any of them becomes load-bearing | - |
+| **O-20** | REST | S | OPEN | S114 | ESTABLISH WHETHER THE SETTLE SURFACE SUPPORTS GREEKS OUTSIDE ATM +/-2 STRIKES AT ALL | - |
+| **O-21** | REST | S | OPEN | S114 | CONFIRM WHETHER THE MEASURED 'FAT LEFT TAIL' IS A PRICE PROPERTY OR A SHORT-VOL P&L ARTIFACT | - |
+| **O-22** | REST | S | OPEN | S114 | INGEST CVOL DAILY (NGVL/NGSK/NGUP/NGDN/NGAM/NGCV) as an independent vol construction | - |
+| **O-25** | REST | S | OPEN | S114 | MEASURE THE VOL PATH SLOPE - regress d(ATM IV) on d(ln F) per month, season and curve regime, then FREEZE it | - |
+| **O-26** | REST | S | OPEN | S114 | MEASURE STICKY-STRIKE vs STICKY-DELTA PER REGIME on our own 180-session surface | - |
+| **O-27** | REST | S | OPEN | S114 | HEDGE EVERY OPTION IN ITS OWN CONTRACT MONTH; aggregate delta via a measured hedge ratio h, gamma via h^2 | - |
+| **O-31** | REST | S | OPEN | S114 | EXPRESS EVERY SPREAD IN VOL POINTS AND % OF VEGA; build the execution-cost model in vega units | - |
+| **O-37** | REST | S | OPEN | S114 | STRESS GRIDS MUST COUPLE PRICE AND VOL POSITIVELY AND ASYMMETRICALLY UPWARD, and include a front-to-back correlation break | - |
+| **O-4** | REST | S | OPEN | S114 | WIRE THE SIGMA YARDSTICK - print every forecast and error in sigma_day units beside dollars | - |
+| **O-40** | REST | S | OPEN | S114 | QUOTE OUR DISPERSION AS A NORMAL (BACHELIER) VOL IN $/MMBtu and convert to Black only at the comparison step | - |
+| **O-41** | REST | S | OPEN | S114 | BUDGET SPAN / SPAN 2 MARGIN AS A SCENARIO, NOT A NUMBER | - |
+| **O-43** | REST | S | OPEN | S114 | ADOPT THE FIVE SIZING RULES - blind-only Kelly inputs, pessimistic end of the range, quarter Kelly at N=20, shorts sized off a 15-20% up-gap stress, reject any edge inside one SE | - |
+| **O-44** | REST | S | OPEN | S114 | TEST WHETHER OI PINNING ACTUALLY OCCURS IN GAS, and whether our pin map is predictive or merely descriptive | - |
+| **O-5** | REST | S | OPEN | S114 | MEASURE k = RV/IV AT 1, 5 AND 21 DAYS, PER SEASON AND PER DAY-CLASS | - |
+| **O-51** | REST | S | OPEN | S114 | ANSWER THE INSTRUMENT QUESTION IN WRITING - which lane owns a one-session view, and what an options trade would have to look like | - |
+| **O-53** | REST | S | OPEN | S114 | ADJUDICATE THE TWO INTERNAL CONTRADICTIONS in the options briefing | - |
+| **O-6** | REST | S | OPEN | S114 | SELECTION-BIAS SWEEP ON THE ANALOG COHORT - does sigma_emp rise monotonically as the match tolerance loosens | - |
+| **O-7** | REST | S | OPEN | S114 | PUBLISH SE(sigma_emp) WITH EVERY DISPERSION OUTPUT AND GATE OUT ANY EDGE INSIDE ONE STANDARD ERROR | - |
+| **O-8** | REST | S | OPEN | S114 | DECIDE THE RE-ANCHORING CONVENTION - absolute cents vs log returns - by testing both on the extreme analogs | - |
 | **A-10** | REST | M | OPEN | S112 | THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8 | MBP-10 restore from S3 (needs AWS keys, absent this session) |
 | **A-24f** | REST | M | OPEN | S113 | Cross-basin freeze GEOMETRY - overlap, sequence and duration, not the coldest basin | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
 | **A-24g** | REST | M | OPEN | S113 | Sunset compression x regional gas marginality - the synchronised thermal ramp | The unread-field triage should land before any candidate is promoted - a candidate built on a defect artifact is a manufactured mechanism. This is a substantive dependency, not a sequencing complaint. |
@@ -197,6 +293,18 @@ By tier: **ESSENTIAL** 7, **BIGGEST_WIN** 24, **REST** 47
 | **G-8** | REST | M | OPEN | S111 | Pipeline critical notices + planned-maintenance calendar | - |
 | **M-5** | REST | M | OPEN | S109 | Seasonal station weights + the Ohio/Baltimore holes | - |
 | **M-6** | REST | M | OPEN | S109 | Coal headroom (EIA-860M additions/retirements + ISO outage aggregates) | - |
+| **O-23** | REST | M | OPEN | S114 | OBTAIN ONE INDEPENDENT BROKER IV SOURCE quoting straddles with bid/ask in vol points | - |
+| **O-24** | REST | M | OPEN | S114 | BUILD THE QUOTE-BASED LNE SURFACE (bid/ask/size from GLBX MDP3) as the backtest input; settle stays the mark | - |
+| **O-28** | REST | M | OPEN | S114 | BUILD THE MONTH-BY-MONTH HEDGE-RATIO MATRIX from the per-leg MBP-10 tape already on S3 | - |
+| **O-29** | REST | M | OPEN | S114 | BUILD THE GREEK ENGINE (Black-76 + discounting for LNE, BAW/binomial for ON) and TEST the ON-minus-LNE settle-IV gap against its predicted size r*intrinsic*T | - |
+| **O-30** | REST | M | OPEN | S114 | RE-MARK THE 51-EVENT VERTICAL REPLAY on quotes, at RFQ and legged economics, with a skew-dynamics assumption | - |
+| **O-32** | REST | M | OPEN | S114 | MEASURE TOUCH WIDTH AND DEPTH BY MONTH AND HOUR from our own MBP-10 and recompute the Leland crossover | - |
+| **O-36** | REST | M | OPEN | S114 | THE RISK REPORT GRID by delivery month and season - net AND gross vega, gamma per 10c, theta with a separate weekend line, charm on the Friday report | - |
+| **O-39** | REST | M | OPEN | S114 | IMPLEMENT BACHELIER / SHIFTED-LOGNORMAL alongside Black-76 from the start | - |
+| **O-45** | REST | M | OPEN | S114 | WIRE THE BREEDEN-LITZENBERGER DENSITY-TO-DENSITY COMPARISON - LNE risk-neutral density against the cohort's empirical density | - |
+| **O-46** | REST | M | OPEN | S114 | SPLIT THE FORECAST INTO TERMINAL DISPERSION AND PATH ROUGHNESS - they price different instruments | - |
+| **O-47** | REST | M | OPEN | S114 | MATCH THE DISPERSION COHORT ON VOL CELL - strip, time-to-expiry bucket, event class, price level | - |
+| **O-52** | REST | M | OPEN | S114 | EXTEND THE FORECAST HORIZON TO 5+ SESSIONS, or aggregate daily paths into a weekly terminal density | - |
 | **S111-2** | REST | M | OPEN | S111 | Run the 82-play audit, all eight batches, using the COMMITTED harness | - |
 | **S111-3** | REST | M | OPEN | S111 | THE BACKFILL - instances and corpus state into the brain | S111-2 |
 | **S111-4** | REST | M | OPEN | S111 | Falsifier backfill - 65 of 82 plays have none | - |
@@ -262,6 +370,16 @@ saturates at ~3.1M MWh/day around $7 gas because coal's cost per MWh sits below 
 BASIN-SPECIFIC. PRB at $14.65/ton is roughly $8/MWh of fuel and is never displaced; CAPP at $82/ton is
 roughly $33/MWh and is displaced by $3 gas. The switching threshold is a per-basin ladder and this feed IS
 that ladder. It is no longer a slow structural level for M-6 alone.
+
+---
+
+### [ESSENTIAL] O-1 - THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A binary is a DIGITAL: value = N(d2) - Vega*(dSigma/dK). We price it as flat-vol N(d2). Gas carries POSITIVE call skew, so an upside digital is worth LESS than the naive mark - and the SIGN of the error is knowable in advance from our own rr25/fly25, which we already compute. This is not a future concern: KXNATGASD is the lane being paper traded now, so every mark carries a one-directional error whose direction we can state. Fixing it needs no new data. FALSIFIER: if measured rr25 is ~0 across seasons the correction is immaterial and this closes.
 
 ---
 
@@ -337,6 +455,16 @@ THE GAP: we serve degree days (gw_hdd) and we serve power burn. We serve NOTHING
 ALSO MISSING FROM THE EXTRACT: industrial consumption. It is 21.4-27.0 Bcf/d - the SECOND largest component - and appears in our steo_vintage store only as the arithmetic residual of NGTCPUS minus the six series we do carry. EIA publishes it; our parse drops it.
 
 WEEKLY CORROBORATION LANDED S114, from a second committed file (storage_week_by_week_S113.csv), per event: four same-burn SAME-BREADTH pairs, each a November/early-December week against a January/February week, 219-369 Bcf apart - 2021-02-25 -338 vs 2020-11-19 +31 (burns 168/174, both br2); 2022-02-03 -268 vs 2022-11-10 +79 (197/197, br2); 2025-01-30 -321 vs 2024-12-05 -30 (248/256, br4); 2019-02-07 -237 vs 2020-11-27 -18 (171/172, br3). Identical power burn, identical breadth; the differing term is res/comm heating. The monthly finding now has its weekly echo at the traded horizon. ALSO: 12 of the 14 deepest breadth-0/1 winter weeks carry POSITIVE dVRE - wind was muting burn while heating drained the tank, which is why a burn-based model under-calls exactly the weeks that matter. See WINTER_LANE_FORWARD_TOOL_S114.md s1.
+
+---
+
+### [BIGGEST_WIN] O-2 - RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The briefing's headline conclusion - 'our forecaster does not yet support an options business' - appears in NO DECISIONS.md line. It survives as a clause in KALSHI_TRADING.md's index prose, which is exactly the D30 disease: a finding with no home in the ledger does not exist. Record it WITH the Phase 0 gate as the stated re-entry condition, so a future session can neither re-litigate it from scratch nor drift into options without meeting the gate.
 
 ---
 
@@ -991,6 +1119,16 @@ D38. Interchange between two BAs inside an aggregate cancels pairwise, so it is 
 
 ---
 
+### [BIGGEST_WIN] O-3 - THE OPTION SKILL RATIO - blind |err| divided by the market's own one-day ATM straddle, per day, never pooled
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A-1 wired the ZERO_CHANGE benchmark, which answers 'do we beat no-forecast'. It does NOT answer the question that decides the options lane: do we beat THE PRICE OF THE BET. The straddle (0.798*F*sigma_imp*sqrt(1/365)) is what a market maker charges for a one-day view, and our settle surface already carries sigma_imp. This is the single sub-recommendation A-1 does not reach, and it is Phase 0's gate. FALSIFIER: it is itself the falsifier - if the ratio is above 1 the options lane stays shut.
+
+---
+
 ### [BIGGEST_WIN] A-2 - Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate)
 
 *size M | OPEN | raised S110*
@@ -1522,6 +1660,16 @@ THE KNOWLEDGE IS IN THE BRAIN (s105.1: weather.winter_heating_size_term, renewab
 
 ---
 
+### [BIGGEST_WIN] G-29 - DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it
+
+*size L | OPEN | raised S114*
+
+**Source:** GAS_SIGNAL_BRIEFING_S111 D36 audit, S114 (51 of 109 untracked; D36 was applied at S112 to section 3 of the SYNTHESIS only - sections 1,4,5,6 and the entire 1,730-line appendix were never read for recommendations)
+
+The supply side of the balance has no nowcast. The briefing's own balance lens ranks this its #1 gap; the SYNTHESIS never carried it forward, so it reached neither the registry nor any build - the clearest instance of the appendix being invisible. Worse, we ALREADY SERVE ngwu_balance.dry_production_bcfd and it is READ BY NOTHING, and per G-1 that series died in September when the balance section was pulled. So the desk has a dead, unread supply series and no replacement. Every demand-side item (A-38, A-19, A-28) improves one half of a balance whose other half is unmodelled. FALSIFIER: if a production nowcast built from pipeline scrapes tracks the monthly EIA-914 actual no better than a persistence forecast, the nowcast is not worth its maintenance.
+
+---
+
 ### [REST] G-14 - Fix the LNE strike decode at source (Databento display_factor bug)
 
 *size XS | OPEN | raised S111*
@@ -1587,6 +1735,96 @@ Greg, S113: 'no more scratchpad. It's in the sop.' A credential is NEITHER code 
 BUILT S113: research/kalshi/creds.py resolves in order - process environment, then ~/.config/markets/env (chmod 600, outside the repo), then the legacy scratchpad path WITH A WARNING so nothing breaks mid-migration. It never prints or returns a value into an artifact; `python creds.py` reports only which secrets resolve and from where, by NAME.
 
 grid_stack.py is repointed and verified live (EIA auth PASS, store rebuilt through 2026-08-05). STILL READING THE OLD PATH, and this is the open work: databento_live_smoke.py, nuclear_outages.py, plant_status.py, platform_sync.py, session_bootstrap.py. Each is a one-function change to creds.get(). Left undone deliberately rather than blind-patched - plant_status is the andon and session_bootstrap is the bring-up path, so both need their own verification rather than a sed.
+
+---
+
+### [REST] O-33 - HEDGE-FREQUENCY POLICY - and never hedge on a clock through 10:30 ET Thursday or the settle window
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Hedging mechanically into the EIA print or the settle window converts a hedge into a market order at the worst moment of the day. Pairs with the settle-window exclusion already standing in the trading rules.
+
+---
+
+### [REST] O-34 - OPEN A BROKER / CLEARPORT RELATIONSHIP BEFORE VALIDATION, NOT AFTER
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A 10-contract weekly block minimum and RFQ-package execution mean the account setup gates the first trade. Doing it after validation adds weeks to an already-deferred lane.
+
+---
+
+### [REST] O-35 - LONG-PREMIUM OR DEFINED-RISK ONLY; never a naked wing
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Gas short vol dies on the UPSIDE, and our own measured tail is fat. A structural rule, not a per-trade preference. It is a structural rule rather than a per-trade preference because the failure it prevents is not recoverable: a naked upside wing in gas can lose more than the account on a single scarcity event, and our own A-33 work says those events arrive with everything failing at once.
+
+---
+
+### [REST] O-38 - NEVER EXPRESS A DOWN VIEW AS AN OUTRIGHT LONG PUT - down views go to futures or put spreads
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Vol falls as gas falls, so a long put fights the vol beta exactly when the direction is right. This aims straight at our own weather model, whose stated asymmetry is 'mild kills demand: big down'.
+
+---
+
+### [REST] O-42 - READ THE CME POSITION-LIMIT / ACCOUNTABILITY TABLE including the options delta-equivalent conversion
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A 2,000-lot spot-month federal limit with delta-equivalent conversion is a hard constraint that must be known before sizing, not after. A hard limit known after sizing is a limit discovered by breaching it. The delta-equivalent conversion is the part people miss - an options book converts into a futures-equivalent position for limit purposes, so a book that looks small can be over the limit.
+
+---
+
+### [REST] O-48 - ACCEPT THAT WITHIN-SESSION TIMING IS AN EXECUTION ASSET, NEVER A POSITION
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Onset and turn times cannot be held; budgeting them as alpha double-counts an edge that is really slippage reduction. Bites D32's monitor loop directly. Without it the options lane reopens by DRIFT rather than by decision - somebody builds one useful options number, then another, and the deferral quietly ends without anyone adjudicating it. Writing down which instrument expresses which view makes the reopening a choice with a date on it.
+
+---
+
+### [REST] O-49 - STATED RULE: NO EV, KELLY FRACTION OR POSITION SIZE MAY BE COMPUTED FROM REFINE STATISTICS
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+D6 governs rule precedence, not sizing. The refine sees the realized curve; sizing off its accuracy assumes information the live system lacks. Our own horizon research puts directional skill death at 5-7 days while options need at least five sessions to be the right instrument, so the two constraints currently exclude each other - and that exclusion, not any modelling gap, is what actually shuts the options lane. Either the horizon extends or the daily paths must be aggregated into the weekly terminal density options price.
+
+---
+
+### [REST] O-50 - RECORD LNE-AS-SURFACE-BACKBONE AS A DELIBERATE DATED DECISION
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+An explicit 'say so in the record' instruction that went unrecorded - the cheapest untracked item in the set, and an inherited default is indistinguishable from a choice once the reason is forgotten.
+
+---
+
+### [REST] O-9 - DECIDE THE DAY-COUNT ONCE (252 / 365 / weighted) AND WRITE IT INTO RUN_SOP
+
+*size XS | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The same annualization must be used in the vol conversion, theta, breakeven and dispersion or the numbers silently disagree with each other. Pairs with the weekend-variance measurement: how the market prices Friday-to-Monday decides which convention is honest, and our worst-scoring seam is exactly that boundary.
 
 ---
 
@@ -1898,6 +2136,296 @@ D34 says there is nothing local and no artifact may name a desktop path. The liv
 
 ---
 
+### [REST] O-10 - MEASURE HOW THE MARKET PRICES WEEKEND VARIANCE - Friday-to-Monday realized against mid-week
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Prerequisite to the day-count decision, and it lands on the desk's documented weakest seam (the S104 Friday/Monday cascade; 11 of 22 Fridays wrong-signed, 10 of 14 bad Mondays rooting to a mis-read Friday). If the market prices the weekend as one day and we model it as three, every weekend-crossing magnitude is mis-scaled.
+
+---
+
+### [REST] O-11 - RESOLVE THE ON / LN / LNE ROOT MAPPING from our own GLBX definitions and record it in KEYS.md as a dated measured fact
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+G-14 and G-15 both name roots without ever establishing the mapping. Root confusion is how ladders get merged and volumes compared across 10,000 / 2,500 / 1,000 MMBtu contracts - a well-formed wrong number, the family this desk hunts.
+
+---
+
+### [REST] O-12 - TAG EVERY SETTLE IV OBSERVED-vs-FITTED and restrict alpha claims to OTM, near-dated, actually-traded strikes
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+294k settle IVs are carried as if uniform. The settlement algorithm FITS strikes that did not trade, so an ITM wing mark is the exchange's opinion, not a price. Our own honest bound already calls the 10-delta wings descriptive-only; nothing enforces it, so a greek engine would read them as data.
+
+---
+
+### [REST] O-13 - RE-KEY THE PIN / OI MAP by (root, expiry, DELIVERY month), handle-filtered, weekly exercising into the second nearby
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The S100.1 combined-pin defect is recorded in CLAUDE.md as 'unfixed, signal core owns it' - declared in prose since S100.1 and owned by no registry item anyone can name. It merges mismatched ladders, which makes every pin/wall read on it unreliable.
+
+---
+
+### [REST] O-14 - KEY EVERY ROW OF OPTIONS DATA BY DELIVERY MONTH, NOT EXPIRY MONTH
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Options expire the business day before futures expiry, so expiry-month and delivery-month keys differ for part of every cycle. If wrong, the entire dataset is mis-joined silently - present, numeric, plausible.
+
+---
+
+### [REST] O-15 - STORE THE SKEW SIGN CONVENTION AS DATA, reconciled against our own 25-delta re-derivation
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The briefing documents one publisher defining skew both ways in two articles. A sign convention carried as an assumption rather than a field is the exact 'present, numeric, in range, self-consistent and wrong' class as the S108 b_share encoding.
+
+---
+
+### [REST] O-16 - RE-TEST THE BLACK-76 JUSTIFICATION ON TRADED PRICES - the settle-based test is circular
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Our ON-vs-LNE gap was measured on numbers produced by a Black-76-consistent fitting procedure, so it cannot falsify Black-76. A test that cannot fail is not evidence (the covering-self-limiting lesson from S106).
+
+---
+
+### [REST] O-17 - ROOT DISCIPLINE AS A HARD GATE - never merge ladders, never mix ON into LNE, normalize contract sizes
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The pin-map ban exists in prose for one consumer. state_health gates forecasting inputs mechanically; the options surface has no equivalent, so the rule holds only where someone remembers it.
+
+---
+
+### [REST] O-18 - EXTEND THE NO-CROSS-SEAM RULE from the ATM decay fit to SKEW and IMPLIED CORRELATION
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+G-18 splits beta by winter/injection season. The same Oct/Nov and Mar/Apr seams break skew and implied correlation, and interpolating across them is the pooling D37 forbids, in a different dress.
+
+---
+
+### [REST] O-19 - RE-VERIFY THE CME CONTRACT SPECS FIRST-PARTY before any of them becomes load-bearing
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The briefing flags its own specs as unverified in three separate lenses because every CME fetch in the sweep was blocked. Tick size, strike grid and expiry arithmetic are the inputs to everything else.
+
+---
+
+### [REST] O-20 - ESTABLISH WHETHER THE SETTLE SURFACE SUPPORTS GREEKS OUTSIDE ATM +/-2 STRIKES AT ALL
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Vanna, volga and charm live in the wings, and our own bound says the wings are descriptive-only. A greek engine fed descriptive marks produces confident, wrong second-order numbers - worse than no engine.
+
+---
+
+### [REST] O-21 - CONFIRM WHETHER THE MEASURED 'FAT LEFT TAIL' IS A PRICE PROPERTY OR A SHORT-VOL P&L ARTIFACT
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+We already carry this finding from S100.1. If it is a P&L artifact of a fat RIGHT tail, the sign of the risk inverts - and short gas vol dies on the upside. A carried finding with the wrong mechanism is D37's worst case.
+
+---
+
+### [REST] O-22 - INGEST CVOL DAILY (NGVL/NGSK/NGUP/NGDN/NGAM/NGCV) as an independent vol construction
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Our entire surface descends from ONE exchange settlement process. The S108 hole-#8 lesson is that only comparison against an INDEPENDENT source catches a well-formed wrong value. Free, daily, published.
+
+---
+
+### [REST] O-25 - MEASURE THE VOL PATH SLOPE - regress d(ATM IV) on d(ln F) per month, season and curve regime, then FREEZE it
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Spot-vol beta decides whether a directional view should be expressed in options at all, and G-18 fits the LEVEL not the beta. Freezing it after measurement is what stops it becoming a fitted knob.
+
+---
+
+### [REST] O-26 - MEASURE STICKY-STRIKE vs STICKY-DELTA PER REGIME on our own 180-session surface
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+It changes every delta we compute. Unmeasured, we are implicitly assuming one of them everywhere. Without quoted width we cannot distinguish an edge from a spread. Every net-of-fee lesson this desk has learned - the crypto-era 22bps taker floor, the S82 Kalshi result, the S87 maker-vs-taker split - says the same thing: direction is the easy part and execution decides whether it pays.
+
+---
+
+### [REST] O-27 - HEDGE EVERY OPTION IN ITS OWN CONTRACT MONTH; aggregate delta via a measured hedge ratio h, gamma via h^2
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Cross-month delta netting assumes a correlation of 1 that gas does not have, especially across the winter strip. This is the difference between a hedged book and an unintended calendar position.
+
+---
+
+### [REST] O-31 - EXPRESS EVERY SPREAD IN VOL POINTS AND % OF VEGA; build the execution-cost model in vega units
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Quoting a structure in ticks or % of premium hides how much vol you are paying away. The cost model must be in the same units as the edge.
+
+---
+
+### [REST] O-37 - STRESS GRIDS MUST COUPLE PRICE AND VOL POSITIVELY AND ASYMMETRICALLY UPWARD, and include a front-to-back correlation break
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A parallel vol shift is the one scenario that never happens in gas. A stress test that cannot produce the loss you will actually take is decoration.
+
+---
+
+### [REST] O-4 - WIRE THE SIGMA YARDSTICK - print every forecast and error in sigma_day units beside dollars
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A $500 error means nothing without the day's scale; sigma_day = F*sigma/sqrt(252) is that scale and we already hold both terms. Without it, errors from a 2.60 tape and a 4.40 tape are added as if comparable - which is what every sum|err| in the record currently does. Cheap: a harness print, no new data.
+
+---
+
+### [REST] O-40 - QUOTE OUR DISPERSION AS A NORMAL (BACHELIER) VOL IN $/MMBtu and convert to Black only at the comparison step
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A re-anchored dollar path is a normal-vol object; converting it to lognormal to compare, then reasoning in the converted units, imports a distributional assumption nobody chose.
+
+---
+
+### [REST] O-41 - BUDGET SPAN / SPAN 2 MARGIN AS A SCENARIO, NOT A NUMBER
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+NG is a day-1 energy POD and short-option margin RISES with vol - the requirement grows exactly when the position is losing. A margin number is a point estimate of a quantity that moves with the market against you; budgeting it as a number rather than a scenario is how a solvent position becomes a forced liquidation. Pairs with the stress-grid item: the same scenarios should drive both.
+
+---
+
+### [REST] O-43 - ADOPT THE FIVE SIZING RULES - blind-only Kelly inputs, pessimistic end of the range, quarter Kelly at N=20, shorts sized off a 15-20% up-gap stress, reject any edge inside one SE
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Kelly computed off REFINE statistics sizes a position using information the live system will not have - the single fastest way to convert a good forecaster into a blown account.
+
+---
+
+### [REST] O-44 - TEST WHETHER OI PINNING ACTUALLY OCCURS IN GAS, and whether our pin map is predictive or merely descriptive
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+We built the pin map at S99 on the assumption. Testable on our own data, and if it is descriptive the map should stop being read as a forecast input.
+
+---
+
+### [REST] O-5 - MEASURE k = RV/IV AT 1, 5 AND 21 DAYS, PER SEASON AND PER DAY-CLASS
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+G-18 carries the correct-denominator rule (implied for period X against realized for the SAME period, never trailing) but names neither the TENORS nor the day-class conditioning. The briefing's point is that the tenor structure of the variance premium in gas is not published anywhere - it is ours to measure and it decides which expiry we would ever trade. Headline covered by G-18, sub-recommendation not.
+
+---
+
+### [REST] O-51 - ANSWER THE INSTRUMENT QUESTION IN WRITING - which lane owns a one-session view, and what an options trade would have to look like
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+D32 says the three lanes diverge as late as possible; it never says which instrument expresses which view. Without it the options lane reopens by drift rather than by decision.
+
+---
+
+### [REST] O-53 - ADJUDICATE THE TWO INTERNAL CONTRADICTIONS in the options briefing
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Lens 5 says be a small net seller of vol at 3-6 months; Phase 4 says long-premium or defined-risk only. Lens 4 says trade the weeklies for a 1-10 session view; section 3 says weeklies do ~4,000 lots/day and 'our exit would be our own bid'. Both are unresolved INSIDE the document. A contradiction carried forward silently gets resolved by whoever reads it last - GREG'S CALL, not a build.
+
+---
+
+### [REST] O-6 - SELECTION-BIAS SWEEP ON THE ANALOG COHORT - does sigma_emp rise monotonically as the match tolerance loosens
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+If our dispersion band widens as we accept worse matches, the band is measuring match quality rather than market uncertainty. D32 makes the unchosen cohort the dispersion source, so this bias sits directly under the product. Testable on the existing library with no new data.
+
+---
+
+### [REST] O-7 - PUBLISH SE(sigma_emp) WITH EVERY DISPERSION OUTPUT AND GATE OUT ANY EDGE INSIDE ONE STANDARD ERROR
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+SE = sigma/sqrt(2(N-1)). At the cohort sizes D32's +/-2-week window permits (roughly 4 per day-class per year), the standard error on a dispersion estimate is large enough to swallow a claimed edge. A number without its SE invites sizing off noise - the same shape as reporting an error without a benchmark (A-1).
+
+---
+
+### [REST] O-8 - DECIDE THE RE-ANCHORING CONVENTION - absolute cents vs log returns - by testing both on the extreme analogs
+
+*size S | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+D32 fixes LEVEL as the only free parameter but never says in which UNITS the transplant happens. On a 2.60-to-4.40 corpus the two conventions diverge most on exactly the large-move days that matter. An unstated convention is a silent choice, and the S110 cum-convention ambiguity (D27) is what happens when a transplant rule is left ambiguous.
+
+---
+
 ### [REST] A-10 - THE BOOK/DIPOLE FEATURE BLOCK IS DEAD IN fingerprints.json FROM 2026-01-18 - and it blocks A-6 and A-8
 
 *size M | OPEN | raised S112 | BLOCKED BY: MBP-10 restore from S3 (needs AWS keys, absent this session)*
@@ -2057,6 +2585,126 @@ Ohio has NO station at all against PJM being the largest gas-burning BA. S111 re
 **Source:** TURNAROUND_MEMO_S110 s1.4, carried from S109
 
 The third absorber in Greg's own stack model and we have none of it. S111 sharpened it (Greg): the asymmetry is CAPACITY, not supply - coal plants are retired or retiring, so expensive gas cannot hand share back. Retirement is a FORWARD-DATED CALENDAR, which puts it in the one information class that survives past the weather horizon. Also the cross-year correction factor for the analog library.
+
+---
+
+### [REST] O-23 - OBTAIN ONE INDEPENDENT BROKER IV SOURCE quoting straddles with bid/ask in vol points
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Same reason as CVOL, and it additionally supplies the bid/ask width that decides whether any edge survives execution. Settle marks carry no width at all.
+
+---
+
+### [REST] O-24 - BUILD THE QUOTE-BASED LNE SURFACE (bid/ask/size from GLBX MDP3) as the backtest input; settle stays the mark
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A backtest on settle marks assumes we trade at the midpoint of a price nobody quoted. The MBP-10 tape is already on S3. It is the cheapest possible defence against the whole 'well-formed wrong value' family: our surface has exactly one parent, so any systematic error in the settlement process is invisible to us by construction. A second construction disagreeing is the only event that could reveal it.
+
+---
+
+### [REST] O-28 - BUILD THE MONTH-BY-MONTH HEDGE-RATIO MATRIX from the per-leg MBP-10 tape already on S3
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+It is the input the item above needs, buildable from data we have paid for and hold. Report raw and prompt-equivalent delta. Unmeasured, we are implicitly assuming ONE of the two everywhere in the greeks, and the assumption is invisible because both produce plausible deltas. Per-regime matters because gas is not one market: the sticky behaviour in a quiet injection season need not hold in a January scarcity event.
+
+---
+
+### [REST] O-29 - BUILD THE GREEK ENGINE (Black-76 + discounting for LNE, BAW/binomial for ON) and TEST the ON-minus-LNE settle-IV gap against its predicted size r*intrinsic*T
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A falsifiable test of a measurement we already carry as iv_amer_naive: if the gap does not match the American-premium prediction, our ON IVs mean something else.
+
+---
+
+### [REST] O-30 - RE-MARK THE 51-EVENT VERTICAL REPLAY on quotes, at RFQ and legged economics, with a skew-dynamics assumption
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The existing replay is settle-marked and execution-unmeasured, and the desk's own crypto-era finding was that direction is the easy part and size-vs-fee is the constraint.
+
+---
+
+### [REST] O-32 - MEASURE TOUCH WIDTH AND DEPTH BY MONTH AND HOUR from our own MBP-10 and recompute the Leland crossover
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The briefing's 35-minute hedge frequency is explicitly labelled a starting hypothesis. The measurement is ours to make. It is the input every other execution number depends on, and the briefing labels its own 35-minute answer 'a starting hypothesis, nothing more'. We hold the MBP-10 tape that settles it, so this is a measurement we have already paid for and never taken.
+
+---
+
+### [REST] O-36 - THE RISK REPORT GRID by delivery month and season - net AND gross vega, gamma per 10c, theta with a separate weekend line, charm on the Friday report
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Net vega across the strip hides an unintended winter-vs-summer position. The Friday charm line is the delta drift into Monday at unchanged price - our worst seam.
+
+---
+
+### [REST] O-39 - IMPLEMENT BACHELIER / SHIFTED-LOGNORMAL alongside Black-76 from the start
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+On spreads and basis the log model's DELTA INVERTS (measured 25/75 to 75/25). Our dispersion is a dollar object and therefore Bachelier-native already. The point is that the log-normal and normal models disagree most on precisely the structures a gas desk trades - spreads and basis - and they disagree about DELTA, which is the hedge. A wrong hedge ratio is worse than no hedge because it is held with confidence.
+
+---
+
+### [REST] O-45 - WIRE THE BREEDEN-LITZENBERGER DENSITY-TO-DENSITY COMPARISON - LNE risk-neutral density against the cohort's empirical density
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+The synthesis names this one of only two genuine differentiators and says plainly neither is wired. It is the only test that asks whether our distribution differs from the market's where it matters.
+
+---
+
+### [REST] O-46 - SPLIT THE FORECAST INTO TERMINAL DISPERSION AND PATH ROUGHNESS - they price different instruments
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Strike structure is priced off terminal dispersion; gamma and vega off path roughness. A-4 scores the curve but does not separate these two objects. It matters because Kelly sizing off refine accuracy assumes the live system will see the realized curve, which it never will - so the position is sized on information that does not exist at decision time. D6 governs which RULES may cross the blind/refine line; nothing governed which NUMBERS may, and sizing is where that omission is most expensive.
+
+---
+
+### [REST] O-47 - MATCH THE DISPERSION COHORT ON VOL CELL - strip, time-to-expiry bucket, event class, price level
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+A-5 matches on seasonal window and day class. Matching across a strip seam or a Samuelson bucket imports the wrong vol scale into the band.
+
+---
+
+### [REST] O-52 - EXTEND THE FORECAST HORIZON TO 5+ SESSIONS, or aggregate daily paths into a weekly terminal density
+
+*size M | OPEN | raised S114*
+
+**Source:** GAS_OPTIONS_BRIEFING_S111 / _SYNTHESIS_ D36 audit, S114 (53 of 64 recommendations were untracked; the 886-line five-lens appendix produced ZERO registry lines)
+
+Our horizon research puts directional skill death at 5-7 days and options need >=5 sessions to be the right instrument. Either extend, or re-frame the daily paths into the density options actually price.
 
 ---
 
