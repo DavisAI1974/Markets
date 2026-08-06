@@ -11,6 +11,7 @@ on:
       - dashboard/frontend/novel.js
       - dashboard/server.py
       - dashboard/README.md
+      - research/kalshi/kalshi_rule_canonicalizer.py
       - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md
       - .github/workflows/novel_edge_lab_ci.yml
   pull_request:
@@ -21,6 +22,7 @@ on:
       - dashboard/frontend/novel.js
       - dashboard/server.py
       - dashboard/README.md
+      - research/kalshi/kalshi_rule_canonicalizer.py
       - CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md
       - .github/workflows/novel_edge_lab_ci.yml
   workflow_dispatch:
@@ -39,11 +41,17 @@ jobs:
       - name: Install dashboard dependency
         run: pip install --quiet fastapi
       - name: Compile Python
-        run: python -m py_compile dashboard/adapters/novel.py dashboard/server.py
+        run: |
+          python -m py_compile \
+            dashboard/adapters/novel.py \
+            dashboard/server.py \
+            research/kalshi/kalshi_rule_canonicalizer.py
       - name: Validate candidate registry JSON
         run: python -m json.tool dashboard/novel_candidates.json >/dev/null
       - name: Check JavaScript syntax
         run: node --check dashboard/frontend/novel.js
+      - name: Test rule canonicalizer
+        run: python research/kalshi/kalshi_rule_canonicalizer.py --selftest
       - name: Validate read-only registry and fixed 48-hour schedule
         run: |
           python - <<'PY'
@@ -61,6 +69,10 @@ jobs:
           assert payload['summary']['next_48h_watch_windows'] >= 3
           assert all(c['execution_enabled'] is False for c in payload['candidates'])
           assert all(c['authority'] in {'WATCH_ONLY', 'SHADOW'} for c in payload['candidates'])
+          duplicate = next(c for c in payload['candidates']
+                           if c['id'] == 'KALSHI_DUPLICATE_WRAPPER_PARITY')
+          assert 'live_diagnostic' in duplicate
+          assert duplicate['live_diagnostic']['path'] == 'data/novel/kalshi_rule_scan.json'
 
           # Sunday morning must roll daily settlement watches to Monday rather than
           # dropping them because the next calendar day is not a trading weekday.
