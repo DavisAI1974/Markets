@@ -620,7 +620,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **158 files.**
+new tool cannot go unlisted. **159 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -634,6 +634,7 @@ new tool cannot go unlisted. **158 files.**
 - `brain_backfill.py` — put the reasoning, the evidence and the past instances INTO the brain, and
 - `brain_conditions.py` — the CONDITIONS slot: vocabulary, verification, and curation harness.
 - `brain_schema.py` — give the brain a schema: typed, queryable, LOSSLESS. (S111, Greg's call)
+- `brain_view.py` — serve the brain to a ROLE, and DECLARE what was withheld.
 - `bshare_normalization_probe.py` — Is session_b_share structurally sub-0.50 because of how it is NORMALIZED?
 - `bshare_restage_repair.py` — S109: repair session_b_share in states staged on the S108 leg path, WITHOUT a data plane.
 - `bshare_threshold_study.py` — Does the 0.55 big_print_b_share threshold need to float?

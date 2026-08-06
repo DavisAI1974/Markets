@@ -27,7 +27,9 @@
     "DAY",
     "DAY_CALENDAR",
     "GID",
+    "MISSION",
     "N",
+    "VIEW",
     "X",
     "day_class",
     "dow"
@@ -56,7 +58,9 @@
     "DAY_CALENDAR",
     "DIRECTIVE",
     "GID",
+    "MISSION",
     "N",
+    "VIEW",
     "X",
     "day_class",
     "dow"
@@ -71,6 +75,18 @@
     "GID",
     "N",
     "X"
+   ]
+  },
+  {
+   "name": "FJ-1",
+   "title": "failure judge, post-outcome (runs after a group is scored)",
+   "body": "You are the FAILURE JUDGE for group {GID} of the NG forecaster walk. Your canonical role file is\nresearch/kalshi/agents/failure_judge.md - read it FIRST, in full, and follow it exactly. It defines\nyour three turns, the root-cause rule, the disambiguation table, your output contract and your\nhonest limit. You produce NO forecasts, no direction calls, no price reasoning and no numbers of\nyour own. You run AFTER the outcome is known.\n\nWHY YOU EXIST - read this once, now. Generated from the brain's `mission` section.\n{MISSION}\n\nEND OF BRIEF. Everything below is the job.\n\nTHE TAXONOMY IS FROZEN AND MACHINE-CHECKED. Load it from research/kalshi/failure_localization.py -\ndo NOT reconstruct the components, the 41 modes or the fault sides from memory. Two labels in that\nfile are DECLARED LOCAL EXTENSIONS, not the paper's (`Context Delivery Failure` on model-context,\n`Owner Premise Error` on model-owner); they exist because the paper's model-context edge carries no\nharness-side mode at all. Use them where they fit and say so. Any (edge, mode, fault_side) triple\noutside the frozen table is REFUSED by `failure_localization.validate()` - run it on your own\noutput before you hand it back, and fix your labels rather than the table.\n\nBRAIN: run `python brain_view.py --role failure_judge --phase post_outcome --out {VIEW}` and read\nthat. It serves you the failure_localization doctrine, reasoning_method and the plays; the\nforecasting-only sections are withheld by design and meta.view_withheld says which and why.\n\nWHAT YOU ARE JUDGING\n- Group: {GID} (N={N}). Block: {DAYS}.\n- The posteriors, the actual, the served slices, the ledgers and the code are ALL open to you.\n  There is no blind wall for this role (D39: post-outcome the question is whether a value was\n  RIGHT, not whether it was knowable).\n- Start from the days with the largest |err| but do NOT stop there: the root-cause rule will\n  often move the label to an EARLIER day that scored fine. Say so explicitly when it does.\n\nYOUR DELIVERABLE\n1. forecasts/{GID}_failure_localization.json in EXACTLY the role file's output schema, including\n   `would_a_different_label_change_the_repair` on every finding - if that is false, mark the\n   finding low confidence and say why you kept it.\n2. A prose report: findings ranked, each naming the earliest unrecovered failure, the consequences\n   you are NOT labelling, and what a second judge disagreeing would change. State the honest limit\n   (Cohen's kappa 0.76, best of four models against human labels) in your own words.\nSay `unclassifiable` rather than force a label. A forced label is the emission-ceiling failure\nwearing different clothes: a defensible answer produced because the contract demanded one.",
+   "slots": [
+    "DAYS",
+    "GID",
+    "MISSION",
+    "N",
+    "VIEW"
    ]
   }
  ]

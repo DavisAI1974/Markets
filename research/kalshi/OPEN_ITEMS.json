@@ -1736,6 +1736,42 @@
    "why": "THE INSTRUMENT EXISTS AND HAS NEVER BEEN RUN ON A LIVE RUN. failure_localization.py carries the paper's 41 modes, nine components, fault-side notation and root-cause rule verbatim, and it has been applied RETROSPECTIVELY to our own history - result: context 16, model 8, owner 2, tool 2. Two thirds of our localised failures are in WHAT WE SERVE, not in who reads it, which is an argument about where effort goes that we have never had from evidence.\n\nWHAT USING IT ON AGENT BEHAVIOUR ADDS, and it is the paper's actual purpose: a post-mortem finding gets an EDGE and a FAULT SIDE before it can become brain evidence. MEASURED COST OF NOT DOING THIS: S108 retracted a play whose day-net was right and whose mechanism was FALSE, because a non-model result had been banked as model-side evidence - and the mechanism is what gets extrapolated. A wrong repair is worse than none because it also manufactures confidence.\n\nTHE ROOT-CAUSE RULE IS THE HIGHEST-VALUE IMPORT: label the EARLIEST failure from which execution does not recover; later errors are CONSEQUENCES. Our post-mortems have habitually labelled the last visible error - S104 measured 10 of 14 bad Mondays rooting to a mis-read Friday, so every Monday-side repair was aimed at the wrong day.\n\nAND IT SETTLES A-40 BY EXPERIMENT RATHER THAN ARGUMENT. The emission ceiling sits on ONE edge (model-owner) with TWO possible fault sides and DISJOINT repairs: Satisficing (model settles for a defensible middle - repair is doctrine) versus Instruction-Grader Mismatch (the contract requires a number and NO CALL is unemittable - repair is the contract, A-2). One of those repairs is wasted effort. Separable: serve the decision order without touching the contract and re-measure.\n\nHONEST LIMIT, to be carried in every report: the paper's kappa 0.76 is the BEST of four frontier models against human labels on 40 examples. The judge is an instrument with known error, its labels are evidence for an adjudication and never the adjudication, and anything touching the brain stays with Greg (SOP STEP 2).\n\nFALSIFIER: if judge labels do not change which repair gets made - if 'would_a_different_label_change_the_repair' comes back false on most findings - the taxonomy is decoration here and should be dropped.",
    "blocks": null,
    "next": "First run: the g22 rehearsal posteriors when the wave completes, or the existing g23 blind post-mortem"
+  },
+  {
+   "id": "A-42",
+   "tier": "BIGGEST_WIN",
+   "title": "RUN the failure judge (FJ-1) on a scored group and see whether the labels change any repair",
+   "why": "The role file, the frozen taxonomy, the validator and now the FJ-1 spawn template all exist, and the judge has never been run on a live group. Until it is, the whole apparatus is the exact shape it was built to stop: a document describing what should happen, sitting apart from the machinery. The honest test is `would_a_different_label_change_the_repair` coming back TRUE on at least one finding - if it is false everywhere, the taxonomy is decoration on this desk and should be scoped down rather than carried.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "Scale AI arXiv:2607.28802 - applied S114"
+  },
+  {
+   "id": "A-43",
+   "tier": "REST",
+   "title": "Second judge for adjudication where a label routes real work",
+   "why": "The paper's Cohen's kappa 0.76 is the BEST of four frontier models against human labels on 40 worked examples - substantial agreement, not ground truth. We run ONE judge. Where a label would route a brain merge, a feed rebuild or spend, a single judge is a single point of failure with a known error rate. Not needed before FJ-1 has run once; needed before a label is allowed to move a play.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "Scale AI arXiv:2607.28802 - applied S114"
+  },
+  {
+   "id": "A-44",
+   "tier": "REST",
+   "title": "Feed the model-context coverage gap back as a finding, and check it against the paper's own data",
+   "why": "The paper's model-context edge has NO harness-side mode - its three are State Tracking Failure (model), Goal Drift (model), Context Rationale Erosion (either). That is where 16 of our 28 failures live, and it forced a declared local extension (Context Delivery Failure). Either the gap is real and general, or our pipeline is unusual in a way worth naming. Both are worth knowing; today we have asserted the first without checking.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "Scale AI arXiv:2607.28802 - applied S114"
+  },
+  {
+   "id": "A-45",
+   "tier": "REST",
+   "title": "Apply the edge/fault-side labelling to the WINNERS census, not only failures",
+   "why": "Registered in failure_localization's own docstring and never built. We currently credit a day carried by a clean served block and a day carried by a derived arithmetic chain identically to the forecaster. The same labelling separates them, and the second is the only kind that extrapolates.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "Scale AI arXiv:2607.28802 - applied S114"
   }
  ],
  "tiers": {

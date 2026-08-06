@@ -113,6 +113,25 @@ def station0():
     except Exception as e:
         rows.append(("WARN", "station0/defects", "could not read defect_timeline: %s" % e))
 
+    # (c1b) THE TAXONOMY IS ON-TAXONOMY (S114). A failure label that LOOKS like the paper's but
+    # means something else is worse than no label: it routes a repair confidently to the wrong end,
+    # which is the exact defect the taxonomy was adopted to stop. Measured the day it was applied -
+    # 19 of 28 classifications carried a borrowed (edge, mode) pair, thirteen of them using
+    # external_env's `Stale State Delivery` for our own harness serving an empty block. Two local
+    # extensions are DECLARED and separately flagged; anything else fails here.
+    try:
+        import failure_localization as _fl
+        bad = _fl.validate(verbose=False)
+        rows.append(("FAIL" if bad else "PASS", "station0/taxonomy",
+                     ("%d off-taxonomy classification(s): %s" %
+                      (len(bad), "; ".join("%s - %s" % b for b in bad[:3])))
+                     if bad else "all %d failure classifications are on-taxonomy (41 paper modes "
+                                 "+ %d declared local extensions)"
+                                 % (len(_fl.CLASSIFIED),
+                                    sum(len(v) for v in _fl.LOCAL_EXTENSIONS.values()))))
+    except Exception as e:
+        rows.append(("WARN", "station0/taxonomy", "could not validate: %s" % e))
+
     # (c2) THE SOP CHANGE LOOP, MADE MECHANICAL (M-11, S114). RUN_SOP change-control item 2 requires
     # a version-log entry before a change to how a covered step executes. It is PROSE, and S114
     # broke it: due_gate was wired into BOTH coordinators (STEP 3.4 and 5.3) and --namespace/--suffix

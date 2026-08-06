@@ -135,6 +135,93 @@ MODES = {
  },
 }
 
+# ---------------------------------------------------------------------------------------------
+# LOCAL EXTENSIONS - OURS, NOT THE PAPER'S, AND MARKED SO THEY CAN NEVER BE MISTAKEN FOR IT.
+#
+# Found by validate() on the day the taxonomy was applied (S114), and it is the single most
+# consequential thing the paper surfaced for this desk:
+#
+#   THE PAPER'S `model-context` EDGE HAS NO HARNESS-SIDE FAILURE MODE.
+#   Its three modes are State Tracking Failure (model), Goal Drift (model), and Context Rationale
+#   Erosion (either). All three are about what the MODEL does with the context it was given. There
+#   is no mode for "the harness put a wrong, empty or stale block IN FRONT of the model."
+#
+# That is our single most common failure - 16 of 28 classifications, every one of the eleven data
+# holes. Thirteen of them had been labelled `Stale State Delivery`, which is a real paper mode but
+# belongs to `model-external_env` and means an OUTSIDE SERVICE went stale. Borrowing it read as a
+# paper label while meaning something else, which is precisely the mislabelling this whole tool
+# exists to prevent - the defect appearing inside the instrument built to catch it.
+#
+# The honest repair is not to bend our cases onto a foreign label, and not to widen the paper's
+# mode until it covers us. It is to DECLARE the extension, keep it separately flagged, and let
+# validate() refuse anything that is neither the paper's nor a declared extension.
+LOCAL_EXTENSIONS = {
+ "model-context": [
+   ("Context Delivery Failure", "context",
+    "OURS (S114). The harness served a block that was absent, empty, stale, wrong-encoded, "
+    "off-instrument or silently truncated, and it read downstream as well-formed. Distinct from "
+    "external_env/Stale State Delivery (an outside service degraded - we own this pipeline) and "
+    "from memory/State Staleness (memory outlives a run; a served block does not). The repair "
+    "always lives in a builder or a stage-time guard, NEVER in doctrine - which is exactly why "
+    "the label has to be its own thing.")],
+ "model-owner": [
+   ("Owner Premise Error", "owner",
+    "OURS (S114). The run directive asserts a factual premise that the served data contradicts - "
+    "NC-1's 'first post-roll session' against flow_calendar. The paper's only owner-side mode is "
+    "Instruction-Grader Mismatch, which is about success being DEFINED differently by the "
+    "instruction and the scorer. A false premise is a different fault with a different repair "
+    "(generate the fact by lookup - spawn.py's CAL_FACTS - rather than realign the scorer).")],
+}
+
+
+def _mode_table():
+    """(mode, edge) -> (fault_side, origin). Paper modes and declared extensions, kept separable."""
+    t = {}
+    for fam, edges in MODES.items():
+        for edge, lst in edges.items():
+            for name, side in lst:
+                t[(name, edge)] = (side, "paper")
+    for edge, lst in LOCAL_EXTENSIONS.items():
+        for name, side, _why in lst:
+            t[(name, edge)] = (side, "local-extension")
+    return t
+
+
+def validate(verbose=True):
+    """Refuse any classification whose (edge, mode, fault_side) is not in the frozen table.
+
+    Without this the taxonomy is decoration: a label that LOOKS like the paper's but means
+    something else is worse than no label, because it routes a repair confidently to the wrong
+    end. This is the check that turns the 41 modes from prose into a constraint - and it found
+    nineteen bad triples on its first run, on data written the same session.
+    """
+    tbl = _mode_table()
+    bad = []
+    for cid, (edge, side, mode, _why) in CLASSIFIED.items():
+        key = (mode, edge)
+        if key not in tbl:
+            near = sorted({e for (m, e) in tbl if m == mode})
+            bad.append((cid, "mode %r is not defined on edge %s%s"
+                        % (mode, edge,
+                           (" - it belongs to %s, so this is a BORROWED label"
+                            % ", ".join(near)) if near else " and is not a mode at all")))
+            continue
+        want, _origin = tbl[key]
+        if want != side:
+            bad.append((cid, "mode %r on %s carries fault side %r, classified as %r"
+                        % (mode, edge, want, side)))
+    if verbose:
+        n_ext = sum(len(v) for v in LOCAL_EXTENSIONS.values())
+        print("TAXONOMY VALIDATION: %d classifications against %d paper modes + %d declared "
+              "local extensions" % (len(CLASSIFIED), len(tbl) - n_ext, n_ext))
+        for cid, msg in bad:
+            print("   FAIL  %-32s %s" % (cid, msg))
+        print("   %s" % ("all classifications are on-taxonomy" if not bad
+                         else "%d OFF-TAXONOMY - a borrowed label routes the repair to the wrong end"
+                              % len(bad)))
+    return bad
+
+
 ROOT_CAUSE_RULE = (
  "Paper, Section 4, verbatim: 'Starting from the observed system-level failure, the preceding events "
  "are traced backward to identify the EARLIEST failure from which execution does not recover. Later "
@@ -158,24 +245,24 @@ JUDGE_PROTOCOL = (
 # Regex-guessing an edge from text is the fuzzy-matching error that produced holes #8 and #9.
 CLASSIFIED = {
  # ---- model-context: what the specialist was shown, and what it did with it ----
- "0629 wind read": ("model-context", "model", "Missed Read",
+ "0629 wind read": ("model-context", "model", "State Tracking Failure",
    "wind_mwh was SERVED in every slice and read by nobody; gw_cdd rose exactly as forecast and burn "
    "FELL 4.2 Bcf/d on a 62% wind rise. The context carried it; the model did not consult it. "
    "Model-side - and this is the classification that says the repair is doctrine, not a feed."),
- "0601 wind read": ("model-context", "model", "Missed Read",
+ "0601 wind read": ("model-context", "model", "State Tracking Failure",
    "0629's twin, found S114: served wind +1,071k MWh, gas -1,271k, blind +350 into a -990 day."),
- "hole #11 forward reads": ("model-context", "context", "Stale State Delivery",
+ "hole #11 forward reads": ("model-context", "context", "Context Delivery Failure",
    "The state served a day's tape under the NEXT day's key, so all three specialists could read past "
    "their own decision point. ALL THREE DECLARED IT - the models behaved correctly and the context "
    "was malformed. Repair was build_causal_slices, i.e. the context builder. Not a model fault."),
- "h-frozen_countdowns": ("model-context", "context", "Stale State Delivery",
+ "h-frozen_countdowns": ("model-context", "context", "Context Delivery Failure",
    "The one-shot mask froze distance-from-today fields, so every staleness reading inside a masked "
    "block counted from the wrong day."),
- "h-squeeze_live / _calendar_twins": ("model-context", "context", "Stale State Delivery",
+ "h-squeeze_live / _calendar_twins": ("model-context", "context", "Context Delivery Failure",
    "A field named _live holding a constant. Twice - the second time inside the fields added to cure "
    "the first."),
  # ---- model-owner: the directive, and what counts as success ----
- "NC-1 false calendar premise": ("model-owner", "owner", "Instruction-Following Failure (owner-side premise)",
+ "NC-1 false calendar premise": ("model-owner", "owner", "Owner Premise Error",
    "The run directive asserted 'first post-roll session'; flow_calendar said otherwise. C-0715 "
    "checked and corrected the record rather than reasoning on it. THE MODEL WAS RIGHT AND THE "
    "DIRECTIVE WAS WRONG - owner-side, and no amount of specialist tuning would have fixed it."),
@@ -246,7 +333,7 @@ CONTEXT_SIDE_RECLASSIFIED = {
  "a10-fingerprint_book": "eleven book features hard-constant since 2026-01-18",
 }
 for _k, _v in CONTEXT_SIDE_RECLASSIFIED.items():
-    CLASSIFIED[_k] = ("model-context", "context", "Stale State Delivery", _v +
+    CLASSIFIED[_k] = ("model-context", "context", "Context Delivery Failure", _v +
         " - served to a specialist and read as if sound. Fault: CONTEXT; the repair lives in the "
         "builder, which is what the fault side names.")
 
