@@ -37,6 +37,10 @@ on:
       - .github/workflows/agent_frankie_ci.yml
   workflow_dispatch:
 
+concurrency:
+  group: agent-frankie-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
