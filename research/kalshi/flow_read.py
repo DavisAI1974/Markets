@@ -13,6 +13,22 @@ detect divergence itself (that is the sharpening - it learns to read the forces,
 import os, gzip, json
 import numpy as np
 
+
+def _phase_bounds_et(t0: float, t1: float) -> list:
+    """S114: the ET wall-clock bounds of the three equal-thirds phases, so a consumer never has to
+    infer which phase is the US session. Epoch seconds -> America/New_York, DST-correct."""
+    try:
+        import datetime
+        from zoneinfo import ZoneInfo
+        et = ZoneInfo("America/New_York")
+        span = max(t1 - t0, 1.0)
+        cuts = [t0, t0 + span / 3, t0 + 2 * span / 3, t1]
+        fmt = lambda t: datetime.datetime.fromtimestamp(t, tz=et).strftime("%Y-%m-%d %H:%M ET")
+        return [{"phase": k + 1, "start_et": fmt(cuts[k]), "end_et": fmt(cuts[k + 1])}
+                for k in range(3)]
+    except Exception:
+        return None
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
 CONT_DIRS = (os.path.join(REPO, "data", "nymex_cont_n0"), os.path.join(REPO, "data", "nymex_cont_n1"))
@@ -135,6 +151,34 @@ def mbo_flow(ymd):
             # S108 additive two-sided series - see the normalization note above. Same measurements with
             # unsided volume removed from the denominator, so 0.50 means balance and nothing else moves.
             "phase_volume_lots": ph_vol, "phase_n_trades": ph_n,
+            # S114: THE PHASE CLOCK. Phases are EQUAL THIRDS OF THE SESSION'S OWN TRADE-TIME SPAN,
+            # not fixed wall-clock windows - so "phase 2" is NOT reliably the US session, and on a
+            # short, holiday or stub session it certainly is not. E-0724 had to INFER that phase 2
+            # was the US session because nothing served the boundaries ("nothing serves the
+            # intraday clock position of the tape"). An inferred window is exactly the kind of
+            # silent assumption that yields a wrong-but-well-formed read. Serve the clock.
+            "phase_bounds_et": _phase_bounds_et(t0, t1),
+            "phase_bounds_note": ("ET start/end of each phase. Phases are equal thirds of THIS "
+                                  "session's first-to-last trade span, NOT fixed clock windows - "
+                                  "do not assume phase 2 is the US session; read these bounds. "
+                                  "MEASURED S114: the phase-to-clock mapping MOVES day to day - on "
+                                  "one g24 session phase 2 ran 03:59-11:59 ET (covering the US "
+                                  "morning and the 10:30 print) and on the next it ran 03:00-09:59 "
+                                  "ET (entirely pre-open), with phase 3 the US session. A "
+                                  "specialist that inferred 'phase 2 = US session' was right on one "
+                                  "day and would have been wrong on the other. "
+                                  "WINDOW CAVEAT: the underlying leg file is a UTC CALENDAR DAY "
+                                  "(20:00 ET prior day -> 19:59 ET), while this desk's session "
+                                  "convention is 20:00 ET -> 17:00 ET close (path_contract.CLOCK / "
+                                  "CLOSE_HOUR). The start matches; the tail does not, so 0.5-0.6% "
+                                  "of prints sit after 17:00 ET in the 18:00-19:59 reopen that the "
+                                  "convention places outside any session (measured: 203 of 31,580 "
+                                  "on 20260730, 139 of 27,342 on 20260721, 0 on Fridays, which have "
+                                  "no reopen after them). This is NOT a look-ahead - every such "
+                                  "print is strictly before the next session's 20:00 decision "
+                                  "point - but the served window is slightly wider than its "
+                                  "declared definition. Trimming it would move every b_share and "
+                                  "flow number by ~0.6% and is deliberately NOT done mid-walk."),
             "phase_volume_note": ("per-phase VOLUME, non-price. Required by "
                                   "flow.passive_ladder_displacement limb (b) - final-phase volume at or "
                                   "above the session maximum - and by the (volume, net) pair on "

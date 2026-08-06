@@ -40,8 +40,13 @@ axis - the leak is on the TIME axis.
 import argparse
 import json
 import os
+import re
 import sys
 from collections import OrderedDict
+
+# S114: what counts as a MEASURED prior in health.can_change_state - an n-of-m record or a
+# percentage. Deliberately narrow: prose confidence ("this usually holds") is not a track record.
+_MEASURED = re.compile(r"\d+\s*(?:of|/)\s*\d+|\d+(?:\.\d+)?\s*%")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRAIN = os.path.join(HERE, "knowledge", "ng_brain.json")
@@ -234,6 +239,41 @@ def build(brain, role, phase="working", window_days=None):
         else:
             withheld.append((name, "phase %r, and this view is phase %r - %s"
                              % (ph, phase, entry.get("phase_why") or "")))
+    # INSTRUMENT PRIORS (S114) - GENERATED, never a second copy.
+    # C-0721, after the g24 run: "the most valuable content in the view was NOT the plays - it was
+    # the health.can_change_state notes, and those are buried inside each play. Two of them (44%
+    # next-day sign accuracy on the D-1 aggregate; the sell side flat at 43-47%) essentially reset
+    # my confidence. THOSE MEASUREMENTS DESERVE TO BE A TOP-LEVEL SECTION, not a per-play footnote -
+    # they are the honest prior on every instrument I have."
+    # 53 of 90 plays carry a measured n-of-m or a percentage in that field. This surfaces them as an
+    # INDEX built from the plays at view time, so it cannot drift from its source the way a
+    # hand-copied section would (ONE STORE, GENERATED VIEWS). It points back to the play; it never
+    # restates the play's call.
+    if "plays" in view:
+        priors = []
+        for pl in view["plays"]:
+            txt = ((pl.get("health") or {}).get("can_change_state") or "")
+            if not isinstance(txt, str) or not _MEASURED.search(txt):
+                continue
+            priors.append(OrderedDict([
+                ("play", pl.get("id")),
+                ("measured", txt),
+                ("status", pl.get("status")),
+            ]))
+        if priors:
+            view["instrument_priors"] = OrderedDict([
+                ("_note",
+                 "GENERATED AT VIEW TIME from every play whose health.can_change_state carries a "
+                 "MEASURED number - the honest track record of each instrument, collected so you do "
+                 "not have to open 90 plays to find the ones that say an instrument is at or below "
+                 "chance. This is an INDEX, not a second source: the play is authoritative and is "
+                 "named on every row. A play absent here has no measured track record, which is "
+                 "itself information - it does not mean the instrument is good."),
+                ("n_plays_with_a_measured_prior", len(priors)),
+                ("n_plays_total", len(view["plays"])),
+                ("priors", priors),
+            ])
+
     if window_days:
         # BLIND LEGALITY (A-53). A window means a blind run, so annotate every play with whether it
         # CAN fire on a blind slice. Specialist D wrote a stand-down paragraph for each of four

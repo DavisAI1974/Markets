@@ -1,0 +1,35 @@
+{
+ "group": "g21",
+ "ts": "2026-08-06T05:07:10Z",
+ "guards": [
+  "block-emptiness (declared-only exemptions)",
+  "tape_conditions required fields",
+  "flow_read_error surfacing",
+  "weather provisional-fetch-tail",
+  "b_share identity b == b2*(1-u) [S109 #9]",
+  "squeeze_watch _live vs flow_calendar [S109 #10]",
+  "phase-sum == session totals [S110 f1]",
+  "storage-vs-consensus freshness [S110 f4]",
+  "strike scale vs calendar_front_settle when units undeclared [S110 f5]",
+  "vol_regime n0 era vs same-session tape when undeclared [S110 f3]"
+ ],
+ "days": 10,
+ "hard": [
+  "20260608: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260609: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260610: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260611: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260612: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260615: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260616: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260617: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260618: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260619: options_surface median top-OI strike 0.35 vs calendar_front_settle 3.229 (ratio 0.108) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5)."
+ ],
+ "soft": [
+  "20260608: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260615: L1 book absent for the prior session (declared) - thin reopen?",
+  "scored_leg: EMPTY on 10/10 days (20260608..20260619) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict."
+ ],
+ "verdict": "FAIL"
+}

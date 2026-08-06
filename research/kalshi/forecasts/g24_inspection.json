@@ -1,6 +1,6 @@
 {
  "group": "g24",
- "ts": "2026-08-06T04:32:13Z",
+ "ts": "2026-08-06T05:22:54Z",
  "guards": [
   "block-emptiness (declared-only exemptions)",
   "tape_conditions required fields",
@@ -14,9 +14,7 @@
   "vol_regime n0 era vs same-session tape when undeclared [S110 f3]"
  ],
  "days": 10,
- "hard": [
-  "scored_leg: EMPTY on 10/10 days (20260720..20260731) - required every day"
- ],
+ "hard": [],
  "soft": [
   "20260720: L1 book absent for the prior session (declared) - thin reopen?",
   "20260722: L1 book absent for the prior session (declared) - thin reopen?",
@@ -28,7 +26,8 @@
   "20260730: L1 book absent for the prior session (declared) - thin reopen?",
   "20260730: frozen front NGQ26 EXPIRED 2026-07-29; live front NGU26 (declared)",
   "20260731: L1 book absent for the prior session (declared) - thin reopen?",
-  "20260731: frozen front NGQ26 EXPIRED 2026-07-29; live front NGU26 (declared)"
+  "20260731: frozen front NGQ26 EXPIRED 2026-07-29; live front NGU26 (declared)",
+  "scored_leg: EMPTY on 10/10 days (20260720..20260731) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict."
  ],
- "verdict": "FAIL"
+ "verdict": "PASS"
 }

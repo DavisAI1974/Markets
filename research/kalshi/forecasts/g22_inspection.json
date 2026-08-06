@@ -1,6 +1,6 @@
 {
  "group": "g22",
- "ts": "2026-08-06T01:40:41Z",
+ "ts": "2026-08-06T05:22:54Z",
  "guards": [
   "block-emptiness (declared-only exemptions)",
   "tape_conditions required fields",
@@ -22,7 +22,8 @@
   "20260630: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
   "20260701: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
   "20260702: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
-  "20260703: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)"
+  "20260703: frozen front NGN26 EXPIRED 2026-06-26; live front NGQ26 (declared)",
+  "scored_leg: EMPTY on 10/10 days (20260622..20260703) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict."
  ],
  "verdict": "PASS"
 }

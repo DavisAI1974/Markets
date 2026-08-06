@@ -1,0 +1,39 @@
+{
+ "group": "g19",
+ "ts": "2026-08-06T05:07:10Z",
+ "guards": [
+  "block-emptiness (declared-only exemptions)",
+  "tape_conditions required fields",
+  "flow_read_error surfacing",
+  "weather provisional-fetch-tail",
+  "b_share identity b == b2*(1-u) [S109 #9]",
+  "squeeze_watch _live vs flow_calendar [S109 #10]",
+  "phase-sum == session totals [S110 f1]",
+  "storage-vs-consensus freshness [S110 f4]",
+  "strike scale vs calendar_front_settle when units undeclared [S110 f5]",
+  "vol_regime n0 era vs same-session tape when undeclared [S110 f3]"
+ ],
+ "days": 10,
+ "hard": [
+  "vol_regime: frozen with NO VALUE on 10/10 days - the mask had nothing to freeze; this is a missing store, not a mask",
+  "20260511: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260512: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260513: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260514: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260515: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260518: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260519: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260520: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260521: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260522: options_surface median top-OI strike 0.3 vs calendar_front_settle 2.757 (ratio 0.109) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5)."
+ ],
+ "soft": [
+  "20260511: no firehose_present flag (state built before the S107 fix?)",
+  "scored_leg: EMPTY on 10/10 days (20260511..20260522) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict.",
+  "stor_surprise: EMPTY on 10/10 days (20260511..20260522) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict.",
+  "stor_surprise_sign: EMPTY on 10/10 days (20260511..20260522) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict.",
+  "storage: EMPTY on 10/10 days (20260511..20260522) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict.",
+  "weather: EMPTY on 10/10 days (20260511..20260522) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict."
+ ],
+ "verdict": "FAIL"
+}

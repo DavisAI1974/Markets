@@ -1,6 +1,6 @@
 {
  "group": "g23",
- "ts": "2026-08-02T05:27:09Z",
+ "ts": "2026-08-06T05:22:54Z",
  "guards": [
   "block-emptiness (declared-only exemptions)",
   "tape_conditions required fields",
@@ -17,7 +17,8 @@
  "hard": [],
  "soft": [
   "20260706: L1 book absent for the prior session (declared) - thin reopen?",
-  "20260713: L1 book absent for the prior session (declared) - thin reopen?"
+  "20260713: L1 book absent for the prior session (declared) - thin reopen?",
+  "scored_leg: EMPTY on 10/10 days (20260706..20260717) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict."
  ],
  "verdict": "PASS"
 }

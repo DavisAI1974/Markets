@@ -694,6 +694,13 @@ _RELIVE_FIELDS = (
     ("vol_regime", "n0_prev_age_days", "cal_since", "n0_prev_date"),
     ("vol_regime", "v0_prev_age_days", "cal_since", "v0_prev_date"),
 )
+# S114: countdowns nested one level inside a LIST in a frozen block. Same doctrine as
+# _RELIVE_FIELDS - the vintage is masked, the distance from today to a published date is not -
+# but the walker above only sees top-level keys, which is why options_surface was exempt for
+# every group of the walk. (block, list field, field, kind, source-date field IN THE SAME RECORD)
+_RELIVE_NESTED_FIELDS = (
+    ("options_surface", "months", "days_to_opex", "cal_to", "opex_date"),
+)
 _RELIVE_UNRESOLVED = {
     ("squeeze_watch", "days_to_calendar_front_expiry"):
         "no expiry date is served inside squeeze_watch, and resolving it from another block would "
@@ -797,6 +804,52 @@ def _relive_distance_fields(blk: str, block: dict, iso: str) -> dict:
         if now != was:
             block[field] = now
             relived.append({"field": field, "frozen": was, "live": now, "source": src})
+    # S114: NESTED COUNTDOWNS. _RELIVE_FIELDS walks TOP-LEVEL block fields only, so
+    # options_surface was silently exempt - its countdown lives one level down, inside months[].
+    # That is the whole reason it was omitted, not a judgment that it should stay frozen.
+    # MEASURED on the committed g24 state: on 20260731 the block serves NGQ26 days_to_opex = 10
+    # against an opex_date of 2026-07-28, which had ALREADY PASSED - and on 20260727 it served 10
+    # against a live 1, which is what B-0727 reported. Unlike squeeze_watch's unresolvable case,
+    # the source date (`opex_date`) sits inside the very same record, so this is arithmetic, not a
+    # guess. Same doctrine as above: the OI values stay frozen at the anchor vintage; only the
+    # distance-from-today moves.
+    for _blk, _list_field, _field, _kind, _src in _RELIVE_NESTED_FIELDS:
+        if _blk != blk:
+            continue
+        # THE ONE-SHOT FREEZE SHALLOW-COPIES THE BLOCK PER DAY, so this nested list is the SAME
+        # OBJECT on every day of the group. Mutating a record in place therefore wrote day 1's
+        # countdown into all ten days and then read it back as already-correct - the first version
+        # of this fix served an identical -3 on 20260720, 20260727 and 20260731. Copy the records
+        # before touching them. (The top-level walker above is safe only because it assigns
+        # scalars onto the per-day block dict, which is NOT shared.)
+        _recs = [dict(r) if isinstance(r, dict) else r for r in (block.get(_list_field) or [])]
+        block[_list_field] = _recs
+        for _i, _rec in enumerate(_recs):
+            if not isinstance(_rec, dict) or _field not in _rec:
+                continue
+            # re-derive from the ORIGINAL frozen value, never from a previously relived one
+            if f"{_field}_frozen" in _rec:
+                _rec[_field] = _rec[f"{_field}_frozen"]
+            _sd = _rec.get(_src)
+            if not _sd:
+                if _rec.get(_field) is not None:
+                    unresolved.append({"field": f"{_list_field}[{_i}].{_field}",
+                                       "reason": f"source date {_src} absent"})
+                continue
+            _was = _rec.get(_field)
+            _now = (_cst.business_days_between(iso, _sd) if _kind == "bus_to"
+                    else _cal(iso, _sd) if _kind == "cal_to" else _cal(_sd, iso))
+            if _now != _was:
+                _rec[_field] = _now
+                _lbl = _rec.get("month") or _i
+                _rec[f"{_field}_frozen"] = _was
+                relived.append({"field": f"{_list_field}[{_lbl}].{_field}",
+                                "frozen": _was, "live": _now, "source": _src})
+                if _now < 0:
+                    _rec[f"{_field}_note"] = (
+                        f"NEGATIVE: {_src} {_sd} has already PASSED as of this reading day. The OI "
+                        f"structure below is the anchor-vintage snapshot of a contract whose opex "
+                        f"is behind you - do not read it as forward pin structure.")
     for (_blk, field), why in _RELIVE_UNRESOLVED.items():
         if _blk == blk and block.get(field) is not None:
             unresolved.append({"field": field, "reason": why})
@@ -1055,7 +1108,12 @@ def _tape_enrich(prev, ymd: str, st: dict) -> dict:
                       "big_print_b_share", "l1_book", "session_b_share",
                       "session_b_share_two_sided", "phase_b_share_two_sided",
                       "big_print_b_share_two_sided", "unsided_volume_frac", "b_share_basis_note",
-                      "phase_volume_lots", "phase_n_trades", "phase_volume_note"):
+                      "phase_volume_lots", "phase_n_trades", "phase_volume_note",
+                      # S114: the phase CLOCK. Same rule as every line above - a field added to
+                      # flow_read and not to this list never reaches a specialist. That is now the
+                      # FOURTH time this list has caused or nearly caused a silent failure
+                      # (S107 big_print_b_share, S108 the two-sided series, S109 session_b_share).
+                      "phase_bounds_et", "phase_bounds_note"):
                 if k in ff:
                     out[k] = ff[k]
             if "big_print_b_share" in ff:
@@ -1210,6 +1268,23 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
                             "front are NOT decision-legit here. flow_calendar carries the live front and "
                             "expiry clock and is never masked - use it.",
                 }
+    # S114: THE STATE DECLARES ITS OWN VINTAGE. Without this, adding any NEW required block turns
+    # every PREVIOUSLY STAGED group permanently red in state_health, because an old file cannot
+    # carry a field that did not exist when it was written - and a permanently-red andon is one
+    # people learn to ignore (S112 Station 0). Measured the moment `scored_leg` was added: g19-g23
+    # all hard-failed on a block none of them could possibly have. `blocks_emitted` lets
+    # state_health tell "the builder did not know this block" (re-stage) from "the builder knew it
+    # and produced nothing" (a real defect).
+    _dayk = [k for k in out if k.isdigit()]
+    out["_state_build"] = {
+        "built_utc": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "blocks_emitted": sorted({b for d in _dayk for b in out[d]}),
+        "group": group,
+        "mask_after": mask_after,
+        "note": ("the vintage of THIS STATE FILE, not of the data in it. `blocks_emitted` is the "
+                 "block vocabulary the builder knew; a required block absent from that list means "
+                 "the state predates the block and must be re-staged, not that the feed is dead."),
+    }
     return out
 
 

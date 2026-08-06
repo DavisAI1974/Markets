@@ -167,12 +167,49 @@ def build_sessions(basis: str, days: list[str] | None = None, verbose: bool = Tr
 
 # ---------------------------------------------------------------- asof derivation
 
+# S114: the bar that separates a full trading session from a reopen/holiday stub. Data-driven
+# rather than a day-of-week rule, because holiday stubs are not Sundays: measured on the live n0
+# store the population is strongly bimodal - full sessions cluster at a ~19,900 median while the
+# stubs sit at 134-2,594 prints, with nothing in between near this bar.
+FULL_SESSION_MIN_FRAC = 0.15
+
+
+def _is_stub(s: dict, population: list[dict]) -> bool:
+    """True if this row is a thin reopen/holiday stub rather than a full trading session.
+    The bar floats off the POPULATION median so it tracks a changing tape instead of a constant."""
+    if not population:
+        return False
+    med = float(np.median([x["trades_n"] for x in population if x.get("trades_n") is not None] or [0]))
+    if med <= 0:
+        return False
+    return (s.get("trades_n") or 0) < FULL_SESSION_MIN_FRAC * med
+
+
 def _basis_fields(b: str, prior: list[dict], iso: str) -> dict:
     """Trailing-window state for date iso from prior = this basis's VALID sessions strictly
     before iso, oldest->newest. The blind wall is asserted on every call."""
     assert all(s["date"] < iso for s in prior), f"blind wall: session >= {iso} in window ({b})"
     f: dict = {}
+    # S114: THE S108 MONDAY-STUB FIX NEVER REACHED THIS MODULE.
+    # tape_conditions got `prior_full_session` at S108 ("Mondays were served 0.2-3% of a normal
+    # tape, the Friday never consulted"). vol_regime did not, so on EVERY Monday `*_prev_*`
+    # describes the ~1-hour Sunday reopen. Measured for 2026-07-20: the prior session is Sunday
+    # 2026-07-19 with 294 trades and a 400 range - against Friday 07-17's 13,743 trades and 800.
+    # `*_prev_*` still reports the LITERAL prior session (it is the honest answer to "what traded
+    # last", and its thinness is informative), but the prior FULL session is now served beside it
+    # and the percentile is sited on the full-session distribution, because a stub's range cannot
+    # be located in a population of 23-hour sessions.
     prev = prior[-1] if prior else None
+    prev_full = next((s for s in reversed(prior) if not _is_stub(s, prior)), None)
+    f[f"{b}_prev_is_stub"] = None if prev is None else _is_stub(prev, prior)
+    if prev_full is not None:
+        f[f"{b}_prev_full_session_date"] = prev_full["date"]
+        f[f"{b}_prev_full_session_net"] = prev_full["net"]
+        f[f"{b}_prev_full_session_range"] = prev_full["range"]
+        f[f"{b}_prev_full_session_trades"] = prev_full["trades_n"]
+    else:
+        for _k in ("date", "net", "range", "trades"):
+            f[f"{b}_prev_full_session_{_k}"] = None
     if prev is None:
         f[f"{b}_prev_date"] = None
         f[f"{b}_prev_age_days"] = None
@@ -199,9 +236,35 @@ def _basis_fields(b: str, prior: list[dict], iso: str) -> dict:
         f"is the scored-leg tape. The two windows do not coincide and diverge most on holidays and "
         f"shortened sessions. Use {b}_prev_* for volatility-regime scaling only; never reconcile it "
         f"against the tape block's trade count as though they were the same measurement.")
-    nets = [s["net"] for s in prior]
-    rngs = [s["range"] for s in prior]
-    trd = [s["trades_n"] for s in prior]
+    # S114: A DISTRIBUTION MUST BE OVER COMPARABLE OBJECTS.
+    # The module header declares "Sundays are REAL (thin) sessions - the 18:00-19:00 ET reopen
+    # hour; trades_n exposes thinness". The declaration is honest and NOTHING DOWNSTREAM EVER
+    # FILTERED ON IT: every trailing sigma/mean/percentile was computed over a mixed population of
+    # ~23-hour sessions and ~1-hour reopen stubs. MEASURED on the live store: 41 of 223 n0
+    # "sessions" (18.4%) carry <15% of the median trade count, 36 of them SUNDAYS, and their
+    # median |net| is 250 against 600 for full sessions. They drag the magnitude conditioner DOWN -
+    # removing them raises sigma_20 by +12% at the g24 anchor and +22% at g23's.
+    # This matters because vol_regime IS the magnitude conditioner and the g24 blind under-emitted
+    # at 0.29x of realized. It is not the whole story (g24's sigma_5 = 137 is arithmetically
+    # correct over five genuinely quiet full sessions) but it is a real, measured bias.
+    # `*_prev_*` above is deliberately NOT filtered: a Sunday reopen genuinely IS the prior session
+    # for a Monday and its thinness is informative. Only the trailing DISTRIBUTIONS are.
+    # The proper long-term fix is folding the Sunday reopen into Monday per the CME trade-date
+    # convention (S104.1, "the ~2h reopen belongs to Monday", effective G17) - which this module
+    # does NOT do, because it slices by UTC calendar day. That re-slice is registered separately;
+    # it is not half-done here.
+    full_sessions = [s for s in prior if not _is_stub(s, prior)]
+    n_excluded = len(prior) - len(full_sessions)
+    nets = [s["net"] for s in full_sessions]
+    rngs = [s["range"] for s in full_sessions]
+    trd = [s["trades_n"] for s in full_sessions]
+    f[f"{b}_window_excluded_stub_sessions"] = n_excluded
+    f[f"{b}_window_basis"] = (
+        f"trailing sigma/mean/percentile fields are computed over FULL SESSIONS ONLY "
+        f"(trades_n >= {FULL_SESSION_MIN_FRAC:.0%} of the store median); {n_excluded} thin "
+        f"reopen/holiday stub(s) were excluded from the windows so the distribution is over "
+        f"comparable objects. {b}_prev_* is NOT filtered - it describes the immediately prior "
+        f"session whatever it was, and a thin reopen is informative there.")
     for w in WINS:
         n = min(w, len(prior))
         f[f"{b}_win_n_{w}"] = n
@@ -210,9 +273,24 @@ def _basis_fields(b: str, prior: list[dict], iso: str) -> dict:
         f[f"{b}_range_{w}_mean"] = int(round(float(np.mean(rngs[-w:])))) if full else None
     f[f"{b}_range_20_max"] = int(max(rngs[-20:])) if len(prior) >= 20 else None
     if prev is not None:
+        # S114: SITE LIKE WITH LIKE. `rngs` is now full-sessions-only, so the reference range must
+        # be a full session's too - locating a 1-hour Sunday reopen's 400 range inside a
+        # distribution of 23-hour sessions returned 0.0 (a "record-compressed regime") when the
+        # honest reading is that the two are not the same measurement. This percentile is the
+        # field a g24 specialist used to weight toward the short sigma, so a spurious extreme here
+        # propagates straight into an under-sized emission.
         wr = rngs[-PCTILE_WIN:]
-        f[f"{b}_range_pctile"] = round(100.0 * sum(1 for r in wr if r <= prev["range"]) / len(wr), 1)
+        _ref = prev_full if prev_full is not None else prev
+        f[f"{b}_range_pctile"] = round(100.0 * sum(1 for r in wr if r <= _ref["range"]) / len(wr), 1)
         f[f"{b}_range_pctile_n"] = len(wr)
+        f[f"{b}_range_pctile_basis"] = (
+            f"the prior FULL session's range ({_ref['range']}, {_ref['date']}) sited in the "
+            f"trailing {len(wr)} FULL sessions. Both sides exclude thin reopen/holiday stubs so "
+            f"the comparison is between comparable objects."
+            + ("" if prev is None or not _is_stub(prev, prior) else
+               f" NOTE: the LITERAL prior session was {prev['date']} (a stub, {prev['trades_n']} "
+               f"prints, range {prev['range']}); it is reported in {b}_prev_* and deliberately "
+               f"NOT used here."))
     else:
         f[f"{b}_range_pctile"] = None
         f[f"{b}_range_pctile_n"] = 0

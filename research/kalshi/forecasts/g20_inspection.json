@@ -1,0 +1,42 @@
+{
+ "group": "g20",
+ "ts": "2026-08-06T05:07:10Z",
+ "guards": [
+  "block-emptiness (declared-only exemptions)",
+  "tape_conditions required fields",
+  "flow_read_error surfacing",
+  "weather provisional-fetch-tail",
+  "b_share identity b == b2*(1-u) [S109 #9]",
+  "squeeze_watch _live vs flow_calendar [S109 #10]",
+  "phase-sum == session totals [S110 f1]",
+  "storage-vs-consensus freshness [S110 f4]",
+  "strike scale vs calendar_front_settle when units undeclared [S110 f5]",
+  "vol_regime n0 era vs same-session tape when undeclared [S110 f3]"
+ ],
+ "days": 10,
+ "hard": [
+  "20260525: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260526: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260527: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260528: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260529: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260601: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260602: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260603: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260604: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5).",
+  "20260605: options_surface median top-OI strike 0.325 vs calendar_front_settle 2.907 (ratio 0.112) with NO strike_units declared - the strikes are off the $/MMBtu convention by ~10x; any distance-from-settle read is nonsense (S110 audit f5)."
+ ],
+ "soft": [
+  "20260525: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260528: frozen front NGM26 EXPIRED 2026-05-27; live front NGN26 (declared)",
+  "20260529: frozen front NGM26 EXPIRED 2026-05-27; live front NGN26 (declared)",
+  "20260601: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260601: frozen front NGM26 EXPIRED 2026-05-27; live front NGN26 (declared)",
+  "20260602: frozen front NGM26 EXPIRED 2026-05-27; live front NGN26 (declared)",
+  "20260603: frozen front NGM26 EXPIRED 2026-05-27; live front NGN26 (declared)",
+  "20260604: frozen front NGM26 EXPIRED 2026-05-27; live front NGN26 (declared)",
+  "20260605: frozen front NGM26 EXPIRED 2026-05-27; live front NGN26 (declared)",
+  "scored_leg: EMPTY on 10/10 days (20260525..20260605) - required every day | LEGACY STATE: no _state_build stamp, so this state predates the block. Not a measurable defect here - RE-STAGE for a verdict."
+ ],
+ "verdict": "FAIL"
+}

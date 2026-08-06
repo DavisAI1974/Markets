@@ -70,11 +70,32 @@ def audit(state: dict) -> dict:
     if not days:
         return {"hard": ["state has no day keys at all"], "soft": [], "days": 0}
 
+    # S114: A STATE MUST DECLARE ITS OWN VINTAGE, or a NEW required block turns every OLD
+    # staged state permanently red. Adding `scored_leg` to REQUIRED_EVERY_DAY did exactly that
+    # to g19-g23 within minutes of the edit: their state files were written before the field
+    # existed, so they cannot carry it, and a hard fail there is not a defect report - it is
+    # noise that trains people to ignore the andon (the S112 Station 0 lesson, and the same
+    # argument as the permanently-red model_disagreement selftest).
+    #   modern state (carries _state_build) + block absent  -> HARD. The builder knew the block
+    #                                                          and did not emit it. A real defect.
+    #   legacy state (no _state_build) + block absent       -> SOFT, named. Not measurable here;
+    #                                                          re-stage to get a verdict.
+    build = state.get("_state_build") or {}
+    known = set(build.get("blocks_emitted") or [])
     for blk in REQUIRED_EVERY_DAY:
         bad = [d for d in days if _empty(state[d].get(blk))]
-        if bad:
-            hard.append(f"{blk}: EMPTY on {len(bad)}/{len(days)} days ({bad[0]}..{bad[-1]}) - "
-                        f"required every day")
+        if not bad:
+            continue
+        msg = (f"{blk}: EMPTY on {len(bad)}/{len(days)} days ({bad[0]}..{bad[-1]}) - "
+               f"required every day")
+        if not build and len(bad) == len(days):
+            soft.append(msg + " | LEGACY STATE: no _state_build stamp, so this state predates the "
+                              "block. Not a measurable defect here - RE-STAGE for a verdict.")
+        elif build and blk not in known and len(bad) == len(days):
+            soft.append(msg + f" | the builder that wrote this state did not know the block "
+                              f"(_state_build.built_utc {build.get('built_utc')}). Re-stage.")
+        else:
+            hard.append(msg)
 
     for blk in MASKED_MUST_HAVE_FROZEN_VALUE:
         bad = [d for d in days if _empty(state[d].get(blk))]
