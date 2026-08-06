@@ -66,7 +66,18 @@ REF_TZ = ZoneInfo("America/Chicago")     # single "gas day" boundary applied to 
 BASE_F = 65.0                             # degree-day base
 IEM_URL = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py"
 NWS_API = "https://api.weather.gov"
-CACHE_DIR = "data/nws_temp"
+# ANCHORED TO THE REPO-ROOT DATA PLANE, not to the caller's cwd. S114: this was the relative
+# "data/nws_temp", so running the feed from research/kalshi (the SOP's stated cwd) wrote the store
+# to research/kalshi/data/nws_temp while forecast_harness reads
+# os.path.join(HERE, "..", "..", "data") - the ROOT tree that restore_substrate populates. The
+# documented command to extend the weather store therefore wrote somewhere the harness never reads:
+# the extension appeared to work (406 days through 2026-08-05 printed and saved) while staging kept
+# reporting `weather: EMPTY` off a 390-day store ending 2026-07-20.
+# THIRD INSTANCE OF THE SAME DISEASE IN ONE SESSION - two `data/` trees also hid the field inventory
+# from the specialists and put the corrected g22 state under a gitignored name. The cure is the same
+# each time: anchor the path to the repo, never to where the process happens to be standing.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CACHE_DIR = os.path.join(_REPO_ROOT, "data", "nws_temp")
 CACHE_FILE = os.path.join(CACHE_DIR, "gw_degree_days.json")   # {date: {...}} merged store
 # S90: the store lives on AWS S3 (out of git). Bucket/prefix from env (defaults to the bento bucket); the
 # feed syncs local <-> S3 so the container and the durable box share ONE store. Local-only if boto3/creds
@@ -511,7 +522,11 @@ def forecast_index_today(verbose: bool = True) -> dict:
 # ------------------------------------------------------------------------------------------------------
 MOS_URL = "https://mesonet.agron.iastate.edu/cgi-bin/request/mos.py"
 IEM_DAILY_URL = "https://mesonet.agron.iastate.edu/cgi-bin/request/daily.py"
-MOS_DIR = "weather/mos_asof"
+# SAME ANCHORING FIX AS CACHE_DIR ABOVE, same reason. forecast_harness reads
+# os.path.join(HERE, "..", "..", "weather", "mos_asof", ...) - the REPO-ROOT weather tree - while
+# this was relative, so a --mos-asof backfill run from research/kalshi wrote 16 days into
+# research/kalshi/weather/mos_asof/ and staging kept reading the root store that ended 2026-07-20.
+MOS_DIR = os.path.join(_REPO_ROOT, "weather", "mos_asof")
 MOS_RAW_DIR = os.path.join(MOS_DIR, "raw")
 MOS_INDEX = os.path.join(MOS_DIR, "mos_asof_index.json")
 MOS_NORMALS = os.path.join(MOS_DIR, "climo_normals.json")

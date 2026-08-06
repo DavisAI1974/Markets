@@ -40,7 +40,14 @@ RENDER_DIR = os.path.join(HERE, "renders", "ng_refine_s95")
 sys.path.insert(0, HERE)
 import group_config as gc  # noqa: E402
 
-SEQ = ["g17", "g18", "g19", "g20", "g21", "g22", "g23"]
+# DERIVED FROM group_config, NOT HARDCODED. S114: this was the literal list
+# ["g17".."g23"], so a NEW group was simply absent from it - `SEQ.index(gid)` returned -1, `prev`
+# became None, and the chain verification SILENTLY DEGRADED to
+# "UNVERIFIED - no prior group actual on disk". The check whose entire job is to catch a wrong
+# anchor did not run on the one group nobody had checked yet, and it said so in a field rather than
+# stopping. Same disease as flow_calendar.CME_HOLIDAYS ending 2027-02-15 - the defect that produced
+# plant_calendar. A hardcoded list of the groups we have done cannot police the group we are doing.
+SEQ = sorted((g for g in gc.GROUPS if g[1:].isdigit()), key=lambda g: int(g[1:]))
 MULT = 10000.0          # NG: $0.001 = $10 per contract, so a $1 move = 10,000 ticks of $/MMBtu
 
 

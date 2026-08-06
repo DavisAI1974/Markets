@@ -1,0 +1,43 @@
+{
+ "group": "g24",
+ "date": "20260717",
+ "dow": "Fri",
+ "anchor_close": 2.916,
+ "anchor_lasthr_dir": -1,
+ "leg": "ng_mbo_ngq26",
+ "basis": "Aug/NGQ26 through 07-21; Sep/NGU26 from 07-22 (Kalshi underlying roll, 5 business days before NGQ26's 07-29 LTD). First two-leg block since g19. LAST BLOCK THE WALK CAN DO - G25 would be 08-02..08-14 and only 3 of its 10 sessions have happened.",
+ "is_holiday_session": false,
+ "verification": {
+  "source": "g23_actual.json last day 20260717",
+  "prior_group_close": 2.916,
+  "status": "MATCH"
+ },
+ "last_hour": {
+  "first_price": 2.924,
+  "last_price": 2.916,
+  "high_price": 2.925,
+  "low_price": 2.916,
+  "net_usd": -80,
+  "direction": "down",
+  "derived_dir": -1,
+  "n_points": 10,
+  "range_usd": 90,
+  "net_ticks": 8,
+  "net_share_of_range": 0.889,
+  "close_in_range": 0.0,
+  "direction_is_resolution_floor": false,
+  "direction_caveat": "last-hour net 8 ticks on a $90 range - direction is supported.",
+  "trade_count": null,
+  "signed_flow": null,
+  "provenance": "price levels derived from the actual file's DOWNSAMPLED `continuous` render path, not the raw tape. Trade count and signed flow are NOT recoverable from a downsampled series and are null by design - a number computed off this series would be wrong-but-well-formed."
+ },
+ "session_activity": {
+  "n_trades": 26930,
+  "volume_lots": 63165,
+  "trades_per_min": 21.4,
+  "session_signed_flow": 1333,
+  "session_b_share": 0.487,
+  "session_b_share_two_sided": 0.511,
+  "source": "tape_conditions.prior_full_session (scored leg)"
+ }
+}

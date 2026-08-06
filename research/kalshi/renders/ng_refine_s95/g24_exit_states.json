@@ -1,0 +1,129 @@
+{
+ "spec": "stage-time ACTUAL exit states for the HE24->HE1 chain (S108)",
+ "group": "g24",
+ "provenance": "derived from the realized MBO legs - REFINE-ONLY. A blind run must never read this file; the blind chain is built by exit_state_blind() from the assembled forecast.",
+ "n_days": 10,
+ "n_null": 0,
+ "days": {
+  "20260720": {
+   "close_px": 2.845,
+   "open_px": 2.883,
+   "day_move_usd": -380,
+   "last_hour_dir": 1,
+   "last_hour_signed_flow": -1,
+   "low_et": "11:09",
+   "high_et": "09:21",
+   "close_off_low_frac": 0.2,
+   "low_late": false,
+   "high_late": false
+  },
+  "20260721": {
+   "close_px": 2.884,
+   "open_px": 2.846,
+   "day_move_usd": 380,
+   "last_hour_dir": -1,
+   "last_hour_signed_flow": 0,
+   "low_et": "20:19",
+   "high_et": "15:12",
+   "close_off_low_frac": 0.66,
+   "low_late": false,
+   "high_late": false
+  },
+  "20260722": {
+   "close_px": 2.916,
+   "open_px": 2.853,
+   "day_move_usd": 630,
+   "last_hour_dir": 1,
+   "last_hour_signed_flow": 0,
+   "low_et": "04:31",
+   "high_et": "14:18",
+   "close_off_low_frac": 0.92,
+   "low_late": false,
+   "high_late": false
+  },
+  "20260723": {
+   "close_px": 2.912,
+   "open_px": 2.915,
+   "day_move_usd": -30,
+   "last_hour_dir": 1,
+   "last_hour_signed_flow": 1,
+   "low_et": "14:53",
+   "high_et": "08:37",
+   "close_off_low_frac": 0.11,
+   "low_late": false,
+   "high_late": false
+  },
+  "20260724": {
+   "close_px": 2.908,
+   "open_px": 2.911,
+   "day_move_usd": -30,
+   "last_hour_dir": 1,
+   "last_hour_signed_flow": 1,
+   "low_et": "14:38",
+   "high_et": "08:41",
+   "close_off_low_frac": 0.3,
+   "low_late": true,
+   "high_late": false
+  },
+  "20260727": {
+   "close_px": 2.772,
+   "open_px": 2.847,
+   "day_move_usd": -750,
+   "last_hour_dir": 0,
+   "last_hour_signed_flow": 1,
+   "low_et": "18:04",
+   "high_et": "20:00",
+   "close_off_low_frac": 0.1,
+   "low_late": true,
+   "high_late": false
+  },
+  "20260728": {
+   "close_px": 2.692,
+   "open_px": 2.772,
+   "day_move_usd": -800,
+   "last_hour_dir": 0,
+   "last_hour_signed_flow": 1,
+   "low_et": "12:09",
+   "high_et": "20:01",
+   "close_off_low_frac": 0.17,
+   "low_late": false,
+   "high_late": false
+  },
+  "20260729": {
+   "close_px": 2.726,
+   "open_px": 2.691,
+   "day_move_usd": 350,
+   "last_hour_dir": -1,
+   "last_hour_signed_flow": 1,
+   "low_et": "07:48",
+   "high_et": "14:00",
+   "close_off_low_frac": 0.67,
+   "low_late": false,
+   "high_late": false
+  },
+  "20260730": {
+   "close_px": 2.744,
+   "open_px": 2.725,
+   "day_move_usd": 190,
+   "last_hour_dir": -1,
+   "last_hour_signed_flow": -1,
+   "low_et": "08:45",
+   "high_et": "11:58",
+   "close_off_low_frac": 0.67,
+   "low_late": false,
+   "high_late": false
+  },
+  "20260731": {
+   "close_px": 2.792,
+   "open_px": 2.744,
+   "day_move_usd": 480,
+   "last_hour_dir": 1,
+   "last_hour_signed_flow": -1,
+   "low_et": "11:51",
+   "high_et": "08:16",
+   "close_off_low_frac": 0.89,
+   "low_late": false,
+   "high_late": false
+  }
+ }
+}

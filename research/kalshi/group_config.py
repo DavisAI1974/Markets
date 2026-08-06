@@ -169,11 +169,14 @@ GROUPS = {
         "window": "Sun 2026-07-19 -> Fri 2026-07-31",
         "days": ["20260720","20260721","20260722","20260723","20260724",
                  "20260727","20260728","20260729","20260730","20260731"],
-        "anchor": 2.916, "anchor_date": "20260717", "anchor_lasthr_dir": None,
+        "anchor": 2.916, "anchor_date": "20260717", "anchor_lasthr_dir": -1,
         # anchor = G23 actual's last-day CLOSE on 20260717 (2.916), per the build_anchor_block rule
         # that each group's anchor must equal the prior group's realized close - an independent
-        # measurement, different file. anchor_lasthr_dir is left None to be DERIVED at stage time
-        # from the actual price path rather than asserted here.
+        # measurement, different file. anchor_lasthr_dir = -1, DERIVED S114 from g23's realized
+        # continuous path: 20260717's final hour ran 2.9240 (16:00) -> 2.9160 (16:59), delta
+        # -0.0080 = 8 ticks, so the direction is real rather than tick-floor noise.
+        # build_anchor_block VERIFIES this against the actual and hard-fails a mismatch - the value
+        # is DECLARED here and CHECKED there, which is why it is not simply computed at stage time.
         "mask_after": "20260717",
         # ---- THE ROLL, RESEARCHED S114 RATHER THAN ASSUMED --------------------------------
         # Kalshi's KXNATGASD underlying rolls forward 5 BUSINESS DAYS BEFORE LTD (spec verified
