@@ -63,6 +63,22 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.15 (S114): TWO SLOT DEFECTS FOUND BY READING THE FIRST EMITTED REHEARSAL PROMPT, before any
+  agent ran. Both would have broken the run, and both are the same disease - a slot resolving to
+  something that is not a usable value.
+  (a) **The `--namespace` INPUT redirect pointed at a deleted directory.** It rewrote the slice
+  path to `<gid>_causal_slices_b/`, which was correct while the corrected state lived under `_b` -
+  and then the `_b` family was deleted, because it was GITIGNORED and so could not survive a
+  session (D34). Removed: output is redirected, input is canonical, which is also what makes a
+  rehearsal a real test of the canonical path rather than of a shadow copy.
+  (b) **`{bridge path}` was emitted as a LITERAL PLACEHOLDER.** Specialist B's Monday clause told it
+  to consume A's bridge read "at {bridge path}". A spaced token is not slot-shaped, so the
+  no-placeholder-survives check never saw it. Renamed to `{bridge_path}` and filled BY LOOKUP on
+  disk; when A has not run, the prompt SAYS the bridge was not produced and tells B to own the
+  number unaided rather than invent an inherited read. NC-1 discipline: a slot is filled by lookup
+  or the line stops - it is never emitted raw.
+  BOTH CAUGHT BY READING THE EMITTED ARTIFACT, not by a test. The 22/22 selftest passed with both
+  defects present, which is the lesson: a prompt is a deliverable and it gets read before it ships.
 - v1.14 (S114): THE CURVE CONTRACT IS ENFORCED AT BLD/RFN — `path_contract.py`, ANNOUNCE in the
   blind coordinator and HARD in the refine (the `due_gate` pattern: a SystemExit in the blind would
   discard a completed run's numbers, and a path is repairable only by re-running the specialist).
@@ -550,7 +566,7 @@ SPAWN PARAMETERS
   Calendar is deterministic and public; D2's one deliberate mask is the PRICE CURVE.
 - {IF E, weekend-feeding Friday}: you MUST emit the 9-field handoff_out (exit_type + monday_bias
   + the exit state fields per your lens file).
-- {IF B}: A's bridge read for your Monday is at {bridge path}; consume it LIVE — A informs, B
+- {IF B}: A's bridge read for your Monday is at {bridge_path}; consume it LIVE — A informs, B
   decides, you alone own the Monday number. Record taken-vs-overridden.
 
 OUTPUT — write forecasts/g{N}_perday/grp{N}_{X}_{DAY}.json:

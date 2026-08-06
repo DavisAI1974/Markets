@@ -346,6 +346,17 @@ def slots(gid, day=None, spec=None):
                           "ATTACHED file generated from the day's OWN causal slice - names only, "
                           "never values. A path, not inline text: Greg, S114 - it is an attachment "
                           "'that doesn't follow them to curve building unless it needs to'")
+        # {bridge path} - the A->B weekend seam handoff. NC-1 discipline: a slot is filled BY
+        # LOOKUP or the line stops; it is NEVER emitted as a literal placeholder, which is what
+        # BLD-1 was doing (measured S114 on the first emitted rehearsal prompt: specialist B was
+        # told to consume A's bridge read "at {bridge path}"). Resolved from disk, and when A has
+        # not run the prompt SAYS SO rather than pointing at a file that does not exist.
+        _bridge = os.path.join("forecasts", "g%s_perday" % n, "grp%s_A_bridge_%s.json" % (n, day))
+        s["bridge_path"] = (_bridge if os.path.exists(os.path.join(ROOT, _bridge))
+                            else "NOT PRODUCED in this run - specialist A did not run, so there is "
+                                 "no bridge read to consume. Say so in your reasoning and own the "
+                                 "Monday number unaided; do not invent an inherited read.",
+                            "lookup on disk; declared absent rather than emitted as a placeholder")
         s["DAY_CALENDAR"] = (day_calendar(gid, day),
                              "GENERATED from plant_calendar RULES - prior/next trading session, "
                              "holiday gaps, upcoming non-normal sessions")
@@ -441,11 +452,13 @@ def _redirect(text, gid, ns):
     n = gid[1:]
     subs = [(f"forecasts/g{n}_perday/", f"forecasts/{ns}/"),
             (f"forecasts/g{n}_refine_perday/", f"forecasts/{ns}/"),
-            # the INPUT slice dir too: a rehearsal reads the re-staged slices, not the canonical
-            # ones. Missing this would have had the agents read a state built before the S114
-            # staging fixes while writing into the rehearsal namespace - a half-redirected run,
-            # which is worse than no redirect because it looks isolated and is not.
-            (f"{gid}_causal_slices/", f"{gid}_causal_slices_b/")]
+            ]
+    # NO INPUT REDIRECT ANY MORE (S114). An earlier version rewrote the slice dir to
+    # `<gid>_causal_slices_b/` so a rehearsal would read the re-staged slices. That was right while
+    # the corrected state lived under `_b` - and then the `_b` family was DELETED, because it was
+    # gitignored and therefore could not survive a session (D34). The canonical slice dir now holds
+    # the corrected slices, so redirecting the INPUT would point at nothing. Output is redirected;
+    # input is canonical, which is also what makes a rehearsal a real test of the canonical path.
     for a_, b_ in subs:
         text = text.replace(a_, b_)
     banner = (f"*** REHEARSAL RUN - NAMESPACE {ns} ***\n"
