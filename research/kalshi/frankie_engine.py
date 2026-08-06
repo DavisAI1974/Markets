@@ -25,6 +25,7 @@ from frankie_core import (
     verify_original_spawn,
     write_evidence,
 )
+from frankie_idempotency import lookup_existing, record_first
 
 LANE_SCHEMA = {
     "verdict": "ADVANCE | HOLD | REJECT | INSUFFICIENT",
@@ -128,6 +129,10 @@ def evaluate_event(
     deterministic_only: bool | None = None,
 ) -> tuple[FrankieDecision, dict[str, Any]]:
     origin = verify_original_spawn()
+    existing = lookup_existing(config=config, event=event)
+    if existing is not None:
+        return existing
+
     registry = load_candidate_registry(config.novel_registry)
     if event.candidate_id not in registry:
         raise GateStop(f"candidate not in Novel registry: {event.candidate_id}")
@@ -169,6 +174,14 @@ def evaluate_event(
         spawn_provenance=origin,
     )
     evidence = write_evidence(decision, event=event, config=config)
+    index = record_first(config=config, event=event, decision=decision, evidence=evidence)
+    if not index.get("created"):
+        winner = lookup_existing(config=config, event=event)
+        if winner is None:
+            raise GateStop("event-index first writer could not be recovered")
+        return winner
+    evidence["event_index"] = index
+    evidence["deduplicated"] = False
     return decision, evidence
 
 
@@ -216,8 +229,8 @@ def consume_once(
         config=config,
         deterministic_only=deterministic_only,
     )
-    # Delete only after the immutable evidence write returns. Invalid messages and backend
-    # failures remain for the queue's redrive/DLQ policy rather than being silently lost.
+    # Delete only after immutable evidence exists or a redelivery was matched to the
+    # immutable first-writer index. Invalid/backend-failed messages remain for redrive/DLQ.
     sqs.delete_message(QueueUrl=config.sqs_queue_url, ReceiptHandle=message["ReceiptHandle"])
     return {
         "received": True,
