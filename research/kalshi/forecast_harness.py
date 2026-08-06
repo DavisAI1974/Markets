@@ -1192,6 +1192,26 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
         dow = DOW[datetime.date(int(d[:4]), int(d[4:6]), int(d[6:])).weekday()]
         past = sorted(ri for ri in surp if ri < iso)  # S96: strictly before the day (same-day print leaked)
         sv = surp[past[-1]]["surprise"] if past else None
+        # S114: STOR_SURPRISE HAD NO BASIS AND NO CLOCK. E-0731: "5.4 'above' against WHAT,
+        # exactly? It is a seasonal proxy with no served baseline, no served formula, and (here) no
+        # motion. I could not tell whether it was a live reading or a dead one until I diffed it
+        # across ten days." A signed scalar with a directional WORD attached, sitting at the top of
+        # the day where it reads as a headline, is the exact "present, numeric, in range,
+        # self-consistent" shape that has produced eleven holes. Serve the arithmetic.
+        _sr = surp[past[-1]] if past else {}
+        _sb = None if not past else {
+            "as_of_report_date": past[-1],
+            "period_week_ending": _sr.get("period"),
+            "actual_bcf": _sr.get("actual"),
+            "seasonal_expectation_bcf": _sr.get("seasonal_exp"),
+            "surprise_bcf": _sr.get("surprise"),
+            "formula": ("surprise = actual - mean(same-ISO-week weekly change over the prior 5 "
+                        "years, >=3 years required). It is a SEASONAL proxy, not a survey "
+                        "consensus - storage_consensus carries the survey separately and the two "
+                        "are additive, never substitutes."),
+            "sign_means": ("positive = the print BUILT more (or drew less) than its own five-year "
+                           "same-week norm; negative = tighter than the norm."),
+        }
         cr = fc.curve_asof(cv, iso)
         cs = _contract_structure_block(iso)
         # curve_regime: the legacy fc path first; where it reads 'unknown' the structure feed's regime
@@ -1203,6 +1223,7 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
         out[d] = {"dow": dow, "scored_leg": _scored_leg_block(d),
                   "stor_surprise": round(sv, 1) if sv is not None else None,
                   "stor_surprise_sign": ("above" if sv > 0 else "below") if sv is not None else None,
+                  "stor_surprise_basis": _sb,
                   "curve_regime": regime,
                   "storage": _storage_asof(iso, stor),
                   "storage_regional": _storage_regional_block(iso),

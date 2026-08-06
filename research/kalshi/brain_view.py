@@ -239,6 +239,59 @@ def build(brain, role, phase="working", window_days=None):
         else:
             withheld.append((name, "phase %r, and this view is phase %r - %s"
                              % (ph, phase, entry.get("phase_why") or "")))
+    # LIVE VERDICT, HOISTED ABOVE THE CLAIM (S114) - generated, never authored.
+    # E-0722 after g24: "several plays state a claim and then, in their own instances, refute it.
+    # midweek.prior_exit_lasthour_magnitude_gate is contradicted three ways by its own evidence.
+    # selector.divergence_resolution has fired on 0 of 82 rows. Reading those top-down costs real
+    # time before you reach the line that kills them. A `health` or `live_verdict` field surfaced
+    # ABOVE the claim would pay for itself."
+    # Those plays are already HONEST - the refutation is written down, in health.can_change_state
+    # and falsifier, BELOW the call. So this invents no judgment: it hoists the one already there
+    # to the top of the play, where it is read before the call rather than after it.
+    for pl in view.get("plays", []) or []:
+        _h = ((pl.get("health") or {}).get("can_change_state") or "")
+        _f = pl.get("falsifier") or ""
+        _h = _h if isinstance(_h, str) else ""
+        _f = _f if isinstance(_f, str) else ""
+        _hl, _fl = _h.lower(), _f.lower()
+        _flags = []
+        # READ THE OPENING VERDICT, NOT THE WHOLE PARAGRAPH. The first cut of this flagged any
+        # health note CONTAINING "degenerate" and produced 39 of 90 - including
+        # magnitude.crash_regime_bands ("Within its stated regime, yes"),
+        # structure.failed_rally_tell ("YES on the refine side and the split is real") and
+        # signal.mos_first_appearance_vs_revision ("YES, ON BOTH LIMBS, AND I CHECKED THE FIELD"),
+        # all of which merely DISCUSS degeneracy while concluding the play is sound. A false
+        # CANNOT_CHANGE_STATE is worse than no flag: it talks a specialist out of a working play,
+        # which is the exact opposite of what this annotation is for. These notes are written
+        # verdict-first, so the verdict is the opening clause.
+        _open = _hl.lstrip(" -*\"'")[:90]
+        _starts_no = re.match(r"no\b|not applicable\b|none\b", _open) is not None
+        _starts_yes = re.match(r"yes\b|technically yes\b", _open) is not None
+        _mixed = _starts_yes and re.search(r"\bno\b", _open) is not None
+        if _starts_no:
+            _flags.append("CANNOT_CHANGE_STATE")
+        elif _mixed:
+            _flags.append("MIXED_VERDICT_READ_THE_SCOPE")
+        if "practically no" in _open or "indistinguishable from the base rate" in _hl:
+            _flags.append("INDISTINGUISHABLE_FROM_BASE_RATE")
+        if any(t in _fl for t in ("already discharged", "discharged against it", "is refuted",
+                                  "never been run", "cannot be run", "does not exist in the corpus")):
+            _flags.append("FALSIFIER_ALREADY_DISCHARGED_OR_UNRUNNABLE")
+        if _flags:
+            _first = (_h.split(". ")[0] if _h else "")[:220]
+            pl_new = OrderedDict()
+            pl_new["live_verdict"] = OrderedDict([
+                ("flags", _flags),
+                ("read_this_before_the_call", _first or "see falsifier"),
+                ("_note", "GENERATED from this play's OWN health.can_change_state and falsifier - "
+                          "no new judgment. Hoisted because the refuting line sat below the call "
+                          "and was being read after it."),
+            ])
+            for _k, _v in pl.items():
+                pl_new[_k] = _v
+            pl.clear()
+            pl.update(pl_new)
+
     # INSTRUMENT PRIORS (S114) - GENERATED, never a second copy.
     # C-0721, after the g24 run: "the most valuable content in the view was NOT the plays - it was
     # the health.can_change_state notes, and those are buried inside each play. Two of them (44%

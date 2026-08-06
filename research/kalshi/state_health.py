@@ -47,6 +47,13 @@ MASKED_MUST_HAVE_FROZEN_VALUE = (
 # Legitimately absent most days - never a failure.
 EXPECTED_SPARSE = ("holiday",)
 
+# S114: pairs of blocks that describe the SAME underlying publication and must therefore agree on
+# which print they are serving. Only add a pair when both sides genuinely track one release - two
+# blocks on DIFFERENT cadences are expected to differ and must never be paired here.
+_SAME_PUBLICATION_ASOF = (
+    ("storage", "storage_regional"),   # both the EIA weekly working-gas print
+)
+
 # tape_conditions sub-reads that the DATA DOCTRINE calls the blind's primary channel.
 TAPE_REQUIRED = ("session_signed_flow", "phase_signed_flow", "phase_b_share", "big_print_b_share")
 
@@ -248,6 +255,27 @@ def audit(state: dict) -> dict:
                     f"- storage knows a print the consensus block still calls future. last_print "
                     f"affirmatively misdescribes which print is last; age/surprise reads off it are "
                     f"about the wrong print (S110 audit f4).")
+
+        # S114 SAME-PUBLICATION AS-OF RECONCILIATION. The f4 guard above catches ONE pair
+        # (storage vs storage_consensus) and the same disease was live in a THIRD block nobody had
+        # paired: `storage_regional` sat frozen at the 2026-07-16 print across all ten g24 days
+        # while `storage` correctly advanced 07-16 -> 07-23 -> 07-30, so on the last day the two
+        # EIA-weekly blocks in ONE slice were two full prints apart. E-0731 asked for exactly this
+        # after the g24 run: "the fields that have a clock did not need checking; the fields that
+        # needed checking had no clock." Generalized: any two blocks that track the SAME
+        # publication must agree on which print they are describing. This is a RECONCILIATION, not
+        # a presence check - presence is what passed (S109).
+        for _a, _b in _SAME_PUBLICATION_ASOF:
+            _ba, _bb = state[d].get(_a) or {}, state[d].get(_b) or {}
+            if not (isinstance(_ba, dict) and isinstance(_bb, dict)):
+                continue
+            _va, _vb = _ba.get("as_of"), _bb.get("as_of")
+            if isinstance(_va, str) and isinstance(_vb, str) and _va != _vb:
+                hard.append(
+                    f"{d}: {_a}.as_of {_va} != {_b}.as_of {_vb} - two blocks in ONE slice "
+                    f"describing the SAME publication disagree about which print is current. The "
+                    f"staler one is serving a superseded reading under a live name, and every play "
+                    f"keyed on it is reading the wrong week.")
 
         # S110 audit f5 STRIKE SCALE. options_surface serves strikes in units exactly 10x below the
         # $/MMBtu convention of every other price field (0.35 on a 3.2 settle), undeclared, in every

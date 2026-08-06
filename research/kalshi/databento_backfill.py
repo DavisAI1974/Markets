@@ -116,6 +116,70 @@ def _write_df(df, symbol: str) -> int:
     return n
 
 
+L1_DIR = "data/ng_l1"          # the L1 quote/book tape flow_read consumes (bid/ask px + sz)
+
+
+def _write_mbp1_df(df, symbol: str, out_dir: str = None) -> int:
+    """S114: mbp-1 -> the ng_l1 row format flow_read actually reads.
+
+    THE GAP THIS CLOSES. `data/ng_l1/NG_<day>.jsonl.gz` is a declared input (stage_group pulls it,
+    firehose_present.l1_book flags it, flow_read serves quote imbalance and spread off it) and
+    NOTHING IN THIS MODULE COULD WRITE IT. A `--schema mbp-1` pull fell through to `_write_df`,
+    which emits the TRADES format into OUT_DIR and DISCARDS every book field - so the pull
+    "succeeded", reported its row count, and produced no L1 file anywhere. Measured on g24: the L1
+    book is absent from S3 for 8 of 10 prior sessions and the blind ran without quote imbalance or
+    spread on those days.
+
+    Written gzipped, one file per UTC day, matching the existing store byte-for-byte in shape:
+      {"ts","action","instrument_id","price","size","side","bid_px","ask_px","bid_sz","ask_sz"}
+    """
+    import gzip as _gz
+    odir = out_dir or L1_DIR
+    os.makedirs(odir, exist_ok=True)
+    handles: dict[str, object] = {}
+    n = 0
+
+    def _num(row, *names):
+        for nm in names:
+            if nm in row:
+                v = row[nm]
+                try:
+                    if v is None or (isinstance(v, float) and v != v):
+                        return None
+                except Exception:
+                    pass
+                return v
+        return None
+
+    for ts, row in df.iterrows():
+        sec = ts.timestamp() if hasattr(ts, "timestamp") else float(ts) / 1e9
+        day = datetime.fromtimestamp(sec, timezone.utc).strftime("%Y%m%d")
+        fh = handles.get(day)
+        if fh is None:
+            fh = _gz.open(os.path.join(odir, f"{symbol}_{day}.jsonl.gz"), "at")
+            handles[day] = fh
+        rec = {
+            "ts": sec,
+            "action": row.get("action"),
+            "instrument_id": _json_safe(_num(row, "instrument_id")),
+            "price": _json_safe(_num(row, "price")),
+            "size": _json_safe(_num(row, "size")),
+            "side": row.get("side"),
+            # DBN mbp-1 exposes level 0 as bid_px_00/ask_px_00; older to_df builds use bid_px/ask_px.
+            # Try both rather than assuming - a silently missing book column would reproduce exactly
+            # the defect this function exists to fix.
+            "bid_px": _json_safe(_num(row, "bid_px_00", "bid_px")),
+            "ask_px": _json_safe(_num(row, "ask_px_00", "ask_px")),
+            "bid_sz": _json_safe(_num(row, "bid_sz_00", "bid_sz")),
+            "ask_sz": _json_safe(_num(row, "ask_sz_00", "ask_sz")),
+        }
+        fh.write(json.dumps(rec) + "\n")
+        n += 1
+    for fh in handles.values():
+        fh.close()
+    return n
+
+
 def _json_safe(v):
     """Make a DBN cell JSON-serializable without losing info: Timestamp -> epoch seconds, numpy scalar ->
     python scalar, NaN/NaT -> None. No rounding, no dropping."""
@@ -278,6 +342,9 @@ def range_pull(client, symbol: str, start: str, end: str, schema: str, max_cost:
     if len(df) and schema.startswith("mbp-10"):
         got = _write_mbp10_df(df, symbol, out_dir)
         print(f"[databento] range {symbol} {start}..{end}: {got} trade+book rows -> {out_dir or MBP10_DIR}")
+    elif len(df) and schema.startswith("mbp-1"):
+        got = _write_mbp1_df(df, symbol, out_dir)
+        print(f"[databento] range {symbol} {start}..{end}: {got} L1 rows -> {out_dir or L1_DIR}")
     else:
         got = _write_df(df, symbol) if len(df) else 0
         print(f"[databento] range {symbol} {start}..{end}: {got} trades -> {OUT_DIR}")
@@ -378,6 +445,7 @@ def _download_decode_flush(client, jid: str, symbol: str, schema: str,
             df = db.DBNStore.from_file(p).to_df()
             if len(df):
                 total += (_write_mbp10_df(df, symbol, out_dir) if schema.startswith("mbp-10")
+                          else _write_mbp1_df(df, symbol, out_dir) if schema.startswith("mbp-1")
                           else _write_df(df, symbol))
             os.remove(p)
             if flush_dir:

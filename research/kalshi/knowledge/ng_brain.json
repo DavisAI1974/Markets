@@ -12225,7 +12225,7 @@
    "id": "boundary.weekend_gap_wide_band_emission",
    "trigger": "any weekend/holiday gap forecast",
    "read": "the weekend gap is NOT ownable as a POINT from current instruments (confirmed negative, measured twice in opposite directions: 0622 forecast +20 actual +1,210; 0629 forecast +480 actual +50). Add-size does not sort gap-size (inverted across 0621/0628). The SESSION read is a separate, sound instrument (0622 session err 120 while its gap missed by 1,190).",
-   "call": "emit the gap as SIGN (from weekend.seam_sign_from_stability_ladder) + WIDE BAND: ~0.5-1.0x sigma mid-book, 1.5-2.5x sigma at a <=5-pctile worsening extreme; SCORE GAP AND SESSION SEPARATELY; day-move p50 belongs at the slope-derived level (close-at-the-slope, n=3 G21/G22)",
+   "call": "emit the gap as SIGN (from weekend.seam_sign_from_stability_ladder) + a WIDE BAND, never a point; SCORE GAP AND SESSION SEPARATELY; day-move p50 belongs at the slope-derived level (close-at-the-slope, n=3 G21/G22). THE 0.5-1.0x SIGMA BAND IS STRUCK - see band_width_refuted_S114. The play's SURVIVING content is the FORM (sign + band + separate scoring), not any width.",
    "requires": "the stability ladder + cot; vol sigma (note n0 era basis)",
    "scope": "all weekend/holiday seams until an instrument earns point authority",
    "status": "PROPOSED",
@@ -12324,6 +12324,13 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
+   },
+   "band_width_refuted_S114": {
+    "what_was_claimed": "the band is ~0.5-1.0x sigma mid-book, 1.5-2.5x sigma at a <=5-pctile extreme",
+    "measured_against_its_OWN_cited_instances": "|realized gap| vs its own 0.5-1.0x sigma_20 band, per event: 20260622 gap 1210 vs band 454-909 OUTSIDE (high); 20260629 gap 50 vs 454-909 OUTSIDE (low, by 9x); 20260706 gap 580 vs 370-741 inside; 20260713 gap 360 vs 370-741 OUTSIDE (low, marginally). THE BAND HOLDS ON 1 OF ITS OWN 4 INSTANCES. Reported by B-0727, who could reach only two of them and asked whether the band was on |gap| or a half-width - measured here on |gap|, the only reading with a defined centre, and it fails.",
+    "what_this_does_and_does_not_kill": "D37: the refuted STORY does not demote the OBSERVATION. The observation - point gap calls fail and the honest emission is a sign plus a wide band, scored separately from the session - is supported by the instances and STANDS. What is refuted is the claim that sigma SIZES the band. Realized gaps span 0.05x to 1.33x sigma_20 across four events, which is not a band, it is 'sigma does not size this'.",
+    "consequence": "emit sign + a band whose width you DERIVE and DECLARE from the day's own drivers, and say it is not sigma-derived. Do not quote a sigma multiple here until one is measured that contains more than 1 of 4.",
+    "falsifier": "a sigma multiple - any multiple - that contains >=4 of 5 realized weekend gaps across g20-g25 would restore a width claim. Measure per event, never pooled."
    }
   },
   {
