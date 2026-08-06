@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 148 |
+| open | 149 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 68, **M** 44, **L** 8
+By size: **XS** 18, **S** 68, **M** 45, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 35, **REST** 102
+By tier: **ESSENTIAL** 13, **BIGGEST_WIN** 35, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (12)
+## ESSENTIAL (13)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -34,6 +34,7 @@ By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 35, **REST** 102
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
+| **A-58** | M | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | It is the one-doc rule measured against the live brain, and it is going live. Three pointers already resolve to nothing, which means a specialist following them silently loses the content - the exact silent-absence family this desk has recorded eleven times. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -204,6 +205,7 @@ By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 35, **REST** 102
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
+| **A-58** | ESSENTIAL | M | OPEN | S115 | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -490,6 +492,27 @@ D35 established the target is demand HH can SEE, and D38 established the HH lane
 **Source:** S114 winners census (Greg: 'Did we do the biggest winners AND the biggest forecast errors builds?'). Merged as magnitude.emission_ceiling_check, brain s105.3.
 
 MEASURED, 60 modern scored days g18-g23, listed individually: the largest |guess| ever emitted is 950 (20260618, the single over-call, on a +520 day); the SECOND largest is 550, so 59 of 60 days emitted <= $550. Meanwhile 30 of 60 days - EXACTLY HALF - delivered |actual| > 550, ranging to 2100. The output distribution is truncated at about a quarter of the input distribution's range. Capture degrades monotonically with move size per event: <300 captures 36-100%, 500-900 captures 17-76%, 900-1400 captures 18-37%, >1400 captures 7-12% (0528 7%, 0709 12%). THE ASYMMETRY IS THE SAME CEILING ON BOTH SIDES: best capture +500 (0605), worst -550 (0713). WHY IT IS ESSENTIAL: this is the mechanical explanation for the S111 benchmark failure - a truncated output against a fat-tailed input loses to zero-change on the tail days BY CONSTRUCTION - so until it is root-caused, no group's magnitudes mean what they claim and the scoreboard cannot be read. THE ROOT CAUSE IS NOT ESTABLISHED and must not be asserted (D37). Candidates to test: (a) the honest-bar doctrine ('emit what the causal read supports even where the actual went further') being read as a CAP rather than a floor; (b) 'magnitudes DERIVED, never fitted' biting harder in the blind, where derivation has less to work with; (c) output-contract or band anchoring; (d) specialists anchoring on a typical day-move instead of the day's own drivers. METHOD: the committed posteriors carry the specialists' full reasoning - read the derivations on the five named big-move days and find where the number stopped growing. The g22 rehearsal is the first live observation. FALSIFIER for the whole item: if raising emissions degrades sum|err|, the cap was doing useful work and the loss is elsewhere.
+
+---
+
+### [ESSENTIAL] A-58 - THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105
+
+*size M | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It is the one-doc rule measured against the live brain, and it is going live. Three pointers already resolve to nothing, which means a specialist following them silently loses the content - the exact silent-absence family this desk has recorded eleven times.
+
+**Source:** Greg, S115: 'Doesn't that chat piece live in the schema? Why is it a separate doc? We agreed on only one doc'
+
+MEASURED S115 by sweeping every brain section served to role=specialist for '*.md' references: 21 distinct outward pointers. Greg's rule (S114) is 'All behavior related docs should be merged with schema... there should only be one brain doc', and each of these is the brain telling a specialist to go read something else.
+THREE ARE DEAD ON ARRIVAL: `blind_class_C.md`, `blind_class_D.md`, `blind_class_E.md` are cited inside `plays` and DO NOT EXIST - the entire blind stack was DELETED at S105 by design (D7: no blind-specific rule file may exist). So the brain has been pointing three plays' provenance at files removed three sessions ago. A specialist that follows the pointer finds nothing and either drops the content or invents it; nothing reports the miss.
+THE REST SPLIT INTO THREE KINDS AND ONLY ONE IS A REAL VIOLATION:
+  (a) LEGITIMATE POINTERS to files the specialist is ALREADY told to read (mbo_refine_shared.md, mbo_specialist_?.md, RUN_SOP.md, README.md) - these are the gold-vaulted reasoning files, correctly outside the brain per D7/A-7. Keep.
+  (b) PROVENANCE citations (S102_MERGE_PROPOSAL.md, SELF_EVAL_S105_*.md, CASCADE_S104_*.md, C2_RATIO_FINDINGS_S98.md) - a record of where a finding came from. These are fine AS CITATIONS but must never carry content the specialist needs; each needs checking for whether the brain states the finding or merely points at it.
+  (c) CONTENT POINTERS - the violation. `doctrine.mbo_refinement_findings` ends 'Integration gotchas: research/kalshi/G15_MBO_FIXES_FOR_CHATGPT.md', i.e. doctrine served to every specialist defers substance to an external file. That content either belongs inline or does not belong in doctrine.
+THE ANSWER TO GREG'S QUESTION, recorded so it is not re-litigated: the external hand-off DOCUMENT is correctly separate - it is a RECORD, dated and finished, and editing it would falsify what was delivered. One-doc governs BEHAVIOUR, not provenance. What must be in the brain is the FINDING; what may stay outside is the evidence it came from. The test is whether an agent must OPEN the other file to reason correctly - and today, for (c) and the three dead pointers, it must.
+THE WORK: classify all 21 into (a)/(b)/(c), inline every (c), repair or strike the three dead ones, and add a brain_schema check that every '*.md' cited in a served section EXISTS - a dead citation should fail validation the way a desktop path does (D34's _is_machine_path precedent).
+DO IT AS A D8 PROPOSAL, never a direct edit of ng_brain.json.
+FALSIFIER: if a specialist can reason correctly on every play without opening any cited .md, the one-doc rule holds and only the dead pointers need repair.
 
 ---
 
