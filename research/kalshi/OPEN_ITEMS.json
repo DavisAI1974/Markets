@@ -1790,6 +1790,24 @@
    "status": "OPEN",
    "session": "S114",
    "source": "path_contract.py measurement, S114"
+  },
+  {
+   "id": "A-48",
+   "tier": "ESSENTIAL",
+   "title": "grp22_state.json is STALE at the canonical name - promote the corrected state or delete it",
+   "why": "Three g22 states existed on disk and the CANONICAL name held the OLDEST. grp22_state.json was committed at S112 (d514816) and predates this session's staging fixes: it serves NO hydro at all and carries FROZEN countdowns (days_to_calendar_front_expiry 5 vs the correct 4, age_days 4 vs 6) - 105 leaf differences on day one alone. grp22_state_b.json is the corrected one. INSTANCE, and it is why this is ESSENTIAL rather than tidy-up: S114 built g22_causal_slices FROM the canonical name and was one command from launching the whole rehearsal wave on pre-fix data - testing the new template against exactly the defects the session had just fixed, and it would have looked like a pass. Caught only because Greg asked whether a fresh stage picks up the changes. VERIFIED SEPARATELY: a fresh stage reproduces the corrected state with 0 leaf differences, so the BUILDERS are correct and G24 is unaffected - this is a stale artifact wearing the canonical name, not a broken pipeline. THE FIX IS GREG'S CALL because promoting _b overwrites a committed record (NC-4 discipline): either promote and delete _b, or delete the stale one and rename. Leaving two names is how the near-miss happened.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "found staging the g22 rehearsal, S114"
+  },
+  {
+   "id": "A-49",
+   "tier": "BIGGEST_WIN",
+   "title": "stage_group --suffix still writes canonical names: the inspection certificate leaked",
+   "why": "The suffixed run prints 'skipping mbo_evidence and exit_states - they write canonical names with no redirect', so the leak is KNOWN and enumerated - but the list is incomplete. Staging g22 with --suffix _fresh rewrote forecasts/g22_inspection.json, a committed record, changing its timestamp. Only a timestamp this time; the point is that a path advertised as safe for rehearsal is not, and this is the NC-4 class (a rehearsal command mutating a record). Fix by deriving the redirect at the WRITE site rather than maintaining a hand-kept skip list - a hand-kept list of what to skip is the same shape as the hand-kept field list that failed (A-22). Until then a suffixed run must be followed by a git status check.",
+   "status": "OPEN",
+   "session": "S114",
+   "source": "found staging the g22 rehearsal, S114"
   }
  ],
  "tiers": {
