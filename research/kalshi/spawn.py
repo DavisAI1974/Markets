@@ -238,7 +238,13 @@ def write_inventory(gid, day):
     Under data/ because it is regenerable from a committed slice and data/ is disposable (D34)."""
     txt = day_inventory(gid, day)
     rel = os.path.join("data", "brain_view", "%s_inventory_%s.txt" % (gid, day))
-    dest = os.path.join(ROOT, rel)
+    # HERE, not ROOT. The SOP's own line is "CWD for all commands: research/kalshi", so every path
+    # in an emitted prompt is resolved by the agent from research/kalshi - and there are TWO `data/`
+    # trees (the repo-root data plane and research/kalshi/data). Writing under ROOT put the
+    # inventory somewhere the agent's own relative path could not reach. MEASURED S114 on the live
+    # rehearsal: the brain view landed correctly (the agent builds it itself, from its own cwd)
+    # while the inventory did not - the one file it was told to consult before standing down.
+    dest = os.path.join(HERE, rel)
     d = os.path.dirname(dest)
     if not os.path.isdir(d):
         os.makedirs(d)
