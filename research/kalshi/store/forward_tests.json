@@ -80,6 +80,16 @@
    "status": "DUE",
    "confirmations": [],
    "refutations": []
+  },
+  {
+   "play_id": "reasoning_method.decision_order",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "falsifier": "If specialists run under the seven-step order and (a) no posterior shows a pre-influence read differing from its post-chain estimate, or (b) emissions still cap at ~550 where drivers support more, or (c) no override is ever declined for lacking an independent read, then the order changed no behaviour and is ceremony. Refuted also if ordering the steps DEGRADES sum|err| against the s105.3 baseline.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
   }
  ]
 }

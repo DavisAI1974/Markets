@@ -1,8 +1,22 @@
 # KALSHI TRADING — file index
 
-## S114 (2026-08-05) — the A-24 paper dissected per event; the two-sided lane discovery MERGED INTO THE BRAIN
+## S114 — the A-24 paper dissected per event; the two-sided lane MERGED; the decision order and the failure taxonomy
 
-- **Brain s105.0 -> s105.2, 89 plays** — the two-sided winter/summer lane discovery lives in the
+- **`reasoning_method.decision_order` (brain s105.4)** — the seven-step order finally served to
+  specialists: classify -> inventory served/broken -> **pre-influence read then independent chain,
+  before any handed-down read** -> gates/damps/guards -> falsifier + pre-mortem + anti-default ->
+  **disposition {commit, abstain, override}** -> commit and hand off. Provenance D25 (S110, Greg).
+  Measured cause for building it: the canonical rule files carry ZERO occurrences of D23/D25/D31/
+  D32/D37/D39 or 'NO CALL', so none of this had ever reached a specialist by any channel. Carries
+  its own known gap - step 6 names ABSTAIN and the machinery cannot emit it (A-2/A-40).
+- **`agents/failure_judge.md` + `store/failure_judge.json` + `failure_localization.py`** — the
+  interaction-centric failure taxonomy (arXiv:2607.28802, Scale AI): every failure gets an
+  interaction EDGE and a FAULT SIDE naming which end owns the repair, plus the root-cause rule
+  (label the EARLIEST unrecovered failure; later errors are consequences). Applied to our own
+  history it inverts the headline - **context 16, model 8, owner 2, tool 2**. The role file is a
+  RENDER of its store, gated by `store.py check`. Registered as A-41.
+
+- **Brain s105.0 -> s105.4, 90 plays** — the two-sided winter/summer lane discovery lives in the
   brain, NOT in a standalone doc (Greg: "Everything lives in the store now... put it where it can
   be used"; an S114 standalone md was created and deleted the same session). Seven plays, all
   PROVISIONAL with g24 forward tests registered in `research/kalshi/store/forward_tests.json`:

@@ -3,7 +3,7 @@
  "session": "S114",
  "target": "knowledge/ng_brain.json -> reasoning_method (the channel that IS served at spawn)",
  "adjudication": {
-  "status": "AWAITING GREG'S EXPLICIT GO (SOP STEP 6, D8). Nothing merged.",
+  "status": "MERGED S114 on Greg's explicit go ('go on the merge after you write everything', repeated 'Go on the merge'). Brain s105.3 -> s105.4. Incumbents byte-identical: 90/90 plays, 18/18 reasoning_method keys. Backup knowledge/ng_brain_s105.3_backup_pre_s105.4.json. Forward test registered against g24.",
   "provenance": "D25 (S110, Greg) + the decision-screenshots discussion Greg re-pasted at S114. NOT re-derived - the design is his and the correction below is his correction OF me.",
   "why_reasoning_method_and_not_the_gold_vault": "FORECAST_ARCHITECTURE_S111 s8: 'Curve-building doctrine lives in the brain (reasoning_method / doctrine), which IS served at spawn.' Measured S114: mbo_refine_shared.md and mbo_specialist_{A..E}.md contain ZERO occurrences of D23/D25/D31/D32/D37/D39, 'no average', or 'NO CALL'; the brain's served doctrine carries `no call` 0 times and `D25` 0 times. So the apparatus has never reached a specialist by ANY channel. reasoning_method is the one that needs no vault event.",
   "the_correction_that_defines_it": "Greg, at the original discussion: 'the other option for the is doing nothing or going against what they decide is right so they do have options.' I had dropped 'option evaluation' as inapplicable because it assumes a MENU. Greg was right and I was wrong: the option set is not competing forecasts, it is DISPOSITION TOWARD YOUR OWN READ - commit it, stand down, or override it - and the instances split cleanly along exactly that axis."
