@@ -456,12 +456,14 @@ def station_fields_multi(cycle_date, cycle_hour, member, fhr, pts, needles, sess
 def capacity_points(kind, cell=0.25):
     """Capacity-weighted sampling cells from REAL generator locations. -> {key: {lat,lon,weight}}
 
-    THE UNIFORM CONUS GRID FAILED VALIDATION AND THIS IS WHY. Measured on 77 days against realized
-    EIA-930 US48 output, day-over-day direction, celled by month and never pooled:
-        WIND  28/76 = 37%, and BELOW 50% in all four month cells (5/20, 7/21, 10/22, 6/13)
-        SOLAR 40/76 = 53%, indistinguishable from a coin flip
-    A uniform mean over the lower 48 is dominated by area with no turbines on it. The generation is
-    not uniform and it is not close: wind nameplate is TX 43.7 GW, OK 13.7, IA 13.4, KS 9.7, IL
+WHY CAPACITY WEIGHTING, MEASURED. 77 days, day-over-day direction against realized EIA-930 US48
+    output, celled by month, never pooled (D37), benchmark a 50% coin flip:
+        uniform CONUS grid      WIND 56/76 = 74%   SOLAR 56/76 = 74%
+        capacity-weighted (this) WIND 64/76 = 84%   SOLAR 57/76 = 75%
+    Wind improves in the cells the physics predicts - May 57 -> 76%, July 62 -> 92% - while solar
+    barely moves, which is itself consistent: irradiance varies far more uniformly across the
+    country than wind does. A uniform mean over the lower 48 is dominated by area with no turbines
+    on it. The generation is not uniform and it is not close: wind nameplate is TX 43.7 GW, OK 13.7, IA 13.4, KS 9.7, IL
     8.7, NM 8.1 - one contiguous belt - while solar is TX 32.6, CA 25.0, FL 13.3, AZ 7.5. Averaging
     the whole country asks a question about the wrong places.
 
@@ -621,9 +623,20 @@ def forcing_density(day, members=None, cycle_hour=12, verbose=True):
                         "at each cell - zero below 3 m/s cut-in, cube between, flat at rated above "
                         "12 m/s, zero above 25 m/s cut-out. Pure cubing overstates every windy day."),
         "geography": ("wind and solar are sampled at their OWN capacity-weighted cells from EIA's "
-                      "operating-generator record, NOT on a uniform grid - the uniform version was "
-                      "measured at 37% (wind) and 53% (solar) day-over-day direction against "
-                      "realized EIA-930, and 37% is worse than a coin flip."),
+                      "operating-generator record, not on a uniform grid. Measured day-over-day "
+                      "direction against realized EIA-930 US48, n=76, benchmark 50%: uniform grid "
+                      "74% wind / 74% solar; capacity-weighted 84% wind / 75% solar."),
+        "validation": ("wind 64/76 = 84%, solar 57/76 = 75% day-over-day DIRECTION against realized "
+                       "EIA-930 US48, every month cell above the 50% coin-flip benchmark (A-1). "
+                       "This is a DIRECTION result on the change, not a level claim - the proxy is "
+                       "meteorology, not MWh, and its level is biased low."),
+        "alignment_trap": ("THE VALIDATION MUST COMPARE forecast(D) TO REALIZED PERIOD D. "
+                           "grid_stack_asof(D) returns period D-2, because EIA-930 publishes with a "
+                           "two-day lag and the served block is correctly blind-legal. Comparing "
+                           "against it scored 37% wind / 53% solar and read as a failed proxy; the "
+                           "same data correctly aligned scores 84% / 75%. Read the period-keyed "
+                           "store (grid_stack.load_store()['days'][iso]['US48']['gen_mwh']), never "
+                           "the as-of view."),
         "these_are_proxies": ("meteorological fields, NOT MWh. Usable only to the extent the "
                               "validation below holds - see `gefs_ensemble.py validate`."),
         "members_used": len(rows),
