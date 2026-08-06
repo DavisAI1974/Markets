@@ -1399,6 +1399,21 @@ MY TAXONOMY WAS TOO COARSE, AND THAT IS THE REAL LESSON. 'Memory' is not one org
 THE DELIVERABLE IS THEREFORE AN OWNERSHIP TABLE, NOT AN ARBITRATION TABLE: every borrowed or planned component names the PART OF THE JOB IT OWNS and the layer it acts on (store / derived index / serving policy / control logic / tools / prompts). Two components may share a LAYER freely - they may not own the same PART. If a genuine overlap is found, the first move is to split the part more finely (the owner_map's answer), and only if that fails does a protocol become necessary.
 REVISED FALSIFIER: if a real overlap appears that CANNOT be resolved by partitioning the job more finely, then ownership is insufficient for a system this size and a coordination protocol is warranted after all - record that instance, because it would be the first.
 
+=== S115: THE INDEX EXISTS - USE THE SURVEY'S OWN CURATION (Greg: 'he has links to harness papers which would be helpful to keep them straight') ===
+The survey ships a curated list, https://github.com/selfimproving-agent/awesome-Self-Improving-Agents (hub: https://selfimproving-agent.github.io/), and it is organised on EXACTLY the two axes this item needs: WHICH COMPONENT is improved, and HOW the improvement is driven (generative demonstrations / evaluative feedback / exploratory experience). So the ownership table does not start from a blank page and we do not re-catalogue papers by hand.
+THE SPLIT DOES MOST OF OUR TRIAGE, AND IT PRUNES HARD:
+  FOUNDATION MODEL IMPROVEMENT  ~90 papers  - UNAVAILABLE TO US BY CONSTRUCTION (we run frontier models through prompting and cannot fine-tune). This is also the correct, SCOPED reason Li's ACM (A-59) does not apply - it is a foundation-model-branch method, not a lesser idea.
+  SCAFFOLDING IMPROVEMENT       ~70 papers  - OUR ENTIRE CORPUS, and its four subsections ARE the layers the ownership contract partitions:
+    2.1 Prompt Optimization  (~30)  -> the gold-vaulted agent files + spawn templates [A-59's render target]
+    2.2 Memory               (~50)  -> brain STORE / instrument_priors INDEX / brain_view SERVING [A-62, A-65]
+    2.3 Tool                 (~40)  -> feeds, decision state, retrieval [A-63's kernel]
+    2.4 Full Scaffolding     (~20)  -> coordinators and control logic [A-64's branching refine]
+  EVALUATION & BENCHMARKING     ~60 papers  - relevant to A-4 (score the curve) and A-60 (score the band)
+NOTE 2.2 MEMORY IS THE LARGEST SUBSECTION (~50) AND IS EXACTLY WHERE OUR OWN THREE-WAY OWNERSHIP SPLIT LIVES - store vs derived index vs serving policy. That is corroboration that the coarse reading of 'memory' as one organ was the error, not a quirk of our system.
+NAMED NEIGHBOURS FOR OUR OWN ITEMS, so the map is usable immediately: 2.4 carries 'Language Agents as Optimizable Graphs' and 'Godel Agent: A Self-Referential Agent Framework' - the neighbourhood A-64's branching refine sits in; 2.1 carries TextGrad and 'LLMs as Optimizers'; 2.2 carries MemGen, MemoryBank, MEMORYLLM.
+USE IT THIS WAY: the ownership table's LAYER column is section 2's subsection numbers. Any future paper Greg sends gets classified into 2.1/2.2/2.3/2.4 (or the foundation branch, which closes it for us with a stated reason rather than a judgement), and then into the PART of that layer it owns. That is the whole 'keep them straight' mechanism, and it costs one line per paper.
+PROVENANCE: repo structure and section sizes read from the GitHub landing page; the ~220 papers themselves are NOT read. Sizes are approximate as reported there.
+
 ---
 
 ### [BIGGEST_WIN] G-30 - weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable
