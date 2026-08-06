@@ -1,0 +1,311 @@
+{
+  "specialist": "B",
+  "group": "g22",
+  "date": "20260622",
+  "run_namespace": "rehearsal_g22",
+  "run_status": "REHEARSAL - MECHANICS SHAKEDOWN. NOT EVIDENCE OF FORECASTING SKILL. Additionally VOID as a blind result: see state_defects_and_gaps_reported[0], the brain view served me the realized outcome for this exact day.",
+
+  "guessed_net_usd": 650,
+  "overnight_gap_usd": 1050,
+  "path_p50_curve": [[20, 0], [22, 60], [0, 80], [2, 50], [4, 10], [6, -30], [8, 20], [10, -120], [12, -230], [14, -330], [16, -400]],
+
+  "confidence": "low",
+
+  "reasoning": {
+    "headline": "Block-open Monday, 3 calendar days off a Juneteenth half-session Friday. I sign the seam gap UP off ONE instrument only (boundary.seam_gap_up_prior_on_worsening_cot: managed money at the 2.83rd 1y percentile and STILL adding, WoW -7,763), because the instrument the brain actually prescribes for seam sign - weekend.seam_sign_from_stability_ladder, running on model_disagreement.stability - is structurally unavailable on this day. I then sell the day back toward the 3.25 balanced opex wall, three days from NGN26 opex. AND THE WHOLE THING IS CONTAMINATED: the brain view handed me this day's actual before I finished. Read defect D1 first; it is worth more than the number.",
+
+    "step_1_classify": {
+      "day_class": "regular Monday, class normal, BLOCK-OPEN day (first session of g22).",
+      "seam": "PRIOR TRADING SESSION = 20260619 Fri, class partial_session (Juneteenth), 3 calendar days back. 20260620 Sat and 20260621 Sun skipped. The Sunday 20260621 reopen stub belongs to THIS Monday by the S104.1 Sunday fold and is the GAP-FORMING session.",
+      "calendar_facts_taken_as_lookup_not_lean": [
+        "is_eia_print_day false; days_to_next_eia_release 3 (Thu 2026-06-25 10:30 ET)",
+        "days_to_opex 3 (options_expiry_date 2026-06-25); is_opex_day false",
+        "days_to_futures_expiry 4 (NGN26, futures_expiry_date 2026-06-26); is_expiry_day false",
+        "business_day_of_month 15; in_bidweek false; in_gsci_roll false; in_bcom_roll false (though bcom_ng_roll_this_month and gsci_ng_roll_this_month are both true with roll_day_n null - the WINDOW flags are unresolved)",
+        "cme_holiday false, cme_early_close false",
+        "next non-normal session: 20260703 Independence_Day_observed partial_session (block's last day, not mine)",
+        "KNOWN LEG BOUNDARY: anchor basis declares NGN26->NGQ26 at 06-19/06-22. continuous_frame therefore governs: at a known roll boundary forecast the REAL overnight ~0 and never read a roll jump as a market move. See defect D2 - the anchor block contradicts itself on which leg its 3.198 sits on, and $430 of my gap number is hostage to that."
+      ],
+      "conjunction_i_believe_i_am_standing_in": "A weekend/holiday SEAM into a maximally crowded, still-worsening short book, with a scheduled dampener (balanced opex wall) three days out and no scheduled catalyst inside my own session. Forcing: mild summer CDD, moderate, rising slowly. Stack: unremarkable. Positioning: extreme. Clock: the seam delivers, the pin damps."
+    },
+
+    "step_2_inventory": {
+      "blocks_used": ["cot", "vol_regime", "options_surface", "contract_structure", "flow_calendar", "tape_conditions (incl. prior_full_session)", "weather_forecast", "weather_forecast_cycle", "model_disagreement (disagreement + stability + summary)", "cash_basis", "storage / storage_regional", "grid_stack", "nuclear_outages", "squeeze_watch", "freeze_risk", "solar", "steo_vintage", "ngwu_balance"],
+      "blocks_declared_defective_or_unusable": "see state_defects_and_gaps_reported - eleven entries, one critical.",
+      "field_inventory_opened": true,
+      "what_the_inventory_changed": "I opened data/brain_view/g22_inventory_20260622.txt BEFORE finalizing any stand-down, per the directive. It changed my day materially in exactly one place: it showed model_disagreement carries `stability` and `summary` alongside `disagreement`. I had read only `disagreement`. `stability` is the named instrument of weekend.seam_sign_from_stability_ladder - the play that is supposed to OWN a weekend seam's sign - and reading it INVERTED my handling of the seam: the ladder turns out to have coverage at horizon 0 only (h1-h7 null on both GFS and MEX) and the two model families disagree in SIGN on that single horizon (GFS d_gw_cdd +1.053, MEX -0.225). Without the inventory I would have signed the seam off the weather_forecast_cycle run-deltas, which weekend.seam_delta_requires_level_difference explicitly forbids across a seam, and I would have called it corroborated when it is not. The inventory also confirmed grid_stack.bas carries wind_mwh (the 0629 field), which I did read.",
+      "fields_i_checked_before_each_stand_down": "named inline in plays_stood_down[] per stand-down."
+    },
+
+    "step_3a_pre_influence_read": {
+      "emitted_before": "opening any brain play, any handed-down read, and before the leak in D1 was encountered. There was no handed-down read to open in this run (specialist A did not produce a bridge - see D9), so the only contamination risk was the brain itself, and this read predates it.",
+      "sign": "UP, weakly held",
+      "magnitude_class": "SMALL-TO-MODERATE (no number - I did not have one at this stage and am not retrofitting one)",
+      "one_sentence": "The weekend model cycles added cooling degree-days at every reachable horizon and the Monday 06Z added more on top, arriving into a managed-money book at the 2.83rd percentile short and still adding; the Friday sell tape is a Juneteenth half-session with 77 percent of its volume dumped in the final phase, which is position-squaring, not a tilt I trust.",
+      "timestamp": "emitted at the end of step 2, before any plays[] were read"
+    },
+
+    "step_3c_independent_chain": {
+      "note": "Arithmetic chain, every judgment term declared rather than absorbed. Unit: 0.001 in price = $10 (verified off the anchor's own last_hour block: 3.200 -> 3.198 = net_ticks 2 = net_usd -20).",
+      "volatility_scale": {
+        "sigma_used_usd": 600,
+        "derivation": "vol_regime n0 basis (the only populated basis - v0 is entirely null, see D5). n0_net_sigma_5 = 589, n0_net_sigma_10 = 614, n0_net_sigma_20 = 868. The 5 and 10 day windows agree at ~600 and the 20 day sits at 868, so volatility has been CONTRACTING; n0_range_pctile 18.3 of 60 puts recent ranges in the bottom quintile. I take the regime I am actually in (600), not the decayed 20-day one."
+      },
+      "gap_derivation": {
+        "sign": "UP",
+        "sign_source": "boundary.seam_gap_up_prior_on_worsening_cot ONLY. Both its limbs are satisfied on served, never-masked, decision-legal data: cot.managed_money_net_pctile_1y = 2.83 (crowded-short regime, <=5) and cot.managed_money_net_chg_wow = -7,763 (WORSENING - shorts still adding). The play's call on that conjunction is explicit: the seam is the covering rally's firing window, base-case UP, a loaded spring, recurring on every seam while the COT keeps worsening.",
+        "sign_weakness_declared": "This is a ONE-INSTRUMENT sign. The play the brain scopes to own a seam's sign (weekend.seam_sign_from_stability_ladder) is unavailable (see plays_stood_down and D4), and it says in its own text that positioning does NOT sign a seam (1/3) and is only a sign-agnostic GAIN term. Two brain plays therefore give opposite answers to my day's central question - logged as D11. I took the higher-status, larger-n one and I am declaring rather than hiding that I did.",
+        "band_arithmetic": "boundary.weekend_gap_wide_band_emission puts a <=5-pctile WORSENING book in the 1.5-2.5x sigma cell. weekend.seam_sign_from_stability_ladder measures the same cell as |gap|/sigma 1.2-2.0. I take the INTERSECTION, 1.5-2.0x sigma: 1.5 x 600 = 900, 2.0 x 600 = 1,200. Band [+900, +1,200].",
+        "point_emitted": 1050,
+        "point_is_a_contract_artifact": "boundary.weekend_gap_wide_band_emission states flatly that the weekend gap is NOT ownable as a POINT from current instruments, confirmed negative and measured twice in opposite directions. The output contract demands an integer, so I emit the band MIDPOINT and label it: this is a midpoint, not a derivation, and the band [+900,+1,200] is the actual product.",
+        "leg_change_hazard": "If the anchor's 3.198 sits on the NGN26 (July) leg rather than the NGQ26 (August) leg it declares, then contract_structure.calendar_front_next_spread = -0.043 puts a MECHANICAL +$430 inside any observed gap, and the market component of my +1,050 would be +620. The anchor block asserts both things (leg ng_mbo_ngq26, AND a boundary leg change at 06-19/06-22 verified against g21's 06-19 close). I take the declared leg at face value and log the contradiction as D2."
+      },
+      "session_derivation": {
+        "implied_open": "anchor 3.198 + 0.105 (the +1,050 gap) = 3.303",
+        "pin_arithmetic": "options_surface NGN26, opex 2026-06-25, days_to_opex 3. The nearest wall to the traded level is the 3.25 strike: 24,778 calls and 24,255 puts - a near-perfectly BALANCED strike carrying 6.08 percent of month OI, which is a pin, not a barrier. Above it 3.50 holds 48,464 calls; below it 3.00 holds 40,319 puts and 2.75 holds 44,298 - both far away and not in play on a one-session horizon. calendar_front_settle is 3.233, i.e. the market was sitting essentially ON the pin at the anchor vintage. A gap to 3.303 puts price 0.053 ABOVE a balanced strike three days from expiry, which is the classic pin-directed-selling setup. Distance 0.053 = 53 ticks = -$530.",
+        "declared_judgment_term": "+$130. The Monday 06Z cycle adds gw_cdd_d0 8.610 -> 9.758 (a LEVEL difference of +1.148 between the Sunday 17:59 ET view and the Monday 08:00 ET view), landing inside my 06-10 ET catch-up window and partially defending the gap. I size it at roughly a quarter of the pin pull. This is JUDGMENT, not arithmetic, and it is declared as such rather than absorbed into the pin number.",
+        "session_net_usd": -400,
+        "chain": "-530 (pin distance) + 130 (declared judgment) = -400"
+      },
+      "day_move": "gap +1,050 + session -400 = +650",
+      "honesty_flag_on_this_number": "MY DAY-MOVE OF +650 IS EXACTLY THE LEAKED ACTUAL FOR THIS DAY. The brain view told me, in plays[].instances[], that 20260622 delivered gap +1,210, session -560, day_move +650, before I finished my chain. I encountered that AFTER my step-3a pre-influence read (which carried a sign and no number) and DURING step 4. I cannot certify the +650 as independently derived, and I am not going to move it off 650 to look independent, because fitting AWAY from a known answer is the same offence as fitting toward it. The chain above is the one I actually ran and it is auditable. The number is void as evidence. That is what D1 costs."
+    },
+
+    "step_4_gates_damps_guards": "See plays_fired and plays_stood_down. Order note: no gate was allowed to touch a number before step 3 produced one - the pin-derived -530 existed before magnitude.emission_ceiling_check ran on it, and emission_ceiling_check only conditioned the emission, it did not create it.",
+
+    "step_5_falsifier_and_anti_default": {
+      "pre_mortem_assume_i_am_wrong": "The most likely way this is wrong is that the gap sign is UP and the gap is SMALL, or the gap is DOWN outright. The single play most against my number is weekend.seam_sign_from_stability_ladder, which measures positioning at 1/3 on signing a seam and calls it sign-AGNOSTIC. If that is right, my entire gap sign is an artifact of preferring the play with the friendlier confidence float, and the honest emission was a wide two-sided band around zero. Secondarily: boundary.prior_close_flow_direction_disagreement is at 5 of 13 on G20-G23 and monday.catchup_window_tilt_gate's served-quantity form is 5 of 9 - the D-1 signed flow of -1,353 says DOWN, and if the Friday half-session tape is real information rather than holiday squaring, my sign is simply inverted.",
+      "anti_default_check": "My |day move| is 650 and my |gap| is 1,050, both ABOVE the measured $550 emission ceiling. Per magnitude.emission_ceiling_check I say so explicitly rather than silently capping: the drivers support it - a 2.83-percentile still-worsening short book at a seam sits in the 1.5-2.0x sigma cell by two separate plays' measurement, and 1.5 x 600 is already 900. This is NOT my default shape; my default shape on an ambiguous day would be a couple of hundred dollars, and the day's own positioning driver is what carries it past that."
+    },
+
+    "step_6_disposition": {
+      "disposition": "COMMIT, heavily qualified",
+      "what_i_committed": "the step-3 chain as conditioned by the gates.",
+      "override": "NONE. There was nothing handed down to override - specialist A did not run (D9), and my lens file's own primary instrument (D-1 trade tilt) I DEMOTED rather than overrode, on the brain's own measured record of it, with the measured quantity named. That is a stand-down, not an override.",
+      "why_not_abstain": "The day carries a real, evaluable driver conjunction (crowded+worsening short at a seam, balanced pin three days out) and both halves of my number came off arithmetic. A stand-down would have been the honest call if the positioning limb had also been unevaluable. It was not."
+    },
+
+    "step_7_shape_of_the_curve": {
+      "this_is_one_path_not_eight_numbers": "cum is measured from the day's OPEN. First point 0, last point -400 = day-move 650 minus gap 1,050. The gap is the one genuine discontinuity and it is carried in overnight_gap_usd; everything after the 20:00 reopen is continuous.",
+      "20_to_00_reopen_and_overnight": "0 -> +60 -> +80. The Sunday stub tape (tape_conditions session 20260621, 191 trades, 252 lots) carried a mild NET BUY: session_signed_flow +16, session_b_share_two_sided 0.549, phase b_share_two_sided [0.429, 0.700, 0.500]. On 252 lots that is a positioning HINT, not a tilt (my lens file's instruction), so it buys a small continuation of the reopen lift and nothing more.",
+      "00_to_06_small_hours": "+80 -> +50 -> +10 -> -30. Thin book, no scheduled information. daytype.thin_session_range_invariance says the RANGE survives thinness even where the net does not, so this decays rather than going flat; it drifts back through the open as the reopen buyers stop.",
+      "06_to_10_the_catch_up_window": "-30 -> +20. This is where my day decides. The 06Z cycle is usable from runtime + 4.5h = 10:30Z = 06:30 ET, and the state's weekday_open view is stamped 08:00 ET with gw_cdd_d0 9.758 against the Sunday view's 8.610. That add lands here and buys ONE lift attempt that fails to make a new high. Per boundary.seam_gap_up_prior_on_worsening_cot the catch-up window TESTS the gap rather than generating direction - a negative-conviction window leaves the gap intact. That is what this shape says: the window tests, does not overturn, and hands over to the pin.",
+      "10_to_16_the_giveback": "+20 -> -120 -> -230 -> -330 -> -400. One continuous pin-directed bleed toward 3.25, steepest 10:00-14:00 where US liquidity is deepest, decaying into the close as the distance to the strike closes. A hill SLOPES, it does not gap: there is no step anywhere in this leg because there is no liquidity event in it - no print, no expiry, no roll on my day.",
+      "close_location": "closes near but not at the session low. The pin is a magnet, not a trapdoor; the next real structure below is 3.00 with 40,319 puts and it is not reachable in one session from 3.30."
+    },
+
+    "evidence_used": [
+      "cot.managed_money_net -122,617; managed_money_net_pctile_1y 2.83; pctile_3y 6.05; managed_money_net_chg_wow -7,763 (the sign limb)",
+      "vol_regime n0_net_sigma_5 589 / n0_net_sigma_10 614 / n0_net_sigma_20 868; n0_range_pctile 18.3 (the scale)",
+      "options_surface NGN26 opex 2026-06-25, 3.25 strike call_oi 24,778 / put_oi 24,255, share_of_month_oi 0.0608; contract_structure.calendar_front_settle 3.233 (the session arithmetic)",
+      "weather_forecast_cycle gw_cdd_d0 8.610 (Sun 17:59 ET) -> 9.758 (Mon 08:00 ET), a LEVEL difference of +1.148 (the declared judgment term)",
+      "tape_conditions.prior_full_session 20260619: session_signed_flow -1,353, session_b_share_two_sided 0.433, phase_signed_flow [-132, -90, -1,131], phase_volume_lots [1,003, 1,791, 9,354] (carried as diagnostic, see below)",
+      "tape_conditions 20260621 Sunday stub: 191 trades, 252 lots, signed_flow +16, two-sided 0.549 (shape of the overnight leg only)",
+      "flow_calendar days_to_opex 3, days_to_futures_expiry 4, is_eia_print_day false",
+      "nuclear_outages capacity_out 3,375 MW, chg_7d +1,210 MW -> 1.21 GW x 24h x 7,900 Btu/kWh = ~0.23 Bcf/d incremental burn vs a week ago (bullish, small, not sized into the number)",
+      "g22_anchor.json: anchor_close 3.198, last_hour close_in_range 0.273, direction_is_resolution_floor true, holiday_caveat (6,935 trades vs ~37,000 median)"
+    ],
+
+    "evidence_rejected": [
+      "weather_forecast_cycle RUN-DELTAS as a seam signal (sunday_reopen d_gw_cdd +0.601/+1.534/+0.419/+0.469/+1.014/+0.517, 6 of 6 positive). REJECTED under weekend.seam_delta_requires_level_difference and the block's own seam_delta_warning: run deltas baseline run-over-run, not session-over-session, so across a multi-cycle weekend seam the accumulation appears in no single delta. Tempting and coherent-looking, and it is the wrong instrument for this boundary. I used levels instead.",
+      "The anchor's last-hour DIRECTION (anchor_lasthr_dir -1). REJECTED on the anchor's own direction_caveat: net is 2 ticks, 18 percent of the $110 last-hour range, at the price resolution floor. I used close_in_range 0.273 instead, which the caveat names as the sturdier read, and even that is off a holiday half-session.",
+      "storage's +114 Bcf vs-5yr surplus as a day-level side. REJECTED under reasoning_method.fundamentals_role: a slow, weak block-trajectory backdrop, never a day-level or pre-print side/timing signal. Noted only that chg_vs_5yr_chg -5.0 means the week's build ran 5 Bcf tighter than the 5-year build, i.e. the surplus is eroding.",
+      "cash_basis as a session driver. hh_cash_minus_front_settle -0.139 with basis_chg_1d -0.052 and chg_3d -0.212 is genuinely bearish physical - cash is not bidding. REJECTED as a seam or session driver on staleness: hh_spot_gas_day 2026-06-16, age_days 6, publication basis modeled_thursday_release. It is a pre-Friday object at weekly staleness and it cannot speak to a weekend seam. Carried as a weak DOWN diagnostic at zero weight in the number.",
+      "grid_stack gas_chg_7d as a directional term. US48 -559,128 MWh WoW looks bearish burn, but period is 2026-06-20 (a SATURDAY, age_days 2) and I have no demand denominator for the comparison week. A 7-day change with no denominator is not a measurement. Used only for the summer_burn_lane_exclusion breadth count (3 of 6 - mid-range, where the play forbids ranking)."
+    ]
+  },
+
+  "plays_fired": [
+    {
+      "play": "boundary.seam_gap_up_prior_on_worsening_cot",
+      "limbs": "(a) crowded-short regime, MM net at a low 1y pctile: 2.83 - SATISFIED. (b) COT WoW delta WORSENING: -7,763, shorts still adding - SATISFIED. (c) inherited extension state - UNRESOLVABLE, see below.",
+      "call_taken": "gap sign UP; magnitude GAP-FIRST",
+      "limb_c_declared_unresolvable": "The play allocates magnitude in two parts, the second EXTENSION-GATED. Chain state / cum_from_anchor is not served in decision_state (A-11, Greg's open call). I am the BLOCK-OPEN day, so cum_from_anchor = 0 by construction - but that is an artifact of where the block was cut, not a measurement of swing extension, and boundary.chain_label_must_track_realized_cum forbids exactly that kind of constructed label. I did NOT use it. The extension-gated intraday half of this play was therefore run without its gate.",
+      "contradiction_declared": "weekend.seam_sign_from_stability_ladder says positioning does NOT sign a seam (1/3) and is sign-agnostic. See D11."
+    },
+    {
+      "play": "boundary.weekend_gap_wide_band_emission",
+      "call_taken": "gap emitted as SIGN + WIDE BAND [+900, +1,200], scored separately from the session. Point +1,050 is the band midpoint and is labelled a contract artifact, not a derivation.",
+      "band_cell": "1.5-2.0x sigma - the intersection of this play's 1.5-2.5x extreme cell with seam_sign_from_stability_ladder's measured 1.2-2.0x at a <=5-pctile worsening book. sigma = 600."
+    },
+    {
+      "play": "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
+      "fires_as": "an inertness rule, and it did real work today.",
+      "measured": "forecast_gw_hdd 0.067 against forecast_gw_cdd 9.062, regime mod_cool. Every absolute HDD bar in the brain is unreachable today - selector.divergence_resolution's gw_hdd >= 16.4 and magnitude.shoulder_weather_band_void's 13.5 among them. They return UNKNOWN, not 'failed'. Without this play, divergence_resolution's unreachable 16.4 silently defaults the selector bearish and shoulder_weather_band_void trivially voids the weather band on every summer day."
+    },
+    {
+      "play": "weekend.seam_delta_requires_level_difference",
+      "fires_as": "a method rule",
+      "what_it_changed": "It removed my most attractive-looking piece of evidence. The sunday_reopen cycle's 6-of-6 positive CDD run-deltas would have read as a clean coherent weekend add; this play (and the block's own seam_delta_warning) forbids run-deltas across a multi-cycle seam. I used the gw_cdd_d0 LEVEL pair 8.610 -> 9.758 instead, and declared that it measures the reopen-to-catch-up span, NOT the Friday-to-Sunday seam, which I cannot measure (D6)."
+    },
+    {
+      "play": "magnitude.emission_ceiling_check",
+      "result": "|day move| 650 and |gap| 1,050 both exceed the measured $550 truncation ceiling. Stated explicitly rather than silently capped, per the play's own instruction. Both numbers come from summed independent drivers (positioning-scaled seam band; pin distance plus one declared judgment term), not from guessing bigger."
+    },
+    {
+      "play": "daytype.monday_weekend_gap",
+      "arm_fired": "the BIGNESS/size-up arm only - Monday is a big mover and the weekend information reprices AT the Sunday reopen, leaving the US session as the reaction. That is the architecture of my whole curve: 1,050 in the gap, -400 in the session.",
+      "arm_stood_down": "the R3 FADE-vs-EXTEND selector, which routes off swing state (mature swing at a fresh cum-extreme = fade; fresh turn = extend). Swing state is not served. The brain's own audit of this play says the raw gap carries zero directional information on its own and 100 percent of the play's content sits in the unmeasured swing-state selector. So the arm I need is the arm that does not exist. Declared."
+    }
+  ],
+
+  "plays_stood_down": [
+    {
+      "play": "weekend.seam_sign_from_stability_ladder",
+      "why": "THE MOST DECISION-RELEVANT STAND-DOWN OF MY DAY. This play is scoped to own a weekend seam's SIGN, and its named instrument is model_disagreement.stability's multi-horizon seasonal-axis revision deltas. Measured on my state: GFS carries coverage 1.0 at horizon 0 (d_gw_cdd +1.053) and coverage 0.0 at horizons 1 through 7 - all eight metros-missing lists are complete, all deltas null. MEX is the same shape, coverage 1.0 at h0 (d_gw_cdd -0.225) and null beyond. So 'a COHERENT MULTI-horizon add' is unevaluable at n=1 horizon, AND on that single horizon the two model families disagree in SIGN. No fire. Consequence: my gap sign rests on one play instead of two, which is why my confidence is low.",
+      "fields_checked": "model_disagreement.stability (GFS and MEX, all 8 horizons), model_disagreement.disagreement (h0 abs_spread_gw_hdd 0.422, spread_gw_cdd 1.099; h1 spread_gw_cdd -0.236; h2+ null), model_disagreement.summary (n_overlap_horizons 2, overlap_horizons [0,1])"
+    },
+    {
+      "play": "monday.catchup_window_tilt_gate",
+      "why": "STOOD DOWN AS A SIGN AUTHORITY, and this is a stand-down against my own lens file. mbo_specialist_B.md instructs that Monday's direction stays with the D-1 (Friday+Sunday) trade tilt. The brain's own record on that instrument is a coin flip: the play carries a DO-NOT-RE-TRY retraction (retracted S112), its 4/4 headline re-scores to 2 of 4 from the blind record, and its falsifier reports the SERVED-quantity forms at 5 of 9 Mondays (sign of prior_full_session.session_signed_flow) and 3 of 6 (two-sided b_share vs 0.50).",
+      "named_measured_quantity": "prior_full_session.session_signed_flow = -1,353 with session_b_share_two_sided 0.433. Had I carried this as my sign, my day would be DOWN. I carried it as a diagnostic only.",
+      "additional_degradation": "The Friday is a Juneteenth partial_session: 6,935 trades against a ~37,000 normal-session median (19 percent), and the anchor's holiday_caveat instructs in terms not to treat it as a full-session exit. Its shape is worse than its level: phase_volume_lots [1,003, 1,791, 9,354] puts 77 percent of the volume in the final phase and phase_signed_flow [-132, -90, -1,131] puts 84 percent of the sell flow there. A back-loaded holiday close is position-squaring, not conviction."
+    },
+    {
+      "play": "monday.window_deep_book_shakeout",
+      "why": "STOOD DOWN - the input does not exist. The play needs an L1-10 resting-book snapshot at Monday 06:00 ET.",
+      "named_measured_quantity": "firehose_present.l1_book = FALSE for the prior session (the Sunday stub). The ONLY book served anywhere in my state is inside prior_full_session (Friday 06-19): quote_bid_share 0.464, p25_p75 [0.333, 0.600], spread_ticks_med 2.0, quote_updates 52,612. That is a Friday object, and the play itself states the reopen/overnight book is UNINFORMATIVE (coin-flip 8/14). Zero weight, zero contribution to the number."
+    },
+    {
+      "play": "monday.overnight_headfake_into_catchup",
+      "why": "STOOD DOWN by the play's own exclusion. It fires only when the overnight gap does NOT confirm the inherited tilt. Here the gap sign (UP) and the live driver (weekend CDD add, gw_cdd_d0 8.610 -> 9.758) point the SAME way - the fresh-shot case the play explicitly excludes. Separately, its evidence requirement (overnight signed flow versus overnight price) is needs_intraday_reveal and is masked in blind."
+    },
+    {
+      "play": "monday.seam_chainage_accommodation_gate",
+      "why": "STOOD DOWN - required input absent, and constructing it would be a fabrication.",
+      "named_measured_quantity": "chain_age_sessions = ABSENT. It arrives via E.handoff_out or C.chain_polarity_and_age; neither E nor C nor A ran in this rehearsal, and chain state is not served in decision_state (A-11). Deriving it from cum_from_anchor = 0 at the block open would be a positional artifact of where the block was cut, which boundary.chain_label_must_track_realized_cum forbids."
+    },
+    {
+      "play": "structure.squeeze_unwind / squeeze_watch",
+      "why": "STOOD DOWN on the conjunction - one of two limbs.",
+      "named_measured_quantity": "Calendar limb SATISFIED: days_to_calendar_front_expiry_live = 4 (NGN26, expiry 2026-06-26), inside the <=7 window, and the state itself flags active=false as a false negative for this half (active_false_negative is declared). Spread limb FAILS: the play needs calendar_front_next_spread_chg_3d > 0 and it is -0.021 - the front/next spread is going MORE negative (contango steepening into the July expiry, front weakening against my August leg). That is the opposite of a delivery squeeze. Also unwind_watch false, sessions_since_prompt_expiry 16."
+    },
+    {
+      "play": "magnitude.positioning_saturation_turn",
+      "why": "STOOD DOWN - two of four conjunction limbs fail, and this is the case where firing would have LOOKED right for a false mechanism.",
+      "named_measured_quantity": "Limb (a) needs NYMEX MM pctile <=~12 AND ICE LD1 <=~3. NYMEX 1y pctile 2.83 SATISFIED; ICE LD1 managed_money_net = +382,649, i.e. NET LONG, at 1y pctile 6.60 - fails the bar and is the wrong sign for a short-saturation read. Limb (d) needs curve contango WHILE storage phase = withdraw; curve_regime is contango but storage.phase is 'inject'. The zero-free-constant discriminator is not satisfied."
+    },
+    {
+      "play": "selector.divergence_resolution",
+      "why": "STOOD DOWN - no coherent split to resolve, and its catalyst-override arm is unevaluable.",
+      "named_measured_quantity": "Override arm needs gw_hdd >= 16.4 AND b_share >= 0.50. forecast_gw_hdd is 0.067 - the 16.4 bar is unreachable in a June CDD regime, so per weather.absolute_hdd_bar_unevaluable_in_cdd_regime it returns UNKNOWN and must NOT default the selector bearish. The b_share limb reads 0.433 two-sided on the Friday and 0.549 on a 252-lot Sunday stub - two different objects, one degenerate."
+    },
+    {
+      "play": "flow.big_print_bshare_thin_tape_guard",
+      "why": "STOOD DOWN by its own thin-tape guard.",
+      "named_measured_quantity": "Sunday stub: big_prints_n = 0, big_print_b_share = null (degenerate by construction). Friday: big_prints_n = 2, big_print_b_share = 0.536 (size_weighted). Two prints is far below the ~20-print floor at which the play raises the bar to ~0.60, and 0.536 clears neither 0.60 nor materially 0.55."
+    },
+    {
+      "play": "direction.book_contrarian / flow.passive_ladder_displacement / flow.resting_program_inverts_aggressor_tilt (the whole BOOK layer)",
+      "why": "STOOD DOWN group-wide per mbo_refine_shared: without a book_trustworthy verdict (execution_authority AND conviction >= floor AND book_complete) the book read stands down to trade-flow only. No such verdict is served anywhere in my state, and firehose_present.l1_book is FALSE for the prior session. flow.passive_ladder_displacement limb (b) needs final-phase volume at or above the session maximum - on the Friday phase_volume_lots [1,003, 1,791, 9,354] that limb IS satisfied, but the play cannot run on one limb without the book half."
+    },
+    {
+      "play": "structure.chain_polarity_flip and the C1/C3/C4 flip-confirm machinery",
+      "why": "STOOD DOWN - requires band-break and continuation-collapse measurements off the realized price path. Blind mode masks the price curve by design, and no chain state is served."
+    },
+    {
+      "play": "daytype.storage_thursday_magnitude",
+      "why": "STOOD DOWN - wrong day class. flow_calendar.is_eia_print_day false, days_to_next_eia_release 3 (print is Thursday 2026-06-25 10:30 ET)."
+    },
+    {
+      "play": "weather.summer_burn_lane_exclusion",
+      "why": "EVALUATED, NO FIRE - correctly, and the count is recorded for the Thursday owner.",
+      "named_measured_quantity": "Breadth of gas-share rises across served BAs from grid_stack (period 2026-06-20, age 2), gas_chg_7d_mwh: ERCO +95,407, MISO +8,251, SWPP +24,211 (rises) vs CISO -58,543, PJM -141,026, SOCO -76,661 (falls). Breadth = 3 of 6. US48 (-559,128) excluded as a respondent, not a pool, per the block's own note. The play is a ONE-SIDED exclusion at breadth <=1 and explicitly forbids ranking mid-size weeks; breadth 3 is mid-range. No fire. Also out of scope for my day - it is a storage-lane tail-size instrument and I am three sessions from the print."
+    },
+    {
+      "play": "magnitude.weekend_gap_delivery",
+      "why": "STOOD DOWN, and the reason is a brain defect rather than a data one - see D10. The play's magnitude arm says it 'requires weekend-cycle model data that decision_state does not currently carry'. decision_state now DOES carry it (weather_forecast_cycle.sunday_reopen, feed A ph1). But the arm as written keys off the D+2..D+6 run-delta, which weekend.seam_delta_requires_level_difference forbids across a seam, and no D+2..D+6 LEVEL pair is available to me (D6). So the arm is unrunnable for a second reason after the first one expired."
+    }
+  ],
+
+  "state_defects_and_gaps_reported": [
+    {
+      "id": "D1",
+      "severity": "CRITICAL",
+      "title": "BLIND WALL BREACH - the brain view serves a blind g22 specialist the realized outcome for its own day",
+      "artifact": "data/brain_view/g22_specialist_s105.7.json (produced by research/kalshi/brain_view.py --role specialist)",
+      "what_is_in_it": "plays[].instances[] carry dated realized dollar outcomes for days INSIDE the forecast window. Verbatim from the served view for my day: '20260622 (Mon): day_move +650 USD - gap +1210 + session net -560 - closing at cum_from_anchor +650. The block-open Monday and the largest seam gap of the modern walk'. Also present: 'roughly $430 of the $1,210 is the leg change'; '0622 forecast +20 actual +1,210'; '0622 session err 120 while its gap missed by 1,190'; and verbatim quotes of the prior blind and refine posteriors for 20260622.",
+      "extent": "57 occurrences of '20260622' and 100 of '0622' in the served view; 33 of '1,210'. The same exposure covers 20260629, 20260706, 20260713 and the g23 window - i.e. every day of both remaining staged groups.",
+      "root_cause": "brain_view.py scopes by SECTION only. There is no instance-level date filter against the group being forecast. The S112 stamping put 624 dated instances into the brain, and every merge since has added realized outcomes; nothing strips them at serve time.",
+      "the_false_assertion_that_hides_it": "brain_view.py's own module docstring, lines 20-21: 'Not a security boundary and not a blind wall - D2's one deliberate mask is the PRICE CURVE, and the brain carries no price.' That was true when written and is FALSE as of s105.7. The brain now carries realized price moves in dollars, dated, for the exact days being forecast, and the comment is what would stop a reviewer from looking.",
+      "consequence": "No blind run on g22 or g23 produced from this view is evidence of anything. My own day-move of +650 matches the leaked actual exactly and I cannot certify it as independently derived. This is the same class as S108's filename collision and S109's hole #11: present, well-formed, right owner, and carrying the answer.",
+      "fix_proposed": "(1) brain_view.py takes the group's date window (and the anchor day) and REDACTS or drops any instances[] entry whose date field intersects it, printing the count redacted so the absence announces itself per the file's own doctrine. (2) Delete the 'the brain carries no price' claim from the docstring. (3) A stage-time assertion in state_health / verify_gold that hard-fails a blind spawn whose brain view contains any in-window date, negative-tested by EMITTING the redaction count, not by checking that the code parses (D11 violation, S110 NC-3)."
+    },
+    {
+      "id": "D2",
+      "severity": "HIGH",
+      "title": "g22_anchor.json contradicts itself on which leg the anchor close sits on - $430 of the block's first day is ambiguous",
+      "detail": "The anchor declares leg 'ng_mbo_ngq26' and basis 'Aug/NGQ26; boundary leg change NGN26->NGQ26 at 06-19/06-22 (anchor on the Aug leg)', while verification.source is 'g21_actual.json last day 20260619' with status MATCH and prior_group_close 3.198. If g21's 06-19 close is on the NGN26 leg, both statements cannot hold without an undeclared roll adjustment. contract_structure.calendar_front_next_spread at the 06-19 vintage is -0.043 = $430.",
+      "why_it_matters": "reasoning_method.continuous_frame is explicit that at a known roll boundary you forecast the REAL overnight ~0 and never read a roll jump as a market move. As served, a specialist cannot tell whether the block-open gap is a market event, a mechanical $430, or both. Every day in the block inherits the level.",
+      "fix_proposed": "the anchor block states the leg of the 3.198 EXPLICITLY, states whether a roll adjustment was applied and of what size, and carries a leg_change_usd field that is zero when clean. Same shape as the existing direction_caveat and provenance fields, which are exemplary."
+    },
+    {
+      "id": "D3",
+      "severity": "MEDIUM",
+      "title": "storage_consensus.next_print carries values snapshotted AFTER my decision point on a causal slice",
+      "detail": "The block is stamped as_of 2026-06-22. Its next_print values carry consensus_pre_print_snapshot_utc 2026-06-25T06:25:05Z (67 Bcf) and the headline consensus_chg_bcf 74.0 from a snapshot_utc of 2026-06-26T06:23:40Z, plus an investing.com estimate stamped 2026-07-21. All three postdate my day by 3 to 29 days. The causal slice is supposed to contain nothing past the decision point.",
+      "second_defect_same_block": "the block's own note says the store 'spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)' while serving populated June 2026 values. The note contradicts the data it is attached to, which is exactly the shape that lets a reader trust a field for the wrong reason.",
+      "impact_on_me": "none - I am three sessions from the print and used no consensus number. It would matter to whoever owns 20260625.",
+      "fix_proposed": "build_causal_slices strips or nulls any estimate whose snapshot_utc exceeds the slice date, and the note is regenerated from the data rather than carried as static prose."
+    },
+    {
+      "id": "D4",
+      "severity": "MEDIUM",
+      "title": "model_disagreement.stability has coverage at horizon 0 ONLY, which makes weekend.seam_sign_from_stability_ladder structurally unrunnable on the seams it is scoped to",
+      "detail": "GFS: h0 coverage 1.0 (d_gw_cdd +1.053, d_gw_hdd +0.034), h1-h7 all coverage 0.0 with all 16 metros missing and the honest note 'delta is null, NOT zero'. MEX: identical shape, h0 coverage 1.0 (d_gw_cdd -0.225). The play requires 'all reachable horizons revised the same way'. With one reachable horizon, and the two model families disagreeing in SIGN on it, the coherence test cannot be run at all.",
+      "why_it_matters": "the play is scoped to weekend/holiday seams and is the brain's designated owner of a seam's SIGN. It cannot run on a weekend seam. That is not a marginal gap, it is the instrument being absent from its own use case, and it is why my gap sign has one leg instead of two.",
+      "fix_proposed": "widen the evening-batch pairing window, or serve the ladder off a longer lookback so h1-h5 populate. Then re-score the play, which is currently unfalsifiable for want of its own input."
+    },
+    {
+      "id": "D5",
+      "severity": "MEDIUM",
+      "title": "vol_regime v0 basis is entirely null - the sigma I sized the gap with has no cross-check",
+      "detail": "v0_win_n_5 = v0_win_n_10 = v0_win_n_20 = 0 and every v0_* field is null (v0_prev_date, v0_prev_net, v0_prev_range, v0_net_sigma_*, v0_range_*, v0_activity_trend). Only the n0 basis is populated. The block's own note warns that the same-window v0 sigma can read 3x the n0 sigma across an expiry week and that 'the basis IS the difference' - and I am 4 business days from the NGN26 expiry, which is precisely the condition the note names.",
+      "impact_on_me": "direct. My whole gap band is 1.5-2.0 x sigma with sigma = 600 taken off n0_net_sigma_5/10. If the v0 basis would have read materially higher here, my band is too narrow and too low. I cannot check."
+    },
+    {
+      "id": "D6",
+      "severity": "LOW-MEDIUM",
+      "title": "the block's FIRST day cannot run the brain's prescribed seam instrument, structurally",
+      "detail": "weekend.seam_delta_requires_level_difference mandates differencing gw_cdd_d0 against the PRIOR SESSION's level across a seam. My prior session is 20260619 and g22_causal_slices/ starts at state_20260622.json - there is no 06-19 slice to difference against. This is not a one-off: every block's first day has the same hole, and the first day of a block is exactly the day carrying the largest seam.",
+      "what_i_did_instead": "used the two levels available INSIDE my own slice - sunday_reopen gw_cdd_d0 8.610 (Sun 17:59 ET) versus weekday_open 9.758 (Mon 08:00 ET), a +1.148 level difference - and declared that this measures the reopen-to-catch-up span, not the Friday-to-Sunday seam.",
+      "fix_proposed": "carry the prior session's weather LEVELS into the block's first slice as a declared read-only carry-in (levels only, no price content, blind-legal)."
+    },
+    {
+      "id": "D7",
+      "severity": "LOW",
+      "title": "three different 'fronts' in contract_structure and none of the front_* fields describe my traded pair",
+      "detail": "front_symbol NGU26 (OI-front, days_to_front_expiry 47), volume_front_symbol NGN26, calendar_front_symbol NGN26, my scored leg NGQ26. front_is_calendar_front false and oi_volume_divergence true. So front_next_spread (-0.040) is an NGU26/NGQ26 object that nobody is trading on my day, sitting under the most obvious field name in the block. The calendar_front_* fields are the correct ones and they are the ones I used - this is the S97 lesson ('the OI-continuous front HIDES the squeeze') still live as a naming trap."
+    },
+    {
+      "id": "D8",
+      "severity": "LOW",
+      "title": "ngwu_balance supply/demand LEVELS are 271 days dead and the LNG term is null",
+      "detail": "latest_sd_levels.age_days 271 (week ending 2025-09-24 - the S&P section removed 2025-10-02). Top-level lng_feedgas_bcfd null, total_supply_bcfd null, power_bcfd null, rescomm_bcfd null. The vessel line survives: 36 vessels, 133.0 Bcf capacity. Known named gap, restated because supply.lng_export_throughput_vessel_line is WIRED_UNPROVEN with the vessel line live and moving and no consumer, which is exactly the served-and-unread defect the grid_stack PARK NOTE warns about."
+    },
+    {
+      "id": "D9",
+      "severity": "LOW - PROCESS",
+      "title": "A's weekend bridge read does not exist and my lens file makes it mandatory",
+      "detail": "The spawn declares it NOT PRODUCED - specialist A did not run. mbo_specialist_B.md says 'Before you finalize a Monday, consume A's WEEKEND BRIDGE READ' and 'Record in your posterior what you took from A's bridge and what you overrode'. I owned the Monday unaided and invented no inherited read.",
+      "taken_from_bridge": "NOTHING - no bridge produced.",
+      "overridden_from_bridge": "NOTHING - nothing to override. Per decision_order step 6, an override is not reachable without something to override, and an inheritance dressed as an override is D25's worst instance."
+    },
+    {
+      "id": "D10",
+      "severity": "LOW",
+      "title": "magnitude.weekend_gap_delivery's availability claim is stale in the brain",
+      "detail": "The play states its magnitude arm 'requires weekend-cycle model data that decision_state does not currently carry' and calls closing it a DATA BUILD (ingest the Sat/Sun 00Z and 12Z runs). That build has landed - weather_forecast_cycle.sunday_reopen is exactly it, feed A ph1, with a max_cycle_runtime of 2026-06-21 12:00 UTC. The play's 'declared irreducible' is no longer accurate as written, and it is one of only two plays that could otherwise own my gap SIZE."
+    },
+    {
+      "id": "D11",
+      "severity": "LOW - ADJUDICATION",
+      "title": "two brain plays give opposite answers to my day's central question",
+      "detail": "boundary.seam_gap_up_prior_on_worsening_cot (PROVISIONAL, confidence 0.85): at a weekend seam in a crowded-short regime with WORSENING COT WoW, the gap 'is NOT non-derivable noise - it carries a DIRECTIONAL prior', base-case UP. weekend.seam_sign_from_stability_ladder (PROPOSED): 'Positioning does not sign a seam (1/3); it is a sign-agnostic GAIN term.' Both scoped to weekend seams; both evaluable on my exact conditions; opposite conclusions on whether positioning may sign.",
+      "what_i_did": "took the higher-status, larger-n one (58: 4 of 5 armed seams up on the specific crowded+worsening conjunction, versus 70's 1/3 on positioning alone without the WoW limb) and declared the choice rather than letting it disappear into the number. Needs Greg's adjudication - as it stands a specialist picks its sign by picking its play."
+    }
+  ],
+
+  "handoff_out": null,
+  "handoff_out_note": "Not required. I am a Monday, not a weekend-feeding day; NEXT TRADING SESSION is 20260623 Tue, class normal, one calendar day forward, no seam. The coordinator's Friday sign-off refusal does not apply."
+}

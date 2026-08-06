@@ -17,8 +17,20 @@ holes #7 and #8 were both silent absences that read downstream exactly like a de
 the lesson was that an absence has to announce itself. A view that quietly dropped a section would
 be the same defect wearing a different hat.
 
-Not a security boundary and not a blind wall - D2's one deliberate mask is the PRICE CURVE, and the
-brain carries no price. This is a RELEVANCE filter: fewer wrong things in front of a forecaster.
+THE SECTION FILTER IS A RELEVANCE FILTER. THE WINDOW REDACTION IS A BLIND WALL, and it exists
+because the docstring here used to say "the brain carries no price" - which was FALSE and was
+caught by a specialist mid-rehearsal, not by any test of mine.
+
+MEASURED S114: `plays[].instances[]` carry DATED REALIZED OUTCOMES in dollars for the exact days
+being forecast - "20260622 (Mon): day_move +650 USD - gap +1210 + session net -560". The g22 window
+draws 455 date-string hits across its ten days, g23 draws 411. Specialist B, forecasting 20260622
+from a view built by this module, hit its own answer at step 4 of the decision order and emitted
++650 - the leaked actual. It declared the leak instead of using it quietly, and its pre-influence
+sign read (step 3a, taken before the hit) is the only part of that run that is evidence.
+
+S112 stamped 624 dated instances into the brain and every merge since has added realized outcomes,
+so this grows on its own. The section filter could never have caught it: sections were the wrong
+axis - the leak is on the TIME axis.
 
     python brain_view.py --role specialist
     python brain_view.py --role specialist --out /path/brain_specialist.json
@@ -54,7 +66,40 @@ def known_roles(brain):
     return sorted(out)
 
 
-def build(brain, role, phase="working"):
+def window_tokens(days):
+    """Every string form a block's days appear in on this desk: 20260622, 2026-06-22, 0622, 06/22."""
+    toks = set()
+    for d in days:
+        y, m, dd = d[:4], d[4:6], d[6:8]
+        toks.update({d, "%s-%s-%s" % (y, m, dd), "%s%s" % (m, dd), "%s/%s" % (m, dd)})
+    return toks
+
+
+def redact_window(obj, toks, counter):
+    """Strip any leaf string that names an in-window day, and SAY SO in its place.
+
+    Aggressive on purpose. A prose sentence mentioning a block day's realized move is the leak just
+    as much as a structured field is, and the MMDD form ("0622") is this desk's own shorthand - it
+    appears 100 times for one day. A false positive costs a specialist one sentence of history; a
+    false negative hands it the answer.
+
+    The replacement is a VISIBLE marker, never a silent drop: holes #7 and #8 were both silent
+    absences that read downstream like a deliberate mask, and the standing lesson is that an
+    absence has to announce itself.
+    """
+    if isinstance(obj, dict):
+        return OrderedDict((k, redact_window(v, toks, counter)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return [redact_window(v, toks, counter) for v in obj]
+    if isinstance(obj, str) and any(t in obj for t in toks):
+        counter[0] += 1
+        return ("[REDACTED - in-window date. This text named a day inside the block you are "
+                "forecasting and the brain records realized outcomes against those days. Withheld "
+                "by the blind wall, not missing.]")
+    return obj
+
+
+def build(brain, role, phase="working", window_days=None):
     """-> (view, served[], withheld[(name, why)]).
 
     PHASE is Greg's distinction, S114: "they should get instructions on what their reason for being
@@ -108,6 +153,22 @@ def build(brain, role, phase="working"):
         else:
             withheld.append((name, "phase %r, and this view is phase %r - %s"
                              % (ph, phase, entry.get("phase_why") or "")))
+    if window_days:
+        toks = window_tokens(window_days)
+        counter = [0]
+        for k in list(view):
+            if k == "meta":
+                continue
+            view[k] = redact_window(view[k], toks, counter)
+        meta["window_redaction"] = OrderedDict([
+            ("days", sorted(window_days)),
+            ("leaves_redacted", counter[0]),
+            ("why", "The brain carries DATED REALIZED OUTCOMES in dollars against block days "
+                    "(S112 stamped 624 instances; every merge since adds more). A blind specialist "
+                    "reading them gets its own answer - measured S114, specialist B on 20260622."),
+            ("what_you_still_have", "Every play, mechanism and falsifier. Only the sentences naming "
+                                    "in-window days are gone, and each one says so where it stood."),
+        ])
     meta["view_served"] = served
     meta["view_withheld"] = [OrderedDict([("section", n), ("why", w)]) for n, w in withheld]
     # the index itself is trimmed to what this role is served, so the view does not advertise a
@@ -116,9 +177,16 @@ def build(brain, role, phase="working"):
     return view, served, withheld
 
 
-def cmd_view(role, out, phase="working"):
+def cmd_view(role, out, phase="working", gid=None):
     brain = load()
-    view, served, withheld = build(brain, role, phase)
+    days = None
+    if gid:
+        sys.path.insert(0, HERE)
+        import group_config as gc
+        if gid not in gc.GROUPS:
+            raise SystemExit("brain_view: unknown group %r" % gid)
+        days = gc.GROUPS[gid]["days"]
+    view, served, withheld = build(brain, role, phase, days)
     if out:
         d = os.path.dirname(os.path.abspath(out))
         if d and not os.path.isdir(d):
@@ -130,6 +198,13 @@ def cmd_view(role, out, phase="working"):
     print("  SERVED  : %s" % ", ".join(served))
     for n, w in withheld:
         print("  WITHHELD: %-22s %s" % (n, w.split(".")[0][:88]))
+    wr = view["meta"].get("window_redaction")
+    if wr:
+        print("  BLIND WALL : %d leaf string(s) redacted for the %s window (%s..%s)"
+              % (wr["leaves_redacted"], gid, wr["days"][0], wr["days"][-1]))
+    elif gid is None:
+        print("  BLIND WALL : NOT APPLIED - no --gid given. A blind specialist MUST be served with "
+              "--gid, or the brain hands it dated realized outcomes for its own day.")
     if out:
         print("  written -> %s  (%.0f KB)" % (out, os.path.getsize(out) / 1024.0))
     return 0
@@ -230,6 +305,26 @@ def cmd_selftest():
         print("     guard output: %s" % str(e)[:96])
         check("NEGATIVE unknown role refuses", True)
 
+    # THE BLIND WALL - the leak two specialists found mid-rehearsal, and the branch that closes it.
+    import group_config as gc
+    days = gc.GROUPS["g22"]["days"]
+    raw_hits = sum(json.dumps(brain).count(d) for d in days)
+    walled, _, _ = build(brain, "specialist", "working", days)
+    txt = json.dumps({k: v for k, v in walled.items() if k != "meta"})
+    wall_hits = sum(txt.count(d) for d in days)
+    wr = walled["meta"]["window_redaction"]
+    print("     guard output: %d leaf string(s) redacted; in-window date hits %d -> %d"
+          % (wr["leaves_redacted"], raw_hits, wall_hits))
+    check("BLIND WALL removes every in-window date from the served body", wall_hits == 0,
+          "%d redacted" % wr["leaves_redacted"])
+    check("the wall REPORTS itself rather than dropping silently",
+          wr["leaves_redacted"] > 0 and wr["why"])
+    check("NEGATIVE without a window the leak is present (the wall is doing the work)",
+          raw_hits > 400, "%d raw hits" % raw_hits)
+    unwalled, _, _ = build(brain, "specialist", "working", None)
+    check("NEGATIVE no window -> no redaction record, so it cannot look applied",
+          "window_redaction" not in unwalled["meta"])
+
     # NEGATIVE 3 - no view may carry every section by accident
     check("NEGATIVE specialist view is strictly smaller than the brain",
           len([k for k in spec if k != "meta"]) < len([k for k in brain if k != "meta"]),
@@ -254,6 +349,8 @@ def main():
                     choices=["working", "briefing", "post_outcome", "all"],
                     help="working (default) = what stays in view while the curve is drawn; "
                          "briefing = the pre-launch mission; all = a human reading the brain")
+    ap.add_argument("--gid", help="group id - REDACT every in-window date from the view (the blind "
+                                  "wall). Required for any blind specialist.")
     ap.add_argument("--roles", action="store_true", help="the section x role matrix")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
@@ -262,7 +359,7 @@ def main():
     if a.roles:
         return cmd_roles()
     if a.role:
-        return cmd_view(a.role, a.out, a.phase)
+        return cmd_view(a.role, a.out, a.phase, a.gid)
     ap.print_help()
     return 2
 

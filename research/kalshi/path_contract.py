@@ -23,7 +23,7 @@ THE CLOCK IS DERIVED, NOT DECREED. Read off the committed refine posteriors that
 good rather than from the prose (which gives no point count):
     [20, 22, 0, 2, 4, 6, 8, 10, 12, 14, 16]        n=7   <- canonical
     [20, 22, 0, 2, 4, 6, 8, 10, 12, 14, 16, 17]    n=5   <- canonical + the 17:00 close
-Both are accepted. Anything ending early (…12, 13) or running past 17 into 18/20 is not, because
+Both are accepted. Anything ending early (...12, 13) or running past 17 into 18/20 is not, because
 past 17:00 is the NEXT session.
 
     python path_contract.py check g22 --blind

@@ -1,0 +1,119 @@
+{
+ "note": "Station coordinates for the gas-weighted degree-day stations, fetched from the IEM network metadata - the SAME provider the realized feed reads. Regenerate with `gefs_ensemble.py coords --write`.",
+ "fetched_for_stations": [
+  "ATL",
+  "BOS",
+  "DCA",
+  "DEN",
+  "DFW",
+  "DTW",
+  "IAH",
+  "LAX",
+  "MSP",
+  "NYC",
+  "ORD",
+  "PHL",
+  "PHX",
+  "SEA",
+  "SFO",
+  "STL"
+ ],
+ "stations": {
+  "NYC": {
+   "lat": 40.779,
+   "lon": -73.9692,
+   "name": "NEW YORK CITY",
+   "source_network": "NY_ASOS"
+  },
+  "BOS": {
+   "lat": 42.3606,
+   "lon": -71.0097,
+   "name": "BOSTON/LOGAN INTL",
+   "source_network": "MA_ASOS"
+  },
+  "PHL": {
+   "lat": 39.8734,
+   "lon": -75.2266,
+   "name": "Philadelphia Intl",
+   "source_network": "PA_ASOS"
+  },
+  "DCA": {
+   "lat": 38.8472,
+   "lon": -77.0346,
+   "name": "WASHINGTON/NATIONAL",
+   "source_network": "VA_ASOS"
+  },
+  "ORD": {
+   "lat": 41.9602,
+   "lon": -87.9316,
+   "name": "Chicago OHare",
+   "source_network": "IL_ASOS"
+  },
+  "DTW": {
+   "lat": 42.23,
+   "lon": -83.33,
+   "name": "DETROIT/WAYNE",
+   "source_network": "MI_ASOS"
+  },
+  "MSP": {
+   "lat": 44.8854,
+   "lon": -93.2313,
+   "name": "MINNEAPOLIS",
+   "source_network": "MN_ASOS"
+  },
+  "STL": {
+   "lat": 38.7524,
+   "lon": -90.3734,
+   "name": "ST. LOUIS",
+   "source_network": "MO_ASOS"
+  },
+  "DFW": {
+   "lat": 32.8968,
+   "lon": -97.038,
+   "name": "DALLAS/FT WORTH",
+   "source_network": "TX_ASOS"
+  },
+  "IAH": {
+   "lat": 29.9844,
+   "lon": -95.3607,
+   "name": "Houston Intercontinental",
+   "source_network": "TX_ASOS"
+  },
+  "ATL": {
+   "lat": 33.6301,
+   "lon": -84.4418,
+   "name": "ATLANTA INTL ARPT",
+   "source_network": "GA_ASOS"
+  },
+  "DEN": {
+   "lat": 39.8328,
+   "lon": -104.6575,
+   "name": "DENVER INTNL ARPT",
+   "source_network": "CO_ASOS"
+  },
+  "PHX": {
+   "lat": 33.4343,
+   "lon": -112.0116,
+   "name": "PHOENIX/SKY HARBOR",
+   "source_network": "AZ_ASOS"
+  },
+  "LAX": {
+   "lat": 33.9382,
+   "lon": -118.3865,
+   "name": "LOS ANGELES INTL",
+   "source_network": "CA_ASOS"
+  },
+  "SFO": {
+   "lat": 37.619,
+   "lon": -122.3749,
+   "name": "SAN FRANCISCO INTL",
+   "source_network": "CA_ASOS"
+  },
+  "SEA": {
+   "lat": 47.4447,
+   "lon": -122.3144,
+   "name": "SEATTLE-TACOMA INTL",
+   "source_network": "WA_ASOS"
+  }
+ }
+}

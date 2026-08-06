@@ -539,12 +539,16 @@ nothing past your decision point. Do not attempt to obtain masked or future data
 
 SPAWN PARAMETERS
 - GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, BLIND. Brain ({BRAIN_V}): your reasoning file names knowledge/ng_brain.json and that is correct
-  - run `python brain_view.py --role specialist --out {VIEW}` and read {VIEW}, which IS that
+  - run `python brain_view.py --role specialist --gid {GID} --out {VIEW}` and read {VIEW}, which IS that
   brain with the sections meant for another phase left out (your MISSION brief, delivered above,
-  and superseded doctrine_legacy). meta.view_withheld names each and why. Reading the raw file is
-  not an error and contradicts nothing; the view simply saves you the sections that cannot help a
-  forecast. Neither is a blind wall - D2's one deliberate mask is the PRICE CURVE, and the brain
-  carries no price.
+  and superseded doctrine_legacy). meta.view_withheld names each and why. --gid applies the BLIND WALL: the brain records DATED REALIZED OUTCOMES against
+  block days (S112 stamped 624 instances and every merge since adds more), so every string naming
+  a day inside your block is redacted and replaced with a marker that says so. meta
+  .window_redaction gives the count.
+  DO NOT read knowledge/ng_brain.json directly on a blind run. An earlier version of this prompt
+  said the brain "carries no price" - that was FALSE, and two specialists forecasting g22 hit
+  their own realized day-move in it and said so. The section scoping is a relevance filter; this
+  redaction is a real wall.
 - YOUR DAY: {DAY} ({dow}, {day_class}). You own this one day in this run.
 - YOUR STATE (the only state you read): renders/ng_refine_s95/{GID}_causal_slices/state_{DAY}.json
 - ANCHOR (group reference level, cum-from-anchor is measured from it): {ANCHOR}
@@ -640,12 +644,16 @@ the causal read supports even where the actual went further); general mechanisms
 
 SPAWN PARAMETERS
 - GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, REFINE. Brain ({BRAIN_V}): your reasoning file names knowledge/ng_brain.json and that is correct
-  - run `python brain_view.py --role specialist --out {VIEW}` and read {VIEW}, which IS that
+  - run `python brain_view.py --role specialist --gid {GID} --out {VIEW}` and read {VIEW}, which IS that
   brain with the sections meant for another phase left out (your MISSION brief, delivered above,
-  and superseded doctrine_legacy). meta.view_withheld names each and why. Reading the raw file is
-  not an error and contradicts nothing; the view simply saves you the sections that cannot help a
-  forecast. Neither is a blind wall - D2's one deliberate mask is the PRICE CURVE, and the brain
-  carries no price.
+  and superseded doctrine_legacy). meta.view_withheld names each and why. --gid applies the BLIND WALL: the brain records DATED REALIZED OUTCOMES against
+  block days (S112 stamped 624 instances and every merge since adds more), so every string naming
+  a day inside your block is redacted and replaced with a marker that says so. meta
+  .window_redaction gives the count.
+  DO NOT read knowledge/ng_brain.json directly on a blind run. An earlier version of this prompt
+  said the brain "carries no price" - that was FALSE, and two specialists forecasting g22 hit
+  their own realized day-move in it and said so. The section scoping is a relevance filter; this
+  redaction is a real wall.
 - YOUR DAY: {DAY} ({dow}, {day_class}).
 - FIELD INVENTORY (attached, consult when needed - do NOT read it start to finish):
   {INVENTORY} lists every field served to you today, names only, no values, no lean.
