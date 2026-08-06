@@ -5,7 +5,8 @@
   "RENDER": "GENERATED from a store. Never hand-edit - edit the store and re-render. Gated byte-identical by store.py check.",
   "VAULT": "frozen, sha256-manifested. A change is a versioned vault event on Greg's go, never an edit. Gated by verify_gold.py.",
   "RECORD": "dated and finished. NEVER updated - a handoff, kickoff, drop-in, ledger or findings memo describes the session that wrote it. Editing one is falsifying the record.",
-  "ARCHIVE": "moved out of the live surface deliberately. Consulted, not maintained."
+  "ARCHIVE": "moved out of the live surface deliberately. Consulted, not maintained.",
+  "EXTERNAL": "a DELIVERED HAND-OFF from outside the session - a ChatGPT brief, a research vendor deliverable, a task packet we sent out and got back. It is a RECORD (dated, never edited) that additionally carries RECOMMENDATIONS, so D36 binds: every numbered recommendation gets a registry id in the session the document lands, INCLUDING the ones we decide against. Audited via store/briefing_audits.json; station0/briefings reports it."
  },
  "close_out_trio": {
   "note": "Greg, S112: 'update all of our docs other than the 3 ending ones.' These three are written LAST, at close-out, because they summarise everything else. They are excluded from mid-session doc sweeps by design. S112 addition (Greg: 'include a doc that i can download and send to chat along with the drop ins when you're printing'): the ChatGPT hand-off ships WITH the drop-in and is GENERATED from the registry by chatgpt_handoff.py, so a finished item cannot appear in it as a live request - A-9's rule, one document over.",
@@ -177,6 +178,81 @@
    "role": "THE MASTER DATA-POINT LIST - four tiers (SERVED / HELD / PLANNED / IDENTIFIED), every row labelled READ or NOT READ, with block, upstream source, cadence, what the blind sees, and known defects.",
    "update_when": "any feed or serving change; regenerate with data_registry.py build --write",
    "gate": "generated"
+  },
+  {
+   "path": "research/kalshi/CHATGPT_*.md",
+   "class": "EXTERNAL",
+   "why": "ChatGPT hand-offs and delivered briefs. THE NAMING RULE (S115, Greg: 'we definitely have to fix the chat naming issue because those are huge findings'): every external deliverable is named CHATGPT_S<N>_<TOPIC>.md so it sorts with its session and is unmistakable. The A-24 note landed as *_CANDIDATES.md and was invisible to the briefing gate for two sessions."
+  },
+  {
+   "path": "research/kalshi/TASK_*.md",
+   "class": "EXTERNAL",
+   "why": "outbound task packets sent for external research, kept so a delivered answer can be checked against what was actually asked (delegated_prior)."
+  },
+  {
+   "path": "research/kalshi/S1??_TASK_*.md",
+   "class": "EXTERNAL",
+   "why": "session-stamped outbound task packets."
+  },
+  {
+   "path": "research/kalshi/*_FOR_CHATGPT.md",
+   "class": "EXTERNAL",
+   "why": "packets prepared for an external reader."
+  },
+  {
+   "path": "research/kalshi/*MERGE_PROPOSAL*.md",
+   "class": "RECORD",
+   "why": "a D8 merge proposal + its adjudication. Dated and finished."
+  },
+  {
+   "path": "research/kalshi/*MERGE_ADDENDUM*.md",
+   "class": "RECORD",
+   "why": "an addendum to a merge proposal."
+  },
+  {
+   "path": "research/kalshi/*_PROPOSAL.md",
+   "class": "RECORD",
+   "why": "a proposal put to Greg; the record of what was asked."
+  },
+  {
+   "path": "research/kalshi/agents/mbo_specialist_?.md",
+   "class": "VAULT",
+   "why": "the five canonical specialist lens files - gold-vaulted, chmod 0444, sha256-manifested. Gated by verify_gold.py; a change is a versioned vault event (D7)."
+  },
+  {
+   "path": "research/kalshi/agents/refine.md",
+   "class": "VAULT",
+   "why": "canonical refine reasoning file, gold-vaulted."
+  },
+  {
+   "path": "research/kalshi/agents/FROZEN.md",
+   "class": "VAULT",
+   "why": "the vault's own marker."
+  },
+  {
+   "path": "research/kalshi/agents/state_auditor.md",
+   "class": "LIVE",
+   "why": "the state auditor's role file (D17). Not vaulted - the auditor is not a forecaster."
+  },
+  {
+   "path": "research/kalshi/agents/failure_judge.md",
+   "class": "RENDER",
+   "why": "generated from store/failure_judge.json; gated byte-identical by store.py check."
+  },
+  {
+   "path": "research/kalshi/knowledge/refinement_architecture_doctrine.md",
+   "class": "LIVE",
+   "why": "refine-side doctrine read by RFN-1."
+  },
+  {
+   "path": "research/kalshi/NG_BEHAVIOR_KNOWLEDGE.md",
+   "class": "LIVE",
+   "why": "standing behavioural notes on the NG tape."
+  },
+  {
+   "path": "research/kalshi/DATABENTO_PLATFORM_REVIEW.md",
+   "class": "RECORD",
+   "why": "dated platform review."
   }
  ]
 }

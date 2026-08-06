@@ -88,11 +88,27 @@ def station0():
     # apply to it and nothing recorded its disposition. Greg found it by asking directly whether we
     # had missed anything, which is exactly the check this station exists to make unnecessary.
     # A rule whose scanner cannot see the document is a rule that does not cover it.
-    _PATTERNS = ("*BRIEFING*.md", "*SYNTHESIS*.md", "*MEMO*.md",
-                 "*CANDIDATES*.md", "*DISCOVERY*.md", "CHATGPT_*.md", "*HANDOFF_S1*.md")
-    briefings = sorted({os.path.basename(p)
-                        for pat in _PATTERNS
-                        for p in glob.glob(os.path.join(HERE, pat))})
+    # THE REACH NOW COMES FROM THE REGISTRY, NOT A GLOB IN THIS FILE. Widening the glob would fix
+    # only the names that exist TODAY and fail open on the next one - the same bug with a longer
+    # list. store.py's `md_unclassified` gate FAILS on any tracked research/kalshi/*.md that no
+    # registry pattern covers, so a new hand-off under ANY name is caught at classification time;
+    # this station then audits everything the registry classes EXTERNAL (plus the
+    # briefing/synthesis/memo bodies, which are ours rather than delivered).
+    _CLASSED = set()
+    try:
+        with open(os.path.join(HERE, "store", "documents.json"), encoding="utf-8") as _f:
+            for _d in json.load(_f).get("documents", []):
+                if _d.get("class") != "EXTERNAL":
+                    continue
+                _pat = (_d.get("path") or "").split("/")[-1].replace("<N>", "*")
+                for _p in glob.glob(os.path.join(HERE, _pat)):
+                    _CLASSED.add(os.path.basename(_p))
+    except Exception as _e:
+        print("[plant_status] EXTERNAL class lookup failed (%s) - falling back to name patterns "
+              "only; a delivered hand-off may be invisible" % _e)
+    briefings = sorted(_CLASSED | {os.path.basename(p)
+                                   for pat in ("*BRIEFING*.md", "*SYNTHESIS*.md", "*MEMO*.md")
+                                   for p in glob.glob(os.path.join(HERE, pat))})
     audited = {}
     if os.path.exists(BRIEFING_AUDITS):
         with open(BRIEFING_AUDITS, encoding="utf-8") as f:

@@ -353,6 +353,29 @@ def render_inventory():
     return "\n".join(out) + "\n"
 
 
+def _unclassified_md(store):
+    """Tracked research/kalshi/*.md not covered by ANY documents-registry path pattern. (S115.)
+
+    The registry's paths are written for humans (`research/kalshi/*_S<N>.md`), so `<N>` is
+    normalised to a digit run before matching. Deliberately scoped to research/kalshi: repo-root
+    docs are covered by their own explicit entries."""
+    import fnmatch
+    tracked = subprocess.run(["git", "-C", ROOT, "ls-files", "research/kalshi/*.md"],
+                             capture_output=True, text=True).stdout.split()
+    pats = []
+    for d in store.get("documents", []):
+        p = (d.get("path") or "").replace("<N>", "*").replace("<n>", "*")
+        if p:
+            pats.append(p if "/" in p else "research/kalshi/" + p)
+    out = []
+    for rel in sorted(tracked):
+        base = os.path.basename(rel)
+        if any(fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(base, os.path.basename(p)) for p in pats):
+            continue
+        out.append(base)
+    return out
+
+
 def _index_gate(path, needed, label):
     """A doc must NAME every member of a computed set. Returns the missing ones."""
     if not os.path.exists(path):
@@ -373,6 +396,32 @@ def docs_problems():
                       "%d tracked research/kalshi/*.py not named: %s"
                       % (len(missing_py), ", ".join(missing_py[:6])
                          + (" ..." if len(missing_py) > 6 else ""))))
+    # S115 - THE EXHAUSTION GATE FOR DOCUMENTS. Greg, S115: "we definitely have to fix the chat
+    # naming issue because those are huge findings."
+    #
+    # THE DEFECT THIS REPLACES. station0/briefings globbed *BRIEFING*/*SYNTHESIS*/*MEMO*, so it
+    # could only see documents whose NAME already matched a pattern someone had thought of. The
+    # ChatGPT A-24 discovery note - a delivered external hand-off carrying SEVEN ranked, numbered
+    # recommendations, two of which were run to completion - is named *_CANDIDATES.md and matched
+    # nothing, so D36 could not reach it and no disposition was ever recorded. Greg found it by
+    # asking directly. Widening the glob (S115, first attempt) fixes exactly the names that exist
+    # TODAY and fails open on the next one, which is the same bug with a longer list.
+    #
+    # THE INVERSION: do not ask "does this name match a known pattern" (fails OPEN on anything new).
+    # Ask "is this document CLASSIFIED" (fails CLOSED). Every tracked research/kalshi/*.md must be
+    # covered by a documents-registry pattern; an unrecognised document is itself the finding, and
+    # a new hand-off under any name at all is caught on the session it lands.
+    with open(DOCS_JSON, encoding='utf-8') as _f:
+        _docstore = json.load(_f)
+    unclassified = _unclassified_md(_docstore)
+    if unclassified:
+        probs.append(("store/documents.json", "md_unclassified",
+                      "%d tracked research/kalshi/*.md carry NO registry class - an unclassified "
+                      "document is one no gate can reach (the A-24 hand-off was invisible for two "
+                      "sessions this way). Classify each in store/documents.json, EXTERNAL for a "
+                      "delivered hand-off: %s"
+                      % (len(unclassified), ", ".join(unclassified[:6])
+                         + (" ..." if len(unclassified) > 6 else ""))))
     missing_sop = _index_gate(PLANT_MAP, _sop_named_py(), "index_sop_py")
     if missing_sop:
         probs.append(("PLANT_MAP.md", "index_sop_py",
