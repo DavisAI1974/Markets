@@ -223,33 +223,21 @@ FJ_SECTION = "failure_localization"
 # It is only required to be DECLARED in `meta.sections` (the brain_schema gate).
 
 
-def _brain_read():
-    with open(BRAIN_JSON, encoding="utf-8") as f:
+def fj_store_read():
+    """MOVED BACK OUT OF THE BRAIN (S114). The doctrine text lives in store/failure_judge.json and
+    renders to agents/failure_judge.md, exactly like the other single-role files. Not a reversal on
+    "one brain doc" - the rule that emerged is sharper: SHARED behaviour lives in the brain; doctrine
+    ONE role uses lives in that role's own file. Greg's deciding test was not size but harm, and the
+    harm was concrete: a brain section the spawn template told specialists to avoid, in a file the
+    FROZEN GOLD mbo_refine_shared.md orders them to read in full. See the store file's
+    `moved_out_of_the_brain_S114`."""
+    with open(FJ_JSON, encoding="utf-8") as f:
         return json.load(f, object_pairs_hook=OrderedDict)
 
 
-def fj_store_read():
-    """Registration from the store file, doctrine text from the brain - one object, one copy each."""
-    with open(FJ_JSON, encoding="utf-8") as f:
-        reg = json.load(f, object_pairs_hook=OrderedDict)
-    sec = _brain_read()[FJ_SECTION]
-    merged = OrderedDict(reg)
-    merged["preamble"] = sec.get("preamble", "")
-    merged["sections"] = sec.get("sections", [])
-    return merged
-
-
 def fj_store_write(obj):
-    """Doctrine text goes back to the BRAIN; the store file keeps only its registration fields."""
-    brain = _brain_read()
-    sec = brain[FJ_SECTION]
-    sec["preamble"] = obj["preamble"]
-    sec["sections"] = obj["sections"]
-    with open(BRAIN_JSON, "w", encoding="utf-8") as f:
-        json.dump(brain, f, indent=1, ensure_ascii=False)
-    reg = OrderedDict((k, v) for k, v in obj.items() if k not in ("preamble", "sections"))
     with open(FJ_JSON, "w", encoding="utf-8") as f:
-        json.dump(reg, f, indent=1, ensure_ascii=False)
+        json.dump(obj, f, indent=1, ensure_ascii=False)
 
 
 def extract_fj():

@@ -170,8 +170,6 @@ def cmd_selftest():
     wnames = [n for n, _ in withheld]
     check("specialist is served plays + reasoning_method",
           "plays" in served and "reasoning_method" in served)
-    check("specialist does NOT see failure_localization (post-outcome)",
-          "failure_localization" not in spec and "failure_localization" in wnames)
     check("specialist does NOT see doctrine_legacy (superseded)",
           "doctrine_legacy" not in spec and "doctrine_legacy" in wnames)
     check("withholding is DECLARED, not silent",
@@ -195,18 +193,23 @@ def cmd_selftest():
     check("phase withholding states the phase and the reason",
           any("phase" in w["why"] for w in spec["meta"]["view_withheld"]))
 
-    fj, fserved, _ = build(brain, "failure_judge", "post_outcome")
-    check("failure_judge IS served failure_localization at its own phase",
-          "failure_localization" in fj)
+    # THE JUDGE'S DOCTRINE IS NO LONGER A BRAIN SECTION (S114). It moved to
+    # store/failure_judge.json -> agents/failure_judge.md because it caused a contradiction with
+    # the FROZEN gold mbo_refine_shared.md, which orders specialists to read knowledge/ng_brain.json
+    # in full. The rule that settled it: SHARED behaviour in the brain, single-role doctrine in that
+    # role's own file. These tests hold the line that it did not creep back.
+    check("failure_localization is NOT a brain section any more",
+          "failure_localization" not in brain,
+          "it lives in store/failure_judge.json -> agents/failure_judge.md")
+    import os as _os
+    check("and its file exists where it moved to",
+          _os.path.exists(_os.path.join(HERE, "store", "failure_judge.json")) and
+          _os.path.exists(_os.path.join(HERE, "agents", "failure_judge.md")))
+    fj, fserved, _ = build(brain, "failure_judge", "working")
+    check("failure_judge still gets the SHARED sections it needs",
+          "plays" in fj and "reasoning_method" in fj)
     check("failure_judge is NOT served fingerprints/mechanisms",
           "fingerprints" not in fj and "mechanisms" not in fj)
-    fj_working, _, _ = build(brain, "failure_judge", "working")
-    check("even the judge does not get it at the WORKING phase",
-          "failure_localization" not in fj_working)
-
-    coord, cserved, _ = build(brain, "coordinator", "post_outcome")
-    check("coordinator sees failure_localization at merge (post_outcome)",
-          "failure_localization" in coord)
 
     # NEGATIVE 1 - an undeclared section must stop the view, not be served or dropped
     import copy
