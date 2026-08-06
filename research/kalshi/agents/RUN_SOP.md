@@ -63,6 +63,38 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.11 (S114): THE BRAIN IS SERVED BY ROLE AND PHASE, AND A MISSION BRIEF IS DELIVERED PRE-LAUNCH.
+  Logged BEFORE execute this time, which is what item 2 asks for and what v1.10 recorded failing.
+  WHY, in Greg's words: *"We don't want the agents seeing nonsense when they are making a
+  forecast"*; *"they should get instructions on what their reason for being is before they launch
+  but that shouldn't touch them when making a curve. They should always be aware of how to make
+  good decisions while they are making the curve"*; *"They are just told to do math basically and
+  not really told that the values flow together over time and they are building a picture basically
+  and not just dots."* WHAT CHANGED:
+  (a) **BLD-1 and RFN-1 gain the `{MISSION}` slot** - a pre-launch brief GENERATED from the brain's
+  new `mission` section, never typed into the template, so it cannot drift from the brain. It states
+  the problem, the named benchmark (the blind loses to zero-change on six of seven blocks), what
+  success is, the emission-ceiling failure mode, where the specialist's day sits in the library
+  build and what it hands forward, that the path is ONE continuous object sampled at eight times
+  rather than eight independent numbers, what the curve is FOR (three lanes, the 17:00 settle, the
+  paper dock), how the variables chain into a tradeable conjunction, and that the job is
+  load-bearing in BOTH directions - which is why a declared stand-down beats a manufactured number.
+  (b) **BLD-1 and RFN-1 gain the `{VIEW}` slot** - the specialist is pointed at
+  `brain_view.py --role specialist`, not at the raw brain. Same brain, scoped: `failure_localization`
+  (post-outcome) and `doctrine_legacy` (superseded) are withheld, the mission is withheld from the
+  WORKING view because it is orientation, and `meta.view_withheld` names every withholding and its
+  reason. NOT a blind wall - D2's one deliberate mask is the PRICE CURVE and the brain carries no
+  price. Honest measurement: the withheld sections are 0.6% of the file, so this is a correctness
+  fix, not a context saving.
+  (c) **`spawn.py` fills both slots BY LOOKUP** (NC-1 discipline), 22/22 selftest.
+  (d) **`brain_schema.py validate` gains the SECTION-INDEX GATE** - every top-level brain section
+  must be declared in `meta.sections` with `is`, `read_by` and `roles`, so a section cannot be added
+  silently or serve to nobody by accident. Six negative branches exercised, each printing its output
+  (NC-3). A section does NOT have to fit the play schema (Greg: *"Same doc but doesn't have to fit
+  the schema"*) - declaration is the only requirement.
+  SCOPE LIMIT: no change to what a specialist is ASKED to produce, to the mask, to the scoring, or
+  to any play. REGISTERED FORWARD TEST: `mission.brief_continuity_and_shape`, due g24, with the
+  mechanical baseline measured on g22's committed blind before any rehearsal.
 - v1.10 (S114): RUN-WRAPPER CHANGES, LOGGED LATE - and the lateness is the point. Greg asked twice
   that the SOP be re-read and followed; it was not re-read, and change-control item 2 (diff -> WHY
   -> explicit go -> version-log -> THEN execute) was broken by this session's own work. Recorded
@@ -397,13 +429,27 @@ You are specialist {X} of the NG 5-specialist forecaster, BLIND mode, group {GID
 Your reasoning files are canonical and shared with the refine — read BOTH, in full, FIRST:
   research/kalshi/agents/mbo_refine_shared.md
   research/kalshi/agents/mbo_specialist_{X}.md
+WHY YOU EXIST - read this once, now, before you touch the state. It is your orientation, not a
+reference: it is deliberately NOT repeated in your brain view, because it is not something to
+consult while you are drawing the curve. Generated from the brain's `mission` section, so it is
+always the current one.
+{MISSION}
+
+END OF BRIEF. Everything below is the job.
+
 Follow them exactly. Blind mode is a DATA fact, not a rule change: your state has the price curve
 masked; you forecast from the market forces (flow, positioning, fundamentals, weather, storage,
 structure, calendar). Causality is physics: your state is a per-day causal slice and contains
 nothing past your decision point. Do not attempt to obtain masked or future data.
 
 SPAWN PARAMETERS
-- GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, BLIND. Brain: knowledge/ng_brain.json ({BRAIN_V}).
+- GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, BLIND. Brain: run `python brain_view.py --role specialist --out {VIEW}` FIRST and read {VIEW},
+  NOT knowledge/ng_brain.json ({BRAIN_V}). It is the same brain, scoped to your role: the
+  post-outcome failure-localization doctrine and the superseded doctrine_legacy are
+  withheld, and meta.view_withheld tells you what was withheld and why. If you believe you
+  need a withheld section, SAY SO in your report - do not open the raw file to route around
+  the scoping. This is a relevance filter, not a blind wall: D2's one deliberate mask is
+  the PRICE CURVE, and the brain carries no price.
 - YOUR DAY: {DAY} ({dow}, {day_class}). You own this one day in this run.
 - YOUR STATE (the only state you read): renders/ng_refine_s95/{GID}_causal_slices/state_{DAY}.json
 - ANCHOR (group reference level, cum-from-anchor is measured from it): {ANCHOR}
@@ -461,13 +507,27 @@ You are specialist {X} of the NG 5-specialist forecaster, REFINE mode, group {GI
 Read BOTH canonical files, in full, FIRST:
   research/kalshi/agents/mbo_refine_shared.md
   research/kalshi/agents/mbo_specialist_{X}.md
+WHY YOU EXIST - read this once, now, before you touch the state. It is your orientation, not a
+reference: it is deliberately NOT repeated in your brain view, because it is not something to
+consult while you are drawing the curve. Generated from the brain's `mission` section, so it is
+always the current one.
+{MISSION}
+
+END OF BRIEF. Everything below is the job.
+
 Refine mode = the identical engine with the price curve VISIBLE. Same kitchen sink as the blind
 plus the realized price/curve — that is your causal evidence. Doctrine binds: the blind stays the
 core predictor; MBO is a posterior update; magnitudes DERIVED, never fitted; honest bar (emit what
 the causal read supports even where the actual went further); general mechanisms only (n>=2).
 
 SPAWN PARAMETERS
-- GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, REFINE. Brain: knowledge/ng_brain.json ({BRAIN_V}).
+- GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, REFINE. Brain: run `python brain_view.py --role specialist --out {VIEW}` FIRST and read {VIEW},
+  NOT knowledge/ng_brain.json ({BRAIN_V}). It is the same brain, scoped to your role: the
+  post-outcome failure-localization doctrine and the superseded doctrine_legacy are
+  withheld, and meta.view_withheld tells you what was withheld and why. If you believe you
+  need a withheld section, SAY SO in your report - do not open the raw file to route around
+  the scoping. This is a relevance filter, not a blind wall: D2's one deliberate mask is
+  the PRICE CURVE, and the brain carries no price.
 - YOUR DAY: {DAY} ({dow}, {day_class}).
 - CALENDAR FOR YOUR DAY (facts, not hints - do not reinterpret them into a lean):
 {DAY_CALENDAR}

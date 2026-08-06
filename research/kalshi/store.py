@@ -207,10 +207,53 @@ def sop_target_write(new_appendix):
 
 FJ_MD = os.path.join(HERE, "agents", "failure_judge.md")
 FJ_JSON = os.path.join(STORE, "failure_judge.json")
+BRAIN_JSON = os.path.join(HERE, "knowledge", "ng_brain.json")
+FJ_SECTION = "failure_localization"
+
+# ONE BRAIN DOC, AND THE STORE FILE STAYS (Greg, S114). Two instructions, and they are not in
+# tension once the split is named:
+#   'All behavior related docs should be merged with schema ... there should only be one brain doc'
+#   'Why retire the store file. Don't do that. There are things that don't need to be in brain.'
+# So: the BEHAVIOUR TEXT - what the judge does, the root-cause rule, the disambiguation table, the
+# honest limit - lives ONCE, in the brain section `failure_localization`, where every agent already
+# reads. The store file survives with the job it is actually for: RENDER REGISTRATION (which target,
+# which role, when it runs, which paper). It holds no second copy of the doctrine, because a second
+# copy is the drift this desk keeps paying for.
+# Greg's qualifier: 'Same doc but doesn't have to fit the schema' - the section keeps its own shape.
+# It is only required to be DECLARED in `meta.sections` (the brain_schema gate).
+
+
+def _brain_read():
+    with open(BRAIN_JSON, encoding="utf-8") as f:
+        return json.load(f, object_pairs_hook=OrderedDict)
+
+
+def fj_store_read():
+    """Registration from the store file, doctrine text from the brain - one object, one copy each."""
+    with open(FJ_JSON, encoding="utf-8") as f:
+        reg = json.load(f, object_pairs_hook=OrderedDict)
+    sec = _brain_read()[FJ_SECTION]
+    merged = OrderedDict(reg)
+    merged["preamble"] = sec.get("preamble", "")
+    merged["sections"] = sec.get("sections", [])
+    return merged
+
+
+def fj_store_write(obj):
+    """Doctrine text goes back to the BRAIN; the store file keeps only its registration fields."""
+    brain = _brain_read()
+    sec = brain[FJ_SECTION]
+    sec["preamble"] = obj["preamble"]
+    sec["sections"] = obj["sections"]
+    with open(BRAIN_JSON, "w", encoding="utf-8") as f:
+        json.dump(brain, f, indent=1, ensure_ascii=False)
+    reg = OrderedDict((k, v) for k, v in obj.items() if k not in ("preamble", "sections"))
+    with open(FJ_JSON, "w", encoding="utf-8") as f:
+        json.dump(reg, f, indent=1, ensure_ascii=False)
 
 
 def extract_fj():
-    """Round-trip the role file back into its store, so `check` compares like with like."""
+    """Round-trip the role file back into its brain section, so `check` compares like with like."""
     import re as _re
     md = open(FJ_MD, encoding="utf-8").read()
     parts = _re.split(r"\n(?=## )", md)
@@ -220,8 +263,9 @@ def extract_fj():
         _h = ln[0].strip()
         while _h.startswith("#"):          # the store holds heading TEXT; the renderer owns the markup
             _h = _h.lstrip("#").strip()    # (S114: without this the round-trip doubled every '##')
-        out.append({"heading": _h, "body": (ln[1] if len(ln) > 1 else "").rstrip("\n")})
-    st = json.load(open(FJ_JSON, encoding="utf-8"))
+        out.append(OrderedDict([("heading", _h),
+                                ("body", (ln[1] if len(ln) > 1 else "").rstrip("\n"))]))
+    st = fj_store_read()
     st["preamble"] = parts[0].rstrip("\n")
     st["sections"] = out
     return st

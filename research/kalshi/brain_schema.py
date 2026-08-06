@@ -455,12 +455,65 @@ def run_sections(write):
     return 0
 
 
+def check_sections(brain):
+    """THE SECTION-INDEX GATE (S114).
+
+    ONE BRAIN DOC (Greg): behaviour doctrine does not get its own file. But a section does NOT have
+    to fit the play schema - 'Same doc but doesn't have to fit the schema.' So this gate checks
+    DECLARATION, never shape: every top-level section must be named in `meta.sections` with what it
+    IS and who READS it, and every declared section must exist. Nothing here constrains a section's
+    internal form.
+
+    Why it exists: before S114 `meta.purpose` listed the sections in PROSE and the prose was stale -
+    it omitted `doctrine` and `doctrine_legacy` outright. A section could be added and no agent
+    would ever be told it was there.
+    """
+    idx = (brain.get("meta") or {}).get("sections") or {}
+    declared = {k for k in idx if not k.startswith("_")}
+    present = {k for k in brain if k != "meta"}
+    undeclared = sorted(present - declared)
+    missing = sorted(declared - present)
+    incomplete = sorted(k for k in declared if not (idx[k] or {}).get("is")
+                        or not (idx[k] or {}).get("read_by"))
+    # `roles` is what brain_view.py actually SERVES on. A section declared without it would be
+    # silently invisible to every role - the same silent-absence shape as holes #7/#8. A section
+    # served to nobody is legal (doctrine_legacy) but must SAY so via withheld_why.
+    no_roles = sorted(k for k in declared if "roles" not in (idx[k] or {}))
+    dead_unexplained = sorted(k for k in declared
+                              if not ((idx[k] or {}).get("roles") or [])
+                              and "roles" in (idx[k] or {})
+                              and not (idx[k] or {}).get("withheld_why"))
+    print("\nSECTION INDEX (meta.sections): %d declared, %d present" % (len(declared), len(present)))
+    for k in sorted(present):
+        e = idx.get(k) or {}
+        print("   %-22s %-9s %-13s %s"
+              % (k, "required" if e.get("required") else "optional",
+                 ",".join(e.get("roles") or []) or "-served to none-",
+                 (e.get("read_by") or "-")[:40]))
+    fails = []
+    if undeclared:
+        fails.append("UNDECLARED section(s) - present in the brain, absent from meta.sections: %s"
+                     % ", ".join(undeclared))
+    if missing:
+        fails.append("DECLARED but ABSENT section(s): %s" % ", ".join(missing))
+    if incomplete:
+        fails.append("declared without `is` and `read_by`: %s" % ", ".join(incomplete))
+    if no_roles:
+        fails.append("declared without `roles` - brain_view would serve it to nobody, silently: %s"
+                     % ", ".join(no_roles))
+    if dead_unexplained:
+        fails.append("served to NO role and no `withheld_why` saying why: %s"
+                     % ", ".join(dead_unexplained))
+    return fails
+
+
 def run_validate():
     brain = json.load(open(BRAIN, encoding="utf-8"))
     plays = brain["plays"]
     schema = brain.get("meta", {}).get("schema")
     print("brain %s | schema %s | %d plays"
           % (brain.get("meta", {}).get("version"), schema or "NONE (pre-migration)", len(plays)))
+    section_fails = check_sections(brain)
     bad = Counter()
     for p in plays:
         if p.get("status") not in STATUS_ENUM:
@@ -476,6 +529,11 @@ def run_validate():
     print("\nopen items (these are the work list, not errors):")
     for k, v in bad.most_common():
         print("   %-24s %3d of %d" % (k, v, len(plays)))
+    if section_fails:
+        print("\nHARD FAIL - section index:")
+        for f in section_fails:
+            print("   %s" % f)
+        return 1
     return 0
 
 

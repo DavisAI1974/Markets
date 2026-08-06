@@ -90,6 +90,19 @@
    "status": "DUE",
    "confirmations": [],
    "refutations": []
+  },
+  {
+   "play_id": "mission.brief_continuity_and_shape",
+   "registered_session": "S114",
+   "merged_status": "PROVISIONAL",
+   "test_group": "g24",
+   "hypothesis": "Greg, S114: 'That will probably help clear up our unattached days and part of the drift.' The mission brief tells a specialist the path is ONE continuous object sampled at eight times, that each point inherits from the one before, and that its day is a link in a chain rather than a standalone estimate. If the unattached-day and drift problems are partly an ORIENTATION fault - agents told to do math and never told the values flow together - the brief should move them.",
+   "what_is_measured_and_it_does_not_need_the_day_to_be_RIGHT": "These are SHAPE properties, measurable on a contaminated rehearsal as well as a fresh run, which matters because g22/g23 have already seen the curve (D39: we test ON the runs, not against them). (a) ATTACHMENT: day N's emitted close level vs day N+1's emitted open level - the count of days that do not connect. (b) CONTRACT ARITHMETIC: first path point == 0 and last == (day-move minus gap); S110 measured g23 at 8 of 10 days mismatched, both Mondays by exactly +400. (c) STEP STRUCTURE: path segments that move with no named liquidity event between them. (d) DRIFT SHARE: |drift| as a fraction of sum|err| - the 'survives' number, which is the part of the error that does NOT cancel and is therefore the part a continuity fault would produce.",
+   "falsifier": "REFUTED if, under the brief, (a) the unattached-day count and the contract-arithmetic mismatch count are no better than the s105.5 baseline, AND (b) drift share is unchanged or worse. Refuted independently if specialists report the brief but their posteriors show no reference to inheritance between points - i.e. it was read and not used. NOTE THE ASYMMETRY: a fall in drift share alone does NOT confirm it, because drift share also falls when the market gets quieter - that exact artifact produced the fake 939 -> 592 'improvement' (realized moves fell 799 -> 457 over the same span). Confirmation requires the mechanical counts (a) to move.",
+   "baseline_named_per_A1": "s105.5 blind, same block. g22 blind of record: 4/10 direction, sum|err| 5,965, drift -1,815, survives 30%. The mechanical counts (attachment, contract arithmetic) must be computed on that committed blind BEFORE the rehearsal, or there is no baseline to beat.",
+   "status": "DUE",
+   "confirmations": [],
+   "refutations": []
   }
  ]
 }

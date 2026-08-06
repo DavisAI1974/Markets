@@ -129,6 +129,54 @@ def _served_days(gid):
     return {k: v for k, v in d.items() if re.fullmatch(r"\d{8}", k)}
 
 
+def _brief_lines(obj, out, depth=0):
+    """Flatten the brain's briefing structure to prose. Keys become headings, lists become bullets.
+    No interpretation and no summarising - every leaf is emitted verbatim, so the brief a specialist
+    reads IS what the brain says, not a paraphrase of it."""
+    pad = "  " * depth
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "note":                       # the note explains the section to US, not to them
+                continue
+            label = k.replace("_", " ")
+            if depth == 0:
+                out.append("")
+                out.append(label.upper())
+            elif isinstance(v, str):              # leaf: keep key and value on one block
+                out.append("%s%s: %s" % (pad, label, v))
+                continue
+            else:
+                out.append("%s%s:" % (pad, label))
+            _brief_lines(v, out, depth + 1)
+    elif isinstance(obj, list):
+        for it in obj:
+            if isinstance(it, (dict, list)):
+                _brief_lines(it, out, depth)
+            else:
+                out.append("%s- %s" % (pad, it))
+    else:
+        out.append("%s%s" % (pad, obj))
+
+
+def mission_brief(role):
+    """THE PRE-LAUNCH BRIEF, generated from brain.mission - never typed into a template.
+
+    Greg, S114: "If i told you to start build py files but you didn't know why you were building
+    them you wouldn't do a good job and there would be no continuity." A brief kept as template
+    prose would drift from the brain the first time either was edited; generating it means the
+    orientation an agent receives is always the current one, and it is versioned with the brain.
+    """
+    import brain_view
+    brain = brain_view.load()
+    view, served, _ = brain_view.build(brain, role, "briefing")
+    if "mission" not in view:
+        raise SlotError("MISSION: brain.mission is not served to role %r at phase 'briefing' - "
+                        "check meta.sections['mission'].roles/phase" % role)
+    out = []
+    _brief_lines(view["mission"], out)
+    return "\n".join(out)
+
+
 def cal_facts(gid):
     """THE NC-1 FIX. Every calendar premise is QUOTED from the served flow_calendar with its field
     name and value beside it, so a directive cannot assert a calendar fact the data contradicts.
@@ -195,6 +243,18 @@ def slots(gid, day=None, spec=None):
         "STATE": (os.path.relpath(_state_path(gid), ROOT), "committed artifact"),
         "ANCHOR": (os.path.relpath(anchor, ROOT), "committed artifact"),
         "BRAIN_V": (brain_v, "knowledge/ng_brain.json meta.version"),
+        # ROLE-SCOPED BRAIN VIEW (S114). Greg: "We don't want the agents seeing nonsense when they
+        # are making a forecast." The path carries the brain version so a stale view cannot be
+        # silently reused across a merge - a view built off s105.4 is a different object.
+        "VIEW": ("data/brain_view/%s_specialist_%s.json" % (gid, brain_v),
+                 "brain_view.py --role specialist (regenerable; data/ is disposable per D34)"),
+        # THE MISSION BRIEF, rendered INTO the prompt (S114). Greg: "If i told you to start build py
+        # files but you didn't know why you were building them you wouldn't do a good job and there
+        # would be no continuity." It is delivered pre-launch and is deliberately NOT in the working
+        # view - orientation, not something to consult mid-curve. Generated, never typed: a brief
+        # kept in a template would drift from the brain the moment either was edited.
+        "MISSION": (mission_brief("specialist"),
+                    "GENERATED from brain.mission via brain_view --phase briefing"),
         "DAYS": (", ".join(g["days"]), "group_config.GROUPS[%s].days" % gid),
         "WINDOW": (str(g.get("window")), "group_config"),
         "SEAM": (str(g.get("seam")), "group_config"),
