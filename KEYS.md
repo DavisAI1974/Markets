@@ -31,6 +31,39 @@ or `bash -lc`; `session_bootstrap.py` handles this.
 
 
 
+## S115 — THE PASTE RITUAL ENDS: MARKETS_ environment variables (one-time setup)
+
+**THE PROBLEM S114 HALVED AND S115 CLOSES.** SSM took the paste from four values to two, but the
+AWS bootstrap pair still had to be hand-dropped every session, and every fresh session opened with
+a false "no keys" alarm. Root cause: the container injects `proxy-injected` PLACEHOLDERS under the
+bare `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` names, so the real values could never ride the
+process environment - the one channel that DOES survive into every fresh container (the Claude
+Code ENVIRONMENT configuration injects its variables at session start).
+
+**THE FIX: a name that cannot collide.** `creds.py` now resolves `MARKETS_<NAME>` FIRST, for every
+key. The placeholders live under the bare names; the prefixed names are ours alone.
+
+**GREG'S ONE-TIME STEP (this is the whole setup):** in the Claude Code environment settings for
+this environment (claude.ai -> Code -> environment -> environment variables), add:
+
+    MARKETS_AWS_ACCESS_KEY_ID     = <the access key id>
+    MARKETS_AWS_SECRET_ACCESS_KEY = <the secret>
+
+After that, every fresh session: the SessionStart hook detects the pair by EFFECTIVE resolution
+(creds.py, not file presence), restores the NG data plane automatically, and SSM supplies
+DATABENTO_API_KEY + EIA_API_KEY on first ask. Zero pasting, zero manual steps.
+
+**VERIFIED S115, both directions (NC-3):** with ONLY `MARKETS_` vars set (env file and
+`~/.aws/credentials` both removed): STS PASS account tail 4170, SSM retrieval PASS (lengths 32/40),
+status reports every key resolvable. With nothing set: the hook's loud no-op branch fires.
+`creds.aws_client()` now passes the RESOLVED pair to boto3 explicitly, so `~/.aws/credentials` is
+no longer needed at all; `restore_substrate.py`'s bare `boto3.client` (which only worked when that
+file happened to exist) was fixed to `creds.aws_client()` the same session.
+
+**SECURITY POSTURE UNCHANGED:** the values live in the environment configuration (outside the
+repo), never in git, never echoed. Rotation: update the two environment variables, re-run
+`creds.py --sync-ssm`. D1 (no rotation during the walk) stands until go-live.
+
 ## S114 — DURABLE RETRIEVAL: SSM Parameter Store (SecureString)
 
 **THE PROBLEM.** `~/.config/markets/env` is the canonical home and is correct — chmod 600, outside

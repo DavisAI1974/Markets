@@ -62,8 +62,13 @@ if [ -f research/kalshi/restore_substrate.py ]; then
   pip install --quiet numpy pandas matplotlib boto3 databento >/dev/null 2>&1 \
     || echo "[session_start] kalshi dep install had issues (continuing)"
 
-  if [ -f "$HOME/.aws/credentials" ] && ! grep -qi placeholder "$HOME/.aws/credentials" 2>/dev/null; then
-    echo "[session_start] AWS creds present - restoring the NG data plane (S3 + vol_regime rebuild)..."
+  # S115: detect credentials by EFFECTIVE resolution (creds.py), not by file presence.
+  # creds.get walks MARKETS_ env vars (set once in the Claude Code environment config,
+  # injected into every fresh container) -> ~/.config/markets/env -> legacy. With the
+  # environment config carrying MARKETS_AWS_ACCESS_KEY_ID / MARKETS_AWS_SECRET_ACCESS_KEY,
+  # a fresh session restores the data plane with ZERO manual steps.
+  if python3 -c "import sys; sys.path.insert(0,'research/kalshi'); import creds; sys.exit(0 if (creds.get('AWS_ACCESS_KEY_ID',required=False) and creds.get('AWS_SECRET_ACCESS_KEY',required=False)) else 1)" 2>/dev/null; then
+    echo "[session_start] AWS creds resolvable - restoring the NG data plane (S3 + vol_regime rebuild)..."
     env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
       python3 research/kalshi/restore_substrate.py 2>&1 | tail -5 \
       || echo "[session_start] restore_substrate had issues - VERIFY BEFORE STAGING"
@@ -73,13 +78,15 @@ if [ -f research/kalshi/restore_substrate.py ]; then
       || echo "[session_start] state_health did not run"
   else
     echo "[session_start] ================================================================"
-    echo "[session_start] NG DATA PLANE NOT RESTORED - no AWS credentials found."
+    echo "[session_start] NG DATA PLANE NOT RESTORED - no AWS credentials resolvable."
     echo "[session_start]   data/ is EMPTY or STALE. Staging a group, re-staging, and the"
     echo "[session_start]   round-2 handoff on any group staged before S108 will FAIL or,"
     echo "[session_start]   worse, read as an empty block. Committed artifacts are fine:"
     echo "[session_start]   a group staged at S108 or later runs BOTH rounds without data/."
-    echo "[session_start]   To restore:  write ~/.aws/credentials (chmod 600), then"
-    echo "[session_start]   env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \\"
+    echo "[session_start]   PERMANENT FIX (one-time): add MARKETS_AWS_ACCESS_KEY_ID and"
+    echo "[session_start]   MARKETS_AWS_SECRET_ACCESS_KEY to the Claude Code ENVIRONMENT"
+    echo "[session_start]   configuration - every future session then restores automatically."
+    echo "[session_start]   Session-only fix: write ~/.config/markets/env (chmod 600), then"
     echo "[session_start]     python3 research/kalshi/restore_substrate.py"
     echo "[session_start] ================================================================"
   fi

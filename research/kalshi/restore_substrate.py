@@ -77,8 +77,11 @@ def log(m):
 
 
 def main(groups):
-    import boto3
-    s3 = boto3.client("s3", REGION)
+    # S115: creds.aws_client, never bare boto3 - it resolves the pair from MARKETS_ env vars,
+    # ~/.config/markets/env or legacy, and is immune to the container's placeholder injection.
+    # A bare client here worked only when ~/.aws/credentials happened to exist.
+    import creds
+    s3 = creds.aws_client("s3", REGION)
     try:
         s3.list_objects_v2(Bucket=BUCKET, MaxKeys=1)
     except Exception as e:

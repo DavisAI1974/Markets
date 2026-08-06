@@ -5,10 +5,17 @@ records, S3 = data. A credential is NEITHER - it must never be in git and must n
 scratchpad directory that dies with the session. So it lives outside the repo tree entirely.
 
 RESOLUTION ORDER, first hit wins:
-  1. the process environment (works for CI, cron and one-off overrides)
+  0. MARKETS_<NAME> in the process environment (S115) - set ONCE in the Claude Code environment
+                                configuration, injected into every fresh container automatically.
+                                The prefix exists because the harness injects proxy-injected
+                                PLACEHOLDERS under the bare AWS names; a prefixed name can never
+                                collide with them. This is what ends the per-session paste.
+  1. the process environment (works for CI, cron and one-off overrides; placeholders ignored)
   2. ~/.config/markets/env      chmod 600, outside the repo, the standard location
   3. <repo>/scratchpad/aws.env  LEGACY - still read so nothing breaks mid-migration, but it WARNS,
                                 because that path is exactly what this module exists to end.
+  4. AWS SSM Parameter Store    non-bootstrap keys only (S114) - needs the AWS pair to be
+                                resolvable by 0-3 first.
 Never logs, prints or returns a value into an artifact. Callers get the string or a clear error.
 """
 import os
@@ -33,6 +40,19 @@ def _is_placeholder(v):
     return bool(v) and v.strip().lower().startswith(PLACEHOLDERS)
 
 
+def _from_env(name):
+    """Process-environment resolution: MARKETS_<NAME> first (S115, un-shadowable by the
+    container's placeholder injection because the name never collides), then the bare name
+    with placeholders filtered out."""
+    v = os.environ.get("MARKETS_" + name)
+    if v and not _is_placeholder(v):
+        return v.strip()
+    v = os.environ.get(name)
+    if v and not _is_placeholder(v):
+        return v
+    return None
+
+
 def _from_file(path, name):
     if not os.path.exists(path):
         return None
@@ -48,9 +68,7 @@ SSM_PREFIX = "/markets"          # SecureString home for non-bootstrap keys (S11
 
 
 def get(name, required=True):
-    v = os.environ.get(name)
-    if _is_placeholder(v):
-        v = None                      # the container's injected stub is NOT a credential
+    v = _from_env(name)               # MARKETS_-prefixed first; placeholder stubs are NOT credentials
     if v:
         return v
     v = _from_file(HOME_ENV, name)
@@ -104,6 +122,15 @@ def aws_client(service, region):
     known-good key) looks like a dead key rather than a shadowed one.
     """
     import boto3
+    # S115: pass the RESOLVED pair explicitly when we have one - from MARKETS_ env vars, the env
+    # file, or legacy. This makes a fresh container with only environment-config vars work with
+    # zero setup (no ~/.aws/credentials write needed), and it is immune to the placeholder trap
+    # by construction.
+    ak = get("AWS_ACCESS_KEY_ID", required=False)
+    sk = get("AWS_SECRET_ACCESS_KEY", required=False)
+    if ak and sk:
+        return boto3.client(service, region_name=region,
+                            aws_access_key_id=ak, aws_secret_access_key=sk)
     for k in _AWS_VARS:
         if _is_placeholder(os.environ.get(k)):
             os.environ.pop(k, None)
@@ -111,15 +138,40 @@ def aws_client(service, region):
 
 
 def status():
-    """Which secrets are resolvable, by NAME only - never a value."""
-    for n in ("EIA_API_KEY", "AWS_ACCESS_KEY_ID", "DATABENTO_API_KEY"):
-        src = ("CONTAINER PLACEHOLDER (ignored)" if _is_placeholder(os.environ.get(n)) else
-               "env" if os.environ.get(n) else
-               "~/.config/markets/env" if _from_file(HOME_ENV, n) else
-               "LEGACY scratchpad" if _from_file(LEGACY, n) else "ABSENT")
-        print(f"  {n:<22} {src}")
-    print(f"  {'(aws fallback)':<22} ~/.aws/credentials "
-          f"{'present' if os.path.exists(os.path.expanduser('~/.aws/credentials')) else 'ABSENT'}"
+    """EFFECTIVE resolution per key, by NAME only - never a value.
+
+    S115: the old display reported file presence, not what get() can actually resolve - so a
+    fresh container printed ABSENT for keys the SSM fallback would have fetched on first ask,
+    and every session opened with a false 'no keys' alarm. This walks the same order get()
+    uses, and for SSM-eligible keys with nothing local it PROBES SSM and says retrievable.
+    """
+    names = ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "DATABENTO_API_KEY", "EIA_API_KEY")
+    aws_ok = bool(get("AWS_ACCESS_KEY_ID", required=False) and
+                  get("AWS_SECRET_ACCESS_KEY", required=False))
+    for n in names:
+        if os.environ.get("MARKETS_" + n) and not _is_placeholder(os.environ.get("MARKETS_" + n)):
+            src = "MARKETS_ env (environment config)"
+        elif os.environ.get(n) and not _is_placeholder(os.environ.get(n)):
+            src = "env"
+        elif _from_file(HOME_ENV, n):
+            src = "~/.config/markets/env"
+        elif _from_file(LEGACY, n):
+            src = "LEGACY scratchpad (move it - D33/D34)"
+        elif n not in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY") and aws_ok:
+            try:
+                aws_client("ssm", os.environ.get("AWS_REGION") or "us-east-2").get_parameter(
+                    Name=f"{SSM_PREFIX}/{n}", WithDecryption=True)
+                src = "SSM (retrievable on first ask)"
+            except Exception:
+                src = "ABSENT (not local, not in SSM)"
+        else:
+            src = "ABSENT"
+        note = ""
+        if _is_placeholder(os.environ.get(n)):
+            note = "  [container placeholder in env: ignored]"
+        print(f"  {n:<24} {src}{note}")
+    print(f"  {'(aws fallback)':<24} ~/.aws/credentials "
+          f"{'present' if os.path.exists(os.path.expanduser('~/.aws/credentials')) else 'absent'}"
           f"  - use creds.aws_client(), not bare boto3.client()")
 
 
