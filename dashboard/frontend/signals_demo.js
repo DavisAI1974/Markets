@@ -120,14 +120,14 @@
     if (!tape || !panel || renderingSignals) return;
     renderingSignals = true;
     try {
-      const signals = (snapshot.signals || []).slice(0, 32);
+      const signalRows = (snapshot.signals || []).slice(0, 32);
       const kicker = panel.querySelector(".panel-kicker");
       const h2 = panel.querySelector("h2");
       const count = panel.querySelector(".panel-header .text-button");
       if (kicker) kicker.textContent = "BRAIN-CONSUMED SIGNALS";
       if (h2) h2.textContent = `Signals in Use · ${snapshot.day}`;
       if (count) count.textContent = `${snapshot.resolved_definition_count}/${snapshot.definition_count} definitions resolved`;
-      tape.innerHTML = signals.map(signal => {
+      tape.innerHTML = signalRows.map(signal => {
         const first = (signal.values || []).find(v => v.available) || (signal.values || [])[0] || {};
         const status = signal.status === "resolved" ? "FED" : signal.status.toUpperCase();
         return `<div class="delta-row" title="${esc(signal.example_path)}">
@@ -135,6 +135,7 @@
           <div><strong>${esc(signal.field)}</strong><small>${esc(first.path || signal.example_path)} = ${esc(fmt(first.value))}</small></div>
           <em class="${signal.status === "awaiting" ? "muted" : ""}">${signal.brain_mentions} refs · ${status}</em></div>`;
       }).join("");
+      tape.dataset.demoSignalsRendered = "true";
       tape.title = snapshot.provenance || "";
       ensureBadge(panel, "REAL REGISTRY", snapshot.note);
     } finally {
@@ -188,16 +189,12 @@
   document.addEventListener("DOMContentLoaded", () => {
     setTimeout(refresh, 800);
     $("#asofDay")?.addEventListener("change", () => setTimeout(refresh, 350));
-    const tape = $("#deltaTape");
-    if (tape) {
-      const observer = new MutationObserver(() => {
-        if (!renderingSignals && latest?.signals) setTimeout(() => renderSignals(latest.signals), 50);
-      });
-      observer.observe(tape, { childList: true });
-    }
     setInterval(refresh, 60000);
     setInterval(() => {
-      if (latest) setEnvironment(latest.feed, latest.signals);
+      if (!latest) return;
+      setEnvironment(latest.feed, latest.signals);
+      const tape = $("#deltaTape");
+      if (tape && tape.dataset.demoSignalsRendered !== "true") renderSignals(latest.signals);
     }, 3000);
   });
 })();
