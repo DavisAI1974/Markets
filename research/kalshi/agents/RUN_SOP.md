@@ -790,7 +790,12 @@ SPAWN PARAMETERS
   {GID}_actual.json (realized price paths), {GID}_mbo_evidence.json (replayed tape evidence),
   {GID}_exit_states.json (actual HE24 exits), {ANCHOR}, forecasts/grp{N}.json (the IMMUTABLE
   blind — never edit), forecasts/g{N}_blind_round1/grp{N}_mbo_specialist_{X}.json (your own blind
-  posterior), knowledge/refinement_architecture_doctrine.md.
+  posterior).
+  (S115: `knowledge/refinement_architecture_doctrine.md` was REMOVED from this list. Its
+  content was merged into the brain at S103 and its last un-merged field - the FLOW line -
+  was merged at S115, so the brain's `doctrine.refinement_architecture` is now the ONLY
+  copy. Two copies of one doctrine with one of them served to agents is the S105 defect
+  that cost a session to diagnose. Do not re-add it.)
 - RUN DIRECTIVE (verbatim from the group's proposal/directive; do not reinterpret): {DIRECTIVE}
 
 OUTPUT — write forecasts/g{N}_refine_perday/grp{N}_{X}_{DAY}.json with the shared file's output

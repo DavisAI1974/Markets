@@ -740,6 +740,58 @@ def check_field_types(plays):
     return fails
 
 
+def check_cited_files(brain):
+    """S115 - A CITATION THAT CANNOT BE OPENED IS A HARD ERROR, not a note.
+
+    Greg, S115: "Let's clear this all up now, is there another hidden doc somewhere". The answer
+    was yes, and worse: three plays served to every specialist cited `blind_class_C/D/E.md`, files
+    DELETED at S105 by design (D7 - blind and refine read the identical committed rule files, so no
+    blind-specific file may exist). The citations sat dead for ten sessions and nothing reported
+    them, because nothing ever checked that a cited file exists.
+
+    Same posture as D34's `_is_machine_path`, which made a desktop path a hard validation error
+    rather than a note: a reference the reader cannot follow is a defect whether the content behind
+    it was good or not. Scoped to sections actually SERVED to a role - a citation inside
+    doctrine_legacy (read_by nobody) cannot mislead anyone.
+
+    Deliberately NOT a git check: the question is whether the file is on disk for the agent that
+    was told to open it, which is what an agent actually experiences.
+    """
+    import re as _re
+    idx = (brain.get("meta") or {}).get("sections") or {}
+    served = [k for k, v in idx.items()
+              if isinstance(v, dict) and (v.get("roles") or [])]
+    pat = _re.compile(r"([A-Za-z0-9_./-]+\.md)")
+    fails = []
+    for sect in served:
+        node = brain.get(sect)
+        items = node if isinstance(node, list) else (list(node.values()) if isinstance(node, dict) else [])
+        for it in items:
+            for m in pat.finditer(json.dumps(it)):
+                f = m.group(1)
+                base = os.path.basename(f)
+                cands = [os.path.join(HERE, f), os.path.join(HERE, base),
+                         os.path.join(HERE, "agents", base), os.path.join(HERE, "knowledge", base),
+                         os.path.join(os.path.dirname(os.path.dirname(HERE)), base),
+                         os.path.join(os.path.dirname(os.path.dirname(HERE)), f)]
+                if any(os.path.exists(c) for c in cands):
+                    continue
+                # A CITATION THAT DECLARES ITS OWN DEATH IS NOT A DEAD CITATION - it is the
+                # repair. The S115 fix keeps the filename on purpose (a reader must be able to see
+                # WHICH file went and why, per the standing rule that an absence announces
+                # itself), so a naive existence check would flag its own cure forever and the gate
+                # would show permanent red - which is the failure D33 warns about.
+                tail = json.dumps(it)[m.end():m.end() + 240].upper()
+                if any(w in tail for w in ("DELETED", "SUPERSEDED", "DOES NOT EXIST", "RETIRED")):
+                    continue
+                who = it.get("id") or it.get("topic") or "?"
+                fails.append("%s[%s] cites %s - THE FILE DOES NOT EXIST. Either repair the "
+                             "citation (say what happened to it) or strike it; a reader told to "
+                             "open it finds nothing and nothing reports the miss."
+                             % (sect, who, f))
+    return sorted(set(fails))
+
+
 def run_validate():
     brain = json.load(open(BRAIN, encoding="utf-8"))
     plays = brain["plays"]
@@ -750,6 +802,7 @@ def run_validate():
     type_fails = check_field_types(plays)
     action_fails = check_instance_actions(plays)
     honesty_fails = check_status_honesty(plays)
+    cited_fails = check_cited_files(brain)
     bad = Counter()
     for p in plays:
         if p.get("status") not in STATUS_ENUM:
@@ -765,7 +818,7 @@ def run_validate():
     print("\nopen items (these are the work list, not errors):")
     for k, v in bad.most_common():
         print("   %-24s %3d of %d" % (k, v, len(plays)))
-    if section_fails or type_fails or action_fails or honesty_fails:
+    if section_fails or type_fails or action_fails or honesty_fails or cited_fails:
         if section_fails:
             print("\nHARD FAIL - section index:")
             for f in section_fails:
@@ -781,6 +834,10 @@ def run_validate():
         if honesty_fails:
             print("\nHARD FAIL - status honesty (S114): a live status on dead evidence")
             for f in honesty_fails:
+                print("   %s" % f)
+        if cited_fails:
+            print("\nHARD FAIL - dead citation (S115): a served section names a file that is gone")
+            for f in cited_fails:
                 print("   %s" % f)
         return 1
     return 0

@@ -7879,7 +7879,7 @@
    "legacy_notes": {
     "evidence": "D self-analysis (SELF_EVAL_S105_D_thursday.md): 9/14 misses = default DOWN into bearish bleed, print RALLIES (1030 +2590, 1106 +1330, 0416 +720, 0430 +1230). Cascade root: 0416 flipped block cum -540->+180, 0430 -510->+720. G17 test-drive: gate FIRED on 0416 (incoherent D-1 0.472/0.522 + over-ext -> two-sided) and correctly SPARED 0423 (coherent sell 0.415/0.40 -> stayed DOWN).",
     "forward_evidence": "G17 refine 10/10: 0416 flipped DOWN->+720 (err 0 at r2), 0423 spared+held DOWN. Test-drive: fired 0416, spared 0423. G18 blind = scored forward test (pending). | G18 blind: D spared coherent-buy 0430 (UP, only up-day the blind caught) and split a same-net-flow pair via big_print_b_share; refine 0430 +1200/0507 +710 both UP.",
-    "provenance": "S105 D tweak (blind_class_D.md [DELETED S105 BY DESIGN - D7: blind and refine read the IDENTICAL committed rule files, so no blind-specific file may exist. The surviving canonical lens is agents/mbo_specialist_D.md, which you are already told to read. Citation repaired S115; the play's content is unchanged] + mbo_specialist_D.md)",
+    "provenance": "S105 D tweak (blind_class_D.md + mbo_specialist_D.md)",
     "merged": "s102.6 S105",
     "declined_evidence": {
      "g20_both_thursdays": "Run honestly on both days, only tell (b) fires on each - below the 2-of-3 bar - so the gate EXPLICITLY SPARED the full band on both, and the blind still emitted +150 and -450. Recorded because it establishes the gate was not the constraint: the failure was the absent generator, not an over-firing veto."
@@ -8171,7 +8171,7 @@
    "legacy_notes": {
     "evidence": "C self-analysis (SELF_EVAL_S105_C_wednesday.md): chain-default over turn-state, 75% of misses, Wednesday drift. G17 test-drive: window fix 2-of-3 -> >=2-of-~5 non-consecutive; the LITERAL arm then fired on 0422 (04-16 0.692 + 04-21 0.609, spaced) on its own while sparing 0414 (0 fires) and 0415 (1 fire) - no over-fire.",
     "forward_evidence": "G17 refine: 0422 flip UP (+130 vs +140) via the literal arm after the >=2-of-~5 window fix; 0414/0415 correctly held. G18 blind = scored forward test (pending). | G18 blind: C used the direct sides to differentiate 3 same-b_share sessions; the accumulation fired on adjacent D/B days (covering), C's 0506 RTS-up was wrong (buy-absorb-failing DOWN) - the arm needs price-turn confirmation.",
-    "provenance": "S105 C tweak + test-drive #2 window fix (blind_class_C.md [DELETED S105 BY DESIGN - D7: blind and refine read the IDENTICAL committed rule files, so no blind-specific file may exist. The surviving canonical lens is agents/mbo_specialist_C.md, which you are already told to read. Citation repaired S115; the play's content is unchanged] + mbo_specialist_C.md)",
+    "provenance": "S105 C tweak + test-drive #2 window fix (blind_class_C.md + mbo_specialist_C.md)",
     "merged": "s102.6 S105",
     "assumption_retired_bshare_basis": {
      "assumed": "That the 'sub-0.50 sell tape' condition means the crowd is net selling.",
@@ -8515,7 +8515,7 @@
    "legacy_notes": {
     "evidence": "G17: 0417 gate fired covering-UP correctly (+40 actual); the blind then RE-FIRED covering-UP on 0424 (+250 guess, -380 actual) = the miss. Test-drive: rule FIRED - COT byte-identical 0421->0424 (spent fuel) + big_print only 0.536 -> reverted 0424 to DOWN, while leaving 0417 intact.",
     "forward_evidence": "G17 refine 10/10: 0424 reverted +250->-370 (err +10), 0417 covering flip left intact. Test-drive fired 0424 / spared 0417. G18 blind = scored forward test (pending). | G18: E 0508 covering-self-limiting passed clean (0501 spent_fade, not re-fired); refine confirmed 0508 aligned-delivered DOWN.",
-    "provenance": "S105 E tweak (blind_class_E.md [DELETED S105 BY DESIGN - D7: blind and refine read the IDENTICAL committed rule files, so no blind-specific file may exist. The surviving canonical lens is agents/mbo_specialist_E.md, which you are already told to read. Citation repaired S115; the play's content is unchanged] + mbo_specialist_E.md); the G17 0424 lesson",
+    "provenance": "S105 E tweak (blind_class_E.md + mbo_specialist_E.md); the G17 0424 lesson",
     "merged": "s102.6 S105"
    },
    "audit": {
@@ -15833,7 +15833,7 @@
    "original_key": "refinement_architecture_s103",
    "kind": "doctrine",
    "body": {
-    "provenance": "GREG, S103 (verbatim intent). Was research/kalshi/knowledge/refinement_architecture_doctrine.md (PENDING); MERGED here after the G15 MBO refine completed, effective G16/G17 MBO. **S115: the standalone file is now SUPERSEDED and has been removed from RFN-1's read list.** Its FLOW line was the only field not already here and is merged above, so this entry is the ONLY copy of this doctrine. Greg, S115: 'merge the reasoning file' - two copies of one doctrine, one of them served to agents, is the S105 defect (blind_shared.md said USE the firehose while blind_class_* said NO MBO - both files were DELETED at S105 and are named here only as history, not as anything to open).",
+    "provenance": "GREG, S103 (verbatim intent). Was research/kalshi/knowledge/refinement_architecture_doctrine.md (PENDING); MERGED here after the G15 MBO refine completed, effective G16/G17 MBO. **S115: the standalone file is now SUPERSEDED and has been removed from RFN-1's read list.** Its FLOW line was the only field not already here and is merged above, so this entry is the ONLY copy of this doctrine. Greg, S115: 'merge the reasoning file' - two copies of one doctrine, one of them served to agents, is the S105 defect (blind_shared.md said USE the firehose while blind_class_* said NO MBO).",
     "load_bearing_principle": "The OLD (blind) prediction framework STAYS the CORE forecasting model. L1+trades+MBO is NOT a replacement predictor - it is a CAUSAL REFINEMENT LAYER that decides whether the immutable blind is still valid as the session unfolds. The refined output is a POSTERIOR UPDATE OF THE IMMUTABLE BLIND, never a new forecast from scratch. Do not replace a working predictor with a reactive order-flow model.",
     "pieces_in_order": [
      "1 IMMUTABLE BLIND = the starting map (direction, magnitude, timing, turns, daily path; pre-cutoff info only). Never rewritten.",

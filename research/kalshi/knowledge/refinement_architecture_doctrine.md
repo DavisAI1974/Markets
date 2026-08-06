@@ -1,6 +1,14 @@
 # REFINEMENT ARCHITECTURE DOCTRINE (Greg, S103) - MERGE INTO ng_brain.json AFTER the G15 MBO run
 
-STATUS: MERGED (S103, brain s102.4). Now lives in ng_brain.json ->
+STATUS: **SUPERSEDED S115 - DO NOT READ THIS FILE, AND DO NOT PUT IT BACK IN ANY READ LIST.**
+The brain is the only copy. Its last un-merged field (the FLOW line below) was merged at S115
+into `doctrine.refinement_architecture`, and RFN-1's read list no longer names this file.
+Kept as a dated RECORD of what was written at S103, never as a source. Greg, S115: 'merge the
+reasoning file' - two copies of one doctrine with one of them served to agents is the S105
+defect (blind_shared.md said USE the firehose while blind_class_* said NO MBO), and it cost a
+session to diagnose.
+
+ORIGINAL STATUS LINE: MERGED (S103, brain s102.4). Now lives in ng_brain.json ->
 doctrine_tier3.refinement_architecture_s103, effective G16/G17 MBO. The G15 MBO refine result and the
 5-specialist lesson proposals landed alongside it at doctrine_tier3.mbo_refinement_g15_findings. This
 file is kept as the human-readable source of the doctrine.
