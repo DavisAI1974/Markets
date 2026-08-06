@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://davisai.ai/schemas/frankie-outcome-v1.json",
+  "title": "Frankie immutable resolved outcome",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["resolved_at", "result", "source_provenance"],
+  "properties": {
+    "resolved_at": {"type": "string", "format": "date-time"},
+    "result": {"type": "string", "minLength": 1},
+    "metrics": {"type": "object"},
+    "notes": {"type": "string"},
+    "execution_enabled": {"const": false},
+    "source_provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["source", "knowable_at", "content_hash"],
+        "properties": {
+          "source": {"type": "string", "minLength": 1},
+          "knowable_at": {"type": "string", "format": "date-time"},
+          "content_hash": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}
