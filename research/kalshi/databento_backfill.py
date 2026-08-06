@@ -89,9 +89,24 @@ def _client():
 
 
 def _sym(symbol: str) -> tuple[str, str]:
-    """(databento symbol, stype_in). Continuous front-month (roll rule ROLL) if a bare root, else raw."""
+    """(databento symbol, stype_in). Continuous front-month (roll rule ROLL) if a bare root, else raw.
+
+    S115 - THE DEFAULT ROLL IS `v` AND THE WALK'S BASIS IS `n`, WHICH IS A SILENT WRONG-SERIES TRAP.
+    `ROLL = "v"` predates the S97 finding that NG.v.0 WHIPSAWS between contracts through an expiry
+    week (it flipped 1000<->1021 across G11, which is why G11 was re-pulled on NG.n.0 and why
+    vol_regime.py records n0 as "the G11+ walk basis" and v0 as "the G3-G10 walk basis"). A pull
+    that takes the default therefore lands the SUPERSEDED series under a name nothing distinguishes
+    - present, well-formed, plausible, wrong contract. Measured instance: the first S115 head pull
+    resolved NG.v.0 and was caught only by reading the cost line before the job finished.
+    This ANNOUNCES the resolution instead of changing the default silently (changing it would
+    re-point every caller mid-flight, including ones that legitimately want v0)."""
     if symbol.upper() in ROOTS:
-        return f"{symbol.upper()}.{ROLL}.0", "continuous"
+        s = f"{symbol.upper()}.{ROLL}.0"
+        if ROLL == "v":
+            print(f"[databento] NOTE: roll='v' -> {s}. The G11+ walk basis is .n.0 (OI-continuous); "
+                  f".v.0 whipsaws between contracts through expiry weeks (S97). Pass --roll n "
+                  f"unless you specifically want the G3-G10 volume-continuous series.")
+        return s, "continuous"
     return symbol, "raw_symbol"
 
 
