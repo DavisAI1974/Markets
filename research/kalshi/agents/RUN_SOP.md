@@ -63,6 +63,27 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.13 (S114): THE JUDGE'S DOCTRINE LEAVES THE BRAIN, AND EVERY ROLE IS DEBRIEFED.
+  (a) **`failure_localization` MOVED OUT of the brain** to `store/failure_judge.json` ->
+  `agents/failure_judge.md`, where the other single-role files already live. Greg's test was
+  *"if it's the cause of even 1 issue then move"*, and it was — but NOT for size (9.2 KB, 0.56% of
+  the brain, already phase-withheld from every forecaster). The issue was a CONTRADICTION:
+  `agents/mbo_refine_shared.md` line 39 is canonical, sits in the GOLD VAULT frozen 0444 under a
+  sha256 manifest, is the file every specialist is ordered to read in full FIRST, and names the
+  input as `knowledge/ng_brain.json` — while the v1.11 template said to read the view and NOT that
+  file. **That is the S105 root cause verbatim** (`blind_shared.md` said USE the MBO firehose, all
+  five `blind_class_*` said NO MBO) and it cost a session to diagnose. The template wording is
+  fixed at the source too, because removing the section alone would leave the WORDS contradicting
+  gold: BLD-1/RFN-1 now say the reasoning file's pointer is correct and the view IS that brain
+  minus other-phase sections. **THE RULE:** shared behaviour lives in the brain; doctrine ONE role
+  uses lives in that role's own file. A sharpening of "one brain doc", not a reversal.
+  (b) **DEBRIEF block on AUD-1, BLD-1, RFN-1 and FJ-1.** Greg: *"ask them if they like the new
+  brain setup"* and, earlier, *"ask them if they had all the tools available and it was a good
+  system for them."* Answered LAST and in the final message only, never in the JSON, so it cannot
+  contaminate a posterior; explicitly unscored, and it asks for bluntness because several things
+  changed at once and we do not know which helped. Five questions: tools/data gaps, the brain
+  view's shape (and what a play-relevance cut should key on — A-46), whether the mission brief
+  changed a decision or was inert, whether the decision order fit, and anything else.
 - v1.12 (S114): THE SPECIALIST IS TOLD WHAT IT WAS SERVED, AND WHERE A REPORTED GAP GOES.
   WHY: Greg asked *"Do the agents know about registry?"* and the answer, checked rather than
   assumed, was NO — none of the six templates mentioned any registry, and no specialist had ever
@@ -443,6 +464,21 @@ correctness; internal consistency is not evidence of correctness; cross-day comp
 field is your highest-yield technique; check LEVELS for plausibility, not only identities;
 separate DECLARED staleness/repairs (rank low) from SILENT defects (the hunt); the fix phase is
 NOT your job in this run — audit only.
+
+DEBRIEF - answer this LAST, in your final message only, NEVER in the JSON.
+Greg asks directly: did you have everything you needed, and do you like the new setup? This is
+not scored and it cannot hurt you. A blunt "this was noise" is more useful to us than politeness -
+we changed several things at once this session and we do not know which of them helped.
+  1. TOOLS AND DATA: did you have what you needed? Name anything missing, and anything served that
+     you could not interpret. If you opened the field inventory, say whether it changed what you
+     looked at; if you did not open it, say that too.
+  2. THE BRAIN VIEW: right shape? Too much, too little, wrong sections? You hold roughly 395k
+     tokens of brain, most of it plays. Would you rather have had fewer, more relevant plays - and
+     if so, what would you have wanted the selection keyed on?
+  3. THE MISSION BRIEF at the top: useful orientation, or padding you skimmed? Did knowing what the
+     curve is FOR change any decision you made, or was it inert?
+  4. THE ORDER: did the decision order fit the work, or did you have to fight it?
+  5. ANYTHING ELSE about the system that made your job harder than it needed to be.
 ```
 
 ### BLD-1 — blind per-day specialist (STEP 3, waves 1 and 3, and A's own day)
@@ -511,6 +547,21 @@ with the named measured quantity>, "plays_fired": [...], "plays_stood_down": [..
 "confidence": "low|med|high", "state_defects_and_gaps_reported": [...]}
 plus handoff_out when required above. Also return a concise prose summary of the day read.
 Declare any input you found defective rather than silently working around it.
+
+DEBRIEF - answer this LAST, in your final message only, NEVER in the JSON.
+Greg asks directly: did you have everything you needed, and do you like the new setup? This is
+not scored and it cannot hurt you. A blunt "this was noise" is more useful to us than politeness -
+we changed several things at once this session and we do not know which of them helped.
+  1. TOOLS AND DATA: did you have what you needed? Name anything missing, and anything served that
+     you could not interpret. If you opened the field inventory, say whether it changed what you
+     looked at; if you did not open it, say that too.
+  2. THE BRAIN VIEW: right shape? Too much, too little, wrong sections? You hold roughly 395k
+     tokens of brain, most of it plays. Would you rather have had fewer, more relevant plays - and
+     if so, what would you have wanted the selection keyed on?
+  3. THE MISSION BRIEF at the top: useful orientation, or padding you skimmed? Did knowing what the
+     curve is FOR change any decision you made, or was it inert?
+  4. THE ORDER: did the decision order fit the work, or did you have to fight it?
+  5. ANYTHING ELSE about the system that made your job harder than it needed to be.
 ```
 
 ### BLD-2 — A's weekend BRIDGE (STEP 3, wave 2; decision point = the Friday exit)
@@ -590,6 +641,21 @@ mbo_verdict} — plus specialist/group/date at top level for the merge, plus han
 weekend-feeding days. Where the run directive names a target your day carries, address it
 explicitly in the reasoning and, if a GENERAL rule emerges (n>=2 spanning groups), state it as a
 PROPOSAL contribution (proposal text only — no brain edit). Return a concise prose summary.
+
+DEBRIEF - answer this LAST, in your final message only, NEVER in the JSON.
+Greg asks directly: did you have everything you needed, and do you like the new setup? This is
+not scored and it cannot hurt you. A blunt "this was noise" is more useful to us than politeness -
+we changed several things at once this session and we do not know which of them helped.
+  1. TOOLS AND DATA: did you have what you needed? Name anything missing, and anything served that
+     you could not interpret. If you opened the field inventory, say whether it changed what you
+     looked at; if you did not open it, say that too.
+  2. THE BRAIN VIEW: right shape? Too much, too little, wrong sections? You hold roughly 395k
+     tokens of brain, most of it plays. Would you rather have had fewer, more relevant plays - and
+     if so, what would you have wanted the selection keyed on?
+  3. THE MISSION BRIEF at the top: useful orientation, or padding you skimmed? Did knowing what the
+     curve is FOR change any decision you made, or was it inert?
+  4. THE ORDER: did the decision order fit the work, or did you have to fight it?
+  5. ANYTHING ELSE about the system that made your job harder than it needed to be.
 ```
 
 ### RFN-2 — refine round 2, HE24->HE1 (STEP 5.4)
@@ -645,4 +711,19 @@ YOUR DELIVERABLE
    (Cohen's kappa 0.76, best of four models against human labels) in your own words.
 Say `unclassifiable` rather than force a label. A forced label is the emission-ceiling failure
 wearing different clothes: a defensible answer produced because the contract demanded one.
+
+DEBRIEF - answer this LAST, in your final message only, NEVER in the JSON.
+Greg asks directly: did you have everything you needed, and do you like the new setup? This is
+not scored and it cannot hurt you. A blunt "this was noise" is more useful to us than politeness -
+we changed several things at once this session and we do not know which of them helped.
+  1. TOOLS AND DATA: did you have what you needed? Name anything missing, and anything served that
+     you could not interpret. If you opened the field inventory, say whether it changed what you
+     looked at; if you did not open it, say that too.
+  2. THE BRAIN VIEW: right shape? Too much, too little, wrong sections? You hold roughly 395k
+     tokens of brain, most of it plays. Would you rather have had fewer, more relevant plays - and
+     if so, what would you have wanted the selection keyed on?
+  3. THE MISSION BRIEF at the top: useful orientation, or padding you skimmed? Did knowing what the
+     curve is FOR change any decision you made, or was it inert?
+  4. THE ORDER: did the decision order fit the work, or did you have to fight it?
+  5. ANYTHING ELSE about the system that made your job harder than it needed to be.
 ```
