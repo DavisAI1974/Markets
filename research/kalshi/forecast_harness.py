@@ -693,6 +693,11 @@ _RELIVE_FIELDS = (
     ("cash_basis", "age_days", "cal_since", "hh_spot_gas_day"),
     ("vol_regime", "n0_prev_age_days", "cal_since", "n0_prev_date"),
     ("vol_regime", "v0_prev_age_days", "cal_since", "v0_prev_date"),
+    # S115 (audit D2-04): the SAME undeclared-frozen-countdown class, found by the PRR sweep.
+    # sessions_since_prompt_expiry sat at a constant 14 on all ten g24 days while
+    # last_prompt_expiry (its source, same block) was 2026-06-26. bus_since mirrors the builder's
+    # own _fcal.bd_between(prev_exp, day). The derived unwind_watch flag moves with it below.
+    ("squeeze_watch", "sessions_since_prompt_expiry", "bus_since", "last_prompt_expiry"),
 )
 # S114: countdowns nested one level inside a LIST in a frozen block. Same doctrine as
 # _RELIVE_FIELDS - the vintage is masked, the distance from today to a published date is not -
@@ -797,6 +802,12 @@ def _relive_distance_fields(blk: str, block: dict, iso: str) -> dict:
         was = block.get(field)
         if kind == "bus_to":
             now = _cst.business_days_between(iso, sd)
+        elif kind == "bus_since":
+            # match the builder's own arithmetic exactly (forecast_harness ~:333 uses
+            # _fcal.bd_between(prev_exp, day)) - a relive on different holiday math would
+            # introduce an off-by-one the builder never had
+            import flow_calendar as _fcal2
+            now = _fcal2.bd_between(sd, iso)
         elif kind == "cal_to":
             now = _cal(iso, sd)
         else:
@@ -804,6 +815,15 @@ def _relive_distance_fields(blk: str, block: dict, iso: str) -> dict:
         if now != was:
             block[field] = now
             relived.append({"field": field, "frozen": was, "live": now, "source": src})
+        # S115 (audit D2-04): unwind_watch is DERIVED from sessions_since (builder: <= 3), so a
+        # relived countdown must carry its flag - a frozen False beside a live <=3 is the S108
+        # squeeze false-negative recurring one field over.
+        if field == "sessions_since_prompt_expiry" and now is not None and "unwind_watch" in block:
+            flag_was, flag_now = block.get("unwind_watch"), bool(now <= 3)
+            if flag_now != flag_was:
+                block["unwind_watch"] = flag_now
+                relived.append({"field": "unwind_watch", "frozen": flag_was, "live": flag_now,
+                                "source": "derived from relived sessions_since_prompt_expiry"})
     # S114: NESTED COUNTDOWNS. _RELIVE_FIELDS walks TOP-LEVEL block fields only, so
     # options_surface was silently exempt - its countdown lives one level down, inside months[].
     # That is the whole reason it was omitted, not a judgment that it should stay frozen.
