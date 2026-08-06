@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 151 |
+| open | 153 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 68, **M** 46, **L** 9
+By size: **XS** 18, **S** 69, **M** 47, **L** 9
 
 ---
 
-By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
+By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 38, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -41,7 +41,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (36)
+## BIGGEST WIN (38)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -58,6 +58,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
 | **A-35** | S | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | It puts a clock on four registered mechanisms rather than adding a fifth, it re-reads the S111 'market got quieter' finding as a risk error, and it supplies the analog library's validity window as a measured quantity. Buildable from grid_stack shares we already hold. |
 | **A-36** | S | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-57** | S | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | A measured result that beat its own named benchmark and then went nowhere. Serving three derived fields off data we already hold is the cheapest possible follow-on, and D30 says a finding with no home does not exist. |
+| **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -71,6 +72,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
 | **A-34** | M | THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING | It is the trading form of the entire S113 coal thread: it does not forecast weather better, it says WHEN a weather call reaches the gas price. Both sides of the state variable are already served or measurable, and it explains 0629 - a documented miss - as the same structure with an instant absorber. |
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
 | **A-41** | M | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
+| **A-62** | M | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | instrument_priors proved the pattern works and was the most-praised content of the g24 run ('the honest prior on every instrument I have' - C-0721). This is the same object aimed at the agent instead of the instrument, built from measurements we already hold, and it targets the walk's worst-performing lanes by name. |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
 | **A-19** | L | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | L, and it is the foundation under the dominant driver. The station set is 16 hand-set metros with ONE covering the entire Southeast, the weights were never tuned, and the primitive is wrong - it should be per-BA with a measured roll-up. Everything weather-shaped rests on this. |
@@ -224,6 +226,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
 | **A-35** | BIGGEST_WIN | S | OPEN | S113 | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | - |
 | **A-36** | BIGGEST_WIN | S | OPEN | S113 | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-57** | BIGGEST_WIN | S | OPEN | S115 | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | - |
+| **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -237,6 +240,7 @@ By tier: **ESSENTIAL** 14, **BIGGEST_WIN** 36, **REST** 102
 | **A-34** | BIGGEST_WIN | M | OPEN | S113 | THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING | - |
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
 | **A-41** | BIGGEST_WIN | M | OPEN | S114 | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
+| **A-62** | BIGGEST_WIN | M | OPEN | S115 | SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
 | **A-19** | BIGGEST_WIN | L | OPEN | S112 | THE WEATHER STATION SET IS 16 HAND-SET METROS AND ONE OF THEM COVERS THE ENTIRE SOUTHEAST - and Greg says the metros no longer sit where the load is | - |
@@ -1294,6 +1298,22 @@ FALSIFIER: if breadth adds nothing inside burn quartiles once coverage is correc
 
 ---
 
+### [BIGGEST_WIN] A-61 - VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers
+
+*size S | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit.
+
+**Source:** S115, measured on the platform-audit workflow's own journal
+
+MEASURED on the S115 pre-paper audit: 5 adversarial verdicts returned, 4 REFUTED / 1 CONFIRMED - and THREE of the four refutations are false. Their own reproductions say why, verbatim: 'nuclear_outages.py:63 at HEAD (400ac23) is API = ... not the cited ENV_PATH line'; 'session_bootstrap.py line 56 def write_keys(aws_id, aws_secret, bento, eia=None)'; 'databento_live_smoke.py _api_key() already implemented as import creds'. Every one of those is a defect I had FIXED HOURS EARLIER in the same session. The finders were right when they filed; the verifiers measured a tree that had changed underneath them and concluded the finders were wrong.
+WHY IT MATTERS MORE THAN IT SOUNDS: a false REFUTED does not merely waste a check - it is an argument, carrying adversarial authority, for UNDOING a correct repair. Had those verdicts been trusted at face value, three real credential defects would have been re-opened as non-defects. The one CONFIRMED verdict (kalshi_auth reading only scratchpad/kalshi.env) is genuine and became M-14.
+THE FIX: any find->verify pipeline pins the commit it reasons about. Concretely - capture `git rev-parse HEAD` when the finders launch, pass it to every verifier, and have each verifier read that commit (git show <sha>:<path>) rather than the working tree; a verifier that cannot pin says CANNOT_TEST rather than REFUTED. Where the tree legitimately moved, the correct verdict is ALREADY_FIXED, which is a THIRD outcome the schema currently cannot express - the verdict enum was CONFIRMED/REFUTED/CANNOT_TEST and had nowhere to put 'true when filed, fixed since'.
+THE TRANSFERABLE RULE, and it is the same one as NC-3 one level up: a test that measures a different object than the claim did has not tested the claim. Presence is not correctness; neither is absence.
+FALSIFIER: if re-running those three verifications against the pre-fix commit returns CONFIRMED, the diagnosis holds. That is a cheap check and should be the first thing done on this item.
+
+---
+
 ### [BIGGEST_WIN] G-30 - weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable
 
 *size S | OPEN | raised S115*
@@ -1755,6 +1775,22 @@ AND IT SETTLES A-40 BY EXPERIMENT RATHER THAN ARGUMENT. The emission ceiling sit
 HONEST LIMIT, to be carried in every report: the paper's kappa 0.76 is the BEST of four frontier models against human labels on 40 examples. The judge is an instrument with known error, its labels are evidence for an adjudication and never the adjudication, and anything touching the brain stays with Greg (SOP STEP 2).
 
 FALSIFIER: if judge labels do not change which repair gets made - if 'would_a_different_label_change_the_repair' comes back false on most findings - the taxonomy is decoration here and should be dropped.
+
+---
+
+### [BIGGEST_WIN] A-62 - SERVE EACH SPECIALIST ITS OWN TRACK RECORD - we measure how each agent fails and have never told the agent
+
+*size M | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** instrument_priors proved the pattern works and was the most-praised content of the g24 run ('the honest prior on every instrument I have' - C-0721). This is the same object aimed at the agent instead of the instrument, built from measurements we already hold, and it targets the walk's worst-performing lanes by name.
+
+**Source:** Greg, S115: 'Is there anything else that you would like to see in an agent? Journals?'
+
+WE MEASURE HOW EACH SPECIALIST FAILS AND NEVER SERVE IT BACK TO THE ONE THAT OWNS THE LANE. Already on file, per specialist: E is wrong-signed on 11 of 22 Fridays - the worst day-class of the walk - and 10 of 14 bad Mondays root to a mis-read Friday (S104); E's own self-analysis found ONE dominant flaw, PRIOR-OVER-STATE on Friday direction, 13 of 18 misses, with ZERO wrong signs traceable to absent data; B-0713 overrode its own instrument (D-1 aggregate -1,225 SELL) on a handed-down verdict table and produced the block's worst wrong-direction day; A-24e records four of the six worst Mondays sitting on sub-1,300-trade panels. B spawns for a Monday knowing none of this.
+THE PATTERN IS ALREADY PROVEN HERE: instrument_priors (S114) collects every play's measured track record into a top-level section, GENERATED at view time so it cannot drift, and C-0721 called it the most valuable content in the view - 'they are the honest prior on every instrument I have'. This is the identical construction aimed at the AGENT: the honest prior on ME.
+THE BUILD: a generated `specialist_priors` section, per lens, carrying (a) day-class hit-rate and sum|err| from the committed corpus, (b) this lens's named recurring failure mode with its instance, (c) what has historically CORRECTED it. Generated from posteriors + actuals, never authored, so it cannot become a second doc (the S115 lesson).
+THE RISK, NAMED SO IT IS DESIGNED FOR: a track record can suppress as easily as inform - an agent told 'you are bad at Mondays' may stand down where it should commit, which is the emission-ceiling failure (A-40) arriving through a new door. Serve the MECHANISM of past failure, not merely the score, and pair it with what corrected it.
+FALSIFIER: if a run under specialist_priors shows no change in the named failure mode AND no drop in emission on that lane, it is inert and should be cut rather than kept for tidiness.
 
 ---
 
