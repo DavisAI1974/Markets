@@ -486,6 +486,18 @@ def _redirect(text, gid, ns):
 
 
 def cmd_emit(a):
+    # A-50 GATE. CLAUDE.md is auto-loaded into every agent before it reads any instruction, and it
+    # states walked blocks' scores and mechanisms outright - so a BLIND run on a block already in
+    # there starts with its own answer. Checked at the moment the blind prompt is built, which is
+    # the only place that can stop it. A fresh block is clean by construction and passes silently;
+    # a rehearsal namespace is exempt because it is declared contaminated already.
+    if a.template.startswith("BLD") and not getattr(a, "namespace", None):
+        import brain_view
+        try:
+            brain_view.assert_no_context_leak(a.gid, hard=True)
+        except SystemExit as e:
+            print("STOP - %s" % e)
+            return 1
     try:
         s = slots(a.gid, a.day, a.spec)
     except SlotError as e:
@@ -568,6 +580,10 @@ def cmd_selftest(a):
     class _A: pass
     arg = _A(); arg.gid = "g23"; arg.day = None; arg.spec = None; arg.template = "BLD-1"
     arg.directive = None
+    # The selftest exercises TEMPLATE MECHANICS on a walked block, which the A-50 gate now blocks
+    # for a real blind run - correctly. A test is not a blind run, so it takes the same declared
+    # path a rehearsal does. The gate itself has its own regression below.
+    arg.namespace = "selftest"
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         rc = cmd_emit(arg)
@@ -592,7 +608,7 @@ def cmd_selftest(a):
     # days he does not own. A-13 closed the gap with the RIGHT channel instead: BLD-1 and RFN-1
     # now carry {DAY_CALENDAR}, the per-day block. So this check no longer says "the forecasters
     # have no calendar channel" - they do - it says CAL_FACTS did not leak into them.
-    arg2 = _A(); arg2.gid = "g23"; arg2.day = None; arg2.spec = None
+    arg2 = _A(); arg2.namespace = 'selftest'; arg2.gid = "g23"; arg2.day = None; arg2.spec = None
     arg2.template = "AUD-1"; arg2.directive = None
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -610,7 +626,7 @@ def cmd_selftest(a):
     for tname in ("BLD-1", "RFN-1"):
         check("A-13: %s declares the DAY_CALENDAR slot" % tname,
               "DAY_CALENDAR" in templates()[tname]["slots"])
-    arg3 = _A(); arg3.gid = "g23"; arg3.day = "20260706"; arg3.spec = None
+    arg3 = _A(); arg3.namespace = 'selftest'; arg3.gid = "g23"; arg3.day = "20260706"; arg3.spec = None
     arg3.template = "BLD-1"; arg3.directive = None
     buf3 = io.StringIO()
     with contextlib.redirect_stdout(buf3):
@@ -639,6 +655,20 @@ def cmd_selftest(a):
     dc3 = day_calendar("g21", "20260526")
     check("a day inheriting from a partial (holiday) session says so",
           "class partial_session" in dc3)
+
+    # THE A-50 GATE, both branches, each printing its output (NC-3)
+    import brain_view as _bv
+    try:
+        _bv.assert_no_context_leak("g24", hard=True)
+        check("A-50 gate PASSES a fresh block (g24 has no outcome anywhere)", True)
+    except SystemExit:
+        check("A-50 gate PASSES a fresh block (g24 has no outcome anywhere)", False)
+    try:
+        _bv.assert_no_context_leak("g22", hard=True)
+        check("A-50 gate BLOCKS a walked block (g22 is in CLAUDE.md)", False)
+    except SystemExit as e:
+        print("     guard output: %s" % str(e)[:96])
+        check("A-50 gate BLOCKS a walked block (g22 is in CLAUDE.md)", True)
 
     print("\n  %d/%d passed" % (sum(res), len(res)))
     return 0 if all(res) else 1

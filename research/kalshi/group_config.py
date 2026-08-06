@@ -165,6 +165,41 @@ GROUPS = {
         "eia_thursdays": ["20260709","20260716"],
         "basis": "Aug/NGQ26 clean; data year ends ~07-20 so this is the last fully-staged block",
     },
+    "g24": {
+        "window": "Sun 2026-07-19 -> Fri 2026-07-31",
+        "days": ["20260720","20260721","20260722","20260723","20260724",
+                 "20260727","20260728","20260729","20260730","20260731"],
+        "anchor": 2.916, "anchor_date": "20260717", "anchor_lasthr_dir": None,
+        # anchor = G23 actual's last-day CLOSE on 20260717 (2.916), per the build_anchor_block rule
+        # that each group's anchor must equal the prior group's realized close - an independent
+        # measurement, different file. anchor_lasthr_dir is left None to be DERIVED at stage time
+        # from the actual price path rather than asserted here.
+        "mask_after": "20260717",
+        # ---- THE ROLL, RESEARCHED S114 RATHER THAN ASSUMED --------------------------------
+        # Kalshi's KXNATGASD underlying rolls forward 5 BUSINESS DAYS BEFORE LTD (spec verified
+        # S99), and the roll day IS the first day on the new leg. NGQ26 LTD is 2026-07-29, so the
+        # seam is 2026-07-22.
+        # FIVE INDEPENDENT CONFIRMATIONS, because a wrong leg is hole #8 - the block populates,
+        # reconciles internally and recomputes coherently off the WRONG contract:
+        #  1. The rule reproduces BOTH prior two-leg seams exactly: NGK26 LTD 04-28 -> 04-21 = g17's
+        #     recorded seam; NGM26 LTD 05-27 -> 05-20 = g19's.
+        #  2. The NG LTD rule (3 business days before the delivery month) reproduces NGU26's
+        #     front_expiry of 2026-08-27 as served in our own contract_structure block.
+        #  3. NGQ26 tape on S3 ends exactly 20260729.
+        #  4. g22 begins 06-22, after the NGN26->NGQ26 roll on 06-19, and is correctly all-NGQ26.
+        #  5. g23's own comment above already recorded "Aug roll 07-22", written by an earlier
+        #     session with no knowledge of this one.
+        # VOLUME IS THE WRONG INSTRUMENT AND WOULD HAVE GIVEN 07-24. Measured, volume LAGS the
+        # underlying roll every time - g17 flipped 2 days late (04-23), g19 1 day late (05-21), and
+        # G24's volume flips 07-24, exactly the g17 lag off a 07-22 seam. Volume says when traders
+        # migrated; the walk forecasts what Kalshi SETTLES against.
+        "seam": "20260722", "legs": {"pre": "ngq26", "post": "ngu26"},
+        "eia_thursdays": ["20260723","20260730"],
+        "basis": "Aug/NGQ26 through 07-21; Sep/NGU26 from 07-22 (Kalshi underlying roll, 5 business "
+                 "days before NGQ26's 07-29 LTD). First two-leg block since g19. LAST BLOCK THE "
+                 "WALK CAN DO - G25 would be 08-02..08-14 and only 3 of its 10 sessions have "
+                 "happened.",
+    },
 }
 
 

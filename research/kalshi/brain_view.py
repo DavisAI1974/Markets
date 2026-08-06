@@ -112,6 +112,74 @@ def redact_window(obj, toks, counter):
 # The blanket strip was therefore both harmful and redundant - it destroyed 938 historical
 # evidence fields to remove leaks the window wall had already removed.
 
+# Files the harness AUTO-LOADS into every agent before it reads any instruction. CLAUDE.md is the
+# one that matters and it is the THIRD leak channel specialist E found (A-50): it states walked
+# blocks' blind and refine scores outright and names 0629's mechanism and its actual.
+AUTOLOADED = ("CLAUDE.md",)
+
+
+def context_leak(days, root=None):
+    """-> [(file, token, excerpt)] for any in-window day named in an auto-loaded file.
+
+    THE SIMPLEST FIX THAT ENFORCES SOMETHING (Greg, S114: "do the simplest fix because we're only
+    going to need it for 2 more runs"). Rewriting CLAUDE.md or maintaining a blind-safe variant
+    would both be larger and would need maintaining past the point of use. A GATE costs nothing
+    when clean and stops the line when not.
+
+    It is clean for a FRESH block by construction - nothing can record the outcome of a day nobody
+    has forecast - so this passes silently on G24 and fires only if someone re-runs a walked block
+    blind, which is exactly the case that should stop.
+
+    A date match is not automatically a leak: CLAUDE.md is full of SESSION dates
+    (SESSION_HANDOFF_2026-07-20_S99.md) and dataset span endpoints. The excerpt is returned so the
+    caller can see which it is rather than trusting the count.
+    """
+    root = root or os.path.dirname(os.path.dirname(HERE))
+    # SCAN THE MMDD FORM ONLY, and that is the whole discriminator. This desk writes a TRADING DAY
+    # as MMDD ("0624", "0709", "0629") and a SESSION date as ISO ("SESSION_HANDOFF_2026-07-20_S99",
+    # "cost us an hour on 2026-07-20"). Measured on all three live blocks: every true leak is MMDD,
+    # every false positive was ISO. An outcome-word regex was tried first and kept firing on "S100"
+    # and a "$500/mo" price - it would have blocked the one clean block we actually need to run,
+    # and a gate that cries wolf is a gate people route around (D33).
+    # LIMIT, STATED: an outcome written in ISO form would slip through. Accepted deliberately -
+    # Greg, S114: "do the simplest fix because we're only going to need it for 2 more runs."
+    toks = {d[4:8] for d in days}
+    out = []
+    for fn in AUTOLOADED:
+        path = os.path.join(root, fn)
+        if not os.path.exists(path):
+            continue
+        with open(path, encoding="utf-8", errors="replace") as f:
+            text = f.read()
+        for t in sorted(toks):
+            i = text.find(t)
+            while i >= 0:
+                ex = text[max(0, i - 90):i + len(t) + 70].replace("\n", " ")
+                out.append({"file": fn, "token": t, "excerpt": ex, "leak": True})
+                i = text.find(t, i + 1)
+    return out
+
+
+def assert_no_context_leak(gid, hard=True):
+    """Gate a BLIND run on the auto-loaded files. Prints both counts; fires only on outcomes."""
+    import group_config as gc
+    hits = context_leak(gc.GROUPS[gid]["days"])
+    leaks = [h for h in hits if h["leak"]]
+    print("[context_leak] %s: %d in-window date mention(s) in %s, %d carrying an OUTCOME"
+          % (gid, len(hits), "/".join(AUTOLOADED), len(leaks)))
+    for h in leaks[:6]:
+        print("    LEAK [%s] ...%s..." % (h["token"], h["excerpt"][:120]))
+    if leaks and hard:
+        raise SystemExit(
+            "context_leak: %s has %d outcome mention(s) in auto-loaded context (A-50). Every agent "
+            "in this repo loads those files before it reads any instruction, so a blind run on this "
+            "block starts with its own answer. A FRESH block is clean by construction - this fires "
+            "only when re-running a walked one, which is exactly what should stop." % (gid, len(leaks)))
+    if not leaks:
+        print("    clean - the matches are session dates and handoff filenames, not outcomes.")
+    return leaks
+
+
 def build(brain, role, phase="working", window_days=None):
     """-> (view, served[], withheld[(name, why)]).
 
