@@ -382,33 +382,40 @@ def build(brain, role, phase="working", window_days=None):
     #
     # The remaining size is answered by PLAY_INDEX below plus the template change (consult by
     # index, do not read 90 plays start to finish) - not by removing reasoning content.
+    # S115 - REVERTED WITHIN THE SESSION, ON GREG'S CORRECTION, AND THE REASON IS RECORDED HERE
+    # RATHER THAN DELETED because the mistake is instructive.
+    #
+    # I withheld `legacy_notes` and compressed the `audit` prose out of the working view to make it
+    # fit, each with a note saying "full text in knowledge/ng_brain.json". Greg: "reasoning is
+    # exactly what we want tied to the decision! ... you have intentionally made a separate doc
+    # that explains why their brain tells them to do something." He is right twice over.
+    #
+    # FIRST, IT BUILT THE VERY THING WE SPENT THE SESSION REMOVING: a pointer out of the brain to
+    # another document, which is A-58's defect authored deliberately instead of inherited.
+    #
+    # SECOND, I MISDESCRIBED WHAT I WAS CUTTING, and the measurement is the correction:
+    #   `audit`        argument + could_evidence_have_come_out_otherwise on ALL 82 plays - that is
+    #                  WHY the play says what it says. D21 exists to bind reasoning to the decision
+    #                  it produced; keeping the verdict and dropping the argument inverts it.
+    #   `legacy_notes` I called it "pre-schema provenance". Measured: forward_evidence on 77 plays,
+    #                  evidence on 75, conditions_note on 57, exemplars on 33 - and FALSIFIER on 17.
+    #                  Every specialist named falsifiers the most valuable content in the brain
+    #                  ("if you cut the view, cut CALLS before FALSIFIERS"), and I cut them.
+    #
+    # THE SIZE PROBLEM IS REAL AND IS NOT SOLVED BY DELETING REASONING. It is answered by
+    # PLAY_INDEX below plus the template's reading instruction - choose which plays to open, then
+    # read those whole. Nothing is withheld from a play a specialist opens.
     if phase == "working" and "plays" in view:
-        _n_lg = _n_au = 0
-        for pl in view["plays"]:
-            if pl.pop("legacy_notes", None) is not None:
-                _n_lg += 1
-                pl["legacy_notes_withheld"] = (
-                    "WITHHELD from the working view, not missing: pre-schema provenance kept "
-                    "verbatim by the D29 migration. It records where this play's fields came "
-                    "from, not how to use it. Full text is in knowledge/ng_brain.json.")
-            _au = pl.get("audit")
-            if isinstance(_au, dict) and any(k in _au for k in ("argument", "recommendation")):
-                _n_au += 1
-                pl["audit"] = OrderedDict(
-                    [(k, _au[k]) for k in ("session", "support_class", "recommendation",
-                                           "confidence", "source") if k in _au] +
-                    [("prose_withheld",
-                      "WITHHELD from the working view: the auditor's `argument` and "
-                      "`could_evidence_have_come_out_otherwise` working. The VERDICT above is "
-                      "what a forecaster acts on. Full text in knowledge/ng_brain.json.")])
         meta["view_play_field_scoping"] = OrderedDict([
-            ("legacy_notes_withheld_on", _n_lg),
-            ("audit_prose_compressed_on", _n_au),
-            ("instances", "SERVED IN FULL - never capped (Greg, S114/S115: outcomes are the "
-                          "evidence; D24 wants past instances with their context)"),
-            ("degenerate_and_refuted_plays", "SERVED IN FULL - a stub cannot be re-sited (D31)"),
-            ("why", "the working view did not fit an agent context; these two cuts are provenance, "
-                    "not reasoning content, and both announce themselves per-play"),
+            ("fields_withheld", "NONE. Every play is served whole."),
+            ("reverted_in_session", "S115 - a working-view cut of `legacy_notes` and the `audit` "
+                                    "prose was built and REVERTED on Greg's correction: it removed "
+                                    "reasoning (argument on 82 plays) and evidence (falsifier on "
+                                    "17, forward_evidence on 77) and replaced them with a pointer "
+                                    "to another file. Reasoning belongs WITH the decision (D21)."),
+            ("how_size_is_handled_instead", "play_index + the BLD-1/RFN-1 reading instruction: "
+                                            "choose plays by index, then read the chosen ones in "
+                                            "full. Selection, never truncation."),
         ])
 
     # PLAY INDEX (S115) - GENERATED, never a second source. The triage layer that makes
@@ -867,12 +874,18 @@ def cmd_selftest():
     check("every falsifier survives", sum(1 for p in _vp if p.get("falsifier"))
           == sum(1 for p in _rawp.values() if p.get("falsifier")))
     _deg = [p for p in _vp if p.get("status") in ("DEGENERATE", "REFUTED")]
-    _lost = [k for p in _deg for k in _rawp[p["id"]]
-             if k not in p and k != "legacy_notes"]
+    _lost = [k for p in _deg for k in _rawp[p["id"]] if k not in p]
     check("DEGENERATE/REFUTED plays keep every field (a stub cannot be re-sited, D31)",
           not _lost, str(_lost[:3]))
-    check("the two cuts ANNOUNCE themselves per play",
-          all("legacy_notes_withheld" in p for p in _vp if "legacy_notes" in _rawp[p["id"]]))
+    check("NOTHING is withheld from any served play (reverted S115 - reasoning stays with the "
+          "decision, D21)",
+          all(set(_rawp[p["id"]]) - set(p) == set() for p in _vp))
+    check("every falsifier inside legacy_notes survives (17 plays carry one there)",
+          sum(1 for p in _vp if (p.get("legacy_notes") or {}).get("falsifier"))
+          == sum(1 for p in _rawp.values() if (p.get("legacy_notes") or {}).get("falsifier")))
+    check("every audit ARGUMENT survives (why the play says what it says)",
+          sum(1 for p in _vp if (p.get("audit") or {}).get("argument"))
+          == sum(1 for p in _rawp.values() if (p.get("audit") or {}).get("argument")))
     check("the scoping is declared in meta", bool(_wv["meta"].get("view_play_field_scoping")))
     check("PLAY_INDEX indexes every play and says it is not a source",
           _wv["play_index"]["n_plays"] == len(_vp)
