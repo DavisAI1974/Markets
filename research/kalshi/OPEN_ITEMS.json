@@ -1724,6 +1724,18 @@
    "why": "Lens 5 says be a small net seller of vol at 3-6 months; Phase 4 says long-premium or defined-risk only. Lens 4 says trade the weeklies for a 1-10 session view; section 3 says weeklies do ~4,000 lots/day and 'our exit would be our own bid'. Both are unresolved INSIDE the document. A contradiction carried forward silently gets resolved by whoever reads it last - GREG'S CALL, not a build.",
    "blocks": null,
    "next": null
+  },
+  {
+   "id": "A-41",
+   "tier": "BIGGEST_WIN",
+   "size": "M",
+   "status": "OPEN",
+   "first_raised": "S114",
+   "title": "RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence",
+   "source": "Greg, S114: 'But i do also want to use it for the agent behavior.' Schema from arXiv:2607.28802 (Scale AI); role file research/kalshi/agents/failure_judge.md; classifier research/kalshi/failure_localization.py",
+   "why": "THE INSTRUMENT EXISTS AND HAS NEVER BEEN RUN ON A LIVE RUN. failure_localization.py carries the paper's 41 modes, nine components, fault-side notation and root-cause rule verbatim, and it has been applied RETROSPECTIVELY to our own history - result: context 16, model 8, owner 2, tool 2. Two thirds of our localised failures are in WHAT WE SERVE, not in who reads it, which is an argument about where effort goes that we have never had from evidence.\n\nWHAT USING IT ON AGENT BEHAVIOUR ADDS, and it is the paper's actual purpose: a post-mortem finding gets an EDGE and a FAULT SIDE before it can become brain evidence. MEASURED COST OF NOT DOING THIS: S108 retracted a play whose day-net was right and whose mechanism was FALSE, because a non-model result had been banked as model-side evidence - and the mechanism is what gets extrapolated. A wrong repair is worse than none because it also manufactures confidence.\n\nTHE ROOT-CAUSE RULE IS THE HIGHEST-VALUE IMPORT: label the EARLIEST failure from which execution does not recover; later errors are CONSEQUENCES. Our post-mortems have habitually labelled the last visible error - S104 measured 10 of 14 bad Mondays rooting to a mis-read Friday, so every Monday-side repair was aimed at the wrong day.\n\nAND IT SETTLES A-40 BY EXPERIMENT RATHER THAN ARGUMENT. The emission ceiling sits on ONE edge (model-owner) with TWO possible fault sides and DISJOINT repairs: Satisficing (model settles for a defensible middle - repair is doctrine) versus Instruction-Grader Mismatch (the contract requires a number and NO CALL is unemittable - repair is the contract, A-2). One of those repairs is wasted effort. Separable: serve the decision order without touching the contract and re-measure.\n\nHONEST LIMIT, to be carried in every report: the paper's kappa 0.76 is the BEST of four frontier models against human labels on 40 examples. The judge is an instrument with known error, its labels are evidence for an adjudication and never the adjudication, and anything touching the brain stays with Greg (SOP STEP 2).\n\nFALSIFIER: if judge labels do not change which repair gets made - if 'would_a_different_label_change_the_repair' comes back false on most findings - the taxonomy is decoration here and should be dropped.",
+   "blocks": null,
+   "next": "First run: the g22 rehearsal posteriors when the wave completes, or the existing g23 blind post-mortem"
   }
  ],
  "tiers": {

@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 131 |
+| open | 132 |
 | in progress | 1 |
 | done | 12 |
 
-By size: **XS** 18, **S** 63, **M** 43, **L** 8
+By size: **XS** 18, **S** 63, **M** 44, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 27, **REST** 97
+By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 28, **REST** 97
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -35,7 +35,7 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 27, **REST** 97
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 
-## BIGGEST WIN (27)
+## BIGGEST WIN (28)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -61,6 +61,7 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 27, **REST** 97
 | **A-33** | M | THE CORRELATED-FAILURE TAIL - 'no surplus of any type of energy', including gas SUPPLY freeze-offs, and our data is daily | It is the largest event class there is, the desk's scoring rule says these are what cost money, and we already hold instruments for most of its components while reading almost none of them. It also reframes A-24f from a demand candidate into a supply-interruption instrument. |
 | **A-34** | M | THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING | It is the trading form of the entire S113 coal thread: it does not forecast weather better, it says WHEN a weather call reaches the gas price. Both sides of the state variable are already served or measurable, and it explains 0629 - a documented miss - as the same structure with an instant absorber. |
 | **A-4** | M | Score the CURVE, not the scalar - four error terms kept separate | D32 made the product a CURVE and we have never scored it. Four error terms kept separate - level, slope, shape, timing - because a day high by 4,000 and a day low by 4,000 net to zero on a forecaster that was catastrophically wrong twice. The scoreboard is what every other item is judged by. |
+| **A-41** | M | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **G-4** | M | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | THE TOP-RANKED GAP, named by two independent lenses, and 0629 is its canonical instance - our cooling forecast was exactly right and burn fell 4.2 Bcf/d because wind rose 62%. It is the fastest-dying input AND the one that flips the SIGN rather than the magnitude. ChatGPT ALREADY DELIVERED the source research (S112 T3) - collect it from Greg first. |
 | **G-5** | M | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | Fills the ensemble gap, the spread gap, the probabilistic-path gap and the option-dispersion gap SIMULTANEOUSLY, at zero cost - ECMWF members went CC-BY in October 2025. It is also the prerequisite for a confidence gate and therefore for A-2. ChatGPT ALREADY DELIVERED the retrieval research (S112 T2). |
 | **M-4** | M | CDD-vs-normal (the anomaly instrument separating hill from spike) | The cure for the D28 TRANSFER disease, and nws_temp_feed already fetches the normals - so it is a serving change, not an ingest. gw_cdd >= 16.4 fires 46.6% pooled and 0/10 on all four summer blocks; an absolute bar cannot transfer across season by construction. |
@@ -207,6 +208,7 @@ By tier: **ESSENTIAL** 8, **BIGGEST_WIN** 27, **REST** 97
 | **A-33** | BIGGEST_WIN | M | OPEN | S113 | THE CORRELATED-FAILURE TAIL - 'no surplus of any type of energy', including gas SUPPLY freeze-offs, and our data is daily | - |
 | **A-34** | BIGGEST_WIN | M | OPEN | S113 | THE MEDIATED-RESPONSE STRUCTURE - the gas bump is delayed by whichever fuel has headroom, and the state variable is COAL HEADROOM REMAINING | - |
 | **A-4** | BIGGEST_WIN | M | OPEN | S111 | Score the CURVE, not the scalar - four error terms kept separate | - |
+| **A-41** | BIGGEST_WIN | M | OPEN | S114 | RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence | - |
 | **G-4** | BIGGEST_WIN | M | OPEN | S111 | ISO day-ahead and 7-day wind + solar -> NET LOAD (we serve the LOAD half already; the renewable half is entirely absent) | - |
 | **G-5** | BIGGEST_WIN | M | OPEN | S111 | ECMWF ENS + GEFS members through our own GWDD weighting -> a DENSITY | - |
 | **M-4** | BIGGEST_WIN | M | OPEN | S109 | CDD-vs-normal (the anomaly instrument separating hill from spike) | - |
@@ -1529,6 +1531,26 @@ this applies.
 The product is a curve and the scoreboard has never touched it. Greg's bar as a function: direction no tolerance, turn timing little, amplitude some, level free. Plus the time dimension - how EARLY was it decidable. S112 flagged that nothing on the S112 list touches the new architecture's spine - A-4 and A-5 are it, and A-4 was absent. Correct: SCOPE A-4 THIS SESSION even if it is not built, because it is what makes the product measurable at all. Note the partial reconciliation S112 had not seen: the audit's corpus search IS library work - 140 instances traced to posteriors and actuals in three batches is exactly the conditions-to-outcome mapping A-5 needs - so the audit is not purely play-chain hygiene.
 
 S114 WINNERS CENSUS - THE SCOREBOARD IS CONTAMINATED BY CHEAP DAYS, measured: of the 15 most accurate days in g18-g23, only TWO had a real move on offer (20260428 -440 vs -350; 20260701 -500 vs -380). Thirteen were quiet or small - 20260625 (act -60), 20260702 (act 0), 20260525 (act +30), 20260619 (act -110), 20260609 (act +70). So a day-level error metric rewards days where being right was free. The curve score must carry CAPTURE (|actual| - |err|, now a committed column in walk_census_g18_g23_S114.csv) beside error, or the scoreboard keeps flattering quiet days. Also: on the 34 days with |actual|>=500 the walk is 15 HIT / 19 MISS on direction - worse than a coin flip exactly where the money is.
+
+---
+
+### [BIGGEST_WIN] A-41 - RUN THE FAILURE JUDGE ON AGENT BEHAVIOUR - localize every post-mortem finding to an interaction edge and fault side BEFORE it becomes brain evidence
+
+*size M | OPEN | raised S114*
+
+**Source:** Greg, S114: 'But i do also want to use it for the agent behavior.' Schema from arXiv:2607.28802 (Scale AI); role file research/kalshi/agents/failure_judge.md; classifier research/kalshi/failure_localization.py
+
+THE INSTRUMENT EXISTS AND HAS NEVER BEEN RUN ON A LIVE RUN. failure_localization.py carries the paper's 41 modes, nine components, fault-side notation and root-cause rule verbatim, and it has been applied RETROSPECTIVELY to our own history - result: context 16, model 8, owner 2, tool 2. Two thirds of our localised failures are in WHAT WE SERVE, not in who reads it, which is an argument about where effort goes that we have never had from evidence.
+
+WHAT USING IT ON AGENT BEHAVIOUR ADDS, and it is the paper's actual purpose: a post-mortem finding gets an EDGE and a FAULT SIDE before it can become brain evidence. MEASURED COST OF NOT DOING THIS: S108 retracted a play whose day-net was right and whose mechanism was FALSE, because a non-model result had been banked as model-side evidence - and the mechanism is what gets extrapolated. A wrong repair is worse than none because it also manufactures confidence.
+
+THE ROOT-CAUSE RULE IS THE HIGHEST-VALUE IMPORT: label the EARLIEST failure from which execution does not recover; later errors are CONSEQUENCES. Our post-mortems have habitually labelled the last visible error - S104 measured 10 of 14 bad Mondays rooting to a mis-read Friday, so every Monday-side repair was aimed at the wrong day.
+
+AND IT SETTLES A-40 BY EXPERIMENT RATHER THAN ARGUMENT. The emission ceiling sits on ONE edge (model-owner) with TWO possible fault sides and DISJOINT repairs: Satisficing (model settles for a defensible middle - repair is doctrine) versus Instruction-Grader Mismatch (the contract requires a number and NO CALL is unemittable - repair is the contract, A-2). One of those repairs is wasted effort. Separable: serve the decision order without touching the contract and re-measure.
+
+HONEST LIMIT, to be carried in every report: the paper's kappa 0.76 is the BEST of four frontier models against human labels on 40 examples. The judge is an instrument with known error, its labels are evidence for an adjudication and never the adjudication, and anything touching the brain stays with Greg (SOP STEP 2).
+
+FALSIFIER: if judge labels do not change which repair gets made - if 'would_a_different_label_change_the_repair' comes back false on most findings - the taxonomy is decoration here and should be dropped.
 
 ---
 

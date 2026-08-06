@@ -606,7 +606,7 @@ not on the live path).
 Every tracked `research/kalshi/*.py`, from git, with the opening line of its docstring.
 Regenerate with `python research/kalshi/store.py docs --write`. The curated sections
 above carry the judgment (current vs superseded); this carries the completeness, so a
-new tool cannot go unlisted. **157 files.**
+new tool cannot go unlisted. **158 files.**
 
 - `adjudicate_g20_merge.py` — Adjudicate G20_MERGE_PROPOSAL_S108 against the live brain.
 - `archive_blind.py` — move the blind's posteriors out of the refine's filenames (S108).
@@ -653,6 +653,7 @@ new tool cannot go unlisted. **157 files.**
 - `eia_surprise.py` — historical EIA release SURPRISE for the NYMEX-canary release windows (S86).
 - `event_move_baseline.py` — the NYMEX-canary EVENT-MOVE baseline (S85).
 - `extract_guesses.py` — the per-day guess-vs-actual scorecard for G3/4/5 survived in the brain's
+- `failure_localization.py` — WHERE does the repair belong? (S114)
 - `fast_tape.py` — fast trade-price path loader for the continuous NG walk (S95 rebuild of the lost
 - `flow_calendar.py` — Flow calendar feed (family CAL) for the NG intraday forecaster -- DATA_GATE_S98 feed F.
 - `flow_read.py` — the full NON-PRICE microstructure flow read for a session (S105 data doctrine).
