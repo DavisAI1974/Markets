@@ -51,12 +51,12 @@
   function ensureBadge(panel, text, title) {
     const header = panel?.querySelector(".panel-header");
     if (!header) return;
-    let badge = header.querySelector(".data-badge.demo-feed-badge");
+    let badge = header.querySelector(".data-badge");
     if (!badge) {
       badge = document.createElement("span");
-      badge.className = "data-badge sim demo-feed-badge";
       header.appendChild(badge);
     }
+    badge.className = "data-badge sim demo-feed-badge";
     badge.textContent = text;
     badge.title = title || "";
   }
@@ -126,7 +126,7 @@
       const count = panel.querySelector(".panel-header .text-button");
       if (kicker) kicker.textContent = "BRAIN-CONSUMED SIGNALS";
       if (h2) h2.textContent = `Signals in Use · ${snapshot.day}`;
-      if (count) count.textContent = `${snapshot.resolved_definition_count}/${snapshot.definition_count} definitions resolved`;
+      if (count) count.textContent = `${snapshot.resolved_definition_count}/${snapshot.definition_count} resolved · top 32 shown`;
       tape.innerHTML = signalRows.map(signal => {
         const first = (signal.values || []).find(v => v.available) || (signal.values || [])[0] || {};
         const status = signal.status === "resolved" ? "FED" : signal.status.toUpperCase();
@@ -193,8 +193,14 @@
     setInterval(() => {
       if (!latest) return;
       setEnvironment(latest.feed, latest.signals);
-      const tape = $("#deltaTape");
-      if (tape && tape.dataset.demoSignalsRendered !== "true") renderSignals(latest.signals);
+      const heading = $(".delta-panel h2");
+      if (!heading || !heading.textContent.startsWith("Signals in Use")) {
+        renderSignals(latest.signals);
+      } else {
+        ensureBadge($(".delta-panel"), "REAL REGISTRY", latest.signals.note);
+      }
+      ensureBadge($(".opportunities-panel"), "DEMO FEED", latest.feed.note);
+      lockExecutionControls();
     }, 3000);
   });
 })();
