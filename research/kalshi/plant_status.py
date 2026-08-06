@@ -82,10 +82,17 @@ def station0():
     # registry, and the audit recorded. The gate does not parse prose - it requires the audit to
     # exist. Measured instance: 12 of the S111 synthesis's 13 recommendations had no item, and
     # nothing could report it because nothing knew the recommendations existed.
-    briefings = sorted(os.path.basename(p) for p in
-                       glob.glob(os.path.join(HERE, "*BRIEFING*.md")) +
-                       glob.glob(os.path.join(HERE, "*SYNTHESIS*.md")) +
-                       glob.glob(os.path.join(HERE, "*MEMO*.md")))
+    # S115: the glob is the gate's REACH, and it was too narrow to see its own best example.
+    # CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md - a delivered external hand-off carrying SEVEN
+    # ranked, numbered recommendations - matched none of BRIEFING/SYNTHESIS/MEMO, so D36 could not
+    # apply to it and nothing recorded its disposition. Greg found it by asking directly whether we
+    # had missed anything, which is exactly the check this station exists to make unnecessary.
+    # A rule whose scanner cannot see the document is a rule that does not cover it.
+    _PATTERNS = ("*BRIEFING*.md", "*SYNTHESIS*.md", "*MEMO*.md",
+                 "*CANDIDATES*.md", "*DISCOVERY*.md", "CHATGPT_*.md", "*HANDOFF_S1*.md")
+    briefings = sorted({os.path.basename(p)
+                        for pat in _PATTERNS
+                        for p in glob.glob(os.path.join(HERE, pat))})
     audited = {}
     if os.path.exists(BRIEFING_AUDITS):
         with open(BRIEFING_AUDITS, encoding="utf-8") as f:

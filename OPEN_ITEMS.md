@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 146 |
+| open | 148 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 66, **M** 44, **L** 8
+By size: **XS** 18, **S** 68, **M** 44, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 33, **REST** 102
+By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 35, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -39,7 +39,7 @@ By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 33, **REST** 102
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (33)
+## BIGGEST WIN (35)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -55,6 +55,8 @@ By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 33, **REST** 102
 | **A-31** | S | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
 | **A-35** | S | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | It puts a clock on four registered mechanisms rather than adding a fifth, it re-reads the S111 'market got quieter' finding as a risk error, and it supplies the analog library's validity window as a measured quantity. Buildable from grid_stack shares we already hold. |
 | **A-36** | S | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
+| **A-57** | S | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | A measured result that beat its own named benchmark and then went nowhere. Serving three derived fields off data we already hold is the cheapest possible follow-on, and D30 says a finding with no home does not exist. |
+| **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
@@ -216,6 +218,8 @@ By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 33, **REST** 102
 | **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | - |
 | **A-35** | BIGGEST_WIN | S | OPEN | S113 | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | - |
 | **A-36** | BIGGEST_WIN | S | OPEN | S113 | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
+| **A-57** | BIGGEST_WIN | S | OPEN | S115 | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | - |
+| **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
@@ -1219,6 +1223,38 @@ and this item reduces to bookkeeping on the coal ceiling alone.
 **Source:** Greg S113: 'even if I don't have gas gen, my neighbor probably has enough for both of us'; 'the import/export numbers only really matter in the hh territory'
 
 D38. Interchange between two BAs inside an aggregate cancels pairwise, so it is already gone from any total containing both ends - MEASURED at US48: net interchange p50 0.5% of demand, MAX 2.8%. The national/storage roll-up therefore needs NO interchange term and adding one would double-count. But any aggregate SHORT of US48 has a real fence: CISO imports p50 20.6% / MAX 41.7% of its load, MISO p50 5.6% / MAX 15.5%. A stack subtraction inside such a BA overstates its gas by roughly the import, because the load was served by somebody else's generation and the fuel is on their books. `interchange_mwh` is now served (sign VERIFIED by the accounting identity TI = sum(gen) - demand, positive = net EXPORT; residual/demand p50 0.00% on ERCO/SOCO/SWPP). It is not yet CONSUMED by anything - D12 requires a named consumer or a PARK note.
+
+---
+
+### [BIGGEST_WIN] A-57 - SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home
+
+*size S | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** A measured result that beat its own named benchmark and then went nowhere. Serving three derived fields off data we already hold is the cheapest possible follow-on, and D30 says a finding with no home does not exist.
+
+**Source:** S115 re-check of the ChatGPT A-24 discovery note against the registry (Greg: 'just want to make sure we didn't miss anything')
+
+A-24c (Rank 3 of the discovery note: gas-marginality BREADTH x South Central salt composition) was RUN at S113 on the restored plane - 391 storage weeks 2019-01-24..2026-07-16, per season, never pooled - and it BEAT its own named benchmark (US48 burn alone): summer n=164, burn alone R2 0.469 -> +breadth 0.554; winter n=160, 0.065 -> +d salt_share 0.462. The item was then stamped DONE and NOTHING serves the terms - no field carries gas_marginality_breadth, no play reads it, no registry item carries the next step. The note's strongest PHYSICAL candidate survived measurement and stopped there, which is the D30 disease exactly.
+THE BUILD, deliberately small: serve three derived fields per day off grid_stack, already in the state - (a) gas_marginality_breadth = count of served BAs whose gas SHARE rose week-over-week, (b) gas_marginality_dispersion = cross-BA dispersion of those share changes, (c) d_salt_share off storage_regional.salt_share. No new feed, no fitted weights.
+THE CAVEAT THAT MUST TRAVEL WITH IT (A-24c recorded it; do not drop it): breadth runs over the six BAs we serve, which sum to 169.3 of US48's 262.6 Bcf/wk of summer power burn - 64.5% coverage, ~93 Bcf/wk unserved - and breadth is exactly the measure that biases with coverage. Either do A-18 (the missing Southeast BAs) first, or print the coverage number beside every result. Per D35 no per-BA figure is ever a conclusion.
+AND THE R2 CAUTION (D37): an R2 is an average. Before any play is proposed, re-run this through per_event.report() so the per-week improved/worsened COUNT and the largest actual moves are named individually - the S113 lesson was an R2 of 0.554 hiding a 92-improved/72-worsened record whose worst week got WORSE.
+FALSIFIER: if breadth adds nothing inside burn quartiles once coverage is corrected, the pooled R2 gain was a coverage artifact and this dies.
+
+---
+
+### [BIGGEST_WIN] G-30 - weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable
+
+*size S | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest.
+
+**Source:** S114 handoff section 11 + DROP_IN_S115 item 3 (named in prose in both, never registered - found by the S115 A-24 re-check)
+
+THE DEFECT: weather_forecast_cycle sums the 18Z, 00Z and 06Z cycles into ONE delta vector, so a specialist can derive the TOTAL revision that arrived overnight but not WHEN it arrived. Recorded in the S114 handoff and repeated in the S115 drop-in as prose - and it had no registry line until now, which is D36 exactly (a document that states work, sitting apart from the list that counts it).
+WHY IT MATTERS BEYOND TIDINESS: A-24a - the note's RANK 1, 'weather information ACCEPTANCE' - rests on separating three states of the SAME revision: completed BEFORE the Globex reopen (should already sit in the gap), completed AFTER it (new intraday information), or large-but-diverging (whipsaw / no-call). That separation IS the per-cycle timestamp. Netted, only the size arm of the mechanism can be evaluated, so A-24a is currently untestable on half its claim.
+CONTEXT ALREADY ON FILE: weather_forecast_cycle was built at S100 (feed A phase 1) for EXACTLY this question - the record says the 0118 Jan-24 +8.511 add was PRE-REOPEN available and that closing the weekend-gap blindness was the point - and then nothing ever read it. Second caveat, S113: on the g23 state the block carries weekday_open only with NO sunday_reopen key, so the Monday arm is unavailable on at least some blocks and must be checked per day rather than assumed.
+THE BUILD: serve the per-cycle breakdown (cycle id, runtime_utc, its own delta) ALONGSIDE the existing net, never instead of it. PAIRS WITH M-13 - the weather_forecast_cycle store is currently STALE on S3 (its index ends 2026-07-20) and must be rebuilt anyway, so fix the cadence while the builder is open.
+FALSIFIER: if per-cycle deltas do not change which of the three acceptance states a day falls into on any block we hold, the netting cost nothing and this closes.
 
 ---
 
