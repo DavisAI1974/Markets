@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 160 |
+| open | 161 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 72, **M** 49, **L** 11
+By size: **XS** 18, **S** 73, **M** 49, **L** 11
 
 ---
 
-By tier: **ESSENTIAL** 18, **BIGGEST_WIN** 40, **REST** 103
+By tier: **ESSENTIAL** 19, **BIGGEST_WIN** 40, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (18)
+## ESSENTIAL (19)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -30,6 +30,7 @@ By tier: **ESSENTIAL** 18, **BIGGEST_WIN** 40, **REST** 103
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
+| **M-16** | S | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | It silently empties the data plane for the LAST group run while reporting success. Third occurrence of the reports-rows-writes-nothing family (S114 ng_l1 writer; S115 --roll v near-miss). Small fix, and everything downstream of staging depends on it. |
 | **O-1** | S | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
@@ -212,6 +213,7 @@ By tier: **ESSENTIAL** 18, **BIGGEST_WIN** 40, **REST** 103
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
+| **M-16** | ESSENTIAL | S | OPEN | S115 | THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir | - |
 | **O-1** | ESSENTIAL | S | OPEN | S114 | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
@@ -472,6 +474,33 @@ THE FIX, same shape as the S115 creds migration: route through creds.get('KALSHI
 WHY IT IS NOT MERELY COSMETIC: the dock is the thing we are about to run for real. A credential that silently resolves to nothing produces an auth failure at order time, which is the worst moment to discover it - and per S115's stage_group finding (D1-07) an auth failure that is caught by a blanket except reads downstream as an ordinary miss.
 FALSIFIER: if kalshi_auth authenticates on a fresh container with no scratchpad/ directory present, this is fixed. Test it that way, not by running where the file happens to exist (NC-3).
 KEYS.md row 23 updated S115 to state the true position instead of the stale 'pending' one.
+
+---
+
+### [ESSENTIAL] M-16 - THE PULLER WRITES TO A PHANTOM data/ AND LIES ABOUT WHERE - relative OUT_DIR + _write_df ignores out_dir
+
+*size S | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It silently empties the data plane for the LAST group run while reporting success. Third occurrence of the reports-rows-writes-nothing family (S114 ng_l1 writer; S115 --roll v near-miss). Small fix, and everything downstream of staging depends on it.
+
+**Source:** S115, caught by verifying Greg's 'we have the whole year's data for ng, we're good' instead of accepting it
+
+MEASURED S115. Two NG pulls completed at Databento and landed NOTHING where anything reads:
+  head trades 2025-07-22..2025-11-02  ->  logged '2,384,994 rows -> data/nymex_cont_n0'
+  L1 gap      2026-07-31..2026-08-06  ->  logged '1,386,421 rows -> data/nymex_mbp10'
+Afterwards /home/user/Markets/data/nymex_cont_n0 was UNCHANGED at 223 files still starting 20251102, and data/nymex_mbp10 did not exist. The rows are real; they went somewhere else.
+
+BUG 1 - RELATIVE PATHS RESOLVE AGAINST THE SHELL'S CWD. databento_backfill.py:51-52,142 define OUT_DIR='data/pyth_ticks', MBP10_DIR='data/nymex_mbp10', L1_DIR='data/ng_l1' as RELATIVE strings. Run from research/kalshi/ (which is where the SOP says to run everything), they resolve to research/kalshi/data/... A PHANTOM SECOND DATA TREE now exists there holding 219 MB of trades and 22 MB of L1 while the real plane got nothing. Every other module in this repo anchors on HERE/REPO; these three constants do not.
+
+BUG 2 - _write_df DOES NOT ACCEPT out_dir. Its signature is _write_df(df, symbol) and it hardcodes OUT_DIR, while its siblings _write_mbp10_df and _write_mbp1_df both take out_dir. So `--out-dir data/nymex_cont_n0` was SILENTLY IGNORED for any trades pull - the flag exists, is documented, is accepted by argparse, and does nothing on the most common schema.
+
+BUG 3 - THE LOG LINE LIES, and it is what made bugs 1 and 2 invisible. batch_pull prints `{total} rows -> {flush_dir or out_dir or MBP10_DIR}` - the REQUESTED destination, never the writer's actual one. So it reported '-> data/nymex_cont_n0' while _write_df wrote to OUT_DIR, and '-> data/nymex_mbp10' while _write_mbp1_df correctly used L1_DIR. A success line naming a directory it never touched.
+
+THIRD OCCURRENCE OF THE FAMILY: S114 found the ng_l1 writer DID NOT EXIST and '--schema mbp-1 fell through to the trades writer, so a pull reported 333,530 rows and produced no file'; S115 caught --roll defaulting to NG.v.0 before it landed. A PULL THAT REPORTS ROWS IS NOT A PULL THAT LANDED DATA, and this desk has now been bitten three times by trusting the row count.
+
+THE FIX, all small: (a) anchor OUT_DIR/MBP10_DIR/L1_DIR on REPO like every other module; (b) give _write_df the out_dir parameter its siblings already have; (c) make the log print the writer's ACTUAL destination, returned by the writer rather than assumed by the caller; (d) after any pull, ASSERT the expected day files exist on disk and hard-fail if not - a row count is not a landing check (NC-3).
+NO RE-PURCHASE NEEDED: Databento re-serves a completed job FREE for 30 days (jobs GLBX-20260806-SEC5NWEY4U and GLBX-20260806-FUHPD9FHH5), and the decoded data is sitting in research/kalshi/data/ - it can be moved rather than re-pulled.
+BLOCKS: staging any head block (A-67/A-69's substrate). Do NOT stage on a plane that looks fine and is empty.
 
 ---
 
