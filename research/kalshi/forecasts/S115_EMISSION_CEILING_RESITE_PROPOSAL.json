@@ -1,0 +1,25 @@
+{
+ "proposal": "S115_EMISSION_CEILING_RESITE",
+ "session": "S115",
+ "adjudication": {
+  "adjudicated_by": "PENDING - Greg. Play-meaning change: D8 proposal + adjudication, never a direct edit.",
+  "why_now": "Found during the S115 pre-paper-trade platform audit. The play's OWN registered forward test (store/forward_tests.json) was settled at S114 close as REFUTED_ON_ITS_PREMISE with the instruction 're-register at the measured ceiling' - and the play in the brain never heard: it still carries threshold 450, status PROVISIONAL, and a health.can_change_state note citing the superseded g18-g23 measurement ('8 of 60 days would trip it'). On g24 the maximum |emission| was 250, so the 450 bar fired 0 of 10 days - DEGENERATE by the desk's own D23/D28 definition (cannot change state inside the block in front of the specialist). This is the S114 schema-correction family (a live status on dead evidence) one door over: the refutation was recorded honestly in the TEST store and nothing carried it to the PLAY."
+ },
+ "changes_proposed": [
+  {
+   "id": "magnitude.emission_ceiling_check",
+   "change": "status PROVISIONAL -> DEGENERATE, on the play's own forward-test verdict (never on inference). Keep the mechanism - the DEGENERATE repair is to RE-SITE THE BAR, not discard the play. Update health.can_change_state to the current measurement (g24: 0/10 fire, max emission 250 vs threshold 450; ceiling trend g22 0.55x -> g23 0.68x -> g24 0.29x of realized).",
+   "resite_options_for_adjudication": [
+    {"option": "a", "text": "Re-site the absolute bar at ~200 (near the measured g24 ceiling of 250). Cheapest, keeps the absolute form D28 measured as healthiest - but the ceiling MOVED 550 -> 250 in one block, so a fixed bar chases a moving target and may be degenerate again next block."},
+    {"option": "b", "text": "Make the check relative to the specialist's own block context (fire when own emission is under X% of the block's served realized-move scale, e.g. vol_regime sigma). D28 CAUTION applies: converting an absolute bar to a ratio destroyed C2's discrimination once already - this form must be measured before it is trusted."},
+    {"option": "c", "text": "Hold at DEGENERATE with no new bar until A-40 (root-cause the emission ceiling) lands. Honest, but the play then does nothing during the g24 refine, which is aimed at exactly this failure."}
+   ],
+   "note_on_scope": "The g24 evidence says under-emission is UNIFORM (0.18-0.40x, 8 of 10 days, no clustering at any cap) - which questions whether a near-ceiling trigger is the right instrument at all. That question IS A-40 and is not settled here."
+  }
+ ],
+ "instances": [
+  {"date": "20260727", "group": "g24", "source_file": "research/kalshi/forecasts/grp24.json", "what_the_state_said": "The block's largest emission, +250, on a -1360 day - wrong-signed AND 0.18x sized. The 450 bar could not fire even on the block's boldest call."},
+  {"date": "ALL", "group": "g24", "source_file": "research/kalshi/store/forward_tests.json", "what_the_state_said": "Forward test settled REFUTED_ON_ITS_PREMISE at S114 close: 'the cap did not arrive at 550. THE MAXIMUM EMISSION OF THE ENTIRE BLOCK WAS 250.'"}
+ ],
+ "no_brain_edit_until_go": true
+}
