@@ -37,7 +37,7 @@ By tier: **ESSENTIAL** 17, **BIGGEST_WIN** 40, **REST** 103
 | **A-58** | M | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | It is the one-doc rule measured against the live brain, and it is going live. Three pointers already resolve to nothing, which means a specialist following them silently loses the content - the exact silent-absence family this desk has recorded eleven times. |
 | **A-60** | M | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | It is the measurement chain across the walk->paper boundary. The walk's scoreboard stops at the boundary and nothing on the other side has ever been validated, so the first honest number about the tradeable object would arrive from live P&L - the most expensive place to learn it. |
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
-| **A-68** | M | GIVE FRANKIE RETENTION: an APPEND-ONLY CAUSAL journal per lens - prior read, what happened, the delta | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
+| **A-68** | M | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -218,7 +218,7 @@ By tier: **ESSENTIAL** 17, **BIGGEST_WIN** 40, **REST** 103
 | **A-58** | ESSENTIAL | M | OPEN | S115 | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | - |
 | **A-60** | ESSENTIAL | M | OPEN | S115 | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | - |
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
-| **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: an APPEND-ONLY CAUSAL journal per lens - prior read, what happened, the delta | - |
+| **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -577,13 +577,13 @@ FALSIFIER: if the matched cohort's spread does not cover realized moves at its s
 
 ---
 
-### [ESSENTIAL] A-68 - GIVE FRANKIE RETENTION: an APPEND-ONLY CAUSAL journal per lens - prior read, what happened, the delta
+### [ESSENTIAL] A-68 - GIVE FRANKIE RETENTION: THE LENS'S BOOK - what I am carrying + what I did, append-only and causal
 
 *size M | OPEN | raised S115*
 
 **Why it is ESSENTIAL:** It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid.
 
-**Source:** Greg, S115: 'We'll have to give him retention abilities then' (after establishing that a per-day spawn has nothing to retain)
+**Source:** Greg, S115: 'We'll have to give him retention abilities then' (after establishing that a per-day spawn has nothing to retain)  ||  Greg, S115: 'I like your book idea'
 
 THE GAP, STATED PRECISELY: the DATA already persists and the REASONING does not. build_causal_slices removes the FUTURE, not the past - E's slice for 20260724 already carries five days of blocks including its own 20260722. So E can already see what the tape did on its earlier day. What E cannot see is WHAT E CONCLUDED on 20260722 and HOW THAT TURNED OUT. Blind-legal by construction: on Thursday you know Tuesday's close, in the walk and in live alike.
 
@@ -598,6 +598,17 @@ RELATIONSHIP TO A-62: A-62 serves the lens its measured track record ACROSS THE 
 
 FALSIFIER: if journal-carrying days show no improvement over non-carrying days for the same lens - measured per event, never pooled - then within-run retention buys nothing at a one-session horizon, and the object-state machinery should be kept for its CONTRACT value only (A-59), with that stated plainly rather than defended.
 BLOCKS: A-67 arm 2 (the retention A/B) cannot run until this exists.
+
+=== S115: NAME IT THE LENS'S BOOK - AND THE NAMING COLLISION THAT WAS NEARLY WALKED INTO ===
+Greg: 'I like your book idea.' The framing is better than 'journal' and it is the desk's own language - but CHECKED BEFORE ADOPTING, and the bare word COLLIDES: 'day-book' is already a term of art here (in the brain and three times in CLAUDE.md), meaning the PER-DAY EDGE as distinct from the block lean - S97: 'the block lean and the day-book are TWO DIFFERENT EDGES'. Calling this 'the book' would put two different objects under one name, which is exactly the defect S115 spent itself unpicking. NAME: **the LENS'S BOOK**, never 'the book' unqualified.
+
+AND 'BOOK' EARNS THE RENAME, because a trader's book has TWO HALVES and 'journal' only captures one:
+  WHAT I AM CARRYING - the live read handed forward: chain state, exit type, what I expect next. The analogue of POSITIONS. This is the half that makes E on 0724 CONTINUOUS WITH E on 0722 rather than merely informed about it.
+  WHAT I DID - prior reads, outcomes, deltas; append-only and causal. The analogue of the RECORD. This is the half 'journal' meant.
+In NOOA terms the mapping is exact: THE BOOK IS THE FIELD - the object's state, CARRIED, not re-derived each spawn. That is what object-state buys us, stated in our own vocabulary rather than the paper's.
+
+IT ALSO SHARPENS WHAT IS ALREADY HALF-BUILT: `handoff_out` is a NINE-FIELD version of the carrying half, restricted to weekend seams (E -> A -> B). The lens's book GENERALISES it to every day and adds the record half. So this is not a new mechanism from nothing - it is the existing seam handoff extended in two directions, which also means the seam's hard-won schema (handoff_out_schema, relocated into the brain at S114) is the starting spec rather than a blank page.
+THE CAUSAL RULE APPLIES TO BOTH HALVES: carried state and record alike are written at their own decision point and readable only by strictly later days.
 
 ---
 
