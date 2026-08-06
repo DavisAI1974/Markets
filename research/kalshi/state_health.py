@@ -254,12 +254,38 @@ def audit(state: dict) -> dict:
         lp = sc0.get("last_print") if isinstance(sc0, dict) else None
         if isinstance(st0, dict) and isinstance(lp, dict):
             a, pdt = st0.get("as_of"), lp.get("print_date")
-            if isinstance(a, str) and isinstance(pdt, str) and a > pdt:
+            # S115 (audit D2-03): SYMMETRIC. The original guard fired only when storage POSTDATED
+            # the consensus - and the live g24 defect was the mirror: consensus knew the 07-23 and
+            # 07-30 prints while storage still called 07-16 last, and the state passed 0 hard. Two
+            # blocks disagreeing about WHICH PRINT IS LAST is the defect, whichever side is staler.
+            if isinstance(a, str) and isinstance(pdt, str) and a != pdt:
+                _who = ("storage.as_of POSTDATES consensus.last_print" if a > pdt else
+                        "storage.as_of is BEHIND consensus.last_print")
                 hard.append(
-                    f"{d}: storage.as_of {a} POSTDATES storage_consensus.last_print.print_date {pdt} "
-                    f"- storage knows a print the consensus block still calls future. last_print "
-                    f"affirmatively misdescribes which print is last; age/surprise reads off it are "
-                    f"about the wrong print (S110 audit f4).")
+                    f"{d}: storage.as_of {a} != storage_consensus.last_print.print_date {pdt} "
+                    f"({_who}) - the staler block serves a superseded print under a live name; "
+                    f"age/surprise reads off it are about the wrong print (S110 f4, symmetric S115).")
+            # S115 (audit D2-03): CADENCE BOUND - equality cannot catch SHARED staleness (both
+            # blocks stuck at the same old print pass the identity check). Storage is a WEEKLY
+            # publication: on any reading day, the last print can be at most ~7 calendar days old
+            # plus holiday slack. A declared *_basis in the block downgrades to soft (a repair
+            # says so; silence does not).
+            if isinstance(a, str):
+                try:
+                    import datetime as _dt
+                    _rd = _dt.date(int(d[:4]), int(d[4:6]), int(d[6:8]))
+                    _ao = _dt.date.fromisoformat(a[:10])
+                    _lag = (_rd - _ao).days
+                except Exception:
+                    _lag = None
+                if _lag is not None and _lag > 9:
+                    _msg = (f"{d}: storage.as_of {a} is {_lag} calendar days behind the reading "
+                            f"day on a WEEKLY publication (bound 9 = 7-day cadence + holiday "
+                            f"slack) - a whole print cycle is missing (S115 audit D2-03).")
+                    if any(k.endswith("_basis") for k in st0):
+                        soft.append(_msg + " [declared *_basis present - downgraded to soft]")
+                    else:
+                        hard.append(_msg)
 
         # S114 SAME-PUBLICATION AS-OF RECONCILIATION. The f4 guard above catches ONE pair
         # (storage vs storage_consensus) and the same disease was live in a THIRD block nobody had
@@ -375,21 +401,6 @@ def write_manifest(state: dict, gid: str) -> str:
     return p
 
 
-if __name__ == "__main__":
-    import json
-    import os
-    import sys as _sys
-    _here = os.path.dirname(os.path.abspath(__file__))
-    for _gid in _sys.argv[1:] or ():
-        _n = _gid.lstrip("g")
-        _sp = os.path.join(_here, "renders", "ng_refine_s95", f"grp{_n}_state.json")
-        _st = json.load(open(_sp, encoding="utf-8"))
-        report(_st, f"g{_n}")
-        print("  manifest ->", os.path.relpath(write_manifest(_st, f"g{_n}"), _here))
-    if not _sys.argv[1:]:
-        print("usage: python state_health.py g22 [g23 ...] - report + write inspection manifest")
-
-
 def assert_healthy(state: dict, label: str = "") -> None:
     r = report(state, label)
     if r["hard"]:
@@ -402,12 +413,22 @@ def assert_healthy(state: dict, label: str = "") -> None:
 
 
 if __name__ == "__main__":
+    # S115 (audit D2-07): ONE __main__, and the default invocation is genuinely READ-ONLY.
+    # The file used to carry TWO __main__ blocks - the first wrote forecasts/g{N}_inspection.json
+    # on every report run (a read-only-LOOKING command that writes, the NC-4 shape), then the
+    # second re-reported. The inspection manifest is now opt-in via --manifest, which is the
+    # staging path's job to request.
     import json, os, sys
     HERE = os.path.dirname(os.path.abspath(__file__))
     RD = os.path.join(HERE, "renders", "ng_refine_s95")
-    for gid in (sys.argv[1:] or ["g19", "g20", "g21", "g22", "g23"]):
-        p = os.path.join(RD, f"grp{gid[1:]}_state.json")
+    args = [a for a in sys.argv[1:] if a != "--manifest"]
+    want_manifest = "--manifest" in sys.argv[1:]
+    for gid in (args or ["g19", "g20", "g21", "g22", "g23", "g24"]):
+        p = os.path.join(RD, f"grp{gid.lstrip('g')}_state.json")
         if not os.path.exists(p):
             print(f"[state_health {gid}] no state file"); continue
-        report(json.load(open(p)), gid)
+        st = json.load(open(p, encoding="utf-8"))
+        report(st, gid)
+        if want_manifest:
+            print("  manifest ->", os.path.relpath(write_manifest(st, gid), HERE))
         print()
