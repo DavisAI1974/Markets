@@ -227,6 +227,15 @@ def _ba_read(days: dict, period: str, ba: str) -> dict | None:
         "solar_share": round(sun / total, 4) if (sun is not None and total) else None,
         "gas_chg_7d_mwh": chg(gas, ref(7, "NG")),
         "solar_chg_7d_mwh": chg(sun, ref(7, "SUN")),
+        # WIND'S 7-DAY TWIN, added S114. Gas, solar and hydro all carried one and wind did not, for
+        # any BA - and wind is the term the 0629 lesson is ABOUT (gw_cdd rose exactly as forecast
+        # and burn FELL 4.2 Bcf/d on a 62% wind rise). Two rehearsal specialists found the gap
+        # independently on different days; one recovered the trend by hand only because its slice
+        # happened to carry four days, and said plainly that a one-day slice could not read it at
+        # all. `wind_share` joins it for the same reason gas/solar carry one: a level without a
+        # denominator cannot say whether the forcing grew or the system did.
+        "wind_share": round(wnd / total, 4) if (wnd is not None and total) else None,
+        "wind_chg_7d_mwh": chg(wnd, ref(7, "WND")),
     }
     if ba == "US48" and gas is not None:
         # the sweep's stated method verbatim: burn_bcfd ~= MWh_per_day x 7900 / 1.035e9

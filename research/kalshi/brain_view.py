@@ -99,6 +99,19 @@ def redact_window(obj, toks, counter):
     return obj
 
 
+# NO BLANKET OUTCOME STRIP - REVERTED S114, and the reason is the correction itself.
+# Specialist E proposed dropping `what_the_day_did` from every instance to cut size and leak
+# together. I applied it to ALL instances, which was wrong. Greg: "Why did you strip outcomes out?
+# He should have those just not real price curve."
+# He is right and it is the sharper rule. A PAST day's outcome is the EVIDENCE - it is what makes
+# an instance worth carrying, it is what the falsifier fields rest on (the thing both specialists
+# called the most useful content in the brain), and it is the library D32 is built to accumulate.
+# What must not be served is the outcome of a day the specialist is FORECASTING. That is a window
+# question, not a field question, and `redact_window` already answers it: any leaf naming an
+# in-window day goes, including that instance's own `what_the_day_did`.
+# The blanket strip was therefore both harmful and redundant - it destroyed 938 historical
+# evidence fields to remove leaks the window wall had already removed.
+
 def build(brain, role, phase="working", window_days=None):
     """-> (view, served[], withheld[(name, why)]).
 
@@ -154,6 +167,21 @@ def build(brain, role, phase="working", window_days=None):
             withheld.append((name, "phase %r, and this view is phase %r - %s"
                              % (ph, phase, entry.get("phase_why") or "")))
     if window_days:
+        # BLIND LEGALITY (A-53). A window means a blind run, so annotate every play with whether it
+        # CAN fire on a blind slice. Specialist D wrote a stand-down paragraph for each of four
+        # plays that were never going to be available; this lets that be one line. The
+        # CONTRADICTION verdict is the one that matters - a play asserting blind-legality while
+        # naming a price-derived quantity is worse than a silently unavailable one, because the
+        # assertion is what a specialist trusts.
+        try:
+            import blind_legality
+            verdicts = blind_legality.sweep(brain, verbose=False)
+            for pl in view.get("plays", []):
+                v = verdicts.get(pl.get("id"))
+                if v:
+                    pl["blind_legality"] = v
+        except Exception as e:
+            print("[brain_view] blind_legality annotation skipped: %s" % e)
         toks = window_tokens(window_days)
         counter = [0]
         for k in list(view):
@@ -163,6 +191,8 @@ def build(brain, role, phase="working", window_days=None):
         meta["window_redaction"] = OrderedDict([
             ("days", sorted(window_days)),
             ("leaves_redacted", counter[0]),
+            ("historical_outcomes", "KEPT. A past day's outcome is evidence; only in-window "
+                                    "days are withheld (Greg, S114)."),
             ("why", "The brain carries DATED REALIZED OUTCOMES in dollars against block days "
                     "(S112 stamped 624 instances; every merge since adds more). A blind specialist "
                     "reading them gets its own answer - measured S114, specialist B on 20260622."),
