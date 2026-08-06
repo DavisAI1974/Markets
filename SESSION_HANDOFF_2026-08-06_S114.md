@@ -311,3 +311,69 @@ It is kept in the ENFORCING file rather than a session doc, because that is the 
 recorded somewhere nothing reads is a finding that expires.** Mirrored into the brain as
 `reasoning_method.what_a_play_status_means_S114` so specialists — who read the brain, not the
 schema — get the operative half.
+
+---
+
+## 13. THE CLOSE-OUT PHASE (everything after this handoff was first written)
+
+This document was drafted mid-session, at the point Greg asked whether to start a fresh session.
+Sections 12 and 13 cover what happened after.
+
+### 13.1 THE MERGE — every forward test registered against g24 is now REPORTED
+
+`merge_gate due g24` returned **5 DUE and unreported**, and a due test left unreported is a
+nonconformance, not a silent pass. All five settled against the run's measured evidence:
+
+| test | verdict |
+|---|---|
+| `weather.renewables_masking_flip` | **REPORTED_NOT_SETTLED** — evaluated and fired 2 of 10 days; B-0727 found the gate's precondition ABSENT AND REVERSED (wind −206,525 w/w) and reported wind/solar/hydro separately, unprompted. But g24 is a summer block, so the winter limb could not arise. |
+| `weather.summer_burn_lane_exclusion` | **UNRUNNABLE_AS_SERVED, NOW FIXED** — stood down 8 of 10 days as uncomputable, not inapplicable. Not a test of the claim; a test of the plumbing, which failed. |
+| `weather.revision_seasonal_sign_map` | **REPORTED_PARTIALLY_UNRUNNABLE** — the most-used weather play of the block (5 of 10), but its named AUTHORITY channel (`model_disagreement`) was dark all ten days. Sign limb reported; authority limb untested. |
+| `weather.month_tail_gates` | **REPORTED_NO_TAIL_AROSE** — the two prints inside g24 (+32, +28) sat well inside July's bounds. A gate that is not approached is not confirmed. |
+| `magnitude.emission_ceiling_check` | **REFUTED ON ITS PREMISE** — it watched for a cap at ~550. The block's MAXIMUM emission was **250** against a max realized move of 1,360. The test was aimed at the wrong number; re-register at the measured ceiling. |
+
+**`merge_gate due g24` now returns 0.** No new PLAY was merged — correct, because the refine has not
+run and the doctrine gates promotion on forward evidence.
+
+### 13.2 DECISIONS 44 -> 48
+
+- **D45 — THE REFINE DOES NOT NEED THE BLIND WALL** (Greg). Never gate, delay or constrain a refine
+  on blind-wall grounds; stage unmasked.
+- **D46 — THE RENEWABLES FORCING IS A PREREQUISITE, NOT A BACKLOG ITEM** (Greg, three times).
+- **D47 — A STORE REBUILT IN A SESSION IS NOT A FIX UNTIL IT IS ON S3**, verified by reading it
+  BACK. Measured at close, BEFORE pushing: S3 still held the PRE-FIX copies of `model_disagreement`,
+  `storage_regional`, `vol_regime` and all five COT books, and **`eia_surprise.json` was ABSENT FROM
+  S3 ENTIRELY**. Starting a fresh session at that moment would have silently undone nearly every
+  data fix of the day, with no error anywhere. **Greg's question about starting a new session is
+  what surfaced it.**
+- **D48 — ALL FOUR KEYS IN ONE ENV FILE, AND IT IS NOTED** (Greg).
+
+### 13.3 KEYS
+
+`~/.config/markets/env`, chmod 600, outside the repo, holding all four names. Verified live at close
+by NAME only, values never printed: STS `get_caller_identity` (account tail 4170), the Databento
+mbp-1 pull, and the EIA rebuilds. `KEYS.md` gained a per-key verification table and records that the
+container's `proxy-injected` placeholder **still shadows the real AWS pair in the process env** —
+which is why `creds.aws_client()` remains the only sanctioned client builder.
+
+### 13.4 OPEN ITEMS — 4 closed, registry re-rendered
+
+`G-5` and `A-51` (the GEFS forcing, built and wired), `A-52` (wind's missing 7-day twin plus the
+share deltas), `A-46` (play evaluability). Registry: **142 open / 1 in progress / 17 done.**
+
+### 13.5 A TEST WHOSE PREMISE EXPIRED — not a regression
+
+`spawn`'s A-50 selftest asserted *"g24 has no outcome anywhere"*. True when written; **FALSE within
+the same session** once g24 was walked, scored and written into CLAUDE.md. The gate correctly began
+firing and the test went red on an expired premise. **Every group eventually becomes a walked
+group**, so any named gid on the clean side of that test is a time bomb — the clean-side probe is
+now a synthetic never-walked window, which tests the GATE rather than the calendar. 24/24, and all
+three walked blocks now correctly refuse a re-blind.
+
+### 13.6 CLOSING STATE
+
+Brain **s105.9**, 90 plays, no play added and no call changed. Decisions 48. `store.py check` PASS
+on all four registries (failure_judge, decisions, sop, docs). `brain_schema validate` clean,
+`brain_view` ALL PASS, `spawn` 24/24, `path_contract` ALL PASS. Working tree clean, everything
+pushed. **The S3 data plane is synced and verified by read-back.**
+
