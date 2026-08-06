@@ -52,7 +52,8 @@ jobs:
           from dashboard.adapters import novel
           from dashboard.server import app
 
-          now = dt.datetime(2026, 8, 6, 10, 13, tzinfo=ZoneInfo('America/New_York'))
+          et = ZoneInfo('America/New_York')
+          now = dt.datetime(2026, 8, 6, 10, 13, tzinfo=et)
           payload = novel.snapshot(now=now)
           assert payload['authority'] == 'READ_ONLY'
           assert payload['execution_enabled'] is False
@@ -60,7 +61,18 @@ jobs:
           assert payload['summary']['next_48h_watch_windows'] >= 3
           assert all(c['execution_enabled'] is False for c in payload['candidates'])
           assert all(c['authority'] in {'WATCH_ONLY', 'SHADOW'} for c in payload['candidates'])
+
+          # Sunday morning must roll daily settlement watches to Monday rather than
+          # dropping them because the next calendar day is not a trading weekday.
+          sunday = dt.datetime(2026, 8, 9, 10, 0, tzinfo=et)
+          weekend_payload = novel.snapshot(now=sunday)
+          daily = [w for w in weekend_payload['immediate_schedule']
+                   if w['candidate_id'] == 'COMMODITY_SETTLEMENT_CLOCK_RESIDUAL']
+          assert len(daily) == 2
+          assert all(w['starts_at_et'].startswith('2026-08-10T') for w in daily)
+
           paths = {route.path for route in app.routes}
           assert '/api/v1/novel/candidates' in paths
           print(payload['summary'])
+          print({'weekend_rollover_windows': len(daily)})
           PY
