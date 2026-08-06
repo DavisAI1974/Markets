@@ -80,6 +80,8 @@ jobs:
           grep -q 'Persistent=true' deploy/aws/markets-frankie-reflect.timer
       - name: Prove original spawner is untouched
         run: |
+          git fetch --no-tags origin \
+            chatgpt/novel-edge-lab-s116:refs/remotes/origin/chatgpt/novel-edge-lab-s116
           test "$(git hash-object research/kalshi/spawn.py)" = "2eb3ab8570be66bd9568bcd3ca2e6b9f19d6b33e"
           git diff --exit-code origin/chatgpt/novel-edge-lab-s116 -- research/kalshi/spawn.py
       - name: Run Frankie selftest
