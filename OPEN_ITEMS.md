@@ -6,15 +6,15 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 155 |
+| open | 156 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 70, **M** 48, **L** 9
+By size: **XS** 18, **S** 71, **M** 48, **L** 9
 
 ---
 
-By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 103
+By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 39, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
@@ -42,7 +42,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 103
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (38)
+## BIGGEST WIN (39)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -60,6 +60,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 103
 | **A-36** | S | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-57** | S | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | A measured result that beat its own named benchmark and then went nowhere. Serving three derived fields off data we already hold is the cheapest possible follow-on, and D30 says a finding with no home does not exist. |
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
+| **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -230,6 +231,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 38, **REST** 103
 | **A-36** | BIGGEST_WIN | S | OPEN | S113 | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
 | **A-57** | BIGGEST_WIN | S | OPEN | S115 | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | - |
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
+| **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -1334,6 +1336,24 @@ FALSIFIER: if re-running those three verifications against the pre-fix commit re
 
 ---
 
+### [BIGGEST_WIN] A-65 - VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day
+
+*size S | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement.
+
+**Source:** Greg, S115: https://arxiv.org/abs/2607.21503 - 'Agentic Context Management' (Dadhich). NOTE: a DIFFERENT paper from the ACM in A-59 (Li/Ming/Chu/Shao/Jin/Xiong), same acronym.
+
+THE SENTENCE THAT INDICTS S115's OWN WORK, verbatim from the abstract: 'naive context accumulation grows token cost quadratically in conversation length, crude summarization buys linear cost at the price of an ACCURACY CLIFF, and only VALIDATED COMPACTION achieves linear cost with preserved fidelity.'
+THAT IS EXACTLY WHAT HAPPENED TODAY. Facing a 420k-token working view I applied CRUDE summarization - a rigid rule cutting legacy_notes and the audit prose - and went off the accuracy cliff: audit.argument lost on all 82 plays, falsifier on 17. Greg caught it by principle. What I never did was VALIDATE the compaction, and that is the whole gap.
+THE TEST, which is obvious in hindsight and cheap: run the SAME specialist on the SAME day twice - once on the full view, once on the compacted view - and DIFF THE POSTERIOR. If direction, magnitude or the fired/stood-down play set changes, the compaction removed something load-bearing and is refused. If they match across a handful of days spanning day-classes, the compaction is validated FOR THOSE CELLS and says so. Per-cell, never pooled (D4/D37): a compaction validated on a quiet Tuesday is not validated on an EIA Thursday.
+WHY IT GENERALISES BEYOND COMPACTION: this is a REGRESSION TEST FOR THE VIEW, and we have none. Every change to brain_view, to the section scoping, to play_index, to the reading instruction, currently ships on argument alone - including S115's own play_index + reading-instruction change, which is UNVALIDATED BY THIS STANDARD RIGHT NOW and will first be exercised by the g24 refine re-run. State that plainly rather than assume it is fine.
+THE PAPER'S FIVE PRIMITIVES, as an audit of what we hold: architecting (have - brain_schema/D29), ingesting (have - feeds to decision state), scoping (have - brain_view role/phase), ANTICIPATING what is needed next (WE HAVE NOTHING), compacting & consolidation (attempted and reverted today, never validated). Its 'consolidating and forgetting while PRESERVING PROVENANCE' is our own standing rule that an absence must announce itself, reached independently from holes #7 and #8 - convergence worth noting.
+EVIDENCE CAUTION, stated so nobody quotes it as settled: single author; the reference implementation (Maximem Synap) is a commercial multi-tenant service; the 92% LongMemEval / 93.2% LoCoMo figures are SELF-REPORTED for that product under a configuration in Section 6 which has NOT been read here. Treat the framework as useful and the numbers as vendor-reported. 23 pages, 6 figures, 4 tables; evaluation harness and study data on GitHub (maximem-ai) - if this is pursued, that harness is the thing to look at first.
+FALSIFIER: if posterior-diffing shows NO change across a range of day-classes for a compaction we independently believe is lossy, the test is insensitive and is not measuring decision impact - fix the test before trusting any compaction it blesses.
+
+---
+
 ### [BIGGEST_WIN] G-30 - weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable
 
 *size S | OPEN | raised S115*
@@ -1981,6 +2001,9 @@ REVISED SPLIT:
   NOOA half - STANDS. It is an ARCHITECTURE (object, typed contracts, docstrings rendered from our store, deterministic vs model-completed methods), not a trained behaviour, so nothing about it depends on fine-tuning. The render-target synthesis is unaffected.
   ACM half - DOWNGRADED from 'merge the mechanism' to 'adopt the FRAMING and the vocabulary'. Its real service to this desk was diagnostic: it named the rigid-heuristic-compression-with-information-loss failure that S115 committed and reverted, and it independently validates the index-over-full-memory design the correction produced. That is worth having written down. It is not a build.
   BEFORE ANY ACM-SHAPED BUILD: somebody must actually read the paper - numbers, baselines, and whether any prompting-only ablation exists. If there is no prompting-only path, the ACM half is CLOSED, not deferred.
+
+=== S115 SECOND CORRECTION: THERE ARE TWO DIFFERENT 'ACM' PAPERS ===
+The ACM downgraded above is Li/Ming/Chu/Shao/Jin/Xiong (arXiv 2607.23809), which requires post-training - that downgrade STANDS for that paper. Greg then sent arXiv 2607.21503, 'Agentic Context Management' by Gaurav Dadhich - SAME ACRONYM, DIFFERENT PAPER, and it is an ARCHITECTURE DISCIPLINE (five primitives: architecting, ingesting, scoping, anticipating, compacting & consolidation) usable with off-the-shelf models, no fine-tuning. So 'ACM needs fine-tuning and is therefore unavailable to us' was correct about the paper I read and WRONG as a conclusion about the idea. The usable half is now tracked as A-65 (validated compaction).
 
 ---
 
