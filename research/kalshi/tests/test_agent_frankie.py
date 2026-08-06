@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import json
 import sys
 import tempfile
 import unittest
@@ -23,7 +22,7 @@ from frankie_core import (  # noqa: E402
     verify_original_spawn,
 )
 from frankie_engine import evaluate_event  # noqa: E402
-from frankie_improve import propose_improvement  # noqa: E402
+from frankie_improve import propose_improvement, record_outcome  # noqa: E402
 
 
 class FrankieTests(unittest.TestCase):
@@ -70,6 +69,38 @@ class FrankieTests(unittest.TestCase):
             "rationale": "test",
         }
 
+    @staticmethod
+    def outcome(result="NO_EDGE_AFTER_COSTS"):
+        return {
+            "resolved_at": "2026-08-07T21:00:00Z",
+            "result": result,
+            "metrics": {"net_edge": 0.0},
+            "source_provenance": [
+                {
+                    "source": "unit-outcome",
+                    "knowable_at": "2026-08-07T21:00:00Z",
+                    "content_hash": "unit-outcome-hash",
+                }
+            ],
+            "execution_enabled": False,
+        }
+
+    def evaluated(self, tmp):
+        config = dataclasses.replace(
+            self.base,
+            allow_missing_papers=True,
+            evidence_root=Path(tmp) / "evidence",
+            s3_bucket=None,
+        )
+        decision, evidence = evaluate_event(
+            self.event(),
+            config=config,
+            primary_backend=ScriptedBackend("one", self.lane()),
+            critic_backend=ScriptedBackend("two", self.lane()),
+            deterministic_only=False,
+        )
+        return config, decision, Path(evidence["local_path"])
+
     def test_origin_is_pinned(self):
         self.assertTrue(verify_original_spawn()["verified"])
 
@@ -96,22 +127,10 @@ class FrankieTests(unittest.TestCase):
 
     def test_incomplete_paper_manifest_caps_shadow(self):
         with tempfile.TemporaryDirectory() as tmp:
-            config = dataclasses.replace(
-                self.base,
-                allow_missing_papers=True,
-                evidence_root=Path(tmp) / "evidence",
-                s3_bucket=None,
-            )
-            decision, evidence = evaluate_event(
-                self.event(),
-                config=config,
-                primary_backend=ScriptedBackend("one", self.lane()),
-                critic_backend=ScriptedBackend("two", self.lane()),
-                deterministic_only=False,
-            )
+            _, decision, evidence = self.evaluated(tmp)
             self.assertEqual(decision.state, "WATCH_ONLY")
             self.assertFalse(decision.execution_enabled)
-            self.assertTrue(Path(evidence["local_path"]).is_file())
+            self.assertTrue(evidence.is_file())
 
     def test_lane_disagreement_cannot_be_averaged(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -130,44 +149,69 @@ class FrankieTests(unittest.TestCase):
             )
             self.assertEqual(decision.state, "HUMAN_REVIEW")
 
-    def test_self_improvement_cannot_touch_spawn(self):
+    def test_outcome_sidecar_is_immutable(self):
         with tempfile.TemporaryDirectory() as tmp:
-            evidence = Path(tmp) / "evidence.json"
-            evidence.write_text(json.dumps({"envelope_hash": "e1"}), encoding="utf-8")
-            proposer = ScriptedBackend(
-                "proposer",
-                {
-                    "target_component": "test_harness",
-                    "hypothesis": "test",
-                    "change_summary": "test",
-                    "evidence_refs": ["e1"],
-                    "requested_files": ["research/kalshi/spawn.py"],
-                    "expected_benefit": "test",
-                    "falsifiers": ["fails"],
-                    "test_plan": ["replay"],
-                    "untouched_forward_gate": "one forward event",
-                    "rollback_plan": "revert",
-                    "execution_enabled": False,
-                    "apply_allowed": False,
-                },
-            )
-            reviewer = ScriptedBackend(
-                "reviewer",
-                {
-                    "verdict": "SANDBOX_ELIGIBLE",
-                    "reasons": ["test"],
-                    "required_tests": ["test"],
-                    "leakage_risks": [],
-                    "execution_risks": [],
-                },
-            )
-            config = dataclasses.replace(self.base, evidence_root=Path(tmp) / "evidence-root")
+            config, _, evidence = self.evaluated(tmp)
+            first = record_outcome(evidence_path=evidence, outcome=self.outcome(), config=config)
+            second = record_outcome(evidence_path=evidence, outcome=self.outcome(), config=config)
+            self.assertEqual(first["outcome_hash"], second["outcome_hash"])
+            with self.assertRaises(GateStop):
+                record_outcome(
+                    evidence_path=evidence,
+                    outcome=self.outcome("DIFFERENT_RESULT"),
+                    config=config,
+                )
+
+    def test_unresolved_evidence_cannot_improve(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config, _, evidence = self.evaluated(tmp)
+            proposer, reviewer = self.improvement_backends(evidence)
             with self.assertRaises(GateStop):
                 propose_improvement(
-                    evidence_paths=[evidence],
-                    proposer=proposer,
-                    critic=reviewer,
-                    config=config,
+                    evidence_paths=[evidence], proposer=proposer, critic=reviewer, config=config
+                )
+
+    def improvement_backends(self, evidence, requested_file="research/kalshi/tests/test_agent_frankie.py"):
+        import json
+
+        evidence_hash = json.loads(evidence.read_text(encoding="utf-8"))["envelope_hash"]
+        proposer = ScriptedBackend(
+            "proposer",
+            {
+                "target_component": "test_harness",
+                "hypothesis": "test",
+                "change_summary": "test",
+                "evidence_refs": [evidence_hash],
+                "requested_files": [requested_file],
+                "expected_benefit": "test",
+                "falsifiers": ["fails"],
+                "test_plan": ["replay"],
+                "untouched_forward_gate": "one forward event",
+                "rollback_plan": "revert",
+                "execution_enabled": False,
+                "apply_allowed": False,
+            },
+        )
+        reviewer = ScriptedBackend(
+            "reviewer",
+            {
+                "verdict": "SANDBOX_ELIGIBLE",
+                "reasons": ["test"],
+                "required_tests": ["test"],
+                "leakage_risks": [],
+                "execution_risks": [],
+            },
+        )
+        return proposer, reviewer
+
+    def test_self_improvement_cannot_touch_spawn(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config, _, evidence = self.evaluated(tmp)
+            record_outcome(evidence_path=evidence, outcome=self.outcome(), config=config)
+            proposer, reviewer = self.improvement_backends(evidence, "research/kalshi/spawn.py")
+            with self.assertRaises(GateStop):
+                propose_improvement(
+                    evidence_paths=[evidence], proposer=proposer, critic=reviewer, config=config
                 )
 
 
