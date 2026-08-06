@@ -9,6 +9,7 @@ on:
       - dashboard/novel_candidates.json
       - dashboard/frontend/novel.css
       - dashboard/frontend/novel.js
+      - dashboard/frontend/novel_diagnostics.js
       - dashboard/server.py
       - dashboard/README.md
       - research/kalshi/kalshi_rule_canonicalizer.py
@@ -20,6 +21,7 @@ on:
       - dashboard/novel_candidates.json
       - dashboard/frontend/novel.css
       - dashboard/frontend/novel.js
+      - dashboard/frontend/novel_diagnostics.js
       - dashboard/server.py
       - dashboard/README.md
       - research/kalshi/kalshi_rule_canonicalizer.py
@@ -49,7 +51,9 @@ jobs:
       - name: Validate candidate registry JSON
         run: python -m json.tool dashboard/novel_candidates.json >/dev/null
       - name: Check JavaScript syntax
-        run: node --check dashboard/frontend/novel.js
+        run: |
+          node --check dashboard/frontend/novel.js
+          node --check dashboard/frontend/novel_diagnostics.js
       - name: Test rule canonicalizer
         run: python research/kalshi/kalshi_rule_canonicalizer.py --selftest
       - name: Validate read-only registry and fixed 48-hour schedule
@@ -58,7 +62,7 @@ jobs:
           import datetime as dt
           from zoneinfo import ZoneInfo
           from dashboard.adapters import novel
-          from dashboard.server import app
+          from dashboard.server import app, index
 
           et = ZoneInfo('America/New_York')
           now = dt.datetime(2026, 8, 6, 10, 13, tzinfo=et)
@@ -85,6 +89,10 @@ jobs:
 
           paths = {route.path for route in app.routes}
           assert '/api/v1/novel/candidates' in paths
+          body = index().body.decode('utf-8')
+          assert 'novel.css' in body
+          assert 'novel.js' in body
+          assert 'novel_diagnostics.js' in body
           print(payload['summary'])
           print({'weekend_rollover_windows': len(daily)})
           PY
