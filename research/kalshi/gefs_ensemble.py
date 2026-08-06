@@ -75,6 +75,45 @@ FORCING_NEEDLES = {
 # the realized feed's estimator is (Tmax+Tmin)/2 from HOURLY obs, and the model carries its own
 # TMAX/TMIN over the step rather than making us approximate extremes from 3-hourly samples.
 EXTREME_NEEDLES = {"tmax": ":TMAX:2 m above ground:", "tmin": ":TMIN:2 m above ground:"}
+
+# eccodes shortName -> our field name. MEASURED from a real decode, not assumed: the .idx says
+# DSWRF and eccodes says `sdswrf`; the .idx says APCP and eccodes says `tp`. v2 mapped the .idx
+# names and lost solar silently.
+def _sample(gid, pts):
+    """Sample a decoded GRIB message at our points by ARITHMETIC INDEX, not codes_grib_find_nearest.
+
+    MEASURED, which is the only reason to prefer one over the other:
+        network, one 0.8 MB message .......  0.7 s
+        390 x codes_grib_find_nearest ..... 10.9 s   <- the whole cost was here
+        codes_get_array + grid metadata ...  0.02 s
+    find_nearest re-walks the grid per call. The GEFS 0.25 deg product is a REGULAR lat/lon grid
+    (Ni=1440, Nj=721, first point 90N/0E, di=dj=0.25, latitude DESCENDING), so the index is
+    computable and the whole field costs one array read. Roughly 500x, and it is what makes 31
+    members x 9 hours feasible at all.
+
+    The grid geometry is READ FROM THE MESSAGE, never assumed - a product change would otherwise
+    silently shift every sample. Verified against find_nearest in the selftest.
+    """
+    import eccodes
+    vals = eccodes.codes_get_array(gid, "values")
+    ni = eccodes.codes_get(gid, "Ni")
+    nj = eccodes.codes_get(gid, "Nj")
+    la1 = eccodes.codes_get(gid, "latitudeOfFirstGridPointInDegrees")
+    lo1 = eccodes.codes_get(gid, "longitudeOfFirstGridPointInDegrees")
+    di = eccodes.codes_get(gid, "iDirectionIncrementInDegrees")
+    dj = eccodes.codes_get(gid, "jDirectionIncrementInDegrees")
+    out = {}
+    for k, c in pts.items():
+        j = int(round((la1 - c["lat"]) / dj))
+        i = int(round(((c["lon"] % 360.0) - lo1) / di)) % ni
+        if 0 <= j < nj:
+            out[k] = float(vals[j * ni + i])
+    return out
+
+
+SHORTNAME_MAP = {"10u": "wind_u10", "10v": "wind_v10", "sdswrf": "solar_dswrf",
+                 "dswrf": "solar_dswrf", "tp": "precip_apcp", "apcp": "precip_apcp",
+                 "2t": "tmp", "mx2t": "tmax", "mn2t": "tmin", "tmax": "tmax", "tmin": "tmin"}
 COORDS_FILE = os.path.join(HERE, "store", "station_coords.json")
 GAS_TZ = ntf.REF_TZ                        # America/Chicago - the same gas-day boundary
 MEMBERS = ["gec00"] + ["gep%02d" % i for i in range(1, 31)]   # control + 30 perturbed
@@ -206,10 +245,8 @@ def station_field(cycle_date, cycle_hour, member, fhr, pts, needle=NEEDLE, sessi
             gid = eccodes.codes_grib_new_from_file(fh)
             if gid is None:
                 return None
-            for st, c in pts.items():
-                n = eccodes.codes_grib_find_nearest(gid, c["lat"], c["lon"])[0]
-                out[st] = n.value          # RAW units - the caller converts, so one decoder serves
-                                           # temperature (K), wind (m/s), DSWRF (W/m2) and APCP (kg/m2)
+            out = _sample(gid, pts)    # RAW units - the caller converts, so one decoder serves
+                                       # temperature (K), wind (m/s), DSWRF (W/m2), APCP (kg/m2)
             eccodes.codes_release(gid)
         return out
     finally:
@@ -334,13 +371,22 @@ def conus_points():
 
 
 def station_fields_multi(cycle_date, cycle_hour, member, fhr, pts, needles, session=None):
-    """Several messages from ONE HTTP range request. -> {name: {point: raw value}}.
+    """Several messages per file, fetched as CONTIGUOUS CLUSTERS. -> {name: {point: raw value}}.
 
-    The first version issued one request per field - 4 fields x 9 forecast hours x 31 members =
-    1,116 round trips per day, and it did not finish. The messages live in ONE file, so a single
-    range spanning the first needed byte to the last brings them all back together; eccodes then
-    walks the blob and each message identifies itself by shortName. Fewer round trips AND fewer
-    bytes than fetching the whole file, which is ~15 MB against ~2 MB for the span.
+    Three revisions, each forced by a measurement rather than a guess:
+      v1 one request per field  - 4 fields x 9 hours x 31 members = 1,116 round trips. Never
+         finished.
+      v2 one span covering all four - correct but 8.4 MB per fetch and 33 s, because DSWRF sits
+         near the end of the file while the wind pair sits in the middle, so the span dragged in
+         twelve unwanted messages.
+      v3 (this) one request per CONTIGUOUS RUN of needed messages. The wind/precip cluster and the
+         radiation message are fetched separately, so we move roughly what we asked for.
+
+    AND THE MESSAGES ARE IDENTIFIED BY shortName FROM A MAP, WHICH IS WHERE v2 SILENTLY LOST SOLAR.
+    The `.idx` calls the field DSWRF; eccodes reports its shortName as `sdswrf`, and precipitation
+    comes back as `tp`, not `apcp`. A name that differs between the index and the decoder is
+    exactly the wrong-but-well-formed class - the fetch succeeded, three fields returned, and solar
+    was simply absent with nothing saying so. Unmapped shortNames are now REPORTED, not dropped.
     """
     import eccodes
     s_ = session or requests
@@ -352,47 +398,59 @@ def station_fields_multi(cycle_date, cycle_hour, member, fhr, pts, needles, sess
     for line in ir.text.strip().splitlines():
         p_ = line.split(":", 3)
         rows.append((int(p_[1]), line))
-    spans = {}
+    spans = []
     for j, (start, line) in enumerate(rows):
         for name, needle in needles.items():
             if needle in line:
                 end = rows[j + 1][0] - 1 if j + 1 < len(rows) else None
-                spans[name] = (start, end)
+                spans.append((start, end, name))
     if not spans:
         return None
-    lo = min(a for a, _ in spans.values())
-    hi_vals = [b for _, b in spans.values()]
-    hi = "" if any(b is None for b in hi_vals) else max(hi_vals)
-    r = s_.get("%s/%s" % (BASE, key), headers={"Range": "bytes=%s-%s" % (lo, hi)}, timeout=300)
-    if r.status_code not in (200, 206):
-        return None
-    fp = tempfile.NamedTemporaryFile(suffix=".grib2", delete=False)
-    try:
-        fp.write(r.content)
-        fp.close()
-        # map shortName -> our name, so a message identifies itself rather than being positional
-        want = {"10u": "wind_u10", "10v": "wind_v10", "dswrf": "solar_dswrf",
-                "tp": "precip_apcp", "unknown": None, "2t": "tmp"}
-        out = {}
-        with open(fp.name, "rb") as fh:
-            while True:
-                gid = eccodes.codes_grib_new_from_file(fh)
-                if gid is None:
-                    break
-                try:
-                    sn = eccodes.codes_get(gid, "shortName")
-                    nm = want.get(sn)
-                    if nm and nm in needles:
-                        out[nm] = {k: eccodes.codes_grib_find_nearest(gid, c["lat"], c["lon"])[0].value
-                                   for k, c in pts.items()}
-                finally:
-                    eccodes.codes_release(gid)
-        return out or None
-    finally:
+    spans.sort()
+    # merge into contiguous clusters: a gap of one message is cheaper to include than to re-request
+    clusters, cur = [], [spans[0]]
+    for sp in spans[1:]:
+        if cur[-1][1] is not None and sp[0] - cur[-1][1] < 2_000_000:
+            cur.append(sp)
+        else:
+            clusters.append(cur); cur = [sp]
+    clusters.append(cur)
+
+    out, seen_names = {}, set()
+    for cl in clusters:
+        lo = cl[0][0]
+        his = [b for _, b, _ in cl]
+        hi = "" if any(b is None for b in his) else max(his)
+        r = s_.get("%s/%s" % (BASE, key), headers={"Range": "bytes=%s-%s" % (lo, hi)}, timeout=300)
+        if r.status_code not in (200, 206):
+            continue
+        fp = tempfile.NamedTemporaryFile(suffix=".grib2", delete=False)
         try:
-            os.unlink(fp.name)
-        except OSError:
-            pass
+            fp.write(r.content)
+            fp.close()
+            with open(fp.name, "rb") as fh:
+                while True:
+                    gid = eccodes.codes_grib_new_from_file(fh)
+                    if gid is None:
+                        break
+                    try:
+                        sn = eccodes.codes_get(gid, "shortName")
+                        seen_names.add(sn)
+                        nm = SHORTNAME_MAP.get(sn)
+                        if nm and nm in needles:
+                            out[nm] = _sample(gid, pts)
+                    finally:
+                        eccodes.codes_release(gid)
+        finally:
+            try:
+                os.unlink(fp.name)
+            except OSError:
+                pass
+    missing = [n for n in needles if n not in out]
+    if missing:
+        # DECLARED, never silent - this is the defect v2 shipped
+        out["_missing"] = {"fields": missing, "shortnames_seen": sorted(seen_names)}
+    return out or None
 
 
 def member_forcings(day, member, cycle_date, cycle_hour, pts, session=None):
@@ -406,11 +464,13 @@ def member_forcings(day, member, cycle_date, cycle_hour, pts, session=None):
     import math
     fhrs = target_fhrs(day, cycle_date, cycle_hour)
     acc = {"wind_cube": [], "solar": [], "precip": []}
+    miss = set()
     for fhr in fhrs:
         got = station_fields_multi(cycle_date, cycle_hour, member, fhr, pts,
                                    FORCING_NEEDLES, session)
         if not got:
             continue
+        miss.update((got.pop("_missing", {}) or {}).get("fields", []))
         u, v = got.get("wind_u10"), got.get("wind_v10")
         if u and v:
             sp = [math.hypot(u[k], v[k]) for k in u]
@@ -429,6 +489,7 @@ def member_forcings(day, member, cycle_date, cycle_hour, pts, session=None):
         if acc["solar"] else None,
         "precip_proxy": round(sum(acc["precip"]), 3) if acc["precip"] else None,
         "slots": len(acc["wind_cube"]),
+        "fields_missing": sorted(miss) or None,
     }
 
 
