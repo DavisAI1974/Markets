@@ -1,0 +1,569 @@
+{
+ "note": "SIGNALS IN USE - served to a blind specialist AND referenced by at least one brain play. Generated S114 from a real causal slice (g22 20260622) cross-referenced against knowledge/ng_brain.json. Metadata excluded (note/date/age_days/vintage/mask flags). The full served set is ~1,050 leaves per day; these 98 unique signals are the ones with a consumer. Blocks marked FANOUT repeat the same field per BA or region.",
+ "fanout": {
+  "grid_stack": "x7 balancing areas (US48, ERCO, CISO, MISO, PJM, SWPP, SOCO)",
+  "storage_regional": "x8 EIA regions incl. salt/non-salt"
+ },
+ "unique_signal_count": 98,
+ "blocks": {
+  "stor_surprise": [
+   {
+    "field": "stor_surprise",
+    "example_path": "stor_surprise",
+    "brain_mentions": 15
+   }
+  ],
+  "curve_regime": [
+   {
+    "field": "curve_regime",
+    "example_path": "curve_regime",
+    "brain_mentions": 48
+   }
+  ],
+  "storage": [
+   {
+    "field": "level",
+    "example_path": "storage.level",
+    "brain_mentions": 121
+   },
+   {
+    "field": "weekly_chg",
+    "example_path": "storage.weekly_chg",
+    "brain_mentions": 3
+   },
+   {
+    "field": "vs_5yr",
+    "example_path": "storage.vs_5yr",
+    "brain_mentions": 56
+   },
+   {
+    "field": "phase",
+    "example_path": "storage.phase",
+    "brain_mentions": 291
+   }
+  ],
+  "storage_regional": [
+   {
+    "field": "level",
+    "example_path": "storage_regional.regions.l48.level",
+    "brain_mentions": 121,
+    "repeats": 7
+   },
+   {
+    "field": "weekly_chg",
+    "example_path": "storage_regional.regions.l48.weekly_chg",
+    "brain_mentions": 3,
+    "repeats": 7
+   },
+   {
+    "field": "vs_5yr",
+    "example_path": "storage_regional.regions.l48.vs_5yr",
+    "brain_mentions": 56,
+    "repeats": 7
+   },
+   {
+    "field": "chg_vs_5yr_chg",
+    "example_path": "storage_regional.regions.l48.chg_vs_5yr_chg",
+    "brain_mentions": 1,
+    "repeats": 7
+   }
+  ],
+  "storage_consensus": [
+   {
+    "field": "consensus_chg_bcf",
+    "example_path": "storage_consensus.next_print.consensus_chg_bcf",
+    "brain_mentions": 2,
+    "repeats": 1
+   },
+   {
+    "field": "consensus_pre_print_bcf",
+    "example_path": "storage_consensus.next_print.consensus_pre_print_bcf",
+    "brain_mentions": 1,
+    "repeats": 1
+   },
+   {
+    "field": "house_disagreement_bcf",
+    "example_path": "storage_consensus.next_print.house_disagreement_bcf",
+    "brain_mentions": 1,
+    "repeats": 1
+   },
+   {
+    "field": "surprise_vs_consensus_bcf",
+    "example_path": "storage_consensus.last_print.surprise_vs_consensus_bcf",
+    "brain_mentions": 2
+   }
+  ],
+  "ngwu_balance": [
+   {
+    "field": "lng_vessels_departed",
+    "example_path": "ngwu_balance.lng_vessels_departed",
+    "brain_mentions": 5
+   },
+   {
+    "field": "lng_vessel_capacity_bcf",
+    "example_path": "ngwu_balance.lng_vessel_capacity_bcf",
+    "brain_mentions": 5
+   },
+   {
+    "field": "lng_feedgas_bcfd",
+    "example_path": "ngwu_balance.latest_sd_levels.lng_feedgas_bcfd",
+    "brain_mentions": 4,
+    "repeats": 1
+   }
+  ],
+  "cot": [
+   {
+    "field": "managed_money_short",
+    "example_path": "cot.managed_money_short",
+    "brain_mentions": 1
+   },
+   {
+    "field": "managed_money_net",
+    "example_path": "cot.managed_money_net",
+    "brain_mentions": 6,
+    "repeats": 4
+   },
+   {
+    "field": "managed_money_net_chg_wow",
+    "example_path": "cot.managed_money_net_chg_wow",
+    "brain_mentions": 5,
+    "repeats": 4
+   },
+   {
+    "field": "managed_money_net_pctile_1y",
+    "example_path": "cot.managed_money_net_pctile_1y",
+    "brain_mentions": 5,
+    "repeats": 4
+   },
+   {
+    "field": "managed_money_net_pctile_3y",
+    "example_path": "cot.managed_money_net_pctile_3y",
+    "brain_mentions": 2,
+    "repeats": 4
+   }
+  ],
+  "contract_structure": [
+   {
+    "field": "calendar_front_expiry",
+    "example_path": "contract_structure.calendar_front_expiry",
+    "brain_mentions": 3
+   },
+   {
+    "field": "days_to_calendar_front_expiry",
+    "example_path": "contract_structure.days_to_calendar_front_expiry",
+    "brain_mentions": 3
+   },
+   {
+    "field": "calendar_front_next_spread",
+    "example_path": "contract_structure.calendar_front_next_spread",
+    "brain_mentions": 5
+   },
+   {
+    "field": "calendar_front_next_spread_chg_3d",
+    "example_path": "contract_structure.calendar_front_next_spread_chg_3d",
+    "brain_mentions": 1
+   },
+   {
+    "field": "front_expiry",
+    "example_path": "contract_structure.front_expiry",
+    "brain_mentions": 3
+   },
+   {
+    "field": "front_next_spread",
+    "example_path": "contract_structure.front_next_spread",
+    "brain_mentions": 5
+   },
+   {
+    "field": "front_next_spread_chg_3d",
+    "example_path": "contract_structure.front_next_spread_chg_3d",
+    "brain_mentions": 1
+   },
+   {
+    "field": "curve_regime",
+    "example_path": "contract_structure.curve_regime",
+    "brain_mentions": 48
+   }
+  ],
+  "squeeze_watch": [
+   {
+    "field": "active",
+    "example_path": "squeeze_watch.active",
+    "brain_mentions": 38
+   },
+   {
+    "field": "days_to_calendar_front_expiry",
+    "example_path": "squeeze_watch.days_to_calendar_front_expiry",
+    "brain_mentions": 3
+   },
+   {
+    "field": "calendar_front_next_spread",
+    "example_path": "squeeze_watch.calendar_front_next_spread",
+    "brain_mentions": 5
+   },
+   {
+    "field": "calendar_front_next_spread_chg_3d",
+    "example_path": "squeeze_watch.calendar_front_next_spread_chg_3d",
+    "brain_mentions": 1
+   },
+   {
+    "field": "days_to_calendar_front_expiry_live",
+    "example_path": "squeeze_watch.days_to_calendar_front_expiry_live",
+    "brain_mentions": 8
+   },
+   {
+    "field": "calendar_limb_satisfied_live",
+    "example_path": "squeeze_watch.calendar_limb_satisfied_live",
+    "brain_mentions": 18
+   },
+   {
+    "field": "sessions_since_prompt_expiry",
+    "example_path": "squeeze_watch.sessions_since_prompt_expiry",
+    "brain_mentions": 11
+   },
+   {
+    "field": "unwind_watch",
+    "example_path": "squeeze_watch.unwind_watch",
+    "brain_mentions": 15
+   }
+  ],
+  "vol_regime": [
+   {
+    "field": "n0_prev_date",
+    "example_path": "vol_regime.n0_prev_date",
+    "brain_mentions": 2
+   },
+   {
+    "field": "n0_prev_net",
+    "example_path": "vol_regime.n0_prev_net",
+    "brain_mentions": 6
+   },
+   {
+    "field": "n0_prev_range",
+    "example_path": "vol_regime.n0_prev_range",
+    "brain_mentions": 2
+   },
+   {
+    "field": "n0_prev_trades",
+    "example_path": "vol_regime.n0_prev_trades",
+    "brain_mentions": 2
+   },
+   {
+    "field": "n0_net_sigma_10",
+    "example_path": "vol_regime.n0_net_sigma_10",
+    "brain_mentions": 1
+   },
+   {
+    "field": "n0_range_20_mean",
+    "example_path": "vol_regime.n0_range_20_mean",
+    "brain_mentions": 4
+   },
+   {
+    "field": "n0_range_pctile",
+    "example_path": "vol_regime.n0_range_pctile",
+    "brain_mentions": 1
+   }
+  ],
+  "flow_calendar": [
+   {
+    "field": "bcom_ng_roll_this_month",
+    "example_path": "flow_calendar.bcom_ng_roll_this_month",
+    "brain_mentions": 4
+   },
+   {
+    "field": "bcom_roll_day_n",
+    "example_path": "flow_calendar.bcom_roll_day_n",
+    "brain_mentions": 1
+   },
+   {
+    "field": "bidweek_day_n",
+    "example_path": "flow_calendar.bidweek_day_n",
+    "brain_mentions": 1
+   },
+   {
+    "field": "business_day_of_month",
+    "example_path": "flow_calendar.business_day_of_month",
+    "brain_mentions": 11
+   },
+   {
+    "field": "cme_early_close",
+    "example_path": "flow_calendar.cme_early_close",
+    "brain_mentions": 2
+   },
+   {
+    "field": "cme_holiday",
+    "example_path": "flow_calendar.cme_holiday",
+    "brain_mentions": 2
+   },
+   {
+    "field": "days_to_futures_expiry",
+    "example_path": "flow_calendar.days_to_futures_expiry",
+    "brain_mentions": 8
+   },
+   {
+    "field": "days_to_next_eia_release",
+    "example_path": "flow_calendar.days_to_next_eia_release",
+    "brain_mentions": 9
+   },
+   {
+    "field": "days_to_opex",
+    "example_path": "flow_calendar.days_to_opex",
+    "brain_mentions": 4
+   },
+   {
+    "field": "gsci_ng_roll_this_month",
+    "example_path": "flow_calendar.gsci_ng_roll_this_month",
+    "brain_mentions": 6
+   },
+   {
+    "field": "gsci_roll_day_n",
+    "example_path": "flow_calendar.gsci_roll_day_n",
+    "brain_mentions": 2
+   },
+   {
+    "field": "in_bcom_hedge_roll",
+    "example_path": "flow_calendar.in_bcom_hedge_roll",
+    "brain_mentions": 2
+   },
+   {
+    "field": "in_bcom_roll",
+    "example_path": "flow_calendar.in_bcom_roll",
+    "brain_mentions": 20
+   },
+   {
+    "field": "in_bidweek",
+    "example_path": "flow_calendar.in_bidweek",
+    "brain_mentions": 3
+   },
+   {
+    "field": "in_gsci_roll",
+    "example_path": "flow_calendar.in_gsci_roll",
+    "brain_mentions": 25
+   },
+   {
+    "field": "is_cme_business_day",
+    "example_path": "flow_calendar.is_cme_business_day",
+    "brain_mentions": 2
+   },
+   {
+    "field": "is_eia_print_day",
+    "example_path": "flow_calendar.is_eia_print_day",
+    "brain_mentions": 6
+   },
+   {
+    "field": "is_expiry_day",
+    "example_path": "flow_calendar.is_expiry_day",
+    "brain_mentions": 9
+   },
+   {
+    "field": "is_opex_day",
+    "example_path": "flow_calendar.is_opex_day",
+    "brain_mentions": 3
+   }
+  ],
+  "grid_stack": [
+   {
+    "field": "demand_mwh",
+    "example_path": "grid_stack.bas.US48.demand_mwh",
+    "brain_mentions": 2,
+    "repeats": 6
+   },
+   {
+    "field": "gas_mwh",
+    "example_path": "grid_stack.bas.US48.gas_mwh",
+    "brain_mentions": 2,
+    "repeats": 6
+   },
+   {
+    "field": "solar_mwh",
+    "example_path": "grid_stack.bas.US48.solar_mwh",
+    "brain_mentions": 4,
+    "repeats": 6
+   },
+   {
+    "field": "wind_mwh",
+    "example_path": "grid_stack.bas.US48.wind_mwh",
+    "brain_mentions": 4,
+    "repeats": 6
+   },
+   {
+    "field": "coal_mwh",
+    "example_path": "grid_stack.bas.US48.coal_mwh",
+    "brain_mentions": 1,
+    "repeats": 6
+   },
+   {
+    "field": "nuclear_mwh",
+    "example_path": "grid_stack.bas.US48.nuclear_mwh",
+    "brain_mentions": 1,
+    "repeats": 6
+   },
+   {
+    "field": "total_gen_mwh",
+    "example_path": "grid_stack.bas.US48.total_gen_mwh",
+    "brain_mentions": 2,
+    "repeats": 6
+   },
+   {
+    "field": "gas_share",
+    "example_path": "grid_stack.bas.US48.gas_share",
+    "brain_mentions": 2,
+    "repeats": 6
+   },
+   {
+    "field": "gas_chg_7d_mwh",
+    "example_path": "grid_stack.bas.US48.gas_chg_7d_mwh",
+    "brain_mentions": 3,
+    "repeats": 6
+   },
+   {
+    "field": "est_gas_burn_bcfd",
+    "example_path": "grid_stack.bas.US48.est_gas_burn_bcfd",
+    "brain_mentions": 7
+   }
+  ],
+  "weather": [
+   {
+    "field": "regime",
+    "example_path": "weather.regime",
+    "brain_mentions": 154
+   },
+   {
+    "field": "gw_hdd",
+    "example_path": "weather.gw_hdd",
+    "brain_mentions": 36
+   },
+   {
+    "field": "gw_cdd",
+    "example_path": "weather.gw_cdd",
+    "brain_mentions": 42
+   },
+   {
+    "field": "gw_precip",
+    "example_path": "weather.gw_precip",
+    "brain_mentions": 1
+   }
+  ],
+  "weather_forecast": [
+   {
+    "field": "forecast_gw_hdd",
+    "example_path": "weather_forecast.forecast_gw_hdd",
+    "brain_mentions": 11
+   },
+   {
+    "field": "forecast_gw_cdd",
+    "example_path": "weather_forecast.forecast_gw_cdd",
+    "brain_mentions": 11
+   },
+   {
+    "field": "forecast_run_delta",
+    "example_path": "weather_forecast.forecast_run_delta",
+    "brain_mentions": 8
+   },
+   {
+    "field": "forecast_run_delta_cdd",
+    "example_path": "weather_forecast.forecast_run_delta_cdd",
+    "brain_mentions": 17
+   }
+  ],
+  "weather_forecast_cycle": [
+   {
+    "field": "gw_cdd_d0",
+    "example_path": "weather_forecast_cycle.weekday_open.gw_cdd_d0",
+    "brain_mentions": 1,
+    "repeats": 1
+   }
+  ],
+  "model_disagreement": [
+   {
+    "field": "max_abs_spread_gw_hdd",
+    "example_path": "model_disagreement.summary.max_abs_spread_gw_hdd",
+    "brain_mentions": 1
+   }
+  ],
+  "tape_conditions": [
+   {
+    "field": "n_trades",
+    "example_path": "tape_conditions.n_trades",
+    "brain_mentions": 54,
+    "repeats": 1
+   },
+   {
+    "field": "volume_lots",
+    "example_path": "tape_conditions.volume_lots",
+    "brain_mentions": 11,
+    "repeats": 1
+   },
+   {
+    "field": "session_b_share",
+    "example_path": "tape_conditions.session_b_share",
+    "brain_mentions": 93,
+    "repeats": 1
+   },
+   {
+    "field": "big_prints_n",
+    "example_path": "tape_conditions.big_prints_n",
+    "brain_mentions": 36,
+    "repeats": 1
+   },
+   {
+    "field": "big_print_b_share",
+    "example_path": "tape_conditions.big_print_b_share",
+    "brain_mentions": 89,
+    "repeats": 1
+   },
+   {
+    "field": "session_signed_flow",
+    "example_path": "tape_conditions.session_signed_flow",
+    "brain_mentions": 95,
+    "repeats": 1
+   },
+   {
+    "field": "session_b_share_two_sided",
+    "example_path": "tape_conditions.session_b_share_two_sided",
+    "brain_mentions": 19,
+    "repeats": 1
+   },
+   {
+    "field": "big_print_b_share_two_sided",
+    "example_path": "tape_conditions.big_print_b_share_two_sided",
+    "brain_mentions": 5,
+    "repeats": 1
+   },
+   {
+    "field": "l1_book",
+    "example_path": "tape_conditions.firehose_present.l1_book",
+    "brain_mentions": 53,
+    "repeats": 1
+   },
+   {
+    "field": "quote_bid_share",
+    "example_path": "tape_conditions.prior_full_session.l1_book.quote_bid_share",
+    "brain_mentions": 10
+   },
+   {
+    "field": "spread_ticks_med",
+    "example_path": "tape_conditions.prior_full_session.l1_book.spread_ticks_med",
+    "brain_mentions": 1
+   },
+   {
+    "field": "quote_updates",
+    "example_path": "tape_conditions.prior_full_session.l1_book.quote_updates",
+    "brain_mentions": 2
+   }
+  ],
+  "holiday": [
+   {
+    "field": "holiday",
+    "example_path": "holiday",
+    "brain_mentions": 81
+   }
+  ],
+  "firehose_present": [
+   {
+    "field": "l1_book",
+    "example_path": "firehose_present.l1_book",
+    "brain_mentions": 53
+   }
+  ]
+ }
+}

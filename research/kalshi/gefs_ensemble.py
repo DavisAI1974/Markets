@@ -58,6 +58,23 @@ import nws_temp_feed as ntf  # noqa: E402  - the SAME weighting and degree-day m
 BASE = "https://noaa-gefs-pds.s3.amazonaws.com"
 PRODUCT = "pgrb2sp25"                      # 0.25 deg surface set; carries TMP 2 m
 NEEDLE = ":TMP:2 m above ground:"
+
+# THE FORCINGS - and every one is in the SAME product we already pull, so no new source, no extra
+# retrieval cost, same .idx range-request. Greg, S114: "We also have to ingest wind and solar and
+# prec data", and all three rehearsal specialists asked for forward wind/solar independently.
+# SERVED SEPARATELY, NEVER SUMMED: wind peaks spring/autumn, solar at the solstice (measured on our
+# own EIA-930: wind 9.9 TWh/wk April vs 5.9 August; solar 3.5 June vs 1.4 December). Summing two
+# opposite annual cycles is worse than serving neither (D37).
+FORCING_NEEDLES = {
+    "wind_u10": ":UGRD:10 m above ground:",
+    "wind_v10": ":VGRD:10 m above ground:",
+    "solar_dswrf": ":DSWRF:surface:",
+    "precip_apcp": ":APCP:surface:",
+}
+# TMAX/TMIN are in the product too, which closes the caveat the temperature density had to declare:
+# the realized feed's estimator is (Tmax+Tmin)/2 from HOURLY obs, and the model carries its own
+# TMAX/TMIN over the step rather than making us approximate extremes from 3-hourly samples.
+EXTREME_NEEDLES = {"tmax": ":TMAX:2 m above ground:", "tmin": ":TMIN:2 m above ground:"}
 COORDS_FILE = os.path.join(HERE, "store", "station_coords.json")
 GAS_TZ = ntf.REF_TZ                        # America/Chicago - the same gas-day boundary
 MEMBERS = ["gec00"] + ["gep%02d" % i for i in range(1, 31)]   # control + 30 perturbed
@@ -152,7 +169,7 @@ def _key(cycle_date, cycle_hour, member, fhr):
     return "gefs.%s/%s/atmos/%s/%s" % (cycle_date, cycle_hour, PRODUCT, stem)
 
 
-def station_temps_f(cycle_date, cycle_hour, member, fhr, pts, session=None):
+def station_field(cycle_date, cycle_hour, member, fhr, pts, needle=NEEDLE, session=None):
     """-> {station: temp_F} for one member at one forecast hour, or None if the message is absent.
 
     Absent is returned, never faked. A missing member at one hour must show up as a smaller
@@ -171,7 +188,7 @@ def station_temps_f(cycle_date, cycle_hour, member, fhr, pts, session=None):
         rows.append((int(p[1]), line))
     span = None
     for j, (start, line) in enumerate(rows):
-        if NEEDLE in line:
+        if needle in line:
             end = rows[j + 1][0] - 1 if j + 1 < len(rows) else ""
             span = (start, end)
             break
@@ -191,7 +208,8 @@ def station_temps_f(cycle_date, cycle_hour, member, fhr, pts, session=None):
                 return None
             for st, c in pts.items():
                 n = eccodes.codes_grib_find_nearest(gid, c["lat"], c["lon"])[0]
-                out[st] = (n.value - 273.15) * 9.0 / 5.0 + 32.0
+                out[st] = n.value          # RAW units - the caller converts, so one decoder serves
+                                           # temperature (K), wind (m/s), DSWRF (W/m2) and APCP (kg/m2)
             eccodes.codes_release(gid)
         return out
     finally:
@@ -199,6 +217,14 @@ def station_temps_f(cycle_date, cycle_hour, member, fhr, pts, session=None):
             os.unlink(fp.name)
         except OSError:
             pass
+
+
+def station_temps_f(cycle_date, cycle_hour, member, fhr, pts, session=None):
+    """Temperature in F - the original contract, now a thin wrapper over station_field."""
+    raw = station_field(cycle_date, cycle_hour, member, fhr, pts, NEEDLE, session)
+    if raw is None:
+        return None
+    return {k: (v - 273.15) * 9.0 / 5.0 + 32.0 for k, v in raw.items()}
 
 
 def member_gwdd(day, member, cycle_date, cycle_hour, pts, session=None):
@@ -281,6 +307,174 @@ def density(day, members=None, cycle_hour=12, verbose=True):
         "gas_day_boundary": str(GAS_TZ),
         "members_requested": len(mems), "members_used": len(rows), "members_dropped": dropped,
         "gw_hdd": dist("gw_hdd"), "gw_cdd": dist("gw_cdd"),
+        "members": rows,
+    }
+
+
+# ---------------------------------------------------------------------------------------------
+# THE FORCINGS at US48 scale
+# ---------------------------------------------------------------------------------------------
+# CONUS sampling grid. A BOUNDING-BOX GRID, not hand-picked generation sites, and the distinction
+# matters: hand-picked points are a fitted choice dressed as geography, and this desk has paid for
+# that shape before. A uniform grid is a stated approximation whose error is measurable - which is
+# why nothing here ships until it is VALIDATED against realized EIA-930 output below.
+CONUS = {"lat0": 25.0, "lat1": 49.0, "lon0": -125.0, "lon1": -67.0, "step": 2.0}
+
+
+def conus_points():
+    pts = {}
+    lat = CONUS["lat0"]
+    while lat <= CONUS["lat1"]:
+        lon = CONUS["lon0"]
+        while lon <= CONUS["lon1"]:
+            pts["%.0f_%.0f" % (lat, lon)] = {"lat": lat, "lon": lon}
+            lon += CONUS["step"]
+        lat += CONUS["step"]
+    return pts
+
+
+def station_fields_multi(cycle_date, cycle_hour, member, fhr, pts, needles, session=None):
+    """Several messages from ONE HTTP range request. -> {name: {point: raw value}}.
+
+    The first version issued one request per field - 4 fields x 9 forecast hours x 31 members =
+    1,116 round trips per day, and it did not finish. The messages live in ONE file, so a single
+    range spanning the first needed byte to the last brings them all back together; eccodes then
+    walks the blob and each message identifies itself by shortName. Fewer round trips AND fewer
+    bytes than fetching the whole file, which is ~15 MB against ~2 MB for the span.
+    """
+    import eccodes
+    s_ = session or requests
+    key = _key(cycle_date, cycle_hour, member, fhr)
+    ir = s_.get("%s/%s.idx" % (BASE, key), timeout=60)
+    if ir.status_code != 200:
+        return None
+    rows = []
+    for line in ir.text.strip().splitlines():
+        p_ = line.split(":", 3)
+        rows.append((int(p_[1]), line))
+    spans = {}
+    for j, (start, line) in enumerate(rows):
+        for name, needle in needles.items():
+            if needle in line:
+                end = rows[j + 1][0] - 1 if j + 1 < len(rows) else None
+                spans[name] = (start, end)
+    if not spans:
+        return None
+    lo = min(a for a, _ in spans.values())
+    hi_vals = [b for _, b in spans.values()]
+    hi = "" if any(b is None for b in hi_vals) else max(hi_vals)
+    r = s_.get("%s/%s" % (BASE, key), headers={"Range": "bytes=%s-%s" % (lo, hi)}, timeout=300)
+    if r.status_code not in (200, 206):
+        return None
+    fp = tempfile.NamedTemporaryFile(suffix=".grib2", delete=False)
+    try:
+        fp.write(r.content)
+        fp.close()
+        # map shortName -> our name, so a message identifies itself rather than being positional
+        want = {"10u": "wind_u10", "10v": "wind_v10", "dswrf": "solar_dswrf",
+                "tp": "precip_apcp", "unknown": None, "2t": "tmp"}
+        out = {}
+        with open(fp.name, "rb") as fh:
+            while True:
+                gid = eccodes.codes_grib_new_from_file(fh)
+                if gid is None:
+                    break
+                try:
+                    sn = eccodes.codes_get(gid, "shortName")
+                    nm = want.get(sn)
+                    if nm and nm in needles:
+                        out[nm] = {k: eccodes.codes_grib_find_nearest(gid, c["lat"], c["lon"])[0].value
+                                   for k, c in pts.items()}
+                finally:
+                    eccodes.codes_release(gid)
+        return out or None
+    finally:
+        try:
+            os.unlink(fp.name)
+        except OSError:
+            pass
+
+
+def member_forcings(day, member, cycle_date, cycle_hour, pts, session=None):
+    """One member -> US48 forcing proxies for `day`, on the same gas-day boundary as the temps.
+
+    WIND is the mean of |V10| CUBED, not of |V10|. Turbine power goes as the cube of wind speed, so
+    averaging speed and then cubing understates a windy day and overstates a calm one - and wind is
+    the term the 0629 miss turned on. SOLAR is mean DSWRF. PRECIP is the day's accumulation.
+    All three are PROXIES for output, never output, and they are named `*_proxy` for that reason.
+    """
+    import math
+    fhrs = target_fhrs(day, cycle_date, cycle_hour)
+    acc = {"wind_cube": [], "solar": [], "precip": []}
+    for fhr in fhrs:
+        got = station_fields_multi(cycle_date, cycle_hour, member, fhr, pts,
+                                   FORCING_NEEDLES, session)
+        if not got:
+            continue
+        u, v = got.get("wind_u10"), got.get("wind_v10")
+        if u and v:
+            sp = [math.hypot(u[k], v[k]) for k in u]
+            acc["wind_cube"].append(sum(x ** 3 for x in sp) / len(sp))
+        if got.get("solar_dswrf"):
+            d = got["solar_dswrf"]
+            acc["solar"].append(sum(d.values()) / len(d))
+        if got.get("precip_apcp"):
+            a = got["precip_apcp"]
+            acc["precip"].append(sum(a.values()) / len(a))
+    if len(acc["wind_cube"]) < 4:
+        return None
+    return {
+        "wind_power_proxy": round(sum(acc["wind_cube"]) / len(acc["wind_cube"]), 2),
+        "solar_irradiance_proxy": round(sum(acc["solar"]) / len(acc["solar"]), 2)
+        if acc["solar"] else None,
+        "precip_proxy": round(sum(acc["precip"]), 3) if acc["precip"] else None,
+        "slots": len(acc["wind_cube"]),
+    }
+
+
+def forcing_density(day, members=None, cycle_hour=12, verbose=True):
+    pts = conus_points()
+    cycle_date, ch, known = cycle_for(day, cycle_hour)
+    mems = members or MEMBERS
+    s = requests.Session()
+    rows = []
+    for m in mems:
+        r = member_forcings(day, m, cycle_date, ch, pts, s)
+        if r is None:
+            continue
+        r["member"] = m
+        rows.append(r)
+        if verbose:
+            print("  %-6s wind %10.1f  solar %7.1f  precip %6.3f"
+                  % (m, r["wind_power_proxy"], r["solar_irradiance_proxy"] or -1,
+                     r["precip_proxy"] or 0))
+    if not rows:
+        raise SystemExit("gefs: no member produced forcings for %s" % day)
+
+    def dist(f):
+        v = sorted(x[f] for x in rows if x.get(f) is not None)
+        if not v:
+            return None
+        q = lambda p: v[min(len(v) - 1, max(0, int(round(p * (len(v) - 1)))))]  # noqa: E731
+        return {"n": len(v), "p10": q(0.10), "p50": q(0.50), "p90": q(0.90),
+                "min": v[0], "max": v[-1]}
+    return {
+        "day": day, "scale": "US48 (CONUS bounding-box grid, %.0f deg)" % CONUS["step"],
+        "n_gridpoints": len(pts),
+        "cycle_utc": "%sT%s:00:00Z" % (dt.datetime.strptime(cycle_date, "%Y%m%d").date(), ch),
+        "knowable_from": known,
+        "served_separately": ("wind and solar are NEVER summed - they are seasonally "
+                              "ANTI-correlated (wind peaks spring/autumn, solar at the solstice), "
+                              "so one 'renewables' term is a composite of two opposite annual "
+                              "cycles (D37)."),
+        "wind_is_cubed": ("wind_power_proxy is the mean of |V10|^3. Turbine power goes as the cube "
+                          "of speed; averaging speed then cubing understates a windy day."),
+        "these_are_proxies": ("meteorological fields, NOT MWh. Usable only to the extent the "
+                              "validation below holds - see `gefs_ensemble.py validate`."),
+        "members_used": len(rows),
+        "wind_power_proxy": dist("wind_power_proxy"),
+        "solar_irradiance_proxy": dist("solar_irradiance_proxy"),
+        "precip_proxy": dist("precip_proxy"),
         "members": rows,
     }
 
