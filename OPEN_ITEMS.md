@@ -1914,6 +1914,18 @@ THE ONE ADAPTATION IT NEEDS BEFORE IT TOUCHES THIS DESK: ACM lets the agent deci
 
 ADDED FALSIFIER for the ACM half: if a live-loop prototype cannot show a session where agent-managed context BEAT serving the full view - on decision quality, not on token count - then for our sizes this is ceremony and only the declared-retrieval index (already built) is warranted. Token reduction alone is NOT the success criterion; this desk does not have a context-cost problem, it has a decision-quality problem.
 
+=== S115 CORRECTION, SAME SESSION: I RECOMMENDED THIS FROM ABSTRACTS, AND THE FULLER READ NARROWS IT ===
+Greg asked 'Did you read it'. I had NOT - both papers were assessed from their arXiv ABSTRACT PAGES (~200 words each), and the BIGGEST_WIN scoping above was written on that basis. Recorded here rather than quietly fixed, because an L-sized build recommended from a summary is the 'plausible, well-formed, unverified' shape this desk exists to catch, and it was caught by Greg asking rather than by any check of mine.
+
+THE FULLER READ IS ALSO PARTIAL AND IS LABELLED AS SUCH: a full-PDF fetch of ACM returned repeated notes that the numbers sit in compressed PDF streams ('specific percentages compressed in PDF sections', 'exact numerical baselines ... require decompression'). SO WE STILL DO NOT HAVE ACM'S ACTUAL BENCHMARK NUMBERS, its baselines, or its magnitudes. Do not cite gains from this item; nobody here has seen them.
+
+THE ONE MATERIAL FINDING, AND IT CUTS AGAINST MY OWN RECOMMENDATION: **ACM APPEARS TO REQUIRE FINE-TUNING.** Its method is a POST-TRAINING pipeline - supervised/RL on trajectories demonstrating good context management - that teaches a model WHEN to compress and offload. The read states it is 'not a pure prompting-only solution applicable to arbitrary frontier models without modification' and is 'fundamentally dependent on the post-training phase'. WE RUN FRONTIER MODELS THROUGH PROMPTING AND CANNOT FINE-TUNE. So the line above proposing ACM's operations as methods on the agent object (recall/offload) OVERSTATES what is available: giving a model those tools WITHOUT the training that taught it when to use them is tool access, not ACM - and the paper's own motivation is that the DECISION is the hard part. Its stated failure modes are precisely the cost of getting that decision wrong: critical-detail loss, retrieval failure when offloaded context is needed again, and premature summarisation before task requirements are clear.
+
+REVISED SPLIT:
+  NOOA half - STANDS. It is an ARCHITECTURE (object, typed contracts, docstrings rendered from our store, deterministic vs model-completed methods), not a trained behaviour, so nothing about it depends on fine-tuning. The render-target synthesis is unaffected.
+  ACM half - DOWNGRADED from 'merge the mechanism' to 'adopt the FRAMING and the vocabulary'. Its real service to this desk was diagnostic: it named the rigid-heuristic-compression-with-information-loss failure that S115 committed and reverted, and it independently validates the index-over-full-memory design the correction produced. That is worth having written down. It is not a build.
+  BEFORE ANY ACM-SHAPED BUILD: somebody must actually read the paper - numbers, baselines, and whether any prompting-only ablation exists. If there is no prompting-only path, the ACM half is CLOSED, not deferred.
+
 ---
 
 ### [BIGGEST_WIN] G-29 - DAILY DRY-GAS PRODUCTION NOWCAST - the balance lens called it 'the single biggest hole' and the synthesis dropped it
