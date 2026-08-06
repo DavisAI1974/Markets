@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+"""Frankie hybrid agent entry point.
+
+Derived from the original ``spawn.py`` operating philosophy: every premise is a lookup,
+missing inputs stop the line, and no prompt may loosen a deterministic gate. The original
+file remains untouched; ``legacy`` delegates to it after verifying its pinned Git blob.
+"""
+from __future__ import annotations
+
+import argparse
+import dataclasses
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from frankie_backends import ScriptedBackend, backend_from_name  # noqa: E402
+from frankie_core import (  # noqa: E402
+    EXECUTION_ENABLED,
+    SPAWN_PATH,
+    FrankieConfig,
+    FrankieEvent,
+    GateStop,
+    adjudicate,
+    load_candidate_registry,
+    load_paper_manifest,
+    qualify_event,
+    verify_original_spawn,
+)
+from frankie_engine import consume_once, evaluate_event, serve  # noqa: E402
+from frankie_improve import propose_improvement  # noqa: E402
+
+
+def print_json(value) -> None:
+    print(json.dumps(value, indent=2, sort_keys=True))
+
+
+def read_event(path: str) -> FrankieEvent:
+    try:
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GateStop(f"cannot read event JSON {path}: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise GateStop("event JSON must contain one object")
+    return FrankieEvent.from_dict(raw)
+
+
+def cmd_health(args: argparse.Namespace) -> int:
+    del args
+    config = FrankieConfig.from_env()
+    origin = verify_original_spawn()
+    manifest = load_paper_manifest(config.paper_manifest, allow_missing=True)
+    registry = load_candidate_registry(config.novel_registry)
+    print_json(
+        {
+            "agent": "Frankie",
+            "execution_enabled": EXECUTION_ENABLED,
+            "origin": origin,
+            "paper_manifest": {
+                "path": str(config.paper_manifest),
+                "status": manifest.status,
+                "papers": len(manifest.papers),
+                "hybrid_ready": manifest.status == "READY" and bool(manifest.papers),
+                "source_session": manifest.source_session,
+            },
+            "candidate_registry": {"path": str(config.novel_registry), "candidates": len(registry)},
+            "backends": {
+                "primary": config.primary_backend,
+                "critic": config.critic_backend,
+                "bedrock_region": config.bedrock_region,
+                "bedrock_model_configured": bool(config.bedrock_model),
+                "openai_model": config.openai_model,
+            },
+            "aws": {
+                "queue_configured": bool(config.sqs_queue_url),
+                "evidence_bucket_configured": bool(config.s3_bucket),
+                "sqs_region": config.sqs_region,
+            },
+            "self_improvement": {
+                "proposal_generation": True,
+                "independent_critic": True,
+                "automatic_apply": False,
+                "production_promotion": "human-reviewed Git PR only",
+            },
+        }
+    )
+    return 0
+
+
+def cmd_verify_origin(args: argparse.Namespace) -> int:
+    del args
+    print_json(verify_original_spawn())
+    return 0
+
+
+def cmd_observe(args: argparse.Namespace) -> int:
+    config = dataclasses.replace(FrankieConfig.from_env(), allow_missing_papers=True)
+    decision, evidence = evaluate_event(
+        read_event(args.event),
+        config=config,
+        deterministic_only=True,
+    )
+    print_json({"decision": decision.as_dict(), "evidence": evidence})
+    return 0
+
+
+def cmd_evaluate(args: argparse.Namespace) -> int:
+    config = FrankieConfig.from_env()
+    if args.primary:
+        config = dataclasses.replace(config, primary_backend=args.primary)
+    if args.critic:
+        config = dataclasses.replace(config, critic_backend=args.critic)
+    decision, evidence = evaluate_event(read_event(args.event), config=config, deterministic_only=False)
+    print_json({"decision": decision.as_dict(), "evidence": evidence})
+    return 0
+
+
+def cmd_legacy(args: argparse.Namespace) -> int:
+    verify_original_spawn()
+    if not args.spawn_args:
+        raise GateStop("legacy requires spawn.py arguments, e.g. legacy emit BLD-1 g23 --day 20260715")
+    completed = subprocess.run(
+        [sys.executable, str(SPAWN_PATH), *args.spawn_args],
+        cwd=str(HERE),
+        check=False,
+    )
+    return int(completed.returncode)
+
+
+def cmd_consume_once(args: argparse.Namespace) -> int:
+    config = FrankieConfig.from_env()
+    print_json(consume_once(config=config, deterministic_only=args.deterministic_only))
+    return 0
+
+
+def cmd_serve(args: argparse.Namespace) -> int:
+    return serve(config=FrankieConfig.from_env(), deterministic_only=args.deterministic_only)
+
+
+def cmd_improve(args: argparse.Namespace) -> int:
+    config = FrankieConfig.from_env()
+    proposer = backend_from_name(args.proposer or config.primary_backend, config)
+    critic = backend_from_name(args.critic or config.critic_backend, config)
+    result = propose_improvement(
+        evidence_paths=[Path(path) for path in args.evidence],
+        proposer=proposer,
+        critic=critic,
+        config=config,
+    )
+    print_json(result)
+    return 0
+
+
+def sample_event() -> FrankieEvent:
+    return FrankieEvent.from_dict(
+        {
+            "event_id": "selftest-event",
+            "candidate_id": "CME_KALSHI_DIGITAL_PARITY",
+            "knowable_at": "2026-08-06T14:30:00Z",
+            "observed_at": "2026-08-06T14:30:01Z",
+            "trigger": "selftest qualified structural comparison",
+            "source_provenance": [
+                {
+                    "source": "selftest",
+                    "knowable_at": "2026-08-06T14:30:00Z",
+                    "content_hash": "selftest-source-hash",
+                }
+            ],
+            "contract_identity": {"status": "MAPPED"},
+            "market_state": {"mode": "test"},
+            "causal_state": {"clock_status": "POINT_IN_TIME", "source_fresh": True},
+            "cost_state": {"costs_known": True},
+            "execution_enabled": False,
+        }
+    )
+
+
+def lane_result(balance_mode: str = "DELTA_NEUTRAL", state: str = "SHADOW") -> dict:
+    return {
+        "verdict": "ADVANCE",
+        "recommended_state": state,
+        "balance_mode": balance_mode,
+        "causal_chain": ["upstream state", "contractual transmission", "downstream observation"],
+        "information_clock": "point-in-time selftest clock",
+        "exact_contracts": ["selftest instrument A", "selftest instrument B"],
+        "missing_evidence": [],
+        "falsifiers": ["no repeatable convergence on untouched events"],
+        "paper_citations": [],
+        "rationale": "synthetic selftest only",
+    }
+
+
+def cmd_selftest(args: argparse.Namespace) -> int:
+    del args
+    checks: list[tuple[str, bool]] = []
+
+    def check(name: str, value: bool) -> None:
+        checks.append((name, bool(value)))
+        print(f"  {'PASS' if value else 'FAIL':<4} | {name}")
+
+    origin = verify_original_spawn()
+    check("original spawn.py Git blob is unchanged", origin["verified"])
+    base = FrankieConfig.from_env()
+    registry = load_candidate_registry(base.novel_registry)
+    check("Novel candidate registry is readable", "CME_KALSHI_DIGITAL_PARITY" in registry)
+    manifest = load_paper_manifest(base.paper_manifest, allow_missing=True)
+    event = sample_event()
+    qualification = qualify_event(event, registry[event.candidate_id])
+    check("qualified synthetic event clears deterministic gates", qualification.eligible)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        config = dataclasses.replace(
+            base,
+            allow_missing_papers=True,
+            evidence_root=Path(tmp) / "evidence",
+            s3_bucket=None,
+        )
+        primary = ScriptedBackend("scripted-primary", lane_result())
+        critic = ScriptedBackend("scripted-critic", lane_result())
+        decision, evidence = evaluate_event(
+            event,
+            config=config,
+            primary_backend=primary,
+            critic_backend=critic,
+            deterministic_only=False,
+        )
+        check("paper-incomplete gate caps SHADOW to WATCH_ONLY", decision.state == "WATCH_ONLY")
+        check("Frankie can never enable execution", decision.execution_enabled is False)
+        check("evidence is written after adjudication", Path(evidence["local_path"]).is_file())
+
+        disagreement = adjudicate(
+            event=event,
+            candidate=registry[event.candidate_id],
+            qualification=qualification,
+            primary=decision.primary_lane and None,
+            critic=None,
+            manifest=manifest,
+            spawn_provenance=origin,
+        )
+        check("missing independent lanes cannot advance", disagreement.state == "WATCH_ONLY")
+
+        evidence_path = Path(tmp) / "improvement_evidence.json"
+        evidence_path.write_text(
+            json.dumps({"envelope_hash": "evidence-selftest", "decision": decision.as_dict()}),
+            encoding="utf-8",
+        )
+        proposal = ScriptedBackend(
+            "scripted-proposer",
+            {
+                "target_component": "test_harness",
+                "hypothesis": "a missing null test allowed a false positive",
+                "change_summary": "add one session-preserving null regression",
+                "evidence_refs": ["evidence-selftest"],
+                "requested_files": ["research/kalshi/tests/test_agent_frankie.py"],
+                "expected_benefit": "reject false positives before shadow",
+                "falsifiers": ["new test does not separate the failed case"],
+                "test_plan": ["replay", "session-preserving null", "untouched shadow"],
+                "untouched_forward_gate": "five independent forward events",
+                "rollback_plan": "revert the reviewed proposal commit",
+                "execution_enabled": False,
+                "apply_allowed": False,
+            },
+        )
+        review = ScriptedBackend(
+            "scripted-reviewer",
+            {
+                "verdict": "SANDBOX_ELIGIBLE",
+                "reasons": ["bounded and falsifiable"],
+                "required_tests": ["run the new regression"],
+                "leakage_risks": [],
+                "execution_risks": [],
+            },
+        )
+        improvement = propose_improvement(
+            evidence_paths=[evidence_path],
+            proposer=proposal,
+            critic=review,
+            config=config,
+        )
+        check("self-improvement produces a sandbox proposal", improvement["state"] == "SANDBOX_ELIGIBLE")
+        check("self-improvement cannot apply itself", improvement["apply_allowed"] is False)
+
+        forbidden = ScriptedBackend(
+            "scripted-forbidden",
+            {
+                **proposal.result,
+                "requested_files": ["research/kalshi/spawn.py"],
+            },
+        )
+        stopped = False
+        try:
+            propose_improvement(
+                evidence_paths=[evidence_path],
+                proposer=forbidden,
+                critic=review,
+                config=config,
+            )
+        except GateStop:
+            stopped = True
+        check("self-improvement cannot touch spawn.py", stopped)
+
+    print(f"\n  {sum(ok for _, ok in checks)}/{len(checks)} passed")
+    return 0 if all(ok for _, ok in checks) else 1
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("health")
+    sub.add_parser("verify-origin")
+    p = sub.add_parser("observe", help="deterministic WATCH/REJECT observation; no LLM")
+    p.add_argument("event")
+    p = sub.add_parser("evaluate", help="run independent causal and trading-mechanics lanes")
+    p.add_argument("event")
+    p.add_argument("--primary", choices=("bedrock", "openai"))
+    p.add_argument("--critic", choices=("bedrock", "openai"))
+    p = sub.add_parser("legacy", help="delegate to untouched spawn.py after origin verification")
+    p.add_argument("spawn_args", nargs=argparse.REMAINDER)
+    p = sub.add_parser("consume-once")
+    p.add_argument("--deterministic-only", action="store_true")
+    p = sub.add_parser("serve")
+    p.add_argument("--deterministic-only", action="store_true")
+    p = sub.add_parser("improve", help="propose and independently critique one bounded improvement")
+    p.add_argument("evidence", nargs="+")
+    p.add_argument("--proposer", choices=("bedrock", "openai"))
+    p.add_argument("--critic", choices=("bedrock", "openai"))
+    sub.add_parser("selftest")
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
+    commands = {
+        "health": cmd_health,
+        "verify-origin": cmd_verify_origin,
+        "observe": cmd_observe,
+        "evaluate": cmd_evaluate,
+        "legacy": cmd_legacy,
+        "consume-once": cmd_consume_once,
+        "serve": cmd_serve,
+        "improve": cmd_improve,
+        "selftest": cmd_selftest,
+    }
+    try:
+        return commands[args.command](args)
+    except GateStop as exc:
+        print(f"STOP - {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:
+        print(f"ERROR - {type(exc).__name__}: {str(exc)[:2000]}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
