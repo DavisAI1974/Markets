@@ -61,7 +61,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **A-57** | S | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | A measured result that beat its own named benchmark and then went nowhere. Serving three derived fields off data we already hold is the cheapest possible follow-on, and D30 says a finding with no home does not exist. |
 | **A-61** | S | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | A false REFUTED is worse than no verification: it argues for UNDOING a real fix, with an adversarial verdict behind it. Cheap to fix (pin a commit) and it protects every future audit. |
 | **A-65** | S | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | It is the test that would have caught THIS session's own worst mistake before Greg did, it is cheap (one extra spawn per change), and it converts every future view/brain change from an argument into a measurement. |
-| **A-66** | S | THE COMPOSITION MAP - update target x driving signal, to STACK borrowed pieces deliberately (not to rank them) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
+| **A-66** | S | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | It is the collision detector for everything else registered tonight. Cheap (a table), and it is the difference between composing best-of-breed and building something that fights itself. Do it BEFORE any of A-59/62/63/64/65 is built. |
 | **G-30** | S | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | It is the instrument dependency under A-24a, the discovery note's own RANK 1 candidate and the one it calls strongest. It also turns five of twelve path points from a timing judgment into arithmetic, on a feed we already ingest. |
 | **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -233,7 +233,7 @@ By tier: **ESSENTIAL** 15, **BIGGEST_WIN** 40, **REST** 103
 | **A-57** | BIGGEST_WIN | S | OPEN | S115 | SERVE THE BREADTH TERM - A-24c's first pass SURVIVED its benchmark and has no forward home | - |
 | **A-61** | BIGGEST_WIN | S | OPEN | S115 | VERIFY AGAINST A PINNED SNAPSHOT - 3 of 4 'REFUTED' verdicts in the S115 audit were FALSE because the tree moved under the verifiers | - |
 | **A-65** | BIGGEST_WIN | S | OPEN | S115 | VALIDATED COMPACTION - prove a view change does not move the decision, by diffing posteriors on the same day | - |
-| **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION MAP - update target x driving signal, to STACK borrowed pieces deliberately (not to rank them) | - |
+| **A-66** | BIGGEST_WIN | S | OPEN | S115 | THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking) | - |
 | **G-30** | BIGGEST_WIN | S | OPEN | S115 | weather_forecast_cycle NETS 18Z/00Z/06Z INTO ONE DELTA - the timing arm of A-24a's Rank 1 mechanism is unavailable | - |
 | **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
@@ -1356,7 +1356,7 @@ FALSIFIER: if posterior-diffing shows NO change across a range of day-classes fo
 
 ---
 
-### [BIGGEST_WIN] A-66 - THE COMPOSITION MAP - update target x driving signal, to STACK borrowed pieces deliberately (not to rank them)
+### [BIGGEST_WIN] A-66 - THE COMPOSITION CONTRACT - partition OWNERSHIP so borrowed pieces own different parts of one job (not a write protocol, and never a ranking)
 
 *size S | OPEN | raised S115*
 
@@ -1385,6 +1385,19 @@ Greg, S115, verbatim: 'don't look at things as downgrade or less than. They migh
 HE IS RESTATING HIS OWN STANDING RULE AND I BROKE IT REPEATEDLY IN ONE EVENING. CLAUDE.md has carried it since S36: 'tools are COMPLEMENTARY, not competing - evaluate by STACKING, never head-to-head'; and the per-cell doctrine says a signal surviving on a SUBSET of cells is KEPT and used there - 'report works on {X}, not {Y}, never X failed'. D31 adds that a refutation is SCOPED to the cell and instrument it was measured on, never converted into 'dead'.
 WHAT I ACTUALLY DID: 'downgraded' the ACM half, marked Kernel Forge's domain half 'CLOSED', and framed the whole exercise as 'steal one piece, park the rest'. Each of those converts a scoped non-fit into a verdict on the idea. The scoped facts stand (Li's ACM needs fine-tuning we cannot do; we run no PyTorch models today) - what was wrong is the RANKING LANGUAGE wrapped around them.
 THE DISTINCTION I COLLAPSED, and both halves are real: (a) two IDEAS improving the same thing from different angles are ADDITIVE - that is the force multiplier, and the correct treatment is to STACK and measure them together; (b) two MECHANISMS writing the same store without a coordination protocol is a PLUMBING hazard - uncoordinated writes, lost provenance - and its answer is a WRITE PROTOCOL, not a winner. I wrote (b)'s caution using (a)'s language.
+
+=== S115, GREG'S SECOND AND BETTER CORRECTION: OWNERSHIP, NOT ARBITRATION ===
+Greg: 'Or you can write the contract that says they own DIFFERENT PARTS of the same job and they compliment each other.'
+THAT IS STRICTLY BETTER THAN THE WRITE PROTOCOL I PROPOSED. A write protocol is RUNTIME coordination - the contention still exists and you sequence it. OWNERSHIP PARTITION is DESIGN-TIME ELIMINATION - there is nothing to sequence because no two hands are on the same part. Locking versus sharding.
+AND WE ALREADY DO THIS, WELL, IN THE PLACE IT MATTERS MOST: the owner_map. B owns Mondays, E owns Fridays, merge_perday enforces it with an owner guard, and the weekend chain is 'A informs, B decides, B OWNS THE NUMBER'. Different parts of one job, complementary, zero contention - not because writes are sequenced but because nobody else's hands are on that day.
+APPLIED TO THE THREE 'MEMORY' WRITERS, THE COLLISION DOES NOT SURVIVE CONTACT:
+  D8 merge      OWNS PLAY CONTENT       - claims, calls, falsifiers, instances; writes the STORE, adjudicated
+  A-62 priors   OWNS THE TRACK RECORD   - derived from posteriors+actuals; writes a GENERATED INDEX, never authored
+  A-65 compact  OWNS SERVING POLICY     - what reaches the reader; writes NOTHING in memory at all
+Store, derived index, serving layer: three genuinely different parts.
+MY TAXONOMY WAS TOO COARSE, AND THAT IS THE REAL LESSON. 'Memory' is not one organ, and the three-layer separation ALREADY EXISTS in this system: knowledge/ng_brain.json is the STORE, instrument_priors is a GENERATED INDEX, brain_view is the SERVING POLICY. A-62 sits at exactly the same layer as instrument_priors; A-65 governs the layer above. I lumped all three into one target, manufactured a collision, and then proposed machinery to arbitrate something that was never in conflict. A collision detector at the wrong RESOLUTION invents collisions.
+THE DELIVERABLE IS THEREFORE AN OWNERSHIP TABLE, NOT AN ARBITRATION TABLE: every borrowed or planned component names the PART OF THE JOB IT OWNS and the layer it acts on (store / derived index / serving policy / control logic / tools / prompts). Two components may share a LAYER freely - they may not own the same PART. If a genuine overlap is found, the first move is to split the part more finely (the owner_map's answer), and only if that fails does a protocol become necessary.
+REVISED FALSIFIER: if a real overlap appears that CANNOT be resolved by partitioning the job more finely, then ownership is insufficient for a system this size and a coordination protocol is warranted after all - record that instance, because it would be the first.
 
 ---
 
