@@ -205,7 +205,42 @@ def sop_target_write(new_appendix):
     with open(SOP_MD, "w", encoding="utf-8") as f:
         f.write(text[:i] + new_appendix)
 
+FJ_MD = os.path.join(HERE, "agents", "failure_judge.md")
+FJ_JSON = os.path.join(STORE, "failure_judge.json")
+
+
+def extract_fj():
+    """Round-trip the role file back into its store, so `check` compares like with like."""
+    import re as _re
+    md = open(FJ_MD, encoding="utf-8").read()
+    parts = _re.split(r"\n(?=## )", md)
+    out = []
+    for p in parts[1:]:
+        ln = p.split("\n", 1)
+        _h = ln[0].strip()
+        while _h.startswith("#"):          # the store holds heading TEXT; the renderer owns the markup
+            _h = _h.lstrip("#").strip()    # (S114: without this the round-trip doubled every '##')
+        out.append({"heading": _h, "body": (ln[1] if len(ln) > 1 else "").rstrip("\n")})
+    st = json.load(open(FJ_JSON, encoding="utf-8"))
+    st["preamble"] = parts[0].rstrip("\n")
+    st["sections"] = out
+    return st
+
+
+def render_fj(store):
+    """The role file IS a render (S114). Greg: 'that md should probably live in the store'. The
+    standalone .md is the shape this desk keeps having to delete - a document describing what should
+    happen, sitting apart from the machinery that serves it."""
+    out = [store["preamble"], ""]
+    for s in store["sections"]:
+        out.append("## " + s["heading"])
+        out.append(s["body"])
+        out.append("")
+    return "\n".join(out).rstrip("\n") + "\n"
+
+
 RENDERS = {
+    "failure_judge": dict(store=FJ_JSON, target=FJ_MD, extract=extract_fj, render=render_fj),
     "decisions": dict(store=DECISIONS_JSON, target=DECISIONS_MD,
                       extract=extract_decisions, render=render_decisions),
     "sop": dict(store=SOP_JSON, target=SOP_MD, extract=extract_sop, render=render_sop,
