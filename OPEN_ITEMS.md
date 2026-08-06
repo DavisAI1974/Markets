@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 158 |
+| open | 159 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 72, **M** 48, **L** 10
+By size: **XS** 18, **S** 72, **M** 49, **L** 10
 
 ---
 
-By tier: **ESSENTIAL** 16, **BIGGEST_WIN** 40, **REST** 103
+By tier: **ESSENTIAL** 17, **BIGGEST_WIN** 40, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (16)
+## ESSENTIAL (17)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -37,6 +37,7 @@ By tier: **ESSENTIAL** 16, **BIGGEST_WIN** 40, **REST** 103
 | **A-58** | M | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | It is the one-doc rule measured against the live brain, and it is going live. Three pointers already resolve to nothing, which means a specialist following them silently loses the content - the exact silent-absence family this desk has recorded eleven times. |
 | **A-60** | M | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | It is the measurement chain across the walk->paper boundary. The walk's scoreboard stops at the boundary and nothing on the other side has ever been validated, so the first honest number about the tradeable object would arrive from live P&L - the most expensive place to learn it. |
 | **A-63** | M | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | D32 makes analog retrieval THE product and we have no similarity function at all - retrieval is a calendar window plus a regime label. It is also the cheapest honest route to the band, which A-60 shows has never been validated and is the only field a binary market actually prices. Two ESSENTIAL items, one build. |
+| **A-68** | M | GIVE FRANKIE RETENTION: an APPEND-ONLY CAUSAL journal per lens - prior read, what happened, the delta | It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid. |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -217,6 +218,7 @@ By tier: **ESSENTIAL** 16, **BIGGEST_WIN** 40, **REST** 103
 | **A-58** | ESSENTIAL | M | OPEN | S115 | THE BRAIN POINTS OUT OF ITSELF 21 TIMES IN SERVED SECTIONS - and 3 of those files were DELETED at S105 | - |
 | **A-60** | ESSENTIAL | M | OPEN | S115 | THE PRE-PAPER GATE: score the BAND, not the point - the forecaster has never been validated on the only field a binary market consumes | - |
 | **A-63** | ESSENTIAL | M | OPEN | S115 | THE KERNEL IS THE MISSING ENGINE - and it produces the BAND for free, which is the same build as A-60 | - |
+| **A-68** | ESSENTIAL | M | OPEN | S115 | GIVE FRANKIE RETENTION: an APPEND-ONLY CAUSAL journal per lens - prior read, what happened, the delta | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
@@ -572,6 +574,30 @@ THE CONSTRAINT IS ALREADY MEASURED: the S111 dimension-budget briefing gives L =
 THE SYNTHESIS, AND IT IS THE POINT OF THIS ITEM: **THE KERNEL PRODUCES THE BAND FOR FREE.** D32 already says so - 'one analog for the central path, the cohort that PASSED the match test but was not chosen for the band - nothing averaged'. So the band is not a quantity to fit; it is the EMPIRICAL SPREAD OF THE MATCHED COHORT. That makes A-60 (score the band, the only field a Kalshi binary prices) and this item the SAME BUILD, and it makes the band non-parametric, which is exactly what this desk's evidence demands: S114 struck weekend_gap_wide_band_emission's 0.5-1.0x sigma band because it held on 1 of its own 4 instances, while the OBSERVATION it rested on survived (D37). A fitted sigma failed; a cohort spread is the honest replacement.
 FORM CONSTRAINTS, from our own rules: match on SHAPE not level - D32 says 'the scrap signal is SLOPE, not level' and 'level errors are correctable and slope errors are not', and differencing removes the level automatically. Per-cell, never pooled (D4/D37) - one kernel fitted across all seasons is the pooled-correlation error in a new costume, and S113 measured that exact failure (a pooled correlation whose sign was opposite to every constituent cell). And amplitude stays a REJECTION TEST, not a knob (D32) - if the matched cohort must be rescaled much to fit, that is the signal to construct rather than retrieve.
 FALSIFIER: if the matched cohort's spread does not cover realized moves at its stated rate - measured per event and per season, never pooled - the kernel is not selecting on anything that governs outcome, and the retrieval key is wrong rather than the band. That is the same coverage test A-60 specifies, which is the evidence these are one build.
+
+---
+
+### [ESSENTIAL] A-68 - GIVE FRANKIE RETENTION: an APPEND-ONLY CAUSAL journal per lens - prior read, what happened, the delta
+
+*size M | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It is the PREREQUISITE for A-67's retention arm - without it there is no retention to measure, and the arm cannot run. It is also the smallest change that turns a per-day amnesiac spawn into something with a horizon, which is the whole premise of the hybrid.
+
+**Source:** Greg, S115: 'We'll have to give him retention abilities then' (after establishing that a per-day spawn has nothing to retain)
+
+THE GAP, STATED PRECISELY: the DATA already persists and the REASONING does not. build_causal_slices removes the FUTURE, not the past - E's slice for 20260724 already carries five days of blocks including its own 20260722. So E can already see what the tape did on its earlier day. What E cannot see is WHAT E CONCLUDED on 20260722 and HOW THAT TURNED OUT. Blind-legal by construction: on Thursday you know Tuesday's close, in the walk and in live alike.
+
+WHAT RETENTION IS, CONCRETELY - three things carried forward per lens, per day: (1) MY PRIOR READ - the number I emitted and the chain that produced it; (2) WHAT ACTUALLY HAPPENED - already in the slice; (3) THE DELTA - was I right, and if not, which limb failed. That is a within-run learning loop and it is D25's dual-process idea (emit the fast read BEFORE the slow work, so an override must state what beat it) extended ACROSS days rather than within one.
+
+THE CONSTRAINT THAT DECIDES WHETHER THIS IS SOUND OR A DISASTER - D22: 'The LEDGER IS NOT A SECOND BRAIN. Lessons reach the BLIND only through the adjudicated brain... a same-group ledger is a look-ahead leak.' That rule was written about COMPLETED ledgers, which contain every day's outcome including days not yet forecast. A journal ACCUMULATED LIVE is a different object.
+THE LINE: **APPEND-ONLY AND CAUSAL.** Each entry is written AT ITS OWN DECISION POINT and is readable ONLY BY STRICTLY LATER DAYS. Never the finished ledger. Never a neighbouring lens's day that has not happened yet. Get this wrong and 'retention' is the answer key arriving through a new door - hole #11 (the state let every specialist read past its own decision point) with a memory system bolted on. The guard is the same shape as build_causal_slices: the future must be ABSENT, not merely discouraged.
+IT DOES NOT BECOME A SECOND BRAIN, and the distinction is load-bearing: a journal entry is THIS LENS'S OWN RECORD OF ITS OWN DAYS, never a general lesson. General lessons still reach the blind ONLY through D8 proposal -> adjudication -> merge. If a journal entry starts reading like doctrine, it belongs in a merge proposal, not in the journal.
+
+OWNERSHIP (A-66), and it is clean: the journal is a NEW PART - owned by the LENS, written at its own decision point, read by its own later days. It does not touch play content (D8's part), the derived index (A-62's part) or serving policy (A-65's part). No two hands on it.
+RELATIONSHIP TO A-62: A-62 serves the lens its measured track record ACROSS THE WHOLE CORPUS (the long-term prior); A-68 carries what the lens learned WITHIN THE CURRENT RUN (the short-term one). Long-term and short-term memory - which is exactly the split both ACM papers describe, and they are complementary parts of one job, not alternatives.
+
+FALSIFIER: if journal-carrying days show no improvement over non-carrying days for the same lens - measured per event, never pooled - then within-run retention buys nothing at a one-session horizon, and the object-state machinery should be kept for its CONTRACT value only (A-59), with that stated plainly rather than defended.
+BLOCKS: A-67 arm 2 (the retention A/B) cannot run until this exists.
 
 ---
 
