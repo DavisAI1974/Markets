@@ -42,7 +42,7 @@ Future firing design and code are documented in `dashboard/KALSHI_EXECUTION_FIRI
     dashboard/
       server.py            FastAPI app: /api/v1 snapshots + serves frontend/
       adapters/            read-only bridges to the signal core (never edits it)
-        paths.py           repo paths + explicit AWS creds (container placeholders ignored)
+        paths.py           repo paths + research/kalshi/creds.py bridge
         brain.py           ng_brain.json inventory (provenance carried per play)
         decision.py        decision_state per day, blockwise-guarded fallback
         signals.py         SIGNALS_IN_USE definitions joined to as-of values
@@ -72,13 +72,27 @@ Future firing design and code are documented in `dashboard/KALSHI_EXECUTION_FIRI
 - Missing data renders as missing (missing==None doctrine); nothing interpolated.
 - A demo opportunity never becomes an executable call by being displayed.
 
-## AWS
+## AWS and credentials
 
 Data plane: S3 `bento-568968024170-us-east-2-an` via `platform_sync.py` pulls into `data/`.
-Credentials resolve from `scratchpad/aws.env` or `~/.aws/credentials` ONLY - the cloud
-container's placeholder `AWS_*` env vars are deliberately ignored (see CLAUDE.md "AWS KEY").
-Deploy target is AWS (app service + static assets + SSE endpoint per the prototype handoff);
-the server is self-contained and environment-driven so it moves to a box unchanged.
+The dashboard delegates credential resolution to `research/kalshi/creds.py`; it does not maintain
+its own source order. For a hosted service such as Render, set:
+
+    MARKETS_AWS_ACCESS_KEY_ID=...
+    MARKETS_AWS_SECRET_ACCESS_KEY=...
+
+For a persistent local machine, the canonical file is:
+
+    ~/.config/markets/env
+
+Use the bare names in that file and set permissions to `chmod 600`. The canonical resolver also
+supports ordinary process environment variables, ignores injected `proxy-` placeholders, retains
+the documented legacy migration read temporarily, and lets `creds.aws_client()` fall through to
+`~/.aws/credentials` when present. Never put credentials in the repository, dashboard frontend,
+HTML snapshots, logs, or Render build output.
+
+The final dashboard target selected by Greg is Render for the hosted web service. The read plane
+remains environment-driven and the browser receives no AWS or Kalshi credentials.
 
 ## Not yet wired (deliberate order)
 
