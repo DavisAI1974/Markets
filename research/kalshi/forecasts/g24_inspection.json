@@ -1,0 +1,34 @@
+{
+ "group": "g24",
+ "ts": "2026-08-06T04:32:13Z",
+ "guards": [
+  "block-emptiness (declared-only exemptions)",
+  "tape_conditions required fields",
+  "flow_read_error surfacing",
+  "weather provisional-fetch-tail",
+  "b_share identity b == b2*(1-u) [S109 #9]",
+  "squeeze_watch _live vs flow_calendar [S109 #10]",
+  "phase-sum == session totals [S110 f1]",
+  "storage-vs-consensus freshness [S110 f4]",
+  "strike scale vs calendar_front_settle when units undeclared [S110 f5]",
+  "vol_regime n0 era vs same-session tape when undeclared [S110 f3]"
+ ],
+ "days": 10,
+ "hard": [
+  "scored_leg: EMPTY on 10/10 days (20260720..20260731) - required every day"
+ ],
+ "soft": [
+  "20260720: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260722: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260723: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260724: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260727: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260728: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260729: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260730: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260730: frozen front NGQ26 EXPIRED 2026-07-29; live front NGU26 (declared)",
+  "20260731: L1 book absent for the prior session (declared) - thin reopen?",
+  "20260731: frozen front NGQ26 EXPIRED 2026-07-29; live front NGU26 (declared)"
+ ],
+ "verdict": "FAIL"
+}

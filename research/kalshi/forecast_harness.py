@@ -602,12 +602,36 @@ def _freeze_risk_block(iso: str) -> dict | None:
         if not v:
             return None
         out = {"asof_utc": v["asof_utc"], "asof_et": v["asof_et"], "basins": {}}
+        n_measured = 0
         for st, b in v["basins"].items():
+            tmins = [h["tmin_f"] for h in b["horizons"]]
+            covered = sum(1 for t in tmins if t is not None)
+            n_measured += covered
+            # S114: A MEASURED ZERO AND A MISSING MEASUREMENT MUST NOT RENDER IDENTICALLY.
+            # `thresholds_f` served days_below=0 / max_consecutive=0 for a basin whose every
+            # tmin was null - a count with no measurement behind it, reading downstream as
+            # "checked, no freeze risk". The g24 seam specialist named it exactly: "harmless
+            # in July, dangerous in January." Counts survive only where a temperature does.
+            th = b["thresholds_f"]
+            if covered == 0:
+                th = {"_null_reason": ("NO TEMPERATURE COVERAGE for this basin in this cycle - "
+                                       "the threshold counts are NOT zero, they are UNMEASURED. "
+                                       "A 0 here would mean 'checked, no sub-threshold run'; "
+                                       "there was nothing to check."),
+                      "days_below": None, "first_below": None,
+                      "last_below": None, "max_consecutive": None}
             out["basins"][st] = {"basin": b["basin"],
                                  "tmin_d0_f": b["horizons"][0]["tmin_f"],
-                                 "tmin_by_horizon": [h["tmin_f"] for h in b["horizons"]],
-                                 "thresholds_f": b["thresholds_f"],
+                                 "tmin_by_horizon": tmins,
+                                 "horizons_measured": covered,
+                                 "thresholds_f": th,
                                  "max_cycle_runtime_utc": b["max_cycle_runtime_utc"]}
+        out["basin_horizons_measured"] = n_measured
+        if n_measured == 0:
+            out["coverage_warning"] = ("ZERO temperature coverage across EVERY basin in this "
+                                       "cycle. This block is UNMEASURED, not benign. Do not read "
+                                       "the absence of a freeze signal as the presence of a "
+                                       "no-freeze signal.")
         return out
 
     out = {"weekday_open": _compact(rec.get("weekday_open")),
@@ -808,6 +832,52 @@ def _leg_store_for(ymd: str):
     try:
         import group_config as gc
         return gc.leg_for(_ACTIVE_LEGS, ymd)
+    except Exception:
+        return None
+
+
+def _scored_leg_block(ymd: str) -> dict | None:
+    """S114: WHICH CONTRACT THIS DAY IS SCORED ON, declared in the state.
+
+    On a roll-straddling block the scored instrument changes mid-block, and NOTHING in the
+    served state said so. Measured on g24 (seam 20260722): five of ten specialists had to
+    call `group_config.leg_for` themselves to discover it, and the seam specialist wrote
+    "a specialist who didn't think to check would have carried NGQ26 flow into an NGU26
+    forecast and never known" - which is hole #8 arriving legitimately instead of through a
+    store-selection bug. The one-shot structural mask compounds it: `contract_structure`,
+    `options_surface` and `squeeze_watch` are all frozen at the ANCHOR vintage, so on the
+    post-roll half of a block they describe the PRE-roll contract. Two specialists nearly
+    imported an expiry-week squeeze onto a deferred leg; one caught it only via the anchor
+    file's basis note. Declare the leg, and declare which blocks may disagree with it.
+    """
+    if not _ACTIVE_LEGS:
+        return None
+    try:
+        import group_config as gc
+        g = gc.GROUPS.get(_ACTIVE_LEGS) or {}
+        leg = gc.leg_for(_ACTIVE_LEGS, ymd)
+        seam = g.get("seam")
+        legs = g.get("legs") or {}
+        if not leg:
+            return None
+        two_leg = len(set(legs.values())) > 1
+        pre = legs.get("pre")
+        out = {"leg": leg, "group": _ACTIVE_LEGS, "block_is_two_leg": two_leg,
+               "seam_date": seam,
+               "side_of_seam": (None if not seam else
+                                ("pre_roll" if ymd < seam else "post_roll")),
+               "note": ("THE CONTRACT THIS DAY IS SCORED ON. Read the tape, the flow and every "
+                        "per-day quantity as belonging to this leg.")}
+        if two_leg and seam and ymd >= seam:
+            out["frozen_structural_blocks_describe"] = pre
+            out["structural_mask_caveat"] = (
+                f"WARNING: this day is scored on {leg}, but the price-derived blocks frozen by "
+                f"the one-shot mask (contract_structure, options_surface, squeeze_watch) are "
+                f"frozen at the ANCHOR vintage and therefore describe {pre}. Their expiry, opex "
+                f"and days-to-* fields belong to {pre}, NOT to your leg. Importing them is the "
+                f"hole-#8 error. Cross-leg structure reaches your instrument only through the "
+                f"calendar spread.")
+        return out
     except Exception:
         return None
 
@@ -1072,7 +1142,8 @@ def decision_state(days: list[str], mask_after: str | None = None, group: str | 
         regime = cr[1]["regime"] if cr else "unknown"
         if regime == "unknown" and cs and cs.get("curve_regime"):
             regime = cs["curve_regime"]
-        out[d] = {"dow": dow, "stor_surprise": round(sv, 1) if sv is not None else None,
+        out[d] = {"dow": dow, "scored_leg": _scored_leg_block(d),
+                  "stor_surprise": round(sv, 1) if sv is not None else None,
                   "stor_surprise_sign": ("above" if sv > 0 else "below") if sv is not None else None,
                   "curve_regime": regime,
                   "storage": _storage_asof(iso, stor),

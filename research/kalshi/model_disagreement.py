@@ -191,8 +191,22 @@ def disagreement_day(target_day: str, mos: dict[str, dict[str, dict]]) -> dict:
                 "n_common_metros": 0, "coverage": 0.0,
                 "metros_mav_only": mav_only, "metros_met_only": met_only, "metros_neither": neither,
                 "mav_runs": {}, "met_runs": {},
+                # S114: the reach reason is CORRECT but was read as absurd by three specialists
+                # independently, each computing "h2 is only +48h, well inside a +72h model" and
+                # concluding the note was boilerplate over a dead feed. The arithmetic they were
+                # missing is the GAS DAY: coverage requires the WHOLE Chicago day, so target D+2
+                # runs to ~D+3T05Z, which is ~+77h from the last eligible (D-1 18Z) MAV cycle and
+                # ~+89h from the last eligible (D-1 12Z) MET cycle. Both fall short by a few hours,
+                # which is why h>=2 is empty while h0/h1 are complete. State the binding constraint,
+                # not just the model reach - an accurate note that misleads an expert reader is a
+                # defect in the note.
                 "note": ("no MAV/MET overlap at this horizon - spread is null, NOT zero"
-                         + (" (beyond both models' reach: MAV ~+72h, MET ~+84h; MEX-only territory)"
+                         + (" (the binding constraint is FULL-GAS-DAY coverage, not the horizon"
+                            " label: target D+h ends ~D+h+1T05Z, so h2 needs ~+77h from the last"
+                            " eligible MAV cycle (D-1 18Z, reach ~+72h) and ~+89h from the last"
+                            " eligible MET cycle (D-1 12Z, reach ~+84h). Both fall short by hours,"
+                            " so h>=2 is MEX-only territory - this is a reach limit, not an outage;"
+                            " h0/h1 on this same date carry all 16 metros)"
                             if not mav_only and not met_only else
                             f" (one-sided coverage: MAV-only {mav_only or '[]'}, MET-only {met_only or '[]'})")),
             })

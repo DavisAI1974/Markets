@@ -142,6 +142,15 @@ ET = ZoneInfo("America/New_York")
 NG_CONTRACT_CODE = "023651"
 NG_MARKET_NAME_EXPECTED = "NAT GAS NYME - NEW YORK MERCANTILE EXCHANGE"
 
+# S114: every contract code the forecaster actually SERVES. `--build` built exactly one
+# of these (the default), so four of the five stores went stale in place while the build
+# reported success - and staleness in a positioning book is invisible downstream, because
+# a frozen COT reads as a real reading with an older report_date. Measured on g24: the
+# NYMEX book was current while all four ICE books sat one publication behind, and three
+# specialists reasoned off the spent-vs-fresh question those books decide. `--build` with
+# no --contract now builds the whole served set. Order = the harness's own read order.
+SERVED_CONTRACT_CODES = ("023651", "023391", "023392", "0233AG", "0233AH")
+
 ARCHIVE_URL = "https://www.cftc.gov/files/dea/history/fut_disagg_txt_{year}.zip"
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -361,8 +370,19 @@ def download_archives(data_dir: str, years: Sequence[int], force: bool = False) 
             paths.append(dest)
             continue
         url = ARCHIVE_URL.format(year=year)
+        # S114: cftc.gov sits behind Cloudflare, which 403s urllib's default
+        # "Python-urllib/3.x" User-Agent while serving the identical file to any
+        # browser UA. This is why the store silently froze at the 2026-07-20 build:
+        # the current year's archive stopped downloading, every cached year was
+        # already on disk and satisfied the not-force branch above, and the build
+        # therefore "succeeded" one publication short. A 403 on ONE year is not a
+        # layout change - send a real UA and say so if it still fails.
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (compatible; DavisAI-Markets/1.0; research data pull)",
+            "Accept": "application/zip,*/*",
+        })
         try:
-            with urllib.request.urlopen(url, timeout=120) as r:
+            with urllib.request.urlopen(req, timeout=120) as r:
                 blob = r.read()
         except Exception as exc:
             raise SystemExit(
@@ -985,10 +1005,16 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
 
     if a.build:
-        store = build(a.data_dir, a.contract, force=a.force)
-        print("built %d reports for %s (%s) -> %s"
-              % (store["n_reports"], a.contract, ", ".join(store["market_names"]),
-                 store_path(a.data_dir, a.contract)))
+        # S114: with no explicit --contract, build EVERY served code (see
+        # SERVED_CONTRACT_CODES). An explicit --contract still builds exactly that one.
+        codes = ([a.contract] if a.contract != NG_CONTRACT_CODE
+                 else list(SERVED_CONTRACT_CODES))
+        for i, code in enumerate(codes):
+            # archives are downloaded once; only the first pass may re-download
+            store = build(a.data_dir, code, force=(a.force and i == 0))
+            print("built %d reports for %s (%s) -> %s"
+                  % (store["n_reports"], code, ", ".join(store["market_names"]),
+                     store_path(a.data_dir, code)))
     if a.list_ng_codes:
         paths = download_archives(a.data_dir, BUILD_YEARS)
         found = {}

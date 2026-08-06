@@ -32,6 +32,9 @@ REQUIRED_EVERY_DAY = (
     "steo_vintage", "cot", "flow_calendar", "solar", "nuclear_outages", "grid_stack",
     "weather", "weather_forecast", "weather_forecast_cycle", "freeze_risk",
     "model_disagreement", "tape_conditions",
+    # S114: the scored contract, declared per day. Required because its ABSENCE on a
+    # roll-straddling block is the exact condition under which hole #8 recurs silently.
+    "scored_leg",
 )
 
 # Price-derived blocks. Under a mask they are EXPECTED to be frozen at the anchor vintage - but the

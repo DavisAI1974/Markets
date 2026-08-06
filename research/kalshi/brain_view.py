@@ -250,6 +250,32 @@ def build(brain, role, phase="working", window_days=None):
                     pl["blind_legality"] = v
         except Exception as e:
             print("[brain_view] blind_legality annotation skipped: %s" % e)
+        # OWN-GROUP RUN FINDINGS ARE WITHHELD WHOLESALE, NOT REDACTED (S114).
+        # `run_findings` is BY CONSTRUCTION a record of outcomes, and MMDD redaction cannot
+        # reach the ones that carry no date: the g24 entry's own block-level line - "6/10
+        # direction, sum|err| 4,890" - survived a full redaction pass because it contains no
+        # date token, while the per-day "-1360" was correctly killed. A block score is an
+        # outcome even with no date attached to it, so scope the ENTRY by its declared window
+        # rather than string-matching its contents. Every OTHER group's findings still come
+        # through in full - a past run's lessons are exactly what this section is for.
+        rf = view.get("run_findings")
+        if isinstance(rf, dict):
+            win = set(window_days)
+            kept = OrderedDict()
+            dropped = []
+            for ek, ev in rf.items():
+                ed = set((ev or {}).get("_window_days") or []) if isinstance(ev, dict) else set()
+                if ed & win:
+                    dropped.append(ek)
+                    continue
+                kept[ek] = ev
+            if dropped:
+                kept["_withheld_own_group"] = (
+                    "WITHHELD, not missing: %s report on days inside YOUR window. These entries "
+                    "carry block-level outcomes (direction hit-rate, sum|err|) that no date-based "
+                    "redaction can reach. Withheld by the blind wall." % ", ".join(dropped))
+            view["run_findings"] = kept
+
         toks = window_tokens(window_days)
         counter = [0]
         for k in list(view):

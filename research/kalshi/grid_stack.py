@@ -201,6 +201,24 @@ def _ba_read(days: dict, period: str, ba: str) -> dict | None:
     def chg(cur, prev):
         return round(cur - prev, 1) if (cur is not None and prev is not None) else None
 
+    # S114: THE SHARE CHANGE, which needs LAST WEEK'S DENOMINATOR and so cannot be derived
+    # downstream. Measured on g24: `weather.summer_burn_lane_exclusion` keys on the gas share
+    # RISING week over week, and two specialists independently found it unrunnable - the state
+    # served the share as a LEVEL and the change in MWh, and "the share change needs an unserved
+    # denominator" (C-0721). A share can fall while the MWh rises whenever the whole stack grows
+    # faster, so the MWh change is NOT a substitute for it, and a specialist who used one as the
+    # other would be answering a different question with a plausible number.
+    def ref_total(k: int):
+        rp = (datetime.date.fromisoformat(period) - datetime.timedelta(days=k)).isoformat()
+        rg = days.get(rp, {}).get(ba, {}).get("gen_mwh", {})
+        return sum(v for v in rg.values() if v is not None) or None
+
+    def share_chg(fuel, cur, k=7):
+        prev, ptot = ref(k, fuel), ref_total(k)
+        if cur is None or prev is None or not total or not ptot:
+            return None
+        return round(cur / total - prev / ptot, 4)
+
     out = {
         "demand_mwh": d.get("demand_mwh"),
         "demand_forecast_mwh": d.get("demand_forecast_mwh"),
@@ -236,6 +254,16 @@ def _ba_read(days: dict, period: str, ba: str) -> dict | None:
         # denominator cannot say whether the forcing grew or the system did.
         "wind_share": round(wnd / total, 4) if (wnd is not None and total) else None,
         "wind_chg_7d_mwh": chg(wnd, ref(7, "WND")),
+        # the SHARE deltas (see share_chg above) - a share level plus an MWh delta cannot be
+        # combined into one without last week's total, which nothing downstream is served.
+        "gas_share_chg_7d": share_chg("NG", gas),
+        "wind_share_chg_7d": share_chg("WND", wnd),
+        "solar_share_chg_7d": share_chg("SUN", sun),
+        "hydro_share_chg_7d": share_chg("WAT", wat),
+        "share_chg_note": ("share_chg_7d = this period's share MINUS the share 7 days ago, each on "
+                           "its OWN total. Sign can differ from the matching *_chg_7d_mwh: a fuel "
+                           "can add MWh while LOSING share if the whole stack grew faster. Plays "
+                           "keyed on a rising/falling SHARE must read these, not the MWh deltas."),
     }
     if ba == "US48" and gas is not None:
         # the sweep's stated method verbatim: burn_bcfd ~= MWh_per_day x 7900 / 1.035e9

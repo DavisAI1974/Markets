@@ -1,0 +1,211 @@
+{
+  "specialist": "C",
+  "group": "g24",
+  "date": "20260721",
+  "dow": "Tue",
+  "day_class": "core_midweek_noncatalyst_week1_last_preroll_session",
+  "round": 1,
+  "mode": "BLIND",
+  "brain_version": "s105.7",
+  "lens": "core intraday tape - onset, continuation-vs-reversal, absorption, give-back turns",
+  "guessed_net_usd": -120,
+  "overnight_gap_usd": -10,
+  "net_semantics": "guessed_net_usd = close-to-close DAY-MOVE from the 20260720 17:00 close (gap INCLUDED). overnight_gap_usd = the 17:00->18:00 maintenance-break discontinuity only. path_p50_curve is CUM FROM THE DAY'S OPEN per the S110 fix: first point 0, last point = guessed_net_usd - overnight_gap_usd = -110. The coordinator adds the gap.",
+  "path_p50_curve": [
+    [20, 0],
+    [22, -2],
+    [0, -3],
+    [2, -4],
+    [4, -5],
+    [6, -7],
+    [8, -8],
+    [10, -43],
+    [12, -76],
+    [14, -94],
+    [16, -107],
+    [17, -110]
+  ],
+  "path_shape_derivation": "Allocated the -110 intraday move by the PRIOR SESSION'S OWN served phase-signed-flow shares (tape_conditions.phase_signed_flow 20260720 = [-339, -3533, -665], total -4537 -> shares 7.5% / 77.9% / 14.7%). Overnight 20:00-08:00 carries 7.5% = -8; US daytime 08:00-14:00 carries 77.9% = -86; afternoon 14:00-17:00 carries 14.7% = -16. The slope CHANGE at 08:00 is not a price gap - it is a real liquidity event: prior-session phase_volume_lots [6369, 51250, 19816] means the per-hour trade rate steps ~8x at the US open, so the same session traded a near-flat overnight and did its directional work 08:00-14:00. Afternoon slope flattens because the prior session's phase-3 flow intensity HALVED (-0.034 signed lots per lot traded vs -0.069 in phase 2). One continuous path, no post-reopen discontinuity.",
+  "expected_magnitude_usd": -120,
+  "expected_range_band_usd": [-560, 630],
+  "expected_intraday_range_usd": 790,
+  "range_vs_net_note": "THE NET IS SMALL, THE DAY IS NOT QUIET. Derived range = 0.667 x n0_range_5_mean(830) + 0.333 x n0_range_20_mean(962) = 874, x n0_activity_trend(0.902) = 788. Net and range decouple (daytype.thin_session_range_invariance; and terminal_impact_coefficient_carry's own qualifier: a net suppressor is NOT a volatility suppressor). Do not compress the options-lane dispersion by the same factor as the p50.",
+  "band_asymmetry_reason": "The upper tail is deliberately fatter than the lower (+630 vs -560 around a -120 p50). positioning.covering_self_limiting_cot_wow_gate limb (b) FIRES: cot.managed_money_net_chg_wow = -45,414 (worsening; shorts still ADDING). That reading is MORE worsening than any of the 12 weekend-seam COT WoW readings measured across g18-g23 (range -38,123 to +23,762). The gate's own scope is explicit - it governs the TAIL and the SIZE, NEVER the p50 sign - so the crowding goes in the band, not in the number.",
+  "posterior_direction_by_horizon": {
+    "overnight_20_08": "flat, mild down drift",
+    "us_daytime_08_14": "down - the session's directional work",
+    "afternoon_14_17": "down, decelerating to flat"
+  },
+  "onset_time_et": "08:00-10:00",
+  "turn_time_et": null,
+  "trend_vs_chop": "low-amplitude trend inside a compressed-vol regime; closer to chop than trend",
+  "continuation_vs_reversal": "continuation (of the 0717 absorption -> 0720 distribution chain), LOW conviction",
+  "confidence": "low",
+  "confidence_reason": "SPLIT VERDICT, stated honestly: the MAGNITUDE read is well supported (vol_regime is served, in-basis, purpose-built, and three of its measures agree the regime is compressed). The SIGN read is weak and I am not dressing it up - see reasoning step 5.",
+  "disposition": "COMMIT on magnitude, LOW-CONFIDENCE COMMIT on sign. NOT an abstain: abstaining would discard a well-supported magnitude read. But the small number is small because the day's own drivers are small, NOT because I capped it (magnitude.emission_ceiling_check run explicitly - see below).",
+  "reasoning": "STEP 1 CLASSIFY (calendar lookup only, before any lean-bearing block). 20260721 Tue, class normal. flow_calendar: is_eia_print_day FALSE, days_to_next_eia_release 2 (Thu 07-23 10:30 ET), is_expiry_day FALSE, days_to_futures_expiry 6 (NGQ26 LTD 07-29), is_opex_day FALSE, days_to_opex 5 (07-28), in_gsci_roll FALSE, in_bcom_roll FALSE, in_bidweek FALSE, cme_holiday FALSE, business_day_of_month 14. Prior trading session 20260720 Mon (1 calendar day back, normal weekday seam - no weekend, no holiday). Next 20260722 Wed. DAY CLASS = NON-CATALYST CORE TUESDAY, my default ownership class. ONE calendar fact that is NOT generic: per the anchor's basis line, my day is the LAST session on the Aug/NGQ26 leg; the Kalshi underlying rolls to Sep/NGU26 from 07-22. So the roll seam sits AFTER my close, not before it - my whole day and path are on one clean leg (reasoning_method.continuous_frame's roll caution is satisfied: no fake overnight jump inside my day). The seam is the NEXT owner's problem and I flag it forward.\n\nSTEP 2 INVENTORY. Opened data/brain_view/g24_inventory_20260721.txt (415 fields / 29 blocks) and read every block in the slice. USED: tape_conditions (mine and the nested prior_full_session for 0717), cot, contract_structure, squeeze_watch, vol_regime, options_surface, cash_basis, storage, storage_regional, steo_vintage, ngwu_balance, weather, weather_forecast, weather_forecast_cycle, grid_stack, nuclear_outages, solar, freeze_risk, flow_calendar, the anchor's last_hour block. DEFECTIVE/DEAD, all itemised in state_defects_and_gaps_reported: model_disagreement (0.0 coverage at ALL 8 horizons on BOTH served days, with a self-justifying note that is false at h0-h2), storage_consensus (no consensus obtainable, named forward hole Mar-Jul 2026), storage_vintage (138 days stale), ngwu_balance.latest_sd_levels (300 days stale), cash_basis (8 days stale), contract_structure OI (5 days stale on the one day it is most needed).\n\nSTEP 3(a) PRE-INFLUENCE READ, emitted before opening any brain play (no handed-down read exists for me: Tue, no E handoff, no A bridge). SIGN: down. MAGNITUDE CLASS: small, roughly 100-250. ONE SENTENCE: 'A non-catalyst Tuesday in a visibly compressed vol regime, inheriting a decelerating sell tape, with a bearish balance backdrop and a crowded short as the only thing on the other side.' TIMESTAMP: recorded at the start of the run, before the plays were read.\n\nSTEP 3(c) THE INDEPENDENT CHAIN. Two routes were attempted. ROUTE A (flow x impact coefficient) DIED ON A MISSING INPUT and that is a finding, not a shortcut: magnitude.terminal_impact_coefficient_carry needs k3 = |ph3 price change| / |ph3 signed flow| for the prior session. tape_conditions serves phase_signed_flow, phase_b_share, phase_volume_lots, phase_n_trades - and NO phase price change. The block is explicitly the NON-PRICE block (never_masked TRUE precisely because it carries no price/return content). The play's own requires field asserts these inputs are 'ALL PRE-CUTOFF, so this is BLIND-LEGAL, not refine-only'. That claim is FALSE against the served blind state. I authored this play (C-0714) and its blind-legality was evidently never executed against an actual blind slice. I refuse to substitute the out-of-block k3 from G20/G23 (0.026/0.018) as though it were measured here - that would be quoting an extrapolation as evidence, and D31 scopes a finding to the cell it was measured on.\n\nROUTE B (vol_regime dispersion) is the one that stands, and it is the served, in-basis, purpose-built channel ('magnitude conditioner only'). Arithmetic, with every judgment term declared: n0_net_sigma_5 = 137, n0_net_sigma_20 = 558, n0_range_pctile = 33.3 (n=60), n0_activity_trend = 0.902. (i) The 33.3 percentile says the current regime sits in the bottom third of its own trailing distribution, so I weight the recent window by (1 - 0.333) and the wider by 0.333: 0.667 x 137 + 0.333 x 558 = 91.4 + 185.8 = 277.2. [DECLARED JUDGMENT TERM: using the range percentile as the blend weight.] (ii) Activity damp: 277.2 x 0.902 = 250.0. (iii) p50 of |signed net| for a normal at that sigma: 0.674 x 250.0 = 168.5. [DECLARED JUDGMENT TERM: the 0.674 normal p50/sigma ratio.] (iv) magnitude.catalyst_condition_sort FIRES and its call is DOWN-SIZE on non-catalyst chop (my day carries none of its five up-size classes: not an EIA print day - days_to_next_eia_release 2, not a weekend-gap Monday, not a swing-reversal seam, not thin-holiday): 168.5 x 0.75 = 126. [DECLARED JUDGMENT TERM: the 0.75 non-catalyst damp.] Committed at -120 on the down side. Three judgment terms, all named, none fitted to anything I cannot see.\n\nSTEP 3(c) THE GAP, derived not guessed. No weekend seam, no holiday, no scheduled overnight catalyst, and the weather-revision channel is stood down (below), so I have NO supported directional input for the overnight. Base case: the prior session's phase 1 carried 6,369 of 77,435 lots = 8.2% of volume, so a proportional allocation of the day-move to the overnight discontinuity is 0.082 x 120 = 10, sign with the chain. overnight_gap_usd = -10 (one tick). If I have the gap sign wrong the cost is one tick, which is the correct exposure to take on a channel with no supported input.\n\nSTEP 3(c) THE DIRECTION, and where it actually comes from. The chain state I inherit, read from the two tape blocks plus the anchor's last_hour: FRIDAY 0717 ran session flow +1,333 with the buying CONCENTRATED IN PHASE 3 (+1,157) and b_share_two_sided rising through the day (0.482 -> 0.505 -> 0.521) - and the anchor shows that last hour going 2.924 -> 2.916, net -80, high 2.925, low 2.916, close_in_range 0.00. That is BUY FLOW ABSORBED UNDER FALLING PRICE at the Friday close. direction.absorption_is_reversal calls absorbed buy -> DOWN, and it DELIVERED: Monday 0720 printed session flow -4,537 with big prints 0.305 size-weighted. IMPORTANT SCOPING: that absorption signal has already DISCHARGED into Monday. Re-using it as fresh evidence for Tuesday would be double-counting a spent signal, so I record it as CONSUMED and it does not enter my Tuesday sign. What carries forward is only the chain LABEL (down chain, 1 session of confirmed distribution) plus daytype.weekday_archetype's Tue = continuation - explicitly a secondary frame.\n\nTHE PHYSICAL BACKDROP, and it is MIXED, which is why I did not compound it. BEARISH: storage 3,024 Bcf, +162 vs 5yr, and the surplus is GROWING (storage_regional chg_vs_5yr_chg +5.4, i.e. this week's build ran 5.4 Bcf above the normal build); STEO jul26 revised dry production UP +0.237 Bcf/d, total consumption DOWN -1.196, power burn DOWN -0.926 for the current month; cash HH 2.83 sits 6.7c BELOW the front settle (hh_cash_minus_front_settle -0.067) - no physical delivery stress at the one point Henry Hub actually is; the forward CDD ladder PEAKS ON MY DAY and rolls off hard (15.213 -> 13.362 -> 10.365 by d2, a 32% fall in gas-weighted cooling demand inside 48 hours); calendar_front_next_spread is ERODING (-0.002 over 3d, -0.010 over 5d) into a 6-day expiry. BULLISH, and I am not hiding it: grid_stack (period 07-19, age 2, like-for-like Sunday-over-Sunday) shows US48 gas generation UP +101,137 MWh week-over-week with realized demand 13.79m against a 13.49m forecast (2.2% ABOVE forecast), and gas gen rose in 5 of the 6 served BAs (ERCO the only faller at -19,336). Per D37 I do NOT sum the forcings into one renewables term - they moved in opposite directions and are seasonally anti-correlated: solar +100,053 MWh (up strongly, ERCO +60,207 and CISO +46,116) against wind -55,762 (down, SWPP -40,466 and MISO -24,550), hydro -17,173. Nuclear is a non-event: 1,410 MW out = 1.44% of fleet, chg_1d -660 MW returning, worth roughly 0.12 Bcf/d against a 44.2 Bcf/d burn. So the balance says loose and the realized burn says firm. A backdrop that argues with itself is a backdrop that cannot license a bigger day-level number - and per doctrine (fundamentals_role) it was never entitled to set a day-level side anyway. It sets a block lean, and the block is two sessions old.\n\nSTEP 4 GATES, DAMPS AND GUARDS - fires and declines, each with its measured quantity, in plays_fired / plays_stood_down.\n\nSTEP 5 FALSIFIER AND ANTI-DEFAULT CHECK. PRE-MORTEM - assume this call is wrong, why? THE SINGLE STRONGEST THING AGAINST MY OWN NUMBER, and it comes from the brain's own measurements: my primary day-level directional channel is measured as WORSE THAN A COIN FLIP. handoff.residual_tilt_field's health record states the D-1 aggregate signed-flow sign predicts next-day sign 26/59 = 44%, and 16/36 = 44% across four groups. tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell independently measures the SELL side flat at 46/43/46/47% agreement across all four of its thresholds - i.e. heavy sell aggression, which is exactly what Monday printed at -4,537, carries no directional information at any size. If those two measurements are right, my sign is a coin flip dressed in a chain label. SECOND: the roll contaminates the one channel I do have. contract_structure.oi_volume_divergence is TRUE with oi_front_symbol NGU26 against volume_front_symbol NGQ26 and open_interest_next_chg_1d +19,550 in a single session - the Aug-to-Sep migration is demonstrably running, and the scored leg NGQ26 is the SELL side of every roll pair. So an unknown share of Monday's -4,537 and of its 0.305 big-print b_share is MECHANICAL, paired against a Sep buy, and carries no information about the level. There is no served way to decontaminate it (see the gap I register below), and the OI channel that could size it is 5 days stale. THIRD: cot.managed_money_net at -105,709, 14.15th percentile 1y / 13.06th 3y, having got 45,414 contracts MORE short in one reported week, is the maximally-crowded-and-still-adding condition. If it fires on my day it fires upward and hard. ANTI-DEFAULT CHECK, run explicitly per magnitude.emission_ceiling_check: my -120 sits far BELOW the measured $550 emission ceiling, so I am not silently emitting the cap - but the play also instructs that when a day carries several independent drivers I must SUM rather than emit the dominant one, so I checked whether I am stopping short. I am not: counted honestly, this day has ONE day-level driver (a flow tilt measured at 44% and roll-contaminated), a backdrop that is internally contradictory (loose balance vs firm realized burn), and a vol regime measured at the 33rd percentile by range with a 5-day net sigma of 137. There is nothing to sum. The number is small because the drivers are small, which is precisely the sentence the play asks me to write instead of quietly emitting a cap.\n\nSTEP 6 DISPOSITION: COMMIT, low confidence, with the split stated - magnitude supported, sign weak. I considered ABSTAIN and rejected it for a stated reason: a no-call would discard a genuinely well-supported magnitude read (three concordant measures of a compressed regime) on account of a weak sign, and the brief's stand-down clause is for days where the causal read supports NO number, not for days where it supports a small one. What I refuse to do is inflate the number to look decisive.\n\nSTEP 7 HANDOFF. Not a weekend-feeding day, so no handoff_out is required. Passing forward for the 20260722 owner: my session is the LAST on Aug/NGQ26 and the Kalshi underlying rolls to Sep/NGU26 at their open, so their seam is a LEG CHANGE and must be treated as never-traded (mbo_refine_shared round-2 protocol step 2), not as a market move. contract_structure.calendar_front_next_spread was +0.035 and eroding.",
+  "plays_fired": [
+    {
+      "id": "magnitude.catalyst_condition_sort",
+      "how": "FIRES on the DOWN-SIZE arm. My day carries none of the five up-size classes - flow_calendar.days_to_next_eia_release 2 (not 0, the play's only served selector), not a weekend-gap Monday (prior session is Mon, 1 calendar day back), no swing-reversal seam, not thin-holiday (prior session 32,453 trades / 77,435 lots / 22.5 trades per min, ABOVE the 0717 anchor session's 21.4). Non-catalyst chop -> down-size. Applied as the declared 0.75 term in the magnitude chain."
+    },
+    {
+      "id": "positioning.covering_self_limiting_cot_wow_gate",
+      "how": "FIRES on limb (b), the only limb available to a blind run (limb (a) needs flow_conviction, which needs realized price - the play says so itself). cot.managed_money_net_chg_wow = -45,414, i.e. WORSENING against the gate's >= 0 bar, so covering is LIVE and RECURRING, not spent. Context that makes this more than a boolean: -45,414 is MORE worsening than any of the 12 weekend-seam readings measured across g18-g23 (range -38,123 to +23,762), and the level sits at the 14.15th percentile 1y / 13.06th 3y. I applied it EXACTLY as scoped - to the TAIL and the SIZE, never the p50 sign - which is why the band is asymmetric at [-560, +630] around a -120 p50 rather than the p50 being moved."
+    },
+    {
+      "id": "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
+      "how": "FIRES. weather.gw_hdd 0.0 and forecast_gw_hdd 0.0 at every horizon 0-6, against gw_cdd 14.7 realized / 15.213 forecast. So selector.divergence_resolution's HDD >= 16.4 limb and magnitude.shoulder_weather_band_void's <= 13.5 limb are both UNEVALUABLE - returned UNKNOWN, not satisfied and not refuted. NO silent bearish default was taken from either, and I did not let the gated-out catalyst-override stand in as evidence for down (my own lens file's explicit warning). Confirms the served ladder_basis_note."
+    },
+    {
+      "id": "daytype.weekday_archetype",
+      "how": "WEAK FIRE, recorded as the secondary frame the play declares itself to be. Tue = strongest-trend weekday / continuation. The running chain is down (0717 absorbed buy -> 0720 distribution), so Tue-continuation votes with my sign. Explicitly overridden-by-the-chain-read scope, so this is a tie-breaker, not a driver, and it is not doing load-bearing work in my number."
+    },
+    {
+      "id": "magnitude.emission_ceiling_check",
+      "how": "RUN DETERMINISTICALLY as required, before emitting. |−120| is far below the measured $550 ceiling so I am not emitting the cap. Ran the play's second clause too (are you stopping short - SUM independent drivers rather than emitting the dominant one): counted, this day has one day-level driver, a self-contradicting backdrop, and a 33rd-percentile vol regime. Nothing to sum. Stated explicitly per the play's instruction rather than silently emitted."
+    }
+  ],
+  "plays_stood_down": [
+    {
+      "id": "magnitude.terminal_impact_coefficient_carry",
+      "reason": "INPUT NOT SERVED - and the play claims otherwise. k3 needs the prior session's phase-3 PRICE CHANGE. tape_conditions (26 served fields, checked against the day's field inventory) carries phase_signed_flow, phase_b_share, phase_b_share_two_sided, phase_volume_lots, phase_n_trades and NO price quantity of any kind - it is the explicitly NON-PRICE block. The play's requires field says these inputs are 'ALL PRE-CUTOFF, so this is BLIND-LEGAL, not refine-only'. That is false against the served blind state. Registered as a defect. I declined to substitute the G20/G23 k3 values (0.026 / 0.018) as a proxy: they are out-of-block and D31 scopes a finding to the cell it was measured on."
+    },
+    {
+      "id": "structure.accumulation_arm_turn",
+      "reason": "DECLINED, decisive limb fails in the WRONG DIRECTION. Requires big_print_b_share >= 0.55 on >= 2 of the last ~5 sessions. Served: 0720 = 0.305 (two-sided 0.306), 0717 = 0.434 (two-sided 0.452), 0719 = null on 0 big prints (Sunday reopen stub, degenerate per flow.big_print_bshare_thin_tape_guard). ZERO sessions at >= 0.55; the big-print channel is SELLING, not absorbing buys. The other two limbs do pass (session_b_share 0.442 sub-0.50; COT extreme and worsening) but the arm's own detector says the crowded short is being ADDED to by size, not faded. Also noting the play's own health record: the sub-0.50 session-tape limb is degenerate on the original series (true on 96.6% of 88 sessions), so 2-of-3 here is really 1-of-2 informative limbs, and the informative one fails."
+    },
+    {
+      "id": "selector.midblock_right_the_ship",
+      "reason": "DECLINED - 1 of 4 stack elements. COT extreme AND trending more extreme: YES (14.15 pctile, -45,414 WoW). Recurring buy-absorption >= 2 of ~5 under a sell tape: NO (0/5, see above). Based chain with no new cum-extreme >= 2 sessions: UNEVALUABLE on a blind run (needs cum/price). EIA print delivering counter on absorbing flow: NO print (days_to_next_eia_release 2). The turn stack is not BUILDING, so there is nothing to unlock. Consistent with the play's own stated falsifier (2): confirm the turn DELIVERED, not merely that one limb is extreme."
+    },
+    {
+      "id": "flow.price_free_absorption_proxy",
+      "reason": "DECLINED ON ITS PRECONDITION. The play requires aggregate session signed flow POSITIVE; 0720 served -4,537. The play's record additionally states the mirror arm on a negative tape is REFUTED and the play stays half-scope ('above-0.50 readings under a negative tape now run two up, two down, no ordering'). So Monday's 0.305 big-print reading cannot be run through this instrument in either direction."
+    },
+    {
+      "id": "flow.passive_ladder_displacement",
+      "reason": "DECLINED, both limbs fail numerically. (a) final-phase |net| below ~5% of the prior phase's: |−665| / |−3,533| = 18.8%, nearly 4x the bar. (b) final-phase volume at or above the session maximum: 19,816 against a session max of 51,250 (phase 2). No fifth exit_type here."
+    },
+    {
+      "id": "direction.flow_conviction_sign_gate",
+      "reason": "REFINE-ONLY BY THE PLAY'S OWN CAVEAT: flow_conviction = sign(signed_flow) x sign(price_change) needs realized price, which is my one deliberate mask. Cannot be computed. Recording the play's own health note as the reason I would discount it even in refine: both states emit the phase price direction 70 of 70, which is D23 degeneracy relocated from the trigger to the call."
+    },
+    {
+      "id": "direction.absorption_is_reversal",
+      "reason": "EVALUATED, FIRED ON 0717, RECORDED AS CONSUMED - NOT re-used for my day. The one absorption read available to a blind run is the anchor's last_hour block (price levels are served there and are not masked): 0717 phase-3 flow +1,157 BUY against a last hour of 2.924 -> 2.916, net -80, close_in_range 0.00 = absorbed buy under falling price -> DOWN. It delivered into 0720's -4,537. Counting it again for 0721 would be double-counting a discharged signal, so it contributes only the chain LABEL, not a fresh Tuesday vote."
+    },
+    {
+      "id": "direction.flow_nowcast",
+      "reason": "DECLINED TWICE OVER. (1) The read variable dip_imb_level is not served in any modern decision state - it is absent from the day's 415-field inventory. (2) The play's health record states the payoff behind the |dip| >= 0.15 bar collapsed to 50/50 from 2026-01-19 onward; my day is 2026-07-21, six months inside that dead era."
+    },
+    {
+      "id": "direction.book_contrarian",
+      "reason": "DECLINED - read variable imb_R is not served anywhere (it needs MBP-10 depth at leg entry, which lives on S3). Checked the nearest served proxy before standing down: tape_conditions.l1_book.quote_bid_share = 0.493 with p25/p75 [0.333, 0.667] and spread_ticks_med 1.0 on 231,664 quote updates - resting liquidity is BALANCED with a hair of ask lean, no side heavy enough to fade. The book channel offers no direction on my day either way."
+    },
+    {
+      "id": "tape.heavy_buy_aggression_is_the_asymmetric_bearish_tell",
+      "reason": "TRIGGER DOES NOT FIRE (needs session flow > +1,000; served -4,537). But I am recording it in the STOOD-DOWN list rather than dropping it, because its measured content is evidence AGAINST my own read and belongs in the record: the play measures the SELL side flat at 46 / 43 / 46 / 47% agreement across all four thresholds, i.e. heavy sell aggression carries no directional information at any size. Combined with handoff.residual_tilt_field's 26/59 = 44% next-day sign record for the D-1 aggregate, my primary day-level channel is measured at or below chance. This is the single largest reason my confidence is low."
+    },
+    {
+      "id": "weather.revision_seasonal_sign_map",
+      "reason": "STANDS DOWN THE ENTIRE WEATHER-REVISION CHANNEL, on a defect. The play is a PREREQUISITE map that must run before any run_delta is read into a lean, and it names the authority channel explicitly: model CONVERGENCE, at state_path model_disagreement.summary.max_abs_spread_gw_hdd with a 0.7 bar. Served value: NULL, with n_overlap_horizons 0 - the authority channel is not low or high, it is ABSENT (see defects). Without authority I do not read the CDD revisions into a direction at all. For the record, the revisions I am declining to use: the D-1 evening batch added CDD (+0.643 d0, +1.674 d1, net +1.306 over d0-d5) and the overnight cycles took the near term back (-0.208 d0, -0.545 d1, -0.728 d4, net +0.129 over d0-d6 with the add pushed to d6 at +1.225). I also respected the play's clause (2) - the size axis inverts, so revision size may not scale an expected move - and clause (1) is inert here because gw_hdd is 0.0 throughout."
+    },
+    {
+      "id": "magnitude.s1void_injection_chain_bleed",
+      "reason": "DECLINED ON SCOPE (D31). Three of its conditions do pass - storage phase 'inject', tape_conditions.session_b_share 0.442 < 0.50, and a building surplus (chg_vs_5yr_chg +5.4) - but the play is scoped to a 'CONFIRMED S1-void SPRING injection block' and my day is peak summer (July, gw_cdd 15.2, gw_hdd 0.0), where the weather driver is at maximum seasonal salience rather than void. Applying a spring-shoulder band out of its measured cell is exactly what D31 forbids. NAMED AS A COINCIDENCE, NOT AS CORROBORATION: its COIL band (-100..-250) happens to contain my independently derived -120. I did not use it to get there and I am not counting it as support."
+    },
+    {
+      "id": "weather.summer_burn_lane_exclusion",
+      "reason": "OUT OF LANE and, separately, NOT EVALUABLE. Its scope is the summer STORAGE lane forming a tail-size weekly build/draw expectation - that is the Thursday print owner's question, not a Tuesday day-move. And its stated input, grid_stack.bas.*.gas_share as a WEEKLY RISE COUNT, is not served: the state carries gas_share as a LEVEL and gas_chg_7d_mwh as an MWh change, and converting one to the other needs the prior week's per-BA demand denominator, which is absent. Flagged because the play's forward field says 'NONE. Registered against g24' - it was registered against this block and cannot be run on it."
+    },
+    {
+      "id": "structure.squeeze_unwind / tape.squeeze_ignition_flush_conjunction",
+      "reason": "NO SQUEEZE. squeeze_watch's calendar limb IS live-satisfied (days_to_calendar_front_expiry_live 6 <= 7, correctly relived from the frozen 8), and the block's own active_false_negative note warns that active=false is not decision-legit. So I evaluated the other half directly rather than taking the flag: the SPREAD limb requires calendar_front_next_spread_chg_3d > 0 and it is NEGATIVE at -0.002, with the 5-day at -0.010. The Aug premium over Sep is DECAYING into expiry, which is the opposite of a squeeze signature. Corroborated independently by the physical channel: cash HH sits 6.7c BELOW the front (hh_cash_minus_front_settle -0.067) versus the +10.77 with chg_3d +7.29 the block's own note cites as what a real squeeze looked like on 2026-01-30. unwind_watch also false, last prompt expiry 14 sessions back."
+    },
+    {
+      "id": "flow.resting_program_inverts_aggressor_tilt",
+      "reason": "TRIGGER FALSE as written - in_gsci_roll FALSE, in_bcom_roll FALSE, days_to_futures_expiry 6 (not 0). I did NOT fire it. But its MECHANISM is exactly my day's problem and its trigger set has a hole, which I register as a gap rather than smuggling in as a discount: see the proposed trigger extension in state_defects_and_gaps_reported. I deliberately did not shave my p50 by an invented decontamination factor - the roll uncertainty went into confidence and the band instead."
+    }
+  ],
+  "evidence_used": [
+    "tape_conditions 20260720: n_trades 32,453 / volume 77,435 lots / 22.5 per min; session_signed_flow -4,537; session_b_share 0.442, two-sided 0.469; big_prints_n 146, big_print_b_share 0.305 size-weighted (two-sided 0.306); phase_signed_flow [-339, -3533, -665]; phase_b_share_two_sided [0.472, 0.464, 0.482]; phase_volume_lots [6369, 51250, 19816]; unsided_volume_frac 0.058; l1_book quote_bid_share 0.493, spread_ticks_med 1.0, quote_updates 231,664",
+    "tape_conditions.prior_full_session 20260717 (via the 0720 block): signed_flow +1,333, b_share_two_sided 0.511, big_print_b_share 0.434 (two-sided 0.452), phase_signed_flow [-120, +296, +1157], phase_b_share_two_sided [0.482, 0.505, 0.521]",
+    "g24_anchor last_hour 20260717: 2.924 -> 2.916, net -80, high 2.925, low 2.916, close_in_range 0.00, net_ticks 8 on a 90 range, direction_caveat states direction IS supported - the absorption read that resolved into Monday",
+    "vol_regime (frozen 20260717 vintage): n0_net_sigma_5 137, n0_net_sigma_10 580, n0_net_sigma_20 558, n0_range_5_mean 830, n0_range_20_mean 962, n0_range_20_max 2110, n0_range_pctile 33.3 on n=60, n0_activity_trend 0.902",
+    "cot (report 2026-07-14, published Fri 2026-07-17 15:30 ET, age 3.35d - published before my day): managed_money_net -105,709, chg_wow -45,414, pctile_1y 14.15, pctile_3y 13.06; options-implied MM net at pctile_1y 74.53 (the two books at opposite extremes); ICE LD1 MM net +228,894 at pctile_1y 0.94 with chg_wow -50,194",
+    "flow_calendar: is_eia_print_day false, days_to_next_eia_release 2, days_to_futures_expiry 6, days_to_opex 5, is_expiry_day false, is_opex_day false, in_gsci_roll false, in_bcom_roll false, in_bidweek false, business_day_of_month 14",
+    "contract_structure: calendar_front NGQ26 2.911 / next NGU26 2.876, spread +0.035, chg_3d -0.002, chg_5d -0.010; oi_volume_divergence TRUE with oi_front_symbol NGU26 vs volume_front_symbol NGQ26; open_interest_front (NGU26) 323,183 chg_1d +19,550; curve_regime backwardation, curve_slope_1 -0.035, curve_slope_back +0.227",
+    "weather / weather_forecast: realized gw_cdd 14.7, gw_hdd 0.0; forecast_gw_cdd d0 15.213 with forecast_vs_normal -0.032 (dead on normal); the forward ladder 15.213 / 13.362 / 10.365 / 10.916 / 12.452 / 13.596 / 13.680 - my day is the PEAK and cooling demand falls 32% by d2",
+    "storage + storage_regional: L48 3,024 Bcf, weekly_chg +41, vs_5yr +161.8, vs_year_ago -28.0, chg_vs_5yr_chg +5.4 (surplus growing); south_central_salt DREW -5 Bcf; phase inject",
+    "steo_vintage jul26 (released 07-07, knowable 07-08): power_burn cur 47.65 Bcf/d, and the revisions vs the prior vintage are bearish on both sides - dry production +0.237, total consumption -1.196, power burn -0.926",
+    "cash_basis: hh_spot 2.83 against front_settle 2.897, hh_cash_minus_front_settle -0.067 (cash BELOW futures - no delivery stress), basis_chg_5d -0.112",
+    "grid_stack period 2026-07-19 (age 2, Sunday-over-Sunday like-for-like): US48 demand 13,793,896 against demand_forecast 13,494,304 (+2.2%), gas 5,793,149 MWh, gas_share 0.4275, est_gas_burn_bcfd 44.2, gas_chg_7d +101,137; solar_chg_7d +100,053 and wind_chg_7d -55,762 reported SEPARATELY per D37 (never summed); hydro_chg_7d -17,173; gas gen rose in 5 of 6 BAs, ERCO the only faller at -19,336",
+    "nuclear_outages: 1,410 MW out = 1.44% of fleet, chg_1d -660 MW returning, chg_7d -107 - worth ~0.12 Bcf/d against a 44.2 Bcf/d burn, i.e. a non-event, checked rather than assumed",
+    "options_surface (frozen 20260717): NGQ26 put_call_oi_ratio 0.611; the two nearest large-OI strikes to the 2.911 front settle are BOTH put walls - 2.75 (34,142 puts vs 895 calls) 16.6c below and 3.00 (32,927 puts vs 12,721 calls) 8.4c above - a containment corridor with 5 days to opex, read as a magnitude argument only, never a direction (OI is unsigned and dealer positioning is not derivable from it)",
+    "freeze_risk: all four basins 69-82F minima, 0 days below 10/15/20F at every horizon - correctly inert in July, checked rather than assumed",
+    "solar: gw_day_length_h 14.509, chg_7d -0.158 (past the solstice, the seasonal march is slowly reducing solar's contribution) - marginal, recorded"
+  ],
+  "evidence_rejected": [
+    "The CDD run-deltas as a directional input - rejected because weather.revision_seasonal_sign_map's stated AUTHORITY channel (model_disagreement.summary.max_abs_spread_gw_hdd) is null, not low. High or absent convergence is a no-call state for that channel, not a direction.",
+    "The out-of-block k3 values 0.026 / 0.018 from G20+G23 as a proxy impact coefficient - rejected as an extrapolation quoted as evidence (D31 scoping; D37 'your story is a guess').",
+    "Reconciling vol_regime.n0_prev_net (240) against tape_conditions.session_signed_flow (+1,333) to back out a same-day impact coefficient - rejected because the block's own n0_era_basis note forbids it: n0_prev_* slice by UTC CALENDAR DAY while tape_conditions counts the EXCHANGE SESSION, and the two windows do not coincide. Checked and declined rather than silently computed.",
+    "squeeze_watch.active = false taken at face value - rejected as a frozen-vintage false negative per the block's own active_false_negative note; the calendar limb was re-derived live (6 <= 7, satisfied) and the spread limb evaluated directly instead (-0.002, fails).",
+    "The 0719 Sunday reopen stub (315 trades, 558 lots, big_prints_n 0) as any kind of tilt - rejected per the block's own note_stub and flow.big_print_bshare_thin_tape_guard; its b_share_two_sided of 0.595 on 558 lots is noise, not a buy tape.",
+    "The Friday 0717 absorption signal as fresh Tuesday evidence - rejected as already DISCHARGED into Monday's -4,537. Using it twice would double-count a spent signal."
+  ],
+  "stand_down_reasons": [
+    "SIGN, partial: my only day-level directional instrument is the D-1 aggregate flow tilt, which the brain measures at 26/59 = 44% next-day sign accuracy (handoff.residual_tilt_field health) and whose sell side is measured flat at 43-47% same-day agreement (tape.heavy_buy_aggression). I did not stand down on sign entirely, because the chain label and a bearish-leaning balance backdrop are concordant, but I have committed it at LOW confidence and named the measured quantity rather than asserting conviction.",
+    "THE WEATHER REVISION CHANNEL: full stand-down for want of its authority gate (model_disagreement dead at all horizons).",
+    "THE IMPACT-COEFFICIENT CHANNEL: full stand-down - k3 is not computable on a blind slice because phase price change is not served."
+  ],
+  "state_defects_and_gaps_reported": [
+    {
+      "block": "model_disagreement",
+      "severity": "HIGH - populated but empty, with a self-justifying note that is FALSE at short horizons",
+      "detail": "coverage 0.0 and n_common_metros 0 at ALL EIGHT horizons (h0 target 2026-07-21 through h7 2026-07-28), on BOTH served day-blocks (20260720 and 20260721). mav_gw_cdd, met_gw_cdd, spread_gw_cdd, spread_gw_hdd all null; all 16 metros listed in metros_neither. summary.max_abs_spread_gw_hdd null, n_overlap_horizons 0. The `stability` sub-block is equally dead ('no metro has a usable GFS read in BOTH evening batches') at every horizon. THE NOTE IS THE PROBLEM: it states the null is because the horizon is 'beyond both models' reach: MAV ~+72h, MET ~+84h'. That cannot be true at h0-h2, which are 0-72h and inside BOTH models' stated reach. So a block that is wholly dead carries an explanation that would let a reader accept it as legitimately empty - the exact S107 pattern where a null reads downstream like a deliberate mask. CONSEQUENCE, not hypothetical: weather.revision_seasonal_sign_map names this field as its AUTHORITY channel with a 0.7 bar, so the entire weather-revision channel stood down on my day. Note weather_forecast and weather_forecast_cycle are HEALTHY (coverage 1.0, all 16 metros, complete true) - so this is a MAV/MET-overlap failure specific to the disagreement feed, not a general weather outage."
+    },
+    {
+      "block": "brain play magnitude.terminal_impact_coefficient_carry",
+      "severity": "HIGH - a false blind-legality claim on a play I authored",
+      "detail": "The play's `requires` field states: 'prior session phase-3 price change and signed flow (tape_conditions) - ALL PRE-CUTOFF, so this is BLIND-LEGAL, not refine-only'. tape_conditions serves 26 fields (verified against the day's field inventory) and NONE is a price or return quantity - the block is explicitly non-price and is never_masked for exactly that reason. k3 therefore CANNOT be computed on a blind run at all. The claim appears never to have been executed against an actual blind slice, which is the NC-3 shape (a guard reported as tested whose firing branch never ran). Either the play must be re-scoped to refine-only, or phase price change must be served in a separate price-bearing block that the blind's mask governs."
+    },
+    {
+      "block": "brain play flow.resting_program_inverts_aggressor_tilt - TRIGGER GAP (proposal, not a defect)",
+      "severity": "MEDIUM - a served, deterministic, open-time program signature is missing from the trigger set",
+      "detail": "The trigger set is in_bcom_roll / in_gsci_roll / days_to_futures_expiry == 0. It omits the CONTRACT ROLL WINDOW, which is served deterministically and open-time as contract_structure.oi_volume_divergence TRUE together with oi_front_symbol != volume_front_symbol and open_interest_next_chg_1d. On my day that signature is live (+19,550 into NGU26 in one session, OI front already Sep while volume front is still Aug) and the scored leg NGQ26 is the SELL side of every roll pair, so the D-1 aggressor tilt the doctrine tells me to put direction on is mechanically sell-contaminated. This is a general day-class (the last sessions before every monthly Kalshi-underlying roll), not a one-off. Proposing the trigger extension."
+    },
+    {
+      "block": "contract_structure - OI staleness on the day it matters most",
+      "severity": "MEDIUM",
+      "detail": "open_interest_front_session and open_interest_next_session are both 2026-07-16, i.e. 5 days stale, on 20260721 - the LAST pre-roll session, the single day-class where sizing the roll's mechanical contribution to the aggressor tilt matters most. The one channel that could decontaminate the flow read is the one that is stale. Not a bug; a coverage gap with a named consequence."
+    },
+    {
+      "block": "brain play weather.summer_burn_lane_exclusion - required input not served",
+      "severity": "MEDIUM",
+      "detail": "Registered against g24 with forward_evidence 'NONE', but its stated input is grid_stack.bas.*.gas_share as a WEEKLY RISE COUNT. The state serves gas_share as a level and gas_chg_7d_mwh as an MWh change; deriving the share change needs the prior week's per-BA demand denominator, which is not served. The play cannot be evaluated on the block it was registered against. (Also out of my lane - it is a storage-week instrument, not a day-move one.)"
+    },
+    {
+      "block": "storage_consensus",
+      "severity": "MEDIUM - declared in-block, recorded so it becomes a tracked line",
+      "detail": "consensus_chg_bcf, n_estimates, range_low/high, house_disagreement and surprise_vs_consensus are ALL null for both the last print (07-16) and the next (07-23); source reads 'NO CONSENSUS OBTAINABLE - actual only' and the note names a forward hole Mar-Jul 2026. So the surprise-vs-consensus channel is dead across the whole g24 window, which matters most for the 07-23 print owner, not for me. Only the seasonal-proxy stor_surprise (+5.4, 'above') survives."
+    },
+    {
+      "block": "storage_vintage / ngwu_balance.latest_sd_levels / cash_basis - staleness, all self-declared",
+      "severity": "LOW-MEDIUM, recorded for the registry",
+      "detail": "storage_vintage as_of 2026-03-05, age_days 138 - the vintage-revision channel is dead for this block. ngwu_balance.latest_sd_levels as_of 2025-09-24, age 300 days - supply/demand LEVELS are dead (only the stated wow deltas and the Vortexa vessel line are live: 34 vessels / 131.0 Bcf). cash_basis hh_spot gas day 2026-07-13 published 07-16, age_days 8 (correctly relived from the frozen 5) - the physical delivery-stress gauge runs at weekly staleness, which is fine for a squeeze check but useless for a day-level read. All three declare themselves; recorded so they do not die in a posterior."
+    },
+    {
+      "block": "vol_regime - v0 basis wholly absent",
+      "severity": "LOW",
+      "detail": "Every v0_* field is null with v0_win_n_5/10/20 all 0. The block's own note says None means insufficient prior sessions on that basis and never 'calm', which I respected - I sized entirely off the n0 basis and did not mix bases. Recording it because vol_regime is the module that conditions magnitude and it is running on one leg."
+    }
+  ],
+  "weight_assigned": {
+    "blind": 1.0,
+    "causal_mbo": 0.0,
+    "note": "Blind round 1 - no MBO evidence file is read on a blind run. The firehose_present flags (mbo_flow true, l1_book true) refer to the source of the served non-price tape aggregates, not to a causal evidence file in my hands."
+  },
+  "selection_reason": "Non-catalyst core Tuesday with no calendar owner competing for it - the default C class per my lens file.",
+  "handoff_forward_note": "NOT a weekend-feeding day, so no handoff_out is contractually required. Passing forward anyway because the seam is unusual: my session is the LAST on Aug/NGQ26 and the Kalshi underlying rolls to Sep/NGU26 from 20260722, so the next owner's overnight is a LEG CHANGE and must be treated as never-traded, never as a market move (mbo_refine_shared round-2 protocol step 2; reasoning_method.continuous_frame roll caution). calendar_front_next_spread was +0.035 and eroding (-0.010 over 5d). Exit state I expect to hand over: a decelerating down chain, 2 sessions old, no new turn evidence, covering fuel still loading (COT -45,414 WoW), and the 07-23 EIA print then 2 sessions ahead."
+}

@@ -5,11 +5,13 @@
    "play_id": "weather.winter_heating_size_term",
    "registered_session": "S114",
    "merged_status": "PROVISIONAL",
-   "test_group": "g24",
+   "test_group": null,
    "falsifier": "If same-burn same-breadth November-vs-deep-winter week pairs stop differing by more than ~100 Bcf once weather-normal heating is accounted for - i.e. the gap turns out to be burn mismeasurement rather than the heating term - the size claim is wrong and A-38's converter build is mis-aimed. Also refuted if the A-38 weekly re-check on a full HDD join shows power burn matching heating's share of weekly variance in Dec-Feb.",
-   "status": "DUE",
+   "status": "AWAITING_ELIGIBLE_BLOCK",
    "confirmations": [],
-   "refutations": []
+   "refutations": [],
+   "scope_error_S114": "REGISTRATION ERROR, found S114 by the g24 run itself: this test was registered against g24 (2026-07-20..07-31, gw_hdd 0.0 on every day) but its claim is WINTER-scoped - a heating size term, a freeze conjunction and a winter hydro buffer cannot be confirmed OR refuted on a late-July block. Three specialists stood it down on season, correctly, and the gate would have read DUE forever. A forward test needs an ELIGIBLE block, not the next one. Re-register when the walk reaches a heating-season block.",
+   "eligibility": "requires a block with heating-degree-day content (gw_hdd > 0 on scored days)"
   },
   {
    "play_id": "weather.renewables_masking_flip",
@@ -25,21 +27,25 @@
    "play_id": "weather.freeze_conjunction_class2",
    "registered_session": "S114",
    "merged_status": "PROVISIONAL",
-   "test_group": "g24",
+   "test_group": null,
    "falsifier": "A forward cold+calm week delivering an ordinary draw with functioning price elasticity (no decoupling, no curtailment) refutes the flag's necessity at its stated strength. The hydro limb is separately falsifiable: a freeze event where hydro fails to rise above its month p50 WITHOUT drought conditions refutes the dispatch-buffer read - 2025-01-25..30 (593-642 vs p50 669) is the one recorded exception and rides with the play.",
-   "status": "DUE",
+   "status": "AWAITING_ELIGIBLE_BLOCK",
    "confirmations": [],
-   "refutations": []
+   "refutations": [],
+   "scope_error_S114": "REGISTRATION ERROR, found S114 by the g24 run itself: this test was registered against g24 (2026-07-20..07-31, gw_hdd 0.0 on every day) but its claim is WINTER-scoped - a heating size term, a freeze conjunction and a winter hydro buffer cannot be confirmed OR refuted on a late-July block. Three specialists stood it down on season, correctly, and the gate would have read DUE forever. A forward test needs an ELIGIBLE block, not the next one. Re-register when the walk reaches a heating-season block.",
+   "eligibility": "requires a block with heating-degree-day content (gw_hdd > 0 on scored days)"
   },
   {
    "play_id": "weather.hydro_winter_buffer",
    "registered_session": "S114",
    "merged_status": "PROVISIONAL",
-   "test_group": "g24",
+   "test_group": null,
    "falsifier": "Refuted if a further year's cycle shows winter (Jan-Mar) p50 at or below late-summer (Jul-Aug) p50 absent drought; or if freeze events systematically show hydro FALLING below month p50 without drought (the 2025-01 exception becoming the rule); or if the drought winter, when it arrives, does NOT produce the outsized gas response the buffer framing implies.",
-   "status": "DUE",
+   "status": "AWAITING_ELIGIBLE_BLOCK",
    "confirmations": [],
-   "refutations": []
+   "refutations": [],
+   "scope_error_S114": "REGISTRATION ERROR, found S114 by the g24 run itself: this test was registered against g24 (2026-07-20..07-31, gw_hdd 0.0 on every day) but its claim is WINTER-scoped - a heating size term, a freeze conjunction and a winter hydro buffer cannot be confirmed OR refuted on a late-July block. Three specialists stood it down on season, correctly, and the gate would have read DUE forever. A forward test needs an ELIGIBLE block, not the next one. Re-register when the walk reaches a heating-season block.",
+   "eligibility": "requires a block with heating-degree-day content (gw_hdd > 0 on scored days)"
   },
   {
    "play_id": "weather.summer_burn_lane_exclusion",
@@ -87,8 +93,18 @@
    "merged_status": "PROVISIONAL",
    "test_group": "g24",
    "falsifier": "If specialists run under the seven-step order and (a) no posterior shows a pre-influence read differing from its post-chain estimate, or (b) emissions still cap at ~550 where drivers support more, or (c) no override is ever declined for lacking an independent read, then the order changed no behaviour and is ceremony. Refuted also if ordering the steps DEGRADES sum|err| against the s105.3 baseline.",
-   "status": "DUE",
-   "confirmations": [],
+   "status": "CONFIRMED_ON_ITS_STATED_FALSIFIER",
+   "confirmations": [
+    {
+     "session": "S114",
+     "group": "g24",
+     "limb_a_no_posterior_shows_a_delta": "NOT MET (so not refuted). At least 6 of 10 posteriors report a pre-influence read differing from the post-chain estimate, and 20260723 FLIPPED SIGN (pre-influence DOWN, chain UP), attributable to two named scope clauses rather than to judgment. Four specialists stated the brain removed the centre of their own read.",
+     "limb_b_emissions_cap_at_550": "NOT MET, BUT THE TEST WAS AIMED AT THE WRONG NUMBER. Emissions did not cap at 550 - they capped at 250, and mean|guess|/mean|actual| = 0.29x against g22 0.55x and g23 0.68x. Under-emitted on 8 of 10 days. See run_findings.g24 THE_DOMINANT_NEGATIVE. The order is not refuted by this, but the emission problem GOT WORSE in the session that introduced the order and the brief, and that must not be scored as a win.",
+     "limb_c_override_declined_for_lacking_an_independent_read": "MET. B-0727 declined weekend.carry_realization_flip; C-0721 declined firing on ICE LD1 when the play's stated path is NYMEX, calling it 'goalpost-moving toward a conclusion I already held'.",
+     "degradation_check_vs_s105_3_baseline": "NOT DEGRADED. sum|err| 4,890 vs g22's 5,965 on a market only 6% quieter (mean|actual move| 497 vs 527).",
+     "honest_caveat": "n=1 block. The order and the mission brief landed together, so their effects are not separable on this run."
+    }
+   ],
    "refutations": []
   },
   {
@@ -100,8 +116,20 @@
    "what_is_measured_and_it_does_not_need_the_day_to_be_RIGHT": "These are SHAPE properties, measurable on a contaminated rehearsal as well as a fresh run, which matters because g22/g23 have already seen the curve (D39: we test ON the runs, not against them). (a) ATTACHMENT: day N's emitted close level vs day N+1's emitted open level - the count of days that do not connect. (b) CONTRACT ARITHMETIC: first path point == 0 and last == (day-move minus gap); S110 measured g23 at 8 of 10 days mismatched, both Mondays by exactly +400. (c) STEP STRUCTURE: path segments that move with no named liquidity event between them. (d) DRIFT SHARE: |drift| as a fraction of sum|err| - the 'survives' number, which is the part of the error that does NOT cancel and is therefore the part a continuity fault would produce.",
    "falsifier": "REFUTED if, under the brief, (a) the unattached-day count and the contract-arithmetic mismatch count are no better than the s105.5 baseline, AND (b) drift share is unchanged or worse. Refuted independently if specialists report the brief but their posteriors show no reference to inheritance between points - i.e. it was read and not used. NOTE THE ASYMMETRY: a fall in drift share alone does NOT confirm it, because drift share also falls when the market gets quieter - that exact artifact produced the fake 939 -> 592 'improvement' (realized moves fell 799 -> 457 over the same span). Confirmation requires the mechanical counts (a) to move.",
    "baseline_named_per_A1": "s105.5 blind, same block. g22 blind of record: 4/10 direction, sum|err| 5,965, drift -1,815, survives 30%. The mechanical counts (attachment, contract arithmetic) must be computed on that committed blind BEFORE the rehearsal, or there is no baseline to beat.",
-   "status": "DUE",
-   "confirmations": [],
+   "status": "CONFIRMED_ON_MECHANICAL_COUNTS_ATTRIBUTION_CONTESTED",
+   "confirmations": [
+    {
+     "session": "S114",
+     "group": "g24",
+     "a_contract_arithmetic": "MOVED HARD. Contract violations 0 of 10, against the g22 blind of record at 10 of 10 and g23 at 9 of 10.",
+     "a_attachment": "0 unattached days, against g23's 8.",
+     "c_step_structure": "largest-single-step share p50 0.22, against g22 0.32 and g23 0.29. No day carries a step above 60% of its travel.",
+     "d_drift_share": "21%, against g22's 30% and g23's 83%.",
+     "THE_QUIETNESS_ARTIFACT_THE_FALSIFIER_WARNED_ABOUT_WAS_CHECKED": "mean |actual move| g22 527, g23 457, g24 497. g24 was NOT meaningfully quieter than g22, so the sum|err| improvement is not the 939->592 artifact. The falsifier required the MECHANICAL counts to move for confirmation, and they did.",
+     "ATTRIBUTION_IS_CONTESTED_AND_STAYS_THAT_WAY": "The mission brief and path_contract.py landed in the SAME session. 'The brief taught continuity' and 'the checker enforced the arithmetic' are both live explanations and THIS BLOCK CANNOT SEPARATE THEM. Recorded as confirmed on the measurement, unresolved on the mechanism (D37: the observation and the story are independent).",
+     "read_and_not_used_check": "NOT REFUTED on this limb either - every specialist named a SPECIFIC decision the brief changed (path drawn as a slope not a step; magnitude scale stated separately from the p50; overnight gap emitted 0 rather than manufactured). Two independently flagged the stakes/P&L paragraph as INERT and asked for it to be cut."
+    }
+   ],
    "refutations": []
   }
  ]

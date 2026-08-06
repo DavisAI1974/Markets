@@ -1,7 +1,7 @@
 {
  "meta": {
   "market": "NG",
-  "version": "s105.7",
+  "version": "s105.8",
   "built_pass": 4,
   "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + fingerprints + plays + mechanisms + open_frontier + ruled_out). s95.2 = the MERGE of s95.1 with the S95.2 roll-clean full refine + the G6 holdout, reviewed and CONFIRMED as the brain (S96). Each pass MERGES; nothing is overwritten blindly. All 13 plays preserved. s102.4 (S103 MBO track): + doctrine_tier3.refinement_architecture_s103 (Greg's causal-refinement-layer doctrine, MERGED) + mbo_refinement_g15_findings (the G15 5-specialist MBO refine result + lesson proposals, forward-test G16/G17 MBO). No play changes; 36 plays preserved. s103.2 (S107): SCOPED ADJUDICATION forced by a data fix, not a group merge. forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one; the claim that flow_conviction REPLACES the 0.55 arm was built on that artifact and is struck (the play itself is kept - the two gates run on different channels, refine-only vs blind-available). Adds flow.big_print_bshare_thin_tape_guard, measured on 204 sessions: the bar does NOT float by season (fire rate 25.3/29.2/29.7% winter/shoulder/summer) but DOES need a thin-tape guard (thinnest big-print quartile carries double the dispersion). 60 of 61 incumbents byte-identical; 62 plays.",
   "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year.",
@@ -168,9 +168,37 @@
     "added": "S114",
     "phase": "briefing",
     "phase_why": "read before launch; rendered into the spawn prompt"
+   },
+   "run_findings": {
+    "is": "what each completed run taught - negative findings first, positives named, attribution kept contested where two explanations survive",
+    "read_by": "specialists before a run on the same instrument; the coordinator when scoring",
+    "roles": [
+     "specialist",
+     "state_auditor",
+     "failure_judge",
+     "coordinator"
+    ],
+    "phase": "working",
+    "phase_why": "a specialist needs to know which served blocks have lied recently and which plays could not be computed - that is working reference, not orientation",
+    "required": "optional"
    }
   },
-  "s105_5_merge": "S114: meta.sections added - a machine-readable index of every top-level section, what it is for and who reads it, gated by brain_schema so a section cannot be added silently. And failure_localization added as a brain SECTION rather than a separate plant document, on Greg's 'there should only be one brain doc... brains control reasoning and behavior along with decision-making'. store/failure_judge.json is retired; agents/failure_judge.md now renders FROM THE BRAIN. 90 plays byte-identical."
+  "s105_5_merge": "S114: meta.sections added - a machine-readable index of every top-level section, what it is for and who reads it, gated by brain_schema so a section cannot be added silently. And failure_localization added as a brain SECTION rather than a separate plant document, on Greg's 'there should only be one brain doc... brains control reasoning and behavior along with decision-making'. store/failure_judge.json is retired; agents/failure_judge.md now renders FROM THE BRAIN. 90 plays byte-identical.",
+  "changelog": [
+   {
+    "version": "s105.8",
+    "session": "S114",
+    "group_run": "g24 blind (6/10, sum|err| 4,890)",
+    "plays_changed": "0 play CONTENT changed - 90 plays, unchanged calls",
+    "what_changed": [
+     "+ run_findings section (declared in meta.sections): the g24 negatives and positives, with attribution left contested where two explanations survive",
+     "+ reasoning_method.handoff_out_schema: the 9-field spec RELOCATED verbatim from CASCADE_S104_friday_cleanup_summary.md, which no specialist opens (D30/D36)",
+     "+ reasoning_method.b_share_basis_rule: a 0.50 bar is read TWO-SIDED unless a play names otherwise",
+     "~ magnitude.terminal_impact_coefficient_carry: struck a FALSE blind-legality claim (4 specialists)",
+     "~ 8 plays: prose moved from `confidence` to `confidence_note`, confidence set null (never invented)"
+    ]
+   }
+  ]
  },
  "reasoning_method": {
   "note": "HOW he reasons - the general method applied every day. Per-event, never averaged; drift is a DESCRIPTOR tied to conditions, never point-fit.",
@@ -269,7 +297,32 @@
    "no_accumulating_tacit_expertise": "A human trader's twenty years lives in their intuition. Ours has to be externalised into the brain and the ledgers or it does not exist next session. That asymmetry is why the plant work matters more for us than a checklist matters in a hospital."
   },
   "the_frame": "Klein's naturalistic decision making (recognition-primed decision) is the better frame than the biases literature: experts pattern-match the situation to a known class and mentally simulate the first workable course, rather than comparing options. That is what classify-then-simulate already is, which is a sign the architecture is on a real track rather than an invented one. The biases literature is useful as a FAILURE TAXONOMY - anchoring (B-0713), confirmation bias (D-0716 citing 0715's +6,326 buy flow as bullish when the same-day tell is bearish), order effects (E-0710 vs E-0717, same engine, opposite outcomes, sequence the only difference).",
-  "reporting_duty_and_where_it_goes": "GREG, S114: 'Do the agents know about registry?' and 'if it dictates agent behavior it should be in schema doc'. It does, so it is here rather than in a spawn template - this is WORKING phase, binding while you run, not orientation. THE DUTY: declare any input you found defective, absent, stale, wrongly encoded or simply suspicious, rather than silently working around it - and declare any build or data gap you noticed while reasoning, even when it did not affect your day. Put it in `state_defects_and_gaps_reported` with the measured quantity that made you suspect it. WHERE IT GOES, which is the part nobody told you: a reported gap becomes a line in the OPEN ITEMS REGISTRY (`OPEN_ITEMS.json`, rendered to `OPEN_ITEMS.md`), tracked with an id, a tier and a WHY, and it is carried session to session until it is closed or explicitly killed. It does not live or die inside your posterior. WHY THE DUTY IS REAL AND NOT POLITENESS: eleven silent data holes have been found on this desk, several because a specialist stopped and said an input looked wrong instead of routing around it - and on this desk that has repeatedly been worth more than the forecast. The converse is also measured: 12 of 13 build suggestions from an S111 briefing had NO registry item, so they existed in prose that nothing counted and none were built. An observation with no registry home does not exist (D30). YOUR SLICE'S INVENTORY: your spawn prompt carries the full list of fields served to you that day - names only, no values, no lean. It is there because a field you do not know about cannot be consulted: on 0629 `wind_mwh` was served in every slice and read by nobody, gw_cdd rose exactly as forecast, and burn FELL 4.2 Bcf/d on a 62% wind rise. When you stand down on a question, say which served fields you checked before standing down."
+  "reporting_duty_and_where_it_goes": "GREG, S114: 'Do the agents know about registry?' and 'if it dictates agent behavior it should be in schema doc'. It does, so it is here rather than in a spawn template - this is WORKING phase, binding while you run, not orientation. THE DUTY: declare any input you found defective, absent, stale, wrongly encoded or simply suspicious, rather than silently working around it - and declare any build or data gap you noticed while reasoning, even when it did not affect your day. Put it in `state_defects_and_gaps_reported` with the measured quantity that made you suspect it. WHERE IT GOES, which is the part nobody told you: a reported gap becomes a line in the OPEN ITEMS REGISTRY (`OPEN_ITEMS.json`, rendered to `OPEN_ITEMS.md`), tracked with an id, a tier and a WHY, and it is carried session to session until it is closed or explicitly killed. It does not live or die inside your posterior. WHY THE DUTY IS REAL AND NOT POLITENESS: eleven silent data holes have been found on this desk, several because a specialist stopped and said an input looked wrong instead of routing around it - and on this desk that has repeatedly been worth more than the forecast. The converse is also measured: 12 of 13 build suggestions from an S111 briefing had NO registry item, so they existed in prose that nothing counted and none were built. An observation with no registry home does not exist (D30). YOUR SLICE'S INVENTORY: your spawn prompt carries the full list of fields served to you that day - names only, no values, no lean. It is there because a field you do not know about cannot be consulted: on 0629 `wind_mwh` was served in every slice and read by nobody, gw_cdd rose exactly as forecast, and burn FELL 4.2 Bcf/d on a 62% wind rise. When you stand down on a question, say which served fields you checked before standing down.",
+  "b_share_basis_rule": {
+   "the_rule": "ANY 0.50 BAR ON A b_share IS READ ON THE TWO-SIDED BASIS unless the play names a different one explicitly. The state serves both series; they routinely sit on OPPOSITE sides of 0.50 (g24 20260723: raw 0.415 vs two-sided 0.508), so the basis decides the verdict, not the tape.",
+   "why_two_sided_is_the_default_and_it_is_measured_not_preferred": "S108: every *_b_share divided by TOTAL volume while the tape carries a THIRD side value ('N') worth 13.49% of volume - in the denominator only. Served mean 0.4078, clearing 0.50 on 5 of 223 sessions. TWO-SIDED mean 0.4999 - dead on the 50/50 the physics requires - clearing on 107. So 0.50 is the physical midpoint of the two-sided series and is NOT a midpoint of the raw one. A 0.50 bar read raw is not a strict bar, it is a DIFFERENT bar sited at roughly the 46th percentile. The two series also disagree about which side of 0.50 they are on 45.7% of the time (corr 0.532), so this is not a constant shift that a calibrated threshold quietly absorbs.",
+   "what_this_does_not_license": "It does not retro-fit any play's calibration. Where a play was demonstrably CALIBRATED on the raw series its own text governs and should say so. This rule settles the DEFAULT for the silent majority, so a specialist stops having to guess - it does not overwrite a stated basis.",
+   "instance": "g24, reported independently by two specialists. C-0721: 'several plays don't say which series they were calibrated on.' D-0723: 'raw 0.415 and two-sided 0.508 sit on opposite sides of 0.50, and at least two plays' limbs flip verdict depending on which you read' - filed as a live trap. 21 of 90 plays carry a ~0.50 b_share bar; 2 name no basis anywhere in their text (direction.flow_conviction_sign_gate, boundary.chain_label_must_track_realized_cum) and the rest mention a basis somewhere without necessarily binding it to the BAR.",
+   "falsifier": "Refuted if a play calibrated on the two-sided series is shown to fire correctly ONLY when read raw - i.e. the raw series carries the signal and the 0.50 coincidence is incidental. Testable per play on committed states: recompute each 0.50-bar limb on both bases across g17-g24 and count verdict flips against realized direction, PER EVENT (D37), never pooled."
+  },
+  "handoff_out_schema": {
+   "status": "THE SPEC, RELOCATED - not newly invented. Verbatim from the S104 cascade cleanup.",
+   "why_it_is_here_now": "S114, g24: the phrase '9-field handoff_out' appears in agents/README.md, agents/RUN_SOP.md and mbo_refine_shared.md, and the nine fields are ENUMERATED IN NONE OF THEM. The only written copy was CASCADE_S104_friday_cleanup_summary.md - a session document no specialist opens. So E-0724 reverse-engineered the schema by opening A NEIGHBOURING GROUP'S POSTERIOR, which speculated forward INTO ITS OWN BLIND WINDOW. Nothing leaked (it had already emitted its pre-influence read and took the print from its own state), but the ONLY thing standing between the missing schema and a real leak was one specialist's discipline. This is D30/D36: a spec with no home in the place people read does not exist. MEASURED COST: 140+ distinct handoff field names across committed posteriors, most used once; several specialists numbered their own fields (1_close_px .. 13_structural_notes) trying to impose an order that was never given to them.",
+   "required_fields_on_every_weekend_feeding_friday": [
+    "1. close_px, cum_from_anchor_usd",
+    "2. chain_polarity, chain_age_sessions (age>=4 or extreme cum -> exhaustion flag)",
+    "3. last_hour_dir (+1/-1) AND last_hour_signed_flow (+1/-1) -> conviction: ALIGNED (genuine momentum) | DIVERGENT-covering (price up vs sell flow) | DIVERGENT-exhaustion (price down vs buy flow)",
+    "4. close_off_extreme_frac (how far off the session high/low the close sits)",
+    "5. positioning_calendar: {expiry, opex, index_roll_window_open_monday (bool)} -> spent vs carrying",
+    "6. driver_realization: {driver, peak_day_et, realizes_before_monday (bool)} -> carry vs sell-the-news",
+    "7. exit_type, one of {crest_trim_fadeable, positioning_spent_fade, fundamental_carry_continue, fundamental_carry_realizing_reverse, momentum_carry, exhausted_extreme_giveback}",
+    "8. monday_bias: directional lean + size class Monday should inherit (the consumable)",
+    "9. sunday_gap_owner: {structural | weather | chain_drift} for A's Sunday-gap sizing"
+   ],
+   "consumption_rule_for_A_and_B": "Read exit_type + monday_bias, NOT the Friday day-move sign. Sunday inherits the CLOSE + chain state (gap sign is noise). Monday's 07-10 ET catch-up window REPRICES driver_realization: if the driver realized over the weekend the catch-up is a FADE (sell-the-news), not an extend.",
+   "blind_mode_amendment_S114": "On a PRICE-MASKED blind slice, fields 1 and 4 are not emittable as realized values and field 2's cum is masked. EMIT THEM AS FORECASTS, LABELLED - or emit null with a named reason. Do NOT manufacture them and do NOT silently drop them: g24 produced both good behaviour (E-0731 wrote '1_close_px: null / NOT EMITTABLE - every price in this block is masked') and a structural gap (E-0731 was a weekend-feeding Friday with NO inbound handoff because A never ran, so it complied its way into an empty chain-state field). A weekend-feeding day with no inbound handoff should fail at STAGE time, not be discovered by the specialist.",
+   "exit_type_is_open_ended": "E-0731 emitted FUNDAMENTAL_CARRY_REALIZING and declared it a FIFTH type rather than forcing one of the enumerated six. That is the correct behaviour: name the new type and say so. The enumeration is a checklist, not a closed set."
+  }
  },
  "plays": [
   {
@@ -7300,7 +7353,7 @@
    "requires": "chain age/cum/positioning/D-1 flow are open_time decision_state fields; no MBO or realized target-day data",
    "scope": "the Friday DIRECTION sign only; magnitude governed by existing bands; does not fire on a clean young-chain continuation",
    "caveats": "a mechanical settle-spent covering close (0327 class) is wrong-signed but self-limiting (does not cascade) - the gate must not force a continuation there; hands to friday_crest_trim_discriminator + positioning_spent_fade",
-   "confidence": "direction-fix is FREE/reasoning; residual magnitude tail (fresh-shot blow-off, carry far-tail) stays honest-under (weekend model-run build, separate)",
+   "confidence": null,
    "status": "PROVISIONAL",
    "status_note": "",
    "status_original": "PROVISIONAL",
@@ -7388,7 +7441,8 @@
     "recommendation": "forward_test_on_next_group",
     "confidence": "med",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "direction-fix is FREE/reasoning; residual magnitude tail (fresh-shot blow-off, carry far-tail) stays honest-under (weekend model-run build, separate)"
   },
   {
    "id": "daytype.friday_crest_trim_discriminator",
@@ -7398,7 +7452,7 @@
    "call": "fire crest_trim_fadeable only when STRETCHED + squaring; route a based-chain or covering-close OUT to friday_turn_exhaustion_gate / positioning_spent_fade",
    "requires": "chain state (open_time); last-hour dir-vs-flow (MBO-measured for G15; inferred otherwise)",
    "scope": "conditions the crest-trim / weekend_crest_friday trigger; does not change its magnitude band",
-   "confidence": "reasoning discriminators, decision-time present; the flow tell is MBO-proven G15, inferred elsewhere",
+   "confidence": null,
    "status": "PROVISIONAL",
    "status_note": "",
    "status_original": "PROVISIONAL",
@@ -7496,7 +7550,8 @@
     "recommendation": "forward_test_on_next_group",
     "confidence": "med",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "reasoning discriminators, decision-time present; the flow tell is MBO-proven G15, inferred elsewhere"
   },
   {
    "id": "daytype.eia_preprint_overextension_gate",
@@ -7506,7 +7561,7 @@
    "call": "if >= 2 fire: do NOT emit full-band chain-sided; go TWO-SIDED / counter-tilt (raise counter-delivery weight, widen toward the turn, p50 off the chain sign). Full band ONLY when D-1 flow is COHERENT with the chain. Surprise SIGN still does not sort direction - the gate keys on OVER-EXTENSION + FLOW COHERENCE. POST-PRINT (refine/live): counter-delivery on absorbing flow RE-ANCHORS the block lean (flip, not just re-size) - see selector.midblock_right_the_ship",
    "requires": "D-1 tape_conditions (session_b/big_print), chain cum run, consensus vintage - all open_time",
    "scope": "EIA-print-day direction; the full-band down is spared when D-1 flow is coherent (0423)",
-   "confidence": "the pre-print tells are open-time (FREE); delivery-vs-absorption post-print is a tape read (proxy = D-1 flow coherence); a fresh consensus surprise is the coherent case",
+   "confidence": null,
    "status": "PROVISIONAL",
    "status_note": "",
    "status_original": "PROVISIONAL",
@@ -7750,7 +7805,8 @@
     "recommendation": "needs_reading_by_greg",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "the pre-print tells are open-time (FREE); delivery-vs-absorption post-print is a tape read (proxy = D-1 flow coherence); a fresh consensus surprise is the coherent case"
   },
   {
    "id": "structure.accumulation_arm_turn",
@@ -7760,7 +7816,7 @@
    "call": "act on it: move the sign toward flat/turn or emit a genuine bimodal split; do NOT ride the S3-down default. The S3-down default is not sign-certain merely because selector.divergence_resolution's HDD>=16.4 catalyst-override is gated out (that excludes the up-angle BY CONSTRUCTION in a shoulder, it is not evidence of down). The turn does not need the >=0.62 single-day extreme to ACT.",
    "requires": "big_print_b_share + session_b_share (D-1 tape_conditions), COT percentile + trajectory - all open_time",
    "scope": "core-day direction; 'honest under-claim' is a MAGNITUDE lever only, never a sign justification",
-   "confidence": "the window fix (~5 non-consecutive) is what makes the arm catch spaced accumulation; the strict 2-of-3 missed G17 entirely",
+   "confidence": null,
    "status": "PROVISIONAL",
    "status_note": "",
    "status_original": "PROVISIONAL",
@@ -8047,7 +8103,8 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "the window fix (~5 non-consecutive) is what makes the arm catch spaced accumulation; the strict 2-of-3 missed G17 entirely"
   },
   {
    "id": "selector.midblock_right_the_ship",
@@ -8058,7 +8115,7 @@
    "requires": "cross-session COT trajectory, D-1 flow coherence, chain age/cum, prior handoff_out exit_type - all open_time",
    "scope": "the block-lean SIGN when a turn stack builds; does not override a clean coherent continuation",
    "caveats": "the escalation reserve is the coordinator HALL-MONITOR (a logged-a-turn-then-emitted-the-chain-sign compliance audit) if specialists keep repeating the flaw after this play",
-   "confidence": "the missing sanity-check Greg named ('right the ship after they lean into something'); FREE - triggers are computable from data already ingested",
+   "confidence": null,
    "status": "PROVISIONAL",
    "status_note": "",
    "status_original": "PROVISIONAL",
@@ -8235,7 +8292,8 @@
     "recommendation": "forward_test_on_next_group",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "the missing sanity-check Greg named ('right the ship after they lean into something'); FREE - triggers are computable from data already ingested"
   },
   {
    "id": "daytype.covering_giveback_self_limiting",
@@ -8245,7 +8303,7 @@
    "call": "once positioning_spent_fade is emitted (covering realized, monday_bias down), the FOLLOWING weekend-feeding day reverts to the chain/state default UNLESS a FRESH crowding stack rebuilt since (new COT extreme AND worsening, new one-sided run into it). A still-extreme-but-NOT-worsening COT is spent fuel, not new fuel. An expiry the week ahead = squeeze TAIL risk (fat upper tail), not a p50 covering trigger",
    "requires": "prior handoff_out exit_type + monday_bias, COT trajectory (worsening vs flat), D-1 big_print - all open_time",
    "scope": "the SECOND weekend-feeding day after a covering give-back; leaves the first (correct) covering flip intact",
-   "confidence": "the spent-vs-fresh COT read across the specialist's own handoff seam is the discriminator; FREE",
+   "confidence": null,
    "status": "PROVISIONAL",
    "status_note": "",
    "status_original": "PROVISIONAL",
@@ -8380,7 +8438,8 @@
     "recommendation": "keep",
     "confidence": "med",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "the spent-vs-fresh COT read across the specialist's own handoff seam is the discriminator; FREE"
   },
   {
    "id": "structure.covering_absorption_directional_tell",
@@ -8390,7 +8449,7 @@
    "call": "read the covered/failing/delivered state from final-phase conviction, not the imbalance sign. A crowded short (MM net < ~12 1y-pctile) whose covering is ABSORBED-not-spent at the Friday close reprices UP on the Monday catch-up (weekend gap and/or 06-10 window) - buy-absorption at the close is a DIRECTIONAL tell, not exhaustion. Its mirror: buy-absorbed-failing stays down until price turns.",
    "requires": "signed flow + price by phase (refine/live); the blind has the flow (decision-legit) but must pair it with its own price forecast",
    "scope": "direction on covering/absorption days; the discriminator is conviction not imbalance",
-   "confidence": "strong cross-specialist convergence (A/B/C/E) on one block; the absorption read needs price (refine/live) - the blind gets the flow and infers against its own forecast",
+   "confidence": null,
    "status": "PROPOSED",
    "status_note": "was: PROPOSAL",
    "status_original": "PROPOSAL",
@@ -8563,7 +8622,8 @@
     "recommendation": "scope_narrower",
     "confidence": "med",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "strong cross-specialist convergence (A/B/C/E) on one block; the absorption read needs price (refine/live) - the blind gets the flow and infers against its own forecast"
   },
   {
    "id": "direction.flow_conviction_sign_gate",
@@ -11778,7 +11838,7 @@
    ],
    "scope": "All seasons, and TWO live forward drivers make it more informative from here, not less (Greg, S109). (1) GULF HURRICANE SEASON: the US liquefaction fleet is Gulf Coast - Sabine Pass, Corpus Christi, Freeport, Cameron - so a storm track through the Gulf hits export capacity and Gulf production at the same time, and the two pull gas price in OPPOSITE directions. Departures are the observable that separates them: a terminal outage shows up as departures collapsing while production returns. Season is Aug-Oct and it is live NOW. (2) A MIDDLE EAST SUPPLY HOLE pulling cargoes: if that supply is short, more US cargoes leave, export throughput rises and the pull is bullish US gas. Both are STEP events, which is what this line reads. It remains a SLOWER term than the weather/renewables stack.",
    "caveats": "WEEKLY resolution, so it cannot time a day. It LAGS the physical event - a cargo departs after liquefaction has already run. Capacity is fleet-mix dependent, so a capacity step is not necessarily a throughput step. And it is a THROUGHPUT proxy, not a feedgas nomination: it will miss an outage that has begun but not yet shown up in departures. AND THE HURRICANE CASE IS THE ONE IT IS WEAKEST ON: departures LAG, so a terminal that shuts today shows up in this line days later, while the price reacts to the storm track immediately. Treat it as CONFIRMATION of an export disruption, never as the early warning. We carry NO tropical/hurricane feed at all - freeze_risk is the winter analogue and has no summer counterpart. Named gap.",
-   "confidence": "none-yet (monitoring). No forward evidence exists. Explicitly NOT promoted on the basis of plausibility.",
+   "confidence": null,
    "status": "WIRED_UNPROVEN",
    "status_note": "WIRED_UNPROVEN - merged on Greg's instruction (S109) to make a live channel readable. Zero brain plays referenced LNG, vessel or feedgas before this.",
    "status_original": "WIRED_UNPROVEN - merged on Greg's instruction (S109) to make a live channel readable. Zero brain plays referenced LNG, vessel or feedgas before this.",
@@ -11861,7 +11921,8 @@
     "recommendation": "keep",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "confidence_note": "none-yet (monitoring). No forward evidence exists. Explicitly NOT promoted on the basis of plausibility."
   },
   {
    "id": "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
@@ -12717,7 +12778,7 @@
    "trigger": "the prior session's terminal-phase impact coefficient k3 = |ph3 price change| / |ph3 signed flow| is NUMB (<= 0.05 on >= 500 lots)",
    "read": "the tape's marginal price impact per unit of aggressor imbalance CARRIES to the next session. A numb prior terminal phase means the next day's NET is small regardless of how large the flow is - and the corollary that makes it usable: it is a NET suppressor, NOT a volatility suppressor.",
    "call": "size the next day's NET small (|day move| <= ~200 class); do NOT compress the expected RANGE by the same factor",
-   "requires": "prior session phase-3 price change and signed flow (tape_conditions) - ALL PRE-CUTOFF, so this is BLIND-LEGAL, not refine-only",
+   "requires": "prior session phase-3 price change AND signed flow. THE PRICE HALF IS NOT SERVED TO A BLIND: k3's numerator is |phase-3 price change|, and tape_conditions is the explicitly NON-price block, so k3 is NOT computable on a masked slice. REFINE-ONLY in practice.",
    "scope": "sign-free by construction - it bounds magnitude, never direction",
    "status": "PROPOSED",
    "status_note": "",
@@ -12854,7 +12915,8 @@
     "recommendation": "scope_narrower",
     "confidence": "high",
     "source": "BRAIN_AUDIT_S112.json"
-   }
+   },
+   "blind_legality_correction_S114": "This field previously read 'ALL PRE-CUTOFF, so this is BLIND-LEGAL, not refine-only'. That was FALSE and it was load-bearing: a play that advertises blind-legality invites a blind specialist to source the missing quantity from somewhere, and a derived k3 reads exactly like a measured one. Four g24 specialists caught it; one wrote 'I authored that play; the claim was evidently never executed against a real blind state.' Being pre-cutoff in TIME is not the same as being SERVED - the mask is defined by content, not by timestamp."
   },
   {
    "id": "structure.void_precedes_impact_collapse",
@@ -15901,6 +15963,71 @@
    "what_that_means_concretely": "This is a real desk with real capital behind it, not a benchmark or a demo. The next step after this walk is the paper dock and then live trading on these curves. Nobody downstream re-derives your number - the coordinator SELECTS and ASSEMBLES, it does not second-guess you, and it is hard-failed from silently substituting anything if your posterior is missing or malformed. You own your day.",
    "which_cuts_BOTH_ways_and_this_is_the_point": "Because it matters, a confident wrong number is expensive and a declared stand-down is cheap. The pressure of an important job is exactly what produces the failure this desk has measured - an answer manufactured because the contract demanded one. Do not let the importance of the job push you into emitting something you cannot derive. The most valuable thing you can hand back on a genuinely uncallable day is the sentence explaining why, with the measured quantity named.",
    "and_declare_what_is_broken": "Eleven silent data holes have been found on this desk, several because a specialist stopped and said an input looked wrong instead of working around it. That is not a distraction from the job; on this desk it has repeatedly been worth more than the forecast."
+  }
+ },
+ "run_findings": {
+  "_note": "What each completed RUN taught, negative and positive, written where specialists read rather than left in a session document. Greg S114: 'Make sure we are updating a lot of context with these findings.' A finding with no home in the brain does not reach a specialist (D30/D36) - g24 proved it twice over: the 9-field handoff spec and 12 of 13 S111 build suggestions both existed only in prose nothing read.  EVERY ENTRY MUST CARRY `_window_days`: brain_view withholds an entry wholesale when its days overlap the reader's window, because a block-level score (direction hit-rate, sum|err|) is an OUTCOME that carries no date and therefore survives MMDD redaction.  DO NOT PUT A REAL SCORE IN THIS NOTE - the first version of it quoted one as an illustration and leaked past the guard being described, because the note sits OUTSIDE the per-entry scoping. Describe the mechanism, never an instance.",
+  "g24_blind_2026_07_20_to_07_31": {
+   "score_with_named_benchmarks_A1": {
+    "blind": "6/10 direction, sum|err| 4,890, drift +1,010, survives 21%",
+    "zero_change": "sum|err| 4,970 - THE BLIND IS 0.98x THE DO-NOTHING FORECASTER. Essentially tied.",
+    "seasonal_naive": "sum|err| 4,080 - the blind is 1.20x, i.e. WORSE THAN GUESSING THE LAST SAME-WEEKDAY MOVE.",
+    "persistence": "sum|err| 6,380 - the blind is 0.77x, better than this one.",
+    "the_honest_headline": "Best direction hit-rate of the walk (6/10) and best sum|err| of the last three blocks - and it still ties do-nothing and loses to seasonal naive. Hit-rate is not the product; the curve is."
+   },
+   "THE_DOMINANT_NEGATIVE_systematic_under_emission": {
+    "measurement_per_event_not_pooled": "mean|guess| / mean|actual| = 146/497 = 0.29x, UNDER-emitted on 8 of 10 days. The trend across blocks is DOWNWARD: g22 0.55x, g23 0.68x, g24 0.29x. Max emission 250 against a max realized move of 1,360. Per day: 0720 0.25x, 0721 0.31x, 0722 0.21x, 0727 0.18x, 0728 0.21x, 0729 0.24x, 0730 0.33x, 0731 0.40x. The two 'over' days (0723, 0724) both have |actual| = 40, where any emission overshoots - they are not counter-evidence.",
+    "why_this_matters_more_than_the_hit_rate": "A 0.29x forecaster that gets direction right 6 of 10 still leaves most of the move on the table, and it is the reason the blind ties zero_change: emitting small IS emitting nearly zero. The registered forward test magnitude.emission_ceiling_check was watching for a cap at ~550. The cap arrived at 250 instead - the test was aimed at the wrong number.",
+    "THE_STORY_IS_A_GUESS_AND_HERE_ARE_THREE (D37)": [
+     "(a) THE BRIEF BIASED SMALL. Multiple specialists independently named 'a confident wrong number is expensive and a declared stand-down is cheap' as the passage that did the most work. That passage plausibly pushes toward smaller numbers. If true, this is an own-goal from S114.",
+     "(b) THE CHAIN WORKED AND SHRINKING WAS CORRECT. Four specialists wrote, unprompted, that their number moved TOWARD ZERO because the brain refuted the instrument their pre-influence read rested on (heavy_buy_aggression 4/9 as a D-1 instrument; D-1 aggregate flow 26/59 = 44% next-day sign). If your only sign channel is measured at chance, shrinking is the honest act and the under-emission is a symptom of having no instrument, not of timidity.",
+     "(c) THE BLOCK WAS GENUINELY HARD. gw_hdd 0.0 on every day kills the winter weather cluster; model_disagreement was dark; the roll seam split the block across two contracts."
+    ],
+    "how_to_tell_them_apart": "(b) predicts under-emission concentrates on days whose specialists DECLARED a refuted channel; (a) predicts it is uniform. It is uniform here (8 of 10, ratios 0.18-0.40 with no clustering), which leans toward (a) - but n=1 block and the three are not exclusive. NEXT RUN: vary the brief's stand-down passage and hold everything else, then compare the emission ratio. Do NOT conclude from this block alone."
+   },
+   "NEGATIVE_the_centrepiece_play_was_unrunnable": "weather.summer_burn_lane_exclusion - the summer-scoped play from the monthly weather/burn mapping, and the one that should have carried this block - STOOD DOWN ON 8 OF 10 DAYS BECAUSE IT COULD NOT BE COMPUTED. It keys on the gas share RISING week over week; the state served the share as a LEVEL and the change in MWh, with no last-week denominator. Two specialists found it independently. FIXED S114 (grid_stack.gas_share_chg_7d + wind/solar/hydro twins), and the fix shows exactly why the substitution was not available: on 20260727 US48 gas MWh FELL 82,071 while the gas SHARE ROSE +0.0135. OPPOSITE SIGNS. A specialist who used the MWh delta as a proxy would have answered the opposite question with a plausible number. THE LESSON: a play whose input is absent does not fail loudly - it stands down, reads as 'considered and declined', and nothing counts it. All 11 monthly weather/burn plays WERE read by at least one specialist; the failure was one of PLUMBING, not of orientation.",
+   "NEGATIVE_data_plane": [
+    "model_disagreement 100% NULL on all 10 days, named by 8 of 10 specialists as the highest-cost gap - it is the authority channel weather.revision_seasonal_sign_map names for licensing a weather revision into a lean. CAUSE: a BUILD-ORDER defect. The store was built 8 minutes BEFORE the raw MOS archive landed on disk. Worse, the empty-but-PRESENT day records SHADOWED the on-the-fly recompute fallback, which only fires when a date is MISSING. Present-and-empty beats absent, every time. FIXED: rebuilt, 16 days, 0 raw gaps, h0/h1 carry all 16 metros.",
+    "The h>=2 'beyond both models' reach' note was CORRECT and still misled three specialists, each computing 'h2 is only +48h, well inside a +72h model' and concluding the feed was dead behind boilerplate. The arithmetic they lacked: coverage needs the WHOLE GAS DAY, so h2 needs ~+77h. AN ACCURATE NOTE THAT MISLEADS AN EXPERT READER IS A DEFECT IN THE NOTE. Rewritten to state the binding constraint.",
+    "COT one publication stale, and it INVERTED A LOAD-BEARING TERM. Three specialists built fat-upper-tail arguments on WoW -45,414 ('more worsening than any of the 12 seam readings across g18-g23'). With the missing 07-21 report served, WoW is +2,953 - a slight COVERING. TWO CAUSES, both fixed: (1) cftc.gov sits behind Cloudflare, which 403s urllib's default User-Agent while serving any browser UA - so the current year silently stopped downloading while every cached year satisfied the not-force branch and the build reported success; (2) --build built ONE of the FIVE served contract codes, so four books went stale in place.",
+    "storage / stor_surprise a full print stale (07-16, +41) while storage_consensus in the SAME SLICE carried the decision-legal 07-23 print (+32). Two blocks, one slice, two answers, and the plays key on the dead one. CAUSE: eia_surprise.json ended 2026-07-16. FIXED, purely additive (+2 NG prints, 0 changed, 0 removed).",
+    "freeze_risk served days_below=0 and max_consecutive=0 for basins whose every tmin was null - a COUNT WITH NO MEASUREMENT BEHIND IT, reading downstream as 'checked, no freeze risk'. Named by the seam specialist: 'harmless in July, dangerous in January.' FIXED: unmeasured basins now serve null counts plus a named reason, and a zero-coverage cycle carries a block-level warning.",
+    "NO scored_leg declaration on a roll-straddling block. Five of ten specialists called group_config.leg_for themselves to learn which contract they were scored on. The one-shot mask compounds it: contract_structure, options_surface and squeeze_watch are frozen at the ANCHOR vintage, so on the post-roll half they describe the PRE-roll contract. Two specialists nearly imported an NGQ26 expiry-week squeeze onto an NGU26 leg; one was saved only by the anchor file's basis note. FIXED: scored_leg block, per day, with an explicit structural-mask caveat post-seam, and state_health now requires it."
+   ],
+   "NEGATIVE_the_brain_itself": [
+    "magnitude.terminal_impact_coefficient_carry ADVERTISED A BLIND-LEGALITY IT DOES NOT HAVE ('ALL PRE-CUTOFF, so this is BLIND-LEGAL'). k3's numerator is |phase-3 PRICE change| and tape_conditions is the explicitly non-price block. Four specialists caught it; its own author was one, and wrote 'the claim was evidently never executed against a real blind state.' The danger is specific: a play that advertises blind-legality invites a specialist to SOURCE the missing quantity, and a derived k3 reads exactly like a measured one. BEING PRE-CUTOFF IN TIME IS NOT THE SAME AS BEING SERVED.",
+    "8 of 90 plays carried a PROSE SENTENCE in `confidence` where 59 carry a float - so anything sorting or thresholding on it mis-handles them. Moved to confidence_note; confidence set null rather than inventing a number. A schema type-gate now blocks it (and blocks bool, which is an int subclass and would have sorted as 1.0).",
+    "THE VIEW IS TOO BIG AND EVERY SPECIALIST SAID SO. 90 plays served; ~20-25 reachable on any one day. Their proposed key, near-unanimous and better than day-class: PRE-EVALUATE each play's conditions against the SERVED SLICE and label it EVALUABLE / INPUT-ABSENT before the specialist opens it. What they asked NOT to cut: falsifiers, health.can_change_state notes, contradicting instances, and blind_legality verdicts - 'if you cut the view, cut calls before falsifiers.'",
+    "3 of 10 forward tests registered against g24 were WINTER-SCOPED against a 20-31 July block (gw_hdd 0.0 every day). They could never resolve and would have read DUE forever. A forward test needs an ELIGIBLE block, not the next one. Re-scoped to AWAITING_ELIGIBLE_BLOCK."
+   ],
+   "POSITIVE_what_measurably_worked": [
+    "THE PATH CONTRACT: 0 of 10 curves violate, against g22 10 of 10 and g23 9 of 10. Unattached days 0, against g23's 8. Largest-single-step share p50 0.22 vs 0.32/0.29. This is the cleanest mechanical win of the session. ATTRIBUTION IS CONTESTED AND MUST STAY THAT WAY: the mission brief and the path_contract checker landed in the SAME session, so 'the brief taught continuity' and 'the checker enforced arithmetic' are both live explanations and this block cannot separate them.",
+    "THE DECISION ORDER EARNED ITS KEEP. Step 3(a) - emit a pre-influence read before opening a play - produced a DIFFERENT post-chain estimate on at least 6 of 10 days, and on 20260723 THE SIGN FLIPPED (pre-influence DOWN, chain UP, attributable to two named scope clauses rather than to judgment). Because the fast read was on disk first, four specialists could state that the brain removed the centre of their own read instead of silently revising and narrating backwards. Its falsifier required (a) no posterior showing a delta - decisively not met.",
+    "THE FIELD INVENTORY CHANGED BEHAVIOUR ON EVERY SINGLE DAY. Every specialist reported it sent them somewhere they would have skipped, and named the block: solar, ngwu_balance, freeze_risk, nuclear_outages, weather_forecast_cycle, options_surface.months. Three of those returned nothing usable, WHICH IS THE CORRECT OUTCOME - the inventory makes 'nothing spoke to this' a CHECKABLE claim rather than an assumption. This is the 0629 wind lesson operationalised.",
+    "SPECIALISTS REFUSED REAL TRAPS, unprompted: a 32,453 -> 18,899 'thinning' read that spanned the roll and compared two instruments; importing NGQ26 expiry structure onto an NGU26 leg (settled with cash_basis -0.067 against the +10.77 of the 01-30 squeeze); firing a play on ICE LD1 when its stated path is NYMEX ('goalpost-moving toward a conclusion I already held'); and one struck a 0.37 damp coefficient it had built, calling it an invented ratio.",
+    "A SPECIALIST PRODUCED NEW MEASUREMENT, not just a number. E-0722 built a D0 CDD-level-step census from the committed g20-g23 states - 24 non-print days, per event - and refuted a channel in both directions (negative steps 6 up/3 down, positive steps 7 up/8 down; neither sorts). It took minutes because the committed states and actuals sit next to blind-legal tooling. THE WALK'S OWN ARCHIVE IS A LIVE INSTRUMENT, NOT JUST A RECORD.",
+    "squeeze_watch's _relived twins worked FROM THE CONSUMER SIDE: the block told a specialist its own frozen active=false was a false negative and served the live countdown beside it. The state catching a hole instead of a post-mortem catching it. Two specialists cited it approvingly and asked for the same treatment on the storage trio.",
+    "THE BLIND WALL HELD: zero leaks reported across ten specialists; one noted 9 redacted leaves, none of which it needed."
+   ],
+   "OPEN_not_fixed_this_session": [
+    "No FORWARD wind or solar expectation is served anywhere. grid_stack.wind_mwh is D+2 stale by construction, so on the exact channel the 0629 lesson is about, wind can only CORROBORATE, never forecast. Four specialists raised it independently. The GEFS forcing feed is built and validated (84% wind / 75% solar direction) but NOT WIRED into staged state.",
+    "weather_forecast_cycle nets the 18Z/00Z/06Z runs into ONE delta vector, so a specialist can derive the total add but not WHEN IT ARRIVED - and class_curve_profiles.shock_add says delivery starts at the cycle carrying the add. Five of twelve path points are therefore a timing judgment where a per-cycle breakdown would make them arithmetic.",
+    "g24_actual.json, g24_exit_states.json and g24_mbo_evidence.json sit in the SAME DIRECTORY as the anchor a blind specialist is told to read. Named as live in S109; still live. The only defence in force is that the specialist does not tab-complete.",
+    "A weekend-feeding Friday with NO inbound handoff (A never ran) complied its way into an empty chain-state field. Should fail at STAGE time the way state_health fails an empty block.",
+    "vol_regime serves sigma_5 137 against sigma_20 558 - a 4x spread with v0 null and no served basis to prefer either. EVERY magnitude on this block inherits that ambiguity, which is a candidate cause of the under-emission above."
+   ],
+   "_window_days": [
+    "20260720",
+    "20260721",
+    "20260722",
+    "20260723",
+    "20260724",
+    "20260727",
+    "20260728",
+    "20260729",
+    "20260730",
+    "20260731"
+   ]
   }
  }
 }

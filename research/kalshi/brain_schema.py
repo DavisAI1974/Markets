@@ -507,6 +507,37 @@ def check_sections(brain):
     return fails
 
 
+# Fields whose TYPE is load-bearing because something downstream sorts, thresholds or
+# arithmetics on them. A field that is a float on most plays and a SENTENCE on a few is the
+# defect this catches: every consumer that compares it either crashes or silently mis-ranks.
+TYPED_FIELDS = {
+    # (field, allowed python types, why)
+    "confidence": ((int, float, type(None)),
+                   "numeric or null. S114: 8 of 90 plays carried a PROSE sentence here while 59 "
+                   "carried a float - found by a g24 specialist ('anything that sorts or thresholds "
+                   "on confidence will mis-handle it'). Prose belongs in `confidence_note`. A null "
+                   "is legal and honest; an INVENTED number would be worse than the prose was."),
+}
+
+
+def check_field_types(plays):
+    """Type gate for the fields something downstream computes on. Declaration-only elsewhere -
+    this deliberately constrains a handful of fields, not the schema at large."""
+    fails = []
+    for field, (types, why) in TYPED_FIELDS.items():
+        # bool is a SUBCLASS of int in python, so a stray `confidence: true` would pass an
+        # isinstance(int) check and then sort as 1.0 - the highest confidence in the brain.
+        # Found by negative-testing this gate rather than by it firing in anger.
+        offenders = [p["id"] for p in plays
+                     if field in p and (isinstance(p.get(field), bool)
+                                        or not isinstance(p.get(field), types))]
+        if offenders:
+            fails.append("%s must be %s (%s) - %d offender(s): %s"
+                         % (field, "/".join(t.__name__ for t in types), why,
+                            len(offenders), ", ".join(offenders[:5])))
+    return fails
+
+
 def run_validate():
     brain = json.load(open(BRAIN, encoding="utf-8"))
     plays = brain["plays"]
@@ -514,6 +545,7 @@ def run_validate():
     print("brain %s | schema %s | %d plays"
           % (brain.get("meta", {}).get("version"), schema or "NONE (pre-migration)", len(plays)))
     section_fails = check_sections(brain)
+    type_fails = check_field_types(plays)
     bad = Counter()
     for p in plays:
         if p.get("status") not in STATUS_ENUM:
@@ -529,10 +561,15 @@ def run_validate():
     print("\nopen items (these are the work list, not errors):")
     for k, v in bad.most_common():
         print("   %-24s %3d of %d" % (k, v, len(plays)))
-    if section_fails:
-        print("\nHARD FAIL - section index:")
-        for f in section_fails:
-            print("   %s" % f)
+    if section_fails or type_fails:
+        if section_fails:
+            print("\nHARD FAIL - section index:")
+            for f in section_fails:
+                print("   %s" % f)
+        if type_fails:
+            print("\nHARD FAIL - field types:")
+            for f in type_fails:
+                print("   %s" % f)
         return 1
     return 0
 
