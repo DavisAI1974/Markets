@@ -1876,6 +1876,28 @@
    "status": "OPEN",
    "session": "S114",
    "source": "g22 rehearsal specialist debriefs, S114"
+  },
+  {
+   "id": "M-12",
+   "title": "S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written",
+   "source": "Greg, S115: 'Will this be a permanent fix?' / 'Make a note of this in open issues doc to make sure we're good moving forward'",
+   "first_raised": "S115",
+   "status": "OPEN",
+   "size": "S",
+   "tier": "ESSENTIAL",
+   "tier_why": "It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115.",
+   "why": "MEASURED S115, and it is why this is ESSENTIAL rather than housekeeping. S114 recorded D47 ('a store rebuilt in a session is not a fix until it is on S3, verified by reading it BACK') and stated at close that the plane was 'synced and verified by read-back'. S115 measured what a fresh restore actually produces and THREE OF FIVE REPAIRED STORES HAD NOT SURVIVED:\n  eia_surprise.json      S3 held 704 prints, latest 2026-07-16 (S114 built 706, latest 07-30) -> the g24 storage lane was two prints stale across BOTH EIA Thursdays in the block\n  storage_consensus      S3 print_date 2026-07-09 vs the committed state's 2026-07-30 - three prints stale\n  weather_forecast_cycle S3 index ends 2026-07-20, the block's FIRST day -> EMPTY on 9/10 days\n  freeze_risk            S3 index ends 2026-07-20 -> EMPTY on 9/10 days\n  model_disagreement     SURVIVED (2026-07-30 both sides)\n  storage_regional       SURVIVED as a store (through 07-30), but the committed STATE was built before the fix and froze it at 07-16\nCONSEQUENCE, measured not hypothesised: a full `stage_group g24` off the current S3 plane produces a state WORSE than the committed one - it fixes storage and EMPTIES three other blocks. Re-staging, the documented refine step, would have silently degraded the input.\nROOT CAUSE: D47 is enforced by nobody. It is the S114 correction record's own lesson #1 - 'a cleanup that does not become a gate expires' - happening to the decision that recorded it. Third occurrence of this family on this desk.\nTHE BUILD: for every store in restore_substrate's prefix list, compare LOCAL content against S3 (hash or a content clock - mtime is not staleness, per the documents registry lesson) and FAIL LOUDLY on divergence in either direction. Run it at close-out (did I push what I rebuilt?) and at bring-up (is what I restored what the last session built?). It must name the store, both sides' coverage, and which side is newer.\nFALSIFIER: if a session rebuilds a store, pushes it, and the gate stays silent while a fresh restore returns the OLD content, the gate is not measuring the thing that matters.\nDONE THIS SESSION, so the gate is not starting from zero: eia_surprise rebuilt (+2 prints, purely additive, 0 existing values changed), pushed, and verified by READ-BACK from S3 (704/05e857e3 -> 706/e1f43a97)."
+  },
+  {
+   "id": "M-13",
+   "title": "THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk",
+   "source": "S115 re-stage attempt (measured, not inferred)",
+   "first_raised": "S115",
+   "status": "OPEN",
+   "size": "M",
+   "tier": "ESSENTIAL",
+   "tier_why": "Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24.",
+   "why": "Measured by diffing a fresh `stage_group g24 --suffix _s115` against the committed state:\n  storage_consensus       S3 last_print.print_date 2026-07-09; committed state 2026-07-30 (3 prints stale)\n  weather_forecast_cycle  mos_cycle_index.json ends 2026-07-20 -> EMPTY on 9/10 g24 days\n  freeze_risk             freeze_risk_index.json ends 2026-07-20 -> EMPTY on 9/10 g24 days\nBoth weather indexes carry exactly 262 dated keys spanning 2025-11-01..2026-07-20, i.e. they were built before the g24 window was walked and never extended - S114 extended them locally and the extension did not reach S3 (see M-12).\nWHY IT WAS NOT FIXED THIS SESSION: the g24 refine was unblocked by GRAFTING the storage family onto the committed state (storage_restage_repair.py, declared per-day via storage_repair_basis) rather than re-staging, because a re-stage would have emptied these three blocks to fix one. That is a repair, not a cure - the stores themselves are still stale and the next group cannot be staged cleanly until they are rebuilt and pushed.\nEACH NEEDS: locate the builder, rebuild through the current date, push, verify by read-back (D47), then confirm a clean `stage_group` returns 0 hard. weather_forecast_cycle and freeze_risk both read the IEM MOS archive, so they are likely one fetch.\nPAIRS WITH: G-23 (weather_forecast_cycle nets 18Z/00Z/06Z into one delta - fix the cadence while the builder is open) and M-12 (the gate that stops this recurring)."
   }
  ],
  "tiers": {

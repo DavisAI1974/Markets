@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 142 |
+| open | 144 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 63, **M** 43, **L** 8
+By size: **XS** 18, **S** 64, **M** 44, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 9, **BIGGEST_WIN** 32, **REST** 102
+By tier: **ESSENTIAL** 11, **BIGGEST_WIN** 32, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (9)
+## ESSENTIAL (11)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -28,11 +28,13 @@ By tier: **ESSENTIAL** 9, **BIGGEST_WIN** 32, **REST** 102
 |---|---|---|---|
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
+| **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
 | **O-1** | S | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | M | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
+| **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
@@ -192,11 +194,13 @@ By tier: **ESSENTIAL** 9, **BIGGEST_WIN** 32, **REST** 102
 |---|---|---|---|---|---|---|
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
+| **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
 | **O-1** | ESSENTIAL | S | OPEN | S114 | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
 | **A-40** | ESSENTIAL | M | OPEN | S114 | ROOT-CAUSE THE MAGNITUDE EMISSION CEILING - the forecaster never emits above ~$550 while half of all days exceed it | - |
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
+| **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
@@ -400,6 +404,29 @@ that ladder. It is no longer a slow structural level for M-6 alone.
 
 ---
 
+### [ESSENTIAL] M-12 - S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written
+
+*size S | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115.
+
+**Source:** Greg, S115: 'Will this be a permanent fix?' / 'Make a note of this in open issues doc to make sure we're good moving forward'
+
+MEASURED S115, and it is why this is ESSENTIAL rather than housekeeping. S114 recorded D47 ('a store rebuilt in a session is not a fix until it is on S3, verified by reading it BACK') and stated at close that the plane was 'synced and verified by read-back'. S115 measured what a fresh restore actually produces and THREE OF FIVE REPAIRED STORES HAD NOT SURVIVED:
+  eia_surprise.json      S3 held 704 prints, latest 2026-07-16 (S114 built 706, latest 07-30) -> the g24 storage lane was two prints stale across BOTH EIA Thursdays in the block
+  storage_consensus      S3 print_date 2026-07-09 vs the committed state's 2026-07-30 - three prints stale
+  weather_forecast_cycle S3 index ends 2026-07-20, the block's FIRST day -> EMPTY on 9/10 days
+  freeze_risk            S3 index ends 2026-07-20 -> EMPTY on 9/10 days
+  model_disagreement     SURVIVED (2026-07-30 both sides)
+  storage_regional       SURVIVED as a store (through 07-30), but the committed STATE was built before the fix and froze it at 07-16
+CONSEQUENCE, measured not hypothesised: a full `stage_group g24` off the current S3 plane produces a state WORSE than the committed one - it fixes storage and EMPTIES three other blocks. Re-staging, the documented refine step, would have silently degraded the input.
+ROOT CAUSE: D47 is enforced by nobody. It is the S114 correction record's own lesson #1 - 'a cleanup that does not become a gate expires' - happening to the decision that recorded it. Third occurrence of this family on this desk.
+THE BUILD: for every store in restore_substrate's prefix list, compare LOCAL content against S3 (hash or a content clock - mtime is not staleness, per the documents registry lesson) and FAIL LOUDLY on divergence in either direction. Run it at close-out (did I push what I rebuilt?) and at bring-up (is what I restored what the last session built?). It must name the store, both sides' coverage, and which side is newer.
+FALSIFIER: if a session rebuilds a store, pushes it, and the gate stays silent while a fresh restore returns the OLD content, the gate is not measuring the thing that matters.
+DONE THIS SESSION, so the gate is not starting from zero: eia_surprise rebuilt (+2 prints, purely additive, 0 existing values changed), pushed, and verified by READ-BACK from S3 (704/05e857e3 -> 706/e1f43a97).
+
+---
+
 ### [ESSENTIAL] O-1 - THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book
 
 *size S | OPEN | raised S114*
@@ -460,6 +487,25 @@ THE DIAGNOSIS, AND IT IS THE DESK'S OWN RECURRING ONE (D30/D33/D36/A-7): the SOP
 THE SHAPE OF THE FIX (design, not decided): a RUN LEDGER that records which SOP step each line-touching command belongs to, and a wrapper that refuses a step out of sequence or on a group whose state does not match the step's precondition - the generalisation of assert_not_the_refine from one command to the whole line. Plus a station0/sop_version check that FAILS when a tracked run-wrapper file changes without a version-log entry, which is the (b) case made mechanical.
 
 FALSIFIER: if a session runs the full group cycle with the gate in place and the gate never fires while a human audit finds no deviations, the machinery is redundant and the prose was enough.
+
+---
+
+### [ESSENTIAL] M-13 - THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk
+
+*size M | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24.
+
+**Source:** S115 re-stage attempt (measured, not inferred)
+
+Measured by diffing a fresh `stage_group g24 --suffix _s115` against the committed state:
+  storage_consensus       S3 last_print.print_date 2026-07-09; committed state 2026-07-30 (3 prints stale)
+  weather_forecast_cycle  mos_cycle_index.json ends 2026-07-20 -> EMPTY on 9/10 g24 days
+  freeze_risk             freeze_risk_index.json ends 2026-07-20 -> EMPTY on 9/10 g24 days
+Both weather indexes carry exactly 262 dated keys spanning 2025-11-01..2026-07-20, i.e. they were built before the g24 window was walked and never extended - S114 extended them locally and the extension did not reach S3 (see M-12).
+WHY IT WAS NOT FIXED THIS SESSION: the g24 refine was unblocked by GRAFTING the storage family onto the committed state (storage_restage_repair.py, declared per-day via storage_repair_basis) rather than re-staging, because a re-stage would have emptied these three blocks to fix one. That is a repair, not a cure - the stores themselves are still stale and the next group cannot be staged cleanly until they are rebuilt and pushed.
+EACH NEEDS: locate the builder, rebuild through the current date, push, verify by read-back (D47), then confirm a clean `stage_group` returns 0 hard. weather_forecast_cycle and freeze_risk both read the IEM MOS archive, so they are likely one fetch.
+PAIRS WITH: G-23 (weather_forecast_cycle nets 18Z/00Z/06Z into one delta - fix the cadence while the builder is open) and M-12 (the gate that stops this recurring).
 
 ---
 
