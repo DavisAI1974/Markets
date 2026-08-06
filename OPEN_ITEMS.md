@@ -40,7 +40,7 @@ By tier: **ESSENTIAL** 16, **BIGGEST_WIN** 40, **REST** 103
 | **M-11** | M | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
-| **A-67** | L | THE A/B: build the minimum Frankenstein, then run g24 refine TWICE on identical data - current harness vs hybrid | It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted. |
+| **A-67** | L | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
 ## BIGGEST WIN (40)
@@ -220,7 +220,7 @@ By tier: **ESSENTIAL** 16, **BIGGEST_WIN** 40, **REST** 103
 | **M-11** | ESSENTIAL | M | OPEN | S114 | MAKE THE SOP ENFORCED RATHER THAN READ - the run wrappers have no gate, and S114 ran off-SOP repeatedly | - |
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
-| **A-67** | ESSENTIAL | L | OPEN | S115 | THE A/B: build the minimum Frankenstein, then run g24 refine TWICE on identical data - current harness vs hybrid | - |
+| **A-67** | ESSENTIAL | L | OPEN | S115 | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | - |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -637,13 +637,13 @@ WEEKLY CORROBORATION LANDED S114, from a second committed file (storage_week_by_
 
 ---
 
-### [ESSENTIAL] A-67 - THE A/B: build the minimum Frankenstein, then run g24 refine TWICE on identical data - current harness vs hybrid
+### [ESSENTIAL] A-67 - THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment
 
 *size L | OPEN | raised S115*
 
 **Why it is ESSENTIAL:** It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted.
 
-**Source:** Greg, S115: 'I say we build it before the group run and run two different refine runs on that data. Refine vs Frankenstein'
+**Source:** Greg, S115: 'I say we build it before the group run and run two different refine runs on that data. Refine vs Frankenstein'  ||  Greg, S115: 'Better yet, Blind vs Frankenstein' / 'That will be closer to real world conditions'
 
 THE DESIGN, and it is clean: g24 is staged, 0 hard, causal slices CLEAN, and the refine has not run. Same state, same actual, same brain, same ten days - the ONLY variable is the harness. D45 says the refine needs no blind wall, so a refine may be re-run freely; nothing about this consumes the last group run or touches the blind record (grp24.json stays immutable, and grp24_state_blind_s114.json preserves what the blind read).
 IT INVERTS THE RISK I HAD BEEN ASSERTING. 'Do not change the engine before the last group run' was right about shipping an UNMEASURED harness. Building it and validating it on g24 means the last run uses a harness we have MEASURED. That de-risks the final run instead of endangering it.
@@ -663,6 +663,24 @@ THE METRIC IS WHERE THIS CAN GO WRONG, AND IT NEEDS DECIDING BEFORE THE RUN. BOT
 
 PROCEDURE: archive nothing, write both arms to SEPARATE namespaces (never the canonical names - NC-4), diff per event with per_event.report(), and record the comparison as a REGISTERED experiment with its metric fixed BEFORE the run so the winner cannot be chosen after the fact.
 FALSIFIER: if the hybrid arm does not move (1)-(3) on a per-event basis, the harness is not the constraint on this desk's forecasting and the hybrid should ship - if at all - purely on maintainability grounds, with that stated honestly rather than dressed as a performance win.
+
+=== S115, GREG'S SHARPENING: BLIND vs FRANKENSTEIN, ON THE HEAD - NOT REFINE, NOT g24 ===
+Greg: 'Better yet, Blind vs Frankenstein' / 'That will be closer to real world conditions.'
+HE IS RIGHT ON TWO LEVELS, AND THE SECOND IS THE BIGGER ONE.
+(1) IT FIXES THE METRIC PROBLEM I RAISED. In a refine-vs-refine A/B both arms SEE the price curve, so sum|err| cannot discriminate and two 10/10 runs teach nothing. Neither BLIND arm can fit a curve it cannot see, so error against the named benchmarks (zero_change, seasonal_naive, persistence - A-1) becomes a VALID discriminator again.
+(2) BLIND MODE IS LIVE MODE. At the decision point in live trading there is no curve - the refine is a TRAINING ARTIFACT that exists only because we walk history. Testing the harness blind tests it under the conditions it will actually run in. A hybrid that won on refine and lost on blind would be a FALSE PASS shipped into paper.
+(3) AND IT TESTS THE ACTUAL DISEASE. The 0.29x under-emission is a BLIND failure (g22 0.55x -> g23 0.68x -> g24 0.29x). A refine can never test it because a refine sees the answer. This is the S114 experiment I had recorded as unrepeatable.
+
+THE SUBSTRATE MUST BE THE UNWALKED HEAD, NOT g24 - MEASURED, not assumed:
+  g24  context_leak returns 1 MMDD hit in CLAUDE.md - AND THAT UNDERSTATES IT. The block-level score ('6/10, sum|err| 4,890') carries NO DATE, so it survives any date-based redaction - the exact hole fixed in brain_view's run_findings handling this same session. g24 is unusable as a blind substrate and the A-50 gate correctly refuses it.
+  UNWALKED HEAD (2025-07-22 .. 2025-09-05) context_leak returns ZERO. Nothing records its outcomes because nobody has forecast it. It is the only clean blind substrate left.
+  Its data pull is ALREADY RUNNING (S115: NG trades 2025-07-22..2025-11-02 on NG.n.0, job GLBX-20260806-SEC5NWEY4U, $0.4391; L1 already covers the window from 2025-07-22).
+
+THIS MERGES THREE THINGS WE WERE TREATING SEPARATELY: the LAST GROUP RUN, the ARCHITECTURE A/B, and the UNDER-EMISSION EXPERIMENT are now ONE block with TWO arms. That is the correct use of the last blind this walk will ever have.
+
+REVISED PROCEDURE: stage a head block -> build the minimum Frankenstein (A-59 render target + typed contract, A-62 priors, A-64 branching) -> run BOTH arms BLIND on the identical staged state, in SEPARATE namespaces (never canonical - NC-4) -> score both with blind_score_nonpooled against the three named benchmarks, plus the per-event set fixed below.
+ARM ORDERING HAZARD, named so it is designed for: arm A's posteriors must not be readable by arm B, and NEITHER arm's outcome may reach CLAUDE.md or any handoff until BOTH have run - the moment one is written up, the block is contaminated for the other. Write nothing narrative until both posteriors are committed.
+METRIC, unchanged and still fixed BEFORE the run (D4/D37, per event, never pooled): sum|err| vs the three benchmarks; EMISSION RATIO mean|guess|/mean|actual|; BAND COVERAGE (A-60); stand-down honesty; derived-vs-fitted read from the reasoning.
 
 ---
 
