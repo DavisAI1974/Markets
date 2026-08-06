@@ -78,6 +78,16 @@ New/changed SERVED state fields the refine specialists will see:
 | `_state_build` | **NEW top-level.** The state's own vintage, so a new required block cannot turn old states red. |
 | `firehose_present.l1_book` | Now TRUE across the block (was False on 8 of 10 days). |
 
+**PLAY STATUS CHANGED UNDER YOU — READ THIS BEFORE THE REFINE.** Nine plays were demoted
+PROVISIONAL -> **`DEGENERATE`** on their own opening verdict. `DEGENERATE` does **not** mean the
+claim is false (that is `REFUTED`) — it means the TRIGGER carries no information as written (the
+D23 disease: fires always, never, or on a bar sited outside its own distribution). **The mechanism
+may be worth keeping; the repair is to re-site the bar.** A specialist meeting one must stand it
+down and NAME the status — and may cite its mechanism only by re-deriving the trigger and saying so.
+Every instance now carries `do` / `dont` / `observation`, and `fire_record` counts do/dont ONLY, so
+a play merged-but-never-run shows n=0 rather than letting its instance count look like a record.
+Full reasoning: `reasoning_method.what_a_play_status_means_S114` in the brain.
+
 Brain view additions (GENERATED, never a second copy): `instrument_priors` (53 plays' measured
 track records, surfaced), `live_verdict` (22 plays' own refuting line hoisted above the call),
 `evaluability` (A-46 — every parsed condition resolved against YOUR slice).

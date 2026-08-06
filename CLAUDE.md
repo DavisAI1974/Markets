@@ -57,6 +57,24 @@ S3 still held PRE-FIX copies of four stores and `eia_surprise.json` was absent e
 session would have silently undone the day's work. **D48 all four keys in `~/.config/markets/env`**,
 chmod 600, verified by name in KEYS.md.
 
+**THE SCHEMA CORRECTION (Greg, at close): A LIVE STATUS ON DEAD EVIDENCE IS AN INVITATION TO FIRE
+THE PLAY.** Measured: **15 of the 22 plays flagged by their OWN health or falsifier still read
+PROVISIONAL** — the refutation was written down honestly in every case and simply sat BELOW the
+`call`. That is the worst form of it, because **the falsifier fields were the run's most-praised
+content** ("if you cut the view, cut CALLS before FALSIFIERS"), so a live status on a discharged
+falsifier spends the credibility they earned. **AND THE do/dont RULE HAD SILENTLY EXPIRED**: S112
+stamped 624 instances and caught 43 declines reading as fires, but never made it a SCHEMA RULE — so
+every play merged since dropped it and **38 instances carried no action at all**, where a missing
+action reads as a FIRE. Same defect, same door, two sessions later. **Brain s105.8 -> s105.9**: new
+**`DEGENERATE`** status (the TRIGGER carries no information as written — distinct from REFUTED,
+which says the CLAIM is wrong; the repair is to RE-SITE THE BAR, not discard the mechanism), **9
+plays demoted on their OWN opening verdict**, `ACTION_ENUM` do/dont/observation with a hard gate,
+and `fire_record` counting do/dont only so the 8 plays merged this session show **n=0 fires, n=0
+declines** instead of an instance count implying a track record. **The full correction record —
+five things we got RIGHT and should build on, six we got WRONG — lives in `brain_schema.py`
+itself**, because that is the lesson: a finding recorded somewhere nothing reads is a finding that
+expires.
+
 **REFUTED AND WORTH KEEPING:** the "Monday stub in the 20260720 slice", filed by two specialists, is
 NOT a defect — the block declares it three ways and the day's OWNER used it correctly. Both
 reporters were non-owners reading a headline for a day they did not own.
