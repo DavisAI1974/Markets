@@ -63,6 +63,42 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.17 (S115): THE BRAIN VIEW MUST FIT, AND THE READING INSTRUCTION SAYS HOW. Greg's go, in
+  session ("do your plan"), after he asked what the shrink plan was and whether it degrades the
+  brain. **THE MEASURED PROBLEM:** the specialist working view was **1,682,984 chars, ~420k
+  tokens - larger in tokens than the brain is on disk** (role+phase scoping removed ~2%, and the
+  view-time annotations added ~96 KB back), while BLD-1/RFN-1 ordered the specialist to *read
+  {VIEW}*. That instruction is unsatisfiable, so **every specialist has been reading an
+  undeclared subset it chose itself and nobody downstream could know which** - CLAUDE.md's own
+  stated failure mode ("a bloated master a cheaper model silently half-ignores") landing on the
+  brain, i.e. non-determinism at the centre of the reasoning layer.
+  **WHAT CHANGED (view-side and template-side only; ONE BRAIN DOC is untouched):**
+  (a) **BLD-1 and RFN-1 now say HOW to read the view** - doctrine, reasoning_method, mechanisms,
+  fingerprints, ruled_out_by_target, instrument_priors and the new `play_index` IN FULL; then
+  `plays` CONSULTED BY NAME off the index, and the chosen plays read whole. A truncated headline
+  may never be fired or declined on, and a play not opened is a play the specialist CHOSE not to
+  open - declared like any stand-down. Choosing by index is the same choice, made in the open.
+  (b) **`play_index`** - GENERATED at view time, one row per play (status, target, scope,
+  fire_record, live_verdict, instance count, truncated call headline, and the A-46 evaluability
+  verdict for that day when spawned with --state/--day). An INDEX, never a second source.
+  (c) **Two PROVENANCE cuts, each announcing itself per play**: `legacy_notes` withheld from the
+  working view (pre-schema record of where a play's fields came from, kept verbatim in the brain
+  by the D29 migration) and the `audit` PROSE compressed to its verdict (support_class,
+  recommendation, confidence stay). Result: **1,682,984 -> 1,355,109 chars, 19.5% smaller.**
+  **WHAT WAS DELIBERATELY NOT CUT, and this is the load-bearing half.** The audit proposed two
+  further cuts and both were REFUSED: capping `instances` (45.2% of play mass) is the S114
+  blanket outcome strip one door over - Greg reverted that once already (*"Why did you strip
+  outcomes out? He should have those just not real price curve"*) and D24 wants past instances
+  WITH their context, which a fire_record total does not preserve; and stubbing DEGENERATE /
+  REFUTED plays breaks their own repair path, because DEGENERATE means the TRIGGER is
+  uninformative and the repair is to RE-SITE THE BAR, which cannot be done against a stub (D31:
+  nothing declared dead is actually dead). **All 90 plays, all 661 instances, all 90 falsifiers
+  and all 90 health notes are served intact - verified in the selftest, not asserted.**
+  Also fixed while in there: `build()` handed out a REFERENCE to the brain's plays, so every
+  view-time annotation had been writing into the caller's object - invisible while annotations
+  were additive, destructive once the field scoping started popping keys (non-idempotent builds).
+  Now deep-copied; caught by an integrity check on this very change (the D3-9 class).
+  First group under it: the g24 refine.
 - v1.16 (S115): REMEDIATION LOG ENTRY, recorded after `station0/sop_version` fired at S115
   bring-up. The change it names was made at S114 close and documented in the S114 handoff (13.5)
   but never version-logged - change-control item 2 broken in its logging half, recorded per item 3
@@ -548,8 +584,29 @@ nothing past your decision point. Do not attempt to obtain masked or future data
 
 SPAWN PARAMETERS
 - GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, BLIND. Brain ({BRAIN_V}): your reasoning file names knowledge/ng_brain.json and that is correct
-  - run `python brain_view.py --role specialist --gid {GID} --state {STATE} --day {DAY} --out {VIEW}` and read {VIEW}, which IS that
-  brain with the sections meant for another phase left out (your MISSION brief, delivered above,
+  - run `python brain_view.py --role specialist --gid {GID} --state {STATE} --day {DAY} --out {VIEW}`.
+
+  HOW TO READ {VIEW} - this is an instruction, not a suggestion, and it CHANGED at S115.
+  READ IN FULL, start to finish: `doctrine`, `reasoning_method`, `mechanisms`, `fingerprints`,
+  `ruled_out_by_target`, `open_frontier` where served, `instrument_priors` (the measured track
+  record of every instrument you hold), and `play_index`.
+  Then CONSULT `plays` BY NAME. Do NOT read 90 plays start to finish. `play_index` carries one
+  row per play - status, target, scope, fire_record, live_verdict, instance count, a TRUNCATED
+  call headline, and (because you were spawned with --state/--day) its A-46 evaluability verdict
+  for YOUR day. Use it to choose which plays your day actually needs, then open THOSE plays in
+  `plays` and read them whole - call, health, falsifier, instances, contradicting instances, all
+  of it. A truncated headline is never enough to fire or decline on.
+  WHY THIS CHANGED: measured at S115, the old instruction ("read the view") asked for ~420k
+  tokens, which does not fit. Every specialist was therefore reading some undeclared subset it
+  picked itself, and nobody downstream could know which. Choosing by index is the same choice
+  made in the open. A play you did not open is a play you chose not to open - if it mattered,
+  say so in your reasoning, exactly as you would a stand-down.
+  NOTHING WAS TAKEN AWAY FROM THE PLAYS. All 90 are served in full. Instances, falsifiers,
+  health notes and contradicting instances are untouched (Greg, S115: outcomes are the evidence).
+  Two provenance fields are scoped out of the working view and each says so in its place -
+  `legacy_notes` (pre-schema record of where a play's fields came from) and the `audit` prose
+  working (its verdict, support_class and recommendation are still there).
+  {VIEW} IS the brain with the sections meant for another phase left out (your MISSION brief, delivered above,
   and superseded doctrine_legacy). meta.view_withheld names each and why. --gid applies the BLIND WALL: the brain records DATED REALIZED OUTCOMES against
   block days (S112 stamped 624 instances and every merge since adds more), so every string naming
   a day inside your block is redacted and replaced with a marker that says so. meta
@@ -654,8 +711,29 @@ the causal read supports even where the actual went further); general mechanisms
 
 SPAWN PARAMETERS
 - GROUP {GID} (N={N}), SPECIALIST {X}, ROUND 1, REFINE. Brain ({BRAIN_V}): your reasoning file names knowledge/ng_brain.json and that is correct
-  - run `python brain_view.py --role specialist --gid {GID} --state {STATE} --day {DAY} --out {VIEW}` and read {VIEW}, which IS that
-  brain with the sections meant for another phase left out (your MISSION brief, delivered above,
+  - run `python brain_view.py --role specialist --gid {GID} --state {STATE} --day {DAY} --out {VIEW}`.
+
+  HOW TO READ {VIEW} - this is an instruction, not a suggestion, and it CHANGED at S115.
+  READ IN FULL, start to finish: `doctrine`, `reasoning_method`, `mechanisms`, `fingerprints`,
+  `ruled_out_by_target`, `open_frontier` where served, `instrument_priors` (the measured track
+  record of every instrument you hold), and `play_index`.
+  Then CONSULT `plays` BY NAME. Do NOT read 90 plays start to finish. `play_index` carries one
+  row per play - status, target, scope, fire_record, live_verdict, instance count, a TRUNCATED
+  call headline, and (because you were spawned with --state/--day) its A-46 evaluability verdict
+  for YOUR day. Use it to choose which plays your day actually needs, then open THOSE plays in
+  `plays` and read them whole - call, health, falsifier, instances, contradicting instances, all
+  of it. A truncated headline is never enough to fire or decline on.
+  WHY THIS CHANGED: measured at S115, the old instruction ("read the view") asked for ~420k
+  tokens, which does not fit. Every specialist was therefore reading some undeclared subset it
+  picked itself, and nobody downstream could know which. Choosing by index is the same choice
+  made in the open. A play you did not open is a play you chose not to open - if it mattered,
+  say so in your reasoning, exactly as you would a stand-down.
+  NOTHING WAS TAKEN AWAY FROM THE PLAYS. All 90 are served in full. Instances, falsifiers,
+  health notes and contradicting instances are untouched (Greg, S115: outcomes are the evidence).
+  Two provenance fields are scoped out of the working view and each says so in its place -
+  `legacy_notes` (pre-schema record of where a play's fields came from) and the `audit` prose
+  working (its verdict, support_class and recommendation are still there).
+  {VIEW} IS the brain with the sections meant for another phase left out (your MISSION brief, delivered above,
   and superseded doctrine_legacy). meta.view_withheld names each and why. --gid applies the BLIND WALL: the brain records DATED REALIZED OUTCOMES against
   block days (S112 stamped 624 instances and every merge since adds more), so every string naming
   a day inside your block is redacted and replaced with a marker that says so. meta

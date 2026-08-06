@@ -38,6 +38,7 @@ axis - the leak is on the TIME axis.
     python brain_view.py --selftest
 """
 import argparse
+import copy
 import json
 import os
 import re
@@ -231,7 +232,16 @@ def build(brain, role, phase="working", window_days=None):
         phase_ok = (phase == "all") or (ph == phase)
         if role_ok and phase_ok:
             if name in brain:
-                view[name] = brain[name]
+                # S115: DEEP-COPY WHAT WE ANNOTATE. `view[name] = brain[name]` handed out a
+                # REFERENCE, so every view-time annotation (live_verdict, fire_record,
+                # evaluability) was writing into the caller's brain object. That was invisible
+                # while the annotations were purely additive and the CLI was one-shot
+                # load->build->write; it became destructive the moment the S115 field scoping
+                # started POPPING legacy_notes, which made build() non-idempotent (a second
+                # build on the same object returned a different, smaller view). Caught by an
+                # integrity check on this very change, and it is the D3-9 class the audit
+                # flagged in check_instance_actions. Copy the section we mutate.
+                view[name] = copy.deepcopy(brain[name]) if name == "plays" else brain[name]
                 served.append(name)
         elif not role_ok:
             withheld.append((name, entry.get("withheld_why")
@@ -344,6 +354,97 @@ def build(brain, role, phase="working", window_days=None):
                 ("n_plays_total", len(view["plays"])),
                 ("priors", priors),
             ])
+
+    # ------------------------------------------------------------------------------------
+    # S115 - THE VIEW MUST FIT. Measured before this: the specialist view was 1,682,984 chars,
+    # ~420k tokens, LARGER in tokens than the brain is on disk (role+phase scoping removed ~2%
+    # and the view-time annotations added ~96 KB back) - while BLD-1/RFN-1 ordered the specialist
+    # to "read {VIEW}". That instruction was unsatisfiable, so every specialist has been reading
+    # SOME undeclared subset chosen by itself. That is CLAUDE.md's own stated failure mode ("a
+    # bloated master a cheaper model silently half-ignores") landing on the brain, and it makes
+    # the reasoning layer non-deterministic in a way no data guard can see.
+    #
+    # TWO CUTS ONLY, both PROVENANCE rather than reasoning content, both DECLARED:
+    #   legacy_notes (16.5% of play mass) - preserved verbatim by the D29 migration so nothing was
+    #     lost; it is the pre-schema record of a play, not how to use it.
+    #   audit (14.1%) - the S112 support audit's working: argument, could-it-have-come-out-
+    #     otherwise, recommendation. Its VERDICT (support_class + recommendation + confidence) is
+    #     the part a forecaster acts on; the prose is how the auditor got there.
+    #
+    # DELIBERATELY NOT CUT, and this is the load-bearing half (Greg, S115):
+    #   instances (45.2%) - capping these is the S114 blanket outcome strip one door over. Greg
+    #     reverted that: "Why did you strip outcomes out? He should have those just not real price
+    #     curve." D24 wants past instances WITH their context; a fire_record total keeps the count
+    #     and throws away the evidence. Untouched.
+    #   DEGENERATE / REFUTED plays - stubbing them breaks their own repair path: DEGENERATE means
+    #     the TRIGGER is uninformative and the repair is to RE-SITE THE BAR, which a specialist
+    #     cannot do against a stub. D31: nothing declared dead is actually dead. Served in full.
+    #
+    # The remaining size is answered by PLAY_INDEX below plus the template change (consult by
+    # index, do not read 90 plays start to finish) - not by removing reasoning content.
+    if phase == "working" and "plays" in view:
+        _n_lg = _n_au = 0
+        for pl in view["plays"]:
+            if pl.pop("legacy_notes", None) is not None:
+                _n_lg += 1
+                pl["legacy_notes_withheld"] = (
+                    "WITHHELD from the working view, not missing: pre-schema provenance kept "
+                    "verbatim by the D29 migration. It records where this play's fields came "
+                    "from, not how to use it. Full text is in knowledge/ng_brain.json.")
+            _au = pl.get("audit")
+            if isinstance(_au, dict) and any(k in _au for k in ("argument", "recommendation")):
+                _n_au += 1
+                pl["audit"] = OrderedDict(
+                    [(k, _au[k]) for k in ("session", "support_class", "recommendation",
+                                           "confidence", "source") if k in _au] +
+                    [("prose_withheld",
+                      "WITHHELD from the working view: the auditor's `argument` and "
+                      "`could_evidence_have_come_out_otherwise` working. The VERDICT above is "
+                      "what a forecaster acts on. Full text in knowledge/ng_brain.json.")])
+        meta["view_play_field_scoping"] = OrderedDict([
+            ("legacy_notes_withheld_on", _n_lg),
+            ("audit_prose_compressed_on", _n_au),
+            ("instances", "SERVED IN FULL - never capped (Greg, S114/S115: outcomes are the "
+                          "evidence; D24 wants past instances with their context)"),
+            ("degenerate_and_refuted_plays", "SERVED IN FULL - a stub cannot be re-sited (D31)"),
+            ("why", "the working view did not fit an agent context; these two cuts are provenance, "
+                    "not reasoning content, and both announce themselves per-play"),
+        ])
+
+    # PLAY INDEX (S115) - GENERATED, never a second source. The triage layer that makes
+    # "consult by name" possible instead of "read 90 plays in order". Every row carries only
+    # fields that already exist on the play, and names the play id so the play itself is one
+    # lookup away. A specialist reads doctrine + reasoning_method + instrument_priors + this
+    # index in full, then opens the plays the index says are live for its day.
+    if "plays" in view:
+        _rows = []
+        for pl in view["plays"]:
+            _call = pl.get("call")
+            _call = _call if isinstance(_call, str) else ""
+            _rows.append(OrderedDict([
+                ("play", pl.get("id")),
+                ("status", pl.get("status")),
+                ("target", pl.get("target")),
+                ("scope", pl.get("scope")),
+                ("fire_record", pl.get("fire_record")),
+                ("live_verdict", (pl.get("live_verdict") or {}).get("verdict")
+                 if isinstance(pl.get("live_verdict"), dict) else pl.get("live_verdict")),
+                ("n_instances", len(pl.get("instances") or [])),
+                ("call_headline", (_call[:180] + " ...[TRUNCATED - open the play]")
+                 if len(_call) > 180 else _call),
+            ]))
+        view["play_index"] = OrderedDict([
+            ("_note",
+             "GENERATED AT VIEW TIME from the plays below - an INDEX, not a second source. Use it "
+             "to decide WHICH plays your day needs, then read those plays in full in `plays`. "
+             "call_headline is TRUNCATED and must never be acted on by itself: a play's call, "
+             "falsifier, health note and contradicting instances are the content, and they are "
+             "all still there. A play absent from your day's reading is a play you chose not to "
+             "open - say so, the same as any stand-down."),
+            ("n_plays", len(_rows)),
+            ("evaluability", "populated per-day when the view is built with --state/--day (A-46)"),
+            ("rows", _rows),
+        ])
 
     if window_days:
         # BLIND LEGALITY (A-53). A window means a blind run, so annotate every play with whether it
@@ -539,6 +640,16 @@ def annotate_evaluability(view, state_day):
                      "somewhere else. ARMED/NOT ARMED is arithmetic, not a call: a play can be "
                      "armed and still wrong for your day."),
         }
+    # S115: keep PLAY_INDEX in step with the per-day stamps, so the triage layer carries the same
+    # verdict the play does. Generated from the plays that were just stamped - never authored.
+    _pi = view.get("play_index")
+    if isinstance(_pi, dict) and isinstance(_pi.get("rows"), list):
+        _by_id = {p.get("id"): p for p in (view.get("plays") or [])}
+        for _row in _pi["rows"]:
+            _p = _by_id.get(_row.get("play"))
+            if _p:
+                _row["evaluability"] = (_p.get("evaluability") or {}).get("verdict")
+        _pi["evaluability"] = "stamped per-play below (A-46) - see each row's `evaluability`"
     return view
 
 
@@ -737,6 +848,39 @@ def cmd_selftest():
           _resolve(_sd, "tape_conditions.phase_signed_flow[x]") == (False, None))
     check("resolver: plain dotted path unchanged",
           _resolve(_sd, "tape_conditions.session_b_share") == (True, 0.48))
+
+    # S115 - THE VIEW MUST FIT, WITHOUT LOSING REASONING CONTENT.
+    _wv, _, _ = build(brain, "specialist", "working")
+    _raw_n = len(json.dumps(brain))
+    _wv2, _, _ = build(brain, "specialist", "working")
+    check("build() does NOT mutate the brain it was handed",
+          len(json.dumps(brain)) == _raw_n)
+    check("build() is idempotent (a second build returns the same view)",
+          len(json.dumps(_wv)) == len(json.dumps(_wv2)))
+    _rawp = {p.get("id"): p for p in brain.get("plays", [])}
+    _vp = _wv.get("plays", [])
+    check("every play is still served (nothing dropped)", len(_vp) == len(_rawp),
+          "%d of %d" % (len(_vp), len(_rawp)))
+    check("instances are UNTOUCHED (Greg S114/S115 - outcomes are the evidence)",
+          sum(len(p.get("instances") or []) for p in _vp)
+          == sum(len(p.get("instances") or []) for p in _rawp.values()))
+    check("every falsifier survives", sum(1 for p in _vp if p.get("falsifier"))
+          == sum(1 for p in _rawp.values() if p.get("falsifier")))
+    _deg = [p for p in _vp if p.get("status") in ("DEGENERATE", "REFUTED")]
+    _lost = [k for p in _deg for k in _rawp[p["id"]]
+             if k not in p and k != "legacy_notes"]
+    check("DEGENERATE/REFUTED plays keep every field (a stub cannot be re-sited, D31)",
+          not _lost, str(_lost[:3]))
+    check("the two cuts ANNOUNCE themselves per play",
+          all("legacy_notes_withheld" in p for p in _vp if "legacy_notes" in _rawp[p["id"]]))
+    check("the scoping is declared in meta", bool(_wv["meta"].get("view_play_field_scoping")))
+    check("PLAY_INDEX indexes every play and says it is not a source",
+          _wv["play_index"]["n_plays"] == len(_vp)
+          and "not a second source" in _wv["play_index"]["_note"])
+    print("     guard output: working view %d chars (~%dk tokens), %.1f%% smaller than the "
+          "pre-S115 view; instances/falsifiers/plays all intact"
+          % (len(json.dumps(_wv)), len(json.dumps(_wv)) // 4000,
+             100 * (1 - len(json.dumps(_wv)) / 1682984.0)))
 
     # NEGATIVE 3 - no view may carry every section by accident
     check("NEGATIVE specialist view is strictly smaller than the brain",
