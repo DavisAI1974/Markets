@@ -381,18 +381,38 @@ def build(brain, role, phase="working", window_days=None):
                     continue
                 kept[ek] = ev
             if dropped:
+                # Count only, no entry names: the entry keys carry the group id, and naming them
+                # here would put the very token the wall is about to redact into the marker (S115).
                 kept["_withheld_own_group"] = (
-                    "WITHHELD, not missing: %s report on days inside YOUR window. These entries "
-                    "carry block-level outcomes (direction hit-rate, sum|err|) that no date-based "
-                    "redaction can reach. Withheld by the blind wall." % ", ".join(dropped))
+                    "WITHHELD, not missing: %d entr%s report on days inside YOUR window. These "
+                    "entries carry block-level outcomes (direction hit-rate, sum|err|) that no "
+                    "date-based redaction can reach. Withheld by the blind wall."
+                    % (len(dropped), "y" if len(dropped) == 1 else "ies"))
             view["run_findings"] = kept
 
         toks = window_tokens(window_days)
+        # S115 (audit D4-1): A BLOCK SCORE IS AN OUTCOME EVEN WITH NO DATE TOKEN, and the GROUP ID
+        # is how such strings name themselves. meta.changelog[0].group_run carried "g24 blind
+        # (6/10, sum|err| 4,890)" into a served g24 specialist view - past a full redaction pass -
+        # because the string holds no date and meta was exempt from the wall. Same disease
+        # run_findings already cured by window scoping, through a different door. Two changes:
+        # the group's own name forms join the token set, and meta is no longer exempt.
+        gid = None
+        try:
+            import group_config as _gc
+            for _g, _spec in _gc.GROUPS.items():
+                if set(_spec.get("days", [])) == set(window_days):
+                    gid = _g
+                    break
+        except Exception:
+            pass
+        if gid:
+            _n = gid.lstrip("gG")
+            toks |= {gid, gid.upper(), "grp" + _n, "GRP" + _n}
         counter = [0]
         for k in list(view):
-            if k == "meta":
-                continue
             view[k] = redact_window(view[k], toks, counter)
+        meta = view["meta"]
         meta["window_redaction"] = OrderedDict([
             ("days", sorted(window_days)),
             ("leaves_redacted", counter[0]),
@@ -667,6 +687,24 @@ def cmd_selftest():
     unwalled, _, _ = build(brain, "specialist", "working", None)
     check("NEGATIVE no window -> no redaction record, so it cannot look applied",
           "window_redaction" not in unwalled["meta"])
+
+    # S115 (audit D4-1) - THE META/GROUP-ID LEAK. meta.changelog carried "g24 blind (6/10,
+    # sum|err| 4,890)" into a served g24 view: no date token, and meta was exempt from the wall.
+    # The wall now redacts meta and the group's own name forms. Assert on g24, where the
+    # changelog names the block score verbatim.
+    days24 = gc.GROUPS["g24"]["days"]
+    walled24, _, _ = build(brain, "specialist", "working", days24)
+    body24 = json.dumps(walled24)
+    # window_redaction's own record legitimately lists the day strings; exclude it before asserting
+    m24 = dict(walled24["meta"])
+    m24.pop("window_redaction", None)
+    meta24 = json.dumps(m24)
+    check("BLIND WALL: no 'g24' token survives anywhere in the served meta", "g24" not in meta24)
+    check("BLIND WALL: the block's own blind score is gone from the whole view",
+          "4,890" not in body24 and "4890" not in body24)
+    unwalled24, _, _ = build(brain, "specialist", "working", None)
+    check("NEGATIVE unwalled view still carries the changelog outcome (the wall is doing the work)",
+          "g24 blind" in json.dumps(unwalled24["meta"]))
 
     # NEGATIVE 3 - no view may carry every section by accident
     check("NEGATIVE specialist view is strictly smaller than the brain",
