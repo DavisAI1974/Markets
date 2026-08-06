@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 159 |
+| open | 160 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 72, **M** 49, **L** 10
+By size: **XS** 18, **S** 72, **M** 49, **L** 11
 
 ---
 
-By tier: **ESSENTIAL** 17, **BIGGEST_WIN** 40, **REST** 103
+By tier: **ESSENTIAL** 18, **BIGGEST_WIN** 40, **REST** 103
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (17)
+## ESSENTIAL (18)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -42,6 +42,7 @@ By tier: **ESSENTIAL** 17, **BIGGEST_WIN** 40, **REST** 103
 | **M-13** | M | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | Any group staged or re-staged off the current S3 plane gets three empty or stale blocks. It blocks the documented re-stage path for every future group, not just g24. |
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-67** | L | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | It is the only way the hybrid ships on a MEASUREMENT rather than on argument, and it DE-RISKS the last group run rather than endangering it - the run would then use a harness validated on g24 instead of one reasoned about. It is also A-65's validated-compaction discipline applied at architecture scale, which is the standard S115 just adopted. |
+| **A-69** | L | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony. |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
 ## BIGGEST WIN (40)
@@ -223,6 +224,7 @@ By tier: **ESSENTIAL** 17, **BIGGEST_WIN** 40, **REST** 103
 | **M-13** | ESSENTIAL | M | OPEN | S115 | THREE STORES ARE STALE ON S3 RIGHT NOW - storage_consensus, weather_forecast_cycle, freeze_risk | - |
 | **A-38** | ESSENTIAL | L | OPEN | S113 | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-67** | ESSENTIAL | L | OPEN | S115 | THE A/B IS BLIND vs FRANKENSTEIN ON THE UNWALKED HEAD - one block that is the last group run, the architecture test AND the under-emission experiment | - |
+| **A-69** | ESSENTIAL | L | OPEN | S115 | SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test | - |
 | **A-50** | ESSENTIAL | ? | OPEN | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 | **O-2** | BIGGEST_WIN | XS | OPEN | S114 | RECORD THE S111 OPTIONS VERDICT AS A BINDING DECISION - it exists only in a file-index blurb | - |
 | **A-15** | BIGGEST_WIN | S | OPEN | S112 | THE THERMAL STACK IS SERVED AND UNREAD - coal_mwh and nuclear_mwh have zero consumers | - |
@@ -737,6 +739,33 @@ WHAT THE TEN-DAY BLOCK DOES TEST WELL, and it is the priority: THE EMISSION DISE
 IF RETENTION IS THE QUESTION, THE SUBSTRATE IS THE WHOLE HEAD: 2025-07-22 .. 2025-09-05 is 34 sessions, about THREE blocks. Run them IN SEQUENCE with Frankie PERSISTING ACROSS ALL THREE while the baseline RESETS each block. 'Pulls away' then becomes a measurable TREND - does the gap widen block over block? - which is the shape the claim actually makes and the only version 34 sessions can support. It also consumes the entire remaining walk, so it is a deliberate spend and Greg's call, not an assumption.
 REGISTERED AS A SEPARATE ARM SO ATTRIBUTION SURVIVES: arm 1 (one block, blind vs Frankenstein) answers HARNESS + EMISSION. Arm 2 (three sequential blocks, Frankie persistent vs baseline reset) answers RETENTION. Running arm 2 without arm 1 confounds them; running arm 1 first costs one block and makes arm 2 interpretable.
 FALSIFIER FOR THE RETENTION ARM: if the block-over-block gap does not widen across three blocks, persistence is not buying anything at our horizon and the object-state half of NOOA should be kept for its CONTRACT value only, with that stated.
+
+---
+
+### [ESSENTIAL] A-69 - SELF-TRAINING LOOP: Frankie runs blinds on the WALKED corpus, grades himself with FJ-1, and the head is held out as the only true test
+
+*size L | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It creates the TRAIN/TEST SPLIT this project has never had, it uses a corpus we already own and have used once each, and its grader is already built and has never been run. It is also the mechanism that makes A-67's retention arm meaningful - retention with nothing to retain across is ceremony.
+
+**Source:** Greg, S115: 'he can also learn context and actual market derived perimeters by us training him over blind runs by himself. We don't tune or fix him, he does that himself. Those are fast runs, and he'll learn in paper too. He can grade himself after the runs and see where he needs to improve instead of us guessing.'
+
+IT DISSOLVES A CONSTRAINT I HAD TREATED AS FIXED ALL SESSION. I kept saying blind runs are SCARCE - one group left, walked blocks cannot be re-blinded (A-50). That scarcity is about MEASUREMENT. For TRAINING it does not hold: we own EIGHTEEN WALKED BLOCKS, roughly 180 scored days (g7..g24), each with a committed state, an actual, and a blind posterior as a ready-made baseline. A corpus already paid for and used exactly ONCE each.
+
+IT GIVES US A TRAIN/TEST SPLIT, WHICH THIS PROJECT HAS NEVER HAD. Train on the walked corpus with the blind wall UP; HOLD OUT the unwalked head (2025-07-22..09-05) as the only true out-of-sample test. Every block to date has been a one-shot measurement - we have never been able to iterate on data and then check on data we had not touched. That is the difference between improving and appearing to.
+
+'HE GRADES HIMSELF INSTEAD OF US GUESSING' IS THE SHARPEST PART, AND IT IS AIMED AT A REAL FAILURE. S114 recorded THREE COMPETING EXPLANATIONS for the 0.29x under-emission and promoted NONE, because the grading was me inferring from outside the reasoning. The specialists who made those calls could have said which it was. We have been guessing at reasoning we could ask about.
+
+THE GRADER IS ALREADY BUILT AND HAS NEVER BEEN RUN. agents/failure_judge.md + failure_localization.py: an interaction-centric taxonomy (41 modes + 2 declared local extensions), a frozen table validated by failure_localization.validate(), and the ROOT-CAUSE RULE that labels the EARLIEST UNRECOVERED failure rather than the loudest - which is exactly what stops a self-grader blaming the last thing that went wrong. Registered as A-42 ('run the failure judge on a scored group and see whether the labels change any repair') and never executed. USE IT AS THE GRADING INSTRUMENT: free-form self-assessment RATIONALISES; a frozen taxonomy with a validator that REFUSES off-table triples does not let an agent invent a flattering category.
+
+THE GUARD THAT DECIDES WHETHER THIS WORKS: **TRAIN WITH THE WALL UP, OR HE LEARNS TO RECALL INSTEAD OF REASON.** Walked blocks carry their outcomes in CLAUDE.md (A-50), in the brain's dated instances (S112 stamped 624; every merge adds more), and in the handoffs. An agent that 'improves' by remembering 0629 will look excellent on the corpus and collapse on the head - manufacturing the most expensive kind of false confidence immediately before paper. brain_view --gid already redacts in-window dates and the A-50 gate scans the auto-loaded files; both must be ON for every training run, and a training run that cannot pass the leak check does not count as a training run.
+
+WHY THE RUNS CAN BE FAST, which is Greg's other point: a persistent lens object (A-68) replaces ten cold spawns per block, the states and actuals are already committed (no data plane needed for a walked block - S108+ groups run both rounds with no data/), and a training pass needs no coordinator render or merge - just posterior, reveal, grade.
+
+AND PAPER IS THE CONTINUOUS VERSION: one fresh day per day, real outcome, no contamination possible because the day had not happened. That is the same loop at a slower clock and it never runs out of data.
+
+FALSIFIER, and it is the whole point of holding the head back: if performance improves across training passes on the walked corpus but does NOT improve on the held-out head, the loop taught recall rather than reasoning and must be scrapped rather than tuned. Measure both, always, and report the corpus number and the held-out number TOGETHER - a corpus gain quoted alone is the metric this falsifier exists to refuse.
+DEPENDS ON: A-68 (the lens's book - retention to accumulate into) and A-42 (first FJ-1 run). PAIRS WITH A-67 (the head is the test substrate for both).
 
 ---
 
