@@ -6,21 +6,21 @@ home does not exist.
 
 | | count |
 |---|---|
-| open | 144 |
+| open | 146 |
 | in progress | 1 |
 | done | 17 |
 
-By size: **XS** 18, **S** 64, **M** 44, **L** 8
+By size: **XS** 18, **S** 66, **M** 44, **L** 8
 
 ---
 
-By tier: **ESSENTIAL** 11, **BIGGEST_WIN** 32, **REST** 102
+By tier: **ESSENTIAL** 12, **BIGGEST_WIN** 33, **REST** 102
 
 > Greg, S112: 'break out the essential ones and the biggest wins and then the rest as a second category but all still on the open doc.' Nothing is dropped - the tier is a reading order, not a filter. Assignment is a JUDGMENT and each tiered item carries its `tier_why` so the judgment can be argued with rather than inherited.
 
 ---
 
-## ESSENTIAL (11)
+## ESSENTIAL (12)
 
 *the next group cannot produce a trustworthy or readable number until these are done, OR the data is being lost while we wait. Leaks, live wrong values, measurement prerequisites, and the one irreversible accrual.*
 
@@ -29,6 +29,7 @@ By tier: **ESSENTIAL** 11, **BIGGEST_WIN** 32, **REST** 102
 | **G-1** | XS | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | 20 MINUTES, and it is the documented hole signature eleven times over. The EIA Natural Gas Weekly Update's final edition was the week ending 2026-01-21. A pipeline pointed at a dead vehicle goes stale SILENTLY - present, numeric, in range, right owner - which is exactly the shape state_health cannot see. Confirm what replaced it before the next group reads the block. |
 | **G-11** | XS | Start accruing EIA weekly coal basin spot prices | IRREVERSIBLE and running out. The EIA endpoint carries a rolling FIVE-WEEK window and EIA states the history is proprietary and cannot be released, so every week nobody runs it is a week gone permanently. Already IN_PROGRESS, captured once by hand; it needs a schedule, not a decision. |
 | **M-12** | S | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | It is the gate under every data fix. Without it a session cannot tell what it actually pushed, and the next session silently inherits pre-fix stores - which is what happened between S114 and S115. |
+| **M-14** | S | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04). |
 | **O-1** | S | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | M | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | NEEDS GREG'S CALL. Serving chain state (cum_from_anchor + chain age) unblocks NINE plays at once, and four of eight independent curation batches hit it without conferring. The largest single unblock on the list. |
 | **A-37** | M | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
@@ -38,7 +39,7 @@ By tier: **ESSENTIAL** 11, **BIGGEST_WIN** 32, **REST** 102
 | **A-38** | L | THE STORAGE LANE'S DOMINANT DEMAND COMPONENT HAS NO MODEL - res/comm heating outmoves power burn on 33 of 52 actual months, and on ALL TEN of the largest | - |
 | **A-50** | ? | CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else | - |
 
-## BIGGEST WIN (32)
+## BIGGEST WIN (33)
 
 *largest measured payoff per unit of effort. Several are two-line serving changes sitting on data we have held for years; two are the scoreboard itself; two already have their research delivered and only need collecting.*
 
@@ -54,6 +55,7 @@ By tier: **ESSENTIAL** 11, **BIGGEST_WIN** 32, **REST** 102
 | **A-31** | S | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | A measured structural ceiling with a price threshold and a dated falsifier, on data we already hold. It corrects the direction in which coal is expected to help, and it makes G-11's basin prices the parameter the mechanism turns on. |
 | **A-35** | S | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | It puts a clock on four registered mechanisms rather than adding a fifth, it re-reads the S111 'market got quieter' finding as a risk error, and it supplies the analog library's validity window as a measured quantity. Buildable from grid_stack shares we already hold. |
 | **A-36** | S | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
+| **M-15** | S | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed. |
 | **O-3** | S | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
 | **A-2** | M | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | THE OTHER MEASUREMENT PREREQUISITE, in Greg's own framing: we cannot measure skill until the system can say NO CALL, because without it the forecaster must pick something and then justify the guess. Measured: one high-confidence day in fifty, and the confidence field does not discriminate (low beats med). A discord score is a number, so no contract change is needed. |
 | **A-21** | M | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | Its cheapest sub-task is the highest-value thing on this list per hour: measure demand_mwh against gas_mwh per BA, from data we have held since 2019, to get the LOAD -> GAS BURN convexity. That is the actual dispatch curve the desk is trying to forecast and nobody has ever plotted it. No new feed, no new station. |
@@ -195,6 +197,7 @@ By tier: **ESSENTIAL** 11, **BIGGEST_WIN** 32, **REST** 102
 | **G-1** | ESSENTIAL | XS | OPEN | S111 | Confirm what replaced the NGWU supply-demand balance (NOT a repoint - the feed already knows both eras) | - |
 | **G-11** | ESSENTIAL | XS | IN_PROGRESS | S111 | Start accruing EIA weekly coal basin spot prices | - |
 | **M-12** | ESSENTIAL | S | OPEN | S115 | S3 STORE PARITY GATE - D47 is a rule with no machine, and it failed one session after it was written | - |
+| **M-14** | ESSENTIAL | S | OPEN | S115 | THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env | - |
 | **O-1** | ESSENTIAL | S | OPEN | S114 | THE KALSHI DAILY BINARY IS PRICED WITHOUT THE SKEW CORRECTION - a live mispricing in the paper book | - |
 | **A-11** | ESSENTIAL | M | OPEN | S112 | SERVE CHAIN STATE (cum_from_anchor + chain age) in the decision state - it unblocks a whole play family at once | - |
 | **A-37** | ESSENTIAL | M | OPEN | S113 (implicit in D35 at S11 | HH TERRITORY IS UNDELIMITED - the HH lane cannot have a number until the fence is drawn | - |
@@ -213,6 +216,7 @@ By tier: **ESSENTIAL** 11, **BIGGEST_WIN** 32, **REST** 102
 | **A-31** | BIGGEST_WIN | S | OPEN | S113 | COAL IS A STARTUP-CONSTRAINED RAMP, NOT A CEILING - the spike comes when the coal ramp rate cannot keep up with the load ramp rate | - |
 | **A-35** | BIGGEST_WIN | S | OPEN | S113 | THE FLEET IS DRIFTING UNDER US - the fast absorber is growing while the slow one retires, so the middle gets quieter and the tails get fatter | - |
 | **A-36** | BIGGEST_WIN | S | OPEN | S113 | INTERCHANGE IS A BOUNDARY TERM - carry it for HH territory, and NOT in the national roll-up | - |
+| **M-15** | BIGGEST_WIN | S | OPEN | S115 | KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived | - |
 | **O-3** | BIGGEST_WIN | S | OPEN | S114 | THE OPTION SKILL RATIO - blind \|err\| divided by the market's own one-day ATM straddle, per day, never pooled | - |
 | **A-2** | BIGGEST_WIN | M | OPEN | S110 | Build NO CALL (matrix-profile discord + EIA sampling floor + ensemble gate) | - |
 | **A-21** | BIGGEST_WIN | M | OPEN | S112 | THE WEATHER INDEX'S FORM: daily-mean degree days collapse the diurnal peak, the index is DRY BULB ONLY, and gw_precip is served with zero readers | A-19 (station set) should land first - form over the wrong stations is worse, not better |
@@ -424,6 +428,22 @@ ROOT CAUSE: D47 is enforced by nobody. It is the S114 correction record's own le
 THE BUILD: for every store in restore_substrate's prefix list, compare LOCAL content against S3 (hash or a content clock - mtime is not staleness, per the documents registry lesson) and FAIL LOUDLY on divergence in either direction. Run it at close-out (did I push what I rebuilt?) and at bring-up (is what I restored what the last session built?). It must name the store, both sides' coverage, and which side is newer.
 FALSIFIER: if a session rebuilds a store, pushes it, and the gate stays silent while a fresh restore returns the OLD content, the gate is not measuring the thing that matters.
 DONE THIS SESSION, so the gate is not starting from zero: eia_surprise rebuilt (+2 prints, purely additive, 0 existing values changed), pushed, and verified by READ-BACK from S3 (704/05e857e3 -> 706/e1f43a97).
+
+---
+
+### [ESSENTIAL] M-14 - THE PAPER DOCK'S OWN CREDENTIAL PATH IS SESSION SCRATCHPAD - kalshi_auth reads scratchpad/kalshi.env
+
+*size S | OPEN | raised S115*
+
+**Why it is ESSENTIAL:** It is the credential the paper book itself needs. It fails on every fresh container by construction, so paper trading cannot start on a new session until it moves. Same class as the three feed consumers fixed this session (D1-02/03/04).
+
+**Source:** S115 PRR audit D9-04 (dimension: keys / paper dock)
+
+MEASURED S115: kalshi_auth.py - the dock's signed REST path (RSA-PSS SHA256, prod+demo verified at S110) - resolves its key id and PEM ONLY from scratchpad/kalshi.env and a PEM beside it. That is a session-scratchpad path: it does not exist on a fresh container and dies with the session (D33), and it is outside the D48 canonical home. M-10 does not cover it (M-10 enumerates aws.env consumers only), and KEYS.md blessed it by still recording the row as 'DOES NOT EXIST YET - destination scratchpad/kalshi.env', so nothing flagged it.
+THE FIX, same shape as the S115 creds migration: route through creds.get('KALSHI_DEMO_KEY_ID') and creds.get('KALSHI_DEMO_KEY_PEM'), with ~/.config/markets/env as the home, SSM SecureString as the durable fallback (the PEM is multi-line - store it as a SecureString value or as a path in the env file, and say which in KEYS.md), and MARKETS_-prefixed env vars for the zero-paste path.
+WHY IT IS NOT MERELY COSMETIC: the dock is the thing we are about to run for real. A credential that silently resolves to nothing produces an auth failure at order time, which is the worst moment to discover it - and per S115's stage_group finding (D1-07) an auth failure that is caught by a blanket except reads downstream as an ordinary miss.
+FALSIFIER: if kalshi_auth authenticates on a fresh container with no scratchpad/ directory present, this is fixed. Test it that way, not by running where the file happens to exist (NC-3).
+KEYS.md row 23 updated S115 to state the true position instead of the stale 'pending' one.
 
 ---
 
@@ -1199,6 +1219,21 @@ and this item reduces to bookkeeping on the coal ceiling alone.
 **Source:** Greg S113: 'even if I don't have gas gen, my neighbor probably has enough for both of us'; 'the import/export numbers only really matter in the hh territory'
 
 D38. Interchange between two BAs inside an aggregate cancels pairwise, so it is already gone from any total containing both ends - MEASURED at US48: net interchange p50 0.5% of demand, MAX 2.8%. The national/storage roll-up therefore needs NO interchange term and adding one would double-count. But any aggregate SHORT of US48 has a real fence: CISO imports p50 20.6% / MAX 41.7% of its load, MISO p50 5.6% / MAX 15.5%. A stack subtraction inside such a BA overstates its gas by roughly the import, because the load was served by somebody else's generation and the fuel is on their books. `interchange_mwh` is now served (sign VERIFIED by the accounting identity TI = sum(gen) - demand, positive = net EXPORT; residual/demand p50 0.00% on ERCO/SOCO/SWPP). It is not yet CONSUMED by anything - D12 requires a named consumer or a PARK note.
+
+---
+
+### [BIGGEST_WIN] M-15 - KEY ROTATION IS NOW DUE, NOT DEFERRED - D1's own expiry condition has arrived
+
+*size S | OPEN | raised S115*
+
+**Why it is BIGGEST WIN:** A compromised credential with a deferral that has silently expired is the kind of thing that is only ever noticed after it matters. Cheap to do, and the deferral it replaces was explicit and time-boxed.
+
+**Source:** S115 PRR audit D9-05; D1 (S107, Greg: 'the keys won't rotate while we're running the groups')
+
+D1 deferred rotation of the AWS pair and the Databento key with an EXPLICIT expiry: 'rotation happens after the walk, as its own item'. Both were photographed into chat at S99 and are therefore genuinely exposed; CLAUDE.md records the AWS pair's full ID in plain text. The walk is now ending and paper trading is starting, so the condition D1 named has arrived - but NOTHING made the deferred->DUE transition visible: no registry item existed (verified S115: zero rotation items in the registry), and D1 is DECIDED/doc-only, so the conformance sweep flags it as stale without saying what to do.
+THE TRIGGER, stated so it is not argued each session: rotate before the FIRST LIVE-MONEY day. Paper/demo trading is exempt - it moves no real money and G5 already scopes rotation to the live cutover - but 'we are on demo' must not become an indefinite extension of a deferral that was time-boxed once already.
+THE PROCEDURE, so it is one command and not a project: (1) mint a new AWS pair, (2) update MARKETS_AWS_ACCESS_KEY_ID / MARKETS_AWS_SECRET_ACCESS_KEY in the Claude Code environment configuration (KEYS.md S115), (3) python creds.py --sync-ssm to re-push Databento+EIA under the new pair with read-back verification, (4) delete the old access key in IAM, (5) confirm restore_substrate and an STS call both still pass. Databento rotates in its own console and lands in the same env file.
+FALSIFIER: if a session after the cutover can still authenticate with the S99-era pair, the rotation did not happen.
 
 ---
 

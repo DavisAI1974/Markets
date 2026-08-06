@@ -2,18 +2,18 @@
  "note": "BRIEFING AUDITS (D36). A research briefing is a RECORD - dated, frozen, correctly never edited - so its recommendations live in prose that nothing counts. This records, per briefing, that its numbered recommendations were audited against OPEN_ITEMS.json and what came of them. The gate does not parse the prose; it requires the audit to have been DONE. An unaudited briefing FAILS the andon.\n\nTHE INSTANCE: GAS_SIGNAL_SYNTHESIS_S111 section 3 ranked 13 under-used data sources and TWELVE OF THIRTEEN had no registry item - including a live wrong-sign risk on a feed we had already built and a leakage question in the module that conditions magnitude. Greg found it by asking whether they were still listed.",
  "audited": {
   "GAS_OPTIONS_BRIEFING_S111.md": {
-   "session": "S112",
-   "n_recommendations": null,
-   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
-   "items": [],
-   "pending": true
+   "session": "S114",
+   "n_recommendations": 64,
+   "result": "AUDITED AT S114 against the registry: 53 of 64 had no registry item and were registered as O-1..O-53; the remainder were already covered. Verified S115 by counting the registry: O-1..O-53 all present (53 items). The S112 `pending` placeholder was STALE - the andon was FAILing on work that had been done, which is its own defect: a red line nobody can clear is one people learn to ignore (D33's lesson). Corrected S115, not re-audited.",
+   "items": "O-1..O-53",
+   "verified_on": "S115"
   },
   "GAS_OPTIONS_SYNTHESIS_S111.md": {
-   "session": "S112",
-   "n_recommendations": null,
-   "result": "NOT YET AUDITED against the registry - recorded so the andon reports it rather than staying silent. D36 requires the audit; this is an honest placeholder, not a pass.",
-   "items": [],
-   "pending": true
+   "session": "S114",
+   "n_recommendations": 64,
+   "result": "AUDITED AT S114 against the registry: 53 of 64 had no registry item and were registered as O-1..O-53; the remainder were already covered. Verified S115 by counting the registry: O-1..O-53 all present (53 items). The S112 `pending` placeholder was STALE - the andon was FAILing on work that had been done, which is its own defect: a red line nobody can clear is one people learn to ignore (D33's lesson). Corrected S115, not re-audited.",
+   "items": "O-1..O-53",
+   "verified_on": "S115"
   },
   "GAS_SIGNAL_BRIEFING_S111.md": {
    "session": "S112",

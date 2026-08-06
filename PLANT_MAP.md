@@ -46,6 +46,9 @@ names but the plant map does not place is a step nobody knows the host for.
 | `group_config.py` | staging: the group's window, legs, roll map | the session |
 | `flow_read.py` / `tape_reconcile.py` | staging: tape stats, and the reconciliation that catches an off-instrument leg | the session |
 | `forecast_harness.py` | staging: builds the decision state the specialists read | the session |
+| `stage_group.py` | STEP 3.1: pulls the legs and tape, builds the state, and runs the completeness + reconciliation gates. S115: an S3 AUTH failure hard-fails the whole stage rather than reporting as per-file misses | the session (needs keys) |
+| `state_health.py` | the completeness gate — refuses to stage a block with a silent hole. S115: symmetric storage-print guard + weekly cadence bound; the CLI is read-only (`--manifest` writes the inspection certificate) | the session |
+| `storage_restage_repair.py` | grafts the correct EIA-weekly family onto a committed state when a full re-stage would empty other blocks; dry-run default, idempotent, declares every repaired day | the session (needs keys) |
 | `build_causal_slices.py` | staging: makes the future ABSENT (hole #11) | the session |
 | `archive_blind.py` | between rounds — archives by MOVE so a missing posterior hard-fails | the session |
 | `group_coordinate_blind.py` / `group_coordinate_refine.py` | BLD/RFN stations: SELECT and ASSEMBLE only, guarded | the session |

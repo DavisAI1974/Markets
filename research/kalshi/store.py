@@ -271,6 +271,10 @@ def render_fj(store):
     return "\n".join(out).rstrip("\n") + "\n"
 
 
+# Defined here (not further down) because RENDERS references them - S115.
+OPEN_ITEMS = os.path.join(HERE, "OPEN_ITEMS.json")
+OPEN_ITEMS_MD = os.path.join(ROOT, "OPEN_ITEMS.md")
+
 RENDERS = {
     "failure_judge": dict(store=FJ_JSON, target=FJ_MD, extract=extract_fj, render=render_fj),
     "decisions": dict(store=DECISIONS_JSON, target=DECISIONS_MD,
@@ -281,7 +285,6 @@ RENDERS = {
 
 
 
-OPEN_ITEMS = os.path.join(HERE, "OPEN_ITEMS.json")
 DOCS_JSON = os.path.join(HERE, "store", "documents.json")
 KALSHI_INDEX = os.path.join(ROOT, "KALSHI_TRADING.md")
 PLANT_MAP = os.path.join(ROOT, "PLANT_MAP.md")
@@ -379,16 +382,22 @@ def docs_problems():
     return probs
 
 
-OPEN_ITEMS_MD = os.path.join(ROOT, "OPEN_ITEMS.md")
 
 
-def render_open_items():
+def render_open_items(reg=None):
     """OPEN_ITEMS.json is the system of record and JSON is not readable. Greg, S112: "put those in
     the open doc please." So the registry gets a RENDER - the same architecture as DECISIONS.md, and
     for the same reason: the store carries the truth, the document carries the readability, and the
-    document is never the thing you edit."""
-    with open(OPEN_ITEMS, encoding="utf-8") as f:
-        reg = json.load(f, object_pairs_hook=OrderedDict)
+    document is never the thing you edit.
+
+    S115: takes the store as an optional argument so it satisfies the RENDERS contract
+    (`spec["render"](store)`) and can therefore be GATED like DECISIONS.md. Before this it was a
+    render that nothing checked - a hand-edit or a stale regeneration passed `store.py check` and
+    the andon silently, which is the same species as the S114 RUN_SOP-appendix lesson (the reason
+    DECISIONS.md is gated at all)."""
+    if reg is None:
+        with open(OPEN_ITEMS, encoding="utf-8") as f:
+            reg = json.load(f, object_pairs_hook=OrderedDict)
     items = reg["items"]
     live = [i for i in items if i.get("status") in ("OPEN", "IN_PROGRESS")]
     done = [i for i in items if i.get("status") == "DONE"]
@@ -450,6 +459,14 @@ def render_open_items():
             L += ["**Already delegated:** %s" % i["delegated_prior"], ""]
         L += [i.get("why", "(no detail recorded)"), "", "---", ""]
     return "\n".join(L) + "\n"
+
+
+# S115 (PRR audit D9-12): OPEN_ITEMS.md is generated from OPEN_ITEMS.json by cmd_docs but was in NO
+# gate - a hand-edit or a stale regeneration passed `store.py check` and the andon while the
+# registry said something else. Same disease this table exists to kill (the S114 RUN_SOP-appendix
+# lesson, one document over). Registered AFTER render_open_items is defined, so drift now FAILS.
+RENDERS["open_items"] = dict(store=OPEN_ITEMS, target=OPEN_ITEMS_MD,
+                             extract=lambda t: None, render=render_open_items)
 
 
 def cmd_docs(a):

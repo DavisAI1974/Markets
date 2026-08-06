@@ -18,9 +18,9 @@ pairs happens AFTER the walk (D1).
 |---|---|---|---|---|
 | AWS access pair (acct ...4170) | platform_sync, S3 restore/stage, EC2/SSM | `~/.config/markets/env` + `~/.aws/credentials` (both 600) | photographed into chat S99 -> ROTATE POST-WALK | S3 restore, staging new groups, box control |
 | Databento key | historical pulls + LIVE feed (Standard $179/mo, subscribed S99) | `~/.config/markets/env` (DATABENTO_API_KEY) | photographed S99 -> ROTATE POST-WALK | new tape pulls, live collector, the mbp-1 L1 book writer (S114) |
-| EIA API key | grid_stack + EIA v2 feeds (incl. step-⑤ winter backfill) | scratchpad/aws.env (EIA_API_KEY) | fine | EIA-930 pulls, feed reruns |
+| EIA API key | grid_stack, eia_surprise, storage_regional, nuclear_outages + EIA v2 feeds | `~/.config/markets/env` (EIA_API_KEY) + SSM `/markets/EIA_API_KEY`, or `MARKETS_EIA_API_KEY` | fine | EIA-930 pulls, storage/surprise rebuilds, feed reruns |
 | Kalshi PUBLIC api | kalshi_collector (read-only snapshots) | none needed | fine | nothing (public) |
-| **Kalshi DEMO trading pair (key id + RSA private key)** | the paper-trading dock (G0/G1/G2) | **DOES NOT EXIST YET — Greg provisioning (S110)**; destination scratchpad/kalshi.env + PEM file beside it | pending | paper order placement |
+| **Kalshi DEMO trading pair (key id + RSA private key)** | the paper-trading dock (G0/G1/G2), via `kalshi_auth.py` | **CODE READS `scratchpad/kalshi.env` + a PEM beside it — a SESSION-SCRATCHPAD path that dies with the container (D33/D34/D48 violation, S115 audit D9-04).** Must move to `~/.config/markets/env` / SSM before paper trading. Registered as **M-14** | key material pending from Greg; the PATH is a known defect | paper order placement — and it will fail on every fresh session until M-14 lands |
 | Kalshi PROD trading pair | live money (post-paper) | DOES NOT EXIST | future | live trading |
 | GitHub (collector pushes) | GH Actions on the old trunk | repo secrets (account-level) | fine | collector accrual |
 | Pyth | pyth collectors | n/a | DEAD — free era ended 2026-07-31; collectors RETIRED (D14) | nothing (gas-only) |

@@ -1,5 +1,26 @@
 # KALSHI TRADING — file index
 
+## S115 — the pre-paper-trade platform audit: the blind wall, the brain view, and the D47 failure
+
+- **`research/kalshi/storage_restage_repair.py`** — grafts the correct EIA-weekly family (`storage`,
+  `stor_surprise`/`_sign`/`_basis`, `storage_regional`) onto a committed group state instead of
+  re-staging it. Built because the g24 refine needed a correct storage lane across the block's two
+  EIA prints (07-23, 07-30) while a full re-stage off the current S3 plane would have EMPTIED three
+  other blocks (`storage_consensus`, `weather_forecast_cycle`, `freeze_risk` — all stale on S3).
+  Dry-run default, idempotent, and every repaired day declares itself in `storage_repair_basis` (the
+  S109 `session_b_share_basis` pattern). Selftest ALL PASS. g24: 12 hard -> 0 hard.
+- **`creds.py` (rewritten resolution order)** — `MARKETS_<NAME>` env vars resolve FIRST, a namespace
+  the container's `proxy-injected` placeholders cannot shadow. Set the two AWS names once in the
+  Claude Code environment configuration and every future session restores the data plane with ZERO
+  pasting; Databento + EIA follow from SSM. `status()` now reports EFFECTIVE resolution (it probes
+  SSM) instead of file presence, ending the false "no keys" alarm on every fresh session.
+- **`brain_view.py` (S115)** — the blind wall now covers `meta` and the group's own name forms (a
+  served g24 view carried `"g24 blind (6/10, sum|err| 4,890)"` in `meta.changelog`, past a full
+  redaction pass, because the string holds no date); the evaluability resolver supports `[N]` list
+  indexing; and the working view gains `play_index` + two declared provenance cuts, taking it from
+  ~420k to ~338k tokens with all 90 plays, 661 instances and 90 falsifiers intact.
+- **`SESSION_HANDOFF_2026-08-06_S115.md`**, **`DROP_IN_S116.md`** — the session record and next box.
+
 ## S114 — the A-24 paper dissected per event; the two-sided lane MERGED; the decision order and the failure taxonomy
 
 - **`reasoning_method.decision_order` (brain s105.4)** — the seven-step order finally served to

@@ -63,6 +63,33 @@ re-composed the spawn text from prose. That is the fixed-then-dropped failure mo
 procedure itself. This file closes it.
 
 ## VERSION LOG
+- v1.18 (S115): TWO RUN WRAPPERS CHANGED BY THE PRE-PAPER-TRADE AUDIT, logged per change-control
+  item 2. Both are STEP-invoked wrappers, so they are in scope for this log even though neither
+  changes a template, a slot or the procedure.
+  (a) **`stage_group.py` (STEP 3.1 / re-stage):** builds its S3 client through `creds.aws_client`
+  instead of a bare `boto3.client`, and an AUTH failure now HARD-FAILS the whole stage instead of
+  being reported as a per-file `miss`. WHY: the bare client picks up the container's injected
+  placeholder credentials, and `_dl`'s blanket `except` converted the resulting auth error into
+  the same string a genuinely absent object produces - so a credential problem would stage a group
+  on an EMPTY data plane while printing a few hundred plausible-looking miss lines. That is the
+  silently-empty-input family this desk has recorded eleven times, arriving through the staging
+  door. Auth-class exceptions are named explicitly (`InvalidClientTokenId`, `AccessDenied`,
+  `NoCredentialsError`, …) and stop the line; a real per-file miss still reports as a miss.
+  (b) **`state_health.py` (STEP 3.1's completeness gate):** the S110-f4 storage-freshness guard is
+  now SYMMETRIC, plus a weekly-cadence bound; and the module's CLI is genuinely read-only.
+  WHY symmetric: f4 fired only when `storage.as_of` POSTDATED the consensus block, and the live
+  g24 defect was the mirror image - consensus knew the 07-23 and 07-30 prints while storage still
+  called 07-16 last - so the state passed 0 hard with a storage lane two prints stale across BOTH
+  EIA Thursdays in the block. Two blocks disagreeing about which print is last is the defect,
+  whichever side is staler. The cadence bound (>9 calendar days behind the reading day on a weekly
+  publication) catches SHARED staleness, which an equality check cannot see by construction; a
+  declared `*_basis` downgrades it to soft. Fires 11 hard on the committed g24 state (the real
+  defect, now repaired); g22 and g23 stay 0 hard, so no false positives on the walked record.
+  WHY read-only: the file carried TWO `__main__` blocks and the first one WROTE
+  `forecasts/g{N}_inspection.json` on every report run - a read-only-LOOKING command that writes,
+  which is the NC-4 shape. One `__main__` now; the inspection manifest is opt-in via `--manifest`,
+  which is the staging path's call to make. Proven by hashing the certificate across a plain run.
+  First group under it: the g24 refine (its re-stage and health check ran under both changes).
 - v1.17 (S115): THE BRAIN VIEW MUST FIT, AND THE READING INSTRUCTION SAYS HOW. Greg's go, in
   session ("do your plan"), after he asked what the shrink plan was and whether it degrades the
   brain. **THE MEASURED PROBLEM:** the specialist working view was **1,682,984 chars, ~420k
