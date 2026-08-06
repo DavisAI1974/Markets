@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "agent": "Frankie",
+  "status": "AWAITING_PRIVATE_CLAUDE_LINK_EXPORT",
+  "source_session": "https://claude.ai/code/session_01XASwGBJCADah3Tb8GssvLJ",
+  "note": "The Claude Code session is login-gated from the build environment. Add the exact linked paper URLs and titles here when exported or pasted. Frankie must not invent paper claims.",
+  "papers": [],
+  "repo_grounding": [
+    "research/kalshi/FORECAST_ARCHITECTURE_S111.md",
+    "research/kalshi/TWO_COACH_SPEC_S100.md",
+    "research/kalshi/agents/README.md",
+    "research/kalshi/agents/RUN_SOP.md",
+    "deploy/aws/COACH_AGENT_SETUP_S93.md",
+    "research/kalshi/CHATGPT_S113_A24_HIDDEN_EDGE_CANDIDATES.md",
+    "CHATGPT_HANDOFF_S116_NOVEL_EDGE_LAB.md"
+  ]
+}
