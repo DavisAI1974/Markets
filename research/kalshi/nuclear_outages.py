@@ -60,15 +60,15 @@ import sys
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 STORE_DIR = os.path.join(_ROOT, "data", "nuclear_outages")
 STORE_PATH = os.path.join(STORE_DIR, "us_daily.json.gz")
-ENV_PATH = os.path.join(_ROOT, "scratchpad", "aws.env")
 API = "https://api.eia.gov/v2/nuclear-outages/us-nuclear-outages/data"
 
 
 def _api_key() -> str:
-    for line in open(ENV_PATH):
-        if line.startswith("EIA_API_KEY="):
-            return line.split("=", 1)[1].strip()
-    raise RuntimeError("EIA_API_KEY not found in scratchpad/aws.env")
+    # S115 (audit D1-03): creds.py is the one resolver - this file read ONLY scratchpad/aws.env,
+    # a path nothing in the current flow writes the EIA key into, so the feed was un-runnable on
+    # every fresh container. Same one-function change already proven in grid_stack.
+    import creds
+    return creds.get("EIA_API_KEY")
 
 
 def build() -> dict:

@@ -24,14 +24,14 @@ import sys
 import time
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ENV_PATH = os.path.join(_ROOT, "scratchpad", "aws.env")
 
 
 def _api_key() -> str:
-    for line in open(ENV_PATH):
-        if line.startswith("DATABENTO_API_KEY="):
-            return line.split("=", 1)[1].strip()
-    raise RuntimeError("DATABENTO_API_KEY not found in scratchpad/aws.env")
+    # S115 (audit D1-04): creds.py is the one resolver - this file read ONLY scratchpad/aws.env,
+    # while the bootstrap wrote the Databento key to bento.env, so the smoke test could never
+    # find it on a fresh container by construction.
+    import creds
+    return creds.get("DATABENTO_API_KEY")
 
 
 def main() -> int:

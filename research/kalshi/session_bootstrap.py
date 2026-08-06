@@ -12,8 +12,9 @@ This collapses it to one command. It does NOT store keys anywhere new and it nev
     python research/kalshi/session_bootstrap.py --verify-only      # no key writes, just check + report
 
 What it does, in order:
-  1. writes ~/.aws/credentials, scratchpad/aws.env, scratchpad/bento.env  (chmod 600, outside the repo
-     tree for the first, gitignored for the others)
+  1. writes ~/.config/markets/env (the D48 canonical home, ALL supplied keys) + ~/.aws/credentials
+     (the boto3 fallback) - both chmod 600, both outside the repo. The legacy scratchpad paths are
+     no longer written (S115, M-10).
   2. verifies the pair via STS, printing ONLY pass/fail and the account tail
   3. restores the data plane from S3 and rebuilds vol_regime
   4. runs the completeness gate and prints each group's verdict
@@ -52,18 +53,34 @@ def _write(path, body, label):
     print(f"[bootstrap] wrote {label} (chmod 600)")
 
 
-def write_keys(aws_id, aws_secret, bento):
+def write_keys(aws_id, aws_secret, bento, eia=None):
+    # S115 (audit D1-02): the D48 canonical home is ~/.config/markets/env and this function never
+    # wrote it - it wrote only the legacy scratchpad paths this module's own successor (creds.py)
+    # exists to end, and it had no way to accept the EIA key at all. Now: every supplied key goes
+    # to the canonical env file (chmod 600, outside the repo); ~/.aws/credentials is kept as the
+    # boto3 fallback; the scratchpad paths are no longer written (M-10).
+    home_env = os.path.expanduser("~/.config/markets/env")
+    os.makedirs(os.path.dirname(home_env), exist_ok=True)
+    lines = {}
+    if os.path.exists(home_env):
+        for ln in open(home_env):
+            if "=" in ln and not ln.startswith("#"):
+                k, v = ln.strip().split("=", 1)
+                lines[k] = v
+    for k, v in (("AWS_ACCESS_KEY_ID", aws_id), ("AWS_SECRET_ACCESS_KEY", aws_secret),
+                 ("DATABENTO_API_KEY", bento), ("EIA_API_KEY", eia)):
+        if v:
+            lines[k] = v
+    if lines:
+        body = ("# ~/.config/markets/env - session credentials. NEVER commit, echo, or paste "
+                "this file.\n" +
+                "".join(f"{k}={v}\n" for k, v in lines.items()))
+        _write(home_env, body, "~/.config/markets/env")
     if aws_id and aws_secret:
         _write(os.path.join(AWS_DIR, "credentials"),
                f"[default]\naws_access_key_id = {aws_id}\n"
                f"aws_secret_access_key = {aws_secret}\nregion = {REGION}\n",
                "~/.aws/credentials")
-        _write(os.path.join(SCRATCH, "aws.env"),
-               f"AWS_ACCESS_KEY_ID={aws_id}\nAWS_SECRET_ACCESS_KEY={aws_secret}\n"
-               f"AWS_DEFAULT_REGION={REGION}\n",
-               "scratchpad/aws.env")
-    if bento:
-        _write(os.path.join(SCRATCH, "bento.env"), f"DATABENTO_API_KEY={bento}\n", "scratchpad/bento.env")
 
 
 def verify_sts():
@@ -92,6 +109,7 @@ def main():
     ap.add_argument("--aws-id", default=os.environ.get("AWS_ID"))
     ap.add_argument("--aws-secret", default=os.environ.get("AWS_SECRET"))
     ap.add_argument("--bento", default=os.environ.get("BENTO_KEY"))
+    ap.add_argument("--eia", default=os.environ.get("EIA_KEY"))
     ap.add_argument("--verify-only", action="store_true",
                     help="do not write keys; just verify and report what is present")
     ap.add_argument("--skip-restore", action="store_true", help="verify keys, do not pull from S3")
@@ -103,11 +121,12 @@ def main():
                   "  Pass --aws-id/--aws-secret, or set AWS_ID/AWS_SECRET, or use --verify-only.\n"
                   "  Keys are NEVER committed and do NOT survive a session - this is expected, not a bug.")
             return 2
-        write_keys(a.aws_id, a.aws_secret, a.bento)
+        write_keys(a.aws_id, a.aws_secret, a.bento, a.eia)
 
     have = os.path.exists(os.path.join(AWS_DIR, "credentials"))
     print(f"[bootstrap] ~/.aws/credentials present: {have}")
-    print(f"[bootstrap] scratchpad/bento.env present: {os.path.exists(os.path.join(SCRATCH, 'bento.env'))}")
+    print(f"[bootstrap] ~/.config/markets/env present: "
+          f"{os.path.exists(os.path.expanduser('~/.config/markets/env'))}")
     if not have:
         print("[bootstrap] NOT READY - no credentials. Staging, restore and S3 access will all fail.")
         return 2

@@ -282,19 +282,30 @@ def main() -> int:
     # printed "NG DATA PLANE NOT RESTORED" - both true, because the hook had materialized crypto
     # realbins. Present, non-empty, right owner, wrong content: exactly the family this desk hunts.
     # Now checks for the NG stores by name rather than for any bytes at all.
-    NG_STORES = ["nymex_cont", "weather", "flow_calendar", "cot", "storage_vintage", "grid_stack"]
+    # S115 (audit D1-10): nymex_cont_n0 is where restore_substrate actually lands the tape (the
+    # old name counted a store that no longer exists), and the keys row asks creds.py what is
+    # RESOLVABLE (names only, values never read) instead of testing for a legacy scratchpad file
+    # that the canonical flow stopped writing at S113.
+    NG_STORES = ["nymex_cont_n0", "weather", "flow_calendar", "cot", "storage_vintage", "grid_stack"]
     ddir = os.path.join(ROOT, "data")
     have_ng = [d for d in NG_STORES if os.path.isdir(os.path.join(ddir, d))]
     plane = len(have_ng) >= 4
-    keys = os.path.exists(os.path.join(HERE, "scratchpad", "aws.env")) or os.path.exists(
-        os.path.join(ROOT, "scratchpad", "aws.env"))
+    try:
+        import creds as _creds
+        _have = [n for n in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+                 if _creds.get(n, required=False)]
+        keys = len(_have) == 2
+        keys_msg = ("AWS pair resolvable via creds.py" if keys else
+                    "AWS pair NOT resolvable (creds.py: env/MARKETS_/file all empty - expected "
+                    "fresh session; needed only for staging/restore)")
+    except Exception as _e:
+        keys, keys_msg = False, "creds.py unavailable: %s" % _e
     say("WARN" if not plane else "PASS", "data-plane",
         ("NG stores present: %s" % ",".join(have_ng)) if plane else
         ("NG DATA PLANE ABSENT - %d/%d NG stores (%s). data/ may still be non-empty from other "
          "feeds; that is NOT the NG plane. Expected without keys; staged S108+ groups run anyway"
          % (len(have_ng), len(NG_STORES), ",".join(have_ng) or "none")))
-    say("WARN" if not keys else "PASS", "keys",
-        ("aws.env present" if keys else "no aws.env (expected fresh session; needed only for staging/restore)"))
+    say("WARN" if not keys else "PASS", "keys", keys_msg)
 
     # 9. THE TRACKED WORK REGISTRY (S111, D30 - a finding with no home does not exist).
     # Seven S110 turnaround-memo items were found undone in S111 because they lived only in prose.

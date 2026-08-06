@@ -18,7 +18,15 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 LEG_DIR = os.path.join(REPO, "data", "ng_mbo_g17")
 RENDER_DIR = os.path.join(HERE, "renders", "ng_refine_s95")
 BUCKET = "bento-568968024170-us-east-2-an"
-s3 = boto3.client("s3", "us-east-2")
+# S115 (audit D1-07): creds.aws_client, never a bare boto3.client - the bare client picks up the
+# container's placeholder injection and every download then reports as a per-file "miss".
+import creds
+s3 = creds.aws_client("s3", "us-east-2")
+
+# Exception names that mean THE CREDENTIALS ARE BROKEN, not "this one file is absent". Reporting
+# an auth failure as a per-file miss is how a whole stage silently degrades into empty blocks.
+_AUTH_ERR_CODES = ("InvalidClientTokenId", "InvalidAccessKeyId", "SignatureDoesNotMatch",
+                   "AccessDenied", "ExpiredToken", "AuthFailure")
 
 
 def log(m): print(f"[stage {m}]", flush=True)
@@ -30,6 +38,15 @@ def _dl(key, dest):
     try:
         s3.download_file(BUCKET, key, dest); return "ok"
     except Exception as e:
+        # S115 (audit D1-07): an auth/credential failure fails the whole stage LOUDLY - it is not
+        # a property of one key, and 400 quiet "miss" lines would stage a group on an empty plane.
+        name = type(e).__name__
+        blob = f"{name}: {e}"
+        if name == "NoCredentialsError" or any(c in blob for c in _AUTH_ERR_CODES):
+            raise SystemExit(
+                f"[stage] S3 AUTH FAILURE on {key}: {blob}\n"
+                f"[stage] This is a credential problem, not a missing file - fix keys "
+                f"(creds.py status) before staging. Refusing to continue and record misses.")
         return f"miss ({e})"
 
 
