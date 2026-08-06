@@ -106,7 +106,12 @@ def _forbidden_file(path: str) -> str | None:
     return None
 
 
-def validate_proposal(raw: Mapping[str, Any], *, evidence_hashes: set[str]) -> ImprovementProposal:
+def validate_proposal(
+    raw: Mapping[str, Any],
+    *,
+    evidence_hashes: set[str],
+    resolved_hashes: set[str],
+) -> ImprovementProposal:
     required = (
         "target_component",
         "hypothesis",
@@ -129,6 +134,11 @@ def validate_proposal(raw: Mapping[str, Any], *, evidence_hashes: set[str]) -> I
     unknown = sorted(set(evidence_refs) - evidence_hashes)
     if unknown:
         raise BackendError(f"proposal cites unknown evidence hashes: {', '.join(unknown)}")
+    if not set(evidence_refs).intersection(resolved_hashes):
+        raise GateStop(
+            "self-improvement requires at least one cited evidence record with an immutable "
+            "resolved-outcome sidecar"
+        )
     requested_files = _strings(raw, "requested_files")
     forbidden = [(path, _forbidden_file(path)) for path in requested_files if _forbidden_file(path)]
     if forbidden:
@@ -286,6 +296,9 @@ def propose_improvement(
 ) -> dict[str, Any]:
     origin = verify_original_spawn()
     records, hashes = load_evidence(evidence_paths, config=config)
+    resolved_hashes = {
+        record["envelope_hash"] for record in records if record["outcome_status"] == "RESOLVED"
+    }
     proposal_schema = {
         "target_component": sorted(ALLOWED_COMPONENTS),
         "hypothesis": "specific causal diagnosis",
@@ -314,7 +327,11 @@ def propose_improvement(
             sort_keys=True,
         ),
     )
-    proposal = validate_proposal(raw_proposal, evidence_hashes=hashes)
+    proposal = validate_proposal(
+        raw_proposal,
+        evidence_hashes=hashes,
+        resolved_hashes=resolved_hashes,
+    )
     raw_review = critic.generate(
         instructions=REVIEW_INSTRUCTIONS,
         prompt=json.dumps(
