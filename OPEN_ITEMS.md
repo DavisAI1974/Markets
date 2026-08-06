@@ -767,6 +767,16 @@ AND PAPER IS THE CONTINUOUS VERSION: one fresh day per day, real outcome, no con
 FALSIFIER, and it is the whole point of holding the head back: if performance improves across training passes on the walked corpus but does NOT improve on the held-out head, the loop taught recall rather than reasoning and must be scrapped rather than tuned. Measure both, always, and report the corpus number and the held-out number TOGETHER - a corpus gain quoted alone is the metric this falsifier exists to refuse.
 DEPENDS ON: A-68 (the lens's book - retention to accumulate into) and A-42 (first FJ-1 run). PAIRS WITH A-67 (the head is the test substrate for both).
 
+=== S115 CORRECTION, MEASURED: THE GRADEABLE CORPUS IS 70 DAYS, NOT 180 ===
+I wrote '18 walked blocks, roughly 180 scored days' from CLAUDE.md's NARRATIVE without checking the files - the same abstract-instead-of-source error made twice already this session. CHECKED:
+  g18..g24  state AND actual present  -> GRADEABLE TODAY: 7 blocks, 70 days
+  g17       actual present, NO STATE  -> cannot be forecast from
+  g6..g16   states present, NO ACTUAL -> can be forecast, CANNOT BE GRADED
+THE ACTUAL IS NOT OPTIONAL HERE. Greg's discipline is explicit - 'He only sees the curve AFTER, to score himself and to make improvements' - so a block with no actual gives the agent nothing to grade against: it forecasts into silence and the loop does not close. Blocks without actuals are not training substrate, they are unlabelled data.
+THE GAP IS A REBUILD, NOT A RE-PULL, which is why this is a prerequisite rather than a blocker: the day ranges are recoverable FROM THE STATE FILES themselves (each state is keyed by its own days), group_actual.build(gid) already exists and is what stage_group calls, and the tape covers the window - nymex_cont_n0 spans 2025-11-02..2026-07-20, containing ALL of g10..g16 (Jan-Apr 2026). So the corpus roughly DOUBLES to ~140 days off tape we already hold, at no Databento cost.
+DO IT BEFORE THE LOOP STARTS: 70 days across four lenses is E~21, C~21, D~14, B~14 - thin for anything a self-training loop should be trusted to conclude, and thinner still once split by day-class (D4/D37 forbids pooling across classes to manufacture an n).
+CAVEAT ON THE OLDER BLOCKS, so nobody treats them as equivalent: g6..g16 were walked under the PRE-S105 architecture and some on the NG.v.0 basis rather than NG.n.0 (S97: v.0 whipsaws through expiry weeks, which is why g11 was re-pulled). Rebuild their actuals on the SAME basis their states were built on, and record which basis each block used - a training corpus mixing bases silently is the off-instrument defect (S108 hole #8) arriving through the training door.
+
 ---
 
 ### [ESSENTIAL] A-50 - CLAUDE.md is a THIRD leak channel and it is auto-loaded before anything else
